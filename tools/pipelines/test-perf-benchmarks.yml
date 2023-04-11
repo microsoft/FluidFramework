@@ -384,10 +384,10 @@ stages:
             artifactName: 'perf-test-outputs_memory-usage'
           condition: succeededOrFailed()
 
-  - ${{ each stage in parameters.endpoints }}:
+  - ${{ each endpoint in parameters.endpoints }}:
 
-    - stage: perf_e2e_tests_${{ stage }}
-      displayName: Perf e2e tests_${{ stage }}
+    - stage: perf_e2e_tests_${{ endpoint }}
+      displayName: Perf e2e tests - ${{ endpoint }}
       dependsOn: []
       variables:
         # The following two paths are defined by the npm scripts invocations in @fluid-internal/test-end-to-end-tests
@@ -471,7 +471,7 @@ stages:
           # Doing this with separate ADO steps is not easy.
           # This step reports failure if either of the test runs reports failure.
           - task: Bash@3
-            displayName: Run tests ${{ stage }}
+            displayName: Run tests ${{ endpoint }}
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
@@ -479,29 +479,29 @@ stages:
 
                 # Run execution time tests
                 echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
-                if [[ '${{ stage }}' == 'local' ]]; then
+                if [[ '${{ endpoint }}' == 'local' ]]; then
                   npm run test:benchmark:report;
                 else
-                  npm run test:benchmark:report:${{ stage }};
+                  npm run test:benchmark:report:${{ endpoint }};
                 fi
                 executionTimeTestsExitCode=$?;
 
                 echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
                 # Run memory tests
-                if [[ '${{ stage }}' == 'local' ]]; then
+                if [[ '${{ endpoint }}' == 'local' ]]; then
                   npm run test:memory-profiling:report;
                 else
-                  npm run test:memory-profiling:report:${{ stage }};
+                  npm run test:memory-profiling:report:${{ endpoint }};
                 fi
 
                 memoryTestsExitCode=$?;
 
                 if [[ $executionTimeTestsExitCode -ne 0 ]]; then
-                  echo "##vso[task.logissue type=error]Exit code for runtime tests execution = $executionTimeTestsExitCode ${{ stage }}"
+                  echo "##vso[task.logissue type=error]Exit code for runtime tests execution = $executionTimeTestsExitCode ${{ endpoint }}"
                 fi
 
                 if [[ $memoryTestsExitCode -ne 0 ]]; then
-                  echo "##vso[task.logissue type=error]Exit code for memory tests execution = $memoryTestsExitCode ${{ stage }}"
+                  echo "##vso[task.logissue type=error]Exit code for memory tests execution = $memoryTestsExitCode ${{ endpoint }}"
                 fi
 
                 if [[ $executionTimeTestsExitCode -ne 0 ]] || [[ $memoryTestsExitCode -ne 0 ]]; then
@@ -510,41 +510,43 @@ stages:
             env:
               FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
               FLUID_BUILD_ID: $(Build.BuildId)
+              FLUID_ENDPOINTNAME: ${{ endpoint }}
               login__microsoft__clientId: $(login-microsoft-clientId)
               login__microsoft__secret: $(login-microsoft-secret)
-              login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-              fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
-              FLUID_ENDPOINTNAME: ${{ stage }}
+              ${{ if eq( endpoint, 'odsp' ) }}: 
+                login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+              ${{ if eq( endpoint, 'frs' ) }}: 
+                fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
 
           - task: Bash@3
-            displayName: Write measurements to Aria/Kusto - execution time ${{ stage }}
+            displayName: Write measurements to Aria/Kusto - execution time ${{ endpoint }}
             condition: succeededOrFailed()
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
               script: |
-                echo "Writing the following performance tests results to Aria/Kusto - ${{ stage }}"
+                echo "Writing the following performance tests results to Aria/Kusto - ${{ endpoint }}"
                 ls -la ${{ variables.executionTimeTestOutputFolder }};
                 node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
             env:
-              FLUID_ENDPOINTNAME: ${{ stage }}
+              FLUID_ENDPOINTNAME: ${{ endpoint }}
 
           - task: Bash@3
-            displayName: Write measurements to Aria/Kusto - memory usage ${{ stage }}
+            displayName: Write measurements to Aria/Kusto - memory usage ${{ endpoint }}
             condition: succeededOrFailed()
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
               script: |
-                echo "Writing the following performance tests results to Aria/Kusto - ${{ stage }}"
+                echo "Writing the following performance tests results to Aria/Kusto - ${{ endpoint }}"
                 ls -la ${{ variables.memoryUsageTestOutputFolder }};
                 node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
             env:
-              FLUID_ENDPOINTNAME: ${{ stage }}
+              FLUID_ENDPOINTNAME: ${{ endpoint }}
 
           - task: Bash@3
             displayName: Send Execution Time Perf Benchmark Measurements to Azure App Insights
-            condition: eq('${{ stage }}', 'local')
+            condition: eq('${{ endpoint }}', 'local')
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
@@ -555,11 +557,11 @@ stages:
             env:
               BUILD_ID: $(Build.BuildId)
               BRANCH_NAME: $(Build.SourceBranchName)
-              FLUID_ENDPOINTNAME: ${{ stage }}
+              FLUID_ENDPOINTNAME: ${{ endpoint }}
 
           - task: Bash@3
             displayName: Send Memory Usage Perf Benchmark Measurements to Azure App Insights
-            condition: eq('${{ stage }}', 'local')
+            condition: eq('${{ endpoint }}', 'local')
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
@@ -570,25 +572,25 @@ stages:
             env:
               BUILD_ID: $(Build.BuildId)
               BRANCH_NAME: $(Build.SourceBranchName)
-              FLUID_ENDPOINTNAME: ${{ stage }}
+              FLUID_ENDPOINTNAME: ${{ endpoint }}
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - E2E perf tests output - execution time {{ $stage }}
-            condition: and(succeededOrFailed(), eq('${{ stage }}', 'local'))
+            condition: succeededOrFailed()
 
             inputs:
               targetPath: '${{ variables.executionTimeTestOutputFolder }}'
-              artifactName: 'perf-test-outputs-e2e_execution-time'
+              artifactName: 'perf-test-outputs-e2e_execution-time-${{ endpoint }}'
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - E2E perf tests output - memory usage {{ $stage }}
-            condition: and(succeededOrFailed(), eq('${{ stage }}', 'local'))
+            condition: succeededOrFailed()
             inputs:
               targetPath: '${{ variables.memoryUsageTestOutputFolder }}'
-              artifactName: 'perf-test-outputs-e2e_memory-usage'
+              artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpoint }}'
 
           - task: Bash@3
-            displayName: Remove Output Folders from local server run ${{ stage }}
+            displayName: Remove Output Folders from local server run ${{ endpoint }}
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
