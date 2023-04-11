@@ -28,7 +28,7 @@ function makeTree(...json: string[]): ISharedTree {
 	return tree;
 }
 
-describe.only("Undo", () => {
+describe("Undo", () => {
 	it("the insert of a node on the main branch from a fork", async () => {
 		const tree = makeTree("A");
 		const fork = tree.fork();
