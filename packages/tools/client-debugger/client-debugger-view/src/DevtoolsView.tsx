@@ -355,26 +355,17 @@ function Menu(props: MenuProps): React.ReactElement {
 
 	const menuSections: React.ReactElement[] = [];
 
-	// Display the Containers menu section only if we have a non-empty Container list.
-	if (containers !== undefined && containers.length > 0) {
-		menuSections.push(
-			<MenuSection header="Containers" key="container-selection-menu-section">
-				{containers.map((container) => (
-					<MenuItem
-						key={container.id}
-						isActive={
-							currentSelection?.type === "containerMenuSelection" &&
-							currentSelection.containerId === container.id
-						}
-						text={container.nickname ?? container.id}
-						onClick={(event): void => {
-							onContainerClicked(`${container.id}`);
-						}}
-					/>
-				))}
-			</MenuSection>,
-		);
-	}
+	menuSections.push(
+		<ContainersMenuSection
+			containers={containers}
+			currentContainerSelection={
+				currentSelection?.type === "containerMenuSelection"
+					? currentSelection.containerId
+					: undefined
+			}
+			selectContainer={onContainerClicked}
+		/>,
+	);
 
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
 	if (supportedFeatures[DevtoolsFeature.Telemetry] === true) {
@@ -394,5 +385,65 @@ function Menu(props: MenuProps): React.ReactElement {
 			{/* TODO: button to refresh list of containers */}
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
 		</Stack.Item>
+	);
+}
+
+/**
+ * {@link ContainersMenuSection} input props.
+ */
+interface ContainersMenuSectionProps {
+	/**
+	 * The set of Containers to offer as selection options.
+	 */
+	containers?: ContainerMetadata[];
+
+	/**
+	 * The currently selected Container ID, if one is currently selected.
+	 */
+	currentContainerSelection: string | undefined;
+
+	/**
+	 * Updates the Container selection to the specified ID.
+	 *
+	 * @remarks Passing `undefined` clears the selection.
+	 */
+	selectContainer(containerId: string | undefined): void;
+}
+
+/**
+ * Displays the Containers menu section, allowing the user to select the Container to display.
+ *
+ * @remarks Displays a spinner while the Container list is being loaded (if the list is undefined),
+ * and displays a note when there are no registered Containers (if the list is empty).
+ */
+function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
+	const { containers, selectContainer, currentContainerSelection } = props;
+
+	let containerSectionInnerView: React.ReactElement;
+	if (containers === undefined) {
+		containerSectionInnerView = <Waiting label="Fetching Container list" />;
+	} else if (containers.length === 0) {
+		containerSectionInnerView = <div>No Containers found.</div>;
+	} else {
+		containerSectionInnerView = (
+			<>
+				{containers.map((container) => (
+					<MenuItem
+						key={container.id}
+						isActive={currentContainerSelection === container.id}
+						text={container.nickname ?? container.id}
+						onClick={(event): void => {
+							selectContainer(`${container.id}`);
+						}}
+					/>
+				))}
+			</>
+		);
+	}
+
+	return (
+		<MenuSection header="Containers" key="container-selection-menu-section">
+			{containerSectionInnerView}
+		</MenuSection>
 	);
 }
