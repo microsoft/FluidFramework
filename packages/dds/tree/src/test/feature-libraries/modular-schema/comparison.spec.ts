@@ -28,6 +28,7 @@ import {
 	lookupTreeSchema,
 	TreeSchemaIdentifier,
 	GlobalFieldKey,
+	treeSchema,
 } from "../../../core";
 import { brand } from "../../../util";
 import {
@@ -200,6 +201,27 @@ describe("Schema Comparison", () => {
 		assert.equal(isNeverTree(defaultSchemaPolicy, repo, emptyLocalFieldTree), false);
 		assert.equal(isNeverTree(defaultSchemaPolicy, repo, valueLocalFieldTree), false);
 		assert.equal(isNeverTree(defaultSchemaPolicy, repo, optionalLocalFieldTree), false);
+	});
+
+	it("isNeverTreeRecursive", () => {
+		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive")]);
+		const recursiveType = treeSchema({
+			extraLocalFields: recursiveField,
+		});
+		updateTreeSchema(repo, brand("recursive"), recursiveType);
+		assert(isNeverTree(defaultSchemaPolicy, repo, recursiveType));
+	});
+
+	it("isNeverTreeRecursive non-never", () => {
+		const repo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+		const recursiveField = fieldSchema(FieldKinds.value, [brand("recursive"), emptyTree.name]);
+		const recursiveType = treeSchema({
+			extraLocalFields: recursiveField,
+		});
+		updateTreeSchema(repo, emptyTree.name, emptyTree);
+		updateTreeSchema(repo, brand("recursive"), recursiveType);
+		assert(isNeverTree(defaultSchemaPolicy, repo, recursiveType));
 	});
 
 	it("allowsValueSuperset", () => {

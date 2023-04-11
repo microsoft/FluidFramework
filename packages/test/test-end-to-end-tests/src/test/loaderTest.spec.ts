@@ -18,6 +18,10 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
+import {
+	requestResolvedObjectFromContainer,
+	waitContainerToCatchUp,
+} from "@fluidframework/container-loader";
 
 class TestSharedDataObject1 extends DataObject {
 	public get _root() {
@@ -301,6 +305,29 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		);
 	});
 
+	it("requestResolvedObjectFromContainer can handle url with query params", async () => {
+		const url = await container.getAbsoluteUrl("");
+		assert(url, "url is undefined");
+		const testUrl = `${url}${
+			url.includes("?") ? "&query1=1&query2=2&inspect=1" : "?query1=1&query2=2&inspect=1"
+		}`;
+
+		const newLoader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const resolvedContainer = await newLoader.resolve({ url: testUrl });
+		const response = await requestResolvedObjectFromContainer(resolvedContainer);
+		const searchParams = new URLSearchParams(response.value);
+		assert.strictEqual(
+			searchParams.get("query1"),
+			"1",
+			"request did not pass the right query to the data store",
+		);
+		assert.strictEqual(
+			searchParams.get("query2"),
+			"2",
+			"request did not pass the right query to the data store",
+		);
+	});
+
 	it("can handle requests with headers", async () => {
 		const dataStoreWithRequestHeaders = await testFactoryWithRequestHeaders.createInstance(
 			dataStore1._context.containerRuntime,
@@ -316,6 +343,38 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		const headers = { wait: false, [RuntimeHeaders.viaHandle]: true };
 		// Request to the newly created data store with headers.
 		const response = await loader.request({ url, headers });
+
+		assert.strictEqual(response.status, 200, "Did not return the correct status");
+		assert.strictEqual(
+			response.mimeType,
+			"request/headers",
+			"Did not get the correct mimeType",
+		);
+		assert.deepStrictEqual(
+			response.value,
+			headers,
+			"Did not get the correct headers in the response",
+		);
+	});
+
+	it("requestResolvedObjectFromContainer can handle requests with headers", async () => {
+		const dataStoreWithRequestHeaders = await testFactoryWithRequestHeaders.createInstance(
+			dataStore1._context.containerRuntime,
+		);
+		dataStore1._root.set("key", dataStoreWithRequestHeaders.handle);
+
+		// Flush all the ops
+		await provider.ensureSynchronized();
+
+		const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
+		assert(url, "Container should return absolute url");
+
+		const headers = { wait: false, [RuntimeHeaders.viaHandle]: true };
+		// Request to the newly created data store with headers.
+		const newLoader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
+		const resolvedContainer = await newLoader.resolve({ url });
+		await waitContainerToCatchUp(resolvedContainer);
+		const response = await requestResolvedObjectFromContainer(resolvedContainer, headers);
 
 		assert.strictEqual(response.status, 200, "Did not return the correct status");
 		assert.strictEqual(

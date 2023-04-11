@@ -311,16 +311,21 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, releaseGroup, releaseVersion } = data;
+	const { context, releaseGroup, releaseVersion, shouldCheckBranch } = data;
+	assert(context !== undefined, "Context is undefined.");
 	assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
 
 	const currentBranch = await context.gitRepo.getCurrentBranchName();
 	const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
 
-	if (currentBranch === releaseBranch) {
-		BaseStateHandler.signalSuccess(machine, state);
+	if (shouldCheckBranch) {
+		if (currentBranch === releaseBranch) {
+			BaseStateHandler.signalSuccess(machine, state);
+		} else {
+			BaseStateHandler.signalFailure(machine, state);
+		}
 	} else {
-		BaseStateHandler.signalFailure(machine, state);
+		BaseStateHandler.signalSuccess(machine, state);
 	}
 
 	return true;

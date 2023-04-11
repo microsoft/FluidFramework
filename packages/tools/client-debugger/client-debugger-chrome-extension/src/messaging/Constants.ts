@@ -4,6 +4,6 @@
  */
 
 /**
- * The message {@link ISourcedDebuggerMessage.source} for all messages posted by the Devtools extension.
+ * The message {@link ISourcedDevtoolsMessage.source} for all messages posted by the Devtools extension.
  */
 export const extensionMessageSource: string = "fluid-client-debugger-devtools";

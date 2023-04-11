@@ -22,6 +22,7 @@ export { parseBoolean } from "./conversion";
 export { deleteSummarizedOps } from "./deleteSummarizedOps";
 export { getHostIp } from "./dns";
 export { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";
+export { executeApiWithMetric } from "./executeApiWithMetric";
 export { executeOnInterval, ScheduledJob } from "./executeOnInterval";
 export { choose, getRandomName } from "./generateNames";
 export { configureLogging, IWinstonConfig } from "./logger";

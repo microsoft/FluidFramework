@@ -71,6 +71,11 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							"Number of telemetry events per flush to telemetryFile (only applicable for JSON format)",
 						type: "number",
 						demandOption: false,
+					})
+					.option("timeout", {
+						describe: "Allowed timeout in ms before process is automatically cancelled",
+						type: "number",
+						demandOption: false,
 					}),
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (argv) => {
@@ -97,6 +102,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							argv.telemetryFile,
 							argv.options,
 							telemetryOptionsResult.telemetryOptions,
+							argv.timeout,
 					  )
 					: exportFile(
 							fluidFileConverter!,
@@ -105,6 +111,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							argv.telemetryFile,
 							argv.options,
 							telemetryOptionsResult.telemetryOptions,
+							argv.timeout,
 					  ));
 
 				if (!result.success) {
