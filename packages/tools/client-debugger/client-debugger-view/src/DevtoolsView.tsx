@@ -380,7 +380,6 @@ function Menu(props: MenuProps): React.ReactElement {
 
 	return (
 		<Stack.Item grow={1} styles={menuStyles}>
-			{/* TODO: button to refresh list of containers */}
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
 		</Stack.Item>
 	);
@@ -439,6 +438,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		);
 	}
 
+	// TODO: add button to refresh list of containers
 	return (
 		<MenuSection header="Containers" key="container-selection-menu-section">
 			{containerSectionInnerView}
