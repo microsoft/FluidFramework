@@ -23,11 +23,11 @@ export enum DevtoolsFeature {
  * This has two primary purposes:
  *
  * 1. It can be used to signal to consumers of the Devtools what kinds of functionality are supported (at runtime)
- * by a Devtools instance.
+ * by a {@link FluidDevtools} instance.
  *
  * 2. It can be used to make backwards compatible changes easier to make.
  * By adding a flag to this object for new features, consumers can easily verify whether or not that feature
- * is supported by the corresponding Devtools instance before attempting to use it.
+ * is supported by the {@link FluidDevtools} instance before attempting to use it.
  *
  * @public
  */
@@ -39,7 +39,7 @@ export type DevtoolsFeatureFlags = {
 };
 
 /**
- * Describes features supported by {@link FluidDevtools}.
+ * Describes features supported by {@link ContainerDevtools}.
  *
  * @public
  */
@@ -52,18 +52,19 @@ export enum ContainerDevtoolsFeature {
 }
 
 /**
- * Describes the set of {@link ContainerDevtoolsFeature | container-related features} supported by a {@link FluidDevtools} instance.
+ * Describes the set of {@link ContainerDevtoolsFeature | container-related features} supported by a
+ * {@link ContainerDevtools} instance.
  *
  * @remarks
  *
  * This has two primary purposes:
  *
  * 1. It can be used to signal to consumers of the Devtools what kinds of functionality are supported (at runtime)
- * by a Devtools instance.
+ * by a {@link ContainerDevtools} instance.
  *
  * 2. It can be used to make backwards compatible changes easier to make.
  * By adding a flag to this object for new features, consumers can easily verify whether or not that feature
- * is supported by the corresponding Devtools instance before attempting to use it.
+ * is supported by the corresponding {@link ContainerDevtools} instance before attempting to use it.
  *
  * @public
  */
