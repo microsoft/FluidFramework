@@ -43,7 +43,7 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * @sealed
  * @internal
  */
-export class FluidDevtoolsLogger extends TelemetryLogger {
+export class DevtoolsLogger extends TelemetryLogger {
 	/**
 	 * Accumulated data for Telemetry logs.
 	 */
@@ -99,7 +99,7 @@ export class FluidDevtoolsLogger extends TelemetryLogger {
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
-		return new FluidDevtoolsLogger(namespace, properties);
+		return new DevtoolsLogger(namespace, properties);
 	}
 
 	/**
@@ -115,12 +115,12 @@ export class FluidDevtoolsLogger extends TelemetryLogger {
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		if (!baseLogger) {
-			return FluidDevtoolsLogger.create(namespace, properties);
+			return DevtoolsLogger.create(namespace, properties);
 		}
 
 		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
 		multiSinkLogger.addLogger(
-			FluidDevtoolsLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
+			DevtoolsLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
 		);
 		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 

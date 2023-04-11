@@ -176,6 +176,13 @@ export namespace DataVisualization {
     }
 }
 
+// @internal @sealed
+export class DevtoolsLogger extends TelemetryLogger {
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
+}
+
 // @public
 export const devtoolsMessageSource: string;
 
@@ -210,13 +217,6 @@ export interface FluidDevtoolsEvents extends IEvent {
     (event: "containerDevtoolsClosed", listener: (containerId: string) => void): void;
     // @eventProperty
     (event: "devtoolsDisposed", listener: () => void): void;
-}
-
-// @internal @sealed
-export class FluidDevtoolsLogger extends TelemetryLogger {
-    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
 }
 
 // @public

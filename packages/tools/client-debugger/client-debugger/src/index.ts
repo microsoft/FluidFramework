@@ -71,7 +71,7 @@ export {
 } from "./data-visualization";
 export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
-export { FluidDevtoolsLogger } from "./DevtoolsLogger";
+export { DevtoolsLogger } from "./DevtoolsLogger";
 export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
