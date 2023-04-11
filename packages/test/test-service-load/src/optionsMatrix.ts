@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/container-runtime";
 import { ILoaderOptions } from "@fluidframework/container-loader";
 import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
-import { DriverEndpoint, TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
@@ -121,11 +121,20 @@ export function generateConfigurations(
 	return generatePairwiseOptions<Record<string, ConfigTypes>>(overrides, seed);
 }
 
+/**
+ *
+ * @param testConfig - the ILoadTestConfig to extract the Option Override from
+ * @param driverType - the DriverType being used in the test, used to determine which option override to pick
+ * @param endpoint - the Endpoint being used in the test, used to determine which option override to pick
+ * @returns an option override
+ */
 export function getOptionOverride(
 	testConfig: ILoadTestConfig | undefined,
 	driverType: TestDriverTypes,
-	endpoint: DriverEndpoint | undefined,
+	endpoint: string | undefined,
 ): OptionOverride | undefined {
+	// Specifically using an all or nothing strategy as that's how our current test config options are written today
+	// We first search for the key driverType-endpoint, if that doesn't exist then we just key on the driverType
 	const driverEndpointOverride = `${driverType}-${endpoint}`;
 	return (
 		testConfig?.optionOverrides?.[driverEndpointOverride] ??
