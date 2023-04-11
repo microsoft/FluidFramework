@@ -416,27 +416,27 @@ export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {
-	if (revertibles.length === 0) {
-		return;
-	}
-	const revertRoot = findRevertRootMergeBlock(revertibles[0].trackingGroup.tracked[0]);
+	let revertRoot: RevertRootMergeBlock | undefined;
 
 	while (revertibles.length > 0) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const r = revertibles.pop()!;
 		const operation = r.operation;
-		switch (operation) {
-			case MergeTreeDeltaType.INSERT:
-				revertLocalInsert(driver, revertRoot, r);
-				break;
-			case MergeTreeDeltaType.REMOVE:
-				revertLocalRemove(driver, revertRoot, r);
-				break;
-			case MergeTreeDeltaType.ANNOTATE:
-				revertLocalAnnotate(driver, revertRoot, r);
-				break;
-			default:
-				unreachableCase(operation);
+		if (r.trackingGroup.size > 0) {
+			revertRoot ??= findRevertRootMergeBlock(r.trackingGroup.tracked[0]);
+			switch (operation) {
+				case MergeTreeDeltaType.INSERT:
+					revertLocalInsert(driver, revertRoot, r);
+					break;
+				case MergeTreeDeltaType.REMOVE:
+					revertLocalRemove(driver, revertRoot, r);
+					break;
+				case MergeTreeDeltaType.ANNOTATE:
+					revertLocalAnnotate(driver, revertRoot, r);
+					break;
+				default:
+					unreachableCase(operation);
+			}
 		}
 	}
 }
