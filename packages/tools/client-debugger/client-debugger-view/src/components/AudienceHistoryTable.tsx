@@ -14,30 +14,30 @@ import {
 	TableHeaderCell,
 } from "@fluentui/react-components";
 import { Clock20Regular, DoorArrowLeft24Regular, Person24Regular } from "@fluentui/react-icons";
-import { FilteredAudienceHistoryData } from "./AudienceView";
+import { TransformedAudienceHistoryData } from "./AudienceView";
 
 /**
- * Input for {@link AudienceHistoryTable}
+ * Represents audience history data filtered to the attributes that will be displayed in the history table.
  */
 export interface AudienceHistoryTableProps {
 	/**
 	 * Filtered audience data from {@link audienceHistoryDataFilter}
 	 * Containing clientId, timestamp & event.
 	 */
-	audienceHistoryItems: FilteredAudienceHistoryData[];
+	audienceHistoryItems: TransformedAudienceHistoryData[];
 }
 
 /**
- * Render audience history in {@link AudienceView}
+ * Renders audience history data of user status event, clientId & timestamp.
  */
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
 
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
+		{ columnKey: "event", label: "Event" },
 		{ columnKey: "clientId", label: "Client ID" },
 		{ columnKey: "time", label: "Time" },
-		{ columnKey: "event", label: "Event" },
 	];
 
 	return (
@@ -46,9 +46,9 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
+							{column.columnKey === "event" && <DoorArrowLeft24Regular />}
 							{column.columnKey === "clientId" && <Person24Regular />}
 							{column.columnKey === "time" && <Clock20Regular />}
-							{column.columnKey === "event" && <DoorArrowLeft24Regular />}
 							{column.label}
 						</TableHeaderCell>
 					))}
@@ -65,9 +65,9 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 									: tokens.colorPaletteRedBorder1,
 						}}
 					>
+						<TableCell>{item.changeKind}</TableCell>
 						<TableCell>{item.clientId}</TableCell>
 						<TableCell>{item.time}</TableCell>
-						<TableCell>{item.changeKind}</TableCell>
 					</TableRow>
 				))}
 			</TableBody>

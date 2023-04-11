@@ -6,8 +6,6 @@ import React from "react";
 import { Divider } from "@fluentui/react-components";
 
 import {
-	AudienceChangeLogEntry,
-	AudienceClientMetadata,
 	AudienceSummary,
 	GetAudienceSummary,
 	handleIncomingMessage,
@@ -84,16 +82,37 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		return <Waiting label="Waiting for Audience data." />;
 	}
 
-	// TODO: Determine if myClientMetaData is necessary
 	const myClientMetadata = audienceData.audienceState.find(
 		(audience) => audience.clientId === audienceData.clientId,
 	)?.client;
-
-	const audienceStateItems = audienceStateDataFilter(
-		audienceData.audienceState,
-		myClientMetadata,
+	
+	const audienceStateItems: TransformedAudienceStateData[] = audienceData.audienceState.map(
+		(entry) => {
+			return {
+				clientId: entry.clientId,
+				userId: entry.client.user.id,
+				mode: entry.client.mode,
+				scopes: entry.client.scopes,
+				myClientConnection: myClientMetadata,
+			};
+		},
 	);
-	const audienceHistoryItems = audienceHistoryDataFilter(audienceData.audienceHistory).reverse();
+
+	const nowTimeStamp = new Date();
+	const audienceHistoryItems: TransformedAudienceHistoryData[] = audienceData.audienceHistory
+		.map((entry) => {
+			const changeTimeStamp = new Date(entry.timestamp);
+			const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
+
+			return {
+				clientId: entry.clientId,
+				time: wasChangeToday
+					? changeTimeStamp.toTimeString()
+					: changeTimeStamp.toDateString(),
+				changeKind: entry.changeKind,
+			};
+		})
+		.reverse();
 
 	return (
 		<>
@@ -106,9 +125,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 }
 
 /**
- * Filtered audience state data for {@link audienceStateDataFilter}
+ * Transformed audience state data type to render audience state.
  */
-export interface FilteredAudienceStateData {
+export interface TransformedAudienceStateData {
 	clientId: string;
 	userId: string;
 	mode: string;
@@ -117,48 +136,10 @@ export interface FilteredAudienceStateData {
 }
 
 /**
- * Removes unncessary data in audienceData.audienceState
+ * Transformed audience history data type to render audience history.
  */
-function audienceStateDataFilter(
-	audienceStateData: AudienceClientMetadata[],
-	myClientConnection: IClient | undefined,
-): FilteredAudienceStateData[] {
-	return audienceStateData.map((entry) => {
-		return {
-			clientId: entry.clientId,
-			userId: entry.client.user.id,
-			mode: entry.client.mode,
-			scopes: entry.client.scopes,
-			myClientConnection,
-		};
-	});
-}
-
-/**
- * Filtered audience state data for {@link audienceHistoryDataFilter}
- */
-export interface FilteredAudienceHistoryData {
+export interface TransformedAudienceHistoryData {
 	clientId: string;
 	time: string;
 	changeKind: string;
-}
-
-/**
- * Removes unncessary data in audienceData.audienceHistory
- */
-function audienceHistoryDataFilter(
-	audienceHistoryData: readonly AudienceChangeLogEntry[],
-): FilteredAudienceHistoryData[] {
-	const nowTimeStamp = new Date();
-
-	return audienceHistoryData.map((entry) => {
-		const changeTimeStamp = new Date(entry.timestamp);
-		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
-
-		return {
-			clientId: entry.clientId,
-			time: wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString(),
-			changeKind: entry.changeKind,
-		};
-	});
 }

@@ -14,21 +14,21 @@ import {
 	TableHeaderCell,
 } from "@fluentui/react-components";
 import { EditRegular, Search20Regular, Person24Regular } from "@fluentui/react-icons";
-import { FilteredAudienceStateData } from "./AudienceView";
+import { TransformedAudienceStateData } from "./AudienceView";
 
 /**
- * Input for {@link AudienceStateTable}
+ * Represents audience state data filtered to the attributes that will be displayed in the state table.
  */
 export interface AudienceStateTableProps {
 	/**
 	 * Filtered audience state data from {@link audienceStateDataFilter}
 	 * Containing clientId, userId, mode, scopes & myClientConnection.
 	 */
-	audienceStateItems: FilteredAudienceStateData[];
+	audienceStateItems: TransformedAudienceStateData[];
 }
 
 /**
- * Render audience state in {@link AudienceView}
+ * Renders audience state data of client(s)'s clientId, userId, mode, and scopres who are currently connected to the container.
  */
 export function AudienceStateTable(props: AudienceStateTableProps): React.ReactElement {
 	const { audienceStateItems } = props;
