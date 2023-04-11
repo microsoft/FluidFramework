@@ -43,7 +43,10 @@ const containerDevtoolsViewClassName = `fluid-client-debugger-view`;
 export type ContainerDevtoolsViewProps = HasContainerId;
 
 /**
- * Displays information about the provided container and its audience.
+ * Container Devtools view.
+ * Communicates with {@link @fluid-tools/client-debugger#ContainerDevtools} via {@link MessageRelayContext} to get
+ * Container-level stats to display, including Container states and history, Audience state and history, and Container
+ * data.
  */
 export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.ReactElement {
 	const { containerId } = props;
