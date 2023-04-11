@@ -52,27 +52,27 @@ describe("VisualTreeView component tests", () => {
 					typeMetadata: "string",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
-				// "test-tree-node": {
-				// 	children: {
-				// 		a: {
-				// 			value: 1,
-				// 			typeMetadata: "number",
-				// 			nodeKind: VisualNodeKind.ValueNode,
-				// 		},
-				// 		b: {
-				// 			value: "2",
-				// 			typeMetadata: "string",
-				// 			nodeKind: VisualNodeKind.ValueNode,
-				// 		},
-				// 		c: {
-				// 			value: true,
-				// 			typeMetadata: "boolean",
-				// 			nodeKind: VisualNodeKind.ValueNode,
-				// 		},
-				// 	},
-				// 	typeMetadata: "object",
-				// 	nodeKind: VisualNodeKind.TreeNode,
-				// },
+				"test-tree-node": {
+					children: {
+						a: {
+							value: 1,
+							typeMetadata: "number",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						b: {
+							value: "2",
+							typeMetadata: "string",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						c: {
+							value: true,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+					},
+					typeMetadata: "object",
+					nodeKind: VisualNodeKind.TreeNode,
+				},
 				// "test-handle": {
 				// 	fluidObjectId: sharedCounter.id,
 				// 	typeMetadata: "Fluid Handle",
@@ -89,10 +89,8 @@ describe("VisualTreeView component tests", () => {
 		await userEvent.click(expandButton);
 
 		await screen.findByText(/Hello world/);
-
-		// await screen.findByText(/test-tree-node/);
-		// await screen.findByText(/1/);
-		// await screen.findByText(/2/);
-		// await screen.findByText(/true/);
+		await screen.findByText(/1/);
+		await screen.findByText(/2/);
+		await screen.findByText(/true/);
 	});
 });

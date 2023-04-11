@@ -25,7 +25,7 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 			header={<div>{`${String(node.value)}, ${node.metadata}`}</div>}
 			className="ValueView"
 		>
-			String(node.value)
+			{console.log("ValueView Hits")}; String(node.value)
 		</Accordion>
 	);
 }

@@ -22,14 +22,21 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	// Accordion header:  fluidObjectId, metadata, typeMetadata
 	// Accordion children: (all of the rendered TreeDataView nodes)
 	return (
-		<Accordion
-			key={containerId}
-			header={<div>{`${node.fluidObjectId}, ${node.metadata}, ${node.typeMetadata}`}</div>}
-			className="FluidTreeView"
-		>
-			{Object.entries(node.children).map(([key, fluidObject], index) => {
-				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
-			})}
-		</Accordion>
+		<>
+			<Accordion
+				key={containerId}
+				header={
+					<div>{`${node.fluidObjectId}, ${node.metadata}, ${node.typeMetadata}`}</div>
+				}
+				className="FluidTreeView"
+			>
+				{Object.entries(node.children).map(([key, fluidObject], index) => {
+					{
+						console.log("fluidObject:", fluidObject);
+					}
+					return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
+				})}
+			</Accordion>
+		</>
 	);
 }

@@ -25,6 +25,12 @@ export interface TreeDataViewProps extends HasContainerId {
  */
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 	const { containerId, node } = props;
+	{
+		console.log("node:", node);
+	}
+	{
+		console.log("node.nodeKind:", node.nodeKind);
+	}
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.

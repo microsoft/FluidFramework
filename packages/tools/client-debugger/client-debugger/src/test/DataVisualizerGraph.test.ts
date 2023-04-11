@@ -198,7 +198,6 @@ describe("DataVisualizerGraph unit tests", () => {
 			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
-
 		expect(childCellTree).to.deep.equal(expectedChildCellTree);
 	});
 });

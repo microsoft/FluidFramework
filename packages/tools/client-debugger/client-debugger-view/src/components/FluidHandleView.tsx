@@ -80,7 +80,6 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <Waiting />;
 	}
 
-	// <TreeDataView containerId={containerId} node={visualTree} />;
 	return (
 		<Accordion
 			key={containerId}
