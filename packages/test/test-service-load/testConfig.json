@@ -25,13 +25,13 @@
 				}
 			},
 			"optionOverrides": {
-				"odsp": {
+				"odsp-odsp": {
 					"configurations": {
 						"Fluid.Container.summarizeProtocolTree2": [true, false],
 						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
 					}
 				},
-				"odsp-df": {
+				"odsp-odsp-df": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
 						"Fluid.Container.summarizeProtocolTree2": [true, false],
@@ -85,7 +85,7 @@
 				"max": 50000
 			},
 			"optionOverrides": {
-				"odsp": {
+				"odsp-odsp": {
 					"configurations": {
 						"Fluid.Container.summarizeProtocolTree2": [true, false],
 						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
@@ -160,7 +160,7 @@
 			"totalSendCount": 150,
 			"readWriteCycleMs": 10000,
 			"optionOverrides": {
-				"odsp": {
+				"odsp-odsp": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2]
 					}
@@ -193,7 +193,7 @@
 				"max": 1800000
 			},
 			"optionOverrides": {
-				"odsp": {
+				"odsp-odsp": {
 					"configurations": {
 						"Fluid.Container.summarizeProtocolTree": [true]
 					}
