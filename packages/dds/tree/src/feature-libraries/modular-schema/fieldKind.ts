@@ -6,11 +6,11 @@
 import {
 	FieldSchema,
 	FieldKindIdentifier,
-	TreeSchemaIdentifier,
 	SchemaPolicy,
 	fieldSchema,
 	SchemaData,
 	FieldKindSpecifier,
+	TreeTypeSet,
 } from "../../core";
 import { isNeverField } from "./comparison";
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
@@ -54,7 +54,7 @@ export class FieldKind<
 		public readonly multiplicity: TMultiplicity,
 		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
 		private readonly allowsTreeSupersetOf: (
-			originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
+			originalTypes: TreeTypeSet,
 			superset: FieldSchema,
 		) => boolean,
 		public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
@@ -67,7 +67,7 @@ export class FieldKind<
 	public allowsFieldSuperset(
 		policy: FullSchemaPolicy,
 		originalData: SchemaData,
-		originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
+		originalTypes: TreeTypeSet,
 		superset: FieldSchema,
 	): boolean {
 		if (isNeverField(policy, originalData, fieldSchema(this, originalTypes))) {

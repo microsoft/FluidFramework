@@ -8,14 +8,12 @@ import React from "react";
 import {
 	ConnectionStateChangeLogEntry,
 	ContainerStateChangeKind,
-	ContainerStateHistoryMessage,
-	GetContainerStateMessageType,
+	ContainerStateHistory,
+	GetContainerState,
 	handleIncomingMessage,
 	HasContainerId,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	InboundHandlers,
-	ContainerStateHistoryMessageType,
-	GetContainerStateMessage,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
@@ -43,8 +41,8 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerStateHistoryMessageType]: (untypedMessage) => {
-				const message = untypedMessage as ContainerStateHistoryMessage;
+			[ContainerStateHistory.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateHistory.Message;
 				if (message.data.containerId === containerId) {
 					setContainerHistory(message.data.history);
 					return true;
@@ -56,7 +54,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		/**
 		 * Event handler for messages coming from the webpage.
 		 */
-		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: "ContainerHistoryView", // TODO: Fix
 			});
@@ -71,12 +69,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		setContainerHistory(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage<GetContainerStateMessage>({
-			type: GetContainerStateMessageType,
-			data: {
-				containerId,
-			},
-		});
+		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);

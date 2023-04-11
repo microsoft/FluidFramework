@@ -13,11 +13,11 @@ import {
 	Reducer,
 	take,
 } from "@fluid-internal/stochastic-test-utils";
+import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "./ddsFuzzHarness";
 
 type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 

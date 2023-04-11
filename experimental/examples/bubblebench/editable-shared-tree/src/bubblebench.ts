@@ -7,7 +7,6 @@ import {
 	fail,
 	ISharedTree,
 	ISharedTreeView,
-	schematizeView,
 	SharedTreeFactory,
 } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
@@ -76,7 +75,7 @@ export class Bubblebench extends DataObject {
 	 * @param tree - ISharedTree
 	 */
 	initializeTree(tree: ISharedTree) {
-		this.view = schematizeView(tree, {
+		this.view = tree.schematize({
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: [],
 			schema: appSchemaData,

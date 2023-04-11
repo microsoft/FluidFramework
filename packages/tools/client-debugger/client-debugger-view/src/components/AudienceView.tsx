@@ -8,14 +8,11 @@ import { Divider } from "@fluentui/react-components";
 import {
 	AudienceChangeLogEntry,
 	AudienceClientMetadata,
-	AudienceSummaryMessage,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessageType,
-	GetAudienceMessage,
-	GetAudienceMessageType,
+	AudienceSummary,
+	GetAudienceSummary,
 	handleIncomingMessage,
 	HasContainerId,
-	IDebuggerMessage,
+	IDevtoolsMessage,
 	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -43,7 +40,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const messageRelay = useMessageRelay();
 
 	const [audienceData, setAudienceData] = React.useState<
-		AudienceSummaryMessageData | undefined
+		AudienceSummary.MessageData | undefined
 	>();
 
 	React.useEffect(() => {
@@ -51,8 +48,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to Audience
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[AudienceSummaryMessageType]: (untypedMessage) => {
-				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
+			[AudienceSummary.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as AudienceSummary.Message;
 
 				setAudienceData(message.data);
 
@@ -63,7 +60,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<IDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
@@ -72,12 +69,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request the current Audience State of the Container
-		messageRelay.postMessage<GetAudienceMessage>({
-			type: GetAudienceMessageType,
-			data: {
+		messageRelay.postMessage(
+			GetAudienceSummary.createMessage({
 				containerId,
-			},
-		});
+			}),
+		);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
