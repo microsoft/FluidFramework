@@ -19,8 +19,6 @@ export interface FluidTreeViewProps extends HasContainerId {
  */
 export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
-	// Accordion header:  fluidObjectId, metadata, typeMetadata
-	// Accordion children: (all of the rendered TreeDataView nodes)
 	return (
 		<>
 			<Accordion
