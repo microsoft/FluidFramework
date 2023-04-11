@@ -129,7 +129,7 @@ stages:
     dependsOn: []
     # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
     variables:
-    - group: stress-frs-canary-lock
+    - group: stress-frs-lock
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
@@ -138,7 +138,7 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 120
-        testCommand: start:frs:canary
+        testCommand: start:frs
         env:
           fluid__test__driver__frs__canary: $(automation-fluid-test-frs-canary-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
