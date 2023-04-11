@@ -176,7 +176,7 @@ async function runnerProcess(
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
-	const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
+	const optionsOverride = endpoint ?? driver;
 	const loaderOptions = generateLoaderOptions(
 		seed,
 		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader,
