@@ -585,7 +585,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe.only("Undo", () => {
+	describe("Undo", () => {
 		it("does nothing if there are no commits in the undo stack", async () => {
 			const value = "42";
 			const provider = await TestTreeProvider.create(2);

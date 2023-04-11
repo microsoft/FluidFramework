@@ -7,21 +7,15 @@ import { strict as assert } from "assert";
 import {
 	ChangeFamilyEditor,
 	ChangeRebaser,
-	Delta,
-	FieldKey,
 	GraphCommit,
-	ITreeCursorSynchronous,
-	RepairDataStore,
-	RevisionTag,
 	SessionId,
 	UndoRedoManager,
-	UpPath,
-	Value,
 	mintRevisionTag,
 } from "../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { UndoableCommit, UndoableCommitType } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
+import { MockRepairDataStore } from "../utils";
 
 const localSessionId: SessionId = "0";
 
@@ -82,7 +76,10 @@ describe("UndoRedoManager", () => {
 		const clonedApplyChanges = () => {
 			clonedApplyChangesCount++;
 		};
-		const clonedUndoRedoManager = manager.clone(clonedApplyChanges);
+		const clonedUndoRedoManager = manager.clone(
+			() => new MockRepairDataStore(),
+			clonedApplyChanges,
+		);
 
 		const undoCommit = createTestGraphCommit([0], 1, localSessionId);
 		clonedUndoRedoManager.trackCommit(undoCommit);
@@ -118,34 +115,6 @@ class TestUndoRedoManager extends UndoRedoManager<TestChange, ChangeFamilyEditor
 
 	public getPendingCommitType(): UndoableCommitType | undefined {
 		return this.pendingCommit;
-	}
-}
-
-class MockRepairDataStore implements RepairDataStore {
-	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
-
-	public capture(change: Delta.Root, revision: RevisionTag): void {
-		const existing = this.capturedData.get(revision);
-
-		if (existing === undefined) {
-			this.capturedData.set(revision, [revision]);
-		} else {
-			existing.push(revision);
-		}
-	}
-
-	public getNodes(
-		revision: RevisionTag,
-		path: UpPath | undefined,
-		key: FieldKey,
-		index: number,
-		count: number,
-	): ITreeCursorSynchronous[] {
-		throw new Error("Method not implemented.");
-	}
-
-	public getValue(revision: RevisionTag, path: UpPath): Value {
-		throw new Error("Method not implemented.");
 	}
 }
 

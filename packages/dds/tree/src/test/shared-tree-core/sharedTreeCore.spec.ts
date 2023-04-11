@@ -24,15 +24,16 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { AnchorSet, IForestSubscription, rootFieldKeySymbol } from "../../core";
+import { AnchorSet, rootFieldKeySymbol } from "../../core";
 import {
 	defaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	singleTextCursor,
 } from "../../feature-libraries";
-import { brand, fail } from "../../util";
+import { brand } from "../../util";
 import { ISubscribable } from "../../events";
+import { MockRepairDataStore } from "../utils";
 
 describe("SharedTreeCore", () => {
 	describe("emits", () => {
@@ -53,9 +54,7 @@ describe("SharedTreeCore", () => {
 					runtime,
 					attributes,
 					"",
-					(): IForestSubscription => {
-						fail("should not need undo");
-					},
+					() => new MockRepairDataStore(),
 				);
 			}
 
@@ -259,9 +258,7 @@ describe("SharedTreeCore", () => {
 			runtime,
 			attributes,
 			"",
-			(): IForestSubscription => {
-				fail("should not need undo");
-			},
+			() => new MockRepairDataStore(),
 		);
 	}
 

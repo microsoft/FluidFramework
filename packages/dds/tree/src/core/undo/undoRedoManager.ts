@@ -9,10 +9,7 @@ import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
 import { Delta } from "../tree";
 
 /**
- * Needed functionality:
- * 1. applying a local change will add it to the undo commit tree
- * 2. undoing will pop the undo commit tree, generate the inverse of the commit
- * 3. takes care of "committing" undo/redos
+ * Manages the undo commit tree and repair data associated with undoable commits.
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	private pendingRepairData?: RepairDataStore;
@@ -101,9 +98,12 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
 	 * Creates a copy of this `UndoRedoManager` with a reference to the same head undo commit.
 	 */
-	public clone(applyChange: (change: TChange) => void): UndoRedoManager<TChange, TEditor> {
+	public clone(
+		repairDataStoreFactory: () => RepairDataStore,
+		applyChange: (change: TChange) => void,
+	): UndoRedoManager<TChange, TEditor> {
 		return new UndoRedoManager(
-			this.repairDataStoryFactory,
+			repairDataStoreFactory,
 			this.changeFamily,
 			applyChange,
 			this.headUndoCommit,

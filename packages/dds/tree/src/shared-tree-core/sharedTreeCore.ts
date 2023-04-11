@@ -37,13 +37,10 @@ import {
 	GraphCommit,
 	RepairDataStore,
 	ChangeFamilyEditor,
-	IForestSubscription,
 	UndoRedoManager,
 } from "../core";
 import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { ForestRepairDataStore } from "../feature-libraries";
-import { StableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -139,7 +136,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
-		forestProvider: (revision: StableId) => IForestSubscription,
+		repairDataStoreFactory: () => RepairDataStore,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
@@ -151,7 +148,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localSessionId = uuid();
 		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
 		this.undoRedoManager = new UndoRedoManager(
-			() => new ForestRepairDataStore(forestProvider),
+			repairDataStoreFactory,
 			changeFamily,
 			this.applyChange.bind(this),
 		);
@@ -238,14 +235,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			revision: revision ?? mintRevisionTag(),
 			sessionId: this.editManager.localSessionId,
 		};
+		const changeDelta = this.changeFamily.intoDelta(change);
 		this.undoRedoManager.trackRepairData(
-			this.changeFamily.intoDelta(change),
+			changeDelta,
 			this.transactions.size === 0 ? commit.revision : this.transactions.outerRevision,
 		);
-		this.transactions.repairStore?.capture(
-			this.changeFamily.intoDelta(change),
-			commit.revision,
-		);
+		this.transactions.repairStore?.capture(changeDelta, commit.revision);
 		const delta = this.editManager.addLocalChange(commit.revision, change, false);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
@@ -323,7 +318,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.
 	 */
-	protected createBranch(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
+	protected createBranch(
+		anchors: AnchorSet,
+		repairDataStoreFactory: () => RepairDataStore,
+	): SharedTreeBranch<TEditor, TChange> {
 		const branch = new SharedTreeBranch(
 			() => this.editManager.getLocalBranchHead(),
 			(forked) => {
@@ -349,6 +347,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.changeFamily,
 			anchors,
 			this.undoRedoManager,
+			repairDataStoreFactory,
 		);
 		return branch;
 	}

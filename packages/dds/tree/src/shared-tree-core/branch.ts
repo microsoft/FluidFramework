@@ -60,6 +60,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
 		parentUndoRedoManager: UndoRedoManager<TChange, TEditor>,
+		repairDataStoreFactory: () => RepairDataStore,
 	) {
 		super();
 		this.head = getBaseBranch();
@@ -67,7 +68,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			(change) => this.applyChange(change, false),
 			anchors,
 		);
-		this.undoRedoManager = parentUndoRedoManager.clone(this.applyChange.bind(this));
+		this.undoRedoManager = parentUndoRedoManager.clone(
+			repairDataStoreFactory,
+			this.applyChange.bind(this),
+		);
 	}
 
 	public applyChange(change: TChange, rebaseAnchors = true): void {
@@ -78,14 +82,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			change,
 		});
 
+		const delta = this.changeFamily.intoDelta(change);
 		this.undoRedoManager.trackRepairData(
-			this.changeFamily.intoDelta(change),
+			delta,
 			this.transactions.size === 0 ? revision : this.transactions.outerRevision,
 		);
-		this.transactions.repairStore?.capture(
-			this.changeFamily.intoDelta(change),
-			this.head.revision,
-		);
+		this.transactions.repairStore?.capture(delta, this.head.revision);
 
 		if (rebaseAnchors) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
@@ -203,7 +205,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
 	 */
-	public fork(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
+	public fork(
+		anchors: AnchorSet,
+		repairDataStoreFactory: () => RepairDataStore,
+	): SharedTreeBranch<TEditor, TChange> {
 		const fork = new SharedTreeBranch(
 			() => this.head,
 			(forked) => {
@@ -231,6 +236,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.changeFamily,
 			anchors,
 			this.undoRedoManager,
+			repairDataStoreFactory,
 		);
 		this.forks.add(fork);
 		return fork;

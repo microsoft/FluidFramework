@@ -296,7 +296,7 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
-			() => this.forest,
+			() => new ForestRepairDataStore(() => this.forest),
 		);
 
 		this.events = createEmitter<ViewEvents>();
@@ -338,9 +338,9 @@ export class SharedTree
 
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
-		const branch = this.createBranch(anchors);
 		const schema = this.storedSchema.inner.clone();
 		const forest = this.forest.clone(schema, anchors);
+		const branch = this.createBranch(anchors, () => new ForestRepairDataStore(() => forest));
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -468,9 +468,9 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
-		const branch = this.branch.fork(anchors);
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
+		const branch = this.branch.fork(anchors, () => new ForestRepairDataStore(() => forest));
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
