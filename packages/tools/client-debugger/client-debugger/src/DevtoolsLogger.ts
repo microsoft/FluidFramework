@@ -43,21 +43,21 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * @sealed
  * @internal
  */
-export class FluidDebuggerLogger extends TelemetryLogger {
+export class FluidDevtoolsLogger extends TelemetryLogger {
 	/**
 	 * Accumulated data for Telemetry logs.
 	 */
 	private readonly _telemetryLog: ITimestampedTelemetryEvent[];
 
 	/**
-	 * Message logging options used by the debugger.
+	 * Message logging options used by the logger.
 	 */
 	private readonly messageLoggingOptions: MessageLoggingOptions = {
-		context: `FluidClientDebuggerLogger`,
+		context: `FluidDevtoolsLogger`,
 	};
 
 	/**
-	 * Handlers for inbound messages related to the debugger.
+	 * Handlers for inbound messages related to the logger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		[GetTelemetryHistory.MessageType]: (untypedMessage) => {
@@ -76,7 +76,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	};
 
 	/**
-	 * Posts a list of {@link IDevtoolsMessage} to the window (globalThis). It will be send
+	 * Posts a list of {@link TelemetryHistory.Message} to the window (globalThis). It will be send
 	 * when requesting all the telemetry history/log since logger created.
 	 */
 	private readonly postLogHistory = (): void => {
@@ -99,7 +99,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
-		return new FluidDebuggerLogger(namespace, properties);
+		return new FluidDevtoolsLogger(namespace, properties);
 	}
 
 	/**
@@ -115,12 +115,12 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		if (!baseLogger) {
-			return FluidDebuggerLogger.create(namespace, properties);
+			return FluidDevtoolsLogger.create(namespace, properties);
 		}
 
 		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
 		multiSinkLogger.addLogger(
-			FluidDebuggerLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
+			FluidDevtoolsLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
 		);
 		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
@@ -146,7 +146,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	}
 
 	/**
-	 * Post a telemetry event to the window (globalThis object).
+	 * Post a {@link TelemetryEvent.Message} to the window (globalThis object).
 	 *
 	 * @param event - the event to send
 	 */

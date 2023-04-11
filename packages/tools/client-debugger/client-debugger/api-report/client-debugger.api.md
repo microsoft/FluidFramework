@@ -189,13 +189,6 @@ export namespace DisconnectContainer {
     export type MessageData = HasContainerId;
 }
 
-// @internal @sealed
-export class FluidDebuggerLogger extends TelemetryLogger {
-    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
-}
-
 // @internal
 export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implements IFluidDevtools {
     constructor(props?: FluidDevtoolsProps);
@@ -217,6 +210,13 @@ export interface FluidDevtoolsEvents extends IEvent {
     (event: "containerDevtoolsClosed", listener: (containerId: string) => void): void;
     // @eventProperty
     (event: "devtoolsDisposed", listener: () => void): void;
+}
+
+// @internal @sealed
+export class FluidDevtoolsLogger extends TelemetryLogger {
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
 }
 
 // @public
