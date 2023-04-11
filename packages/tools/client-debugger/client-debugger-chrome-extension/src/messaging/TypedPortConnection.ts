@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDebuggerMessage } from "@fluid-tools/client-debugger";
+import { ISourcedDevtoolsMessage } from "@fluid-tools/client-debugger";
 
 /**
  * A {@link chrome.runtime.Port} with specific types which it expects to send and receive.
@@ -12,8 +12,8 @@ import { ISourcedDebuggerMessage } from "@fluid-tools/client-debugger";
  * @typeParam TReceive - The type of message received by this port connection.
  */
 export interface TypedPortConnection<
-	TSend extends ISourcedDebuggerMessage = ISourcedDebuggerMessage,
-	TReceive extends ISourcedDebuggerMessage = ISourcedDebuggerMessage,
+	TSend extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage,
+	TReceive extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage,
 > extends chrome.runtime.Port {
 	/**
 	 * Type-safe override of {@link chrome.runtime.Port.postMessage}.

@@ -2,7 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { fail, ISharedTree, SharedTreeFactory } from "@fluid-internal/tree";
+import {
+	AllowedUpdateType,
+	fail,
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+} from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./appState";
@@ -16,28 +22,30 @@ export class Bubblebench extends DataObject {
 		return "@fluid-example/bubblebench-sharedtree";
 	}
 
-	private _tree: ISharedTree | undefined;
+	private view: ISharedTreeView | undefined;
 	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
-		this._tree = this.runtime.createChannel(
+		const tree = this.runtime.createChannel(
 			/* id: */ undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
 
-		this.initializeTree(this.tree);
+		this.initializeTree(tree);
 
-		this.root.set(treeKey, this.tree.handle);
+		this.root.set(treeKey, tree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
+		const tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
+		this.initializeTree(tree);
 	}
 
 	protected async hasInitialized() {
 		this._appState = new AppState(
-			this.tree.root as ClientsField,
+			// TODO: make schematizeView strongly type root and remove this cast
+			this.tree.root as unknown as ClientsField,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,
@@ -63,20 +71,23 @@ export class Bubblebench extends DataObject {
 	}
 
 	/**
-	 * Initialize the schema of the shared tree to that of the Bubblebench AppState
-	 * and inserts a node with the initial AppState as the root of the tree.
+	 * Initialize the schema of the shared tree to that of the Bubblebench AppState.
 	 * @param tree - ISharedTree
 	 */
 	initializeTree(tree: ISharedTree) {
-		tree.storedSchema.update(appSchemaData);
+		this.view = tree.schematize({
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: [],
+			schema: appSchemaData,
+		});
 	}
 
 	/**
 	 * Get the SharedTree.
 	 * Cannot be accessed until after initialization has complected.
 	 */
-	private get tree(): ISharedTree {
-		return this._tree ?? fail("not initialized");
+	private get tree(): ISharedTreeView {
+		return this.view ?? fail("not initialized");
 	}
 
 	/**

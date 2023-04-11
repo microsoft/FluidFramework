@@ -34,10 +34,12 @@ parameters:
 trigger:
   branches:
     include:
-    - main
-    - next
     - lts
-    - release/*
+    - release/azure/*
+    - release/v2int/1*
+    - release/v2int/2*
+    - release/v2int/3*
+    - release/v2int/4.0
   paths:
     include:
     - azure
@@ -61,10 +63,12 @@ trigger:
 pr:
   branches:
     include:
-    - main
-    - next
     - lts
-    - release/*
+    - release/azure/*
+    - release/v2int/1*
+    - release/v2int/2*
+    - release/v2int/3*
+    - release/v2int/4.0
   paths:
     include:
     - azure

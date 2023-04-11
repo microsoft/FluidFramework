@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
-import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -24,6 +24,7 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
@@ -72,6 +73,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/commits",
 		utils.validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const commitP = createCommit(
 				request.params.tenantId,
@@ -87,6 +89,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/commits/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const commitP = getCommit(

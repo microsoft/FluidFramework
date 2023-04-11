@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluid-example/bubblebench-common";
-import { EditableField } from "@fluid-internal/tree";
+import { cursorFromContextualData } from "@fluid-internal/tree";
 import { BubbleWrapper } from "./bubble";
 import { Client, FlexBubble } from "./schema";
 
@@ -33,8 +33,12 @@ export class ClientWrapper implements IClient {
 	}
 
 	public increaseBubbles(bubble: FlexBubble) {
-		const bubbles: EditableField = this.clientTreeProxy.bubbles;
-		bubbles[bubbles.length] = bubble;
+		const bubbles = this.clientTreeProxy.bubbles;
+		// TODO: better API
+		bubbles.insertNodes(
+			bubbles.length,
+			cursorFromContextualData(bubbles.context.schema, bubbles.fieldSchema.types, bubble),
+		);
 	}
 
 	public decreaseBubbles() {

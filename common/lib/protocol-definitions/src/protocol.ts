@@ -53,7 +53,7 @@ export enum MessageType {
 	SummaryNack = "summaryNack",
 
 	/**
-	 * Channel operation (op).
+	 * Operation (op) produced by container runtime.
 	 */
 	Operation = "op",
 
@@ -222,6 +222,7 @@ export interface ISequencedDocumentMessage {
 
 	/**
 	 * The term identifier.
+	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
 	 */
 	term: number | undefined;
 
