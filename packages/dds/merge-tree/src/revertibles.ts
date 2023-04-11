@@ -416,6 +416,9 @@ export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {
+	if (revertibles.length === 0) {
+		return;
+	}
 	const revertRoot = findRevertRootMergeBlock(revertibles[0].trackingGroup.tracked[0]);
 
 	while (revertibles.length > 0) {
