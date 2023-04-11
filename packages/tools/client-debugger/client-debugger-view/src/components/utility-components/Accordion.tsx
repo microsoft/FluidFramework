@@ -38,7 +38,7 @@ const accordionStyles: IStackStyles = {
 		borderStyle: "solid",
 		borderWidth: 1,
 		borderColor: DefaultPalette.neutralTertiary,
-		color: "black",
+		color: DefaultPalette.neutralDark,
 	},
 };
 
@@ -49,7 +49,7 @@ const accordionStyles: IStackStyles = {
 const accordionContentStyles: IStackStyles = {
 	root: {
 		padding: 10,
-		color: "black",
+		color: DefaultPalette.neutralDark,
 	},
 };
 
@@ -80,11 +80,6 @@ export type AccordionProps = React.PropsWithChildren<{
 	 * Optional styling for each of the Accordion's child items.
 	 */
 	contentStyles?: IStackStyles;
-
-	/**
-	 * Accordion classname for test
-	 */
-	className?: string;
 }>;
 
 /**

@@ -28,12 +28,8 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 				header={
 					<div>{`${node.fluidObjectId}, ${node.metadata}, ${node.typeMetadata}`}</div>
 				}
-				className="FluidTreeView"
 			>
 				{Object.entries(node.children).map(([key, fluidObject], index) => {
-					{
-						console.log("fluidObject:", fluidObject);
-					}
 					return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
 				})}
 			</Accordion>

@@ -23,9 +23,6 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 		<Accordion
 			key={containerId}
 			header={<div>{`${String(node.value)}, ${node.metadata}`}</div>}
-			className="ValueView"
-		>
-			{console.log("ValueView Hits")}; String(node.value)
-		</Accordion>
+		></Accordion>
 	);
 }

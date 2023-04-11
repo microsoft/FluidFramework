@@ -23,7 +23,6 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 		<Accordion
 			key={containerId}
 			header={<div>{`${String(node.value)}, ${node.metadata}`}</div>}
-			className="FluidValueView"
 		>
 			{String(node.value)}
 		</Accordion>

@@ -84,7 +84,6 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		<Accordion
 			key={containerId}
 			header={<div>{`${visualTree.metadata}, ${visualTree.nodeKind}`}</div>}
-			className="FluidHandleView"
 		>
 			<TreeDataView containerId={containerId} node={visualTree} />;
 		</Accordion>

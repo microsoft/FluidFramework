@@ -96,7 +96,6 @@ export async function createFluidContainer(
 		console.error(`Encountered error attaching Fluid container: "${error}".`);
 		throw error;
 	}
-	// console.log("Fluid container attached!");
 
 	return {
 		container,
