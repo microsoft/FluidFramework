@@ -11,7 +11,7 @@ import { LocalReferenceCollection, LocalReferencePosition } from "./localReferen
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
 import { ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
-import { Trackable, TrackingGroup } from "./mergeTreeTracking";
+import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { matchProperties, PropertySet } from "./properties";
 import { DetachedReferencePosition } from "./referencePositions";
@@ -27,15 +27,15 @@ import { MergeTree, findRootMergeBlock } from "./mergeTree";
 export type MergeTreeDeltaRevertible =
 	| {
 			operation: typeof MergeTreeDeltaType.INSERT;
-			trackingGroup: TrackingGroup;
+			trackingGroup: ITrackingGroup;
 	  }
 	| {
 			operation: typeof MergeTreeDeltaType.REMOVE;
-			trackingGroup: TrackingGroup;
+			trackingGroup: ITrackingGroup;
 	  }
 	| {
 			operation: typeof MergeTreeDeltaType.ANNOTATE;
-			trackingGroup: TrackingGroup;
+			trackingGroup: ITrackingGroup;
 			propertyDeltas: PropertySet;
 	  };
 
@@ -126,7 +126,7 @@ function appendLocalInsertToRevertibles(
 	if (revertibles[revertibles.length - 1]?.operation !== MergeTreeDeltaType.INSERT) {
 		revertibles.push({
 			operation: MergeTreeDeltaType.INSERT,
-			trackingGroup: new TrackingGroup(),
+			trackingGroup: new UnorderedTrackingGroup(),
 		});
 	}
 	const last = revertibles[revertibles.length - 1];
@@ -142,7 +142,7 @@ function appendLocalRemoveToRevertibles(
 	if (revertibles[revertibles.length - 1]?.operation !== MergeTreeDeltaType.REMOVE) {
 		revertibles.push({
 			operation: MergeTreeDeltaType.REMOVE,
-			trackingGroup: new TrackingGroup(),
+			trackingGroup: new UnorderedTrackingGroup(),
 		});
 	}
 	const last = revertibles[revertibles.length - 1];
@@ -188,7 +188,7 @@ function appendLocalAnnotateToRevertibles(
 				last = {
 					operation: MergeTreeDeltaType.ANNOTATE,
 					propertyDeltas,
-					trackingGroup: new TrackingGroup(),
+					trackingGroup: new UnorderedTrackingGroup(),
 				};
 				last.trackingGroup.link(ds.segment);
 				revertibles.push(last);

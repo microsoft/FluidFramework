@@ -11,7 +11,6 @@ module.exports = {
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
 		// Release groups
-		"azure": "azure",
 		"client": {
 			directory: "",
 			ignoredDirs: [],
