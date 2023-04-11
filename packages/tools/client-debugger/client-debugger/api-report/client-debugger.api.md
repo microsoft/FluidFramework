@@ -250,6 +250,7 @@ export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implem
     get disposed(): boolean;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
+    readonly logger: FluidDebuggerLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
@@ -417,6 +418,7 @@ export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDi
     closeContainerDevtools(containerId: string): void;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
+    readonly logger: FluidDebuggerLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 

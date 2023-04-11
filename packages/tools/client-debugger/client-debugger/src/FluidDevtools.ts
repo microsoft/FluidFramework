@@ -113,9 +113,9 @@ export class FluidDevtools
 	implements IFluidDevtools
 {
 	/**
-	 * {@inheritDoc FluidDevtoolsProps.logger}
+	 * {@inheritDoc IFluidDevtools.logger}
 	 */
-	private readonly logger?: FluidDebuggerLogger;
+	public readonly logger: FluidDebuggerLogger | undefined;
 
 	/**
 	 * Stores Container-level devtools instances registered with this object.
