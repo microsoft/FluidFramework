@@ -31,7 +31,7 @@ import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
 import { getFluentUIThemeToUse } from "./ThemeHelper";
 
-const loggingContext = "INLINE(DebuggerPanel)";
+const loggingContext = "INLINE(DevtoolsView)";
 
 // Ensure FluentUI icons are initialized.
 initializeFluentUiIcons();
@@ -290,7 +290,7 @@ function View(props: ViewProps): React.ReactElement {
 			const container = containers?.find((x) => x.id === menuSelection.containerId);
 			view =
 				container === undefined ? (
-					<div>Could not find a debugger for that container.</div>
+					<div>Could not find a Devtools instance for that container.</div>
 				) : (
 					<ContainerDevtoolsView containerId={menuSelection.containerId} />
 				);
@@ -303,7 +303,7 @@ function View(props: ViewProps): React.ReactElement {
 	return (
 		<Stack.Item grow={5} styles={contentViewStyles}>
 			<div
-				id="debugger-view-content"
+				id="devtools-view-content"
 				style={{ width: "100%", height: "100%", overflowY: "auto" }}
 			>
 				{view}
