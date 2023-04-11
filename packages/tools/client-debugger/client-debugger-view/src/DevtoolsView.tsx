@@ -138,10 +138,10 @@ const menuStyles: IStackItemStyles = {
 // #endregion
 
 /**
- * Renders drop down to show more than 2 containers and manage the selected container in the debug view for an active
- * debugger session registered using {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
- *
- * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
+ * Primary Devtools view.
+ * Communicates with {@link @fluid-tools/client-debugger#FluidDevtools} via {@link MessageRelayContext} to get
+ * runtime-level stats to display, as well as the list of Container-level Devtools instances to display as menu options
+ * and sub-views.
  */
 export function DevtoolsView(): React.ReactElement {
 	// Set of features supported by the Devtools.
