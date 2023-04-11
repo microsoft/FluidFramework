@@ -45,6 +45,11 @@ function logEvent(logger: ITelemetryLogger, props: ITelemetryGenericEvent & { id
 	console.log(`########## ${props.eventName} - ${props.id}`);
 }
 
+function getBlobIdFromHandle(blobHandle: IFluidHandle<ArrayBufferLike>) {
+	const pathParts = blobHandle.absolutePath.split("/");
+	return pathParts[2];
+}
+
 /**
  * Reference activities that can be performed in the test.
  */
@@ -591,19 +596,19 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 * Creates a new data object, reference it and ask it to run.
 	 */
 	private async createAndReferenceDataObject(): Promise<boolean> {
-		// Give each data object a unique id w.r.t. this data object's id.
-		const dataObjectId = `${this.nodeId}/ds-${uuid()}`;
-		logEvent(this.logger, {
-			eventName: "DS+",
-			id: dataObjectId,
-		});
-
 		const dataObject = await dataObjectFactoryLeaf.createChildInstance(this.context);
+		const dataObjectId = `${this.nodeId}/ds-${dataObject.id}`;
 		this.dataObjectMap.set(dataObjectId, dataObject.handle);
 		this.referencedDataObjects.push({
 			id: dataObjectId,
 			object: dataObject,
 		});
+
+		logEvent(this.logger, {
+			eventName: "DS+",
+			id: dataObjectId,
+		});
+
 		return dataObject.run(this.childRunConfig, dataObjectId);
 	}
 
@@ -634,7 +639,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 */
 	private async reviveDataObject(dataObjectDetails: IActivityObjectDetails): Promise<boolean> {
 		logEvent(this.logger, {
-			eventName: "DS++",
+			eventName: "DS^",
 			id: dataObjectDetails.id,
 		});
 		this.dataObjectMap.set(dataObjectDetails.id, dataObjectDetails.object.handle);
@@ -655,17 +660,17 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			const blobAction = config.random.integer(0, 3);
 			switch (blobAction) {
 				case ReferenceActivityType.CreateAndReference: {
-					// Give each blob a unique id w.r.t. this data object's id.
-					const blobId = `${this.nodeId}/blob-${uuid()}`;
+					const blobContents = `Content - ${this.uniqueBlobContentId}-${uuid()}`;
+					const blobHandle = await this.context.uploadBlob(
+						stringToBuffer(blobContents, "utf-8"),
+					);
+					const blobId = `${this.nodeId}/blob-${getBlobIdFromHandle(blobHandle)}`;
+					this.blobMap.set(blobId, blobHandle);
+
 					logEvent(this.logger, {
 						eventName: "Blob+",
 						id: blobId,
 					});
-					const blobContents = `Content - ${this.uniqueBlobContentId}-${blobId}`;
-					const blobHandle = await this.context.uploadBlob(
-						stringToBuffer(blobContents, "utf-8"),
-					);
-					this.blobMap.set(blobId, blobHandle);
 
 					const blobObject = new AttachmentBlobObject(blobHandle);
 					this.referencedAttachmentBlobs.push({
@@ -699,7 +704,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 					const nextUnreferencedAttachmentBlob = this.unreferencedAttachmentBlobs.shift();
 					if (nextUnreferencedAttachmentBlob !== undefined) {
 						logEvent(this.logger, {
-							eventName: "Blob++",
+							eventName: "Blob^",
 							id: nextUnreferencedAttachmentBlob.id,
 						});
 						this.blobMap.set(
