@@ -97,6 +97,8 @@ export async function createFluidContainer(
 		throw error;
 	}
 
+	console.log("Fluid container attached!");
+	
 	return {
 		container,
 		containerId,
