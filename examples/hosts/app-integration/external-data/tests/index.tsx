@@ -70,7 +70,14 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 
 	// Render it
 	ReactDOM.render(
-		<TaskListView taskList={taskList} model={model} clientID={clientID} leaderID={leaderID} />,
+		<TaskListView
+			taskList={taskList}
+			claimLeadership={(): void => {
+				model.handleClaimLeadership();
+			}}
+			clientID={clientID}
+			leaderID={leaderID}
+		/>,
 		element,
 	);
 

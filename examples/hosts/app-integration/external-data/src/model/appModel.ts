@@ -41,7 +41,7 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	 * {@inheritDoc IAppModel.handleClaimLeadership}
 	 */
 	public handleClaimLeadership(): void {
-		const clientID = this.getClientID();
+		const clientID = this.runtime.clientId;
 		if (clientID !== undefined) {
 			this.baseDocument.setLeader(clientID);
 		}

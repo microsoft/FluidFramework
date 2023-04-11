@@ -31,7 +31,14 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 		setLeaderID(newLeader);
 	});
 	return taskList !== undefined ? (
-		<TaskListView taskList={taskList} model={model} clientID={clientID} leaderID={leaderID} />
+		<TaskListView
+			taskList={taskList}
+			claimLeadership={(): void => {
+				model.handleClaimLeadership();
+			}}
+			clientID={clientID}
+			leaderID={leaderID}
+		/>
 	) : (
 		<div>Whomp whomp whomp</div>
 	);

@@ -6,7 +6,7 @@ import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import type { ExternalSnapshotTask, IAppModel, ITask, ITaskList } from "../model-interface";
+import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
 
 interface ITaskRowProps {
 	readonly leader: string | undefined;
@@ -127,7 +127,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
  */
 export interface ITaskListViewProps {
 	readonly taskList: ITaskList;
-	readonly model: IAppModel;
+	readonly claimLeadership: () => void;
 	readonly clientID: string | undefined;
 	readonly leaderID: string | undefined;
 }
@@ -136,7 +136,7 @@ export interface ITaskListViewProps {
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-	const { taskList, model, clientID, leaderID } = props;
+	const { taskList, claimLeadership, clientID, leaderID } = props;
 
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
 	const [lastSaved, setLastSaved] = useState<number | undefined>();
@@ -158,7 +158,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	 * Set the current client to be the leader of the Fluid document.
 	 */
 	const setLeaderShip = (): void => {
-		model.handleClaimLeadership();
+		claimLeadership();
 	};
 
 	useEffect(() => {
