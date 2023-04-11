@@ -180,7 +180,7 @@ export class DocumentDeltaConnection
 						const start = Date.now();
 
 						// Emit ping event every minute. Log if latency is longer than 1 min
-						this.socket.volatile.emit("ping", () => {
+						this.socket.volatile?.emit("ping", () => {
 							const latency = Date.now() - start;
 							if (latency > 1000 * 60) {
 								this.mc.logger.sendErrorEvent({
