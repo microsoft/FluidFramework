@@ -83,6 +83,9 @@ export function getNextHash(message: ISequencedDocumentMessage, lastHash: string
 // @public (undocumented)
 export function getOrCreateRepository(endpoint: string, owner: string, repository: string, headers?: AxiosRequestHeaders): Promise<void>;
 
+// @public
+export const getRandomInt: (range: number) => number;
+
 // @public (undocumented)
 export function getRandomName(connector?: string, capitalize?: boolean): string;
 
