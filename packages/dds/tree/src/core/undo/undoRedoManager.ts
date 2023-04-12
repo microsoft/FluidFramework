@@ -27,10 +27,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	public constructor(
 		private readonly repairDataStoryFactory: () => RepairDataStore,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		protected applyChange?: (
-			change: TChange,
-			type?: GraphCommitType,
-		) => void,
+		protected applyChange?: (change: TChange, type?: GraphCommitType) => void,
 		protected headUndoableCommit?: UndoableCommit<TChange>,
 	) {
 		if (applyChange !== undefined) {
@@ -42,7 +39,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Used to set the callback to apply undos as local changes after construction. This should call {@link UndoRedoManager.trackCommit}.
 	 */
 	public initialize(applyChange: (change: TChange, type?: GraphCommitType) => void) {
-		assert(this.initialize === false, "UndoRedoManager already initialized");
+		assert(this.initialized === false, "UndoRedoManager already initialized");
 		this.applyChange = applyChange;
 		this.initialized = true;
 	}
@@ -61,7 +58,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	}
 
 	/**
-	 * Adds the provided commit to the undo commit tree. 
+	 * Adds the provided commit to the undo commit tree.
 	 * Should be called for all commits on the relevant branch, including undo commits.
 	 */
 	public trackCommit(commit: GraphCommit<TChange>) {
@@ -88,7 +85,10 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Inverts the head undo commit and applies it as a local change.
 	 */
 	public undo(): void {
-		assert(this.applyChange !== undefined, "applyChange must be set using the  before calling undo");
+		assert(
+			this.applyChange !== undefined,
+			"applyChange must be set using the  before calling undo",
+		);
 		const commitToUndo = this.headUndoableCommit;
 
 		if (commitToUndo === undefined) {

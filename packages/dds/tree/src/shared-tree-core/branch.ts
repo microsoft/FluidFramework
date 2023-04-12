@@ -80,10 +80,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		const delta = this.changeFamily.intoDelta(change);
-		this.undoRedoManager.trackRepairData(
-			delta,
-			this.transactions.size === 0 ? revision : this.transactions.outerRevision,
-		);
+		this.undoRedoManager.trackRepairData(delta, this.transactions.outerRevision ?? revision);
 		this.transactions.repairStore?.capture(delta, this.head.revision);
 
 		// If this is not part of a transaction, add it to the undo commit tree

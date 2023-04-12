@@ -240,7 +240,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const changeDelta = this.changeFamily.intoDelta(change);
 		this.undoRedoManager.trackRepairData(
 			changeDelta,
-			this.transactions.size === 0 ? commit.revision : this.transactions.outerRevision,
+			this.transactions.outerRevision ?? commit.revision,
 		);
 		this.transactions.repairStore?.capture(changeDelta, commit.revision);
 		const delta = this.editManager.addLocalChange(commit.revision, change, false);
@@ -349,7 +349,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
 			anchors,
-			this.undoRedoManager.clone(repairDataStoreFactory)
+			this.undoRedoManager.clone(repairDataStoreFactory),
 		);
 		return branch;
 	}
