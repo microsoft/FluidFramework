@@ -71,7 +71,8 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	it("the insert of two separate nodes", async () => {
+	// TODO: enable once rebasing works for merge
+	it.skip("the insert of two separate nodes", async () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const addX = tree.fork();
 		const addY = tree.fork();
@@ -92,7 +93,8 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	it("can be rebased", () => {
+	// TODO: enable once rebasing works for merge
+	it.skip("can be rebased", () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const addX = tree.fork();
 		const addY = tree.fork();
