@@ -3,24 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "chai";
 import React from "react";
+
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import {
+	IMessageRelay,
+	IMessageRelayEvents,
+	FluidObjectValueNode,
+	IDebuggerMessage, 
 	FluidObjectTreeNode,
+	DataVisualizationMessage, 
+	DataVisualizationMessageType, 
+	GetDataVisualizationMessageType,
 	UnknownObjectNode,
 	VisualNodeKind,
 } from "@fluid-tools/client-debugger";
-import { SharedCounter } from "@fluidframework/counter";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-
-// eslint-disable-next-line import/no-internal-modules
-import { UnknownDataView } from "../components/UnknownDataView";
-// eslint-disable-next-line import/no-internal-modules
-import { FluidTreeView } from "../components/FluidTreeView";
+import { UnknownDataView, FluidTreeView } from "../components";
+import { MessageRelayContext } from "../MessageRelayContext";
+import { MockMessageRelay } from "./MockMessageRelay";
 
 describe("VisualTreeView component tests", () => {
 	// eslint-disable-next-line jest/expect-expect
@@ -36,13 +41,30 @@ describe("VisualTreeView component tests", () => {
 
 	// eslint-disable-next-line jest/expect-expect
 	it("FluidObjectTreeView", async (): Promise<void> => {
-		const runtime = new MockFluidDataStoreRuntime();
+		const containerId = "test-container-id";
 
-		const sharedCounter = new SharedCounter(
-			"test-counter",
-			runtime,
-			SharedCounter.getFactory().attributes,
-		);
+		const messageRelay = new MockMessageRelay((untypedMessage: IDebuggerMessage) => {
+			switch (untypedMessage.type) {
+				case GetDataVisualizationMessageType: {
+					const message = untypedMessage as GetDataVisualizationMessage;
+					const visualization: FluidObjectValueNode = {
+						fluidObjectId: message.data.fluidObjectId,
+						value: `test-value: ${message.data.fluidObjectId}`,
+						nodeKind: VisualNodeKind.FluidValueNode,
+					}
+					return {
+						
+						type: DataVisualizationMessageType,
+						data: {
+							containerId,
+							visualization,
+						}
+					};
+				}
+				default: 
+					fail("Received unexpected message.");
+			}
+		});
 
 		const treeData: FluidObjectTreeNode = {
 			fluidObjectId: "test-object",
@@ -73,18 +95,22 @@ describe("VisualTreeView component tests", () => {
 					typeMetadata: "object",
 					nodeKind: VisualNodeKind.TreeNode,
 				},
-				// "test-handle": {
-				// 	fluidObjectId: sharedCounter.id,
-				// 	typeMetadata: "Fluid Handle",
-				// 	nodeKind: VisualNodeKind.FluidHandleNode,
-				// },
+				"test-handle": {
+					fluidObjectId: containerId, 
+					typeMetadata: "Fluid Handle",
+					nodeKind: VisualNodeKind.FluidHandleNode,
+				},
 			},
 			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 
-		render(<FluidTreeView containerId={sharedCounter.id} node={treeData} />);
+		render(
+			<MessageRelayContext.Provider value={messageRelay}>
+				<FluidTreeView containerId={containerId} node={treeData} />
+			</MessageRelayContext.Provider>
+		);
 
-		// Expand the first level
+		// TODO: Loop the expand button for n-amount of times. 
 		const expandButton = await screen.findByTestId("expand-button");
 		await userEvent.click(expandButton);
 

@@ -16,6 +16,12 @@ export * from "./LandingView";
 export * from "./Menu";
 export * from "./TelemetryView";
 export * from "./Waiting";
+export * from "./TreeView";
+export * from "./FluidTreeView";
+export * from "./ValueView";
+export * from "./FluidValueView";
 export * from "./UnknownDataView";
+export * from "./UnknownFluidObjectView";
+export * from "./FluidHandleView";
 
 /* eslint-enable no-restricted-syntax */
