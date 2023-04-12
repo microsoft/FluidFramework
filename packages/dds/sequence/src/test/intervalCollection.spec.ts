@@ -17,35 +17,7 @@ import {
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
-
-const assertIntervals = (
-	sharedString: SharedString,
-	intervalCollection: IntervalCollection<SequenceInterval>,
-	expected: readonly { start: number; end: number }[],
-	validateOverlapping: boolean = true,
-) => {
-	const actual = Array.from(intervalCollection);
-	if (validateOverlapping && sharedString.getLength() > 0) {
-		const overlapping = intervalCollection.findOverlappingIntervals(
-			0,
-			sharedString.getLength() - 1,
-		);
-		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
-	}
-	assert.strictEqual(
-		actual.length,
-		expected.length,
-		`findOverlappingIntervals() must return the expected number of intervals`,
-	);
-
-	const actualPos = actual.map((interval) => {
-		assert(interval);
-		const start = sharedString.localReferencePositionToPosition(interval.start);
-		const end = sharedString.localReferencePositionToPosition(interval.end);
-		return { start, end };
-	});
-	assert.deepEqual(actualPos, expected, "intervals are not as expected");
-};
+import { assertIntervals } from "./intervalUtils";
 
 function assertIntervalEquals(
 	string: SharedString,
