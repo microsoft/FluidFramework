@@ -20,7 +20,7 @@ import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import {
-	FluidDebuggerLogger,
+	DevtoolsLogger,
 	IFluidDevtools,
 	initializeFluidDevtools,
 } from "@fluid-tools/client-debugger";
@@ -232,7 +232,7 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Fluid Debugger logger
-	const logger = React.useMemo(() => FluidDebuggerLogger.create(), []);
+	const logger = React.useMemo(() => DevtoolsLogger.create(), []);
 
 	// Initialize devtools
 	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);

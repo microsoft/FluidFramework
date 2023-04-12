@@ -21,7 +21,7 @@ import {
 import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
 import { ContainerMetadata } from "./ContainerMetadata";
 import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
-import { FluidDebuggerLogger } from "./FluidDebuggerLogger";
+import { DevtoolsLogger } from "./DevtoolsLogger";
 
 // TODOs:
 // - Devtools disposal
@@ -71,7 +71,7 @@ export interface FluidDevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: FluidDebuggerLogger;
+	logger?: DevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
@@ -115,7 +115,7 @@ export class FluidDevtools
 	/**
 	 * {@inheritDoc IFluidDevtools.logger}
 	 */
-	public readonly logger: FluidDebuggerLogger | undefined;
+	public readonly logger: DevtoolsLogger | undefined;
 
 	/**
 	 * Stores Container-level devtools instances registered with this object.
