@@ -7,6 +7,7 @@ import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
+	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -21,6 +22,8 @@ import {
 	AnchorNode,
 	IEditableForest,
 	AnchorSetRootEvents,
+	symbolFromKey,
+	GlobalFieldKey,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -39,9 +42,14 @@ import {
 	ContextuallyTypedNodeData,
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
+	IdentifierIndex,
+	EditableTree,
+	Identifier,
+	SchemaAware,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { TransactionResult } from "../util";
+import { brand, TransactionResult } from "../util";
+import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -165,6 +173,41 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+
+	/**
+	 * A map of nodes that have been recorded by the identifier index.
+	 */
+	readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+
+	/**
+	 * Takes in a tree and returns a view of it that conforms to the view schema.
+	 * The returned view referees to and can edit the provided one: it is not a fork of it.
+	 * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
+	 *
+	 * If the tree is uninitialized (has no nodes or schema at all),
+	 * it is initialized to the config's initial tree and the provided schema are stored.
+	 * This is done even if `AllowedUpdateType.None`.
+	 *
+	 * @remarks
+	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
+	 * Other approach tend to have leave easy to make mistakes.
+	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
+	 * or call it unconditionally leaving an app that can only create new documents.
+	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
+	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
+	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
+	 * on the create code-path (for example how a schematized factory might do it),
+	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
+	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
+	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+	 *
+	 * TODO:
+	 * - Implement schema-aware API for return type.
+	 * - Support adapters for handling out of schema data.
+	 */
+	schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView;
 }
 
 /**
@@ -182,15 +225,8 @@ export interface ISharedTreeFork extends ISharedTreeView {
 	 * Apply all the changes on this view to the base view from which it was forked.
 	 * If the base view has new changes since this view last pulled (or was forked),
 	 * then this view's changes will be rebased over those first.
-	 * After the merge completes, this view may no longer be forked or mutated.
 	 */
 	merge(): void;
-
-	/**
-	 * Whether or not this view has been merged into its base view via `merge()`.
-	 * If it has, then it may no longer be forked or mutated.
-	 */
-	isMerged(): boolean;
 }
 
 /**
@@ -203,18 +239,32 @@ export interface ISharedTreeFork extends ISharedTreeView {
 export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
+ * The key for the special identifier field, which allows nodes to be given identifiers that can be used
+ * to find the nodes via the identifier index
+ * @alpha
+ */
+export const identifierKey: GlobalFieldKey = brand("identifier");
+
+/**
+ * The global field key symbol that corresponds to {@link identifierKey}
+ * @alpha
+ */
+export const identifierKeySymbol = symbolFromKey(identifierKey);
+
+/**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
  */
-class SharedTree
+export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+	public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>;
 	public readonly transaction: ISharedTreeView["transaction"];
 
 	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
@@ -255,10 +305,17 @@ class SharedTree
 		};
 
 		this.context = getEditableTreeContext(forest, this.editor);
+		this.identifiedNodes = new IdentifierIndex(identifierKey);
 		this.changeEvents.on("newLocalState", (changeDelta) => {
 			this.forest.applyDelta(changeDelta);
-			this.events.emit("afterBatch");
+			this.finishBatch();
 		});
+	}
+
+	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView {
+		return schematizeView(this, config);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -275,11 +332,17 @@ class SharedTree
 
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
+		const branch = this.createBranch(anchors);
+		const schema = this.storedSchema.inner.clone();
+		const forest = this.forest.clone(schema, anchors);
+		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
-			this.createBranch(anchors),
+			branch,
 			defaultChangeFamily,
-			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, anchors),
+			schema,
+			forest,
+			context,
+			this.identifiedNodes.clone(context),
 		);
 	}
 
@@ -300,6 +363,17 @@ class SharedTree
 		if (!this.storedSchema.tryHandleOp(message)) {
 			super.processCore(message, local, localOpMetadata);
 		}
+	}
+
+	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+		await super.loadCore(services);
+		this.finishBatch();
+	}
+
+	/** Finish a batch (see {@link ViewEvents}) */
+	private finishBatch(): void {
+		this.identifiedNodes.scanIdentifiers(this.context);
+		this.events.emit("afterBatch");
 	}
 }
 
@@ -334,20 +408,21 @@ export class SharedTreeFactory implements IChannelFactory {
 	}
 }
 
-class SharedTreeFork implements ISharedTreeFork {
+export class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
-	public readonly context: EditableTreeContext;
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
+		public readonly context: EditableTreeContext,
+		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		this.context = getEditableTreeContext(forest, this.editor);
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
+			this.identifiedNodes.scanIdentifiers(this.context);
 			this.events.emit("afterBatch");
 		});
 	}
@@ -367,6 +442,12 @@ class SharedTreeFork implements ISharedTreeFork {
 		inProgress: () => this.branch.isTransacting(),
 	};
 
+	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView {
+		return schematizeView(this, config);
+	}
+
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);
 	}
@@ -376,22 +457,23 @@ class SharedTreeFork implements ISharedTreeFork {
 	}
 
 	public fork(): ISharedTreeFork {
-		const storedSchema = this.storedSchema.clone();
 		const anchors = new AnchorSet();
+		const branch = this.branch.fork(anchors);
+		const storedSchema = this.storedSchema.clone();
+		const forest = this.forest.clone(storedSchema, anchors);
+		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
-			this.branch.fork(anchors),
+			branch,
 			this.changeFamily,
 			storedSchema,
-			this.forest.clone(storedSchema, anchors),
+			forest,
+			context,
+			this.identifiedNodes.clone(context),
 		);
 	}
 
 	public merge(): void {
 		this.branch.merge();
-	}
-
-	public isMerged(): boolean {
-		return this.branch.isMerged();
 	}
 
 	public get root(): UnwrappedEditableField {

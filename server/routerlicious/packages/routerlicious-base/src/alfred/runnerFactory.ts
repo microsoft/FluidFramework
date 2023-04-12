@@ -441,7 +441,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		let tokenManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
 			socketTracker = new utils.WebSocketTracker();
-			tokenManager = new utils.DummyTokenManager();
+			tokenManager = new utils.DummyTokenRevocationManager();
 			await tokenManager.initialize();
 		}
 

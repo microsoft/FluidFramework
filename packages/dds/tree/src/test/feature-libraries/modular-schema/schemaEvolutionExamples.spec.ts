@@ -155,6 +155,7 @@ describe("Schema Evolution Examples", () => {
 		const viewCollection: ViewSchemaCollection = {
 			globalFieldSchema: new Map([[rootFieldKey, root]]),
 			treeSchema: treeViewSchema,
+			policy: defaultSchemaPolicy,
 		};
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
@@ -204,6 +205,7 @@ describe("Schema Evolution Examples", () => {
 			const viewCollection2: ViewSchemaCollection = {
 				globalFieldSchema: new Map([[rootFieldKey, tolerantRoot]]), // This was updated
 				treeSchema: viewCollection.treeSchema,
+				policy: defaultSchemaPolicy,
 			};
 			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
 			// When we open this document, we should check it's compatibility with our application:
@@ -283,6 +285,7 @@ describe("Schema Evolution Examples", () => {
 					[counterIdentifier, counter],
 					[positionedCanvasItemIdentifier, positionedCanvasItem2],
 				]),
+				policy: defaultSchemaPolicy,
 			};
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
 
@@ -330,6 +333,7 @@ describe("Schema Evolution Examples", () => {
 		const viewCollection: ViewSchemaCollection = {
 			globalFieldSchema: new Map([[rootFieldKey, root]]),
 			treeSchema: treeViewSchema,
+			policy: defaultSchemaPolicy,
 		};
 
 		// Register an adapter that handles a missing root.
@@ -448,6 +452,7 @@ describe("Schema Evolution Examples", () => {
 				// Compatibility Schema for old documents:
 				[textIdentifier, string],
 			]),
+			policy: defaultSchemaPolicy,
 		};
 
 		const textAdapter: TreeAdapter = { input: textIdentifier, output: formattedTextIdentifier };

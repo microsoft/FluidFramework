@@ -5,10 +5,9 @@
 ```ts
 
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IDebuggerMessage } from '@fluid-tools/client-debugger';
+import { IDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ISourcedDebuggerMessage } from '@fluid-tools/client-debugger';
+import { ISourcedDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
 
 // @public
@@ -24,27 +23,10 @@ export interface AudienceMemberViewProps {
     myClientId: string | undefined;
 }
 
-// @public
-export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
-
 export { IMessageRelay }
 
 // @public
-export const MessageRelayContext: React_2.Context<IMessageRelay<IDebuggerMessage<unknown>, ISourcedDebuggerMessage<unknown>> | undefined>;
-
-// @public
-export type RenderChild = (childObject: unknown) => React_2.ReactElement;
-
-// @public
-export interface RenderOptions {
-    onRenderAudienceMember?: (props: AudienceMemberViewProps) => React_2.ReactElement;
-    sharedObjectRenderOptions?: SharedObjectRenderOptions;
-}
-
-// @public
-export type RenderSharedObject = (
-sharedObject: ISharedObject,
-renderChild: RenderChild) => React_2.ReactElement;
+export const MessageRelayContext: React_2.Context<IMessageRelay<IDevtoolsMessage<unknown>, ISourcedDevtoolsMessage<unknown>> | undefined>;
 
 // @public
 export function RootView(props: RootViewProps): React_2.ReactElement;
@@ -53,13 +35,5 @@ export function RootView(props: RootViewProps): React_2.ReactElement;
 export interface RootViewProps {
     messageRelay: IMessageRelay;
 }
-
-// @public
-export interface SharedObjectRenderOptions {
-    [k: SharedObjectType]: RenderSharedObject;
-}
-
-// @public
-export type SharedObjectType = string;
 
 ```

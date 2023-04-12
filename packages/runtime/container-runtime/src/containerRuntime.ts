@@ -168,6 +168,7 @@ import {
 	Outbox,
 	OpSplitter,
 	RemoteMessageProcessor,
+	OpGroupingManager,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
@@ -402,6 +403,17 @@ export interface IContainerRuntimeOptions {
 	 * can be used to disable it at runtime.
 	 */
 	readonly enableOpReentryCheck?: boolean;
+	/**
+	 * If enabled, the runtime will group messages within a batch into a single
+	 * message to be sent to the service.
+	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
+	 *
+	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
+	 * flag can be used to disable it at runtime.
+	 *
+	 * @experimental Not ready for use.
+	 */
+	readonly enableGroupedBatching?: boolean;
 }
 
 /**
@@ -643,6 +655,7 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
+			enableGroupedBatching = false,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -726,6 +739,7 @@ export class ContainerRuntime
 				maxBatchSizeInBytes,
 				chunkSizeInBytes,
 				enableOpReentryCheck,
+				enableGroupedBatching,
 			},
 			containerScope,
 			logger,
@@ -1056,6 +1070,9 @@ export class ContainerRuntime
 		const disableChunking = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
 		);
+
+		const opGroupingManager = new OpGroupingManager(this.groupedBatchingEnabled);
+
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.context.submitBatchFn,
@@ -1063,9 +1080,11 @@ export class ContainerRuntime
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
+
 		this.remoteMessageProcessor = new RemoteMessageProcessor(
 			opSplitter,
 			new OpDecompressor(this.mc.logger),
+			opGroupingManager,
 		);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
@@ -1193,9 +1212,15 @@ export class ContainerRuntime
 			() => this.storage,
 			(localId: string, blobId?: string) => {
 				if (!this.disposed) {
-					this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
-						localId,
-						blobId,
+					// eslint-disable-next-line @typescript-eslint/no-floating-promises
+					Promise.resolve().then(() => {
+						// Blob attaches need to be in their own batch (grouped batching would hide metadata)
+						this.flush();
+						this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
+							localId,
+							blobId,
+						});
+						this.flush();
 					});
 				}
 			},
@@ -1252,6 +1277,7 @@ export class ContainerRuntime
 				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
+			groupingManager: opGroupingManager,
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1289,12 +1315,6 @@ export class ContainerRuntime
 			);
 
 			if (this.context.clientDetails.type === summarizerClientType) {
-				// ContainerRuntime handles the entryPoint for summarizer clients on its own; we shouldn't receive
-				// an initializeEntryPoint for that case.
-				assert(
-					initializeEntryPoint === undefined,
-					0x5be /* Summarizer clients cannot have a custom entryPoint */,
-				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -1308,6 +1328,7 @@ export class ContainerRuntime
 							// information. The proxy delta manager would always return false for summarizer client.
 							() => this.innerDeltaManager.active,
 						),
+					!this.groupedBatchingEnabled,
 				);
 			} else if (
 				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
@@ -1406,6 +1427,7 @@ export class ContainerRuntime
 				disablePartialFlush,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
+			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1820,8 +1842,16 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
-		const message = this.remoteMessageProcessor.process(messageCopy);
+		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+			this.processCore(message, local, runtimeMessage);
+		}
+	}
 
+	private processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		runtimeMessage: boolean,
+	) {
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -1876,8 +1906,7 @@ export class ContainerRuntime
 					}
 			}
 
-			// For back-compat, notify only about runtime messages for now.
-			if (runtimeMessage) {
+			if (runtimeMessage || this.groupedBatchingEnabled) {
 				this.emit("op", message, runtimeMessage);
 			}
 
@@ -1945,12 +1974,13 @@ export class ContainerRuntime
 					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 				});
 			} else if (
-				this.consecutiveReconnects === 0 &&
 				envelope.clientSignalSequenceNumber ===
-					this._perfSignalData.trackingSignalSequenceNumber
+				this._perfSignalData.trackingSignalSequenceNumber
 			) {
 				// only logging for the first connection and the trackingSignalSequenceNUmber.
-				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				if (this.consecutiveReconnects === 0) {
+					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				}
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
 			}
 		}
@@ -3182,6 +3212,17 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
+		const recoveryMethod = this.mc.config.getString(
+			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
+		);
+		if (recoveryMethod === "restart") {
+			this._summarizer?.stop("latestSummaryStateStale");
+			// TODO: stop execution, but don't cause a cascading series of errors.
+			const error = new GenericError("Restarting summarizer instead of refreshing");
+			this.closeFn(error);
+			throw error;
+		}
+
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
@@ -3320,6 +3361,13 @@ export class ContainerRuntime
 				`"minIdleTime" [${configuration.minIdleTime}] cannot be greater than "maxIdleTime" [${configuration.maxIdleTime}]`,
 			);
 		}
+	}
+
+	private get groupedBatchingEnabled(): boolean {
+		const killSwitch = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableGroupedBatching",
+		);
+		return killSwitch !== true && this.runtimeOptions.enableGroupedBatching;
 	}
 }
 

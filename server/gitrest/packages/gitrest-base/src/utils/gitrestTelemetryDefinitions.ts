@@ -12,7 +12,32 @@ export enum GitRestLumberEventName {
 	WholeSummaryManagerReadSummary = "ReadSummary",
 	WholeSummaryManagerWriteSummary = "WriteSummary",
 
-	// RepoManager
+	// Misc
+	CheckSoftDeleted = "CheckSoftDeleted",
+
+    // Repository APIs
+    RepositoryManager = "RepositoryManager",
+    RepositoryManagerFactory = "RepositoryManagerFactory",
+}
+
+// List of properties used in telemetry throughout GitRest
+export enum BaseGitRestTelemetryProperties {
+	directoryPath = "directoryPath",
+	emptyFullSummary = "emptyFullSummary",
+	fullSummaryirectoryExists = "fullSummaryirectoryExists",
+	ref = "ref",
+	repoName = "repoName",
+	repoOwner = "repoOwner",
+	repoPerDocEnabled = "repoPerDocEnabled",
+	sha = "sha",
+	softDelete = "softDelete",
+	storageName = "storageName",
+	summaryType = "summaryType",
+	tag = "tag",
+}
+
+export enum GitRestRepositoryApiCategory {
+    // RepoManager
 	CreateBlob = "CreateBlob",
 	CreateCommit = "CreateCommit",
 	CreateRef = "CreateRef",
@@ -32,23 +57,4 @@ export enum GitRestLumberEventName {
 	// RepoManagerFactory
 	OpenRepo = "OpenRepo",
 	CreateRepo = "CreateRepo",
-
-	// Misc
-	CheckSoftDeleted = "CheckSoftDeleted",
-}
-
-// List of properties used in telemetry throughout GitRest
-export enum BaseGitRestTelemetryProperties {
-	directoryPath = "directoryPath",
-	emptyFullSummary = "emptyFullSummary",
-	fullSummaryirectoryExists = "fullSummaryirectoryExists",
-	ref = "ref",
-	repoName = "repoName",
-	repoOwner = "repoOwner",
-	repoPerDocEnabled = "repoPerDocEnabled",
-	sha = "sha",
-	softDelete = "softDelete",
-	storageName = "storageName",
-	summaryType = "summaryType",
-	tag = "tag",
 }

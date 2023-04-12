@@ -55,6 +55,406 @@ importers:
       syncpack: 9.8.4
       typescript: 4.5.5
 
+  azure/packages/azure-client:
+    specifiers:
+      '@fluid-tools/build-cli': ^0.13.1
+      '@fluidframework/aqueduct': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@1.1.1
+      '@fluidframework/azure-local-service': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.13.1
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/counter': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/driver-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/fluid-static': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/server-services-client': ^0.1038.4000
+      '@fluidframework/test-client-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@microsoft/api-extractor': ^7.34.4
+      '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.38
+      axios: ^0.26.0
+      concurrently: ^7.6.0
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      eslint-plugin-jsdoc: ~39.3.0
+      mocha: ^10.2.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      start-server-and-test: ^1.11.7
+      typescript: ~4.5.5
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader': link:../../../packages/loader/container-loader
+      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
+      '@fluidframework/driver-definitions': link:../../../packages/common/driver-definitions
+      '@fluidframework/driver-utils': link:../../../packages/loader/driver-utils
+      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
+      '@fluidframework/map': link:../../../packages/dds/map
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
+      '@fluidframework/server-services-client': 0.1038.4000
+      axios: 0.26.1
+    devDependencies:
+      '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
+      '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/azure-client-previous': /@fluidframework/azure-client/1.1.1
+      '@fluidframework/azure-local-service': link:../azure-local-service
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.13.1_@types+node@14.18.38
+      '@fluidframework/counter': link:../../../packages/dds/counter
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/test-client-utils': link:../../../packages/framework/test-client-utils
+      '@fluidframework/test-utils': link:../../../packages/test/test-utils
+      '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
+      '@types/mocha': 9.1.1
+      '@types/node': 14.18.38
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
+      mocha: 10.2.0
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      start-server-and-test: 1.14.0
+      typescript: 4.5.5
+
+  azure/packages/azure-local-service:
+    specifiers:
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@microsoft/api-extractor': ^7.34.4
+      concurrently: ^7.6.0
+      copyfiles: ^2.4.1
+      eslint: ~8.6.0
+      eslint-plugin-jsdoc: ~39.3.0
+      forever: ^4.0.3
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      tinylicious: 0.7.2
+      ts-node: ^8.6.2
+      typescript: ~4.5.5
+    dependencies:
+      tinylicious: 0.7.2
+    devDependencies:
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@microsoft/api-extractor': 7.34.4
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      eslint: 8.6.0
+      eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
+      forever: 4.0.3
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      ts-node: 8.10.2_typescript@4.5.5
+      typescript: 4.5.5
+
+  azure/packages/azure-service-utils:
+    specifiers:
+      '@fluid-tools/build-cli': ^0.13.1
+      '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@1.1.1
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.13.1
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/protocol-definitions': ^1.0.0
+      '@microsoft/api-extractor': ^7.34.4
+      '@types/jsrsasign': ^8.0.8
+      concurrently: ^7.6.0
+      copyfiles: ^2.4.1
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      eslint-plugin-jsdoc: ~39.3.0
+      jsrsasign: ^10.5.25
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      typescript: ~4.5.5
+      uuid: ^8.3.1
+    dependencies:
+      '@fluidframework/protocol-definitions': 1.1.0
+      jsrsasign: 10.7.0
+      uuid: 8.3.2
+    devDependencies:
+      '@fluid-tools/build-cli': 0.13.1
+      '@fluidframework/azure-service-utils-previous': /@fluidframework/azure-service-utils/1.1.1
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@microsoft/api-extractor': 7.34.4
+      '@types/jsrsasign': 8.0.13
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-plugin-jsdoc: 39.3.25_eslint@8.6.0
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      typescript: 4.5.5
+
+  azure/packages/external-controller:
+    specifiers:
+      '@fluidframework/azure-client': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/fluid-static': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/local-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/test-client-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-tools': ^0.2.3074
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': ^14.18.38
+      '@types/puppeteer': 1.3.0
+      assert: ^2.0.0
+      axios: ^0.26.0
+      clean-webpack-plugin: ^4.0.0
+      concurrently: ^7.6.0
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      events: ^3.1.0
+      fluid-framework: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      html-webpack-plugin: ^5.5.0
+      jest: ^26.6.3
+      jest-environment-puppeteer: ^4.3.0
+      jest-junit: ^10.0.0
+      jest-puppeteer: ^4.3.0
+      prettier: ~2.6.2
+      process: ^0.11.10
+      puppeteer: ^1.20.0
+      rimraf: ^4.4.0
+      start-server-and-test: ^1.11.7
+      tinylicious: 0.7.2
+      ts-jest: ^26.4.4
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+      webpack: ^5.76.2
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluidframework/azure-client': link:../azure-client
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
+      assert: 2.0.0
+      axios: 0.26.1
+      events: 3.3.0
+      fluid-framework: link:../../../packages/framework/fluid-framework
+    devDependencies:
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader': link:../../../packages/loader/container-loader
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
+      '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
+      '@fluidframework/server-local-server': 0.1038.4000
+      '@fluidframework/test-client-utils': link:../../../packages/framework/test-client-utils
+      '@fluidframework/test-tools': 0.2.3074
+      '@types/expect-puppeteer': 2.2.1
+      '@types/jest': 22.2.3
+      '@types/jest-environment-puppeteer': 2.2.0
+      '@types/node': 14.18.38
+      '@types/puppeteer': 1.3.0
+      clean-webpack-plugin: 4.0.0_webpack@5.76.2
+      concurrently: 7.6.0
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      html-webpack-plugin: 5.5.0_webpack@5.76.2
+      jest: 26.6.3
+      jest-environment-puppeteer: 4.4.0
+      jest-junit: 10.0.0
+      jest-puppeteer: 4.4.0_puppeteer@1.20.0
+      prettier: 2.6.2
+      process: 0.11.10
+      puppeteer: 1.20.0
+      rimraf: 4.4.0
+      start-server-and-test: 1.14.0
+      tinylicious: 0.7.2
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
+      ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
+      typescript: 4.5.5
+      webpack: 5.76.2_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_7grl5awahfdjaulopckzaywq64
+      webpack-dev-server: 4.6.0_x7pknmm2t3vm5puavzdpmh6qv4
+      webpack-merge: 5.8.0
+
+  azure/packages/test/end-to-end-tests:
+    specifiers:
+      '@fluidframework/aqueduct': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/azure-client': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/counter': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/fluid-static': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/matrix': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-client-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@types/mocha': ^9.1.1
+      '@types/nock': ^9.3.0
+      '@types/node': ^14.18.38
+      '@types/uuid': ^8.3.0
+      concurrently: ^7.6.0
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      fluid-framework: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      mocha: ^10.2.0
+      nock: ^10.0.1
+      nyc: ^15.1.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      sinon: ^7.4.2
+      start-server-and-test: ^1.11.7
+      tinylicious: 0.7.2
+      typescript: ~4.5.5
+      uuid: ^8.3.1
+    dependencies:
+      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/azure-client': link:../../azure-client
+      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
+      '@fluidframework/counter': link:../../../../packages/dds/counter
+      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
+      '@fluidframework/map': link:../../../../packages/dds/map
+      '@fluidframework/matrix': link:../../../../packages/dds/matrix
+      '@fluidframework/sequence': link:../../../../packages/dds/sequence
+      '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
+      '@fluidframework/test-client-utils': link:../../../../packages/framework/test-client-utils
+      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../../../packages/test/test-utils
+      cross-env: 7.0.3
+      fluid-framework: link:../../../../packages/framework/fluid-framework
+      mocha: 10.2.0
+      prettier: 2.6.2
+      sinon: 7.5.0
+      start-server-and-test: 1.14.0
+      tinylicious: 0.7.2
+      uuid: 8.3.2
+    devDependencies:
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/mocha': 9.1.1
+      '@types/nock': 9.3.1
+      '@types/node': 14.18.38
+      '@types/uuid': 8.3.4
+      concurrently: 7.6.0
+      eslint: 8.6.0
+      nock: 10.0.6
+      nyc: 15.1.0
+      rimraf: 4.4.0
+      typescript: 4.5.5
+
+  azure/packages/test/scenario-runner:
+    specifiers:
+      '@fluid-tools/build-cli': ^0.13.1
+      '@fluidframework/aqueduct': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/azure-client': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/counter': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/fluid-static': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/matrix': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-client-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@types/js-yaml': ^4.0.5
+      '@types/mocha': ^9.1.1
+      '@types/nock': ^9.3.0
+      '@types/node': ^14.18.38
+      '@types/uuid': ^8.3.0
+      commander: ^5.1.0
+      concurrently: ^7.6.0
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      fluid-framework: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      js-yaml: ^4.1.0
+      mocha: ^10.2.0
+      nock: ^10.0.1
+      nyc: ^15.1.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      sinon: ^7.4.2
+      start-server-and-test: ^1.11.7
+      tinylicious: 0.7.2
+      typescript: ~4.5.5
+      uuid: ^8.3.1
+    dependencies:
+      '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
+      '@fluidframework/azure-client': link:../../azure-client
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
+      '@fluidframework/counter': link:../../../../packages/dds/counter
+      '@fluidframework/fluid-static': link:../../../../packages/framework/fluid-static
+      '@fluidframework/map': link:../../../../packages/dds/map
+      '@fluidframework/matrix': link:../../../../packages/dds/matrix
+      '@fluidframework/sequence': link:../../../../packages/dds/sequence
+      '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
+      '@fluidframework/test-client-utils': link:../../../../packages/framework/test-client-utils
+      '@fluidframework/test-driver-definitions': link:../../../../packages/test/test-driver-definitions
+      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../../../packages/test/test-utils
+      commander: 5.1.0
+      cross-env: 7.0.3
+      fluid-framework: link:../../../../packages/framework/fluid-framework
+      js-yaml: 4.1.0
+      mocha: 10.2.0
+      sinon: 7.5.0
+      start-server-and-test: 1.14.0
+      tinylicious: 0.7.2
+      uuid: 8.3.2
+    devDependencies:
+      '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/js-yaml': 4.0.5
+      '@types/mocha': 9.1.1
+      '@types/nock': 9.3.1
+      '@types/node': 14.18.38
+      '@types/uuid': 8.3.4
+      concurrently: 7.6.0
+      eslint: 8.6.0
+      nock: 10.0.6
+      nyc: 15.1.0
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      typescript: 4.5.5
+
   examples/apps/collaborative-textarea:
     specifiers:
       '@fluid-example/example-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -2171,7 +2571,7 @@ importers:
       source-map-support: ^0.5.16
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
-      ts-node: ^7.0.1
+      ts-node: ^8.6.2
       typescript: ~4.5.5
       url-loader: ^2.1.0
       webpack: ^5.76.2
@@ -2230,7 +2630,7 @@ importers:
       source-map-support: 0.5.21
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
-      ts-node: 7.0.1
+      ts-node: 8.10.2_typescript@4.5.5
       typescript: 4.5.5
       url-loader: 2.3.0_ocbe2kpzrlewhsjts6w3r27aky
       webpack: 5.76.2_webpack-cli@4.10.0
@@ -5516,7 +5916,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       source-map-support: ^0.5.16
-      ts-node: ^7.0.1
+      ts-node: ^8.6.2
       tslib: ^1.10.0
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -5563,7 +5963,7 @@ importers:
       prettier: 2.6.2
       rimraf: 4.4.0
       source-map-support: 0.5.21
-      ts-node: 7.0.1
+      ts-node: 8.10.2_typescript@4.5.5
       typescript: 4.5.5
       uuid: 8.3.2
 
@@ -5859,7 +6259,6 @@ importers:
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
-      '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -5898,7 +6297,6 @@ importers:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-utils': link:../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
@@ -5979,7 +6377,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      ts-node: ^7.0.1
+      ts-node: ^8.6.2
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -6020,7 +6418,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.0
-      ts-node: 7.0.1
+      ts-node: 8.10.2_typescript@4.5.5
       typescript: 4.5.5
 
   packages/dds/shared-summary-block:
@@ -6171,10 +6569,14 @@ importers:
 
   packages/dds/test-dds-utils:
     specifiers:
+      '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       concurrently: ^7.6.0
@@ -6184,7 +6586,11 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
+      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
+      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       mocha: 10.2.0
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
@@ -6563,6 +6969,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       concurrently: ^7.6.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       events: ^3.1.0
@@ -6609,6 +7016,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       concurrently: 7.6.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
@@ -8646,7 +9054,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      ts-node: ^7.0.1
+      ts-node: ^8.6.2
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -8681,7 +9089,7 @@ importers:
       prettier: 2.6.2
       rimraf: 4.4.0
       sinon: 7.5.0
-      ts-node: 7.0.1
+      ts-node: 8.10.2_typescript@4.5.5
       typescript: 4.5.5
 
   packages/runtime/test-runtime-utils:
@@ -9864,16 +10272,24 @@ importers:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
+      '@fluidframework/cell': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/container-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/counter': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/matrix': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/chai': ^4.0.0
       '@types/events': ^3.0.0
@@ -9895,12 +10311,19 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
+      '@fluidframework/cell': link:../../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/container-utils': link:../../../loader/container-utils
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/matrix': link:../../../dds/matrix
       '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
     devDependencies:
       '@fluidframework/build-common': 1.1.0
@@ -9908,6 +10331,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.4
       '@types/chai': 4.3.4
       '@types/events': 3.0.0
@@ -9934,7 +10358,7 @@ importers:
       '@fluentui/react': ^8.96.1
       '@fluentui/react-hooks': ^8.6.12
       '@fluentui/react-icons-mdl2': ^1.3.22
-      '@fluentui/react-tabs': ^9.1.6
+      '@fluentui/react-tabs': ^9.3.6
       '@fluid-tools/client-debugger': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/client-debugger-view': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -9981,7 +10405,7 @@ importers:
       '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/react-icons-mdl2': 1.3.28_74b3ggvk3akyhuq4eydyx3fqim
-      '@fluentui/react-tabs': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-tabs': 9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluid-tools/client-debugger': link:../client-debugger
       '@fluid-tools/client-debugger-view': link:../client-debugger-view
       '@fluidframework/common-definitions': 0.20.1
@@ -10029,9 +10453,11 @@ importers:
   packages/tools/client-debugger/client-debugger-view:
     specifiers:
       '@fluentui/react': ^8.96.1
+      '@fluentui/react-components': ^9.18.6
       '@fluentui/react-hooks': ^8.6.12
+      '@fluentui/react-icons': ^2.0.199
       '@fluentui/react-icons-mdl2': ^1.3.22
-      '@fluentui/react-tabs': ^9.1.6
+      '@fluentui/react-tabs': ^9.3.6
       '@fluid-example/collaborative-textarea': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-experimental/react-inputs': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/client-debugger': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -10092,9 +10518,11 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-components': 9.18.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
       '@fluentui/react-icons-mdl2': 1.3.28_74b3ggvk3akyhuq4eydyx3fqim
-      '@fluentui/react-tabs': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-tabs': 9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-tools/client-debugger': link:../client-debugger
       '@fluidframework/common-definitions': 0.20.1
@@ -12576,6 +13004,16 @@ packages:
       - supports-color
     dev: true
 
+  /@floating-ui/core/1.2.5:
+    resolution: {integrity: sha512-qrcbyfnRVziRlB6IYwjCopYhO7Vud750JlJyuljruIXcPxr22y8zdckcJGsuOdnQ639uVD1tTXddrcH3t3QYIQ==}
+    dev: false
+
+  /@floating-ui/dom/1.2.5:
+    resolution: {integrity: sha512-+sAUfpQ3Frz+VCbPCqj+cZzvEESy3fjSeT/pDWkYCWOBXYNNKZfuVsHuv8/JO2zze8+Eb/Q7a6hZVgzS81fLbQ==}
+    dependencies:
+      '@floating-ui/core': 1.2.5
+    dev: false
+
   /@fluentui/date-time-utilities/7.9.1:
     resolution: {integrity: sha512-o8iU1VIY+QsqVRWARKiky29fh4KR1xaKSgMClXIi65qkt8EDDhjmlzL0KVDEoDA2GWukwb/1PpaVCWDg4v3cUQ==}
     dependencies:
@@ -12590,6 +13028,13 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@fluentui/date-time-utilities/8.5.6:
+    resolution: {integrity: sha512-BS5EgnB5GFLg4p84GWqCjt6Pbnjnz0RZA94FAfVOYoqHcnjLURZ1BkQuorGdwS7ipaE4AVgNaQsPq90PsAfuXw==}
+    dependencies:
+      '@fluentui/set-version': 8.2.6
+      tslib: 2.5.0
+    dev: false
+
   /@fluentui/dom-utilities/1.1.2:
     resolution: {integrity: sha512-XqPS7l3YoMwxdNlaYF6S2Mp0K3FmVIOIy2K3YkMc+eRxu9wFK6emr2Q/3rBhtG5u/On37NExRT7/5CTLnoi9gw==}
     dependencies:
@@ -12600,8 +13045,27 @@ packages:
   /@fluentui/dom-utilities/2.2.3:
     resolution: {integrity: sha512-Ml/xwpTC6vb9lHHVAbSUD9jMbt9nVzV208D0FEoQn0c0+dP2vdMXSvXC/QHs/57B6JicttVQPuX6EcPwR3Mkpg==}
     dependencies:
-      '@fluentui/set-version': 8.2.3
+      '@fluentui/set-version': 8.2.6
       tslib: 2.5.0
+    dev: false
+
+  /@fluentui/dom-utilities/2.2.6:
+    resolution: {integrity: sha512-yJOEiFj/TfR307hzZn15kNocC0P3j2BltrAJznhgXywMKJhIczATFTfj2len7YMHxLttnR5yDz/oYpyBLSk4rw==}
+    dependencies:
+      '@fluentui/set-version': 8.2.6
+      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/font-icons-mdl2/8.5.13_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-3JjYN7lJZefpBdNPoQRFOiNpyVw+BOGynMkmYglnGjEWlg3uodawNi9lnKBODXCy31OHh900n9pAPFyNpdCbBg==}
+    dependencies:
+      '@fluentui/set-version': 8.2.6
+      '@fluentui/style-utilities': 8.9.6_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
+      tslib: 2.5.0
+    transitivePeerDependencies:
+      - '@types/react'
+      - react
     dev: false
 
   /@fluentui/font-icons-mdl2/8.5.5_q5o373oqrklnndq2vhekyuzhxi:
@@ -12631,6 +13095,21 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@fluentui/foundation-legacy/8.2.33_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-Z1Nl1hmyICAjTwaU2fvIGenzczRfyf0P3oaRniwac4gAa5MidE6QlpAkEcwCka2QEG/qUjcx/cMacDGLN/Dd0A==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/merge-styles': 8.5.7
+      '@fluentui/set-version': 8.2.6
+      '@fluentui/style-utilities': 8.9.6_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
+      '@types/react': 17.0.52
+      react: 17.0.2
+      tslib: 2.5.0
+    dev: false
+
   /@fluentui/keyboard-key/0.2.17:
     resolution: {integrity: sha512-iT1bU56rKrKEOfODoW6fScY11qj3iaYrZ+z11T6fo5+TDm84UGkkXjLXJTE57ZJzg0/gbccHQWYv+chY7bJN8Q==}
     dependencies:
@@ -12643,10 +13122,16 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/keyboard-keys/9.0.1:
-    resolution: {integrity: sha512-I22XoRFvVHSfJ4xiaYRQensHODhPel9KDn4t0FxHPvBH1u04vNYOXIimqSHgIVMRUdOb6221IOcv4XsKBBiG6w==}
+  /@fluentui/keyboard-key/0.4.6:
+    resolution: {integrity: sha512-p59zLGs3ucDPc7ZVaPxVCaQsfNwERDt3n+yLE0w/FFBlPWJcOSkiZHIieMhqk5ur5YGzbgs9WppPrtxNga23fw==}
     dependencies:
       tslib: 2.5.0
+    dev: false
+
+  /@fluentui/keyboard-keys/9.0.2:
+    resolution: {integrity: sha512-yB+mD96zhFnKyHCJ0AfTjSwA56LJtossToKSZbCEN38X3457TL2v8F9vzTrcO6Ha01n9YLcJ0O5ZgNIKrpP8fg==}
+    dependencies:
+      '@swc/helpers': 0.4.14
     dev: false
 
   /@fluentui/merge-styles/8.5.4:
@@ -12656,8 +13141,21 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/react-context-selector/9.1.5_7dy3sgqkcy3kjbu4ktqmdo3kpm:
-    resolution: {integrity: sha512-3U0d6qOP1IMASLpWK6ek9PLagxdGK0L0EKBhaO7U9Q89k2DJ0JQRzz2kZSrnN0a23yL0BipxtKGZiqhO0u6AHA==}
+  /@fluentui/merge-styles/8.5.7:
+    resolution: {integrity: sha512-t/mOQTigj51n7z6VPZ1nlb9getkzoLVhN0aUbOJUSD5qvu0gZqSBh7Y9xIP6QeYWF4q6wcZhEggo8HOgYqaWQw==}
+    dependencies:
+      '@fluentui/set-version': 8.2.6
+      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/priority-overflow/9.0.2:
+    resolution: {integrity: sha512-vQBIMpXaHhsgA5l+3yDkPjL7PzEiJubtSaO76P3WPdAB7iEGlQ5Fmw6ebvwce7bLWacLPC177nWCwqdGz2pr7g==}
+    dependencies:
+      '@swc/helpers': 0.4.14
+    dev: false
+
+  /@fluentui/react-accordion/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-ajQNo/yDq1Ai+zCqELCUgErFFFfkAuFjgcR6Dx4bGbWmbiGLxlie5HxoJYrZyTQ8eptjlTlzPT6RAIIqcD7Y4w==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
@@ -12665,13 +13163,351 @@ packages:
       react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
       scheduler: ^0.19.0 || ^0.20.0
     dependencies:
-      '@fluentui/react-utilities': 9.4.0_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-aria': 9.3.15_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       scheduler: 0.20.2
-      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/react-alert/9.0.0-beta.41_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-OLL3Vh7hYwmRlo7pHCH0h9Ghq3+3chsyzlWkonA8mghL/oAq9vnaM965WyD/ObOWugEISDtmll8bMjKjMLBctg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-avatar': 9.4.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-button': 9.3.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-aria/9.3.15_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-JQcrz/rreSBVM5meMIe24w4mxZj48+VA5FA3ine6jLbxHhpJhHTB5kn1x9F1EKjrvTfyUZS76QIUoeZJI0kHOw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-avatar/9.4.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-2luAQTvNlEYk8M6uWHObrJ5L2pUvMHz+cl48/fSj97K8sok2Nc88vXQKejbpLQWM1AGBHU8xlnIrSPrtB9lh9A==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/react-badge': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-popover': 9.5.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-tooltip': 9.2.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
+    dev: false
+
+  /@fluentui/react-badge/9.1.6_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-POkv94oZmUDK871EQhPPapKGfkgv4f/esyOV32uWjIGGb49UzOXJEWVheio+SA+MoIQr9jX53E4GrUknW6EepA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-button/9.3.6_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-Xy98hjWANWW31k+pxRlW4HnUFGadGOJKAXk/tF8P4clnY21jg65lEbpbxfA272CkkBKUUY+p8lUO9aDobjwZKw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-aria': 9.3.15_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-card/9.0.4_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-neIuXXGaPDiugVFMYrnmxrkCQvGqBKj5piGlJ3HoePs2lD7/18zA9IFAsVfUOkARWu1VXcgCJ8w92laFiXfnJg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-checkbox/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-JWI837Cj4yi43WQjJrPxPYm5KqMHgytxauz3N6i3QCFGG73a5gRoHFeDK0S5+m/ZlSumn+bYQc/BSo5F7KrQ1w==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-label': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-combobox/9.2.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-YyXNp7L/nhwkEz3h8a3ocygsUu+NxKpjmscju1SXZ7++qdP1JpshAl2P8bElJXp4ZT5DFupsG4orWw7p8kYHfA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-portal': 9.2.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-positioning': 9.5.7_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
+    dev: false
+
+  /@fluentui/react-components/9.18.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-65BDZuWRbFtzbSM84REs28ZXVzWq7gyhWZnQPcQTillguwzo5OszdgDBoC1jcHWwNMikscbIt7ptncA927qBLg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/react-accordion': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-alert': 9.0.0-beta.41_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-avatar': 9.4.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-badge': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-button': 9.3.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-card': 9.0.4_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-checkbox': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-combobox': 9.2.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-dialog': 9.4.2_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-divider': 9.2.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-image': 9.1.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-infobutton': 9.0.0-beta.24_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-input': 9.4.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-label': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-link': 9.0.32_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-menu': 9.7.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-overflow': 9.0.12_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-persona': 9.2.5_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-popover': 9.5.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-portal': 9.2.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-positioning': 9.5.7_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-progress': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-provider': 9.5.0_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-radio': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-select': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-skeleton': 9.0.0-beta.5_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-slider': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-spinbutton': 9.2.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-spinner': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-switch': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-table': 9.2.2_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-tabs': 9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-text': 9.3.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-textarea': 9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-toolbar': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-tooltip': 9.2.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-tree': 9.0.0-beta.8_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-virtualizer': 9.0.0-alpha.14_74b3ggvk3akyhuq4eydyx3fqim
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
+    dev: false
+
+  /@fluentui/react-context-selector/9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-aYjyG5w7n2WLmsxzXqj6Hyno8QneOHMqhKyP+qJT3Dvzm4v7zCQ1bQYoc0Bdy/J3DgsrvuK030PmYdX/dqMuDQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
+    dev: false
+
+  /@fluentui/react-dialog/9.4.2_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-DTA1ambJ9imxN//GbnlqgN3E0Xi+TrJXRlv/min6N8ntfOEI2sXTRuTs4Hq5Qjzu/MAYyq64F60sNCqErQIL6A==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-aria': 9.3.15_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-portal': 9.2.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-divider/9.2.6_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-lHf5ZXwOeUtilT72LAD6iXbJBtdrje29rCJojhajuFHsAlvmQQoZtpddGcTh5UUuRRmqsxeELpVX4X0ousOoPg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-field/9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-ex1Q2nAHR0aDXjZaXw8Z0ieb/CcZIYsBofySn03SDQnsXIbYnbME3cdpY6VLhLeo510O0IPhOeoEHHLo+SrFkQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-label': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
     dev: false
 
   /@fluentui/react-focus/7.18.17_74b3ggvk3akyhuq4eydyx3fqim:
@@ -12710,6 +13546,22 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@fluentui/react-focus/8.8.19_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-Gswx0aOazRVFJONmcsj5o6SI/ebWQeZyBAlOsdFeSUuK38aRlVy4DbwVQ+5tQ675u3wmf/+Ln2a0xCixOAVvWg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-key': 0.4.6
+      '@fluentui/merge-styles': 8.5.7
+      '@fluentui/set-version': 8.2.6
+      '@fluentui/style-utilities': 8.9.6_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
+      '@types/react': 17.0.52
+      react: 17.0.2
+      tslib: 2.5.0
+    dev: false
+
   /@fluentui/react-hooks/8.6.14_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-mM2bW7xIRGGx7thBXKDR64SaZB1tYwICdM9qpM/Jfiu0H+VPQhhhtMPJ+ImmG+DM8MxX9n5Su8ePo2QWtz9mYA==}
     peerDependencies:
@@ -12719,6 +13571,20 @@ packages:
       '@fluentui/react-window-provider': 2.2.4_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/set-version': 8.2.3
       '@fluentui/utilities': 8.13.4_q5o373oqrklnndq2vhekyuzhxi
+      '@types/react': 17.0.52
+      react: 17.0.2
+      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/react-hooks/8.6.20_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-vb90tgc0nGWvahE2zuPPtEpknIfAA0ABq7/ro7+CAcKgDx2sleGZKRGdzKXdYS026OxjQ8TN2K7/D3OI1v4Rjg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-window-provider': 2.2.9_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/set-version': 8.2.6
+      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
@@ -12758,6 +13624,220 @@ packages:
       - react-dom
     dev: false
 
+  /@fluentui/react-icons/2.0.199_react@17.0.2:
+    resolution: {integrity: sha512-mFkdkP19sO9brg7ol2XONWjzvdJ8N+wfKLO6eY1NRtbXXDt9CEqEJ0eIaiFWGow9mv3e2N5nPkRKd9rSrRQK8Q==}
+    peerDependencies:
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@griffel/react': 1.5.2_react@17.0.2
+      react: 17.0.2
+      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/react-image/9.1.3_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-Ewwe2fq5LukU/Xetz9EhnrMIGHXhdHMyPeF6bUIYaSnRnprXjMGREasz0rMISmFpfLo+qiCRhGG8vzRIlSBW6w==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-infobutton/9.0.0-beta.24_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-K+XllUAo/avC6dUZ+3QFsutgl9NII+Co4Fz0lXCKyB9/O5ZBQwg0sxhPN7IOtkfp2+dpY8MwS1rNgHqI7RpkEg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-label': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-popover': 9.5.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-input/9.4.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-n0DGF+5wWCOSefkIGTnjUWJIBUuEhycleI3T1mYd+ub5O+KtRYDbWXfx9VtIQRovVkicLDu/mS6EtYr8iwN53Q==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-label/9.1.6_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-sfwFy/aJ+Y4DwiYjTXftymXw06gcFU+iGk3o4BDM8q2cCocNFWwnC9FRIykAlJCelgGgYSGvSbekCGd9qVngFQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-link/9.0.32_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-vGdUEVN+Z8XIs+Lxuw4Qk8XguiSkpwSt5G8k+A+GrStxzla2ro57EovuX4IXGG1Dn98N935sh+GObWovg7f56A==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-menu/9.7.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-bs4QwzdM21l3fcPt2YRVMTu9ZEA7dd6Ue/JBT9JYEucu5hLTchxyjKz5H5dPz1la/w/JW1wl88xd5tmgWVtHqg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-aria': 9.3.15_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-portal': 9.2.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-positioning': 9.5.7_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
+    dev: false
+
+  /@fluentui/react-overflow/9.0.12_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-mtelzgHkZNrkG7lCOVPRNUFLZML3FqeNhUKOt+9FF6DAE3k6l5Bq4FUjEwDpR0rwvIUr/hC2c/tFpODiD9xy1Q==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/priority-overflow': 9.0.2
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
+    dev: false
+
+  /@fluentui/react-persona/9.2.5_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-bpaCRcPG90B8m82teJpzXUFtk7tkGMpAhQndh5xfyyCJuYA5nOScx5Mzs9HJhlRA7X3RFYkE3Dbd59cNV0Vpgw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-avatar': 9.4.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-badge': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-popover/9.5.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-WZBv+um7MJgtHOUh3meBpmOn9TxYyKsE9y49CI30pBA1WQFy5ETN53RZQylsAfi48hWp9vTICMHC5TdOIlMmDg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-aria': 9.3.15_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-portal': 9.2.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-positioning': 9.5.7_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
+    dev: false
+
   /@fluentui/react-portal-compat-context/9.0.4_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-qw2lmkxZ2TmgC0pB2dvFyrzVffxBdpCx1BdWRaF+MRGUlTxRtqfybSx3Edsqa6NMewc3J0ThLMFdVFBQ5Yafqw==}
     peerDependencies:
@@ -12769,20 +13849,102 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/react-shared-contexts/9.1.4_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-528QMaG3hmCt8mFFWvfK2eXN3nA+p2bJToxq5HrfHqZ4ua9BwQ6iwGNq0w5s0ymqpfdHsXuezu8m0FmFLbZJDA==}
+  /@fluentui/react-portal-compat-context/9.0.5_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-vgGvv74jPi/salcxv37TCm06lOFn44CfNLX5wZw5HQIe9LYGUw/J7vkaniwNIzmQZsn62Y+fVxDS6Sq5S823tA==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
-      '@fluentui/react-theme': 9.1.5
+      '@swc/helpers': 0.4.14
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.5.0
     dev: false
 
-  /@fluentui/react-tabs/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
-    resolution: {integrity: sha512-U0fjKZOV5Z6BZW+ZtOOvS43ttkCVZGdE+OlbkU8+6r+DHltl5Y4hPu0d4pL39NnwPHuDGyayB7MRixrNT64Myg==}
+  /@fluentui/react-portal/9.2.3_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-DpcRv3sneyZKlOLLfM2xoXvHLpSNuj+cJ7T/Vmr84EJ1zEW4jcMHkVABEoYV18kN3MREM/44cC1quwymzW60qw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      use-disposable: 1.0.1_74b3ggvk3akyhuq4eydyx3fqim
+    dev: false
+
+  /@fluentui/react-positioning/9.5.7_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-fB2ow674IXFpIcbUabWE/U4/awfNYOGZfq/S3PTqK7/i1m+jSvHZzHWuuYT4964Bh13ldW2kx5cuGnWpb+P0Hg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@floating-ui/dom': 1.2.5
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-progress/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-GF04gXf22ATDP7bD45k5LRVu1b9w9Y39OJlCXQhZf1aboCkb3RAeMvGrt5JYcmHlGeoevKsRBo2il59CEU/+5Q==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-provider/9.5.0_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-ETx+5DTjqVQtrdY527AbFXjmSrDwfaafi5wcw9BiGMaghHh9Nm2E4rLFfrmlj5xy9m6F1t8DNrjX3WYgowTufw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/core': 1.9.0
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-radio/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-/mG0ffus1t1PO0zumm3He/yHfQLn/qvueiG1W3aNVYQiKA14pHIDI8sYzSaeex4Vx7YlBu0vqWDeqbq16DF9rg==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
@@ -12790,57 +13952,398 @@ packages:
       react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
       scheduler: ^0.19.0 || ^0.20.0
     dependencies:
-      '@fluentui/react-context-selector': 9.1.5_7dy3sgqkcy3kjbu4ktqmdo3kpm
-      '@fluentui/react-tabster': 9.3.6_74b3ggvk3akyhuq4eydyx3fqim
-      '@fluentui/react-theme': 9.1.5
-      '@fluentui/react-utilities': 9.4.0_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-label': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
       '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       scheduler: 0.20.2
-      tslib: 2.5.0
     dev: false
 
-  /@fluentui/react-tabster/9.3.6_74b3ggvk3akyhuq4eydyx3fqim:
-    resolution: {integrity: sha512-WGb+qwUxjxXqThuIUK0BW2M4b+GMll9iouKhlkPBmXUfdnkKVgpD/BeoWsj7pvBhKfqFp2rM1HaqgxRSVMQRXQ==}
+  /@fluentui/react-select/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-Uhu+04qrZa7enNBzvpk7CsUcIB18m5aUL7CTiygaNBKDRXFlPKubPWJN7PR+f/AwW7fF3q0ofee5PbdUr/kU1Q==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       '@types/react-dom': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0 || 17.0.2'
       react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
-      '@fluentui/react-shared-contexts': 9.1.4_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/react-theme': 9.1.5
-      '@fluentui/react-utilities': 9.4.0_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
       '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      keyborg: 1.2.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      tabster: 3.0.7
-      tslib: 2.5.0
+    transitivePeerDependencies:
+      - scheduler
     dev: false
 
-  /@fluentui/react-theme/9.1.5:
-    resolution: {integrity: sha512-VOvPOM2IY2M9MpvA0voGIsDMdVxjTfakqu9ReNtaOrH/1pbUy5A+Z7ycHSo7eh7jVDj8W7KG79v0Q8kFPjymQQ==}
-    dependencies:
-      '@fluentui/tokens': 1.0.0-alpha.2
-      tslib: 2.5.0
-    dev: false
-
-  /@fluentui/react-utilities/9.4.0_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-h8kz4OjPRWE7Q35jCTsnu173yfEha9xRMXyF9rHia+cHPiFAsOspdf9mhCtfJaflWry1owiKx97P97PKKgycMQ==}
+  /@fluentui/react-shared-contexts/9.3.3_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-7X+Oj69s3aYLSJ9xuh1eIVCQXNtFox6cXKSZF5ogq4ebRRXE6NqXx8tF8KAjv7+JIWBwPo2/sLtWq2ma363NLg==}
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
-      '@fluentui/keyboard-keys': 9.0.1
+      '@fluentui/react-theme': 9.1.7
+      '@swc/helpers': 0.4.14
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/react-skeleton/9.0.0-beta.5_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-elUitUvLttuqqEFTjOKkpjhxZHsgIni8DZ+WKGIRtsJNOtImuft/rtp3LWCDguYRaCSkoN2FjaCIKqaZWb3FLQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-slider/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-EQjLL8XUEZOWpO3Zl5hRgkJEUJ+ktXG+8eLn/vDFm3ecfZeWiFGh30tl/hRHO/HpdRVD1xL1S40yIOzw4YSekw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-spinbutton/9.2.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-QtRa3thyiuPk6gI8D6ctcIQ8ZWtSzXYoYIARuwxXoTRZuXIned3/9vKbHdns1hEe8QjRNEycuOeT5Auu+lsW1Q==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-spinner/9.1.6_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-4qmkxfBL07cDqlm+G9WZ1Pm8EaWXVWhlYAzJMiKn3+CS/fZFuCPJHpIzU8s6CXdCpdufoOEl3BgMDZ1iK1gK8g==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-label': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-switch/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-0JCxazYLJJeNtfm97iCfstezay+sENQ1ho+PjtK+d+j4/bKmFGF8Rgn1oZU+NrpjDHjAdol4/+AOoT4cCdbc1A==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-label': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-table/9.2.2_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-EoiYDp7jIh2oQ73UxLcfK4aPNF13V9dJ8FWNityb54n5BGoprhf2E6ViTEQqBqvMt0IyarWrsDdjPojaincmtQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-aria': 9.3.15_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-avatar': 9.4.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-checkbox': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-radio': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-tabs/9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-pUe2xkw2jP37UdtszWcUlYxm636P6xZyQoOPVPFZ87incu8yiXH+SXoBD6i37pjt+Pixvy7PJHikVkv1CZaquw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      scheduler: 0.20.2
+    dev: false
+
+  /@fluentui/react-tabster/9.6.2_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-zSXOOgZRlUwlFxg2HTC1YMIUpfArbPBHQzoapeHOsXES1joZfjIDUX2ej1cKbc7nf0/6bmetFzSayoCc35sfMg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      keyborg: 2.0.0
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tabster: 4.2.0
+    dev: false
+
+  /@fluentui/react-text/9.3.3_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-jOAhD6oazANL3YnP2tH21tu2VKk/sfnOGzOOV5jjDJse+51SrXQ7u0jgNgnAFwR9z9yWUMTTycnvMvHwy2b+9Q==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-textarea/9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-800ivRHs7d5H2kJ5RuqHSnIV07tMe6ZgK7rkvlLmLyTMBvSEP8DT21U6aaX4zO1QB3cOOQWiGIfzN0tPcYhsHA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-field': 9.0.0-alpha.28_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-theme/9.1.7:
+    resolution: {integrity: sha512-VS/ckVxZJyfDAFNrkZZP4EqEvugadnE7ST1zTOVALh/I8GCsACstaFfMqPSUd9X0NaaSAGJMEBlsDNonw95fkg==}
+    dependencies:
+      '@fluentui/tokens': 1.0.0-alpha.4
+      '@swc/helpers': 0.4.14
+    dev: false
+
+  /@fluentui/react-toolbar/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-n6ZlXXsQghZ/OL5gr404bayRRmIoYgMZkLpB1qGmJvUsPqVHNyZb2rrh7m9WlRlIbR0IctIaxYgi+4TB0u8sAA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-button': 9.3.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-divider': 9.2.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-radio': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-tooltip/9.2.6_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-ovmFsausJxW88kDuHAgmcgqCUfPkb5prxleJpqGi4hv8G6YV99ZVm8OQj9C905uCvwGiO3wQ+VU+PU1f134iEw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-portal': 9.2.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-positioning': 9.5.7_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /@fluentui/react-tree/9.0.0-beta.8_7dy3sgqkcy3kjbu4ktqmdo3kpm:
+    resolution: {integrity: sha512-xrIxSXTXnK22qDZMBTqXifq0F7vvJOo77mXl1+fnL+i02tmhyCxC44gYg9ofO9+OsaTFH5B90mbp6GNVSVmFHA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@fluentui/react-aria': 9.3.15_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-avatar': 9.4.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-button': 9.3.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-context-selector': 9.1.15_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
+      '@fluentui/react-portal': 9.2.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-shared-contexts': 9.3.3_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-tabster': 9.6.2_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.7
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    transitivePeerDependencies:
+      - scheduler
+    dev: false
+
+  /@fluentui/react-utilities/9.7.2_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-BsllpfopT7vow5exouA3kqyPs3g2Ao9gmslnsu+tmKGJgcyCSw/EcxFqgJSlCCCH/5UbnYN00VuZ3E1AHBoiGQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-keys': 9.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      react: 17.0.2
+    dev: false
+
+  /@fluentui/react-virtualizer/9.0.0-alpha.14_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-aXHbBpEYNfK1Kn5wjwKRhNp2V3D8cWPOxAuPV9YhVUojDbUKW+N5vVMpUG7nb9f5+Fb5R4Rn/jAiesnbpjfTQg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react': 8.107.0_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-utilities': 9.7.2_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@swc/helpers': 0.4.14
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
     dev: false
 
   /@fluentui/react-window-provider/1.0.6_74b3ggvk3akyhuq4eydyx3fqim:
@@ -12866,6 +14369,18 @@ packages:
       react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
       '@fluentui/set-version': 8.2.3
+      '@types/react': 17.0.52
+      react: 17.0.2
+      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/react-window-provider/2.2.9_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-BRa23ITjwUgewS9ynzCnW2bJIgaNHwhPUY0htLKcYSSv3fG7iib91B6FVC7QqmXDBTia00kqVul1TZz5G0qrlQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/set-version': 8.2.6
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
@@ -12899,8 +14414,42 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@fluentui/react/8.107.0_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-UaMt2Fl5n+BPJTML/EKCccoonccTdNPmuvSnAYnLJv3LuLNxoSyIKa6UBcBUUcWuBu5q2JaUIpBuj0omXXjcmQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/date-time-utilities': 8.5.6
+      '@fluentui/font-icons-mdl2': 8.5.13_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/foundation-legacy': 8.2.33_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/merge-styles': 8.5.7
+      '@fluentui/react-focus': 8.8.19_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-hooks': 8.6.20_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-portal-compat-context': 9.0.5_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-window-provider': 2.2.9_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/set-version': 8.2.6
+      '@fluentui/style-utilities': 8.9.6_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/theme': 2.6.25_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
+      '@microsoft/load-themed-styles': 1.10.295
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 2.5.0
+    dev: false
+
   /@fluentui/set-version/8.2.3:
     resolution: {integrity: sha512-/+5vrI1Bq/ZsNDEK9++RClnDOeCILS8RXxZb7OAqmOc8GnPScxKcIN8e/1bosUxTjb2EB1KbVk6XeUpk0WvQIg==}
+    dependencies:
+      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/set-version/8.2.6:
+    resolution: {integrity: sha512-zXIfscQ1ZAiEpHc5taMrDEtTP2NtPBGlz2HbOpZiQ3aj/xcnUT7nT73ctb+Q2bHIqlDCHEaFRQxy/HG6koGYAA==}
     dependencies:
       tslib: 2.5.0
     dev: false
@@ -12912,6 +14461,20 @@ packages:
       '@fluentui/set-version': 8.2.3
       '@fluentui/theme': 2.6.20_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/utilities': 8.13.4_q5o373oqrklnndq2vhekyuzhxi
+      '@microsoft/load-themed-styles': 1.10.295
+      tslib: 2.5.0
+    transitivePeerDependencies:
+      - '@types/react'
+      - react
+    dev: false
+
+  /@fluentui/style-utilities/8.9.6_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-glhexQzJNnLws66Tb7a0WPStYVE1tRy0QWwbtOdIRXsd/3CA1FZse76itss8/yqGakPin2PElkej/jTKpaRWew==}
+    dependencies:
+      '@fluentui/merge-styles': 8.5.7
+      '@fluentui/set-version': 8.2.6
+      '@fluentui/theme': 2.6.25_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
       '@microsoft/load-themed-styles': 1.10.295
       tslib: 2.5.0
     transitivePeerDependencies:
@@ -12951,10 +14514,24 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/tokens/1.0.0-alpha.2:
-    resolution: {integrity: sha512-Rd3xFE+ynAjpTgXwOWQnbw1jLqRrRvCgFTPtlqFlXK31lkNOz28f4HAHkNSXsFF95r/pM6EvJ+GtEoBhzfkdSw==}
+  /@fluentui/theme/2.6.25_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-slp+Tk+FEDj6HtZNWzckEMPLZMYfe2bECz4hLj/aq2ok51f2ztVTM8rjjmiJjOAidcTirF/gdYVbayc/5MOKag==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
     dependencies:
+      '@fluentui/merge-styles': 8.5.7
+      '@fluentui/set-version': 8.2.6
+      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
+      '@types/react': 17.0.52
+      react: 17.0.2
       tslib: 2.5.0
+    dev: false
+
+  /@fluentui/tokens/1.0.0-alpha.4:
+    resolution: {integrity: sha512-fzA4O2XTUqvMGW6H2Lny97uRRfO6CThEn8Vz1J1P8s6KIoSJOewUday5+2SCgJ2qA8xBtkXuaURy17IJjTGKDw==}
+    dependencies:
+      '@swc/helpers': 0.4.14
     dev: false
 
   /@fluentui/utilities/8.13.4_q5o373oqrklnndq2vhekyuzhxi:
@@ -12966,6 +14543,20 @@ packages:
       '@fluentui/dom-utilities': 2.2.3
       '@fluentui/merge-styles': 8.5.4
       '@fluentui/set-version': 8.2.3
+      '@types/react': 17.0.52
+      react: 17.0.2
+      tslib: 2.5.0
+    dev: false
+
+  /@fluentui/utilities/8.13.9_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-8SkDFN+v3FZ2DNQtnRHnUxkY2tVQo6ojHVPWsR5WAbfKDAdlDUWxf5bM+U/8d4E4v49x4HpKY1fqsrx3hLAhyA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/dom-utilities': 2.2.6
+      '@fluentui/merge-styles': 8.5.7
+      '@fluentui/set-version': 8.2.6
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
@@ -13271,6 +14862,30 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/aqueduct/1.3.6:
+    resolution: {integrity: sha512-33vWqX1UEwYYTHb3Iv6+1B4ZFFcPNdD3cqfAmYbR7nOwxPYq1uKflUzafUOKW6SMpRyomeebCy/f5/PIoG+yJA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-loader': 1.3.6
+      '@fluidframework/container-runtime': 1.3.6
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/map': 1.3.6
+      '@fluidframework/request-handler': 1.3.6
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/synthesize': 1.3.6
+      '@fluidframework/view-interfaces': 1.3.6
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
+
   /@fluidframework/aqueduct/2.0.0-internal.4.0.0:
     resolution: {integrity: sha512-ss393BKocNgzrSjSpT4VEvtw91OP9hdg9DA6v8qSirYAe8b0t+sq48l4IYsIsGCya+ljUW1QvF6USeOfxvr3Sw==}
     dependencies:
@@ -13317,6 +14932,45 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
+    dev: true
+
+  /@fluidframework/azure-client/1.1.1:
+    resolution: {integrity: sha512-2raaGv2nWxdMbcrw9kuDhHd8coqqVloIoM7X19NmcCVP7FLkT7n8Fj2O/7gg8ccqsaMSXNWCRhbtMpca/lcD8g==}
+    peerDependencies:
+      fluid-framework: ^1.3.3
+    peerDependenciesMeta:
+      fluid-framework:
+        optional: true
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-loader': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/fluid-static': 1.3.6
+      '@fluidframework/map': 1.3.6
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/routerlicious-driver': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/server-services-client': 0.1036.5001
+      axios: 0.21.4
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+    dev: true
+
+  /@fluidframework/azure-service-utils/1.1.1:
+    resolution: {integrity: sha512-cvOXB3IRpqpvZMIFRwCyTo4dzJGLMC/eQLBk/c9uZhDaZWiCxe5vEJ2Ff174DrTGR3AvRzwm54z6tJnNvzVdjA==}
+    dependencies:
+      '@fluidframework/protocol-definitions': 1.1.0
+      jsrsasign: 10.7.0
+      uuid: 8.3.2
     dev: true
 
   /@fluidframework/build-common/1.1.0:
@@ -13546,6 +15200,18 @@ packages:
   /@fluidframework/common-definitions/0.20.1:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
 
+  /@fluidframework/common-utils/0.32.2:
+    resolution: {integrity: sha512-PoGX7/l0vWKt5JaAxcgFOdGje30Q6qSE06YzFIKh9Ba3oq7B60+TFqu7c2ErQt6sNddmvcAcAiLVNaTGAip3vw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@types/events': 3.0.0
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    dev: true
+
   /@fluidframework/common-utils/1.1.1:
     resolution: {integrity: sha512-XCPEFE1JAg+juQZYQQVZjHZJlM5+Wm9NxRbsnsix05M1tSq0p3SLqwgfaSGssXhLLX5QtG+aF1QD5a3LA1qtNQ==}
     dependencies:
@@ -13556,6 +15222,16 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       sha.js: 2.4.11
+
+  /@fluidframework/container-definitions/1.3.6:
+    resolution: {integrity: sha512-+5fuIUG7jGjKrRHtrH2VgrRI0YUXcP9jSLrHdI4Ks+4kNSDiOlu+UT7j9T9KoBAfHOpnihS3PVeDBJtIeqgDZw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      events: 3.3.0
+    dev: true
 
   /@fluidframework/container-definitions/2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-LajwUIrZZ/L46HmExSMk753Y/km4NFa9PCVCyVAp9Sh6vhQww+TBEVPvzJFry/Ji6cdYXgVVSlqcGG3YRkQDYQ==}
@@ -13575,6 +15251,30 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.4.0.0
       '@fluidframework/protocol-definitions': 1.1.0
       events: 3.3.0
+    dev: true
+
+  /@fluidframework/container-loader/1.3.6:
+    resolution: {integrity: sha512-J7nF7XTHCtL24gGnUhg155kolokX8HRWJqj2XEjaPrBsRmkyiySP+qCnrKY0bgLqaFLHW4WYfmC80lFE3oaELg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.3.6
+      abort-controller: 3.0.0
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      lodash: 4.17.21
+      url: 0.11.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
     dev: true
 
   /@fluidframework/container-loader/2.0.0-internal.4.0.0:
@@ -13625,6 +15325,17 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/container-runtime-definitions/1.3.6:
+    resolution: {integrity: sha512-cQP/F2F9BjeXKyUNmwQCRRb5qJPoufZ/iIyBSdj8qEYwhTyv3Ogbk+LyHz5cG8wPYlM2ff8IirxwEdgq7VTL/w==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+    dev: true
+
   /@fluidframework/container-runtime-definitions/2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-Q+kLdiA9RNQHXWLkPXERmlgQIigL9/00R7YtAWcS96oKTJZ+ceqqZDZYqtgT6C3Rb8tPUiu2zJjXQMsK8TDFZQ==}
     dependencies:
@@ -13645,6 +15356,32 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.4.0.0
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.0.0
+    dev: true
+
+  /@fluidframework/container-runtime/1.3.6:
+    resolution: {integrity: sha512-YC1Bvd8UiO3YID/sU9yxMMibW0FPqpf+sS47Czg1ILf2twK48U2BopDDKNeIHJFDl3yNOqxJniUkJJLNoYWwqg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/garbage-collector': 1.3.6
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/telemetry-utils': 1.3.6
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
     dev: true
 
   /@fluidframework/container-runtime/2.0.0-internal.2.4.3:
@@ -13728,6 +15465,18 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/container-utils/1.3.6:
+    resolution: {integrity: sha512-Hf3kxHuRzQv3a7J+I/3q5OH3WW5lajy3ENucc1HLCuOKYi39MM5AfAMBEfaTl1aI5iMxhHEyDAZJhaGJvvgOew==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.3.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@fluidframework/container-utils/2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-H7l5IznD9yJ1nL8cwgti9xoTpMdLBreMkx9wR+GF1rogwUD2YtXvf7kH3UPHK3iVWxaxyGZb4e8cwXoFPdMtog==}
     dependencies:
@@ -13750,6 +15499,10 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.4.0.0
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /@fluidframework/core-interfaces/1.3.6:
+    resolution: {integrity: sha512-6ccflpLJvlPhZ58MiMUUC5XvWF1s5yTmP3dXHsJf514IzuAvS5PCGLdZWUjWCgxA2fPvZKzA4VfWpwyFt1H0LA==}
     dev: true
 
   /@fluidframework/core-interfaces/2.0.0-internal.2.4.3:
@@ -13795,6 +15548,17 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/datastore-definitions/1.3.6:
+    resolution: {integrity: sha512-9kgqa5FsIHHuxQPL50cm/FX6FOukBDDHG45ByGEChISbnfkS13xncLrY6mE4FgTC1jW0d7y3CgGT3pn4n9Hc+g==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+    dev: true
+
   /@fluidframework/datastore-definitions/2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-5nn0/q5ksbjRKQEjVlB2+dFYjzuGiZOtPnTNPd0fSo/o1S4Bx+Q5GbINzRBr5qZwdrbsvwelOnUk2iSSRtdkFw==}
     dependencies:
@@ -13815,6 +15579,30 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.4.0.0
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.0.0
+    dev: true
+
+  /@fluidframework/datastore/1.3.6:
+    resolution: {integrity: sha512-eQTkB/Z0Sn5JwZ66EvY3r4RflSoZth0Zi7ezD4kbx75c4wmixRSs+qGSMM0xbllFXjyA24ucbL21zduVLxZGcg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/garbage-collector': 1.3.6
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/telemetry-utils': 1.3.6
+      lodash: 4.17.21
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
     dev: true
 
   /@fluidframework/datastore/2.0.0-internal.2.4.3:
@@ -13916,6 +15704,20 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/driver-base/1.3.6:
+    resolution: {integrity: sha512-Ini7PyyIP+out9+5eAqq+QYWfxSGprVtxTrtipmoKCjI6XTmgfmSwrs9VPrgdIl6lI52RjEFWQtC/J3vmjAesg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.3.6
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
+
   /@fluidframework/driver-base/2.0.0-internal.4.0.0:
     resolution: {integrity: sha512-jXM5VoJYjwbGIS26USSuCoklf5ms09znJNY7A4VjrIOjBL9RYcyeXHRMi1Hsbqlw9IVIx1BepLgLxpwi/lCTkg==}
     dependencies:
@@ -13944,6 +15746,14 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/driver-definitions/1.3.6:
+    resolution: {integrity: sha512-5Rvk2NhXxh2bhk8WWnBtcJq/9TgVYhAj4z7DDuqXqJyRUF/XYhyxqOfMuo7IAhTa2oTpp8o7QDwZqsfWKfC9tA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+    dev: true
+
   /@fluidframework/driver-definitions/2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-6t2DvzDS0x6rtUl+A5BFQVC/5ptlAu0w99yN0X59fN8jGv9KZpFvBdC6A02kATfqkpCVvIxCw9BS8FGRRRuYcQ==}
     dependencies:
@@ -13958,6 +15768,24 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/core-interfaces': 2.0.0-internal.4.0.0
       '@fluidframework/protocol-definitions': 1.1.0
+    dev: true
+
+  /@fluidframework/driver-utils/1.3.6:
+    resolution: {integrity: sha512-yDbuR4eMj0Y+kbIwV0XaXd3kh+U1YxmU1Qgcxa2RgD3MEMsDiCBaQrUCPjjxmBT9diUfBijVxjjOc5vUfm/eBA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/gitresources': 0.1036.5001
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.3.6
+      axios: 0.26.1
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
     dev: true
 
   /@fluidframework/driver-utils/2.0.0-internal.2.4.3:
@@ -14091,6 +15919,26 @@ packages:
       - utf-8-validate
     dev: true
 
+  /@fluidframework/fluid-static/1.3.6:
+    resolution: {integrity: sha512-ncGgaDmewFQJou9roh+8K94hhpIlNEGvLaxNnofgFHAq1R2vLlx+zb5VGMMywnof+gvjgrsk4JOP2C9XpMs9Tw==}
+    dependencies:
+      '@fluidframework/aqueduct': 1.3.6
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-loader': 1.3.6
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/request-handler': 1.3.6
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
+
   /@fluidframework/fluid-static/2.0.0-internal.4.0.0:
     resolution: {integrity: sha512-zSYKRK7fg0bHV0hj/Hj5HIq1/7m94d8ElRADIAPRvL1sUVwNAIC7dRP99Xl3n0zw4osRZ9Jzu1sv2VzZnSlrVw==}
     dependencies:
@@ -14111,6 +15959,14 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/garbage-collector/1.3.6:
+    resolution: {integrity: sha512-uJpvkWNzTsLJAmGwu6LUjR8cVoAzlfmhxoudaGrA3DeWhGheDcGVP/hiKht+pMw3u1CCA4AKOfE+0bIOQXyFBA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/runtime-definitions': 1.3.6
+    dev: true
+
   /@fluidframework/garbage-collector/2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-oOW7dpui9p+yvAgQDe/vdYIF48XsRknyprXZBW/FEVq1GKgKdJ3KTPpknVjZvNpmdxxA1uadVs+88JzKV4G5fg==}
     dependencies:
@@ -14127,6 +15983,10 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.0.0
+    dev: true
+
+  /@fluidframework/gitresources/0.1036.5001:
+    resolution: {integrity: sha512-Beg1A/eR7wCPYYb5u5iqqc092NkWnSvl4XCn2ImA4FDKtnYggD2/KYd9Hp0feM6Z99aU4FYSBidL2NewWlvF7A==}
     dev: true
 
   /@fluidframework/gitresources/0.1038.4000:
@@ -14217,6 +16077,25 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.4.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.4.0.0
     transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@fluidframework/map/1.3.6:
+    resolution: {integrity: sha512-CEuDHKLbJGt8SwwyUKoY1ZBkeFcn7Y+XPbm6lqsctYM08Fz2n1IsI6cl7KqppR3xJ2SpGyzDnVzNXeiPyOapfQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/shared-object-base': 1.3.6
+      path-browserify: 1.0.1
+    transitivePeerDependencies:
+      - debug
       - supports-color
     dev: true
 
@@ -14403,6 +16282,15 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/protocol-base/0.1036.5001:
+    resolution: {integrity: sha512-Btjy2bWVbVsmzNTBxTQZ9l/WXljsjDpGbBgJsn9GLacrTG9aDDtIVMXuwLAcEV1IVkxGcIipXryvfhbPHDYcMg==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/gitresources': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      lodash: 4.17.21
+    dev: true
+
   /@fluidframework/protocol-base/0.1038.4000:
     resolution: {integrity: sha512-9CcrHIMT53IEjugdJcSrvYssb6ZG4WX8BKovyPOg8znkW/qAFz4vb7ZV/rW8Q+K+SR1g+haeuidDsYngWl6sWw==}
     dependencies:
@@ -14420,6 +16308,12 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       events: 3.3.0
       lodash: 4.17.21
+
+  /@fluidframework/protocol-definitions/0.1028.2000:
+    resolution: {integrity: sha512-ZUPCmPFcK7UAK4RkfVWfzQPAWFvYNm6ywP51V42YC38gCGye+Epvyr3beA+FSaHPIZGxm5+Uw52+ykTvmDb2UA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+    dev: true
 
   /@fluidframework/protocol-definitions/1.1.0:
     resolution: {integrity: sha512-Q4YA6FBlB2cHicgvfs9z3LPKnfZMdx5JrmIEGOmxFmom/l9EV1F43sXl6K9/j5se8tQ9V9L8drFbDzqVf37roQ==}
@@ -14455,6 +16349,18 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/request-handler/1.3.6:
+    resolution: {integrity: sha512-4z0XRVuj3mu6ZYceUbTf/DZfRt1u0cClnpVZPthEs26QSk6LJvEpt5UBE3oIGkESoxZ3LHtAnkS2zCEl8jcrFw==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@fluidframework/request-handler/2.0.0-internal.4.0.0:
     resolution: {integrity: sha512-x8ewEfrsS7KlKFCojnBpsbLmGXrS4FDfWXSc2kOiPY3/yjwbXbSQjG0/OoWkJuV9H4TWoIxflRKY1MJRb8aQWg==}
     dependencies:
@@ -14465,6 +16371,33 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.4.0.0
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /@fluidframework/routerlicious-driver/1.3.6:
+    resolution: {integrity: sha512-b9NXLWI7YH4l2dEkgjDuIF9BNb1ggxkzS8ZtZpr+eBtegRN+E+WSbkR7JCPwrDmA+vPa9z0mXNS88ZeCwnQp3A==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/driver-base': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/gitresources': 0.1036.5001
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/server-services-client': 0.1036.5001
+      '@fluidframework/telemetry-utils': 1.3.6
+      cross-fetch: 3.1.5
+      json-stringify-safe: 5.0.1
+      querystring: 0.2.1
+      socket.io-client: 4.6.1
+      url-parse: 1.5.10
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
     dev: true
 
   /@fluidframework/routerlicious-driver/2.0.0-internal.4.0.0:
@@ -14532,6 +16465,17 @@ packages:
       url: 0.11.0
     dev: true
 
+  /@fluidframework/runtime-definitions/1.3.6:
+    resolution: {integrity: sha512-sFCUkN4sCz1ww7XKhIFiiXuaUtrps8Dd4h0VaYLsvzkH9bD/lcbbcvgmaMmqPa3tOy0ROsLAM5QSr5jBYipidw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+    dev: true
+
   /@fluidframework/runtime-definitions/2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-vSUlhGiGawKmu73wGucrACSle3mvXX6uq+EjItsV5lkZjC7xV2a99bAQeQcCE5CmyBPfal1qSuPZZytYH1yoMA==}
     dependencies:
@@ -14552,6 +16496,24 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.4.0.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.0.0
       '@fluidframework/protocol-definitions': 1.1.0
+    dev: true
+
+  /@fluidframework/runtime-utils/1.3.6:
+    resolution: {integrity: sha512-Yl0oWTcUwgDBWIaW6UsyfHE9D5yhmY11lx5ij3RcEn2Up07mD7+DzFXvxXTjdCioc4B0ssad70vvGJKJOwk6Nw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/garbage-collector': 1.3.6
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/telemetry-utils': 1.3.6
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /@fluidframework/runtime-utils/2.0.0-internal.2.4.3:
@@ -14821,6 +16783,26 @@ packages:
       - supports-color
       - utf-8-validate
 
+  /@fluidframework/server-services-client/0.1036.5001:
+    resolution: {integrity: sha512-e+Zk2uPcds9yqlalAZ0PpfEAKPPUIpIoQb3YSm42ZVpAgQmLYIRqTpXrmTC7qdeQnSGFJUAliW4DfHBEwpSXlQ==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/gitresources': 0.1036.5001
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      axios: 0.26.1_debug@4.3.4
+      crc-32: 1.2.0
+      debug: 4.3.4
+      json-stringify-safe: 5.0.1
+      jsrsasign: 10.7.0
+      jwt-decode: 3.1.2
+      querystring: 0.2.1
+      sillyname: 0.1.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@fluidframework/server-services-client/0.1038.4000:
     resolution: {integrity: sha512-oQBFNkReL8mOL1Q/I549X1nhG19RE/XAnmXwV9T1sLxQOHFE0u+J5H80ufCZ4WpyeCFA0usGDHZr9/zJJ6B/vg==}
     dependencies:
@@ -14999,6 +16981,27 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@fluidframework/shared-object-base/1.3.6:
+    resolution: {integrity: sha512-eUMtIosNBwDJXpw69BJuOLGJw4Lf53f6sU6ZgNKU1l2C5/Ht7gG2iDEBxYnNUvVAMQprTHYt5T1qTwn8uaT+Lw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-runtime': 1.3.6
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/telemetry-utils': 1.3.6
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
+
   /@fluidframework/shared-object-base/2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-dFCLHQ4j60UgAiX0aYN1KIZOK5Hmu2cgBQk/3r0jHwKiYl5p86NNS16CvzHjDKyfYopLDSGnwPiCZg5opm0Ynw==}
     dependencies:
@@ -15077,6 +17080,10 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/synthesize/1.3.6:
+    resolution: {integrity: sha512-avt0K5uxvOjs1Y6XpisonkMmG3RaI901h5XfIWFlxOhkHSgeN7T3ZmTdAinlpyRv+XKHzVzN1SqaccpGeC0+lw==}
+    dev: true
+
   /@fluidframework/synthesize/2.0.0-internal.4.0.0:
     resolution: {integrity: sha512-E+KyYj44KoXSnYNHjcdaj932dktxdZjlnQp0lYx6Iw/IEwF7zDNFpWNjnrrG8mWeceqL7oov13vInjwwJjty1g==}
     dev: true
@@ -15097,6 +17104,18 @@ packages:
       events: 3.3.0
     transitivePeerDependencies:
       - debug
+      - supports-color
+    dev: true
+
+  /@fluidframework/telemetry-utils/1.3.6:
+    resolution: {integrity: sha512-9DoLzKwnELWBN2NiCJPgfj2lCER4IiHSgiBMwbLoEZ0qTqGKhWJ1+7m1PupuwGuKX1zbb9HjUNxv2ommokZcqw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      debug: 4.3.4
+      events: 3.3.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
       - supports-color
     dev: true
 
@@ -15327,6 +17346,12 @@ packages:
       '@fluidframework/view-interfaces': 2.0.0-internal.4.0.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+    dev: true
+
+  /@fluidframework/view-interfaces/1.3.6:
+    resolution: {integrity: sha512-QEBEPmJdNCO7BdCjUaFxA32fjH91LePRs2xMV5iK8KRQwkyYnp4kRa3nKD3Iv2ezYKG+MvtAIDmUvfzICwWxUA==}
+    dependencies:
+      '@fluidframework/core-interfaces': 1.3.6
     dev: true
 
   /@fluidframework/view-interfaces/2.0.0-internal.4.0.0:
@@ -16786,7 +18811,7 @@ packages:
       npmlog: 6.0.2
     dev: true
 
-  /@lerna/publish/5.6.2_nx@15.7.2+typescript@4.8.4:
+  /@lerna/publish/5.6.2_nx@15.7.2+typescript@4.5.5:
     resolution: {integrity: sha512-QaW0GjMJMuWlRNjeDCjmY/vjriGSWgkLS23yu8VKNtV5U3dt5yIKA3DNGV3HgZACuu45kQxzMDsfLzgzbGNtYA==}
     engines: {node: ^14.15.0 || >=16.0.0}
     dependencies:
@@ -16808,7 +18833,7 @@ packages:
       '@lerna/run-lifecycle': 5.6.2
       '@lerna/run-topologically': 5.6.2
       '@lerna/validation-error': 5.6.2
-      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.8.4
+      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.5.5
       fs-extra: 9.1.0
       libnpmaccess: 6.0.4
       npm-package-arg: 8.1.1
@@ -16940,7 +18965,7 @@ packages:
       npmlog: 6.0.2
     dev: true
 
-  /@lerna/version/5.6.2_nx@15.7.2+typescript@4.8.4:
+  /@lerna/version/5.6.2_nx@15.7.2+typescript@4.5.5:
     resolution: {integrity: sha512-odNSR2rTbHW++xMZSQKu/F6Syrd/sUvwDLPaMKktoOSPKmycHt/eWcuQQyACdtc43Iqeu4uQd7PCLsniqOVFrw==}
     engines: {node: ^14.15.0 || >=16.0.0}
     dependencies:
@@ -16958,7 +18983,7 @@ packages:
       '@lerna/run-topologically': 5.6.2
       '@lerna/temp-write': 5.6.2
       '@lerna/validation-error': 5.6.2
-      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.8.4
+      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.5.5
       chalk: 4.1.2
       dedent: 0.7.0
       load-json-file: 6.2.0
@@ -17829,12 +19854,12 @@ packages:
       - debug
     dev: true
 
-  /@nrwl/devkit/15.7.2_nx@15.7.2+typescript@4.8.4:
+  /@nrwl/devkit/15.7.2_nx@15.7.2+typescript@4.5.5:
     resolution: {integrity: sha512-HMGi7L6w2g4IrYwhb04snD8Zr24Z/gzau5i9WUNkwzrjeR1xAm0Cc9WRre221zaeohtK11gyBt7BerT1tgkNwA==}
     peerDependencies:
       nx: '>= 14.1 <= 16'
     dependencies:
-      '@phenomnomnominal/tsquery': 4.1.1_typescript@4.8.4
+      '@phenomnomnominal/tsquery': 4.1.1_typescript@4.5.5
       ejs: 3.1.8
       ignore: 5.2.4
       nx: 15.7.2
@@ -18436,13 +20461,13 @@ packages:
       node-gyp-build: 4.6.0
     dev: true
 
-  /@phenomnomnominal/tsquery/4.1.1_typescript@4.8.4:
+  /@phenomnomnominal/tsquery/4.1.1_typescript@4.5.5:
     resolution: {integrity: sha512-jjMmK1tnZbm1Jq5a7fBliM4gQwjxMU7TFoRNwIyzwlO+eHPRCFv/Nv+H/Gi1jc3WR7QURG8D5d0Tn12YGrUqBQ==}
     peerDependencies:
       typescript: ^3 || ^4
     dependencies:
       esquery: 1.4.2
-      typescript: 4.8.4
+      typescript: 4.5.5
     dev: true
 
   /@pmmmwh/react-refresh-webpack-plugin/0.5.9_qouehdyvslt6cyfzajsl2rhebu:
@@ -20111,6 +22136,12 @@ packages:
       regenerator-runtime: 0.13.11
       resolve-from: 5.0.0
     dev: true
+
+  /@swc/helpers/0.4.14:
+    resolution: {integrity: sha512-4C7nX/dvpzB7za4Ql9K81xK3HPxCpHMgwTZVyf+9JQ6VUbn9jjZVN7/Nkdz/Ugzs2CSjqnL/UPXroiVBVHUWUw==}
+    dependencies:
+      tslib: 2.5.0
+    dev: false
 
   /@szmarczak/http-timer/1.1.2:
     resolution: {integrity: sha512-XIB2XbzHTN6ieIjfIMV9hlVcfPU26s2vafYWQcZHWXHOxiaRZYEDKEwdl129Zyg50+foYV2jCgtrqSA6qNuNSA==}
@@ -22478,7 +24509,6 @@ packages:
   /async-each/1.0.3:
     resolution: {integrity: sha512-z/WhQ5FPySLdvREByI2vZiTWwCnF0moMJ1hK9YQwDTHKh6I7/uSckMetoRGb5UBZPC1z0jlw+n/XCgjeH7y1AQ==}
     dev: true
-    optional: true
 
   /async-hook-jl/1.7.6:
     resolution: {integrity: sha512-gFaHkFfSxTjvoxDMYqDuGHlcRyUuamF8s+ZTtJdDzqjws4mCt7v0vuV79/E2Wr2/riMQgtG4/yUtXWs1gZ7JMg==}
@@ -22511,6 +24541,18 @@ packages:
     resolution: {integrity: sha512-tfDb02Th6CE6pJUF2gjW5ZVjsgwlucVXOEQMvEX9JgSJMs9gAX+Nz3xRuJBKuUYjTSYORqvDBORdAQ3LU59g7Q==}
     dependencies:
       retry: 0.12.0
+    dev: true
+
+  /async/0.2.10:
+    resolution: {integrity: sha512-eAkdoKxU6/LkKDBzLpT+t6Ff5EtfSF4wx1WfJiPEEV7WNLnDaRXk0oVysiEPm262roaachGexwUv94WhSgN5TQ==}
+    dev: true
+
+  /async/0.2.9:
+    resolution: {integrity: sha512-OAtM6mexGteNKdU29wcUfRW+VuBr94A3hx9h9yzBnPaQAbKoW1ORd68XM4CCAOpdL5wlNFgO29hsY1TKv2vAKw==}
+    dev: true
+
+  /async/1.5.2:
+    resolution: {integrity: sha512-nSVgobk4rv61R9PUSDtYt7mPVB2olxNR5RWJcAsH676/ef11bUZwvu7+RGYrYauVdDPcO519v68wRhXQtxsV9w==}
     dev: true
 
   /async/2.6.4:
@@ -22602,6 +24644,14 @@ packages:
   /axe-core/3.3.0:
     resolution: {integrity: sha512-54XaTd2VB7A6iBnXMUG2LnBOI7aRbnrVxC5Tz+rVUwYl9MX/cIJc/Ll32YUoFIE/e9UKWMZoQenQu9dFrQyZCg==}
     engines: {node: '>=4'}
+    dev: true
+
+  /axios/0.21.4:
+    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
+    dependencies:
+      follow-redirects: 1.15.2
+    transitivePeerDependencies:
+      - debug
     dev: true
 
   /axios/0.21.4_debug@4.3.2:
@@ -23191,7 +25241,6 @@ packages:
     resolution: {integrity: sha512-Un7MIEDdUC5gNpcGDV97op1Ywk748MpHcFTHoYs6qnj1Z3j7I53VG3nwZhKzoBZmbdRNnb6WRdFlwl7tSDuZGw==}
     engines: {node: '>=0.10.0'}
     dev: true
-    optional: true
 
   /binary-extensions/2.2.0:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
@@ -23372,6 +25421,17 @@ packages:
     resolution: {integrity: sha512-ex5W9DoOQ/LUEU3PMdLs9ua/CYZl1678NUkKOdUSi8Aw5F1idieaiRURCBFJCwVcrD1J8Iy3vfWSloaMwO2qFg==}
     dependencies:
       wcwidth: 1.0.1
+    dev: true
+
+  /broadway/0.3.6:
+    resolution: {integrity: sha512-zivf7KWx8ftTEsXaKfmve6wdSfbDJ6NLXwhwWN4Q1z5+/nsHWALP952KV9jJbJGwjZHEMZABHyuKqEAh3wb2kw==}
+    engines: {node: '>= 0.6.4'}
+    dependencies:
+      cliff: 0.1.9
+      eventemitter2: 0.4.14
+      nconf: 0.6.9
+      utile: 0.2.1
+      winston: 0.8.0
     dev: true
 
   /brorand/1.1.0:
@@ -23769,6 +25829,10 @@ packages:
     resolution: {integrity: sha512-HpX65o1Hnr9HH25ojC1YGs7HCQLq0GCOibSaWER0eNpgJ/Z1MZv2mTc7+xh6WOPxbRVcmgbv4hGU+uSQ/2xFZQ==}
     dev: true
 
+  /caller/1.1.0:
+    resolution: {integrity: sha512-n+21IZC3j06YpCWaxmUy5AnVqhmCIM2bQtqQyy00HJlmStRt6kwDX5F9Z97pqwAB+G/tgSz6q/kUBbNyQzIubw==}
+    dev: true
+
   /callsites/3.1.0:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
@@ -24086,7 +26150,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-    optional: true
 
   /chokidar/3.5.3:
     resolution: {integrity: sha512-Dr3sfKRP6oTcjf2JmUmFJfeVMvXBdegxB0iVQ5eb2V10uFJUCAS8OByZdVAyVb8xXNz3GjjTgj9kLWsZTqE6kw==}
@@ -24312,6 +26375,24 @@ packages:
     engines: {node: '>= 10'}
     dev: true
 
+  /cliff/0.1.10:
+    resolution: {integrity: sha512-roZWcC2Cxo/kKjRXw7YUpVNtxJccbvcl7VzTjUYgLQk6Ot0R8bm2netbhSZYWWNrKlOO/7HD6GXHl8dtzE6SiQ==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      colors: 1.0.3
+      eyes: 0.1.8
+      winston: 0.8.3
+    dev: true
+
+  /cliff/0.1.9:
+    resolution: {integrity: sha512-2EECQDk23AtYy9WTUDS0UwdlyGJe62IatdR9dOfG/T3+VIoC6/SA5AnYJWGTjXjweTYL360HEGu4DchCeee4Ng==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      colors: 0.6.2
+      eyes: 0.1.8
+      winston: 0.8.3
+    dev: true
+
   /cliui/3.2.0:
     resolution: {integrity: sha512-0yayqDxWQbqk3ojkYqUKqaAQ6AfNKeKWRNA8kR0WXzAsdHpP4BIaOmMAG87JGuO6qcobyW4GjxHd9PmhEd+T9w==}
     dependencies:
@@ -24521,6 +26602,11 @@ packages:
   /colorette/2.0.19:
     resolution: {integrity: sha512-3tlv/dIP7FWvj3BsbHrGLJ6l/oKh1O3TcgBqMn+yyCagOxc23fyzDS6HypQbgxWbkpDnf52p1LuR4eWDQ/K9WQ==}
 
+  /colors/0.6.2:
+    resolution: {integrity: sha512-OsSVtHK8Ir8r3+Fxw/b4jS1ZLPXkV6ZxDRJQzeD7qo0SqMXWrHDM71DgYzPMHY8SFJ0Ao+nNU2p1MmwdzKqPrw==}
+    engines: {node: '>=0.1.90'}
+    dev: true
+
   /colors/1.0.3:
     resolution: {integrity: sha512-pFGrxThWcWQ2MsAz6RtgeWe4NK2kUE1WfsrvvlctdII745EW9I0yflqhe7++M5LEc7bV2c/9/5zc8sFcpL0Drw==}
     engines: {node: '>=0.1.90'}
@@ -24723,6 +26809,18 @@ packages:
   /configstore/3.1.5:
     resolution: {integrity: sha512-nlOhI4+fdzoK5xmJ+NY+1gZK56bwEaWZr8fYuXohZ9Vkc1o3a4T/R3M+yE/w7x/ZVJ1zF8c+oaOvF0dztdUgmA==}
     engines: {node: '>=4'}
+    dependencies:
+      dot-prop: 4.2.1
+      graceful-fs: 4.2.11
+      make-dir: 1.3.0
+      unique-string: 1.0.0
+      write-file-atomic: 2.4.3
+      xdg-basedir: 3.0.0
+    dev: true
+
+  /configstore/4.0.0:
+    resolution: {integrity: sha512-CmquAXFBocrzaSM8mtGPMM/HiWmyIpr4CcJl/rgY2uCObZ/S7cKU0silxslqJejl+t/T9HS8E0PUNQD81JGUEQ==}
+    engines: {node: '>=6'}
     dependencies:
       dot-prop: 4.2.1
       graceful-fs: 4.2.11
@@ -25443,6 +27541,11 @@ packages:
       fs-exists-sync: 0.1.0
     dev: true
 
+  /cycle/1.0.3:
+    resolution: {integrity: sha512-TVF6svNzeQCOpjCqsy0/CSy8VgObG3wXusJ73xW2GbG5rGx7lC8zxDSURicsXI2UsGdi2L0QNRCi745/wUDvsA==}
+    engines: {node: '>=0.4.0'}
+    dev: true
+
   /cyclist/1.0.1:
     resolution: {integrity: sha512-NJGVKPS81XejHcLhaLJS7plab0fK3slPh11mESeeDq2W4ZI5kUKK/LRRdVDvjJseojbPB7ZwjnyOybg3Igea/A==}
     dev: true
@@ -25998,6 +28101,11 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       path-type: 4.0.0
+
+  /director/1.2.7:
+    resolution: {integrity: sha512-Cuia7IBvmSanM+7ZmKYtP9hq+Du7n7mv2cpCt8GiEIkUDni0ecSlVCFJUL6HWwGzqLX03uA49xVOZOjwnabWmQ==}
+    engines: {node: '>= 0.8.0'}
+    dev: true
 
   /discontinuous-range/1.0.0:
     resolution: {integrity: sha512-c68LpLbO+7kP/b1Hr1qs8/BJ09F5khZGTxqxZuhzxpmwJKOgRFHJWIb9/KmqnqHhLdO55aOxFH/EGBvUQbL/RQ==}
@@ -27278,6 +29386,14 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
+  /eventemitter2/0.4.14:
+    resolution: {integrity: sha512-K7J4xq5xAD5jHsGM5ReWXRTFa3JRGofHiMcVgQ8PRwgWxzjHpMWCIzsmyf60+mh8KLsqYPcjUMa0AC4hd6lPyQ==}
+    dev: true
+
+  /eventemitter2/6.4.4:
+    resolution: {integrity: sha512-HLU3NDY6wARrLCEwyGKRBvuWYyvW6mHYv72SJJAH3iJN3a6eVUvkjFkcxah1bcTgGVBBrFdIopBJPhCQFMLyXw==}
+    dev: true
+
   /eventemitter3/3.1.2:
     resolution: {integrity: sha512-tvtQIeLVHjDkJYnzf2dgVMxfuSGJeM/7UCG17TT4EumTfNtF+0nebF/4zWOIkCreAbtNqhGEboB6BWrwqNaw4Q==}
 
@@ -27552,6 +29668,11 @@ packages:
   /extsprintf/1.3.0:
     resolution: {integrity: sha512-11Ndz7Nv+mvAC1j0ktTa7fAb0vLyGGX+rMHNBYQviQDGU0Hw7lhctJANqbPhu9nV9/izT/IntTgZ7Im/9LJs9g==}
     engines: {'0': node >=0.6.0}
+    dev: true
+
+  /eyes/0.1.8:
+    resolution: {integrity: sha512-GipyPsXO1anza0AOZdy69Im7hGFCNB7Y/NGjDlZGJ3GJJLtwNSb2vrzYrTYJRrRloVx7pl+bhUaTB8yiccPvFQ==}
+    engines: {node: '> 0.1.90'}
     dev: true
 
   /fake-indexeddb/3.1.4:
@@ -27962,6 +30083,17 @@ packages:
     resolution: {integrity: sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==}
     hasBin: true
 
+  /flatiron/0.4.3:
+    resolution: {integrity: sha512-+X3/0hl9in0FJPsPB5/xTpkxxMzDSoA4cyon46HtXhrfEbpqBvKxpR+HJGqMjKv4jcBmoLjEtTVIAADJjLjv8A==}
+    engines: {node: '>= 0.4.0'}
+    hasBin: true
+    dependencies:
+      broadway: 0.3.6
+      director: 1.2.7
+      optimist: 0.6.0
+      prompt: 0.2.14
+    dev: true
+
   /flatted/3.2.7:
     resolution: {integrity: sha512-5nqDSxl8nn5BSNxyR3n4I6eDmbolI6WT+QqR547RwxQapgjQBmtktdP+HTBb/a/zLsbzERTONyUB5pefh5TtjQ==}
     dev: true
@@ -28044,6 +30176,42 @@ packages:
 
   /forever-agent/0.6.1:
     resolution: {integrity: sha512-j0KLYPhm6zeac4lz3oJ3o65qvgQCcPubiyotZrXqEaG4hNagNYO8qdlUrX5vwqv9ohqeT/Z3j6+yW067yWWdUw==}
+    dev: true
+
+  /forever-monitor/3.0.3:
+    resolution: {integrity: sha512-7YGDo0UlbMy++6G3lzncWISDaT5CVp+yPVAkZ7FDFF0ec+0HKgBOWOhPGKpMF0hjcm3Ps/HbtrETrQLYREZ7YQ==}
+    engines: {node: '>=6'}
+    dependencies:
+      async: 1.5.2
+      chokidar: 2.1.8
+      eventemitter2: 6.4.4
+      minimatch: 3.1.2
+      ps-tree: 1.2.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /forever/4.0.3:
+    resolution: {integrity: sha512-N8aVtvB3bdh3lXPE9Rb+ErISSnJsAkv0GgZ0h6qtN8UXFgcSqJNMyBst9r3SBNk6+n4iBVaZso16mr1SUVvG3Q==}
+    engines: {node: '>=6'}
+    hasBin: true
+    dependencies:
+      async: 1.5.2
+      cliff: 0.1.10
+      clone: 2.1.2
+      colors: 0.6.2
+      configstore: 4.0.0
+      eventemitter2: 6.4.4
+      flatiron: 0.4.3
+      forever-monitor: 3.0.3
+      mkdirp: 0.5.6
+      nssocket: 0.6.0
+      object-assign: 4.1.1
+      prettyjson: 1.2.5
+      shush: 1.0.2
+      winston: 3.8.2
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /fork-ts-checker-webpack-plugin/4.1.6_lj5o444ts7emnvfl5zr6yybgz4:
@@ -29754,6 +31922,11 @@ packages:
     resolution: {integrity: sha512-ygGZLjmXfPHj+ZWh6LwbC37l43MhfztxetbFCoYTM2VjkIUpeHgSNn7QIyVFj7YQ1Wl9Cbw5sholVJPzWvC2MQ==}
     dev: false
 
+  /i/0.3.7:
+    resolution: {integrity: sha512-FYz4wlXgkQwIPqhzC5TdNMLSE5+GS1IIDJZY/1ZiEPCT2S3COUVZeT5OW4BmW4r5LHLQuOosSwsvnroG9GR59Q==}
+    engines: {node: '>=0.4'}
+    dev: true
+
   /iconv-lite/0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
     engines: {node: '>=0.10.0'}
@@ -30235,7 +32408,6 @@ packages:
     dependencies:
       binary-extensions: 1.13.1
     dev: true
-    optional: true
 
   /is-binary-path/2.1.0:
     resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
@@ -32037,8 +34209,8 @@ packages:
   /jwt-decode/3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
 
-  /keyborg/1.2.1:
-    resolution: {integrity: sha512-PXjcJb7d4ecncFnJgq1TzLBx38+LbTPDpbwNCXebMzp3xaZeG//7ydWpISouBVyjRtJFuIvpIryme4U2dYGUEg==}
+  /keyborg/2.0.0:
+    resolution: {integrity: sha512-RWY8nWrzRkwTQLaKyDtbTu5SOb5L4B20UzAsBHlQDFZqVY/+Mid0bQ7MVTC8vbOTrWY2xkkzj8gZF9Ua7re4xA==}
     dev: false
 
   /keyv/3.1.0:
@@ -32170,6 +34342,11 @@ packages:
       dotenv-expand: 5.1.0
     dev: true
 
+  /lazy/1.0.11:
+    resolution: {integrity: sha512-Y+CjUfLmIpoUCCRl0ub4smrYtGGr5AOa2AKOaWelGHOGz33X/Y/KizefGqbkwfz44+cnq/+9habclf8vOmu2LA==}
+    engines: {node: '>=0.2.0'}
+    dev: true
+
   /lcid/1.0.0:
     resolution: {integrity: sha512-YiGkH6EnGrDGqLMITnGjXtGmNtjoXw9SVUzcaos8RBi7Ps0VBylkq+vOcY9QE5poLasPCR849ucFUkl0UzUyOw==}
     engines: {node: '>=0.10.0'}
@@ -32202,15 +34379,15 @@ packages:
       '@lerna/init': 5.6.2
       '@lerna/link': 5.6.2
       '@lerna/list': 5.6.2
-      '@lerna/publish': 5.6.2_nx@15.7.2+typescript@4.8.4
+      '@lerna/publish': 5.6.2_nx@15.7.2+typescript@4.5.5
       '@lerna/run': 5.6.2
-      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.8.4
-      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.8.4
+      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.5.5
+      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.5.5
       import-local: 3.1.0
       inquirer: 8.2.5
       npmlog: 6.0.2
       nx: 15.7.2
-      typescript: 4.8.4
+      typescript: 4.5.5
     transitivePeerDependencies:
       - '@swc-node/register'
       - '@swc/core'
@@ -34010,6 +36187,20 @@ packages:
       secure-keys: 1.0.0
       yargs: 16.2.0
 
+  /nconf/0.6.9:
+    resolution: {integrity: sha512-MHiYHIc2igQsoI1v0IcVE4MVaV/+yIQtduOwUcQNoLd+pPgoKblWKbgU3itkhC0az5w2VMdQlQuAO+oi4qxtJg==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      async: 0.2.9
+      ini: 1.3.8
+      optimist: 0.6.0
+    dev: true
+
+  /ncp/0.4.2:
+    resolution: {integrity: sha512-PfGU8jYWdRl4FqJfCy0IzbkGyFHntfWygZg46nFk/dJD/XRrk2cj0SsKSX9n5u5gE0E0YfEpKWrEkfjnlZSTXA==}
+    hasBin: true
+    dev: true
+
   /nearley/2.20.1:
     resolution: {integrity: sha512-+Mc8UaAebFzgV+KpI5n7DasuuQCHA89dmwm7JXw3TV43ukfNQ9DnBH3Mdb2g/I4Fdxc26pwimBWvjIw0UAILSQ==}
     hasBin: true
@@ -34064,7 +36255,7 @@ packages:
       lodash: 4.17.21
       mkdirp: 0.5.6
       propagate: 1.0.0
-      qs: 6.11.0
+      qs: 6.11.1
       semver: 5.7.1
     transitivePeerDependencies:
       - supports-color
@@ -34655,6 +36846,14 @@ packages:
       gauge: 4.0.4
       set-blocking: 2.0.0
 
+  /nssocket/0.6.0:
+    resolution: {integrity: sha512-a9GSOIql5IqgWJR3F/JXG4KpJTA3Z53Cj0MeMvGpglytB1nxE4PdFNC0jINe27CS7cGivoynwc054EzCcT3M3w==}
+    engines: {node: '>= 0.10.x'}
+    dependencies:
+      eventemitter2: 0.4.14
+      lazy: 1.0.11
+    dev: true
+
   /nth-check/1.0.2:
     resolution: {integrity: sha512-WeBOdju8SnzPN5vTUJYxYUxLeXpCaVP5i5e0LF8fg7WORF2Wd7wFX/pk0tYZk7s8T+J7VLy0Da6J1+wCT0AtHg==}
     dependencies:
@@ -35028,6 +37227,13 @@ packages:
       '@wry/context': 0.7.0
       '@wry/trie': 0.3.2
     dev: false
+
+  /optimist/0.6.0:
+    resolution: {integrity: sha512-ubrZPyOU0AHpXkmwqfWolap+eHMwQ484AKivkf0ZGyysd6fUJZl7ow9iu5UNV1vCZv46HQ7EM83IC3NGJ820hg==}
+    dependencies:
+      minimist: 0.0.8
+      wordwrap: 0.0.3
+    dev: true
 
   /optionator/0.8.3:
     resolution: {integrity: sha512-+IW9pACdk3XWmmTXG8m3upGUJst5XRGzxMRjXzAuJ1XnIFNvfhjjIuYkDvysnPQ7qzqVzLt78BCruntqRhWQbA==}
@@ -35825,6 +38031,16 @@ packages:
       find-up: 2.1.0
     dev: true
 
+  /pkginfo/0.3.1:
+    resolution: {integrity: sha512-yO5feByMzAp96LtP58wvPKSbaKAi/1C4kV9XpTctr6EepnP6F33RBNOiVrdz9BrPA98U2BMFsTNHo44TWcbQ2A==}
+    engines: {node: '>= 0.4.0'}
+    dev: true
+
+  /pkginfo/0.4.1:
+    resolution: {integrity: sha512-8xCNE/aT/EXKenuMDZ+xTVwkT8gsoHN2z/Q29l80u0ppGEXVvsKRzNMbtKhg8LS8k1tJLAHHylf6p4VFmP6XUQ==}
+    engines: {node: '>= 0.4.0'}
+    dev: true
+
   /platform/1.3.6:
     resolution: {integrity: sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg==}
     dev: true
@@ -36146,7 +38362,6 @@ packages:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
     hasBin: true
-    dev: true
 
   /prettier/2.8.7:
     resolution: {integrity: sha512-yPngTo3aXUUmyuTjeTUT75txrf+aMh9FiD7q9ZE/i6r0bPb22g4FsE6Y338PQX1bmfy08i9QQCB7/rcUAVntfw==}
@@ -36333,6 +38548,17 @@ packages:
     resolution: {integrity: sha512-CcBGsRhhq466fsZVyHfptuKqon6eih0CqMsJE0kWIIjbpVNEyDoaKLELm2WVs//W/WXRBHip+6xhTExTkHUwtA==}
     dependencies:
       when: 3.7.8
+    dev: true
+
+  /prompt/0.2.14:
+    resolution: {integrity: sha512-jDK5yEbAakJmNm+260gZG1+PuzX3jT5Jy0VZAUGrrW9RQ1JEWEDEVNnhO70mL3+U5r6bSJo02xsE34wOS/LnrA==}
+    engines: {node: '>= 0.6.6'}
+    dependencies:
+      pkginfo: 0.4.1
+      read: 1.0.7
+      revalidator: 0.1.8
+      utile: 0.2.1
+      winston: 0.8.3
     dev: true
 
   /prompts-ncu/2.5.1:
@@ -36613,7 +38839,7 @@ packages:
   /puppeteer/1.20.0:
     resolution: {integrity: sha512-bt48RDBy2eIwZPrkgbcwHtb51mj2nKvHOPMaSH2IsWiv7lOG9k9zhaRzpDZafrk05ajMc3cu+lSQYYOfH2DkVQ==}
     engines: {node: '>=6.4.0'}
-    deprecated: < 19.2.0 is no longer supported
+    deprecated: < 19.4.0 is no longer supported
     requiresBuild: true
     dependencies:
       debug: 4.3.4
@@ -37333,7 +39559,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-    optional: true
 
   /readdirp/3.6.0:
     resolution: {integrity: sha512-hOS089on8RduqdbhvQ5Z37A0ESjsqz6qnRcffsMU3495FuTdqSm+7bhJ29JvIOsBDEEnan5DPu9t3To9VRlMzA==}
@@ -37873,6 +40098,11 @@ packages:
     resolution: {integrity: sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
 
+  /revalidator/0.1.8:
+    resolution: {integrity: sha512-xcBILK2pA9oh4SiinPEZfhP8HfrB/ha+a2fTMyl7Om2WjlDVrOQy99N2MXXlUHqGJz4qEu2duXxHJjDWuK/0xg==}
+    engines: {node: '>= 0.4.0'}
+    dev: true
+
   /rimraf/2.7.1:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
     hasBin: true
@@ -38404,6 +40634,13 @@ packages:
   /shimmer/1.2.1:
     resolution: {integrity: sha512-sQTKC1Re/rM6XyFM6fIAGHRPVGvyXfgzIDvzoq608vM+jeyVD0Tu1E6Np0Kc2zAIFWIj963V2800iF/9LPieQw==}
     dev: false
+
+  /shush/1.0.2:
+    resolution: {integrity: sha512-dA7YOFK3a2Ra2SVOucZIDi6qjllTEw3ri7eexmyxyJCYFpYZe0Ja4ZWUqX0NG6DKkC2rw1FEtsrCakERwGQR2g==}
+    dependencies:
+      caller: 1.1.0
+      strip-json-comments: 2.0.1
+    dev: true
 
   /side-channel/1.0.4:
     resolution: {integrity: sha512-q5XPytqFEIKHkGdiMIrY10mvLRvnQh42/+GoBlFW3b2LXLE2xxJpZFdm94we0BaoV3RwJyGqg5wS7epxTv0Zvw==}
@@ -39647,10 +41884,10 @@ packages:
       strip-ansi: 6.0.1
     dev: true
 
-  /tabster/3.0.7:
-    resolution: {integrity: sha512-xoZz02FUJfLR68fp5e6IZy7HvqBG3TTkj9YTGRYVrnLhr1MbSzCmzFGNIiQj4Em9ehdXsOZmUCj6NnKF3locpw==}
+  /tabster/4.2.0:
+    resolution: {integrity: sha512-xjQP6vOdGDnWBttO6PxjEWZXnzNIZHkq5wnzuqGtFd+ChGvyv8vplzcfXtbFpf51nRDJtC4T7zwwLYLUCEECvQ==}
     dependencies:
-      keyborg: 1.2.1
+      keyborg: 2.0.0
       tslib: 2.5.0
     dev: false
 
@@ -40226,19 +42463,19 @@ packages:
       code-block-writer: 11.0.3
     dev: true
 
-  /ts-node/7.0.1:
-    resolution: {integrity: sha512-BVwVbPJRspzNh2yfslyT1PSbl5uIk03EZlb493RKHN4qej/D06n1cEhjlOJG69oFsE7OT8XjpTUcYf6pKTLMhw==}
-    engines: {node: '>=4.2.0'}
+  /ts-node/8.10.2_typescript@4.5.5:
+    resolution: {integrity: sha512-ISJJGgkIpDdBhWVu3jufsWpK3Rzo7bdiIXJjQc0ynKxVOVcg2oIrf2H2cejminGrptVc6q6/uynAHNCuWGbpVA==}
+    engines: {node: '>=6.0.0'}
     hasBin: true
+    peerDependencies:
+      typescript: '>=2.7'
     dependencies:
-      arrify: 1.0.1
-      buffer-from: 1.1.2
-      diff: 3.5.0
+      arg: 4.1.3
+      diff: 4.0.2
       make-error: 1.3.6
-      minimist: 1.2.8
-      mkdirp: 0.5.6
       source-map-support: 0.5.21
-      yn: 2.0.0
+      typescript: 4.5.5
+      yn: 3.1.1
     dev: true
 
   /ts-node/9.1.1_typescript@4.5.5:
@@ -40831,7 +43068,6 @@ packages:
     resolution: {integrity: sha512-aZwGpamFO61g3OlfT7OQCHqhGnW43ieH9WZeP7QxN/G/jS4jfqUkZxoryvJgVPEcrl5NL/ggHsSmLMHuH64Lhg==}
     engines: {node: '>=4'}
     dev: true
-    optional: true
 
   /upath/2.0.1:
     resolution: {integrity: sha512-1uEe95xksV1O0CYKXo8vQvN1JEbtJp7lb7C5U9HMsIp6IVwntkH/oNUzyVNQSd4S1sYk2FpSSW44FqMc8qee5w==}
@@ -41001,6 +43237,20 @@ packages:
       react: 17.0.2
     dev: false
 
+  /use-disposable/1.0.1_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-5Sle1XEmK3lw3xyGqeIY7UKkiUgF+TxwUty7fTsqM5D5AxfQfo2ft+LY9xKCA+W5YbaBFbOkWfQsZY/y5JhInA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+    dependencies:
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
   /use-isomorphic-layout-effect/1.1.2_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-49L8yCO3iGT/ZF9QttjwLF/ZD9Iwto5LnH5LmEdk/6cFmXddqi2ulF0edxTwjj+7mqvpVVGQWvbXZdn32wRSHA==}
     peerDependencies:
@@ -41086,6 +43336,18 @@ packages:
 
   /utila/0.4.0:
     resolution: {integrity: sha512-Z0DbgELS9/L/75wZbro8xAnT50pBVFQZ+hUEueGDU5FN51YSCYM+jdxsfCiHjwNP/4LCDD0i/graKpeBnOXKRA==}
+    dev: true
+
+  /utile/0.2.1:
+    resolution: {integrity: sha512-ltfvuCJNa/JFOhKBBiQ9qDyyFwLstoMMO1ru0Yg/Mcl8dp1Z3IBaL7n+5dHpyma+d3lCogkgBQnWKtGxzNyqhg==}
+    engines: {node: '>= 0.6.4'}
+    dependencies:
+      async: 0.2.10
+      deep-equal: 2.2.0
+      i: 0.3.7
+      mkdirp: 0.5.6
+      ncp: 0.4.2
+      rimraf: 2.7.1
     dev: true
 
   /utils-merge/1.0.1:
@@ -41643,7 +43905,7 @@ packages:
       default-gateway: 6.0.3
       del: 6.1.1
       express: 4.18.2
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       html-entities: 2.3.3
       http-proxy-middleware: 2.0.6_debug@4.3.4
       ipaddr.js: 2.0.1
@@ -41660,7 +43922,7 @@ packages:
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_7grl5awahfdjaulopckzaywq64
       webpack-dev-middleware: 5.3.3_webpack@5.76.2
-      ws: 8.11.0
+      ws: 8.13.0
     transitivePeerDependencies:
       - '@types/express'
       - bufferutil
@@ -41689,7 +43951,7 @@ packages:
       default-gateway: 6.0.3
       del: 6.1.1
       express: 4.18.2
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       html-entities: 2.3.3
       http-proxy-middleware: 2.0.6_@types+express@4.17.14
       ipaddr.js: 2.0.1
@@ -41706,7 +43968,7 @@ packages:
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_7grl5awahfdjaulopckzaywq64
       webpack-dev-middleware: 5.3.3_webpack@5.76.2
-      ws: 8.11.0
+      ws: 8.13.0
     transitivePeerDependencies:
       - '@types/express'
       - bufferutil
@@ -41734,7 +43996,7 @@ packages:
       default-gateway: 6.0.3
       del: 6.1.1
       express: 4.18.2
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       html-entities: 2.3.3
       http-proxy-middleware: 2.0.6
       ipaddr.js: 2.0.1
@@ -41751,7 +44013,7 @@ packages:
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_7grl5awahfdjaulopckzaywq64
       webpack-dev-middleware: 5.3.3_webpack@5.76.2
-      ws: 8.11.0
+      ws: 8.13.0
     transitivePeerDependencies:
       - '@types/express'
       - bufferutil
@@ -42098,6 +44360,31 @@ packages:
       readable-stream: 3.6.2
       triple-beam: 1.3.0
 
+  /winston/0.8.0:
+    resolution: {integrity: sha512-BoFzn3FEOWlq+1rDbDrbD093E3IRqukS8DYiqtY4vblIFR+5MSGUstAU228MGJa0vodiqm/iU2c8OGw6Iorx1g==}
+    engines: {node: '>= 0.6.0'}
+    dependencies:
+      async: 0.2.10
+      colors: 0.6.2
+      cycle: 1.0.3
+      eyes: 0.1.8
+      pkginfo: 0.3.1
+      stack-trace: 0.0.10
+    dev: true
+
+  /winston/0.8.3:
+    resolution: {integrity: sha512-fPoamsHq8leJ62D1M9V/f15mjQ1UHe4+7j1wpAT3fqgA5JqhJkk4aIfPEjfMTI9x6ZTjaLOpMAjluLtmgO5b6g==}
+    engines: {node: '>= 0.6.0'}
+    dependencies:
+      async: 0.2.10
+      colors: 0.6.2
+      cycle: 1.0.3
+      eyes: 0.1.8
+      isstream: 0.1.2
+      pkginfo: 0.3.1
+      stack-trace: 0.0.10
+    dev: true
+
   /winston/3.8.2:
     resolution: {integrity: sha512-MsE1gRx1m5jdTTO9Ld/vND4krP2To+lgDoMEHGGa4HIlAUyXJtfc7CxQcGXVyz2IBpw5hbFkj2b/AtUdQwyRew==}
     engines: {node: '>= 12.0.0'}
@@ -42117,6 +44404,11 @@ packages:
   /word-wrap/1.2.3:
     resolution: {integrity: sha512-Hz/mrNwitNRh/HUAtM/VT/5VH+ygD6DV7mYKZAtHOrbs8U7lvPS6xf7EJKMF0uW1KJCl0H701g3ZGus+muE5vQ==}
     engines: {node: '>=0.10.0'}
+    dev: true
+
+  /wordwrap/0.0.3:
+    resolution: {integrity: sha512-1tMA907+V4QmxV7dbRvb4/8MaRALK6q9Abid3ndMYnbyo8piisCmeONVqVSXqQA3KaP4SLt5b7ud6E2sqP8TFw==}
+    engines: {node: '>=0.4.0'}
     dev: true
 
   /wordwrap/1.0.0:
@@ -42316,7 +44608,6 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
-    dev: true
 
   /ws/8.2.3:
     resolution: {integrity: sha512-wBuoj1BDpC6ZQ1B7DWQBYVLphPWkm8i9Y0/3YdHjHKHiohOJ1ws+3OccDWtH+PoC9DZD5WOTrJvNbWvjS6JWaA==}
@@ -42640,11 +44931,6 @@ packages:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    dev: true
-
-  /yn/2.0.0:
-    resolution: {integrity: sha512-uTv8J/wiWTgUTg+9vLTi//leUl5vDQS6uii/emeTb2ssY7vl6QWf2fFbIIGjnhjvbdKlU0ed7QPgY1htTC86jQ==}
-    engines: {node: '>=4'}
     dev: true
 
   /yn/3.1.1:

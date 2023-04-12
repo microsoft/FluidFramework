@@ -61,11 +61,11 @@ export class RunningSummarizer implements IDisposable {
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
-		raiseSummarizingError: (errorMessage: string) => void,
 		summaryCollection: SummaryCollection,
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		runtime: ISummarizerRuntime,
+		listenToDeltaManagerOps: boolean,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -74,11 +74,11 @@ export class RunningSummarizer implements IDisposable {
 			submitSummaryCallback,
 			refreshLatestSummaryAckCallback,
 			heuristicData,
-			raiseSummarizingError,
 			summaryCollection,
 			cancellationToken,
 			stopSummarizerCallback,
 			runtime,
+			listenToDeltaManagerOps,
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
@@ -146,6 +146,9 @@ export class RunningSummarizer implements IDisposable {
 	private totalSuccessfulAttempts = 0;
 	private initialized = false;
 
+	private readonly deltaManagerListener;
+	private readonly runtimeListener;
+
 	private constructor(
 		baseLogger: ITelemetryLogger,
 		private readonly summaryWatcher: IClientSummaryWatcher,
@@ -157,11 +160,11 @@ export class RunningSummarizer implements IDisposable {
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly heuristicData: ISummarizeHeuristicData,
-		private readonly raiseSummarizingError: (errorMessage: string) => void,
 		private readonly summaryCollection: SummaryCollection,
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		private readonly runtime: ISummarizerRuntime,
+		listenToDeltaManagerOps: boolean,
 	) {
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
@@ -198,13 +201,12 @@ export class RunningSummarizer implements IDisposable {
 		const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
-			// pre-0.58 error message: summaryAckWaitTimeout
-			this.raiseSummarizingError("Pending summary ack not received in time");
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
 			this.mc.logger.sendErrorEvent({
 				eventName: "SummaryAckWaitTimeout",
+				message: "Pending summary ack not received in time",
 				maxAckWaitTime,
 				referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
 				summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
@@ -227,7 +229,6 @@ export class RunningSummarizer implements IDisposable {
 			this.pendingAckTimer,
 			this.heuristicData,
 			this.submitSummaryCallback,
-			this.raiseSummarizingError,
 			() => {
 				this.totalSuccessfulAttempts++;
 			},
@@ -235,10 +236,23 @@ export class RunningSummarizer implements IDisposable {
 			this.mc.logger,
 		);
 
-		// Listen for ops
-		this.runtime.deltaManager.on("op", (op) => {
-			this.handleOp(op);
-		});
+		this.deltaManagerListener = (op) => {
+			this.handleOp(op, isRuntimeMessage(op));
+		};
+
+		this.runtimeListener = (op, runtimeMessage) => {
+			this.handleOp(op, runtimeMessage);
+		};
+
+		// Purpose of this argument is for back-compat
+		// It can be set to false once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
+		// Expectation when this is false is that the consumer of this class will call "handleOp" explicitly
+		// Tracked by AB#3883
+		if (listenToDeltaManagerOps) {
+			this.runtime.deltaManager.on("op", this.deltaManagerListener);
+		} else {
+			this.runtime.on?.("op", this.runtimeListener);
+		}
 	}
 
 	private async handleSummaryAck(): Promise<number> {
@@ -345,9 +359,8 @@ export class RunningSummarizer implements IDisposable {
 	}
 
 	public dispose(): void {
-		this.runtime.deltaManager.off("op", (op) => {
-			this.handleOp(op);
-		});
+		this.runtime.deltaManager.off("op", this.deltaManagerListener);
+		this.runtime.off?.("op", this.runtimeListener);
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
@@ -372,10 +385,10 @@ export class RunningSummarizer implements IDisposable {
 	/** We only want a single heuristic runner micro-task (will provide better optimized grouping of ops) */
 	private heuristicRunnerMicroTaskExists = false;
 
-	public handleOp(op: ISequencedDocumentMessage) {
+	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean) {
 		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
-		if (isRuntimeMessage(op)) {
+		if (runtimeMessage) {
 			this.heuristicData.numRuntimeOps++;
 		} else {
 			this.heuristicData.numNonRuntimeOps++;
@@ -386,7 +399,7 @@ export class RunningSummarizer implements IDisposable {
 		// Check for enqueued on-demand summaries; Intentionally do nothing otherwise
 		if (
 			this.initialized &&
-			this.opCanTriggerSummary(op) &&
+			this.opCanTriggerSummary(op, runtimeMessage) &&
 			!this.tryRunEnqueuedSummary() &&
 			!this.heuristicRunnerMicroTaskExists
 		) {
@@ -407,14 +420,14 @@ export class RunningSummarizer implements IDisposable {
 	 * @param op - op to check
 	 * @returns true if this op can trigger a summary
 	 */
-	private opCanTriggerSummary(op: ISequencedDocumentMessage): boolean {
+	private opCanTriggerSummary(op: ISequencedDocumentMessage, runtimeMessage: boolean): boolean {
 		switch (op.type) {
 			case MessageType.Summarize:
 			case MessageType.SummaryAck:
 			case MessageType.SummaryNack:
 				return false;
 			default:
-				return isRuntimeMessage(op) || this.nonRuntimeOpCanTriggerSummary();
+				return runtimeMessage || this.nonRuntimeOpCanTriggerSummary();
 		}
 	}
 

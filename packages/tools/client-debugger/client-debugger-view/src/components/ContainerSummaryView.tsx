@@ -8,13 +8,17 @@ import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
 import {
-	ContainerStateChangeMessage,
+	CloseContainer,
+	ConnectContainer,
+	ContainerStateChange,
 	ContainerStateMetadata,
+	DisconnectContainer,
+	GetContainerState,
 	handleIncomingMessage,
 	HasContainerId,
-	ISourcedDebuggerMessage,
 	IMessageRelay,
 	InboundHandlers,
+	ISourcedDevtoolsMessage,
 } from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -53,8 +57,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["CONTAINER_STATE_CHANGE"]: (untypedMessage) => {
-				const message = untypedMessage as ContainerStateChangeMessage;
+			[ContainerStateChange.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateChange.Message;
 				if (message.data.containerId === containerId) {
 					setContainerState(message.data.containerState);
 					return true;
@@ -66,7 +70,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		/**
 		 * Event handler for messages coming from the webpage.
 		 */
-		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: "ContainerSummaryView", // TODO: fix
 			});
@@ -81,12 +85,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		setContainerState(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage({
-			type: "GET_CONTAINER_STATE",
-			data: {
-				containerId,
-			},
-		});
+		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -98,32 +97,29 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 
 	function tryConnect(): void {
-		messageRelay.postMessage({
-			type: "CONNECT_CONTAINER",
-			data: {
+		messageRelay.postMessage(
+			ConnectContainer.createMessage({
 				containerId,
-			},
-		});
+			}),
+		);
 	}
 
 	function forceDisconnect(): void {
-		messageRelay.postMessage({
-			type: "DISCONNECT_CONTAINER",
-			data: {
+		messageRelay.postMessage(
+			DisconnectContainer.createMessage({
 				containerId,
 				/* TODO: Specify debugger reason here once it is supported */
-			},
-		});
+			}),
+		);
 	}
 
 	function closeContainer(): void {
-		messageRelay.postMessage({
-			type: "CLOSE_CONTAINER",
-			data: {
+		messageRelay.postMessage(
+			CloseContainer.createMessage({
 				containerId,
 				/* TODO: Specify debugger reason here once it is supported */
-			},
-		});
+			}),
+		);
 	}
 
 	// Build up status string

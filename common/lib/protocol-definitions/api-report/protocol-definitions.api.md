@@ -146,6 +146,7 @@ export interface ICreateBlobResponse {
 export interface IDocumentAttributes {
     minimumSequenceNumber: number;
     sequenceNumber: number;
+    // @deprecated
     term: number | undefined;
 }
 
@@ -297,6 +298,7 @@ export interface ISequencedDocumentMessage {
     referenceSequenceNumber: number;
     sequenceNumber: number;
     serverMetadata?: any;
+    // @deprecated
     term: number | undefined;
     timestamp: number;
     traces?: ITrace[];

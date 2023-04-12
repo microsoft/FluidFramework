@@ -153,12 +153,12 @@ describe("Summary Manager", () => {
 				},
 				async (options) => {},
 				new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
-				() => {},
 				summaryCollection,
 				neverCancelledSummaryToken,
 				// stopSummarizerCallback
 				(reason) => {},
 				mockRuntime as any as ISummarizerRuntime,
+				true /* listenToDeltaManagerOps */,
 			);
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);
