@@ -122,7 +122,7 @@ export {
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
-export { ForestRepairDataStore } from "./forestRepairDataStore";
+export { ForestRepairDataStore, repairDataStoreFactoryFromForest } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";

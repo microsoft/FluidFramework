@@ -46,6 +46,7 @@ import {
 	EditableTree,
 	Identifier,
 	SchemaAware,
+	repairDataStoreFactoryFromForest,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, TransactionResult } from "../util";
@@ -297,7 +298,7 @@ export class SharedTree
 			runtime,
 			attributes,
 			telemetryContextPrefix,
-			() => new ForestRepairDataStore(() => this.forest),
+			() => repairDataStoreFactoryFromForest(this.forest),
 		);
 
 		this.events = createEmitter<ViewEvents>();
@@ -341,7 +342,7 @@ export class SharedTree
 		const anchors = new AnchorSet();
 		const schema = this.storedSchema.inner.clone();
 		const forest = this.forest.clone(schema, anchors);
-		const branch = this.createBranch(anchors, () => new ForestRepairDataStore(() => forest));
+		const branch = this.createBranch(anchors, () => repairDataStoreFactoryFromForest(forest));
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -471,7 +472,7 @@ export class SharedTreeFork implements ISharedTreeFork {
 		const anchors = new AnchorSet();
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
-		const branch = this.branch.fork(anchors, () => new ForestRepairDataStore(() => forest));
+		const branch = this.branch.fork(anchors, () => repairDataStoreFactoryFromForest(forest));
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,

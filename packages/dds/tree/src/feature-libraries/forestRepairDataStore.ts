@@ -178,3 +178,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 		return valueMap.get(revision);
 	}
 }
+
+export function repairDataStoreFactoryFromForest(forest: IForestSubscription): RepairDataStore {
+	return new ForestRepairDataStore(() => forest);
+}
