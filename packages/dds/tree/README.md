@@ -314,7 +314,6 @@ flowchart
             undo-->change-family
             undo-->rebase
             undo-->repair
-            undo-->tree
         end
         core-->events-->util
         core-->id-compressor-->util
