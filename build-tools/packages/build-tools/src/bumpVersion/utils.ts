@@ -2,16 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
 import * as semver from "semver";
-
-import {
-	VersionBumpType,
-	VersionChangeType,
-	VersionChangeTypeExtended,
-	VersionScheme,
-	isVersionBumpType,
-} from "@fluid-tools/version-tools";
 
 import { execAsync } from "../common/utils";
 

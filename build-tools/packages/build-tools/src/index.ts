@@ -8,12 +8,8 @@ export {
 	getVersionsFromStrings,
 	getIsLatest,
 } from "./buildVersion/buildVersionLib";
-export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
-export { bumpRepo } from "./bumpVersion/bumpVersion";
 export { Context } from "./bumpVersion/context";
-export { createReleaseBump } from "./bumpVersion/createReleaseBump";
 export { GitRepo } from "./bumpVersion/gitRepo";
-export { releaseVersion } from "./bumpVersion/releaseVersion";
 export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
 export { FluidRepo, VersionDetails } from "./common/fluidRepo";
@@ -32,5 +28,4 @@ export {
 } from "./common/utils";
 export { Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";
-export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/lib";
 export { type PreviousVersionStyle } from "./common/fluidRepo";
