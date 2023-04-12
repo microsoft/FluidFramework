@@ -61,7 +61,7 @@ export interface IInterval {
 	): IInterval | undefined;
 	/**
 	 * @returns whether this interval overlaps with `b`.
-	 * Since intervals are inclusive, this includes cases where endpoints are equal.
+	 * Intervals are considered to overlap if their intersection is non-empty.
 	 */
 	overlaps(b: IInterval): boolean;
 	/**
