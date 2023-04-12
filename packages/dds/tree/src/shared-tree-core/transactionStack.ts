@@ -33,8 +33,8 @@ export class TransactionStack {
 	/**
 	 * @returns the revision that the outermost transaction will have once it is squashed, or `undefined` if no transaction is ongoing.
 	 */
-	public get outerRevision(): RevisionTag {
-		return this.stack[0]?.revision ?? fail("No transaction is currently in progress");
+	public get outerRevision(): RevisionTag | undefined {
+		return this.stack[0]?.revision;
 	}
 
 	/**
