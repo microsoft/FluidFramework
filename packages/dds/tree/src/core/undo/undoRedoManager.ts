@@ -47,7 +47,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	}
 
 	/**
-	 * Adds the provided commit to the undo commit tree. Also deals with commits created by calling {@link UndoRedoManager.undo}.
+	 * Adds the provided commit to the undo commit tree. 
+	 * Should be called for all commits on the relevant branch, including undo commits.
 	 */
 	public trackCommit(commit: GraphCommit<TChange>) {
 		if (commit.type === GraphCommitType.Undo) {
