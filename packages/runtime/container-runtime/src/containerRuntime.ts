@@ -492,6 +492,8 @@ interface IPendingRuntimeState {
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
 
+const restartErrorMessage = "Restarting summarizer instead of refreshing";
+
 const defaultFlushMode = FlushMode.TurnBased;
 
 // The actual limit is 1Mb (socket.io and Kafka limits)
@@ -2556,15 +2558,28 @@ export class ContainerRuntime
 		assert(this.outbox.isEmpty, 0x3d1 /* Can't trigger summary in the middle of a batch */);
 
 		let latestSnapshotVersionId: string | undefined;
+		let refreshLatestAckFailed: boolean = false;
 		if (refreshLatestAck) {
-			const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
-				ChildLogger.create(summaryNumberLogger, undefined, { all: { safeSummary: true } }),
-			);
-			const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
-			latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;
+			try {
+				const latestSnapshotInfo = await this.refreshLatestSummaryAckFromServer(
+					ChildLogger.create(summaryNumberLogger, undefined, {
+						all: { safeSummary: true },
+					}),
+				);
+				const latestSnapshotRefSeq = latestSnapshotInfo.latestSnapshotRefSeq;
+				latestSnapshotVersionId = latestSnapshotInfo.latestSnapshotVersionId;
 
-			// We might need to catch up to the latest summary's reference sequence number before pausing.
-			await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
+				// We might need to catch up to the latest summary's reference sequence number before pausing.
+				await this.waitForDeltaManagerToCatchup(latestSnapshotRefSeq, summaryNumberLogger);
+			} catch (error) {
+				if (
+					typeof error !== GenericError.name ||
+					(error as GenericError).message !== restartErrorMessage
+				) {
+					throw error;
+				}
+				refreshLatestAckFailed = true;
+			}
 		}
 
 		const shouldPauseInboundSignal =
@@ -2594,6 +2609,9 @@ export class ContainerRuntime
 				// like loss of connectivity for main (interactive) client.
 				if (options.cancellationToken.cancelled) {
 					return { continue: false, error: "disconnected" };
+				}
+				if (refreshLatestAckFailed) {
+					return { continue: false, error: restartErrorMessage };
 				}
 				// That said, we rely on submitSystemMessage() that today only works in connected state.
 				// So if we fail here, it either means that RunWhileConnectedCoordinator does not work correctly,
@@ -3220,12 +3238,14 @@ export class ContainerRuntime
 				this._summarizer !== undefined,
 				"Should be only summarizer refreshing from storage",
 			);
+			const error = new GenericError(restartErrorMessage);
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "RestartInsteadOfRefreshFromServerFetch",
-				message: "Restarting summarizer instead of refreshing",
+				...error,
 			});
 			this._summarizer.stop("latestSummaryStateStale");
 			this.closeFn();
+			throw error;
 		}
 
 		return PerformanceEvent.timedExecAsync(
