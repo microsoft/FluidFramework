@@ -39,7 +39,7 @@ export interface ICapabilities {
 export type ClientType = "client" | "summarizer";
 
 /**
- * TODO
+ * {@link IClient} connection / environment metadata.
  */
 export interface IClientDetails {
 	/**
