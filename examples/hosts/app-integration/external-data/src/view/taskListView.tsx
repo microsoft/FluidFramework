@@ -10,11 +10,15 @@ import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface"
 
 /**
  * {@link TaskRow} input props.
- * leader: the clientId of the current leader in the container, could be same as clientID. No leader if undefined.
- * clientID: the current user's clientId. If undefined, client is not connected to container
  */
 interface ITaskRowProps {
+	/*
+	 * The clientId of the current leader, or undefined if no client has claimed leadership.
+	 */
 	readonly leader: string | undefined;
+	/*
+	 * The current client's id. If undefined, the client is not connected to the service.
+	 */
 	readonly clientID: string | undefined;
 	readonly task: ITask;
 	readonly deleteDraftTask: () => void;
@@ -129,14 +133,20 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 
 /**
  * {@link TaskListView} input props.
- * claimLeadership(): function to update container's current leader
- * clientID: user's own clientID, undefined if not connected to container
- * leaderID: clientID of the container's leader. No leader if undefined.
  */
 export interface ITaskListViewProps {
 	readonly taskList: ITaskList;
+	/*
+	 * Function to update the container's current leader.
+	 */
 	readonly claimLeadership: () => void;
+	/*
+	 * The current client's id. If undefined, the client is not connected to the service.
+	 */
 	readonly clientID: string | undefined;
+	/*
+	 * The clientId of the current leader, or undefined if no client has claimed leadership.
+	 */
 	readonly leaderID: string | undefined;
 }
 

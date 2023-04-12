@@ -33,6 +33,9 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 		});
 	};
 
+	/**
+	 * {@inheritDoc IAppModel.getClientId}
+	 */
 	public getClientID(): string | undefined {
 		return this.runtime.clientId;
 	}
