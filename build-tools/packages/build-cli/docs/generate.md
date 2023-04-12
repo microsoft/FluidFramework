@@ -5,7 +5,6 @@ Generate commands are used to create/update code, docs, readmes, etc.
 
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
-* [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub generate readme`](#flub-generate-readme)
 
 ## `flub generate buildVersion`
@@ -54,23 +53,6 @@ FLAGS
 DESCRIPTION
   Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
   consumption
-```
-
-## `flub generate packageJson`
-
-Generate mono repo package json
-
-```
-USAGE
-  $ flub generate packageJson -g client|server|azure|build-tools [-v]
-
-FLAGS
-  -g, --releaseGroup=<option>  (required) Name of the release group
-                               <options: client|server|azure|build-tools>
-  -v, --verbose                Verbose logging.
-
-DESCRIPTION
-  Generate mono repo package json
 ```
 
 ## `flub generate readme`
