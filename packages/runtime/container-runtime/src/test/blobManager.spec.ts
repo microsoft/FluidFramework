@@ -61,7 +61,6 @@ class DedupeTTLStorage extends BaseMockBlobStorage {
 	}
 
 	public async createBlob(blob: ArrayBufferLike) {
-		console.log("createblob in expired storage");
 		const id = await gitHashFile(blob as any);
 		this._createBlobCount += 1;
 		this.blobs.set(id, blob);
@@ -417,6 +416,7 @@ describe("BlobManager", () => {
 	});
 
 	it("throw if expired", async () => {
+		let exceptionOccurred = false;
 		await runtime.attach();
 		runtime.useTTLStorage = true;
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
@@ -429,10 +429,14 @@ describe("BlobManager", () => {
 				"Trying to send BlobAttachOp of expired blob",
 				"Unexpected exception thrown",
 			);
+			exceptionOccurred = true;
 		});
+		assert.strictEqual(
+			exceptionOccurred,
+			true,
+			"call did not fail as expected.",
+		);
 		await runtime.processAll();
-
-		// const summaryData = validateSummary(runtime);
 	});
 
 	it("no reupload if not expired", async () => {
