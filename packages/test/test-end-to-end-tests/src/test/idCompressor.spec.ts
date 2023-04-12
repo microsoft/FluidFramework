@@ -2,7 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct";
 import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -11,24 +15,49 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { SharedCell } from "@fluidframework/cell";
 import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 import { SharedObjectCore } from "@fluidframework/shared-object-base";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { IContainer } from "@fluidframework/container-definitions";
 
-const mapId = "mapKey";
-const cellId = "cellKey";
-const testContainerConfig: ITestContainerConfig = {
-	registry: [
-		[mapId, SharedMap.getFactory()],
-		[cellId, SharedCell.getFactory()],
-	],
-	runtimeOptions: {
-		enableRuntimeIdCompressor: true,
-	},
-	fluidDataObjectType: DataObjectFactoryType.Test,
-};
+class TestDataObject extends DataObject {
+	public get _root() {
+		return this.root;
+	}
+
+	public get _context() {
+		return this.context;
+	}
+
+	private readonly sharedMapKey = "map";
+	public map!: SharedMap;
+
+	private readonly sharedCellKey = "sharedCell";
+	public sharedCell!: SharedCell;
+
+	protected async initializingFirstTime() {
+		const sharedMap = SharedMap.create(this.runtime);
+		this.root.set(this.sharedMapKey, sharedMap.handle);
+
+		const sharedCell = SharedCell.create(this.runtime);
+		this.root.set(this.sharedCellKey, sharedCell.handle);
+	}
+
+	protected async hasInitialized() {
+		const mapHandle = this.root.get<IFluidHandle<SharedMap>>(this.sharedMapKey);
+		assert(mapHandle !== undefined, "SharedMap not found");
+		this.map = await mapHandle.get();
+
+		const sharedCellHandle = this.root.get<IFluidHandle<SharedCell>>(this.sharedCellKey);
+		assert(sharedCellHandle !== undefined, "SharedCell not found");
+		this.sharedCell = await sharedCellHandle.get();
+	}
+}
 
 function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
@@ -36,55 +65,131 @@ function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 
 describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	beforeEach(() => {
-		provider = getTestObjectProvider();
-	});
+	const factory = new DataObjectFactory(
+		"TestDataObject",
+		TestDataObject,
+		[SharedMap.getFactory(), SharedCell.getFactory()],
+		[],
+	);
+
+	const runtimeOptions: IContainerRuntimeOptions = {
+		enableRuntimeIdCompressor: true
+	};
+
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+		factory,
+		[[factory.type, Promise.resolve(factory)]],
+		undefined,
+		undefined,
+		runtimeOptions,
+	);
+
+	let containerRuntime: ContainerRuntime;
+	let mainDataStore: TestDataObject;
 
 	let sharedMapContainer1: SharedMap;
-	let SharedCellContainer1: SharedCell;
 	let sharedMapContainer2: SharedMap;
 	let sharedMapContainer3: SharedMap;
 
+	let sharedCellContainer1: SharedCell;
+
+	const createContainer = async (): Promise<IContainer> =>
+		provider.createContainer(runtimeFactory);
+
 	beforeEach(async () => {
-		const container1 = await provider.makeTestContainer(testContainerConfig);
-		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-		sharedMapContainer1 = await dataObject1.getSharedObject<SharedMap>(mapId);
-		SharedCellContainer1 = await dataObject1.getSharedObject<SharedCell>(cellId);
+		provider = getTestObjectProvider();
+		const container1 = await createContainer();
+		mainDataStore = await requestFluidObject<TestDataObject>(container1, "/");
+		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+		sharedMapContainer1 = mainDataStore.map;
+		sharedCellContainer1 = mainDataStore.sharedCell;
 
-		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-		sharedMapContainer2 = await dataObject2.getSharedObject<SharedMap>(mapId);
+		const container2 = await provider.loadContainer(runtimeFactory);
+		const container2MainDataStore = await requestFluidObject<TestDataObject>(container2, "/");
+		sharedMapContainer2 = container2MainDataStore.map;
 
-		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
-		sharedMapContainer3 = await dataObject3.getSharedObject<SharedMap>(mapId);
+		const container3 = await provider.loadContainer(runtimeFactory);
+		const container3MainDataStore = await requestFluidObject<TestDataObject>(container3, "/");
+		sharedMapContainer3 = container3MainDataStore.map;
 
-		sharedMapContainer1.set("testKey1", "testValue");
+		await waitForContainerConnection(container1);
+		await waitForContainerConnection(container2);
+		await waitForContainerConnection(container3);
+	});
+
+	// IdCompressor is at container runtime level, which means that individual DDSs
+	// in the same container and different DataStores should have the same underlying compressor state
+	it("DDSs in different DataStores have the same compressor state", async () => {
+		const dataStore2 = await factory.createInstance(containerRuntime);
+		mainDataStore.map.set("DataStore2", dataStore2.handle);
 
 		await provider.ensureSynchronized();
+		// 1 Id in the map compressor in the main DataStore, 1 in the cell compressor
+		// in the same DataStore, 1 in the map of DataStore2 should result in 3 local
+		// Ids in the same compressor
+		const compressedIds: SessionSpaceCompressedId[] = []
+		compressedIds.push(getIdCompressor(sharedMapContainer1).generateCompressedId());
+		compressedIds.push(getIdCompressor(sharedCellContainer1).generateCompressedId());
+		compressedIds.push(getIdCompressor(dataStore2.map).generateCompressedId());
+
+		const decompressedIds: string[] = [];
+		compressedIds.forEach((id) => {
+			const decompressedId = getIdCompressor(sharedMapContainer1).decompress(id);
+
+			// All the compressors point to the same compressor and should all be able to 
+			// decompress the local Id to the same decompressed Id
+			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach((compressor) => {
+				assert.strictEqual(compressor.decompress(id), decompressedId);
+			});
+
+			decompressedIds.push(decompressedId);
+		});
+
+		sharedMapContainer1.set("key", "value");
+
+		await provider.ensureSynchronized();
+
+		// Everything should be pointing to the same compressor. All
+		// compressors should have allocated the same number of local Ids.
+		assert.strictEqual(
+			(getIdCompressor(sharedMapContainer1) as any).localIdCount,
+			(getIdCompressor(sharedCellContainer1) as any).localIdCount,
+		);
+
+		assert.strictEqual(
+			(getIdCompressor(sharedMapContainer1) as any).localIdCount,
+			(getIdCompressor(dataStore2.map) as any).localIdCount
+		);
+
+		decompressedIds.forEach((id, index) => {
+			// All compressors should be able to recompress the decompressed Ids
+			// back to the SessionSpace compressed Id: [-1, -2, -3]
+			const compressedId = getIdCompressor(sharedMapContainer1).recompress(id);
+			assert.strictEqual(compressedIds[index], compressedId);
+
+			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach((compressor) => {
+				assert.strictEqual(compressedId, compressor.recompress(id));
+			});
+		})
 	});
 
 	it("has no compressor if not enabled", async () => {
 		provider.reset();
 		const config: ITestContainerConfig = {
 			registry: [
-				[mapId, SharedMap.getFactory()],
-				[cellId, SharedCell.getFactory()],
+				["mapId", SharedMap.getFactory()],
+				["cellId", SharedCell.getFactory()],
 			],
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};
 		const container1 = await provider.makeTestContainer(config);
-		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-		const map = await dataObject1.getSharedObject<SharedMap>(mapId);
+		const dataObject = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const map = await dataObject.getSharedObject<SharedMap>("mapId");
 
 		assert(getIdCompressor(map) === undefined);
 	});
 
 	it("can normalize session space IDs to op space", async () => {
-		assert(getIdCompressor(sharedMapContainer1) !== undefined, "IdCompressor is undefined");
-		assert(getIdCompressor(sharedMapContainer2) !== undefined, "IdCompressor is undefined");
-		assert(getIdCompressor(sharedMapContainer3) !== undefined, "IdCompressor is undefined");
-
 		// None of these clusters will be ack'd yet and as such they will all
 		// generate local Ids. State of compressors afterwards should be:
 		// SharedMap1 Compressor: Local IdRange { first: -1, last: -512 }
@@ -163,7 +268,6 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	});
 
 	it("can normalize local op space IDs from a local session to session space", async () => {
-		assert(getIdCompressor(sharedMapContainer1) !== undefined, "IdCompressor is undefined");
 		const sessionSpaceId = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		sharedMapContainer1.set("key", "value");
 
@@ -227,30 +331,30 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 	it("eagerly allocates IDs across DDSs using the same compressor", async () => {
 		assert(getIdCompressor(sharedMapContainer1) !== undefined, "IdCompressor is undefined");
-		assert(getIdCompressor(SharedCellContainer1) !== undefined, "IdCompressor is undefined");
+		assert(getIdCompressor(sharedCellContainer1) !== undefined, "IdCompressor is undefined");
 
 		const localId1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		assert.strictEqual(localId1, -1);
-		const localId2 = getIdCompressor(SharedCellContainer1).generateCompressedId();
+		const localId2 = getIdCompressor(sharedCellContainer1).generateCompressedId();
 		assert.strictEqual(localId2, -2);
 
 		sharedMapContainer1.set("key", "value");
-		SharedCellContainer1.set("value");
+		sharedCellContainer1.set("value");
 		await provider.ensureSynchronized();
 
 		const finalId3 = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		assert.strictEqual(finalId3, 2);
-		const finalId4 = getIdCompressor(SharedCellContainer1).generateCompressedId();
+		const finalId4 = getIdCompressor(sharedCellContainer1).generateCompressedId();
 		assert.strictEqual(finalId4, 3);
 
 		sharedMapContainer1.set("key2", "value2");
-		SharedCellContainer1.set("value2");
+		sharedCellContainer1.set("value2");
 		await provider.ensureSynchronized();
 
 		const opSpaceId1 = getIdCompressor(sharedMapContainer1).normalizeToOpSpace(localId1);
-		const opSpaceId2 = getIdCompressor(SharedCellContainer1).normalizeToOpSpace(localId2);
+		const opSpaceId2 = getIdCompressor(sharedCellContainer1).normalizeToOpSpace(localId2);
 		const opSpaceId3 = getIdCompressor(sharedMapContainer1).normalizeToOpSpace(finalId3);
-		const opSpaceId4 = getIdCompressor(SharedCellContainer1).normalizeToOpSpace(finalId4);
+		const opSpaceId4 = getIdCompressor(sharedCellContainer1).normalizeToOpSpace(finalId4);
 
 		assert.strictEqual(opSpaceId1, 0);
 		assert.strictEqual(opSpaceId2, 1);
@@ -267,9 +371,9 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 			localId1,
 		);
 		assert.equal(
-			getIdCompressor(SharedCellContainer1).normalizeToSessionSpace(
+			getIdCompressor(sharedCellContainer1).normalizeToSessionSpace(
 				opSpaceId2,
-				getIdCompressor(SharedCellContainer1).localSessionId,
+				getIdCompressor(sharedCellContainer1).localSessionId,
 			),
 			localId2,
 		);
@@ -281,9 +385,9 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 			finalId3,
 		);
 		assert.equal(
-			getIdCompressor(SharedCellContainer1).normalizeToSessionSpace(
+			getIdCompressor(sharedCellContainer1).normalizeToSessionSpace(
 				opSpaceId4,
-				getIdCompressor(SharedCellContainer1).localSessionId,
+				getIdCompressor(sharedCellContainer1).localSessionId,
 			),
 			finalId4,
 		);
@@ -350,7 +454,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	// in the same container should have the same underlying compressor state
 	it("container with multiple DDSs has same compressor state", async () => {
 		assert(getIdCompressor(sharedMapContainer1) !== undefined, "IdCompressor is undefined");
-		assert(getIdCompressor(SharedCellContainer1) !== undefined, "IdCompressor is undefined");
+		assert(getIdCompressor(sharedCellContainer1) !== undefined, "IdCompressor is undefined");
 
 		// 2 IDs in the map compressor, 1 in the cell compressor
 		// should result in a local count of 3 IDs
@@ -360,7 +464,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		const sharedMapCompressedId2 = getIdCompressor(sharedMapContainer1).generateCompressedId();
 		const sharedMapDecompressedId2 =
 			getIdCompressor(sharedMapContainer1).decompress(sharedMapCompressedId2);
-		const sharedCellCompressedId = getIdCompressor(SharedCellContainer1).generateCompressedId();
+		const sharedCellCompressedId = getIdCompressor(sharedCellContainer1).generateCompressedId();
 		const sharedCellDecompressedId =
 			getIdCompressor(sharedMapContainer1).decompress(sharedCellCompressedId);
 
@@ -370,24 +474,24 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 		assert.strictEqual(
 			(getIdCompressor(sharedMapContainer1) as any).localIdCount,
-			(getIdCompressor(SharedCellContainer1) as any).localIdCount,
+			(getIdCompressor(sharedCellContainer1) as any).localIdCount,
 		);
 
 		await provider.ensureSynchronized();
 
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer1).recompress(sharedMapDecompressedId),
-			getIdCompressor(SharedCellContainer1).recompress(sharedMapDecompressedId),
+			getIdCompressor(sharedCellContainer1).recompress(sharedMapDecompressedId),
 		);
 
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer1).recompress(sharedMapDecompressedId2),
-			getIdCompressor(SharedCellContainer1).recompress(sharedMapDecompressedId2),
+			getIdCompressor(sharedCellContainer1).recompress(sharedMapDecompressedId2),
 		);
 
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer1).recompress(sharedCellDecompressedId),
-			getIdCompressor(SharedCellContainer1).recompress(sharedCellDecompressedId),
+			getIdCompressor(sharedCellContainer1).recompress(sharedCellDecompressedId),
 		);
 
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
