@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export {
-	getSimpleVersion,
-	getVersionsFromStrings,
-	getIsLatest,
-} from "./buildVersion/buildVersionLib";
 export { Context } from "./bumpVersion/context";
 export { GitRepo } from "./bumpVersion/gitRepo";
 export { exec, execNoError } from "./bumpVersion/utils";
