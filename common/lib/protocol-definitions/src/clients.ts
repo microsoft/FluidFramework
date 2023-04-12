@@ -67,9 +67,9 @@ export interface IClientDetails {
 	 * If the environment needs to specify multiple properties which gives info about the environment, then
 	 * it should be in particular format like: `prop1:val1;prop2:val2;prop3:val3`.
 	 *
-	 * @example TODO: an example here would be helpful, since the expected form is complex and the type is simply `string`
-	 *
 	 * Note: this is optional for backwards compatibility, but will be required in the future.
+	 *
+	 * @example TODO: an example here would be helpful, since the expected form is complex and the type is simply `string`
 	 */
 	environment?: string;
 
