@@ -38,6 +38,7 @@ import {
 	RepairDataStore,
 	ChangeFamilyEditor,
 	UndoRedoManager,
+	GraphCommitType,
 } from "../core";
 import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -229,11 +230,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param revision - The revision to associate with the change.
 	 * Defaults to a new, randomly generated, revision if not provided.
 	 */
-	protected applyChange(change: TChange, revision?: RevisionTag): void {
+	protected applyChange(change: TChange, type?: GraphCommitType, revision?: RevisionTag): void {
 		const commit = {
 			change,
 			revision: revision ?? mintRevisionTag(),
 			sessionId: this.editManager.localSessionId,
+			type,
 		};
 		const changeDelta = this.changeFamily.intoDelta(change);
 		this.undoRedoManager.trackRepairData(
@@ -337,8 +339,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					ancestor === localBranchHead,
 					0x598 /* Expected merging checkout branches to be related */,
 				);
-				for (const { change, revision } of changes) {
-					this.applyChange(change, revision);
+				for (const { change, type, revision } of changes) {
+					this.applyChange(change, type, revision);
 					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				}
 				return changeToForked;
@@ -347,8 +349,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
 			anchors,
-			this.undoRedoManager,
-			repairDataStoreFactory,
+			this.undoRedoManager.clone(repairDataStoreFactory)
 		);
 		return branch;
 	}

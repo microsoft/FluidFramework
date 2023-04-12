@@ -40,7 +40,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 > {
 	private head: GraphCommit<TChange>;
 	public readonly editor: TEditor;
-	private readonly undoRedoManager: UndoRedoManager<TChange, TEditor>;
 	private readonly transactions = new TransactionStack();
 	private readonly forks = new Set<SharedTreeBranch<TEditor, TChange>>();
 
@@ -60,22 +59,18 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		private readonly rebaser: Rebaser<TChange>,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
-		parentUndoRedoManager: UndoRedoManager<TChange, TEditor>,
-		repairDataStoreFactory: () => RepairDataStore,
+		private readonly undoRedoManager: UndoRedoManager<TChange, TEditor>,
 	) {
 		super();
 		this.head = getBaseBranch();
 		this.editor = this.changeFamily.buildEditor(
-			(change) => this.applyChange(change, false),
+			(change) => this.applyChange(change, undefined, false),
 			anchors,
 		);
-		this.undoRedoManager = parentUndoRedoManager.clone(
-			repairDataStoreFactory,
-			this.applyChange.bind(this),
-		);
+		this.undoRedoManager.initialize(this.applyChange.bind(this));
 	}
 
-	public applyChange(change: TChange, rebaseAnchors = true, type?: GraphCommitType): void {
+	public applyChange(change: TChange, type?: GraphCommitType, rebaseAnchors = true): void {
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
 			revision,
@@ -243,8 +238,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.rebaser,
 			this.changeFamily,
 			anchors,
-			this.undoRedoManager,
-			repairDataStoreFactory,
+			this.undoRedoManager.clone(repairDataStoreFactory),
 		);
 		this.forks.add(fork);
 		return fork;
