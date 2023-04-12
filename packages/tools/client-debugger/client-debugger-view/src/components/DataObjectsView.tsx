@@ -4,12 +4,11 @@
  */
 import React from "react";
 import {
-	RootDataVisualizationsMessageType,
-	GetRootDataVisualizationsMessageType,
+	RootDataVisualizations,
+	GetRootDataVisualizations,
 	handleIncomingMessage,
-	RootDataVisualizationsMessage,
 	HasContainerId,
-	IDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	InboundHandlers,
 	RootHandleNode,
 } from "@fluid-tools/client-debugger";
@@ -43,9 +42,8 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
 	React.useEffect(() => {
 		const inboundMessageHandlers: InboundHandlers = {
-			[RootDataVisualizationsMessageType]: (untypedMessage) => {
-				const message: RootDataVisualizationsMessage =
-					untypedMessage as RootDataVisualizationsMessage;
+			[RootDataVisualizations.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as RootDataVisualizations.Message;
 
 				if (message.data.containerId === containerId) {
 					setRootDataHandles(message.data.visualizations);
@@ -57,7 +55,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 			},
 		};
 
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
@@ -66,12 +64,11 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 		messageRelay.on("message", messageHandler);
 
 		// POST Request for DDS data in container.
-		messageRelay.postMessage({
-			type: GetRootDataVisualizationsMessageType,
-			data: {
+		messageRelay.postMessage(
+			GetRootDataVisualizations.createMessage({
 				containerId,
-			},
-		});
+			}),
+		);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);

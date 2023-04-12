@@ -3,29 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "chai";
+import { fail } from "assert";
 import React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-
 import {
-	IMessageRelay,
-	IMessageRelayEvents,
+	ISourcedDevtoolsMessage,
+	DataVisualization,
 	FluidObjectValueNode,
-	IDebuggerMessage, 
 	FluidObjectTreeNode,
-	DataVisualizationMessage, 
-	DataVisualizationMessageType, 
-	GetDataVisualizationMessageType,
 	UnknownObjectNode,
 	VisualNodeKind,
 } from "@fluid-tools/client-debugger";
 import { UnknownDataView, FluidTreeView } from "../components";
 import { MessageRelayContext } from "../MessageRelayContext";
 import { MockMessageRelay } from "./MockMessageRelay";
+
+const CONTAINERID = "test-container-id";
 
 describe("VisualTreeView component tests", () => {
 	// eslint-disable-next-line jest/expect-expect
@@ -34,34 +31,30 @@ describe("VisualTreeView component tests", () => {
 			nodeKind: VisualNodeKind.UnknownObjectNode,
 		};
 
-		render(<UnknownDataView containerId={"foo"} node={input} />);
+		render(<UnknownDataView containerId={CONTAINERID} node={input} />);
 
 		await screen.findByText(/Encountered an unrecognized kind of data object/); // Will throw if exact text not found
 	});
 
 	// eslint-disable-next-line jest/expect-expect
 	it("FluidObjectTreeView", async (): Promise<void> => {
-		const containerId = "test-container-id";
-
-		const messageRelay = new MockMessageRelay((untypedMessage: IDebuggerMessage) => {
-			switch (untypedMessage.type) {
-				case GetDataVisualizationMessageType: {
-					const message = untypedMessage as GetDataVisualizationMessage;
+		const messageRelay = new MockMessageRelay((message: ISourcedDevtoolsMessage) => {
+			switch (message.type) {
+				case DataVisualization.MessageType: {
 					const visualization: FluidObjectValueNode = {
 						fluidObjectId: message.data.fluidObjectId,
 						value: `test-value: ${message.data.fluidObjectId}`,
 						nodeKind: VisualNodeKind.FluidValueNode,
-					}
+					};
 					return {
-						
-						type: DataVisualizationMessageType,
+						...message,
 						data: {
-							containerId,
+							CONTAINERID,
 							visualization,
-						}
+						},
 					};
 				}
-				default: 
+				default:
 					fail("Received unexpected message.");
 			}
 		});
@@ -96,7 +89,7 @@ describe("VisualTreeView component tests", () => {
 					nodeKind: VisualNodeKind.TreeNode,
 				},
 				"test-handle": {
-					fluidObjectId: containerId, 
+					fluidObjectId: CONTAINERID,
 					typeMetadata: "Fluid Handle",
 					nodeKind: VisualNodeKind.FluidHandleNode,
 				},
@@ -106,11 +99,11 @@ describe("VisualTreeView component tests", () => {
 
 		render(
 			<MessageRelayContext.Provider value={messageRelay}>
-				<FluidTreeView containerId={containerId} node={treeData} />
-			</MessageRelayContext.Provider>
+				<FluidTreeView containerId={CONTAINERID} node={treeData} />,
+			</MessageRelayContext.Provider>,
 		);
 
-		// TODO: Loop the expand button for n-amount of times. 
+		// TODO: Loop the expand button for n-amount of times.
 		const expandButton = await screen.findByTestId("expand-button");
 		await userEvent.click(expandButton);
 

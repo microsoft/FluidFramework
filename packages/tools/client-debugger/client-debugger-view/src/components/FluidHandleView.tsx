@@ -4,14 +4,14 @@
  */
 import React from "react";
 import {
-	DataVisualizationMessageType,
-	IDebuggerMessage,
+	DataVisualization,
+	GetDataVisualization,
+	ISourcedDevtoolsMessage,
 	InboundHandlers,
 	handleIncomingMessage,
 	HasContainerId,
 	HasFluidObjectId,
 	FluidObjectNode,
-	DataVisualizationMessage,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Accordion } from "./utility-components/";
@@ -39,10 +39,8 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		 * Handlers for inbound message related to Data View.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[DataVisualizationMessageType]: (untypedMessage) => {
-				const message: DataVisualizationMessage =
-					untypedMessage as DataVisualizationMessage;
-
+			[DataVisualization.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as DataVisualization.Message;
 				if (
 					message.data.containerId === containerId &&
 					message.data.fluidObjectId === fluidObjectId
@@ -58,7 +56,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		/**
 		 * Event handler for messages coming from the Message Relay.
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
@@ -67,13 +65,12 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		messageRelay.on("message", messageHandler);
 
 		// POST Request for FluidObjectNode.
-		messageRelay.postMessage({
-			type: "GET_DATA_VISUALIZATION",
-			data: {
+		messageRelay.postMessage(
+			GetDataVisualization.createMessage({
 				containerId,
 				fluidObjectId,
-			},
-		});
+			}),
+		);
 	}, [containerId, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
