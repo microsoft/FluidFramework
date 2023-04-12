@@ -182,4 +182,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
 
-export { UndoRedoManager, UndoableCommitType } from "./undo";
+export { UndoRedoManager } from "./undo";
