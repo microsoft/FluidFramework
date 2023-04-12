@@ -19,7 +19,7 @@ import {
 import { jsonNumber } from "../../domains";
 import { brand } from "../../util";
 import { toJsonableTree } from "../utils";
-import { ISharedTree, schematizeView, SharedTreeFactory } from "../../shared-tree";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
 	LocalFieldKey,
@@ -201,7 +201,7 @@ describe("SharedTree benchmarks", () => {
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
 				before: () => {
 					tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-					const schematized = schematizeView(tree, {
+					const schematized = tree.schematize({
 						allowedSchemaModifications: AllowedUpdateType.None,
 						initialTree: makeJsDeepTree(numberOfNodes, 1),
 						schema: deepSchema,
@@ -227,7 +227,7 @@ describe("SharedTree benchmarks", () => {
 						numbers.push(index);
 						expected += index;
 					}
-					const schematized = schematizeView(tree, {
+					const schematized = tree.schematize({
 						allowedSchemaModifications: AllowedUpdateType.None,
 						initialTree: makeJsWideTreeWithEndValue(numberOfNodes, numberOfNodes - 1),
 						schema: wideSchema,
@@ -243,13 +243,13 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("EditableTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTree;
+			let tree: ISharedTreeView;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-					const schematized = schematizeView(tree, {
+					const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
+					tree = untypedTree.schematize({
 						allowedSchemaModifications: AllowedUpdateType.None,
 						initialTree: makeJsDeepTree(numberOfNodes, 1),
 						schema: deepSchema,
@@ -263,19 +263,19 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTree;
+			let tree: ISharedTreeView;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
 				title: `Wide Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+					const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 					const numbers = [];
 					for (let index = 0; index < numberOfNodes; index++) {
 						numbers.push(index);
 						expected += index;
 					}
-					const schematized = schematizeView(tree, {
+					tree = untypedTree.schematize({
 						allowedSchemaModifications: AllowedUpdateType.None,
 						initialTree: { foo: numbers },
 						schema: wideSchema,
@@ -292,14 +292,14 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Edit with editor", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTree;
+			let tree: ISharedTreeView;
 			let path: UpPath;
 			benchmark({
 				type: benchmarkType,
 				title: `Update value at leaf of ${numberOfNodes} deep tree`,
 				before: () => {
-					tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-					const schematized = schematizeView(tree, {
+					const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
+					tree = untypedTree.schematize({
 						allowedSchemaModifications: AllowedUpdateType.None,
 						initialTree: makeJsDeepTree(numberOfNodes, 1),
 						schema: deepSchema,
@@ -323,18 +323,18 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTree;
+			let tree: ISharedTreeView;
 			let path: UpPath;
 			benchmark({
 				type: benchmarkType,
 				title: `Update value at leaf of ${numberOfNodes} wide tree`,
 				before: () => {
-					tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+					const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 					const numbers = [];
 					for (let index = 0; index < numberOfNodes; index++) {
 						numbers.push(index);
 					}
-					const schematized = schematizeView(tree, {
+					tree = untypedTree.schematize({
 						allowedSchemaModifications: AllowedUpdateType.None,
 						initialTree: { foo: numbers },
 						schema: wideSchema,
@@ -387,7 +387,7 @@ function readWideTreeAsJSObject(tree: JSWideTree): { nodesCount: number; sum: nu
 	return { nodesCount: nodes.length, sum };
 }
 
-function readWideCursorTree(tree: ISharedTree): { nodesCount: number; sum: number } {
+function readWideCursorTree(tree: ISharedTreeView): { nodesCount: number; sum: number } {
 	let nodesCount = 0;
 	let sum = 0;
 	const readCursor = tree.forest.allocateCursor();
@@ -401,7 +401,7 @@ function readWideCursorTree(tree: ISharedTree): { nodesCount: number; sum: numbe
 	return { nodesCount, sum };
 }
 
-function readDeepCursorTree(tree: ISharedTree): { depth: number; value: number } {
+function readDeepCursorTree(tree: ISharedTreeView): { depth: number; value: number } {
 	let depth = 0;
 	let value = 0;
 	const readCursor = tree.forest.allocateCursor();
@@ -454,7 +454,7 @@ function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-function readWideEditableTree(tree: ISharedTree): { nodesCount: number; sum: number } {
+function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum: number } {
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.root;
@@ -469,7 +469,7 @@ function readWideEditableTree(tree: ISharedTree): { nodesCount: number; sum: num
 	return { nodesCount, sum };
 }
 
-function readDeepEditableTree(tree: ISharedTree): { depth: number; value: number } {
+function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: number } {
 	let depth = 0;
 	let currentNode: UnwrappedEditableField = tree.root;
 	while (isUnwrappedNode(currentNode)) {

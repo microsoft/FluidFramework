@@ -133,6 +133,7 @@ export class OpDecompressor {
 		 */
 		try {
 			if (
+				message.contents !== null &&
 				typeof message.contents === "object" &&
 				Object.keys(message.contents).length === 1 &&
 				message.contents?.packedContents !== undefined &&

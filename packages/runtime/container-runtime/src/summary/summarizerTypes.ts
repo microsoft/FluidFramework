@@ -78,6 +78,14 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	disposeFn?(): void;
 	closeFn(): void;
+	on?(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	): this;
+	off?(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	): this;
 }
 
 /** Options affecting summarize behavior. */
@@ -294,8 +302,13 @@ export type SummarizerStopReason =
 	| "notElectedClient"
 	/** Summarizer client was disconnected */
 	| "summarizerClientDisconnected"
-	/* running summarizer threw an exception */
-	| "summarizerException";
+	/** running summarizer threw an exception */
+	| "summarizerException"
+	/**
+	 * The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
+	 * first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
+	 */
+	| "latestSummaryStateStale";
 
 export interface ISummarizerEvents extends IEvent {
 	/**
@@ -398,6 +411,8 @@ export interface ISummarizeHeuristicData {
 
 	/** Mark that the last sent summary attempt has received an ack */
 	markLastAttemptAsSuccessful(): void;
+
+	opsSinceLastSummary: number;
 }
 
 /** Responsible for running heuristics determining when to summarize. */

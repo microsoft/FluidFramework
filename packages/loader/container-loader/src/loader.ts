@@ -273,7 +273,10 @@ export async function requestResolvedObjectFromContainer(
 		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
 	}
 
-	return container.request({
+	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
+	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
+
+	return router.request({
 		url: `${parsedUrl.path}${parsedUrl.query}`,
 		headers,
 	});

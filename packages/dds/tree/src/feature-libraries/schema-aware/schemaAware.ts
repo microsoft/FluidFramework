@@ -13,7 +13,7 @@ import {
 	ViewSchemaCollection,
 } from "../modular-schema";
 import { defaultSchemaPolicy } from "../defaultSchema";
-import { UntypedField, UntypedTreeCore } from "../unknownTree";
+import { UntypedField, UntypedTreeCore } from "../untypedTree";
 import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
 import { UntypedSequenceField } from "./partlyTyped";
 
@@ -206,10 +206,11 @@ export type TypeSetToTypedTrees<
  * Interface which strongly typed schema collections extend.
  * @alpha
  */
-export interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
+export interface TypedSchemaData extends ViewSchemaCollection {
+	readonly policy: FullSchemaPolicy;
 	// TODO: can we use a more specific type here?
-	treeSchemaObject: Record<string, any>; // LabeledTreeSchema
-	allTypes: readonly string[];
+	readonly treeSchemaObject: Record<string, any>; // LabeledTreeSchema
+	readonly allTypes: readonly string[];
 }
 
 /**

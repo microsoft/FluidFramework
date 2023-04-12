@@ -389,7 +389,8 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 
 // @alpha
 export interface EditableTreeEvents {
-    changing(): void;
+    changing(upPath: UpPath, value: Value): void;
+    subtreeChanging(upPath: UpPath): void;
 }
 
 // @alpha
@@ -498,9 +499,9 @@ export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
 
 // @alpha @sealed
 export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMultiplicity extends Multiplicity = Multiplicity> implements FieldKindSpecifier {
-    constructor(identifier: FieldKindIdentifier, multiplicity: TMultiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
+    constructor(identifier: FieldKindIdentifier, multiplicity: TMultiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
-    allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;
+    allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: TreeTypeSet, superset: FieldSchema): boolean;
     // (undocumented)
     readonly changeHandler: FieldChangeHandler<any, TEditor>;
     // (undocumented)
@@ -718,7 +719,6 @@ interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 declare namespace InternalTypes {
     export {
         TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
-        TypedSchemaData,
         TypedTree,
         CollectOptions,
         TypedFields,
@@ -771,7 +771,6 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 
 // @alpha
 export interface ISharedTreeFork extends ISharedTreeView {
-    isMerged(): boolean;
     merge(): void;
     pull(): void;
 }
@@ -787,6 +786,7 @@ export interface ISharedTreeView extends AnchorLocator {
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    schematize<TSchema extends SchemaAware.TypedSchemaData>(config: SchematizeConfiguration<TSchema>): ISharedTreeView;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start(): void;
@@ -1301,6 +1301,7 @@ declare namespace SchemaAware {
         typedSchemaData,
         TypedNode,
         TypedField,
+        TypedSchemaData,
         InternalTypes
     }
 }
@@ -1332,14 +1333,11 @@ export interface SchemaPolicy {
 }
 
 // @alpha
-export interface SchematizeConfiguration {
+export interface SchematizeConfiguration<TMap extends ViewSchemaCollection = ViewSchemaCollection> {
     readonly allowedSchemaModifications: AllowedUpdateType;
     readonly initialTree: ContextuallyTypedFieldData;
-    readonly schema: ViewSchemaCollection;
+    readonly schema: TMap;
 }
-
-// @alpha
-export function schematizeView(tree: ISharedTreeView, config: SchematizeConfiguration): ISharedTreeView;
 
 // @alpha (undocumented)
 export interface SequenceFieldEditBuilder {
@@ -1571,11 +1569,13 @@ declare namespace TypedSchema {
 export { TypedSchema }
 
 // @alpha
-interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
+interface TypedSchemaData extends ViewSchemaCollection {
     // (undocumented)
-    allTypes: readonly string[];
+    readonly allTypes: readonly string[];
     // (undocumented)
-    treeSchemaObject: Record<string, any>;
+    readonly policy: FullSchemaPolicy;
+    // (undocumented)
+    readonly treeSchemaObject: Record<string, any>;
 }
 
 // @alpha
@@ -1782,6 +1782,8 @@ export interface ViewEvents {
 export interface ViewSchemaCollection {
     // (undocumented)
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
+    // (undocumented)
+    readonly policy: SchemaPolicy;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
 }
