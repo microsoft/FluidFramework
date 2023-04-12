@@ -30,7 +30,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			revision?: RevisionTag,
 			type?: GraphCommitType,
 		) => void,
-		protected headUndoCommit?: UndoableCommit<TChange>,
+		protected headUndoableCommit?: UndoableCommit<TChange>,
 	) {}
 
 	/**
