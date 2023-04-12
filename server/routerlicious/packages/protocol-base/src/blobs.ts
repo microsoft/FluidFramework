@@ -35,6 +35,8 @@ export function getGitMode(value: SummaryObject): string {
 }
 
 /**
+ * @deprecated Please import the function from `@fluidframework/server-services-client`. It will be removed from server packages.
+ *
  * Take a summary object and returns its type.
  *
  * @param value - summary object
@@ -55,6 +57,9 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
+ * @deprecated Please import the function from `@fluidframework/server-services-client` if you want to use it in server packages.
+ * `@fluidframework/protocol-base` will be moved to client release group soon.
+ *
  * Build a tree hierarchy base on a flat tree
  *
  * @param flatTree - a flat tree
@@ -97,6 +102,8 @@ export function buildHierarchy(
 }
 
 /**
+ * Only used in client packages
+ *
  * Basic implementation of a blob ITreeEntry
  */
 export class BlobTreeEntry {
@@ -120,6 +127,8 @@ export class BlobTreeEntry {
 }
 
 /**
+ * Only used in client packages
+ *
  * Basic implementation of a tree ITreeEntry
  */
 export class TreeTreeEntry {
@@ -135,6 +144,8 @@ export class TreeTreeEntry {
 }
 
 /**
+ * Only used in client packages
+ *
  * Basic implementation of an attachment ITreeEntry
  */
 export class AttachmentTreeEntry {

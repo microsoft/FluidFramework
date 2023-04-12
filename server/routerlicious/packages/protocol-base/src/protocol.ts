@@ -43,6 +43,9 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
 	}
 }
 
+/**
+ * Only used in client packages
+ */
 export interface ILocalSequencedClient extends ISequencedClient {
 	/**
 	 * True if the client should have left the quorum, false otherwise
@@ -50,6 +53,9 @@ export interface ILocalSequencedClient extends ISequencedClient {
 	shouldHaveLeft?: boolean;
 }
 
+/**
+ * Only used in client packages
+ */
 export interface IProtocolHandler {
 	readonly quorum: IQuorum;
 	readonly attributes: IDocumentAttributes;
