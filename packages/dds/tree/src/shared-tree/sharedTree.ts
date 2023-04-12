@@ -127,7 +127,8 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly editor: IDefaultEditBuilder;
 
 	/**
-	 * Undoes the last edit made by the client within the current session.
+	 * Undoes the last completed transaction made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	undo(): void;
 

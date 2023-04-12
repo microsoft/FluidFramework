@@ -304,7 +304,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	/**
-	 * TODO: Return something, prob undo result
+	 * Undoes the last completed transaction made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	public undo(): void {
 		if (this.isTransacting()) {
