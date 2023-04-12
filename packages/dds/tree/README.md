@@ -313,7 +313,6 @@ flowchart
             forest-->tree
             undo-->change-family
             undo-->rebase
-            undo-->repair
         end
         core-->events-->util
         core-->id-compressor-->util
