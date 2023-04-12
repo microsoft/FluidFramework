@@ -198,13 +198,6 @@ export namespace DataVisualization {
     }
 }
 
-// @internal @sealed
-export class DevtoolsLogger extends TelemetryLogger {
-    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
-}
-
 // @public
 export enum DevtoolsFeature {
     Telemetry = "telemetry"
@@ -225,6 +218,13 @@ export namespace DevtoolsFeatures {
     export interface MessageData {
         features: DevtoolsFeatureFlags;
     }
+}
+
+// @public @sealed
+export class DevtoolsLogger extends TelemetryLogger {
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): DevtoolsLogger;
+    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
 }
 
 // @public
@@ -250,7 +250,7 @@ export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implem
     get disposed(): boolean;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    readonly logger: FluidDebuggerLogger | undefined;
+    readonly logger: DevtoolsLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
@@ -267,7 +267,7 @@ export interface FluidDevtoolsEvents extends IEvent {
 // @public
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
-    logger?: FluidDebuggerLogger;
+    logger?: DevtoolsLogger;
 }
 
 // @public
@@ -418,7 +418,7 @@ export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDi
     closeContainerDevtools(containerId: string): void;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    readonly logger: FluidDebuggerLogger | undefined;
+    readonly logger: DevtoolsLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
