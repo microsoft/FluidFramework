@@ -60,6 +60,11 @@ export class TransactionStack {
 	public pop(): {
 		startRevision: RevisionTag;
 		repairStore?: RepairDataStore;
+		/**
+		 * A RepairDataStore that is scoped to the entire transaction stack rather than each change within a transaction.
+		 * It should be able to capture repair data for the squashed change of the entire stack.
+		 * This is only returned when the transaction stack is empty after popping.
+		 */
 		commitRepairStore?: RepairDataStore;
 	} {
 		const currentTransaction = this.stack.pop();
