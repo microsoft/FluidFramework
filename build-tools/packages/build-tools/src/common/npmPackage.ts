@@ -101,8 +101,7 @@ export class Package {
 	}
 
 	public get name(): string {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.packageJson.name!;
+		return this.packageJson.name;
 	}
 
 	public get nameColored(): string {
@@ -110,8 +109,7 @@ export class Package {
 	}
 
 	public get version(): string {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.packageJson.version!;
+		return this.packageJson.version;
 	}
 
 	public get fluidBuildConfig(): IFluidBuildConfig | undefined {
@@ -146,12 +144,21 @@ export class Package {
 		return Object.keys(this.packageJson.dependencies ?? {});
 	}
 
-	public get combinedDependencies() {
+	public get combinedDependencies(): Generator<
+		{
+			name: string;
+			version: string;
+			dev: boolean;
+		},
+		void
+	> {
 		const it = function* (packageJson: PackageJson) {
 			for (const item in packageJson.dependencies) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				yield { name: item, version: packageJson.dependencies[item]!, dev: false };
 			}
 			for (const item in packageJson.devDependencies) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				yield { name: item, version: packageJson.devDependencies[item]!, dev: true };
 			}
 		};

@@ -50,7 +50,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			data.push([
 				pkg.monoRepo?.kind ?? "n/a",
 				pkg.name,
-				(pkg.packageJson.private ?? false) ? "-private-" : "",
+				pkg.packageJson.private ?? false ? "-private-" : "",
 				pkg.monoRepo ? pkg.monoRepo.version : pkg.version,
 			]);
 		}
