@@ -145,6 +145,7 @@ import {
 	ISummarizerRuntime,
 	IRefreshSummaryAckOptions,
 	RunWhileConnectedCoordinator,
+	restartErrorMessage,
 } from "./summary";
 import { formExponentialFn, Throttler } from "./throttler";
 import {
@@ -491,8 +492,6 @@ interface IPendingRuntimeState {
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
-
-const restartErrorMessage = "Restarting summarizer instead of refreshing";
 
 const defaultFlushMode = FlushMode.TurnBased;
 

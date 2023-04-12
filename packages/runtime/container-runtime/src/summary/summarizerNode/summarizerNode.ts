@@ -34,6 +34,7 @@ import {
 	PerformanceEvent,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
+import { restartErrorMessage } from "../summarizerTypes";
 import {
 	EscapedPath,
 	ICreateChildDetails,
@@ -371,10 +372,19 @@ export class SummarizerNode implements IRootSummarizerNode {
 					return { latestSummaryUpdated: false };
 				}
 
+				let latestSnapshotFetch: IFetchSnapshotResult;
+				try {
+					latestSnapshotFetch = await fetchLatestSnapshot();
+				} catch (error: any) {
+					if (error?.message === restartErrorMessage) {
+						return { latestSummaryUpdated: false };
+					}
+					throw error;
+				}
+
 				// Fetch the latest snapshot and refresh state from it. Note that we need to use the reference sequence number
 				// of the fetched snapshot and not the "summaryRefSeq" that was passed in.
-				const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } =
-					await fetchLatestSnapshot();
+				const { snapshotTree, snapshotRefSeq: fetchedSnapshotRefSeq } = latestSnapshotFetch;
 
 				// Possible re-entrancy. We may have updated latest summary state while fetching the snapshot. If the fetched
 				// snapshot is older than the latest tracked summary, ignore it.

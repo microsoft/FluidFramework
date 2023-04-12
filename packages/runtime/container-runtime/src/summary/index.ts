@@ -62,6 +62,7 @@ export {
 	ISummarizingWarning,
 	IUploadSummaryResult,
 	SummarizeResultPart,
+	restartErrorMessage,
 } from "./summarizerTypes";
 export {
 	IAckedSummary,

@@ -28,6 +28,7 @@ import {
 	ISummaryCancellationToken,
 	ISummarizeTelemetryProperties,
 	SummaryGeneratorTelemetry,
+	restartErrorMessage,
 } from "./summarizerTypes";
 import { IClientSummaryWatcher } from "./summaryCollection";
 
@@ -252,7 +253,9 @@ export class SummaryGenerator {
 			// If failure happened on upload, we may not yet realized that socket disconnected, so check
 			// offlineError too.
 			const category =
-				cancellationToken.cancelled || error?.errorType === DriverErrorType.offlineError
+				cancellationToken.cancelled ||
+				error === restartErrorMessage ||
+				error?.errorType === DriverErrorType.offlineError
 					? "generic"
 					: "error";
 

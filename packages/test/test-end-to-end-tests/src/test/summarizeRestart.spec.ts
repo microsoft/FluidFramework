@@ -41,7 +41,11 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName:
 					"fluid:telemetry:ContainerRuntime:RestartInsteadOfRefreshFromServerFetch",
-				message: "Restarting summarizer instead of refreshing",
+				category: "generic",
+			},
+			{
+				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
+				refreshLatestAck: true,
 			},
 		],
 		async () => {
@@ -73,7 +77,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName:
 					"fluid:telemetry:ContainerRuntime:RestartInsteadOfRefreshFromServerFetch",
-				message: "Restarting summarizer instead of refreshing",
+				category: "generic",
 			},
 		],
 		async () => {
@@ -120,7 +124,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{
 				eventName:
 					"fluid:telemetry:ContainerRuntime:RestartInsteadOfRefreshFromServerFetch",
-				message: "Restarting summarizer instead of refreshing",
+				category: "generic",
 			},
 		],
 		async () => {

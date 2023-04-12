@@ -34,6 +34,7 @@ import {
 	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
 	IRefreshSummaryAckOptions,
+	restartErrorMessage,
 } from "./summarizerTypes";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -656,7 +657,7 @@ export class RunningSummarizer implements IDisposable {
 					);
 					const result = await resultSummarize.receivedSummaryAckOrNack;
 
-					if (result.success) {
+					if (result.success || result.error === restartErrorMessage) {
 						return;
 					}
 					// Check for retryDelay that can come from summaryNack or upload summary flow.

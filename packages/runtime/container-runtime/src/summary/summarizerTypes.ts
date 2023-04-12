@@ -284,6 +284,8 @@ export type EnqueueSummarizeResult =
 			readonly overridden?: undefined;
 	  };
 
+export const restartErrorMessage = "Restarting summarizer instead of refreshing";
+
 export type SummarizerStopReason =
 	/** Summarizer client failed to summarize in all 3 consecutive attempts. */
 	| "failToSummarize"
