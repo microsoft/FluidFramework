@@ -93,7 +93,7 @@ describe.skip("Pong", () => {
 			return container;
 		}
 
-		it.only("Delta manager receives pong event", async () => {
+		it("Delta manager receives pong event", async () => {
 			const container = await createConnectedContainer();
 			let run = 0;
 			container.deltaManager.on("pong", () => {
