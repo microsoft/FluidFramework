@@ -14,8 +14,8 @@ export { Timer } from "./common/timer";
 export { VersionBag } from "./common/versionBag";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export {
-  exec,
-  execNoError,
+	exec,
+	execNoError,
 	execAsync,
 	execWithErrorAsync,
 	readJsonAsync,

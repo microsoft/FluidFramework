@@ -128,8 +128,8 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				version,
 				tags,
 				shouldIncludeInternalVersions,
-        true,
-      );
+				true,
+			);
 			this.log(`isLatest=${isLatest}`);
 			if (isRelease && isLatest === true) {
 				this.log(`##vso[task.setvariable variable=isLatest;isOutput=true]${isLatest}`);

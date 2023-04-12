@@ -24,7 +24,7 @@ export function getSimpleVersion(
 	// Azure DevOp passes in the build number as $(buildNum).$(buildAttempt).
 	// Get the Build number and ignore the attempt number.
 	const buildId = patch ? parseInt(argBuildNum.split(".")[0], 10) : undefined;
-  let version = fileVersion;
+	let version = fileVersion;
 	if (isInternalVersionScheme(version, /* allowPrereleases */ true)) {
 		if (patch) {
 			throw new Error(
@@ -160,7 +160,9 @@ function getVersions(prefix: TagPrefix) {
  * @returns An array of versions extracted from the provided tags.
  */
 function getVersionsFromStrings(prefix: TagPrefix, tags: string[]) {
-	const versions = tags.filter((v) => v.startsWith(`${prefix}_v`)).map((tag) => tag.substring(`${prefix}_v`.length));
+	const versions = tags
+		.filter((v) => v.startsWith(`${prefix}_v`))
+		.map((tag) => tag.substring(`${prefix}_v`.length));
 	semver.sort(versions);
 	return versions;
 }
