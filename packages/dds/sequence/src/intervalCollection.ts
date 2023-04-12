@@ -1956,6 +1956,13 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		}
 	}
 
+	/**
+	 * @deprecated - This functionality was useful when adding two intervals at the same start/end positions resulted
+	 * in a conflict. This is no longer the case (as of PR#6407), as interval collections support multiple intervals
+	 * at the same location and gives each interval a unique id.
+	 *
+	 * As such, the conflict resolver is never invoked and unnecessary. This API will be removed in an upcoming release.
+	 */
 	public addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");
