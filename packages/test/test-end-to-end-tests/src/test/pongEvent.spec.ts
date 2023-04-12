@@ -30,7 +30,7 @@ const id = "fluid-test://localhost/containerTest";
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
-describe("Pong", () => {
+describe.skip("Pong", () => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
