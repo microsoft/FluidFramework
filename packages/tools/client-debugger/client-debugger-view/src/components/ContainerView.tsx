@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { Stack } from "@fluentui/react";
-import { Tab, TabList, SelectTabData, SelectTabEvent, TabValue } from "@fluentui/react-components";
+import { Tab, TabList, SelectTabData, SelectTabEvent } from "@fluentui/react-components";
 import { HasContainerId } from "@fluid-tools/client-debugger";
-import * as React from "react";
+import React from "react";
 
 import { initializeFluentUiIcons } from "../InitializeIcons";
 import { AudienceView } from "./AudienceView";
@@ -141,10 +141,8 @@ export interface PanelViewSelectionMenuProps {
  */
 export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
 	const { updateSelection } = props;
-	const [selectedValue, setSelectedValue] = React.useState<TabValue>("none");
 
 	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {
-		setSelectedValue(data.value);
 		updateSelection(data.value as PanelView);
 	};
 	const options = Object.entries(PanelView).map(([_, flag]) => ({
@@ -152,14 +150,12 @@ export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): Reac
 	}));
 
 	return (
-		<div>
-			<TabList selectedValue={selectedValue} onTabSelect={onTabSelect}>
+			<TabList onTabSelect={onTabSelect}>
 				{options.map((option, index) => (
 					<Tab key={`tab${index + 1}`} value={option.key}>
 						{option.key}
 					</Tab>
 				))}
 			</TabList>
-		</div>
 	);
 }

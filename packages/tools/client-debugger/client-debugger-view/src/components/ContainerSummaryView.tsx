@@ -64,13 +64,13 @@ interface Item {
 	property: string;
 	value: string;
 }
-const items = [];
+
 /**
  * Debugger view displaying basic Container stats.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
 	const { containerId } = props;
-
+	const items = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
 
 	const [containerState, setContainerState] = React.useState<
@@ -80,7 +80,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
 		containerProperty: {
 			idealWidth: 80,
-			minWidth: 120,
+			minWidth: 80,
 		},
 	});
 
@@ -169,7 +169,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		}
 	}
 
-	function ContainerIDRow(label: string, id: string | undefined): React.ReactElement {
+	function DataRow(label: string, id: string | undefined): React.ReactElement {
 		return (
 			<TableRow>
 				<TableCell {...columnSizing_unstable.getTableCellProps("containerProperty")}>
@@ -230,10 +230,10 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		<Stack>
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>
-					{ContainerIDRow("Container", containerState.id)}
+					{DataRow("Container", containerState.id)}
 					{ContainerStatusRow()}
-					{ContainerIDRow("Client ID", containerState.clientId)}
-					{ContainerIDRow("Audience ID", containerState.audienceId)}
+					{DataRow("Client ID", containerState.clientId)}
+					{DataRow("Audience ID", containerState.audienceId)}
 				</Table>
 			</StackItem>
 			<StackItem align="end">
