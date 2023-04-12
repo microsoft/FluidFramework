@@ -11,7 +11,8 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
-	ISourcedDevtoolsMessage,
+	IDevtoolsMessage,
+	GetDataVisualization,
 	DataVisualization,
 	FluidObjectValueNode,
 	FluidObjectTreeNode,
@@ -38,16 +39,17 @@ describe("VisualTreeView component tests", () => {
 
 	// eslint-disable-next-line jest/expect-expect
 	it("FluidObjectTreeView", async (): Promise<void> => {
-		const messageRelay = new MockMessageRelay((message: ISourcedDevtoolsMessage) => {
-			switch (message.type) {
-				case DataVisualization.MessageType: {
+		const messageRelay = new MockMessageRelay((untypedMessage: IDevtoolsMessage) => {
+			switch (untypedMessage.type) {
+				case GetDataVisualization.MessageType: {
+					const message = untypedMessage as GetDataVisualization.Message;
 					const visualization: FluidObjectValueNode = {
 						fluidObjectId: message.data.fluidObjectId,
 						value: `test-value: ${message.data.fluidObjectId}`,
 						nodeKind: VisualNodeKind.FluidValueNode,
 					};
 					return {
-						...message,
+						type: DataVisualization.MessageType,
 						data: {
 							CONTAINERID,
 							visualization,

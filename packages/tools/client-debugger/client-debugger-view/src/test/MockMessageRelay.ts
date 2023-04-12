@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IMessageRelay,
-	IMessageRelayEvents,
-	ISourcedDevtoolsMessage,
-} from "@fluid-tools/client-debugger";
+import { IMessageRelay, IMessageRelayEvents, IDevtoolsMessage } from "@fluid-tools/client-debugger";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 /**
@@ -15,9 +11,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
  *
  * Will return `undefined` if no response message should be emitted.
  */
-export type MockRelayMessageHandler = (
-	message: ISourcedDevtoolsMessage,
-) => ISourcedDevtoolsMessage | undefined;
+export type MockRelayMessageHandler = (message: IDevtoolsMessage) => IDevtoolsMessage | undefined;
 
 /**
  * Mock implementation of {@link @fluid-tools/client-debugger#IMessageRelay} for use in tests.
@@ -26,7 +20,7 @@ export type MockRelayMessageHandler = (
  */
 export class MockMessageRelay
 	extends TypedEventEmitter<IMessageRelayEvents>
-	implements IMessageRelay<ISourcedDevtoolsMessage>
+	implements IMessageRelay
 {
 	public constructor(
 		/**
@@ -42,9 +36,7 @@ export class MockMessageRelay
 	 * {@inheritDoc IMessageRelay.postMessage}
 	 */
 
-	public postMessage<TPost extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage>(
-		message: TPost,
-	): void {
+	public postMessage(message: IDevtoolsMessage): void {
 		const response = this.messageHandler(message);
 		if (response !== undefined) {
 			this.emit("message", response);
