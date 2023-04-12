@@ -38,7 +38,7 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	readonly handleClaimLeadership: () => void;
 
 	/**
-	 * @returns string with current user's clientID.
+	 * Returns teh current user's clientID.
 	 */
 	readonly getClientID: () => string | undefined;
 
@@ -183,7 +183,7 @@ export interface IBaseDocumentEvents extends IEvent {
 	/**
 	 * Emitted when a client claims leadership.
 	 */
-	(event: "leaderChanged", listener: (newLeader) => void);
+	(event: "leaderChanged", listener: (newLeader: string) => void);
 }
 
 /**
@@ -211,12 +211,12 @@ export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	readonly getTaskList: (id: string) => ITaskList | undefined;
 
 	/**
-	 * Gets the client ID of the current leader
+	 * Gets the client ID of the current leader. Returns undefined when no client is leader.
 	 */
 	readonly getLeader: () => string | undefined;
 
 	/**
-	 * Updates the shared leader property to be the cu
+	 * Updates the shared leader property to be the current user's clientID
 	 * @param newLeader - the clientID of the user
 	 */
 	readonly setLeader: (newLeader: string) => void;

@@ -8,6 +8,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
 
+/**
+ * {@link TaskRow} input props.
+ * leader: the clientId of the current leader in the container, could be same as clientID. No leader if undefined.
+ * clientID: the current user's clientId. If undefined, client is not connected to container
+ */
 interface ITaskRowProps {
 	readonly leader: string | undefined;
 	readonly clientID: string | undefined;
@@ -42,7 +47,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			task.off("draftPriorityChanged", updatePriorityFromFluid);
 			task.off("changesAvailable", updateExternalSnapshotData);
 		};
-	}, [task, priorityRef, leader]);
+	}, [task, priorityRef]);
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
@@ -124,6 +129,9 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 
 /**
  * {@link TaskListView} input props.
+ * claimLeadership(): function to update container's current leader
+ * clientID: user's own clientID, undefined if not connected to container
+ * leaderID: clientID of the container's leader. No leader if undefined.
  */
 export interface ITaskListViewProps {
 	readonly taskList: ITaskList;
@@ -154,13 +162,6 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			});
 	}, [taskList]);
 
-	/**
-	 * Set the current client to be the leader of the Fluid document.
-	 */
-	const setLeaderShip = (): void => {
-		claimLeadership();
-	};
-
 	useEffect(() => {
 		const updateTasks = (): void => {
 			setTasks(taskList.getDraftTasks());
@@ -172,7 +173,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			taskList.off("draftTaskAdded", updateTasks);
 			taskList.off("draftTaskDeleted", updateTasks);
 		};
-	}, [taskList, leaderID]);
+	}, [taskList]);
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow
@@ -231,7 +232,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			</table>
 			<button onClick={handleSaveChanges}>Write to External Source</button>
 			<div style={{ margin: "10px 0" }}>
-				<button onClick={(): void => setLeaderShip()}>Claim Leadership</button>
+				<button onClick={(): void => claimLeadership()}>Claim Leadership</button>
 			</div>
 		</div>
 	);
