@@ -182,9 +182,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * TODO: Return something, prob undo result
 	 */
 	public undo(): void {
-		if (this.isTransacting()) {
-			fail("cannot undo ");
-		}
+		// TODO: allow this once it becomes possible to compose the changesets created by edits made
+		// within transactions and edits that represent completed transactions.
+		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
 
 		this.undoRedoManager.undo();
 	}
