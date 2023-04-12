@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "assert";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -73,7 +73,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	);
 
 	const runtimeOptions: IContainerRuntimeOptions = {
-		enableRuntimeIdCompressor: true
+		enableRuntimeIdCompressor: true,
 	};
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
@@ -127,7 +127,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		// 1 Id in the map compressor in the main DataStore, 1 in the cell compressor
 		// in the same DataStore, 1 in the map of DataStore2 should result in 3 local
 		// Ids in the same compressor
-		const compressedIds: SessionSpaceCompressedId[] = []
+		const compressedIds: SessionSpaceCompressedId[] = [];
 		compressedIds.push(getIdCompressor(sharedMapContainer1).generateCompressedId());
 		compressedIds.push(getIdCompressor(sharedCellContainer1).generateCompressedId());
 		compressedIds.push(getIdCompressor(dataStore2.map).generateCompressedId());
@@ -136,11 +136,13 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		compressedIds.forEach((id) => {
 			const decompressedId = getIdCompressor(sharedMapContainer1).decompress(id);
 
-			// All the compressors point to the same compressor and should all be able to 
+			// All the compressors point to the same compressor and should all be able to
 			// decompress the local Id to the same decompressed Id
-			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach((compressor) => {
-				assert.strictEqual(compressor.decompress(id), decompressedId);
-			});
+			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach(
+				(compressor) => {
+					assert.strictEqual(compressor.decompress(id), decompressedId);
+				},
+			);
 
 			decompressedIds.push(decompressedId);
 		});
@@ -158,7 +160,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 		assert.strictEqual(
 			(getIdCompressor(sharedMapContainer1) as any).localIdCount,
-			(getIdCompressor(dataStore2.map) as any).localIdCount
+			(getIdCompressor(dataStore2.map) as any).localIdCount,
 		);
 
 		decompressedIds.forEach((id, index) => {
@@ -167,10 +169,12 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 			const compressedId = getIdCompressor(sharedMapContainer1).recompress(id);
 			assert.strictEqual(compressedIds[index], compressedId);
 
-			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach((compressor) => {
-				assert.strictEqual(compressedId, compressor.recompress(id));
-			});
-		})
+			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach(
+				(compressor) => {
+					assert.strictEqual(compressedId, compressor.recompress(id));
+				},
+			);
+		});
 	});
 
 	it("has no compressor if not enabled", async () => {
