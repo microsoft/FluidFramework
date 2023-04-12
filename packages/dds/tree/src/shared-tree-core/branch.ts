@@ -15,7 +15,6 @@ import {
 	mintRevisionTag,
 	Rebaser,
 	RepairDataStore,
-	RevisionTag,
 	UndoRedoManager,
 } from "../core";
 import { EventEmitter } from "../events";
@@ -79,7 +78,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		const delta = this.changeFamily.intoDelta(change);
-		this.undoRedoManager.trackRepairData(delta, this.transactions.outerRevision ?? revision);
 		this.transactions.repairStore?.capture(delta, this.head.revision);
 
 		// If this is not part of a transaction, add it to the undo commit tree
@@ -100,13 +98,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return this.head;
 	}
 
-	public startTransaction(repairStore?: RepairDataStore): void {
-		this.transactions.push(this.head.revision, mintRevisionTag(), repairStore);
+	public startTransaction(
+		repairStore?: RepairDataStore,
+		commitRepairStore?: RepairDataStore,
+	): void {
+		this.transactions.push(this.head.revision, repairStore, commitRepairStore);
 		this.editor.enterTransaction();
 	}
 
 	public commitTransaction(): TransactionResult.Commit {
-		const [startCommit, commits, revision] = this.popTransaction();
+		const [startCommit, commits, _repairStore, commitRepairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 
 		// Anonymize the commits from this transaction by stripping their revision tags.
@@ -117,14 +118,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// Squash the changes and make the squash commit the new head of this branch
 			const change = this.changeFamily.rebaser.compose(anonymousCommits);
 			this.head = mintCommit(startCommit, {
-				revision,
+				revision: mintRevisionTag(),
 				sessionId: this.sessionId,
 				change,
 			});
 
 			// If this transaction is not nested, add it to the undo commit tree
 			if (this.transactions.size === 0) {
-				this.undoRedoManager.trackCommit(this.head);
+				commitRepairStore?.capture(this.changeFamily.intoDelta(change), this.head.revision);
+				this.undoRedoManager.trackCommit(this.head, commitRepairStore);
 			}
 
 			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
@@ -138,7 +140,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	public abortTransaction(): TransactionResult.Abort {
-		const [startCommit, commits, _revision, repairStore] = this.popTransaction();
+		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
 		for (let i = commits.length - 1; i >= 0; i--) {
@@ -156,17 +158,17 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private popTransaction(): [
 		GraphCommit<TChange>,
 		GraphCommit<TChange>[],
-		RevisionTag,
+		RepairDataStore | undefined,
 		RepairDataStore | undefined,
 	] {
-		const { startRevision, revision, repairStore } = this.transactions.pop();
+		const { startRevision, repairStore, commitRepairStore } = this.transactions.pop();
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,
 		);
-		return [startCommit, commits, revision, repairStore];
+		return [startCommit, commits, repairStore, commitRepairStore];
 	}
 
 	/**

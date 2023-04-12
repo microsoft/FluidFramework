@@ -50,11 +50,11 @@ describe("SharedTreeCore", () => {
 					[],
 					defaultChangeFamily,
 					new AnchorSet(),
+					() => new MockRepairDataStore(),
 					"ChangeEventSharedTree",
 					runtime,
 					attributes,
 					"",
-					() => new MockRepairDataStore(),
 				);
 			}
 
@@ -254,11 +254,11 @@ describe("SharedTreeCore", () => {
 			indexes,
 			defaultChangeFamily,
 			new AnchorSet(),
+			() => new MockRepairDataStore(),
 			"TestSharedTree",
 			runtime,
 			attributes,
 			"",
-			() => new MockRepairDataStore(),
 		);
 	}
 

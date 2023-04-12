@@ -12,9 +12,14 @@ import { fail } from "../util";
 export class TransactionStack {
 	private readonly stack: {
 		startRevision: RevisionTag;
-		revision: RevisionTag;
 		repairStore?: RepairDataStore;
 	}[] = [];
+
+	/**
+	 * A RepairDataStore that is scoped to the entire transaction stack rather than each change within a transaction.
+	 * It should be able to capture repair data for the squashed change of the entire stack.
+	 */
+	public commitRepairStore: RepairDataStore | undefined;
 
 	/**
 	 * The number of transactions currently ongoing.
@@ -31,23 +36,21 @@ export class TransactionStack {
 	}
 
 	/**
-	 * @returns the revision that the outermost transaction will have once it is squashed, or `undefined` if no transaction is ongoing.
-	 */
-	public get outerRevision(): RevisionTag | undefined {
-		return this.stack[0]?.revision;
-	}
-
-	/**
 	 * Pushes a new transaction onto the stack. That transaction becomes the current transaction.
 	 * @param startRevision - the revision of the latest commit when this transaction begins
 	 * @param repairStore - an optional repair data store for helping with undo or rollback operations
+	 * @param commitRepairStore - an optional repair data store that is scoped to the entire transaction stack,
+	 * is only used if this is the first transaction in the stack.
 	 */
 	public push(
 		startRevision: RevisionTag,
-		revision: RevisionTag,
 		repairStore?: RepairDataStore,
+		commitRepairStore?: RepairDataStore,
 	): void {
-		this.stack.push({ startRevision, revision, repairStore });
+		if (this.stack.length === 0) {
+			this.commitRepairStore = commitRepairStore;
+		}
+		this.stack.push({ startRevision, repairStore });
 	}
 
 	/**
@@ -56,9 +59,17 @@ export class TransactionStack {
 	 */
 	public pop(): {
 		startRevision: RevisionTag;
-		revision: RevisionTag;
 		repairStore?: RepairDataStore;
+		commitRepairStore?: RepairDataStore;
 	} {
-		return this.stack.pop() ?? fail("No transaction is currently in progress");
+		const currentTransaction = this.stack.pop();
+		let commitRepairStore: RepairDataStore | undefined;
+		if (this.stack.length === 0) {
+			commitRepairStore = this.commitRepairStore;
+			this.commitRepairStore = undefined;
+		}
+		return currentTransaction !== undefined
+			? { ...currentTransaction, commitRepairStore }
+			: fail("No transaction is currently in progress");
 	}
 }

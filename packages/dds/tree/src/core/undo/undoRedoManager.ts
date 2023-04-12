@@ -4,16 +4,13 @@
  */
 
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
-import { GraphCommit, GraphCommitType, RevisionTag, tagChange } from "../rebase";
+import { GraphCommit, GraphCommitType, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
-import { Delta } from "../tree";
 
 /**
  * Manages the undo commit tree and repair data associated with undoable commits.
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
-	private pendingRepairData?: RepairDataStore;
-
 	/**
 	 * @param repairDataStoryFactory - Factory function for creating {@link RepairDataStore}s to create and store repair
 	 * data for {@link UndoableCommit}s.
@@ -27,35 +24,22 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	) {}
 
 	/**
-	 * Used to capture repair data from changes within a transaction. The repair data will be
-	 * add to the same {@link RepairDataStore} until {@link UndoRedoManager.trackCommit} is called.
-	 * @param startRevision - the revision of the first commit in the transaction
-	 */
-	public trackRepairData(change: Delta.Root, startRevision: RevisionTag) {
-		if (this.pendingRepairData === undefined) {
-			this.pendingRepairData = this.repairDataStoryFactory();
-		}
-
-		this.pendingRepairData.capture(change, startRevision);
-	}
-
-	/**
 	 * Adds the provided commit to the undo commit tree.
 	 * Should be called for all commits on the relevant branch, including undo commits.
 	 */
-	public trackCommit(commit: GraphCommit<TChange>) {
+	public trackCommit(commit: GraphCommit<TChange>, repairDataStore?: RepairDataStore): void {
 		if (commit.type === GraphCommitType.Undo) {
 			// Currently no need to handle undo commits
 			return;
 		}
 
 		const parent = this.headUndoableCommit;
-		const repairData = this.pendingRepairData ?? this.repairDataStoryFactory();
-		if (this.pendingRepairData === undefined) {
+		// If repair data was not provided, create a new repair data store and capture the repair data for the commit
+		const repairData = repairDataStore ?? this.repairDataStoryFactory();
+		if (repairDataStore === undefined) {
 			repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
-		} else {
-			this.pendingRepairData = undefined;
 		}
+
 		this.headUndoableCommit = {
 			commit,
 			parent,

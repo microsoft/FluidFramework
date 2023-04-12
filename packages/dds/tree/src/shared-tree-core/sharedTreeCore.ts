@@ -132,12 +132,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
+		private readonly repairDataStoreFactory: () => RepairDataStore,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
-		repairDataStoreFactory: () => RepairDataStore,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
@@ -197,10 +197,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		await Promise.all(loadSummaries);
 	}
 
-	private submitCommit(commit: Commit<TChange>): void {
+	private submitCommit(commit: Commit<TChange>, repairData?: RepairDataStore): void {
 		// Nested transactions are tracked as part of the outermost transaction
 		if (this.transactions.size === 0) {
-			this.undoRedoManager.trackCommit(commit);
+			this.undoRedoManager.trackCommit(commit, repairData);
 		}
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -234,14 +234,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			type,
 		};
 		const changeDelta = this.changeFamily.intoDelta(change);
-		this.undoRedoManager.trackRepairData(
-			changeDelta,
-			this.transactions.outerRevision ?? commit.revision,
-		);
 		this.transactions.repairStore?.capture(changeDelta, commit.revision);
-		const delta = this.editManager.addLocalChange(commit.revision, change, false);
+
+		// If this commit will be submitted, repair data must be captured before the change is applied.
+		let repairData: RepairDataStore | undefined;
 		if (this.transactions.size === 0) {
-			this.submitCommit(commit);
+			repairData = this.repairDataStoreFactory();
+			repairData?.capture(changeDelta, commit.revision);
+		}
+
+		const delta = this.editManager.addLocalChange(commit.revision, change, false);
+
+		if (this.transactions.size === 0) {
+			this.submitCommit(commit, repairData);
 		}
 
 		this.changeEvents.emit("newLocalChange", change);
@@ -272,20 +277,28 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	public startTransaction(repairStore?: RepairDataStore): void {
+	public startTransaction(
+		repairStore?: RepairDataStore,
+		commitRepairStore?: RepairDataStore,
+	): void {
 		this.transactions.push(
 			this.editManager.getLocalBranchHead().revision,
-			mintRevisionTag(),
 			repairStore,
+			commitRepairStore,
 		);
 		this.editor.enterTransaction();
 	}
 
 	public commitTransaction(): TransactionResult.Commit {
-		const { startRevision, revision } = this.transactions.pop();
+		const { startRevision, commitRepairStore } = this.transactions.pop();
 		this.editor.exitTransaction();
-		const squashCommit = this.editManager.squashLocalChanges(startRevision, revision);
-		this.submitCommit(squashCommit);
+		const squashCommit = this.editManager.squashLocalChanges(startRevision);
+		// If this is the last transaction in the stack, the repair data must be captured for the squashed commit.
+		commitRepairStore?.capture(
+			this.changeFamily.intoDelta(squashCommit.change),
+			squashCommit.revision,
+		);
+		this.submitCommit(squashCommit, commitRepairStore);
 		return TransactionResult.Commit;
 	}
 
