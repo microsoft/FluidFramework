@@ -139,7 +139,7 @@ export interface ISequencedClient {
 }
 
 /**
- * TODO
+ * TODO: what are the semantics of this?
  */
 export interface ISignalClient {
 	/**
