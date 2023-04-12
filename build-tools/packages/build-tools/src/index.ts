@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-export { Context } from "./bumpVersion/context";
-export { GitRepo } from "./bumpVersion/gitRepo";
-export { exec, execNoError } from "./bumpVersion/utils";
-export { VersionBag } from "./bumpVersion/versionBag";
+export { Context } from "./common/context";
+export { GitRepo } from "./common/gitRepo";
 export { FluidRepo, VersionDetails } from "./common/fluidRepo";
 export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
 export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
 export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
 export { Package, PackageJson, updatePackageJsonFile } from "./common/npmPackage";
-export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
+export { VersionBag } from "./common/versionBag";
+export { LayerGraph } from "./layerCheck/layerGraph";
 export {
+  exec,
+  execNoError,
 	execAsync,
 	execWithErrorAsync,
 	readJsonAsync,

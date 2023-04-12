@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import { PackageName } from "@rushstack/node-core-library";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import * as semver from "semver";
 
 import { commonOptions } from "../common/commonOptions";
 import { FluidRepo, IFluidBuildConfig, VersionDetails } from "../common/fluidRepo";
@@ -14,8 +15,13 @@ import { Package } from "../common/npmPackage";
 import { getVersionFromTag } from "../common/tags";
 import { Timer } from "../common/timer";
 import { GitRepo } from "./gitRepo";
-import { fatal, prereleaseSatisfies } from "./utils";
+import { fatal } from "./utils";
 import { ReferenceVersionBag, VersionBag } from "./versionBag";
+
+function prereleaseSatisfies(packageVersion: string, range: string) {
+	// Pretend that the current package is latest prerelease (zzz) and see if the version still satisfies.
+	return semver.satisfies(`${packageVersion}-zzz`, range);
+}
 
 /**
  * Context provides access to data about the Fluid repo, and exposes methods to interrogate the repo state.

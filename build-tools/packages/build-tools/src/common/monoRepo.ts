@@ -6,7 +6,7 @@ import { readFileSync } from "fs-extra";
 import * as path from "path";
 import YAML from "yaml";
 
-import { fatal } from "../bumpVersion/utils";
+import { fatal } from "../common/utils";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { Logger, defaultLogger } from "./logging";
 import { Package, PackageJson, Packages } from "./npmPackage";
