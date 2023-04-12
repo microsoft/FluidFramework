@@ -6,7 +6,7 @@ import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
 import * as fs from "fs";
-import { readFileSync, writeJsonSync } from "fs-extra";
+import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
 import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
@@ -22,7 +22,6 @@ import {
 	existsSync,
 	isSameFileOrDir,
 	lookUpDirSync,
-	readJsonSync,
 	rimrafWithErrorAsync,
 	unlinkAsync,
 } from "./utils";

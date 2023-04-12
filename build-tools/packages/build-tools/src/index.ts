@@ -23,13 +23,6 @@ export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from 
 export { Package, PackageJson, updatePackageJsonFile } from "./common/npmPackage";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
-export {
-	execAsync,
-	execWithErrorAsync,
-	readJsonAsync,
-	readFileAsync,
-	writeFileAsync,
-} from "./common/utils";
 export { Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";
 export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/lib";
