@@ -41,7 +41,7 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * @remarks This logger is intended to integrate with the Fluid DevTools browser extension.
  *
  * @sealed
- * @internal
+ * @public
  */
 export class DevtoolsLogger extends TelemetryLogger {
 	/**
@@ -98,7 +98,7 @@ export class DevtoolsLogger extends TelemetryLogger {
 	public static create(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
-	): TelemetryLogger {
+	): DevtoolsLogger {
 		return new DevtoolsLogger(namespace, properties);
 	}
 
