@@ -40,7 +40,7 @@ import {
 	UndoRedoManager,
 	GraphCommitType,
 } from "../core";
-import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
+import { brand, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
@@ -148,11 +148,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = uuid();
 		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
-		this.undoRedoManager = new UndoRedoManager(
-			repairDataStoreFactory,
-			changeFamily,
-			this.applyChange.bind(this),
-		);
+		this.undoRedoManager = new UndoRedoManager(repairDataStoreFactory, changeFamily);
 		this.summarizables = [
 			new EditManagerSummarizer(runtime, this.editManager),
 			...summarizables,
@@ -310,11 +306,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	public undo(): void {
-		if (this.isTransacting()) {
-			fail("cannot undo during a transaction");
-		}
+		// TODO: allow this once it becomes possible to compose the changesets created by edits made
+		// within transactions and edits that represent completed transactions.
+		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
 
-		this.undoRedoManager.undo();
+		const undoChange = this.undoRedoManager.undo();
+		if (undoChange !== undefined) {
+			this.applyChange(undoChange, GraphCommitType.Undo);
+		}
 	}
 
 	/**

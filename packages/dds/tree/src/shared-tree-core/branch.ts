@@ -19,7 +19,7 @@ import {
 	UndoRedoManager,
 } from "../core";
 import { EventEmitter } from "../events";
-import { fail, TransactionResult } from "../util";
+import { TransactionResult } from "../util";
 import { TransactionStack } from "./transactionStack";
 
 /**
@@ -67,7 +67,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			(change) => this.applyChange(change, undefined, false),
 			anchors,
 		);
-		this.undoRedoManager.initialize(this.applyChange.bind(this));
 	}
 
 	public applyChange(change: TChange, type?: GraphCommitType, rebaseAnchors = true): void {
@@ -179,7 +178,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
 
-		this.undoRedoManager.undo();
+		const undoChange = this.undoRedoManager.undo();
+		if (undoChange !== undefined) {
+			this.applyChange(undoChange, GraphCommitType.Undo);
+		}
 	}
 
 	/**

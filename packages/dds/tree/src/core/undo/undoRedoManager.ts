@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
 import { GraphCommit, GraphCommitType, RevisionTag, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
@@ -13,36 +12,19 @@ import { Delta } from "../tree";
  * Manages the undo commit tree and repair data associated with undoable commits.
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
-	private initialized: boolean = false;
 	private pendingRepairData?: RepairDataStore;
 
 	/**
 	 * @param repairDataStoryFactory - Factory function for creating {@link RepairDataStore}s to create and store repair
 	 * data for {@link UndoableCommit}s.
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
-	 * @param applyChange - Callback to apply undos as local changes. This should call {@link UndoRedoManager.trackCommit}
-	 * with the created commit.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
 	 */
 	public constructor(
 		private readonly repairDataStoryFactory: () => RepairDataStore,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		protected applyChange?: (change: TChange, type?: GraphCommitType) => void,
 		protected headUndoableCommit?: UndoableCommit<TChange>,
-	) {
-		if (applyChange !== undefined) {
-			this.initialized = true;
-		}
-	}
-
-	/**
-	 * Used to set the callback to apply undos as local changes after construction. This should call {@link UndoRedoManager.trackCommit}.
-	 */
-	public initialize(applyChange: (change: TChange, type?: GraphCommitType) => void) {
-		assert(this.initialized === false, "UndoRedoManager already initialized");
-		this.applyChange = applyChange;
-		this.initialized = true;
-	}
+	) {}
 
 	/**
 	 * Used to capture repair data from changes within a transaction. The repair data will be
@@ -84,11 +66,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
 	 * Inverts the head undo commit and applies it as a local change.
 	 */
-	public undo(): void {
-		assert(
-			this.applyChange !== undefined,
-			"applyChange must be set using the  before calling undo",
-		);
+	public undo(): TChange | undefined {
 		const commitToUndo = this.headUndoableCommit;
 
 		if (commitToUndo === undefined) {
@@ -100,13 +78,11 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		// Removes this undo from the undo commit tree
 		this.headUndoableCommit = parent;
 
-		const inverse = this.changeFamily.rebaser.invert(
+		return this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
 			false,
 			repairData,
 		);
-
-		this.applyChange(inverse, GraphCommitType.Undo);
 	}
 
 	/**
@@ -119,7 +95,6 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		return new UndoRedoManager(
 			repairDataStoreFactory,
 			this.changeFamily,
-			applyChange,
 			this.headUndoableCommit,
 		);
 	}
