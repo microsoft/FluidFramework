@@ -76,8 +76,8 @@ export class DevtoolsLogger extends TelemetryLogger {
 	};
 
 	/**
-	 * Posts a list of {@link TelemetryHistory.Message} to the window (globalThis). It will be send
-	 * when requesting all the telemetry history/log since logger created.
+	 * Posts a {@link TelemetryHistory.Message} to the window (globalThis) containing the complete history of
+	 * telemetry events.
 	 */
 	private readonly postLogHistory = (): void => {
 		postMessagesToWindow(
@@ -146,9 +146,9 @@ export class DevtoolsLogger extends TelemetryLogger {
 	}
 
 	/**
-	 * Post a {@link TelemetryEvent.Message} to the window (globalThis object).
+	 * Post a {@link TelemetryEvent.Message} to the window (globalThis) for the provided telemetry event.
 	 *
-	 * @param event - the event to send
+	 * @param event - The telemetry event to send.
 	 */
 	public send(event: ITelemetryBaseEvent): void {
 		// TODO: ability to disable the logger so this becomes a no-op
