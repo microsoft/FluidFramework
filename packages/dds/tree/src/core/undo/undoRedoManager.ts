@@ -22,7 +22,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
 	 * @param applyChange - Callback to apply undos as local changes. This should call {@link UndoRedoManager.trackCommit}
 	 * with the created commit.
-	 * @param headUndoCommit - Optional commit to set as the initial undoable commit.
+	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
 	 */
 	public constructor(
 		private readonly repairDataStoryFactory: () => RepairDataStore,
@@ -31,7 +31,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			change: TChange,
 			type?: GraphCommitType,
 		) => void,
-		protected headUndoCommit?: UndoableCommit<TChange>,
+		protected headUndoableCommit?: UndoableCommit<TChange>,
 	) {
 		if (applyChange !== undefined) {
 			this.initialized = true;
@@ -70,14 +70,14 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			return;
 		}
 
-		const parent = this.headUndoCommit;
+		const parent = this.headUndoableCommit;
 		const repairData = this.pendingRepairData ?? this.repairDataStoryFactory();
 		if (this.pendingRepairData === undefined) {
 			repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
 		} else {
 			this.pendingRepairData = undefined;
 		}
-		this.headUndoCommit = {
+		this.headUndoableCommit = {
 			commit,
 			parent,
 			repairData,
@@ -89,7 +89,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 */
 	public undo(): void {
 		assert(this.applyChange !== undefined, "applyChange must be set using the  before calling undo");
-		const commitToUndo = this.headUndoCommit;
+		const commitToUndo = this.headUndoableCommit;
 
 		if (commitToUndo === undefined) {
 			// No undoable commits, exit early
@@ -98,7 +98,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		const { commit, parent, repairData } = commitToUndo;
 		// Removes this undo from the undo commit tree
-		this.headUndoCommit = parent;
+		this.headUndoableCommit = parent;
 
 		const inverse = this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
@@ -120,7 +120,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairDataStoreFactory,
 			this.changeFamily,
 			applyChange,
-			this.headUndoCommit,
+			this.headUndoableCommit,
 		);
 	}
 }

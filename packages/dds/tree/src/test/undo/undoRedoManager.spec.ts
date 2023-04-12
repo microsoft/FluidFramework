@@ -109,7 +109,7 @@ class TestUndoRedoManager extends UndoRedoManager<TestChange, ChangeFamilyEditor
 	}
 
 	public getHeadUndoCommit(): UndoableCommit<TestChange> | undefined {
-		return this.headUndoCommit as UndoableCommit<TestChange>;
+		return this.headUndoableCommit as UndoableCommit<TestChange>;
 	}
 }
 
