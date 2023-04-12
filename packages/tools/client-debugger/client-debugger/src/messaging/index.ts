@@ -15,66 +15,23 @@
 
 export { devtoolsMessageSource } from "./Constants";
 export {
-	HasContainerId,
-	HasFluidObjectId,
-	ConnectContainerMessage,
-	ConnectContainerMessageData,
-	ConnectContainerMessageType,
-	DisconnectContainerMessage,
-	DisconnectContainerMessageData,
-	DisconnectContainerMessageType,
-	CloseContainerMessage,
-	CloseContainerMessageData,
-	CloseContainerMessageType,
-	ContainerStateChangeMessage,
-	ContainerStateChangeMessageData,
-	ContainerStateChangeMessageType,
-	ContainerStateHistoryMessage,
-	ContainerStateHistoryMessageData,
-	ContainerStateHistoryMessageType,
-	DataVisualizationMessage,
-	DataVisualizationMessageData,
-	DataVisualizationMessageType,
-	GetContainerStateMessage,
-	GetContainerStateMessageData,
-	GetContainerStateMessageType,
-	GetDataVisualizationMessage,
-	GetDataVisualizationMessageData,
-	GetDataVisualizationMessageType,
-	GetRootDataVisualizationsMessage,
-	GetRootDataVisualizationsMessageData,
-	GetRootDataVisualizationsMessageType,
-	RootDataVisualizationsMessage,
-	RootDataVisualizationsMessageData,
-	RootDataVisualizationsMessageType,
-} from "./ContainerDevtoolsMessages";
-export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
+	AudienceSummary,
+	CloseContainer,
+	ConnectContainer,
+	ContainerStateChange,
+	ContainerStateHistory,
+	DataVisualization,
+	DisconnectContainer,
+	GetAudienceSummary,
+	GetContainerState,
+	GetDataVisualization,
+	GetRootDataVisualizations,
+	RootDataVisualizations,
+} from "./container-devtools-messages";
+export { ContainerList, GetContainerList } from "./devtools-messages";
+export { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
-export {
-	GetContainerListMessage,
-	GetContainerListMessageType,
-	ContainerListMessage,
-	ContainerListMessageData,
-	ContainerListMessageType,
-} from "./DevtoolsMessages";
-export {
-	AudienceClientMetadata,
-	AudienceSummaryMessage,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessageType,
-	GetAudienceMessage,
-	GetAudienceMessageType,
-} from "./AudienceMessages";
-export {
-	GetTelemetryHistoryMessage,
-	GetTelemetryHistoryMessageType,
-	ITimestampedTelemetryEvent,
-	TelemetryEventMessage,
-	TelemetryEventMessageData,
-	TelemetryEventMessageType,
-	TelemetryHistoryMessage,
-	TelemetryHistoryMessageType,
-} from "./TelemetryMessages";
+export { GetTelemetryHistory, TelemetryEvent, TelemetryHistory } from "./telemetry-messages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,

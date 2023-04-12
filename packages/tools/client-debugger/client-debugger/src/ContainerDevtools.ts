@@ -8,12 +8,12 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
 
+import { FluidObjectId } from "./CommonInterfaces";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
 	DataVisualizerGraph,
 	defaultVisualizers,
-	FluidObjectId,
 	FluidObjectNode,
 	RootHandleNode,
 	VisualizeSharedObject,
@@ -21,36 +21,26 @@ import {
 import { IContainerDevtools, ContainerDevtoolsEvents } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
-	AudienceClientMetadata,
-	AudienceSummaryMessage,
-	AudienceSummaryMessageType,
-	CloseContainerMessage,
-	CloseContainerMessageType,
-	ConnectContainerMessage,
-	ConnectContainerMessageType,
-	ContainerStateChangeMessageType,
-	ContainerStateHistoryMessageType,
-	DataVisualizationMessage,
-	DataVisualizationMessageType,
-	DisconnectContainerMessage,
-	DisconnectContainerMessageType,
-	GetAudienceMessage,
-	GetAudienceMessageType,
-	GetContainerStateMessageType,
-	GetContainerStateMessage,
-	GetDataVisualizationMessage,
-	GetDataVisualizationMessageType,
-	GetRootDataVisualizationsMessage,
-	GetRootDataVisualizationsMessageType,
+	AudienceSummary,
+	CloseContainer,
+	ConnectContainer,
+	ContainerStateChange,
+	ContainerStateHistory,
+	DataVisualization,
+	DisconnectContainer,
+	GetAudienceSummary,
+	GetContainerState,
+	GetDataVisualization,
+	GetRootDataVisualizations,
 	handleIncomingWindowMessage,
-	IDebuggerMessage,
+	IDevtoolsMessage,
 	InboundHandlers,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
-	RootDataVisualizationsMessage,
-	RootDataVisualizationsMessageType,
+	RootDataVisualizations,
 } from "./messaging";
+import { AudienceClientMetadata } from "./AudienceMetadata";
 
 /**
  * Properties for configuring a {@link IContainerDevtools}.
@@ -122,35 +112,39 @@ export interface ContainerDevtoolsProps {
  *
  * **Messages it listens for:**
  *
- * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast
- * {@link ContainerStateChangeMessage}.
+ * - {@link GetContainerState.Message}: When received (if the container ID matches), the debugger will broadcast
+ * {@link ContainerStateChange.Message}.
  *
- * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to
+ * - {@link ConnectContainer.Message}: When received (if the container ID matches), the debugger will connect to
  * the container.
  *
- * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect
+ * - {@link DisconnectContainer.Message}: When received (if the container ID matches), the debugger will disconnect
  * from the container.
  *
- * - {@link CloseContainerMessage}: When received (if the container ID matches), the debugger will close the container.
+ * - {@link CloseContainer.Message}: When received (if the container ID matches), the debugger will close the container.
  *
- * - {@link GetAudienceMessage}: When received (if the container ID matches), the debugger will broadcast {@link AudienceSummaryMessage}.
+ * - {@link GetAudienceSummary.Message}: When received (if the container ID matches), the debugger will broadcast
+ * {@link AudienceSummary.Message}.
  *
- * - {@link GetRootDataVisualizationsMessage}: When received (if the container ID matches), the debugger will
- * broadcast {@link RootDataVisualizationsMessage}.
+ * - {@link GetRootDataVisualizations.Message}: When received (if the container ID matches), the debugger will
+ * broadcast {@link RootDataVisualizations.Message}.
  *
- * - {@link GetDataVisualizationMessage}: When received (if the container ID matches), the debugger will
- * broadcast {@link DataVisualizationMessage}.
+ * - {@link GetDataVisualization.Message}: When received (if the container ID matches), the debugger will
+ * broadcast {@link DataVisualization.Message}.
  *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
- * - {@link ContainerStateChangeMessage}: This is posted any time relevant Container state changes,
- * or when requested (via {@link GetContainerStateMessage}).
+ * - {@link AudienceSummary.Message}: Posted any time the Container's Audience state changes, or when requested
+ * (via {@link GetAudienceSummary.Message}).
  *
- * - {@link RootDataVisualizationsMessage}: Posted when requested via {@link GetRootDataVisualizationsMessage}.
+ * - {@link ContainerStateChange.Message}: Posted any time relevant Container state changes,
+ * or when requested (via {@link GetContainerState.Message}).
  *
- * - {@link DataVisualizationMessage}: Posted when requested via {@link GetDataVisualizationMessage}, or when
+ * - {@link RootDataVisualizations.Message}: Posted when requested via {@link GetRootDataVisualizations.Message}.
+ *
+ * - {@link DataVisualization.Message}: Posted when requested via {@link GetDataVisualization.Message}, or when
  * a change has occurred on the associated DDS, reachable from the visualization graph.
  *
  * TODO: Document others as they are added.
@@ -301,48 +295,48 @@ export class ContainerDevtools
 	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetContainerStateMessageType]: (untypedMessage) => {
-			const message = untypedMessage as GetContainerStateMessage;
+		[GetContainerState.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as GetContainerState.Message;
 			if (message.data.containerId === this.containerId) {
 				this.postContainerStateChange();
 				return true;
 			}
 			return false;
 		},
-		[ConnectContainerMessageType]: (untypedMessage) => {
-			const message = untypedMessage as ConnectContainerMessage;
+		[ConnectContainer.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as ConnectContainer.Message;
 			if (message.data.containerId === this.containerId) {
 				this.container.connect();
 				return true;
 			}
 			return false;
 		},
-		[DisconnectContainerMessageType]: (untypedMessage) => {
-			const message = untypedMessage as DisconnectContainerMessage;
+		[DisconnectContainer.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerId === this.containerId) {
 				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
 				return true;
 			}
 			return false;
 		},
-		[CloseContainerMessageType]: (untypedMessage) => {
-			const message = untypedMessage as CloseContainerMessage;
+		[CloseContainer.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as CloseContainer.Message;
 			if (message.data.containerId === this.containerId) {
 				this.container.close(/* TODO: Specify debugger reason here once it is supported */);
 				return true;
 			}
 			return false;
 		},
-		[GetAudienceMessageType]: (untypedMessage) => {
-			const message = untypedMessage as GetAudienceMessage;
+		[GetAudienceSummary.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as GetAudienceSummary.Message;
 			if (message.data.containerId === this.containerId) {
 				this.postAudienceStateChange();
 				return true;
 			}
 			return false;
 		},
-		[GetRootDataVisualizationsMessageType]: (untypedMessage) => {
-			const message = untypedMessage as GetRootDataVisualizationsMessage;
+		[GetRootDataVisualizations.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as GetRootDataVisualizations.Message;
 			if (message.data.containerId === this.containerId) {
 				this.getRootDataVisualizations().then((visualizations) => {
 					this.postRootDataVisualizations(visualizations);
@@ -351,8 +345,8 @@ export class ContainerDevtools
 			}
 			return false;
 		},
-		[GetDataVisualizationMessageType]: (untypedMessage) => {
-			const message = untypedMessage as GetDataVisualizationMessage;
+		[GetDataVisualization.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as GetDataVisualization.Message;
 			if (message.data.containerId === this.containerId) {
 				this.getDataVisualization(message.data.fluidObjectId).then((visualization) => {
 					this.postDataVisualization(message.data.fluidObjectId, visualization);
@@ -367,36 +361,30 @@ export class ContainerDevtools
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
-	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
+	 * Posts a {@link ISourcedDevtoolsMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessagesToWindow<IDebuggerMessage>(
+		postMessagesToWindow<IDevtoolsMessage>(
 			this.messageLoggingOptions,
-			{
-				type: ContainerStateChangeMessageType,
-				data: {
-					containerId: this.containerId,
-					containerState: this.getContainerState(),
-				},
-			},
-			{
-				type: ContainerStateHistoryMessageType,
-				data: {
-					containerId: this.containerId,
-					history: [...this._connectionStateLog],
-				},
-			},
+			ContainerStateChange.createMessage({
+				containerId: this.containerId,
+				containerState: this.getContainerState(),
+			}),
+			ContainerStateHistory.createMessage({
+				containerId: this.containerId,
+				history: [...this._connectionStateLog],
+			}),
 		);
 	};
 
 	/**
-	 * Posts a {@link AudienceSummaryMessage} to the window (globalThis).
+	 * Posts a {@link AudienceSummary.Message} to the window (globalThis).
 	 */
 	private readonly postAudienceStateChange = (): void => {
 		const allAudienceMembers = this.container.audience.getMembers();
@@ -407,41 +395,41 @@ export class ContainerDevtools
 			return { clientId, client };
 		});
 
-		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
-			type: AudienceSummaryMessageType,
-			data: {
+		postMessagesToWindow(
+			this.messageLoggingOptions,
+			AudienceSummary.createMessage({
 				containerId: this.containerId,
 				clientId: this.container.clientId,
 				audienceState: audienceClientMetadata,
 				audienceHistory: this.getAudienceHistory(),
-			},
-		});
+			}),
+		);
 	};
 
 	private readonly postRootDataVisualizations = (
 		visualizations: Record<string, RootHandleNode> | undefined,
 	): void => {
-		postMessagesToWindow<RootDataVisualizationsMessage>(this.messageLoggingOptions, {
-			type: RootDataVisualizationsMessageType,
-			data: {
+		postMessagesToWindow(
+			this.messageLoggingOptions,
+			RootDataVisualizations.createMessage({
 				containerId: this.containerId,
 				visualizations,
-			},
-		});
+			}),
+		);
 	};
 
 	private readonly postDataVisualization = (
 		fluidObjectId: FluidObjectId,
 		visualization: FluidObjectNode | undefined,
 	): void => {
-		postMessagesToWindow<DataVisualizationMessage>(this.messageLoggingOptions, {
-			type: DataVisualizationMessageType,
-			data: {
+		postMessagesToWindow(
+			this.messageLoggingOptions,
+			DataVisualization.createMessage({
 				containerId: this.containerId,
 				fluidObjectId,
 				visualization,
-			},
-		});
+			}),
+		);
 	};
 
 	// #endregion
