@@ -23,7 +23,6 @@ export {
 export {
 	createHandleNode,
 	FluidHandleNode,
-	FluidObjectId,
 	FluidObjectNode,
 	FluidObjectNodeBase,
 	FluidObjectTreeNode,

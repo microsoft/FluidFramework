@@ -111,6 +111,9 @@
 		"broken": {
 			"ClassDeclaration_ContainerRuntime": {
 				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SummarizerStopReason": {
+				"backCompat": false
 			}
 		}
 	}

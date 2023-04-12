@@ -42,6 +42,7 @@ trigger:
   paths:
     include:
     - packages
+    - azure
     - examples
     - experimental
     - lerna.json
@@ -49,6 +50,7 @@ trigger:
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
+    - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -67,6 +69,7 @@ pr:
   paths:
     include:
     - packages
+    - azure
     - examples
     - experimental
     - lerna.json
@@ -74,6 +77,7 @@ pr:
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
+    - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
