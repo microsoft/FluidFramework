@@ -139,25 +139,19 @@ function revertLocalChange(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.CHANGE>,
 ) {
-	// TODO: remove new interval and restore previous interval
-	const label = revertible.interval.properties.label;
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const id = revertible.interval.getIntervalId()!;
 	// might be better to assert if id is undefined
-	string.getIntervalCollection(label).removeIntervalById(id);
-
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const type = revertible.interval.intervalType;
-	const props = revertible.interval.properties;
-	string.getIntervalCollection(label).add(start, end, type, props);
+
+	revertible.collection.change(id, start, end);
 }
 
 function revertLocalPropertyChanged(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.PROPERTYCHANGED>,
 ) {
-	// TODO: revert properties
 	const label = revertible.interval.properties.label;
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const id = revertible.interval.getIntervalId()!;
