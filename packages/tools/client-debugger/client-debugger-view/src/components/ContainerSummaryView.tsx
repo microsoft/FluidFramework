@@ -60,9 +60,82 @@ const columnsDef: TableColumnDefinition<Item>[] = [
 		columnId: "value",
 	}),
 ];
+
+/**
+ * Simple representation of each row of data in the table
+ */
 interface Item {
+	/*
+	 * The type of container property, ie: Container/Audience ID etc
+	 */
 	property: string;
+	/*
+	 * The value of the property.
+	 */
 	value: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function DataRow(label: string, id: string | undefined, columnProps: any): React.ReactElement {
+	return (
+		<TableRow>
+			<TableCell
+				{
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+					...columnProps.getTableCellProps("containerProperty")
+				}
+			>
+				<b>{label}</b>
+			</TableCell>
+			<TableCell>{id}</TableCell>
+		</TableRow>
+	);
+}
+
+function ContainerStatusRow(statusComponents: string[]): React.ReactElement {
+	return (
+		<TableRow>
+			<TableCell>
+				<b>Status</b>
+			</TableCell>
+			<TableCell>
+				<TableCellLayout
+					media={((): JSX.Element => {
+						switch (statusComponents[0]) {
+							case "attaching":
+								return (
+									<Badge shape="rounded" color="warning">
+										{statusComponents[0]}
+									</Badge>
+								);
+							case "detached":
+								return (
+									<Badge shape="rounded" color="danger">
+										{statusComponents[0]}
+									</Badge>
+								);
+							default:
+								return (
+									<Badge shape="rounded" color="success">
+										{statusComponents[0]}
+									</Badge>
+								);
+						}
+					})()}
+				>
+					{statusComponents[1] === "Connected" ? (
+						<Badge shape="rounded" color="success">
+							{statusComponents[1]}
+						</Badge>
+					) : (
+						<Badge shape="rounded" color="danger">
+							{statusComponents[1]}
+						</Badge>
+					)}
+				</TableCellLayout>
+			</TableCell>
+		</TableRow>
+	);
 }
 
 /**
@@ -70,7 +143,7 @@ interface Item {
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
 	const { containerId } = props;
-	const items = [];
+	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
 
 	const [containerState, setContainerState] = React.useState<
@@ -169,71 +242,14 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		}
 	}
 
-	function DataRow(label: string, id: string | undefined): React.ReactElement {
-		return (
-			<TableRow>
-				<TableCell {...columnSizing_unstable.getTableCellProps("containerProperty")}>
-					<b>{label}</b>
-				</TableCell>
-				<TableCell>{id}</TableCell>
-			</TableRow>
-		);
-	}
-
-	function ContainerStatusRow(): React.ReactElement {
-		return (
-			<TableRow>
-				<TableCell>
-					<b>Status</b>
-				</TableCell>
-				<TableCell>
-					<TableCellLayout
-						media={((): JSX.Element => {
-							switch (statusComponents[0]) {
-								case "attaching":
-									return (
-										<Badge shape="rounded" color="warning">
-											{statusComponents[0]}
-										</Badge>
-									);
-								case "detached":
-									return (
-										<Badge shape="rounded" color="danger">
-											{statusComponents[0]}
-										</Badge>
-									);
-								default:
-									return (
-										<Badge shape="rounded" color="success">
-											{statusComponents[0]}
-										</Badge>
-									);
-							}
-						})()}
-					>
-						{statusComponents[1] === "Connected" ? (
-							<Badge shape="rounded" color="success">
-								{statusComponents[1]}
-							</Badge>
-						) : (
-							<Badge shape="rounded" color="danger">
-								{statusComponents[1]}
-							</Badge>
-						)}
-					</TableCellLayout>
-				</TableCell>
-			</TableRow>
-		);
-	}
-
 	return (
 		<Stack>
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>
-					{DataRow("Container", containerState.id)}
-					{ContainerStatusRow()}
-					{DataRow("Client ID", containerState.clientId)}
-					{DataRow("Audience ID", containerState.audienceId)}
+					{DataRow("Container", containerState.id, columnSizing_unstable)}
+					{ContainerStatusRow(statusComponents)}
+					{DataRow("Client ID", containerState.clientId, columnSizing_unstable)}
+					{DataRow("Audience ID", containerState.audienceId, columnSizing_unstable)}
 				</Table>
 			</StackItem>
 			<StackItem align="end">
