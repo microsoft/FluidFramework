@@ -5,11 +5,8 @@
 import React from "react";
 
 import { IMessageRelay } from "@fluid-tools/client-debugger";
-import { FluentProvider } from "@fluentui/react-components";
-
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
-import { getFluentUIThemeToUse } from "./ThemeHelper";
 
 /**
  * Necessary props to render {@link RootView}.
