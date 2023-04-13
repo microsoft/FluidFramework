@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { jsonSchemaData, jsonString, singleJsonCursor } from "../../domains";
@@ -70,7 +71,7 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	// TODO: enable once rebasing works for merge
+	// TODO: unskip once I fix the undo commit graph after rebasing
 	it.skip("the insert of two separate nodes", async () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const addX = tree.fork();
@@ -90,6 +91,20 @@ describe("Undo", () => {
 		addY.merge();
 
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
+	});
+
+	// TODO: unskip once I fix the undo commit graph after rebasing
+	it.skip("an insert that needs to be rebased over an insert on the base branch", () => {
+		const tree = makeTree("A", "B", "C", "D");
+		const doUndo = tree.fork();
+
+		insert(tree, 1, "x");
+		insert(doUndo, 3, "y");
+
+		doUndo.undo();
+		doUndo.merge();
+
+		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
 	});
 });
 
