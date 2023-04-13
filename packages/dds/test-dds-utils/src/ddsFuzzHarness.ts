@@ -380,8 +380,6 @@ function mixinReconnect<
 		operation,
 	) => {
 		if (operation.type === "changeConnectionState") {
-			// TODO: consider reserving "type" fields here. allowing consumers to set it might be a useful feature.
-			// if we don't want that, we should validate at runtime and throw a reasonable error.
 			state.client.containerRuntime.connected = (
 				operation as ChangeConnectionState
 			).connected;
