@@ -3219,8 +3219,11 @@ export class ContainerRuntime
 			const error = new GenericError("Restarting summarizer instead of refreshing");
 			this.mc.logger.sendTelemetryEvent(
 				{
+					...event,
 					eventName: "RestartInsteadOfRefreshFromServerFetch",
+					originatingEventName: event.eventName,
 					message: "Stopping fetch from storage",
+					versionId: versionId != null ? versionId : undefined,
 				},
 				error,
 			);

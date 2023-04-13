@@ -654,6 +654,7 @@ describe("Runtime", () => {
 
 				it("Should not retry on failure when stopping instead of restarting", async () => {
 					settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
+					await startRunningSummarizer();
 					await emitNextOp();
 
 					// too early, should not run yet

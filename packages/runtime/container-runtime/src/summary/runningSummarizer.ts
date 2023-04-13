@@ -46,6 +46,8 @@ import {
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
 const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
+const attemptOnceBecauseOfRestart = 1; // Only summarize once
+
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
  * Until disposed, the instance of RunningSummarizer can assume that it is
@@ -133,6 +135,7 @@ export class RunningSummarizer implements IDisposable {
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
+	private readonly shouldRestart: boolean;
 
 	private enqueuedSummary:
 		| {
@@ -176,6 +179,10 @@ export class RunningSummarizer implements IDisposable {
 				all: telemetryProps,
 			}),
 		);
+
+		this.shouldRestart =
+			this.mc.config.getString("Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod") ===
+			"restart";
 
 		if (configuration.state !== "disableHeuristics") {
 			assert(
@@ -595,9 +602,10 @@ export class RunningSummarizer implements IDisposable {
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
 				// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
-				let totalAttempts =
-					this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
-					defaultNumberSummarizationAttempts;
+				let totalAttempts = this.shouldRestart
+					? attemptOnceBecauseOfRestart
+					: this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
+					  defaultNumberSummarizationAttempts;
 
 				if (totalAttempts > attempts.length) {
 					this.mc.logger.sendTelemetryEvent({
@@ -647,20 +655,6 @@ export class RunningSummarizer implements IDisposable {
 						return;
 					}
 
-					// Instead of doing multiple attempts, immediately close the summarizer
-					if (
-						this.mc.config.getString(
-							"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
-						) === "restart"
-					) {
-						this.mc.logger.sendTelemetryEvent({
-							eventName: "RestartInsteadOfRefreshFromServerFetch",
-							message: "Stopping retries",
-						});
-						this.stopSummarizerCallback("latestSummaryStateStale");
-						return;
-					}
-
 					// Check for retryDelay that can come from summaryNack or upload summary flow.
 					// Retry the same step only once per retryAfter response.
 					overrideDelaySeconds = result.retryAfterSeconds;
@@ -684,9 +678,12 @@ export class RunningSummarizer implements IDisposable {
 				}
 
 				// If all attempts failed, log error (with last attempt info) and close the summarizer container
-				this.mc.logger.sendErrorEvent(
+				this.mc.logger.sendTelemetryEvent(
 					{
-						eventName: "FailToSummarize",
+						category: this.shouldRestart ? "generic" : "error",
+						eventName: this.shouldRestart
+							? "RestartInsteadOfRefreshFromServerFetch"
+							: "FailToSummarize",
 						reason,
 						message: lastResult?.message,
 					},
