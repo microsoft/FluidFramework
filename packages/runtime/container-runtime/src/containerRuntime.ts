@@ -1328,7 +1328,6 @@ export class ContainerRuntime
 							// information. The proxy delta manager would always return false for summarizer client.
 							() => this.innerDeltaManager.active,
 						),
-					!this.groupedBatchingEnabled,
 				);
 			} else if (
 				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
