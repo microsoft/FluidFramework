@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { FieldKinds, singleTextCursor } from "../../feature-libraries";
 import { jsonSchemaData, jsonString, singleJsonCursor } from "../../domains";
@@ -91,29 +90,6 @@ describe("Undo", () => {
 		addY.merge();
 
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
-	});
-
-	// TODO: enable once rebasing works for merge
-	it.skip("can be rebased", () => {
-		const tree = makeTree("A", "B", "C", "D");
-		const addX = tree.fork();
-		const addY = tree.fork();
-
-		insert(addX, 1, "x");
-		insert(addY, 3, "y");
-
-		addX.merge();
-		addY.merge();
-
-		expectJsonTree(tree, ["A", "x", "B", "C", "y", "D"]);
-
-		remove(addX, 3, 1);
-
-		addY.undo();
-		addX.merge();
-		addY.merge();
-
-		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
 	});
 });
 

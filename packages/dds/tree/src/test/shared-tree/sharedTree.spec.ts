@@ -868,6 +868,54 @@ describe("SharedTree", () => {
 			validateTree(tree2, [initialState]);
 		});
 
+		// TODO: unskip once I fix the undo commit graph after rebasing
+		it.skip("can be rebased", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			pushTestValue(tree1, "D");
+			pushTestValue(tree1, "C");
+			pushTestValue(tree1, "B");
+			pushTestValue(tree1, "A");
+			await provider.ensureSynchronized();
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "A",
+				},
+				{
+					type: brand("TestValue"),
+					value: "B",
+				},
+				{
+					type: brand("TestValue"),
+					value: "C",
+				},
+				{
+					type: brand("TestValue"),
+					value: "D",
+				},
+			];
+
+			// Validate insertion
+			validateTree(tree2, expectedState);
+
+			// Insert nodes on both trees
+			insert(tree1, 1, "x");
+			insert(tree2, 3, "y");
+
+			// Undo node insertion on both trees
+			tree1.undo();
+			tree2.undo();
+			// The undo should be rebased to do nothing and this should not throw
+			await provider.ensureSynchronized();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
 		// There is currently a bug when composing moves that causes this test to fail
 		it.skip("multiple moves in a transaction", async () => {
 			const provider = await TestTreeProvider.create(1);
