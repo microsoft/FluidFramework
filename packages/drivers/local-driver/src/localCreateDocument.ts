@@ -37,7 +37,7 @@ export async function createDocument(
 		id,
 		appSummary,
 		sequenceNumber,
-		documentAttributes.term ?? 1,
+		1, // term
 		defaultHash,
 		resolvedUrl.endpoints.ordererUrl ?? "",
 		resolvedUrl.endpoints.storageUrl ?? "",
