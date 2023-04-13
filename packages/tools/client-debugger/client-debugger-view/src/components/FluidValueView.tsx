@@ -4,7 +4,7 @@
  */
 import React from "react";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
-import { Accordion } from "./utility-components";
+import { Stack, StackItem, IStackStyles } from "@fluentui/react";
 
 /**
  * {@link ValueView} input props.
@@ -18,19 +18,21 @@ export interface FluidValueViewProps {
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { node } = props;
+	const stackStyles: IStackStyles = {
+		root: {
+			padding: "15px",
+			background: "rgb(237, 235, 233)",
+		},
+	};
 
 	return (
-		<Accordion
-			header={
-				<div>
-					{`${node.fluidObjectId}
+		<Stack>
+			<StackItem styles={stackStyles}>
+				{`${node.fluidObjectId}
 						${node.metadata !== undefined ? `${node.metadata} : ` : ""}
 						${node.nodeKind} : 
 						${String(node.value)}`}
-				</div>
-			}
-		>
-			{String(node.value)}
-		</Accordion>
+			</StackItem>
+		</Stack>
 	);
 }

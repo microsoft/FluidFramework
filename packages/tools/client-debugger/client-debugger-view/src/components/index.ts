@@ -9,19 +9,19 @@
 export * from "./client-data-views";
 
 export * from "./AudienceView";
-export * from "./ContainerView";
 export * from "./ContainerHistoryView";
 export * from "./ContainerSummaryView";
+export * from "./ContainerView";
+export * from "./FluidHandleView";
+export * from "./FluidTreeView";
+export * from "./FluidValueView";
 export * from "./LandingView";
 export * from "./Menu";
 export * from "./TelemetryView";
-export * from "./Waiting";
 export * from "./TreeView";
-export * from "./FluidTreeView";
-export * from "./ValueView";
-export * from "./FluidValueView";
 export * from "./UnknownDataView";
 export * from "./UnknownFluidObjectView";
-export * from "./FluidHandleView";
+export * from "./ValueView";
+export * from "./Waiting";
 
 /* eslint-enable no-restricted-syntax */

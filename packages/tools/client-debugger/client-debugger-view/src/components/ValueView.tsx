@@ -4,7 +4,7 @@
  */
 import React from "react";
 import { ValueNodeBase } from "@fluid-tools/client-debugger";
-import { Accordion } from "./utility-components";
+import { Stack, StackItem, IStackStyles } from "@fluentui/react";
 
 /**
  * {@link ValueView} input props.
@@ -19,15 +19,20 @@ export interface ValueViewProps {
 export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { node } = props;
 
+	const stackStyles: IStackStyles = {
+		root: {
+			padding: "10px",
+			background: "rgb(237, 235, 233)",
+		},
+	};
+
 	return (
-		<Accordion
-			header={
-				<div>
-					{`${node.metadata !== undefined ? `${node.metadata} : ` : ""}
+		<Stack>
+			<StackItem styles={stackStyles}>
+				{`${node.metadata !== undefined ? `${node.metadata} : ` : ""}
 						${node.nodeKind}
 						${String(node.value)}`}
-				</div>
-			}
-		></Accordion>
+			</StackItem>
+		</Stack>
 	);
 }

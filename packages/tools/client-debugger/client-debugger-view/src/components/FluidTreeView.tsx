@@ -20,20 +20,18 @@ export interface FluidTreeViewProps extends HasContainerId {
 export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
 	return (
-		<>
-			<Accordion
-				header={
-					<div>
-						{`${node.fluidObjectId} : 
+		<Accordion
+			header={
+				<div>
+					{`${node.fluidObjectId} : 
 						${node.metadata !== undefined ? `${node.metadata}` : ""}
 						${node.nodeKind}`}
-					</div>
-				}
-			>
-				{Object.entries(node.children).map(([key, fluidObject], index) => {
-					return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
-				})}
-			</Accordion>
-		</>
+				</div>
+			}
+		>
+			{Object.entries(node.children).map(([key, fluidObject], index) => {
+				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
+			})}
+		</Accordion>
 	);
 }

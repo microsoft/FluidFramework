@@ -22,19 +22,17 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
 	return (
-		<>
-			<Accordion
-				header={
-					<div>
-						{`${node.metadata !== undefined ? `${node.metadata} : ` : ""} 
+		<Accordion
+			header={
+				<div>
+					{`${node.metadata !== undefined ? `${node.metadata} : ` : ""} 
 						${node.nodeKind}`}
-					</div>
-				}
-			/>
-
+				</div>
+			}
+		>
 			{Object.entries(node.children).map(([key, fluidObject], index) => {
 				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
 			})}
-		</>
+		</Accordion>
 	);
 }
