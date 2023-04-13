@@ -18,7 +18,11 @@ import {
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { channelsTreeName, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import {
+	channelsTreeName,
+	IFluidDataStoreFactory,
+	IIdCompressor,
+} from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -721,6 +725,184 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 		assert(
 			summary3ParentHandle === summary2AckHandle,
 			"Summary Parent should match ack handle of summary2",
+		);
+	});
+});
+
+describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	let config: ITestContainerConfig = {
+		...testContainerConfig,
+		runtimeOptions: { ...testContainerConfig.runtimeOptions, enableRuntimeIdCompressor: true },
+	};
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+	});
+
+	it("Summary includes IdCompressor when enabled", async () => {
+		const { mainContainer } = await createMainContainerAndSummarizer(provider, config);
+
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(
+			mainContainer,
+			defaultDataStoreId,
+		);
+		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+
+		await provider.ensureSynchronized();
+
+		const { summary } = await containerRuntime.summarize({
+			runGC: false,
+			fullTree: false,
+			trackState: false,
+			summaryLogger: new TelemetryNullLogger(),
+		});
+
+		assert(
+			summary.tree[".idCompressor"] !== undefined,
+			"IdCompressor should be present in summary",
+		);
+	});
+
+	it("Summary does not include IdCompressor when disabled", async () => {
+		const { mainContainer } = await createMainContainerAndSummarizer(
+			provider,
+			testContainerConfig,
+		);
+
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(
+			mainContainer,
+			defaultDataStoreId,
+		);
+
+		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+		await provider.ensureSynchronized();
+		const { summary } = await containerRuntime.summarize({
+			runGC: false,
+			fullTree: false,
+			trackState: false,
+			summaryLogger: new TelemetryNullLogger(),
+		});
+
+		assert(
+			summary.tree[".idCompressor"] === undefined,
+			"IdCompressor should not be present in summary when not enabled",
+		);
+	});
+
+	it("Shouldn't include unack'd local ids in summary", async () => {
+		const { mainContainer } = await createMainContainerAndSummarizer(provider, config);
+
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(
+			mainContainer,
+			defaultDataStoreId,
+		);
+
+		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
+		assert(idCompressor !== undefined, "IdCompressor should be present");
+		idCompressor.generateCompressedId();
+
+		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+		await provider.ensureSynchronized();
+
+		const { summary } = await containerRuntime.summarize({
+			runGC: false,
+			fullTree: false,
+			trackState: false,
+			summaryLogger: new TelemetryNullLogger(),
+		});
+
+		const compressorSummary = summary.tree[".idCompressor"];
+		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
+		const summaryAsObj = JSON.parse((compressorSummary as any).content);
+		assert(
+			summaryAsObj.sessions.length === 0,
+			"Shouldn't have any local sessions as all ids are unack'd",
+		);
+		assert(
+			summaryAsObj.clusters.length === 0,
+			"Shouldn't have any local clusters as all ids are unack'd",
+		);
+	});
+
+	it("Includes ack'd ids in summary", async () => {
+		const { mainContainer } = await createMainContainerAndSummarizer(provider, config);
+
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(
+			mainContainer,
+			defaultDataStoreId,
+		);
+
+		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
+		assert(idCompressor !== undefined, "IdCompressor should be present");
+		idCompressor.generateCompressedId();
+		defaultDataStore._root.set("key", "value");
+		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+		await provider.ensureSynchronized();
+
+		const { summary } = await containerRuntime.summarize({
+			runGC: false,
+			fullTree: false,
+			trackState: false,
+			summaryLogger: new TelemetryNullLogger(),
+		});
+
+		const compressorSummary = summary.tree[".idCompressor"];
+		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
+		const summaryAsObj = JSON.parse((compressorSummary as any).content);
+		assert(
+			summaryAsObj.sessions.length === 1,
+			"Should have a local session as all ids are ack'd",
+		);
+		assert(
+			summaryAsObj.clusters.length === 1,
+			"Should have a local cluster as all ids are ack'd",
+		);
+	});
+
+	it("Newly connected container synchronizes from summary", async () => {
+		const { mainContainer } = await createMainContainerAndSummarizer(provider, config);
+
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(
+			mainContainer,
+			defaultDataStoreId,
+		);
+
+		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
+		assert(idCompressor !== undefined, "IdCompressor should be present");
+		idCompressor.generateCompressedId();
+		defaultDataStore._root.set("key", "value");
+		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
+		await provider.ensureSynchronized();
+
+		const { summary } = await containerRuntime.summarize({
+			runGC: false,
+			fullTree: false,
+			trackState: false,
+			summaryLogger: new TelemetryNullLogger(),
+		});
+
+		const compressorSummary = summary.tree[".idCompressor"];
+		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
+		const summaryAsObj = JSON.parse((compressorSummary as any).content);
+		assert(
+			summaryAsObj.sessions.length === 1,
+			"Should have a local session as all ids are ack'd",
+		);
+		assert(
+			summaryAsObj.clusters.length === 1,
+			"Should have a local cluster as all ids are ack'd",
+		);
+
+		const otherContainer = await provider.loadTestContainer(config);
+		const otherDataStore = await requestFluidObject<ITestDataObject>(
+			otherContainer,
+			defaultDataStoreId,
+		);
+		const otherIdCompressor: IIdCompressor = (otherDataStore._root as any).runtime.idCompressor;
+		assert(otherIdCompressor !== undefined, "Second IdCompressor should be present");
+		assert(
+			(otherIdCompressor as any).sessions.get(idCompressor.localSessionId) !== undefined,
+			"Should have the other compressor's session from summary",
 		);
 	});
 });
