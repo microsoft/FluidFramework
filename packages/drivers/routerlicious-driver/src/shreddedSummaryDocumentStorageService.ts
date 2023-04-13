@@ -18,16 +18,14 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import {
-	GitManager,
-	ISummaryUploadManager,
-	SummaryTreeUploadManager,
-} from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache, InMemoryCache } from "./cache";
 import { RetriableGitManager } from "./retriableGitManager";
 import { ISnapshotTreeVersion } from "./definitions";
+import { GitManager } from "./gitManager";
+import { ISummaryUploadManager } from "./storageContracts";
+import { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
 
 const isNode = typeof window === "undefined";
 

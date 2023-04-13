@@ -6,13 +6,14 @@
 import type * as git from "@fluidframework/gitresources";
 import type * as protocol from "@fluidframework/protocol-definitions";
 import {
-	IGitManager,
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { runWithRetry } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IGitManager } from "./storageContracts";
+import { IR11sResponse } from "./restWrapper";
 
 export class RetriableGitManager implements IGitManager {
 	constructor(
@@ -148,7 +149,7 @@ export class RetriableGitManager implements IGitManager {
 		);
 	}
 
-	public async getSummary(sha: string): Promise<IWholeFlatSummary> {
+	public async getSummary(sha: string): Promise<IR11sResponse<IWholeFlatSummary>> {
 		return this.runWithRetry(
 			async () => this.internalGitManager.getSummary(sha),
 			"gitManager_getSummary",

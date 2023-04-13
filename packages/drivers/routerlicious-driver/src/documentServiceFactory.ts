@@ -27,7 +27,7 @@ import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+import { IR11sResponse, RouterliciousOrdererRestWrapper, getW3CData } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
@@ -253,11 +253,19 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					eventName: "DiscoverSession",
 					docId: documentId,
 				},
-				async () => {
+				async (event) => {
 					// The service responds with the current document session associated with the container.
-					return ordererRestWrapper.get<ISession>(
+					const response = await ordererRestWrapper.get<IR11sResponse<ISession>>(
 						`${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`,
+						undefined,
+						undefined,
+						true,
 					);
+					event.end({
+						...response.propsToLog,
+						...getW3CData(response.requestUrl),
+					});
+					return response.content;
 				},
 			);
 			return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
