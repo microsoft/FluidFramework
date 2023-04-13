@@ -1,0 +1,68 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import {
+	MockFluidDataStoreRuntime,
+	MockStorage,
+	MockContainerRuntimeFactory,
+} from "@fluidframework/test-runtime-utils";
+import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
+import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator";
+
+function createConnectedMatrix(id: string, runtimeFactory: MockContainerRuntimeFactory, dataStoreRuntime: MockFluidDataStoreRuntime) {
+	const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+	matrix.connect({
+		deltaConnection: runtimeFactory
+			.createContainerRuntime(dataStoreRuntime)
+			.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	});
+	return matrix;
+}
+
+function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
+	return new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);
+}
+
+describeNoCompat("PAS Test", () => {
+	let matrix: SharedMatrix;
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+
+	before(async () => {});
+
+	/**
+	 * The PerformanceTestWrapper class includes 2 functionalities:
+	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
+	 * 2) Stores the configuration properties that should be consumed by benchmarkAll to define its behavior:
+	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
+	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
+	 */
+	benchmarkAll(
+		"Create Table Matrix With SharedStrings",
+		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+			containerRuntimeFactory = new MockContainerRuntimeFactory();
+			matrix = createConnectedMatrix("matrix1", containerRuntimeFactory, dataStoreRuntime);
+
+			async run(): Promise<void> {
+				this.matrix.insertRows(0, 6);
+				this.matrix.insertCols(0, 5);
+				for (let i = 0; i < 6; i++) {
+					for (let j = 0; j < 5; j++) {
+						const id = j.toString() + i.toString();
+						const sharedString: SharedString = createString(id, dataStoreRuntime);
+						sharedString.insertText(0, "testValue");
+						this.matrix.setCell(i, j, sharedString);
+					}
+				}
+			}
+			before(): void {}
+			beforeIteration(): void {}
+			after(): void {}
+		})(),
+	);
+});
