@@ -70,7 +70,7 @@ export interface ChangeConnectionState {
 
 export interface AddClient {
 	type: "addClient";
-	channelId: string;
+	addedChannelId: string;
 }
 
 export interface Synchronize {
@@ -201,6 +201,10 @@ interface DDSFuzzSuiteOptions {
 	 * If not specified, no new clients will be added after the test starts.
 	 *
 	 * This option is useful for testing eventual consistency bugs related to summarization.
+	 *
+	 * @remarks - Even without enabling this option, DDS fuzz models can generate {@link AddClient}
+	 * operations with whatever strategy is appropriate.
+	 * This is useful for nudging test cases towards a particular pattern of clients joining.
 	 */
 	clientJoinOptions?: {
 		/**
@@ -302,7 +306,7 @@ function mixinNewClient<
 			) {
 				return {
 					type: "addClient",
-					channelId: makeFriendlyClientId(random, clients.length),
+					addedChannelId: makeFriendlyClientId(random, clients.length),
 				};
 			}
 			return baseOp;
@@ -321,9 +325,10 @@ function mixinNewClient<
 				deltaConnection: containerRuntime.createDeltaConnection(),
 				objectStorage: MockStorage.createFromSummary(summary),
 			};
+
 			const channel = (await model.factory.load(
 				dataStoreRuntime,
-				op.channelId,
+				op.addedChannelId,
 				services,
 				model.factory.attributes,
 			)) as ReturnType<TChannelFactory["create"]>;
@@ -413,28 +418,10 @@ function mixinSynchronization<
 			);
 			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
-				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
-					if (state.random.bool(validationStrategy.probability)) {
-						return { type: "synchronize" };
-					}
-
-					// Pick a channel, and:
-					// 1. Make it available for the DDS model generators (so they don't need to
-					// do the boilerplate of selecting a client to perform the operation on)
-					// 2. Make it available to the subsequent reducer logic we're going to inject
-					// (so that we can recover the channel from serialized data)
-					const channel = state.random.pick(state.clients).channel;
-					const baseOp = await baseGenerator({
-						...state,
-						channel: state.random.pick(state.clients).channel,
-					});
-					return baseOp === done
-						? done
-						: {
-								...baseOp,
-								channelId: channel.id,
-						  };
-				};
+				return async (state: TState): Promise<TOperation | Synchronize | typeof done> =>
+					state.random.bool(validationStrategy.probability)
+						? { type: "synchronize" }
+						: baseGenerator(state);
 			};
 			break;
 
@@ -442,25 +429,7 @@ function mixinSynchronization<
 			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
 				return interleave<TOperation | Synchronize, TState>(
-					async (state) => {
-						// Pick a channel, and:
-						// 1. Make it available for the DDS model generators (so they don't need to
-						// do the boilerplate of selecting a client to perform the operation on)
-						// 2. Make it available to the subsequent reducer logic we're going to inject
-						// (so that we can recover the channel from serialized data)
-						const client = state.random.pick(state.clients);
-						const baseOp = await baseGenerator({
-							...state,
-							channel: client.channel,
-							client,
-						});
-						return baseOp === done
-							? done
-							: {
-									...baseOp,
-									channelId: client.channel.id,
-							  };
-					},
+					baseGenerator,
 					repeat({ type: "synchronize" } as const),
 					validationStrategy.interval,
 					1,
@@ -471,10 +440,10 @@ function mixinSynchronization<
 		default:
 			unreachableCase(validationStrategy);
 	}
+
+	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
-		if (operation.type === "synchronize") {
-			// TODO: consider reserving "type" fields here. allowing consumers to set it might be a useful feature.
-			// if we don't want that, we should validate at runtime and throw a reasonable error.
+		if (isSynchronizeOp(operation)) {
 			state.containerRuntimeFactory.processAllMessages();
 			const connectedClients = state.clients.filter(
 				(client) => client.containerRuntime.connected,
@@ -486,17 +455,57 @@ function mixinSynchronization<
 				}
 			}
 			return state;
-		} else {
-			const isClientSpec = (op: unknown): op is ClientSpec =>
-				(op as ClientSpec).channelId !== undefined;
-			assert(isClientSpec(operation), "operation should have been given a client");
-			const client = state.clients.find((c) => c.channel.id === operation.channelId);
-			assert(client !== undefined);
-			return model.reducer(
-				{ ...state, channel: client.channel, client },
-				operation as TOperation,
-			);
 		}
+		return model.reducer(state, operation);
+	};
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+	};
+}
+
+const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).channelId !== undefined;
+
+function mixinClientSelection<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	_: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation, TState> {
+	const generatorFactory: () => Generator<TOperation, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | typeof done> => {
+			// Pick a channel, and:
+			// 1. Make it available for the DDS model generators (so they don't need to
+			// do the boilerplate of selecting a client to perform the operation on)
+			// 2. Make it available to the subsequent reducer logic we're going to inject
+			// (so that we can recover the channel from serialized data)
+			const client = state.random.pick(state.clients);
+			const baseOp = await baseGenerator({
+				...state,
+				channel: client.channel,
+				client,
+			});
+			return baseOp === done
+				? done
+				: {
+						...baseOp,
+						channelId: client.channel.id,
+				  };
+		};
+	};
+
+	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
+		assert(isClientSpec(operation), "operation should have been given a client");
+		const client = state.clients.find((c) => c.channel.id === operation.channelId);
+		assert(client !== undefined);
+		return model.reducer(
+			{ ...state, channel: client.channel, client },
+			operation as TOperation,
+		);
 	};
 	return {
 		...model,
@@ -607,7 +616,7 @@ export function createDDSFuzzSuite<
 	assert(isInternalOptions(options));
 
 	const model = mixinSynchronization(
-		mixinReconnect(mixinNewClient(ddsModel, options), options),
+		mixinNewClient(mixinClientSelection(mixinReconnect(ddsModel, options), options), options),
 		options,
 	);
 

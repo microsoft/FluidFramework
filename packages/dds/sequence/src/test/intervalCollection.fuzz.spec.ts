@@ -292,14 +292,14 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 
 function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, ClientOpState> {
 	const withLogging =
-		<T>(baseReducer: (state: ClientOpState, operation: T) => void): Reducer<T, ClientOpState> =>
+		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
 		async (state, operation) => {
 			if (loggingInfo !== undefined) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
-			baseReducer(state, operation);
+			await baseReducer(state, operation);
 		};
 
 	const reducer = combineReducers<Operation, ClientOpState>({
@@ -330,7 +330,7 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, ClientOpStat
 	return withLogging(reducer);
 }
 
-describe.only("IntervalCollection fuzz testing", () => {
+describe("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
 		workloadName: "default interval collection",
 		generatorFactory: () => take(100, makeOperationGenerator()),
@@ -351,19 +351,21 @@ describe.only("IntervalCollection fuzz testing", () => {
 			clientAddProbability: 0.1,
 		},
 		defaultTestCount: 100,
+		// This option can be used to replay a specific seed from its failure file.
+		// replay: 0,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		parseOperations: (serialized: string) => {
-			let operations: Operation[] = JSON.parse(serialized);
-			// Replace this value with some other interval ID to filter replay of the test suite to only include
-			// interval operations with this ID.
-			const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-			if (filterIntervalId) {
-				operations = operations.filter((entry) =>
-					[undefined, filterIntervalId].includes((entry as any).id),
-				);
-			}
+			const operations: Operation[] = JSON.parse(serialized);
+			// Replace this value with some other interval ID and uncomment to filter replay of the test
+			// suite to only include interval operations with this ID.
+			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+			// if (filterIntervalId) {
+			// 	return operations.filter((entry) =>
+			// 		[undefined, filterIntervalId].includes((entry as any).id),
+			// 	);
+			// }
 			return operations;
 		},
 	});
