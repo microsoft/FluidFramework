@@ -36,23 +36,22 @@ export type ScriptDependencies = { [key: string]: string[] };
  * A type representing fluid-build-specific config that may be in package.json.
  */
 type FluidPackageJson = {
-  /**
-   * nyc config
-   */
-  nyc?: any;
-  
-  /**
-   * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
-   * it at the root of the repo or release group has no effect.
-   */
-  typeValidation?: ITypeValidationConfig;
+	/**
+	 * nyc config
+	 */
+	nyc?: any;
 
-  /**
-   * fluid-build config. Some properties only apply when set in the root or release group root package.json.
-   */
-  fluidBuild?: IFluidBuildConfig;
+	/**
+	 * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
+	 * it at the root of the repo or release group has no effect.
+	 */
+	typeValidation?: ITypeValidationConfig;
 
-}
+	/**
+	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
+	 */
+	fluidBuild?: IFluidBuildConfig;
+};
 
 /**
  * A type representing all known fields in package.json, including fluid-build-specific config.

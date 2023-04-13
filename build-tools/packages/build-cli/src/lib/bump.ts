@@ -164,7 +164,11 @@ export async function bumpReleaseGroup(
 	if (releaseGroupOrPackage instanceof MonoRepo) {
 		workingDir = context.gitRepo.resolvedRoot;
 		name = releaseGroupOrPackage.kind;
-		cmd = `flub exec -g ${name} -- "npm version '${translatedVersion.version}' && npm run build:genver"`;
+		cmd = `npx --no-install lerna version ${
+			translatedVersion.version
+		} --no-push --no-git-tag-version -y${
+			exactDependencyType === "" ? " --exact" : ""
+		} && npm run build:genver`;
 	} else {
 		workingDir = releaseGroupOrPackage.directory;
 		name = releaseGroupOrPackage.name;
