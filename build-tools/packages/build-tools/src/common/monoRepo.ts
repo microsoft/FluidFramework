@@ -23,6 +23,8 @@ export enum MonoRepoKind {
 	Server = "server",
 	Azure = "azure",
 	BuildTools = "build-tools",
+	GitRest = "gitrest",
+	Historian = "historian",
 }
 
 /**
@@ -148,7 +150,11 @@ export class MonoRepo {
 			for (const dir of this._packageJson.workspaces as string[]) {
 				this.packages.push(...Packages.loadGlob(dir, kind, ignoredDirs, this));
 			}
-			this.workspaceGlobs = this._packageJson.workspaces;
+			if (this._packageJson.workspaces instanceof Array) {
+				this.workspaceGlobs = this._packageJson.workspaces;
+			} else {
+				fatal(`workspaces field in ${this.repoPath} is not an array.`);
+			}
 			return;
 		}
 		fatal(

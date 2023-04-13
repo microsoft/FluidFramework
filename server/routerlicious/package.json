@@ -74,6 +74,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.13.1",
+		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.13.1",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",

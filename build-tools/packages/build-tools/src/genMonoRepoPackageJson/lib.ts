@@ -7,7 +7,7 @@ import path from "path";
 import { commonOptions } from "../common/commonOptions";
 import { Logger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
-import { Package } from "../common/npmPackage";
+import { Package, PackageJson } from "../common/npmPackage";
 import { readJsonAsync, writeFileAsync } from "../common/utils";
 
 function format(n: number) {
@@ -114,14 +114,6 @@ async function generateMonoRepoPackageLockJson(
 	);
 }
 
-interface PackageJson {
-	name: string;
-	version: string;
-	private?: boolean;
-	dependencies: { [key: string]: string };
-	devDependencies: { [key: string]: string };
-}
-
 function processDependencies(
 	repoPackageJson: PackageJson,
 	packageJson: PackageJson,
@@ -134,7 +126,7 @@ function processDependencies(
 			continue;
 		}
 		const version = packageJson.dependencies[dep];
-		const existing = repoPackageJson.dependencies[dep];
+		const existing = repoPackageJson.dependencies?.[dep];
 		if (existing) {
 			if (existing !== version) {
 				throw new Error(
@@ -143,7 +135,7 @@ function processDependencies(
 			}
 			continue;
 		}
-		repoPackageJson.dependencies[dep] = version;
+		repoPackageJson.dependencies![dep] = version;
 		depCount++;
 	}
 	return depCount++;
@@ -161,8 +153,9 @@ function processDevDependencies(
 			continue;
 		}
 		const version = packageJson.devDependencies[dep];
-		const existing = repoPackageJson.dependencies[dep] ?? repoPackageJson.devDependencies[dep];
-		if (existing) {
+		const existing =
+			repoPackageJson.dependencies?.[dep] ?? repoPackageJson.devDependencies?.[dep];
+		if (existing !== undefined) {
 			if (existing !== version) {
 				throw new Error(
 					`Dependency version mismatch for ${dep}: ${existing} and ${version}`,
@@ -170,7 +163,7 @@ function processDevDependencies(
 			}
 			continue;
 		}
-		repoPackageJson.devDependencies[dep] = packageJson.devDependencies[dep];
+		repoPackageJson.devDependencies![dep] = packageJson.devDependencies[dep];
 		devDepCount++;
 	}
 	return devDepCount++;
@@ -188,6 +181,7 @@ export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, log
 		private: true,
 		dependencies: {},
 		devDependencies: {},
+		scripts: {},
 	};
 
 	const rootPackageJson = await readJsonAsync(path.join(monoRepo.repoPath, "package.json"));

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import React, { useState } from "react";
 
 import type { IAppModel } from "../model-interface";
 import { TaskListView } from "./taskListView";
@@ -24,8 +24,21 @@ export interface IAppViewProps {
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 	const { model } = props;
 	const taskList = model.baseDocument.getTaskList("task-list-1");
+
+	const clientID = model.getClientID();
+	const [leaderID, setLeaderID] = useState(model.baseDocument.getLeader());
+	model.baseDocument.on("leaderChanged", (newLeader: string) => {
+		setLeaderID(newLeader);
+	});
 	return taskList !== undefined ? (
-		<TaskListView taskList={taskList} />
+		<TaskListView
+			taskList={taskList}
+			claimLeadership={(): void => {
+				model.handleClaimLeadership();
+			}}
+			clientID={clientID}
+			leaderID={leaderID}
+		/>
 	) : (
 		<div>Whomp whomp whomp</div>
 	);

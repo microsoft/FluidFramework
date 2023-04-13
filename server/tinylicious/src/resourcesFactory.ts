@@ -10,7 +10,6 @@ import {
 	MongoDatabaseManager,
 	MongoManager,
 	IResourcesFactory,
-	DefaultServiceConfiguration,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -70,14 +69,6 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 				return new Historian(url, false, false);
 			},
 			winston,
-			{
-				// Temporary disable generateServiceSummary, as it causes SummaryNack with client summaries
-				// See AB#1627
-				scribe: {
-					...DefaultServiceConfiguration.scribe,
-					generateServiceSummary: false,
-				},
-			},
 			pubsub,
 		);
 

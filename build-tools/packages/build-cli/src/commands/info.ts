@@ -40,7 +40,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 
 		// Filter out private packages
 		if (!flags.private) {
-			packages = packages.filter((p) => !p.packageJson.private);
+			packages = packages.filter((p) => p.packageJson.private !== true);
 		}
 
 		const data: (string | MonoRepoKind | undefined)[][] = [
@@ -50,8 +50,8 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			data.push([
 				pkg.monoRepo?.kind ?? "n/a",
 				pkg.name,
-				pkg.packageJson.private ? "-private-" : "",
-				pkg.monoRepo ? pkg.monoRepo.version : pkg.version,
+				pkg.packageJson.private ?? false ? "-private-" : "",
+				pkg.monoRepo === undefined ? pkg.version : pkg.monoRepo.version,
 			]);
 		}
 
