@@ -17,7 +17,7 @@ import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import { TreeDataView } from "./TreeDataView";
 
-const loggingContext = "COMPONENTS(DataObjectsView)";
+const loggingContext = "INLINE(VIEW)";
 
 /**
  * {@link DataObjectsView} input props.
