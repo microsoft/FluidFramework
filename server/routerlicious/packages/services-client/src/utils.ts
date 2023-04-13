@@ -80,7 +80,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
- * NOTE: found a similar function in services-client#storageUtils.ts
+ * NOTE: Duplicated the protocol-base#buildHierarchy function. Renamed it to buildGitTreeHierarchy
  *
  * Build a tree hierarchy base on a flat tree
  *
@@ -89,7 +89,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
  * @param removeAppTreePrefix - Remove `.app/` from beginning of paths when present
  * @returns the hierarchical tree
  */
-export function buildHierarchy(
+export function buildGitTreeHierarchy(
 	flatTree: resources.ITree,
 	blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
 	removeAppTreePrefix = false,

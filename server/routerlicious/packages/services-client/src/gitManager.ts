@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import * as resources from "@fluidframework/gitresources";
-import { buildHierarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import {
@@ -14,7 +13,7 @@ import {
 	IGitManager,
 	IHistorian,
 } from "./storage";
-import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { buildGitTreeHierarchy } from "./utils";
 
 export class GitManager implements IGitManager {
 	private readonly blobCache = new Map<string, resources.IBlob>();
@@ -32,7 +31,7 @@ export class GitManager implements IGitManager {
 			this.blobCache.set(blob.sha, blob);
 		}
 
-		return buildHierarchy(header.tree);
+		return buildGitTreeHierarchy(header.tree);
 	}
 
 	public async getFullTree(sha: string): Promise<any> {
