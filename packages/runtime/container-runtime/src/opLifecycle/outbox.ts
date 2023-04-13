@@ -101,8 +101,9 @@ export class Outbox {
 		}
 
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-			this.mc.logger.sendErrorEvent(
+			this.mc.logger.sendTelemetryEvent(
 				{
+					category: this.params.config.disablePartialFlush ? "error" : "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
 					mainReferenceSequenceNumber: mainBatchReference,
 					attachReferenceSequenceNumber: attachFlowBatchReference,

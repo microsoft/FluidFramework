@@ -690,7 +690,6 @@ describe("Outbox", () => {
 		mockLogger.assertMatch([
 			{
 				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-				category: "error",
 			},
 		]);
 	});
@@ -746,7 +745,6 @@ describe("Outbox", () => {
 			mockLogger.assertMatch([
 				{
 					eventName: "Outbox:ReferenceSequenceNumberMismatch",
-					category: "error",
 				},
 			]);
 		});
@@ -795,7 +793,6 @@ describe("Outbox", () => {
 		mockLogger.assertMatch([
 			{
 				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-				category: "error",
 			},
 		]);
 	});
@@ -817,7 +814,6 @@ describe("Outbox", () => {
 		mockLogger.assertMatch(
 			new Array(3).fill({
 				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-				category: "error",
 			}),
 		);
 	});
