@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
@@ -119,6 +120,9 @@ export class Package {
 		return this.color(this.name);
 	}
 
+	public get nameUnscoped(): string {
+		return PackageName.getUnscopedName(this.name);
+	}
 	public get version(): string {
 		return this.packageJson.version;
 	}

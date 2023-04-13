@@ -19,7 +19,7 @@ import {
 	detectVersionScheme,
 } from "@fluid-tools/version-tools";
 
-import { packageOrReleaseGroupArg } from "../args";
+import { argToReleaseGroupOrPackage, packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
 import {
@@ -105,8 +105,15 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
-		if (args.package_or_release_group === undefined) {
+		const rgOrPackageName = args.package_or_release_group;
+		const rgOrPackage = argToReleaseGroupOrPackage(rgOrPackageName, context);
+
+		if (rgOrPackageName === undefined) {
 			this.error("ERROR: No dependency provided.");
+		}
+
+		if (rgOrPackage === undefined) {
+			this.error(`Package not found: ${rgOrPackageName}`);
 		}
 
 		if (bumpType === undefined && flags.exact === undefined) {
@@ -130,22 +137,16 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`Invalid exactDepType: ${exactDepType}`);
 		}
 
-		if (isReleaseGroup(args.package_or_release_group)) {
-			const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
-			assert(
-				releaseRepo !== undefined,
-				`Release repo not found for ${args.package_or_release_group}`,
-			);
+		if (rgOrPackage instanceof MonoRepo) {
+			const releaseRepo = rgOrPackage;
+			assert(releaseRepo !== undefined, `Release repo not found for ${rgOrPackageName}`);
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
-			const releasePackage = context.fullPackageMap.get(args.package_or_release_group);
-			if (releasePackage === undefined) {
-				this.error(`Package not in context: ${releasePackage}`);
-			}
+			const releasePackage = rgOrPackage;
 
 			if (releasePackage.monoRepo !== undefined) {
 				const rg = releasePackage.monoRepo.kind;
@@ -185,7 +186,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		scheme = flags.scheme ?? detectVersionScheme(newVersion);
 
 		this.logHr();
-		this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
+		this.log(`Release group: ${chalk.blueBright(rgOrPackageName)}`);
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
@@ -222,14 +223,14 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		if (shouldCommit) {
 			const commitMessage = generateBumpVersionCommitMessage(
-				args.package_or_release_group,
+				rgOrPackageName,
 				bumpArg,
 				repoVersion,
 				scheme,
 			);
 
 			const bumpBranch = generateBumpVersionBranchName(
-				args.package_or_release_group,
+				rgOrPackageName,
 				bumpArg,
 				repoVersion,
 				scheme,
