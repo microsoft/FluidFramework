@@ -13,12 +13,12 @@ Releases a package or release group.
 
 ```
 USAGE
-  $ flub release [-v] [-g client|server|azure|build-tools | -p <value>] [-t major|minor|patch] [-x |
-    --install | --commit | --branchCheck | --updateCheck | --policyCheck]
+  $ flub release [-v] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-t
+    major|minor|patch] [-x | --install | --commit | --branchCheck | --updateCheck | --policyCheck]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
-                               <options: client|server|azure|build-tools>
+                               <options: client|server|azure|build-tools|gitrest|historian>
   -p, --package=<value>        Name of package.
   -t, --bumpType=<option>      Version bump type.
                                <options: major|minor|patch>
@@ -53,11 +53,12 @@ Prints a list of released versions of a package or release group. Releases are g
 
 ```
 USAGE
-  $ flub release history [-v] [-g client|server|azure|build-tools | -p <value>] [-l <value>] [--json]
+  $ flub release history [-v] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-l <value>]
+    [--json]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
-                               <options: client|server|azure|build-tools>
+                               <options: client|server|azure|build-tools|gitrest|historian>
   -l, --limit=<value>          Limits the number of displayed releases for each release group. Results are sorted by
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.
   -p, --package=<value>        Name of package.
@@ -90,7 +91,8 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [-v] [--json] [-i | -r | -s] [-g client|server|azure|build-tools] [-o <value>]
+  $ flub release report [-v] [--json] [-i | -r | -s] [-g client|server|azure|build-tools|gitrest|historian] [-o
+    <value>]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -102,7 +104,7 @@ FLAGS
 
       If you want to report on a particular release, check out the git tag for the release version you want to report on
       before running this command.
-      <options: client|server|azure|build-tools>
+      <options: client|server|azure|build-tools|gitrest|historian>
 
   -i, --interactive
       Choose the version of each release group and package to contain in the release report.
