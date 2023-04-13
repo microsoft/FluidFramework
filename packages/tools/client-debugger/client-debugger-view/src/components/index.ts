@@ -12,7 +12,6 @@ export * from "./AudienceView";
 export * from "./ContainerDevtoolsView";
 export * from "./ContainerHistoryView";
 export * from "./ContainerSummaryView";
-export * from "./ContainerView";
 export * from "./FluidHandleView";
 export * from "./FluidTreeView";
 export * from "./FluidValueView";
