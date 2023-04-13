@@ -15,7 +15,12 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	MockLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "../../containerRuntime";
@@ -35,6 +40,10 @@ class MockRuntime {
 	) {}
 }
 
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
 describe("Runtime", () => {
 	describe("Summarization", () => {
 		describe("RunningSummarizer", () => {
@@ -44,6 +53,7 @@ describe("Runtime", () => {
 			let refreshLatestAckRunCount: number;
 			let clock: sinon.SinonFakeTimers;
 			let mockLogger: MockLogger;
+			let settings = {};
 			let mockDeltaManager: MockDeltaManager;
 			let summaryCollection: SummaryCollection;
 			let summarizer: RunningSummarizer;
@@ -272,7 +282,11 @@ describe("Runtime", () => {
 				lastRefSeq = 0;
 				lastClientSeq = -1000; // negative/decrement for test
 				lastSummarySeq = 0; // negative/decrement for test
-				mockLogger = new MockLogger();
+				settings = {};
+				mockLogger = mixinMonitoringContext(
+					new MockLogger(),
+					configProvider(settings),
+				).logger;
 				mockDeltaManager = new MockDeltaManager();
 				mockRuntime = new MockRuntime(mockDeltaManager);
 				summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
@@ -635,6 +649,59 @@ describe("Runtime", () => {
 					// Should stop after final nack
 					assert.strictEqual(stopCall, 0);
 					await emitNack();
+					assert.strictEqual(stopCall, 1);
+				});
+
+				it("Should not retry on failure when stopping instead of restarting", async () => {
+					settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
+					await emitNextOp();
+
+					// too early, should not run yet
+					await emitNextOp(summaryConfig.maxOps - 1);
+					assertRunCounts(0, 0, 0);
+
+					// now should run a normal run
+					await emitNextOp(1);
+					assertRunCounts(1, 0, 0);
+					const retryProps1 = {
+						summarizeCount: 1,
+						summaryAttemptsPerPhase: 1,
+						summaryAttempts: 1,
+						summaryAttemptPhase: 1,
+					};
+					assert(
+						mockLogger.matchEvents([
+							{ eventName: "Running:Summarize_generate", ...retryProps1 },
+							{ eventName: "Running:Summarize_Op", ...retryProps1 },
+						]),
+						"unexpected log sequence",
+					);
+
+					// should not run, because our summary hasn't been acked/nacked yet
+					await emitNextOp(summaryConfig.maxOps + 1);
+					assertRunCounts(1, 0, 0);
+
+					// should run with refresh after first nack
+					await emitNack();
+					assertRunCounts(2, 0, 0, "retry1 should be refreshLatestAck");
+					const retryProps2 = {
+						summarizeCount: 1,
+						summarizerSuccessfulAttempts: 0,
+					};
+					assert(
+						mockLogger.matchEvents([
+							{
+								eventName: "Running:Summarize_cancel",
+								...retryProps1,
+								reason: getFailMessage("summaryNack"),
+							},
+							{
+								eventName: "Running:RestartInsteadOfRefreshFromServerFetch",
+								...retryProps2,
+							},
+						]),
+						"unexpected log sequence",
+					);
 					assert.strictEqual(stopCall, 1);
 				});
 
