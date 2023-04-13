@@ -580,16 +580,17 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				assert(parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
 				maybeWithNode(
 					(p) => {
-						assert(parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
 						p.events.emit("childrenChanging", p);
-						const parentFieldPath: FieldUpPath = {
-							parent: p,
-							field: parentField,
-						};
-						for (const [, visitors] of pathVisitors) {
-							visitors.forEach(({ onDelete: visitorOnDelete }) => {
-								visitorOnDelete(parentFieldPath, start, count);
-							});
+						if (parentField !== undefined) {
+							const parentFieldPath: FieldUpPath = {
+								parent: p,
+								field: parentField,
+							};
+							for (const [, visitors] of pathVisitors) {
+								visitors.forEach(({ onDelete: visitorOnDelete }) => {
+									visitorOnDelete(parentFieldPath, start, count);
+								});
+							}
 						}
 					},
 					() => this.events.emit("childrenChanging", this),
@@ -600,16 +601,17 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
 				maybeWithNode(
 					(p) => {
-						assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
 						p.events.emit("childrenChanging", p);
-						const parentFieldPath: FieldUpPath = {
-							parent: p,
-							field: parentField,
-						};
-						for (const [, visitors] of pathVisitors) {
-							visitors.forEach(({ onInsert: visitorOnInsert }) => {
-								visitorOnInsert(parentFieldPath, start, content);
-							});
+						if (parentField !== undefined) {
+							const parentFieldPath: FieldUpPath = {
+								parent: p,
+								field: parentField,
+							};
+							for (const [, visitors] of pathVisitors) {
+								visitors.forEach(({ onInsert: visitorOnInsert }) => {
+									visitorOnInsert(parentFieldPath, start, content);
+								});
+							}
 						}
 					},
 					() => this.events.emit("childrenChanging", this),
