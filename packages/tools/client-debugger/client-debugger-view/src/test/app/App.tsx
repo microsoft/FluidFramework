@@ -20,12 +20,11 @@ import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import {
-	FluidDebuggerLogger,
+	DevtoolsLogger,
 	IFluidDevtools,
 	initializeFluidDevtools,
 } from "@fluid-tools/client-debugger";
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	ContainerInfo,
 	createFluidContainer,
@@ -118,10 +117,7 @@ function registerContainerWithDevtools(
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(
-	devtools: IFluidDevtools,
-	logger: ITelemetryBaseLogger,
-): {
+function useContainerInfo(devtools: IFluidDevtools): {
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;
 } {
@@ -142,14 +138,14 @@ function useContainerInfo(
 				return containerId.length === 0
 					? createFluidContainer(
 							containerSchema,
-							logger,
+							devtools.logger,
 							populateRootMap,
 							containerNickname,
 					  )
 					: loadExistingFluidContainer(
 							containerId,
 							containerSchema,
-							logger,
+							devtools.logger,
 							containerNickname,
 					  );
 			}
@@ -169,7 +165,7 @@ function useContainerInfo(
 
 				return createFluidContainer(
 					containerSchema,
-					logger,
+					devtools.logger,
 					populateRootMap,
 					"Private Container",
 				);
@@ -236,17 +232,18 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Fluid Debugger logger
-	const logger = React.useMemo(() => FluidDebuggerLogger.create(), []);
+	const logger = React.useMemo(() => DevtoolsLogger.create(), []);
 
 	// Initialize devtools
-	const devtools = React.useMemo(() => initializeFluidDevtools(), []);
+	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);
+
 	React.useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.
 		return (): void => devtools.dispose();
 	}, [devtools]);
 
 	// Load the collaborative SharedString object
-	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger);
+	const { privateContainer, sharedContainer } = useContainerInfo(devtools);
 
 	const view = (
 		<Stack horizontal>
