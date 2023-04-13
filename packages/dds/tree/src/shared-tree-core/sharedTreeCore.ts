@@ -291,31 +291,44 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	protected createBranch(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
 		const branch = new SharedTreeBranch(
-			() => this.editManager.getLocalBranchHead(),
-			(forked) => {
-				const changeToForked = forked.pull();
-				const changes: GraphCommit<TChange>[] = [];
-				const localBranchHead = this.editManager.getLocalBranchHead();
-				const ancestor = findAncestor(
-					[forked.getHead(), changes],
-					(c) => c === localBranchHead,
-				);
-				assert(
-					ancestor === localBranchHead,
-					0x598 /* Expected merging checkout branches to be related */,
-				);
-				for (const { change, revision } of changes) {
-					this.applyChange(change, revision);
-					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-				}
-				return changeToForked;
-			},
+			this.editManager.getLocalBranchHead(),
 			this.editManager.localSessionId,
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
 			anchors,
 		);
 		return branch;
+	}
+
+	// TODO: doc
+	protected mergeBranch(branch: SharedTreeBranch<TEditor, TChange>): void {
+		assert(
+			!branch.isTransacting(),
+			0x597 /* Branch may not be merged while transaction is in progress */,
+		);
+
+		const commits: GraphCommit<TChange>[] = [];
+		const localBranchHead = this.editManager.getLocalBranchHead();
+		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
+		if (ancestor === localBranchHead) {
+			for (const { change, revision } of commits) {
+				this.applyChange(change, revision);
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+			}
+		} else {
+			const rebaser = new Rebaser(this.changeFamily.rebaser);
+			const [newHead] = rebaser.rebaseBranch(branch.getHead(), this.getLocalBranchHead());
+			const changes: GraphCommit<TChange>[] = [];
+			findAncestor([newHead, changes], (c) => c === this.getLocalBranchHead());
+			for (const { change, revision } of changes) {
+				this.applyChange(change, revision);
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+			}
+		}
+	}
+
+	public getLocalBranchHead(): GraphCommit<TChange> {
+		return this.editManager.getLocalBranchHead();
 	}
 
 	protected onDisconnect() {}
