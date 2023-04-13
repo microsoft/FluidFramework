@@ -13,8 +13,15 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { Clock20Regular, PlugConnected24Regular } from "@fluentui/react-icons";
 import {
+	Clock20Regular,
+	PlugConnected24Regular,
+	Attach24Regular,
+	PlugDisconnected24Regular,
+	ErrorCircle24Regular,
+	Info24Regular,
+  } from "@fluentui/react-icons";
+  import {
 	ConnectionStateChangeLogEntry,
 	ContainerStateHistory,
 	GetContainerState,
@@ -114,7 +121,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 
 	return (
 		<>
-			<Divider appearance="brand"> Audience State </Divider>
+			<Divider appearance="brand"> Container State Log </Divider>
 			<Table size="small" aria-label="Audience history table">
 				<TableHeader>
 					<TableRow>
@@ -137,6 +144,24 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 							? changeTimeStamp.toTimeString()
 							: changeTimeStamp.toDateString();
 
+							const getStateIcon = (state: string): React.ReactElement => {
+								switch (state) {
+								  case "connected":
+									return <PlugConnected24Regular />;
+								  case "attached":
+									return <Attach24Regular />;
+								  case "disconnected":
+									return <PlugDisconnected24Regular />;
+								  case "disposed":
+									return <ErrorCircle24Regular />;
+								  case "closed":
+									return <Info24Regular />;
+								  default:
+									console.log("Unknown state type for container!");
+									return <Info24Regular />;
+								}
+							  };
+							  
 						return (
 							<TableRow
 								key={itemIndex}
@@ -144,7 +169,10 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 									backgroundColor: getBackgroundColorForState(item.newState),
 								}}
 							>
-								<TableCell>{item.newState}</TableCell>
+								<TableCell>
+									{getStateIcon(item.newState)}
+									{item.newState}
+								</TableCell>
 								<TableCell>{timestampDisplay}</TableCell>
 							</TableRow>
 						);
