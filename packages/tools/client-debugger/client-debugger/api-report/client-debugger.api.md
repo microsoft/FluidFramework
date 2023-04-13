@@ -93,6 +93,28 @@ export interface ContainerDevtoolsEvents extends IEvent {
 }
 
 // @public
+export enum ContainerDevtoolsFeature {
+    ContainerData = "container-data"
+}
+
+// @public
+export type ContainerDevtoolsFeatureFlags = {
+    [Feature in ContainerDevtoolsFeature]?: boolean;
+};
+
+// @public
+export namespace ContainerDevtoolsFeatures {
+    const MessageType = "CONTAINER_DEVTOOLS_FEATURES";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData extends HasContainerId {
+        features: ContainerDevtoolsFeatureFlags;
+    }
+}
+
+// @public
 export interface ContainerDevtoolsProps {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
@@ -177,6 +199,35 @@ export namespace DataVisualization {
 }
 
 // @public
+export enum DevtoolsFeature {
+    Telemetry = "telemetry"
+}
+
+// @public
+export type DevtoolsFeatureFlags = {
+    [Feature in DevtoolsFeature]?: boolean;
+};
+
+// @public
+export namespace DevtoolsFeatures {
+    const MessageType = "DEVTOOLS_FEATURES";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        features: DevtoolsFeatureFlags;
+    }
+}
+
+// @public @sealed
+export class DevtoolsLogger extends TelemetryLogger {
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): DevtoolsLogger;
+    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
 export const devtoolsMessageSource: string;
 
 // @public
@@ -189,13 +240,6 @@ export namespace DisconnectContainer {
     export type MessageData = HasContainerId;
 }
 
-// @internal @sealed
-export class FluidDebuggerLogger extends TelemetryLogger {
-    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
-}
-
 // @internal
 export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implements IFluidDevtools {
     constructor(props?: FluidDevtoolsProps);
@@ -206,6 +250,7 @@ export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implem
     get disposed(): boolean;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
+    readonly logger: DevtoolsLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
@@ -222,6 +267,7 @@ export interface FluidDevtoolsEvents extends IEvent {
 // @public
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
+    logger?: DevtoolsLogger;
 }
 
 // @public
@@ -267,6 +313,16 @@ export namespace GetAudienceSummary {
 }
 
 // @public
+export namespace GetContainerDevtoolsFeatures {
+    const MessageType = "GET_CONTAINER_DEVTOOLS_FEATURES";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export type MessageData = HasContainerId;
+}
+
+// @public
 export namespace GetContainerList {
     const MessageType = "GET_CONTAINER_LIST";
     export function createMessage(): Message;
@@ -293,6 +349,15 @@ export namespace GetDataVisualization {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId & HasFluidObjectId;
+}
+
+// @public
+export namespace GetDevtoolsFeatures {
+    const MessageType = "GET_DEVTOOLS_FEATURES";
+    export function createMessage(): Message;
+    export interface Message extends IDevtoolsMessage<undefined> {
+        type: typeof MessageType;
+    }
 }
 
 // @public
@@ -353,6 +418,7 @@ export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDi
     closeContainerDevtools(containerId: string): void;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
+    readonly logger: DevtoolsLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
