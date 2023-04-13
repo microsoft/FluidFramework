@@ -118,14 +118,8 @@ export function evalBlobsAndTrees(snapshot: INormalizedWholeSummary) {
 }
 
 export function validateBlobsAndTrees(snapshot: ISnapshotTree) {
-	assert(
-		snapshot.trees !== undefined,
-		0x200 /* "Returned odsp snapshot is malformed. No trees!" */,
-	);
-	assert(
-		snapshot.blobs !== undefined,
-		0x201 /* "Returned odsp snapshot is malformed. No blobs!" */,
-	);
+	assert(snapshot.trees !== undefined, "Returned r11s snapshot is malformed. No trees!");
+	assert(snapshot.blobs !== undefined, "Returned r11s snapshot is malformed. No blobs!");
 }
 
 function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
