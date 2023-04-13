@@ -243,13 +243,6 @@ export class Context {
 		return [...this.fullPackageMap.values()];
 	}
 
-	public getPackage(name: string): Package | undefined {
-		return (
-			this.independentPackages.find((pkg) => pkg.nameUnscoped === name) ??
-			this.fullPackageMap.get(name)
-		);
-	}
-
 	/**
 	 * Gets the version for a package or release group. If a versionBag was provided, it will be searched for the
 	 * package. Otherwise, the value is assumed to be a release group, so the context is searched.

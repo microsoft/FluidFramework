@@ -14,6 +14,10 @@ export const packageOrReleaseGroupArg = Args.string({
 	description: "The name of a package or a release group.",
 });
 
+/**
+ * Takes a packageOrReleaseGroupArg and searches the context for it. Release groups are checked first, then independent
+ * packages by scoped name, then by unscoped name.
+ */
 export const argToReleaseGroupOrPackage = (
 	name: string,
 	context: Context,
@@ -23,7 +27,7 @@ export const argToReleaseGroupOrPackage = (
 	}
 
 	return (
-		context.independentPackages.find((pkg) => pkg.nameUnscoped === name) ??
-		context.fullPackageMap.get(name)
+		context.fullPackageMap.get(name) ??
+		context.independentPackages.find((pkg) => pkg.nameUnscoped === name)
 	);
 };
