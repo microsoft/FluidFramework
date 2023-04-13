@@ -272,7 +272,7 @@ const rootKey: FieldKey = brand("root");
 
 /**
  * This is a hack to encode arbitrary information (the intentions) into a Delta.
- * The resulting Delta does note represent a concrete change to a document tree.
+ * The resulting Delta does not represent a concrete change to a document tree.
  * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
  * `ChangeFamily.intoDelta` with the expected change.
  */
