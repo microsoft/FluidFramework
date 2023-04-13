@@ -171,6 +171,12 @@ export class AttributableMapKernel {
 	 */
 	private readonly localValueMaker: LocalValueMaker;
 
+	/**
+	 * Temporary property to make the attribution track consistently enabled for demo purpose
+	 */
+
+	private readonly alwaysTrackAttribution: boolean = true;
+
 	private attribution: Map<string, AttributionKey> | undefined;
 
 	/**
@@ -192,7 +198,7 @@ export class AttributableMapKernel {
 	) {
 		this.localValueMaker = new LocalValueMaker(serializer);
 		this.messageHandlers = this.getMessageHandlers();
-		if (options?.attribution?.track) {
+		if (options?.attribution?.track || this.alwaysTrackAttribution) {
 			this.attribution = new Map();
 		}
 	}
@@ -386,7 +392,7 @@ export class AttributableMapKernel {
 	}
 
 	private setAttribution(key: string, message?: ISequencedDocumentMessage): void {
-		if (this.options?.attribution?.track) {
+		if (this.options?.attribution?.track || this.alwaysTrackAttribution) {
 			if (message) {
 				this.attribution?.set(key, { type: "op", seq: message.sequenceNumber });
 			} else {
@@ -400,13 +406,13 @@ export class AttributableMapKernel {
 	}
 
 	private deleteAttribution(key: string): void {
-		if (this.options?.attribution?.track) {
+		if (this.options?.attribution?.track || this.alwaysTrackAttribution) {
 			this.attribution?.delete(key);
 		}
 	}
 
 	private clearAllAttribution(): void {
-		if (this.options?.attribution?.track) {
+		if (this.options?.attribution?.track || this.alwaysTrackAttribution) {
 			this.attribution?.clear();
 		}
 	}
@@ -419,9 +425,10 @@ export class AttributableMapKernel {
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
-			const attribution = this.options?.attribution?.track
-				? this.attribution?.get(key)
-				: undefined;
+			const attribution =
+				this.options?.attribution?.track || this.alwaysTrackAttribution
+					? this.attribution?.get(key)
+					: undefined;
 
 			assert(
 				!attribution || attribution.type !== "local",

@@ -140,6 +140,7 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
+		options?: IMapOptions,
 	) {
 		super(id, runtime, attributes, "fluid_map_");
 		this.kernel = new AttributableMapKernel(
@@ -148,7 +149,7 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			() => this.isAttached(),
 			this,
-			runtime.options as IMapOptions,
+			options ?? (runtime.options as IMapOptions),
 		);
 	}
 
