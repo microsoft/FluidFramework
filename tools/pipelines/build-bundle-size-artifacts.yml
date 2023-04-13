@@ -45,6 +45,7 @@ extends:
     taskBuildDocs: false
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
+    setVersionInPipeline: false
     buildDirectory: .
     tagName: bundle-artifacts
     poolBuild: Large
