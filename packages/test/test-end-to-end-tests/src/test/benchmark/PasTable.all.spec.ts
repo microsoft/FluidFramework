@@ -6,22 +6,14 @@
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import {
 	MockFluidDataStoreRuntime,
-	MockStorage,
 	MockContainerRuntimeFactory,
 } from "@fluidframework/test-runtime-utils";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
 import { benchmarkAll, IBenchmarkParameters } from "./DocumentCreator";
 
-function createConnectedMatrix(id: string, runtimeFactory: MockContainerRuntimeFactory, dataStoreRuntime: MockFluidDataStoreRuntime) {
-	const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
-	matrix.connect({
-		deltaConnection: runtimeFactory
-			.createContainerRuntime(dataStoreRuntime)
-			.createDeltaConnection(),
-		objectStorage: new MockStorage(),
-	});
-	return matrix;
+function createLocalMatrix(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
+	return new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
 }
 
 function createString(id: string, dataStoreRuntime: MockFluidDataStoreRuntime) {
@@ -46,7 +38,7 @@ describeNoCompat("PAS Test", () => {
 		"Create Table Matrix With SharedStrings",
 		new (class PerformanceTestWrapper implements IBenchmarkParameters {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
-			matrix = createConnectedMatrix("matrix1", containerRuntimeFactory, dataStoreRuntime);
+			matrix = createLocalMatrix("matrix1", dataStoreRuntime);
 
 			async run(): Promise<void> {
 				this.matrix.insertRows(0, 6);
