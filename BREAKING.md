@@ -28,7 +28,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 ## 2.0.0-internal.5.0.0 Breaking changes
 
 -   [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
--   [garbage-collector and related items removed](#garbage-collector-and-related-items-removed)
+-   [@fluidframework/garbage-collector removed](#@fluidframework/garbage-collector-removed)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
 -   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
 -   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
@@ -40,9 +40,9 @@ In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have 
 This makes IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls are now FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
 ensureFluidResolvedUrl have been removed due to this.
 
-### garbage-collector and related items removed
+### @fluidframework/garbage-collector removed
 
-The following functions, interfaces, and types currently available in `@fluidframework/garbage-collector` were deprecated in 2.0.0-internal.4.1.0 and are now removed.
+The `@fluidframework/garbage-collector` package was deprecated in 2.0.0-internal.4.1.0. It has now been removed with the following functions, interfaces, and types in it.
 
 -   `runGarbageCollection`
 -   `trimLeadingAndTrailingSlashes`
@@ -50,6 +50,7 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `trimTrailingSlashes`
 -   `cloneGCData`
 -   `unpackChildNodesGCDetails`
+-   `unpackChildNodesUsedRoutes`
 -   `removeRouteFromAllNodes`
 -   `concatGarbageCollectionStates`
 -   `concatGarbageCollectionData`

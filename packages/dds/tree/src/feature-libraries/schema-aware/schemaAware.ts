@@ -4,7 +4,7 @@
  */
 
 import { GlobalFieldKey, SchemaDataAndPolicy, TreeSchemaIdentifier, ValueSchema } from "../../core";
-import { typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import { MarkedArrayLike, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
 import {
 	FullSchemaPolicy,
 	Multiplicity,
@@ -13,7 +13,9 @@ import {
 	ViewSchemaCollection,
 } from "../modular-schema";
 import { defaultSchemaPolicy } from "../defaultSchema";
+import { UntypedField, UntypedTreeCore } from "../untypedTree";
 import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
+import { UntypedSequenceField } from "./partlyTyped";
 
 /**
  * Schema aware API for a specific Schema.
@@ -68,13 +70,19 @@ export const enum ApiMode {
 	 * - Does not do primary field inlining.
 	 * - Primitive node handling might not match.
 	 */
-	Normalized,
+	Editable,
 	/**
 	 * Always use full node objects for everything.
 	 *
 	 * Fields are still shaped based on their multiplicity.
 	 */
 	Wrapped,
+	/**
+	 * Simplified version of Flexible.
+	 *
+	 * Primitive values are always unwrapped.
+	 */
+	Simple,
 }
 
 /**
@@ -90,7 +98,7 @@ export type CollectOptions<
 	[ApiMode.Flexible]: Record<string, never> extends TTypedFields
 		? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName>
 		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
-	[ApiMode.Normalized]: [Record<string, never>, TValueSchema] extends [
+	[ApiMode.Editable]: [Record<string, never>, TValueSchema] extends [
 		TTypedFields,
 		PrimitiveValueSchema,
 	]
@@ -100,11 +108,15 @@ export type CollectOptions<
 					[typeNameSymbol]: TName & TreeSchemaIdentifier;
 				} & ValueFieldTreeFromSchema<TValueSchema> &
 					TTypedFields
-		  >;
+		  > &
+				UntypedTreeCore;
 	[ApiMode.Wrapped]: {
 		[typeNameSymbol]: TName;
 		[valueSymbol]: TypedValue<TValueSchema>;
 	} & TTypedFields;
+	[ApiMode.Simple]: Record<string, never> extends TTypedFields
+		? TypedValue<TValueSchema>
+		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
 }[Mode];
 
 /**
@@ -132,23 +144,51 @@ export type TypedFields<
 	TFields extends { [key: string]: TypedSchema.FieldSchemaTypeInfo },
 > = [
 	{
-		[key in keyof TFields]: ApplyMultiplicity<
-			TFields[key]["kind"]["multiplicity"],
-			TypeSetToTypedTrees<TMap, Mode, TFields[key]["types"]>
-		>;
+		[key in keyof TFields]: TypedField<TMap, Mode, TFields[key]>;
 	},
+][TypedSchema._dummy];
+
+/**
+ * `FieldSchemaTypeInfo` to `TypedTree`
+ * @alpha
+ */
+export type TypedField<
+	TMap extends TypedSchemaData,
+	Mode extends ApiMode,
+	TField extends TypedSchema.FieldSchemaTypeInfo,
+> = [
+	ApplyMultiplicity<
+		TField["kind"]["multiplicity"],
+		TypeSetToTypedTrees<TMap, Mode, TField["types"]>,
+		Mode
+	>,
 ][TypedSchema._dummy];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
  * @alpha
  */
-export type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
+export type ApplyMultiplicity<
+	TMultiplicity extends Multiplicity,
+	TypedChild,
+	Mode extends ApiMode,
+> = {
 	[Multiplicity.Forbidden]: undefined;
 	[Multiplicity.Optional]: undefined | TypedChild;
-	[Multiplicity.Sequence]: TypedChild[];
+	[Multiplicity.Sequence]: Mode extends ApiMode.Editable
+		? EditableSequenceField<TypedChild>
+		: TypedChild[];
 	[Multiplicity.Value]: TypedChild;
 }[TMultiplicity];
+
+// TODO: add strong typed `getNode`.
+export type EditableField<TypedChild> = UntypedField & MarkedArrayLike<TypedChild>;
+
+// TODO: add strong typed `getNode`.
+/**
+ * @alpha
+ */
+export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<TypedChild>;
 
 /**
  * Takes in `types?: unknown | TypedSchema.NameSet` and returns a TypedTree union.
@@ -166,10 +206,11 @@ export type TypeSetToTypedTrees<
  * Interface which strongly typed schema collections extend.
  * @alpha
  */
-export interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
+export interface TypedSchemaData extends ViewSchemaCollection {
+	readonly policy: FullSchemaPolicy;
 	// TODO: can we use a more specific type here?
-	treeSchemaObject: Record<string, any>; // LabeledTreeSchema
-	allTypes: readonly string[];
+	readonly treeSchemaObject: Record<string, any>; // LabeledTreeSchema
+	readonly allTypes: readonly string[];
 }
 
 /**
