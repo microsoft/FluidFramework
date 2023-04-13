@@ -233,20 +233,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			sessionId: this.editManager.localSessionId,
 			type,
 		};
-		const changeDelta = this.changeFamily.intoDelta(change);
-		this.transactions.repairStore?.capture(changeDelta, commit.revision);
-
-		// If this commit will be submitted, repair data must be captured before the change is applied.
-		let repairData: RepairDataStore | undefined;
-		if (this.transactions.size === 0) {
-			repairData = this.repairDataStoreFactory();
-			repairData?.capture(changeDelta, commit.revision);
-		}
-
 		const delta = this.editManager.addLocalChange(commit.revision, change, false);
+		this.transactions.repairStore?.capture(delta, commit.revision);
 
 		if (this.transactions.size === 0) {
-			this.submitCommit(commit, repairData);
+			this.submitCommit(commit);
 		}
 
 		this.changeEvents.emit("newLocalChange", change);
