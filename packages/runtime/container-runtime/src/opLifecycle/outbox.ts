@@ -101,6 +101,10 @@ export class Outbox {
 		}
 
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
+			// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+			const originalStackTraceLimit = (Error as any).stackTraceLimit;
+			(Error as any).stackTraceLimit = 50;
+
 			this.mc.logger.sendTelemetryEvent(
 				{
 					category: this.params.config.disablePartialFlush ? "error" : "generic",
@@ -111,6 +115,8 @@ export class Outbox {
 				},
 				new UsageError("Submission of an out of order message"),
 			);
+
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
 
 		if (!this.params.config.disablePartialFlush) {
