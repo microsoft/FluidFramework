@@ -111,7 +111,8 @@ export async function bumpPackageDependencies(
 				const dependencies = dev
 					? pkg.packageJson.devDependencies
 					: pkg.packageJson.dependencies;
-				const verString = dependencies[name];
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const verString = dependencies[name]!;
 				const depIsPrerelease = (semver.minVersion(verString)?.prerelease?.length ?? 0) > 0;
 
 				const depNewRangeOrBumpType = dep.rangeOrBumpType;
@@ -176,7 +177,7 @@ export async function bumpReleaseGroup(
 
 	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts if needed.
 	if (releaseGroupOrPackage instanceof MonoRepo) {
-		workingDir = releaseGroupOrPackage.repoPath;
+		workingDir = context.gitRepo.resolvedRoot;
 		name = releaseGroupOrPackage.kind;
 		cmd = `flub exec -g ${name} -- "npm version '${translatedVersion.version}' && npm run build:genver"`;
 	} else {
