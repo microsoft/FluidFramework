@@ -300,7 +300,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return branch;
 	}
 
-	// TODO: doc
+	/**
+	 * Merges the commits of the given branch into the root local branch.
+	 * This behaves as if all divergent commits on the branch were applied to the root local branch one at a time.
+	 * @param branch - the branch to merge
+	 */
 	protected mergeBranch(branch: SharedTreeBranch<TEditor, TChange>): void {
 		assert(
 			!branch.isTransacting(),
@@ -327,7 +331,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	public getLocalBranchHead(): GraphCommit<TChange> {
+	/**
+	 * @returns the head commit of the root local branch
+	 */
+	protected getLocalBranchHead(): GraphCommit<TChange> {
 		return this.editManager.getLocalBranchHead();
 	}
 

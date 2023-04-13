@@ -29,7 +29,7 @@ export interface SharedTreeBranchEvents<TChange> {
 	/**
 	 * Fired anytime the head of this branch changes.
 	 * @param change - the cumulative change to this branch's state.
-	 * This may be a composition of changes from multiple commits.
+	 * This may be a composition of changes from multiple commits at once (e.g. after a rebase or merge).
 	 */
 	change(change: TChange): void;
 }
@@ -43,14 +43,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 
-	/** // TODO: re-doc params. Remove Anchor field? Anchors can be rebased outside? !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	 * @param getBaseBranch - a function which retrieves the head of the base branch
-	 * @param mergeIntoBase - a function which describes how to merge this branch into the base branch which created it.
-	 * It is responsible for rebasing the changes properly across branches and updating the head of the base branch.
-	 * It returns the net change to the child branch.
-	 * @param sessionId - the session ID used to author commits made by to this branch
-	 * @param rebaser - a rebaser to rebase this branch's changes when it pulls or merges
-	 */
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
@@ -69,7 +61,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		super();
 		this.editor = this.changeFamily.buildEditor(
 			(change) => this.applyChange(change),
-			new AnchorSet(), // The branch will do the anchor rebasing, so pass a dummy anchor set here.
+			new AnchorSet(), // This branch class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.
 		);
 	}
 
@@ -86,7 +78,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.head.revision,
 		);
 
-		this.emitChanges(change);
+		this.emitAndRebaseAnchors(change);
 	}
 
 	/**
@@ -137,7 +129,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false, repairStore);
 			inverses.push(tagChange(inverse, mintRevisionTag()));
 		}
-		this.emitChanges(inverses);
+		this.emitAndRebaseAnchors(inverses);
 		return TransactionResult.Abort;
 	}
 
@@ -192,7 +184,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		this.head = newHead;
-		return this.emitChanges(change);
+		return this.emitAndRebaseAnchors(change);
 	}
 
 	/**
@@ -215,7 +207,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		if (ancestor === this.head) {
 			// We know that `branch` is based off our latest state (e.g. `branch` just did a `rebaseOnto` this branch)
 			this.head = branch.head;
-			return this.emitChanges(commits);
+			return this.emitAndRebaseAnchors(commits);
 		}
 
 		const [newHead] = this.rebaser.rebaseBranch(branch.head, this.head);
@@ -226,10 +218,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const changes: GraphCommit<TChange>[] = [];
 		findAncestor([newHead, changes], (c) => c === this.head);
 		this.head = newHead;
-		return this.emitChanges(changes);
+		return this.emitAndRebaseAnchors(changes);
 	}
 
-	private emitChanges(change: TChange | TaggedChange<TChange>[]): TChange {
+	private emitAndRebaseAnchors(change: TChange | TaggedChange<TChange>[]): TChange {
 		let composedChange: TChange;
 		if (Array.isArray(change)) {
 			composedChange = this.rebaser.changeRebaser.compose(change);

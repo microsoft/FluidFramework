@@ -48,6 +48,7 @@ import {
 	EditableTree,
 	Identifier,
 	SchemaAware,
+	ModularChangeset,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, fail, TransactionResult } from "../util";
@@ -351,6 +352,10 @@ export class SharedTree
 		this.mergeBranch(getForkBranch(view));
 	}
 
+	public override getLocalBranchHead(): GraphCommit<ModularChangeset> {
+		return super.getLocalBranchHead();
+	}
+
 	/**
 	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
 	 * Whatever pattern is adopted should probably also handle multiple versions of changeset operations.
@@ -413,7 +418,6 @@ export class SharedTreeFactory implements IChannelFactory {
 	}
 }
 
-const branchSymbol = Symbol("branch");
 export class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
 
@@ -511,7 +515,12 @@ export function runSynchronous(
 		: view.transaction.commit();
 }
 
-// TODO: do this a better way?
+// #region Extraction functions
+// The following two functions assume the underlying classes/implementations of `ISharedTreeView` and `ISharedTreeFork`.
+// While `instanceof` checks are in general bad practice or code smell, these are justifiable because:
+// 1. `SharedTree` and `SharedTreeFork` are private and meant to be the only implementations of `ISharedTreeView` and `ISharedTreeFork`.
+// 2. The `ISharedTreeView` and `ISharedTreeFork` interfaces are not meant to specify input contracts, but exist solely to reduce the API provided by the underlying classes.
+//    It is never expected that a user would create their own object or class which satisfies `ISharedTreeView` or `ISharedTreeFork`.
 function getHeadCommit(view: ISharedTreeView): GraphCommit<DefaultChangeset> {
 	if (view instanceof SharedTree) {
 		return view.getLocalBranchHead();
@@ -519,12 +528,13 @@ function getHeadCommit(view: ISharedTreeView): GraphCommit<DefaultChangeset> {
 		return view.branch.getHead();
 	}
 
-	fail("Unsupported view implementation");
+	fail("Unsupported ISharedTreeView implementation");
 }
 
 function getForkBranch(
 	fork: ISharedTreeFork,
 ): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
-	assert(fork instanceof SharedTreeFork, "Unsupported fork implementation");
+	assert(fork instanceof SharedTreeFork, "Unsupported ISharedTreeFork implementation");
 	return fork.branch;
 }
+// #endregion Extraction functions

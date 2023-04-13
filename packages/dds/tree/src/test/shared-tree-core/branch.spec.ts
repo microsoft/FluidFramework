@@ -24,6 +24,7 @@ import {
 import { brand } from "../../util";
 
 describe("Branches", () => {
+	/** The tag used for the "origin commit" (the commit that all other commits share as a common ancestor) */
 	const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
 
 	it("have a consistent history as they apply changes", () => {
