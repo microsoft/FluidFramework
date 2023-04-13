@@ -29,7 +29,7 @@ jobs:
         with:
           fetch-depth: "0" # all history
           persist-credentials: false
-      # install and configure the node, pnpm and the changeset tools
+      # install and configure node, pnpm and the changeset tools
       - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
         with:
           version: "^7"
