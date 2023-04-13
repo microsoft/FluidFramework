@@ -206,7 +206,7 @@ export interface ISummaryBaseConfiguration {
 	/**
 	 * Defines the maximum allowed time to wait for a pending summary ack.
 	 * The maximum amount of time client will wait for a summarize is the minimum of
-	 * maxSummarizeAckWaitTime (currently 10 * 60 * 1000) and maxAckWaitTime.
+	 * maxSummarizeAckWaitTime (currently 3 * 60 * 1000) and maxAckWaitTime.
 	 */
 	maxAckWaitTime: number;
 	/**
@@ -302,7 +302,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
 	minOpsForLastSummaryAttempt: 10,
 
-	maxAckWaitTime: 10 * 60 * 1000, // 10 mins.
+	maxAckWaitTime: 3 * 60 * 1000, // 3 mins.
 
 	maxOpsSinceLastSummary: 7000,
 
