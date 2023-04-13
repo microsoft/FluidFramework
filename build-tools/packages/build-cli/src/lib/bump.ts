@@ -101,7 +101,8 @@ export async function bumpPackageDependencies(
 				const dependencies = dev
 					? pkg.packageJson.devDependencies
 					: pkg.packageJson.dependencies;
-				const verString = dependencies[name];
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const verString = dependencies[name]!;
 				const depIsPrerelease = (semver.minVersion(verString)?.prerelease?.length ?? 0) > 0;
 
 				const depNewRangeOrBumpType = dep.rangeOrBumpType;
@@ -161,7 +162,7 @@ export async function bumpReleaseGroup(
 	let workingDir: string;
 
 	if (releaseGroupOrPackage instanceof MonoRepo) {
-		workingDir = releaseGroupOrPackage.repoPath;
+		workingDir = context.gitRepo.resolvedRoot;
 		name = releaseGroupOrPackage.kind;
 		cmd = `npx --no-install lerna version ${
 			translatedVersion.version
