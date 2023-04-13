@@ -69,6 +69,12 @@ export {
 	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
+export {
+	ContainerDevtoolsFeature,
+	ContainerDevtoolsFeatureFlags,
+	DevtoolsFeature,
+	DevtoolsFeatureFlags,
+} from "./Features";
 export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
@@ -83,16 +89,20 @@ export {
 	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
+	ContainerDevtoolsFeatures,
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
+	DevtoolsFeatures,
 	devtoolsMessageSource,
 	DisconnectContainer,
 	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
 	GetContainerList,
 	GetContainerState,
 	GetDataVisualization,
+	GetDevtoolsFeatures,
 	GetRootDataVisualizations,
 	GetTelemetryHistory,
 	IDevtoolsMessage,
