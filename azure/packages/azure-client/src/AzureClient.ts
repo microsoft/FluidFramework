@@ -21,7 +21,7 @@ import { IClient, SummaryType } from "@fluidframework/protocol-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { AzureAudience } from "./AzureAudience";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver";
 import {
@@ -69,15 +69,7 @@ export class AzureClient {
 			this.props.connection.tokenProvider,
 			{ enableWholeSummaryUpload: isRemoteConnection, enableDiscovery: isRemoteConnection },
 		);
-
-		if (props.experimentalFlags !== undefined) {
-			const configProvider = (
-				settings: Record<string, ConfigTypes>,
-			): IConfigProviderBase => ({
-				getRawConfig: (name: string): ConfigTypes => settings[name],
-			});
-			this.configProvider = configProvider(props.experimentalFlags);
-		}
+		this.configProvider = props.configProvider;
 	}
 
 	/**

@@ -8,11 +8,10 @@ import {
 	AzureClient,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
-	ExperimentalFlags,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { IConfigProviderBase, MockLogger } from "@fluidframework/telemetry-utils";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 /**
@@ -23,7 +22,7 @@ export function createAzureClient(
 	userID?: string,
 	userName?: string,
 	logger?: MockLogger,
-	experimentalFlags?: ExperimentalFlags,
+	configProvider?: IConfigProviderBase,
 ): AzureClient {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
@@ -50,5 +49,5 @@ export function createAzureClient(
 				endpoint: "http://localhost:7071",
 				type: "local",
 		  };
-	return new AzureClient({ connection: connectionProps, logger, experimentalFlags });
+	return new AzureClient({ connection: connectionProps, logger, configProvider });
 }

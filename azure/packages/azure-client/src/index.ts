@@ -23,7 +23,6 @@ export {
 	AzureMember,
 	AzureRemoteConnectionConfig,
 	AzureUser,
-	ExperimentalFlags,
 	IAzureAudience,
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,

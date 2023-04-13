@@ -4,14 +4,18 @@
  */
 import { strict as assert } from "node:assert";
 
-import { AzureClient, ExperimentalFlags } from "@fluidframework/azure-client";
+import { AzureClient } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase, MockLogger } from "@fluidframework/telemetry-utils";
 import { createAzureClient } from "./AzureClientFactory";
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 describe("Container create scenarios", () => {
 	const connectTimeoutMs = 1000;
@@ -153,10 +157,14 @@ describe("Container create with feature flags", () => {
 
 	beforeEach(() => {
 		mockLogger = new MockLogger();
-		const experimentalFlags: ExperimentalFlags = {
-			"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
-		};
-		client = createAzureClient(undefined, undefined, mockLogger, experimentalFlags);
+		client = createAzureClient(
+			undefined,
+			undefined,
+			mockLogger,
+			configProvider({
+				"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
+			}),
+		);
 		schema = {
 			initialObjects: {
 				map1: SharedMap,
