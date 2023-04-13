@@ -4,7 +4,7 @@
  */
 
 import { HasContainerId } from "../../CommonInterfaces";
-import { IDevtoolsMessage } from "../Messages";
+import { IDebuggerMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link DisconnectContainer.Message}.
@@ -13,7 +13,7 @@ import { IDevtoolsMessage } from "../Messages";
  */
 export namespace DisconnectContainer {
 	/**
-	 * {@link DisconnectContainer.Message} {@link IDevtoolsMessage."type"}.
+	 * {@link DisconnectContainer.Message} {@link IDebuggerMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -31,9 +31,9 @@ export namespace DisconnectContainer {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDevtoolsMessage<MessageData> {
+	export interface Message extends IDebuggerMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
+		 * {@inheritDoc IDebuggerMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

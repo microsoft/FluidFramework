@@ -4,7 +4,7 @@
  */
 
 import { ITimestampedTelemetryEvent } from "../../TelemetryMetadata";
-import { IDevtoolsMessage } from "../Messages";
+import { IDebuggerMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link TelemetryEvent.Message}.
@@ -13,7 +13,7 @@ import { IDevtoolsMessage } from "../Messages";
  */
 export namespace TelemetryEvent {
 	/**
-	 * {@link TelemetryEvent.Message} {@link IDevtoolsMessage."type"}.
+	 * {@link TelemetryEvent.Message} {@link IDebuggerMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -37,9 +37,9 @@ export namespace TelemetryEvent {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDevtoolsMessage<MessageData> {
+	export interface Message extends IDebuggerMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
+		 * {@inheritDoc IDebuggerMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

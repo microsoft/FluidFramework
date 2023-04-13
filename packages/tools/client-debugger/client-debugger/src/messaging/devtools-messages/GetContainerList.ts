@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDevtoolsMessage } from "../Messages";
+import { IDebuggerMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetContainerList.Message}.
@@ -12,7 +12,7 @@ import { IDevtoolsMessage } from "../Messages";
  */
 export namespace GetContainerList {
 	/**
-	 * {@link GetContainerList.Message} {@link IDevtoolsMessage."type"}.
+	 * {@link GetContainerList.Message} {@link IDebuggerMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -24,9 +24,9 @@ export namespace GetContainerList {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDevtoolsMessage<undefined> {
+	export interface Message extends IDebuggerMessage<undefined> {
 		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
+		 * {@inheritDoc IDebuggerMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

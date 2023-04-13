@@ -36,7 +36,6 @@ export async function create(
 	const deletionIntervalMs = config.get("mongo:deletionIntervalMs") as number;
 
 	const enableTelemetry = (config.get("scriptorium:enableTelemetry") as boolean) ?? false;
-	const maxDbBatchSize = config.get("scriptorium:maxDbBatchSize") as number;
 
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
@@ -101,5 +100,5 @@ export async function create(
 		},
 	);
 
-	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, { enableTelemetry, maxDbBatchSize });
+	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, { enableTelemetry });
 }

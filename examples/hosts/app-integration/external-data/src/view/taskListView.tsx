@@ -8,18 +8,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
 
-/**
- * {@link TaskRow} input props.
- */
 interface ITaskRowProps {
-	/*
-	 * The clientId of the current leader, or undefined if no client has claimed leadership.
-	 */
-	readonly leader: string | undefined;
-	/*
-	 * The current client's id. If undefined, the client is not connected to the service.
-	 */
-	readonly clientID: string | undefined;
 	readonly task: ITask;
 	readonly deleteDraftTask: () => void;
 }
@@ -28,7 +17,7 @@ interface ITaskRowProps {
  * The view for a single task in the TaskListView, as a table row.
  */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-	const { task, deleteDraftTask, clientID, leader } = props;
+	const { task, deleteDraftTask } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
 	const [externalDataSnapshot, setExternalDataSnapshot] = useState<ExternalSnapshotTask>(
 		task.externalDataSnapshot,
@@ -85,7 +74,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	}
 
 	return (
-		<tr style={{ margin: 0 }}>
+		<tr>
 			<td>{task.id}</td>
 			<td>
 				<CollaborativeInput
@@ -106,26 +95,21 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 					❌
 				</button>
 			</td>
-			{showNameDiff ? (
+			{showNameDiff && (
 				<td style={{ backgroundColor: diffColor }}>{externalDataSnapshot.name}</td>
-			) : (
-				<td />
 			)}
-			{showPriorityDiff ? (
+			{showPriorityDiff && (
 				<td style={{ backgroundColor: diffColor, width: "30px" }}>
 					{externalDataSnapshot.priority}
 				</td>
-			) : (
-				<td />
 			)}
 			<td>
-				<div style={{ visibility: showAcceptButton }}>
-					{clientID !== undefined && clientID === leader ? (
-						<button onClick={task.overwriteWithExternalData}>Accept change</button>
-					) : (
-						<h4 style={{ margin: 0 }}>Changes in progress</h4>
-					)}
-				</div>
+				<button
+					onClick={task.overwriteWithExternalData}
+					style={{ visibility: showAcceptButton }}
+				>
+					Accept change
+				</button>
 			</td>
 		</tr>
 	);
@@ -136,25 +120,13 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
  */
 export interface ITaskListViewProps {
 	readonly taskList: ITaskList;
-	/*
-	 * Function to update the container's current leader.
-	 */
-	readonly claimLeadership: () => void;
-	/*
-	 * The current client's id. If undefined, the client is not connected to the service.
-	 */
-	readonly clientID: string | undefined;
-	/*
-	 * The clientId of the current leader, or undefined if no client has claimed leadership.
-	 */
-	readonly leaderID: string | undefined;
 }
 
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-	const { taskList, claimLeadership, clientID, leaderID } = props;
+	const { taskList } = props;
 
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
 	const [lastSaved, setLastSaved] = useState<number | undefined>();
@@ -168,10 +140,10 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			})
 			.catch((error) => {
 				console.log(error);
+
 				setFailedUpdate(true);
 			});
 	}, [taskList]);
-
 	useEffect(() => {
 		const updateTasks = (): void => {
 			setTasks(taskList.getDraftTasks());
@@ -187,8 +159,6 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow
-			leader={leaderID}
-			clientID={clientID}
 			key={task.id}
 			task={task}
 			deleteDraftTask={(): void => taskList.deleteDraftTask(task.id)}
@@ -241,9 +211,6 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				<tbody>{taskRows}</tbody>
 			</table>
 			<button onClick={handleSaveChanges}>Write to External Source</button>
-			<div style={{ margin: "10px 0" }}>
-				<button onClick={(): void => claimLeadership()}>Claim Leadership</button>
-			</div>
 		</div>
 	);
 };

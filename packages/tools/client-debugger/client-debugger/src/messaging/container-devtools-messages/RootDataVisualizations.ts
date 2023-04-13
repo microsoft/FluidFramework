@@ -5,7 +5,7 @@
 
 import { HasContainerId } from "../../CommonInterfaces";
 import { RootHandleNode } from "../../data-visualization";
-import { IDevtoolsMessage } from "../Messages";
+import { IDebuggerMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link RootDataVisualizations.Message}.
@@ -14,7 +14,7 @@ import { IDevtoolsMessage } from "../Messages";
  */
 export namespace RootDataVisualizations {
 	/**
-	 * {@link RootDataVisualizations.Message} {@link IDevtoolsMessage."type"}.
+	 * {@link RootDataVisualizations.Message} {@link IDebuggerMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -40,9 +40,9 @@ export namespace RootDataVisualizations {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDevtoolsMessage<MessageData> {
+	export interface Message extends IDebuggerMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
+		 * {@inheritDoc IDebuggerMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

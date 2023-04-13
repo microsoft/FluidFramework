@@ -5,7 +5,7 @@
 
 import { HasContainerId } from "../../CommonInterfaces";
 import { ConnectionStateChangeLogEntry } from "../../Logs";
-import { IDevtoolsMessage } from "../Messages";
+import { IDebuggerMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link ContainerStateHistory.Message}.
@@ -14,7 +14,7 @@ import { IDevtoolsMessage } from "../Messages";
  */
 export namespace ContainerStateHistory {
 	/**
-	 * {@link ContainerStateHistory.Message} {@link IDevtoolsMessage."type"}.
+	 * {@link ContainerStateHistory.Message} {@link IDebuggerMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -37,9 +37,9 @@ export namespace ContainerStateHistory {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDevtoolsMessage<MessageData> {
+	export interface Message extends IDebuggerMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
+		 * {@inheritDoc IDebuggerMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

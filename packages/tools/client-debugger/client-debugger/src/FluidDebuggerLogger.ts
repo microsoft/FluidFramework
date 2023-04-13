@@ -13,7 +13,7 @@ import {
 import {
 	GetTelemetryHistory,
 	handleIncomingWindowMessage,
-	IDevtoolsMessage,
+	IDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
@@ -41,23 +41,23 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * @remarks This logger is intended to integrate with the Fluid DevTools browser extension.
  *
  * @sealed
- * @public
+ * @internal
  */
-export class DevtoolsLogger extends TelemetryLogger {
+export class FluidDebuggerLogger extends TelemetryLogger {
 	/**
 	 * Accumulated data for Telemetry logs.
 	 */
 	private readonly _telemetryLog: ITimestampedTelemetryEvent[];
 
 	/**
-	 * Message logging options used by the logger.
+	 * Message logging options used by the debugger.
 	 */
 	private readonly messageLoggingOptions: MessageLoggingOptions = {
-		context: `FluidDevtoolsLogger`,
+		context: `FluidClientDebuggerLogger`,
 	};
 
 	/**
-	 * Handlers for inbound messages related to the logger.
+	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		[GetTelemetryHistory.MessageType]: (untypedMessage) => {
@@ -70,14 +70,14 @@ export class DevtoolsLogger extends TelemetryLogger {
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDevtoolsMessage>>,
+		event: MessageEvent<Partial<IDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
-	 * Posts a {@link TelemetryHistory.Message} to the window (globalThis) containing the complete history of
-	 * telemetry events.
+	 * Posts a list of {@link IDebuggerMessage} to the window (globalThis). It will be send
+	 * when requesting all the telemetry history/log since logger created.
 	 */
 	private readonly postLogHistory = (): void => {
 		postMessagesToWindow(
@@ -98,8 +98,8 @@ export class DevtoolsLogger extends TelemetryLogger {
 	public static create(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
-	): DevtoolsLogger {
-		return new DevtoolsLogger(namespace, properties);
+	): TelemetryLogger {
+		return new FluidDebuggerLogger(namespace, properties);
 	}
 
 	/**
@@ -115,12 +115,12 @@ export class DevtoolsLogger extends TelemetryLogger {
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		if (!baseLogger) {
-			return DevtoolsLogger.create(namespace, properties);
+			return FluidDebuggerLogger.create(namespace, properties);
 		}
 
 		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
 		multiSinkLogger.addLogger(
-			DevtoolsLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
+			FluidDebuggerLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
 		);
 		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
@@ -146,9 +146,9 @@ export class DevtoolsLogger extends TelemetryLogger {
 	}
 
 	/**
-	 * Post a {@link TelemetryEvent.Message} to the window (globalThis) for the provided telemetry event.
+	 * Post a telemetry event to the window (globalThis object).
 	 *
-	 * @param event - The telemetry event to send.
+	 * @param event - the event to send
 	 */
 	public send(event: ITelemetryBaseEvent): void {
 		// TODO: ability to disable the logger so this becomes a no-op

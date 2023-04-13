@@ -1584,7 +1584,6 @@ declare function get_current_TypeAliasDeclaration_MergeTreeDeltaRevertible():
 declare function use_old_TypeAliasDeclaration_MergeTreeDeltaRevertible(
     use: TypeOnly<old.MergeTreeDeltaRevertible>);
 use_old_TypeAliasDeclaration_MergeTreeDeltaRevertible(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_MergeTreeDeltaRevertible());
 
 /*

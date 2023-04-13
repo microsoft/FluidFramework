@@ -95,7 +95,7 @@ export {
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
 } from "./summaryFormat";
-export { getFailMessage, SummarizeReason } from "./summaryGenerator";
+export { SummarizeReason } from "./summaryGenerator";
 export {
 	IConnectedEvents,
 	IConnectedState,

@@ -9,14 +9,14 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import React from "react";
 import { SinonSandbox, createSandbox } from "sinon";
 import { useTree } from "..";
-import { schema, Inventory } from "./schema";
+import { appSchemaData, Inventory } from "./schema/appSchema";
 
 describe("useTree()", () => {
 	function createLocalTree(id: string): ISharedTreeView {
 		const factory = new SharedTreeFactory();
 		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
 		const treeView: ISharedTreeView = tree.schematize({
-			schema,
+			schema: appSchemaData,
 			initialTree: {
 				nuts: 0,
 				bolts: 0,

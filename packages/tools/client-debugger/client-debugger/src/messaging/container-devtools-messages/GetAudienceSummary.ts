@@ -4,7 +4,7 @@
  */
 
 import { HasContainerId } from "../../CommonInterfaces";
-import { IDevtoolsMessage } from "../Messages";
+import { IDebuggerMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetAudienceSummary.Message}.
@@ -13,7 +13,7 @@ import { IDevtoolsMessage } from "../Messages";
  */
 export namespace GetAudienceSummary {
 	/**
-	 * {@link GetAudienceSummary.Message} {@link IDevtoolsMessage."type"}.
+	 * {@link GetAudienceSummary.Message} {@link IDebuggerMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -32,9 +32,9 @@ export namespace GetAudienceSummary {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDevtoolsMessage<MessageData> {
+	export interface Message extends IDebuggerMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
+		 * {@inheritDoc IDebuggerMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

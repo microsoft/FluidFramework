@@ -6,7 +6,7 @@ import React from "react";
 
 import { IMessageRelay } from "@fluid-tools/client-debugger";
 
-import { DevtoolsView } from "./DevtoolsView";
+import { FluidClientDebuggers } from "./Debugger";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 /**
@@ -27,7 +27,7 @@ export interface RootViewProps {
 export function RootView(props: RootViewProps): React.ReactElement {
 	return (
 		<MessageRelayContext.Provider value={props.messageRelay}>
-			<DevtoolsView />
+			<FluidClientDebuggers />
 		</MessageRelayContext.Provider>
 	);
 }

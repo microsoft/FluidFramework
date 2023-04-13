@@ -9,15 +9,7 @@ import { SortedSegmentSet } from "./sortedSegmentSet";
 
 export type Trackable = ISegment | LocalReferencePosition;
 
-export interface ITrackingGroup {
-	tracked: readonly Trackable[];
-	size: number;
-	has(trackable: Trackable): boolean;
-	link(trackable: Trackable): void;
-	unlink(trackable: Trackable): boolean;
-}
-
-export class TrackingGroup implements ITrackingGroup {
+export class TrackingGroup {
 	private readonly trackedSet: SortedSegmentSet<Trackable>;
 
 	constructor() {
@@ -46,14 +38,14 @@ export class TrackingGroup implements ITrackingGroup {
 		return this.trackedSet.has(trackable);
 	}
 
-	public link(trackable: Trackable): void {
+	public link(trackable: Trackable) {
 		if (!this.trackedSet.has(trackable)) {
 			this.trackedSet.addOrUpdate(trackable);
 			trackable.trackingCollection.link(this);
 		}
 	}
 
-	public unlink(trackable: Trackable): boolean {
+	public unlink(trackable: Trackable) {
 		if (this.trackedSet.remove(trackable)) {
 			trackable.trackingCollection.unlink(this);
 			return true;
@@ -62,62 +54,17 @@ export class TrackingGroup implements ITrackingGroup {
 	}
 }
 
-/**
- * Tracking group backed by an unordered set. Lookup, insertion, and deletion are O(1)
- */
-export class UnorderedTrackingGroup implements ITrackingGroup {
-	private readonly trackedSet: Set<Trackable>;
-
-	constructor() {
-		this.trackedSet = new Set<Trackable>();
-	}
-
-	public get tracked(): readonly Trackable[] {
-		return Array.from(this.trackedSet);
-	}
-
-	public get size(): number {
-		return this.trackedSet.size;
-	}
-
-	public has(trackable: Trackable): boolean {
-		return this.trackedSet.has(trackable);
-	}
-
-	public link(trackable: Trackable): void {
-		if (!this.trackedSet.has(trackable)) {
-			this.trackedSet.add(trackable);
-			trackable.trackingCollection.link(this);
-		}
-	}
-
-	public unlink(trackable: Trackable): boolean {
-		if (this.trackedSet.delete(trackable)) {
-			trackable.trackingCollection.unlink(this);
-			return true;
-		}
-		return false;
-	}
-}
-
 export class TrackingGroupCollection {
-	private readonly _trackingGroups: Set<ITrackingGroup>;
-
-	public get trackingGroups(): Set<TrackingGroup> {
-		// Cast here is necessary to avoid a breaking change to
-		// `TrackingGroupCollection`. Ideally we could just return
-		// `Set<ITrackingGroup>`
-		return this._trackingGroups as Set<TrackingGroup>;
-	}
+	public readonly trackingGroups: Set<TrackingGroup>;
 
 	constructor(private readonly trackable: Trackable) {
-		this._trackingGroups = new Set<ITrackingGroup>();
+		this.trackingGroups = new Set<TrackingGroup>();
 	}
 
-	public link(trackingGroup: ITrackingGroup): void {
+	public link(trackingGroup: TrackingGroup): void {
 		if (trackingGroup) {
-			if (!this._trackingGroups.has(trackingGroup)) {
-				this._trackingGroups.add(trackingGroup);
+			if (!this.trackingGroups.has(trackingGroup)) {
+				this.trackingGroups.add(trackingGroup);
 			}
 
 			if (!trackingGroup.has(this.trackable)) {
@@ -126,37 +73,37 @@ export class TrackingGroupCollection {
 		}
 	}
 
-	public unlink(trackingGroup: ITrackingGroup): boolean {
-		if (this._trackingGroups.has(trackingGroup)) {
+	public unlink(trackingGroup: TrackingGroup): boolean {
+		if (this.trackingGroups.has(trackingGroup)) {
 			if (trackingGroup.has(this.trackable)) {
 				trackingGroup.unlink(this.trackable);
 			}
-			this._trackingGroups.delete(trackingGroup);
+			this.trackingGroups.delete(trackingGroup);
 			return true;
 		}
 
 		return false;
 	}
 
-	public copyTo(trackable: Trackable): void {
-		this._trackingGroups.forEach((sg) => {
+	public copyTo(trackable: Trackable) {
+		this.trackingGroups.forEach((sg) => {
 			trackable.trackingCollection.link(sg);
 		});
 	}
 
 	public get empty(): boolean {
-		return this._trackingGroups.size === 0;
+		return this.trackingGroups.size === 0;
 	}
 
 	public matches(trackingCollection: TrackingGroupCollection): boolean {
 		if (
 			!trackingCollection ||
-			this._trackingGroups.size !== trackingCollection._trackingGroups.size
+			this.trackingGroups.size !== trackingCollection.trackingGroups.size
 		) {
 			return false;
 		}
-		for (const tg of this._trackingGroups.values()) {
-			if (!trackingCollection._trackingGroups.has(tg)) {
+		for (const tg of this.trackingGroups.values()) {
+			if (!trackingCollection.trackingGroups.has(tg)) {
 				return false;
 			}
 		}

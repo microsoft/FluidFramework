@@ -20,7 +20,6 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { ISummaryConfiguration } from "../../containerRuntime";
 import {
-	getFailMessage,
 	neverCancelledSummaryToken,
 	RunningSummarizer,
 	SummaryCollection,
@@ -241,6 +240,7 @@ describe("Runtime", () => {
 					},
 					async (options) => {},
 					heuristicData,
+					() => {},
 					summaryCollection,
 					neverCancelledSummaryToken,
 					// stopSummarizerCallback
@@ -569,7 +569,7 @@ describe("Runtime", () => {
 							{
 								eventName: "Running:Summarize_cancel",
 								...retryProps1,
-								reason: getFailMessage("summaryNack"),
+								reason: "summaryNack",
 							},
 							{ eventName: "Running:Summarize_generate", ...retryProps2 },
 							{ eventName: "Running:Summarize_Op", ...retryProps2 },
@@ -597,7 +597,7 @@ describe("Runtime", () => {
 								{
 									eventName: "Running:Summarize_cancel",
 									...retryProps2,
-									reason: getFailMessage("summaryNack"),
+									reason: "summaryNack",
 								},
 								{ eventName: "Running:Summarize_generate", ...retryProps3 },
 								{ eventName: "Running:Summarize_Op", ...retryProps3 },
@@ -685,7 +685,7 @@ describe("Runtime", () => {
 							{
 								eventName: "Running:Summarize_cancel",
 								summarizeCount: 1,
-								reason: getFailMessage("summaryNack"),
+								reason: "summaryNack",
 							},
 							{
 								eventName: "Running:SummarizeAttemptDelay",
@@ -728,7 +728,7 @@ describe("Runtime", () => {
 								{
 									eventName: "Running:Summarize_cancel",
 									...retryProps2,
-									reason: getFailMessage("summaryNack"),
+									reason: "summaryNack",
 								},
 								{ eventName: "Running:SummarizeAttemptDelay", ...retryProps3 },
 								{ eventName: "Running:Summarize_generate", ...retryProps3 },

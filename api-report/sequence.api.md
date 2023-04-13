@@ -150,7 +150,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // @internal (undocumented)
     ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
-    // @deprecated (undocumented)
+    // (undocumented)
     addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
@@ -192,7 +192,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     next(): IteratorResult<TInterval>;
 }
 
-// @public @deprecated (undocumented)
+// @public (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 // @public

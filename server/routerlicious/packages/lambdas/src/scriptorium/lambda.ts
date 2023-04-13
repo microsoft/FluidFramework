@@ -39,7 +39,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private readonly clientFacadeRetryEnabled: boolean;
 	private readonly telemetryEnabled: boolean;
 	private pendingMetric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined;
-	private readonly maxDbBatchSize: number;
 
 	constructor(
 		private readonly opCollection: ICollection<any>,
@@ -48,7 +47,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 		this.telemetryEnabled = this.providerConfig?.enableTelemetry;
-		this.maxDbBatchSize = this.providerConfig?.maxDbBatchSize ?? 1000;
 	}
 
 	public handler(message: IQueuedMessage) {
@@ -144,20 +142,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 		// Process all the batches + checkpoint
 		for (const [, messages] of this.current) {
-			if (this.maxDbBatchSize > 0 && messages.length > this.maxDbBatchSize) { // cap the max batch size sent to mongo db
-				let startIndex = 0;
-				while(startIndex < messages.length) {
-					const endIndex = startIndex + this.maxDbBatchSize;
-					const messagesBatch = messages.slice(startIndex, endIndex);
-					startIndex = endIndex;
-
-					const processP = this.processMongoCore(messagesBatch, metric?.id);
-					allProcessed.push(processP);
-				}
-			} else {
-				const processP = this.processMongoCore(messages, metric?.id);
-				allProcessed.push(processP);
-			}
+			const processP = this.processMongoCore(messages, metric?.id);
+			allProcessed.push(processP);
 		}
 
 		Promise.all(allProcessed).then(

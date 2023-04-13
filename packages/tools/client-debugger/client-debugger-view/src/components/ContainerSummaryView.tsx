@@ -18,7 +18,7 @@ import {
 	HasContainerId,
 	IMessageRelay,
 	InboundHandlers,
-	ISourcedDevtoolsMessage,
+	ISourcedDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -70,7 +70,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		/**
 		 * Event handler for messages coming from the webpage.
 		 */
-		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: "ContainerSummaryView", // TODO: fix
 			});

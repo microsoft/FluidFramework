@@ -35,11 +35,7 @@ trigger:
   branches:
     include:
     - lts
-    - release/azure/*
-    - release/v2int/1*
-    - release/v2int/2*
-    - release/v2int/3*
-    - release/v2int/4.0
+    - release/*
   paths:
     include:
     - azure
@@ -64,11 +60,7 @@ pr:
   branches:
     include:
     - lts
-    - release/azure/*
-    - release/v2int/1*
-    - release/v2int/2*
-    - release/v2int/3*
-    - release/v2int/4.0
+    - release/*
   paths:
     include:
     - azure

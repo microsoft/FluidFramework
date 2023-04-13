@@ -4,7 +4,6 @@
  */
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Lazy } from "@fluidframework/common-utils";
-import { TelemetryDataTag } from "./logger";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -48,7 +47,7 @@ const NullConfigProvider: IConfigProviderBase = {
  */
 export const inMemoryConfigProvider = (storage: Storage | undefined): IConfigProviderBase => {
 	if (storage !== undefined && storage !== null) {
-		return new CachedConfigProvider(undefined, {
+		return new CachedConfigProvider({
 			getRawConfig: (name: string) => {
 				try {
 					return stronglyTypedParse(storage.getItem(name) ?? undefined)?.raw;
@@ -166,10 +165,7 @@ export class CachedConfigProvider implements IConfigProvider {
 	private readonly configCache = new Map<string, StronglyTypedValue>();
 	private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
 
-	constructor(
-		private readonly logger?: ITelemetryBaseLogger,
-		...orderedBaseProviders: (IConfigProviderBase | undefined)[]
-	) {
+	constructor(...orderedBaseProviders: (IConfigProviderBase | undefined)[]) {
 		this.orderedBaseProviders = [];
 		const knownProviders = new Set<IConfigProviderBase>();
 		const candidateProviders = [...orderedBaseProviders];
@@ -218,15 +214,6 @@ export class CachedConfigProvider implements IConfigProvider {
 				const parsed = stronglyTypedParse(provider?.getRawConfig(name));
 				if (parsed !== undefined) {
 					this.configCache.set(name, parsed);
-					this.logger?.send({
-						category: "generic",
-						eventName: "ConfigRead",
-						configName: { tag: TelemetryDataTag.CodeArtifact, value: name },
-						configValue: {
-							tag: TelemetryDataTag.CodeArtifact,
-							value: JSON.stringify(parsed),
-						},
-					});
 					return parsed;
 				}
 			}
@@ -277,7 +264,7 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 	 * of the MonitoringContext and get the config provider.
 	 */
 	const mc: L & Partial<MonitoringContext<L>> = logger;
-	mc.config = new CachedConfigProvider(logger, ...configs);
+	mc.config = new CachedConfigProvider(...configs);
 	mc.logger = logger;
 	return mc as MonitoringContext<L>;
 }

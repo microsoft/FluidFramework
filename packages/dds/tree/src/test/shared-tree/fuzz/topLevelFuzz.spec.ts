@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
 import {
 	AsyncGenerator,
 	makeRandom,
@@ -13,7 +12,6 @@ import { TestTreeProvider, SummarizeType, initializeTestTree } from "../../utils
 import {
 	FuzzTestState,
 	makeOpGenerator,
-	makeOpGeneratorFromFilePath,
 	Operation,
 	EditGeneratorOpWeights,
 } from "./fuzzEditGenerators";
@@ -79,13 +77,4 @@ describe("Fuzz - Top-Level", () => {
 			editGeneratorOpWeights,
 		);
 	});
-});
-
-describe.skip("Re-run form ops saved on file", () => {
-	// For using saved operations set the value of the runSeed used to saved the ops in the file.
-	const runSeed = 0;
-	const filepath = path.join(__dirname, `fuzz-tests-saved-ops/ops_with_seed_${runSeed}`);
-	it(`with seed ${runSeed}`, async () => {
-		await performFuzzActions(await makeOpGeneratorFromFilePath(filepath), runSeed);
-	}).timeout(20000);
 });

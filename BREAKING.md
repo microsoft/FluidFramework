@@ -45,7 +45,6 @@ and verifying that the following expectation changes won't have any effects:
 -   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
 -   [Container-loader deprecations](#Container-loader-deprecations)
 -   [Op compression is enabled by default](#op-compression-is-enabled-by-default)
--   [IntervalConflictResolver deprecation](#intervalconflictresolver-deprecation)
 
 ### @fluidframework/garbage-collector deprecated
 
@@ -98,12 +97,6 @@ The following types in the @fluidframework/container-loader package are not used
 If the size of a batch is larger than 614kb, the ops will be compressed. After upgrading to this version, if batches exceed the size threshold, the runtime will produce a new type of op with the compression properties. To open a document which contains this type of op, the client's runtime version needs to be at least `client_v2.0.0-internal.2.3.0`. Older clients will close with assert `0x3ce` ("Runtime message of unknown type") and will not be able to open the documents until they upgrade. To minimize the risk, it is recommended to audit existing session and ensure that at least 99.9% of them are using a runtime version equal or greater than `client_v2.0.0-internal.2.3.0`, before upgrading to `2.0.0-internal.4.1.0`.
 
 More information about op compression can be found [here](./packages/runtime/container-runtime/src/opLifecycle/README.md).
-
-### IntervalConflictResolver deprecation
-
-In SharedString, interval conflict resolvers have been unused since [this change](https://github.com/microsoft/FluidFramework/pull/6407), which added support for multiple intervals at the same position.
-As such, any existing usages can be removed.
-Related APIs have been deprecated and will be removed in an upcoming release.
 
 # 2.0.0-internal.4.0.0
 

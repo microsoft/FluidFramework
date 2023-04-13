@@ -5,7 +5,6 @@
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
 import { ContainerDevtoolsProps } from "./ContainerDevtools";
-import { DevtoolsLogger } from "./DevtoolsLogger";
 import { IContainerDevtools } from "./IContainerDevtools";
 
 /**
@@ -38,22 +37,13 @@ export interface FluidDevtoolsEvents extends IEvent {
 }
 
 /**
- * Fluid Devtools. A single instance is used to generate and communicate stats associated with the general Fluid
- * runtime (i.e., it is not associated with any single Framework entity).
+ * Fluid Devtools.
  *
- * @remarks
- *
- * Supports registering {@link IContainerDevtools | Container-level Devtools} objects for specific
- * {@link @fluidframework/container-definitions#IContainer}s (via {@link IFluidDevtools.registerContainerDevtools}).
+ * TODO
  *
  * @public
  */
 export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDisposable {
-	/**
-	 * (optional) telemetry logger associated with the Fluid runtime.
-	 */
-	readonly logger: DevtoolsLogger | undefined;
-
 	/**
 	 * Initializes a {@link IContainerDevtools} from the provided properties and stores it for future reference.
 	 *

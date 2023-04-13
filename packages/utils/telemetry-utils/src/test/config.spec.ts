@@ -4,14 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { MockLogger } from "@fluidframework/telemetry-utils-previous";
 import {
 	CachedConfigProvider,
 	ConfigTypes,
 	IConfigProviderBase,
 	inMemoryConfigProvider,
 } from "../config";
-import { TelemetryDataTag } from "../logger";
 
 describe("Config", () => {
 	const getMockStore = (settings: Record<string, string>): Storage => {
@@ -54,22 +52,9 @@ describe("Config", () => {
 		};
 
 		const mockStore = getMockStore(settings);
-		const logger = new MockLogger();
-		const config = new CachedConfigProvider(logger, inMemoryConfigProvider(mockStore));
+		const config = new CachedConfigProvider(inMemoryConfigProvider(mockStore));
 
 		assert.equal(config.getNumber("number"), 1);
-		assert(
-			logger.matchEvents([
-				{
-					eventName: "ConfigRead",
-					configName: { tag: TelemetryDataTag.CodeArtifact, value: "number" },
-					configValue: {
-						tag: TelemetryDataTag.CodeArtifact,
-						value: `{"raw":"1","string":"1","number":1}`,
-					},
-				},
-			]),
-		);
 		assert.equal(config.getNumber("badNumber"), undefined);
 		assert.equal(config.getNumber("stringAndNumber"), 1);
 
@@ -111,7 +96,7 @@ describe("Config", () => {
 		};
 
 		const mockStore = untypedProvider(settings);
-		const config = new CachedConfigProvider(undefined, mockStore);
+		const config = new CachedConfigProvider(mockStore);
 
 		assert.equal(config.getNumber("number"), 1);
 		assert.equal(config.getNumber("stringAndNumber"), 1);
@@ -138,7 +123,7 @@ describe("Config", () => {
 	});
 
 	it("Void provider", () => {
-		const config = new CachedConfigProvider(undefined, inMemoryConfigProvider(undefined));
+		const config = new CachedConfigProvider(inMemoryConfigProvider(undefined));
 		assert.equal(config.getNumber("number"), undefined);
 		assert.equal(config.getString("does not exist"), undefined);
 		assert.equal(config.getBoolean("boolean"), undefined);
@@ -165,7 +150,6 @@ describe("Config", () => {
 		};
 
 		const config1 = new CachedConfigProvider(
-			undefined,
 			inMemoryConfigProvider(getMockStore(settings1)),
 			inMemoryConfigProvider(getMockStore(settings1)),
 			inMemoryConfigProvider(getMockStore(settings2)),
@@ -180,7 +164,6 @@ describe("Config", () => {
 		assert.equal(config1.getBoolean("featureEnabled"), false); // from settings1.BreakGlass
 
 		const config2 = new CachedConfigProvider(
-			undefined,
 			inMemoryConfigProvider(getMockStore(settings3)),
 			inMemoryConfigProvider(getMockStore(settings2)),
 			inMemoryConfigProvider(getMockStore(settings1)),
@@ -256,7 +239,7 @@ describe("Config", () => {
 			badBooleanArray2: ["true", "false", "true"],
 		};
 
-		const config = new CachedConfigProvider(undefined, new HybridSettingsProvider(settings));
+		const config = new CachedConfigProvider(new HybridSettingsProvider(settings));
 
 		assert.equal(config.getNumber("number"), 1);
 		assert.equal(config.getNumber("sortOfNumber"), 1);

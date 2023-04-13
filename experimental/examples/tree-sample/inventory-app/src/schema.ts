@@ -4,28 +4,43 @@
  */
 
 import {
-	FieldKinds,
-	rootFieldKey,
-	SchemaAware,
-	TypedSchema,
 	ValueSchema,
+	rootFieldKey,
+	SchemaData,
+	brand,
+	EditableTree,
+	FieldKinds,
+	fieldSchema,
+	namedTreeSchema,
 } from "@fluid-internal/tree";
 
-export const float64 = TypedSchema.tree("number", { value: ValueSchema.Number });
+// TODO: Remove once primitive types are predeclared.
+const float64 = namedTreeSchema({
+	name: brand("number"),
+	value: ValueSchema.Number,
+});
 
-export const inventory = TypedSchema.tree("Contoso:Inventory-1.0.0", {
-	local: {
-		nuts: TypedSchema.field(FieldKinds.value, float64),
-		bolts: TypedSchema.field(FieldKinds.value, float64),
+// Declare the 'Inventory' schema type.
+export const inventory = namedTreeSchema({
+	name: brand("Contoso:Inventory"),
+	localFields: {
+		nuts: fieldSchema(FieldKinds.value, [float64.name]),
+		bolts: fieldSchema(FieldKinds.value, [float64.name]),
 	},
 });
 
-export const rootField = TypedSchema.field(FieldKinds.value, inventory);
+// TODO: Replace with TypeOf<T> when available.
+export type Inventory = EditableTree & {
+	nuts: number;
+	bolts: number;
+};
 
-export const schema = SchemaAware.typedSchemaData([[rootFieldKey, rootField]], float64, inventory);
+// The root field of the tree points to an instance of 'Inventory'.
+const rootField = fieldSchema(FieldKinds.value, [inventory.name]);
 
-export type Inventory = SchemaAware.NodeDataFor<
-	typeof schema,
-	SchemaAware.ApiMode.Editable,
-	typeof inventory
->;
+// Package everything up as a 'SchemaData'.  This includes a registery of
+// all referenced schema types as well as our root field declaration.
+export const schema: SchemaData = {
+	treeSchema: new Map([float64, inventory].map((type) => [type.name, type])),
+	globalFieldSchema: new Map([[rootFieldKey, rootField]]),
+};

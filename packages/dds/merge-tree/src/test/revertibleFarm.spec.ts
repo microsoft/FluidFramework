@@ -10,7 +10,6 @@ import { ISegment, SegmentGroup } from "../mergeTreeNodes";
 import {
 	appendToMergeTreeDeltaRevertibles,
 	MergeTreeDeltaRevertible,
-	MergeTreeWithRevert,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
@@ -36,14 +35,14 @@ const defaultOptions = {
 };
 
 describe("MergeTree.Client", () => {
-	doOverRanges(defaultOptions, ({ minLength: minLen, concurrentOpsWithRevert, revertOps }) => {
+	doOverRanges(defaultOptions, ({ minLength: minLen, revertOps: opsWithRevert, revertOps }) => {
 		for (const ackBeforeRevert of defaultOptions.ackBeforeRevert) {
-			it(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${concurrentOpsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
+			it(`InitialOps: ${defaultOptions.initialOps} MinLen: ${minLen}  ConcurrentOpsWithRevert: ${opsWithRevert} RevertOps: ${revertOps} AckBeforeRevert: ${ackBeforeRevert}`, async () => {
 				const random = makeRandom(
 					minLen,
 					revertOps,
 					[...ackBeforeRevert].reduce<number>((pv, cv) => pv + cv.charCodeAt(0), 0),
-					concurrentOpsWithRevert,
+					opsWithRevert,
 				);
 
 				const clients = createClientsAtInitialState(
@@ -115,7 +114,7 @@ describe("MergeTree.Client", () => {
 						);
 					}
 
-					if (concurrentOpsWithRevert > 0) {
+					if (opsWithRevert > 0) {
 						// add modifications from another client
 						msgs.push(
 							...generateOperationMessagesForClients(
@@ -123,7 +122,7 @@ describe("MergeTree.Client", () => {
 								seq,
 								[clients.A, clients.C],
 								logger,
-								concurrentOpsWithRevert,
+								opsWithRevert,
 								minLen,
 								defaultOptions.operations,
 							),
@@ -160,7 +159,7 @@ describe("MergeTree.Client", () => {
 					}
 					logger.validate({
 						clear: true,
-						baseText: concurrentOpsWithRevert === 0 ? undoBaseText : undefined,
+						baseText: opsWithRevert === 0 ? undoBaseText : undefined,
 						errorPrefix: "After Revert (undo)",
 					});
 
@@ -190,14 +189,15 @@ describe("MergeTree.Client", () => {
 								);
 							}
 						});
-						const mergeTreeWithRevert: Partial<MergeTreeWithRevert> =
-							clients.B.mergeTree;
-						assert.notDeepStrictEqual(
-							mergeTreeWithRevert.__mergeTreeRevertible?.detachedReferences?.localRefs
-								?.empty,
-							false,
-							"there should be no left over local references in detached references",
-						);
+						const detachedReferences =
+							clientBDriver.__mergeTreeRevertible?.detachedReferences;
+						if (detachedReferences?.localRefs?.empty === false) {
+							assert.notDeepStrictEqual(
+								detachedReferences?.localRefs?.empty,
+								false,
+								"there should be no left over local references in detached references",
+							);
+						}
 					} catch (e) {
 						throw logger.addLogsToError(e);
 					}

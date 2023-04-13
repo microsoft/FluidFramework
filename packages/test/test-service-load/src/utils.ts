@@ -31,7 +31,6 @@ import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
-	getOptionOverride,
 } from "./optionsMatrix";
 import { pkgName, pkgVersion } from "./packageVersion";
 import { ILoadTestConfig, ITestConfig } from "./testConfigFile";
@@ -164,12 +163,20 @@ export async function initialize(
 	testIdn?: string,
 ) {
 	const random = makeRandom(seed);
-	const optionsOverride = getOptionOverride(testConfig, testDriver.type, testDriver.endpointName);
-
-	const loaderOptions = random.pick(generateLoaderOptions(seed, optionsOverride?.loader));
-	const containerOptions = random.pick(generateRuntimeOptions(seed, optionsOverride?.container));
+	const optionsOverride = `${testDriver.type}${
+		testDriver.endpointName !== undefined ? `-${testDriver.endpointName}` : ""
+	}`;
+	const loaderOptions = random.pick(
+		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
+	);
+	const containerOptions = random.pick(
+		generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container),
+	);
 	const configurations = random.pick(
-		generateConfigurations(seed, optionsOverride?.configurations),
+		generateConfigurations(
+			seed,
+			testConfig?.optionOverrides?.[optionsOverride]?.configurations,
+		),
 	);
 
 	const logger = await createLogger({

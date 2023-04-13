@@ -269,8 +269,7 @@
 		"groupId": "scriptorium",
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
-		"enableTelemetry": true,
-		"maxDbBatchSize": 1000
+		"enableTelemetry": true
 	},
 	"copier": {
 		"topic": "rawdeltas",

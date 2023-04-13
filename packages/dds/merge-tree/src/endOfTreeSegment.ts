@@ -4,10 +4,11 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { LocalClientId } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
-import { MergeTree } from "./mergeTree";
-import { ISegment, IRemovalInfo } from "./mergeTreeNodes";
+import { IRootMergeBlock, MergeTree } from "./mergeTree";
+import { ISegment, IRemovalInfo, IMergeNode } from "./mergeTreeNodes";
 import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
 
 /**
@@ -24,7 +25,19 @@ import { depthFirstNodeWalk, NodeAction } from "./mergeTreeNodeWalk";
  */
 export class EndOfTreeSegment implements ISegment, IRemovalInfo {
 	type: string = "EndOfTreeSegment";
-	constructor(private readonly mergeTree: MergeTree) {}
+	private readonly mergeTree: MergeTree;
+	constructor(segmentOrNode: IMergeNode) {
+		let maybeRoot: IRootMergeBlock | undefined = segmentOrNode.isLeaf()
+			? segmentOrNode.parent
+			: segmentOrNode;
+		while (maybeRoot?.parent !== undefined) {
+			maybeRoot = maybeRoot.parent;
+		}
+		if (maybeRoot?.mergeTree === undefined) {
+			throw new UsageError("segmentOrNode must be in rooted tree");
+		}
+		this.mergeTree = maybeRoot.mergeTree;
+	}
 	/*
 	 * segments must be of at least length one, but
 	 * removed segments will have a calculated length

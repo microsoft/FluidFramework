@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { promises as fs } from "fs";
 import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
@@ -11,9 +10,7 @@ import {
 	createWeightedAsyncGenerator,
 	done,
 	IRandom,
-	asyncGeneratorFromArray,
 } from "@fluid-internal/stochastic-test-utils";
-import { safelyParseJSON } from "@fluidframework/common-utils";
 import { ISharedTree } from "../../../shared-tree";
 import { brand, fail } from "../../../util";
 import { ITestTreeProvider } from "../../utils";
@@ -227,14 +224,6 @@ export function makeOpGenerator(
 		[{ type: "synchronize" }, 1],
 	];
 	return createWeightedAsyncGenerator(opWeights);
-}
-
-export async function makeOpGeneratorFromFilePath(
-	filepath: string,
-): Promise<AsyncGenerator<Operation, FuzzTestState>> {
-	const savedOperationsStr = await fs.readFile(filepath, "utf-8");
-	const operations: Operation[] = safelyParseJSON(savedOperationsStr) ?? [];
-	return asyncGeneratorFromArray(operations);
 }
 
 const moves = {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDevtoolsMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
+import { ISourcedDebuggerMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
 
 import { TypedPortConnection } from "./TypedPortConnection";
 
@@ -20,7 +20,7 @@ function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOp
  *
  * @internal
  */
-export function relayMessageToWindow<TMessage extends ISourcedDevtoolsMessage>(
+export function relayMessageToWindow<TMessage extends ISourcedDebuggerMessage>(
 	message: TMessage,
 	messageSource: string,
 	loggingOptions?: MessageLoggingOptions,
@@ -45,7 +45,7 @@ export function relayMessageToWindow<TMessage extends ISourcedDevtoolsMessage>(
  *
  * @internal
  */
-export function relayMessageToPort<TMessage extends ISourcedDevtoolsMessage>(
+export function relayMessageToPort<TMessage extends ISourcedDebuggerMessage>(
 	message: TMessage,
 	messageSource: string,
 	targetPort: TypedPortConnection<TMessage>,
@@ -73,7 +73,7 @@ export function relayMessageToPort<TMessage extends ISourcedDevtoolsMessage>(
  *
  * @internal
  */
-export function postMessageToPort<TMessage extends ISourcedDevtoolsMessage>(
+export function postMessageToPort<TMessage extends ISourcedDebuggerMessage>(
 	message: TMessage,
 	targetPort: TypedPortConnection<TMessage>,
 	loggingOptions?: MessageLoggingOptions,

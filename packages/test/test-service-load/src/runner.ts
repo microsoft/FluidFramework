@@ -26,7 +26,6 @@ import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
-	getOptionOverride,
 } from "./optionsMatrix";
 
 function printStatus(runConfig: IRunConfig, message: string) {
@@ -177,12 +176,21 @@ async function runnerProcess(
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
-	const optionsOverride = getOptionOverride(runConfig.testConfig, driver, endpoint);
+	const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
+	const loaderOptions = generateLoaderOptions(
+		seed,
+		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader,
+	);
 
-	const loaderOptions = generateLoaderOptions(seed, optionsOverride?.loader);
-	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
-	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
+	const containerOptions = generateRuntimeOptions(
+		seed,
+		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container,
+	);
 
+	const configurations = generateConfigurations(
+		seed,
+		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations,
+	);
 	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
 
 	// Cycle between creating new factory vs. reusing factory.

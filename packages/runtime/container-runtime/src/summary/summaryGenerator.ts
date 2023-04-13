@@ -120,10 +120,6 @@ const summarizeErrors = {
 	disconnect: "Summary cancelled due to summarizer or main client disconnect",
 } as const;
 
-// Helper functions to report failures and return.
-export const getFailMessage = (errorCode: keyof typeof summarizeErrors) =>
-	`${errorCode}: ${summarizeErrors[errorCode]}`;
-
 export class SummarizeResultBuilder {
 	public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
 	public readonly summaryOpBroadcasted = new Deferred<
@@ -175,6 +171,7 @@ export class SummaryGenerator {
 		private readonly submitSummaryCallback: (
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
+		private readonly raiseSummarizingError: (errorMessage: string) => void,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLogger,
@@ -238,12 +235,16 @@ export class SummaryGenerator {
 			{ start: true, end: true, cancel: "generic" },
 		);
 
+		// Helper functions to report failures and return.
+		const getFailMessage = (errorCode: keyof typeof summarizeErrors) =>
+			`${errorCode}: ${summarizeErrors[errorCode]}`;
 		const fail = (
 			errorCode: keyof typeof summarizeErrors,
 			error?: any,
 			properties?: SummaryGeneratorTelemetry,
 			nackSummaryResult?: INackSummaryResult,
 		) => {
+			this.raiseSummarizingError(summarizeErrors[errorCode]);
 			// UploadSummary may fail with 429 and retryAfter - respect that
 			// Summary Nack also can have retryAfter, it's parsed below and comes as a property.
 			const retryAfterSeconds = getRetryDelaySecondsFromError(error);
@@ -256,17 +257,17 @@ export class SummaryGenerator {
 					? "generic"
 					: "error";
 
-			const reason = getFailMessage(errorCode);
+			const message = getFailMessage(errorCode);
 			summarizeEvent.cancel(
 				{
 					...properties,
-					reason,
+					reason: errorCode,
 					category,
 					retryAfterSeconds,
 				},
-				error ?? reason,
+				error ?? message,
 			); // disconnect & summaryAckTimeout do not have proper error.
-			resultsBuilder.fail(reason, error, nackSummaryResult, retryAfterSeconds);
+			resultsBuilder.fail(message, error, nackSummaryResult, retryAfterSeconds);
 		};
 
 		// Wait to generate and send summary
