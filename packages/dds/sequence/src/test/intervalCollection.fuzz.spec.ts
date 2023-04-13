@@ -7,11 +7,11 @@ import * as path from "path";
 import { strict as assert } from "assert";
 import {
 	AcceptanceCondition,
-	combineReducers,
-	createWeightedGenerator,
-	Generator,
-	Reducer,
-	take,
+	combineReducersAsync as combineReducers,
+	createWeightedAsyncGenerator as createWeightedGenerator,
+	AsyncGenerator as Generator,
+	AsyncReducer as Reducer,
+	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
 import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
@@ -168,7 +168,7 @@ function makeOperationGenerator(
 		};
 	}
 
-	function addText(state: ClientOpState): AddText {
+	async function addText(state: ClientOpState): Promise<AddText> {
 		const { random, channel } = state;
 		return {
 			type: "addText",
@@ -177,11 +177,11 @@ function makeOperationGenerator(
 		};
 	}
 
-	function removeRange(state: ClientOpState): RemoveRange {
+	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRange(state) };
 	}
 
-	function addInterval(state: ClientOpState): AddInterval {
+	async function addInterval(state: ClientOpState): Promise<AddInterval> {
 		return {
 			type: "addInterval",
 			...inclusiveRange(state),
@@ -190,14 +190,14 @@ function makeOperationGenerator(
 		};
 	}
 
-	function deleteInterval(state: ClientOpState): DeleteInterval {
+	async function deleteInterval(state: ClientOpState): Promise<DeleteInterval> {
 		return {
 			type: "deleteInterval",
 			...interval(state),
 		};
 	}
 
-	function changeInterval(state: ClientOpState): ChangeInterval {
+	async function changeInterval(state: ClientOpState): Promise<ChangeInterval> {
 		const { start, end } = inclusiveRange(state);
 		return {
 			type: "changeInterval",
@@ -207,7 +207,7 @@ function makeOperationGenerator(
 		};
 	}
 
-	function changeProperties(state: ClientOpState): ChangeProperties {
+	async function changeProperties(state: ClientOpState): Promise<ChangeProperties> {
 		return {
 			type: "changeProperties",
 			...interval(state),
@@ -293,7 +293,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, ClientOpState> {
 	const withLogging =
 		<T>(baseReducer: (state: ClientOpState, operation: T) => void): Reducer<T, ClientOpState> =>
-		(state, operation) => {
+		async (state, operation) => {
 			if (loggingInfo !== undefined) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
@@ -303,25 +303,25 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, ClientOpStat
 		};
 
 	const reducer = combineReducers<Operation, ClientOpState>({
-		addText: ({ channel }, { index, content }) => {
+		addText: async ({ channel }, { index, content }) => {
 			channel.insertText(index, content);
 		},
-		removeRange: ({ channel }, { start, end }) => {
+		removeRange: async ({ channel }, { start, end }) => {
 			channel.removeRange(start, end);
 		},
-		addInterval: ({ channel }, { start, end, collectionName, id }) => {
+		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
 		},
-		deleteInterval: ({ channel }, { id, collectionName }) => {
+		deleteInterval: async ({ channel }, { id, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.removeIntervalById(id);
 		},
-		changeInterval: ({ channel }, { id, start, end, collectionName }) => {
+		changeInterval: async ({ channel }, { id, start, end, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.change(id, start, end);
 		},
-		changeProperties: ({ channel }, { id, properties, collectionName }) => {
+		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
 		},
@@ -330,7 +330,7 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, ClientOpStat
 	return withLogging(reducer);
 }
 
-describe("IntervalCollection fuzz testing", () => {
+describe.only("IntervalCollection fuzz testing", () => {
 	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
 		workloadName: "default interval collection",
 		generatorFactory: () => take(100, makeOperationGenerator()),
@@ -345,6 +345,11 @@ describe("IntervalCollection fuzz testing", () => {
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: 10 },
 		reconnectProbability: 0.1,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.1,
+		},
 		defaultTestCount: 100,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		// Uncomment this line to replay a specific seed:

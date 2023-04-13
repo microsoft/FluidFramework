@@ -12,13 +12,14 @@ import {
 	defaultOptions,
 	done,
 	ExitBehavior,
-	Generator,
-	generatorFromArray,
-	interleave,
+	AsyncGenerator as Generator,
+	asyncGeneratorFromArray as generatorFromArray,
+	interleaveAsync as interleave,
+	IRandom,
 	makeRandom,
-	performFuzzActions,
-	Reducer,
-	repeat,
+	performFuzzActionsAsync as performFuzzActions,
+	AsyncReducer as Reducer,
+	repeatAsync as repeat,
 	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
 import {
@@ -38,6 +39,15 @@ export interface Client<TChannelFactory extends IChannelFactory> {
 export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+
+	/**
+	 * Client which is responsible for summarizing. This client remains connected and read-only
+	 * throughout the test.
+	 *
+	 * This client is also used for consistency validation, as eventual consistency bugs are
+	 * typically easier to reason about when one client was readonly.
+	 */
+	summarizerClient: Client<TChannelFactory>;
 	clients: Client<TChannelFactory>[];
 	// Client which was selected to perform an operation on
 	client: Client<TChannelFactory>;
@@ -56,6 +66,11 @@ export interface BaseOperation {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
+}
+
+export interface AddClient {
+	type: "addClient";
+	channelId: string;
 }
 
 export interface Synchronize {
@@ -175,10 +190,33 @@ interface DDSFuzzSuiteOptions {
 	defaultTestCount: number;
 
 	/**
-	 * Number of clients to perform operations on.
-	 * TODO: Making clients behave in some predictable way would be a nice harness improvement.
+	 * Number of clients to perform operations on at the start of the test.
+	 * This does not include the read-only client created for consistency validation
+	 * and summarization--see {@link DDSFuzzTestState.summarizerClient}.
 	 */
 	numberOfClients: number;
+
+	/**
+	 * Options dictating if and when to simulate new clients joining the collaboration session.
+	 * If not specified, no new clients will be added after the test starts.
+	 *
+	 * This option is useful for testing eventual consistency bugs related to summarization.
+	 */
+	clientJoinOptions?: {
+		/**
+		 * The maximum number of clients that will ever be added to the test.
+		 * @remarks - Due to current mock limitations, clients will only ever be added to the collaboration session,
+		 * not removed.
+		 * Adding an excessive number of clients may cause performance issues.
+		 */
+		maxNumberOfClients: number;
+
+		/**
+		 * The probability that a client will be added at any given operation.
+		 * If the current number of clients has reached the maximum, this probability is ignored.
+		 */
+		clientAddProbability: number;
+	};
 
 	/**
 	 * Strategy for validating eventual consistency of DDSes.
@@ -242,6 +280,71 @@ const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	validationStrategy: { type: "random", probability: 0.05 },
 };
 
+function mixinNewClient<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzModel<TChannelFactory, TOperation | AddClient, TState> {
+	const isClientAddOp = (op: TOperation | AddClient): op is AddClient => op.type === "addClient";
+
+	const generatorFactory: () => Generator<TOperation | AddClient, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | AddClient | typeof done> => {
+			const baseOp = baseGenerator(state);
+			const { clients, random } = state;
+			if (
+				options.clientJoinOptions !== undefined &&
+				clients.length < options.clientJoinOptions.maxNumberOfClients &&
+				random.bool(options.clientJoinOptions.clientAddProbability)
+			) {
+				return {
+					type: "addClient",
+					channelId: makeFriendlyClientId(random, clients.length),
+				};
+			}
+			return baseOp;
+		};
+	};
+
+	const reducer: Reducer<TOperation | AddClient, TState> = async (state, op) => {
+		if (isClientAddOp(op)) {
+			const { summary } = state.summarizerClient.channel.getAttachSummary();
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const containerRuntime = state.containerRuntimeFactory.createContainerRuntime(
+				dataStoreRuntime,
+				{ minimumSequenceNumber: state.containerRuntimeFactory.sequenceNumber },
+			);
+			const services: IChannelServices = {
+				deltaConnection: containerRuntime.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary),
+			};
+			const channel = (await model.factory.load(
+				dataStoreRuntime,
+				op.channelId,
+				services,
+				model.factory.attributes,
+			)) as ReturnType<TChannelFactory["create"]>;
+			channel.connect(services);
+			const newClient: Client<TChannelFactory> = {
+				channel,
+				containerRuntime,
+			};
+			state.clients.push(newClient);
+			return state;
+		}
+		return model.reducer(state, op);
+	};
+
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+	};
+}
+
 function mixinReconnect<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
@@ -252,7 +355,7 @@ function mixinReconnect<
 ): DDSFuzzModel<TChannelFactory, TOperation | ChangeConnectionState, TState> {
 	const generatorFactory: () => Generator<TOperation | ChangeConnectionState, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		return (state): TOperation | ChangeConnectionState | typeof done => {
+		return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
 			const baseOp = baseGenerator(state);
 			if (state.random.bool(options.reconnectProbability)) {
 				const client = state.clients.find((c) => c.channel.id === state.channel.id);
@@ -267,7 +370,10 @@ function mixinReconnect<
 		};
 	};
 
-	const reducer: Reducer<TOperation | ChangeConnectionState, TState> = (state, operation) => {
+	const reducer: Reducer<TOperation | ChangeConnectionState, TState> = async (
+		state,
+		operation,
+	) => {
 		if (operation.type === "changeConnectionState") {
 			// TODO: consider reserving "type" fields here. allowing consumers to set it might be a useful feature.
 			// if we don't want that, we should validate at runtime and throw a reasonable error.
@@ -307,7 +413,7 @@ function mixinSynchronization<
 			);
 			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
-				return (state: TState): TOperation | Synchronize | typeof done => {
+				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
 					if (state.random.bool(validationStrategy.probability)) {
 						return { type: "synchronize" };
 					}
@@ -318,7 +424,7 @@ function mixinSynchronization<
 					// 2. Make it available to the subsequent reducer logic we're going to inject
 					// (so that we can recover the channel from serialized data)
 					const channel = state.random.pick(state.clients).channel;
-					const baseOp = baseGenerator({
+					const baseOp = await baseGenerator({
 						...state,
 						channel: state.random.pick(state.clients).channel,
 					});
@@ -336,14 +442,14 @@ function mixinSynchronization<
 			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
 				return interleave<TOperation | Synchronize, TState>(
-					(state) => {
+					async (state) => {
 						// Pick a channel, and:
 						// 1. Make it available for the DDS model generators (so they don't need to
 						// do the boilerplate of selecting a client to perform the operation on)
 						// 2. Make it available to the subsequent reducer logic we're going to inject
 						// (so that we can recover the channel from serialized data)
 						const client = state.random.pick(state.clients);
-						const baseOp = baseGenerator({
+						const baseOp = await baseGenerator({
 							...state,
 							channel: client.channel,
 							client,
@@ -365,7 +471,7 @@ function mixinSynchronization<
 		default:
 			unreachableCase(validationStrategy);
 	}
-	const reducer: Reducer<TOperation | Synchronize, TState> = (state, operation) => {
+	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		if (operation.type === "synchronize") {
 			// TODO: consider reserving "type" fields here. allowing consumers to set it might be a useful feature.
 			// if we don't want that, we should validate at runtime and throw a reasonable error.
@@ -373,10 +479,10 @@ function mixinSynchronization<
 			const connectedClients = state.clients.filter(
 				(client) => client.containerRuntime.connected,
 			);
-			if (connectedClients.length >= 2) {
-				const first = connectedClients[0].channel;
-				for (const { channel: other } of connectedClients.slice(1)) {
-					model.validateConsistency(first, other);
+			if (connectedClients.length > 0) {
+				const readonlyChannel = state.summarizerClient.channel;
+				for (const { channel } of connectedClients) {
+					model.validateConsistency(readonlyChannel, channel);
 				}
 			}
 			return state;
@@ -410,6 +516,35 @@ function makeUnreachableCodepathProxy<T extends object>(name: string): T {
 	});
 }
 
+function createClient<TChannelFactory extends IChannelFactory>(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	factory: TChannelFactory,
+	id: string,
+): Client<TChannelFactory> {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const channel: ReturnType<typeof factory.create> = factory.create(dataStoreRuntime, id);
+
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const services: IChannelServices = {
+		deltaConnection: containerRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	};
+
+	channel.connect(services);
+	// TS resolves the return type of model.factory.create too early and isn't able to retain a more specific type
+	// than IChannel here.
+	return { containerRuntime, channel: channel as ReturnType<TChannelFactory["create"]> };
+}
+
+/**
+ * Gets a friendly ID for a client based on its index in the client list.
+ * This exists purely for easier debugging--reasoning about client "A" is easier than reasoning
+ * about client "3e8a621a-7b35-414b-897f-8795962fb415".
+ */
+function makeFriendlyClientId(random: IRandom, index: number): string {
+	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
+}
+
 function runTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 	model: DDSFuzzModel<TChannelFactory, TOperation>,
 	options: InternalOptions,
@@ -420,29 +555,19 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	itFn(`seed ${seed}`, async () => {
 		const random = makeRandom(seed);
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-		const clients = Array.from({ length: options.numberOfClients }, (_, index) => {
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			const channel: ReturnType<typeof model.factory.create> = model.factory.create(
-				dataStoreRuntime,
-				// Use friendly IDs for a reasonable number of DDSes for easier debugging.
-				index < 26 ? String.fromCodePoint(index + 65) : random.uuid4(),
-			);
+		const clients = Array.from({ length: options.numberOfClients }, (_, index) =>
+			createClient(
+				containerRuntimeFactory,
+				model.factory,
+				makeFriendlyClientId(random, index),
+			),
+		);
 
-			const containerRuntime =
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-			const services: IChannelServices = {
-				deltaConnection: containerRuntime.createDeltaConnection(),
-				objectStorage: new MockStorage(),
-			};
-
-			channel.connect(services);
-			return { containerRuntime, channel };
-		});
+		const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
 
 		const initialState: DDSFuzzTestState<TChannelFactory> = {
-			// TS resolves the return type of model.factory.create too early and isn't able to retain a more specific type
-			// than IChannel here.
-			clients: clients as Client<TChannelFactory>[],
+			clients,
+			summarizerClient,
 			containerRuntimeFactory,
 			random,
 			// These properties should always be injected into the state by the mixed in reducer/generator
@@ -452,7 +577,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 			client: makeUnreachableCodepathProxy("client"),
 		};
 
-		performFuzzActions(model.generatorFactory(), model.reducer, initialState, saveInfo);
+		await performFuzzActions(model.generatorFactory(), model.reducer, initialState, saveInfo);
 	});
 }
 
@@ -481,7 +606,10 @@ export function createDDSFuzzSuite<
 	options.only = only;
 	assert(isInternalOptions(options));
 
-	const model = mixinSynchronization(mixinReconnect(ddsModel, options), options);
+	const model = mixinSynchronization(
+		mixinReconnect(mixinNewClient(ddsModel, options), options),
+		options,
+	);
 
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
 	describeFuzz(model.workloadName, ({ testCount }) => {
