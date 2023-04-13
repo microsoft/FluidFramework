@@ -93,6 +93,7 @@ export {
 	AnchorSetRootEvents,
 	FieldKindSpecifier,
 	AllowedUpdateType,
+	PathVisitor,
 } from "./core";
 
 export {

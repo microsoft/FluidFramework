@@ -33,6 +33,7 @@ export interface AnchorEvents {
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanging(anchor: AnchorNode): void;
     valueChanging(anchor: AnchorNode, value: Value): void;
+    visitSubtreeChanging(anchor: AnchorNode): PathVisitor;
 }
 
 // @alpha (undocumented)
@@ -1183,6 +1184,16 @@ export interface PathRootPrefix {
     indexOffset?: number;
     parent?: UpPath | undefined;
     rootFieldOverride?: FieldKey;
+}
+
+// @alpha
+export interface PathVisitor {
+    // (undocumented)
+    onDelete(path: FieldUpPath, index: number, count: number): void;
+    // (undocumented)
+    onInsert(path: FieldUpPath, index: number, content: readonly Delta.ProtoNode[]): void;
+    // (undocumented)
+    onSetValue(path: UpPath, field: FieldKey | undefined, value: Value): void;
 }
 
 // @alpha
