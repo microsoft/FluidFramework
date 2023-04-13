@@ -109,6 +109,10 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error("ERROR: No dependency provided.");
 		}
 
+		if (bumpType === undefined && flags.exact === undefined) {
+			this.error(`One of the following must be provided: --bumpType, --exact`);
+		}
+
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
@@ -185,7 +189,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
-		this.log(`Exact dependency type: ${exactDepType}`);
+		this.log(`Exact dependency type: ${exactDepType === "" ? "exact" : exactDepType}`);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
