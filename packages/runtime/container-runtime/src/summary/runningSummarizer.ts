@@ -677,18 +677,30 @@ export class RunningSummarizer implements IDisposable {
 					}
 				}
 
-				// If all attempts failed, log error (with last attempt info) and close the summarizer container
-				this.mc.logger.sendTelemetryEvent(
-					{
-						category: this.shouldRestart ? "generic" : "error",
-						eventName: this.shouldRestart
-							? "RestartInsteadOfRefreshFromServerFetch"
-							: "FailToSummarize",
-						reason,
-						message: lastResult?.message,
-					},
-					lastResult?.error,
-				);
+				if (this.shouldRestart) {
+					this.mc.logger.sendTelemetryEvent(
+						{
+							eventName: "RestartInsteadOfRefreshFromServerFetch",
+							reason,
+							message: lastResult?.message,
+						},
+						lastResult?.error,
+					);
+
+					this.stopSummarizerCallback("latestSummaryStateStale");
+					this.runtime.closeFn();
+					return;
+				} else {
+					// If all attempts failed, log error (with last attempt info) and close the summarizer container
+					this.mc.logger.sendErrorEvent(
+						{
+							eventName: "FailToSummarize",
+							reason,
+							message: lastResult?.message,
+						},
+						lastResult?.error,
+					);
+				}
 
 				this.stopSummarizerCallback("failToSummarize");
 			},

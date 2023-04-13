@@ -35,9 +35,15 @@ import {
 } from "../../summary";
 
 class MockRuntime {
+	disposed = false;
+
 	constructor(
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	) {}
+
+	closeFn() {
+		this.disposed = true;
+	}
 }
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -704,6 +710,7 @@ describe("Runtime", () => {
 						"unexpected log sequence",
 					);
 					assert.strictEqual(stopCall, 1);
+					assert(mockRuntime.disposed, "runtime should be disposed!");
 				});
 
 				it("Should retry after delay on failures with retryAfter", async () => {
