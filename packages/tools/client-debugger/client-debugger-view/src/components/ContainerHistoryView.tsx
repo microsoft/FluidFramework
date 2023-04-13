@@ -2,12 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DefaultPalette, IStackItemStyles, Icon, Stack, StackItem } from "@fluentui/react";
 import React from "react";
-
+import {
+	Divider,
+	tokens,
+	TableBody,
+	TableCell,
+	TableRow,
+	Table,
+	TableHeader,
+	TableHeaderCell,
+} from "@fluentui/react-components";
+import { Clock20Regular, PlugConnected24Regular } from "@fluentui/react-icons";
 import {
 	ConnectionStateChangeLogEntry,
-	ContainerStateChangeKind,
 	ContainerStateHistory,
 	GetContainerState,
 	handleIncomingMessage,
@@ -80,105 +88,69 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		return <Waiting label="Waiting for Container Summary data." />;
 	}
 
-	const nowTimeStamp = new Date();
-	const historyViews: React.ReactElement[] = [];
+	// Columns for rendering audience history
+	const containerHistoryColumns = [
+		{ columnKey: "state", label: "State" },
+		{ columnKey: "time", label: "Time" },
+	];
 
-	// Newest events are displayed first
-	for (let i = containerHistory.length - 1; i >= 0; i--) {
-		const changeTimeStamp = new Date(containerHistory[i].timestamp);
-		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
-
-		const accordionBackgroundColor: IStackItemStyles = {
-			root: {
-				background:
-					containerHistory[i].newState === ContainerStateChangeKind.Connected
-						? "#F0FFF0" // green
-						: containerHistory[i].newState === ContainerStateChangeKind.Attached
-						? "#F0FFFF" // blue
-						: containerHistory[i].newState === ContainerStateChangeKind.Disconnected
-						? "#FDF5E6" // yellow
-						: containerHistory[i].newState === ContainerStateChangeKind.Closed
-						? "#FFF0F5" // red
-						: containerHistory[i].newState === ContainerStateChangeKind.Disposed
-						? "#FFE4E1" // dark red
-						: "#C0C0C0", // grey for unknown state
-				borderStyle: "solid",
-				borderWidth: 1,
-				borderColor: DefaultPalette.neutralTertiary,
-				padding: 3,
-			},
-		};
-
-		const iconStyle: IStackItemStyles = {
-			root: {
-				padding: 10,
-			},
-		};
-
-		historyViews.push(
-			<div key={`container-history-info-${i}`}>
-				<Stack horizontal={true} styles={accordionBackgroundColor}>
-					<StackItem styles={iconStyle}>
-						<Icon
-							iconName={
-								containerHistory[i].newState === ContainerStateChangeKind.Connected
-									? "PlugConnected"
-									: containerHistory[i].newState ===
-									  ContainerStateChangeKind.Attached
-									? "Attach"
-									: containerHistory[i].newState ===
-									  ContainerStateChangeKind.Disconnected
-									? "PlugDisconnected"
-									: containerHistory[i].newState ===
-									  ContainerStateChangeKind.Disposed
-									? "RemoveLink"
-									: containerHistory[i].newState ===
-									  ContainerStateChangeKind.Closed
-									? "SkypeCircleMinus"
-									: "Help"
-							}
-						/>
-					</StackItem>
-					<StackItem>
-						<div
-							key={`${containerHistory[i].newState}-${containerHistory[i].timestamp}`}
-						>
-							<b>State: </b>
-							{containerHistory[i].newState}
-							<br />
-							<b>Time: </b>
-							{wasChangeToday
-								? changeTimeStamp.toTimeString()
-								: changeTimeStamp.toDateString()}
-							<br />
-						</div>
-					</StackItem>
-				</Stack>
-			</div>,
-		);
-	}
+	const getBackgroundColorForState = (state: string): string => {
+		switch (state) {
+			case "connected":
+				return tokens.colorPaletteGreenBackground2; // green
+			case "disconnected":
+				return tokens.colorPaletteDarkOrangeBorderActive; // orange
+			case "closed":
+				return tokens.colorPaletteRedBorder1; // red
+			case "disposed":
+				return tokens.colorPaletteDarkRedBackground2; // dark red
+			case "attached":
+				return tokens.colorPaletteRoyalBlueBackground2; // blue
+			default:
+				console.log("Unknown state type for container!");
+				return tokens.colorBrandBackgroundPressed; // black
+		}
+	};
 
 	return (
-		<Stack
-			styles={{
-				root: {
-					height: "100%",
-				},
-			}}
-		>
-			<StackItem>
-				<h3>Container State History</h3>
-				<Stack
-					styles={{
-						root: {
-							overflowY: "auto",
-							height: "300px",
-						},
-					}}
-				>
-					<div style={{ overflowY: "scroll" }}>{historyViews}</div>
-				</Stack>
-			</StackItem>
-		</Stack>
+		<>
+			<Divider appearance="brand"> Audience State </Divider>
+			<Table size="small" aria-label="Audience history table">
+				<TableHeader>
+					<TableRow>
+						{containerHistoryColumns.map((column, columnIndex) => (
+							<TableHeaderCell key={columnIndex}>
+								{column.columnKey === "state" && <PlugConnected24Regular />}
+								{column.columnKey === "time" && <Clock20Regular />}
+								{column.label}
+							</TableHeaderCell>
+						))}
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{containerHistory.map((item, itemIndex) => {
+						const nowTimeStamp = new Date();
+						const changeTimeStamp = new Date(item.timestamp);
+						const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
+
+						const timestampDisplay = wasChangeToday
+							? changeTimeStamp.toTimeString()
+							: changeTimeStamp.toDateString();
+
+						return (
+							<TableRow
+								key={itemIndex}
+								style={{
+									backgroundColor: getBackgroundColorForState(item.newState),
+								}}
+							>
+								<TableCell>{item.newState}</TableCell>
+								<TableCell>{timestampDisplay}</TableCell>
+							</TableRow>
+						);
+					})}
+				</TableBody>
+			</Table>
+		</>
 	);
 }
