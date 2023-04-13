@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { AsyncReducer } from "@fluid-internal/stochastic-test-utils";
-import { Multiplicity, singleTextCursor } from "../../../feature-libraries";
+import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { ITestTreeProvider, toJsonableTree } from "../../utils";
 import { ISharedTree } from "../../../shared-tree";
@@ -14,6 +14,8 @@ import {
 	Operation,
 	FuzzFieldChange,
 	FuzzNodeEditChange,
+	NodeEdit,
+	FieldEdit,
 } from "./fuzzEditGenerators";
 
 export const fuzzReducer: {
@@ -21,13 +23,20 @@ export const fuzzReducer: {
 } = {
 	edit: async (state, operation) => {
 		const { contents } = operation;
-		const index = contents.change.treeIndex;
-		const tree = state.testTreeProvider.trees[index];
 		switch (contents.editType) {
-			case "fieldEdit":
-				applyFieldEdit(tree, contents.change);
-			case "nodeEdit":
-				applyNodeEdit(tree, contents.change as FuzzNodeEditChange);
+			case "fieldEdit": {
+				const index = contents.change.edit.treeIndex;
+				const tree = state.testTreeProvider.trees[index];
+				applyFieldEdit(tree, contents);
+				break;
+			}
+			case "nodeEdit": {
+				const change = operation.contents as NodeEdit;
+				const index = change.edit.treeIndex;
+				const tree = state.testTreeProvider.trees[index];
+				applyNodeEdit(tree, change.edit);
+				break;
+			}
 			default:
 				break;
 		}
@@ -57,10 +66,10 @@ export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 	}
 }
 
-function applyFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
-	switch (change.fieldKind) {
-		case Multiplicity.Sequence:
-			applySequenceFieldEdit(tree, change);
+function applyFieldEdit(tree: ISharedTree, fieldEdit: FieldEdit): void {
+	switch (fieldEdit.change.type) {
+		case "sequence":
+			applySequenceFieldEdit(tree, fieldEdit.change.edit);
 			break;
 		default:
 			break;
@@ -68,7 +77,7 @@ function applyFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
 }
 
 function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
-	switch (change.fieldEditType) {
+	switch (change.type) {
 		case "insert": {
 			const field = tree.editor.sequenceField(change.parent, change.field);
 			field.insert(

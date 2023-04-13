@@ -21,37 +21,35 @@ import {
 	rootFieldKeySymbol,
 	UpPath,
 } from "../../../core";
-import { Multiplicity } from "../../../feature-libraries";
 
-export type Operation = TreeEdit | Synchronize | TransactionEdit;
+export type Operation = TreeOperation | Synchronize;
+
+export type TreeOperation = TreeEdit | TransactionBoundary;
 
 export interface TreeEdit {
 	type: "edit";
-	contents: FuzzEdit;
+	contents: FieldEdit | NodeEdit;
 }
 
 export interface Synchronize {
 	type: "synchronize";
 }
 
-export interface TransactionEdit {
+export interface TransactionBoundary {
 	type: "transaction";
 	contents: FuzzTransactionEdit;
 	treeIndex: number;
 }
 
-export type FuzzEdit = FuzzFieldEdit | FuzzNodeEdit;
-
 export type FuzzFieldChange = FuzzInsert | FuzzDelete;
 
-export interface FuzzFieldEdit {
+export interface FieldEdit {
 	editType: "fieldEdit";
-	change: FuzzFieldChange;
+	change: SequenceFieldEdit;
 }
 
 export interface FuzzInsert {
-	fieldEditType: "insert";
-	fieldKind: Multiplicity;
+	type: "insert";
 	parent: UpPath | undefined;
 	field: FieldKey;
 	index: number;
@@ -59,17 +57,21 @@ export interface FuzzInsert {
 	treeIndex: number;
 }
 
+export interface SequenceFieldEdit {
+	type: "sequence";
+	edit: FuzzInsert | FuzzDelete;
+}
+
 export interface FuzzDelete extends NodeRangePath {
-	fieldEditType: "delete";
-	fieldKind: Multiplicity;
+	type: "delete";
 	treeIndex: number;
 }
 
 export type FuzzNodeEditChange = FuzzSetPayload;
 
-export interface FuzzNodeEdit {
+export interface NodeEdit {
 	editType: "nodeEdit";
-	change: FuzzNodeEditChange;
+	edit: FuzzNodeEditChange;
 }
 
 export interface FuzzSetPayload {
@@ -151,8 +153,7 @@ export const makeInsertGenerator = (
 		treeIndex: number,
 	): FuzzInsert {
 		return {
-			fieldEditType: "insert",
-			fieldKind: Multiplicity.Sequence,
+			type: "insert",
 			parent: path.parent,
 			field: path.parentField,
 			index: path.parentIndex,
@@ -165,21 +166,11 @@ export const makeInsertGenerator = (
 		[insertGenerator, opWeights.insert ?? 0],
 	]);
 
-	return async (state: FuzzTestState): Promise<FuzzInsert | typeof done> => {
-		const trees = state.testTreeProvider.trees;
-		// does not include last tree, as we want a passive client
-		const treeIndex = trees.length === 1 ? 0 : state.random.integer(0, trees.length - 2);
-
-		const contents = await baseInsertGenerator({
-			...state,
-			treeIndex,
-		});
-		state.numberOfEdits += 1;
-		if (contents === done) {
-			return done;
-		}
+	const buildOperation = (contents: FuzzInsert) => {
 		return contents;
 	};
+
+	return createAsyncGenerator<FuzzInsert, FuzzInsert>(baseInsertGenerator, buildOperation);
 };
 
 export const makeDeleteGenerator = (
@@ -207,8 +198,7 @@ export const makeDeleteGenerator = (
 		treeIndex: number,
 	): FuzzDelete {
 		return {
-			fieldEditType: "delete",
-			fieldKind: Multiplicity.Sequence,
+			type: "delete",
 			firstNode,
 			count,
 			treeIndex,
@@ -224,26 +214,16 @@ export const makeDeleteGenerator = (
 		],
 	]);
 
-	return async (state: FuzzTestState): Promise<FuzzDelete | typeof done> => {
-		const trees = state.testTreeProvider.trees;
-		// does not include last tree, as we want a passive client
-		const treeIndex = trees.length === 1 ? 0 : state.random.integer(0, trees.length - 2);
-
-		const contents = await baseDeleteGenerator({
-			...state,
-			treeIndex,
-		});
-		state.numberOfEdits += 1;
-		if (contents === done) {
-			return done;
-		}
+	const buildOperation = (contents: FuzzDelete) => {
 		return contents;
 	};
+
+	return createAsyncGenerator<FuzzDelete, FuzzDelete>(baseDeleteGenerator, buildOperation);
 };
 
 export const makeNodeEditGenerator = (
 	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
-): AsyncGenerator<FuzzNodeEdit, FuzzTestState> => {
+): AsyncGenerator<NodeEdit, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
 
 	async function setPayloadGenerator(state: EditState): Promise<FuzzSetPayload> {
@@ -259,7 +239,7 @@ export const makeNodeEditGenerator = (
 		};
 	}
 
-	const baseSetPayloadGenerator = createWeightedAsyncGenerator<FuzzNodeEditChange, EditState>([
+	const baseNodeEditGenerator = createWeightedAsyncGenerator<FuzzNodeEditChange, EditState>([
 		[
 			setPayloadGenerator,
 			opWeights.setPayload ?? 0,
@@ -268,66 +248,84 @@ export const makeNodeEditGenerator = (
 		],
 	]);
 
-	return async (state: FuzzTestState): Promise<FuzzNodeEdit | typeof done> => {
-		const trees = state.testTreeProvider.trees;
-		// does not include last tree, as we want a passive client
-		const treeIndex = trees.length === 1 ? 0 : state.random.integer(0, trees.length - 2);
-
-		const contents = await baseSetPayloadGenerator({
-			...state,
-			treeIndex,
-		});
-		state.numberOfEdits += 1;
-		if (contents === done) {
-			return done;
-		}
-		return {
+	const buildOperation = (contents: FuzzNodeEditChange) => {
+		const operation: NodeEdit = {
 			editType: "nodeEdit",
-			change: contents,
+			edit: contents,
 		};
+		return operation;
 	};
+
+	return createAsyncGenerator<FuzzNodeEditChange, NodeEdit>(
+		baseNodeEditGenerator,
+		buildOperation,
+	);
+};
+
+export const makeSequenceFieldEditGenerator = (
+	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
+): AsyncGenerator<SequenceFieldEdit, FuzzTestState> => {
+	type EditState = FuzzTestState & TreeContext;
+
+	const baseSequenceFieldEditGenerator = createWeightedAsyncGenerator<FuzzFieldChange, EditState>(
+		[
+			[
+				makeDeleteGenerator(),
+				opWeights.delete ?? 0,
+				({ testTreeProvider, treeIndex }) =>
+					containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
+			],
+			[makeInsertGenerator(), opWeights.insert ?? 0],
+		],
+	);
+
+	const buildOperation = (contents: FuzzFieldChange) => {
+		const operation: SequenceFieldEdit = {
+			type: "sequence",
+			edit: contents,
+		};
+		return operation;
+	};
+
+	return createAsyncGenerator<FuzzFieldChange, SequenceFieldEdit>(
+		baseSequenceFieldEditGenerator,
+		buildOperation,
+	);
 };
 
 export const makeFieldEditGenerator = (
 	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
-): AsyncGenerator<FuzzFieldEdit, FuzzTestState> => {
+): AsyncGenerator<FieldEdit, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
 
-	const baseFieldEditGenerator = createWeightedAsyncGenerator<FuzzFieldChange, EditState>([
+	const baseFieldEditGenerator = createWeightedAsyncGenerator<SequenceFieldEdit, EditState>([
 		[
-			makeDeleteGenerator(),
-			opWeights.delete ?? 0,
+			makeSequenceFieldEditGenerator(),
+			sumWeights([opWeights.insert, opWeights.delete]),
 			({ testTreeProvider, treeIndex }) =>
 				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
 		],
-		[makeInsertGenerator(), opWeights.insert ?? 0],
 	]);
 
-	return async (state: FuzzTestState): Promise<FuzzFieldEdit | typeof done> => {
-		const trees = state.testTreeProvider.trees;
-		// does not include last tree, as we want a passive client
-		const treeIndex = trees.length === 1 ? 0 : state.random.integer(0, trees.length - 2);
-
-		const contents = await baseFieldEditGenerator({
-			...state,
-			treeIndex,
-		});
-		state.numberOfEdits += 1;
-		if (contents === done) {
-			return done;
-		}
-		return {
+	const buildOperation = (contents: SequenceFieldEdit) => {
+		const operation: FieldEdit = {
 			editType: "fieldEdit",
 			change: contents,
 		};
+		return operation;
 	};
+
+	return createAsyncGenerator<SequenceFieldEdit, FieldEdit>(
+		baseFieldEditGenerator,
+		buildOperation,
+	);
 };
 
 export const makeEditGenerator = (
 	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<TreeEdit, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
-	const baseEditGenerator = createWeightedAsyncGenerator<FuzzEdit, EditState>([
+	const baseEditGenerator = createWeightedAsyncGenerator<FieldEdit | NodeEdit, EditState>([
 		[
 			makeFieldEditGenerator(),
 			sumWeights([opWeights.delete, opWeights.insert]),
@@ -338,29 +336,20 @@ export const makeEditGenerator = (
 		[makeNodeEditGenerator(), opWeights.setPayload ?? 0],
 	]);
 
-	return async (state: FuzzTestState): Promise<TreeEdit | typeof done> => {
-		const trees = state.testTreeProvider.trees;
-		// does not include last tree, as we want a passive client
-		const treeIndex = trees.length === 1 ? 0 : state.random.integer(0, trees.length - 2);
-
-		const contents = await baseEditGenerator({
-			...state,
-			treeIndex,
-		});
-		state.numberOfEdits += 1;
-		if (contents === done) {
-			return done;
-		}
-		return {
+	const buildOperation = (contents: FieldEdit | NodeEdit) => {
+		const operation: TreeEdit = {
 			type: "edit",
 			contents,
 		};
+		return operation;
 	};
+
+	return createAsyncGenerator<FieldEdit | NodeEdit, TreeEdit>(baseEditGenerator, buildOperation);
 };
 
 export const makeTransactionEditGenerator = (
 	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
-): AsyncGenerator<TransactionEdit, FuzzTestState> => {
+): AsyncGenerator<TransactionBoundary, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
 
 	async function transactionStartGenerator(state: EditState): Promise<TransactionStartOp> {
@@ -401,12 +390,31 @@ export const makeTransactionEditGenerator = (
 		],
 	]);
 
-	return async (state: FuzzTestState): Promise<TransactionEdit | typeof done> => {
+	const buildOperation = (contents: FuzzTransactionEdit, treeIndex: number) => {
+		const operation: TransactionBoundary = {
+			type: "transaction",
+			contents,
+			treeIndex,
+		};
+		return operation;
+	};
+
+	return createAsyncGenerator<FuzzTransactionEdit, TransactionBoundary>(
+		baseTransactionEditGenerator,
+		buildOperation,
+	);
+};
+
+function createAsyncGenerator<Op, OpOut>(
+	baseGenerator: (state: FuzzTestState & TreeContext) => Promise<Op | typeof done>,
+	buildOperation: (contents: Op, treeIndex: number) => OpOut,
+): AsyncGenerator<OpOut, FuzzTestState> {
+	return async (state: FuzzTestState): Promise<OpOut | typeof done> => {
 		const trees = state.testTreeProvider.trees;
 		// does not include last tree, as we want a passive client
 		const treeIndex = trees.length === 1 ? 0 : state.random.integer(0, trees.length - 2);
 
-		const contents = await baseTransactionEditGenerator({
+		const contents = await baseGenerator({
 			...state,
 			treeIndex,
 		});
@@ -414,9 +422,9 @@ export const makeTransactionEditGenerator = (
 		if (contents === done) {
 			return done;
 		}
-		return { type: "transaction", contents, treeIndex };
+		return buildOperation(contents, treeIndex);
 	};
-};
+}
 
 export function makeOpGenerator(
 	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
