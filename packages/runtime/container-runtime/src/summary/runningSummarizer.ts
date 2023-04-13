@@ -61,7 +61,6 @@ export class RunningSummarizer implements IDisposable {
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
-		raiseSummarizingError: (errorMessage: string) => void,
 		summaryCollection: SummaryCollection,
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
@@ -75,7 +74,6 @@ export class RunningSummarizer implements IDisposable {
 			submitSummaryCallback,
 			refreshLatestSummaryAckCallback,
 			heuristicData,
-			raiseSummarizingError,
 			summaryCollection,
 			cancellationToken,
 			stopSummarizerCallback,
@@ -162,7 +160,6 @@ export class RunningSummarizer implements IDisposable {
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly heuristicData: ISummarizeHeuristicData,
-		private readonly raiseSummarizingError: (errorMessage: string) => void,
 		private readonly summaryCollection: SummaryCollection,
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
@@ -204,13 +201,12 @@ export class RunningSummarizer implements IDisposable {
 		const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
-			// pre-0.58 error message: summaryAckWaitTimeout
-			this.raiseSummarizingError("Pending summary ack not received in time");
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
 			this.mc.logger.sendErrorEvent({
 				eventName: "SummaryAckWaitTimeout",
+				message: "Pending summary ack not received in time",
 				maxAckWaitTime,
 				referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
 				summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
@@ -233,7 +229,6 @@ export class RunningSummarizer implements IDisposable {
 			this.pendingAckTimer,
 			this.heuristicData,
 			this.submitSummaryCallback,
-			this.raiseSummarizingError,
 			() => {
 				this.totalSuccessfulAttempts++;
 			},
