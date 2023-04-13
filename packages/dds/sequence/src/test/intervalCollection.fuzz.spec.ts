@@ -351,11 +351,9 @@ describe("IntervalCollection fuzz testing", () => {
 			clientAddProbability: 0.1,
 		},
 		defaultTestCount: 100,
-		// This option can be used to replay a specific seed from its failure file.
+		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-		// Uncomment this line to replay a specific seed:
-		// replay: 0,
 		parseOperations: (serialized: string) => {
 			const operations: Operation[] = JSON.parse(serialized);
 			// Replace this value with some other interval ID and uncomment to filter replay of the test
