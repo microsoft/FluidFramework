@@ -172,12 +172,6 @@ module.exports = {
 		"@typescript-eslint/typedef": "off",
 
 		/**
-		 * Disabled because we will lean on the formatter (i.e. prettier) to enforce indentation policy.
-		 * @remarks This rule also directly conflicts with prettier's formatting of nested ternary expressions.
-		 */
-		"unicorn/no-nested-ternary": "off",
-
-		/**
 		 * Disabled because we want to encourage documenting different events separately.
 		 */
 		"@typescript-eslint/unified-signatures": "off",

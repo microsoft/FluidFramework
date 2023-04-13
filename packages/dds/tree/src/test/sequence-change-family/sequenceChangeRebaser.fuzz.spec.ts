@@ -20,6 +20,7 @@ import {
 	noFailure,
 	OutputType,
 	verifyChangeRebaser,
+	UpPath,
 } from "../../core";
 import { brand } from "../../util";
 // TODO: Move ../rebase/fuzz.ts code outside of src/test
@@ -32,7 +33,7 @@ const random = makeRandom(4521357);
 
 const fooKey = brand<FieldKey>("foo");
 const keySet = new Set([fooKey]);
-const pathGen = (seed: number) => generateRandomUpPath(keySet, seed, 1, 3);
+const pathGen = (seed: number): UpPath => generateRandomUpPath(keySet, seed, 1, 3);
 
 const generateChange = (seed: number) => generateRandomChange(seed, pathGen);
 

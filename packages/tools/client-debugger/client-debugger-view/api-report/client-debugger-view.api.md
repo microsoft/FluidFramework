@@ -5,8 +5,9 @@
 ```ts
 
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
-import { ISharedObject } from '@fluidframework/shared-object-base';
+import { IDevtoolsMessage } from '@fluid-tools/client-debugger';
+import { IMessageRelay } from '@fluid-tools/client-debugger';
+import { ISourcedDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
 
 // @public
@@ -22,64 +23,17 @@ export interface AudienceMemberViewProps {
     myClientId: string | undefined;
 }
 
-// @internal
-export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
+export { IMessageRelay }
 
-// @internal
-export const clientDebugViewClassName = "fluid-client-debugger-view";
+// @public
+export const MessageRelayContext: React_2.Context<IMessageRelay<IDevtoolsMessage<unknown>, ISourcedDevtoolsMessage<unknown>> | undefined>;
 
-// @internal
-export interface ClientDebugViewProps extends HasClientDebugger {
-    renderOptions?: RenderOptions;
+// @public
+export function RootView(props: RootViewProps): React_2.ReactElement;
+
+// @public
+export interface RootViewProps {
+    messageRelay: IMessageRelay;
 }
-
-// @public
-export const defaultRenderOptions: Required<RenderOptions>;
-
-// @public
-export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
-
-// @public
-export interface FluidClientDebuggerProps {
-    renderOptions?: RenderOptions;
-}
-
-// @public
-export function FluidClientDebuggers(props: FluidClientDebuggerProps): React_2.ReactElement;
-
-// @internal
-export interface HasClientDebugger {
-    clientDebugger: IFluidClientDebugger;
-}
-
-// @internal
-export interface HasContainerId {
-    containerId: string;
-}
-
-// @public
-export type RenderChild = (childObject: unknown) => React_2.ReactElement;
-
-// @public
-export function renderClientDebuggerView(targetElement: HTMLElement | null): Promise<boolean>;
-
-// @public
-export interface RenderOptions {
-    onRenderAudienceMember?: (props: AudienceMemberViewProps) => React_2.ReactElement;
-    sharedObjectRenderOptions?: SharedObjectRenderOptions;
-}
-
-// @public
-export type RenderSharedObject = (
-sharedObject: ISharedObject,
-renderChild: RenderChild) => React_2.ReactElement;
-
-// @public
-export interface SharedObjectRenderOptions {
-    [k: SharedObjectType]: RenderSharedObject;
-}
-
-// @public
-export type SharedObjectType = string;
 
 ```

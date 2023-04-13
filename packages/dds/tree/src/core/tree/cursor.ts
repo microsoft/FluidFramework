@@ -371,3 +371,39 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 export function castCursorToSynchronous(cursor: ITreeCursor): ITreeCursorSynchronous {
 	return cursor as ITreeCursorSynchronous;
 }
+
+/**
+ * Runs `f` inside of field `field` on `cursor`.
+ * @param cursor - Cursor whoso field to enter and exit. Must be in `nodes` mode.
+ * @param field - Field to enter.
+ * @param f - Callback to run when in field.
+ * @returns return value of `f`
+ */
+export function inCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	field: FieldKey,
+	f: (cursor: TCursor) => T,
+): T {
+	cursor.enterField(field);
+	const result = f(cursor);
+	cursor.exitField();
+	return result;
+}
+
+/**
+ * Runs `f` inside of node `index` on `cursor`.
+ * @param cursor - Cursor whoso node to enter and exit. Must be in `fields` mode.
+ * @param index - Node to enter.
+ * @param f - Callback to run when in node.
+ * @returns return value of `f`
+ */
+export function inCursorNode<T, TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	index: number,
+	f: (cursor: TCursor) => T,
+): T {
+	cursor.enterNode(index);
+	const result = f(cursor);
+	cursor.exitNode();
+	return result;
+}

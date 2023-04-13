@@ -13,10 +13,10 @@ import { MessageType } from "@fluidframework/protocol-definitions";
  * @param type - the type to check
  * @returns true if it is a system message type
  */
-export const isServiceMessageType = (type: string) => (
-    type === MessageType.ClientJoin ||
-    type === MessageType.ClientLeave ||
-    type === MessageType.Control ||
-    type === MessageType.NoClient ||
-    type === MessageType.SummaryAck ||
-    type === MessageType.SummaryNack);
+export const isServiceMessageType = (type: string) =>
+	type === MessageType.ClientJoin ||
+	type === MessageType.ClientLeave ||
+	type === MessageType.Control ||
+	type === MessageType.NoClient ||
+	type === MessageType.SummaryAck ||
+	type === MessageType.SummaryNack;

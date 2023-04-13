@@ -7,8 +7,11 @@ import isEqual from "lodash.isequal";
 import React, { useEffect, useState } from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import type { IAppModel, TaskData } from "../model-interface";
+import type { IAppModel, ITaskData } from "../model-interface";
 
+// Hardcoding a taskListId here for now. In a real scenario this would be provided by the user when creating a task list component in the container.
+
+const externalTaskListId = "task-list-1";
 /**
  * Helper function used in several of the views to fetch data form the external app
  */
@@ -17,16 +20,19 @@ async function pollForServiceUpdates(
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
 	try {
-		const response = await fetch(`http://localhost:${externalDataServicePort}/fetch-tasks`, {
-			method: "GET",
-			headers: {
-				"Access-Control-Allow-Origin": "*",
-				"Content-Type": "application/json",
+		const response = await fetch(
+			`http://localhost:${externalDataServicePort}/fetch-tasks/${externalTaskListId}`,
+			{
+				method: "GET",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
 			},
-		});
+		);
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
-		const newData = responseBody.taskList as TaskData;
+		const newData = responseBody.taskList as ITaskData;
 		if (newData !== undefined && !isEqual(newData, externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
 			setExternalData(newData);
@@ -61,7 +67,6 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 		<div>
 			<ControlsView model={props.model} />
 			<ExternalDataDebugView />
-			<SyncStatusView />
 		</div>
 	);
 };
@@ -88,7 +93,7 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 	}, [externalData, setExternalData]);
 	const parsedExternalData = isEqual(externalData, {})
 		? []
-		: Object.entries(externalData as TaskData);
+		: Object.entries(externalData as ITaskData);
 	const taskRows = parsedExternalData.map(([key, { name, priority }]) => (
 		<tr key={key}>
 			<td>{key}</td>
@@ -111,27 +116,6 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 					</thead>
 					<tbody>{taskRows}</tbody>
 				</table>
-			</div>
-		</div>
-	);
-};
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface ISyncStatusViewProps {}
-
-// TODO: Implement the statuses below
-const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
-	return (
-		<div>
-			<h3>Sync status</h3>
-			<div style={{ margin: "10px 0" }}>
-				Fluid has [no] unsync&apos;d changes (not implemented)
-				<br />
-				External data source has [no] unsync&apos;d changes (not implemented)
-				<br />
-				Current sync activity: [idle | fetching | writing | resolving conflicts?] (not
-				implemented)
-				<br />
 			</div>
 		</div>
 	);
@@ -250,7 +234,7 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 
 		return (): void => {};
 	}, [externalData, setExternalData]);
-	const parsedExternalData = Object.entries(externalData as TaskData);
+	const parsedExternalData = Object.entries(externalData as ITaskData);
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
 	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
 	const writeToExternalServer = async (): Promise<void> => {
@@ -262,14 +246,17 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 			};
 		}
 		try {
-			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
+			await fetch(
+				`http://localhost:${externalDataServicePort}/set-tasks/${externalTaskListId}`,
+				{
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ taskList: formattedTasks }),
 				},
-				body: JSON.stringify({ taskList: formattedTasks }),
-			});
+			);
 		} catch (error) {
 			console.error(`Task list submition failed due to an error:\n${error}`);
 

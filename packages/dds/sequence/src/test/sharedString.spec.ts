@@ -24,6 +24,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { getTextAndMarkers, SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
@@ -170,6 +171,23 @@ describe("SharedString", () => {
 			}
 		});
 
+		it("can handle empty annotations in text", async () => {
+			const text = "hello world";
+			const startingProps = Object.entries({});
+			sharedString.insertText(0, text, startingProps);
+			for (let i = 0; i < text.length; i++) {
+				const actualProps = sharedString.getPropertiesAtPosition(i);
+				assert(
+					actualProps !== undefined,
+					"Properties are undefined when they should be empty",
+				);
+				assert(
+					startingProps.toString() === Object.entries(actualProps).toString(),
+					`Properties are not empty at position ${i}`,
+				);
+			}
+		});
+
 		it("can insert marker", () => {
 			sharedString.insertText(0, "hello world");
 			// Insert a simple marker.
@@ -219,6 +237,91 @@ describe("SharedString", () => {
 			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
 		});
 
+		it("fails when the marker id is updated with a new string", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker.
+			const props = { color: "blue" };
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			sharedString.annotateMarker(simpleMarker, props);
+			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
+			// Annotate the marker's ID.
+			const newIdProps = { [reservedMarkerIdKey]: "newIdValue" };
+			assert.throws(
+				() => {
+					sharedString.annotateMarker(simpleMarker, newIdProps);
+				},
+				(e) =>
+					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				"Error from attempting to update marker was not thrown or was not the expected error",
+			);
+		});
+
+		it("fails when the marker id is updated with null", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker's ID.
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			const newIdProps = { [reservedMarkerIdKey]: null };
+
+			assert.throws(
+				() => {
+					sharedString.annotateMarker(simpleMarker, newIdProps);
+				},
+				(e) =>
+					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				"Error from attempting to update marker was not thrown or was not the expected error",
+			);
+		});
+
+		it("fails when the marker id is updated with undefined", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker's ID.
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			const newIdProps = { [reservedMarkerIdKey]: undefined };
+
+			assert.throws(
+				() => {
+					sharedString.annotateMarker(simpleMarker, newIdProps);
+				},
+				(e) =>
+					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				"Error from attempting to update marker was not thrown or was not the expected error",
+			);
+		});
+
+		it("allows the markerId to be updated with the existing value", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker's ID.
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			const newIdProps = { [reservedMarkerIdKey]: "markerId" };
+			sharedString.annotateMarker(simpleMarker, newIdProps);
+			assert.equal(
+				sharedString.getMarkerFromId("markerId"),
+				simpleMarker,
+				"Could not update marker with the existing id value",
+			);
+			assert.equal(
+				"markerId",
+				simpleMarker.properties?.[reservedMarkerIdKey],
+				`Actual value of marker id property - ${simpleMarker.properties?.[reservedMarkerIdKey]} - does not match the expected value`,
+			);
+		});
+
 		it("replace zero range", async () => {
 			sharedString.insertText(0, "123");
 			sharedString.replaceText(1, 1, "\u00e4\u00c4");
@@ -243,7 +346,7 @@ describe("SharedString", () => {
 				sharedString.insertText(0, `${insertText}${i}`);
 			}
 
-			// Verify that summary data is correcy.
+			// Verify that summary data is correct.
 			let summaryTree = verifyAndReturnSummaryTree();
 
 			// Load a new SharedString from the snapshot and verify it is loaded correctly.

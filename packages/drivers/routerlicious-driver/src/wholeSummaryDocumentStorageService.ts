@@ -10,7 +10,6 @@ import {
 	ISummaryContext,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { convertSnapshotAndBlobsToSummaryTree } from "@fluidframework/driver-utils";
 import {
 	ICreateBlobResponse,
 	ISnapshotTree,
@@ -28,6 +27,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 import { IRouterliciousDriverPolicies } from "./policies";
+import { convertSnapshotAndBlobsToSummaryTree } from "./treeUtils";
 
 const latestSnapshotId: string = "latest";
 
@@ -248,19 +248,21 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		);
 		const normalizedWholeSummary =
 			convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
+		assert(
+			normalizedWholeSummary.snapshotTree.id !== undefined,
+			0x275 /* "Root tree should contain the id" */,
+		);
 		const wholeFlatSummaryId: string = wholeFlatSummary.id;
-		const snapshotTreeId = normalizedWholeSummary.snapshotTree.id;
-		assert(snapshotTreeId !== undefined, 0x275 /* "Root tree should contain the id" */);
 		const snapshotTreeVersion = {
 			id: wholeFlatSummaryId,
 			snapshotTree: normalizedWholeSummary.snapshotTree,
 		};
 
 		const cachePs: Promise<any>[] = [
-			this.snapshotTreeCache.put(this.getCacheKey(snapshotTreeId), snapshotTreeVersion),
+			this.snapshotTreeCache.put(this.getCacheKey(wholeFlatSummaryId), snapshotTreeVersion),
 			this.initBlobCache(normalizedWholeSummary.blobs),
 		];
-		if (snapshotTreeId !== versionId) {
+		if (wholeFlatSummaryId !== versionId) {
 			// versionId could be "latest". When summarizer checks cache for "latest", we want it to be available.
 			// TODO: For in-memory cache, <latest,snapshotTree> will be a shared pointer with <snapshotId,snapshotTree>,
 			// However, for something like Redis, this will cache the same value twice. Alternatively, could we simply

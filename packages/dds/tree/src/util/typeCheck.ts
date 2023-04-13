@@ -217,4 +217,4 @@ export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : fa
  *
  * @alpha
  */
-export type requireAssignableTo<A extends B, B> = true;
+export type requireAssignableTo<_A extends B, B> = true;

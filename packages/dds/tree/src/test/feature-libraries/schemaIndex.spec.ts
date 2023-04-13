@@ -29,6 +29,31 @@ describe("SchemaIndex", () => {
 		assert(allowsRepoSuperset(defaultSchemaPolicy, parsed, data));
 	});
 
+	it("accepts valid data", () => {
+		// TODO: should test way more cases, and check results are correct.
+		const cases = ['{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": []}'];
+		for (const data of cases) {
+			parseSchemaString(data);
+		}
+	});
+
+	it("rejects malformed data", () => {
+		// TODO: should test way more cases
+		// TODO: maybe well formed but semantically invalid data should be rejected (ex: with duplicates keys)?
+		const badCases = [
+			"",
+			"{}",
+			'{"version": "2.0.0"}',
+			'{"version": "1.0.0"}',
+			'{"version": "2.0.0"}',
+			'{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": [{}]}',
+			'{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": [], "extraField": 0}',
+		];
+		for (const data of badCases) {
+			assert.throws(() => parseSchemaString(data));
+		}
+	});
+
 	// TODO: testing SchemaIndex class itself, specifically for attachment and normal summaries.
 	// TODO: format compatibility tests to detect breaking of existing documents.
 });

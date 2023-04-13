@@ -6,6 +6,7 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
 import { FieldChangeEncoder } from "../modular-schema";
+import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import { Changeset, Mark } from "./format";
 import { isSkipMark } from "./utils";
 
@@ -33,7 +34,6 @@ export function encodeForJson<TNodeChange>(
 				case "Delete":
 				case "MoveOut":
 				case "ReturnFrom":
-				case "Revive":
 					if (mark.changes !== undefined) {
 						jsonMarks.push({
 							...mark,
@@ -44,6 +44,22 @@ export function encodeForJson<TNodeChange>(
 					}
 
 					break;
+				case "Revive": {
+					const content = mark.content.map(jsonableTreeFromCursor);
+					if (mark.changes !== undefined) {
+						jsonMarks.push({
+							...mark,
+							content,
+							changes: encodeChild(mark.changes),
+						} as unknown as JsonCompatible);
+					} else {
+						jsonMarks.push({
+							...mark,
+							content,
+						} as unknown as JsonCompatible);
+					}
+					break;
+				}
 				case "Modify":
 					jsonMarks.push({
 						...mark,
@@ -85,8 +101,7 @@ export function decodeJson<TNodeChange>(
 				case "Insert":
 				case "Delete":
 				case "MoveOut":
-				case "ReturnFrom":
-				case "Revive": {
+				case "ReturnFrom": {
 					if (mark.changes !== undefined) {
 						marks.push({
 							...mark,
@@ -94,6 +109,22 @@ export function decodeJson<TNodeChange>(
 						});
 					} else {
 						marks.push(mark as Mark<TNodeChange>);
+					}
+					break;
+				}
+				case "Revive": {
+					const content = mark.content.map(singleTextCursor);
+					if (mark.changes !== undefined) {
+						marks.push({
+							...mark,
+							content,
+							changes: decodeChild(mark.changes),
+						});
+					} else {
+						marks.push({
+							...mark,
+							content,
+						} as unknown as Mark<TNodeChange>);
 					}
 					break;
 				}

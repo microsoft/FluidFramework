@@ -4,15 +4,18 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	IGarbageCollectionState,
 } from "@fluidframework/runtime-definitions";
+import {
+	concatGarbageCollectionStates,
+	IGarbageCollectionState,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/dist/gc";
 
 /**
  * Returns the garbage collection state from the GC tree in the summary.

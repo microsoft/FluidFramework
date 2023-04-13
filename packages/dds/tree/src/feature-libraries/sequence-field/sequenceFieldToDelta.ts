@@ -4,22 +4,20 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, fail, OffsetListFactory } from "../../util";
+import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
+import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
-import { NodeReviver } from "../modular-schema";
-import { MarkList, ProtoNode } from "./format";
-import { getInputLength, isSkipMark } from "./utils";
+import { MarkList } from "./format";
+import { isSkipMark } from "./utils";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
+export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	reviver: NodeReviver,
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
-	let inputIndex = 0;
 	for (const mark of marks) {
 		if (isSkipMark(mark)) {
 			out.pushOffset(mark);
@@ -28,11 +26,12 @@ export function sequenceFieldToDelta<TNodeChange>(
 			const type = mark.type;
 			switch (type) {
 				case "Insert": {
-					const insertMark: Delta.Mark = makeDeltaInsert(
-						mark.content,
-						mark.changes,
-						deltaFromChild,
-					);
+					const cursors = mark.content.map(singleTextCursor);
+					const insertMark: Mutable<Delta.Insert> = {
+						type: Delta.MarkType.Insert,
+						content: cursors,
+					};
+					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
 					out.pushContent(insertMark);
 					break;
 				}
@@ -47,8 +46,11 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Modify": {
-					const modify = deltaFromChild(mark.changes, inputIndex);
-					if (modify.setValue !== undefined || modify.fields !== undefined) {
+					const modify = deltaFromChild(mark.changes);
+					if (
+						Object.prototype.hasOwnProperty.call(modify, "setValue") ||
+						modify.fields !== undefined
+					) {
 						out.pushContent(modify);
 					} else {
 						out.pushOffset(1);
@@ -56,37 +58,32 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Delete": {
-					const deleteMark: Delta.Delete = {
+					const deleteMark: Mutable<Delta.Delete> = {
 						type: Delta.MarkType.Delete,
 						count: mark.count,
 					};
+					populateChildModificationsIfAny(mark.changes, deleteMark, deltaFromChild);
 					out.pushContent(deleteMark);
 					break;
 				}
 				case "MoveOut":
 				case "ReturnFrom": {
-					const moveMark: Delta.MoveOut = {
+					const moveMark: Mutable<Delta.MoveOut> = {
 						type: Delta.MarkType.MoveOut,
 						moveId: brandOpaque<Delta.MoveId>(mark.id),
 						count: mark.count,
 					};
+					populateChildModificationsIfAny(mark.changes, moveMark, deltaFromChild);
 					out.pushContent(moveMark);
 					break;
 				}
 				case "Revive": {
 					if (mark.conflictsWith === undefined) {
-						const insertMark: Delta.Insert = {
+						const insertMark: Mutable<Delta.Insert> = {
 							type: Delta.MarkType.Insert,
-							content: reviver(
-								mark.detachedBy ??
-									mark.lastDetachedBy ??
-									fail(
-										"Unable to get convert revive mark to delta due to missing revision tag",
-									),
-								mark.detachIndex,
-								mark.count,
-							),
+							content: mark.content,
 						};
+						populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
 						out.pushContent(insertMark);
 					} else if (mark.lastDetachedBy === undefined) {
 						out.pushOffset(mark.count);
@@ -97,32 +94,17 @@ export function sequenceFieldToDelta<TNodeChange>(
 					unreachableCase(type);
 			}
 		}
-		inputIndex += getInputLength(mark);
 	}
 	return out.list;
 }
 
-/**
- * Converts inserted content into the format expected in Delta instances.
- * This involves applying all except MoveIn changes.
- *
- * The returned `fields` map may be empty if all modifications are applied by the function.
- */
-function makeDeltaInsert<TNodeChange>(
-	content: ProtoNode[],
+function populateChildModificationsIfAny<TNodeChange>(
 	changes: TNodeChange | undefined,
+	deltaMark: Mutable<Delta.HasModifications>,
 	deltaFromChild: ToDelta<TNodeChange>,
-): Delta.Insert | Delta.InsertAndModify {
-	// TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
-	const cursors = content.map(singleTextCursor);
+): void {
 	if (changes !== undefined) {
-		const outModifications = deltaFromChild(changes, undefined);
-		return {
-			...outModifications,
-			type: Delta.MarkType.InsertAndModify,
-			content: cursors[0],
-		};
-	} else {
-		return { type: Delta.MarkType.Insert, content: cursors };
+		const modify = deltaFromChild(changes);
+		populateChildModifications(modify, deltaMark);
 	}
 }

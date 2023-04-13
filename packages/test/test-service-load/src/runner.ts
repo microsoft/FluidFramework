@@ -4,13 +4,13 @@
  */
 
 import commander from "commander";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import {
 	ITestDriver,
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState } from "@fluidframework/container-loader";
-import random from "random-js";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -26,6 +26,7 @@ import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
+	getOptionOverride,
 } from "./optionsMatrix";
 
 function printStatus(runConfig: IRunConfig, message: string) {
@@ -86,12 +87,10 @@ async function main() {
 		process.exit(-1);
 	}
 
-	const randEng = random.engines.mt19937();
 	// combine the runId with the seed for generating local randoms
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
-	randEng.seedWithArray([seed, runId]);
-
+	const random = makeRandom(seed, runId);
 	const logger = await createLogger({
 		runId,
 		driverType: driver,
@@ -116,7 +115,7 @@ async function main() {
 				runId,
 				testConfig: profile,
 				verbose,
-				randEng,
+				random,
 				profileName,
 				logger,
 			},
@@ -178,21 +177,12 @@ async function runnerProcess(
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
-	const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
-	const loaderOptions = generateLoaderOptions(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader,
-	);
+	const optionsOverride = getOptionOverride(runConfig.testConfig, driver, endpoint);
 
-	const containerOptions = generateRuntimeOptions(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container,
-	);
+	const loaderOptions = generateLoaderOptions(seed, optionsOverride?.loader);
+	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
+	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
 
-	const configurations = generateConfigurations(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations,
-	);
 	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
 
 	// Cycle between creating new factory vs. reusing factory.
@@ -305,10 +295,8 @@ function scheduleFaultInjection(
 	faultInjectionMaxMs: number,
 ) {
 	const schedule = () => {
-		const injectionTime = random.integer(
-			faultInjectionMinMs,
-			faultInjectionMaxMs,
-		)(runConfig.randEng);
+		const { random } = runConfig;
+		const injectionTime = random.integer(faultInjectionMinMs, faultInjectionMaxMs);
 		printStatus(
 			runConfig,
 			`fault injection in ${(injectionTime / 60000).toString().substring(0, 4)} min`,
@@ -323,14 +311,8 @@ function scheduleFaultInjection(
 				)?.documentDeltaConnection;
 				if (deltaConn !== undefined) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
-					const canRetry =
-						random.integer(
-							0,
-							runConfig.testConfig.numClients - 1,
-						)(runConfig.randEng) === 0
-							? false
-							: true;
-					switch (random.integer(0, 5)(runConfig.randEng)) {
+					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
+					switch (random.integer(0, 5)) {
 						// dispreferr errors
 						case 0: {
 							printStatus(runConfig, `error injected canRetry:${canRetry}`);
@@ -398,10 +380,10 @@ function scheduleContainerClose(
 					// this will bias toward the summarizer client which is always quorum index 0.
 					if (quorumIndex >= 0 && quorumIndex <= runConfig.testConfig.numClients / 4) {
 						quorum.off("removeMember", scheduleLeave);
-						const leaveTime = random.integer(
+						const leaveTime = runConfig.random.integer(
 							faultInjectionMinMs,
 							faultInjectionMaxMs,
-						)(runConfig.randEng);
+						);
 						printStatus(
 							runConfig,
 							`closing in ${(leaveTime / 60000).toString().substring(0, 4)} min`,
@@ -450,20 +432,14 @@ function scheduleOffline(
 				if (container.closed) {
 					return;
 				}
-
-				const injectionTime = random.integer(
-					offlineDelayMinMs,
-					offlineDelayMaxMs,
-				)(runConfig.randEng);
+				const { random } = runConfig;
+				const injectionTime = random.integer(offlineDelayMinMs, offlineDelayMaxMs);
 				await new Promise<void>((resolve) => setTimeout(resolve, injectionTime));
 
 				assert(container.resolvedUrl !== undefined, "no url");
 				const ds = dsf.documentServices.get(container.resolvedUrl);
 				assert(!!ds, "no documentServices");
-				const offlineTime = random.integer(
-					offlineDurationMinMs,
-					offlineDurationMaxMs,
-				)(runConfig.randEng);
+				const offlineTime = random.integer(offlineDurationMinMs, offlineDurationMaxMs);
 				printStatus(runConfig, `going offline for ${offlineTime / 1000} seconds!`);
 				ds.goOffline();
 

@@ -22,7 +22,7 @@ import {
 	chunkTree,
 	TreeChunk,
 } from "../../../feature-libraries";
-import { brand } from "../../../util";
+import { brand, ReferenceCountedBase } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { uniformChunk } from "../../../feature-libraries/chunked-forest";
 // eslint-disable-next-line import/no-internal-modules
@@ -39,7 +39,6 @@ import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenc
 import { jsonNumber } from "../../../domains";
 import {
 	ChunkedCursor,
-	ReferenceCountedBase,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunk";
 import { emptyShape, testData } from "./uniformChunkTestData";
@@ -236,11 +235,11 @@ class WrapperChunk extends ReferenceCountedBase implements TreeChunk {
 		this.chunk.referenceRemoved();
 	}
 
-	get topLevelLength(): number {
+	public get topLevelLength(): number {
 		return this.chunk.topLevelLength;
 	}
 
-	cursor(): ChunkedCursor {
+	public cursor(): ChunkedCursor {
 		return this.chunk.cursor();
 	}
 }

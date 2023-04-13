@@ -13,7 +13,8 @@ If you're looking for a reference implementation of the Fluid service, don't loo
 You can install, build, and start this service by running the following
 
 ```sh
-npm i
+npm i -g pnpm
+pnpm i
 npm run build
 npm run start
 ```

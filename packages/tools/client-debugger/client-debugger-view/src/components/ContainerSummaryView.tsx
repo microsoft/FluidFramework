@@ -7,12 +7,29 @@ import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fl
 import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
+import {
+	CloseContainer,
+	ConnectContainer,
+	ContainerStateChange,
+	ContainerStateMetadata,
+	DisconnectContainer,
+	GetContainerState,
+	handleIncomingMessage,
+	HasContainerId,
+	IMessageRelay,
+	InboundHandlers,
+	ISourcedDevtoolsMessage,
+} from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
-import { HasClientDebugger } from "../CommonProps";
-import { useMyClientConnection, useMyClientId } from "../ReactHooks";
+import { initializeFluentUiIcons } from "../InitializeIcons";
 import { connectionStateToString } from "../Utilities";
+import { useMessageRelay } from "../MessageRelayContext";
+import { Waiting } from "./Waiting";
+
+// Ensure FluentUI icons are initialized for use below.
+initializeFluentUiIcons();
 
 // TODOs:
 // - Add info tooltips (with question mark icons?) for each piece of Container status info to
@@ -21,164 +38,177 @@ import { connectionStateToString } from "../Utilities";
 /**
  * {@link ContainerSummaryView} input props.
  */
-export type ContainerSummaryViewProps = HasClientDebugger;
+export type ContainerSummaryViewProps = HasContainerId;
 
 /**
  * Debugger view displaying basic Container stats.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
-	const { clientDebugger } = props;
-	const { container, containerId } = clientDebugger;
+	const { containerId } = props;
 
-	// #region Audience state
+	const messageRelay: IMessageRelay = useMessageRelay();
 
-	const myClientId = useMyClientId(clientDebugger);
-	const myClientConnection = useMyClientConnection(clientDebugger);
-
-	// #endregion
-
-	// #region Container State
-
-	const [containerAttachState, setContainerAttachState] = React.useState<AttachState>(
-		container.attachState,
-	);
-	const [containerConnectionState, setContainerConnectionState] = React.useState<ConnectionState>(
-		container.connectionState,
-	);
-	const [isContainerDirty, setIsContainerDirty] = React.useState<boolean>(container.isDirty);
-	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
+	const [containerState, setContainerState] = React.useState<
+		ContainerStateMetadata | undefined
+	>();
 
 	React.useEffect(() => {
-		function onContainerAttached(): void {
-			setContainerAttachState(container.attachState);
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			[ContainerStateChange.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateChange.Message;
+				if (message.data.containerId === containerId) {
+					setContainerState(message.data.containerState);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the webpage.
+		 */
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: "ContainerSummaryView", // TODO: fix
+			});
 		}
 
-		function onContainerConnectionChange(): void {
-			setContainerConnectionState(container.connectionState);
-		}
+		messageRelay.on("message", messageHandler);
 
-		function onContainerDirty(): void {
-			setIsContainerDirty(true);
-		}
+		// Reset state with Container data, to ensure we aren't displaying stale data (for the wrong container) while we
+		// wait for a response to the message sent below. Especially relevant for the Container-related views because this
+		// component wont be unloaded and reloaded if the user just changes the menu selection from one Container to another.
+		// eslint-disable-next-line unicorn/no-useless-undefined
+		setContainerState(undefined);
 
-		function onContainerSaved(): void {
-			setIsContainerDirty(false);
-		}
-
-		function onContainerClosed(): void {
-			setIsContainerClosed(true);
-		}
-
-		container.on("attached", onContainerAttached);
-		container.on("connected", onContainerConnectionChange);
-		container.on("disconnected", onContainerConnectionChange);
-		container.on("dirty", onContainerDirty);
-		container.on("saved", onContainerSaved);
-		container.on("closed", onContainerClosed);
-
-		setContainerAttachState(container.attachState);
-		setContainerConnectionState(container.connectionState);
-		setIsContainerDirty(container.isDirty);
-		setIsContainerClosed(container.closed);
+		// Request state info for the newly specified containerId
+		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
 
 		return (): void => {
-			container.off("attached", onContainerAttached);
-			container.off("connected", onContainerConnectionChange);
-			container.off("disconnected", onContainerConnectionChange);
-			container.off("dirty", onContainerDirty);
-			container.off("saved", onContainerSaved);
-			container.off("closed", onContainerClosed);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [
-		container,
-		setContainerAttachState,
-		setContainerConnectionState,
-		setIsContainerDirty,
-		setIsContainerClosed,
-	]);
+	}, [containerId, setContainerState, messageRelay]);
 
-	// #endregion
+	if (containerState === undefined) {
+		return <Waiting label="Waiting for Container Summary data." />;
+	}
 
-	// Only show core Container state until the Container itself is closed (disposed).
-	// After that, just display a note indicating that it has been closed.
-	// All other state data at that point is obsolete.
-	let innerStateView: React.ReactElement;
-	// eslint-disable-next-line unicorn/prefer-ternary
-	if (isContainerClosed) {
-		innerStateView = (
-			<StackItem>
-				<span>
-					<b>Container Status</b>: Closed
-				</span>
-			</StackItem>
-		);
-	} else {
-		innerStateView = (
-			<>
-				<StackItem>
-					<span>
-						<b>Attach State</b>: {containerAttachState}
-					</span>
-				</StackItem>
-				<StackItem>
-					<span>
-						<b>Connection State</b>: {connectionStateToString(containerConnectionState)}
-					</span>
-				</StackItem>
-				<StackItem>
-					<span>
-						<b>Local Edit State</b>: {isContainerDirty ? "Dirty" : "Saved"}
-					</span>
-				</StackItem>
-				<StackItem>
-					{myClientId === undefined ? (
-						<></>
-					) : (
-						<span>
-							<b>Client ID</b>: {myClientId}
-						</span>
-					)}
-				</StackItem>
-				<StackItem>
-					{myClientConnection === undefined ? (
-						<></>
-					) : (
-						<span>
-							<b>Audience ID</b>: {myClientConnection.user.id}
-						</span>
-					)}
-				</StackItem>
-				<StackItem align="end">
-					<ActionsBar
-						isContainerConnected={
-							containerConnectionState === ConnectionState.Connected
-						}
-						tryConnect={(): void => container.connect()}
-						forceDisconnect={(): void => container.disconnect()}
-						closeContainer={(): void => container.close()}
-					/>
-				</StackItem>
-			</>
+	function tryConnect(): void {
+		messageRelay.postMessage(
+			ConnectContainer.createMessage({
+				containerId,
+			}),
 		);
 	}
+
+	function forceDisconnect(): void {
+		messageRelay.postMessage(
+			DisconnectContainer.createMessage({
+				containerId,
+				/* TODO: Specify debugger reason here once it is supported */
+			}),
+		);
+	}
+
+	function closeContainer(): void {
+		messageRelay.postMessage(
+			CloseContainer.createMessage({
+				containerId,
+				/* TODO: Specify debugger reason here once it is supported */
+			}),
+		);
+	}
+
+	// Build up status string
+	const statusComponents: string[] = [];
+	if (closed) {
+		statusComponents.push("Closed");
+	} else {
+		statusComponents.push(containerState.attachState);
+		if (containerState.attachState === AttachState.Attached) {
+			statusComponents.push(connectionStateToString(containerState.connectionState));
+		}
+	}
+	const statusString = statusComponents.join(" | ");
 
 	return (
 		<Stack className="container-summary-view">
 			<StackItem>
 				<span>
-					<b>Container ID</b>: {containerId}
+					<b>Container</b>:{" "}
+					{containerState.nickname !== undefined
+						? `${containerState.nickname} (${containerState.id})`
+						: containerState.id}
 				</span>
 			</StackItem>
-			{innerStateView}
+			<StackItem>
+				<span>
+					<b>Status</b>: {statusString}
+				</span>
+			</StackItem>
+			<StackItem>
+				{containerState.clientId === undefined ? (
+					<></>
+				) : (
+					<span>
+						<b>Client ID</b>: {containerState.clientId}
+					</span>
+				)}
+			</StackItem>
+			<StackItem>
+				{containerState.audienceId === undefined ? (
+					<></>
+				) : (
+					<span>
+						<b>Audience ID</b>: {containerState.audienceId}
+					</span>
+				)}
+			</StackItem>
+			<StackItem align="end">
+				<ActionsBar
+					isContainerConnected={
+						containerState.connectionState === ConnectionState.Connected
+					}
+					tryConnect={tryConnect}
+					forceDisconnect={forceDisconnect}
+					closeContainer={closeContainer}
+				/>
+			</StackItem>
 		</Stack>
 	);
 }
 
-interface ActionsBarProps {
+/**
+ * Container actions supported by the debugger view.
+ */
+export interface IContainerActions {
+	/**
+	 * Attempt to connect a disconnected Container.
+	 *
+	 * @remarks Button controls will be disabled if this is not provided.
+	 */
+	tryConnect?: () => void;
+
+	/**
+	 * Disconnect a connected Container.
+	 *
+	 * @remarks Button controls will be disabled if this is not provided.
+	 */
+	forceDisconnect?: () => void;
+
+	/**
+	 * Close the container.
+	 *
+	 * @remarks Button controls will be disabled if this is not provided.
+	 */
+	closeContainer?: () => void;
+}
+
+interface ActionsBarProps extends IContainerActions {
 	isContainerConnected: boolean;
-	tryConnect(): void;
-	forceDisconnect(): void;
-	closeContainer(): void;
 }
 
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
@@ -192,6 +222,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
 			<IconButton
 				onClick={forceDisconnect}
+				disabled={forceDisconnect === undefined}
 				menuIconProps={{ iconName: "PlugDisconnected" }}
 				aria-describedby={disconnectButtonTooltipId}
 			/>
@@ -200,6 +231,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
 			<IconButton
 				onClick={tryConnect}
+				disabled={tryConnect === undefined}
 				menuIconProps={{ iconName: "PlugConnected" }}
 				aria-describedby={connectButtonTooltipId}
 			/>
@@ -210,6 +242,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
 			<IconButton
 				onClick={closeContainer}
+				disabled={closeContainer === undefined}
 				menuIconProps={{ iconName: "Delete" }}
 				aria-describedby={disposeContainerButtonTooltipId}
 			/>

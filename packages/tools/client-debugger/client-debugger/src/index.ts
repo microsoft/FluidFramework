@@ -43,27 +43,80 @@
  * @packageDocumentation
  */
 
-export { MemberChangeKind } from "./Audience";
-
+export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
+export { FluidObjectId, HasContainerId, HasFluidObjectId } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
-
-export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
-
+export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
+export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
+export {
+	FluidHandleNode,
+	FluidObjectNode,
+	FluidObjectNodeBase,
+	FluidObjectTreeNode,
+	FluidObjectValueNode,
+	FluidUnknownObjectNode,
+	Primitive,
+	RootHandleNode,
+	TreeNodeBase,
+	ValueNodeBase,
+	VisualChildNode,
+	VisualNode,
+	VisualNodeBase,
+	VisualNodeKind,
+	VisualTreeNode,
+	VisualValueNode,
+	VisualizeChildData,
+	VisualizeSharedObject,
+	UnknownObjectNode,
+} from "./data-visualization";
+export {
+	ContainerDevtoolsFeature,
+	ContainerDevtoolsFeatureFlags,
+	DevtoolsFeature,
+	DevtoolsFeatureFlags,
+} from "./Features";
+export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
+export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+export { DevtoolsLogger } from "./DevtoolsLogger";
+export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
 	LogEntry,
 	StateChangeLogEntry,
 } from "./Logs";
-
 export {
-	DebuggerRegistry,
-	DebuggerRegistryEvents,
-	clearDebuggerRegistry,
-	closeFluidClientDebugger,
-	FluidClientDebuggerProps,
-	getDebuggerRegistry,
-	getFluidClientDebugger,
-	getFluidClientDebuggers,
-	initializeFluidClientDebugger,
-} from "./Registry";
+	AudienceSummary,
+	CloseContainer,
+	ConnectContainer,
+	ContainerDevtoolsFeatures,
+	ContainerList,
+	ContainerStateChange,
+	ContainerStateHistory,
+	DataVisualization,
+	DevtoolsFeatures,
+	devtoolsMessageSource,
+	DisconnectContainer,
+	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
+	GetContainerList,
+	GetContainerState,
+	GetDataVisualization,
+	GetDevtoolsFeatures,
+	GetRootDataVisualizations,
+	GetTelemetryHistory,
+	IDevtoolsMessage,
+	IMessageRelay,
+	IMessageRelayEvents,
+	ISourcedDevtoolsMessage,
+	handleIncomingMessage,
+	handleIncomingWindowMessage,
+	InboundHandlers,
+	isDebuggerMessage,
+	MessageLoggingOptions,
+	postMessagesToWindow,
+	RootDataVisualizations,
+	TelemetryEvent,
+	TelemetryHistory,
+} from "./messaging";
+export { ITimestampedTelemetryEvent } from "./TelemetryMetadata";

@@ -5,53 +5,56 @@
 
 import * as http from "http";
 
-export type RequestListener = (request: http.IncomingMessage, response: http.ServerResponse) => void;
+export type RequestListener = (
+	request: http.IncomingMessage,
+	response: http.ServerResponse,
+) => void;
 
 export interface IWebServerFactory {
-    create(requestListener: RequestListener): IWebServer;
+	create(requestListener: RequestListener): IWebServer;
 }
 
 export interface IWebSocket {
-    id: string;
+	id: string;
 
-    on(event: string, listener: (...args: any[]) => void);
+	on(event: string, listener: (...args: any[]) => void);
 
-    join(id: string): Promise<void>;
+	join(id: string): Promise<void>;
 
-    emit(event: string, ...args);
+	emit(event: string, ...args);
 
-    emitToRoom(roomId: string, event: string, ...args: any[]);
+	emitToRoom(roomId: string, event: string, ...args: any[]);
 
-    disconnect(close?: boolean): void;
+	disconnect(close?: boolean): void;
 }
 
 export interface IWebServer {
-    /**
-     * Web socket interface
-     */
-    webSocketServer: IWebSocketServer;
+	/**
+	 * Web socket interface
+	 */
+	webSocketServer: IWebSocketServer;
 
-    /**
-     * HTTP server interface
-     */
-    httpServer: IHttpServer;
+	/**
+	 * HTTP server interface
+	 */
+	httpServer: IHttpServer;
 
-    /**
-     * Closes the web server
-     */
-    close(): Promise<void>;
+	/**
+	 * Closes the web server
+	 */
+	close(): Promise<void>;
 }
 
 export interface IWebSocketServer {
-    on(event: string, listener: (...args: any[]) => void);
+	on(event: string, listener: (...args: any[]) => void);
 
-    close(): Promise<void>;
+	close(): Promise<void>;
 }
 
 export interface IHttpServer {
-    listen(port: any): void;
+	listen(port: any): void;
 
-    on(event: string, listener: (...args: any[]) => void);
+	on(event: string, listener: (...args: any[]) => void);
 
-    address(): { port: number; family: string; address: string; };
+	address(): { port: number; family: string; address: string };
 }

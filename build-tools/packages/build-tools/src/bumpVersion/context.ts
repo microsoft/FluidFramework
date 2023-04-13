@@ -97,7 +97,7 @@ export class Context {
 					"Attempted to collect server info on a Fluid repo with no server directory",
 				);
 			}
-			processMonoRepo(this.repo.monoRepos.get(repoKind)!);
+			processMonoRepo(this.repo.releaseGroups.get(repoKind)!);
 		} else {
 			const pkg = this.fullPackageMap.get(releaseGroup);
 			if (!pkg) {
@@ -128,22 +128,12 @@ export class Context {
 						// Just verify that the two package has the same version and the dependency has the same version
 						if (pkg.version !== depBuildPackage.version) {
 							fatal(
-								`Inconsistent package version within ${
-									pkg.monoRepo!.kind
-								} monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${
-									depBuildPackage.version
-								}`,
+								`Inconsistent package version within ${pkg.monoRepo?.kind} monorepo\n   ${pkg.name}@${pkg.version}\n  ${dep}@${depBuildPackage.version}`,
 							);
 						}
 						if (version !== `^${depBuildPackage.version}`) {
 							fatal(
-								`Inconsistent version dependency within ${
-									pkg.monoRepo!.kind
-								} monorepo in ${
-									pkg.name
-								}\n  actual: ${dep}@${version}\n  expected: ${dep}@^${
-									depBuildPackage.version
-								}`,
+								`Inconsistent version dependency within ${pkg.monoRepo?.kind} monorepo in ${pkg.name}\n  actual: ${dep}@${version}\n  expected: ${dep}@^${depBuildPackage.version}`,
 							);
 						}
 						continue;

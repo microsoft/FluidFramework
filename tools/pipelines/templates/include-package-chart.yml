@@ -1,0 +1,46 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+parameters:
+- name: chartPath
+  type: string
+
+variables:
+  - name: skipComponentGovernanceDetection
+    value: true
+  - name: packagedChartFolder
+    value: $(Build.ArtifactStagingDirectory)/chart
+    readonly: true
+
+jobs:
+- job: package_chart
+  displayName: Package chart
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 1
+
+  - task: ComponentGovernanceComponentDetection@0
+    displayName: Component Detection
+    inputs:
+      sourceScanPath: ${{ parameters.chartPath }}
+
+  - task: HelmInstaller@1
+    displayName: Install Helm
+    inputs:
+      helmVersionToInstall: latest
+
+  - task: HelmDeploy@0
+    displayName: Package Helm chart
+    inputs:
+      command: package
+      chartPath: ${{ parameters.chartPath }}
+      destination: $(packagedChartFolder)
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Artifact: chart'
+    inputs:
+      targetPath: $(packagedChartFolder)
+      artifactName: chart

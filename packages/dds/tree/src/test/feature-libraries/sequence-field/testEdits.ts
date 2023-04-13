@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import {
+	ChangesetLocalId,
+	SequenceField as SF,
+	singleTextCursor,
+} from "../../../feature-libraries";
 import { brand } from "../../../util";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
@@ -41,12 +46,17 @@ function createInsertChangeset(
 	index: number,
 	size: number,
 	startingValue: number = 0,
+	id?: ChangesetLocalId,
 ): SF.Changeset<never> {
 	const content = [];
 	while (content.length < size) {
 		content.push({ type, value: startingValue + content.length });
 	}
-	return SF.sequenceFieldEditor.insert(index, content.map(singleTextCursor));
+	return SF.sequenceFieldEditor.insert(
+		index,
+		content.map(singleTextCursor),
+		id ?? brand(startingValue),
+	);
 }
 
 function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<never> {
@@ -58,11 +68,18 @@ function createReviveChangeset(
 	count: number,
 	detachedBy: RevisionTag,
 	detachIndex?: number,
+	reviver = fakeRepair,
 	conflictsWith?: RevisionTag,
 	linage?: SF.LineageEvent[],
 	lastDetachedBy?: RevisionTag,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachedBy, detachIndex);
+	const markList = SF.sequenceFieldEditor.revive(
+		startIndex,
+		count,
+		detachedBy,
+		reviver,
+		detachIndex,
+	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 	if (conflictsWith !== undefined) {
 		mark.conflictsWith = conflictsWith;
@@ -81,6 +98,7 @@ function createIntentionalReviveChangeset(
 	count: number,
 	detachedBy: RevisionTag,
 	detachIndex?: number,
+	reviver = fakeRepair,
 	conflictsWith?: RevisionTag,
 	linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
@@ -88,6 +106,7 @@ function createIntentionalReviveChangeset(
 		startIndex,
 		count,
 		detachedBy,
+		reviver,
 		detachIndex,
 		true,
 	);
@@ -105,8 +124,11 @@ function createMoveChangeset(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
+	id: ChangesetLocalId = brand(0),
 ): SF.Changeset<never> {
-	return composeAnonChangesShallow(SF.sequenceFieldEditor.move(sourceIndex, count, destIndex));
+	return composeAnonChangesShallow(
+		SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id),
+	);
 }
 
 function createReturnChangeset(

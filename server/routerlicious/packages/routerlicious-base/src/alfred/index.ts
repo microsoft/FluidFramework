@@ -4,5 +4,10 @@
  */
 
 export { AlfredRunner } from "./runner";
-export { AlfredResources, AlfredResourcesFactory, AlfredRunnerFactory, OrdererManager } from "./runnerFactory";
+export {
+	AlfredResources,
+	AlfredResourcesFactory,
+	AlfredRunnerFactory,
+	OrdererManager,
+} from "./runnerFactory";
 export { DeltaService } from "./services";

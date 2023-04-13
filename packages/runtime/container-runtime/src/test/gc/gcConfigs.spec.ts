@@ -8,13 +8,13 @@ import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	IGarbageCollectionData,
-	IGarbageCollectionState,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	sessionStorageConfigProvider,
 	ConfigTypes,
+	MonitoringContext,
+	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
@@ -22,13 +22,13 @@ import {
 	GCNodeType,
 	GCSummaryStateTracker,
 	IGarbageCollectionRuntime,
+	IGarbageCollectionState,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
 	IGCRuntimeOptions,
 	defaultSessionExpiryDurationMs,
-	runSessionExpiryKey,
 	oneDayMs,
 	runGCKey,
 	runSweepKey,
@@ -36,12 +36,15 @@ import {
 	gcTestModeKey,
 	currentGCVersion,
 	stableGCVersion,
-	gcVersionUpgradeToV2Key,
+	gcVersionUpgradeToV3Key,
 	gcTombstoneGenerationOptionName,
+	gcSweepGenerationOptionName,
 	GCVersion,
+	runSessionExpiryKey,
 } from "../../gc";
 import { IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
+import { configProvider } from "./garbageCollection.spec";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
@@ -52,11 +55,11 @@ type GcWithPrivates = IGarbageCollector & {
 };
 
 describe("Garbage Collection configurations", () => {
-	const mockLogger: MockLogger = new MockLogger();
 	const testPkgPath = ["testPkg"];
 
-	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
 	let injectedSettings: Record<string, ConfigTypes> = {};
+	let mockLogger: MockLogger;
+	let mc: MonitoringContext;
 	let clock: SinonFakeTimers;
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
 	let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
@@ -119,7 +122,7 @@ describe("Garbage Collection configurations", () => {
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
-			baseLogger: mockLogger,
+			baseLogger: mc.logger,
 			existing: createParams.metadata !== undefined /* existing */,
 			metadata: createParams.metadata,
 			createContainerMetadata: {
@@ -137,18 +140,18 @@ describe("Garbage Collection configurations", () => {
 
 	before(() => {
 		clock = useFakeTimers();
-		sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
 	});
 
 	beforeEach(() => {
 		gc = undefined;
+		mockLogger = new MockLogger();
+		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
 		// To ensure inactive timeout is less than sweep timeout.
 		injectedSettings[testOverrideInactiveTimeoutKey] = 1;
 	});
 
 	afterEach(() => {
 		clock.reset();
-		mockLogger.clear();
 		injectedSettings = {};
 		defaultGCData = { gcNodes: {} };
 		gc?.dispose();
@@ -156,7 +159,6 @@ describe("Garbage Collection configurations", () => {
 
 	after(() => {
 		clock.restore();
-		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
 	});
 
 	describe("Existing container", () => {
@@ -184,10 +186,14 @@ describe("Garbage Collection configurations", () => {
 				"latestSummaryGCVersion incorrect",
 			);
 		});
-		it("gcFeature 0, sweepEnabled true", () => {
-			gc = createGcWithPrivateMembers({ gcFeature: 0, sweepEnabled: true });
+		it("gcFeature 0, Sweep enabled via sweepGeneration", () => {
+			gc = createGcWithPrivateMembers(
+				{ gcFeature: 0, gcFeatureMatrix: { sweepGeneration: 0 } },
+				{ [gcSweepGenerationOptionName]: 0 },
+			);
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
+			assert(!gc.configs.shouldRunSweep, "shouldRunSweep incorrect");
 			assert.equal(
 				gc.summaryStateTracker.latestSummaryGCVersion,
 				0,
@@ -203,8 +209,8 @@ describe("Garbage Collection configurations", () => {
 				"latestSummaryGCVersion incorrect",
 			);
 		});
-		it("sweepEnabled false", () => {
-			gc = createGcWithPrivateMembers({ sweepEnabled: false });
+		it("sweepEnabled value ignored", () => {
+			gc = createGcWithPrivateMembers({ sweepEnabled: true }); // no sweepGeneration option set
 			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("sessionExpiryTimeoutMs set (sweepTimeoutMs unset)", () => {
@@ -228,19 +234,21 @@ describe("Garbage Collection configurations", () => {
 		});
 		it("Metadata Roundtrip", () => {
 			const inputMetadata: IGCMetadata = {
-				sweepEnabled: true,
+				sweepEnabled: true, // ignored
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1 },
+				gcFeatureMatrix: { tombstoneGeneration: 1, sweepGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata, {
 				[gcTombstoneGenerationOptionName]: 2, // 2 should not be persisted
+				[gcSweepGenerationOptionName]: 2, // 2 should not be persisted
 			});
 			const outputMetadata = gc.getMetadata();
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
-				gcFeature: stableGCVersion,
+				sweepEnabled: false, // Hardcoded, not used
+				gcFeature: currentGCVersion,
 			};
 			assert.deepEqual(
 				outputMetadata,
@@ -248,20 +256,43 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than loaded from",
 			);
 		});
-		it("Metadata Roundtrip with GC version upgrade to v2 enabled", () => {
-			injectedSettings[gcVersionUpgradeToV2Key] = true;
+		it("Metadata Roundtrip with GC version upgrade to v3 enabled", () => {
+			injectedSettings[gcVersionUpgradeToV3Key] = true;
 			const inputMetadata: IGCMetadata = {
-				sweepEnabled: true,
+				sweepEnabled: true, // ignored
 				gcFeature: 1,
 				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
 				sweepTimeoutMs: 123,
-				gcFeatureMatrix: { tombstoneGeneration: 1 },
+				gcFeatureMatrix: { tombstoneGeneration: 1, sweepGeneration: 1 },
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
 			const outputMetadata = gc.getMetadata();
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
+				sweepEnabled: false, // Hardcoded, not used
 				gcFeature: currentGCVersion,
+			};
+			assert.deepEqual(
+				outputMetadata,
+				expectedOutputMetadata,
+				"getMetadata returned different metadata than loaded from",
+			);
+		});
+		it("Metadata Roundtrip with GC version upgrade to v3 disabled", () => {
+			injectedSettings[gcVersionUpgradeToV3Key] = false;
+			const inputMetadata: IGCMetadata = {
+				sweepEnabled: true, // ignored
+				gcFeature: 1,
+				sessionExpiryTimeoutMs: customSessionExpiryDurationMs,
+				sweepTimeoutMs: 123,
+				gcFeatureMatrix: { tombstoneGeneration: 1, sweepGeneration: 1 },
+			};
+			gc = createGcWithPrivateMembers(inputMetadata);
+			const outputMetadata = gc.getMetadata();
+			const expectedOutputMetadata: IGCMetadata = {
+				...inputMetadata,
+				sweepEnabled: false, // Hardcoded, not used
+				gcFeature: stableGCVersion,
 			};
 			assert.deepEqual(
 				outputMetadata,
@@ -273,7 +304,6 @@ describe("Garbage Collection configurations", () => {
 
 	describe("New Container", () => {
 		it("No options", () => {
-			injectedSettings[runSessionExpiryKey] = true;
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
@@ -284,7 +314,7 @@ describe("Garbage Collection configurations", () => {
 			assert(gc.configs.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
 			assert.equal(
 				gc.summaryStateTracker.latestSummaryGCVersion,
-				stableGCVersion,
+				currentGCVersion,
 				"latestSummaryGCVersion incorrect",
 			);
 		});
@@ -296,23 +326,30 @@ describe("Garbage Collection configurations", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, { gcAllowed: false });
 			assert(!gc.configs.gcEnabled, "gcEnabled incorrect");
 		});
-		it("sweepAllowed true, gcAllowed false", () => {
+		it("sweepAllowed ignored", () => {
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {
+				gcAllowed: false,
+				sweepAllowed: true, // ignored. Not even checked against gcAllowed.
+				// no sweepGeneration option set
+			});
+			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
+		});
+		it("sweepGeneration specified, gcAllowed false", () => {
 			assert.throws(
 				() => {
 					gc = createGcWithPrivateMembers(undefined /* metadata */, {
 						gcAllowed: false,
-						sweepAllowed: true,
+						[gcSweepGenerationOptionName]: 1,
 					});
 				},
 				(e) => e.errorType === "usageError",
 				"Should be unsupported",
 			);
 		});
-		it("sweepAllowed true, gcAllowed true", () => {
-			injectedSettings[runSessionExpiryKey] = true;
+		it("Sweep enabled via sweepGeneration, gcAllowed true", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				gcAllowed: true,
-				sweepAllowed: true,
+				[gcSweepGenerationOptionName]: 1,
 			});
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
@@ -323,11 +360,20 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimeoutMs incorrect",
 			);
 		});
-		it("sweepAllowed true, gcAllowed true, sessionExpiry off", () => {
+		it("Sweep disabled (no sweepGeneration), sessionExpiry on", () => {
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
+			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
+			assert(
+				gc.configs.sessionExpiryTimeoutMs !== undefined,
+				"sessionExpiryTimeoutMs incorrect",
+			);
+			assert(gc.configs.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
+		});
+		it("Sweep enabled via sweepGeneration, gcAllowed true, sessionExpiry off", () => {
 			injectedSettings[runSessionExpiryKey] = false;
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
 				gcAllowed: true,
-				sweepAllowed: true,
+				[gcSweepGenerationOptionName]: 1,
 			});
 			assert(gc.configs.gcEnabled, "gcEnabled incorrect");
 			assert(gc.configs.sweepEnabled, "sweepEnabled incorrect");
@@ -337,30 +383,9 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert(gc.configs.sweepTimeoutMs === undefined, "sweepTimeoutMs incorrect");
 		});
-		it("sweepAllowed false, sessionExpiry on", () => {
-			injectedSettings[runSessionExpiryKey] = true;
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
-			assert(
-				gc.configs.sessionExpiryTimeoutMs !== undefined,
-				"sessionExpiryTimeoutMs incorrect",
-			);
-			assert(gc.configs.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
-		});
-		it("sweepAllowed false, sessionExpiry off", () => {
-			injectedSettings[runSessionExpiryKey] = false;
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
-			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
-			assert(
-				gc.configs.sessionExpiryTimeoutMs === undefined,
-				"sessionExpiryTimeoutMs incorrect",
-			);
-			assert(gc.configs.sweepTimeoutMs === undefined, "sweepTimeoutMs incorrect");
-		});
-		it("TestOverride.SweepTimeout set, sweepAllowed false, sessionExpiry on", () => {
+		it("TestOverride.SweepTimeout set, Sweep disabled (no sweepGeneration), sessionExpiry on", () => {
 			injectedSettings[testOverrideSweepTimeoutKey] = 123;
-			injectedSettings[runSessionExpiryKey] = true;
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs === defaultSessionExpiryDurationMs,
@@ -368,10 +393,10 @@ describe("Garbage Collection configurations", () => {
 			);
 			assert(gc.configs.sweepTimeoutMs === 123, "sweepTimeoutMs incorrect");
 		});
-		it("TestOverride.SweepTimeout set, sweepAllowed false, sessionExpiry off", () => {
+		it("TestOverride.SweepTimeout set, Sweep disabled (no sweepGeneration), sessionExpiry off", () => {
 			injectedSettings[testOverrideSweepTimeoutKey] = 123;
 			injectedSettings[runSessionExpiryKey] = false;
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: false });
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
 			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 			assert(
 				gc.configs.sessionExpiryTimeoutMs === undefined,
@@ -380,17 +405,17 @@ describe("Garbage Collection configurations", () => {
 			assert(gc.configs.sweepTimeoutMs === 123, "sweepTimeoutMs incorrect");
 		});
 		it("Metadata Roundtrip", () => {
-			injectedSettings[runSessionExpiryKey] = true;
 			const expectedMetadata: IGCMetadata = {
-				sweepEnabled: true,
-				gcFeature: 1,
+				sweepEnabled: false, // hardcoded, not used
+				gcFeature: currentGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
-				gcFeatureMatrix: { tombstoneGeneration: 2 },
+				gcFeatureMatrix: { tombstoneGeneration: 2, sweepGeneration: 2 },
 			};
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
-				sweepAllowed: true,
+				sweepAllowed: true, // ignored
 				[gcTombstoneGenerationOptionName]: 2,
+				[gcSweepGenerationOptionName]: 2,
 			});
 			const outputMetadata = gc.getMetadata();
 			assert.deepEqual(
@@ -399,17 +424,35 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than expected",
 			);
 		});
-		it("Metadata Roundtrip with GC version upgrade to v2 enabled", () => {
-			injectedSettings[runSessionExpiryKey] = true;
-			injectedSettings[gcVersionUpgradeToV2Key] = true;
+		it("Metadata Roundtrip with GC version upgrade to v3 enabled", () => {
+			injectedSettings[gcVersionUpgradeToV3Key] = true;
 			const expectedMetadata: IGCMetadata = {
-				sweepEnabled: true,
+				sweepEnabled: false, // hardcoded, not used
 				gcFeature: currentGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: undefined,
 			};
-			gc = createGcWithPrivateMembers(undefined /* metadata */, { sweepAllowed: true });
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {});
+			const outputMetadata = gc.getMetadata();
+			assert.deepEqual(
+				outputMetadata,
+				expectedMetadata,
+				"getMetadata returned different metadata than expected",
+			);
+		});
+		it("Metadata Roundtrip with only sweepGeneration", () => {
+			const expectedMetadata: IGCMetadata = {
+				sweepEnabled: false, // hardcoded, not used
+				gcFeature: currentGCVersion,
+				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+				gcFeatureMatrix: { sweepGeneration: 2, tombstoneGeneration: undefined },
+			};
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {
+				sweepAllowed: true, // ignored
+				[gcSweepGenerationOptionName]: 2,
+			});
 			const outputMetadata = gc.getMetadata();
 			assert.deepEqual(
 				outputMetadata,
@@ -421,7 +464,6 @@ describe("Garbage Collection configurations", () => {
 
 	describe("Session Expiry and Sweep Timeout", () => {
 		beforeEach(() => {
-			injectedSettings[runSessionExpiryKey] = true;
 			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] = 1; // To ensure it's less than sweep timeout
 		});
 
@@ -430,7 +472,6 @@ describe("Garbage Collection configurations", () => {
 		// 2. IGCRuntimeOptions.sessionExpiryTimeoutMs
 		// 3. IGCMetadata.sessionExpiryTimeoutMs
 		// 4. "Fluid.GarbageCollection.TestOverride.SessionExpiryMs" setting
-		// 5. boolean setting: runSessionExpiryKey
 		// Config sources for Sweep Timeout:
 		// 1. IGCMetadata.sweepTimeoutMs
 		// 2. Computed from Session Expiry, fixed upper bound for Snapshot Expiry and a fixed buffer (on create, or to backfill existing)
@@ -468,6 +509,18 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimer incorrect",
 			);
 			assert.equal(gc.configs.sweepTimeoutMs, 7890, "sweepTimeoutMs incorrect");
+		});
+		it("gcAllowed off, session expiry off", () => {
+			gc = gc = createGcWithPrivateMembers(undefined /* metadata */, {
+				gcAllowed: false,
+			});
+			assert.equal(
+				gc.configs.sessionExpiryTimeoutMs,
+				undefined,
+				"sessionExpiryTimeoutMs incorrect",
+			);
+			assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer incorrect");
+			assert.equal(gc.configs.sweepTimeoutMs, undefined, "sweepTimeoutMs incorrect");
 		});
 		it("IGCRuntimeOptions.sessionExpiryTimeoutMs", () => {
 			gc = createGcWithPrivateMembers(undefined /* metadata */, {
@@ -517,54 +570,6 @@ describe("Garbage Collection configurations", () => {
 			assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer incorrect");
 			assert.equal(gc.configs.sweepTimeoutMs, 789, "sweepTimeoutMs incorrect");
 		});
-		function testSessionExpiryMsOverride() {
-			const expectedSweepTimeoutMs = defaultSessionExpiryDurationMs + 6 * oneDayMs;
-			assert(!!gc, "PRECONDITION: gc must be set before calling this helper");
-			assert.equal(
-				gc.configs.sessionExpiryTimeoutMs,
-				defaultSessionExpiryDurationMs,
-				"sessionExpiryTimeoutMs incorrect",
-			);
-			assert.equal(
-				gc.sessionExpiryTimer.defaultTimeout,
-				789,
-				"sessionExpiry used for timer should be the override value",
-			);
-			assert.equal(
-				gc.configs.sweepTimeoutMs,
-				expectedSweepTimeoutMs,
-				"sweepTimeoutMs incorrect",
-			);
-
-			const expectedMetadata: IGCMetadata = {
-				sweepEnabled: false,
-				gcFeature: 1,
-				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
-				sweepTimeoutMs: expectedSweepTimeoutMs,
-				gcFeatureMatrix: undefined,
-			};
-			const outputMetadata = gc.getMetadata();
-			assert.deepEqual(
-				outputMetadata,
-				expectedMetadata,
-				"getMetadata returned different metadata than expected",
-			);
-		}
-		it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - New Container", () => {
-			injectedSettings[testOverrideSessionExpiryMsKey] = 789;
-			gc = createGcWithPrivateMembers();
-			testSessionExpiryMsOverride();
-		});
-		it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - Existing Container", () => {
-			injectedSettings[testOverrideSessionExpiryMsKey] = 789;
-			gc = createGcWithPrivateMembers(
-				{
-					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
-					gcFeature: 1,
-				} /* metadata */,
-			);
-			testSessionExpiryMsOverride();
-		});
 		it("RunSessionExpiry setting turned off", () => {
 			injectedSettings[runSessionExpiryKey] = false;
 			injectedSettings[testOverrideSessionExpiryMsKey] = 1234; // This override should be ignored
@@ -597,6 +602,55 @@ describe("Garbage Collection configurations", () => {
 				"sessionExpiryTimer should be undefined if it's disabled",
 			);
 			assert.equal(gc.configs.sweepTimeoutMs, 7890, "sweepTimeoutMs incorrect");
+		});
+
+		function testSessionExpiryMsOverride() {
+			const expectedSweepTimeoutMs = defaultSessionExpiryDurationMs + 6 * oneDayMs;
+			assert(!!gc, "PRECONDITION: gc must be set before calling this helper");
+			assert.equal(
+				gc.configs.sessionExpiryTimeoutMs,
+				defaultSessionExpiryDurationMs,
+				"sessionExpiryTimeoutMs incorrect",
+			);
+			assert.equal(
+				gc.sessionExpiryTimer.defaultTimeout,
+				789,
+				"sessionExpiry used for timer should be the override value",
+			);
+			assert.equal(
+				gc.configs.sweepTimeoutMs,
+				expectedSweepTimeoutMs,
+				"sweepTimeoutMs incorrect",
+			);
+
+			const expectedMetadata: IGCMetadata = {
+				sweepEnabled: false,
+				gcFeature: currentGCVersion,
+				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+				sweepTimeoutMs: expectedSweepTimeoutMs,
+				gcFeatureMatrix: undefined,
+			};
+			const outputMetadata = gc.getMetadata();
+			assert.deepEqual(
+				outputMetadata,
+				expectedMetadata,
+				"getMetadata returned different metadata than expected",
+			);
+		}
+		it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - New Container", () => {
+			injectedSettings[testOverrideSessionExpiryMsKey] = 789;
+			gc = createGcWithPrivateMembers();
+			testSessionExpiryMsOverride();
+		});
+		it("TestOverride.SessionExpiryMs setting applied to timeout but not written to file - Existing Container", () => {
+			injectedSettings[testOverrideSessionExpiryMsKey] = 789;
+			gc = createGcWithPrivateMembers(
+				{
+					sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+					gcFeature: 1,
+				} /* metadata */,
+			);
+			testSessionExpiryMsOverride();
 		});
 	});
 
@@ -632,7 +686,7 @@ describe("Garbage Collection configurations", () => {
 						"PRECONDITION: gcEnabled set incorrectly",
 					);
 					assert.equal(
-						gc.shouldRunGC,
+						gc.configs.shouldRunGC,
 						testCase.expectedResult,
 						"shouldRunGC not set as expected",
 					);
@@ -642,69 +696,59 @@ describe("Garbage Collection configurations", () => {
 		describe("shouldRunSweep", () => {
 			const testCases: {
 				shouldRunGC: boolean;
-				setSweepTimeout: boolean;
 				sweepEnabled: boolean;
-				runSweep?: boolean;
-				expectedResult: boolean;
+				shouldRunSweep?: boolean;
+				expectedShouldRunSweep: boolean;
 			}[] = [
 				{
 					shouldRunGC: false,
-					setSweepTimeout: true,
 					sweepEnabled: true,
-					runSweep: true,
-					expectedResult: false,
+					shouldRunSweep: true,
+					expectedShouldRunSweep: false,
 				},
 				{
 					shouldRunGC: true,
-					setSweepTimeout: false,
 					sweepEnabled: true,
-					runSweep: true,
-					expectedResult: false,
+					shouldRunSweep: true,
+					expectedShouldRunSweep: true,
 				},
 				{
 					shouldRunGC: true,
-					setSweepTimeout: true,
 					sweepEnabled: true,
-					runSweep: false,
-					expectedResult: false,
+					shouldRunSweep: false,
+					expectedShouldRunSweep: false,
 				},
 				{
 					shouldRunGC: true,
-					setSweepTimeout: true,
 					sweepEnabled: false,
-					runSweep: true,
-					expectedResult: true,
+					shouldRunSweep: true,
+					expectedShouldRunSweep: true,
 				},
 				{
 					shouldRunGC: true,
-					setSweepTimeout: true,
 					sweepEnabled: true,
-					expectedResult: true,
+					expectedShouldRunSweep: true,
 				},
 				{
 					shouldRunGC: true,
-					setSweepTimeout: true,
 					sweepEnabled: false,
-					expectedResult: false,
+					expectedShouldRunSweep: false,
 				},
 			];
-			testCases.forEach((testCase) => {
+			testCases.forEach((testCase, index) => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					injectedSettings[runGCKey] = testCase.shouldRunGC;
-					injectedSettings[runSweepKey] = testCase.runSweep;
-					injectedSettings[runSessionExpiryKey] = testCase.setSweepTimeout; // Sweep timeout is set iff sessionExpiry runs (under other default inputs)
-					gc = createGcWithPrivateMembers(undefined /* metadata */, {
-						sweepAllowed: testCase.sweepEnabled,
-					});
-					assert.equal(
-						gc.shouldRunGC,
-						testCase.shouldRunGC,
-						"PRECONDITION: shouldRunGC set incorrectly",
+					injectedSettings[runSweepKey] = testCase.shouldRunSweep;
+					gc = createGcWithPrivateMembers(
+						undefined /* metadata */,
+						{
+							[gcSweepGenerationOptionName]: testCase.sweepEnabled ? 1 : undefined,
+						} /* gcOptions */,
 					);
 					assert.equal(
-						gc.configs.sweepTimeoutMs !== undefined,
-						testCase.setSweepTimeout,
-						"PRECONDITION: sweep timeout set incorrectly",
+						gc.configs.shouldRunGC,
+						testCase.shouldRunGC,
+						"PRECONDITION: shouldRunGC set incorrectly",
 					);
 					assert.equal(
 						gc.configs.sweepEnabled,
@@ -713,8 +757,8 @@ describe("Garbage Collection configurations", () => {
 					);
 					assert.equal(
 						gc.configs.shouldRunSweep,
-						testCase.expectedResult,
-						"shouldRunSweep not set as expected",
+						testCase.expectedShouldRunSweep,
+						`shouldRunSweep not set as expected`,
 					);
 				});
 			});
@@ -749,7 +793,6 @@ describe("Garbage Collection configurations", () => {
 				});
 			});
 			it("inactiveTimeout must not be greater than sweepTimeout", () => {
-				injectedSettings[runSessionExpiryKey] = true;
 				injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
 					Number.MAX_VALUE;
 				assert.throws(

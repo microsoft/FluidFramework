@@ -15,9 +15,9 @@ import {
 	TreeType,
 	PathRootPrefix,
 } from "../../core";
-import { fail } from "../../util";
+import { fail, ReferenceCountedBase } from "../../util";
 import { prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, cursorChunk, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
 
 /**
  * General purpose one node chunk.

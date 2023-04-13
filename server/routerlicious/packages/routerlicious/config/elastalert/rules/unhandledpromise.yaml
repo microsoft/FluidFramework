@@ -4,14 +4,14 @@ index: logstash-*
 num_events: 1
 timeframe:
     minutes: 1
-filter: 
-- query:
-    query_string:
-      query: "*UnhandledPromiseRejection*"
+filter:
+    - query:
+          query_string:
+              query: "*UnhandledPromiseRejection*"
 alert:
-- "email"
-- "debug"
+    - "email"
+    - "debug"
 realert:
     hours: 24
 email:
-- list_of_emails_to_send_alert
+    - list_of_emails_to_send_alert

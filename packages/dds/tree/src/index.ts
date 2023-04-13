@@ -69,11 +69,10 @@ export {
 	SchemaDataAndPolicy,
 	ChangeEncoder,
 	ChangeFamily,
+	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
-	ICheckout,
-	TransactionResult,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -82,6 +81,18 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPathDefault,
+	AnchorEvents,
+	AnchorSetRootEvents,
+	FieldKindSpecifier,
+	AllowedUpdateType,
 } from "./core";
 
 export {
@@ -104,9 +115,18 @@ export {
 	JsonCompatibleObject,
 	NestedMap,
 	fail,
+	TransactionResult,
 } from "./util";
 
-export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
+export {
+	Events,
+	IsEvent,
+	ISubscribable,
+	createEmitter,
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
+} from "./events";
 
 export {
 	cursorToJsonObject,
@@ -148,6 +168,9 @@ export {
 	NodeChangeDecoder,
 	CrossFieldManager,
 	CrossFieldTarget,
+	RevisionIndexer,
+	RevisionMetadataSource,
+	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
@@ -166,11 +189,11 @@ export {
 	typeSymbol,
 	typeNameSymbol,
 	valueSymbol,
-	indexSymbol,
 	proxyTargetSymbol,
 	getField,
 	createField,
 	replaceField,
+	contextSymbol,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -179,6 +202,7 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
+	Identifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -191,27 +215,38 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	HasFieldChanges,
+	EditableTreeEvents,
+	on,
+	ValueConstraint,
+	TypedSchema,
+	SchemaAware,
+	ArrayLikeMut,
+	FieldKinds,
+	ViewSchemaCollection,
+	ContextuallyTypedFieldData,
+	TreeViewSchema,
+	FieldViewSchema,
+	cursorFromContextualData,
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UntypedTreeCore,
+	UnwrappedUntypedField,
+	UnwrappedUntypedTree,
+	UntypedTreeOrPrimitive,
 } from "./feature-libraries";
 
-// Export subset of FieldKinds in an API-Extractor compatible way:
-import { FieldKind, FieldKinds as FieldKindsOriginal } from "./feature-libraries";
-/**
- * @alpha
- */
-interface FieldKinds {
-	value: FieldKind;
-	optional: FieldKind;
-	sequence: FieldKind;
-}
-/**
- * @alpha
- */
-const FieldKinds: FieldKinds = FieldKindsOriginal;
-/**
- * @alpha
- */
-export { FieldKinds };
-
-export { ISharedTree, SharedTreeFactory } from "./shared-tree";
+export {
+	identifierKey,
+	identifierKeySymbol,
+	ISharedTree,
+	ISharedTreeView,
+	ISharedTreeFork,
+	runSynchronous,
+	SharedTreeFactory,
+	ViewEvents,
+	SchematizeConfiguration,
+} from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";

@@ -19,39 +19,39 @@ import * as contents from "./repository/contents";
 import * as summaries from "./summaries";
 
 export interface IRoutes {
-    git: {
-        blobs: Router;
-        commits: Router;
-        refs: Router;
-        repos: Router;
-        tags: Router;
-        trees: Router;
-    };
-    repository: {
-        commits: Router;
-        contents: Router;
-    };
-    summaries: Router;
+	git: {
+		blobs: Router;
+		commits: Router;
+		refs: Router;
+		repos: Router;
+		tags: Router;
+		trees: Router;
+	};
+	repository: {
+		commits: Router;
+		contents: Router;
+	};
+	summaries: Router;
 }
 
 export function create(
-    store: nconf.Provider,
-    fileSystemManagerFactory: IFileSystemManagerFactory,
-    repoManagerFactory: IRepositoryManagerFactory,
+	store: nconf.Provider,
+	fileSystemManagerFactory: IFileSystemManagerFactory,
+	repoManagerFactory: IRepositoryManagerFactory,
 ): IRoutes {
-    return {
-        git: {
-            blobs: blobs.create(store, fileSystemManagerFactory, repoManagerFactory),
-            commits: commits.create(store, fileSystemManagerFactory, repoManagerFactory),
-            refs: refs.create(store, fileSystemManagerFactory, repoManagerFactory),
-            repos: repos.create(store, repoManagerFactory),
-            tags: tags.create(store, fileSystemManagerFactory, repoManagerFactory),
-            trees: trees.create(store, fileSystemManagerFactory, repoManagerFactory),
-        },
-        repository: {
-            commits: repositoryCommits.create(store, fileSystemManagerFactory, repoManagerFactory),
-            contents: contents.create(store, fileSystemManagerFactory, repoManagerFactory),
-        },
-        summaries: summaries.create(store, fileSystemManagerFactory, repoManagerFactory),
-    };
+	return {
+		git: {
+			blobs: blobs.create(store, fileSystemManagerFactory, repoManagerFactory),
+			commits: commits.create(store, fileSystemManagerFactory, repoManagerFactory),
+			refs: refs.create(store, fileSystemManagerFactory, repoManagerFactory),
+			repos: repos.create(store, repoManagerFactory),
+			tags: tags.create(store, fileSystemManagerFactory, repoManagerFactory),
+			trees: trees.create(store, fileSystemManagerFactory, repoManagerFactory),
+		},
+		repository: {
+			commits: repositoryCommits.create(store, fileSystemManagerFactory, repoManagerFactory),
+			contents: contents.create(store, fileSystemManagerFactory, repoManagerFactory),
+		},
+		summaries: summaries.create(store, fileSystemManagerFactory, repoManagerFactory),
+	};
 }

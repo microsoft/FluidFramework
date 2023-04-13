@@ -2,72 +2,67 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-empty-interface */
 
 import {
-	brand,
-	EditableTree,
 	FieldKinds,
-	fieldSchema,
-	namedTreeSchema,
 	rootFieldKey,
-	SchemaData,
 	ValueSchema,
+	TypedSchema,
+	SchemaAware,
 } from "@fluid-internal/tree";
 
-export const stringSchema = namedTreeSchema({
-	name: brand("String"),
-	value: ValueSchema.String,
-});
+// Aliases for conciseness
+const { value, sequence } = FieldKinds;
+const { tree, field } = TypedSchema;
 
-export const numberSchema = namedTreeSchema({
-	name: brand("number"),
-	value: ValueSchema.Number,
-});
+export const stringSchema = tree("string", { value: ValueSchema.String });
+export const numberSchema = tree("number", { value: ValueSchema.Number });
 
-export const bubbleSchema = namedTreeSchema({
-	name: brand("Test:BubbleBenchAppStateBubble-1.0.0"),
-	localFields: {
-		x: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		y: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		r: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		vx: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		vy: fieldSchema(FieldKinds.value, [numberSchema.name]),
+export const bubbleSchema = tree("BubbleBenchAppStateBubble-1.0.0", {
+	local: {
+		x: field(value, numberSchema),
+		y: field(value, numberSchema),
+		r: field(value, numberSchema),
+		vx: field(value, numberSchema),
+		vy: field(value, numberSchema),
 	},
 });
 
-export const clientSchema = namedTreeSchema({
-	name: brand("Test:BubbleBenchAppStateClient-1.0.0"),
-	localFields: {
-		clientId: fieldSchema(FieldKinds.value, [stringSchema.name]),
-		color: fieldSchema(FieldKinds.value, [stringSchema.name]),
-		bubbles: fieldSchema(FieldKinds.sequence, [bubbleSchema.name]),
+export const clientSchema = tree("BubbleBenchAppStateClient-1.0.0", {
+	local: {
+		clientId: field(value, stringSchema),
+		color: field(value, stringSchema),
+		bubbles: field(sequence, bubbleSchema),
 	},
 });
 
-// TODO: Generate this from schema automatically instead of hand coding it.
-export type BubbleTreeProxy = EditableTree & {
-	x: number;
-	y: number;
-	vx: number;
-	vy: number;
-	r: number;
-};
+export const rootAppStateSchema = field(sequence, clientSchema);
 
-// TODO: Generate this from schema automatically instead of hand coding it.
-export type ClientTreeProxy = EditableTree & {
-	clientId: string;
-	color: string;
-	bubbles: BubbleTreeProxy[];
-};
+export const appSchemaData = SchemaAware.typedSchemaData(
+	[[rootFieldKey, rootAppStateSchema]],
+	stringSchema,
+	numberSchema,
+	bubbleSchema,
+	clientSchema,
+);
 
-export const rootAppStateSchema = fieldSchema(FieldKinds.sequence, [clientSchema.name]);
+type Typed<
+	TSchema extends TypedSchema.LabeledTreeSchema,
+	TMode extends SchemaAware.ApiMode = SchemaAware.ApiMode.Editable,
+> = SchemaAware.NodeDataFor<typeof appSchemaData, TMode, TSchema>;
 
-export const appSchemaData: SchemaData = {
-	treeSchema: new Map([
-		[stringSchema.name, stringSchema],
-		[numberSchema.name, numberSchema],
-		[bubbleSchema.name, bubbleSchema],
-		[clientSchema.name, clientSchema],
-	]),
-	globalFieldSchema: new Map([[rootFieldKey, rootAppStateSchema]]),
-};
+export type Bubble = Typed<typeof bubbleSchema>;
+export type Client = Typed<typeof clientSchema>;
+
+export type FlexBubble = Typed<typeof bubbleSchema, SchemaAware.ApiMode.Simple>;
+export type FlexClient = Typed<typeof clientSchema, SchemaAware.ApiMode.Simple>;
+
+// TODO: experiment with this interface pattern. Maybe it makes better intellisense and errors?
+// TODO: Intellisense is pretty bad here if not using interface.
+export interface ClientsField
+	extends SchemaAware.TypedField<
+		typeof appSchemaData,
+		SchemaAware.ApiMode.Editable,
+		typeof rootAppStateSchema
+	> {}

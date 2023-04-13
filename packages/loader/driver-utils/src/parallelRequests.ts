@@ -8,7 +8,7 @@ import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";
-import { waitForConnectedState, logNetworkFailure } from "./networkUtils";
+import { logNetworkFailure } from "./networkUtils";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion";
 
@@ -379,6 +379,19 @@ export class Queue<T> implements IStream<T> {
 	}
 }
 
+const waitForOnline = async (): Promise<void> => {
+	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
+	if (globalThis.navigator?.onLine === false && globalThis.addEventListener !== undefined) {
+		return new Promise<void>((resolve) => {
+			const resolveAndRemoveListener = () => {
+				resolve();
+				globalThis.removeEventListener("online", resolveAndRemoveListener);
+			};
+			globalThis.addEventListener("online", resolveAndRemoveListener);
+		});
+	}
+};
+
 /**
  * Retrieve single batch of ops
  * @param request - request index
@@ -403,7 +416,6 @@ async function getSingleOpBatch(
 	let lastSuccessTime: number | undefined;
 
 	let retry: number = 0;
-	const deltas: ISequencedDocumentMessage[] = [];
 	const nothing = { partial: false, cancel: true, payload: [] };
 
 	while (signal?.aborted !== true) {
@@ -412,23 +424,22 @@ async function getSingleOpBatch(
 		const startTime = performance.now();
 
 		try {
-			// Issue async request for deltas - limit the number fetched to MaxBatchDeltas
-			const deltasP = get({ ...props, retry } /* telemetry props */);
+			// Issue async request for deltas
+			const { messages, partialResult } = await get(
+				{ ...props, retry } /* telemetry props */,
+			);
 
-			const { messages, partialResult } = await deltasP;
-			deltas.push(...messages);
-
-			const deltasRetrievedLast = messages.length;
-
-			if (deltasRetrievedLast !== 0 || !strongTo) {
-				return { payload: deltas, cancel: false, partial: partialResult };
+			// If we got messages back, return them.  Return regardless of whether we got messages back if we didn't
+			// specify a "to", since we don't have an expectation of how many to receive.
+			if (messages.length !== 0 || !strongTo) {
+				return { payload: messages, cancel: false, partial: partialResult };
 			}
 
-			// Storage does not have ops we need.
-			// Attempt to fetch more deltas. If we didn't receive any in the previous call we up our retry
-			// count since something prevented us from seeing those deltas
+			// Otherwise, the storage gave us back an empty set of ops but we were expecting a non-empty set.
 
 			if (lastSuccessTime === undefined) {
+				// Take timestamp of the first time server responded successfully, even though it wasn't with the ops we asked for.
+				// If we keep getting empty responses we'll eventually fail out below.
 				lastSuccessTime = performance.now();
 			} else if (performance.now() - lastSuccessTime > 30000) {
 				// If we are connected and receiving proper responses from server, but can't get any ops back,
@@ -448,8 +459,6 @@ async function getSingleOpBatch(
 			}
 		} catch (error) {
 			const canRetry = canRetryOnError(error);
-
-			lastSuccessTime = undefined;
 
 			const retryAfter = getRetryDelayFromError(error);
 
@@ -472,12 +481,22 @@ async function getSingleOpBatch(
 				throw error;
 			}
 
-			if (retryAfter !== undefined && retryAfter >= 0) {
+			if (retryAfter !== undefined) {
+				// If the error told us to wait, then we will wait for that specific amount rather than the default.
 				delay = retryAfter;
 			}
 		}
 
-		await waitForConnectedState(delay);
+		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
+		// Either way we will wait a little bit before retrying.
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, delay);
+		});
+
+		// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
+		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
+		// should probably live in the driver.
+		await waitForOnline();
 	}
 
 	return nothing;

@@ -32,8 +32,10 @@ import {
 	convertToSummaryTree,
 	create404Response,
 	createResponseError,
+	GCDataBuilder,
 	responseToException,
 	SummaryTreeBuilder,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
@@ -43,10 +45,9 @@ import {
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { BlobCacheStorageService, buildSnapshotTree } from "@fluidframework/driver-utils";
+import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import {
 	ContainerRuntime,
@@ -61,6 +62,7 @@ import {
 	createAttributesBlob,
 	LocalDetachedFluidDataStoreContext,
 } from "./dataStoreContext";
+import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import {
 	GCNodeType,
@@ -245,10 +247,10 @@ export class DataStores implements IDisposable {
 			throw error;
 		}
 
-		const flatBlobs = new Map<string, ArrayBufferLike>();
+		const flatAttachBlobs = new Map<string, ArrayBufferLike>();
 		let snapshotTree: ISnapshotTree | undefined;
 		if (attachMessage.snapshot) {
-			snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+			snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatAttachBlobs);
 		}
 
 		// Include the type of attach message which is the pkg of the store to be
@@ -258,7 +260,7 @@ export class DataStores implements IDisposable {
 			id: attachMessage.id,
 			snapshotTree,
 			runtime: this.runtime,
-			storage: new BlobCacheStorageService(this.runtime.storage, flatBlobs),
+			storage: new StorageServiceWithAttachBlobs(this.runtime.storage, flatAttachBlobs),
 			scope: this.runtime.scope,
 			createSummarizerNodeFn: this.getCreateChildSummarizerNodeFn(attachMessage.id, {
 				type: CreateSummarizerNodeSource.FromAttach,
@@ -576,6 +578,10 @@ export class DataStores implements IDisposable {
 						eventName: "SetConnectionStateError",
 						clientId,
 						fluidDataStore,
+						details: JSON.stringify({
+							runtimeConnected: this.runtime.connected,
+							connected,
+						}),
 					},
 					error,
 				);

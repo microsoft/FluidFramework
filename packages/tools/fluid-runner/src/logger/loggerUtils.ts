@@ -51,11 +51,11 @@ export function getTelemetryFileValidationError(telemetryFile: string): string |
  * Validate the provided output format and default properties
  * @param format - desired output format of the telemetry
  * @param props - default properties to be added to every telemetry entry
- * @internal
  */
 export function validateAndParseTelemetryOptions(
 	format?: string,
 	props?: (string | number)[],
+	eventsPerFlush?: number,
 ): { success: false; error: string } | { success: true; telemetryOptions: ITelemetryOptions } {
 	let outputFormat: OutputFormat | undefined;
 	const defaultProps: Record<string, string | number> = {};
@@ -85,5 +85,12 @@ export function validateAndParseTelemetryOptions(
 		}
 	}
 
-	return { success: true, telemetryOptions: { outputFormat, defaultProps } };
+	if (eventsPerFlush !== undefined && isNaN(eventsPerFlush)) {
+		return {
+			success: false,
+			error: "Invalid eventsPerFlush",
+		};
+	}
+
+	return { success: true, telemetryOptions: { outputFormat, defaultProps, eventsPerFlush } };
 }

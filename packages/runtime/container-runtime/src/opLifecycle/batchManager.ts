@@ -13,6 +13,12 @@ export interface IBatchManagerOptions {
 }
 
 /**
+ * Estimated size of the stringification overhead for an op accumulated
+ * from runtime to loader to the service.
+ */
+const opOverhead = 200;
+
+/**
  * Helper class that manages partial batch & rollback.
  */
 export class BatchManager {
@@ -43,7 +49,7 @@ export class BatchManager {
 		// Also content will be strigified, and that adds a lot of overhead due to a lot of escape characters.
 		// Not taking it into account, as compression work should help there - compressed payload will be
 		// initially stored as base64, and that requires only 2 extra escape characters.
-		const socketMessageSize = contentSize + 200 * opCount;
+		const socketMessageSize = contentSize + opOverhead * opCount;
 
 		// If we were provided soft limit, check for exceeding it.
 		// But only if we have any ops, as the intention here is to flush existing ops (on exceeding this limit)
@@ -117,4 +123,16 @@ const addBatchMetadata = (batch: IBatch): IBatch => {
 	}
 
 	return batch;
+};
+
+/**
+ * Estimates the real size in bytes on the socket for a given batch. It assumes that
+ * the envelope size (and the size of an empty op) is 200 bytes, taking into account
+ * extra overhead from stringification.
+ *
+ * @param batch - the batch to inspect
+ * @returns An estimate of the payload size in bytes which will be produced when the batch is sent over the wire
+ */
+export const estimateSocketSize = (batch: IBatch): number => {
+	return batch.contentSizeInBytes + opOverhead * batch.content.length;
 };

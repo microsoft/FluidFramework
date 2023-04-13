@@ -26,9 +26,9 @@ const DEFAULT_MIN_VERSION = "0.0.0";
  *
  * The number of results can be limited using the --limit argument.
  */
-export default class ReleaseHistoryCommand<
-	T extends typeof ReleaseHistoryCommand.flags,
-> extends ReleaseReportBaseCommand<T> {
+export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
+	typeof ReleaseHistoryCommand
+> {
 	static description = `Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
 
     Use 'npm view' to list published packages based on the public npm registry.
@@ -68,8 +68,7 @@ export default class ReleaseHistoryCommand<
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<{ reports: ReleaseReport[] }> {
-		this.releaseGroupOrPackage =
-			this.processedFlags.releaseGroup ?? this.processedFlags.package;
+		this.releaseGroupOrPackage = this.flags.releaseGroup ?? this.flags.package;
 
 		const context = await this.getContext();
 		this.releaseData = await this.collectReleaseData(
@@ -136,7 +135,7 @@ export default class ReleaseHistoryCommand<
 			index++;
 		}
 
-		const limit = this.processedFlags.limit;
+		const limit = this.flags.limit;
 		if (limit !== undefined && tableData.length > limit) {
 			this.info(
 				`Reached the release limit (${limit}), ignoring the remaining ${

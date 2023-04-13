@@ -7,11 +7,14 @@
 /* eslint-disable no-restricted-syntax */
 
 export * from "./client-data-views";
-export * from "./data-object-views";
 
 export * from "./AudienceView";
-export * from "./ClientDebugView";
-export * from "./ContainerSelectionDropdown";
-export * from "./ContainerStateView";
+export * from "./ContainerDevtoolsView";
+export * from "./ContainerHistoryView";
+export * from "./ContainerSummaryView";
+export * from "./LandingView";
+export * from "./Menu";
+export * from "./TelemetryView";
+export * from "./Waiting";
 
 /* eslint-enable no-restricted-syntax */

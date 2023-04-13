@@ -16,7 +16,7 @@ import { BaseCommand } from "../../base";
  * prerelease suffix if it is not a tagged build.
  */
 export default class GenerateBuildVersionCommand extends BaseCommand<
-	typeof GenerateBuildVersionCommand.flags
+	typeof GenerateBuildVersionCommand
 > {
 	static description = `This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build`;
 
@@ -70,7 +70,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 	public async run(): Promise<void> {
 		const context = await this.getContext();
-		const flags = this.processedFlags;
+		const flags = this.flags;
 		const isRelease = flags.release === "release";
 		const useSimplePatchVersion = flags.patch?.toLowerCase() === "true";
 		const useTestVersion = flags.testBuild?.toLowerCase() === "true";

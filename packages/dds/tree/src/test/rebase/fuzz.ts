@@ -54,7 +54,8 @@ export function generateFuzzyCombinedChange<TChange>(
 				]);
 				break;
 			case Operation.Invert:
-				change = invert(makeAnonChange(change));
+				// TODO: test rollback inversions as well
+				change = invert(makeAnonChange(change), false);
 				break;
 			default:
 				unreachableCase(operation);

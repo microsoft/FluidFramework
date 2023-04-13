@@ -4,10 +4,10 @@
  */
 
 import { IBubble } from "@fluid-example/bubblebench-common";
-import { BubbleTreeProxy } from "./schema";
+import { Bubble } from "./schema";
 
-export class Bubble implements IBubble {
-	constructor(public readonly bubbleTreeProxy: BubbleTreeProxy) {}
+export class BubbleWrapper implements IBubble {
+	constructor(public readonly bubbleTreeProxy: Bubble) {}
 
 	public get x() {
 		return this.bubbleTreeProxy.x;

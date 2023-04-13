@@ -192,6 +192,8 @@ Mermaid diagrams can be put inline in a Markdown file using a code block with th
 
 **Input**
 
+
+<!-- markdownlint-disable-next-line MD048 -->
 ~~~markdown
 ```mermaid
 classDiagram
@@ -246,6 +248,7 @@ Some simple samples are included below. See
 
 **Input**
 
+<!-- markdownlint-disable-next-line MD048 -->
 ~~~markdown
 ```goat
 +-------------------+    +---------------------+
@@ -274,6 +277,7 @@ Some simple samples are included below. See
 
 **Input**
 
+<!-- markdownlint-disable-next-line MD048 -->
 ~~~markdown
 ```goat
           .               .                .               .--- 1          .-- 1     / 1

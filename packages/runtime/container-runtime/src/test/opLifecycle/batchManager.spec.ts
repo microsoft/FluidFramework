@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { BatchManager, BatchMessage } from "../../opLifecycle";
+import { BatchManager, BatchMessage, estimateSocketSize } from "../../opLifecycle";
 import { ContainerMessageType } from "../../containerRuntime";
 
 describe("BatchManager", () => {
@@ -175,5 +175,30 @@ describe("BatchManager", () => {
 		assert.equal(batchManager.push({ ...smallMessage(), referenceSequenceNumber: 2 }), true);
 
 		assert.equal(batchManager.referenceSequenceNumber, 2);
+	});
+
+	it("Batch size estimates", () => {
+		const batchManager = new BatchManager({ hardLimit });
+		batchManager.push(smallMessage());
+		// 10 bytes of content + 200 bytes overhead
+		assert.equal(estimateSocketSize(batchManager.popBatch()), 210);
+
+		for (let i = 0; i < 10; i++) {
+			batchManager.push(smallMessage());
+		}
+
+		// (10 bytes of content + 200 bytes overhead) x 10
+		assert.equal(estimateSocketSize(batchManager.popBatch()), 2100);
+
+		batchManager.push(smallMessage());
+		for (let i = 0; i < 9; i++) {
+			batchManager.push({
+				contents: undefined,
+				deserializedContent: { type: ContainerMessageType.FluidDataStoreOp },
+			} as any as BatchMessage); // empty op
+		}
+
+		// 10 bytes of content + 200 bytes overhead x 10
+		assert.equal(estimateSocketSize(batchManager.popBatch()), 2010);
 	});
 });
