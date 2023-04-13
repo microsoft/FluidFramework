@@ -28,6 +28,8 @@ export interface ContentMove {
 	readonly moveId: Delta.MoveId;
 }
 
+// TODO: Degree of freedom for: global vs local (assume local for now)
+// TODO: Degree of freedom for: reachability of destination
 export interface Change<TDeepChange> {
 	/**
 	 * The destination for the content that was in the cell before this change.
@@ -177,53 +179,13 @@ export function compose<TDeepChange>(
 	};
 
 	const composed: Mutable<Change<TDeepChange>> = {};
-
-	let deepSource: ContentMove | undefined;
-	let deepChanges: TaggedChange<TDeepChange>[] = [];
 	for (const { change, revision } of changes) {
-		if (change.deep !== undefined) {
-			const taggedChange = tagChange(change.deep, revision);
-			deepChanges.push(taggedChange);
-		}
-
-		if (deepChanges.length > 0) {
-			const composedDeep = composeDeep(deepChanges);
-			if (deepSource === undefined) {
-				// The changes so far all apply to the content present in the cell before the composed changeset
-				composed.deep = composedDeep;
-			} else {
-				// The changes since the last shallow change apply to the content present in the cell after the
-				// last shallow change.
-				// Those changes should be represented in the source cell of the new content.
-				crossCellManager.initiateMoveOut(deepSource.moveId, composedDeep);
-			}
-			deepChanges = [];
-			deepSource = normalizeMove(change.newContentSrc, revision);
-		}
-		if (shallow === undefined) {
-			shallow = {};
-			if (change.oldContentDst !== undefined) {
-				shallow.oldContentDst = normalizeMove(change.oldContentDst, revision);
-			}
-			if (change.newContentSrc !== undefined) {
-				shallow.newContentSrc = normalizeMove(change.newContentSrc, revision);
-			}
-		} else {
-			if (change.newContentSrc !== undefined) {
-				shallow.newContentSrc = normalizeMove(change.newContentSrc, revision);
-			} else {
-				delete shallow.newContentSrc;
-			}
-			// This check will succeed when we compose changes that make the cell go from empty to full to empty again
-			if (shallow.newContentSrc === shallow.oldContentDst) {
-				shallow = undefined;
+		if (change.oldContentDst !== undefined) {
+			if (composed.newContentSrc !== undefined) {
 			}
 		}
 	}
 
-	if (shallow !== undefined) {
-		composed.shallow = shallow;
-	}
 	return composed;
 }
 
