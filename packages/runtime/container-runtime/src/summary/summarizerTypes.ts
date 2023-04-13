@@ -96,6 +96,8 @@ export interface ISummarizeOptions {
 	readonly refreshLatestAck?: boolean;
 }
 
+export const summarizeRecoveryMethodKey = "Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod";
+
 /**
  * Data required to update internal tracking state after receiving a Summary Ack.
  */

@@ -34,6 +34,7 @@ import {
 	ISummarizerRuntime,
 	ISummarizeRunnerTelemetry,
 	IRefreshSummaryAckOptions,
+	summarizeRecoveryMethodKey,
 } from "./summarizerTypes";
 import { IAckedSummary, IClientSummaryWatcher, SummaryCollection } from "./summaryCollection";
 import {
@@ -598,9 +599,11 @@ export class RunningSummarizer implements IDisposable {
 				this.beforeSummaryAction();
 			},
 			async () => {
+				const fullTreeAttempt =
+					this.mc.config.getString(summarizeRecoveryMethodKey) === "fullTree";
 				const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
 					{ refreshLatestAck: false, fullTree: false },
-					{ refreshLatestAck: true, fullTree: false },
+					{ refreshLatestAck: true, fullTree: fullTreeAttempt },
 					{ refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },
 					{ refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
 				];
