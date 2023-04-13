@@ -17,12 +17,10 @@ import {
 
 export const initializeProtocol = (
 	protocolState: IProtocolState,
-	term: number,
 ): ProtocolOpHandler =>
 	new ProtocolOpHandler(
 		protocolState.minimumSequenceNumber,
 		protocolState.sequenceNumber,
-		term,
 		protocolState.members,
 		protocolState.proposals,
 		protocolState.values,
