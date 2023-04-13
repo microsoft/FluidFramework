@@ -15,16 +15,19 @@ export interface FluidTreeViewProps extends HasContainerId {
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container.
+ * Render data with type {@link VisualNodeKind.FluidTreeNode} and render its children.
  */
 export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
 	return (
 		<>
 			<Accordion
-				key={containerId}
 				header={
-					<div>{`${node.fluidObjectId}, ${node.metadata}, ${node.typeMetadata}`}</div>
+					<div>
+						{`${node.fluidObjectId} : 
+						${node.metadata !== undefined ? `${node.metadata}` : ""}
+						${node.nodeKind}`}
+					</div>
 				}
 			>
 				{Object.entries(node.children).map(([key, fluidObject], index) => {

@@ -3,28 +3,27 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { HasContainerId, FluidUnknownObjectNode } from "@fluid-tools/client-debugger";
+import { FluidUnknownObjectNode } from "@fluid-tools/client-debugger";
 import { Stack, StackItem } from "@fluentui/react";
 
 /**
  * {@link UnknownDataView} input props.
  */
-export interface UnknownFluidObjectViewProps extends HasContainerId {
+export interface UnknownFluidObjectViewProps {
 	node: FluidUnknownObjectNode;
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container.
+ * Render data with type {@link VisualNodeKind.FluidUnknownObjectNode}.
  */
 export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): React.ReactElement {
-	const { containerId, node } = props;
-
-	console.log(containerId, node);
+	const { node } = props;
 
 	return (
 		<Stack className="UnknownFluidObjectView">
 			<StackItem>
-				Encountered an unrecognized kind of Fluid object: {node.fluidObjectId}
+				Encountered an unrecognized kind of Fluid object: {node.nodeKind},{" "}
+				{node.fluidObjectId}
 			</StackItem>
 		</Stack>
 	);

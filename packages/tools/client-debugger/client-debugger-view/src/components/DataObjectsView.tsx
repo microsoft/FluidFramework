@@ -17,7 +17,7 @@ import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import { TreeDataView } from "./TreeDataView";
 
-const loggingContext = "EXTENSION(DataObjectsView)";
+const loggingContext = "COMPONENTS(DataObjectsView)";
 
 /**
  * {@link DataObjectsView} input props.
@@ -29,7 +29,7 @@ export type DataObjectsViewProps = HasContainerId;
  *
  * @remarks
  *
- * Dispatches data object rendering based on those provided view {@link DataObjectsViewProps.renderOptions}.
+ * Dispatches data object rendering based on those provided view {@link TreeDataView}.
  */
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
 	const { containerId } = props;

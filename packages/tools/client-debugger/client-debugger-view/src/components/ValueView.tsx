@@ -3,26 +3,31 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { HasContainerId, ValueNodeBase } from "@fluid-tools/client-debugger";
+import { ValueNodeBase } from "@fluid-tools/client-debugger";
 import { Accordion } from "./utility-components";
 
 /**
  * {@link ValueView} input props.
  */
-export interface ValueViewProps extends HasContainerId {
+export interface ValueViewProps {
 	node: ValueNodeBase;
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container.
+ * Render data with type {@link VisualNodeKind.ValueNode}.
  */
 export function ValueView(props: ValueViewProps): React.ReactElement {
-	const { containerId, node } = props;
+	const { node } = props;
 
 	return (
 		<Accordion
-			key={containerId}
-			header={<div>{`${String(node.value)}, ${node.metadata}`}</div>}
+			header={
+				<div>
+					{`${node.metadata !== undefined ? `${node.metadata} : ` : ""}
+						${node.nodeKind}
+						${String(node.value)}`}
+				</div>
+			}
 		></Accordion>
 	);
 }

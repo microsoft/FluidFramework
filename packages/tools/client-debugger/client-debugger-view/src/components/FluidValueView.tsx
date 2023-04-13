@@ -3,26 +3,32 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { HasContainerId, FluidObjectValueNode } from "@fluid-tools/client-debugger";
+import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
 import { Accordion } from "./utility-components";
 
 /**
  * {@link ValueView} input props.
  */
-export interface FluidValueViewProps extends HasContainerId {
+export interface FluidValueViewProps {
 	node: FluidObjectValueNode;
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container.
+ * Render data with type {@link VisualNodeKind.FluidValueNode}.
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
-	const { containerId, node } = props;
+	const { node } = props;
 
 	return (
 		<Accordion
-			key={containerId}
-			header={<div>{`${String(node.typeMetadata)}, ${node.metadata}`}</div>}
+			header={
+				<div>
+					{`${node.fluidObjectId}
+						${node.metadata !== undefined ? `${node.metadata} : ` : ""}
+						${node.nodeKind} : 
+						${String(node.value)}`}
+				</div>
+			}
 		>
 			{String(node.value)}
 		</Accordion>

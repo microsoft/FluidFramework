@@ -26,7 +26,7 @@ const loggingContext = "EXTENSION(HandleView)";
 export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {}
 
 /**
- * Displays visual summary trees for DDS_s within the container.
+ * Render data with type {@link VisualNodeKind.FluidHandleNode} and render its children.
  */
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
 	const { containerId, fluidObjectId } = props;
@@ -71,6 +71,11 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 				fluidObjectId,
 			}),
 		);
+
+		// Callback to clean up our message handlers.
+		return (): void => {
+			messageRelay.off("message", messageHandler);
+		};
 	}, [containerId, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
@@ -79,8 +84,11 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 
 	return (
 		<Accordion
-			key={containerId}
-			header={<div>{`${visualTree.metadata}, ${visualTree.nodeKind}`}</div>}
+			header={
+				<div>{`${visualTree.metadata && visualTree.metadata} : ${
+					visualTree.nodeKind
+				}`}</div>
+			}
 		>
 			<TreeDataView containerId={containerId} node={visualTree} />;
 		</Accordion>

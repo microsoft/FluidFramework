@@ -11,7 +11,6 @@ import { ValueView } from "./ValueView";
 import { FluidValueView } from "./FluidValueView";
 import { UnknownFluidObjectView } from "./UnknownFluidObjectView";
 import { UnknownDataView } from "./UnknownDataView";
-// import { Waiting } from "./Waiting";
 
 /**
  * {@link TreeDataView} input props.
@@ -40,28 +39,31 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * Node with primitive value.
 		 */
 		case VisualNodeKind.ValueNode:
-			return <ValueView containerId={containerId} node={node} />;
+			return <ValueView node={node} />;
 		/**
 		 * FluidObjectNode with primitive value.
 		 */
 		case VisualNodeKind.FluidValueNode:
-			return <FluidValueView containerId={containerId} node={node} />;
+			return <FluidValueView node={node} />;
 		/**
 		 * Unknown data type.
 		 */
 		case VisualNodeKind.UnknownObjectNode:
-			return <UnknownDataView containerId={containerId} node={node} />;
+			return <UnknownDataView node={node} />;
 		/**
 		 * Unknown SharedObject data type.
 		 */
 		case VisualNodeKind.FluidUnknownObjectNode:
-			return <UnknownFluidObjectView containerId={containerId} node={node} />;
+			return <UnknownFluidObjectView node={node} />;
 		/**
 		 * POST request to FluidClientDebugger.
 		 */
 		case VisualNodeKind.FluidHandleNode:
 			return <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId} />;
 		default:
-			return <div>{`unknown ${JSON.stringify(node)}`}</div>;
+			{
+				console.log("DevTools hit unknown data. This is NOT expected.");
+			}
+			return <div>{`Unknown ${JSON.stringify(node)}`}</div>;
 	}
 }
