@@ -1,5 +1,5 @@
 {
-	"name": "root",
+	"name": "historian-release-group",
 	"version": "0.0.1",
 	"private": true,
 	"homepage": "https://fluidframework.com",
@@ -48,6 +48,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.11.0-135362",
+		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "0.11.0-135362",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@rushstack/eslint-config": "^2.6.1",

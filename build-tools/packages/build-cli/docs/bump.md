@@ -8,12 +8,12 @@ Bump the version of packages, release groups, and their dependencies.
 
 ## `flub bump PACKAGE_OR_RELEASE_GROUP`
 
-Bumps the version of a release group or package to the next minor, major, or patch version.
+Bumps the version of a release group or package to the next minor, major, or patch version, or to a specific version, with control over the interdependency version ranges.
 
 ```
 USAGE
-  $ flub bump PACKAGE_OR_RELEASE_GROUP [-v] [-t major|minor|patch | --exact <value>] [--exactDepType ^|~|]
-    [--scheme semver|internal|virtualPatch | ] [-x | --install | --commit |  |  | ]
+  $ flub bump PACKAGE_OR_RELEASE_GROUP [-v] [-t major|minor|patch | --exact <value>] [--scheme
+    semver|internal|virtualPatch | ] [--exactDepType ^|~|] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -25,19 +25,20 @@ FLAGS
   -x, --skipChecks         Skip all checks.
   --[no-]commit            Commit changes to a new branch.
   --exact=<value>          An exact string to use as the version. The string must be a valid semver string.
-  --exactDepType=<option>  [default: ^] When using the exact flag, controls the type of dependency that is used between
-                           packages within the release group.
+  --exactDepType=<option>  [default: ^] Controls the type of dependency that is used between packages within the release
+                           group. Use "" to indicate exact dependencies.
                            <options: ^|~|>
   --[no-]install           Update lockfiles by running 'npm install' automatically.
   --scheme=<option>        Override the version scheme used by the release group or package.
                            <options: semver|internal|virtualPatch>
 
 DESCRIPTION
-  Bumps the version of a release group or package to the next minor, major, or patch version.
+  Bumps the version of a release group or package to the next minor, major, or patch version, or to a specific version,
+  with control over the interdependency version ranges.
 
   The bump command is used to bump the version of a release groups or individual packages within the repo. Typically
   this is done as part of the release process (see the release command), but it is sometimes useful to bump without
-  doing a release.
+  doing a release, for example when moving a package from one release group to another.
 
 EXAMPLES
   Bump @fluidframework/build-common to the next minor version.
@@ -52,6 +53,11 @@ EXAMPLES
   You can skip these steps using the --no-commit and --no-install flags.
 
     $ flub bump server -t major --no-commit --no-install
+
+  You can control how interdependencies between packages in a release group are expressed using the --exactDepType
+  flag.
+
+    $ flub bump client --exact 2.0.0-internal.4.1.0 --exactDepType "~"
 ```
 
 _See code: [src/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bump.ts)_
@@ -63,15 +69,15 @@ Update the dependency version of a specified package or release group. That is, 
 ```
 USAGE
   $ flub bump deps PACKAGE_OR_RELEASE_GROUP [-v] [--prerelease -t
-    latest|newest|greatest|minor|patch|@next|@canary] [--onlyBumpPrerelease] [-g client|server|azure|build-tools | -p
-    <value>] [-x | --install | --commit |  |  | ]
+    latest|newest|greatest|minor|patch|@next|@canary] [--onlyBumpPrerelease] [-g
+    client|server|azure|build-tools|gitrest|historian | -p <value>] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 FLAGS
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
-                               <options: client|server|azure|build-tools>
+                               <options: client|server|azure|build-tools|gitrest|historian>
   -p, --package=<value>        Only bump dependencies of this package.
   -t, --updateType=<option>    [default: minor] Bump the current version of the dependency according to this bump type.
                                <options: latest|newest|greatest|minor|patch|@next|@canary>
