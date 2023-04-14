@@ -99,7 +99,6 @@ export class LocalOrdererManager implements IOrdererManager {
 			this.pubsub,
 			undefined /* broadcasterContext */,
 			undefined /* scriptoriumContext */,
-			undefined /* foremanContext */,
 			undefined /* scribeContext */,
 			undefined /* deliContext */,
 			undefined /* moiraContext */,
@@ -109,7 +108,6 @@ export class LocalOrdererManager implements IOrdererManager {
 		const lambdas = [
 			orderer.broadcasterLambda,
 			orderer.deliLambda,
-			orderer.foremanLambda,
 			orderer.scribeLambda,
 			orderer.scriptoriumLambda,
 		];

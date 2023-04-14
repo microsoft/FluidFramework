@@ -245,10 +245,6 @@ data:
             "scribe": {
                 "group": "{{ template "scribe.fullname" . }}",
                 "topic": "{{ .Values.kafka.topics.deltas }}"
-            },
-            "foreman": {
-                "group": "{{ template "foreman.fullname" . }}",
-                "topic": "{{ .Values.kafka.topics.deltas }}"
             }
         },
         "scriptorium": {
@@ -257,18 +253,6 @@ data:
             "groupId": "{{ template "scriptorium.fullname" . }}",
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000
-        },
-        "foreman": {
-            "alfred": "http://{{ template "alfred.fullname" . }}",
-            "topic": "{{ .Values.kafka.topics.deltas }}",
-            "kafkaClientId": "{{ template "foreman.fullname" . }}",
-            "groupId": "{{ template "foreman.fullname" . }}",
-            "queues": ["paparazziQueue", "augloopQueue", "headlessQueue"],
-            "permissions": {
-                "paparazziQueue": ["snapshot", "spell", "intel", "translation"],
-                "augloopQueue": ["augmentation"],
-                "headlessQueue": ["chain-snapshot", "chain-intel", "chain-translation", "chain-spell", "chain-cache", "chain-search"]
-            }
         },
         "paparazzi": {
             "queue": "paparazziQueue"
