@@ -9745,6 +9745,7 @@ importers:
       '@fluidframework/test-driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/tinylicious-client': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/undo-redo': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
@@ -9808,6 +9809,7 @@ importers:
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../test-utils
+      '@fluidframework/tinylicious-client': link:../../framework/tinylicious-client
       '@fluidframework/undo-redo': link:../../framework/undo-redo
       cross-env: 7.0.3
       mocha: 10.2.0
