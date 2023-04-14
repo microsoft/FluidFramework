@@ -4,7 +4,7 @@
  */
 
 import { IStackItemStyles, Stack, StackItem } from "@fluentui/react";
-import { 
+import {
 	Button,
 	Badge,
 	createTableColumn,
@@ -17,7 +17,11 @@ import {
 	useTableFeatures,
 	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
-import { PlugConnected24Regular, PlugDisconnected24Regular, LockClosed24Filled } from "@fluentui/react-icons";
+import {
+	PlugConnected24Regular,
+	PlugDisconnected24Regular,
+	LockClosed24Filled,
+} from "@fluentui/react-icons";
 import React from "react";
 
 import {
@@ -305,13 +309,34 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	// const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
 
 	const changeConnectionStateButton = isContainerConnected ? (
-		<Button icon={<PlugDisconnected24Regular />} onClick={forceDisconnect} disabled={forceDisconnect === undefined}> Disconnect Container </Button>
+		<Button
+			icon={<PlugDisconnected24Regular />}
+			onClick={forceDisconnect}
+			disabled={forceDisconnect === undefined}
+		>
+			{" "}
+			Disconnect Container{" "}
+		</Button>
 	) : (
-		<Button icon={<PlugConnected24Regular />} onClick={tryConnect} disabled={tryConnect === undefined}> Connect Container </Button>
+		<Button
+			icon={<PlugConnected24Regular />}
+			onClick={tryConnect}
+			disabled={tryConnect === undefined}
+		>
+			{" "}
+			Connect Container{" "}
+		</Button>
 	);
 
 	const disposeContainerButton = (
-		<Button icon={<LockClosed24Filled />} onClick={closeContainer} disabled={closeContainer === undefined}> Close Container </Button>
+		<Button
+			icon={<LockClosed24Filled />}
+			onClick={closeContainer}
+			disabled={closeContainer === undefined}
+		>
+			{" "}
+			Close Container{" "}
+		</Button>
 	);
 
 	const itemStyles: IStackItemStyles = {
