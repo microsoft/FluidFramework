@@ -131,6 +131,12 @@ class DefaultBinaryCodec<TDecoded> implements IBinaryCodec<TDecoded> {
 	}
 }
 
+function isJsonCodec<TDecoded>(
+	codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>,
+): codec is IJsonCodec<TDecoded> {
+	return typeof codec.encode === "function" && typeof codec.decode === "function";
+}
+
 /**
  * Constructs a {@link IMultiFormatCodec} from a `IJsonCodec` using a generic binary encoding that simply writes
  * the json representation of the object to a buffer.
@@ -147,16 +153,11 @@ export function withDefaultBinaryEncoding<TDecoded>(
 /**
  * Ensures that the provided single or multi-format codec has a binary encoding.
  * Adapts the json encoding using {@link withDefaultBinaryEncoding} if necessary.
- * @returns
  */
 export function ensureBinaryEncoding<TDecoded>(
 	codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>,
 ): IMultiFormatCodec<TDecoded> {
-	if (typeof codec.encode === "function" && typeof codec.decode === "function") {
-		return withDefaultBinaryEncoding(codec);
-	} else {
-		return codec;
-	}
+	return isJsonCodec(codec) ? withDefaultBinaryEncoding(codec) : codec;
 }
 
 /**
