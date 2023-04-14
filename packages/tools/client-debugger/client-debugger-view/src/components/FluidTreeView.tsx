@@ -6,7 +6,6 @@ import React from "react";
 import { HasContainerId, FluidObjectTreeNode } from "@fluid-tools/client-debugger";
 import { Accordion } from "./utility-components/";
 import { TreeDataView } from "./TreeDataView";
-
 /**
  * {@link TreeView} input props.
  */
@@ -15,7 +14,7 @@ export interface FluidTreeViewProps extends HasContainerId {
 }
 
 /**
- * Render data with type {@link VisualNodeKind.FluidTreeNode} and render its children.
+ * Render data with type VisualNodeKind.FluidTreeNode and render its children.
  */
 export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const { containerId, node } = props;

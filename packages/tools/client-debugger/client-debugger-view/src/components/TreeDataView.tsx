@@ -20,7 +20,7 @@ export interface TreeDataViewProps extends HasContainerId {
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container.
+ * Displays visual summary trees for DDS_s within the container based on the current node's type.
  */
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 	const { containerId, node } = props;

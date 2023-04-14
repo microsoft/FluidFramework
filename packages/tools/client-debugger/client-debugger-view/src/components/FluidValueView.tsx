@@ -14,7 +14,7 @@ export interface FluidValueViewProps {
 }
 
 /**
- * Render data with type {@link VisualNodeKind.FluidValueNode}.
+ * Render data with type VisualNodeKind.FluidValueNode and render its children.
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { node } = props;

@@ -14,7 +14,7 @@ export interface UnknownFluidObjectViewProps {
 }
 
 /**
- * Render data with type {@link VisualNodeKind.FluidUnknownObjectNode}.
+ * Render data with type VisualNodeKind.FluidUnknownObjectNode and render its children.
  */
 export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): React.ReactElement {
 	const { node } = props;

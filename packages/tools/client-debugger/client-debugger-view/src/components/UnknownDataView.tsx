@@ -14,7 +14,7 @@ export interface UnknownDataViewProps {
 }
 
 /**
- * Render data with type {@link VisualNodeKind.UnknownObjectNode}.
+ * Render data with type VisualNodeKind.UnknownObjectNode and render its children.
  */
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
 	const { node } = props;

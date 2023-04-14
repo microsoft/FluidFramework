@@ -26,7 +26,7 @@ const loggingContext = "EXTENSION(HandleView)";
 export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {}
 
 /**
- * Render data with type {@link VisualNodeKind.FluidHandleNode} and render its children.
+ * Render data with type VisualNodeKind.FluidHandleNode and render its children.
  */
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
 	const { containerId, fluidObjectId } = props;

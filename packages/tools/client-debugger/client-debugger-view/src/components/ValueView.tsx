@@ -14,7 +14,7 @@ export interface ValueViewProps {
 }
 
 /**
- * Render data with type {@link VisualNodeKind.ValueNode}.
+ * Render data with type VisualNodeKind.ValueNode and render its children.
  */
 export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { node } = props;

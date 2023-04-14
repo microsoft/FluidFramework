@@ -16,7 +16,7 @@ export interface TreeViewProps extends HasContainerId {
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container.
+ * Render data with type VisualNodeKind.TreeNode and render its children.
  */
 export function TreeView(props: TreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
