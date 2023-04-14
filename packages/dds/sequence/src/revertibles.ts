@@ -5,7 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalReferencePosition, PropertySet } from "@fluidframework/merge-tree";
-import { IntervalCollection, SequenceInterval } from "./intervalCollection";
+import { SequenceInterval } from "./intervalCollection";
 import { SharedString } from "./sharedString";
 
 const IntervalEventType = {
@@ -23,19 +23,16 @@ type IntervalRevertible =
 			interval: SequenceInterval;
 			start: LocalReferencePosition;
 			end: LocalReferencePosition;
-			collection: IntervalCollection<SequenceInterval>;
 	  }
 	| {
 			event: typeof IntervalEventType.ADD;
 			interval: SequenceInterval;
-			collection: IntervalCollection<SequenceInterval>;
 	  }
 	| {
 			event: typeof IntervalEventType.DELETE;
 			interval: SequenceInterval;
 			start: LocalReferencePosition;
 			end: LocalReferencePosition;
-			collection: IntervalCollection<SequenceInterval>;
 	  }
 	| {
 			event: typeof IntervalEventType.PROPERTYCHANGED;
@@ -48,12 +45,10 @@ type TypedRevertible<T extends IntervalRevertible["event"]> = IntervalRevertible
 export function appendLocalAddToRevertibles(
 	interval: SequenceInterval,
 	revertibles: IntervalRevertible[],
-	collection: IntervalCollection<SequenceInterval>,
 ) {
 	revertibles.push({
 		event: IntervalEventType.ADD,
 		interval,
-		collection,
 	});
 
 	return revertibles;
@@ -63,16 +58,14 @@ export function appendLocalDeleteToRevertibles(
 	string: SharedString,
 	interval: SequenceInterval,
 	revertibles: IntervalRevertible[],
-	collection: IntervalCollection<SequenceInterval>,
 ) {
-	// TODO: create localReferences to track positions of deleted interval
-	// just use positions on the interval?
+	const startRef = interval.start;
+	const endRef = interval.end;
 	revertibles.push({
 		event: IntervalEventType.DELETE,
 		interval,
-		start: interval.start,
-		end: interval.end,
-		collection,
+		start: startRef,
+		end: endRef,
 	});
 
 	return revertibles;
@@ -83,15 +76,14 @@ export function appendLocalChangeToRevertibles(
 	newInterval: SequenceInterval,
 	previousInterval: SequenceInterval,
 	revertibles: IntervalRevertible[],
-	collection: IntervalCollection<SequenceInterval>,
 ) {
-	// TODO: create localReferences to track positions of previous interval
+	const prevStartRef = previousInterval.start;
+	const prevEndRef = previousInterval.end;
 	revertibles.push({
 		event: IntervalEventType.CHANGE,
 		interval: newInterval,
-		start: previousInterval.start,
-		end: previousInterval.end,
-		collection,
+		start: prevStartRef,
+		end: prevEndRef,
 	});
 
 	return revertibles;
@@ -115,11 +107,8 @@ function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.ADD>,
 ) {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
-	// might be better to assert if id is undefined
+	const id = revertible.interval.getIntervalId();
 	const label = revertible.interval.properties.label;
-	// should I use revertible.collection here or access from sharedstring?
 	string.getIntervalCollection(label).removeIntervalById(id);
 }
 
@@ -139,13 +128,12 @@ function revertLocalChange(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.CHANGE>,
 ) {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
-	// might be better to assert if id is undefined
+	const label = revertible.interval.properties.label;
+	const id = revertible.interval.getIntervalId();
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 
-	revertible.collection.change(id, start, end);
+	string.getIntervalCollection(label).change(id, start, end);
 }
 
 function revertLocalPropertyChanged(
@@ -153,9 +141,7 @@ function revertLocalPropertyChanged(
 	revertible: TypedRevertible<typeof IntervalEventType.PROPERTYCHANGED>,
 ) {
 	const label = revertible.interval.properties.label;
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
-	// same as above -- assert?
+	const id = revertible.interval.getIntervalId();
 	const newProps = revertible.propertyDeltas;
 	string.getIntervalCollection(label).changeProperties(id, newProps);
 }
