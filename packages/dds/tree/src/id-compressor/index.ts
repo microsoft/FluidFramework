@@ -58,3 +58,4 @@ export {
 } from "./uuidUtilities";
 export { SessionIdNormalizer } from "./sessionIdNormalizer";
 export { fail, Mutable, getOrCreate, compareStrings } from "./utils";
+export { createThrottledIdCompressorLogger } from "./logger";
