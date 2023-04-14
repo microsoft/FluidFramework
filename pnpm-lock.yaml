@@ -10380,6 +10380,7 @@ importers:
       concurrently: ^7.6.0
       copy-webpack-plugin: ^11.0.0
       copyfiles: ^2.4.1
+      cross-env: ^7.0.3
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-jest: ~27.1.5
@@ -10428,6 +10429,7 @@ importers:
       concurrently: 7.6.0
       copy-webpack-plugin: 11.0.0_webpack@5.76.2
       copyfiles: 2.4.1
+      cross-env: 7.0.3
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_e7w73bdyuoy63spbnf7wdyrtai
