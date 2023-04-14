@@ -10,15 +10,15 @@ echo INTERDEPENDENCY_RANGE="'$INTERDEPENDENCY_RANGE'"
 if [ -f "lerna.json" ]; then
   if [ "$VERSION_RELEASE" = "release" ]; then
     # this is a release build of a release group
-    if [ "$INTERDEPENDENCY_RANGE" != " " ]; then
+    # if [ "$INTERDEPENDENCY_RANGE" != " " ]; then
       # tilde or caret dependency ranges
       echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"$INTERDEPENDENCY_RANGE\" -xv"
       flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="$INTERDEPENDENCY_RANGE" -xv
-    else
-      # exact dependencies
-      echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"\" -xv"
-      flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="$INTERDEPENDENCY_RANGE" -xv
-    fi
+    # else
+    #   # exact dependencies
+    #   echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"\" -xv"
+    #   flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="$INTERDEPENDENCY_RANGE" -xv
+    # fi
   else
     # this is a dev/test build of a release group
     echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"\" -xv"
