@@ -9,7 +9,6 @@ import {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	findAncestor,
-	findCommonAncestor,
 	GraphCommit,
 	mintCommit,
 	mintRevisionTag,
@@ -174,15 +173,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @returns the net change to this branch
 	 */
 	public rebaseOnto(branch: GraphCommit<TChange>): TChange {
-		if (this.head === branch) {
+		// Rebase this branch onto the given branch
+		const rebaseResult = this.rebaseBranch(this.head, branch);
+		if (rebaseResult === undefined) {
 			return this.noChange;
 		}
 
-		const [newHead, change] = this.rebaser.rebaseBranch(this.head, branch);
-		if (this.head === newHead) {
-			return this.noChange;
-		}
-
+		// The net change to this branch is provided by the `rebaseBranch` API
+		const [newHead, change] = rebaseResult;
 		this.head = newHead;
 		return this.emitAndRebaseAnchors(change);
 	}
@@ -197,28 +195,36 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			0x597 /* Branch may not be merged while transaction is in progress */,
 		);
 
-		if (this.head === branch.head) {
+		// Rebase the given branch onto this branch
+		const rebaseResult = this.rebaseBranch(branch.head, this.head);
+		if (rebaseResult === undefined) {
 			return this.noChange;
 		}
 
-		// Collect all divergent commits on `branch`
-		const commits: GraphCommit<TChange>[] = [];
-		const ancestor = findCommonAncestor(this.head, [branch.head, commits]);
-		if (ancestor === this.head) {
-			// We know that `branch` is based off our latest state (e.g. `branch` just did a `rebaseOnto` this branch)
-			this.head = branch.head;
-			return this.emitAndRebaseAnchors(commits);
-		}
-
-		const [newHead] = this.rebaser.rebaseBranch(branch.head, this.head);
-		if (this.head === newHead) {
-			return this.noChange;
-		}
-
+		// Compute the net change to this branch
+		const [newHead] = rebaseResult;
 		const changes: GraphCommit<TChange>[] = [];
 		findAncestor([newHead, changes], (c) => c === this.head);
 		this.head = newHead;
 		return this.emitAndRebaseAnchors(changes);
+	}
+
+	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
+	private rebaseBranch(
+		branchHead: GraphCommit<TChange>,
+		onto: GraphCommit<TChange>,
+	): ReturnType<Rebaser<TChange>["rebaseBranch"]> | undefined {
+		if (this.head === onto) {
+			return undefined;
+		}
+
+		const rebaseResult = this.rebaser.rebaseBranch(branchHead, onto);
+		const [rebasedHead] = rebaseResult;
+		if (this.head === rebasedHead) {
+			return undefined;
+		}
+
+		return rebaseResult;
 	}
 
 	private emitAndRebaseAnchors(change: TChange | TaggedChange<TChange>[]): TChange {
