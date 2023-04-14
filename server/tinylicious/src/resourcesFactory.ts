@@ -11,7 +11,6 @@ import {
 	MongoManager,
 	IResourcesFactory,
 	DefaultServiceConfiguration,
-	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -30,21 +29,18 @@ import {
 const defaultTinyliciousPort = 7070;
 
 export class TinyliciousResourcesFactory implements IResourcesFactory<TinyliciousResources> {
-	public async create(
-		config: Provider,
-		customizations?: Record<string, any>,
-	): Promise<TinyliciousResources> {
+	public async create(config: Provider): Promise<TinyliciousResources> {
 		const globalDbEnabled = false;
 		// Pull in the default port off the config
 		const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
-		const collectionNames = config. get("mongo:collectionNames");
+		const collectionNames = config.get("mongo:collectionNames");
 
 		const tenantManager = new TenantManager(`http://localhost:${port}`);
-		const dbFactory =  await getDbFactory(config);
+		const dbFactory = await getDbFactory(config);
 
-		const taskMessageSender =   new TaskMessageSender();
-		const mongoManager =   new MongoManager(dbFactory);
-		const databaseManager =   new MongoDatabaseManager(
+		const taskMessageSender = new TaskMessageSender();
+		const mongoManager = new MongoManager(dbFactory);
+		const databaseManager = new MongoDatabaseManager(
 			globalDbEnabled,
 			mongoManager,
 			null,
@@ -53,18 +49,8 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			collectionNames.deltas,
 			collectionNames.scribeDeltas,
 		);
-		const documentsCollection = await databaseManager.    getDocumentCollection();
-		const documentRepository =
-			customizations?.documentRepository ?? new MongoDocumentRepository(documentsCollection);
 
-		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
-
-		const storage = new DocumentStorage(
-			documentRepository,
-			tenantManager,
-			false,
-			opsCollection,
-		);
+		const storage = new DocumentStorage(databaseManager, tenantManager, false);
 		const io = new Server({
 			// enable compatibility with socket.io v2 clients
 			// https://socket.io/docs/v4/client-installation/
