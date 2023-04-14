@@ -37,8 +37,6 @@ export class AttributableMapPage extends DataObject {
 	protected async initializingFirstTime() {
 		// Create the AttributableMap and store the handle in our root SharedDirectory
 		const map = AttributableMap.create(this.runtime);
-		// const options: IMapOptions = { attribution: { track: true } };
-		// const map = new AttributableMap("map", this.runtime, MapFactory.Attributes, options);
 		this.root.set(this.mapKey, map.handle);
 	}
 

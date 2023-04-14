@@ -44,15 +44,18 @@ const App: React.FC = () => {
 		void getMyMap().then((myMap) => setFluidMap(myMap));
 	}, []);
 
-	const [viewData, setViewData] = useState<{ time?: string, attribution?: AttributionKey }>();
+	const [viewData, setViewData] = useState<{ time?: string; attribution?: AttributionKey }>();
 	useEffect(() => {
 		if (fluidMap !== undefined) {
 			// sync Fluid data into view state
-			const syncView = () => setViewData({ time: fluidMap.get(timeKey), attribution: fluidMap.getAttribution(timeKey) });
-			// ensure sync runs at least once
-			syncView();
+			const syncView = () => {
+				const value = fluidMap.get(timeKey);
+				console.log("value:", value);
+				setViewData({ time: value?.time, attribution: value?.attribution });
+			};
 			// update state each time our map changes
 			fluidMap.on("valueChanged", syncView);
+			syncView();
 			// turn off listener when component is unmounted
 			return () => {
 				fluidMap.off("valueChanged", syncView);
@@ -63,11 +66,10 @@ const App: React.FC = () => {
 	if (!viewData) return <div />;
 
 	// business logic could be passed into the view via context
-	// const setTime = () => fluidMap?.set(timeKey, Date.now().toString());
 	const setTime = () => {
 		const attribution = fluidMap?.getAttribution(timeKey);
-		setViewData({ time: viewData.time, attribution });
-		fluidMap?.set(timeKey, Date.now().toString());
+		const newValue = { time: Date.now().toString(), attribution };
+		fluidMap?.set(timeKey, newValue);
 	};
 
 	return (
@@ -77,7 +79,7 @@ const App: React.FC = () => {
 				click{" "}
 			</button>
 			<span className="time">{viewData.time}</span>
-            <span className="attribution">{JSON.stringify(viewData.attribution)}</span>
+			<span className="attribution">{JSON.stringify(viewData.attribution)}</span>
 		</div>
 	);
 };
