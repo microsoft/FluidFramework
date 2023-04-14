@@ -446,7 +446,11 @@ async function fetchLatestSnapshotCore(
 				// This time likely is very closely correlated with networkTime, i.e. time it takes to receive
 				// actual content (starting measuring from first bite / end of response header)
 				receiveContentTime,
-				...getW3CData(response.requestUrl, "fetch", spReqDuration !== undefined ? parseInt(spReqDuration, 10) : undefined),
+				...getW3CData(
+					response.requestUrl,
+					"fetch",
+					spReqDuration !== undefined ? parseInt(spReqDuration, 10) : undefined,
+				),
 				// Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
 				// Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
 				// Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate
