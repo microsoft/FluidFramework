@@ -25,7 +25,7 @@ parameters:
 - name: interdependencyRange
   displayName: Range to use for interdependencies (only affects releases) (default = ~)
   type: string
-  default: "~"
+  default: " "
   values:
     - "^"
     - "~"
