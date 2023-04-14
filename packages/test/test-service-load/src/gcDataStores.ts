@@ -112,7 +112,7 @@ class AttachmentBlobObject implements IGCActivityObject {
 		const delayBetweenBlobGetMs = (60 * 1000) / config.testConfig.opRatePerMin;
 		while (this.running) {
 			try {
-				await this.performActivity(config);
+				await this.runActivity(config);
 			} catch (error) {
 				done = false;
 				break;
@@ -130,13 +130,13 @@ class AttachmentBlobObject implements IGCActivityObject {
 	}
 
 	/**
-	 * Performs one of the following activity at random:
+	 * Runs one of the following activity at random:
 	 * 1. GetBlob - Retrieves the blob associated with the IFluidHandle.
 	 * 2. None - Do nothing. This is to have summaries where no blobs are retrieved.
 	 */
-	private async performActivity(config: IRunConfig) {
-		const action = config.random.integer(0, 1);
-		switch (action) {
+	private async runActivity(config: IRunConfig) {
+		const activityType = config.random.integer(0, 1);
+		switch (activityType) {
 			case BlobActivityType.GetBlob: {
 				await this.handle.get();
 				break;
@@ -192,7 +192,7 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 		this.running = true;
 		const delayBetweenOpsMs = (60 * 1000) / config.testConfig.opRatePerMin;
 		while (this.running && !this.runtime.disposed) {
-			this.performActivity(config);
+			this.runActivity(config);
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
 			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
 		}
@@ -206,13 +206,13 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 	}
 
 	/**
-	 * Performs one of the following activity at random:
+	 * Runs one of the following activity at random:
 	 * 1. GetBlob - Retrieves the blob associated with the IFluidHandle.
 	 * 2. None - Do nothing. This is to have summaries where this data store or its DDS does not change.
 	 */
-	private performActivity(config: IRunConfig) {
-		const action = config.random.integer(0, 1);
-		switch (action) {
+	private runActivity(config: IRunConfig) {
+		const activityType = config.random.integer(0, 1);
+		switch (activityType) {
 			case LeafActivityType.SendOps: {
 				this.counter.increment(1);
 				break;
@@ -323,113 +323,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		const blobMapHandle = this.root.get<IFluidHandle<SharedMap>>(this.blobMapKey);
 		assert(blobMapHandle !== undefined, "The blob map handle should exist on initialization");
 		this._blobMap = await blobMapHandle.get();
-	}
-
-	public async run(config: IRunConfig, id?: string): Promise<boolean> {
-		if (this.running) {
-			return true;
-		}
-
-		this._nodeId = id;
-		this._logger = config.logger;
-		this.running = true;
-		/**
-		 * Adjust the totalSendCount and opRatePerMin such that this data object and its child data objects collectively
-		 * send totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafDataObjects
-		 * running at the same time. So maxDataObjects = maxRunningLeafDataObjects + 1 (this data object).
-		 * - Ops per minute sent by this data object and its children is 1/maxDataObjects times the opRatePerMin.
-		 * - totalSendCount of this data objects is 1/maxDataObjects times the totalSendCount as its children are also
-		 *   sending ops at the same. What this boils down to is that totalSendCount is controlling how long the test
-		 *   runs since the total number of ops sent may be less than totalSendCount.
-		 */
-		const maxDataObjects = maxRunningLeafDataObjects + 1;
-		const opRatePerMin = Math.ceil(config.testConfig.opRatePerMin / maxDataObjects);
-		const totalSendCount = config.testConfig.totalSendCount / maxDataObjects;
-		this._childRunConfig = {
-			...config,
-			testConfig: {
-				...config.testConfig,
-				opRatePerMin,
-				totalSendCount,
-			},
-		};
-		// Perform an activity every 1/6th minute = every 10 seconds.
-		const activityThresholdOpCount = Math.ceil(opRatePerMin / 6);
-		const delayBetweenOpsMs = (60 * 1000) / opRatePerMin;
-
-		let localSendCount = 0;
-		let activityFailed = false;
-
-		// Set up the listener that would run / stop activity from previous run of this client.
-		this.setupEventHandlers();
-
-		// Initialize referenced objects, if any and run activity on them.
-		await this.initialize();
-		this.runInitialActivity()
-			.then((results: boolean[]) => {
-				for (const result of results) {
-					if (result === false) {
-						activityFailed = true;
-						break;
-					}
-				}
-			})
-			.catch((error) => {
-				activityFailed = true;
-			});
-
-		while (
-			this.running &&
-			this.counter.value < totalSendCount &&
-			!this.runtime.disposed &&
-			!activityFailed
-		) {
-			// After every activityThresholdOpCount ops, perform activities.
-			if (localSendCount % activityThresholdOpCount === 0) {
-				// We do not await for the activity because we want any data objects created to run asynchronously.
-				this.performDataObjectActivity(config)
-					.then((done: boolean) => {
-						if (!done) {
-							activityFailed = true;
-						}
-					})
-					.catch((error) => {
-						activityFailed = true;
-					});
-
-				// Skip performing blob activity for ODSP. It creates too many network requests resulting in throttling.
-				if (config.testConfig.driverType !== "odsp") {
-					this.performBlobActivity(config)
-						.then((done: boolean) => {
-							if (!done) {
-								activityFailed = true;
-							}
-						})
-						.catch((error) => {
-							activityFailed = true;
-						});
-				}
-			}
-
-			this.counter.increment(1);
-			localSendCount++;
-
-			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
-			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
-		}
-		this.stop();
-		const notDone = this.runtime.disposed || activityFailed;
-		return !notDone;
-	}
-
-	public stop() {
-		this.running = false;
-		this.referencedDataObjects.forEach((dataObjectDetails: IActivityObjectDetails) => {
-			dataObjectDetails.object.stop();
-		});
-		this.referencedAttachmentBlobs.forEach((blobDetails: IActivityObjectDetails) => {
-			blobDetails.object.stop();
-		});
 	}
 
 	/**
@@ -550,216 +443,257 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		return Promise.all(runP);
 	}
 
+	public async run(config: IRunConfig, id?: string): Promise<boolean> {
+		if (this.running) {
+			return true;
+		}
+
+		this._nodeId = id;
+		this._logger = config.logger;
+		this.running = true;
+		/**
+		 * Adjust the totalSendCount and opRatePerMin such that this data object and its child data objects collectively
+		 * send totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafDataObjects
+		 * running at the same time. So maxDataObjects = maxRunningLeafDataObjects + 1 (this data object).
+		 * - Ops per minute sent by this data object and its children is 1/maxDataObjects times the opRatePerMin.
+		 * - totalSendCount of this data objects is 1/maxDataObjects times the totalSendCount as its children are also
+		 *   sending ops at the same. What this boils down to is that totalSendCount is controlling how long the test
+		 *   runs since the total number of ops sent may be less than totalSendCount.
+		 */
+		const maxDataObjects = maxRunningLeafDataObjects + 1;
+		const opRatePerMin = Math.ceil(config.testConfig.opRatePerMin / maxDataObjects);
+		const totalSendCount = config.testConfig.totalSendCount / maxDataObjects;
+		this._childRunConfig = {
+			...config,
+			testConfig: {
+				...config.testConfig,
+				opRatePerMin,
+				totalSendCount,
+			},
+		};
+		// Perform an activity every 1/6th minute = every 10 seconds.
+		const activityThresholdOpCount = Math.ceil(opRatePerMin / 6);
+		const delayBetweenOpsMs = (60 * 1000) / opRatePerMin;
+
+		let localSendCount = 0;
+		let activityFailed = false;
+
+		// Set up the listener that would run / stop activity from previous run of this client.
+		this.setupEventHandlers();
+
+		// Initialize referenced objects, if any and run activity on them.
+		await this.initialize();
+		this.runInitialActivity()
+			.then((results: boolean[]) => {
+				for (const result of results) {
+					if (result === false) {
+						activityFailed = true;
+						break;
+					}
+				}
+			})
+			.catch((error) => {
+				activityFailed = true;
+			});
+
+		while (
+			this.running &&
+			this.counter.value < totalSendCount &&
+			!this.runtime.disposed &&
+			!activityFailed
+		) {
+			// After every activityThresholdOpCount ops, run activities.
+			if (localSendCount % activityThresholdOpCount === 0) {
+				// We do not await for the activity because we want any objects created to run asynchronously.
+				this.runActivity(config)
+					.then((results: boolean[]) => {
+						for (const result of results) {
+							if (result === false) {
+								activityFailed = true;
+								break;
+							}
+						}
+					})
+					.catch((error) => {
+						activityFailed = true;
+					});
+			}
+
+			this.counter.increment(1);
+			localSendCount++;
+
+			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
+			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
+		}
+		this.stop();
+		const notDone = this.runtime.disposed || activityFailed;
+		return !notDone;
+	}
+
+	public stop() {
+		this.running = false;
+		this.referencedDataObjects.forEach((dataObjectDetails: IActivityObjectDetails) => {
+			dataObjectDetails.object.stop();
+		});
+		this.referencedAttachmentBlobs.forEach((blobDetails: IActivityObjectDetails) => {
+			blobDetails.object.stop();
+		});
+	}
+
+	private async runActivity(config: IRunConfig) {
+		// If it's possible to run a new data object and a new blob, all activities can be performed upto Revive.
+		// If not, only activities upto Unreference can be performed.
+		const maxActivityIndex =
+			this.referencedDataObjects.length < maxRunningLeafDataObjects &&
+			this.referencedAttachmentBlobs.length < maxRunningAttachmentBlobs
+				? ReferenceActivityType.Revive
+				: ReferenceActivityType.Unreference;
+		const activityType = config.random.integer(0, maxActivityIndex);
+		return Promise.all([
+			this.runDataObjectActivity(activityType),
+			this.runBlobActivity(activityType),
+		]);
+	}
+
 	/**
-	 * Performs one of the following activity at random:
+	 * Runs one of the following activity at random:
 	 * 1. CreateAndReference - Create a data object, reference it and ask it to run.
 	 * 2. Unreference - Unreference the oldest referenced data object and asks it to stop running.
 	 * 3. Revive - Re-reference the oldest unreferenced data object and ask it to run.
 	 * 4. None - Do nothing. This is to have summaries where no references changed leading to incremental GC.
 	 */
-	private async performDataObjectActivity(config: IRunConfig): Promise<boolean> {
-		/**
-		 * Tracks if the random activity completed. Keeps trying to run an activity until one completes.
-		 * For Unreference and Revive activities to complete, there has to be referenced and unreferenced
-		 * data objects respectively. If there are none, choose another activity to run.
-		 */
-		let activityCompleted = false;
-		while (!activityCompleted) {
-			activityCompleted = false;
-
-			// If it's possible to run a new data object, all activities can be performed upto Revive. If not,
-			// only activities upto Unreference can be preformed.
-			const maxActivityIndex = this.canRunNewDataObject()
-				? ReferenceActivityType.Revive
-				: ReferenceActivityType.Unreference;
-			const action = config.random.integer(0, maxActivityIndex);
-			switch (action) {
-				case ReferenceActivityType.CreateAndReference: {
-					return this.createAndReferenceDataObject();
-				}
-				case ReferenceActivityType.Unreference: {
-					if (this.referencedDataObjects.length > 0) {
-						this.unreferenceDataObject();
-						activityCompleted = true;
-					}
-					break;
-				}
-				case ReferenceActivityType.Revive: {
-					const nextUnreferencedDataObjectDetails = this.unreferencedDataObjects.shift();
-					if (nextUnreferencedDataObjectDetails !== undefined) {
-						return this.reviveDataObject(nextUnreferencedDataObjectDetails);
-					}
-					break;
-				}
-				case ReferenceActivityType.None: {
-					activityCompleted = true;
-					break;
-				}
-				default:
-					break;
+	private async runDataObjectActivity(activityType: ReferenceActivityType): Promise<boolean> {
+		switch (activityType) {
+			case ReferenceActivityType.CreateAndReference: {
+				const dataObject = await dataObjectFactoryLeaf.createChildInstance(this.context);
+				const dataObjectId = `${this.nodeId}/ds-${dataObject.id}`;
+				this.dataObjectMap.set(dataObjectId, dataObject.handle);
+				this.referencedDataObjects.push({
+					id: dataObjectId,
+					object: dataObject,
+				});
+				logEvent(this.logger, {
+					eventName: "DS+",
+					id: dataObjectId,
+				});
+				return dataObject.run(this.childRunConfig, dataObjectId);
 			}
+			case ReferenceActivityType.Unreference: {
+				if (this.referencedDataObjects.length > 0) {
+					const dataObjectDetails = this.referencedDataObjects.shift();
+					assert(
+						dataObjectDetails !== undefined,
+						"Cannot find data object to unreference",
+					);
+
+					const dataObjectHandle = this.dataObjectMap.get<
+						IFluidHandle<IGCActivityObject>
+					>(dataObjectDetails.id);
+					assert(dataObjectHandle !== undefined, "Could not get handle for data object");
+
+					dataObjectDetails.object.stop();
+					this.dataObjectMap.delete(dataObjectDetails.id);
+					this.unreferencedDataObjects.push(dataObjectDetails);
+					logEvent(this.logger, {
+						eventName: "DS-",
+						id: dataObjectDetails.id,
+					});
+				}
+				break;
+			}
+			case ReferenceActivityType.Revive: {
+				const dataObjectDetails = this.unreferencedDataObjects.shift();
+				if (dataObjectDetails !== undefined) {
+					this.dataObjectMap.set(dataObjectDetails.id, dataObjectDetails.object.handle);
+					this.referencedDataObjects.push(dataObjectDetails);
+					logEvent(this.logger, {
+						eventName: "DS^",
+						id: dataObjectDetails.id,
+					});
+					return dataObjectDetails.object.run(this.childRunConfig, dataObjectDetails.id);
+				}
+				break;
+			}
+			case ReferenceActivityType.None:
+			default:
+				break;
 		}
-		return activityCompleted;
+		return true;
 	}
 
 	/**
-	 * Returns whether it's possible to run a new data object at the moment. For instance, there is a limit on the number
-	 * of child data objects than can be running in parallel to control the number of ops per minute.
-	 */
-	private canRunNewDataObject() {
-		return this.referencedDataObjects.length < maxRunningLeafDataObjects;
-	}
-
-	/**
-	 * Creates a new data object, reference it and ask it to run.
-	 */
-	private async createAndReferenceDataObject(): Promise<boolean> {
-		const dataObject = await dataObjectFactoryLeaf.createChildInstance(this.context);
-		const dataObjectId = `${this.nodeId}/ds-${dataObject.id}`;
-		this.dataObjectMap.set(dataObjectId, dataObject.handle);
-		this.referencedDataObjects.push({
-			id: dataObjectId,
-			object: dataObject,
-		});
-
-		logEvent(this.logger, {
-			eventName: "DS+",
-			id: dataObjectId,
-		});
-
-		return dataObject.run(this.childRunConfig, dataObjectId);
-	}
-
-	/**
-	 * Retrieves the oldest referenced data object, asks it to stop running and unreferences it.
-	 */
-	private unreferenceDataObject() {
-		const dataObjectDetails = this.referencedDataObjects.shift();
-		assert(dataObjectDetails !== undefined, "Cannot find data object to unreference");
-		logEvent(this.logger, {
-			eventName: "DS-",
-			id: dataObjectDetails.id,
-		});
-
-		const dataObjectHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(
-			dataObjectDetails.id,
-		);
-		assert(dataObjectHandle !== undefined, "Could not get handle for data object");
-
-		dataObjectDetails.object.stop();
-
-		this.dataObjectMap.delete(dataObjectDetails.id);
-		this.unreferencedDataObjects.push(dataObjectDetails);
-	}
-
-	/**
-	 * Retrieves the oldest unreferenced data object, references it and asks it to run.
-	 */
-	private async reviveDataObject(dataObjectDetails: IActivityObjectDetails): Promise<boolean> {
-		logEvent(this.logger, {
-			eventName: "DS^",
-			id: dataObjectDetails.id,
-		});
-		this.dataObjectMap.set(dataObjectDetails.id, dataObjectDetails.object.handle);
-		this.referencedDataObjects.push(dataObjectDetails);
-		return dataObjectDetails.object.run(this.childRunConfig, dataObjectDetails.id);
-	}
-
-	/**
-	 * Returns whether it's possible to run a new attachment blob object at the moment.
-	 */
-	private canRunNewBlobObject() {
-		return this.referencedAttachmentBlobs.length < maxRunningAttachmentBlobs;
-	}
-
-	/**
-	 * Performs one of the following activity at random:
+	 * Runs one of the following activity at random:
 	 * 1. CreateAndReference - Upload an attachment blob and reference it.
 	 * 2. Unreference - Unreference the oldest referenced attachment blob.
 	 * 3. Revive - Re-reference the oldest unreferenced attachment blob.
 	 * 4. None - Do nothing. This is to have summaries where no references changed leading to incremental GC.
 	 */
-	private async performBlobActivity(config: IRunConfig): Promise<boolean> {
-		let activityCompleted = false;
-		while (!activityCompleted) {
-			activityCompleted = false;
+	private async runBlobActivity(activityType: ReferenceActivityType): Promise<boolean> {
+		switch (activityType) {
+			case ReferenceActivityType.CreateAndReference: {
+				const blobContents = `Content - ${this.uniqueBlobContentId}-${uuid()}`;
+				const blobHandle = await this.context.uploadBlob(
+					stringToBuffer(blobContents, "utf-8"),
+				);
+				const blobId = `${this.nodeId}/blob-${getBlobIdFromHandle(blobHandle)}`;
+				this.blobMap.set(blobId, blobHandle);
 
-			// If it's possible to run a new blob, all activities can be performed upto Revive. If not,
-			// only activities upto Unreference can be preformed.
-			const maxActivityIndex = this.canRunNewBlobObject()
-				? ReferenceActivityType.Revive
-				: ReferenceActivityType.Unreference;
-			const blobAction = config.random.integer(0, maxActivityIndex);
-			switch (blobAction) {
-				case ReferenceActivityType.CreateAndReference: {
-					const blobContents = `Content - ${this.uniqueBlobContentId}-${uuid()}`;
-					const blobHandle = await this.context.uploadBlob(
-						stringToBuffer(blobContents, "utf-8"),
-					);
-					const blobId = `${this.nodeId}/blob-${getBlobIdFromHandle(blobHandle)}`;
-					this.blobMap.set(blobId, blobHandle);
+				logEvent(this.logger, {
+					eventName: "Blob+",
+					id: blobId,
+				});
 
-					logEvent(this.logger, {
-						eventName: "Blob+",
-						id: blobId,
-					});
-
-					const blobObject = new AttachmentBlobObject(blobHandle);
-					this.referencedAttachmentBlobs.push({
-						id: blobId,
-						object: blobObject,
-					});
-					return blobObject.run(this.childRunConfig, blobId);
-				}
-				case ReferenceActivityType.Unreference: {
-					if (this.referencedAttachmentBlobs.length > 0) {
-						const blobDetails = this.referencedAttachmentBlobs.shift();
-						assert(blobDetails !== undefined, "Cannot find blob to unreference");
-						logEvent(this.logger, {
-							eventName: "Blob-",
-							id: blobDetails.id,
-						});
-
-						const blobHandle = this.blobMap.get<IFluidHandle<ArrayBufferLike>>(
-							blobDetails.id,
-						);
-						assert(blobHandle !== undefined, "Could not get handle for blob");
-
-						blobDetails.object.stop();
-						this.blobMap.delete(blobDetails.id);
-						this.unreferencedAttachmentBlobs.push(blobDetails);
-						activityCompleted = true;
-					}
-					break;
-				}
-				case ReferenceActivityType.Revive: {
-					const nextUnreferencedAttachmentBlob = this.unreferencedAttachmentBlobs.shift();
-					if (nextUnreferencedAttachmentBlob !== undefined) {
-						logEvent(this.logger, {
-							eventName: "Blob^",
-							id: nextUnreferencedAttachmentBlob.id,
-						});
-						this.blobMap.set(
-							nextUnreferencedAttachmentBlob.id,
-							nextUnreferencedAttachmentBlob.object.handle,
-						);
-						this.referencedAttachmentBlobs.push(nextUnreferencedAttachmentBlob);
-						return nextUnreferencedAttachmentBlob.object.run(
-							this.childRunConfig,
-							nextUnreferencedAttachmentBlob.id,
-						);
-					}
-					break;
-				}
-				case ReferenceActivityType.None: {
-					activityCompleted = true;
-					break;
-				}
-				default:
-					break;
+				const blobObject = new AttachmentBlobObject(blobHandle);
+				this.referencedAttachmentBlobs.push({
+					id: blobId,
+					object: blobObject,
+				});
+				return blobObject.run(this.childRunConfig, blobId);
 			}
+			case ReferenceActivityType.Unreference: {
+				if (this.referencedAttachmentBlobs.length > 0) {
+					const blobDetails = this.referencedAttachmentBlobs.shift();
+					assert(blobDetails !== undefined, "Cannot find blob to unreference");
+					logEvent(this.logger, {
+						eventName: "Blob-",
+						id: blobDetails.id,
+					});
+
+					const blobHandle = this.blobMap.get<IFluidHandle<ArrayBufferLike>>(
+						blobDetails.id,
+					);
+					assert(blobHandle !== undefined, "Could not get handle for blob");
+
+					blobDetails.object.stop();
+					this.blobMap.delete(blobDetails.id);
+					this.unreferencedAttachmentBlobs.push(blobDetails);
+				}
+				break;
+			}
+			case ReferenceActivityType.Revive: {
+				const nextUnreferencedAttachmentBlob = this.unreferencedAttachmentBlobs.shift();
+				if (nextUnreferencedAttachmentBlob !== undefined) {
+					logEvent(this.logger, {
+						eventName: "Blob^",
+						id: nextUnreferencedAttachmentBlob.id,
+					});
+					this.blobMap.set(
+						nextUnreferencedAttachmentBlob.id,
+						nextUnreferencedAttachmentBlob.object.handle,
+					);
+					this.referencedAttachmentBlobs.push(nextUnreferencedAttachmentBlob);
+					return nextUnreferencedAttachmentBlob.object.run(
+						this.childRunConfig,
+						nextUnreferencedAttachmentBlob.id,
+					);
+				}
+				break;
+			}
+			case ReferenceActivityType.None:
+			default:
+				break;
 		}
-		return activityCompleted;
+		return true;
 	}
 }
 
