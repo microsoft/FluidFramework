@@ -29,8 +29,10 @@ export interface IDecoder<TDecoded, TEncoded> {
 /**
  * @alpha
  */
-export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly>
-	extends IEncoder<TDecoded, TEncoded>,
+export interface IJsonCodec<
+	TDecoded,
+	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+> extends IEncoder<TDecoded, TEncoded>,
 		IDecoder<TDecoded, TEncoded> {}
 
 /**
@@ -54,7 +56,10 @@ export interface IBinaryCodec<TDecoded>
  *
  * @alpha
  */
-export interface IMultiFormatCodec<TDecoded, TJsonEncoded = JsonCompatibleReadOnly> {
+export interface IMultiFormatCodec<
+	TDecoded,
+	TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
+> {
 	json: IJsonCodec<TDecoded, TJsonEncoded>;
 	binary: IBinaryCodec<TDecoded>;
 
@@ -77,6 +82,10 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded = JsonCompatibleReadOn
 export interface ICodecFamily<TDecoded> {
 	/**
 	 * @returns - a codec that can be used to encode and decode data in the specified format.
+	 * @throws - if the format version is not supported by this family.
+	 * @remarks - Implementations should typically emit telemetry (either indirectly by throwing a well-known error with
+	 * logged properties or directly using some logger) when a format version is requested that is not supported.
+	 * This ensures that applications can diagnose compatibility issues.
 	 */
 	resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
 
@@ -178,9 +187,44 @@ export const unitCodec: IMultiFormatCodec<0> = {
  * Creates a json codec for objects which are just a json compatible value
  * and can be serialized as-is.
  *
+ * This type of encoding is only appropriate if the persisted type (which should be defined in a persisted format file)
+ * happens to be convenient for in-memory usage as well.
+ *
  * @remarks - Beware that this encoder doesn't validate its input and isn't typesafe.
  * It would be great to be able to constrain T to a reasonable type, but due to how typechecking
  * of index signatures works, JsonCompatibleReadOnly isn't sufficient.
+ *
+ * TODO: This API is an anti-pattern for production code: using the same type for persisted and in-memory data
+ * without any validation is prone to bugs involving extraneous data in the persisted format.
+ * Consider the following example:
+ * ```typescript
+ * interface MyPersistedType {
+ *     foo: string;
+ *     id: number;
+ * }
+ *
+ * const codec = makeValueCodec<MyPersistedType>();
+ *
+ * // Later, in some other file...
+ * interface SomeInMemoryType extends MyPersistedType {
+ *     someOtherProperty: string;
+ * }
+ *
+ * const someInMemoryObject: SomeInMemoryType = {
+ *     foo:	"bar",
+ *     id: 0,
+ *     someOtherProperty: "this shouldn't be here and ends up in the persisted format"
+ * }
+ *
+ * const encoded = codec.encode(someInMemoryObject);
+ * ```
+ * This all typechecks, but the persisted format will contain the extraneous `someOtherProperty` field.
+ * It's unlikely a real-life example would be this simple, but the principle is the same.
+ *
+ * This issue can be avoided using schema validation with schemas that generally shouldn't accept additional properties.
+ *
+ * AB#4074 tracks making this function take a typebox schema and using it to validate objects.
+ * Note: this might allow usage of Jsonable, since the type parameter would be inferrable from the schema.
  */
 export function makeValueCodec<T>(): IJsonCodec<T> {
 	return {
