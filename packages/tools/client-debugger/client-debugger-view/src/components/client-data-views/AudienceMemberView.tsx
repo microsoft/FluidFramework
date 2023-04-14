@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Stack, StackItem } from "@fluentui/react";
+import { tokens } from "@fluentui/react-components";
 import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -50,7 +51,9 @@ export function AudienceMemberView(props: AudienceMemberViewProps): React.ReactE
 		</Stack>
 	);
 
-	const headerBackgroundColor = isUserMyself ? "lightblue" : "lightyellow";
+	const headerBackgroundColor = isUserMyself
+		? tokens.colorPaletteBlueBackground2
+		: tokens.colorPaletteYellowBackground2;
 
 	let view: React.ReactElement;
 	if (connectionCount === 1) {

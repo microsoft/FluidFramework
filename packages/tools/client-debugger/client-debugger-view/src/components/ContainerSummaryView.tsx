@@ -5,6 +5,18 @@
 
 import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
+import {
+	Badge,
+	createTableColumn,
+	Table,
+	TableRow,
+	TableCell,
+	TableCellLayout,
+	TableColumnDefinition,
+	TableColumnSizingOptions,
+	useTableFeatures,
+	useTableColumnSizing_unstable,
+} from "@fluentui/react-components";
 import React from "react";
 
 import {
@@ -40,17 +52,114 @@ initializeFluentUiIcons();
  */
 export type ContainerSummaryViewProps = HasContainerId;
 
+const columnsDef: TableColumnDefinition<Item>[] = [
+	createTableColumn<Item>({
+		columnId: "containerProperty",
+	}),
+	createTableColumn<Item>({
+		columnId: "value",
+	}),
+];
+
+/**
+ * Simple representation of each row of data in the table
+ */
+interface Item {
+	/*
+	 * The type of container property, ie: Container/Audience ID etc
+	 */
+	property: string;
+	/*
+	 * The value of the property.
+	 */
+	value: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function DataRow(label: string, id: string | undefined, columnProps: any): React.ReactElement {
+	return (
+		<TableRow>
+			<TableCell
+				{
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+					...columnProps.getTableCellProps("containerProperty")
+				}
+			>
+				<b>{label}</b>
+			</TableCell>
+			<TableCell>{id}</TableCell>
+		</TableRow>
+	);
+}
+
+function ContainerStatusRow(statusComponents: string[]): React.ReactElement {
+	return (
+		<TableRow>
+			<TableCell>
+				<b>Status</b>
+			</TableCell>
+			<TableCell>
+				<TableCellLayout
+					media={((): JSX.Element => {
+						switch (statusComponents[0]) {
+							case "attaching":
+								return (
+									<Badge shape="rounded" color="warning">
+										{statusComponents[0]}
+									</Badge>
+								);
+							case "detached":
+								return (
+									<Badge shape="rounded" color="danger">
+										{statusComponents[0]}
+									</Badge>
+								);
+							default:
+								return (
+									<Badge shape="rounded" color="success">
+										{statusComponents[0]}
+									</Badge>
+								);
+						}
+					})()}
+				>
+					{statusComponents[1] === "Connected" ? (
+						<Badge shape="rounded" color="success">
+							{statusComponents[1]}
+						</Badge>
+					) : (
+						<Badge shape="rounded" color="danger">
+							{statusComponents[1]}
+						</Badge>
+					)}
+				</TableCellLayout>
+			</TableCell>
+		</TableRow>
+	);
+}
+
 /**
  * Debugger view displaying basic Container stats.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
 	const { containerId } = props;
-
+	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
 
 	const [containerState, setContainerState] = React.useState<
 		ContainerStateMetadata | undefined
 	>();
+	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
+	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
+		containerProperty: {
+			idealWidth: 80,
+			minWidth: 80,
+		},
+	});
+
+	const { columnSizing_unstable, tableRef } = useTableFeatures({ columns, items }, [
+		useTableColumnSizing_unstable({ columnSizingOptions }),
+	]);
 
 	React.useEffect(() => {
 		/**
@@ -132,40 +241,16 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			statusComponents.push(connectionStateToString(containerState.connectionState));
 		}
 	}
-	const statusString = statusComponents.join(" | ");
 
 	return (
-		<Stack className="container-summary-view">
+		<Stack>
 			<StackItem>
-				<span>
-					<b>Container</b>:{" "}
-					{containerState.nickname !== undefined
-						? `${containerState.nickname} (${containerState.id})`
-						: containerState.id}
-				</span>
-			</StackItem>
-			<StackItem>
-				<span>
-					<b>Status</b>: {statusString}
-				</span>
-			</StackItem>
-			<StackItem>
-				{containerState.clientId === undefined ? (
-					<></>
-				) : (
-					<span>
-						<b>Client ID</b>: {containerState.clientId}
-					</span>
-				)}
-			</StackItem>
-			<StackItem>
-				{containerState.audienceId === undefined ? (
-					<></>
-				) : (
-					<span>
-						<b>Audience ID</b>: {containerState.audienceId}
-					</span>
-				)}
+				<Table size="extra-small" ref={tableRef}>
+					{DataRow("Container", containerState.id, columnSizing_unstable)}
+					{ContainerStatusRow(statusComponents)}
+					{DataRow("Client ID", containerState.clientId, columnSizing_unstable)}
+					{DataRow("Audience ID", containerState.audienceId, columnSizing_unstable)}
+				</Table>
 			</StackItem>
 			<StackItem align="end">
 				<ActionsBar
