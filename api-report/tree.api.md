@@ -708,6 +708,8 @@ export interface IJsonCodec<TDecoded, TEncoded = JsonCompatibleReadOnly> extends
 export interface IMultiFormatCodec<TDecoded, TJsonEncoded = JsonCompatibleReadOnly> {
     // (undocumented)
     binary: IBinaryCodec<TDecoded>;
+    decode?: never;
+    encode?: never;
     // (undocumented)
     json: IJsonCodec<TDecoded, TJsonEncoded>;
 }

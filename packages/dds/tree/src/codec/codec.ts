@@ -57,6 +57,11 @@ export interface IBinaryCodec<TDecoded>
 export interface IMultiFormatCodec<TDecoded, TJsonEncoded = JsonCompatibleReadOnly> {
 	json: IJsonCodec<TDecoded, TJsonEncoded>;
 	binary: IBinaryCodec<TDecoded>;
+
+	/** Ensures multi-format codecs cannot also be single-format codecs. */
+	encode?: never;
+	/** Ensures multi-format codecs cannot also be single-format codecs. */
+	decode?: never;
 }
 
 /**
@@ -90,20 +95,12 @@ export function makeCodecFamily<TDecoded>(
 		[formatVersion: number, codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>]
 	>,
 ): ICodecFamily<TDecoded> {
-	const isJsonCodec = (
-		codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>,
-	): codec is IJsonCodec<TDecoded> =>
-		typeof (codec as any).encode === "function" && typeof (codec as any).decode === "function";
 	const codecs: Map<number, IMultiFormatCodec<TDecoded>> = new Map();
 	for (const [formatVersion, codec] of registry) {
-		if (codecs.get(formatVersion) !== undefined) {
+		if (codecs.has(formatVersion)) {
 			fail("Duplicate codecs specified.");
 		}
-		if (isJsonCodec(codec)) {
-			codecs.set(formatVersion, withDefaultBinaryEncoding(codec));
-		} else {
-			codecs.set(formatVersion, codec);
-		}
+		codecs.set(formatVersion, ensureBinaryEncoding(codec));
 	}
 
 	return {
@@ -145,6 +142,21 @@ export function withDefaultBinaryEncoding<TDecoded>(
 		json: jsonCodec,
 		binary: new DefaultBinaryCodec(jsonCodec),
 	};
+}
+
+/**
+ * Ensures that the provided single or multi-format codec has a binary encoding.
+ * Adapts the json encoding using {@link withDefaultBinaryEncoding} if necessary.
+ * @returns
+ */
+export function ensureBinaryEncoding<TDecoded>(
+	codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>,
+): IMultiFormatCodec<TDecoded> {
+	if (typeof codec.encode === "function" && typeof codec.decode === "function") {
+		return withDefaultBinaryEncoding(codec);
+	} else {
+		return codec;
+	}
 }
 
 /**
