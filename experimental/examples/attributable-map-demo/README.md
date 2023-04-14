@@ -1,6 +1,6 @@
 # @fluid-example/attributable-map-demo
 
-In this simple multi-user app, you are going to build a button that, when pressed, shows the current timestamp. We will store that timestamp in Fluid so that each co-authors will automatically see the most recent timestamp at which any author pressed the button. In addition, the attribution key will be displayed by the side, it consists of the type of attribution and related sequence number/id. Please refer to [Attributor](../../../packages/framework/attributor/README.md) and [AttributableMap](../../dds/attributable-map/README.md) fpr more details
+In this simple multi-user app, you are going to build a button that, when pressed, shows the current timestamp. We will store that timestamp in Fluid so that each co-authors will automatically see the most recent timestamp at which any author pressed the button. In addition, the attribution key will be displayed by the side, it consists of the type of attribution and related sequence number/id. Please refer to [Attributor](../../../packages/framework/attributor/README.md) and [AttributableMap](../../dds/attributable-map/README.md) for more details
 
 ## Getting started
 
