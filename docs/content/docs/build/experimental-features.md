@@ -11,7 +11,7 @@ At any given time, there are experimental features within FluidFramework that ar
 
 ### Proceed with Caution
 
-Experimental features are by definition not fully supported and **should not be used in production scenarios**. Moreover, experimental features may be **added, modified, or removed without warning** in any minor or major release.
+Experimental features are by definition not fully supported and **should not be used in production applications**. Moreover, experimental features may be **added, modified, or removed without warning** in any minor or major release.
 
 ## API
 
