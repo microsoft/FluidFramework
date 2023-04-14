@@ -102,6 +102,7 @@ scribe:
   name: scribe
   replicas: 8
   getDeltasViaAlfred: true
+  transientTenants: []
   checkpointHeuristics:
     enable: false
     idleTime: 10000
