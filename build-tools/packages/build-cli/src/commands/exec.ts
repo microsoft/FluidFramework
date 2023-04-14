@@ -17,7 +17,12 @@ export default class ExecCommand extends PackageCommand<typeof ExecCommand> {
 	};
 
 	protected async processPackage(directory: string): Promise<void> {
-		const result = await execa(this.args.cmd, { cwd: directory });
+		// TODO: The shell option should not need to be true. AB#4067
+		const result = await execa(this.args.cmd, {
+			cwd: directory,
+			stdio: "inherit",
+			shell: true,
+		});
 		this.log(result.all);
 	}
 }
