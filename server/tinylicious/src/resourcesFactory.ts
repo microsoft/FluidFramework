@@ -37,14 +37,14 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const globalDbEnabled = false;
 		// Pull in the default port off the config
 		const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
-		const collectionNames = config.get("mongo:collectionNames");
+		const collectionNames = config. get("mongo:collectionNames");
 
 		const tenantManager = new TenantManager(`http://localhost:${port}`);
-		const dbFactory = await getDbFactory(config);
+		const dbFactory =  await getDbFactory(config);
 
-		const taskMessageSender = new TaskMessageSender();
-		const mongoManager = new MongoManager(dbFactory);
-		const databaseManager = new MongoDatabaseManager(
+		const taskMessageSender =   new TaskMessageSender();
+		const mongoManager =   new MongoManager(dbFactory);
+		const databaseManager =   new MongoDatabaseManager(
 			globalDbEnabled,
 			mongoManager,
 			null,
@@ -53,7 +53,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			collectionNames.deltas,
 			collectionNames.scribeDeltas,
 		);
-		const documentsCollection = await databaseManager.getDocumentCollection();
+		const documentsCollection = await databaseManager.    getDocumentCollection();
 		const documentRepository =
 			customizations?.documentRepository ?? new MongoDocumentRepository(documentsCollection);
 
