@@ -169,7 +169,7 @@ export class ScribeLambda implements IPartitionLambda {
 					continue;
 				}
 
-				const lastProtocolHandlerSequenceNumber =
+				const lastProtocolHandlerSequenceNumber: number =
 					this.pendingMessages.peekBack()?.sequenceNumber ??
 					this.protocolHandler.sequenceNumber;
 
