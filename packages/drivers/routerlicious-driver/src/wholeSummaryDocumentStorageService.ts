@@ -5,6 +5,7 @@
 
 import type { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { getW3CData } from "@fluidframework/driver-base";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
@@ -34,7 +35,7 @@ import {
 import { GitManager } from "./gitManager";
 import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
 import { ISummaryUploadManager } from "./storageContracts";
-import { getW3CData, IR11sResponse } from "./restWrapper";
+import { IR11sResponse } from "./restWrapper";
 
 const latestSnapshotId: string = "latest";
 
@@ -103,7 +104,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 			async () => {
 				const manager = await this.getStorageManager();
-				return manager.getCommits(id, count);
+				return (await manager.getCommits(id, count)).content;
 			},
 		);
 		return commits.map((commit) => ({
@@ -141,7 +142,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 			async (event) => {
 				const manager = await this.getStorageManager();
-				const response = await manager.getBlob(blobId);
+				const response = (await manager.getBlob(blobId)).content;
 				event.end({
 					size: response.size,
 				});
@@ -215,7 +216,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				const manager = await this.getStorageManager();
 				const response = await manager
 					.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
-					.then((r) => ({ id: r.sha, url: r.url }));
+					.then((r) => ({ id: r.content.sha, url: r.content.url }));
 				event.end({
 					blobId: response.id,
 				});
@@ -263,7 +264,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 					encodedBlobsSize,
 					...response.propsToLog,
 					snapshotConversionTime,
-					...getW3CData(response.requestUrl),
+					...getW3CData(response.requestUrl, "xmlhttprequest"),
 				});
 				return snapshot;
 			},

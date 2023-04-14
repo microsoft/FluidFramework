@@ -62,7 +62,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 			}),
 		);
 
-		const treeHandle = await this.manager.createGitTree({ tree: entries });
+		const treeHandle = (await this.manager.createGitTree({ tree: entries })).content;
 		return treeHandle.sha;
 	}
 
@@ -102,7 +102,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		const hash = await gitHashFile(IsoBuffer.from(parsedContent, encoding));
 		if (!this.blobsShaCache.has(hash)) {
 			this.blobsShaCache.set(hash, "");
-			const blob = await this.manager.createBlob(parsedContent, encoding);
+			const blob = (await this.manager.createBlob(parsedContent, encoding)).content;
 			assert(hash === blob.sha, 0x0b6 /* "Blob.sha and hash do not match!!" */);
 		}
 		return hash;

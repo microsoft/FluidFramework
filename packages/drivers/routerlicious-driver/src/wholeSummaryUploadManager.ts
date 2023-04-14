@@ -57,6 +57,8 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 			type,
 		};
 
-		return this.manager.createSummary(snapshotPayload, initial).then((response) => response.id);
+		return this.manager
+			.createSummary(snapshotPayload, initial)
+			.then((response) => response.content.id);
 	}
 }

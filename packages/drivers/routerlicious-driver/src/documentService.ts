@@ -107,14 +107,9 @@ export class DocumentService implements api.IDocumentService {
 					this.driverPolicies.enableRestLess,
 					this.storageUrl,
 				);
-				const historian = new Historian(this.storageUrl, true, false, storageRestWrapper);
+				const historian = new Historian(true, false, storageRestWrapper);
 				this.storageManager = new GitManager(historian);
-				const noCacheHistorian = new Historian(
-					this.storageUrl,
-					true,
-					true,
-					storageRestWrapper,
-				);
+				const noCacheHistorian = new Historian(true, true, storageRestWrapper);
 				this.noCacheStorageManager = new GitManager(noCacheHistorian);
 			}
 

@@ -3,19 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import * as resources from "@fluidframework/gitresources";
-import { buildHierarchy } from "@fluidframework/protocol-base";
-import * as api from "@fluidframework/protocol-definitions";
 import {
-	ICreateRefParamsExternal,
-	IPatchRefParamsExternal,
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { IGitManager, IHistorian } from "./storageContracts";
-import { IR11sResponse } from "./restWrapper";
+import { IR11sResponse, createR11sResponseFromContent } from "./restWrapper";
 
 export class GitManager implements IGitManager {
 	private readonly blobCache = new Map<string, resources.IBlob>();
@@ -25,34 +20,13 @@ export class GitManager implements IGitManager {
 
 	constructor(private readonly historian: IHistorian) {}
 
-	public async getHeader(id: string, sha: string): Promise<api.ISnapshotTree> {
-		const header = await this.historian.getHeader(sha);
-
-		// Cache blobs that were sent in the header
-		for (const blob of header.blobs) {
-			this.blobCache.set(blob.sha, blob);
-		}
-
-		return buildHierarchy(header.tree);
-	}
-
-	public async getFullTree(sha: string): Promise<any> {
-		return this.historian.getFullTree(sha);
-	}
-
-	public async getCommit(sha: string): Promise<resources.ICommit> {
-		const commit = this.commitCache.get(sha);
-		if (commit !== undefined) {
-			return commit;
-		}
-
-		return this.historian.getCommit(sha);
-	}
-
 	/**
 	 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
 	 */
-	public async getCommits(shaOrRef: string, count: number): Promise<resources.ICommitDetails[]> {
+	public async getCommits(
+		shaOrRef: string,
+		count: number,
+	): Promise<IR11sResponse<resources.ICommitDetails[]>> {
 		let sha: string | undefined = shaOrRef;
 
 		// See if the sha is really a ref and convert
@@ -64,14 +38,14 @@ export class GitManager implements IGitManager {
 
 			// If null is stored for the ref then there are no commits - return an empty array
 			if (!sha) {
-				return [];
+				return createR11sResponseFromContent([]);
 			}
 		}
 
 		// See if the commit sha is hashed and return it if so
 		const commit = this.commitCache.get(sha);
 		if (commit !== undefined) {
-			return [
+			return createR11sResponseFromContent([
 				{
 					commit: {
 						author: commit.author,
@@ -84,7 +58,7 @@ export class GitManager implements IGitManager {
 					sha: commit.sha,
 					url: commit.url,
 				},
-			];
+			]);
 		}
 
 		// Otherwise fall back to the historian
@@ -94,40 +68,27 @@ export class GitManager implements IGitManager {
 	/**
 	 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
 	 */
-	public async getTree(root: string, recursive = true): Promise<resources.ITree> {
+	public async getTree(root: string, recursive = true): Promise<IR11sResponse<resources.ITree>> {
 		const tree = this.treeCache.get(root);
 		if (tree !== undefined) {
-			return tree;
+			return createR11sResponseFromContent(tree);
 		}
 
 		return this.historian.getTree(root, recursive);
 	}
 
-	public async getBlob(sha: string): Promise<resources.IBlob> {
+	public async getBlob(sha: string): Promise<IR11sResponse<resources.IBlob>> {
 		const blob = this.blobCache.get(sha);
 		if (blob !== undefined) {
-			return blob;
+			return createR11sResponseFromContent(blob);
 		}
 		return this.historian.getBlob(sha);
-	}
-
-	public getRawUrl(sha: string): string {
-		return `${this.historian.endpoint}/git/blobs/raw/${sha}`;
-	}
-
-	/**
-	 * Retrieves the object at the given revision number
-	 */
-
-	public async getContent(commit: string, path: string): Promise<resources.IBlob> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return this.historian.getContent(path, commit);
 	}
 
 	public async createBlob(
 		content: string,
 		encoding: "utf-8" | "base64",
-	): Promise<resources.ICreateBlobResponse> {
+	): Promise<IR11sResponse<resources.ICreateBlobResponse>> {
 		const blob: resources.ICreateBlobParams = {
 			content,
 			encoding,
@@ -135,182 +96,21 @@ export class GitManager implements IGitManager {
 		return this.historian.createBlob(blob);
 	}
 
-	public async createGitTree(params: resources.ICreateTreeParams): Promise<resources.ITree> {
+	public async createGitTree(
+		params: resources.ICreateTreeParams,
+	): Promise<IR11sResponse<resources.ITree>> {
 		const treeP = this.historian.createTree(params);
 		return treeP;
-	}
-
-	public async createTree(files: api.ITree): Promise<resources.ITree> {
-		return this.createTreeCore(files, 0);
-	}
-
-	public async createCommit(commit: resources.ICreateCommitParams): Promise<resources.ICommit> {
-		return this.historian.createCommit(commit);
 	}
 
 	public async createSummary(
 		summary: IWholeSummaryPayload,
 		initial: boolean = false,
-	): Promise<IWriteSummaryResponse> {
+	): Promise<IR11sResponse<IWriteSummaryResponse>> {
 		return this.historian.createSummary(summary, initial);
-	}
-
-	public async deleteSummary(softDelete: boolean): Promise<void> {
-		return this.historian.deleteSummary(softDelete);
 	}
 
 	public async getSummary(sha: string): Promise<IR11sResponse<IWholeFlatSummary>> {
 		return this.historian.getSummary(sha);
-	}
-
-	public async getRef(ref: string): Promise<resources.IRef> {
-		return this.historian.getRef(`heads/${ref}`);
-	}
-
-	public async createRef(branch: string, sha: string): Promise<resources.IRef> {
-		const createRefParams: ICreateRefParamsExternal = {
-			ref: `refs/heads/${branch}`,
-			sha,
-			config: { enabled: true },
-		};
-
-		return this.historian.createRef(createRefParams);
-	}
-
-	public async upsertRef(branch: string, commitSha: string): Promise<resources.IRef> {
-		// Update (force) the ref to the new commit
-		const ref: IPatchRefParamsExternal = {
-			force: true,
-			sha: commitSha,
-			config: { enabled: true },
-		};
-
-		return this.historian.updateRef(`heads/${branch}`, ref);
-	}
-
-	public addRef(ref: string, sha: string) {
-		this.refCache.set(ref, sha);
-	}
-
-	public addCommit(commit: resources.ICommit) {
-		this.commitCache.set(commit.sha, commit);
-	}
-
-	public addTree(tree: resources.ITree) {
-		this.treeCache.set(tree.sha, tree);
-	}
-
-	public addBlob(blob: resources.IBlob) {
-		this.blobCache.set(blob.sha, blob);
-	}
-
-	/**
-	 * Writes to the object with the given ID
-	 */
-	public async write(
-		branch: string,
-		inputTree: api.ITree,
-		parents: string[],
-		message: string,
-	): Promise<resources.ICommit> {
-		const tree = await this.createTree(inputTree);
-
-		// Construct a commit for the tree
-		const commitParams: resources.ICreateCommitParams = {
-			author: {
-				date: new Date().toISOString(),
-				email: "kurtb@microsoft.com",
-				name: "Kurt Berglund",
-			},
-			message,
-			parents,
-			tree: tree.sha,
-		};
-
-		const commit = await this.historian.createCommit(commitParams);
-
-		// Create or update depending on if ref exists.
-		// TODO optimize the update to know up front if the ref exists
-		const existingRef = await this.getRef(branch);
-
-		await (existingRef
-			? this.upsertRef(branch, commit.sha)
-			: this.createRef(branch, commit.sha));
-
-		return commit;
-	}
-
-	private async createTreeCore(files: api.ITree, depth: number): Promise<resources.ITree> {
-		// If a id is specified use it rather than creating new
-		if (files.id) {
-			return this.getTree(files.id);
-		}
-
-		// Kick off the work to create all the tree values
-		const entriesP: Promise<resources.ICreateBlobResponse | resources.ITree>[] = [];
-		for (const entry of files.entries) {
-			switch (api.TreeEntry[entry.type]) {
-				case api.TreeEntry.Blob: {
-					const entryAsBlob = entry.value as api.IBlob;
-
-					// Symlinks currently directly references a folder off the root of the tree. We adjust
-					// the path based on the depth of the tree
-					if (entry.mode === api.FileMode.Symlink) {
-						entryAsBlob.contents = this.translateSymlink(entryAsBlob.contents, depth);
-					}
-
-					const blobP = this.createBlob(entryAsBlob.contents, entryAsBlob.encoding);
-					entriesP.push(blobP);
-					break;
-				}
-
-				case api.TreeEntry.Tree: {
-					const entryAsTree = entry.value as api.ITree;
-					const treeBlobP = this.createTreeCore(entryAsTree, depth + 1);
-					entriesP.push(treeBlobP);
-					break;
-				}
-
-				default:
-					throw new Error("Unknown entry type");
-			}
-		}
-
-		// Wait for them all to resolve
-		const entries = await Promise.all(entriesP);
-		const tree: resources.ICreateTreeEntry[] = [];
-		assert(entries.length === files.entries.length, "File entries length is not correct");
-
-		// Construct a new tree from the collection of hashes
-		for (let i = 0; i < files.entries.length; i++) {
-			const type =
-				files.entries[i].type === api.TreeEntry.Tree
-					? "tree"
-					: files.entries[i].type === api.TreeEntry.Blob
-					? "blob"
-					: "commit";
-
-			tree.push({
-				mode: files.entries[i].mode,
-				path: files.entries[i].path,
-				sha: entries[i].sha,
-				type,
-			});
-		}
-
-		const requestBody: resources.ICreateTreeParams = {
-			tree,
-		};
-		const treeP = this.historian.createTree(requestBody);
-		return treeP;
-	}
-
-	private translateSymlink(link: string, depth: number): string {
-		let prefix = "";
-		for (let i = 0; i <= depth; i++) {
-			prefix += "../";
-		}
-
-		return `${prefix}${link}`;
 	}
 }

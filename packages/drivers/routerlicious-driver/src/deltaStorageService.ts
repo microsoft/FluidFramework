@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { getW3CData } from "@fluidframework/driver-base";
 import {
 	IDeltaStorageService,
 	IDocumentDeltaStorageService,
@@ -15,7 +16,6 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { DocumentStorageService } from "./documentStorageService";
 import { RestWrapper } from "./restWrapperBase";
-import { IR11sResponse, getW3CData } from "./restWrapper";
 
 const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
 
@@ -116,24 +116,19 @@ export class DeltaStorageService implements IDeltaStorageService {
 			async (event) => {
 				const restWrapper = await this.getRestWrapper();
 				const url = this.getDeltaStorageUrl();
-				const response = await restWrapper.get<IR11sResponse<ISequencedDocumentMessage[]>>(
-					url,
-					{
-						from: from - 1,
-						to,
-					},
-					undefined,
-					true,
-				);
+				const response = await restWrapper.get<ISequencedDocumentMessage[]>(url, {
+					from: from - 1,
+					to,
+				});
 				event.end({
-					count: response.content.length,
+					length: response.content.length,
 					details: JSON.stringify({
 						firstOpSeqNumber: response.content[0]?.sequenceNumber,
 						lastOpSeqNumber:
 							response.content[response.content.length - 1]?.sequenceNumber,
 					}),
 					...response.propsToLog,
-					...getW3CData(response.requestUrl),
+					...getW3CData(response.requestUrl, "xmlhttprequest"),
 				});
 				return response.content;
 			},

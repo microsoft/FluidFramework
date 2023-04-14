@@ -4,6 +4,7 @@
  */
 
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
+import { IR11sResponse } from "./restWrapper";
 
 export abstract class RestWrapper {
 	constructor(
@@ -17,9 +18,15 @@ export abstract class RestWrapper {
 		url: string,
 		queryString?: QueryStringType,
 		headers?: AxiosRequestHeaders,
-		addNetworkCallProps?: boolean,
-	): Promise<T> {
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
+	): Promise<IR11sResponse<T>> {
 		const options: AxiosRequestConfig = {
+			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
 			maxBodyLength: this.maxBodyLength,
@@ -27,7 +34,7 @@ export abstract class RestWrapper {
 			method: "GET",
 			url: `${url}${this.generateQueryString(queryString)}`,
 		};
-		return this.request<T>(options, 200, addNetworkCallProps);
+		return this.request<T>(options, 200);
 	}
 
 	public async post<T>(
@@ -35,9 +42,15 @@ export abstract class RestWrapper {
 		requestBody: any,
 		queryString?: QueryStringType,
 		headers?: AxiosRequestHeaders,
-		addNetworkCallProps?: boolean,
-	): Promise<T> {
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
+	): Promise<IR11sResponse<T>> {
 		const options: AxiosRequestConfig = {
+			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
 			headers,
@@ -46,16 +59,22 @@ export abstract class RestWrapper {
 			method: "POST",
 			url: `${url}${this.generateQueryString(queryString)}`,
 		};
-		return this.request<T>(options, 201, addNetworkCallProps);
+		return this.request<T>(options, 201);
 	}
 
 	public async delete<T>(
 		url: string,
 		queryString?: QueryStringType,
 		headers?: AxiosRequestHeaders,
-		addNetworkCallProps?: boolean,
-	): Promise<T> {
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
+	): Promise<IR11sResponse<T>> {
 		const options: AxiosRequestConfig = {
+			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
 			maxBodyLength: this.maxBodyLength,
@@ -63,7 +82,7 @@ export abstract class RestWrapper {
 			method: "DELETE",
 			url: `${url}${this.generateQueryString(queryString)}`,
 		};
-		return this.request<T>(options, 204, addNetworkCallProps);
+		return this.request<T>(options, 204);
 	}
 
 	public async patch<T>(
@@ -71,9 +90,15 @@ export abstract class RestWrapper {
 		requestBody: any,
 		queryString?: QueryStringType,
 		headers?: AxiosRequestHeaders,
-		addNetworkCallProps?: boolean,
-	): Promise<T> {
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
+	): Promise<IR11sResponse<T>> {
 		const options: AxiosRequestConfig = {
+			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
 			headers,
@@ -82,14 +107,14 @@ export abstract class RestWrapper {
 			method: "PATCH",
 			url: `${url}${this.generateQueryString(queryString)}`,
 		};
-		return this.request<T>(options, 200, addNetworkCallProps);
+		return this.request<T>(options, 200);
 	}
 
 	protected abstract request<T>(
 		options: AxiosRequestConfig,
 		statusCode: number,
 		addNetworkCallProps?: boolean,
-	): Promise<T>;
+	): Promise<IR11sResponse<T>>;
 
 	protected generateQueryString(queryStringValues?: QueryStringType) {
 		if (this.defaultQueryString || queryStringValues) {

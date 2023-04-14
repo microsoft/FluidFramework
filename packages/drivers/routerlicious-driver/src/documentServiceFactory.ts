@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { getW3CData } from "@fluidframework/driver-base";
 import {
 	FiveDaysMs,
 	IDocumentService,
@@ -27,7 +28,7 @@ import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
-import { IR11sResponse, RouterliciousOrdererRestWrapper, getW3CData } from "./restWrapper";
+import { RouterliciousOrdererRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
@@ -128,15 +129,17 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			},
 			async (event) => {
 				// @TODO: Remove returned "string" type when removing back-compat code
-				const postRes = await ordererRestWrapper.post<
-					{ id: string; token?: string; session?: ISession } | string
-				>(`/documents/${tenantId}`, {
-					summary: convertSummaryToCreateNewSummary(appSummary),
-					sequenceNumber: documentAttributes.sequenceNumber,
-					values: quorumValues,
-					enableDiscovery: this.driverPolicies.enableDiscovery,
-					generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
-				});
+				const postRes = (
+					await ordererRestWrapper.post<
+						{ id: string; token?: string; session?: ISession } | string
+					>(`/documents/${tenantId}`, {
+						summary: convertSummaryToCreateNewSummary(appSummary),
+						sequenceNumber: documentAttributes.sequenceNumber,
+						values: quorumValues,
+						enableDiscovery: this.driverPolicies.enableDiscovery,
+						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+					})
+				).content;
 
 				event.end({
 					docId: typeof postRes === "string" ? postRes : postRes.id,
@@ -255,15 +258,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				},
 				async (event) => {
 					// The service responds with the current document session associated with the container.
-					const response = await ordererRestWrapper.get<IR11sResponse<ISession>>(
+					const response = await ordererRestWrapper.get<ISession>(
 						`${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`,
-						undefined,
-						undefined,
-						true,
 					);
 					event.end({
 						...response.propsToLog,
-						...getW3CData(response.requestUrl),
+						...getW3CData(response.requestUrl, "xmlhttprequest"),
 					});
 					return response.content;
 				},

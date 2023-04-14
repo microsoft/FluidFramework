@@ -47,6 +47,15 @@ export interface IR11sResponse<T> {
 	requestUrl: string;
 }
 
+export function createR11sResponseFromContent<T>(content: T): IR11sResponse<T> {
+	return {
+		content,
+		headers: new Map(),
+		propsToLog: {},
+		requestUrl: "",
+	};
+}
+
 function headersToMap(headers: Headers) {
 	const newHeaders = new Map<string, string>();
 	for (const [key, value] of headers.entries()) {
@@ -66,7 +75,7 @@ export function getPropsToLogFromResponse(headers: {
 	// We rename headers so that otel doesn't scrub them away. Otel doesn't allow
 	// certain characters in headers including '-'
 	const headersToLog: LoggingHeader[] = [
-		{ headerName: "x-correlation-id", logName: "clientCorrelationId" },
+		{ headerName: "x-correlation-id", logName: "requestCorrelationId" },
 		{ headerName: "content-encoding", logName: "contentEncoding" },
 		{ headerName: "content-type", logName: "contentType" },
 	];
@@ -102,9 +111,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	protected async request<T>(
 		requestConfig: AxiosRequestConfig,
 		statusCode: number,
-		addNetworkCallProps?: boolean,
 		canRetry = true,
-	): Promise<T> {
+	): Promise<IR11sResponse<T>> {
 		const config = {
 			...requestConfig,
 			headers: this.generateHeaders(requestConfig.headers),
@@ -143,38 +151,32 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
 		// Success
 		if (response.ok || response.status === statusCode) {
-			const result = responseBody;
-			if (addNetworkCallProps) {
-				const headers = headersToMap(response.headers);
-				return {
-					content: result,
-					headers,
-					requestUrl: fetchRequestConfig[0].toString(),
-					propsToLog: {
-						...getPropsToLogFromResponse(headers),
-						bodySize,
-						receiveContentTime,
-						parseTime,
-						callDuration: res.duration,
-					},
-				} as unknown as T;
-			} else {
-				return result as T;
-			}
+			const result = responseBody as T;
+			const headers = headersToMap(response.headers);
+			return {
+				content: result,
+				headers,
+				requestUrl: fetchRequestConfig[0].toString(),
+				propsToLog: {
+					...getPropsToLogFromResponse(headers),
+					bodySize,
+					receiveContentTime,
+					parseTime,
+					fetchTime: res.duration,
+				},
+			};
 		}
 		// Failure
 		if (response.status === 401 && canRetry) {
 			// Refresh Authorization header and retry once
 			this.token = await this.fetchRefreshedToken(true /* refreshToken */);
-			return this.request<T>(config, statusCode, addNetworkCallProps, false);
+			return this.request<T>(config, statusCode, false);
 		}
 		if (response.status === 429 && responseBody?.retryAfter > 0) {
 			// Retry based on retryAfter[Seconds]
-			return new Promise<T>((resolve, reject) =>
+			return new Promise<IR11sResponse<T>>((resolve, reject) =>
 				setTimeout(() => {
-					this.request<T>(config, statusCode, addNetworkCallProps)
-						.then(resolve)
-						.catch(reject);
+					this.request<T>(config, statusCode).then(resolve).catch(reject);
 				}, responseBody.retryAfter * 1000),
 			);
 		}
@@ -371,73 +373,4 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 
 		return restWrapper;
 	}
-}
-
-export function getW3CData(url: string) {
-	// From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
-	// fetchStart: immediately before the browser starts to fetch the resource.
-	// requestStart: immediately before the browser starts requesting the resource from the server
-	// responseStart: immediately after the browser receives the first byte of the response from the server.
-	// responseEnd: immediately after the browser receives the last byte of the resource
-	//              or immediately before the transport connection is closed, whichever comes first.
-	// secureConnectionStart: immediately before the browser starts the handshake process to secure the
-	//              current connection. If a secure connection is not used, this property returns zero.
-	// startTime: Time when the resource fetch started. This value is equivalent to fetchStart.
-	// domainLookupStart: immediately before the browser starts the domain name lookup for the resource.
-	// domainLookupEnd: immediately after the browser finishes the domain name lookup for the resource.
-	// redirectStart: start time of the fetch which that initiates the redirect.
-	// redirectEnd: immediately after receiving the last byte of the response of the last redirect.
-	let dnsLookupTime: number | undefined; // domainLookupEnd - domainLookupStart
-	let redirectTime: number | undefined; // redirectEnd - redirectStart
-	let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
-	let secureConnectionTime: number | undefined; // connectEnd  - secureConnectionStart
-	let responseNetworkTime: number | undefined; // responsEnd - responseStart
-	let fetchStartToResponseEndTime: number | undefined; // responseEnd  - fetchStart
-	let reqStartToResponseEndTime: number | undefined; // responseEnd - requestStart
-	let networkTime: number | undefined; // responseEnd - responseStart
-
-	// getEntriesByType is only available in browser performance object
-	const resources1 = performance.getEntriesByType?.("resource") ?? [];
-	// Usually the latest fetch call is to the end of resources, so we start from the end.
-	for (let i = resources1.length - 1; i > 0; i--) {
-		const indResTime = resources1[i] as PerformanceResourceTiming;
-		const resource_name = indResTime.name.toString();
-		const resource_initiatortype = indResTime.initiatorType;
-		if (
-			resource_initiatortype.localeCompare("xmlhttprequest") === 0 &&
-			resource_name.includes(url)
-		) {
-			redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
-			dnsLookupTime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
-			tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
-			secureConnectionTime =
-				indResTime.secureConnectionStart > 0
-					? indResTime.connectEnd - indResTime.secureConnectionStart
-					: undefined;
-			responseNetworkTime =
-				indResTime.responseStart > 0
-					? indResTime.responseEnd - indResTime.responseStart
-					: undefined;
-			fetchStartToResponseEndTime =
-				indResTime.fetchStart > 0
-					? indResTime.responseEnd - indResTime.fetchStart
-					: undefined;
-			reqStartToResponseEndTime =
-				indResTime.requestStart > 0
-					? indResTime.responseEnd - indResTime.requestStart
-					: undefined;
-			networkTime = responseNetworkTime;
-			break;
-		}
-	}
-	return {
-		dnsLookupTime,
-		redirectTime,
-		tcpHandshakeTime,
-		secureConnectionTime,
-		responseNetworkTime,
-		fetchStartToResponseEndTime,
-		reqStartToResponseEndTime,
-		networkTime,
-	};
 }

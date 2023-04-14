@@ -14,16 +14,6 @@ import { QueryStringType, RestWrapper } from "./restWrapperBase";
 import { IR11sResponse } from "./restWrapper";
 import { IHistorian } from "./storageContracts";
 
-function endsWith(value: string, endings: string[]): boolean {
-	for (const ending of endings) {
-		if (value.endsWith(ending)) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
 export interface ICredentials {
 	user: string;
 	password: string;
@@ -40,7 +30,6 @@ export class Historian implements IHistorian {
 	private readonly cacheBust: boolean;
 
 	constructor(
-		public endpoint: string,
 		private readonly historianApi: boolean,
 		disableCache: boolean,
 		private readonly restWrapper: RestWrapper,
@@ -53,24 +42,16 @@ export class Historian implements IHistorian {
 		}
 	}
 
-	public async getHeader(sha: string): Promise<any> {
-		return this.historianApi
-			? this.restWrapper.get(`/headers/${encodeURIComponent(sha)}`, this.getQueryString())
-			: this.getHeaderDirect(sha);
-	}
-
-	public async getFullTree(sha: string): Promise<any> {
-		return this.restWrapper.get(`/tree/${encodeURIComponent(sha)}`, this.getQueryString());
-	}
-
-	public async getBlob(sha: string): Promise<git.IBlob> {
+	public async getBlob(sha: string): Promise<IR11sResponse<git.IBlob>> {
 		return this.restWrapper.get<git.IBlob>(
 			`/git/blobs/${encodeURIComponent(sha)}`,
 			this.getQueryString(),
 		);
 	}
 
-	public async createBlob(blob: git.ICreateBlobParams): Promise<git.ICreateBlobResponse> {
+	public async createBlob(
+		blob: git.ICreateBlobParams,
+	): Promise<IR11sResponse<git.ICreateBlobResponse>> {
 		return this.restWrapper.post<git.ICreateBlobResponse>(
 			`/git/blobs`,
 			blob,
@@ -78,64 +59,29 @@ export class Historian implements IHistorian {
 		);
 	}
 
-	public async getContent(path: string, ref: string): Promise<any> {
-		return this.restWrapper.get(`/contents/${path}`, this.getQueryString({ ref }));
-	}
-
-	public async getCommits(sha: string, count: number): Promise<git.ICommitDetails[]> {
+	public async getCommits(
+		sha: string,
+		count: number,
+	): Promise<IR11sResponse<git.ICommitDetails[]>> {
 		return this.restWrapper
 			.get<git.ICommitDetails[]>(`/commits`, this.getQueryString({ count, sha }))
 			.catch((error) =>
-				error === 400 || error === 404
-					? ([] as git.ICommitDetails[])
-					: Promise.reject<git.ICommitDetails[]>(error),
+				error.statusCode === 400 || error.statusCode === 404
+					? {
+							content: [],
+							headers: new Map(),
+							propsToLog: {},
+							requestUrl: "",
+					  }
+					: Promise.reject<IR11sResponse<git.ICommitDetails[]>>(error),
 			);
 	}
 
-	public async getCommit(sha: string): Promise<git.ICommit> {
-		return this.restWrapper.get<git.ICommit>(
-			`/git/commits/${encodeURIComponent(sha)}`,
-			this.getQueryString(),
-		);
-	}
-
-	public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-		return this.restWrapper.post<git.ICommit>(`/git/commits`, commit, this.getQueryString());
-	}
-
-	public async getRefs(): Promise<git.IRef[]> {
-		return this.restWrapper.get(`/git/refs`, this.getQueryString());
-	}
-
-	public async getRef(ref: string): Promise<git.IRef> {
-		return this.restWrapper.get(`/git/refs/${ref}`, this.getQueryString());
-	}
-
-	public async createRef(params: git.ICreateRefParams): Promise<git.IRef> {
-		return this.restWrapper.post(`/git/refs`, params, this.getQueryString());
-	}
-
-	public async updateRef(ref: string, params: git.IPatchRefParams): Promise<git.IRef> {
-		return this.restWrapper.patch(`/git/refs/${ref}`, params, this.getQueryString());
-	}
-
-	public async deleteRef(ref: string): Promise<void> {
-		await this.restWrapper.delete(`/git/refs/${ref}`, this.getQueryString());
-	}
-
-	public async createTag(tag: git.ICreateTagParams): Promise<git.ITag> {
-		return this.restWrapper.post(`/git/tags`, tag, this.getQueryString());
-	}
-
-	public async getTag(tag: string): Promise<git.ITag> {
-		return this.restWrapper.get(`/git/tags/${tag}`, this.getQueryString());
-	}
-
-	public async createTree(tree: git.ICreateTreeParams): Promise<git.ITree> {
+	public async createTree(tree: git.ICreateTreeParams): Promise<IR11sResponse<git.ITree>> {
 		return this.restWrapper.post<git.ITree>(`/git/trees`, tree, this.getQueryString());
 	}
 
-	public async getTree(sha: string, recursive: boolean): Promise<git.ITree> {
+	public async getTree(sha: string, recursive: boolean): Promise<IR11sResponse<git.ITree>> {
 		return this.restWrapper.get<git.ITree>(
 			`/git/trees/${encodeURIComponent(sha)}`,
 			this.getQueryString({ recursive: recursive ? 1 : 0 }),
@@ -144,44 +90,19 @@ export class Historian implements IHistorian {
 	public async createSummary(
 		summary: IWholeSummaryPayload,
 		initial?: boolean,
-	): Promise<IWriteSummaryResponse> {
+	): Promise<IR11sResponse<IWriteSummaryResponse>> {
 		return this.restWrapper.post<IWriteSummaryResponse>(
 			`/git/summaries`,
 			summary,
 			this.getQueryString(initial !== undefined ? { initial } : undefined),
 		);
 	}
-	public async deleteSummary(softDelete: boolean): Promise<void> {
-		const headers = { "Soft-Delete": softDelete };
-		return this.restWrapper.delete(`/git/summaries`, this.getQueryString(), headers);
-	}
+
 	public async getSummary(sha: string): Promise<IR11sResponse<IWholeFlatSummary>> {
-		return this.restWrapper.get<IR11sResponse<IWholeFlatSummary>>(
+		return this.restWrapper.get<IWholeFlatSummary>(
 			`/git/summaries/${sha}`,
 			this.getQueryString(),
-			undefined,
-			true,
 		);
-	}
-
-	private async getHeaderDirect(sha: string): Promise<git.IHeader> {
-		const tree = await this.getTree(sha, true);
-
-		const includeBlobs = [".attributes", ".blobs", ".messages", "header"];
-
-		const blobsP: Promise<git.IBlob>[] = [];
-		for (const entry of tree.tree) {
-			if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
-				const blobP = this.getBlob(entry.sha);
-				blobsP.push(blobP);
-			}
-		}
-		const blobs = await Promise.all(blobsP);
-
-		return {
-			blobs,
-			tree,
-		};
 	}
 
 	private getQueryString(queryString?: QueryStringType): QueryStringType {
