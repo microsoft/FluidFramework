@@ -659,10 +659,12 @@ export class IdCompressor {
 				currentCluster.count += remainingCapacity;
 				eagerFinalIdCount = remainingCapacity;
 				remainingCount -= remainingCapacity;
-				this.logger?.sendTelemetryEvent({
-					eventName: 'SharedTreeIdCompressor:OverfilledCluster',
-					sessionId: this.localSessionId,
-				});
+				if (isLocal) {
+					this.logger?.sendTelemetryEvent({
+						eventName: 'SharedTreeIdCompressor:OverfilledCluster',
+						sessionId: this.localSessionId,
+					});
+				}
 			}
 		} else {
 			// Session has never made a cluster, form a new one with the session UUID as the baseUuid
