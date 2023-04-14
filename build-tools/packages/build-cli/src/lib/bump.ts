@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import path from "node:path";
+import execa from "execa";
 import { writeFile, readJson } from "fs-extra";
 import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import * as semver from "semver";
@@ -13,7 +14,6 @@ import {
 	Logger,
 	Package,
 	VersionBag,
-	exec,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import {
@@ -188,8 +188,13 @@ export async function bumpReleaseGroup(
 			cmd += " && npm run build:genver";
 		}
 	}
-	const results = await exec(cmd, workingDir, `Error bumping ${name}`);
-	log?.verbose(results);
+
+	try {
+		const results = await execa(cmd, { cwd: workingDir });
+		log?.verbose(results.stdout);
+	} catch (error: any) {
+		log?.errorLog(`Error running command: ${cmd}\n${error}`);
+	}
 
 	if (releaseGroupOrPackage instanceof Package) {
 		// Return early; packages only need to be bumped using npm. The rest of the logic is only for release groups.
