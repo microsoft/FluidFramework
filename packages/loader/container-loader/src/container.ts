@@ -350,7 +350,6 @@ export class Container
 								// and continuously retrying (consider offline mode)
 								// Host has no container to close, so it's prudent to do it here
 								container.close(err);
-								container.dispose(err);
 								onClosed(err);
 							},
 						);
@@ -1172,7 +1171,6 @@ export class Container
 					const newError = normalizeError(error);
 					newError.addTelemetryProperties({ resolvedUrl: this.resolvedUrl?.url });
 					this.close(newError);
-					this.dispose(newError);
 					throw newError;
 				}
 			},
@@ -1319,7 +1317,6 @@ export class Container
 		// pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
 		const error = new GenericError("Existing context does not satisfy incoming proposal");
 		this.close(error);
-		this.dispose(error);
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1388,7 +1385,6 @@ export class Container
 			// if we have pendingLocalState we can load without storage; don't wait for connection
 			this.storageAdapter.connectToService(this.service).catch((error) => {
 				this.close(error);
-				this.dispose(error);
 			});
 		}
 
@@ -1701,7 +1697,6 @@ export class Container
 				this.processCodeProposal().catch((error) => {
 					const normalizedError = normalizeError(error);
 					this.close(normalizedError);
-					this.dispose(normalizedError);
 					throw error;
 				});
 			}
@@ -1974,7 +1969,6 @@ export class Container
 					{ messageType: type },
 				);
 				this.close(newError);
-				this.dispose(newError);
 				return -1;
 			}
 		}

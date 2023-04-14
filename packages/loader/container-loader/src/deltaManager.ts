@@ -357,7 +357,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => {
 				this.close(error);
-				this.close(error, true);
 			},
 			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
@@ -379,7 +378,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.lastMessage,
 			);
 			this.close(newError);
-			this.close(newError, true);
 		});
 
 		// Inbound signal queue
@@ -398,7 +396,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this._inboundSignal.on("error", (error) => {
 			const newError = normalizeError(error);
 			this.close(newError);
-			this.close(newError, true);
 		});
 
 		// Initially, all queues are created paused.
@@ -1059,7 +1056,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
 			this.close(normalizeError(error));
-			this.close(normalizeError(error), true);
 		} finally {
 			this.refreshDelayInfo(this.deltaStorageDelayId);
 			this.fetchReason = undefined;
