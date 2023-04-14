@@ -46,7 +46,7 @@ import {
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
 const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
-const attemptOnceBecauseOfRestart = 1; // Only summarize once
+const numberOfAttemptsOnRestartAsRecovery = 1; // Only summarize once
 
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
@@ -602,7 +602,7 @@ export class RunningSummarizer implements IDisposable {
 				let summaryAttemptsPerPhase = 0;
 				// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
 				let totalAttempts = this.shouldAbortOnSummaryFailure
-					? attemptOnceBecauseOfRestart
+					? numberOfAttemptsOnRestartAsRecovery
 					: this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
 					  defaultNumberSummarizationAttempts;
 
@@ -689,17 +689,16 @@ export class RunningSummarizer implements IDisposable {
 					this.stopSummarizerCallback("latestSummaryStateStale");
 					this.runtime.closeFn();
 					return;
-				} else {
-					// If all attempts failed, log error (with last attempt info) and close the summarizer container
-					this.mc.logger.sendErrorEvent(
-						{
-							eventName: "FailToSummarize",
-							reason,
-							message: lastResult?.message,
-						},
-						lastResult?.error,
-					);
 				}
+				// If all attempts failed, log error (with last attempt info) and close the summarizer container
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "FailToSummarize",
+						reason,
+						message: lastResult?.message,
+					},
+					lastResult?.error,
+				);
 
 				this.stopSummarizerCallback("failToSummarize");
 			},
