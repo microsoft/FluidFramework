@@ -12,19 +12,24 @@ if [ -f "lerna.json" ]; then
     # this is a release build of a release group
     # if [ "$INTERDEPENDENCY_RANGE" != " " ]; then
       # tilde or caret dependency ranges
+      # echo "release group release build with tilde or caret deps"
+      echo "release group with '$INTERDEPENDENCY_RANGE' deps"
       echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"$INTERDEPENDENCY_RANGE\" -xv"
       flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="$INTERDEPENDENCY_RANGE" -xv
     # else
     #   # exact dependencies
+    #   echo "release group release build with exact deps"
     #   echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"\" -xv"
     #   flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="$INTERDEPENDENCY_RANGE" -xv
     # fi
   else
-    # this is a dev/test build of a release group
+    # this is a non-release build of a release group
+    echo "release group non-release build"
     echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType=\"\" -xv"
     flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --exactDepType="" -xv
   fi
 else
   # this is an independent package
+  echo "independent package"
   npm version $SETVERSION_VERSION --no-git-tag-version -f --allow-same-version
 fi
