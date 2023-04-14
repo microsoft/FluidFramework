@@ -18,18 +18,25 @@ export {
 	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
+	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
 	DisconnectContainer,
 	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	RootDataVisualizations,
 } from "./container-devtools-messages";
-export { ContainerList, GetContainerList } from "./devtools-messages";
-export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
+export {
+	ContainerList,
+	DevtoolsFeatures,
+	GetContainerList,
+	GetDevtoolsFeatures,
+} from "./devtools-messages";
+export { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export { GetTelemetryHistory, TelemetryEvent, TelemetryHistory } from "./telemetry-messages";
 export {

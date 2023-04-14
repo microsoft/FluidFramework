@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-shared",
-	"version": "0.1040.1000",
+	"version": "0.1041.1000",
 	"description": "Fluid server shared services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -53,12 +53,12 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/gitresources": "^0.1040.1000",
-		"@fluidframework/protocol-base": "^0.1040.1000",
+		"@fluidframework/gitresources": "^0.1041.1000",
+		"@fluidframework/protocol-base": "^0.1041.1000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/server-services-client": "^0.1040.1000",
-		"@fluidframework/server-services-core": "^0.1040.1000",
-		"@fluidframework/server-services-telemetry": "^0.1040.1000",
+		"@fluidframework/server-services-client": "^0.1041.1000",
+		"@fluidframework/server-services-core": "^0.1041.1000",
+		"@fluidframework/server-services-telemetry": "^0.1041.1000",
 		"@socket.io/redis-adapter": "^7.2.0",
 		"body-parser": "^1.17.1",
 		"debug": "^4.1.1",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
+import { ISourcedDevtoolsMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
 
 import {
 	DevToolsInitAcknowledgement,
@@ -45,7 +45,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 	 * Listen for init messages from the Devtools Script, and instantiate tab (Content Script)
 	 * connections as needed.
 	 */
-	const devtoolsMessageListener = (message: Partial<ISourcedDebuggerMessage>): void => {
+	const devtoolsMessageListener = (message: Partial<ISourcedDevtoolsMessage>): void => {
 		if (!isDebuggerMessage(message)) {
 			// Since this handler is attached strictly to our Devtools Script port,
 			// we should *only* see our own messages.
@@ -89,7 +89,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 					// Forward incoming messages from the tab (Content script) to the Devtools script
 
 					tabConnection.onMessage.addListener(
-						(tabMessage: Partial<ISourcedDebuggerMessage>): void => {
+						(tabMessage: Partial<ISourcedDevtoolsMessage>): void => {
 							if (isDebuggerMessage(tabMessage)) {
 								relayMessageToPort(
 									tabMessage,

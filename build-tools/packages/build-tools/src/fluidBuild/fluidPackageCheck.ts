@@ -255,7 +255,7 @@ export class FluidPackageCheck {
 			if (this.ensureTestDevDependency(pkg, fix, "nyc")) {
 				fixed = true;
 			}
-			if (pkg.packageJson.nyc) {
+			if (pkg.packageJson.nyc !== undefined && pkg.packageJson.nyc !== null) {
 				if (pkg.packageJson.nyc["exclude-after-remap"] !== false) {
 					this.logWarn(pkg, `nyc.exclude-after-remap need to be false`, fix);
 					if (fix) {
@@ -954,8 +954,8 @@ export class FluidPackageCheck {
 			}
 			for (const depPackage of Object.keys(scriptDep)) {
 				if (
-					!pkg.packageJson.dependencies[depPackage] &&
-					!pkg.packageJson.devDependencies[depPackage]
+					!pkg.packageJson.dependencies?.[depPackage] &&
+					!pkg.packageJson.devDependencies?.[depPackage]
 				) {
 					this.logWarn(
 						pkg,

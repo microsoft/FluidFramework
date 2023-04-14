@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
 
-import { execAsync, FluidRepo } from "@fluidframework/build-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
 import {
@@ -311,16 +312,21 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { context, releaseGroup, releaseVersion } = data;
+	const { context, releaseGroup, releaseVersion, shouldCheckBranch } = data;
+	assert(context !== undefined, "Context is undefined.");
 	assert(isReleaseGroup(releaseGroup), `Not a release group: ${releaseGroup}`);
 
 	const currentBranch = await context.gitRepo.getCurrentBranchName();
 	const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
 
-	if (currentBranch === releaseBranch) {
-		BaseStateHandler.signalSuccess(machine, state);
+	if (shouldCheckBranch) {
+		if (currentBranch === releaseBranch) {
+			BaseStateHandler.signalSuccess(machine, state);
+		} else {
+			BaseStateHandler.signalFailure(machine, state);
+		}
 	} else {
-		BaseStateHandler.signalFailure(machine, state);
+		BaseStateHandler.signalSuccess(machine, state);
 	}
 
 	return true;
@@ -390,7 +396,7 @@ export const checkPolicy: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execAsync(`npm run policy-check`, {
+		const result = await execa(`npm run policy-check`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);
@@ -448,7 +454,7 @@ export const checkAssertTagging: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execAsync(`npm run policy-check:asserts`, {
+		const result = await execa(`npm run policy-check:asserts`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);

@@ -4,7 +4,7 @@
  */
 
 import { HasContainerId } from "../../CommonInterfaces";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetContainerState.Message}.
@@ -13,7 +13,7 @@ import { IDebuggerMessage } from "../Messages";
  */
 export namespace GetContainerState {
 	/**
-	 * {@link GetContainerState.Message} {@link IDebuggerMessage."type"}.
+	 * {@link GetContainerState.Message} {@link IDevtoolsMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -33,9 +33,9 @@ export namespace GetContainerState {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDebuggerMessage<HasContainerId> {
+	export interface Message extends IDevtoolsMessage<HasContainerId> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
