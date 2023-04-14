@@ -230,10 +230,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private emitAndRebaseAnchors(change: TChange | TaggedChange<TChange>[]): TChange {
 		let composedChange: TChange;
 		if (Array.isArray(change)) {
-			composedChange = this.rebaser.changeRebaser.compose(change);
 			if (change.length === 0) {
-				return composedChange;
+				return this.noChange;
 			}
+			composedChange = this.rebaser.changeRebaser.compose(change);
 		} else {
 			composedChange = change;
 		}
