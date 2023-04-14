@@ -332,6 +332,11 @@ export class IdCompressor {
 	private localIdCount = 0;
 
 	/**
+	 * Number of eager final IDs allocated since the last range was finalized.
+	 */
+	private eagerFinalIdCount = 0;
+
+	/**
 	 * The most recent (i.e. smallest, due to being negative) local ID in a range returned by `takeNextCreationRange`.
 	 * Undefined if no non-empty ranges have ever been returned by this compressor.
 	 */
@@ -577,7 +582,6 @@ export class IdCompressor {
 		const finalizeCount = normalizedLastFinalizedLocal - newLastFinalizedLocal;
 		assert(finalizeCount >= 1, 'Cannot finalize an empty range.');
 
-		let eagerFinalIdCount = 0;
 		let initialClusterCount = 0;
 		let remainingCount = finalizeCount;
 		let newBaseUuid: NumericUuid | undefined;
@@ -603,7 +607,6 @@ export class IdCompressor {
 			const hasRoom = overflow <= 0;
 			if (hasRoom || currentBaseFinalId === this.finalIdToCluster.maxKey()) {
 				currentCluster.count += remainingCount;
-				eagerFinalIdCount = remainingCount;
 				remainingCount = 0;
 				// The common case is that there is room in the cluster, and the new final IDs can simply be added to it
 				if (!hasRoom) {
@@ -657,7 +660,6 @@ export class IdCompressor {
 				// form a new one by incrementing the previous baseUuid
 				newBaseUuid = incrementUuid(currentCluster.baseUuid, currentCluster.capacity);
 				currentCluster.count += remainingCapacity;
-				eagerFinalIdCount = remainingCapacity;
 				remainingCount -= remainingCapacity;
 				if (isLocal) {
 					this.logger?.sendTelemetryEvent({
@@ -834,11 +836,13 @@ export class IdCompressor {
 		if (isLocal) {
 			this.logger?.sendTelemetryEvent({
 				eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
-				eagerFinalIdCount: eagerFinalIdCount - (overrides?.length ?? 0),
+				eagerFinalIdCount: this.eagerFinalIdCount,
 				localIdCount: remainingCount + (overrides?.length ?? 0),
 				overridesCount: overrides?.length ?? 0,
 				sessionId: this.localSessionId,
 			});
+
+			this.eagerFinalIdCount = 0;
 		}
 
 		session.lastFinalizedLocalId = newLastFinalizedLocal;
@@ -1007,6 +1011,7 @@ export class IdCompressor {
 				lastFinalKnown - currentClusterDetails.clusterBase + 1 < cluster.capacity
 			) {
 				eagerFinalId = (lastFinalKnown + 1) as FinalCompressedId & SessionSpaceCompressedId;
+				this.eagerFinalIdCount++;
 			}
 		}
 
