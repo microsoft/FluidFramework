@@ -1,7 +1,7 @@
 {
 	"name": "@fluid-example/attributable-map-demo",
 	"version": "0.1.0",
-	"description": "An example app built using Create React App plus a custom Fluid React hook",
+	"description": "An web app demo using the attributableMap",
 	"homepage": "https://fluidframework.com",
 	"repository": "microsoft/FluidExamples",
 	"license": "MIT",
