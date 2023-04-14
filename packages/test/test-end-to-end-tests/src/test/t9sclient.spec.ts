@@ -10,11 +10,19 @@ import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { IContainer } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { waitForContainerConnection } from "@fluidframework/test-utils";
+import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 
 describeNoCompat("Tinylicious client", (getTestObjectProvider) => {
-	// Regression test for _______
-	it.only("interactive client doesn't change its client details when summarizer starts", async function () {
+	let provider: ITestObjectProvider;
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+	});
+
+	it("interactive client doesn't change its client details when summarizer starts", async function () {
+		// This test only applies to tinylicious
+		if (provider.driver.type !== "tinylicious") {
+			this.skip();
+		}
 		// This test validates behavior that only occurs when the summarizer is created with the same loader that created
 		// the container.
 		// Manually creating a summarizer (Summarizer.create()) requires passing in a loader but Tinylicious client does not
