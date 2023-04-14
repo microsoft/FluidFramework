@@ -65,7 +65,6 @@ export class RunningSummarizer implements IDisposable {
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		runtime: ISummarizerRuntime,
-		listenToDeltaManagerOps: boolean,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -78,7 +77,6 @@ export class RunningSummarizer implements IDisposable {
 			cancellationToken,
 			stopSummarizerCallback,
 			runtime,
-			listenToDeltaManagerOps,
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
@@ -164,7 +162,6 @@ export class RunningSummarizer implements IDisposable {
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		private readonly runtime: ISummarizerRuntime,
-		listenToDeltaManagerOps: boolean,
 	) {
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
@@ -236,23 +233,25 @@ export class RunningSummarizer implements IDisposable {
 			this.mc.logger,
 		);
 
+		// Listen to deltaManager for non-runtime ops
 		this.deltaManagerListener = (op) => {
-			this.handleOp(op, isRuntimeMessage(op));
+			if (!isRuntimeMessage(op)) {
+				this.handleOp(op, false);
+			}
 		};
 
+		// Listen to runtime for runtime ops
 		this.runtimeListener = (op, runtimeMessage) => {
-			this.handleOp(op, runtimeMessage);
+			if (runtimeMessage) {
+				this.handleOp(op, true);
+			}
 		};
 
-		// Purpose of this argument is for back-compat
-		// It can be set to false once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
-		// Expectation when this is false is that the consumer of this class will call "handleOp" explicitly
+		// Purpose of listening to deltaManager is for back-compat
+		// Can remove and only listen to runtime once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
 		// Tracked by AB#3883
-		if (listenToDeltaManagerOps) {
-			this.runtime.deltaManager.on("op", this.deltaManagerListener);
-		} else {
-			this.runtime.on?.("op", this.runtimeListener);
-		}
+		this.runtime.deltaManager.on("op", this.deltaManagerListener);
+		this.runtime.on?.("op", this.runtimeListener);
 	}
 
 	private async handleSummaryAck(): Promise<number> {
