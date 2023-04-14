@@ -3221,7 +3221,7 @@ export class ContainerRuntime
 				{
 					...event,
 					eventName: "RestartInsteadOfRefreshFromServerFetch",
-					originatingEventName: event.eventName,
+					codePath: event.eventName,
 					message: "Stopping fetch from storage",
 					versionId: versionId != null ? versionId : undefined,
 				},
