@@ -538,19 +538,19 @@ export abstract class RestWrapper {
     // (undocumented)
     protected defaultQueryString: Record<string, unknown>;
     // (undocumented)
-    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
+    delete<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected generateQueryString(queryStringValues: Record<string, unknown>): string;
     // (undocumented)
-    get<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
+    get<T>(url: string, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected readonly maxBodyLength: number;
     // (undocumented)
     protected readonly maxContentLength: number;
     // (undocumented)
-    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
+    patch<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
-    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders): Promise<T>;
+    post<T>(url: string, requestBody: any, queryString?: Record<string, unknown>, headers?: AxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }
