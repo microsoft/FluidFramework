@@ -7,15 +7,10 @@
 
 import Path from "path";
 
-import { delay } from "@fluidframework/common-utils";
-
 import Puppeteer, { Browser, Page } from "puppeteer";
 
 // Paths are relative to src/test
 const extensionPath = Path.resolve(__dirname, "..", "..", "dist");
-// const backgroundScriptPath = Path.join("..", "background", "BackgroundScript.js");
-// const devtoolsScriptPath = Path.join("..", "devtools", "DevtoolsScript.js");
-// const contentScriptPath = Path.join("..", "content", "ContentScript.js");
 
 describe("Devtools Chromium extension integration tests", () => {
 	let browser: Browser | undefined;
@@ -36,21 +31,38 @@ describe("Devtools Chromium extension integration tests", () => {
 				"--show-component-extension-options",
 			],
 		});
+	}, 10_000);
+
+	beforeEach(async () => {
+		const targets = await browser!.targets();
+
+		const backgroundPageTarget = targets.find(
+			(_target) => (_target.type() as unknown) === "background_page",
+		);
+
+		if (backgroundPageTarget === undefined) {
+			throw new Error("Could not find background page.");
+		}
+
+		await backgroundPageTarget.page();
 
 		// Creates a new tab
-		page = await browser.newPage();
+		page = await browser!.newPage();
+		await page.goto(`file://${__dirname}/index.html`, { waitUntil: "load" });
+	});
 
-		// navigates to some specific page
-		await page.goto(`file://${__dirname}/index.html`);
-	}, 10_000);
+	afterEach(async () => {
+		await page?.close();
+	});
 
 	afterAll(async () => {
 		// Tear down the browser
-		await browser!.close();
+		await browser?.close();
 	});
 
+	// eslint-disable-next-line jest/expect-expect
 	it("Smoke test", async () => {
-		await delay(10_000);
-		expect(true).toBe(true);
-	}, 15_000);
+		// TODO: extract ID to constant
+		await page!.waitForSelector("#fluid-devtools-view"); // Will fail if not found
+	}, 150_000);
 });

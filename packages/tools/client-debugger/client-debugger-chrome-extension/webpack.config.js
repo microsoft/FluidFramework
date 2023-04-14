@@ -16,7 +16,11 @@ module.exports = {
 	entry: {
 		// The Devtools script and view
 		"devtools/DevtoolsScript": path.join(sourceDirectoryPath, "devtools", "DevtoolsScript.ts"),
-		"devtools/RootView": path.join(sourceDirectoryPath, "devtools", "RootView.tsx"),
+		"devtools/InitializeViewScript": path.join(
+			sourceDirectoryPath,
+			"devtools",
+			"InitializeViewScript.ts",
+		),
 
 		// The Background script
 		"background/BackgroundScript": path.join(

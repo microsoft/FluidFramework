@@ -243,7 +243,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	}, [messageRelay, setContainers]);
 
 	return (
-		<Stack enableScopedSelectors horizontal styles={stackStyles}>
+		<Stack enableScopedSelectors horizontal styles={stackStyles} id="fluid-devtools-view">
 			<Menu
 				currentSelection={menuSelection}
 				setSelection={setMenuSelection}
