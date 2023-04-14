@@ -7,10 +7,12 @@
 
 import Path from "path";
 
+import { delay } from "@fluidframework/common-utils";
+
 import Puppeteer, { Browser, Page } from "puppeteer";
 
-// Paths are relative to dist/test
-const extensionPath = Path.resolve(__dirname, "..");
+// Paths are relative to src/test
+const extensionPath = Path.resolve(__dirname, "..", "..", "dist");
 // const backgroundScriptPath = Path.join("..", "background", "BackgroundScript.js");
 // const devtoolsScriptPath = Path.join("..", "devtools", "DevtoolsScript.js");
 // const contentScriptPath = Path.join("..", "content", "ContentScript.js");
@@ -21,7 +23,7 @@ describe("Devtools Chromium extension integration tests", () => {
 
 	beforeAll(async () => {
 		browser = await Puppeteer.launch({
-			headless: true,
+			headless: false,
 			slowMo: 250,
 			devtools: true,
 			args: [
@@ -39,16 +41,16 @@ describe("Devtools Chromium extension integration tests", () => {
 		page = await browser.newPage();
 
 		// navigates to some specific page
-		await page.goto("https://google.com");
-	});
+		await page.goto(`file://${__dirname}/index.html`);
+	}, 10_000);
 
 	afterAll(async () => {
 		// Tear down the browser
 		await browser!.close();
 	});
 
-	// eslint-disable-next-line jest/expect-expect
 	it("Smoke test", async () => {
+		await delay(10_000);
 		expect(true).toBe(true);
-	});
+	}, 15_000);
 });
