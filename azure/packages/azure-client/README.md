@@ -67,7 +67,7 @@ const azureClient = new AzureClient(clientProps);
 
 ### Experimental Features
 
-`AzureClient` supports the ability to instantiate with experimental features enabled. These features are experimental in nauture and are **NOT** reccomended to be used in production scenarios. To learn more, see [Experimental Features](https://fluidframework.com/docs/build/experimental-features/).
+`AzureClient` supports the ability to instantiate with experimental features enabled. These features are experimental in nature and should **NOT** be used in production applications. To learn more, see [Experimental Features](https://fluidframework.com/docs/build/experimental-features/).
 
 ## Fluid Containers
 
