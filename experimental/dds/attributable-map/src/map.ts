@@ -19,7 +19,7 @@ import {
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISharedMap, IMapOptions, ISharedMapEvents } from "./interfaces";
+import { ISharedMap, ISharedMapEvents } from "./interfaces";
 import { IMapDataObjectSerializable, IMapOperation, AttributableMapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
@@ -140,7 +140,6 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		options?: IMapOptions,
 	) {
 		super(id, runtime, attributes, "fluid_map_");
 		this.kernel = new AttributableMapKernel(
@@ -149,7 +148,6 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			() => this.isAttached(),
 			this,
-			options ?? (runtime.options as IMapOptions),
 		);
 	}
 

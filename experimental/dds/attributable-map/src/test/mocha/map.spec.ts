@@ -12,7 +12,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { IMapOptions, ISerializableValue, IValueChanged } from "../../interfaces";
+import { ISerializableValue, IValueChanged } from "../../interfaces";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -27,10 +27,8 @@ import { IMapOperation } from "../../mapKernel";
 function createConnectedMap(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-	options?: IMapOptions,
 ): AttributableMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
@@ -42,9 +40,8 @@ function createConnectedMap(
 	return map;
 }
 
-function createLocalMap(id: string, options?: IMapOptions): AttributableMap {
+function createLocalMap(id: string): AttributableMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 	const map: AttributableMap = new AttributableMap(id, dataStoreRuntime, MapFactory.Attributes);
 	return map;
 }
@@ -167,7 +164,7 @@ describe("Map", () => {
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second","attribution":{"type":"detached","id":0}},"third":{"type":"Plain","value":"fourth","attribution":{"type":"detached","id":0}},"fifth":{"type":"Plain","value":"sixth","attribution":{"type":"detached","id":0}},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"attribution":{"type":"detached","id":0}}}}`,
 				);
 			});
 
@@ -184,7 +181,7 @@ describe("Map", () => {
 				const subMapHandleUrl = subMap.handle.absolutePath;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
+					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second","attribution":{"type":"detached","id":0}},"third":{"type":"Plain","value":"fourth","attribution":{"type":"detached","id":0}},"fifth":{"type":"Plain","attribution":{"type":"detached","id":0}},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"attribution":{"type":"detached","id":0}}}}`,
 				);
 			});
 
@@ -205,7 +202,7 @@ describe("Map", () => {
 					.content;
 				assert.equal(
 					summaryContent,
-					`{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}}}}}`,
+					`{"blobs":[],"content":{"object":{"type":"Plain","value":{"subMapHandle":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"},"nestedObj":{"subMap2Handle":{"type":"__fluid_handle__","url":"${subMap2HandleUrl}"}}},"attribution":{"type":"detached","id":0}}}}`,
 				);
 			});
 
@@ -246,6 +243,10 @@ describe("Map", () => {
 						key: {
 							type: "Plain",
 							value: "value",
+							attribution: {
+								type: "detached",
+								id: 0,
+							},
 						},
 					},
 				});
@@ -289,10 +290,18 @@ describe("Map", () => {
 						key: {
 							type: "Plain",
 							value: "value",
+							attribution: {
+								type: "detached",
+								id: 0,
+							},
 						},
 						zzz: {
 							type: "Plain",
 							value: "the end",
+							attribution: {
+								type: "detached",
+								id: 0,
+							},
 						},
 					},
 				});
@@ -300,6 +309,10 @@ describe("Map", () => {
 					longValue: {
 						type: "Plain",
 						value: longString,
+						attribution: {
+							type: "detached",
+							id: 0,
+						},
 					},
 				});
 
@@ -441,8 +454,7 @@ describe("Map", () => {
 
 		describe("Attributor", () => {
 			it("should retrive proper attribution in detached state", async () => {
-				const options: IMapOptions = { attribution: { track: true } };
-				map = createLocalMap("testMap", options);
+				map = createLocalMap("testMap");
 
 				map.set("key1", 1);
 				map.set("key2", 2);
@@ -832,12 +844,11 @@ describe("Map", () => {
 
 		describe("Attributor", () => {
 			beforeEach(() => {
-				const options: IMapOptions = { attribution: { track: true } };
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first map with attribution enabled.
-				map1 = createConnectedMap("map1", containerRuntimeFactory, options);
+				map1 = createConnectedMap("map1", containerRuntimeFactory);
 				// Create a second map with attribution enabled.
-				map2 = createConnectedMap("map2", containerRuntimeFactory, options);
+				map2 = createConnectedMap("map2", containerRuntimeFactory);
 			});
 
 			it("Can retrieve proper attribution information with set/delete key operations", () => {

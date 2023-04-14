@@ -24,7 +24,7 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 export class AttributableMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes, options?: IMapOptions);
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
     protected applyStashedOp(content: unknown): unknown;
     clear(): void;
