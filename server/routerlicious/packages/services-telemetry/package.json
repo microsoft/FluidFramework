@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-telemetry",
-	"version": "0.1040.1000",
+	"version": "0.1041.1000",
 	"description": "Fluid server telemetry utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {

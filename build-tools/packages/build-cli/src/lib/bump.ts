@@ -2,10 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import path from "node:path";
+import execa from "execa";
+import { writeFile, readJson } from "fs-extra";
+import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import * as semver from "semver";
 
-import { Context, MonoRepo, Package, VersionBag, exec } from "@fluidframework/build-tools";
-
+import {
+	Context,
+	MonoRepo,
+	Logger,
+	Package,
+	VersionBag,
+	updatePackageJsonFile,
+} from "@fluidframework/build-tools";
 import {
 	VersionChangeType,
 	VersionScheme,
@@ -143,16 +153,20 @@ export async function bumpPackageDependencies(
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
  * @param exactDependencyType - The type of dependency to use on packages within the release group.
+ * @param log - A logger to use.
  *
  * @internal
  */
+// eslint-disable-next-line max-params
 export async function bumpReleaseGroup(
 	context: Context,
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
+	// eslint-disable-next-line default-param-last
 	exactDependencyType: "~" | "^" | "" = "^",
-) {
+	log?: Logger,
+): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)
 		? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
 		: bumpType;
@@ -161,52 +175,82 @@ export async function bumpReleaseGroup(
 	let cmd: string;
 	let workingDir: string;
 
+	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts if needed.
 	if (releaseGroupOrPackage instanceof MonoRepo) {
 		workingDir = context.gitRepo.resolvedRoot;
 		name = releaseGroupOrPackage.kind;
-		cmd = `npx --no-install lerna version ${
-			translatedVersion.version
-		} --no-push --no-git-tag-version -y${
-			exactDependencyType === "" ? " --exact" : ""
-		} && npm run build:genver`;
+		cmd = `flub exec -g ${name} -- "npm version '${translatedVersion.version}' && npm run build:genver"`;
 	} else {
 		workingDir = releaseGroupOrPackage.directory;
 		name = releaseGroupOrPackage.name;
-		cmd = `npm version ${translatedVersion.version}`;
+		cmd = `npm version '${translatedVersion.version}'`;
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
 			cmd += " && npm run build:genver";
 		}
 	}
 
-	const results = await exec(cmd, workingDir, `Error bumping ${name}`);
+	try {
+		const results = await execa(cmd, { cwd: workingDir });
+		log?.verbose(results.stdout);
+	} catch (error: any) {
+		log?.errorLog(`Error running command: ${cmd}\n${error}`);
+	}
+
+	if (releaseGroupOrPackage instanceof Package) {
+		// Return early; packages only need to be bumped using npm. The rest of the logic is only for release groups.
+		return;
+	}
+
+	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
+	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
+	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
+	const [lernaJson, prettierConfig] = await Promise.all([
+		readJson(lernaPath),
+		resolvePrettierConfig(lernaPath),
+	]);
+
+	if (prettierConfig !== null) {
+		prettierConfig.filepath = lernaPath;
+	}
+	lernaJson.version = translatedVersion.version;
+	const output = prettier(
+		JSON.stringify(lernaJson),
+		prettierConfig === null ? undefined : prettierConfig,
+	);
+	await writeFile(lernaPath, output);
+
+	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
+		json.version = translatedVersion.version;
+	});
+
 	context.repo.reload();
 
-	// the lerna version command sets the dependency range of managed packages to a caret (^) dependency range. However,
-	// for the internal version scheme, the range needs to be a >= < range.
+	// The package versions have been bumped, so now we update the dependency ranges for packages within the release
+	// group. We need to account for Fluid internal versions and the requested exactDependencyType.
+	let range: string;
 	if (scheme === "internal" || scheme === "internalPrerelease") {
-		const range =
+		range =
 			exactDependencyType === ""
 				? translatedVersion.version
 				: getVersionRange(translatedVersion, exactDependencyType);
-		if (releaseGroupOrPackage instanceof MonoRepo) {
-			const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
-			const packageNewVersionMap = new Map<string, PackageWithRangeSpec>();
-			for (const pkg of packagesToCheckAndUpdate) {
-				packageNewVersionMap.set(pkg.name, { pkg, rangeOrBumpType: range });
-			}
-
-			for (const pkg of packagesToCheckAndUpdate) {
-				// eslint-disable-next-line no-await-in-loop
-				await bumpPackageDependencies(
-					pkg,
-					packageNewVersionMap,
-					/* prerelease */ false,
-					/* onlyBumpPrerelease */ false,
-					/* updateWithinSameReleaseGroup */ true,
-				);
-			}
-		}
+	} else {
+		range = `${exactDependencyType}${translatedVersion.version}`;
 	}
 
-	return results;
+	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
+	const packageNewVersionMap = new Map<string, PackageWithRangeSpec>();
+	for (const pkg of packagesToCheckAndUpdate) {
+		packageNewVersionMap.set(pkg.name, { pkg, rangeOrBumpType: range });
+	}
+
+	for (const pkg of packagesToCheckAndUpdate) {
+		// eslint-disable-next-line no-await-in-loop
+		await bumpPackageDependencies(
+			pkg,
+			packageNewVersionMap,
+			/* prerelease */ false,
+			/* onlyBumpPrerelease */ false,
+			/* updateWithinSameReleaseGroup */ true,
+		);
+	}
 }
