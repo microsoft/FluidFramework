@@ -603,7 +603,7 @@ export class RunningSummarizer implements IDisposable {
 					this.mc.config.getString(summarizeRecoveryMethodKey) === "fullTree";
 				const attempts: (ISummarizeOptions & { delaySeconds?: number })[] = [
 					{ refreshLatestAck: false, fullTree: false },
-					{ refreshLatestAck: true, fullTree: fullTreeAttempt },
+					{ refreshLatestAck: !fullTreeAttempt, fullTree: fullTreeAttempt },
 					{ refreshLatestAck: true, fullTree: false, delaySeconds: 2 * 60 },
 					{ refreshLatestAck: true, fullTree: true, delaySeconds: 10 * 60 },
 				];

@@ -572,7 +572,7 @@ describe("Runtime", () => {
 
 					// should run with refresh after first nack
 					await emitNack();
-					assertRunCounts(2, 1, 1, "retry1 should be refreshLatestAck");
+					assertRunCounts(2, 1, 0, "retry1 should be refreshLatestAck");
 					const retryProps2 = {
 						summarizeCount: 1,
 						summaryAttemptsPerPhase: 1,
