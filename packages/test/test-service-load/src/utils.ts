@@ -157,14 +157,15 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 export async function initialize(
 	testDriver: ITestDriver,
 	seed: number,
-	endpoint: DriverEndpoint | undefined,
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
 	profileName: string,
 	testIdn?: string,
 ) {
 	const random = makeRandom(seed);
-	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
+	const optionsOverride = `${testDriver.type}${
+		testDriver.endpointName !== undefined ? `-${testDriver.endpointName}` : ""
+	}`;
 	const loaderOptions = random.pick(
 		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
 	);
@@ -213,9 +214,7 @@ export async function initialize(
 		);
 	}
 
-	// Currently odsp binary snapshot format only works for special file names. This won't affect any other test
-	// since we have a unique dateId as prefix. So we can just add the required suffix.
-	const testId = testIdn ?? `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
+	const testId = testIdn ?? Date.now().toString();
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);

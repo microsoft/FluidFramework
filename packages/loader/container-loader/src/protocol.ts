@@ -51,7 +51,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		super(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
-			attributes.term,
+			1, // term
 			quorumSnapshot.members,
 			quorumSnapshot.proposals,
 			quorumSnapshot.values,

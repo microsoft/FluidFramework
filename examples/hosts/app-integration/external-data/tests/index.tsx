@@ -32,7 +32,11 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		model = createResponse.model;
 
 		id = await createResponse.attach();
-		model.baseDocument.addTaskList({ externalTaskListId: "task-list-test" });
+		model.baseDocument.addTaskList({
+			externalTaskListId: "task-list-test",
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			containerUrl: model.getContainerResolvedUrl()!,
+		});
 	} else {
 		id = location.hash.slice(1);
 		model = await sessionStorageModelLoader.loadExisting(id);

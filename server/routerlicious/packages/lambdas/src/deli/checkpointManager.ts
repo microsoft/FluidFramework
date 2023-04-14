@@ -4,9 +4,8 @@
  */
 
 import {
-	ICollection,
 	IDeliState,
-	IDocument,
+	IDocumentRepository,
 	IQueuedMessage,
 } from "@fluidframework/server-services-core";
 import { CheckpointReason } from "../utils";
@@ -46,31 +45,23 @@ export interface ICheckpointParams {
 export function createDeliCheckpointManagerFromCollection(
 	tenantId: string,
 	documentId: string,
-	collection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
 		writeCheckpoint: async (checkpoint: IDeliState) => {
-			return collection.update(
-				{
-					documentId,
-					tenantId,
-				},
+			await documentRepository.updateOne(
+				{ tenantId, documentId },
 				{
 					deli: JSON.stringify(checkpoint),
 				},
-				null,
 			);
 		},
 		deleteCheckpoint: async () => {
-			return collection.update(
-				{
-					documentId,
-					tenantId,
-				},
+			await documentRepository.updateOne(
+				{ tenantId, documentId },
 				{
 					deli: "",
 				},
-				null,
 			);
 		},
 	};

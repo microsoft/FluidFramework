@@ -24,6 +24,7 @@ import {
 	ITestObjectProvider,
 	DataObjectFactoryType,
 	createAndAttachContainer,
+	createDocumentId,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
@@ -31,6 +32,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -45,11 +47,14 @@ const registry: ChannelFactoryRegistry = [
 	[directoryId, SharedDirectory.getFactory()],
 ];
 
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
 	runtimeOptions: {
-		enableOfflineLoad: true,
 		summaryOptions: {
 			summaryConfigOverrides: {
 				...DefaultSummaryConfiguration,
@@ -61,6 +66,11 @@ const testContainerConfig: ITestContainerConfig = {
 				},
 			},
 		},
+	},
+	loaderProps: {
+		configProvider: configProvider({
+			"Fluid.Container.enableOfflineLoad": true,
+		}),
 	},
 };
 
@@ -151,7 +161,7 @@ async function loadOffline(
 	};
 	const loader = provider.createLoader(
 		[[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)]],
-		{ documentServiceFactory },
+		{ ...testContainerConfig.loaderProps, documentServiceFactory },
 	);
 	const container = await loader.resolve(
 		request,
@@ -545,7 +555,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const container2 = await loader.resolve({ url }, pendingOps);
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
-		console.log(string2);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(string1.getText(), "hello world!");
@@ -1165,5 +1174,37 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const container2 = await loader.resolve({ url }, pendingOps);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
+	});
+});
+
+describeNoCompat("stashed ops", (getTestObjectProvider) => {
+	it("handles stashed ops with reference sequence number of 0", async function () {
+		const provider2 = getTestObjectProvider();
+		const loader2 = provider2.makeTestLoader(testContainerConfig);
+		const container = await createAndAttachContainer(
+			provider2.defaultCodeDetails,
+			loader2,
+			provider2.driver.createCreateNewRequest(createDocumentId()),
+		);
+
+		await provider2.ensureSynchronized();
+		const url = await container.getAbsoluteUrl("");
+		assert(url, "no url");
+		await provider2.opProcessingController.pauseProcessing(container);
+
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		map.set(testKey, testValue);
+		const pendingOps = container.closeAndGetPendingLocalState();
+		// make sure we got stashed ops with refseqnum === 0, otherwise we are not testing the scenario we want to
+		assert(/referenceSequenceNumber[^\w,}]*0/.test(pendingOps));
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader2.resolve({ url }, pendingOps);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		await waitForContainerConnection(container2, true);
+		await provider2.ensureSynchronized();
+		assert.strictEqual(map2.get(testKey), testValue);
 	});
 });

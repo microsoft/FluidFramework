@@ -398,6 +398,18 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 				});
 			}
 			this.applyForConnectedState("addMemberEvent");
+		} else if (clientId === this.clientId) {
+			// If we see our clientId and it's not also our pending ID, it's our own join op
+			// being replayed, so start the timer in case our previous client is still in quorum
+			assert(
+				!this.waitingForLeaveOp,
+				"Unexpected join op with current clientId while waiting",
+			);
+			assert(
+				this.connectionState !== ConnectionState.Connected,
+				"Unexpected join op with current clientId while connected",
+			);
+			this.prevClientLeftTimer.restart();
 		}
 	}
 

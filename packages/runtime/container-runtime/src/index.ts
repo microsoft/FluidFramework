@@ -47,7 +47,6 @@ export {
 	IGeneratedSummaryStats,
 	INackSummaryResult,
 	IOnDemandSummarizeOptions,
-	IProvideSummarizer,
 	IRefreshSummaryAckOptions,
 	ISubmitSummaryOpResult,
 	ISubmitSummaryOptions,

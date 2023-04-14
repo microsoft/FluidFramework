@@ -27,7 +27,6 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
@@ -38,7 +37,6 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryNack } from '@fluidframework/protocol-definitions';
@@ -171,7 +169,9 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
-    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+    notifyAttaching(): void;
+    // (undocumented)
+    notifyOpReplay(message: ISequencedDocumentMessage): Promise<void>;
     // (undocumented)
     get options(): ILoaderOptions;
     // (undocumented)
@@ -343,7 +343,6 @@ export interface IConnectableRuntime {
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
-    readonly enableOfflineLoad?: boolean;
     readonly enableOpReentryCheck?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
@@ -367,6 +366,7 @@ export interface IGCRuntimeOptions {
     gcAllowed?: boolean;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
+    // @deprecated (undocumented)
     sweepAllowed?: boolean;
 }
 
@@ -416,12 +416,6 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
 
-// @public @deprecated (undocumented)
-export interface IProvideSummarizer {
-    // @deprecated (undocumented)
-    readonly ISummarizer: ISummarizer;
-}
-
 // @public
 export interface IRefreshSummaryAckOptions {
     readonly ackHandle: string;
@@ -458,14 +452,12 @@ export interface ISummarizeOptions {
     readonly refreshLatestAck?: boolean;
 }
 
-// @public @deprecated (undocumented)
-export const ISummarizer: keyof IProvideSummarizer;
-
 // @public (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     // (undocumented)
     close(): void;
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
+    readonly ISummarizer?: ISummarizer;
     // (undocumented)
     run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
     // (undocumented)
@@ -646,7 +638,7 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 
 // @public
 export class Summarizer extends EventEmitter implements ISummarizer {
-    constructor(url: string,
+    constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
@@ -655,10 +647,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
-    // (undocumented)
-    get handle(): IFluidHandle<this>;
-    // (undocumented)
-    get IFluidLoadable(): this;
     // (undocumented)
     get ISummarizer(): this;
     // (undocumented)
@@ -701,7 +689,14 @@ export type SummarizerStopReason =
 */
 | "notElectedClient"
 /** Summarizer client was disconnected */
-| "summarizerClientDisconnected" | "summarizerException";
+| "summarizerClientDisconnected"
+/** running summarizer threw an exception */
+| "summarizerException"
+/**
+* The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
+* first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
+*/
+| "latestSummaryStateStale";
 
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {

@@ -27,10 +27,12 @@ export {
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
 	convertToSummaryTreeWithStats,
+	GCDataBuilder,
 	getBlobSize,
 	mergeStats,
 	SummaryTreeBuilder,
 	TelemetryContext,
 	utf8ByteLength,
 } from "./summaryUtils";
+export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes";
 export { ReadAndParseBlob, seqFromTree } from "./utils";

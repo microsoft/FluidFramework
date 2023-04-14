@@ -78,7 +78,6 @@ api-report/location-redirection-utils.api.md                              @micro
 api-report/map.api.md                                                     @microsoft/fluid-cr-dds
 api-report/matrix.api.md                                                  @microsoft/fluid-cr-dds
 api-report/merge-tree.api.md                                              @microsoft/fluid-cr-dds
-api-report/mocha-test-setup.api.md                                        @microsoft/fluid-cr-test
 api-report/odsp-driver-definitions.api.md                                 @microsoft/fluid-cr-odsp
 api-report/odsp-driver.api.md                                             @microsoft/fluid-cr-odsp
 api-report/ordered-collection.api.md                                      @microsoft/fluid-cr-dds

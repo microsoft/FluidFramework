@@ -18,9 +18,7 @@ import {
 	DocSection,
 } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { Link } from "../Link";
-import { Logger } from "../Logging";
 import {
 	CodeSpanNode,
 	DocumentationNode,
@@ -33,7 +31,9 @@ import {
 	SingleLineDocumentationNode,
 	SingleLineSpanNode,
 } from "../documentation-domain";
+import { ConfigurationBase } from "../ConfigurationBase";
 import { getDocNodeTransformationOptions } from "./Utilities";
+import { ApiItemTransformationConfiguration } from "./configuration";
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
@@ -55,7 +55,7 @@ import { getDocNodeTransformationOptions } from "./Utilities";
 export function transformDocNode(
 	docNode: DocNode,
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentationNode | undefined {
 	const transformOptions = getDocNodeTransformationOptions(contextApiItem, config);
 	return _transformDocNode(docNode, transformOptions);
@@ -64,7 +64,7 @@ export function transformDocNode(
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface DocNodeTransformOptions {
+export interface DocNodeTransformOptions extends ConfigurationBase {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -79,11 +79,6 @@ export interface DocNodeTransformOptions {
 	 * @returns The appropriate URL target if the reference can be resolved. Otherwise, `undefined`.
 	 */
 	readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
-
-	/**
-	 * Optional policy for logging system information.
-	 */
-	readonly logger?: Logger;
 }
 
 /**

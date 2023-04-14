@@ -5,12 +5,6 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import {
-	cloneGCData,
-	getGCDataFromSnapshot,
-	runGarbageCollection,
-	unpackChildNodesGCDetails,
-} from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -23,8 +17,16 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { ReadAndParseBlob, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
+import {
+	cloneGCData,
+	getGCDataFromSnapshot,
+	runGarbageCollection,
+	unpackChildNodesGCDetails,
+} from "../../gc";
 import { SummarizerNode } from "./summarizerNode";
 import {
 	EscapedPath,
@@ -105,6 +107,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			fullTree: boolean,
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
+			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 		) => Promise<ISummarizeInternalResult>,
 		config: ISummarizerNodeConfigWithGC,
 		changeSequenceNumber: number,
@@ -119,8 +122,18 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	) {
 		super(
 			logger,
-			async (fullTree: boolean, _trackState: boolean, telemetryContext?: ITelemetryContext) =>
-				summarizeFn(fullTree, true /* trackState */, telemetryContext),
+			async (
+				fullTree: boolean,
+				_trackState: boolean,
+				telemetryContext?: ITelemetryContext,
+				incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+			) =>
+				summarizeFn(
+					fullTree,
+					true /* trackState */,
+					telemetryContext,
+					incrementalSummaryContext,
+				),
 			config,
 			changeSequenceNumber,
 			latestSummary,
@@ -136,8 +149,8 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		});
 
 		this.childNodesBaseGCDetailsP = new LazyPromise(async () => {
-			const baseGCDetails = await this.baseGCDetailsP;
-			return unpackChildNodesGCDetails(baseGCDetails);
+			await this.loadBaseGCDetails();
+			return unpackChildNodesGCDetails({ gcData: this.gcData, usedRoutes: this.usedRoutes });
 		});
 	}
 
@@ -303,9 +316,28 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	): void {
 		// If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
 		if (!this.gcDisabled) {
-			const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
-			if (summaryNode?.serializedUsedRoutes !== undefined) {
-				this.referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
+			const summaryNode = this.pendingSummaries.get(proposalHandle);
+			if (summaryNode !== undefined) {
+				// If a pending summary exists, it must have used routes since GC is enabled.
+				const summaryNodeWithGC = summaryNode as SummaryNodeWithGC;
+				if (summaryNodeWithGC.serializedUsedRoutes === undefined) {
+					const error = new LoggingError("MissingGCStateInPendingSummary", {
+						proposalHandle,
+						referenceSequenceNumber,
+						id: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: this.telemetryNodeId,
+						},
+					});
+					this.logger.sendErrorEvent(
+						{
+							eventName: error.message,
+						},
+						error,
+					);
+					throw error;
+				}
+				this.referenceUsedRoutes = JSON.parse(summaryNodeWithGC.serializedUsedRoutes);
 			}
 		}
 
@@ -381,13 +413,15 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			// process it as explained above.
 			const gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 
-			const gcNodes: { [id: string]: string[] } = {};
-			for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
-				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+			if (gcSnapshotData.gcState !== undefined) {
+				const gcNodes: { [id: string]: string[] } = {};
+				for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
+					gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+				}
+				// Run GC on the nodes in the snapshot to get the used routes for each node in the container.
+				const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
+				gcDetails = { gcData: { gcNodes }, usedRoutes };
 			}
-			// Run GC on the nodes in the snapshot to get the used routes for each node in the container.
-			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
-			gcDetails = { gcData: { gcNodes }, usedRoutes };
 		} else {
 			// If there is a GC blob in the snapshot, it's a non-root summarizer nodes - The root summarizer node
 			// writes GC blob in the snapshot of child nodes. Get  GC data and used routes from the blob.
@@ -440,7 +474,6 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 	): ISummarizerNodeWithGC {
 		assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
-
 		/**
 		 * Update the child node's base GC details from this node's current GC details instead of updating from the base
 		 * GC details of this node. This will handle scenarios where the GC details was updated during refresh from
@@ -472,10 +505,45 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
 		// tracked, the child's summary tracking state needs to be updated too.
-		this.maybeUpdateChildState(child);
+		this.maybeUpdateChildState(child, id);
 
 		this.children.set(id, child);
 		return child;
+	}
+
+	/**
+	 * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
+	 * summary tracking state needs to be updated too.
+	 * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
+	 * pending summary as well. Finally, if the pendingSummaries entries have serializedRoutes, replicate them to the
+	 * pendingSummaries from the child nodes.
+	 * @param child - The child node whose state is to be updated.
+	 * @param id - Initial id or path part of this node
+	 */
+	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string) {
+		super.maybeUpdateChildState(child, id);
+
+		// In case we have pending summaries on the parent, let's initialize it on the child.
+		if (child.latestSummary !== undefined) {
+			for (const [key, value] of this.pendingSummaries.entries()) {
+				const summaryNodeWithGC = value as SummaryNodeWithGC;
+				if (summaryNodeWithGC.serializedUsedRoutes !== undefined) {
+					const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
+						JSON.parse(summaryNodeWithGC.serializedUsedRoutes),
+					);
+					const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
+					const newLatestSummaryNode = new SummaryNodeWithGC(
+						JSON.stringify(newSerializedRoutes),
+						{
+							referenceSequenceNumber: value.referenceSequenceNumber,
+							basePath: value.basePath,
+							localPath: value.localPath,
+						},
+					);
+					child.addPendingSummary(key, newLatestSummaryNode);
+				}
+			}
+		}
 	}
 
 	/**

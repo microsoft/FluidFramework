@@ -67,7 +67,7 @@ export function encodeForJsonFormat0(
 	return {
 		maxId: change.maxId,
 		revisions: change.revisions as readonly RevisionInfo[] & JsonCompatibleReadOnly,
-		changes: encodeFieldChangesForJson(fieldKinds, change.changes),
+		changes: encodeFieldChangesForJson(fieldKinds, change.fieldChanges),
 	};
 }
 
@@ -126,7 +126,7 @@ export function decodeJsonFormat0(
 ): ModularChangeset {
 	const encodedChange = change as unknown as EncodedModularChangeset;
 	const decoded: Mutable<ModularChangeset> = {
-		changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
+		fieldChanges: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
 	};
 	if (encodedChange.revisions !== undefined) {
 		decoded.revisions = encodedChange.revisions;

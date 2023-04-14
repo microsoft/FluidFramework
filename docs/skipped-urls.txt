@@ -12,3 +12,6 @@ https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/*
 # These URLs have false positives with their anchors. Linkcheck thinks the anchors are missing.
 https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort*
 https://github.com/npm/node-semver*
+
+# These are fake URLs used in API docs
+https://foo-my.sharepoint.com*

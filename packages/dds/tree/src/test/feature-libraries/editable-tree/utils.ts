@@ -11,6 +11,7 @@ import {
 	genericTreeKeys,
 	getGenericTreeField,
 	JsonableTree,
+	lookupTreeSchema,
 } from "../../../core";
 import { fail, brand } from "../../../util";
 import {
@@ -32,7 +33,6 @@ import {
 	getFieldSchema,
 	parentField,
 } from "../../../feature-libraries";
-import { schemaMap } from "./mockData";
 
 /**
  * This helper function traverses the tree using field keys and expects
@@ -44,7 +44,7 @@ export function expectTreeEquals(
 	expected: JsonableTree,
 ): void {
 	assert(inputField !== undefined);
-	const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
+	const expectedType = lookupTreeSchema(schemaData, expected.type);
 	const primary = getPrimaryField(expectedType);
 	if (primary !== undefined) {
 		assert(isEditableField(inputField));

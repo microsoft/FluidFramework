@@ -51,6 +51,8 @@ export function isCombinedAppAndProtocolSummary(
  * @param appSummary - Summary of the app.
  * @param protocolSummary - Summary of the protocol.
  * @internal
+ *
+ * @deprecated 2.0.0-internal.3.4.0 - Not intended for public use.  Will be moved to container-loader and no longer exported in an upcoming release.
  */
 export function combineAppAndProtocolSummary(
 	appSummary: ISummaryTree,
@@ -82,9 +84,7 @@ export function getDocAttributesFromProtocolSummary(
 	protocolSummary: ISummaryTree,
 ): IDocumentAttributes {
 	const attributesBlob = protocolSummary.tree.attributes as ISummaryBlob;
-	const documentAttributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
-	documentAttributes.term = documentAttributes.term ?? 1;
-	return documentAttributes;
+	return JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
 }
 
 /**

@@ -17,7 +17,6 @@ export interface ISummaryWriteResponse {
 }
 
 export interface ILatestSummaryState {
-	term: number;
 	protocolHead: number;
 	scribe: string;
 	messages: ISequencedDocumentMessage[];
@@ -47,7 +46,7 @@ export interface ISummaryWriter {
 		currentProtocolHead: number,
 		checkpoint: IScribe,
 		pendingOps: ISequencedOperationMessage[],
-	): Promise<boolean>;
+	): Promise<string | false>;
 
 	isExternal: boolean;
 }

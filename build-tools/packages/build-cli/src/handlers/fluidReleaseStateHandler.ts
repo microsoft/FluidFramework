@@ -320,7 +320,8 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 				break;
 			}
 
-			case "PromptToPRDeps": {
+			case "PromptToPRDeps":
+			case "PromptToPRReleasedDepsBump": {
 				result = await promptToPRDeps(state, machine, testMode, log, data);
 				break;
 			}
@@ -340,17 +341,6 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 
 			case "PromptToReleaseDeps": {
 				result = await promptToReleaseDeps(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToPRReleasedDepsBump": {
-				if (testMode) return true;
-
-				log.errorLog(`Not yet implemented`);
-				if (data.exitFunc !== undefined) {
-					data.exitFunc(101);
-				}
-
 				break;
 			}
 

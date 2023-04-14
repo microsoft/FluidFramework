@@ -89,6 +89,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	readonly disableIsolatedChannels?: true;
 	/** The summary number for a container's summary. Incremented on summaries throughout its lifetime. */
 	readonly summaryNumber?: number;
+	/** GUID to identify a document in telemetry */
+	readonly telemetryDocumentId?: string;
 }
 
 export interface ICreateContainerMetadata {

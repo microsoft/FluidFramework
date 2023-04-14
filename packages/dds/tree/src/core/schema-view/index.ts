@@ -10,4 +10,5 @@ export {
 	TreeAdapter,
 	ViewSchemaData,
 	AdaptedViewSchema,
+	AllowedUpdateType,
 } from "./view";

@@ -16,11 +16,20 @@ import { externalDataServicePort } from "../src/mock-external-data-service-inter
 import {
 	ExternalDataSource,
 	initializeExternalDataService,
+	MockWebhook,
 } from "../src/mock-external-data-service";
 import { assertValidTaskData, ITaskData } from "../src/model-interface";
 import { closeServer } from "./utilities";
 
 const externalTaskListId = "task-list-1";
+
+const newData: ITaskData = {
+	42: {
+		name: "Determine meaning of life",
+		priority: 37,
+	},
+};
+
 describe("mock-external-data-service", () => {
 	/**
 	 * External data source backing our service.
@@ -37,11 +46,20 @@ describe("mock-external-data-service", () => {
 	 */
 	let externalDataService: Server | undefined;
 
+	/**
+	 * Datastore mapping of external resource id to its subscribers.
+	 *
+	 * @defaultValue A new new map will be initialized.
+	 */
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
+
 	beforeEach(async () => {
 		externalDataSource = new ExternalDataSource();
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			externalDataSource,
+			webhookCollection,
 		});
 	});
 
@@ -69,7 +87,6 @@ describe("mock-external-data-service", () => {
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
 	/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-
 	it("fetch-tasks: Ensure server yields the data we expect", async () => {
 		const expectedData = await getCurrentExternalData();
 		await request(externalDataService!)
@@ -77,13 +94,8 @@ describe("mock-external-data-service", () => {
 			.expect(200, { taskList: expectedData });
 	});
 
+	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
 	it("set-tasks: Ensure external data is updated with provided data", async () => {
-		const newData: ITaskData = {
-			42: {
-				name: "Determine meaning of life",
-				priority: 37,
-			},
-		};
 		await request(externalDataService!)
 			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ taskList: newData })
@@ -135,10 +147,13 @@ describe("mock-external-data-service", () => {
 
 describe("mock-external-data-service: webhook", () => {
 	let externalDataService: Server | undefined;
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
 	beforeEach(async () => {
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
+			webhookCollection,
 		});
 	});
 
@@ -170,7 +185,7 @@ describe("mock-external-data-service: webhook", () => {
 		try {
 			// Register with the external service for notifications
 			const webhookRegistrationResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/register-for-webhook?externalTaskListId=${externalTaskListId}`,
+				`http://localhost:${externalDataServicePort}/register-for-webhook`,
 				{
 					method: "POST",
 					headers: {
@@ -178,7 +193,7 @@ describe("mock-external-data-service: webhook", () => {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						url: `http://localhost:${localServicePort}/broadcast-signal`,
+						url: `http://localhost:${localServicePort}/broadcast-signal?externalTaskListId=${externalTaskListId}`,
 					}),
 				},
 			);

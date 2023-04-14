@@ -8,7 +8,6 @@ import {
 	FieldChangeHandler,
 	FieldKind,
 	Multiplicity,
-	FieldKinds,
 	NodeChangeset,
 	GenericChangeset,
 	genericFieldKind,
@@ -16,9 +15,12 @@ import {
 	CrossFieldManager,
 	RevisionMetadataSource,
 } from "../../../feature-libraries";
+// TODO: this is not the file being tested, importing it should not be required here.
+// eslint-disable-next-line import/no-internal-modules
+import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { fakeRepair } from "../../utils";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -28,6 +30,8 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	editor: { buildChildChange: () => fail("Child changes not supported") },
 	intoDelta: (change) =>
 		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
+
+	isEmpty: (change) => change === 0,
 };
 
 const valueField = new FieldKind(
@@ -106,7 +110,18 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	return nodeChangeFromValueChange(inverse);
 };
 
-const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): NodeChangeset => {
+const childRebaser = (
+	nodeChangeA: NodeChangeset | undefined,
+	nodeChangeB: NodeChangeset | undefined,
+): NodeChangeset | undefined => {
+	if (nodeChangeA === undefined) {
+		return undefined;
+	}
+
+	if (nodeChangeB === undefined) {
+		return nodeChangeA;
+	}
+
 	const valueChangeA = valueChangeFromNodeChange(nodeChangeA);
 	const valueChangeB = valueChangeFromNodeChange(nodeChangeB);
 	const rebased = valueHandler.rebaser.rebase(

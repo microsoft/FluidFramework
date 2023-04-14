@@ -92,11 +92,18 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder, TName extends 
 /**
  * Builds a FieldSchema with the type information also captured in the
  * typescript type to allow for deriving schema aware APIs.
+ *
+ * @remarks
+ * The typing here explicitly forbids passing no types: no types would make a field that didn't allow anything.
+ * While the underlying system does support such fields (which can be useful if planning to modify their schema later),
+ * usually what is instead desired is a field which allows any child type.
+ * For that see {@link TypedSchema#fieldUnrestricted}.
+ *
  * @alpha
  */
 export function typedFieldSchema<
 	TKind extends FieldKind,
-	TTypes extends (string | Named<string>)[],
+	TTypes extends [string | Named<string>, ...(string | Named<string>)[]],
 >(
 	kind: TKind,
 	...typeArray: TTypes
@@ -110,6 +117,7 @@ export function typedFieldSchema<
  * typescript type to allow for deriving schema aware APIs.
  *
  * For fields with unrestricted polymorphism (meaning all child types are allowed).
+ * @alpha
  */
 export function unrestrictedFieldSchema<TKind extends FieldKind>(kind: TKind): { kind: TKind } {
 	return { kind };
@@ -127,6 +135,10 @@ export function nameSetSimple<T extends [...string[]]>(...names: T): NameSet<T> 
 	return new Set(names) as unknown as NameSet<T>;
 }
 
+/**
+ * Gets a set of names from a list of named objects or names.
+ * @alpha
+ */
 export function nameSet<T extends [...(string | Named<string>)[]]>(
 	...names: T
 ): NameSet<UnbrandList<AsNames<T>, TreeSchemaIdentifier>> {
@@ -147,4 +159,4 @@ export function typedTreeSchemaFromInfo<T extends TreeSchemaTypeInfo>(t: T): Lab
  * Schema for a field which must always be empty.
  * @alpha
  */
-export const emptyField = typedFieldSchema(forbidden);
+export const emptyField = unrestrictedFieldSchema(forbidden);

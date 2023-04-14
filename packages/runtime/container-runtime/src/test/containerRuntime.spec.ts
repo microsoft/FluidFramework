@@ -34,7 +34,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
+import { IPendingMessageOld, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -616,13 +616,7 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onSubmitMessage(
-					ContainerMessageType.FluidDataStoreOp,
-					0,
-					"",
-					"",
-					undefined,
-				);
+				pendingStateManager.onSubmitMessage("", 0, "", undefined);
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
@@ -1027,7 +1021,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					(state?.pendingStates[0] as IPendingMessage).content.contents,
+					(state?.pendingStates[0] as IPendingMessageOld).content.contents,
 					{
 						prop1: 1,
 					},
@@ -1078,13 +1072,12 @@ describe("Runtime", () => {
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
 				flushMode: FlushMode.TurnBased,
-				enableOfflineLoad: false,
 				compressionOptions: {
-					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					minimumBatchSizeInBytes: 614400,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
-				maxBatchSizeInBytes: 950 * 1024,
-				chunkSizeInBytes: Number.POSITIVE_INFINITY,
+				maxBatchSizeInBytes: 700 * 1024,
+				chunkSizeInBytes: 204800,
 				enableOpReentryCheck: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
@@ -1109,9 +1102,9 @@ describe("Runtime", () => {
 
 			it("Container load stats with feature gate overrides", async () => {
 				const featureGates = {
-					"Fluid.ContainerRuntime.DisableCompression": true,
+					"Fluid.ContainerRuntime.CompressionDisabled": true,
+					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
-					"Fluid.ContainerRuntime.DisableCompressionChunking": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,

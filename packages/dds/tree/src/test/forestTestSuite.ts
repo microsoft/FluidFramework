@@ -580,9 +580,9 @@ export function testForest(config: ForestTestConfiguration): void {
 				];
 				initializeForest(forest, content.map(singleTextCursor));
 
-				const mark: Delta.InsertAndModify = {
-					type: Delta.MarkType.InsertAndModify,
-					content: singleTextCursor({ type: jsonNumber.name, value: 3 }),
+				const mark: Delta.Insert = {
+					type: Delta.MarkType.Insert,
+					content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
 					fields: new Map([
 						[
 							brand("newField"),
@@ -621,8 +621,9 @@ export function testForest(config: ForestTestConfiguration): void {
 				initializeForest(forest, nestedContent.map(singleTextCursor));
 
 				const moveId = brandOpaque<Delta.MoveId>(0);
-				const mark: Delta.ModifyAndDelete = {
-					type: Delta.MarkType.ModifyAndDelete,
+				const mark: Delta.Delete = {
+					type: Delta.MarkType.Delete,
+					count: 1,
 					fields: new Map([
 						[xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
 					]),
@@ -651,7 +652,8 @@ export function testForest(config: ForestTestConfiguration): void {
 							xField,
 							[
 								{
-									type: Delta.MarkType.ModifyAndMoveOut,
+									type: Delta.MarkType.MoveOut,
+									count: 1,
 									setValue: 2,
 									moveId,
 								},

@@ -27,19 +27,23 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"perf": "mocha --config ./.mocharc.js --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
+		"perf": "mocha --config ./.mocharc.js --v8-expose-gc --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:mocha": "mocha \"dist/test/**/*.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"benchmark": "^2.1.4",
 		"chai": "^4.2.0",
+		"chalk": "^4.1.2",
 		"easy-table": "^1.1.1",
-		"mocha": "^10.0.0"
+		"mocha": "^10.0.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",

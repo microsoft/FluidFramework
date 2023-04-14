@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import sortPackageJson from "sort-package-json";
+import { PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
 
-import { PackageJson } from "@fluidframework/build-tools";
-import { readJsonSync, writeJsonSync } from "fs-extra";
-import path from "node:path";
-
-import { PackageCommand } from "../BasePackageCommand";
+import { PackageCommand, PackageKind } from "../BasePackageCommand";
 
 export default class PrepareTypeTestsCommand extends PackageCommand<
 	typeof PrepareTypeTestsCommand
@@ -78,7 +74,8 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 		},
 	];
 
-	protected async processPackage(directory: string): Promise<void> {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	protected async processPackage(directory: string, kind: PackageKind): Promise<void> {
 		const version =
 			this.flags.exact ??
 			(this.flags.remove
@@ -182,17 +179,4 @@ function updateTypeTestConfiguration(pkgJson: PackageJson, options: TypeTestConf
 	if (options.resetBroken === true && pkgJson.typeValidation !== undefined) {
 		pkgJson.typeValidation.broken = {};
 	}
-}
-
-/**
- * Update package.json
- */
-function updatePackageJsonFile(
-	packageDir: string,
-	packageTransformer: (json: PackageJson) => void,
-): void {
-	const packagePath = path.join(packageDir, "package.json");
-	const pkgJson: PackageJson = readJsonSync(packagePath);
-	packageTransformer(pkgJson);
-	writeJsonSync(path.join(packagePath), sortPackageJson(pkgJson), { spaces: "\t" });
 }

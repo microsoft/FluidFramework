@@ -34,8 +34,6 @@ parameters:
 trigger:
   branches:
     include:
-    - main
-    - next
     - lts
     - release/*
   paths:
@@ -61,8 +59,6 @@ trigger:
 pr:
   branches:
     include:
-    - main
-    - next
     - lts
     - release/*
   paths:

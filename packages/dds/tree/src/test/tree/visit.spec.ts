@@ -212,8 +212,6 @@ describe("visit", () => {
 			["enterNode", 0],
 			["enterField", fooKey],
 			["onDelete", 0, 10],
-			["enterNode", 5],
-			["exitNode", 5],
 			["exitField", fooKey],
 			["exitNode", 0],
 		];
@@ -347,8 +345,9 @@ describe("visit", () => {
 
 	it("modify and move children", () => {
 		const moveId: Delta.MoveId = brand(1);
-		const moveOut: Delta.ModifyAndMoveOut = {
-			type: Delta.MarkType.ModifyAndMoveOut,
+		const moveOut: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
 			setValue: 42,
 			moveId,
 		};
@@ -466,7 +465,8 @@ describe("visit", () => {
 				rootKey,
 				[
 					{
-						type: Delta.MarkType.ModifyAndDelete,
+						type: Delta.MarkType.Delete,
+						count: 1,
 						fields: new Map([[fooKey, [moveIn]]]),
 					},
 					moveOut,
@@ -522,7 +522,8 @@ describe("visit", () => {
 				rootKey,
 				[
 					{
-						type: Delta.MarkType.ModifyAndMoveOut,
+						type: Delta.MarkType.MoveOut,
+						count: 1,
 						moveId: moveId1,
 						fields: new Map([[fooKey, [moveIn2]]]),
 					},
@@ -573,8 +574,9 @@ describe("visit", () => {
 				rootKey,
 				[
 					{
-						type: Delta.MarkType.ModifyAndMoveOut,
+						type: Delta.MarkType.MoveOut,
 						moveId: moveId1,
+						count: 1,
 						fields: new Map([[fooKey, [del]]]),
 					},
 					moveIn1,

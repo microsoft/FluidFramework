@@ -27,9 +27,11 @@ const runtimeFactory: IProvideRuntimeFactory = {
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
 // mode.  To overcome this and test pick(), we can register a fake task (which always tries to perform
-// a write) so we get nack'd and bumped into write mode.
+// a write) so we get nack'd and bumped into write mode.  Only new task would generate op, so use a counter
+// to make them different.
+let writeModeCount = 0;
 const forceWriteMode = async (scheduler: IAgentScheduler): Promise<void> =>
-	scheduler.register("makeWriteMode");
+	scheduler.register(`makeWriteMode ${writeModeCount++}`);
 
 describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -38,6 +40,11 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 		provider.createContainer(runtimeFactory);
 
 	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
+	const getAgentScheduler = async (container: IContainer): Promise<IAgentScheduler> => {
+		const scheduler = await requestFluidObject<IAgentScheduler>(container, "default");
+		await forceWriteMode(scheduler);
+		return scheduler;
+	};
 
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -48,8 +55,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
 		beforeEach(async () => {
 			const container = await createContainer();
-			scheduler = await requestFluidObject<IAgentScheduler>(container, "default");
-			await forceWriteMode(scheduler);
+			scheduler = await getAgentScheduler(container);
 		});
 
 		it("No tasks initially", async () => {
@@ -110,13 +116,11 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 		beforeEach(async () => {
 			// Create a new Container for the first document.
 			container1 = await createContainer();
-			scheduler1 = await requestFluidObject<IAgentScheduler>(container1, "default");
-			await forceWriteMode(scheduler1);
+			scheduler1 = await getAgentScheduler(container1);
 
 			// Load existing Container for the second document.
 			container2 = await loadContainer();
-			scheduler2 = await requestFluidObject<IAgentScheduler>(container2, "default");
-			await forceWriteMode(scheduler2);
+			scheduler2 = await getAgentScheduler(container2);
 
 			// const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
 

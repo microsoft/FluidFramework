@@ -95,6 +95,7 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -107,7 +108,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -444,7 +444,6 @@ declare function get_current_InterfaceDeclaration_IConnectableRuntime():
 declare function use_old_InterfaceDeclaration_IConnectableRuntime(
     use: TypeOnly<old.IConnectableRuntime>);
 use_old_InterfaceDeclaration_IConnectableRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectableRuntime());
 
 /*
@@ -642,78 +641,6 @@ use_old_InterfaceDeclaration_IOnDemandSummarizeOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingFlush": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingFlush": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingLocalState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingLocalState": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingMessage": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IPendingMessage": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IPendingState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_IPendingState": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideSummarizer": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IProvideSummarizer():
-    TypeOnly<old.IProvideSummarizer>;
-declare function use_current_InterfaceDeclaration_IProvideSummarizer(
-    use: TypeOnly<current.IProvideSummarizer>);
-use_current_InterfaceDeclaration_IProvideSummarizer(
-    get_old_InterfaceDeclaration_IProvideSummarizer());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideSummarizer": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IProvideSummarizer():
-    TypeOnly<current.IProvideSummarizer>;
-declare function use_old_InterfaceDeclaration_IProvideSummarizer(
-    use: TypeOnly<old.IProvideSummarizer>);
-use_old_InterfaceDeclaration_IProvideSummarizer(
-    get_current_InterfaceDeclaration_IProvideSummarizer());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRefreshSummaryAckOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRefreshSummaryAckOptions():
@@ -854,30 +781,6 @@ declare function use_old_InterfaceDeclaration_ISummarizeResults(
     use: TypeOnly<old.ISummarizeResults>);
 use_old_InterfaceDeclaration_ISummarizeResults(
     get_current_InterfaceDeclaration_ISummarizeResults());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_ISummarizer": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_ISummarizer():
-    TypeOnly<typeof old.ISummarizer>;
-declare function use_current_VariableDeclaration_ISummarizer(
-    use: TypeOnly<typeof current.ISummarizer>);
-use_current_VariableDeclaration_ISummarizer(
-    get_old_VariableDeclaration_ISummarizer());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_ISummarizer": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_ISummarizer():
-    TypeOnly<typeof current.ISummarizer>;
-declare function use_old_VariableDeclaration_ISummarizer(
-    use: TypeOnly<typeof old.ISummarizer>);
-use_old_VariableDeclaration_ISummarizer(
-    get_current_VariableDeclaration_ISummarizer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1502,6 +1405,7 @@ declare function get_current_TypeAliasDeclaration_SummarizerStopReason():
 declare function use_old_TypeAliasDeclaration_SummarizerStopReason(
     use: TypeOnly<old.SummarizerStopReason>);
 use_old_TypeAliasDeclaration_SummarizerStopReason(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SummarizerStopReason());
 
 /*

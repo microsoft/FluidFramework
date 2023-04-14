@@ -145,13 +145,10 @@ export type ProtoNode = ITreeCursorSynchronous;
 export type Mark<TTree = ProtoNode> =
 	| Skip
 	| Modify<TTree>
-	| Delete
-	| MoveOut
+	| Delete<TTree>
+	| MoveOut<TTree>
 	| MoveIn
-	| Insert<TTree>
-	| ModifyAndDelete<TTree>
-	| ModifyAndMoveOut<TTree>
-	| InsertAndModify<TTree>;
+	| Insert<TTree>;
 
 /**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
@@ -172,57 +169,51 @@ export type Skip = number;
  * Describes modifications made to a subtree.
  * @alpha
  */
-export interface Modify<TTree = ProtoNode> {
-	readonly type: typeof MarkType.Modify;
-	readonly setValue?: Value;
+export interface HasModifications<TTree = ProtoNode> {
 	readonly fields?: FieldMarks<TTree>;
+	/**
+	 * When set, indicates the new value that should be assigned to the node.
+	 * Can be set to `undefined` to convey that the node's value should be cleared.
+	 * Readers of this field should use the following check to distinguish the above cases:
+	 * `Object.prototype.hasOwnProperty.call(mark, "setValue")`
+	 */
+	readonly setValue?: Value;
+}
+
+/**
+ * Describes modifications made to an otherwise untouched subtree.
+ * @alpha
+ */
+export interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
+	readonly type: typeof MarkType.Modify;
 }
 
 /**
  * Describes the deletion of a contiguous range of node.
  * @alpha
  */
-export interface Delete {
+export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Delete;
+	/**
+	 * Must be 1 when either `setValue` or `fields` is populated.
+	 */
 	readonly count: number;
-}
-
-/**
- * Describes the deletion of a single node.
- * Includes descriptions of the modifications the node.
- * @alpha
- */
-export interface ModifyAndDelete<TTree = ProtoNode> {
-	readonly type: typeof MarkType.ModifyAndDelete;
-	readonly fields: FieldMarks<TTree>;
 }
 
 /**
  * Describes the moving out of a contiguous range of node.
  * @alpha
  */
-export interface MoveOut {
+export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.MoveOut;
+	/**
+	 * Must be 1 when either `setValue` or `fields` is populated.
+	 */
 	readonly count: number;
 	/**
 	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
 	 */
 	readonly moveId: MoveId;
-}
-
-/**
- * Describes the moving out of a single node.
- * Includes descriptions of the modifications made to the node.
- * @alpha
- */
-export interface ModifyAndMoveOut<TTree = ProtoNode> {
-	readonly type: typeof MarkType.ModifyAndMoveOut;
-	/**
-	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
-	 */
-	readonly moveId: MoveId;
-	readonly setValue?: Value;
-	readonly fields?: FieldMarks<TTree>;
 }
 
 /**
@@ -242,22 +233,13 @@ export interface MoveIn {
  * Describes the insertion of a contiguous range of node.
  * @alpha
  */
-export interface Insert<TTree = ProtoNode> {
+export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Insert;
 	// TODO: use a single cursor with multiple nodes instead of array of cursors.
+	/**
+	 * Must be of length 1 when either `setValue` or `fields` is populated.
+	 */
 	readonly content: readonly TTree[];
-}
-
-/**
- * Describes the insertion of a single node.
- * Includes descriptions of the modifications made to the nodes.
- * @alpha
- */
-export interface InsertAndModify<TTree = ProtoNode> {
-	readonly type: typeof MarkType.InsertAndModify;
-	readonly content: TTree;
-	readonly setValue?: Value;
-	readonly fields?: FieldMarks<TTree>;
 }
 
 /**
@@ -282,10 +264,7 @@ export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 export const MarkType = {
 	Modify: 0,
 	Insert: 1,
-	InsertAndModify: 2,
-	MoveIn: 3,
-	Delete: 4,
-	ModifyAndDelete: 5,
-	MoveOut: 6,
-	ModifyAndMoveOut: 7,
+	MoveIn: 2,
+	Delete: 3,
+	MoveOut: 4,
 } as const;

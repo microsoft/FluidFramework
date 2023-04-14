@@ -69,6 +69,8 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/build/eslint-config-fluid
     tagName: eslint-config-fluid
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     taskBuild: build
     taskBuildDocs: false
     taskLint: false

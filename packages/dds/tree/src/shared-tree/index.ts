@@ -4,10 +4,14 @@
  */
 
 export {
+	identifierKey,
+	identifierKeySymbol,
 	ISharedTree,
-	ISharedTreeBranch,
+	ISharedTreeView,
 	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
-	BranchEvents,
+	ViewEvents,
 } from "./sharedTree";
+
+export { SchematizeConfiguration } from "./schematizedTree";

@@ -5,16 +5,16 @@
 
 import { IDisposable } from "@fluidframework/common-definitions";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import {
-	combineAppAndProtocolSummary,
-	isCombinedAppAndProtocolSummary,
-} from "@fluidframework/driver-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
+/**
+ * A storage service wrapper whose sole job is to intercept calls to uploadSummaryWithContext and ensure they include
+ * the protocol summary, using the provided callback to add it if necessary.
+ */
 export class ProtocolTreeStorageService implements IDocumentStorageService, IDisposable {
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService & IDisposable,
-		private readonly generateProtocolTree: () => ISummaryTree,
+		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 	) {}
 	public get policies() {
 		return this.internalStorageService.policies;
@@ -38,9 +38,7 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		context: ISummaryContext,
 	): Promise<string> {
 		return this.internalStorageService.uploadSummaryWithContext(
-			isCombinedAppAndProtocolSummary(summary) === true
-				? summary
-				: combineAppAndProtocolSummary(summary, this.generateProtocolTree()),
+			this.addProtocolSummaryIfMissing(summary),
 			context,
 		);
 	}
