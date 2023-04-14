@@ -9,9 +9,11 @@ author: scottn12
 
 At any given time, there are experimental features within FluidFramework that are still being actively developed/tested. In order to allow developers to adopt and test these features in a controlled environment, we introduced experimental feature gates to enable these features and easily disable them if they cause unexpected behavior.
 
-### Proceed with Caution
+{{<callout warning>}}
 
 Experimental features are by definition not fully supported and **should not be used in production applications**. Moreover, experimental features may be **added, modified, or removed without warning** in any minor or major release.
+
+{{< /callout >}}
 
 ## API
 
