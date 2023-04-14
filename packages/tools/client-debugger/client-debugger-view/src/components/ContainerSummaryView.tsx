@@ -20,7 +20,7 @@ import {
 import {
 	PlugConnected24Regular,
 	PlugDisconnected24Regular,
-	LockClosed24Filled,
+	Delete24Regular,
 } from "@fluentui/react-icons";
 import React from "react";
 
@@ -304,18 +304,13 @@ interface ActionsBarProps extends IContainerActions {
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, tryConnect, forceDisconnect, closeContainer } = props;
 
-	// const connectButtonTooltipId = useId("connect-button-tooltip");
-	// const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
-	// const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
-
 	const changeConnectionStateButton = isContainerConnected ? (
 		<Button
 			icon={<PlugDisconnected24Regular />}
 			onClick={forceDisconnect}
 			disabled={forceDisconnect === undefined}
 		>
-			{" "}
-			Disconnect Container{" "}
+			Disconnect Container
 		</Button>
 	) : (
 		<Button
@@ -323,19 +318,17 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			onClick={tryConnect}
 			disabled={tryConnect === undefined}
 		>
-			{" "}
-			Connect Container{" "}
+			Connect Container
 		</Button>
 	);
 
 	const disposeContainerButton = (
 		<Button
-			icon={<LockClosed24Filled />}
+			icon={<Delete24Regular />}
 			onClick={closeContainer}
 			disabled={closeContainer === undefined}
 		>
-			{" "}
-			Close Container{" "}
+			Close Container
 		</Button>
 	);
 
