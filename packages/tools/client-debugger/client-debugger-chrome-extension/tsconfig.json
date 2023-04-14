@@ -4,7 +4,7 @@
 		"rootDir": "src",
 		"outDir": "dist",
 		"composite": true,
-		"types": ["chrome", "jest", "node"],
+		"types": ["chrome", "jest", "node", "puppeteer"],
 		"jsx": "react-jsx",
 		"module": "es6",
 		"target": "es6",
