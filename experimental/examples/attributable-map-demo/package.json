@@ -1,6 +1,7 @@
 {
 	"name": "@fluid-example/attributable-map-demo",
-	"version": "0.1.0",
+	"version": "2.0.0-internal.4.1.0",
+	"private": true,
 	"description": "An web app demo using the attributableMap",
 	"homepage": "https://fluidframework.com",
 	"repository": "microsoft/FluidExamples",
