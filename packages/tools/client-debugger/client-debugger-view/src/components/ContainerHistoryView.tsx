@@ -3,25 +3,8 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+import { Divider } from "@fluentui/react-components";
 import {
-	Divider,
-	tokens,
-	TableBody,
-	TableCell,
-	TableRow,
-	Table,
-	TableHeader,
-	TableHeaderCell,
-} from "@fluentui/react-components";
-import {
-	Clock20Regular,
-	PlugConnected24Regular,
-	Attach24Regular,
-	PlugDisconnected24Regular,
-	ErrorCircle24Regular,
-	Info24Regular,
-  } from "@fluentui/react-icons";
-  import {
 	ConnectionStateChangeLogEntry,
 	ContainerStateHistory,
 	GetContainerState,
@@ -31,6 +14,7 @@ import {
 	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
+import { ContainerHistoryLog } from "../ContainerHistoryLog";
 import { Waiting } from "./Waiting";
 
 /**
@@ -95,90 +79,10 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		return <Waiting label="Waiting for Container Summary data." />;
 	}
 
-	// Columns for rendering audience history
-	const containerHistoryColumns = [
-		{ columnKey: "state", label: "State" },
-		{ columnKey: "time", label: "Time" },
-	];
-
-	const getBackgroundColorForState = (state: string): string => {
-		switch (state) {
-			case "connected":
-				return tokens.colorPaletteGreenBackground2; // green
-			case "disconnected":
-				return tokens.colorPaletteDarkOrangeBorderActive; // orange
-			case "closed":
-				return tokens.colorPaletteRedBorder1; // red
-			case "disposed":
-				return tokens.colorPaletteDarkRedBackground2; // dark red
-			case "attached":
-				return tokens.colorPaletteRoyalBlueBackground2; // blue
-			default:
-				console.log("Unknown state type for container!");
-				return tokens.colorBrandBackgroundPressed; // black
-		}
-	};
-
 	return (
 		<>
 			<Divider appearance="brand"> Container State Log </Divider>
-			<Table size="small" aria-label="Audience history table">
-				<TableHeader>
-					<TableRow>
-						{containerHistoryColumns.map((column, columnIndex) => (
-							<TableHeaderCell key={columnIndex}>
-								{column.columnKey === "state" && <PlugConnected24Regular />}
-								{column.columnKey === "time" && <Clock20Regular />}
-								{column.label}
-							</TableHeaderCell>
-						))}
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{containerHistory.map((item, itemIndex) => {
-						const nowTimeStamp = new Date();
-						const changeTimeStamp = new Date(item.timestamp);
-						const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
-
-						const timestampDisplay = wasChangeToday
-							? changeTimeStamp.toTimeString()
-							: changeTimeStamp.toDateString();
-
-							const getStateIcon = (state: string): React.ReactElement => {
-								switch (state) {
-								  case "connected":
-									return <PlugConnected24Regular />;
-								  case "attached":
-									return <Attach24Regular />;
-								  case "disconnected":
-									return <PlugDisconnected24Regular />;
-								  case "disposed":
-									return <ErrorCircle24Regular />;
-								  case "closed":
-									return <Info24Regular />;
-								  default:
-									console.log("Unknown state type for container!");
-									return <Info24Regular />;
-								}
-							  };
-							  
-						return (
-							<TableRow
-								key={itemIndex}
-								style={{
-									backgroundColor: getBackgroundColorForState(item.newState),
-								}}
-							>
-								<TableCell>
-									{getStateIcon(item.newState)}
-									{item.newState}
-								</TableCell>
-								<TableCell>{timestampDisplay}</TableCell>
-							</TableRow>
-						);
-					})}
-				</TableBody>
-			</Table>
+			<ContainerHistoryLog containerHistory={containerHistory} />
 		</>
 	);
 }
