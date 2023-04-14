@@ -17,7 +17,7 @@ const IntervalEventType = {
 
 type IntervalEventType = typeof IntervalEventType[keyof typeof IntervalEventType];
 
-type IntervalRevertible =
+export type IntervalRevertible =
 	| {
 			event: typeof IntervalEventType.CHANGE;
 			interval: SequenceInterval;
@@ -108,7 +108,7 @@ function revertLocalAdd(
 	revertible: TypedRevertible<typeof IntervalEventType.ADD>,
 ) {
 	const id = revertible.interval.getIntervalId();
-	const label = revertible.interval.properties.label;
+	const label = revertible.interval.properties.referenceRangeLabels[0];
 	string.getIntervalCollection(label).removeIntervalById(id);
 }
 
@@ -116,7 +116,7 @@ function revertLocalDelete(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.DELETE>,
 ) {
-	const label = revertible.interval.properties.label;
+	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const type = revertible.interval.intervalType;
@@ -128,7 +128,7 @@ function revertLocalChange(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.CHANGE>,
 ) {
-	const label = revertible.interval.properties.label;
+	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const id = revertible.interval.getIntervalId();
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
@@ -140,7 +140,7 @@ function revertLocalPropertyChanged(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.PROPERTYCHANGED>,
 ) {
-	const label = revertible.interval.properties.label;
+	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const id = revertible.interval.getIntervalId();
 	const newProps = revertible.propertyDeltas;
 	string.getIntervalCollection(label).changeProperties(id, newProps);
