@@ -10371,16 +10371,11 @@ importers:
       '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.34.4
-      '@testing-library/dom': ^8.2.0
-      '@testing-library/jest-dom': ^5.16.5
-      '@testing-library/react': ^12.0.0
-      '@testing-library/user-event': ^14.4.3
       '@types/chrome': 0.0.200
       '@types/jest': 22.2.3
       '@types/node': ^14.18.38
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      '@types/testing-library__jest-dom': ^5.14.5
       concurrently: ^7.6.0
       copy-webpack-plugin: ^11.0.0
       copyfiles: ^2.4.1
@@ -10391,7 +10386,6 @@ importers:
       html-webpack-plugin: ^5.5.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
-      jest-webextension-mock: ^3.7.22
       prettier: ~2.6.2
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -10422,16 +10416,11 @@ importers:
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
-      '@testing-library/dom': 8.19.1
-      '@testing-library/jest-dom': 5.16.5
-      '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
-      '@testing-library/user-event': 14.4.3_ua4wuun3fnehcjqtqj2e2ldgpe
       '@types/chrome': 0.0.200
       '@types/jest': 22.2.3
       '@types/node': 14.18.38
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      '@types/testing-library__jest-dom': 5.14.5
       concurrently: 7.6.0
       copy-webpack-plugin: 11.0.0_webpack@5.76.2
       copyfiles: 2.4.1
@@ -10442,7 +10431,6 @@ importers:
       html-webpack-plugin: 5.5.0_webpack@5.76.2
       jest: 26.6.3
       jest-junit: 10.0.0
-      jest-webextension-mock: 3.8.7
       prettier: 2.6.2
       rimraf: 4.4.0
       start-server-and-test: 1.14.0
@@ -33651,10 +33639,6 @@ packages:
       chalk: 4.1.2
       jest-util: 26.6.2
       string-length: 4.0.2
-    dev: true
-
-  /jest-webextension-mock/3.8.7:
-    resolution: {integrity: sha512-hLLqY24VqebfzKE21oRXVJRpLwxF6VKzTJZdGSpRqtUmnywmopP/jBZsegbtxH50rhn9Ql5Zioivkt35cMHZJg==}
     dev: true
 
   /jest-worker/26.6.2:

@@ -267,14 +267,18 @@ stages:
             script: |
               ${{ parameters.packageManagerInstallCommand }}
 
-        # Set version
-        - template: include-set-package-version.yml
-          parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-            tagName: ${{ parameters.tagName }}
-            usesPrettier: ${{ parameters.usesPrettier }}
+        # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
+        # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
+        # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
+        # true, we use that to determine whether to set versions.
+        - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+          - template: include-set-package-version.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+              tagName: ${{ parameters.tagName }}
+              usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

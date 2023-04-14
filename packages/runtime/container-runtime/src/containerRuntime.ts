@@ -1328,7 +1328,6 @@ export class ContainerRuntime
 							// information. The proxy delta manager would always return false for summarizer client.
 							() => this.innerDeltaManager.active,
 						),
-					!this.groupedBatchingEnabled,
 				);
 			} else if (
 				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
@@ -3216,10 +3215,19 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
 		);
 		if (recoveryMethod === "restart") {
-			this._summarizer?.stop("latestSummaryStateStale");
-			// TODO: stop execution, but don't cause a cascading series of errors.
 			const error = new GenericError("Restarting summarizer instead of refreshing");
-			this.closeFn(error);
+			this.mc.logger.sendTelemetryEvent(
+				{
+					...event,
+					eventName: "ClosingSummarizerOnSummaryStale",
+					codePath: event.eventName,
+					message: "Stopping fetch from storage",
+					versionId: versionId != null ? versionId : undefined,
+				},
+				error,
+			);
+			this._summarizer?.stop("latestSummaryStateStale");
+			this.closeFn();
 			throw error;
 		}
 
