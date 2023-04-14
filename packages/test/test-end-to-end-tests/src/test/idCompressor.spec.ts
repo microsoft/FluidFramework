@@ -85,6 +85,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	);
 
 	let containerRuntime: ContainerRuntime;
+	let container1: IContainer;
 	let mainDataStore: TestDataObject;
 
 	let sharedMapContainer1: SharedMap;
@@ -98,7 +99,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
-		const container1 = await createContainer();
+		container1 = await createContainer();
 		mainDataStore = await requestFluidObject<TestDataObject>(container1, "/");
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 		sharedMapContainer1 = mainDataStore.map;
@@ -115,6 +116,47 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		await waitForContainerConnection(container1);
 		await waitForContainerConnection(container2);
 		await waitForContainerConnection(container3);
+	});
+
+	it("Ids generated when disconnected are correctly resubmitted", async () => {
+		// Disconnect first container
+		container1.disconnect();
+
+		// Generate a new Id in the disconnected container
+		const id1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
+		// Trigger Id submission
+		sharedMapContainer1.set("key", "value");
+
+		// Generate a new Id in a connected container
+		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
+		// Trigger Id submission
+
+		// Reconnect the first container
+		// IdRange should be resubmitted and reflected in all compressors
+		container1.connect();
+		const id3 = getIdCompressor(sharedMapContainer1).generateCompressedId();
+		sharedMapContainer1.set("key2", "value2");
+		sharedMapContainer2.set("key3", "value3");
+		await waitForContainerConnection(container1);
+		await provider.ensureSynchronized();
+
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id2),
+			0,
+			"Second container should get first cluster and allocate Id 0",
+		);
+
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(id1),
+			512,
+			"First container should get second cluster and allocate Id 512",
+		);
+
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(id3),
+			513,
+			"Second Id from first container should get second cluster and allocate Id 513",
+		);
 	});
 
 	// IdCompressor is at container runtime level, which means that individual DDSs
@@ -186,8 +228,8 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 			],
 			fluidDataObjectType: DataObjectFactoryType.Test,
 		};
-		const container1 = await provider.makeTestContainer(config);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const container = await provider.makeTestContainer(config);
+		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 		const map = await dataObject.getSharedObject<SharedMap>("mapId");
 
 		assert(getIdCompressor(map) === undefined);

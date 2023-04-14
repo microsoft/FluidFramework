@@ -2927,28 +2927,30 @@ export class ContainerRuntime
 			});
 		}
 
-		let idRange: IdCreationRange | undefined;
-		// Resubmitted ops will already have an idRange specified and taking the next creation range
-		// again will result in finalizations out of order
-		if (this.runtimeOptions.enableRuntimeIdCompressor === true) {
-			idRange = this.idCompressor?.takeNextCreationRange();
-			// Don't include the idRange if there weren't any Ids allocated
-			idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
-		}
-
 		let idAllocationBatchMessage: BatchMessage | undefined;
-		if (idRange !== undefined) {
-			const idAllocationMessage: ContainerRuntimeMessage = {
-				type: ContainerMessageType.IdAllocation,
-				contents: idRange,
-			};
-			idAllocationBatchMessage = {
-				contents: JSON.stringify(idAllocationMessage),
-				deserializedContent: idAllocationMessage,
-				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-				metadata: undefined,
-				localOpMetadata: undefined,
-			};
+		if (type !== ContainerMessageType.IdAllocation) {
+			let idRange: IdCreationRange | undefined;
+			// Resubmitted ops will already have an idRange specified and taking the next creation range
+			// again will result in finalizations out of order
+			if (this.runtimeOptions.enableRuntimeIdCompressor === true) {
+				idRange = this.idCompressor?.takeNextCreationRange();
+				// Don't include the idRange if there weren't any Ids allocated
+				idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+			}
+
+			if (idRange !== undefined) {
+				const idAllocationMessage: ContainerRuntimeMessage = {
+					type: ContainerMessageType.IdAllocation,
+					contents: idRange,
+				};
+				idAllocationBatchMessage = {
+					contents: JSON.stringify(idAllocationMessage),
+					deserializedContent: idAllocationMessage,
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					metadata: undefined,
+					localOpMetadata: undefined,
+				};
+			}
 		}
 
 		const message: BatchMessage = {
