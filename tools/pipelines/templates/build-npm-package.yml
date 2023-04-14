@@ -97,11 +97,6 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
-# If true (the default), the pipeline will set the version of the package. This should only be set to false carefully.
-- name: setVersionInPipeline
-  type: boolean
-  default: true
-
 # If true, then this pipeline will check and format package.json files according to prettier settings.
 - name: usesPrettier
   type: boolean
