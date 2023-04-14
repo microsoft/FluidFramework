@@ -39,8 +39,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing",
 		[
 			{
-				eventName:
-					"fluid:telemetry:ContainerRuntime:RestartInsteadOfRefreshFromServerFetch",
+				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
 			},
 		],
@@ -70,8 +69,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing with two clients",
 		[
 			{
-				eventName:
-					"fluid:telemetry:ContainerRuntime:RestartInsteadOfRefreshFromServerFetch",
+				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
 			},
 			{
@@ -116,8 +114,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing when loading from an older summary",
 		[
 			{
-				eventName:
-					"fluid:telemetry:ContainerRuntime:RestartInsteadOfRefreshFromServerFetch",
+				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 				message: "Stopping fetch from storage",
 			},
 			{

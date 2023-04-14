@@ -703,7 +703,7 @@ describe("Runtime", () => {
 								reason: getFailMessage("summaryNack"),
 							},
 							{
-								eventName: "Running:RestartInsteadOfRefreshFromServerFetch",
+								eventName: "Running:ClosingSummarizerOnSummaryStale",
 								...retryProps2,
 							},
 						]),

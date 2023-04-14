@@ -135,7 +135,7 @@ export class RunningSummarizer implements IDisposable {
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
-	private readonly shouldRestart: boolean;
+	private readonly shouldAbortOnSummaryFailure: boolean;
 
 	private enqueuedSummary:
 		| {
@@ -180,7 +180,7 @@ export class RunningSummarizer implements IDisposable {
 			}),
 		);
 
-		this.shouldRestart =
+		this.shouldAbortOnSummaryFailure =
 			this.mc.config.getString("Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod") ===
 			"restart";
 
@@ -602,7 +602,7 @@ export class RunningSummarizer implements IDisposable {
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
 				// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
-				let totalAttempts = this.shouldRestart
+				let totalAttempts = this.shouldAbortOnSummaryFailure
 					? attemptOnceBecauseOfRestart
 					: this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
 					  defaultNumberSummarizationAttempts;
@@ -677,10 +677,10 @@ export class RunningSummarizer implements IDisposable {
 					}
 				}
 
-				if (this.shouldRestart) {
+				if (this.shouldAbortOnSummaryFailure) {
 					this.mc.logger.sendTelemetryEvent(
 						{
-							eventName: "RestartInsteadOfRefreshFromServerFetch",
+							eventName: "ClosingSummarizerOnSummaryStale",
 							reason,
 							message: lastResult?.message,
 						},

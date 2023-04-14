@@ -3220,7 +3220,7 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
-					eventName: "RestartInsteadOfRefreshFromServerFetch",
+					eventName: "ClosingSummarizerOnSummaryStale",
 					codePath: event.eventName,
 					message: "Stopping fetch from storage",
 					versionId: versionId != null ? versionId : undefined,
