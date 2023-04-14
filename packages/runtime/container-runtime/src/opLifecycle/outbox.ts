@@ -37,6 +37,7 @@ export interface IOutboxParameters {
 	readonly splitter: OpSplitter;
 	readonly logger: ITelemetryLogger;
 	readonly groupingManager: OpGroupingManager;
+	readonly getProcessedClientSequenceNumber: () => number | undefined;
 }
 
 function getLongStack(action: () => Error): Error {
@@ -94,7 +95,9 @@ export class Outbox {
 	 */
 	private maybeFlushPartialBatch(message: BatchMessage) {
 		const mainBatchReference = this.mainBatch.referenceSequenceNumber;
+		const mainBatchClient = this.mainBatch.clientSequenceNumber;
 		const attachFlowBatchReference = this.attachFlowBatch.referenceSequenceNumber;
+		const attachFlowBatchClient = this.attachFlowBatch.clientSequenceNumber;
 		assert(
 			this.params.config.disablePartialFlush ||
 				mainBatchReference === undefined ||
@@ -103,11 +106,16 @@ export class Outbox {
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
+		const currentClientSequenceNumber = this.params.getProcessedClientSequenceNumber();
+
 		if (
 			(mainBatchReference === undefined ||
 				mainBatchReference === message.referenceSequenceNumber) &&
 			(attachFlowBatchReference === undefined ||
-				attachFlowBatchReference === message.referenceSequenceNumber)
+				attachFlowBatchReference === message.referenceSequenceNumber) &&
+			(mainBatchClient === undefined || mainBatchClient === currentClientSequenceNumber) &&
+			(attachFlowBatchClient === undefined ||
+				attachFlowBatchClient === currentClientSequenceNumber)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -119,8 +127,11 @@ export class Outbox {
 					category: this.params.config.disablePartialFlush ? "error" : "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
 					mainReferenceSequenceNumber: mainBatchReference,
+					mainClientSequenceNumber: mainBatchClient,
 					attachReferenceSequenceNumber: attachFlowBatchReference,
+					attachClientSequenceNumber: attachFlowBatchClient,
 					messageReferenceSequenceNumber: message.referenceSequenceNumber,
+					currentClientSequenceNumber,
 				},
 				getLongStack(() => new UsageError("Submission of an out of order message")),
 			);
@@ -134,7 +145,7 @@ export class Outbox {
 	public submit(message: BatchMessage) {
 		this.maybeFlushPartialBatch(message);
 
-		if (!this.mainBatch.push(message)) {
+		if (!this.mainBatch.push(message, this.params.getProcessedClientSequenceNumber())) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
 				opSize: message.contents?.length ?? 0,
 				batchSize: this.mainBatch.contentSizeInBytes,
@@ -147,12 +158,14 @@ export class Outbox {
 	public submitAttach(message: BatchMessage) {
 		this.maybeFlushPartialBatch(message);
 
-		if (!this.attachFlowBatch.push(message)) {
+		if (!this.attachFlowBatch.push(message, this.params.getProcessedClientSequenceNumber())) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
 			// when queue is not empty.
 			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
 			this.flushInternal(this.attachFlowBatch.popBatch());
-			if (!this.attachFlowBatch.push(message)) {
+			if (
+				!this.attachFlowBatch.push(message, this.params.getProcessedClientSequenceNumber())
+			) {
 				throw new GenericError("BatchTooLarge", /* error */ undefined, {
 					opSize: message.contents?.length ?? 0,
 					batchSize: this.attachFlowBatch.contentSizeInBytes,

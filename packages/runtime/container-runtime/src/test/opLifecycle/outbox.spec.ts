@@ -201,6 +201,7 @@ describe("Outbox", () => {
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),
+			getProcessedClientSequenceNumber: () => undefined,
 		});
 
 	beforeEach(() => {

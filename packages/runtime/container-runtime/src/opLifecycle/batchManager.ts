@@ -38,9 +38,11 @@ export class BatchManager {
 			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
+	public clientSequenceNumber: number | undefined;
+
 	constructor(public readonly options: IBatchManagerOptions) {}
 
-	public push(message: BatchMessage): boolean {
+	public push(message: BatchMessage, currentClientSequenceNumber?: number): boolean {
 		const contentSize = this.batchContentSize + (message.contents?.length ?? 0);
 		const opCount = this.pendingBatch.length;
 
@@ -68,6 +70,10 @@ export class BatchManager {
 			return false;
 		}
 
+		if (this.pendingBatch.length === 0) {
+			this.clientSequenceNumber = currentClientSequenceNumber;
+		}
+
 		this.batchContentSize = contentSize;
 		this.pendingBatch.push(message);
 		return true;
@@ -86,6 +92,7 @@ export class BatchManager {
 
 		this.pendingBatch = [];
 		this.batchContentSize = 0;
+		this.clientSequenceNumber = undefined;
 
 		return addBatchMetadata(batch);
 	}
