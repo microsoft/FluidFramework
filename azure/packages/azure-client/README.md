@@ -65,6 +65,10 @@ const clientProps = {
 const azureClient = new AzureClient(clientProps);
 ```
 
+### Experimental Features
+
+`AzureClient` supports the ability to instantiate with experimental features enabled. These features are experimental in nauture and are **NOT** reccomended to be used in production scenarios. To learn more, see [Experimental Features](https://fluidframework.com/docs/build/experimental-features/).
+
 ## Fluid Containers
 
 A Container instance is a organizational unit within Fluid. Each Container instance has a connection to the defined Fluid Service and contains a collection of collaborative objects.
