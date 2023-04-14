@@ -39,6 +39,19 @@ export interface IOutboxParameters {
 	readonly groupingManager: OpGroupingManager;
 }
 
+function getLongStack(action: () => Error): Error {
+	// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+	try {
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		(Error as any).stackTraceLimit = 50;
+		const result = action();
+		(Error as any).stackTraceLimit = originalStackTraceLimit;
+		return result;
+	} catch (error) {
+		return action();
+	}
+}
+
 export class Outbox {
 	private readonly mc: MonitoringContext;
 	private readonly attachFlowBatch: BatchManager;
@@ -101,10 +114,6 @@ export class Outbox {
 		}
 
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-			// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
-			const originalStackTraceLimit = (Error as any).stackTraceLimit;
-			(Error as any).stackTraceLimit = 50;
-
 			this.mc.logger.sendTelemetryEvent(
 				{
 					category: this.params.config.disablePartialFlush ? "error" : "generic",
@@ -113,10 +122,8 @@ export class Outbox {
 					attachReferenceSequenceNumber: attachFlowBatchReference,
 					messageReferenceSequenceNumber: message.referenceSequenceNumber,
 				},
-				new UsageError("Submission of an out of order message"),
+				getLongStack(() => new UsageError("Submission of an out of order message")),
 			);
-
-			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
 
 		if (!this.params.config.disablePartialFlush) {
