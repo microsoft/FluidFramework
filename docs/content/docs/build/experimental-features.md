@@ -34,7 +34,7 @@ The following is an example of how to enable experimental features with `AzureCl
 
     ```typescript
     const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-      getRawConfig: (name: string): ConfigTypes => settings[name],
+      getRawConfig: (name: string): ConfigTypes => settings[name]
     });
     ```
 
