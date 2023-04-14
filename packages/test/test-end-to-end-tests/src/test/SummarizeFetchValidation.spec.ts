@@ -369,10 +369,9 @@ describeFullCompat("Summarizer fetches expected number of times", (getTestObject
 		let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 		const func = async (summary: ISummaryTree, context: ISummaryContext) => {
 			uploadSummaryUploaderFunc = uploadSummaryUploaderFunc.bind(containerRuntime.storage);
-			const response = await uploadSummaryUploaderFunc(summary, context);
 			// Close summarizer so that it does not submit SummaryOp
 			summarizer.close();
-			return response;
+			return "";
 		};
 		containerRuntime.storage.uploadSummaryWithContext = func;
 
