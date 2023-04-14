@@ -16,11 +16,12 @@ import {
 import {
 	Clock20Regular,
 	PlugConnected24Regular,
-	Attach24Regular,
+	AlertBadge24Regular,
 	PlugDisconnected24Regular,
 	ErrorCircle24Regular,
 	Warning24Regular,
-	ClipboardError24Filled,
+	Attach24Regular,
+	LockClosed24Filled,
 } from "@fluentui/react-icons";
 import { ConnectionStateChangeLogEntry } from "@fluid-tools/client-debugger";
 
@@ -48,16 +49,16 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 
 	const getBackgroundColorForState = (state: string): string => {
 		switch (state) {
+			case "attached":
+				return tokens.colorPaletteRoyalBlueBackground2; // blue
+			case "closed":
+				return tokens.colorPaletteRedBorder1; // red
 			case "connected":
 				return tokens.colorPaletteGreenBackground2; // green
 			case "disconnected":
 				return tokens.colorPaletteDarkOrangeBorderActive; // orange
-			case "closed":
-				return tokens.colorPaletteRedBorder1; // red
 			case "disposed":
 				return tokens.colorPaletteDarkRedBackground2; // dark red
-			case "attached":
-				return tokens.colorPaletteRoyalBlueBackground2; // blue
 			default:
 				console.log("Unknown state type for container!");
 				return tokens.colorBrandBackgroundPressed; // black
@@ -70,7 +71,7 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 				<TableRow>
 					{containerHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "state" && <PlugConnected24Regular />}
+							{column.columnKey === "state" && <AlertBadge24Regular />}
 							{column.columnKey === "time" && <Clock20Regular />}
 							{column.label}
 						</TableHeaderCell>
@@ -89,16 +90,16 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 
 					const getStateIcon = (state: string): React.ReactElement => {
 						switch (state) {
-							case "connected":
-								return <PlugConnected24Regular />;
 							case "attached":
 								return <Attach24Regular />;
+							case "closed":
+								return <LockClosed24Filled />;
+							case "connected":
+								return <PlugConnected24Regular />;
 							case "disconnected":
 								return <PlugDisconnected24Regular />;
 							case "disposed":
 								return <ErrorCircle24Regular />;
-							case "closed":
-								return <ClipboardError24Filled />;
 							default:
 								console.log("Unknown state type for container!");
 								return <Warning24Regular />;
