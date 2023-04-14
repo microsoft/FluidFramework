@@ -33,7 +33,7 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { ISubscribable } from "../../events";
-import { MockRepairDataStore } from "../utils";
+import { MockRepairDataStoreProvider } from "../utils";
 
 describe("SharedTreeCore", () => {
 	describe("emits", () => {
@@ -50,7 +50,7 @@ describe("SharedTreeCore", () => {
 					[],
 					defaultChangeFamily,
 					new AnchorSet(),
-					() => new MockRepairDataStore(),
+					new MockRepairDataStoreProvider(),
 					"ChangeEventSharedTree",
 					runtime,
 					attributes,
@@ -254,7 +254,7 @@ describe("SharedTreeCore", () => {
 			indexes,
 			defaultChangeFamily,
 			new AnchorSet(),
-			() => new MockRepairDataStore(),
+			new MockRepairDataStoreProvider(),
 			"TestSharedTree",
 			runtime,
 			attributes,

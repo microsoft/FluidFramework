@@ -16,7 +16,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { UndoableCommit } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
-import { MockRepairDataStore } from "../utils";
+import { MockRepairDataStore, MockRepairDataStoreProvider } from "../utils";
 
 const localSessionId: SessionId = "0";
 
@@ -81,7 +81,7 @@ class TestUndoRedoManager extends UndoRedoManager<TestChange, ChangeFamilyEditor
 		headUndoCommit?: UndoableCommit<TestChange>,
 		rebaser?: ChangeRebaser<TestChange>,
 	) {
-		super(() => new MockRepairDataStore(), testChangeFamilyFactory(rebaser), headUndoCommit);
+		super(new MockRepairDataStoreProvider(), testChangeFamilyFactory(rebaser), headUndoCommit);
 	}
 
 	public getHeadUndoCommit(): UndoableCommit<TestChange> | undefined {

@@ -5,7 +5,8 @@
 
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
 import { GraphCommit, GraphCommitType, tagChange } from "../rebase";
-import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
+import { ReadonlyRepairDataStore } from "../repair";
+import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
 /**
  * Manages the undo commit tree and repair data associated with undoable commits.
@@ -18,7 +19,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
 	 */
 	public constructor(
-		private readonly repairDataStoryFactory: () => RepairDataStore,
+		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		protected headUndoableCommit?: UndoableCommit<TChange>,
 	) {}
@@ -27,19 +28,15 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Adds the provided commit to the undo commit tree.
 	 * Should be called for all commits on the relevant branch, including undo commits.
 	 */
-	public trackCommit(commit: GraphCommit<TChange>, repairDataStore?: RepairDataStore): void {
+	public trackCommit(commit: GraphCommit<TChange>): void {
 		if (commit.type === GraphCommitType.Undo) {
 			// Currently no need to handle undo commits
 			return;
 		}
 
 		const parent = this.headUndoableCommit;
-		// If repair data was not provided, create a new repair data store and capture the repair data for the commit
-		const repairData = repairDataStore ?? this.repairDataStoryFactory();
-		if (repairDataStore === undefined) {
-			repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
-		}
-
+		const repairData = this.repairDataStoreProvider.createRepairData();
+		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
 		this.headUndoableCommit = {
 			commit,
 			parent,
@@ -71,13 +68,14 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Creates a copy of this `UndoRedoManager` with a reference to the same head undo commit.
+	 * @param repairDataStoreProvider - Optional {@link IRepairDataStoreProvider} to use for the new `UndoRedoManager`.
+	 * If one is not provided, the `repairDataStoreProvider` of this `UndoRedoManager` will be cloned.
 	 */
 	public clone(
-		repairDataStoreFactory: () => RepairDataStore,
-		applyChange?: (change: TChange) => void,
+		repairDataStoreProvider?: IRepairDataStoreProvider,
 	): UndoRedoManager<TChange, TEditor> {
 		return new UndoRedoManager(
-			repairDataStoreFactory,
+			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
 			this.changeFamily,
 			this.headUndoableCommit,
 		);

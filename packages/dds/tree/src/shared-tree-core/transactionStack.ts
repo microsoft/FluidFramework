@@ -16,12 +16,6 @@ export class TransactionStack {
 	}[] = [];
 
 	/**
-	 * A RepairDataStore that is scoped to the entire transaction stack rather than each change within a transaction.
-	 * It should be able to capture repair data for the squashed change of the entire stack.
-	 */
-	public commitRepairStore: RepairDataStore | undefined;
-
-	/**
 	 * The number of transactions currently ongoing.
 	 */
 	public get size() {
@@ -42,14 +36,7 @@ export class TransactionStack {
 	 * @param commitRepairStore - an optional repair data store that is scoped to the entire transaction stack,
 	 * is only used if this is the first transaction in the stack.
 	 */
-	public push(
-		startRevision: RevisionTag,
-		repairStore?: RepairDataStore,
-		commitRepairStore?: RepairDataStore,
-	): void {
-		if (this.stack.length === 0) {
-			this.commitRepairStore = commitRepairStore;
-		}
+	public push(startRevision: RevisionTag, repairStore?: RepairDataStore): void {
 		this.stack.push({ startRevision, repairStore });
 	}
 
@@ -60,21 +47,7 @@ export class TransactionStack {
 	public pop(): {
 		startRevision: RevisionTag;
 		repairStore?: RepairDataStore;
-		/**
-		 * A RepairDataStore that is scoped to the entire transaction stack rather than each change within a transaction.
-		 * It should be able to capture repair data for the squashed change of the entire stack.
-		 * This is only returned when the transaction stack is empty after popping.
-		 */
-		commitRepairStore?: RepairDataStore;
 	} {
-		const currentTransaction = this.stack.pop();
-		let commitRepairStore: RepairDataStore | undefined;
-		if (this.stack.length === 0) {
-			commitRepairStore = this.commitRepairStore;
-			this.commitRepairStore = undefined;
-		}
-		return currentTransaction !== undefined
-			? { ...currentTransaction, commitRepairStore }
-			: fail("No transaction is currently in progress");
+		return this.stack.pop() ?? fail("No transaction is currently in progress");
 	}
 }

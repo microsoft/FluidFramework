@@ -39,6 +39,7 @@ import {
 	ChangeFamilyEditor,
 	UndoRedoManager,
 	GraphCommitType,
+	IRepairDataStoreProvider,
 } from "../core";
 import { brand, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -132,7 +133,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
-		private readonly repairDataStoreFactory: () => RepairDataStore,
+		repairDataStoreProvider: IRepairDataStoreProvider,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -148,7 +149,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = uuid();
 		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
-		this.undoRedoManager = new UndoRedoManager(repairDataStoreFactory, changeFamily);
+		this.undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily);
 		this.summarizables = [
 			new EditManagerSummarizer(runtime, this.editManager),
 			...summarizables,
@@ -197,10 +198,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		await Promise.all(loadSummaries);
 	}
 
-	private submitCommit(commit: Commit<TChange>, repairData?: RepairDataStore): void {
+	private submitCommit(commit: Commit<TChange>): void {
 		// Nested transactions are tracked as part of the outermost transaction
 		if (this.transactions.size === 0) {
-			this.undoRedoManager.trackCommit(commit, repairData);
+			this.undoRedoManager.trackCommit(commit);
 		}
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -268,28 +269,22 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	public startTransaction(
-		repairStore?: RepairDataStore,
-		commitRepairStore?: RepairDataStore,
-	): void {
-		this.transactions.push(
-			this.editManager.getLocalBranchHead().revision,
-			repairStore,
-			commitRepairStore,
-		);
+	public startTransaction(repairStore?: RepairDataStore): void {
+		if (this.transactions.size === 0) {
+			// If this is the start of a transaction stack, freeze the undo redo manager's
+			// repair data store provider so that repair data can be captured based on the
+			// state of the branch at the start of the transaction.
+			this.undoRedoManager.repairDataStoreProvider.freeze();
+		}
+		this.transactions.push(this.editManager.getLocalBranchHead().revision, repairStore);
 		this.editor.enterTransaction();
 	}
 
 	public commitTransaction(): TransactionResult.Commit {
-		const { startRevision, commitRepairStore } = this.transactions.pop();
+		const { startRevision } = this.transactions.pop();
 		this.editor.exitTransaction();
 		const squashCommit = this.editManager.squashLocalChanges(startRevision);
-		// If this is the last transaction in the stack, the repair data must be captured for the squashed commit.
-		commitRepairStore?.capture(
-			this.changeFamily.intoDelta(squashCommit.change),
-			squashCommit.revision,
-		);
-		this.submitCommit(squashCommit, commitRepairStore);
+		this.submitCommit(squashCommit);
 		return TransactionResult.Commit;
 	}
 
@@ -326,7 +321,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	protected createBranch(
 		anchors: AnchorSet,
-		repairDataStoreFactory: () => RepairDataStore,
+		repairDataStoreProvider: IRepairDataStoreProvider,
 	): SharedTreeBranch<TEditor, TChange> {
 		const branch = new SharedTreeBranch(
 			() => this.editManager.getLocalBranchHead(),
@@ -352,7 +347,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
 			anchors,
-			this.undoRedoManager.clone(repairDataStoreFactory),
+			this.undoRedoManager.clone(repairDataStoreProvider),
 		);
 		return branch;
 	}

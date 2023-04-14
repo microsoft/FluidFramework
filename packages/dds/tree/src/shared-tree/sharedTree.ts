@@ -41,12 +41,12 @@ import {
 	buildForest,
 	ContextuallyTypedNodeData,
 	IDefaultEditBuilder,
-	ForestRepairDataStore,
 	IdentifierIndex,
 	EditableTree,
 	Identifier,
 	SchemaAware,
-	repairDataStoreFactoryFromForest,
+	ForestRepairDataStoreProvider,
+	repairDataStoreFromForest,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, TransactionResult } from "../util";
@@ -294,7 +294,7 @@ export class SharedTree
 			[schemaSummarizer, forestSummarizer],
 			defaultChangeFamily,
 			anchors,
-			() => repairDataStoreFactoryFromForest(this.forest),
+			new ForestRepairDataStoreProvider(forest, schema),
 			id,
 			runtime,
 			attributes,
@@ -306,23 +306,7 @@ export class SharedTree
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
 
 		this.transaction = {
-			start: () => {
-				// A commit repair data store is only needed if there is not already an ongoing transaction.
-				if (this.isTransacting()) {
-					return this.startTransaction(new ForestRepairDataStore(() => this.forest));
-				}
-
-				const clonedForest = this.forest.clone(
-					this.storedSchema.inner.clone(),
-					new AnchorSet(),
-				);
-				return this.startTransaction(
-					new ForestRepairDataStore(() => this.forest),
-					// Create a RepairDataStore with a clone of the forest, so that repair data can be stored for
-					// the resulting commit rather than just for each change within the transaction.
-					new ForestRepairDataStore(() => clonedForest),
-				);
-			},
+			start: () => this.startTransaction(repairDataStoreFromForest(this.forest)),
 			commit: () => this.commitTransaction(),
 			abort: () => this.abortTransaction(),
 			inProgress: () => this.isTransacting(),
@@ -358,7 +342,10 @@ export class SharedTree
 		const anchors = new AnchorSet();
 		const schema = this.storedSchema.inner.clone();
 		const forest = this.forest.clone(schema, anchors);
-		const branch = this.createBranch(anchors, () => repairDataStoreFactoryFromForest(forest));
+		const branch = this.createBranch(
+			anchors,
+			new ForestRepairDataStoreProvider(forest, schema),
+		);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -460,20 +447,7 @@ export class SharedTreeFork implements ISharedTreeFork {
 	}
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
-		start: () => {
-			// A commit repair data store is only needed if there is not already an ongoing transaction.
-			if (this.branch.isTransacting()) {
-				return this.branch.startTransaction(new ForestRepairDataStore(() => this.forest));
-			}
-
-			const clonedForest = this.forest.clone(this.storedSchema.clone(), new AnchorSet());
-			return this.branch.startTransaction(
-				new ForestRepairDataStore(() => this.forest),
-				// Create a RepairDataStore with a clone of the forest, so that repair data can be stored for
-				// the resulting commit rather than just for each change within the transaction.
-				new ForestRepairDataStore(() => clonedForest),
-			);
-		},
+		start: () => this.branch.startTransaction(repairDataStoreFromForest(this.forest)),
 		commit: () => this.branch.commitTransaction(),
 		abort: () => this.branch.abortTransaction(),
 		inProgress: () => this.branch.isTransacting(),
@@ -501,7 +475,8 @@ export class SharedTreeFork implements ISharedTreeFork {
 		const anchors = new AnchorSet();
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
-		const branch = this.branch.fork(anchors, () => repairDataStoreFactoryFromForest(forest));
+		const repairDataStoreProvider = new ForestRepairDataStoreProvider(forest, storedSchema);
+		const branch = this.branch.fork(anchors, repairDataStoreProvider);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,

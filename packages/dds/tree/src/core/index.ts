@@ -182,4 +182,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
 
-export { UndoRedoManager } from "./undo";
+export { IRepairDataStoreProvider, UndoRedoManager } from "./undo";

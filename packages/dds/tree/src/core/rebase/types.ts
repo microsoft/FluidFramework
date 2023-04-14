@@ -75,11 +75,12 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, sessionId, change } = commit;
+	const { revision, sessionId, change, type } = commit;
 	return {
 		revision,
 		sessionId,
 		change,
 		parent,
+		type,
 	};
 }

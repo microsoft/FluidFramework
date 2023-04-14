@@ -55,6 +55,7 @@ import {
 	RepairDataStore,
 	ITreeCursorSynchronous,
 	FieldKey,
+	IRepairDataStoreProvider,
 } from "../core";
 import { brand, makeArray } from "../util";
 
@@ -495,5 +496,19 @@ export class MockRepairDataStore implements RepairDataStore {
 
 	public getValue(revision: RevisionTag, path: UpPath): Value {
 		throw new Error("Method not implemented.");
+	}
+}
+
+export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
+	public freeze(): void {
+		// Noop
+	}
+
+	public createRepairData(): MockRepairDataStore {
+		return new MockRepairDataStore();
+	}
+
+	public clone(): IRepairDataStoreProvider {
+		return new MockRepairDataStoreProvider();
 	}
 }

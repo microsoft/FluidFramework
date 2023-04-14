@@ -11,6 +11,7 @@ import {
 	findAncestor,
 	GraphCommit,
 	GraphCommitType,
+	IRepairDataStoreProvider,
 	mintCommit,
 	mintRevisionTag,
 	Rebaser,
@@ -98,16 +99,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return this.head;
 	}
 
-	public startTransaction(
-		repairStore?: RepairDataStore,
-		commitRepairStore?: RepairDataStore,
-	): void {
-		this.transactions.push(this.head.revision, repairStore, commitRepairStore);
+	public startTransaction(repairStore?: RepairDataStore): void {
+		if (this.transactions.size === 0) {
+			// If this is the start of a transaction stack, freeze the undo redo manager's
+			// repair data store provider so that repair data can be captured based on the
+			// state of the branch at the start of the transaction.
+			this.undoRedoManager.repairDataStoreProvider.freeze();
+		}
+		this.transactions.push(this.head.revision, repairStore);
 		this.editor.enterTransaction();
 	}
 
 	public commitTransaction(): TransactionResult.Commit {
-		const [startCommit, commits, _repairStore, commitRepairStore] = this.popTransaction();
+		const [startCommit, commits, _repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 
 		// Anonymize the commits from this transaction by stripping their revision tags.
@@ -125,8 +129,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 			// If this transaction is not nested, add it to the undo commit tree
 			if (this.transactions.size === 0) {
-				commitRepairStore?.capture(this.changeFamily.intoDelta(change), this.head.revision);
-				this.undoRedoManager.trackCommit(this.head, commitRepairStore);
+				this.undoRedoManager.trackCommit(this.head);
 			}
 
 			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
@@ -159,16 +162,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		GraphCommit<TChange>,
 		GraphCommit<TChange>[],
 		RepairDataStore | undefined,
-		RepairDataStore | undefined,
 	] {
-		const { startRevision, repairStore, commitRepairStore } = this.transactions.pop();
+		const { startRevision, repairStore } = this.transactions.pop();
 		const commits: GraphCommit<TChange>[] = [];
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
 			startCommit !== undefined,
 			0x593 /* Expected branch to be ahead of transaction start revision */,
 		);
-		return [startCommit, commits, repairStore, commitRepairStore];
+		return [startCommit, commits, repairStore];
 	}
 
 	/**
@@ -211,7 +213,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public fork(
 		anchors: AnchorSet,
-		repairDataStoreFactory: () => RepairDataStore,
+		repairDataStoreProvider: IRepairDataStoreProvider,
 	): SharedTreeBranch<TEditor, TChange> {
 		const fork = new SharedTreeBranch(
 			() => this.head,
@@ -239,7 +241,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.rebaser,
 			this.changeFamily,
 			anchors,
-			this.undoRedoManager.clone(repairDataStoreFactory),
+			this.undoRedoManager.clone(repairDataStoreProvider),
 		);
 		this.forks.add(fork);
 		return fork;

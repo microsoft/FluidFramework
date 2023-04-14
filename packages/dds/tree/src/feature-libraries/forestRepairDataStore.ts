@@ -5,12 +5,15 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
+	AnchorSet,
 	castCursorToSynchronous,
 	Delta,
 	EmptyKey,
 	FieldKey,
 	getDescendant,
 	IForestSubscription,
+	InMemoryStoredSchemaRepository,
+	IRepairDataStoreProvider,
 	ITreeCursorSynchronous,
 	keyAsDetachedField,
 	moveToDetachedField,
@@ -179,6 +182,36 @@ export class ForestRepairDataStore implements RepairDataStore {
 	}
 }
 
-export function repairDataStoreFactoryFromForest(forest: IForestSubscription): RepairDataStore {
+export function repairDataStoreFromForest(forest: IForestSubscription): ForestRepairDataStore {
 	return new ForestRepairDataStore(() => forest);
+}
+
+export class ForestRepairDataStoreProvider implements IRepairDataStoreProvider {
+	private frozenForest: IForestSubscription | undefined;
+
+	public constructor(
+		private readonly forest: IForestSubscription,
+		private readonly storedSchema: InMemoryStoredSchemaRepository,
+	) {}
+
+	public freeze(): void {
+		this.frozenForest = this.forest.clone(this.storedSchema.clone(), new AnchorSet());
+	}
+
+	public createRepairData(): ForestRepairDataStore {
+		const repairDataStore =
+			this.frozenForest !== undefined
+				? repairDataStoreFromForest(this.frozenForest)
+				: repairDataStoreFromForest(this.forest);
+		this.frozenForest = undefined;
+		return repairDataStore;
+	}
+
+	public clone(forest?: IForestSubscription): ForestRepairDataStoreProvider {
+		const storedSchema = this.storedSchema.clone();
+		return new ForestRepairDataStoreProvider(
+			forest ?? this.forest.clone(storedSchema, new AnchorSet()),
+			storedSchema,
+		);
+	}
 }
