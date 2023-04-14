@@ -14,7 +14,6 @@ export { Context } from "./bumpVersion/context";
 export { createReleaseBump } from "./bumpVersion/createReleaseBump";
 export { GitRepo } from "./bumpVersion/gitRepo";
 export { releaseVersion } from "./bumpVersion/releaseVersion";
-export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
 export { FluidRepo, VersionDetails } from "./common/fluidRepo";
 export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
