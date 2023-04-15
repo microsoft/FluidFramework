@@ -173,9 +173,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	public tryResubmitOp(content: any): boolean {
 		const op: JsonCompatibleReadOnly = content;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
-			const data = parseSchemaString(op.data as string);
-			// TODO: This does not correctly handle concurrency of schema edits.
-			this.inner.update(data);
+			this.submit(content);
 			return true;
 		}
 		return false;
