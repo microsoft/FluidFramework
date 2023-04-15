@@ -181,14 +181,14 @@ export async function bumpReleaseGroup(
 		name = releaseGroupOrPackage.kind;
 		cmds.push(
 			[`flub`, [`exec`, "-g", name, "--", `"npm version ${translatedVersion.version}"`]],
-			[`npm`, ["run", "build:genver"]],
+			[`pnpm`, ["-r", "run", "build:genver"]],
 		);
 	} else {
 		workingDir = releaseGroupOrPackage.directory;
 		name = releaseGroupOrPackage.name;
 		cmds.push([`npm`, ["version", translatedVersion.version]]);
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
-			cmds.push([`npm`, ["run", "build:genver"]]);
+			cmds.push([`pnpm`, ["run", "build:genver"]]);
 		}
 	}
 
@@ -207,6 +207,7 @@ export async function bumpReleaseGroup(
 			}
 		} catch (error: any) {
 			log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
+			throw error;
 		}
 	}
 

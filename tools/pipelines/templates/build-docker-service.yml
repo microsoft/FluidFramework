@@ -74,6 +74,12 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+  default: "^"
+
 # If true, then this pipeline will check and format package.json files according to prettier settings.
 - name: usesPrettier
   type: boolean
@@ -170,6 +176,7 @@ stages:
             componentDetection=${{ variables.componentDetection }}
             publish=${{ variables.publish }}
             canRelease=${{ variables.canRelease }}
+            interdependencyRange='${{ parameters.interdependencyRange }}'
 
             pushImage=${{ variables.pushImage }}
             releaseImage=${{ variables.releaseImage }}
@@ -261,6 +268,7 @@ stages:
           buildDirectory: ${{ parameters.buildDirectory }}
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+          interdependencyRange: ${{ parameters.interdependencyRange }}
           tagName: ${{ parameters.tagName }}
           usesPrettier: ${{ parameters.usesPrettier }}
     - ${{ if eq(parameters.setVersion, false) }}:
