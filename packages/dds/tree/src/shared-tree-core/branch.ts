@@ -214,7 +214,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		branchHead: GraphCommit<TChange>,
 		onto: GraphCommit<TChange>,
 	): ReturnType<Rebaser<TChange>["rebaseBranch"]> | undefined {
-		if (this.head === onto) {
+		if (branchHead === onto) {
 			return undefined;
 		}
 
