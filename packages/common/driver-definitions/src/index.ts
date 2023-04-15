@@ -43,3 +43,11 @@ export {
 	IWebResolvedUrl,
 	IUrlResolver,
 } from "./urlResolver";
+export {
+	createCompressionStorageAdapterBuilder,
+	ICompressionStorageConfig,
+	createDefaultCompressionConfig,
+	applyStorageAdapters,
+	StorageAdapterBuilderType,
+	SummaryCompressionAlgorithm,
+} from "./adapters";

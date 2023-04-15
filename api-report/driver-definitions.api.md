@@ -24,6 +24,15 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 
+// @public
+export function applyStorageAdapters(storage: IDocumentStorageService, storageAdapters?: StorageAdapterBuilderType[]): IDocumentStorageService;
+
+// @public (undocumented)
+export function createCompressionStorageAdapterBuilder(config?: ICompressionStorageConfig): StorageAdapterBuilderType;
+
+// @public (undocumented)
+export function createDefaultCompressionConfig(): ICompressionStorageConfig;
+
 // @public (undocumented)
 export type DriverError = IThrottlingWarning | IGenericNetworkError | IAuthorizationError | ILocationRedirectionError | IDriverBasicError;
 
@@ -88,6 +97,14 @@ export interface IAuthorizationError extends IDriverErrorBase {
     readonly errorType: DriverErrorType.authorizationError;
     // (undocumented)
     readonly tenantId?: string;
+}
+
+// @public (undocumented)
+export interface ICompressionStorageConfig {
+    // (undocumented)
+    algorithm: SummaryCompressionAlgorithm;
+    // (undocumented)
+    minSizeToCompress: number;
 }
 
 // @public
@@ -304,6 +321,17 @@ export interface IWebResolvedUrl extends IResolvedUrlBase {
 export enum LoaderCachingPolicy {
     NoCaching = 0,
     Prefetch = 1
+}
+
+// @public (undocumented)
+export type StorageAdapterBuilderType = (storage: IDocumentStorageService) => IDocumentStorageService;
+
+// @public (undocumented)
+export enum SummaryCompressionAlgorithm {
+    // (undocumented)
+    LZ4 = 2,
+    // (undocumented)
+    None = 1
 }
 
 // (No @packageDocumentation comment for this package)

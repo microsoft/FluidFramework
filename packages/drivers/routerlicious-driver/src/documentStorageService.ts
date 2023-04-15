@@ -8,6 +8,8 @@ import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
 	LoaderCachingPolicy,
+	StorageAdapterBuilderType,
+	applyStorageAdapters,
 } from "@fluidframework/driver-definitions";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
 import { GitManager } from "@fluidframework/server-services-client";
@@ -33,6 +35,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		manager: GitManager,
 		logger: ITelemetryLogger,
 		policies: IDocumentStorageServicePolicies,
+		adapterBuilders?: StorageAdapterBuilderType[],
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
 		snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
@@ -68,7 +71,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		) {
 			return new PrefetchDocumentStorageService(storageService);
 		}
-		return storageService;
+		return adapterBuilders !== undefined ? applyStorageAdapters(storageService, adapterBuilders) : storageService;		
 	}
 
 	constructor(
@@ -76,6 +79,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		public manager: GitManager,
 		logger: ITelemetryLogger,
 		policies: IDocumentStorageServicePolicies,
+		adapterBuilders?: StorageAdapterBuilderType[],
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
 		snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
@@ -88,6 +92,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 				manager,
 				logger,
 				policies,
+				adapterBuilders,
 				driverPolicies,
 				blobCache,
 				snapshotTreeCache,

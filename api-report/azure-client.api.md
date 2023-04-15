@@ -47,6 +47,8 @@ export class AzureClient {
 export interface AzureClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
+    // (undocumented)
+    readonly enableSummaryCompression?: boolean;
     readonly logger?: ITelemetryBaseLogger;
 }
 

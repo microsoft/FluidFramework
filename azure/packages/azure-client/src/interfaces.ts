@@ -28,6 +28,8 @@ export interface AzureClientProps {
 	 * Base interface for providing configurations to control experimental features. If unsure, leave this undefined.
 	 */
 	readonly configProvider?: IConfigProviderBase;
+
+	readonly enableSummaryCompression?: boolean;
 }
 
 /**

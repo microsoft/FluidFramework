@@ -63,6 +63,7 @@ export class DocumentService implements api.IDocumentService {
 		private readonly blobCache: ICache<ArrayBufferLike>,
 		private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
+		private readonly storageAdapterBuilders?: api.StorageAdapterBuilderType[],
 	) {}
 
 	private documentStorageService: DocumentStorageService | undefined;
@@ -126,6 +127,7 @@ export class DocumentService implements api.IDocumentService {
 			storageManager,
 			this.logger,
 			this.documentStorageServicePolicies,
+			this.storageAdapterBuilders,
 			this.driverPolicies,
 			this.blobCache,
 			this.snapshotTreeCache,

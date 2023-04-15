@@ -12,6 +12,7 @@ import {
 	IFluidResolvedUrl,
 	IResolvedUrl,
 	LoaderCachingPolicy,
+	StorageAdapterBuilderType,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
@@ -55,10 +56,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
 	private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
+	private readonly storageAdapterBuilders?: StorageAdapterBuilderType[];
 
 	constructor(
 		private readonly tokenProvider: ITokenProvider,
 		driverPolicies: Partial<IRouterliciousDriverPolicies> = {},
+		storageAdapterBuilders?: StorageAdapterBuilderType[],
 	) {
 		// Use the maximum allowed by the policy (IDocumentStorageServicePolicies.maximumCacheDurationMs set below)
 		const snapshotCacheExpiryMs: FiveDaysMs = maximumSnapshotCacheDurationMs;
@@ -71,6 +74,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
 			? new InMemoryCache<ISnapshotTreeVersion>(snapshotCacheExpiryMs)
 			: new NullCache<ISnapshotTreeVersion>();
+		this.storageAdapterBuilders = storageAdapterBuilders;
 	}
 
 	/**
@@ -301,6 +305,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.blobCache,
 			this.snapshotTreeCache,
 			discoverFluidResolvedUrl,
+			this.storageAdapterBuilders,
 		);
 	}
 }

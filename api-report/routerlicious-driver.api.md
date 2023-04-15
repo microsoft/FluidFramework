@@ -11,6 +11,7 @@ import { ISession } from '@fluidframework/server-services-client';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenClaims } from '@fluidframework/protocol-definitions';
+import { StorageAdapterBuilderType } from '@fluidframework/driver-definitions';
 
 // @public
 export class DefaultTokenProvider implements ITokenProvider {
@@ -63,7 +64,7 @@ export interface ITokenService {
 
 // @public
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
-    constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>);
+    constructor(tokenProvider: ITokenProvider, driverPolicies?: Partial<IRouterliciousDriverPolicies>, storageAdapterBuilders?: StorageAdapterBuilderType[]);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
