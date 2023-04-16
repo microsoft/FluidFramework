@@ -62,6 +62,7 @@ export class CompressionSummaryStorageAdapter extends SummaryStorageAdapter {
 			prepSummary: recursivelyReplace(summary, this.blobReplacer, context) as ISummaryTree,
 			prepContext: context,
 		};
+		console.log(`Miso Summary Upload: ${  JSON.stringify(prep.prepSummary).length}`);
 		return super.uploadSummaryWithContext(prep.prepSummary, prep.prepContext);
 	}
 	public get algorithm(): SummaryCompressionAlgorithm | undefined {

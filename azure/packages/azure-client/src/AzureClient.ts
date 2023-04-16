@@ -8,7 +8,7 @@ import {
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IUrlResolver, StorageAdapterBuilderType, createCompressionStorageAdapterBuilder } from "@fluidframework/driver-definitions";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
 	ContainerSchema,
@@ -59,6 +59,10 @@ export class AzureClient {
 	 * @param props - Properties for initializing a new AzureClient instance
 	 */
 	public constructor(private readonly props: AzureClientProps) {
+		const compressAdapters: StorageAdapterBuilderType[] = [];
+		if(props.enableSummaryCompression !== undefined && props.enableSummaryCompression) {
+			compressAdapters.push(createCompressionStorageAdapterBuilder());
+		}
 		// remove trailing slash from URL if any
 		props.connection.endpoint = props.connection.endpoint.replace(/\/$/, "");
 		this.urlResolver = new AzureUrlResolver();
@@ -68,6 +72,7 @@ export class AzureClient {
 		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
 			this.props.connection.tokenProvider,
 			{ enableWholeSummaryUpload: isRemoteConnection, enableDiscovery: isRemoteConnection },
+			compressAdapters
 		);
 		this.configProvider = props.configProvider;
 	}

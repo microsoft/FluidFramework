@@ -69,7 +69,10 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 			!driverPolicies?.enableWholeSummaryUpload &&
 			policies.caching === LoaderCachingPolicy.Prefetch
 		) {
-			return new PrefetchDocumentStorageService(storageService);
+			const retStorage = adapterBuilders !== undefined ? 
+			    applyStorageAdapters(new PrefetchDocumentStorageService(storageService), 
+			    adapterBuilders) : storageService;		
+			return retStorage;
 		}
 		return adapterBuilders !== undefined ? applyStorageAdapters(storageService, adapterBuilders) : storageService;		
 	}
