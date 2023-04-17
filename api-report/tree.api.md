@@ -1189,9 +1189,9 @@ export interface PathRootPrefix {
 // @alpha
 export interface PathVisitor {
     // (undocumented)
-    onDelete(path: FieldUpPath, index: number, count: number): void;
+    onDelete(path: UpPath, count: number): void;
     // (undocumented)
-    onInsert(path: FieldUpPath, index: number, content: readonly Delta.ProtoNode[]): void;
+    onInsert(path: UpPath, content: readonly Delta.ProtoNode[]): void;
     // (undocumented)
     onSetValue(path: UpPath, field: FieldKey | undefined, value: Value): void;
 }

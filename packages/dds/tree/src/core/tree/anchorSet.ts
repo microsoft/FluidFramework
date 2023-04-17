@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { createEmitter, ISubscribable } from "../../events";
 import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../../util";
 import { FieldKey, EmptyKey, Delta, visitDelta, DeltaVisitor } from "../tree";
-import { FieldUpPath, UpPath } from "./pathTree";
+import { UpPath } from "./pathTree";
 import { Value } from "./types";
 import { PathVisitor } from "./visithPath";
 
@@ -582,13 +582,14 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 					(p) => {
 						p.events.emit("childrenChanging", p);
 						if (parentField !== undefined) {
-							const parentFieldPath: FieldUpPath = {
+							const upPath: UpPath = {
 								parent: p,
-								field: parentField,
+								parentField,
+								parentIndex: start,
 							};
 							for (const [, visitors] of pathVisitors) {
 								visitors.forEach(({ onDelete: visitorOnDelete }) => {
-									visitorOnDelete(parentFieldPath, start, count);
+									visitorOnDelete(upPath, count);
 								});
 							}
 						}
@@ -603,13 +604,14 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 					(p) => {
 						p.events.emit("childrenChanging", p);
 						if (parentField !== undefined) {
-							const parentFieldPath: FieldUpPath = {
+							const upPath: UpPath = {
 								parent: p,
-								field: parentField,
+								parentField,
+								parentIndex: start,
 							};
 							for (const [, visitors] of pathVisitors) {
 								visitors.forEach(({ onInsert: visitorOnInsert }) => {
-									visitorOnInsert(parentFieldPath, start, content);
+									visitorOnInsert(upPath, content);
 								});
 							}
 						}

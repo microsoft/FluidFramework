@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { FieldUpPath, UpPath } from "./pathTree";
 import * as Delta from "./delta";
+import { UpPath } from "./pathTree";
 import { FieldKey, Value } from "./types";
 
 /**
@@ -14,7 +13,7 @@ import { FieldKey, Value } from "./types";
  * @alpha
  */
 export interface PathVisitor {
-	onDelete(path: FieldUpPath, index: number, count: number): void;
-	onInsert(path: FieldUpPath, index: number, content: readonly Delta.ProtoNode[]): void;
+	onDelete(path: UpPath, count: number): void;
+	onInsert(path: UpPath, content: readonly Delta.ProtoNode[]): void;
 	onSetValue(path: UpPath, field: FieldKey | undefined, value: Value): void;
 }

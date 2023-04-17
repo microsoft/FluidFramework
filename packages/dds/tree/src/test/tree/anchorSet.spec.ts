@@ -11,7 +11,6 @@ import {
 	AnchorSet,
 	Delta,
 	FieldKey,
-	FieldUpPath,
 	JsonableTree,
 	PathVisitor,
 	UpPath,
@@ -303,11 +302,17 @@ describe("AnchorSet", () => {
 		const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 		const pathVisitor: PathVisitor = {
-			onDelete(path: FieldUpPath, index: number, count: number): void {
-				log.logger(`visitSubtreeChange.onDelete-${String(path.field)}-${index}-${count}`)();
+			onDelete(path: UpPath, count: number): void {
+				log.logger(
+					`visitSubtreeChange.onDelete-${String(path.parentField)}-${
+						path.parentIndex
+					}-${count}`,
+				)();
 			},
-			onInsert(path: FieldUpPath, index: number, content: readonly Delta.ProtoNode[]): void {
-				log.logger(`visitSubtreeChange.onInsert-${String(path.field)}-${index}`)();
+			onInsert(path: UpPath, content: readonly Delta.ProtoNode[]): void {
+				log.logger(
+					`visitSubtreeChange.onInsert-${String(path.parentField)}-${path.parentIndex}`,
+				)();
 			},
 			onSetValue(path: UpPath, field: FieldKey, value: Value): void {
 				log.logger(`visitSubtreeChange.onSetValue-${value}`)();
