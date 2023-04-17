@@ -38,8 +38,9 @@ import {
 	RepairDataStore,
 	ChangeFamilyEditor,
 } from "../core";
-import { brand, JsonCompatibleReadOnly, TransactionResult } from "../util";
+import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
+import { isStableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -348,15 +349,29 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	protected override reSubmitCore(content: any, localOpMetadata: unknown) {
+	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
+		assert(isJsonObject(content), "expected content to be json object");
+		assert(
+			typeof content.revision === "string" && isStableId(content.revision),
+			"expected revision id to be valid stable id",
+		);
+		assert(isStableId(content.revision), "invalid stable ID");
 		const [commit] = this.editManager.findLocalCommit(content.revision);
 		this.submitCommit(commit);
 	}
 
-	protected applyStashedOp(content: any): undefined {
-		const { revision, changeset } = content as Message;
-		const decodedChangeset = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
-		this.addLocalChange(decodedChangeset, revision);
+	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+		assert(isJsonObject(content), "expected content to be json object");
+		assert(
+			typeof content.revision === "string" && isStableId(content.revision),
+			"expected revision id to be valid stable id",
+		);
+		assert(content.changeset !== undefined, "expected changeset to be defined");
+		const decodedChangeset = this.changeFamily.encoder.decodeJson(
+			formatVersion,
+			content.changeset,
+		);
+		this.addLocalChange(decodedChangeset, content.revision);
 		return;
 	}
 
