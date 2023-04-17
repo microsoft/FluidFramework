@@ -31,6 +31,7 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
 	assert,
+	delay,
 	LazyPromise,
 	Trace,
 	TypedEventEmitter,
@@ -507,6 +508,8 @@ const defaultCompressionConfig = {
 };
 
 const defaultChunkSizeInBytes = 204800;
+
+const defaultRestartDelayMs = 10000; // 10 seconds
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
@@ -3225,6 +3228,9 @@ export class ContainerRuntime
 				},
 				error,
 			);
+
+			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
+			await delay(defaultRestartDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
 			throw error;
