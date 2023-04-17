@@ -13,14 +13,16 @@ import { ICreateTreeEntry, ITree } from "@fluidframework/gitresources";
 import { IQuorumSnapshot } from "./quorum";
 
 export function getQuorumTreeEntries(
+	documentId: string,
 	minimumSequenceNumber: number,
 	sequenceNumber: number,
+	term: number,
 	quorumSnapshot: IQuorumSnapshot,
 ): ITreeEntry[] {
 	const documentAttributes: IDocumentAttributes = {
 		minimumSequenceNumber,
 		sequenceNumber,
-		term: 1,
+		term,
 	};
 
 	const entries: ITreeEntry[] = [

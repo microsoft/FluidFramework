@@ -281,6 +281,7 @@ export interface IPendingContainerState {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
+	term: number;
 	clientId?: string;
 }
 
@@ -1000,6 +1001,10 @@ export class Container
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
 		assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
+		assert(
+			this._protocolHandler.attributes.term !== undefined,
+			0x37e /* Must have a valid protocol handler instance */,
+		);
 		assert(!!this.baseSnapshot, "no base snapshot");
 		assert(!!this.baseSnapshotBlobs, "no snapshot blobs");
 		const pendingState: IPendingContainerState = {
@@ -1008,6 +1013,7 @@ export class Container
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
 			url: this.resolvedUrl.url,
+			term: this._protocolHandler.attributes.term,
 			clientId: this.clientId,
 		};
 
@@ -1637,6 +1643,11 @@ export class Container
 
 		const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
 
+		// Backward compatibility for older summaries with no term
+		if (attributes.term === undefined) {
+			attributes.term = 1;
+		}
+
 		return attributes;
 	}
 
@@ -1862,6 +1873,7 @@ export class Container
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
+			attributes.term ?? 1,
 			{
 				process: (message) => this.processRemoteMessage(message),
 				processSignal: (message) => {

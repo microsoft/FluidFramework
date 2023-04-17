@@ -47,11 +47,16 @@ export class DeltaService implements IDeltaService {
 		collectionName: string,
 		tenantId: string,
 		documentId: string,
+		fromTerm: number,
+		toTerm: number,
 		fromSeq?: number,
 		toSeq?: number,
 	): Promise<ISequencedDocumentMessage[]> {
 		const query: any = { documentId, tenantId, scheduledDeletionTime: { $exists: false } };
+		query["operation.term"] = {};
 		query["operation.sequenceNumber"] = {};
+		query["operation.term"].$gte = fromTerm;
+		query["operation.term"].$lte = toTerm;
 		if (fromSeq !== undefined) {
 			query["operation.sequenceNumber"].$gt = fromSeq;
 		}
@@ -59,7 +64,7 @@ export class DeltaService implements IDeltaService {
 			query["operation.sequenceNumber"].$lt = toSeq;
 		}
 
-		const sort = { "operation.sequenceNumber": 1 };
+		const sort = { "operation.term": 1, "operation.sequenceNumber": 1 };
 		return this.queryDeltas(collectionName, query, sort);
 	}
 
@@ -85,12 +90,18 @@ export class DeltaService implements IDeltaService {
 
 		const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
 		if (!existingRef) {
-			return this.getDeltasFromStorage(collectionName, tenantId, documentId, from, to);
+			return this.getDeltasFromStorage(collectionName, tenantId, documentId, 1, 1, from, to);
 		} else {
-			const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
+			const [deliContent, opsContent] = await Promise.all([
+				gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli"),
+				gitManager.getContent(existingRef.object.sha, ".logTail/logTail"),
+			]);
 			const opsFromSummary = JSON.parse(
 				toUtf8(opsContent.content, opsContent.encoding),
 			) as ISequencedDocumentMessage[];
+
+			const deli = JSON.parse(toUtf8(deliContent.content, deliContent.encoding));
+			const term = deli.term;
 
 			const fromSeq =
 				opsFromSummary.length > 0
@@ -100,6 +111,8 @@ export class DeltaService implements IDeltaService {
 				collectionName,
 				tenantId,
 				documentId,
+				term,
+				term,
 				fromSeq,
 				to,
 			);

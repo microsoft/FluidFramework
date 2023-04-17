@@ -61,7 +61,7 @@ const DefaultScribe: IScribe = {
 	validParentSummaries: undefined,
 };
 
-export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionLambdaConfig> {
+export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
@@ -232,7 +232,10 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			++expectedSequenceNumber;
 		}
 
-		const protocolHandler = initializeProtocol(lastCheckpoint.protocolState);
+		const protocolHandler = initializeProtocol(
+			lastCheckpoint.protocolState,
+			latestSummary.term,
+		);
 
 		const lastSummaryMessages = latestSummary.messages;
 		const summaryWriter = new SummaryWriter(
@@ -275,12 +278,14 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			document.tenantId,
 			document.documentId,
 			summaryWriter,
+			summaryReader,
 			pendingMessageReader,
 			checkpointManager,
 			lastCheckpoint,
 			this.serviceConfiguration,
 			this.producer,
 			protocolHandler,
+			latestSummary.term,
 			latestSummary.protocolHead,
 			opsSinceLastSummary,
 			scribeSessionMetric,
