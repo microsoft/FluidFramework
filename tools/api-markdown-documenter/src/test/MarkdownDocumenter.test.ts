@@ -10,7 +10,7 @@ import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
 
-import { renderApiModelAsMarkdown } from "../MarkdownDocumenter";
+import { renderApiModelAsMarkdown } from "../RenderMarkdown";
 import {
 	ApiItemTransformationConfiguration,
 	apiModelToDocument,
