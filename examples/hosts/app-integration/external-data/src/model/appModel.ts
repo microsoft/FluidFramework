@@ -34,6 +34,24 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	};
 
 	/**
+	 * {@inheritDoc IAppModel.getClientId}
+	 */
+	public getClientID(): string | undefined {
+		return this.runtime.clientId;
+	}
+
+	/**
+	 * {@inheritDoc IAppModel.handleClaimLeadership}
+	 */
+	public handleClaimLeadership(): void {
+		const clientID = this.runtime.clientId;
+		if (clientID === undefined) {
+			throw new Error("clientID is undefined");
+		}
+		this.baseDocument.setLeader(clientID);
+		console.log(`Setting leader to ${clientID}`);
+	}
+	/**
 	 * {@inheritDoc IAppModel.getContainerResolvedUrl}
 	 */
 	public readonly getContainerResolvedUrl = (): IFluidResolvedUrl | undefined => {

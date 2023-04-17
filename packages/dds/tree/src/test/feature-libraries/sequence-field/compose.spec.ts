@@ -835,6 +835,22 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, []);
 	});
 
+	it("move ○ move (forward)", () => {
+		const move1 = Change.move(0, 1, 1, brand(0));
+		const move2 = Change.move(1, 1, 2, brand(1));
+		const expected = Change.move(0, 1, 2, brand(1));
+		const actual = shallowCompose([makeAnonChange(move1), makeAnonChange(move2)]);
+		assert.deepEqual(actual, expected);
+	});
+
+	it("move ○ move (back)", () => {
+		const move1 = Change.move(2, 1, 1, brand(0));
+		const move2 = Change.move(1, 1, 0, brand(1));
+		const expected = Change.move(2, 1, 0, brand(1));
+		const actual = shallowCompose([makeAnonChange(move1), makeAnonChange(move2)]);
+		assert.deepEqual(actual, expected);
+	});
+
 	it("move ○ move with no net effect (back and forward)", () => {
 		const move1 = Change.move(1, 1, 0);
 		const move2 = Change.move(0, 1, 1);
