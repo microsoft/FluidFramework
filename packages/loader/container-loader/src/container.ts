@@ -65,6 +65,7 @@ import {
 	ISummaryTree,
 	IVersion,
 	MessageType,
+	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -1053,6 +1054,41 @@ export class Container
 		return JSON.stringify(combinedSummary);
 	}
 
+	/**
+	 * This method traverses the given summary tree. It will collect names of all ITreeBlob entries. 
+	 * It will create new ITreeBlob inside the given summary tree beside the blob which has name ".metadata", which
+	 * can be nested deeper in the tree.
+	 * The new blob will have name ".metadata_compressed" and will contain the list of blob names collected in the first step.
+	 * @param summary - summary tree to traverse
+	 */
+    public addCompressionMarkup(summary: ISummaryTree): void {
+		const blobNames: string[] = [];
+		const addBlobName = (path: string) => {
+			blobNames.push(path);
+		}
+		let compressedBlobHolder;
+		const traverse = (tree: SummaryObject, path: string) => {			
+			if (tree.type === SummaryType.Tree) {
+				for (const [key, value] of Object.entries(tree.tree)) {
+					if(value.type === SummaryType.Blob && key !== ".metadata") {
+						compressedBlobHolder =	tree;	
+					}
+					if (value.type === SummaryType.Tree) {
+						traverse(value , `${path}/${key}`);
+					}		
+					else if (value.type === SummaryType.Blob) {
+						addBlobName(`${path}/${key}`);
+					}			
+				}
+			}
+		}
+		traverse(summary, "");
+		compressedBlobHolder.tree[".metadata_compressed"] = {
+			type: SummaryType.Blob,
+			content: JSON.stringify(blobNames),
+		};		
+	}
+
 	public async attach(request: IRequest): Promise<void> {
 		await PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -1088,6 +1124,8 @@ export class Container
 						// Get the document state post attach - possibly can just call attach but we need to change the
 						// semantics around what the attach means as far as async code goes.
 						const appSummary: ISummaryTree = this.context.createSummary();
+                        // TODO - make conditional, based on configuration
+						this.addCompressionMarkup(appSummary);
 						const protocolSummary = this.captureProtocolSummary();
 						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
