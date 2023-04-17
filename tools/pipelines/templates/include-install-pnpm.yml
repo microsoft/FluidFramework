@@ -38,6 +38,7 @@ steps:
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
+    condition: or(succeeded(), canceled())
     script: |
       corepack enable
       pnpm -v
