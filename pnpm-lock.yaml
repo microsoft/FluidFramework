@@ -7292,7 +7292,6 @@ importers:
       nock: ^10.0.1
       nyc: ^15.1.0
       prettier: ~2.6.2
-      querystring: ^0.2.0
       rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.4.1
@@ -7312,7 +7311,6 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       cross-fetch: 3.1.5
       json-stringify-safe: 5.0.1
-      querystring: 0.2.1
       socket.io-client: 4.5.4
       url-parse: 1.5.10
       uuid: 8.3.2
