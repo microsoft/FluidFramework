@@ -6,7 +6,6 @@
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
@@ -48,7 +47,6 @@ export default TinyliciousClient;
 export interface TinyliciousClientProps {
     connection?: TinyliciousConnectionConfig;
     logger?: ITelemetryBaseLogger;
-    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @public

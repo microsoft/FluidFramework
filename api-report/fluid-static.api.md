@@ -13,7 +13,6 @@ import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
-import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
 import { ICriticalContainerError } from '@fluidframework/container-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
@@ -34,7 +33,7 @@ export type DataObjectClass<T extends IFluidLoadable> = {
 
 // @public
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-    constructor(schema: ContainerSchema, runtimeOptions?: IContainerRuntimeOptions);
+    constructor(schema: ContainerSchema);
     // (undocumented)
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
 }
