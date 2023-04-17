@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IStackItemStyles, Stack, StackItem } from "@fluentui/react";
+import { IStackItemStyles, Stack, StackItem, TooltipHost  } from "@fluentui/react";
+import { useId } from "@fluentui/react-hooks";
 import {
 	Button,
 	Badge,
@@ -304,32 +305,43 @@ interface ActionsBarProps extends IContainerActions {
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, tryConnect, forceDisconnect, closeContainer } = props;
 
+	
+	const connectButtonTooltipId = useId("connect-button-tooltip");
+	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
+	const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
+
 	const changeConnectionStateButton = isContainerConnected ? (
-		<Button
-			icon={<PlugDisconnected24Regular />}
-			onClick={forceDisconnect}
-			disabled={forceDisconnect === undefined}
-		>
-			Disconnect Container
-		</Button>
+		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
+			<Button
+				icon={<PlugDisconnected24Regular />}
+				onClick={forceDisconnect}
+				disabled={forceDisconnect === undefined}
+			>
+				Disconnect Container
+			</Button>
+		</TooltipHost>
 	) : (
-		<Button
-			icon={<PlugConnected24Regular />}
-			onClick={tryConnect}
-			disabled={tryConnect === undefined}
-		>
-			Connect Container
-		</Button>
+		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
+			<Button
+				icon={<PlugConnected24Regular />}
+				onClick={tryConnect}
+				disabled={tryConnect === undefined}
+			>
+				Connect Container
+			</Button>
+		</TooltipHost>
 	);
 
 	const disposeContainerButton = (
-		<Button
-			icon={<Delete24Regular />}
-			onClick={closeContainer}
-			disabled={closeContainer === undefined}
-		>
-			Close Container
-		</Button>
+		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
+			<Button
+				icon={<Delete24Regular />}
+				onClick={closeContainer}
+				disabled={closeContainer === undefined}
+			>
+				Close Container
+			</Button>
+		</TooltipHost>
 	);
 
 	const itemStyles: IStackItemStyles = {
