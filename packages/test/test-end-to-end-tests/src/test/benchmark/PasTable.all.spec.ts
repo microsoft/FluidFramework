@@ -45,8 +45,8 @@ describeNoCompat("PAS Test", () => {
 			async run(): Promise<void> {
 				this.matrix.insertRows(0, rowSize);
 				this.matrix.insertCols(0, columnSize);
-				for (let i = 0; i < 6; i++) {
-					for (let j = 0; j < 5; j++) {
+				for (let i = 0; i < rowSize; i++) {
+					for (let j = 0; j < columnSize; j++) {
 						const id = j.toString() + i.toString();
 						const sharedString: SharedString = createString(id, dataStoreRuntime);
 						sharedString.insertText(0, "testValue");
