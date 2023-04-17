@@ -65,7 +65,7 @@
 		"@microsoft/api-extractor-model": "^7.26.4",
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/node-core-library": "^3.55.2",
-		"chalk": "^2.4.2"
+		"chalk": "^4.1.2"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
