@@ -186,7 +186,13 @@ export async function bumpReleaseGroup(
 		cmds.push(
 			[
 				`flub`,
-				[`exec`, "-g", name, "--", `"npm version ${translatedVersion.version}"`],
+				[
+					`exec`,
+					"-g",
+					name,
+					"--",
+					`"npm version ${translatedVersion.version} --allow-same-version"`,
+				],
 				options,
 			],
 			["pnpm", ["-r", "run", "build:genver"], options],
