@@ -246,7 +246,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "sendBlobAttach",
 					entryStatus: pendingEntry.status,
-					timeSinceUpload: secondsSinceUpload,
+					secondsSinceUpload,
 					minTTLInSeconds: pendingEntry.minTTLInSeconds,
 					expired,
 				});
