@@ -179,7 +179,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	public tryResubmitOp(content: JsonCompatibleReadOnly): boolean {
 		const op: JsonCompatibleReadOnly = content;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
-			assert(typeof op.data === 'string', "expected string data for resubmitted schema op");
+			assert(typeof op.data === "string", "expected string data for resubmitted schema op");
 			const schemaOp: SchemaOp = {
 				type: op.type,
 				data: op.data,
