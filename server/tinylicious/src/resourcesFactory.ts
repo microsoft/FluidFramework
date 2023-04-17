@@ -10,6 +10,7 @@ import {
 	MongoDatabaseManager,
 	MongoManager,
 	IResourcesFactory,
+	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -28,7 +29,10 @@ import {
 const defaultTinyliciousPort = 7070;
 
 export class TinyliciousResourcesFactory implements IResourcesFactory<TinyliciousResources> {
-	public async create(config: Provider): Promise<TinyliciousResources> {
+	public async create(
+		config: Provider,
+		customizations?: Record<string, any>,
+	): Promise<TinyliciousResources> {
 		const globalDbEnabled = false;
 		// Pull in the default port off the config
 		const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
@@ -48,7 +52,18 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			collectionNames.deltas,
 			collectionNames.scribeDeltas,
 		);
-		const storage = new DocumentStorage(databaseManager, tenantManager, false);
+		const documentsCollection = await databaseManager.getDocumentCollection();
+		const documentRepository =
+			customizations?.documentRepository ?? new MongoDocumentRepository(documentsCollection);
+
+		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
+
+		const storage = new DocumentStorage(
+			documentRepository,
+			tenantManager,
+			false,
+			opsCollection,
+		);
 		const io = new Server({
 			// enable compatibility with socket.io v2 clients
 			// https://socket.io/docs/v4/client-installation/
@@ -69,6 +84,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 				return new Historian(url, false, false);
 			},
 			winston,
+			undefined /* serviceConfiguration */,
 			pubsub,
 		);
 

@@ -10,6 +10,7 @@ import {
 	ISummaryTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
+import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
 
 /**
  * Summary tree assembler props
@@ -104,4 +105,27 @@ export function convertSnapshotAndBlobsToSummaryTree(
 		assembler.addTree(key, subtree);
 	}
 	return assembler.summary;
+}
+
+export function evalBlobsAndTrees(snapshot: INormalizedWholeSummary) {
+	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
+	const numBlobs = snapshot.blobs.size;
+	let encodedBlobsSize = 0;
+	for (const [_, blobContent] of snapshot.blobs) {
+		encodedBlobsSize += blobContent.byteLength;
+	}
+	return { trees, numBlobs, encodedBlobsSize };
+}
+
+export function validateBlobsAndTrees(snapshot: ISnapshotTree) {
+	assert(snapshot.trees !== undefined, "Returned r11s snapshot is malformed. No trees!");
+	assert(snapshot.blobs !== undefined, "Returned r11s snapshot is malformed. No blobs!");
+}
+
+function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
+	let numTrees = 0;
+	for (const [_, tree] of Object.entries(snapshotTree.trees)) {
+		numTrees += 1 + countTreesInSnapshotTree(tree);
+	}
+	return numTrees;
 }

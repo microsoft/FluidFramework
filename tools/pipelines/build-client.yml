@@ -102,6 +102,7 @@ extends:
     taskLint: true
     taskLintName: ci:lint
     taskTest:
+    - webpack
     - ci:test:mocha
     - ci:test:jest
     - ci:test:realsvc:local

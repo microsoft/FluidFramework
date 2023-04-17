@@ -6,3 +6,8 @@
 
 This member was related to an experimental feature that did not ship. As a result it is unused/ignored by all consumers.
 This change deprecates it, to be removed in a later release.
+
+### Deprecate RemoteHelp from MessageType
+
+The RemoteHelp MessageType is no longer used by the server side so it is safe to deprecate this op type.
+This change deprecates it, to be removed in a later release.
