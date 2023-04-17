@@ -44,6 +44,7 @@ export function create(
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
+    const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
 
 	// Express app configuration
 	const app: express.Express = express();
@@ -73,7 +74,7 @@ export function create(
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
 					[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
 				};
-			}),
+			}, enableLatencyMetric),
 		);
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
