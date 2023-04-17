@@ -120,7 +120,7 @@ describe("Routerlicious", () => {
 
 				testContext = new TestContext();
 				lambda = (await factory.create(
-					{ documentId: testDocumentId, tenantId: testTenantId },
+					{ documentId: testDocumentId, tenantId: testTenantId, leaderEpoch: 0 },
 					testContext,
 				)) as ScribeLambda;
 				messageFactory.createSequencedOperation(); // mock join op.

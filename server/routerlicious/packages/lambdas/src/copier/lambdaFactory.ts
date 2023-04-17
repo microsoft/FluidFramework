@@ -8,6 +8,7 @@ import {
 	ICollection,
 	IContext,
 	IPartitionLambda,
+	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
 	MongoManager,
 } from "@fluidframework/server-services-core";
@@ -22,7 +23,7 @@ export class CopierLambdaFactory extends EventEmitter implements IPartitionLambd
 	}
 
 	public async create(
-		config: undefined,
+		config: IPartitionLambdaConfig,
 		context: IContext,
 	): Promise<IPartitionLambda> {
 		return new CopierLambda(this.rawOpCollection, context);

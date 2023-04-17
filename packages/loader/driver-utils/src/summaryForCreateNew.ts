@@ -84,7 +84,9 @@ export function getDocAttributesFromProtocolSummary(
 	protocolSummary: ISummaryTree,
 ): IDocumentAttributes {
 	const attributesBlob = protocolSummary.tree.attributes as ISummaryBlob;
-	return JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
+	const documentAttributes = JSON.parse(attributesBlob.content as string) as IDocumentAttributes;
+	documentAttributes.term = documentAttributes.term ?? 1;
+	return documentAttributes;
 }
 
 /**
