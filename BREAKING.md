@@ -17,6 +17,26 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 # 2.0.0-internal.4.1.0
 
+## 2.0.0-internal.4.1.0 Breaking changes
+
+-   [Ability to enable grouped batching](#Ability-to-enable-grouped-batching)
+
+### Ability to enable grouped batching
+
+The `IContainerRuntimeOptions.enableGroupedBatching` option has been added to the container runtime layer and is off by default. This option will group all batch messages
+under a new "grouped" message to be sent to the service. Upon receiving this new "grouped" message, the batch messages will be extracted and given
+the sequence number of the parent "grouped" message.
+
+Upon enabling this option, if any issues arise, use the `Fluid.ContainerRuntime.DisableGroupedBatching` feature flag to disable at runtime. This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (version "2.0.0-internal.4.1.0" or later). This option is experimental and should not be enabled yet in production. Containers created with this option may not open in future versions of the framework.
+
+This option will change a couple of expectations around message structure and runtime layer expectations. Only enable this option after testing
+and verifying that the following expectation changes won't have any effects:
+
+-   batch messages observed at the runtime layer will not match messages seen at the loader layer
+-   messages within the same batch will have the same sequence number
+-   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
+-   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
+
 ## 2.0.0-internal.4.1.0 Upcoming changes
 
 -   [@fluidframework/garbage-collector deprecated](#@fluidframework/garbage-collector-deprecated)
@@ -25,6 +45,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
 -   [Container-loader deprecations](#Container-loader-deprecations)
 -   [Op compression is enabled by default](#op-compression-is-enabled-by-default)
+-   [IntervalConflictResolver deprecation](#intervalconflictresolver-deprecation)
 
 ### @fluidframework/garbage-collector deprecated
 
@@ -77,6 +98,12 @@ The following types in the @fluidframework/container-loader package are not used
 If the size of a batch is larger than 614kb, the ops will be compressed. After upgrading to this version, if batches exceed the size threshold, the runtime will produce a new type of op with the compression properties. To open a document which contains this type of op, the client's runtime version needs to be at least `client_v2.0.0-internal.2.3.0`. Older clients will close with assert `0x3ce` ("Runtime message of unknown type") and will not be able to open the documents until they upgrade. To minimize the risk, it is recommended to audit existing session and ensure that at least 99.9% of them are using a runtime version equal or greater than `client_v2.0.0-internal.2.3.0`, before upgrading to `2.0.0-internal.4.1.0`.
 
 More information about op compression can be found [here](./packages/runtime/container-runtime/src/opLifecycle/README.md).
+
+### IntervalConflictResolver deprecation
+
+In SharedString, interval conflict resolvers have been unused since [this change](https://github.com/microsoft/FluidFramework/pull/6407), which added support for multiple intervals at the same position.
+As such, any existing usages can be removed.
+Related APIs have been deprecated and will be removed in an upcoming release.
 
 # 2.0.0-internal.4.0.0
 

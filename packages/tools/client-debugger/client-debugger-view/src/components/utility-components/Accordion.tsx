@@ -38,6 +38,7 @@ const accordionStyles: IStackStyles = {
 		borderStyle: "solid",
 		borderWidth: 1,
 		borderColor: DefaultPalette.neutralTertiary,
+		color: DefaultPalette.neutralDark,
 	},
 };
 
@@ -48,6 +49,7 @@ const accordionStyles: IStackStyles = {
 const accordionContentStyles: IStackStyles = {
 	root: {
 		padding: 10,
+		color: DefaultPalette.neutralDark,
 	},
 };
 
@@ -99,6 +101,7 @@ export function Accordion(props: AccordionProps): React.ReactElement {
 							iconProps={{
 								iconName: collapsed ? "ChevronRight" : "ChevronDown",
 							}}
+							data-testid="expand-button"
 						/>
 					</StackItem>
 					<StackItem align="center">{header}</StackItem>

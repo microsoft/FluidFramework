@@ -13,16 +13,13 @@ import {
 import React from "react";
 
 import {
+	GetTelemetryHistory,
 	handleIncomingMessage,
-	ISourcedDebuggerMessage,
 	InboundHandlers,
+	ISourcedDevtoolsMessage,
 	ITimestampedTelemetryEvent,
-	TelemetryHistoryMessage,
-	TelemetryEventMessage,
-	TelemetryEventMessageType,
-	TelemetryHistoryMessageType,
-	GetTelemetryHistoryMessageType,
-	GetTelemetryHistoryMessage,
+	TelemetryHistory,
+	TelemetryEvent,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
@@ -77,33 +74,30 @@ export function TelemetryView(): React.ReactElement {
 		 * Handlers for inbound messages related to telemetry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[TelemetryEventMessageType]: (untypedMessage) => {
-				const message: TelemetryEventMessage = untypedMessage as TelemetryEventMessage;
+			[TelemetryEvent.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as TelemetryEvent.Message;
 				setTelemetryEvents((currentEvents) => [
-					...message.data.contents,
+					message.data.event,
 					...(currentEvents ?? []),
 				]);
 				return true;
 			},
-			[TelemetryHistoryMessageType]: (untypedMessage) => {
-				const message: TelemetryHistoryMessage = untypedMessage as TelemetryHistoryMessage;
+			[TelemetryHistory.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as TelemetryHistory.Message;
 				setTelemetryEvents(message.data.contents);
 				return true;
 			},
 		};
 
 		// Event handler for messages coming from the Message Relay
-		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers);
 		}
 
 		messageRelay.on("message", messageHandler);
 
 		// Request all log history
-		messageRelay.postMessage<GetTelemetryHistoryMessage>({
-			type: GetTelemetryHistoryMessageType,
-			data: undefined,
-		});
+		messageRelay.postMessage(GetTelemetryHistory.createMessage());
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);

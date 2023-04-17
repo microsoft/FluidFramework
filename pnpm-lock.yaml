@@ -78,6 +78,7 @@ importers:
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/server-services-client': ^0.1038.4000
+      '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-client-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
@@ -109,6 +110,7 @@ importers:
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-services-client': 0.1038.4000
+      '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       axios: 0.26.1
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
@@ -10281,6 +10283,7 @@ importers:
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/matrix': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -10317,6 +10320,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
       '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/matrix': link:../../../dds/matrix
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
@@ -10365,16 +10369,11 @@ importers:
       '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.34.4
-      '@testing-library/dom': ^8.2.0
-      '@testing-library/jest-dom': ^5.16.5
-      '@testing-library/react': ^12.0.0
-      '@testing-library/user-event': ^14.4.3
       '@types/chrome': 0.0.200
       '@types/jest': 22.2.3
       '@types/node': ^14.18.38
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      '@types/testing-library__jest-dom': ^5.14.5
       concurrently: ^7.6.0
       copy-webpack-plugin: ^11.0.0
       copyfiles: ^2.4.1
@@ -10385,7 +10384,6 @@ importers:
       html-webpack-plugin: ^5.5.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
-      jest-webextension-mock: ^3.7.22
       prettier: ~2.6.2
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -10416,16 +10414,11 @@ importers:
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
-      '@testing-library/dom': 8.19.1
-      '@testing-library/jest-dom': 5.16.5
-      '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
-      '@testing-library/user-event': 14.4.3_ua4wuun3fnehcjqtqj2e2ldgpe
       '@types/chrome': 0.0.200
       '@types/jest': 22.2.3
       '@types/node': 14.18.38
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      '@types/testing-library__jest-dom': 5.14.5
       concurrently: 7.6.0
       copy-webpack-plugin: 11.0.0_webpack@5.76.2
       copyfiles: 2.4.1
@@ -10436,7 +10429,6 @@ importers:
       html-webpack-plugin: 5.5.0_webpack@5.76.2
       jest: 26.6.3
       jest-junit: 10.0.0
-      jest-webextension-mock: 3.8.7
       prettier: 2.6.2
       rimraf: 4.4.0
       start-server-and-test: 1.14.0
@@ -10451,6 +10443,7 @@ importers:
       '@fluentui/react': ^8.96.1
       '@fluentui/react-components': ^9.18.6
       '@fluentui/react-hooks': ^8.6.12
+      '@fluentui/react-icons': ^2.0.199
       '@fluentui/react-icons-mdl2': ^1.3.22
       '@fluentui/react-tabs': ^9.3.6
       '@fluid-example/collaborative-textarea': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -10515,6 +10508,7 @@ importers:
       '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-components': 9.18.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
       '@fluentui/react-icons-mdl2': 1.3.28_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-tabs': 9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
@@ -33643,10 +33637,6 @@ packages:
       chalk: 4.1.2
       jest-util: 26.6.2
       string-length: 4.0.2
-    dev: true
-
-  /jest-webextension-mock/3.8.7:
-    resolution: {integrity: sha512-hLLqY24VqebfzKE21oRXVJRpLwxF6VKzTJZdGSpRqtUmnywmopP/jBZsegbtxH50rhn9Ql5Zioivkt35cMHZJg==}
     dev: true
 
   /jest-worker/26.6.2:

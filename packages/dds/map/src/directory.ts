@@ -743,29 +743,30 @@ export class SharedDirectory
 	}
 
 	/**
-	 * This checks if there is pending delete op for local delete for a subdirectory.
+	 * This checks if there is pending delete op for local delete for a any subdir in the relative path.
 	 * @param relativePath - path of sub directory.
 	 * @returns - true if there is pending delete.
 	 */
 	private isSubDirectoryDeletePending(relativePath: string): boolean {
-		const parentSubDir = this.getParentDirectory(relativePath);
-		const index = relativePath.lastIndexOf(posix.sep);
-		const dirName = relativePath.substring(index + 1);
-		return !!parentSubDir?.isSubDirectoryDeletePending(dirName);
-	}
-
-	/**
-	 * Gets the parent directory of a sub directory.
-	 * @param relativePath - path of sub directory of which parent needs to be find out.
-	 */
-	private getParentDirectory(relativePath: string): SubDirectory | undefined {
 		const absolutePath = this.makeAbsolute(relativePath);
 		if (absolutePath === posix.sep) {
-			return undefined;
+			return false;
 		}
-		const index = absolutePath.lastIndexOf(posix.sep);
-		const parentAbsPath = absolutePath.substring(0, index);
-		return this.getWorkingDirectory(parentAbsPath) as SubDirectory;
+		let currentParent = this.root;
+		const nodeList = absolutePath.split(posix.sep);
+		let start = 1;
+		while (start < nodeList.length) {
+			const subDirName = nodeList[start];
+			if (currentParent.isSubDirectoryDeletePending(subDirName)) {
+				return true;
+			}
+			currentParent = currentParent.getSubDirectory(subDirName) as SubDirectory;
+			if (currentParent === undefined) {
+				return true;
+			}
+			start += 1;
+		}
+		return false;
 	}
 
 	/**
@@ -780,8 +781,8 @@ export class SharedDirectory
 				localOpMetadata,
 			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				// If there is pending delete op for this subDirectory, then don't apply the this op as we are going
-				// to delete this subDirectory.
+				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
+				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
 					subdir.processClearMessage(msg, op, local, localOpMetadata);
 				}
@@ -807,8 +808,8 @@ export class SharedDirectory
 				localOpMetadata,
 			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				// If there is pending delete op for this subDirectory, then don't apply the this op as we are going
-				// to delete this subDirectory.
+				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
+				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
 					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
 				}
@@ -836,8 +837,8 @@ export class SharedDirectory
 				localOpMetadata,
 			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				// If there is pending delete op for this subDirectory, then don't apply the this op as we are going
-				// to delete this subDirectory.
+				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
+				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
 					const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
 					subdir.processSetMessage(msg, op, context, local, localOpMetadata);
@@ -866,7 +867,9 @@ export class SharedDirectory
 				localOpMetadata,
 			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (parentSubdir) {
+				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
+				// as we are going to delete this subDirectory.
+				if (parentSubdir && !this.isSubDirectoryDeletePending(op.path)) {
 					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -895,7 +898,9 @@ export class SharedDirectory
 				localOpMetadata,
 			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				if (parentSubdir) {
+				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
+				// as we are going to delete this subDirectory.
+				if (parentSubdir && !this.isSubDirectoryDeletePending(op.path)) {
 					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
