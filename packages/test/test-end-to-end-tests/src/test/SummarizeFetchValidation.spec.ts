@@ -373,9 +373,9 @@ describeNoCompat("Summarizer fetches expected number of times", (getTestObjectPr
 			const response = await uploadSummaryUploaderFunc(summary, context);
 			// Close summarizer so that it does not submit SummaryOp
 			summarizer.close();
-			// ODSP has single commit summary enabled by default and 
+			// ODSP has single commit summary enabled by default and
 			// will update the summary version even without the summary op.
-			if (provider.driver.type === "odsp") { 
+			if (provider.driver.type === "odsp") {
 				lastSummaryVersion = response;
 			}
 			return response;
@@ -389,7 +389,11 @@ describeNoCompat("Summarizer fetches expected number of times", (getTestObjectPr
 		const value = getAndIncrementCellValue(mainDataStore.matrix, 0, 0, "1");
 		assert(value === 1, "Value matches expected");
 
-		const secondSummarizer = await createSummarizer(provider, mainContainer, lastSummaryVersion);
+		const secondSummarizer = await createSummarizer(
+			provider,
+			mainContainer,
+			lastSummaryVersion,
+		);
 		let versionWrap = await incrementCellValueAndRunSummary(
 			secondSummarizer,
 			2 /* expectedMatrixCellValue */,
