@@ -48,6 +48,7 @@ export {
 	isStatic,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
+	transformApiModel,
 	transformDocNode,
 } from "./api-item-transforms";
 
@@ -77,7 +78,6 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging";
-export { transformApiModel } from "./TransformApiModel";
 
 // Conveinence re-exports of API model types
 export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

@@ -9,6 +9,7 @@ import { FileSystem } from "@rushstack/node-core-library";
 import {
 	ApiItemTransformationConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
+	transformApiModel,
 } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
 import {
@@ -16,7 +17,6 @@ import {
 	getMarkdownRenderConfigurationWithDefaults,
 	renderDocumentAsMarkdown,
 } from "./markdown-renderer";
-import { transformApiModel } from "./TransformApiModel";
 
 /**
  * Renders the provided model and its contents, and writes each document to a file on disk.
