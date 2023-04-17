@@ -695,24 +695,24 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.equal(
 			(container1 as any).clientDetails?.capabilities?.interactive,
 			true,
-			"Interactive container's capabilities do not say 'interactive: true' before resolving second container",
+			"First container's client capabilities should say 'interactive: true' before resolving second container",
 		);
 		assert.equal(
 			(container1 as any).clientDetails?.type,
 			undefined,
-			"Interactive container's capabilities do not have undefined 'type' before resolving second container",
+			"First container's clientDetails should have undefined 'type' before resolving second container",
 		);
 
 		// Check that the IClient object passed in loader props hasn't been mutated
 		assert.equal(
 			client.details.capabilities.interactive,
 			true,
-			"IClient.details.capabilities.interactive does not have the expected value before resolving second container",
+			"IClient.details.capabilities.interactive should be 'true' before resolving second container",
 		);
 		assert.equal(
 			client.details.type,
 			undefined,
-			"IClient.details.type does not have the expected value before resolving second container",
+			"IClient.details.type should be undefined before resolving second container",
 		);
 
 		// Resolve the container a second time with different client details.
@@ -729,30 +729,42 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			},
 			url: await provider.driver.createContainerUrl(documentId, container1.resolvedUrl),
 		};
-		await loader.resolve(request);
+		const container2 = await loader.resolve(request);
+
+		// Check that the second container's client details are the expected ones
+		assert.equal(
+			(container2 as any).clientDetails?.capabilities?.interactive,
+			false,
+			"Second container's capabilities should say 'interactive: false'",
+		);
+		assert.equal(
+			(container2 as any).clientDetails?.type,
+			"myContainerType",
+			"Second container's clientDetails say 'type: myContainerType'",
+		);
 
 		// Check that the first container's client details are still the expected ones after resolving the second container
 		assert.equal(
 			(container1 as any).clientDetails?.capabilities?.interactive,
 			true,
-			"Interactive container's capabilities do not say 'interactive: true' after resolving second container",
+			"First container's capabilities should say 'interactive: true' after resolving second container",
 		);
 		assert.equal(
-			(container1 as any).clientDetails?.capabilities?.type,
+			(container1 as any).clientDetails?.type,
 			undefined,
-			"Interactive container's capabilities do not have undefined 'type' after resolving second container",
+			"First container's clientDetails should have undefined 'type' after resolving second container",
 		);
 
 		// Check that the IClient object passed in loader props hasn't been mutated
 		assert.equal(
 			client.details.capabilities.interactive,
 			true,
-			"IClient.details.capabilities.interactive does not have the expected value after resolving second container",
+			"IClient.details.capabilities.interactive should be 'true' after resolving second container",
 		);
 		assert.equal(
 			client.details.type,
 			undefined,
-			"IClient.details.type does not have the expected value after resolving second container",
+			"IClient.details.type should be undefined after resolving second container",
 		);
 	});
 });
