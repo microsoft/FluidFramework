@@ -155,7 +155,6 @@ export class StaticStorageDocumentService implements IDocumentService {
 
 	public dispose() {}
 
-	// TODO: Issue-2109 Implement detach container api or put appropriate comment.
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		return this.storage;
