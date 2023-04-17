@@ -21,6 +21,11 @@ parameters:
   type: boolean
   default: true
 
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -115,25 +120,11 @@ steps:
   env:
     VERSION_RELEASE: $(release)
     RELEASE_GROUP: ${{ parameters.tagName }}
+    INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
   inputs:
-    targetType: 'inline'
+    targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      echo SETVERSION_VERSION=$SETVERSION_VERSION
-      echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
-      echo RELEASE_GROUP=$RELEASE_GROUP
-
-      if [ -f "lerna.json" ]; then
-        if [ "$VERSION_RELEASE" = "release" ]; then
-          echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"^\" -xv"
-          flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="^" -xv
-        else
-          echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"\" -xv"
-          flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="" -xv
-        fi
-      else
-        npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
-      fi
+    filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
 - ${{ if eq(parameters.usesPrettier, true) }}:
   # package.json files are reformatted by the prior set version steps, so reformat them (and only them) with prettier
