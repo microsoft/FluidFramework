@@ -13,7 +13,8 @@ controller:
     enabled: False # Disable admission webhooks endpoint to keep moving parts to a minimum as long as we don't use it
   service:
     annotations:
-      # This annotation is necessary for external traffic to reach the pods correctly in AKS.
+      # This annotation is necessary for external traffic to reach the pods correctly in AKS (Azure Kubernetes Service,
+      # https://learn.microsoft.com/en-us/azure/aks/).
       # Without it, health probes on the automatically-created load balancer will have an incorrect path, fail because
       # of that, and make it look like the targets of the load balancing rules are unhealthy, which results in external
       # requests hanging instead of getting routed to the appropriate pods.
