@@ -200,7 +200,7 @@ export async function bumpReleaseGroup(
 		};
 		cmds.push([`npm`, ["version", translatedVersion.version], options]);
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
-			cmds.push([`pnpm`, ["run", "build:genver"], options]);
+			cmds.push([`npm`, ["run", "build:genver"], options]);
 		}
 	}
 
