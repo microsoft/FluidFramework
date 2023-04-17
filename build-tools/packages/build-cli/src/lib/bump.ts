@@ -204,7 +204,7 @@ export async function bumpReleaseGroup(
 			stdio: "inherit",
 			shell: true,
 		};
-		cmds.push([`npm`, ["version", translatedVersion.version], options]);
+		cmds.push([`npm`, ["version", translatedVersion.version, "--allow-same-version"], options]);
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
 			cmds.push([`npm`, ["run", "build:genver"], options]);
 		}
