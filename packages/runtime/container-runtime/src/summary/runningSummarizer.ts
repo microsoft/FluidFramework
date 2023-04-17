@@ -15,7 +15,7 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ISummaryConfiguration } from "../containerRuntime";
+import { ISummaryConfiguration, defaultCloseSummarizerDelayMs } from "../containerRuntime";
 import { opSize } from "../opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
@@ -674,23 +674,32 @@ export class RunningSummarizer implements IDisposable {
 						});
 						await delay(delaySeconds * 1000);
 					}
+
+					if (this.shouldAbortOnSummaryFailure) {
+						// There's no need to delay here as we already have summarizeAttemptDelay given to us by the server.
+						if (delaySeconds === 0) {
+							const closeSummarizerDelayOverrideMs =
+								this.mc.config.getNumber(
+									"Fluid.ContainerRuntime.Test.CloseSummarizerOnSummaryStaleDelayOverrideMs",
+								) ?? defaultCloseSummarizerDelayMs;
+							await delay(closeSummarizerDelayOverrideMs);
+						}
+
+						this.mc.logger.sendTelemetryEvent(
+							{
+								eventName: "ClosingSummarizerOnSummaryStale",
+								reason,
+								message: lastResult?.message,
+							},
+							lastResult?.error,
+						);
+
+						this.stopSummarizerCallback("latestSummaryStateStale");
+						this.runtime.closeFn();
+						return;
+					}
 				}
 
-				if (this.shouldAbortOnSummaryFailure) {
-					// There's no need to delay here as we already have summarizeAttemptDelay given to us by the server.
-					this.mc.logger.sendTelemetryEvent(
-						{
-							eventName: "ClosingSummarizerOnSummaryStale",
-							reason,
-							message: lastResult?.message,
-						},
-						lastResult?.error,
-					);
-
-					this.stopSummarizerCallback("latestSummaryStateStale");
-					this.runtime.closeFn();
-					return;
-				}
 				// If all attempts failed, log error (with last attempt info) and close the summarizer container
 				this.mc.logger.sendErrorEvent(
 					{
