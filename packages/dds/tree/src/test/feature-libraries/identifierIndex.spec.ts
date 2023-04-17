@@ -474,7 +474,7 @@ describe("Node Identifier Index", () => {
 				fork.context.root.deleteNodes(0, 1);
 				assertIds(tree, [id]);
 				assertIds(fork, []);
-				fork.merge();
+				tree.merge(fork);
 				assertIds(tree, []);
 			});
 
@@ -496,7 +496,7 @@ describe("Node Identifier Index", () => {
 				tree.context.root.deleteNodes(0, 1);
 				assertIds(tree, []);
 				assertIds(fork, [id]);
-				fork.merge();
+				tree.merge(fork);
 				assertIds(tree, []);
 			});
 		});
