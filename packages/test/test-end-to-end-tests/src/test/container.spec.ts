@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
@@ -11,6 +12,7 @@ import {
 	ContainerErrorType,
 	IFluidCodeDetails,
 	IContainer,
+	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
 	ConnectionState,
@@ -35,6 +37,7 @@ import {
 	timeoutPromise,
 	ITestContainerConfig,
 	waitForContainerConnection,
+	ITestFluidObject,
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -48,6 +51,7 @@ import {
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
@@ -665,6 +669,96 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
 		assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
 		assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
+	});
+
+	it.only("clientDetailsOverride does not cause client details of other containers with the same loader to change", async function () {
+		const timeoutDurationMs = this.timeout() / 2;
+		const client: IClient = {
+			details: {
+				capabilities: { interactive: true },
+			},
+			permission: [],
+			scopes: [],
+			user: { id: "" },
+			mode: "write",
+		};
+		const loaderProps: Partial<ILoaderProps> = {
+			options: {
+				client,
+			},
+		};
+		const loader = provider.makeTestLoader({ loaderProps });
+		const container1 = await loader.createDetachedContainer(provider.defaultCodeDetails);
+		const initDataObject = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const createNewRequest = provider.driver.createCreateNewRequest(uuid());
+		await container1.attach(createNewRequest);
+		// await timeoutPromise((resolve) => container1.once("attached", () => resolve()), {
+		// 	durationMs: timeoutDurationMs*5,
+		// 	errorMsg: "container attach timeout",
+		// });
+
+		// Check that client details are the expected ones before resolving a second container with different client details
+		assert.equal(
+			(container1 as any).clientDetails?.capabilities?.interactive,
+			true,
+			"Interactive container's capabilities do not say 'interactive: true' before resolving second container",
+		);
+		assert.equal(
+			(container1 as any).clientDetails?.type,
+			undefined,
+			"Interactive container's capabilities do not have undefined 'type' before resolving second container",
+		);
+
+		// Check that the IClient object passed in loader props hasn't been mutated
+		assert.equal(
+			client.details.capabilities.interactive,
+			true,
+			"IClient.details.capabilities.interactive does not have the expected value before resolving second container",
+		);
+		assert.equal(
+			client.details.type,
+			undefined,
+			"IClient.details.type does not have the expected value before resolving second container",
+		);
+
+		// Resolve the container a second time with different client details
+		const request: IRequest = {
+			headers: {
+				[LoaderHeader.cache]: false,
+				[LoaderHeader.clientDetails]: {
+					capabilities: { interactive: false },
+					type: "myContainerType",
+				},
+				[LoaderHeader.reconnect]: false,
+				[LoaderHeader.loadMode]: { deltaConnection: "none" },
+			},
+			url: (container1.resolvedUrl as IFluidResolvedUrl).url,
+		};
+		await loader.resolve(request);
+
+		// Check that client details are still the expected ones *after* the summarizer starts
+		assert.equal(
+			(container1 as any).clientDetails?.capabilities?.interactive,
+			true,
+			"Interactive container's capabilities do not say 'interactive: true' after resolving second container",
+		);
+		assert.equal(
+			(container1 as any).clientDetails?.capabilities?.type,
+			undefined,
+			"Interactive container's capabilities do not have undefined 'type' after resolving second container",
+		);
+
+		// Check that the IClient object passed in loader props hasn't been mutated
+		assert.equal(
+			client.details.capabilities.interactive,
+			true,
+			"IClient.details.capabilities.interactive does not have the expected value after resolving second container",
+		);
+		assert.equal(
+			client.details.type,
+			undefined,
+			"IClient.details.type does not have the expected value after resolving second container",
+		);
 	});
 });
 
