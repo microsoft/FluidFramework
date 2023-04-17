@@ -677,6 +677,7 @@ export class RunningSummarizer implements IDisposable {
 				}
 
 				if (this.shouldAbortOnSummaryFailure) {
+					// There's no need to delay here as we already have summarizeAttemptDelay given to us by the server.
 					this.mc.logger.sendTelemetryEvent(
 						{
 							eventName: "ClosingSummarizerOnSummaryStale",

@@ -509,7 +509,7 @@ const defaultCompressionConfig = {
 
 const defaultChunkSizeInBytes = 204800;
 
-const defaultRestartDelayMs = 10000; // 10 seconds
+const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
@@ -3218,6 +3218,12 @@ export class ContainerRuntime
 		);
 		if (recoveryMethod === "restart") {
 			const error = new GenericError("Restarting summarizer instead of refreshing");
+
+			const closeSummarizerDelayOverrideMs =
+				this.mc.config.getNumber(
+					"Fluid.ContainerRuntime.Test.CloseSummarizerOnSummaryStaleDelayOverrideMs",
+				) ?? defaultCloseSummarizerDelayMs;
+
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3225,17 +3231,13 @@ export class ContainerRuntime
 					codePath: event.eventName,
 					message: "Stopping fetch from storage",
 					versionId: versionId != null ? versionId : undefined,
+					closeSummarizerDelayMs: closeSummarizerDelayOverrideMs,
 				},
 				error,
 			);
 
-			const testDelayOverrideMs =
-				this.mc.config.getNumber(
-					"Fluid.ContainerRuntime.Test.CloseSummarizerOnSummaryStaleDelayOverrideMs",
-				) ?? defaultRestartDelayMs;
-
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
-			await delay(testDelayOverrideMs);
+			await delay(closeSummarizerDelayOverrideMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
 			throw error;
