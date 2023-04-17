@@ -7,7 +7,6 @@
 				"packages": [
 					"@fluidframework/common-definitions",
 					"@fluidframework/core-interfaces",
-					"@fluidframework/core-utils",
 					"@fluidframework/gitresources"
 				]
 			},
@@ -33,6 +32,10 @@
 			"Base-Utils": {
 				"packages": ["@fluidframework/common-utils"],
 				"deps": ["Base-Definitions"]
+			},
+			"Core-Utils": {
+				"packages": ["@fluidframework/core-utils"],
+				"deps": []
 			},
 			"Protocol-Utils": {
 				"packages": ["@fluidframework/protocol-base"],
@@ -79,7 +82,7 @@
 			},
 			"Runtime": {
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
-				"deps": ["Container-Definitions", "Driver-Utils", "Container-Utils"]
+				"deps": ["Container-Definitions", "Container-Utils", "Core-Utils", "Driver-Utils"]
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects", "@fluidframework/fluid-static"],
@@ -131,6 +134,7 @@
 			"Test-Utils": {
 				"dev": true,
 				"packages": [
+					"@fluid-internal/stochastic-test-utils",
 					"@fluid-internal/test-dds-utils",
 					"@fluidframework/local-driver",
 					"@fluidframework/test-runtime-utils",
@@ -182,6 +186,12 @@
 			"Server-Tools": {
 				"packages": ["tinylicious"],
 				"deps": ["Server-Libs"]
+			},
+			"GitRest": {
+				"dirs": ["server/gitrest/", "server/gitrest/packages/"]
+			},
+			"Historian": {
+				"dirs": ["server/historian/", "server/historian/packages/"]
 			}
 		}
 	},

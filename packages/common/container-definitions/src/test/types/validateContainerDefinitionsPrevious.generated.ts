@@ -352,6 +352,30 @@ use_old_InterfaceDeclaration_IConnectionDetails(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IConnectionDetailsInternal": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IConnectionDetailsInternal():
+    TypeOnly<old.IConnectionDetailsInternal>;
+declare function use_current_InterfaceDeclaration_IConnectionDetailsInternal(
+    use: TypeOnly<current.IConnectionDetailsInternal>);
+use_current_InterfaceDeclaration_IConnectionDetailsInternal(
+    get_old_InterfaceDeclaration_IConnectionDetailsInternal());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IConnectionDetailsInternal": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IConnectionDetailsInternal():
+    TypeOnly<current.IConnectionDetailsInternal>;
+declare function use_old_InterfaceDeclaration_IConnectionDetailsInternal(
+    use: TypeOnly<old.IConnectionDetailsInternal>);
+use_old_InterfaceDeclaration_IConnectionDetailsInternal(
+    get_current_InterfaceDeclaration_IConnectionDetailsInternal());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainer():
@@ -904,54 +928,6 @@ use_old_InterfaceDeclaration_IFluidPackageEnvironment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IFluidTokenProvider": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_IFluidTokenProvider():
-    TypeOnly<typeof old.IFluidTokenProvider>;
-declare function use_current_VariableDeclaration_IFluidTokenProvider(
-    use: TypeOnly<typeof current.IFluidTokenProvider>);
-use_current_VariableDeclaration_IFluidTokenProvider(
-    get_old_VariableDeclaration_IFluidTokenProvider());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IFluidTokenProvider": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_IFluidTokenProvider():
-    TypeOnly<typeof current.IFluidTokenProvider>;
-declare function use_old_VariableDeclaration_IFluidTokenProvider(
-    use: TypeOnly<typeof old.IFluidTokenProvider>);
-use_old_VariableDeclaration_IFluidTokenProvider(
-    get_current_VariableDeclaration_IFluidTokenProvider());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidTokenProvider": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IFluidTokenProvider():
-    TypeOnly<old.IFluidTokenProvider>;
-declare function use_current_InterfaceDeclaration_IFluidTokenProvider(
-    use: TypeOnly<current.IFluidTokenProvider>);
-use_current_InterfaceDeclaration_IFluidTokenProvider(
-    get_old_InterfaceDeclaration_IFluidTokenProvider());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFluidTokenProvider": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IFluidTokenProvider():
-    TypeOnly<current.IFluidTokenProvider>;
-declare function use_old_InterfaceDeclaration_IFluidTokenProvider(
-    use: TypeOnly<old.IFluidTokenProvider>);
-use_old_InterfaceDeclaration_IFluidTokenProvider(
-    get_current_InterfaceDeclaration_IFluidTokenProvider());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IGenericError": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IGenericError():
@@ -1116,30 +1092,6 @@ declare function use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
     use: TypeOnly<old.IProvideFluidCodeDetailsComparer>);
 use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
     get_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideFluidTokenProvider": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IProvideFluidTokenProvider():
-    TypeOnly<old.IProvideFluidTokenProvider>;
-declare function use_current_InterfaceDeclaration_IProvideFluidTokenProvider(
-    use: TypeOnly<current.IProvideFluidTokenProvider>);
-use_current_InterfaceDeclaration_IProvideFluidTokenProvider(
-    get_old_InterfaceDeclaration_IProvideFluidTokenProvider());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideFluidTokenProvider": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IProvideFluidTokenProvider():
-    TypeOnly<current.IProvideFluidTokenProvider>;
-declare function use_old_InterfaceDeclaration_IProvideFluidTokenProvider(
-    use: TypeOnly<old.IProvideFluidTokenProvider>);
-use_old_InterfaceDeclaration_IProvideFluidTokenProvider(
-    get_current_InterfaceDeclaration_IProvideFluidTokenProvider());
 
 /*
 * Validate forward compat by using old type in place of current type

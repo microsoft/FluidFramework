@@ -5,6 +5,10 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import {
+	MockDocumentDeltaConnection,
+	MockDocumentService,
+} from "@fluid-internal/test-loader-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -13,10 +17,6 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import {
-	MockDocumentDeltaConnection,
-	MockDocumentService,
-} from "@fluidframework/test-loader-utils";
 import { MessageType2 } from "@fluidframework/driver-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";

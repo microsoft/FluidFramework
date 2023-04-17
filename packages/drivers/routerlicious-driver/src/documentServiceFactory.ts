@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { getW3CData } from "@fluidframework/driver-base";
 import {
 	FiveDaysMs,
 	IDocumentService,
@@ -19,6 +20,7 @@ import {
 	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
+	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -51,7 +53,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
  * use the routerlicious implementation.
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
-	public readonly protocolName = "fluid:";
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
 	private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
@@ -96,11 +97,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		}
 		const [, tenantId] = parsedUrl.pathname.split("/");
 
-		const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-		const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-		if (!(protocolSummary && appSummary)) {
+		if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 			throw new Error("Protocol and App Summary required in the full summary");
 		}
+		const protocolSummary = createNewSummary.tree[".protocol"];
+		const appSummary = createNewSummary.tree[".app"];
+
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
@@ -127,15 +129,17 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			},
 			async (event) => {
 				// @TODO: Remove returned "string" type when removing back-compat code
-				const postRes = await ordererRestWrapper.post<
-					{ id: string; token?: string; session?: ISession } | string
-				>(`/documents/${tenantId}`, {
-					summary: convertSummaryToCreateNewSummary(appSummary),
-					sequenceNumber: documentAttributes.sequenceNumber,
-					values: quorumValues,
-					enableDiscovery: this.driverPolicies.enableDiscovery,
-					generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
-				});
+				const postRes = (
+					await ordererRestWrapper.post<
+						{ id: string; token?: string; session?: ISession } | string
+					>(`/documents/${tenantId}`, {
+						summary: convertSummaryToCreateNewSummary(appSummary),
+						sequenceNumber: documentAttributes.sequenceNumber,
+						values: quorumValues,
+						enableDiscovery: this.driverPolicies.enableDiscovery,
+						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+					})
+				).content;
 
 				event.end({
 					docId: typeof postRes === "string" ? postRes : postRes.id,
@@ -252,11 +256,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					eventName: "DiscoverSession",
 					docId: documentId,
 				},
-				async () => {
+				async (event) => {
 					// The service responds with the current document session associated with the container.
-					return ordererRestWrapper.get<ISession>(
+					const response = await ordererRestWrapper.get<ISession>(
 						`${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`,
 					);
+					event.end({
+						...response.propsToLog,
+						...getW3CData(response.requestUrl, "xmlhttprequest"),
+					});
+					return response.content;
 				},
 			);
 			return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);

@@ -107,7 +107,7 @@ export class MockDeltaManager
 
 	public readOnlyInfo: ReadOnlyInfo = { readonly: false };
 	public readonly clientType: string = undefined as any;
-	public readonly clientDetails: IClientDetails = undefined as any;
+	public readonly clientDetails: IClientDetails = {} as any;
 	public get IDeltaSender() {
 		return this;
 	}

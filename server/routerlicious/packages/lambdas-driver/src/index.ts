@@ -4,4 +4,9 @@
  */
 
 export { DocumentContext, DocumentLambdaFactory } from "./document-router";
-export { IKafkaResources, KafkaRunner, KafkaRunnerFactory, PartitionManager } from "./kafka-service";
+export {
+	IKafkaResources,
+	KafkaRunner,
+	KafkaRunnerFactory,
+	PartitionManager,
+} from "./kafka-service";

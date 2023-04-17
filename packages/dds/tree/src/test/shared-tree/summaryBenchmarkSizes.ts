@@ -8,11 +8,10 @@ import { IsoBuffer, unreachableCase } from "@fluidframework/common-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
-import { ISharedTree } from "../../shared-tree";
+import { ISharedTree, runSynchronous } from "../../shared-tree";
 import { brand } from "../../util";
 import { SummarizeType, TestTreeProvider } from "../utils";
 import {
-	TransactionResult,
 	rootFieldKey,
 	rootFieldKeySymbol,
 	TreeValue,
@@ -75,12 +74,13 @@ describe("Summary size benchmark", () => {
 		assert(summarySize > 1000);
 		assert(summarySize < 2000000);
 	});
-	// TODO: this should work, but currently hits batch size limits. Convert this into benchmark when fixed.
-	it("rejected for deep tree with 1000 nodes", async () => {
-		await assert.rejects(getInsertsSummaryTree(1000, TreeShape.Deep), {
-			message: "BatchTooLarge",
-		});
-	});
+	it("for a deep tree with 200 nodes.", async () => {
+		const summaryTree = await getInsertsSummaryTree(200, TreeShape.Deep);
+		const summaryString = JSON.stringify(summaryTree);
+		const summarySize = IsoBuffer.from(summaryString).byteLength;
+		assert(summarySize > 1000);
+		assert(summarySize < 10000000);
+	}).timeout(50000);
 });
 
 /**
@@ -88,23 +88,19 @@ describe("Summary size benchmark", () => {
  */
 function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void {
 	// Apply an edit to the tree which inserts a node with a value
-	tree.runTransaction((forest, editor) => {
+	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 		field.insert(index, writeCursor);
-
-		return TransactionResult.Apply;
 	});
 }
 
 function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath): void {
 	// Apply an edit to the tree which inserts a node with a value.
-	tree.runTransaction((forest, editor) => {
+	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = editor.sequenceField(path, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField(path, rootFieldKeySymbol);
 		field.insert(0, writeCursor);
-
-		return TransactionResult.Apply;
 	});
 }
 
@@ -190,11 +186,9 @@ function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void 
 	tree.storedSchema.update(testSchema);
 
 	// Apply an edit to the tree which inserts a node with a value
-	tree.runTransaction((forest, editor) => {
+	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 		field.insert(0, writeCursor);
-
-		return TransactionResult.Apply;
 	});
 }

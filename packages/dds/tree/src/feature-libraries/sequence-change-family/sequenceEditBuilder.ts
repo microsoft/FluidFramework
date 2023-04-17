@@ -20,7 +20,7 @@ import { SequenceChangeset } from "./sequenceChangeset";
 export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChangeset> {
 	private opId: number = 0;
 
-	constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {
+	public constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {
 		super(sequenceChangeFamily, changeReceiver, anchorSet);
 	}
 

@@ -6,7 +6,8 @@
 import BTree from 'sorted-btree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 import type { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
-import { assert, compareArrays, fail } from './Common';
+import { compareArrays } from '@fluidframework/core-utils';
+import { assert, fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';
 import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types';

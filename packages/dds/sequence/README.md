@@ -328,8 +328,8 @@ The following example illustrates these properties and highlights the major APIs
 
 const comments = sharedString.getIntervalCollection("comments");
 const comment = comments.add(
-	3,
-	7, // (inclusive range): references "world"
+	3, // (inclusive)
+	8, // (exclusive): references "world"
 	IntervalType.SlideOnRemove,
 	{
 		creator: "my-user-id",
@@ -338,7 +338,7 @@ const comment = comments.add(
 );
 //   content: hi world!
 // positions: 012345678
-//   comment:    [   ]
+//   comment:    [    )
 
 // Interval collection supports iterating over all intervals via Symbol.iterator or `.map()`:
 const allIntervalsInCollection = Array.from(comments);
@@ -347,14 +347,14 @@ const allProperties = comments.map((comment) => comment.properties);
 const intervalsOverlappingFirstHalf = comments.findOverlappingIntervals(0, 4);
 
 // Interval endpoints are LocalReferencePositions, so all APIs in the above section can be used:
-const startPosition = sharedString.localReferencePositionToPosition(comment.start);
-const endPosition = sharedString.localReferencePositionToPosition(comment.end);
+const startPosition = sharedString.localReferencePositionToPosition(comment.start); // returns 3
+const endPosition = sharedString.localReferencePositionToPosition(comment.end); // returns 8: note this is exclusive!
 
 // Intervals can be modified:
 comments.change(comment.getIntervalId(), 0, 1);
 //   content: hi world!
 // positions: 012345678
-//   comment: []
+//   comment: [)
 
 // their properties can be changed:
 comments.changeProperties(comment.getIntervalId(), { status: "resolved" });
@@ -430,10 +430,10 @@ Next, enable the `"Fluid.Attribution.EnableOnNewFile"` config flag to start trac
 const { segment, offset } = sharedString.getContainingSegment(5);
 const key = segment.attribution.getAtOffset(offset);
 // `key` can be used with an IAttributor to recover user/timestamp info about the insertion of the character at offset 5.
-// See the @fluidframework/attributor package for more details.
+// See the @fluid-experimental/attributor package for more details.
 ```
 
-For further reading on attribution, see the [@fluidframework/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
+For further reading on attribution, see the [@fluid-experimental/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
 
 There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
 

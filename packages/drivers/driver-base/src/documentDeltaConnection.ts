@@ -92,16 +92,7 @@ export class DocumentDeltaConnection
 				0x244 /* "Socket is closed, but connection is not!" */,
 			);
 		} catch (error) {
-			const normalizedError = normalizeError(error, {
-				props: {
-					details: JSON.stringify({
-						disposed: this._disposed,
-						socketConnected: this.socket?.connected,
-						clientId: this._details?.clientId,
-						conenctionId: this.connectionId,
-					}),
-				},
-			});
+			const normalizedError = this.addPropsToError(error);
 			throw normalizedError;
 		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
@@ -252,16 +243,7 @@ export class DocumentDeltaConnection
 			(Error as any).stackTraceLimit = 50;
 			assert(!this.disposed, 0x20c /* "connection disposed" */);
 		} catch (error) {
-			const normalizedError = normalizeError(error, {
-				props: {
-					details: JSON.stringify({
-						disposed: this._disposed,
-						socketConnected: this.socket?.connected,
-						clientId: this._details?.clientId,
-						conenctionId: this.connectionId,
-					}),
-				},
-			});
+			const normalizedError = this.addPropsToError(error);
 			throw normalizedError;
 		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
@@ -368,11 +350,8 @@ export class DocumentDeltaConnection
 					eventName: "SocketCloseOnDisposedConnection",
 					driverVersion,
 					details: JSON.stringify({
-						disposed: this._disposed,
-						socketConnected: this.socket?.connected,
+						...this.getConnectionDetailsProps(),
 						trackedListenerCount: this.trackedListeners.size,
-						clientId: this.clientId,
-						connectionId: this.connectionId,
 					}),
 				},
 				error,
@@ -396,10 +375,7 @@ export class DocumentDeltaConnection
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
 			details: JSON.stringify({
-				disposed: this._disposed,
-				socketConnected: this.socket.connected,
-				clientId: this._details?.clientId,
-				connectionId: this.connectionId,
+				...this.getConnectionDetailsProps(),
 			}),
 		});
 		this.disconnect(
@@ -427,26 +403,24 @@ export class DocumentDeltaConnection
 		// to prevent normal messages from being emitted.
 		this._disposed = true;
 
-		// Let user of connection object know about disconnect. This has to happen in between setting _disposed and
-		// removing all listeners!
+		// Remove all listeners listening on the socket. These are listeners on socket and not on this connection
+		// object. Anyway since we have disposed this connection object, nobody should listen to event on socket
+		// anymore.
+		this.removeTrackedListeners();
+
+		// Clear the connection/socket before letting the deltaManager/connection manager know about the disconnect.
+		this.disconnectCore();
+
+		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
 		this.logger.sendTelemetryEvent({
 			eventName: "AfterDisconnectEvent",
 			driverVersion,
 			details: JSON.stringify({
-				disposed: this._disposed,
-				clientId: this.clientId,
-				socketConnected: this.socket.connected,
+				...this.getConnectionDetailsProps(),
 				disconnectListenerCount: this.listenerCount("disconnect"),
-				connectionId: this.connectionId,
 			}),
 		});
-		// user of DeltaConnection should have processed "disconnect" event and removed all listeners. Not clear
-		// if we want to enforce that, as some users (like LocalDocumentService) do not unregister any handlers
-		// assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");
-
-		this.removeTrackedListeners();
-		this.disconnectCore();
 	}
 
 	/**
@@ -472,14 +446,34 @@ export class DocumentDeltaConnection
 
 		this._details = await new Promise<IConnected>((resolve, reject) => {
 			const failAndCloseSocket = (err: IAnyDriverError) => {
-				this.closeSocket(err);
+				try {
+					this.closeSocket(err);
+				} catch (failError) {
+					const normalizedError = this.addPropsToError(failError);
+					this.logger.sendErrorEvent({ eventName: "CloseSocketError" }, normalizedError);
+				}
 				reject(err);
 			};
 
 			const failConnection = (err: IAnyDriverError) => {
-				this.disconnect(err);
+				try {
+					this.disconnect(err);
+				} catch (failError) {
+					const normalizedError = this.addPropsToError(failError);
+					this.logger.sendErrorEvent(
+						{ eventName: "FailConnectionError" },
+						normalizedError,
+					);
+				}
 				reject(err);
 			};
+
+			// Immediately set the connection timeout.
+			// Give extra 2 seconds for handshake on top of socket connection timeout.
+			this.socketConnectionTimeout = setTimeout(() => {
+				failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
+			}, timeout + 2000);
+
 			// Listen for connection issues
 			this.addConnectionListener("connect_error", (error) => {
 				internalSocketConnectionFailureCount++;
@@ -629,14 +623,29 @@ export class DocumentDeltaConnection
 			});
 
 			this.socket.emit("connect_document", connectMessage);
-
-			// Give extra 2 seconds for handshake on top of socket connection timeout
-			this.socketConnectionTimeout = setTimeout(() => {
-				failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
-			}, timeout + 2000);
 		});
 
 		assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
+	}
+
+	private addPropsToError(errorToBeNormalized: unknown) {
+		const normalizedError = normalizeError(errorToBeNormalized, {
+			props: {
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			},
+		});
+		return normalizedError;
+	}
+
+	private getConnectionDetailsProps() {
+		return {
+			disposed: this._disposed,
+			socketConnected: this.socket?.connected,
+			clientId: this._details?.clientId,
+			connectionId: this.connectionId,
+		};
 	}
 
 	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -723,7 +732,12 @@ export class DocumentDeltaConnection
 		const errorObj = createGenericNetworkError(
 			`socket.io (${handler}): ${message}`,
 			{ canRetry },
-			{ driverVersion },
+			{
+				driverVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			},
 		);
 
 		return errorObj;

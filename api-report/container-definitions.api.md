@@ -110,15 +110,17 @@ export interface IConnectionDetails {
     claims: ITokenClaims;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
-    existing: boolean;
-    // @deprecated (undocumented)
-    initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    mode: ConnectionMode;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-    // @deprecated (undocumented)
+}
+
+// @public
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+    // (undocumented)
+    initialClients: ISignalClient[];
+    // (undocumented)
+    mode: ConnectionMode;
+    // (undocumented)
     version: string;
 }
 
@@ -139,6 +141,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     // @alpha
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getEntryPoint?(): Promise<FluidObject | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
@@ -172,6 +175,7 @@ export interface IContainerContext extends IDisposable {
     // @deprecated (undocumented)
     readonly existing: boolean | undefined;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
+    getEntryPoint?(): Promise<FluidObject | undefined>;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated (undocumented)
@@ -214,6 +218,7 @@ export interface IContainerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     (event: "disconnected", listener: () => void): any;
+    (event: "attaching", listener: () => void): any;
     (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
@@ -387,17 +392,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public @deprecated (undocumented)
-export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
-
-// @public @deprecated (undocumented)
-export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    // (undocumented)
-    intelligence: {
-        [service: string]: any;
-    };
-}
-
 // @public
 export interface IGenericError extends IErrorBase {
     // (undocumented)
@@ -419,7 +413,7 @@ export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
 
 // @public
 export interface ILoaderHeader {
-    // (undocumented)
+    // @deprecated (undocumented)
     [LoaderHeader.cache]: boolean;
     // (undocumented)
     [LoaderHeader.clientDetails]: IClientDetails;
@@ -456,12 +450,6 @@ export interface IProvideFluidCodeDetailsComparer {
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @public @deprecated (undocumented)
-export interface IProvideFluidTokenProvider {
-    // (undocumented)
-    readonly IFluidTokenProvider: IFluidTokenProvider;
-}
-
 // @public (undocumented)
 export interface IProvideLoader {
     // (undocumented)
@@ -483,6 +471,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 // @public
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
+    getEntryPoint?(): Promise<FluidObject | undefined>;
     getPendingLocalState(): unknown;
     // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
@@ -539,6 +528,7 @@ export interface IUsageError extends IErrorBase {
 
 // @public
 export enum LoaderHeader {
+    // @deprecated (undocumented)
     cache = "fluid-cache",
     // (undocumented)
     clientDetails = "fluid-client-details",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, RevisionTag } from "../../core";
+import { ITreeCursorSynchronous, JsonableTree, RevisionTag } from "../../core";
 import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
@@ -127,6 +127,12 @@ export interface Insert<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange> {
 	type: "Insert";
 	content: ProtoNode[];
+
+	/**
+	 * The first ID in a block associated with the nodes being inserted.
+	 * The node `content[i]` is associated with `id + i`.
+	 */
+	id: ChangesetLocalId;
 }
 
 export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, CanConflict {
@@ -220,6 +226,7 @@ export interface Revive<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange>,
 		CanConflict {
 	type: "Revive";
+	content: ITreeCursorSynchronous[];
 	count: NodeCount;
 }
 
@@ -311,4 +318,8 @@ export enum Effects {
 	Move = "Move",
 	Delete = "Delete",
 	None = "None",
+}
+
+export function isEmpty<T>(change: Changeset<T>): boolean {
+	return change.length === 0;
 }

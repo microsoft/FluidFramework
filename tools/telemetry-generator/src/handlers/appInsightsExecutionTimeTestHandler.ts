@@ -10,7 +10,7 @@ import { TelemetryClient } from "applicationinsights";
  * This handler expects the 'telemetryClient' arg to be TelemetryClient class from the 'applicationinsights' Azure package.
  */
 module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
-    console.log(`Found ${fileData.benchmarks.length} total benchmark tests to emit`);
+	console.log(`Found ${fileData.benchmarks.length} total benchmark tests to emit`);
 	fileData.benchmarks.forEach(async (testData) => {
 		const arithmeticMeanMetricName = `${fileData.suiteName}_${testData.benchmarkName}_arithmeticMean`;
 		try {
@@ -58,6 +58,5 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
 		} catch (error) {
 			console.error(`failed to emit metric ${marginOfErrorMetricName}`, error);
 		}
-
 	});
 };

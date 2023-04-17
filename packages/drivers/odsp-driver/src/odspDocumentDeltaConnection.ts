@@ -294,30 +294,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			enableMultiplexing,
 		);
 
-		try {
-			await deltaConnection.initialize(connectMessage, timeoutMs);
-			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
-		} catch (errorObject: any) {
-			if (errorObject !== null && typeof errorObject === "object") {
-				// We have to special-case error types here in terms of what is re-triable.
-				// These errors have to re-retried, we just need new joinSession result to connect to right server:
-				//    400: Invalid tenant or document id. The WebSocket is connected to a different document
-				//         Document is full (with retryAfter)
-				//    404: Invalid document. The document \"local/w1-...\" does not exist
-				// But this has to stay not-retriable:
-				//    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
-				//    409: Epoch Version Mismatch. Client epoch and server epoch does not match, so app needs
-				//         to be refreshed.
-				// This one is fine either way
-				//    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
-				//         and on join Session path.
-				//    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
-				if (errorObject.statusCode === 400 || errorObject.statusCode === 404) {
-					errorObject.canRetry = true;
-				}
-			}
-			throw errorObject;
-		}
+		await deltaConnection.initialize(connectMessage, timeoutMs);
+		await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
 
 		return deltaConnection;
 	}

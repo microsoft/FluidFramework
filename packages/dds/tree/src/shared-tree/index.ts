@@ -3,4 +3,15 @@
  * Licensed under the MIT License.
  */
 
-export { ISharedTree, SharedTreeFactory } from "./sharedTree";
+export {
+	identifierKey,
+	identifierKeySymbol,
+	ISharedTree,
+	ISharedTreeView,
+	ISharedTreeFork,
+	runSynchronous,
+	SharedTreeFactory,
+	ViewEvents,
+} from "./sharedTree";
+
+export { SchematizeConfiguration } from "./schematizedTree";

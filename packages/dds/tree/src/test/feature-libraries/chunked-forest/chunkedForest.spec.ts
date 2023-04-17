@@ -4,46 +4,38 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest";
-/* eslint-disable-next-line import/no-internal-modules */
-import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
+// eslint-disable-next-line import/no-internal-modules
+import { tryGetChunk } from "../../../feature-libraries/chunked-forest/chunk";
+import {
+	basicChunkTree,
+	basicOnlyChunkPolicy,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunkTree";
 
 import {
-	AnchorSet,
-	Checkout,
-	EditManager,
-	FieldKey,
 	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
 	JsonableTree,
 	mapCursorField,
-	mapCursorFields,
 	moveToDetachedField,
 	rootFieldKeySymbol,
-	TransactionResult,
+	Delta,
+	IForestSubscription,
 } from "../../../core";
 import { jsonSchemaData } from "../../../domains";
 import {
-	chunkTree,
-	DefaultChangeFamily,
-	defaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	runSynchronousTransaction,
 	singleTextCursor,
-	defaultChunkPolicy,
+	ForestRepairDataStore,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
-
-const fooKey: FieldKey = brand("foo");
 
 describe("ChunkedForest", () => {
 	testForest({
@@ -56,79 +48,58 @@ describe("ChunkedForest", () => {
 	});
 
 	it("doesn't copy data when capturing and restoring repair data", () => {
-		const initialState: JsonableTree = {
-			type: brand("Node"),
-			fields: {
-				foo: [
-					{ type: brand("Number"), value: 0 },
-					{ type: brand("Number"), value: 1 },
-					{ type: brand("Number"), value: 2 },
-				],
-			},
-		};
-		const anchors = new AnchorSet();
+		const initialState: JsonableTree = { type: brand("Node") };
 		const forest = buildChunkedForest(
 			new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-			anchors,
 		);
-		const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
-			defaultChangeFamily,
-			anchors,
-		);
-		editManager.initSessionId(uuid());
-		const cursor = singleTextCursor(initialState);
-		const chunk = new TestChunk(
-			cursor.type,
-			new Map(
-				mapCursorFields(cursor, () => [
-					cursor.getFieldKey(),
-					mapCursorField(cursor, () => chunkTree(cursor, defaultChunkPolicy)),
-				]),
-			),
-			cursor.value,
-		);
-		const chunkCursor = chunk.cursor();
-		chunkCursor.firstNode();
-		initializeForest(forest, [chunkCursor]);
+		const chunk = basicChunkTree(singleTextCursor(initialState), basicOnlyChunkPolicy);
 
-		const checkout: Checkout<DefaultEditBuilder, DefaultChangeset> = {
-			forest,
-			changeFamily: defaultChangeFamily,
-			submitEdit: (edit) => {
-				const delta = editManager.addLocalChange(mintRevisionTag(), edit);
-				forest.applyDelta(delta);
-			},
-		};
+		// Insert chunk into forest
+		{
+			const chunkCursor = chunk.cursor();
+			chunkCursor.firstNode();
+			initializeForest(forest, [chunkCursor]);
+			assert(chunk.isShared());
+			chunk.referenceRemoved(); // chunkCursor
+		}
+		// forest should hold the only ref to chunk.
+		assert(!chunk.isShared());
+		compareForest(forest, [initialState]);
 
-		assert(chunk.isShared(), "chunk should be shared after forest initialization");
-		assert.equal(chunk.referenceCount, 2);
+		const repairStore = new ForestRepairDataStore(() => forest);
+		const delta: Delta.Root = new Map([
+			[rootFieldKeySymbol, [{ type: Delta.MarkType.Delete, count: 1 }]],
+		]);
 
-		runSynchronousTransaction(checkout, (_, editor) => {
-			const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
-			rootField.delete(0, 1);
-			// Aborting the transaction should restore the forest
-			return TransactionResult.Abort;
-		});
+		const revision = mintRevisionTag();
+		// Capture reference to content before delete.
+		repairStore.capture(delta, revision);
+		// Captured reference owns a ref count making it shared.
+		assert(chunk.isShared());
+		// Delete from forest, removing the forest's ref, making chunk not shared again.
+		forest.applyDelta(delta);
+		assert(!chunk.isShared());
+		compareForest(forest, []);
 
+		// Confirm the data from the repair store is chunk
+		const data = repairStore.getNodes(revision, undefined, rootFieldKeySymbol, 0, 1);
+		const chunk2 = tryGetChunk(data[0]);
+		assert(chunk === chunk2);
+
+		// Put it back in the forest, which adds a ref again
+		initializeForest(forest, data);
 		assert(
 			chunk.isShared(),
 			"chunk should be shared after storing as repair data and reinserting",
 		);
-		assert.equal(chunk.referenceCount, 4);
-
-		const readCursor = forest.allocateCursor();
-		moveToDetachedField(forest, readCursor);
-		const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-		readCursor.free();
-		assert.deepEqual(actual, [initialState]);
+		compareForest(forest, [initialState]);
 	});
 });
 
-class TestChunk extends BasicChunk {
-	public referenceCount: number = 1;
-
-	public referenceAdded(): void {
-		super.referenceAdded();
-		this.referenceCount++;
-	}
+function compareForest(forest: IForestSubscription, expected: JsonableTree[]): void {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
+	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+	readCursor.free();
+	assert.deepEqual(actual, expected);
 }

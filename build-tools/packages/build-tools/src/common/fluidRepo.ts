@@ -133,9 +133,15 @@ export type PreviousVersionStyle =
  */
 export interface PolicyConfig {
 	additionalLockfilePaths?: string[];
+	pnpmSinglePackageWorkspace?: string[];
 	dependencies?: {
 		requireTilde?: string[];
 	};
+	/**
+	 * An array of strings/regular expressions. Paths that match any of these expressions will be completely excluded from
+	 * policy-check.
+	 */
+	exclusions?: string[];
 }
 
 /**

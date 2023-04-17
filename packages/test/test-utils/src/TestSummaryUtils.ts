@@ -53,10 +53,12 @@ async function createSummarizerCore(
 	const summarizerContainer = await loader.resolve(request);
 	await waitForContainerConnection(summarizerContainer);
 
-	const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(summarizerContainer, {
-		url: "_summarizer",
-	});
-	if (fluidObject.ISummarizer === undefined) {
+	const fluidObject: FluidObject<ISummarizer> | undefined = summarizerContainer.getEntryPoint
+		? await summarizerContainer.getEntryPoint?.()
+		: await requestFluidObject<FluidObject<ISummarizer>>(summarizerContainer, {
+				url: "_summarizer",
+		  });
+	if (fluidObject?.ISummarizer === undefined) {
 		throw new Error("Fluid object does not implement ISummarizer");
 	}
 
@@ -87,6 +89,7 @@ export async function createSummarizerFromFactory(
 	summaryVersion?: string,
 	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
+	logger?: ITelemetryBaseLogger,
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
@@ -100,6 +103,7 @@ export async function createSummarizerFromFactory(
 
 	const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]], {
 		configProvider: mockConfigProvider(),
+		logger,
 	});
 	return createSummarizerCore(container, loader, summaryVersion);
 }

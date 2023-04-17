@@ -9,13 +9,12 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	Multiplicity,
-	isPrimitiveValue,
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
+	TypedSchema,
 } from "../../../feature-libraries";
 import {
-	fieldSchema,
 	LocalFieldKey,
 	FieldSchema,
 	InMemoryStoredSchemaRepository,
@@ -33,10 +32,10 @@ import {
 } from "../../../feature-libraries/editable-tree/utilities";
 import {
 	arraySchema,
+	buildTestSchema,
 	int32Schema,
 	mapStringSchema,
 	optionalChildSchema,
-	schemaMap,
 	stringSchema,
 } from "./mockData";
 
@@ -44,21 +43,8 @@ describe("editable-tree utilities", () => {
 	it("isPrimitive", () => {
 		assert(isPrimitive(int32Schema));
 		assert(isPrimitive(stringSchema));
-		assert(isPrimitive(mapStringSchema));
+		assert(!isPrimitive(mapStringSchema));
 		assert(!isPrimitive(optionalChildSchema));
-	});
-
-	it("isPrimitiveValue", () => {
-		assert(isPrimitiveValue(0));
-		assert(isPrimitiveValue(0.001));
-		assert(isPrimitiveValue(NaN));
-		assert(isPrimitiveValue(true));
-		assert(isPrimitiveValue(false));
-		assert(isPrimitiveValue(""));
-		assert(!isPrimitiveValue({}));
-		assert(!isPrimitiveValue(undefined));
-		assert(!isPrimitiveValue(null));
-		assert(!isPrimitiveValue([]));
 	});
 
 	it("field utils", () => {
@@ -69,12 +55,8 @@ describe("editable-tree utilities", () => {
 			schema,
 		};
 
-		const rootSchema = fieldSchema(FieldKinds.value, [arraySchema.name]);
-
-		const fullSchemaData: SchemaData = {
-			treeSchema: schemaMap,
-			globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
-		};
+		const rootSchema = TypedSchema.field(FieldKinds.value, arraySchema);
+		const fullSchemaData: SchemaData = buildTestSchema(rootSchema);
 		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
 		assert.deepEqual(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), rootSchema);
 		assert.throws(

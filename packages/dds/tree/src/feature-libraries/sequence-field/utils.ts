@@ -47,6 +47,8 @@ import {
 	OutputSpanningMark,
 	SkipLikeDetach,
 	MoveId,
+	Revive,
+	Delete,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -133,8 +135,7 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 	}
 	const objMark = mark as Exclude<TMark, Skip>;
 	const clone = { ...objMark };
-	if (clone.type === "Insert") {
-		// TODO: also do this for Revive marks once they carry content
+	if (clone.type === "Insert" || clone.type === "Revive") {
 		clone.content = [...clone.content];
 	}
 	if (isAttach(clone) && clone.lineage !== undefined) {
@@ -337,6 +338,12 @@ export function isDetachMark<TNodeChange>(
 	return false;
 }
 
+export function isDeleteMark<TNodeChange>(
+	mark: Mark<TNodeChange> | undefined,
+): mark is Delete<TNodeChange> {
+	return isObjMark(mark) && mark.type === "Delete";
+}
+
 export function isObjMark<TNodeChange>(
 	mark: Mark<TNodeChange> | undefined,
 ): mark is ObjectMark<TNodeChange> {
@@ -397,7 +404,10 @@ export function tryExtendMark<T>(
 	switch (type) {
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
-			if (isEqualPlace(lhsInsert, rhs)) {
+			if (
+				isEqualPlace(lhsInsert, rhs) &&
+				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id
+			) {
 				lhsInsert.content.push(...rhs.content);
 				return true;
 			}
@@ -472,6 +482,7 @@ export function tryExtendMark<T>(
 				rhs.lastDetachedBy === lhsReattach.lastDetachedBy &&
 				lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
 			) {
+				(lhsReattach as Revive).content.push(...rhs.content);
 				lhsReattach.count += rhs.count;
 				return true;
 			}
@@ -587,6 +598,7 @@ export class DetachedNodeTracker {
 								old: v,
 								new: {
 									rev:
+										change.rollbackOf ??
 										mark.revision ??
 										change.revision ??
 										fail("Unable to track detached nodes"),
@@ -726,7 +738,11 @@ export class DetachedNodeTracker {
 		const original = { rev: mark.detachedBy!, index: mark.detachIndex };
 		const updated = this.getUpdatedDetach(original);
 		if (updated.rev !== original.rev || updated.index !== original.index) {
-			mark.detachedBy = updated.rev;
+			if (mark.isIntention === true) {
+				mark.detachedBy = updated.rev;
+			} else if (updated.rev !== mark.detachedBy) {
+				mark.lastDetachedBy = updated.rev;
+			}
 			mark.detachIndex = updated.index;
 		}
 	}

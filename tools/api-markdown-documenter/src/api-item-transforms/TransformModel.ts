@@ -4,9 +4,9 @@
  */
 import { ApiModel } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { DocumentNode } from "../documentation-domain";
 import { createDocument } from "./Utilities";
+import { ApiItemTransformationConfiguration } from "./configuration";
 
 /**
  * Generates a {@link DocumentNode} for the specified `apiModel`.
@@ -18,11 +18,11 @@ import { createDocument } from "./Utilities";
  */
 export function apiModelToDocument(
 	apiModel: ApiModel,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
 	const logger = config.logger;
 
-	logger.verbose(`Rendering API Model document...`);
+	logger.verbose(`Generating API Model document...`);
 
 	// Note: We don't render the breadcrumb for Model document, as it is always the root of the file hierarchical
 

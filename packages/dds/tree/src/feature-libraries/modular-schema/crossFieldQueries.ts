@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { Brand, NestedSet } from "../../util";
+import { brand, Brand, NestedSet } from "../../util";
+import { IdAllocator } from "./fieldChangeHandler";
 
 export type CrossFieldQuerySet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
 
@@ -56,3 +58,24 @@ export interface CrossFieldManager<T = unknown> {
  * @alpha
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+
+export interface IdAllocationState {
+	maxId: ChangesetLocalId;
+}
+
+/**
+ * @alpha
+ */
+export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
+	return idAllocatorFromState({ maxId: maxId ?? brand(-1) });
+}
+
+export function idAllocatorFromState(state: IdAllocationState): IdAllocator {
+	return (c?: number) => {
+		const count = c ?? 1;
+		assert(count > 0, "Must allocate at least one ID");
+		const id: ChangesetLocalId = brand((state.maxId as number) + 1);
+		state.maxId = brand((state.maxId as number) + count);
+		return id;
+	};
+}

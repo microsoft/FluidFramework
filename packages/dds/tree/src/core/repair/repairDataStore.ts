@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag } from "../rebase";
 import { Value, Delta, UpPath, FieldKey } from "../tree";
 
 /**
  * An object that can queried for document data that was deleted in prior revisions.
  * @alpha
  */
-export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
+export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> {
 	/**
 	 * @param revision - The revision at which the nodes of interest were deleted.
 	 * @param path - The path of the node under which the nodes were deleted.
@@ -25,7 +24,7 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 	 * `path`.
 	 */
 	getNodes(
-		revision: RevisionTag,
+		revision: TRevisionTag,
 		path: UpPath | undefined,
 		key: FieldKey,
 		index: number,
@@ -39,18 +38,19 @@ export interface ReadonlyRepairDataStore<TTree = Delta.ProtoNode> {
 	 * WARNING: This may change soon.
 	 * @returns The value on the node at the given `path` that was overwritten at the given `revision`.
 	 */
-	getValue(revision: RevisionTag, path: UpPath): Value;
+	getValue(revision: TRevisionTag, path: UpPath): Value;
 }
 
 /**
  * An object that captures document data being deleted by changes, and can be queried to retrieve that data.
  * @alpha
  */
-export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepairDataStore<TTree> {
+export interface RepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown>
+	extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
 	/**
 	 * Updates the store so it retains the document data being deleted by the given `change`.
 	 * @param change - A change that may be deleting document data that this store should retain.
 	 * @param revision - The revision associated with the change.
 	 */
-	capture(change: Delta.Root, revision: RevisionTag): void;
+	capture(change: Delta.Root, revision: TRevisionTag): void;
 }

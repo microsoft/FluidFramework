@@ -19,6 +19,10 @@ parameters:
   type: boolean
   default: true
 
+- name: taskLintName
+  type: string
+  default: lint
+
 - name: taskTest
   type: object
   default:
@@ -168,6 +172,7 @@ stages:
                 BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 Lint=${{ parameters.taskLint }}
+                LintName: ${{ parameters.taskLintName }}
                 Test=${{ convertToJson(parameters.taskTest) }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
@@ -229,9 +234,9 @@ stages:
 
         # Install
         - task: UseNode@1
-          displayName: Use Node 14.x
+          displayName: Use Node 16.x
           inputs:
-            version: 14.x
+            version: 16.x
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - task: Cache@2
@@ -250,7 +255,8 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
-                npm i -g pnpm
+                corepack enable
+                pnpm -v
                 pnpm config set store-dir $(pnpmStorePath)
 
         - task: Bash@3
@@ -261,14 +267,18 @@ stages:
             script: |
               ${{ parameters.packageManagerInstallCommand }}
 
-        # Set version
-        - template: include-set-package-version.yml
-          parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-            tagName: ${{ parameters.tagName }}
-            usesPrettier: ${{ parameters.usesPrettier }}
+        # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
+        # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
+        # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
+        # true, we use that to determine whether to set versions.
+        - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+          - template: include-set-package-version.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+              tagName: ${{ parameters.tagName }}
+              usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -282,11 +292,11 @@ stages:
         # Lint
         - ${{ if ne(parameters.taskLint, false) }}:
           - task: Npm@1
-            displayName: npm run lint
+            displayName: npm run ${{ parameters.taskLintName }}
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run lint'
+              customCommand: 'run ${{ parameters.taskLintName }}'
 
         # Test
         - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
@@ -354,6 +364,11 @@ stages:
               searchFolder: ${{ parameters.buildDirectory }}/nyc
               mergeTestResults: false
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+          # Log Test Failures
+          - template: include-log-test-failures.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
@@ -569,7 +584,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"

@@ -6,9 +6,11 @@
 export {
 	IAttributionCollection,
 	IAttributionCollectionSerializer,
-	createInsertOnlyAttributionPolicy,
+	IAttributionCollectionSpec,
 	SerializedAttributionCollection,
+	SequenceOffsets,
 } from "./attributionCollection";
+export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
 export { IIntegerRange } from "./base";
 export { Client } from "./client";
 export {
@@ -93,7 +95,12 @@ export {
 	SegmentGroup,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
-export { Trackable, TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
+export {
+	Trackable,
+	TrackingGroup,
+	ITrackingGroup,
+	TrackingGroupCollection,
+} from "./mergeTreeTracking";
 export {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,

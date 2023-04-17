@@ -6,6 +6,16 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json"],
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// Test files are run in node only so additional node libraries can be used.
+				"import/namespace": "off",
+			},
+		},
+	],
 };

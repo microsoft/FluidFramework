@@ -69,7 +69,7 @@ extends:
     packageManager: pnpm
     buildDirectory: build-tools
     tagName: build-tools
-    taskBuild: 'build:full'
+    taskBuild: build
     taskBuildDocs: false
     taskLint: true
     poolBuild: Large

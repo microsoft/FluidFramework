@@ -153,10 +153,6 @@ export class OpSplitter {
 
 		const firstMessage = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
 		assert(
-			firstMessage.metadata?.compressed === true || firstMessage.compression !== undefined,
-			0x517 /* Batch needs to be compressed */,
-		);
-		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,
 			0x518 /* First message in the batch needs to be chunkable */,
 		);
@@ -276,6 +272,6 @@ export const splitOp = (
 	}
 
 	assert(offset >= contentLength, 0x58c /* Content offset equal or larger than content length */);
-	assert(chunks.length === chunkCount, "Expected number of chunks");
+	assert(chunks.length === chunkCount, 0x5a5 /* Expected number of chunks */);
 	return chunks;
 };

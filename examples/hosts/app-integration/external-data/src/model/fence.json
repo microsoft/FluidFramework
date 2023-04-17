@@ -1,5 +1,10 @@
 {
 	"tags": ["model"],
 	"exports": ["index"],
-	"imports": ["model-interface", "mock-external-data-service-interface", "utilities"]
+	"imports": [
+		"mock-customer-service-interface",
+		"model-interface",
+		"mock-external-data-service-interface",
+		"utilities"
+	]
 }

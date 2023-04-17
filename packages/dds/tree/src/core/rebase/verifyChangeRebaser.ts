@@ -99,7 +99,8 @@ export function verifyChangeRebaser<TChange>(
 	const rebase = (change: TChange, over: TChange) => rebaser.rebase(change, makeAnonChange(over));
 	const compose = (changeToCompose: TChange[]) =>
 		rebaser.compose(changeToCompose.map(makeAnonChange));
-	const invert = (change: TChange) => rebaser.invert(makeAnonChange(change));
+	// TODO: test with isRollback = true
+	const invert = (change: TChange) => rebaser.invert(makeAnonChange(change), false);
 
 	const output: OutputType<TChange> = {
 		rebaseLeftDistributivity: [],

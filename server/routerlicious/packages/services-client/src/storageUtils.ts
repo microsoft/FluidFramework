@@ -3,19 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { assert, stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
+import {
+	assert,
+	stringToBuffer,
+	Uint8ArrayToString,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-    ISummaryTree,
-    IWholeSummaryTree,
-    WholeSummaryTreeValue,
-    IWholeSummaryTreeBaseEntry,
-    WholeSummaryTreeEntry,
-    IEmbeddedSummaryHandle,
-    IWholeFlatSummaryTree,
-    IWholeFlatSummary,
-    INormalizedWholeSummary,
+	ISummaryTree,
+	IWholeSummaryTree,
+	WholeSummaryTreeValue,
+	IWholeSummaryTreeBaseEntry,
+	WholeSummaryTreeEntry,
+	IEmbeddedSummaryHandle,
+	IWholeFlatSummaryTree,
+	IWholeFlatSummary,
+	INormalizedWholeSummary,
 } from "./storageContracts";
 
 /**
@@ -25,10 +30,10 @@ import {
  * @param nodeNames - node names in path
  */
 export const buildTreePath = (...nodeNames: string[]): string =>
-    nodeNames
-        .map((nodeName) => nodeName.replace(/^\//, "").replace(/\/$/, ""))
-        .filter((nodeName) => !!nodeName)
-        .join("/");
+	nodeNames
+		.map((nodeName) => nodeName.replace(/^\//, "").replace(/\/$/, ""))
+		.filter((nodeName) => !!nodeName)
+		.join("/");
 
 /**
  * Converts the summary tree to a whole summary tree to be uploaded. Always upload full whole summary tree.
@@ -37,100 +42,104 @@ export const buildTreePath = (...nodeNames: string[]): string =>
  * @param path - Current path of node which is getting evaluated.
  */
 export function convertSummaryTreeToWholeSummaryTree(
-    parentHandle: string | undefined,
-    tree: ISummaryTree,
-    path: string = "",
-    rootNodeName: string = "",
+	parentHandle: string | undefined,
+	tree: ISummaryTree,
+	path: string = "",
+	rootNodeName: string = "",
 ): IWholeSummaryTree {
-    const wholeSummaryTree: IWholeSummaryTree = {
-        type: "tree",
-        entries: [] as WholeSummaryTreeEntry[],
-    };
+	const wholeSummaryTree: IWholeSummaryTree = {
+		type: "tree",
+		entries: [] as WholeSummaryTreeEntry[],
+	};
 
-    const keys = Object.keys(tree.tree);
-    for (const key of keys) {
-        const summaryObject = tree.tree[key];
+	const keys = Object.keys(tree.tree);
+	for (const key of keys) {
+		const summaryObject = tree.tree[key];
 
-        let id: string | undefined;
-        let value: WholeSummaryTreeValue | undefined;
-        let unreferenced: true | undefined;
+		let id: string | undefined;
+		let value: WholeSummaryTreeValue | undefined;
+		let unreferenced: true | undefined;
 
-        const currentPath = path === ""
-            ? buildTreePath(rootNodeName, key)
-            : buildTreePath(path, key);
-        switch (summaryObject.type) {
-            case SummaryType.Tree: {
-                const result = convertSummaryTreeToWholeSummaryTree(
-                    parentHandle,
-                    summaryObject,
-                    currentPath,
-                    rootNodeName,
-                );
-                value = result;
-                unreferenced = summaryObject.unreferenced || undefined;
-                break;
-            }
-            case SummaryType.Blob: {
-                value = typeof summaryObject.content === "string"
-                    ? {
-                        type: "blob",
-                        content: summaryObject.content,
-                        encoding: "utf-8",
-                    } : {
-                        type: "blob",
-                        content: Uint8ArrayToString(summaryObject.content, "base64"),
-                        encoding: "base64",
-                    };
-                break;
-            }
-            case SummaryType.Handle: {
-                const handleValue = summaryObject as IEmbeddedSummaryHandle;
-                if (handleValue.embedded) {
-                    id = summaryObject.handle;
-                } else {
-                    if (!parentHandle) {
-                        throw Error("Parent summary does not exist to reference by handle.");
-                    }
-                    id = buildTreePath(parentHandle, rootNodeName, summaryObject.handle);
-                }
-                break;
-            }
-            case SummaryType.Attachment: {
-                id = summaryObject.id;
-                break;
-            }
-            default: {
-                unreachableCase(summaryObject, `Unknown type: ${(summaryObject as any).type}`);
-            }
-        }
+		const currentPath =
+			path === "" ? buildTreePath(rootNodeName, key) : buildTreePath(path, key);
+		switch (summaryObject.type) {
+			case SummaryType.Tree: {
+				const result = convertSummaryTreeToWholeSummaryTree(
+					parentHandle,
+					summaryObject,
+					currentPath,
+					rootNodeName,
+				);
+				value = result;
+				unreferenced = summaryObject.unreferenced || undefined;
+				break;
+			}
+			case SummaryType.Blob: {
+				value =
+					typeof summaryObject.content === "string"
+						? {
+								type: "blob",
+								content: summaryObject.content,
+								encoding: "utf-8",
+						  }
+						: {
+								type: "blob",
+								content: Uint8ArrayToString(summaryObject.content, "base64"),
+								encoding: "base64",
+						  };
+				break;
+			}
+			case SummaryType.Handle: {
+				const handleValue = summaryObject as IEmbeddedSummaryHandle;
+				if (handleValue.embedded) {
+					id = summaryObject.handle;
+				} else {
+					if (!parentHandle) {
+						throw Error("Parent summary does not exist to reference by handle.");
+					}
+					id = buildTreePath(parentHandle, rootNodeName, summaryObject.handle);
+				}
+				break;
+			}
+			case SummaryType.Attachment: {
+				id = summaryObject.id;
+				break;
+			}
+			default: {
+				unreachableCase(summaryObject, `Unknown type: ${(summaryObject as any).type}`);
+			}
+		}
 
-        const baseEntry: IWholeSummaryTreeBaseEntry = {
-            path: encodeURIComponent(key),
-            type: getGitType(summaryObject),
-        };
+		const baseEntry: IWholeSummaryTreeBaseEntry = {
+			path: encodeURIComponent(key),
+			type: getGitType(summaryObject),
+		};
 
-        let entry: WholeSummaryTreeEntry;
+		let entry: WholeSummaryTreeEntry;
 
-        if (value) {
-            assert(id === undefined, 0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */);
-            entry = {
-                value,
-                unreferenced,
-                ...baseEntry,
-            };
-        } else if (id) {
-            entry = {
-                ...baseEntry,
-                id,
-            };
-        } else {
-            throw new Error(`Invalid tree entry for ${summaryObject.type}`);
-        }
+		if (value) {
+			assert(
+				id === undefined,
+				0x0ad /* "Snapshot entry has both a tree value and a referenced id!" */,
+			);
+			entry = {
+				value,
+				unreferenced,
+				...baseEntry,
+			};
+		} else if (id) {
+			entry = {
+				...baseEntry,
+				id,
+			};
+		} else {
+			throw new Error(`Invalid tree entry for ${summaryObject.type}`);
+		}
 
-        wholeSummaryTree.entries.push(entry);
-    }
+		wholeSummaryTree.entries.push(entry);
+	}
 
-    return wholeSummaryTree;
+	return wholeSummaryTree;
 }
 
 /**
@@ -140,38 +149,42 @@ export function convertSummaryTreeToWholeSummaryTree(
  * @param treePrefixToRemove - tree prefix to strip
  * @returns the heirarchical tree
  */
- function buildHierarchy(
-    flatTree: IWholeFlatSummaryTree,
-    treePrefixToRemove: string,
+function buildHierarchy(
+	flatTree: IWholeFlatSummaryTree,
+	treePrefixToRemove: string,
 ): ISnapshotTree {
-    const lookup: { [path: string]: ISnapshotTree; } = {};
-    // Root tree id will be used to determine which version was downloaded.
-    const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
-    lookup[""] = root;
+	const lookup: { [path: string]: ISnapshotTree } = {};
+	// Root tree id will be used to determine which version was downloaded.
+	const root: ISnapshotTree = { id: flatTree.id, blobs: {}, trees: {} };
+	lookup[""] = root;
 
-    for (const entry of flatTree.entries) {
-        // Strip the `treePrefixToRemove` path from tree entries such that they are stored under root.
-        const entryPath = entry.path.replace(new RegExp(`^${treePrefixToRemove}/`), "");
-        const lastIndex = entryPath.lastIndexOf("/");
-        const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
-        const entryPathBase = entryPath.slice(lastIndex + 1);
+	for (const entry of flatTree.entries) {
+		// Strip the `treePrefixToRemove` path from tree entries such that they are stored under root.
+		const entryPath = entry.path.replace(new RegExp(`^${treePrefixToRemove}/`), "");
+		const lastIndex = entryPath.lastIndexOf("/");
+		const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
+		const entryPathBase = entryPath.slice(lastIndex + 1);
 
-        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-        const node = lookup[entryPathDir];
+		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+		const node = lookup[entryPathDir];
 
-        // Add in either the blob or tree
-        if (entry.type === "tree") {
-            const newTree: ISnapshotTree = { blobs: {}, trees: {}, unreferenced: entry.unreferenced };
-            node.trees[decodeURIComponent(entryPathBase)] = newTree;
-            lookup[entryPath] = newTree;
-        } else if (entry.type === "blob") {
-            node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
-        } else {
-            throw new Error(`Unknown entry type!!`);
-        }
-    }
+		// Add in either the blob or tree
+		if (entry.type === "tree") {
+			const newTree: ISnapshotTree = {
+				blobs: {},
+				trees: {},
+				unreferenced: entry.unreferenced,
+			};
+			node.trees[decodeURIComponent(entryPathBase)] = newTree;
+			lookup[entryPath] = newTree;
+		} else if (entry.type === "blob") {
+			node.blobs[decodeURIComponent(entryPathBase)] = entry.id;
+		} else {
+			throw new Error(`Unknown entry type!!`);
+		}
+	}
 
-    return root;
+	return root;
 }
 
 /**
@@ -182,25 +195,22 @@ export function convertSummaryTreeToWholeSummaryTree(
  * @returns snapshot tree, blob array, and sequence number
  */
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
-    flatSummary: IWholeFlatSummary,
-    treePrefixToRemove: string = ".app",
+	flatSummary: IWholeFlatSummary,
+	treePrefixToRemove: string = ".app",
 ): INormalizedWholeSummary {
-    const blobs = new Map<string, ArrayBuffer>();
-    if (flatSummary.blobs) {
-        flatSummary.blobs.forEach((blob) => {
-            blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
-        });
-    }
-    const flatSummaryTree = flatSummary.trees?.[0];
-    const sequenceNumber = flatSummaryTree?.sequenceNumber;
-    const snapshotTree = buildHierarchy(
-        flatSummaryTree,
-        treePrefixToRemove,
-    );
+	const blobs = new Map<string, ArrayBuffer>();
+	if (flatSummary.blobs) {
+		flatSummary.blobs.forEach((blob) => {
+			blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
+		});
+	}
+	const flatSummaryTree = flatSummary.trees?.[0];
+	const sequenceNumber = flatSummaryTree?.sequenceNumber;
+	const snapshotTree = buildHierarchy(flatSummaryTree, treePrefixToRemove);
 
-    return {
-        blobs,
-        snapshotTree,
-        sequenceNumber,
-    };
+	return {
+		blobs,
+		snapshotTree,
+		sequenceNumber,
+	};
 }

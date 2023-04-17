@@ -10,11 +10,11 @@
 import { strict as assert } from "assert";
 import fs from "fs";
 import path from "path";
+import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { Trace } from "@fluidframework/common-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import JsDiff from "diff";
-import random from "random-js";
 import {
 	KeyComparer,
 	Property,
@@ -187,15 +187,13 @@ function elapsedMicroseconds(trace: Trace) {
 }
 
 export function integerTest1() {
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const random = makeRandom(0xdeadbeef, 0xfeedbed);
 	const imin = 0;
 	const imax = 10000000;
 	const intCount = 1100000;
-	const distribution = random.integer(imin, imax);
 	const beast = new RedBlackTree<number, number>(compareNumbers);
 
-	const randInt = () => distribution(mt);
+	const randInt = () => random.integer(imin, imax);
 	const pos = new Array<number>(intCount);
 	let i = 0;
 	let redo = false;
@@ -405,12 +403,10 @@ export function mergeTreeLargeTest() {
 	);
 	const insertCount = 1000000;
 	const removeCount = 980000;
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const random = makeRandom(0xdeadbeef, 0xfeedbed);
 	const imin = 1;
 	const imax = 9;
-	const distribution = random.integer(imin, imax);
-	const randInt = () => distribution(mt);
+	const randInt = () => random.integer(imin, imax);
 	function randomString(len: number, c: string) {
 		let str = "";
 		for (let i = 0; i < len; i++) {
@@ -425,7 +421,7 @@ export function mergeTreeLargeTest() {
 		const slen = randInt();
 		const s = randomString(slen, String.fromCharCode(48 + slen));
 		const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = random.integer(0, preLen);
 		const clockStart = clock();
 		insertText({
 			mergeTree,
@@ -455,7 +451,7 @@ export function mergeTreeLargeTest() {
 	for (let i = 0; i < removeCount; i++) {
 		const dlen = randInt();
 		const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = random.integer(0, preLen);
 		// Log(itree.toString());
 		const clockStart = clock();
 		mergeTree.markRangeRemoved(
@@ -494,14 +490,12 @@ export function mergeTreeCheckedTest() {
 	const insertCount = 2000;
 	const removeCount = 1400;
 	const largeRemoveCount = 20;
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const random = makeRandom(0xdeadbeef, 0xfeedbed);
+
 	const imin = 1;
 	const imax = 9;
-	const distribution = random.integer(imin, imax);
-	const largeDistribution = random.integer(10, 1000);
-	const randInt = () => distribution(mt);
-	const randLargeInt = () => largeDistribution(mt);
+	const randInt = () => random.integer(imin, imax);
+	const randLargeInt = () => random.integer(10, 1000);
 	function randomString(len: number, c: string) {
 		let str = "";
 		for (let i = 0; i < len; i++) {
@@ -517,7 +511,7 @@ export function mergeTreeCheckedTest() {
 		const slen = randInt();
 		const s = randomString(slen, String.fromCharCode(48 + slen));
 		const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = random.integer(0, preLen);
 		if (!checkInsertMergeTree(mergeTree, pos, makeCollabTextSegment(s), true)) {
 			log(
 				`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${mergeTree.getLength(
@@ -545,7 +539,7 @@ export function mergeTreeCheckedTest() {
 	for (let i = 0; i < largeRemoveCount; i++) {
 		const dlen = randLargeInt();
 		const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = random.integer(0, preLen);
 		// log(itree.toString());
 		if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
 			log(
@@ -573,7 +567,7 @@ export function mergeTreeCheckedTest() {
 	for (let i = 0; i < removeCount; i++) {
 		const dlen = randInt();
 		const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = random.integer(0, preLen);
 		// log(itree.toString());
 		if (i & 1) {
 			if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
@@ -617,7 +611,7 @@ export function mergeTreeCheckedTest() {
 		const slen = randInt();
 		const s = randomString(slen, String.fromCharCode(48 + slen));
 		const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = random.integer(0, preLen);
 		if (!checkInsertMergeTree(mergeTree, pos, makeCollabTextSegment(s), true)) {
 			log(
 				`i: ${i} preLen ${preLen} pos: ${pos} slen: ${slen} s: ${s} itree len: ${mergeTree.getLength(
@@ -645,7 +639,7 @@ export function mergeTreeCheckedTest() {
 	for (let i = 0; i < removeCount; i++) {
 		const dlen = randInt();
 		const preLen = mergeTree.getLength(UniversalSequenceNumber, LocalClientId);
-		const pos = random.integer(0, preLen)(mt);
+		const pos = random.integer(0, preLen);
 		// log(itree.toString());
 		if (i & 1) {
 			if (!checkMarkRemoveMergeTree(mergeTree, pos, pos + dlen, true)) {
@@ -702,16 +696,12 @@ type SharedStringJSONSegment = IJSONTextSegment & IJSONMarkerSegment;
 // }
 
 export function TestPack(verbose = true) {
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const random = makeRandom(0xdeadbeef, 0xfeedbed);
 	const minSegCount = 1;
 	const maxSegCount = 1000;
-	const segmentCountDistribution = random.integer(minSegCount, maxSegCount);
-	const smallSegmentCountDistribution = random.integer(1, 4);
-	const randSmallSegmentCount = () => smallSegmentCountDistribution(mt);
-	const randSegmentCount = () => segmentCountDistribution(mt);
-	const textLengthDistribution = random.integer(1, 5);
-	const randTextLength = () => textLengthDistribution(mt);
+	const randSmallSegmentCount = () => random.integer(1, 4);
+	const randSegmentCount = () => random.integer(minSegCount, maxSegCount);
+	const randTextLength = () => random.integer(1, 5);
 	const zedCode = 48;
 	function randomString(len: number, c: string) {
 		let str = "";
@@ -855,7 +845,7 @@ export function TestPack(verbose = true) {
 			const cliMsgCount = client.getMessageCount();
 			const countToApply = all
 				? cliMsgCount
-				: random.integer(Math.floor((2 * cliMsgCount) / 3), cliMsgCount)(mt);
+				: random.integer(Math.floor((2 * cliMsgCount) / 3), cliMsgCount);
 			client.applyMessages(countToApply);
 		}
 
@@ -863,7 +853,7 @@ export function TestPack(verbose = true) {
 			const svrMsgCount = _server.getMessageCount();
 			const countToApply = all
 				? svrMsgCount
-				: random.integer(Math.floor((2 * svrMsgCount) / 3), svrMsgCount)(mt);
+				: random.integer(Math.floor((2 * svrMsgCount) / 3), svrMsgCount);
 			return _server.applyMessages(countToApply);
 		}
 
@@ -874,7 +864,7 @@ export function TestPack(verbose = true) {
 				String.fromCharCode(zedCode + ((client.getCurrentSeq() + charIndex) % 50)),
 			);
 			const preLen = client.getLength();
-			const pos = random.integer(0, preLen)(mt);
+			const pos = random.integer(0, preLen);
 			if (includeMarkers) {
 				const insertMarkerOp = client.insertMarkerLocal(pos, ReferenceType.Tile, {
 					[reservedTileLabelsKey]: "test",
@@ -892,7 +882,7 @@ export function TestPack(verbose = true) {
 		function randomSpateOfRemoves(client: TestClient) {
 			const dlen = randTextLength();
 			const preLen = client.getLength();
-			const pos = random.integer(0, preLen)(mt);
+			const pos = random.integer(0, preLen);
 			const op = client.removeRangeLocal(pos, pos + dlen);
 			server.enqueueMsg(client.makeOpMessage(op!));
 			if (TestClient.useCheckQ) {
@@ -1189,7 +1179,7 @@ export function TestPack(verbose = true) {
 						String.fromCharCode(zedCode + (sequenceNumber % 50)),
 					);
 					const preLen = cliA.getLength();
-					const pos = random.integer(0, preLen)(mt);
+					const pos = random.integer(0, preLen);
 
 					const msg = cliA.makeOpMessage(
 						cliA.insertTextLocal(pos, text)!,
@@ -1219,7 +1209,7 @@ export function TestPack(verbose = true) {
 						String.fromCharCode(zedCode + (sequenceNumber % 50)),
 					);
 					const preLen = cliB.getLength();
-					const pos = random.integer(0, preLen)(mt);
+					const pos = random.integer(0, preLen);
 					const msg = cliB.makeOpMessage(
 						cliB.insertTextLocal(pos, text)!,
 						sequenceNumber++,
@@ -1248,8 +1238,8 @@ export function TestPack(verbose = true) {
 				const cliAMsgs: ISequencedDocumentMessage[] = [];
 				for (let j = 0; j < removeCount; j++) {
 					const dlen = randTextLength();
-					const preLen = cliA.getLength();
-					const pos = random.integer(0, preLen)(mt);
+					const maxStartPos = cliA.getLength() - dlen;
+					const pos = random.integer(0, maxStartPos);
 					const msg = cliA.makeOpMessage(
 						cliA.removeRangeLocal(pos, pos + dlen)!,
 						sequenceNumber++,
@@ -1273,8 +1263,8 @@ export function TestPack(verbose = true) {
 				const cliBMsgs: ISequencedDocumentMessage[] = [];
 				for (let j = 0; j < removeCount; j++) {
 					const dlen = randTextLength();
-					const preLen = cliB.getLength() - 1;
-					const pos = random.integer(0, preLen)(mt);
+					const maxStartPos = cliB.getLength() - dlen;
+					const pos = random.integer(0, maxStartPos);
 					const msg = cliB.makeOpMessage(
 						cliB.removeRangeLocal(pos, pos + dlen)!,
 						sequenceNumber++,
@@ -1614,14 +1604,13 @@ function tst() {
 }
 
 export class RandomPack {
-	mt: Random.MT19937;
+	random: IRandom;
 	constructor() {
-		this.mt = random.engines.mt19937();
-		this.mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+		this.random = makeRandom(0xdeadbeef, 0xfeedbed);
 	}
 
 	randInteger(min: number, max: number) {
-		return random.integer(min, max)(this.mt);
+		return this.random.integer(min, max);
 	}
 
 	randString(wordCount: number) {

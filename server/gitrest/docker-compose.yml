@@ -1,9 +1,9 @@
-version: '3'
+version: "3"
 services:
     gitrest:
         build:
-          context: .
-          target: runner
+            context: .
+            target: runner
         ports:
             - "3000:3000"
         volumes:
@@ -17,5 +17,5 @@ services:
             - git:/home/git
         restart: always
 volumes:
-  git:
-    driver: local
+    git:
+        driver: local

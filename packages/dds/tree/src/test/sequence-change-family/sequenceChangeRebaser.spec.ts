@@ -67,7 +67,10 @@ describe("SequenceChangeFamily", () => {
 							for (let offset2 = 1; offset2 <= 4; ++offset2) {
 								const change1 = asForest([offset1, mark1]);
 								const change2 = asForest([offset2, mark2]);
-								const inv = sequenceChangeRebaser.invert(makeAnonChange(change2));
+								const inv = sequenceChangeRebaser.invert(
+									makeAnonChange(change2),
+									false,
+								);
 								const r1 = sequenceChangeRebaser.rebase(
 									change1,
 									makeAnonChange(change2),
@@ -98,7 +101,10 @@ describe("SequenceChangeFamily", () => {
 						for (let offset2 = 1; offset2 <= 4; ++offset2) {
 							const change1 = asForest([offset1, mark1]);
 							const change2 = asForest([offset2, mark2]);
-							const inverse2 = sequenceChangeRebaser.invert(makeAnonChange(change2));
+							const inverse2 = sequenceChangeRebaser.invert(
+								makeAnonChange(change2),
+								false,
+							);
 							const r1 = sequenceChangeRebaser.rebase(
 								change1,
 								makeAnonChange(change2),
@@ -125,7 +131,7 @@ describe("SequenceChangeFamily", () => {
 			} else {
 				it(`${name} ○ ${name}⁻¹ === ε`, () => {
 					const change = asForest([mark]);
-					const inv = sequenceChangeRebaser.invert(makeAnonChange(change));
+					const inv = sequenceChangeRebaser.invert(makeAnonChange(change), false);
 					const actual = sequenceChangeRebaser.compose([
 						makeAnonChange(change),
 						makeAnonChange(inv),

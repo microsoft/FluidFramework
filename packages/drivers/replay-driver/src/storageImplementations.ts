@@ -172,7 +172,6 @@ export class StaticStorageDocumentService implements IDocumentService {
 }
 
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
-	public readonly protocolName = "fluid-static-storage:";
 	public constructor(protected readonly storage: IDocumentStorageService) {}
 
 	public async createDocumentService(
