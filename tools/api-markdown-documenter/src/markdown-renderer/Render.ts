@@ -13,13 +13,13 @@ import { MarkdownRenderContext, getContextWithDefaults } from "./RenderContext";
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.
  *
  * @param document - The document to render.
- * @param context - Optional, partial {@link MarkdownRenderContext}.
- * Any missing parameters will be filled in with system defaults.
+ * @param config - Partial Markdown rendering configuration.
  */
 export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const writer = new DocumentWriter(new StringBuilder());
+	const renderContext = getContextWithDefaults({ renderers: config.renderers });
 
-	renderNodes(document.children, writer, getContextWithDefaults({ renderers: config.renderers }));
+	renderNodes(document.children, writer, renderContext);
 
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();
