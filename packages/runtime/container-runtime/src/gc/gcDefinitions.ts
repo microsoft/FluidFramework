@@ -12,16 +12,20 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IContainerRuntimeMetadata, ICreateContainerMetadata } from "../summary";
+import {
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
+	RefreshSummaryResult,
+} from "../summary";
 
 export type GCVersion = number;
 
 /** The stable version of garbage collection in production. */
 export const stableGCVersion: GCVersion = 1;
 /** The current version of garbage collection. */
-export const currentGCVersion: GCVersion = 2;
+export const currentGCVersion: GCVersion = 3;
 
 /**
  * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value
@@ -56,7 +60,7 @@ export const throwOnTombstoneLoadKey = "Fluid.GarbageCollection.ThrowOnTombstone
 // Feature gate to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops).
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 // Feature gate to enable GC version upgrade.
-export const gcVersionUpgradeToV2Key = "Fluid.GarbageCollection.GCVersionUpgradeToV2";
+export const gcVersionUpgradeToV3Key = "Fluid.GarbageCollection.GCVersionUpgradeToV3";
 // Feature gate to enable GC sweep for datastores.
 // TODO: Remove Test from the flag when we are confident to turn on sweep
 export const sweepDatastoresKey = "Fluid.GarbageCollection.Test.SweepDataStores";
@@ -164,9 +168,7 @@ export const GCNodeType = {
 };
 export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 
-// NOTE: Once this is removed from the package exports in the next major, the deprecation tag can be removed as well
 /**
- * @deprecated - Was only to be used internally anyway, no replacement provided.
  * Defines the APIs for the runtime object to be passed to the garbage collector.
  */
 export interface IGarbageCollectionRuntime {
@@ -373,3 +375,13 @@ export const UnreferencedState = {
 	SweepReady: "SweepReady",
 } as const;
 export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
+
+/**
+ * Represents the result of a GC run.
+ */
+export interface IGCResult {
+	/** The ids of nodes that are referenced in the referenced graph */
+	referencedNodeIds: string[];
+	/** The ids of nodes that are not-referenced or deleted in the referenced graph */
+	deletedNodeIds: string[];
+}

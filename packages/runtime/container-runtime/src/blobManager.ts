@@ -762,7 +762,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				continue;
 			}
 			const storageId = this.redirectTable.get(blobId);
-			assert(!!storageId, "Must be attached to run GC");
+			assert(!!storageId, 0x5bb /* Must be attached to run GC */);
 			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(blobId);
 		}
@@ -770,7 +770,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Find out storage ids that are in-use and remove them from maybeUnusedStorageIds. A storage id is in-use if
 		// the redirect table has a local id -> storage id entry for it.
 		for (const [localId, storageId] of this.redirectTable.entries()) {
-			assert(!!storageId, "Must be attached to run GC");
+			assert(!!storageId, 0x5bc /* Must be attached to run GC */);
 			// For every storage id, the redirect table has a id -> id entry. These do not make the storage id in-use.
 			if (maybeUnusedStorageIds.has(storageId) && localId !== storageId) {
 				maybeUnusedStorageIds.delete(storageId);
@@ -909,7 +909,7 @@ function getBlobIdFromGCNodePath(nodePath: string) {
 	const pathParts = nodePath.split("/");
 	assert(
 		pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-		"Invalid blob node path",
+		0x5bd /* Invalid blob node path */,
 	);
 	return pathParts[2];
 }

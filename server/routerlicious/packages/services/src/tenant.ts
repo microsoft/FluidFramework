@@ -14,6 +14,7 @@ import {
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 
 export class Tenant implements core.ITenant {
 	public get id(): string {
@@ -76,7 +77,12 @@ export class TenantManager implements core.ITenantManager {
 		documentId: string,
 		includeDisabledTenant = false,
 	): Promise<IGitManager> {
-		const key = await this.getKey(tenantId, includeDisabledTenant);
+		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
+		const key = await core.requestWithRetry(
+			async () => this.getKey(tenantId, includeDisabledTenant),
+			"getTenantGitManager_getKey" /* callName */,
+			lumberProperties /* telemetryProperties */,
+		);
 
 		const defaultQueryString = {
 			token: fromUtf8ToBase64(`${tenantId}`),

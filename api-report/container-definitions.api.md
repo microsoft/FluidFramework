@@ -110,15 +110,17 @@ export interface IConnectionDetails {
     claims: ITokenClaims;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
-    existing: boolean;
-    // @deprecated (undocumented)
-    initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    mode: ConnectionMode;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-    // @deprecated (undocumented)
+}
+
+// @public
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+    // (undocumented)
+    initialClients: ISignalClient[];
+    // (undocumented)
+    mode: ConnectionMode;
+    // (undocumented)
     version: string;
 }
 
@@ -216,6 +218,7 @@ export interface IContainerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "contextChanged", listener: (codeDetails: IFluidCodeDetails) => void): any;
     (event: "disconnected", listener: () => void): any;
+    (event: "attaching", listener: () => void): any;
     (event: "attached", listener: () => void): any;
     (event: "closed", listener: (error?: ICriticalContainerError) => void): any;
     (event: "disposed", listener: (error?: ICriticalContainerError) => void): any;
@@ -389,17 +392,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public @deprecated (undocumented)
-export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
-
-// @public @deprecated (undocumented)
-export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    // (undocumented)
-    intelligence: {
-        [service: string]: any;
-    };
-}
-
 // @public
 export interface IGenericError extends IErrorBase {
     // (undocumented)
@@ -456,12 +448,6 @@ export interface IPendingLocalState {
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @public @deprecated (undocumented)
-export interface IProvideFluidTokenProvider {
-    // (undocumented)
-    readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
 // @public (undocumented)

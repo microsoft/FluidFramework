@@ -13,7 +13,7 @@ import { assert, performance, TypedEventEmitter } from "@fluidframework/common-u
 import {
 	IDeltaQueue,
 	ReadOnlyInfo,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
@@ -293,10 +293,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * and do not know if user has write access to a file.
 	 */
 	private get readonly(): boolean | undefined {
-		if (this._forceReadonly) {
-			return true;
-		}
-		return this._readonlyPermissions;
+		return this.readOnlyInfo.readonly;
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
@@ -314,11 +311,12 @@ export class ConnectionManager implements IConnectionManager {
 		return { readonly: this._readonlyPermissions };
 	}
 
-	private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
+	private static detailsFromConnection(
+		connection: IDocumentDeltaConnection,
+	): IConnectionDetailsInternal {
 		return {
 			claims: connection.claims,
 			clientId: connection.clientId,
-			existing: connection.existing,
 			checkpointSequenceNumber: connection.checkpointSequenceNumber,
 			get initialClients() {
 				return connection.initialClients;

@@ -225,6 +225,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			0x597 /* Branch may not be merged while transaction is in progress */,
 		);
 		const change = this.mergeIntoBase(this);
+		this.head = this.getBaseBranch();
 		this.dispose();
 		return change;
 	}

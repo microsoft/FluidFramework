@@ -31,6 +31,7 @@ export {
 	parentField,
 	EditableTreeEvents,
 	on,
+	contextSymbol,
 } from "./editable-tree";
 
 export {
@@ -49,12 +50,13 @@ export {
 	ArrayLikeMut,
 	cursorFromContextualData,
 	cursorsFromContextualData,
+	ContextuallyTypedFieldData,
 } from "./contextuallyTyped";
 
-export { ForestIndex } from "./forestIndex";
+export { ForestSummarizer } from "./forestSummarizer";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
-export { SchemaIndex, SchemaEditor } from "./schemaIndex";
+export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { getSchemaString } from "./schemaIndexFormat";
 export {
@@ -112,16 +114,13 @@ export {
 	ValueConstraint,
 	TypedSchema,
 	revisionMetadataSourceFromInfo,
+	ViewSchema,
+	ViewSchemaCollection,
+	FieldViewSchema,
+	TreeViewSchema,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
-
-export {
-	EditManagerIndex,
-	CommitEncoder,
-	parseSummary as loadSummary,
-	stringifySummary as encodeSummary,
-} from "./editManagerIndex";
 
 export { ForestRepairDataStore } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
@@ -129,6 +128,13 @@ export { dummyRepairDataStore } from "./fakeRepairDataStore";
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
+
+export {
+	Identifier,
+	identifierFieldSchema,
+	IdentifierIndex,
+	identifierSchema,
+} from "./identifierIndex";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
@@ -146,3 +152,13 @@ export const FieldKinds: {
 	readonly optional: FieldKind<FieldEditor<any>, Multiplicity.Optional>;
 	readonly sequence: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
 } = FieldKindsOriginal;
+
+export {
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UntypedTreeCore,
+	UnwrappedUntypedField,
+	UnwrappedUntypedTree,
+	UntypedTreeOrPrimitive,
+} from "./untypedTree";

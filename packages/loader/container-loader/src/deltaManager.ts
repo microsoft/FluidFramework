@@ -18,7 +18,7 @@ import {
 	IDeltaQueue,
 	ICriticalContainerError,
 	IThrottlingWarning,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { normalizeError, logIfFalse, safeRaiseEvent } from "@fluidframework/telemetry-utils";
@@ -57,6 +57,7 @@ export interface IConnectionArgs {
 export interface IDeltaManagerInternalEvents extends IDeltaManagerEvents {
 	(event: "throttled", listener: (error: IThrottlingWarning) => void);
 	(event: "closed" | "disposed", listener: (error?: ICriticalContainerError) => void);
+	(event: "connect", listener: (details: IConnectionDetailsInternal, opsBehind?: number) => void);
 }
 
 /**
@@ -122,7 +123,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastObservedSeqNumber: number = 0;
 	private lastProcessedSequenceNumber: number = 0;
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
-	private baseTerm: number = 0;
 
 	/** count number of noops sent by the client which may not be acked */
 	private noOpCount: number = 0;
@@ -184,10 +184,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	public get lastKnownSeqNumber() {
 		return this.lastObservedSeqNumber;
-	}
-
-	public get referenceTerm(): number {
-		return this.baseTerm;
 	}
 
 	public get minimumSequenceNumber(): number {
@@ -361,7 +357,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
 			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
-			connectHandler: (connection: IConnectionDetails) => this.connectHandler(connection),
+			connectHandler: (connection: IConnectionDetailsInternal) =>
+				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
 			readonlyChangeHandler: (readonly?: boolean) =>
 				safeRaiseEvent(this, this.logger, "readonly", readonly),
@@ -404,7 +401,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		// - inbound & inboundSignal are resumed in attachOpHandler() when we have handler setup
 	}
 
-	private connectHandler(connection: IConnectionDetails) {
+	private connectHandler(connection: IConnectionDetailsInternal) {
 		this.refreshDelayInfo(this.deltaStreamDelayId);
 
 		const props = this.connectionManager.connectionVerboseProps;
@@ -463,13 +460,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	public async attachOpHandler(
 		minSequenceNumber: number,
 		sequenceNumber: number,
-		term: number,
 		handler: IDeltaHandlerStrategy,
 		prefetchType: "cached" | "all" | "none" = "none",
 	) {
 		this.initSequenceNumber = sequenceNumber;
 		this.lastProcessedSequenceNumber = sequenceNumber;
-		this.baseTerm = term;
 		this.minSequenceNumber = minSequenceNumber;
 		this.lastQueuedSequenceNumber = sequenceNumber;
 		this.lastObservedSeqNumber = sequenceNumber;
@@ -981,12 +976,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.lastProcessedSequenceNumber <= this.lastObservedSeqNumber,
 			0x267 /* "lastObservedSeqNumber should be updated first" */,
 		);
-
-		// Back-compat for older server with no term
-		if (message.term === undefined) {
-			message.term = 1;
-		}
-		this.baseTerm = message.term;
 
 		if (this.handler === undefined) {
 			throw new Error("Attempted to process an inbound message without a handler attached");

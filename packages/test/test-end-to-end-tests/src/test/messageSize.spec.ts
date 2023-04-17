@@ -16,7 +16,7 @@ import {
 	DataObjectFactoryType,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -106,15 +106,26 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			}),
 		);
 
+	const disableCompressionConfig = {
+		...testContainerConfig,
+		runtimeOptions: {
+			compressionOptions: {
+				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
+		},
+	}; // Compression is enabled by default
+
 	itExpects(
-		"A large op will close the container",
+		"A large op will close the container when compression is disabled",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
 			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
 		],
 		async () => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
-			await setupContainers(testContainerConfig);
+			await setupContainers(disableCompressionConfig);
+
 			const errorEvent = containerError(localContainer);
 
 			const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
@@ -147,14 +158,14 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 	});
 
 	itExpects(
-		"Small batches pass while disconnected, fails when the container connects",
+		"Small batches pass while disconnected, fail when the container connects and compression is disabled",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
 			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
 		],
 		async () => {
-			const maxMessageSizeInBytes = 800 * 1024; // slightly below 1Mb
-			await setupContainers(testContainerConfig);
+			const maxMessageSizeInBytes = 600 * 1024;
+			await setupContainers(disableCompressionConfig);
 			const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
 			const messageCount = 10;
 			localContainer.disconnect();
@@ -235,7 +246,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers(testContainerConfig); // Compression is disabled by default
+			await setupContainers(disableCompressionConfig);
 
 			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 3; // Will result in a 15 MB payload
@@ -252,20 +263,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers(
-				{
-					...testContainerConfig,
-					runtimeOptions: {
-						compressionOptions: {
-							minimumBatchSizeInBytes: 1,
-							compressionAlgorithm: CompressionAlgorithms.lz4,
-						},
-					},
-				},
-				{
-					"Fluid.ContainerRuntime.DisableCompression": true,
-				},
-			);
+			await setupContainers(testContainerConfig, {
+				"Fluid.ContainerRuntime.CompressionDisabled": true,
+			});
 
 			const largeString = generateStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 10;
@@ -285,10 +285,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			await setupContainers({
 				...testContainerConfig,
 				runtimeOptions: {
-					compressionOptions: {
-						minimumBatchSizeInBytes: 1,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
+					chunkSizeInBytes: Number.POSITIVE_INFINITY,
 				},
 			});
 
@@ -303,11 +300,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 	const chunkingBatchesConfig: ITestContainerConfig = {
 		...testContainerConfig,
 		runtimeOptions: {
-			compressionOptions: {
-				minimumBatchSizeInBytes: compressionSizeThreshold,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-			chunkSizeInBytes: 800 * 1024,
 			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 		},
 	};
@@ -375,7 +367,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			async function () {
 				const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
 				await setupContainers(chunkingBatchesConfig, {
-					"Fluid.ContainerRuntime.DisableCompressionChunking": true,
+					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 				});
 
 				const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);

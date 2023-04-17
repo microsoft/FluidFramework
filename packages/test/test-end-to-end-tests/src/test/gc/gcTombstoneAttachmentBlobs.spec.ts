@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -15,7 +15,7 @@ import {
 	mockConfigProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
@@ -59,7 +59,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 			// Send an op to transition the container to write mode.
 			dataStore._root.set("transition to write", "true");
-			await waitForContainerConnection(container, true);
+			await waitForContainerConnection(container);
 
 			const { summarizer } = await createSummarizer(
 				provider,
@@ -466,7 +466,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				const { summarizer } = await createSummarizer(
 					provider,
@@ -538,7 +538,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				// Upload the same blob. This will get de-duped and we will get back another local handle. Both the these
 				// localIds should be mapped to the same storageId.
@@ -645,7 +645,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				const { summarizer } = await createSummarizer(
 					provider,
@@ -742,7 +742,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		async function createContainerAndDataStore() {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
-			await waitForContainerConnection(mainContainer, true);
+			await waitForContainerConnection(mainContainer);
 			return { mainContainer, mainDataStore };
 		}
 
@@ -774,7 +774,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await new Promise<void>((resolve) =>
 					container.on("connected", () => resolveIfActive(resolve)),
 				);
-				(container as Container).off("connected", resolveIfActive);
 			}
 		};
 

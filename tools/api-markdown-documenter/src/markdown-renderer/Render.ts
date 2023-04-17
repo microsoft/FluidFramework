@@ -37,8 +37,8 @@ export function renderDocument(
 }
 
 /**
- * Renders the provided {@link DocumentationNode} per the configured policy
- * ({@link MarkdownRenderContext.renderers}).
+ * Renders the provided {@link DocumentationNode} per the configured
+ * {@link MarkdownRenderContext.renderers | renderers}.
  */
 export function renderNode(
 	node: DocumentationNode,
@@ -55,8 +55,8 @@ export function renderNode(
 }
 
 /**
- * Renders a list of child {@link DocumentationNode}s per the configured policy
- * ({@link MarkdownRenderContext.renderers}).
+ * Renders a list of child {@link DocumentationNode}s per the configured
+ * {@link MarkdownRenderContext.renderers | renderers}.
  */
 export function renderNodes(
 	children: DocumentationNode[],

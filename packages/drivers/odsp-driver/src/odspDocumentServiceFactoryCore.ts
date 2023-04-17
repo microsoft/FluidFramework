@@ -13,7 +13,6 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	getDocAttributesFromProtocolSummary,
-	ensureFluidResolvedUrl,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
@@ -50,11 +49,6 @@ import {
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-	/**
-	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
-	 */
-	public readonly protocolName = "fluid-odsp:";
-
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
@@ -68,8 +62,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(createNewResolvedUrl);
-
 		let odspResolvedUrl = getOdspResolvedUrl(createNewResolvedUrl);
 		const resolvedUrlData: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,

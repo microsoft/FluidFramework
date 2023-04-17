@@ -36,7 +36,7 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;

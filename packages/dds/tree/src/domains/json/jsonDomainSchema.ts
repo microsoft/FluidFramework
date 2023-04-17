@@ -64,7 +64,7 @@ export const jsonBoolean = TypedSchema.tree("Json.Boolean", {
  * @alpha
  */
 export const jsonSchemaData: SchemaData = SchemaAware.typedSchemaData(
-	new Map(),
+	[],
 	jsonObject,
 	jsonArray,
 	jsonNumber,

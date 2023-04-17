@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../util";
+import { fail, requireAssignableTo } from "../../util";
 import {
 	FieldSchema,
 	LocalFieldKey,
@@ -16,6 +16,8 @@ import {
 	AdaptedViewSchema,
 	Compatibility,
 	FieldAdapter,
+	SchemaDataAndPolicy,
+	SchemaPolicy,
 } from "../../core";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
 import { allowsRepoSuperset, isNeverTree } from "./comparison";
@@ -158,6 +160,9 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 }
 
 // TODO: Separate this from TreeSchema, adding more data.
+/**
+ * @alpha
+ */
 export interface TreeViewSchema extends TreeSchema {}
 
 /**
@@ -165,19 +170,24 @@ export interface TreeViewSchema extends TreeSchema {}
  * including functionality that does not have to be kept consistent across versions or deterministic.
  *
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
+ * @alpha
  */
-export class FieldTypeView<Kind extends FieldKind = FieldKind> implements FieldSchema {
-	public readonly types?: ReadonlySet<TreeSchemaIdentifier>;
-
-	public constructor(public readonly kind: Kind, types?: Iterable<TreeSchemaIdentifier>) {
-		this.types = types === undefined ? undefined : new Set(types);
-	}
+export interface FieldViewSchema<Kind extends FieldKind = FieldKind> extends FieldSchema {
+	readonly kind: Kind;
 }
 
 /**
  * Schema data that can be stored in a document.
+ * @alpha
  */
 export interface ViewSchemaCollection {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldTypeView>;
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
+	readonly policy: SchemaPolicy;
+}
+
+{
+	// ViewSchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
+	// but want to be compatible with it, so check that here:
+	type _test = requireAssignableTo<ViewSchemaCollection, SchemaDataAndPolicy>;
 }

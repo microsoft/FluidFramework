@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -16,7 +15,7 @@ import {
 	mockConfigProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-internal-modules
@@ -702,7 +701,6 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				await new Promise<void>((resolve) =>
 					container.on("connected", () => resolveIfActive(resolve)),
 				);
-				(container as Container).off("connected", resolveIfActive);
 			}
 		};
 

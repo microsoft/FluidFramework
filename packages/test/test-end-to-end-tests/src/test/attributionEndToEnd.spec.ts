@@ -19,7 +19,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
@@ -131,6 +131,7 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 
 		const text = "client 1";
 		sharedString1.insertText(0, text);
+		assertAttributionMatches(sharedString1, 3, attributor, "local");
 		await provider.ensureSynchronized();
 		sharedString2.insertText(0, "client 2, ");
 		await provider.ensureSynchronized();

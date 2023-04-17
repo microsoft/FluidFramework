@@ -106,9 +106,6 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public @deprecated
-export function ensureContainerConnected(container: IContainer): Promise<void>;
-
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
@@ -215,7 +212,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
     ensureSynchronized(...containers: IContainer[]): Promise<void>;
-    ensureSynchronizedWithTimeout?(timeoutDuration: number | undefined, ...containers: IContainer[]): Promise<void>;
     pauseProcessing(...containers: IContainer[]): Promise<void>;
     processIncoming(...containers: IContainer[]): Promise<void>;
     processOutgoing(...containers: IContainer[]): Promise<void>;
@@ -314,7 +310,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     // (undocumented)
     readonly driver: ITestDriver;
     // (undocumented)
-    ensureSynchronized(timeoutDuration?: number): Promise<void>;
+    ensureSynchronized(): Promise<void>;
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)

@@ -19,6 +19,7 @@ import {
 	ILogger,
 	TokenGenerator,
 	DefaultServiceConfiguration,
+	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import sillyname from "sillyname";
@@ -68,6 +69,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		address: string,
 		storage: IDocumentStorage,
 		databaseManager: IDatabaseManager,
+		documentRepository: IDocumentRepository,
 		timeoutLength: number,
 		webSocketServerFactory: () => IWebSocketServer,
 		taskMessageSender: ITaskMessageSender,
@@ -85,6 +87,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			node,
 			storage,
 			databaseManager,
+			documentRepository,
 			timeoutLength,
 			taskMessageSender,
 			tenantManager,
@@ -157,6 +160,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		private node: INode,
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
+		private readonly documentRepository: IDocumentRepository,
 		private readonly timeoutLength: number,
 		private readonly taskMessageSender: ITaskMessageSender,
 		private readonly tenantManager: ITenantManager,
@@ -261,6 +265,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			this.permission,
 			this.tokenGenerator,
 			this.logger,
+			this.documentRepository,
 		);
 		assert(!this.orderMap.has(fullId));
 		this.orderMap.set(fullId, orderer);

@@ -50,6 +50,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",
+		// Performance tests benefit from having access to GC, and memory tests require it.
+		// Exposing it here avoids all packages which do perf testing from having to expose it.
+		"v8-expose-gc": true,
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {

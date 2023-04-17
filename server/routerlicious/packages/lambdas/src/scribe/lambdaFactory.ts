@@ -12,6 +12,7 @@ import {
 	IControlMessage,
 	IDeltaService,
 	IDocument,
+	IDocumentRepository,
 	ILambdaStartControlMessageContents,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
@@ -60,10 +61,10 @@ const DefaultScribe: IScribe = {
 	validParentSummaries: undefined,
 };
 
-export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionLambdaConfig> {
 	constructor(
 		private readonly mongoManager: MongoManager,
-		private readonly documentCollection: ICollection<IDocument>,
+		private readonly documentRepository: IDocumentRepository,
 		private readonly messageCollection: ICollection<ISequencedOperationMessage>,
 		private readonly producer: IProducer,
 		private readonly deltaManager: IDeltaService,
@@ -100,7 +101,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		);
 
 		try {
-			document = await this.documentCollection.findOne({ documentId, tenantId });
+			document = await this.documentRepository.readOne({ documentId, tenantId });
 
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
@@ -231,10 +232,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			++expectedSequenceNumber;
 		}
 
-		const protocolHandler = initializeProtocol(
-			lastCheckpoint.protocolState,
-			latestSummary.term,
-		);
+		const protocolHandler = initializeProtocol(lastCheckpoint.protocolState);
 
 		const lastSummaryMessages = latestSummary.messages;
 		const summaryWriter = new SummaryWriter(
@@ -251,7 +249,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			context,
 			tenantId,
 			documentId,
-			this.documentCollection,
+			this.documentRepository,
 			this.messageCollection,
 			this.deltaManager,
 			this.getDeltasViaAlfred,
@@ -277,14 +275,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			document.tenantId,
 			document.documentId,
 			summaryWriter,
-			summaryReader,
 			pendingMessageReader,
 			checkpointManager,
 			lastCheckpoint,
 			this.serviceConfiguration,
 			this.producer,
 			protocolHandler,
-			latestSummary.term,
 			latestSummary.protocolHead,
 			opsSinceLastSummary,
 			scribeSessionMetric,

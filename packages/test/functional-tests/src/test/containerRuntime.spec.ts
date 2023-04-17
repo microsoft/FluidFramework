@@ -5,6 +5,10 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import {
+	MockDocumentDeltaConnection,
+	MockDocumentService,
+} from "@fluid-internal/test-loader-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
@@ -18,10 +22,6 @@ import { DeltaManager } from "@fluidframework/container-loader/dist/deltaManager
 import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/dist/contracts";
 // eslint-disable-next-line import/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/dist/connectionManager";
-import {
-	MockDocumentDeltaConnection,
-	MockDocumentService,
-} from "@fluidframework/test-loader-utils";
 // ADO:1981
 // eslint-disable-next-line import/no-internal-modules
 import { ScheduleManager } from "@fluidframework/container-runtime/dist/scheduleManager";
@@ -143,7 +143,7 @@ describe("Container Runtime", () => {
 				);
 			});
 
-			await deltaManager.attachOpHandler(0, 0, 1, {
+			await deltaManager.attachOpHandler(0, 0, {
 				process(message: ISequencedDocumentMessage) {
 					processOp(message);
 					return {};
@@ -314,7 +314,7 @@ describe("Container Runtime", () => {
 						props,
 					),
 			);
-			await deltaManager2.attachOpHandler(0, 0, 1, {
+			await deltaManager2.attachOpHandler(0, 0, {
 				process(message: ISequencedDocumentMessage) {
 					processOp(message);
 					return {};

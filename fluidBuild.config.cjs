@@ -11,7 +11,6 @@ module.exports = {
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
 		// Release groups
-		"azure": "azure",
 		"client": {
 			directory: "",
 			ignoredDirs: [],
@@ -44,6 +43,7 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
+			"build-tools/packages/build-tools/src/test/data/",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
@@ -52,6 +52,7 @@ module.exports = {
 			"azure/packages/azure-local-service/src/index.ts",
 			"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 			"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+			"tools/markdown-magic/test",
 			"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 		],
 		dependencies: {
@@ -76,6 +77,7 @@ module.exports = {
 		pnpmSinglePackageWorkspace: [
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
+			"@fluid-tools/markdown-magic",
 			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
 			"@fluidframework/common-definitions",
@@ -83,6 +85,8 @@ module.exports = {
 			"@fluidframework/eslint-config-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
+			"fluidframework-docs",
+			"tinylicious",
 		],
 	},
 

@@ -16,7 +16,7 @@ import {
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
 	GCVersion,
-	gcVersionUpgradeToV2Key,
+	gcVersionUpgradeToV3Key,
 	IGarbageCollectorConfigs,
 	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
@@ -158,7 +158,9 @@ export function generateGCConfigs(
 
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	const gcVersionInEffect =
-		mc.config.getBoolean(gcVersionUpgradeToV2Key) === true ? currentGCVersion : stableGCVersion;
+		mc.config.getBoolean(gcVersionUpgradeToV3Key) === false
+			? stableGCVersion
+			: currentGCVersion;
 
 	return {
 		gcEnabled,

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Container } from "@fluidframework/container-loader";
+
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -17,7 +17,8 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
@@ -38,15 +39,15 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
 	let sharedMap3: ISharedMap;
 
 	beforeEach(async () => {
-		const container1 = (await provider.makeTestContainer(testContainerConfig)) as Container;
+		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
-		const container2 = (await provider.loadTestContainer(testContainerConfig)) as Container;
+		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
-		const container3 = (await provider.loadTestContainer(testContainerConfig)) as Container;
+		const container3 = await provider.loadTestContainer(testContainerConfig);
 		const dataObject3 = await requestFluidObject<ITestFluidObject>(container3, "default");
 		sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 
@@ -381,7 +382,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	let container: Container;
+	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let sharedMap: SharedMap;
 
@@ -404,7 +405,7 @@ describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
 			},
 		};
 
-		container = (await provider.makeTestContainer(configWithFeatureGates)) as Container;
+		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;

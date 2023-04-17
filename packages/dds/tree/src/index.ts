@@ -92,6 +92,7 @@ export {
 	AnchorEvents,
 	AnchorSetRootEvents,
 	FieldKindSpecifier,
+	AllowedUpdateType,
 } from "./core";
 
 export {
@@ -192,6 +193,7 @@ export {
 	getField,
 	createField,
 	replaceField,
+	contextSymbol,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -200,6 +202,7 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
+	Identifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -220,15 +223,30 @@ export {
 	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
+	ViewSchemaCollection,
+	ContextuallyTypedFieldData,
+	TreeViewSchema,
+	FieldViewSchema,
+	cursorFromContextualData,
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UntypedTreeCore,
+	UnwrappedUntypedField,
+	UnwrappedUntypedTree,
+	UntypedTreeOrPrimitive,
 } from "./feature-libraries";
 
 export {
+	identifierKey,
+	identifierKeySymbol,
 	ISharedTree,
-	ISharedTreeBranch,
+	ISharedTreeView,
 	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
-	BranchEvents,
+	ViewEvents,
+	SchematizeConfiguration,
 } from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";

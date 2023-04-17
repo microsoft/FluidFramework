@@ -53,7 +53,7 @@ export enum MessageType {
 	SummaryNack = "summaryNack",
 
 	/**
-	 * Channel operation (op).
+	 * Operation (op) produced by container runtime.
 	 */
 	Operation = "op",
 
@@ -219,11 +219,6 @@ export interface ISequencedDocumentMessage {
 	 * The sequenced identifier.
 	 */
 	sequenceNumber: number;
-
-	/**
-	 * The term identifier.
-	 */
-	term: number | undefined;
 
 	/**
 	 * The minimum sequence number for all connected clients.

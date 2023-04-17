@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestFluidObject, timeoutPromise } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {

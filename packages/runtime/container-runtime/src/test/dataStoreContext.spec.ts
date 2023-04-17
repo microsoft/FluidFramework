@@ -10,7 +10,6 @@ import { LazyPromise, stringToBuffer } from "@fluidframework/common-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import {
 	IBlob,
 	ISnapshotTree,
@@ -28,11 +27,7 @@ import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import {
-	createRootSummarizerNodeWithGC,
-	IRootSummarizerNodeWithGC,
-	packagePathToTelemetryProperty,
-} from "@fluidframework/runtime-utils";
+import { packagePathToTelemetryProperty, GCDataBuilder } from "@fluidframework/runtime-utils";
 import {
 	isFluidError,
 	MockLogger,
@@ -53,7 +48,9 @@ import {
 import { ContainerRuntime } from "../containerRuntime";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs";
 import {
+	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
+	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	summarizerClientType,

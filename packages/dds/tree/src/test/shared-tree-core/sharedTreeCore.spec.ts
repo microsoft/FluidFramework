@@ -18,10 +18,9 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
-	Index,
-	IndexEvents,
+	ChangeEvents,
 	SharedTreeCore,
-	SummaryElement,
+	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
@@ -37,17 +36,40 @@ import { ISubscribable } from "../../events";
 
 describe("SharedTreeCore", () => {
 	describe("emits", () => {
-		function countTreeEvent(event: keyof IndexEvents<DefaultChangeset>): {
+		/** Implementation of SharedTreeCore which exposes change events */
+		class ChangeEventSharedTree extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
+			public constructor() {
+				const runtime = new MockFluidDataStoreRuntime();
+				const attributes: IChannelAttributes = {
+					type: "ChangeEventSharedTree",
+					snapshotFormatVersion: "0.0.0",
+					packageVersion: "0.0.0",
+				};
+				super(
+					[],
+					defaultChangeFamily,
+					new AnchorSet(),
+					"ChangeEventSharedTree",
+					runtime,
+					attributes,
+					"",
+				);
+			}
+
+			public get events(): ISubscribable<ChangeEvents<DefaultChangeset>> {
+				return this.changeEvents;
+			}
+		}
+
+		function countTreeEvent(event: keyof ChangeEvents<DefaultChangeset>): {
 			tree: ReturnType<typeof createTree>;
 			counter: { count: number };
 		} {
 			const counter = {
 				count: 0,
 			};
-			const tree = createTree((events) => {
-				events.on(event, () => (counter.count += 1));
-				return [new MockIndex()];
-			});
+			const tree = new ChangeEventSharedTree();
+			tree.events.on(event, () => (counter.count += 1));
 			return { tree, counter };
 		}
 
@@ -109,106 +131,107 @@ describe("SharedTreeCore", () => {
 		const { summary, stats } = await tree.summarize();
 		assert(summary);
 		assert(stats);
-		assert.equal(stats.treeNodeCount, 2);
-		assert.equal(stats.blobNodeCount, 0);
+		assert.equal(stats.treeNodeCount, 3);
+		assert.equal(stats.blobNodeCount, 1); // EditManager is always summarized
 		assert.equal(stats.handleNodeCount, 0);
 	});
 
-	describe("indexes", () => {
+	describe("summarizables", () => {
 		it("are loaded", async () => {
-			const index = new MockIndex();
+			const summarizable = new MockSummarizable();
 			let loaded = false;
-			index.on("loaded", () => (loaded = true));
-			const indexes = [index] as const;
-			const tree = createTree(indexes);
-			await tree.load(new MockSharedObjectServices({}));
-			assert(loaded, "Expected index to load");
+			summarizable.on("loaded", () => (loaded = true));
+			const summarizables = [summarizable] as const;
+			const tree = createTree(summarizables);
+			const defaultSummary = await createTree([]).summarize();
+			await tree.load(MockSharedObjectServices.createFromSummary(defaultSummary.summary));
+			assert(loaded, "Expected summarizable to load");
 		});
 
 		it("load blobs", async () => {
-			const index = new MockIndex();
+			const summarizable = new MockSummarizable();
 			let loadedBlob = false;
-			index.on("loaded", (blobContents) => {
-				if (blobContents === MockIndex.blobContents) {
+			summarizable.on("loaded", (blobContents) => {
+				if (blobContents === MockSummarizable.blobContents) {
 					loadedBlob = true;
 				}
 			});
-			const indexes = [index] as const;
-			const tree = createTree(indexes);
+			const summarizables = [summarizable] as const;
+			const tree = createTree(summarizables);
 			const { summary } = await tree.summarize();
 			await tree.load(MockSharedObjectServices.createFromSummary(summary));
 			assert.equal(loadedBlob, true);
 		});
 
 		it("summarize synchronously", () => {
-			const indexA = new MockIndex("Index A");
-			let summarizedIndexA = false;
-			indexA.on("summarizeAttached", () => (summarizedIndexA = true));
-			const indexB = new MockIndex("Index B");
-			let summarizedIndexB = false;
-			indexB.on("summarizeAttached", () => (summarizedIndexB = true));
-			const indexes = [indexA, indexB] as const;
-			const tree = createTree(indexes);
+			const summarizableA = new MockSummarizable("summarizable A");
+			let summarizedA = false;
+			summarizableA.on("summarizeAttached", () => (summarizedA = true));
+			const summarizableB = new MockSummarizable("summarizable B");
+			let summarizedB = false;
+			summarizableB.on("summarizeAttached", () => (summarizedB = true));
+			const summarizables = [summarizableA, summarizableB] as const;
+			const tree = createTree(summarizables);
 			const { summary, stats } = tree.getAttachSummary();
-			assert(summarizedIndexA, "Expected Index A to summarize");
-			assert(summarizedIndexB, "Expected Index B to summarize");
-			const indexSummaryTree = summary.tree.indexes;
+			assert(summarizedA, "Expected summarizable A to summarize");
+			assert(summarizedB, "Expected summarizable B to summarize");
+			const summarizableTree = summary.tree.indexes;
 			assert(
-				isSummaryTree(indexSummaryTree),
-				"Expected index subtree to be present in summary",
+				isSummaryTree(summarizableTree),
+				"Expected summarizable subtree to be present in summary",
 			);
 			assert.equal(
-				Object.entries(indexSummaryTree.tree).length,
-				indexes.length,
-				"Expected both indexes to be present in the index subtree of the summary",
+				Object.entries(summarizableTree.tree).length - 1, // EditManager is always summarized
+				summarizables.length,
+				"Expected both summaries to be present in the summarizable",
 			);
 
 			assert.equal(
 				stats.treeNodeCount,
-				4,
+				5,
 				"Expected summary stats to correctly count tree nodes",
 			);
 		});
 
 		// TODO: Enable once SharedTreeCore properly implements async summaries
 		it.skip("summarize asynchronously", async () => {
-			const indexA = new MockIndex("Index A");
-			let summarizedIndexA = false;
-			indexA.on("summarizeAsync", () => (summarizedIndexA = true));
-			const indexB = new MockIndex("Index B");
-			let summarizedIndexB = false;
-			indexB.on("summarizeAsync", () => (summarizedIndexB = true));
-			const indexes = [indexA, indexB];
-			const tree = createTree(indexes);
+			const summarizableA = new MockSummarizable("summarizable A");
+			let summarizedA = false;
+			summarizableA.on("summarizeAsync", () => (summarizedA = true));
+			const summarizableB = new MockSummarizable("summarizable B");
+			let summarizedB = false;
+			summarizableB.on("summarizeAsync", () => (summarizedB = true));
+			const summarizables = [summarizableA, summarizableB];
+			const tree = createTree(summarizables);
 			const { summary, stats } = await tree.summarize();
-			assert(summarizedIndexA, "Expected Index A to summarize");
-			assert(summarizedIndexB, "Expected Index B to summarize");
-			const indexSummaryTree = summary.tree.indexes;
+			assert(summarizedA, "Expected summarizable A to summarize");
+			assert(summarizedB, "Expected summarizable B to summarize");
+			const summarizableTree = summary.tree.indexes;
 			assert(
-				isSummaryTree(indexSummaryTree),
-				"Expected index subtree to be present in summary",
+				isSummaryTree(summarizableTree),
+				"Expected summarizable subtree to be present in summary",
 			);
 			assert.equal(
-				Object.entries(indexSummaryTree.tree).length,
-				indexes.length,
-				"Expected both indexes to be present in the index subtree of the summary",
+				Object.entries(summarizableTree.tree).length,
+				summarizables.length,
+				"Expected both summaries to be present in the summary",
 			);
 
 			assert.equal(
 				stats.treeNodeCount,
-				indexes.length + 1,
+				summarizables.length + 1,
 				"Expected summary stats to correctly count tree nodes",
 			);
 		});
 
 		it("are asked for GC", () => {
-			const index = new MockIndex("Index");
+			const summarizable = new MockSummarizable("summarizable");
 			let requestedGC = false;
-			index.on("gcRequested", () => (requestedGC = true));
-			const indexes = [index] as const;
-			const tree = createTree(indexes);
+			summarizable.on("gcRequested", () => (requestedGC = true));
+			const summarizables = [summarizable] as const;
+			const tree = createTree(summarizables);
 			tree.getGCData();
-			assert(requestedGC, "Expected SharedTree to ask index for GC");
+			assert(requestedGC, "Expected SharedTree to ask summarizable for GC");
 		});
 	});
 
@@ -216,9 +239,9 @@ describe("SharedTreeCore", () => {
 		return summaryObject.type === SummaryType.Tree;
 	}
 
-	function createTree<TIndexes extends readonly Index[]>(
-		indexes: TIndexes | ((events: ISubscribable<IndexEvents<DefaultChangeset>>) => TIndexes),
-	): SharedTreeCore<DefaultEditBuilder, DefaultChangeset, TIndexes> {
+	function createTree<TIndexes extends readonly Summarizable[]>(
+		indexes: TIndexes,
+	): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 		const runtime = new MockFluidDataStoreRuntime();
 		const attributes: IChannelAttributes = {
 			type: "TestSharedTree",
@@ -236,18 +259,19 @@ describe("SharedTreeCore", () => {
 		);
 	}
 
-	interface TestIndexEvents extends IEvent {
+	interface MockSummarizableEvents extends IEvent {
 		(event: "loaded", listener: (blobContents?: string) => void): void;
 		(event: "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): void;
 	}
 
-	class MockIndex extends TypedEventEmitter<TestIndexEvents> implements Index, SummaryElement {
+	class MockSummarizable
+		extends TypedEventEmitter<MockSummarizableEvents>
+		implements Summarizable
+	{
 		public static readonly blobKey = "MockIndexBlobKey";
 		public static readonly blobContents = "MockIndexBlobContent";
 
-		public summaryElement: SummaryElement = this;
-
-		public constructor(public readonly key = "MockIndex") {
+		public constructor(public readonly key = "MockIndexsummarizable") {
 			super();
 		}
 
@@ -255,8 +279,8 @@ describe("SharedTreeCore", () => {
 			services: IChannelStorageService,
 			parse: SummaryElementParser,
 		): Promise<void> {
-			if (await services.contains(MockIndex.blobKey)) {
-				const blob = await services.readBlob(MockIndex.blobKey);
+			if (await services.contains(MockSummarizable.blobKey)) {
+				const blob = await services.readBlob(MockSummarizable.blobKey);
 				const blobContents = parse(IsoBuffer.from(blob).toString());
 				this.emit("loaded", blobContents);
 			} else {
@@ -286,7 +310,10 @@ describe("SharedTreeCore", () => {
 
 		private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
 			this.emit("summarize");
-			return createSingleBlobSummary(MockIndex.blobKey, stringify(MockIndex.blobContents));
+			return createSingleBlobSummary(
+				MockSummarizable.blobKey,
+				stringify(MockSummarizable.blobContents),
+			);
 		}
 
 		public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
@@ -297,8 +324,8 @@ describe("SharedTreeCore", () => {
 });
 
 /** Makes an arbitrary change to the given tree */
-function changeTree<TChange, TEditor extends DefaultEditBuilder, TIndexes extends readonly Index[]>(
-	tree: SharedTreeCore<TEditor, TChange, TIndexes>,
+function changeTree<TChange, TEditor extends DefaultEditBuilder>(
+	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
 	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));

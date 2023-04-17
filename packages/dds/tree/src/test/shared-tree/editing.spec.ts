@@ -4,7 +4,7 @@
  */
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
-import { jsonString } from "../../domains";
+import { jsonString, singleJsonCursor } from "../../domains";
 import { moveToDetachedField, rootFieldKeySymbol, UpPath } from "../../core";
 import { brand, JsonCompatible } from "../../util";
 import { fakeRepair } from "../utils";
@@ -33,6 +33,30 @@ describe("Editing", () => {
 			tree4.receive(sequenced);
 
 			expectJsonTree([tree1, tree2, tree3, tree4], ["x", "y"]);
+		});
+
+		// TODO: enable once muted marks are supported
+		it.skip("can rebase change under a node whose insertion is also rebased", () => {
+			const sequencer = new Sequencer();
+			const tree1 = TestTree.fromJson(["B"]);
+			const tree2 = tree1.fork();
+			const tree3 = tree1.fork();
+
+			const addC = insert(tree2, 1, "C");
+			const addA = insert(tree1, 0, "A");
+			const nestedChange = tree1.runTransaction((forest, editor) => {
+				editor.setValue(
+					{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 },
+					"a",
+				);
+			});
+
+			const sequenced = sequencer.sequence([addC, addA, nestedChange]);
+			tree1.receive(sequenced);
+			tree2.receive(sequenced);
+			tree3.receive(sequenced);
+
+			expectJsonTree([tree1, tree2, tree3], ["a", "B", "C"]);
 		});
 
 		it("can handle competing deletes", () => {
@@ -289,6 +313,45 @@ describe("Editing", () => {
 			tree1.receive(seqChange);
 
 			expectJsonTree(tree1, ["x", { foo: ["b", "a"] }]);
+		});
+	});
+
+	describe("Optional Field", () => {
+		it.skip("can rebase an insert of and edit to a node", () => {
+			const sequencer = new Sequencer();
+			const tree1 = TestTree.fromJson([]);
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			// Cause a rebase of tree2's edits
+			const e1 = tree1.runTransaction((forest, editor) => {
+				const field = editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(singleJsonCursor("41"), true);
+			});
+
+			const e2 = tree2.runTransaction((forest, editor) => {
+				const field = editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(singleJsonCursor("42"), true);
+			});
+
+			const e3 = tree2.runTransaction((forest, editor) => {
+				editor.setValue(rootPath, "43");
+			});
+
+			const sequenced = sequencer.sequence([e1, e2, e3]);
+			// Rebasing e3 over e2⁻¹ mutes e3
+			// Rebasing the muted e3 over e1 doesn't affect it
+			// Rebasing the muted e3 over e2' fails to unmute the change because e2' is expressed
+			// as `set` operation instead of a `revert`.
+			tree1.receive(sequenced);
+			tree2.receive(sequenced);
+
+			expectJsonTree([tree1, tree2], ["43"]);
 		});
 	});
 });

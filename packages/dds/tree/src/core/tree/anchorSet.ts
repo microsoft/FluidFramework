@@ -59,6 +59,9 @@ export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey exte
 	: never;
 
 /**
+ * Stores arbitrary, user-defined data on an {@link Anchor}.
+ * This data is preserved over the course of that anchor's lifetime.
+ * @see {@link anchorSlot} for creation and an example use case.
  * @alpha
  */
 export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;

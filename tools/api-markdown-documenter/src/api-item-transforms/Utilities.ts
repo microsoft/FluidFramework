@@ -5,11 +5,11 @@
 import { ApiItem, IResolveDeclarationReferenceResult } from "@microsoft/api-extractor-model";
 import { DocDeclarationReference } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { Link } from "../Link";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { getFilePathForApiItem, getLinkForApiItem } from "../utilities";
+import { getFilePathForApiItem, getLinkForApiItem } from "./ApiItemUtilities";
 import { DocNodeTransformOptions } from "./DocNodeTransforms";
+import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";
 
 /**
@@ -18,18 +18,20 @@ import { wrapInSection } from "./helpers";
 export function createDocument(
 	documentItem: ApiItem,
 	sections: SectionNode[],
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
 	let contents: SectionNode[] = sections;
 
 	// If a top-level heading was requested, we will wrap our document sections in a root section
 	// with the appropriate heading to ensure hierarchy is adjusted appropriately.
 	if (config.includeTopLevelDocumentHeading) {
-		contents = [wrapInSection(sections, { title: config.headingTitlePolicy(documentItem) })];
+		contents = [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })];
 	}
 
 	const frontMatter =
-		config.frontMatterPolicy === undefined ? undefined : config.frontMatterPolicy(documentItem);
+		config.generateFrontMatter === undefined
+			? undefined
+			: config.generateFrontMatter(documentItem);
 
 	return new DocumentNode({
 		children: contents,
@@ -42,11 +44,11 @@ export function createDocument(
  * Create {@link DocNodeTransformOptions} for the provided context API item and the system config.
  *
  * @param contextApiItem - See {@link DocNodeTransformOptions.contextApiItem}.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function getDocNodeTransformationOptions(
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocNodeTransformOptions {
 	return {
 		contextApiItem,
@@ -61,12 +63,12 @@ export function getDocNodeTransformationOptions(
  *
  * @param contextApiItem - See {@link DocNodeTransformOptions.contextApiItem}.
  * @param codeDestination - The link reference target.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 function resolveSymbolicLink(
 	contextApiItem: ApiItem,
 	codeDestination: DocDeclarationReference,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): Link | undefined {
 	const { apiModel, logger } = config;
 

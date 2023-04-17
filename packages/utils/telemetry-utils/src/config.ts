@@ -142,9 +142,20 @@ function stronglyTypedParse(input: ConfigTypes): StronglyTypedValue | undefined 
 	return defaultReturn;
 }
 
-/** `sessionStorage` is undefined in some environments such as Node */
+/** `sessionStorage` is undefined in some environments such as Node and web pages with session storage disabled */
 const safeSessionStorage = (): Storage | undefined => {
-	return globalThis.sessionStorage;
+	// For some configurations accessing "globalThis.sessionStorage" throws
+	// "'sessionStorage' property from 'Window': Access is denied for this document" rather than returning undefined.
+	// Therefor check for it before accessing.
+	try {
+		// Using globalThis and checking for undefined is preferred over just accessing global sessionStorage
+		// since it avoids an exception when running in node.
+		// In some cases this has returned null when disabled in the browser, so ensure its undefined in that case:
+		return globalThis.sessionStorage ?? undefined;
+	} catch {
+		// For browsers which error on the above when session storage is disabled:
+		return undefined;
+	}
 };
 
 /**
