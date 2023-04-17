@@ -59,8 +59,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_FileDocumentService": {
-				"forwardCompat": false
+			"RemovedClassDeclaration_FileDocumentService": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
