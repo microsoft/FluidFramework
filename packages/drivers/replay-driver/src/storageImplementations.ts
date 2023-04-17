@@ -155,7 +155,6 @@ export class StaticStorageDocumentService implements IDocumentService {
 
 	public dispose() {}
 
-
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		return this.storage;
 	}
