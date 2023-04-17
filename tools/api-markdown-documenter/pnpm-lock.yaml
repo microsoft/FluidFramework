@@ -9,7 +9,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': ^1.3.6
       '@fluidframework/test-utils': ^1.3.6
-      '@microsoft/api-documenter': 7.21.6
+      '@microsoft/api-documenter': 7.21.7
       '@microsoft/api-extractor': ^7.34.4
       '@microsoft/api-extractor-model': ^7.26.4
       '@microsoft/tsdoc': ^0.14.2
@@ -35,7 +35,7 @@ importers:
       rimraf: ^5.0.0
       typescript: ~5.0.4
     dependencies:
-      '@microsoft/api-documenter': 7.21.6_@types+node@18.15.11
+      '@microsoft/api-documenter': 7.21.7_@types+node@18.15.11
       '@microsoft/api-extractor-model': 7.26.4_@types+node@18.15.11
       '@microsoft/tsdoc': 0.14.2
       '@rushstack/node-core-library': 3.55.2_@types+node@18.15.11
@@ -1127,8 +1127,8 @@ packages:
       '@jridgewell/sourcemap-codec': 1.4.15
     dev: true
 
-  /@microsoft/api-documenter/7.21.6_@types+node@18.15.11:
-    resolution: {integrity: sha512-Z7orii4J9nsPfiehngONhKHQJwqfHaqwr8CvhHkgeK1jf1stECBMaej/+iKw/+KzXpP9eDdJDEGCnMprxU0kjg==}
+  /@microsoft/api-documenter/7.21.7_@types+node@18.15.11:
+    resolution: {integrity: sha512-qlCJ9dSefL6Rmuv1FKtxg7i6N7Bv6LUPrA5Bb0dR/9Ffac2xQuXtuSXOJ09seM7G0WkpQOzta2Kc1CPixzDaIw==}
     hasBin: true
     dependencies:
       '@microsoft/api-extractor-model': 7.26.4_@types+node@18.15.11
