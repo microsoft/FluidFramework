@@ -215,7 +215,7 @@ data:
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
             },
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
-            "transientTenants": {{ .Values.scribe.transientTenants }},
+            "transientTenants": {{ .Values.scribe.transientTenants }}
         },
         "system": {
             "httpServer": {
