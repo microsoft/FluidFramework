@@ -49,46 +49,56 @@ export function transformApiModel(
 	transformConfig: ApiItemTransformationConfiguration,
 ): DocumentNode[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(transformConfig);
-	const apiModel = config.apiModel;
+	const { apiModel, logger } = config;
 
-	config.logger.info(
-		`Generating Markdown documentation for API Model ${apiModel.displayName}...`,
-	);
+	logger.info(`Generating Markdown documentation for API Model ${apiModel.displayName}...`);
 
 	const documents: DocumentNode[] = [];
 
-	// Always render Model document
+	// Always render Model document (this is the "root" of the generated documentation suite).
 	documents.push(apiModelToDocument(apiModel, config));
 
+	const packages = apiModel.packages;
+
+	if (packages.length === 0) {
+		logger.warning("No packages found.");
+		return [];
+	}
+
+	// Filter out packages not wanted per user config
 	const filteredPackages = apiModel.packages.filter(
 		(apiPackage) => !config.skipPackage(apiPackage),
 	);
-	if (filteredPackages.length > 0) {
-		// For each package, walk the child graph to find API items which should be rendered to their own document
-		// per provided document boundaries configuration.
 
-		for (const packageItem of filteredPackages) {
-			// Always render documents for packages under the model
-			documents.push(apiPackageToDocument(packageItem, config));
+	if (filteredPackages.length === 0) {
+		logger.warning("No packages found after filtering per `skipPackages` configuration.");
+		return [];
+	}
 
-			const packageEntryPoints = packageItem.entryPoints;
-			if (packageEntryPoints.length !== 1) {
-				throw new Error(
-					`Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
-						"API-Extractor only supports single-entry packages, so this should not be possible.",
-				);
-			}
+	// For each package, walk the child graph to find API items which should be rendered to their own document
+	// per provided document boundaries configuration.
 
-			const packageEntryPointItem = packageEntryPoints[0];
+	for (const packageItem of filteredPackages) {
+		// Always render documents for packages under the model
+		documents.push(apiPackageToDocument(packageItem, config));
 
-			const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
-			for (const apiItem of packageDocumentItems) {
-				documents.push(apiItemToDocument(apiItem, config));
-			}
+		const packageEntryPoints = packageItem.entryPoints;
+		if (packageEntryPoints.length !== 1) {
+			throw new Error(
+				`Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
+					"API-Extractor only supports single-entry packages, so this should not be possible.",
+			);
+		}
+
+		const packageEntryPointItem = packageEntryPoints[0];
+
+		const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
+		for (const apiItem of packageDocumentItems) {
+			documents.push(apiItemToDocument(apiItem, config));
 		}
 	}
 
-	config.logger.success("Documents generated!");
+	logger.success("Documents generated!");
 
 	return documents;
 }
