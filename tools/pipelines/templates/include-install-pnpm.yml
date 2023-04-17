@@ -38,6 +38,8 @@ steps:
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
+    # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
+    # restoration, we want to continue even if it timed out.
     condition: or(succeeded(), canceled())
     script: |
       corepack enable
