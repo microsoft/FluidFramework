@@ -67,7 +67,11 @@ export {
 	renderNodesAsMarkdown,
 } from "./markdown-renderer";
 
-export { transformApiModel, renderApiModelAsMarkdown } from "./MarkdownDocumenter";
+export {
+	transformApiModel,
+	renderApiModelAsMarkdown,
+	renderDocumentsAsMarkdown,
+} from "./MarkdownDocumenter";
 
 export type { ConfigurationBase } from "./ConfigurationBase";
 export type { Heading } from "./Heading";
