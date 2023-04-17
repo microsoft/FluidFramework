@@ -25,7 +25,7 @@ import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { ISummaryConfiguration } from "../../containerRuntime";
+import { ISummaryConfiguration, defaultCloseSummarizerDelayMs } from "../../containerRuntime";
 import {
 	getFailMessage,
 	neverCancelledSummaryToken,
@@ -671,6 +671,7 @@ describe("Runtime", () => {
 
 				it("Should not retry on failure when stopping instead of restarting", async () => {
 					settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
+					settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
 					await startRunningSummarizer();
 					await emitNextOp();
 
@@ -701,7 +702,8 @@ describe("Runtime", () => {
 
 					// should run with refresh after first nack
 					await emitNack();
-					assertRunCounts(2, 0, 0, "retry1 should be refreshLatestAck");
+					await tickAndFlushPromises(defaultCloseSummarizerDelayMs);
+					assertRunCounts(2, 0, 0, "retry1 should not refreshLatestAck");
 					const retryProps2 = {
 						summarizeCount: 1,
 						summarizerSuccessfulAttempts: 0,
