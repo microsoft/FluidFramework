@@ -25,7 +25,6 @@ importers:
       '@fluidframework/server-services-utils': ^0.1040.1000
       '@fluidframework/server-test-utils': ^0.1040.1000
       '@microsoft/api-extractor': ^7.34.4
-      '@socket.io/redis-adapter': ^7.2.0
       '@types/compression': ^1.7.2
       '@types/cookie-parser': ^1.4.1
       '@types/cors': ^2.8.4
@@ -87,7 +86,6 @@ importers:
       '@fluidframework/server-services-telemetry': 0.1040.1000
       '@fluidframework/server-services-utils': 0.1040.1000
       '@fluidframework/server-test-utils': 0.1040.1000
-      '@socket.io/redis-adapter': 7.2.0
       agentkeepalive: 4.2.1
       axios: 0.26.1
       body-parser: 1.20.0

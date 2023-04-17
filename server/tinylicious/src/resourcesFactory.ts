@@ -70,10 +70,6 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			// enable compatibility with socket.io v2 clients
 			// https://socket.io/docs/v4/client-installation/
 			allowEIO3: true,
-			// Indicates whether a connection should use compression
-			perMessageDeflate: true,
-			// Enable long-polling as a fallback
-			transports: ["websocket", "polling"],
 		});
 		const pubsub = new PubSubPublisher(io);
 		const webServerFactory = new WebServerFactory(io);
