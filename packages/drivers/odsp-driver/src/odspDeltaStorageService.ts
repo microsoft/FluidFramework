@@ -14,10 +14,10 @@ import {
 	IDocumentDeltaStorageService,
 } from "@fluidframework/driver-definitions";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getWithRetryForTokenRefresh, validateMessages } from "./odspUtils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
