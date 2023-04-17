@@ -66,13 +66,7 @@ export {
 	renderNodeAsMarkdown,
 	renderNodesAsMarkdown,
 } from "./markdown-renderer";
-
-export {
-	transformApiModel,
-	renderApiModelAsMarkdown,
-	renderDocumentsAsMarkdown,
-} from "./MarkdownDocumenter";
-
+export { renderApiModelAsMarkdown, renderDocumentsAsMarkdown } from "./MarkdownDocumenter";
 export type { ConfigurationBase } from "./ConfigurationBase";
 export type { Heading } from "./Heading";
 export type { Link, UrlTarget } from "./Link";
@@ -83,6 +77,7 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging";
+export { transformApiModel } from "./TransformApiModel";
 
 // Conveinence re-exports of API model types
 export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

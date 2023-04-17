@@ -10,7 +10,7 @@ import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
 
-import { renderApiModelAsMarkdown, transformApiModel } from "../MarkdownDocumenter";
+import { renderApiModelAsMarkdown } from "../MarkdownDocumenter";
 import {
 	ApiItemTransformationConfiguration,
 	apiModelToDocument,
@@ -22,6 +22,7 @@ import {
 	MarkdownRenderConfiguration,
 	getMarkdownRenderConfigurationWithDefaults,
 } from "../markdown-renderer";
+import { transformApiModel } from "../TransformApiModel";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
