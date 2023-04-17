@@ -3229,8 +3229,13 @@ export class ContainerRuntime
 				error,
 			);
 
+			const testDelayOverrideMs =
+				this.mc.config.getNumber(
+					"Fluid.ContainerRuntime.Test.CloseSummarizerOnSummaryStaleDelayOverrideMs",
+				) ?? defaultRestartDelayMs;
+
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
-			await delay(defaultRestartDelayMs);
+			await delay(testDelayOverrideMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
 			throw error;
