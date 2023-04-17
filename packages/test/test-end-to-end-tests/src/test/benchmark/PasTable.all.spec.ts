@@ -24,6 +24,8 @@ describeNoCompat("PAS Test", () => {
 	let matrix: SharedMatrix;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const rowSize = 6;
+	const columnSize = 5;
 
 	before(async () => {});
 
@@ -41,8 +43,8 @@ describeNoCompat("PAS Test", () => {
 			matrix = createLocalMatrix("matrix1", dataStoreRuntime);
 
 			async run(): Promise<void> {
-				this.matrix.insertRows(0, 6);
-				this.matrix.insertCols(0, 5);
+				this.matrix.insertRows(0, rowSize);
+				this.matrix.insertCols(0, columnSize);
 				for (let i = 0; i < 6; i++) {
 					for (let j = 0; j < 5; j++) {
 						const id = j.toString() + i.toString();
