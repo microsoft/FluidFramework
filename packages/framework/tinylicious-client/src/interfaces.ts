@@ -6,11 +6,8 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 // Re-export so developers can build loggers without pulling in common-definitions
 export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-// Re-export so developers can pass runtime options to TinyliciousClient without having to pull in container-runtime
-export { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 /**
  * Props for initializing a {@link TinyliciousClient}
@@ -25,11 +22,6 @@ export interface TinyliciousClientProps {
 	 * Optional. A logger instance to receive diagnostic messages.
 	 */
 	logger?: ITelemetryBaseLogger;
-
-	/**
-	 * Optional. Options for the runtime of containers created with the {@link TinyliciousClient}.
-	 */
-	runtimeOptions?: IContainerRuntimeOptions;
 }
 
 /**

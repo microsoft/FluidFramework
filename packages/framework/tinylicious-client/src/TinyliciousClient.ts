@@ -25,7 +25,6 @@ import {
 	IRootDataObject,
 } from "@fluidframework/fluid-static";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
 
@@ -37,7 +36,6 @@ import { TinyliciousAudience } from "./TinyliciousAudience";
 export class TinyliciousClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;
 	private readonly urlResolver: IUrlResolver;
-	private readonly runtimeOptions?: IContainerRuntimeOptions;
 
 	/**
 	 * Creates a new client instance using configuration parameters.
@@ -52,7 +50,6 @@ export class TinyliciousClient {
 		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
 			this.props?.connection?.tokenProvider ?? tokenProvider,
 		);
-		this.runtimeOptions = props?.runtimeOptions;
 	}
 
 	/**
@@ -126,10 +123,7 @@ export class TinyliciousClient {
 	}
 
 	private createLoader(containerSchema: ContainerSchema) {
-		const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(
-			containerSchema,
-			this.runtimeOptions,
-		);
+		const containerRuntimeFactory = new DOProviderContainerRuntimeFactory(containerSchema);
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: containerRuntimeFactory },

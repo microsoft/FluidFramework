@@ -11,7 +11,6 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	ContainerSchema,
 	DataObjectClass,
@@ -157,7 +156,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 	private readonly initialObjects: LoadableObjectClassRecord;
 
-	constructor(schema: ContainerSchema, runtimeOptions?: IContainerRuntimeOptions) {
+	constructor(schema: ContainerSchema) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 		const rootDataObjectFactory = new DataObjectFactory(
 			"rootDO",
@@ -172,7 +171,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			[defaultRouteRequestHandler(rootDataStoreId)],
 			// temporary workaround to disable message batching until the message batch size issue is resolved
 			// resolution progress is tracked by the Feature 465 work item in AzDO
-			{ flushMode: FlushMode.Immediate, ...runtimeOptions },
+			{ flushMode: FlushMode.Immediate },
 		);
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

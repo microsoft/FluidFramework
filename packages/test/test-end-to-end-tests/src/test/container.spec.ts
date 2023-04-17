@@ -37,7 +37,6 @@ import {
 	timeoutPromise,
 	ITestContainerConfig,
 	waitForContainerConnection,
-	ITestFluidObject,
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -671,8 +670,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
 	});
 
-	it.only("clientDetailsOverride does not cause client details of other containers with the same loader to change", async function () {
-		const timeoutDurationMs = this.timeout() / 2;
+	it("clientDetailsOverride does not cause client details of other containers with the same loader to change", async function () {
+		const documentId = uuid();
 		const client: IClient = {
 			details: {
 				capabilities: { interactive: true },
@@ -689,13 +688,8 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		};
 		const loader = provider.makeTestLoader({ loaderProps });
 		const container1 = await loader.createDetachedContainer(provider.defaultCodeDetails);
-		const initDataObject = await requestFluidObject<ITestFluidObject>(container1, "default");
-		const createNewRequest = provider.driver.createCreateNewRequest(uuid());
+		const createNewRequest = provider.driver.createCreateNewRequest(documentId);
 		await container1.attach(createNewRequest);
-		// await timeoutPromise((resolve) => container1.once("attached", () => resolve()), {
-		// 	durationMs: timeoutDurationMs*5,
-		// 	errorMsg: "container attach timeout",
-		// });
 
 		// Check that client details are the expected ones before resolving a second container with different client details
 		assert.equal(
@@ -721,7 +715,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			"IClient.details.type does not have the expected value before resolving second container",
 		);
 
-		// Resolve the container a second time with different client details
+		// Resolve the container a second time with different client details.
+		// The contents of the [LoaderHeader.clientDetails] header end up in IContainerLoadOptions.clientDetailsOverride
+		// when loading the container during the loader.resolve() call.
 		const request: IRequest = {
 			headers: {
 				[LoaderHeader.cache]: false,
@@ -730,13 +726,12 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 					type: "myContainerType",
 				},
 				[LoaderHeader.reconnect]: false,
-				[LoaderHeader.loadMode]: { deltaConnection: "none" },
 			},
-			url: (container1.resolvedUrl as IFluidResolvedUrl).url,
+			url: await provider.driver.createContainerUrl(documentId, container1.resolvedUrl),
 		};
 		await loader.resolve(request);
 
-		// Check that client details are still the expected ones *after* the summarizer starts
+		// Check that the first container's client details are still the expected ones after resolving the second container
 		assert.equal(
 			(container1 as any).clientDetails?.capabilities?.interactive,
 			true,
