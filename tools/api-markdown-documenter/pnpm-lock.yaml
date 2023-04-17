@@ -24,7 +24,6 @@ importers:
       copyfiles: ^2.4.1
       dir-compare: ^4.0.0
       eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
       eslint-plugin-chai-expect: ^3.0.0
       eslint-plugin-chai-friendly: ^0.7.2
       mocha: ^10.2.0
@@ -57,7 +56,6 @@ importers:
       copyfiles: 2.4.1
       dir-compare: 4.0.0
       eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
       eslint-plugin-chai-friendly: 0.7.2_eslint@8.6.0
       mocha: 10.2.0
