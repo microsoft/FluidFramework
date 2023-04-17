@@ -10,10 +10,10 @@ parameters:
 - name: buildDirectory
   type: string
 
-# If set to true, the pnpm store will not be cached or restored from cache.
-- name: disableCache
+# If set to false, the pnpm store will not be cached or restored from cache.
+- name: enableCache
   type: boolean
-  default: false
+  default: true
 
 # The path to the pnpm store. The contents here will be cached and restored when using pnpm in a pipeline.
 - name: pnpmStorePath

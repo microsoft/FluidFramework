@@ -256,7 +256,6 @@ stages:
             targetType: 'inline'
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
-              pwd
               ${{ parameters.packageManagerInstallCommand }}
 
         # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because

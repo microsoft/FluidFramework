@@ -82,7 +82,7 @@ jobs:
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
         # This pipeline experiences a high failure rate when the cache is enabled, so we disable it
-        disableCache: true
+        enableCache: false
 
     - task: Bash@3
       displayName: Install dependencies
