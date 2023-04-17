@@ -405,6 +405,7 @@ async function fetchLatestSnapshotCore(
 			let fetchStartToResponseEndTime: number | undefined; // responseEnd  - fetchStart
 			let reqStartToResponseEndTime: number | undefined; // responseEnd - requestStart
 			let networkTime: number | undefined; // responseEnd - startTime
+			let w3cStartTime: number | undefined; // W3C Start time = fetchStart time
 			const spReqDuration = odspResponse.headers.get("sprequestduration");
 
 			// getEntriesByType is only available in browser performance object
@@ -419,6 +420,7 @@ async function fetchLatestSnapshotCore(
 					resource_name.localeCompare(response.requestUrl) === 0
 				) {
 					redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
+					w3cStartTime = indResTime.fetchStart;
 					dnsLookupTime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
 					tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
 					secureConnectionTime =
@@ -497,6 +499,8 @@ async function fetchLatestSnapshotCore(
 				redirectTime,
 				// Interval between start and finish of the domain name lookup for the resource.
 				dnsLookupTime,
+				// W3C Start Time or fetchStart Time
+				w3cStartTime,
 				// Interval to receive all (first to last) bytes form the server.
 				responseNetworkTime,
 				// Time to establish the connection to the server to retrieve the resource.
