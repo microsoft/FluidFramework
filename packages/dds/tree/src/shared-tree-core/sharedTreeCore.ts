@@ -350,7 +350,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
-		assert(isJsonObject(content), "expected content to be json object");
+		assert(isJsonObject(content), "expected content to be an object");
 		assert(
 			typeof content.revision === "string" && isStableId(content.revision),
 			"expected revision id to be valid stable id",
@@ -361,7 +361,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		assert(isJsonObject(content), "expected content to be json object");
+		assert(isJsonObject(content), "expected content to be an object");
 		assert(
 			typeof content.revision === "string" && isStableId(content.revision),
 			"expected revision id to be valid stable id",
