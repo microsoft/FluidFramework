@@ -10,7 +10,7 @@ import {
 	MongoDatabaseManager,
 	MongoManager,
 	IResourcesFactory,
-	MongoDocumentRepository,
+	DefaultServiceConfiguration,
 } from "@fluidframework/server-services-core";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -29,10 +29,7 @@ import {
 const defaultTinyliciousPort = 7070;
 
 export class TinyliciousResourcesFactory implements IResourcesFactory<TinyliciousResources> {
-	public async create(
-		config: Provider,
-		customizations?: Record<string, any>,
-	): Promise<TinyliciousResources> {
+	public async create(config: Provider): Promise<TinyliciousResources> {
 		const globalDbEnabled = false;
 		// Pull in the default port off the config
 		const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
@@ -53,18 +50,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			collectionNames.scribeDeltas,
 		);
 
-		const documentsCollection = await databaseManager.getDocumentCollection();
-		const documentRepository =
-			customizations?.documentRepository ?? new MongoDocumentRepository(documentsCollection);
-
-		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
-
-		const storage = new DocumentStorage(
-			documentRepository,
-			tenantManager,
-			false,
-			opsCollection,
-		);
+		const storage = new DocumentStorage(databaseManager, tenantManager, false);
 
 		const io = new Server({
 			// enable compatibility with socket.io v2 clients
@@ -86,7 +72,14 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 				return new Historian(url, false, false);
 			},
 			winston,
-			undefined /* serviceConfiguration */,
+			{
+				// Temporary disable generateServiceSummary, as it causes SummaryNack with client summaries
+				// See AB#1627
+				scribe: {
+					...DefaultServiceConfiguration.scribe,
+					generateServiceSummary: false,
+				},
+			},
 			pubsub,
 		);
 
