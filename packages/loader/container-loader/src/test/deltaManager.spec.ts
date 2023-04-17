@@ -81,7 +81,7 @@ describe("Loader", () => {
 					noopCountFrequency,
 				);
 
-				await deltaManager.attachOpHandler(0, 0, {
+				await deltaManager.attachOpHandler(0, 0, 1, {
 					process: (message) =>
 						tracker.scheduleSequenceNumberUpdate(message, immediateNoOp),
 					processSignal() {},

@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { ForemanLambda } from "./lambda";
 
-export class ForemanLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionLambdaConfig> {
+export class ForemanLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly messageSender: ITaskMessageSender,
 		private readonly tenantManager: ITenantManager,

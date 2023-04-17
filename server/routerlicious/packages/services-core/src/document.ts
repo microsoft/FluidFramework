@@ -36,6 +36,7 @@ export interface IDocumentStorage {
 		documentId: string,
 		summary: ISummaryTree,
 		sequenceNumber: number,
+		term: number,
 		initialHash: string,
 		ordererUrl: string,
 		historianUrl: string,
@@ -75,6 +76,12 @@ export interface IDeliState {
 
 	// Rolling hash at sequenceNumber
 	expHash1: string;
+
+	// Epoch of stream provider
+	epoch: number;
+
+	// Term at logOffset
+	term: number;
 
 	// Last sent minimum sequence number
 	lastSentMSN: number | undefined;

@@ -6,6 +6,7 @@
 import { inspect } from "util";
 import {
 	IContextErrorData,
+	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
@@ -25,7 +26,8 @@ export class DocumentPartition {
 	private activityTimeoutTime: number | undefined;
 
 	constructor(
-		factory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
+		factory: IPartitionLambdaFactory,
+		config: IPartitionConfig,
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		public readonly context: DocumentContext,
@@ -34,6 +36,7 @@ export class DocumentPartition {
 		this.updateActivityTime();
 
 		const documentConfig: IPartitionLambdaConfig = {
+			leaderEpoch: config.leaderEpoch,
 			tenantId,
 			documentId,
 		};

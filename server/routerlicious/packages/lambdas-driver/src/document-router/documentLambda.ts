@@ -7,7 +7,7 @@ import {
 	extractBoxcar,
 	IContext,
 	IQueuedMessage,
-	IPartitionLambdaConfig,
+	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaFactory,
 	LambdaCloseType,
@@ -34,7 +34,8 @@ export class DocumentLambda implements IPartitionLambda {
 	private activityCheckTimer: NodeJS.Timeout | undefined;
 
 	constructor(
-		private readonly factory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
+		private readonly factory: IPartitionLambdaFactory,
+		private readonly config: IPartitionConfig,
 		private readonly context: IContext,
 		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
 	) {
@@ -101,6 +102,7 @@ export class DocumentLambda implements IPartitionLambda {
 
 			document = new DocumentPartition(
 				this.factory,
+				this.config,
 				boxcar.tenantId,
 				boxcar.documentId,
 				documentContext,

@@ -86,13 +86,13 @@ export interface IPartitionLambda {
 /**
  * Factory for creating lambda related objects
  */
-export interface IPartitionLambdaFactory<TConfig = undefined>
+export interface IPartitionLambdaFactory<T extends IPartitionConfig = IPartitionLambdaConfig>
 	extends EventEmitter {
 	/**
 	 * Constructs a new lambda
 	 */
 	create(
-		config: TConfig,
+		config: T,
 		context: IContext,
 		updateActivityTime?: () => void,
 	): Promise<IPartitionLambda>;
@@ -104,9 +104,16 @@ export interface IPartitionLambdaFactory<TConfig = undefined>
 }
 
 /**
+ * Partition config
+ */
+export interface IPartitionConfig {
+	leaderEpoch: number;
+}
+
+/**
  * Lambda config
  */
-export interface IPartitionLambdaConfig {
+export interface IPartitionLambdaConfig extends IPartitionConfig {
 	tenantId: string;
 	documentId: string;
 }
