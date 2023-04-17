@@ -16,4 +16,6 @@ You can run this example using the following steps:
 
 ## Demo visualization
 
-When the app loads it will update the URL. Copy that new URL into a second browser and note that if you click the button in one browser, the other browser updates as well.
+When the app loads it will update the URL. Copy that new URL into a second browser and note that if you click the button in one browser, the time value and attribution key in other browsers updates as well.
+
+![attributable-map-demo](./images/react-demo.gif)
