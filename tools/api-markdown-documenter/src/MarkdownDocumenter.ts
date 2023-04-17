@@ -18,7 +18,6 @@ import {
 import { DocumentNode } from "./documentation-domain";
 import {
 	MarkdownRenderConfiguration,
-	MarkdownRenderers,
 	getMarkdownRenderConfigurationWithDefaults,
 	renderDocumentAsMarkdown,
 } from "./markdown-renderer";
@@ -27,6 +26,7 @@ import {
  * This module contains the primary rendering entrypoints to the system.
  *
  * @remarks
+ *
  * This implementation is based on API-Documenter's standard MarkdownDocumenter implementation,
  * but has been updated to be used programmatically rather than just from a CLI, and to be more extensible.
  *
@@ -39,11 +39,17 @@ import {
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.
  *
  * @remarks
+ *
  * Which API members get their own documents and which get written to the contents of their parent is
  * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
- * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
- * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
+ * The generated nodes' {@link DocumentNode.filePath}s are determined by the provided output path and the
+ * following configuration properties:
+ *
+ * - {@link DocumentationSuiteOptions.documentBoundaries}
+ * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
+ *
+ * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  */
 export function transformApiModel(
 	transformConfig: ApiItemTransformationConfiguration,
@@ -107,39 +113,56 @@ export function transformApiModel(
  * Renders the provided model and its contents, and writes each document to a file on disk.
  *
  * @remarks
+ *
  * Which API members get their own documents and which get written to the contents of their parent is
  * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
- * The file paths under which the files will be saved is determined by the provided output path and the
+ * The file paths under which the files will be generated is determined by the provided output path and the
  * following configuration properties:
  *
  * - {@link DocumentationSuiteOptions.documentBoundaries}
  * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
- * @param apiModel - The API model being processed.
- * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
- * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
- * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
- * @param customRenderers - Custom {@link DocumentationNode} Markdown renderers.
- * Specified per {@link DocumentationNode."type"}.
+ * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
+ * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
+ * @param outputDirectoryPath - The directory under which the document files will be generated.
  */
 export async function renderApiModelAsMarkdown(
 	transformConfig: ApiItemTransformationConfiguration,
 	renderConfig: MarkdownRenderConfiguration,
 	outputDirectoryPath: string,
-	customRenderers?: MarkdownRenderers,
 ): Promise<void> {
 	const completeTransformConfig =
 		getApiItemTransformationConfigurationWithDefaults(transformConfig);
-	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(renderConfig);
-
-	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
 	const documents = transformApiModel(completeTransformConfig);
 
+	return renderDocumentsAsMarkdown(documents, renderConfig, outputDirectoryPath);
+}
+
+/**
+ * Renders the provided documents using Markdown syntax, and writes each document to a file on disk.
+ *
+ * @param documents - The documents to render. Each will be rendered to its own file on disk per
+ * {@link DocumentNode.filePath} (relative to the provided output directory).
+ *
+ * @param config - A partial {@link MarkdownRenderConfiguration}.
+ * Missing values will be filled in with system defaults.
+ *
+ * @param outputDirectoryPath - The directory under which the document files will be generated.
+ */
+export async function renderDocumentsAsMarkdown(
+	documents: DocumentNode[],
+	config: MarkdownRenderConfiguration,
+	outputDirectoryPath: string,
+): Promise<void> {
+	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(config);
+
+	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
+
 	await Promise.all(
 		documents.map(async (document) => {
-			const renderedDocument = renderDocumentAsMarkdown(document, customRenderers);
+			const renderedDocument = renderDocumentAsMarkdown(document, config);
 
 			const filePath = Path.join(outputDirectoryPath, document.filePath);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {

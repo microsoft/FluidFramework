@@ -415,13 +415,16 @@ export class PlainTextNode implements DocumentationLiteralNode<string>, SingleLi
 }
 
 // @public
-export function renderApiModelAsMarkdown(transformConfig: ApiItemTransformationConfiguration, renderConfig: MarkdownRenderConfiguration, outputDirectoryPath: string, customRenderers?: MarkdownRenderers): Promise<void>;
+export function renderApiModelAsMarkdown(transformConfig: ApiItemTransformationConfiguration, renderConfig: MarkdownRenderConfiguration, outputDirectoryPath: string): Promise<void>;
 
 // @public
-export function renderDocumentAsMarkdown(document: DocumentNode, context?: Partial<MarkdownRenderContext>): string;
+export function renderDocumentAsMarkdown(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @public
 export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends DocumentationNode = DocumentationNode> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+
+// @public
+export function renderDocumentsAsMarkdown(documents: DocumentNode[], config: MarkdownRenderConfiguration, outputDirectoryPath: string): Promise<void>;
 
 // @public
 export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;

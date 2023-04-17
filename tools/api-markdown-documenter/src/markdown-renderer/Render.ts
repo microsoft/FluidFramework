@@ -5,6 +5,7 @@
 import { StringBuilder } from "@microsoft/tsdoc";
 
 import type { DocumentNode, DocumentationNode } from "../documentation-domain";
+import { RenderConfiguration } from "./configuration";
 import { DocumentWriter } from "./DocumentWriter";
 import { MarkdownRenderContext, getContextWithDefaults } from "./RenderContext";
 
@@ -15,12 +16,10 @@ import { MarkdownRenderContext, getContextWithDefaults } from "./RenderContext";
  * @param context - Optional, partial {@link MarkdownRenderContext}.
  * Any missing parameters will be filled in with system defaults.
  */
-export function renderDocument(
-	document: DocumentNode,
-	context?: Partial<MarkdownRenderContext>,
-): string {
+export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
 	const writer = new DocumentWriter(new StringBuilder());
-	renderNodes(document.children, writer, getContextWithDefaults(context));
+
+	renderNodes(document.children, writer, getContextWithDefaults({ renderers: config.renderers }));
 
 	// Trim any leading and trailing whitespace
 	let renderedDocument = writer.getText().trim();
