@@ -257,6 +257,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					minTTLInSeconds: pendingEntry.minTTLInSeconds,
 					expired,
 				});
+				if(expired) {
+					this.deleteAndEmitsIfEmpty(localId);
+					throw new Error("Trying to send BlobAttachOp of expired blob");
+				}
 			}
 			return sendBlobAttachOp(localId, blobId);
 		};
@@ -545,24 +549,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * sendBlobAttachOp with extra check and logging for expired blobs
-	 */
-	private sendBlobAttach(localId: string, blobId?: string): void {
-		const pendingEntry = this.pendingBlobs.get(localId);
-		if (pendingEntry) {
-			this.logTimeInfo(pendingEntry);
-			if (pendingEntry.minTTLInSeconds && pendingEntry.localUploadTime) {
-				const timeLapseSinceUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
-				if (timeLapseSinceUpload - pendingEntry.minTTLInSeconds > 0) {
-					this.deleteAndEmitsIfEmpty(localId);
-					throw new Error("Trying to send BlobAttachOp of expired blob");
-				}
-			}
-		}
-		return this.sendBlobAttachOp(localId, blobId);
-	}
-
-	/**
 	 * Resubmit a BlobAttach op. Used to add storage IDs to ops that were
 	 * submitted to runtime while disconnected.
 	 * @param metadata - op metadata containing storage and/or local IDs
@@ -580,9 +566,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					!!pendingEntry?.storageId,
 				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
 			);
-			return this.sendBlobAttach(localId, pendingEntry.storageId);
+			return this.sendBlobAttachOp(localId, pendingEntry.storageId);
 		}
-		return this.sendBlobAttach(localId, blobId);
+		return this.sendBlobAttachOp(localId, blobId);
 	}
 
 	public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
@@ -899,7 +885,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		for (const [key, entry] of this.pendingBlobs) {
 			blobs[key] = {
 				blob: bufferToString(entry.blob, "base64"),
-				localUploadTime: entry.localUploadTime,
+				localUploadTime: entry.uploadTime,
 				minTTLInSeconds: entry.minTTLInSeconds,
 			};
 		}
