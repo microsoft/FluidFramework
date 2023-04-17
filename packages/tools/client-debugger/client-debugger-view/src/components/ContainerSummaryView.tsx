@@ -263,6 +263,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					isContainerConnected={
 						containerState.connectionState === ConnectionState.Connected
 					}
+					isContainerClosed={containerState.closed}
 					tryConnect={tryConnect}
 					forceDisconnect={forceDisconnect}
 					closeContainer={closeContainer}
@@ -300,12 +301,12 @@ export interface IContainerActions {
 
 interface ActionsBarProps extends IContainerActions {
 	isContainerConnected: boolean;
+	isContainerClosed: boolean;
 }
 
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
-	const { isContainerConnected, tryConnect, forceDisconnect, closeContainer } = props;
-
-	const [actionButtonState, setActionButtonState] = React.useState(true);
+	const { isContainerConnected, isContainerClosed, tryConnect, forceDisconnect, closeContainer } =
+		props;
 
 	const connectButtonTooltipId = useId("connect-button-tooltip");
 	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
@@ -316,7 +317,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			<Button
 				icon={<PlugDisconnected24Regular />}
 				onClick={forceDisconnect}
-				disabled={forceDisconnect === undefined || actionButtonState === false}
+				disabled={forceDisconnect === undefined || isContainerClosed}
 			>
 				Disconnect Container
 			</Button>
@@ -326,7 +327,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			<Button
 				icon={<PlugConnected24Regular />}
 				onClick={tryConnect}
-				disabled={tryConnect === undefined || actionButtonState === false}
+				disabled={tryConnect === undefined || isContainerClosed}
 			>
 				Connect Container
 			</Button>
@@ -337,13 +338,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
 			<Button
 				icon={<Delete24Regular />}
-				onClick={(): void => {
-					if (closeContainer) {
-						closeContainer();
-					}
-					setActionButtonState(false);
-				}}
-				disabled={closeContainer === undefined || actionButtonState === false}
+				onClick={closeContainer}
+				disabled={closeContainer === undefined || isContainerClosed}
 			>
 				Close Container
 			</Button>
