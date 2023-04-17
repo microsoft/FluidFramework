@@ -82,15 +82,15 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
 }
 
 // @public
-export function getW3CData(url: string, initiatorType: string, spReqDuration?: number): {
+export function getW3CData(url: string, initiatorType: string): {
     dnsLookupTime: number | undefined;
+    w3cStartTime: number | undefined;
     redirectTime: number | undefined;
     tcpHandshakeTime: number | undefined;
     secureConnectionTime: number | undefined;
     responseNetworkTime: number | undefined;
     fetchStartToResponseEndTime: number | undefined;
     reqStartToResponseEndTime: number | undefined;
-    networkTime: number | undefined;
 };
 
 // (No @packageDocumentation comment for this package)

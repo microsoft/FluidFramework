@@ -7,9 +7,8 @@
  * Extract and return the w3c data.
  * @param url - request url for which w3c data needs to be reported.
  * @param initiatorType - type of the network call
- * @param spReqDuration - Time spent on server reported by server in some servers.
  */
-export function getW3CData(url: string, initiatorType: string, spReqDuration: number = 0) {
+export function getW3CData(url: string, initiatorType: string) {
 	// From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
 	// fetchStart: immediately before the browser starts to fetch the resource.
 	// requestStart: immediately before the browser starts requesting the resource from the server
@@ -41,10 +40,7 @@ export function getW3CData(url: string, initiatorType: string, spReqDuration: nu
 	// reqStartToResponseEndTime = fetchStartToResponseEndTime - <initial TCP handshake>
 	// Interval between starting the request for the resource until receiving the last byte.
 	let reqStartToResponseEndTime: number | undefined; // responseEnd - requestStart
-	// networkTime = fetchStartToResponseEndTime - sprequestduration
-	// Interval between starting the request for the resource until receiving the last byte but
-	// excluding the snaphot request duration indicated on the snapshot response header.
-	let networkTime: number | undefined; // responseEnd - responseStart
+	let w3cStartTime: number | undefined; // W3C Start time = fetchStart time
 
 	// getEntriesByType is only available in browser performance object
 	const resources1 = performance.getEntriesByType?.("resource") ?? [];
@@ -58,6 +54,7 @@ export function getW3CData(url: string, initiatorType: string, spReqDuration: nu
 			resource_name.includes(url)
 		) {
 			redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
+			w3cStartTime = indResTime.fetchStart;
 			dnsLookupTime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
 			tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
 			secureConnectionTime =
@@ -76,21 +73,17 @@ export function getW3CData(url: string, initiatorType: string, spReqDuration: nu
 				indResTime.requestStart > 0
 					? indResTime.responseEnd - indResTime.requestStart
 					: undefined;
-			networkTime = fetchStartToResponseEndTime;
-			if (networkTime !== undefined) {
-				networkTime = networkTime - spReqDuration;
-			}
 			break;
 		}
 	}
 	return {
 		dnsLookupTime,
+		w3cStartTime,
 		redirectTime,
 		tcpHandshakeTime,
 		secureConnectionTime,
 		responseNetworkTime,
 		fetchStartToResponseEndTime,
 		reqStartToResponseEndTime,
-		networkTime,
 	};
 }
