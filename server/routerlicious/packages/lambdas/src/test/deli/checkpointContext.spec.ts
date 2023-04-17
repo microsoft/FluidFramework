@@ -38,10 +38,12 @@ describe("Routerlicious", () => {
 					deliState: {
 						clients: undefined,
 						durableSequenceNumber: 0,
+						epoch: 0,
 						expHash1: defaultHash,
 						logOffset,
 						sequenceNumber,
 						signalClientConnectionNumber: 0,
+						term: 1,
 						lastSentMSN: 0,
 						nackMessages: undefined,
 						successfullyStartedLambdas: [],

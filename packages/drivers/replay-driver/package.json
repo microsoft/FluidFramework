@@ -67,8 +67,9 @@
 			"ClassDeclaration_ReplayDocumentService": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_StaticStorageDocumentService": {
-				"forwardCompat": false
+			"RemovedClassDeclaration_StaticStorageDocumentService": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
