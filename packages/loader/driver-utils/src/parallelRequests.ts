@@ -414,7 +414,8 @@ async function getSingleOpBatch(
 	scenarioName?: string,
 ): Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[] }> {
 	let lastSuccessTime: number | undefined;
-
+	let totalRetryAfterTime = 0;
+	let telemetryEvent: PerformanceEvent | undefined;
 	let retry: number = 0;
 	const nothing = { partial: false, cancel: true, payload: [] };
 
@@ -485,8 +486,18 @@ async function getSingleOpBatch(
 				// If the error told us to wait, then we will wait for that specific amount rather than the default.
 				delay = retryAfter;
 			}
+		} finally {
+			telemetryEvent?.end({
+				duration: totalRetryAfterTime,
+				...props,
+				reason: scenarioName,
+			});
 		}
 
+		const waitStartTime = performance.now();
+		telemetryEvent = PerformanceEvent.start(logger, {
+			eventName: "GetDeltasWaitTime",
+		});
 		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
@@ -497,6 +508,7 @@ async function getSingleOpBatch(
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.
 		await waitForOnline();
+		totalRetryAfterTime += performance.now() - waitStartTime;
 	}
 
 	return nothing;

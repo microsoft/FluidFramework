@@ -17,6 +17,7 @@ import { requestOps, streamObserver } from "@fluidframework/driver-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getWithRetryForTokenRefresh, validateMessages } from "./odspUtils";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 
 /**
  * Provides access to the underlying delta storage on the server for sharepoint driver.
@@ -43,69 +44,77 @@ export class OdspDeltaStorageService {
 		telemetryProps: ITelemetryProperties,
 		scenarioName?: string,
 	): Promise<IDeltasFetchResult> {
-		return getWithRetryForTokenRefresh(async (options) => {
-			// Note - this call ends up in getSocketStorageDiscovery() and can refresh token
-			// Thus it needs to be done before we call getStorageToken() to reduce extra calls
-			const baseUrl = this.buildUrl(from, to);
-			const storageToken = await this.getStorageToken(options, "DeltaStorage");
-
-			const formBoundary = uuid();
-			let postBody = `--${formBoundary}\r\n`;
-			postBody += `Authorization: Bearer ${storageToken}\r\n`;
-			postBody += `X-HTTP-Method-Override: GET\r\n`;
-
-			postBody += `_post: 1\r\n`;
-			postBody += `\r\n--${formBoundary}--`;
-			const headers: { [index: string]: any } = {
-				"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
-			};
-
-			// Some request take a long time (1-2 minutes) to complete, where telemetry shows very small amount
-			// of time spent on server, and usually small payload sizes. I.e. all the time is spent somewhere in
-			// networking. Even bigger problem - a lot of requests timeout (based on cursory look - after 1-2 minutes)
-			// So adding some timeout to ensure we retry again in hope of faster success.
-			// Please see https://github.com/microsoft/FluidFramework/issues/6997 for details.
-			const abort = new AbortController();
-			const timer = setTimeout(() => abort.abort(), 30000);
-
-			const response = await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
-				baseUrl,
-				{
-					headers,
-					body: postBody,
-					method: "POST",
-					signal: abort.signal,
-				},
-				"ops",
-				true,
-				scenarioName,
-			);
-			clearTimeout(timer);
-			const deltaStorageResponse = response.content;
-			const messages =
-				deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]
-					? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
-							(operation) => operation.op,
-					  )
-					: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
-
-			this.logger.sendPerformanceEvent({
+		return PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
 				eventName: "OpsFetch",
-				headers: Object.keys(headers).length !== 0 ? true : undefined,
-				length: messages.length,
-				duration: response.duration, // this duration for single attempt!
-				...response.propsToLog,
-				attempts: options.refresh ? 2 : 1,
 				from,
 				to,
 				...telemetryProps,
 				reason: scenarioName,
-			});
+			},
+			async (event) =>
+				getWithRetryForTokenRefresh(async (options) => {
+					// Note - this call ends up in getSocketStorageDiscovery() and can refresh token
+					// Thus it needs to be done before we call getStorageToken() to reduce extra calls
+					const baseUrl = this.buildUrl(from, to);
+					const storageToken = await this.getStorageToken(options, "DeltaStorage");
 
-			// It is assumed that server always returns all the ops that it has in the range that was requested.
-			// This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
-			return { messages, partialResult: false };
-		});
+					const formBoundary = uuid();
+					let postBody = `--${formBoundary}\r\n`;
+					postBody += `Authorization: Bearer ${storageToken}\r\n`;
+					postBody += `X-HTTP-Method-Override: GET\r\n`;
+
+					postBody += `_post: 1\r\n`;
+					postBody += `\r\n--${formBoundary}--`;
+					const headers: { [index: string]: any } = {
+						"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
+					};
+
+					// Some request take a long time (1-2 minutes) to complete, where telemetry shows very small amount
+					// of time spent on server, and usually small payload sizes. I.e. all the time is spent somewhere in
+					// networking. Even bigger problem - a lot of requests timeout (based on cursory look - after 1-2 minutes)
+					// So adding some timeout to ensure we retry again in hope of faster success.
+					// Please see https://github.com/microsoft/FluidFramework/issues/6997 for details.
+					const abort = new AbortController();
+					const timer = setTimeout(() => abort.abort(), 30000);
+
+					const response =
+						await this.epochTracker.fetchAndParseAsJSON<IDeltaStorageGetResponse>(
+							baseUrl,
+							{
+								headers,
+								body: postBody,
+								method: "POST",
+								signal: abort.signal,
+							},
+							"ops",
+							true,
+							scenarioName,
+						);
+					clearTimeout(timer);
+					const deltaStorageResponse = response.content;
+					const messages =
+						deltaStorageResponse.value.length > 0 &&
+						"op" in deltaStorageResponse.value[0]
+							? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
+									(operation) => operation.op,
+							  )
+							: (deltaStorageResponse.value as ISequencedDocumentMessage[]);
+
+					event.end({
+						headers: Object.keys(headers).length !== 0 ? true : undefined,
+						length: messages.length,
+						successDuration: response.duration, // this duration for single attempt!
+						...response.propsToLog,
+						attempts: options.refresh ? 2 : 1,
+					});
+
+					// It is assumed that server always returns all the ops that it has in the range that was requested.
+					// This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
+					return { messages, partialResult: false };
+				}),
+		);
 	}
 
 	public buildUrl(from: number, to: number) {
