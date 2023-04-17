@@ -84,6 +84,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 				return new Historian(url, false, false);
 			},
 			winston,
+			{},
 			pubsub,
 		);
 
