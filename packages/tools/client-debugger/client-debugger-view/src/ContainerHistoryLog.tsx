@@ -113,10 +113,10 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 								backgroundColor: getBackgroundColorForState(item.newState),
 							}}
 						>
-							<TableCell>
+							<TableHeaderCell>
 								{getStateIcon(item.newState)}
 								{item.newState}
-							</TableCell>
+							</TableHeaderCell>
 							<TableCell>{timestampDisplay}</TableCell>
 						</TableRow>
 					);

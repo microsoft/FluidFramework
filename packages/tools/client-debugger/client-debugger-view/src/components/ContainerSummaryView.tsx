@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IStackItemStyles, Stack, StackItem, TooltipHost  } from "@fluentui/react";
+import { IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import {
 	Button,
@@ -305,7 +305,6 @@ interface ActionsBarProps extends IContainerActions {
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, tryConnect, forceDisconnect, closeContainer } = props;
 
-	
 	const connectButtonTooltipId = useId("connect-button-tooltip");
 	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
 	const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
