@@ -21,7 +21,7 @@ parameters:
   default: $(Pipeline.Workspace)/.pnpm-store
 
 steps:
-- ${{ if eq(parameters.disableCache, false) }}:
+- ${{ if eq(parameters.enableCache, true) }}:
   - task: Cache@2
     displayName: Cache pnpm store
     timeoutInMinutes: 5
