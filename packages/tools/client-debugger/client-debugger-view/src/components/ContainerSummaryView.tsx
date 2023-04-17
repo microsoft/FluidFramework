@@ -305,6 +305,8 @@ interface ActionsBarProps extends IContainerActions {
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, tryConnect, forceDisconnect, closeContainer } = props;
 
+	const [actionButtonState, setActionButtonState] = React.useState(true);
+
 	const connectButtonTooltipId = useId("connect-button-tooltip");
 	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
 	const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
@@ -314,7 +316,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			<Button
 				icon={<PlugDisconnected24Regular />}
 				onClick={forceDisconnect}
-				disabled={forceDisconnect === undefined}
+				disabled={forceDisconnect === undefined || actionButtonState === false}
 			>
 				Disconnect Container
 			</Button>
@@ -324,7 +326,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			<Button
 				icon={<PlugConnected24Regular />}
 				onClick={tryConnect}
-				disabled={tryConnect === undefined}
+				disabled={tryConnect === undefined || actionButtonState === false}
 			>
 				Connect Container
 			</Button>
@@ -335,8 +337,13 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
 			<Button
 				icon={<Delete24Regular />}
-				onClick={closeContainer}
-				disabled={closeContainer === undefined}
+				onClick={(): void => {
+					if (closeContainer) {
+						closeContainer();
+					}
+					setActionButtonState(false);
+				}}
+				disabled={closeContainer === undefined || actionButtonState === false}
 			>
 				Close Container
 			</Button>

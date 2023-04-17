@@ -113,10 +113,17 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 								backgroundColor: getBackgroundColorForState(item.newState),
 							}}
 						>
-							<TableHeaderCell>
-								{getStateIcon(item.newState)}
-								{item.newState}
-							</TableHeaderCell>
+							<TableCell>
+								<span
+									style={{
+										display: "inline-flex",
+										alignItems: "center",
+									}}
+								>
+									{getStateIcon(item.newState)}
+									<span style={{ marginLeft: "5px" }}>{item.newState}</span>
+								</span>
+							</TableCell>
 							<TableCell>{timestampDisplay}</TableCell>
 						</TableRow>
 					);
