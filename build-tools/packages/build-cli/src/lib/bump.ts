@@ -172,36 +172,44 @@ export async function bumpReleaseGroup(
 		: bumpType;
 
 	let name: string;
-	const cmds: [string, string[]][] = [];
-	let workingDir: string;
+	const cmds: [string, string[], execa.Options | undefined][] = [];
+	let options: execa.Options | undefined;
 
 	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts if needed.
 	if (releaseGroupOrPackage instanceof MonoRepo) {
-		workingDir = context.gitRepo.resolvedRoot;
 		name = releaseGroupOrPackage.kind;
+		options = {
+			cwd: releaseGroupOrPackage.repoPath,
+			stdio: "inherit",
+			shell: true,
+		};
 		cmds.push(
-			[`flub`, [`exec`, "-g", name, "--", `"npm version ${translatedVersion.version}"`]],
-			[`pnpm`, ["-r", "run", "build:genver"]],
+			[
+				`flub`,
+				[`exec`, "-g", name, "--", `"npm version ${translatedVersion.version}"`],
+				options,
+			],
+			["pnpm", ["-r", "run", "build:genver"], options],
 		);
 	} else {
-		workingDir = releaseGroupOrPackage.directory;
 		name = releaseGroupOrPackage.name;
-		cmds.push([`npm`, ["version", translatedVersion.version]]);
+		options = {
+			cwd: releaseGroupOrPackage.directory,
+			stdio: "inherit",
+			shell: true,
+		};
+		cmds.push([`npm`, ["version", translatedVersion.version], options]);
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
-			cmds.push([`pnpm`, ["run", "build:genver"]]);
+			cmds.push([`pnpm`, ["run", "build:genver"], options]);
 		}
 	}
 
-	for (const [cmd, args] of cmds) {
-		log?.verbose(`Running command: ${cmd} in ${workingDir}`);
+	for (const [cmd, args, opts] of cmds) {
+		log?.verbose(`Running command: ${cmd} ${args} in ${opts?.cwd}`);
 		try {
 			// TODO: The shell option should not need to be true. AB#4067
 			// eslint-disable-next-line no-await-in-loop
-			const results = await execa(cmd, args, {
-				cwd: workingDir,
-				stdio: "inherit",
-				shell: true,
-			});
+			const results = await execa(cmd, args, options);
 			if (results.all !== undefined) {
 				log?.verbose(results.all);
 			}
