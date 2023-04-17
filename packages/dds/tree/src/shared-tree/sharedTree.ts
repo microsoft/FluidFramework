@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -24,6 +25,7 @@ import {
 	AnchorSetRootEvents,
 	symbolFromKey,
 	GlobalFieldKey,
+	GraphCommit,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -47,9 +49,10 @@ import {
 	SchemaAware,
 	ForestRepairDataStoreProvider,
 	repairDataStoreFromForest,
+	ModularChangeset,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, TransactionResult } from "../util";
+import { brand, fail, TransactionResult } from "../util";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
 /**
@@ -172,6 +175,12 @@ export interface ISharedTreeView extends AnchorLocator {
 	fork(): ISharedTreeFork;
 
 	/**
+	 * Apply all the new changes on the given view to this view.
+	 * @param view - a view which was created by a call to `fork()`. It is not modified by this operation.
+	 */
+	merge(view: ISharedTreeFork): void;
+
+	/**
 	 * Events about this view.
 	 */
 	readonly events: ISubscribable<ViewEvents>;
@@ -223,17 +232,10 @@ export interface ISharedTreeView extends AnchorLocator {
  */
 export interface ISharedTreeFork extends ISharedTreeView {
 	/**
-	 * Rebase the changes that have been applied to this view over all the changes in the base view that have
-	 * occurred since this view last pulled (or was forked).
+	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
+	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
 	 */
-	pull(): void;
-
-	/**
-	 * Apply all the changes on this view to the base view from which it was forked.
-	 * If the base view has new changes since this view last pulled (or was forked),
-	 * then this view's changes will be rebased over those first.
-	 */
-	merge(): void;
+	rebaseOnto(view: ISharedTreeView): void;
 }
 
 /**
@@ -357,6 +359,14 @@ export class SharedTree
 		);
 	}
 
+	public merge(view: ISharedTreeFork): void {
+		this.mergeBranch(getForkBranch(view));
+	}
+
+	public override getLocalBranchHead(): GraphCommit<ModularChangeset> {
+		return super.getLocalBranchHead();
+	}
+
 	/**
 	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
 	 * Whatever pattern is adopted should probably also handle multiple versions of changeset operations.
@@ -423,14 +433,14 @@ export class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
 
 	public constructor(
-		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		public readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly context: EditableTreeContext,
 		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		branch.on("onChange", (change) => {
+		branch.on("change", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
 			this.identifiedNodes.scanIdentifiers(this.context);
@@ -467,16 +477,12 @@ export class SharedTreeFork implements ISharedTreeFork {
 		return this.forest.anchors.locate(anchor);
 	}
 
-	public pull(): void {
-		this.branch.pull();
-	}
-
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
 		const repairDataStoreProvider = new ForestRepairDataStoreProvider(forest, storedSchema);
-		const branch = this.branch.fork(anchors, repairDataStoreProvider);
+		const branch = this.branch.fork(repairDataStoreProvider, anchors);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -488,8 +494,12 @@ export class SharedTreeFork implements ISharedTreeFork {
 		);
 	}
 
-	public merge(): void {
-		this.branch.merge();
+	public rebaseOnto(view: ISharedTreeView): void {
+		this.branch.rebaseOnto(getHeadCommit(view));
+	}
+
+	public merge(view: ISharedTreeFork): void {
+		this.branch.merge(getForkBranch(view));
 	}
 
 	public get root(): UnwrappedEditableField {
@@ -520,3 +530,27 @@ export function runSynchronous(
 		? view.transaction.abort()
 		: view.transaction.commit();
 }
+
+// #region Extraction functions
+// The following two functions assume the underlying classes/implementations of `ISharedTreeView` and `ISharedTreeFork`.
+// While `instanceof` checks are in general bad practice or code smell, these are justifiable because:
+// 1. `SharedTree` and `SharedTreeFork` are private and meant to be the only implementations of `ISharedTreeView` and `ISharedTreeFork`.
+// 2. The `ISharedTreeView` and `ISharedTreeFork` interfaces are not meant to specify input contracts, but exist solely to reduce the API provided by the underlying classes.
+//    It is never expected that a user would create their own object or class which satisfies `ISharedTreeView` or `ISharedTreeFork`.
+function getHeadCommit(view: ISharedTreeView): GraphCommit<DefaultChangeset> {
+	if (view instanceof SharedTree) {
+		return view.getLocalBranchHead();
+	} else if (view instanceof SharedTreeFork) {
+		return view.branch.getHead();
+	}
+
+	fail("Unsupported ISharedTreeView implementation");
+}
+
+function getForkBranch(
+	fork: ISharedTreeFork,
+): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+	assert(fork instanceof SharedTreeFork, "Unsupported ISharedTreeFork implementation");
+	return fork.branch;
+}
+// #endregion Extraction functions

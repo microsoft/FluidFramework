@@ -62,11 +62,11 @@ Generate mono repo package json
 
 ```
 USAGE
-  $ flub generate packageJson -g client|server|azure|build-tools [-v]
+  $ flub generate packageJson -g client|server|azure|build-tools|gitrest|historian [-v]
 
 FLAGS
   -g, --releaseGroup=<option>  (required) Name of the release group
-                               <options: client|server|azure|build-tools>
+                               <options: client|server|azure|build-tools|gitrest|historian>
   -v, --verbose                Verbose logging.
 
 DESCRIPTION

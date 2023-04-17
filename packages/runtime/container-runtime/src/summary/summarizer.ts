@@ -87,7 +87,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		private readonly runCoordinatorCreateFn: (
 			runtime: IConnectableRuntime,
 		) => Promise<ICancellableSummarizerController>,
-		private readonly listenToDeltaManagerOps: boolean = true,
 	) {
 		super();
 		this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
@@ -264,19 +263,10 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
 				summaryTime: Date.now(),
 			} as const),
-			(errorMessage: string) => {
-				if (!this._disposed) {
-					this.logger.sendErrorEvent(
-						{ eventName: "summarizingError" },
-						createSummarizingWarning(errorMessage, true),
-					);
-				}
-			},
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,
 			this.runtime,
-			this.listenToDeltaManagerOps,
 		);
 		this.runningSummarizer = runningSummarizer;
 		this.starting = false;

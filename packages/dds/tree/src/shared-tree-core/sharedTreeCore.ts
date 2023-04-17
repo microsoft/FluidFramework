@@ -324,32 +324,52 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		repairDataStoreProvider: IRepairDataStoreProvider,
 	): SharedTreeBranch<TEditor, TChange> {
 		const branch = new SharedTreeBranch(
-			() => this.editManager.getLocalBranchHead(),
-			(forked) => {
-				const changeToForked = forked.pull();
-				const changes: GraphCommit<TChange>[] = [];
-				const localBranchHead = this.editManager.getLocalBranchHead();
-				const ancestor = findAncestor(
-					[forked.getHead(), changes],
-					(c) => c === localBranchHead,
-				);
-				assert(
-					ancestor === localBranchHead,
-					0x598 /* Expected merging checkout branches to be related */,
-				);
-				for (const { change, type, revision } of changes) {
-					this.applyChange(change, type, revision);
-					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-				}
-				return changeToForked;
-			},
+			this.editManager.getLocalBranchHead(),
 			this.editManager.localSessionId,
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
-			anchors,
 			this.undoRedoManager.clone(repairDataStoreProvider),
+			anchors,
 		);
 		return branch;
+	}
+
+	/**
+	 * Merges the commits of the given branch into the root local branch.
+	 * This behaves as if all divergent commits on the branch were applied to the root local branch one at a time.
+	 * @param branch - the branch to merge
+	 */
+	protected mergeBranch(branch: SharedTreeBranch<TEditor, TChange>): void {
+		assert(
+			!branch.isTransacting(),
+			"Branch may not be merged while transaction is in progress",
+		);
+
+		const commits: GraphCommit<TChange>[] = [];
+		const localBranchHead = this.editManager.getLocalBranchHead();
+		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
+		if (ancestor === localBranchHead) {
+			for (const { change, type, revision } of commits) {
+				this.applyChange(change, type, revision);
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+			}
+		} else {
+			const rebaser = new Rebaser(this.changeFamily.rebaser);
+			const [newHead] = rebaser.rebaseBranch(branch.getHead(), this.getLocalBranchHead());
+			const changes: GraphCommit<TChange>[] = [];
+			findAncestor([newHead, changes], (c) => c === this.getLocalBranchHead());
+			for (const { change, type, revision } of changes) {
+				this.applyChange(change, type, revision);
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+			}
+		}
+	}
+
+	/**
+	 * @returns the head commit of the root local branch
+	 */
+	protected getLocalBranchHead(): GraphCommit<TChange> {
+		return this.editManager.getLocalBranchHead();
 	}
 
 	protected onDisconnect() {}

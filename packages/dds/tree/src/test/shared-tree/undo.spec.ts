@@ -34,7 +34,7 @@ describe("Undo", () => {
 		const fork = tree.fork();
 
 		fork.undo();
-		fork.merge();
+		tree.merge(fork);
 
 		expectJsonTree(tree, []);
 	});
@@ -48,7 +48,7 @@ describe("Undo", () => {
 		expectJsonTree(fork, ["A", "x"]);
 
 		fork.undo();
-		fork.merge();
+		tree.merge(fork);
 
 		expectJsonTree(tree, ["A"]);
 	});
@@ -61,12 +61,12 @@ describe("Undo", () => {
 
 		expectJsonTree(delAB, ["C", "D"]);
 
-		delAB.merge();
+		tree.merge(delAB);
 
 		expectJsonTree(tree, ["C", "D"]);
 
 		delAB.undo();
-		delAB.merge();
+		tree.merge(delAB);
 
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
@@ -80,15 +80,15 @@ describe("Undo", () => {
 		insert(addX, 1, "x");
 		insert(addY, 3, "y");
 
-		addX.merge();
-		addY.merge();
+		tree.merge(addX);
+		tree.merge(addY);
 
 		expectJsonTree(tree, ["A", "x", "B", "C", "y", "D"]);
 
 		addX.undo();
 		addY.undo();
-		addX.merge();
-		addY.merge();
+		tree.merge(addX);
+		tree.merge(addY);
 
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
@@ -102,7 +102,7 @@ describe("Undo", () => {
 		insert(doUndo, 3, "y");
 
 		doUndo.undo();
-		doUndo.merge();
+		tree.merge(doUndo);
 
 		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
 	});

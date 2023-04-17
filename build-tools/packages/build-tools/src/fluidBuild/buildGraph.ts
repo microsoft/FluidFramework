@@ -218,7 +218,8 @@ export class BuildGraph {
 			for (const { name, version } of node.pkg.combinedDependencies) {
 				const child = this.buildPackages.get(name);
 				if (child) {
-					if (semver.satisfies(child.pkg.version, version)) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					if (semver.satisfies(child.pkg.version, version!)) {
 						if (depFilter(child.pkg)) {
 							verbose(
 								`Package dependency: ${node.pkg.nameColored} => ${child.pkg.nameColored}`,
