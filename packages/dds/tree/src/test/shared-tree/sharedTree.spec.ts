@@ -20,7 +20,7 @@ import {
 	TypedSchema,
 	SchemaAware,
 } from "../../feature-libraries";
-import { brand, TransactionResult } from "../../util";
+import { brand, fail, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import {
@@ -819,7 +819,7 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const pausedContainer = provider.containers[0];
-			const url = await pausedContainer.getAbsoluteUrl("");
+			const url = (await pausedContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 			const pausedTree = provider.trees[0];
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			insert(pausedTree, 1, "b");
@@ -832,8 +832,7 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const loader = provider.makeTestLoader();
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const loadedContainer = await loader.resolve({ url: url! }, pendingOps);
+			const loadedContainer = await loader.resolve({ url }, pendingOps);
 			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
