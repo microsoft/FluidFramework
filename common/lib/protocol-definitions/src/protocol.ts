@@ -59,6 +59,7 @@ export enum MessageType {
 
 	/**
 	 * Message to indicate the need of a remote agent for a document.
+	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
 	 */
 	RemoteHelp = "remoteHelp",
 
