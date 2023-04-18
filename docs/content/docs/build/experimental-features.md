@@ -7,7 +7,7 @@ author: scottn12
 
 ## Overview
 
-At any given time, there are experimental features within FluidFramework that are still being actively developed/tested. In order to allow developers to adopt and test these features in a controlled environment, we introduced experimental feature gates to enable these features and easily disable them if they cause unexpected behavior.
+At any given time, there are experimental features within FluidFramework that are being actively developed/tested. In order to allow developers to adopt and test these features in a controlled environment, we introduced feature gates. Feature gates are user defined values that allow experimental features to be easily enabled, and disabled if they cause unexpected behavior. This document will provide details on how to use feature gates to enable experimental features.
 
 {{<callout warning>}}
 
