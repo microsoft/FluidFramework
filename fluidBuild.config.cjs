@@ -11,13 +11,14 @@ module.exports = {
 	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
 	repoPackages: {
 		// Release groups
-		"azure": "azure",
 		"client": {
 			directory: "",
 			ignoredDirs: [],
 		},
 		"build-tools": "build-tools",
 		"server": "server/routerlicious",
+		"gitrest": "server/gitrest",
+		"historian": "server/historian",
 
 		// Independent packages
 		"build": "common/build",
@@ -37,7 +38,7 @@ module.exports = {
 		// Services
 		"services": {
 			directory: "server",
-			ignoredDirs: ["routerlicious", "tinylicious"],
+			ignoredDirs: ["routerlicious", "tinylicious", "gitrest", "historian"],
 		},
 	},
 
@@ -53,6 +54,8 @@ module.exports = {
 			"azure/packages/azure-local-service/src/index.ts",
 			"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 			"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+			"server/gitrest/package.json",
+			"server/historian/package.json",
 			"tools/markdown-magic/test",
 			"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 		],

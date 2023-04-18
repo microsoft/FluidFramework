@@ -38,8 +38,8 @@
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/view-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/view-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1"
 	},

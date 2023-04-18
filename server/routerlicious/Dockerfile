@@ -50,7 +50,7 @@ COPY packages/services-utils/package*.json packages/services-utils/
 COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 
-RUN npm install --global pnpm@7.30.5
+RUN corepack enable
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files

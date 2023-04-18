@@ -99,7 +99,7 @@ export { MongoManager } from "./mongo";
 export { MongoDatabaseManager } from "./mongoDatabaseManager";
 export { MongoDocumentRepository } from "./mongoDocumentRepository";
 export { MongoCheckpointRepository } from "./mongoCheckpointRepository";
-export { CheckpointService } from "./checkpointService";
+export { CheckpointService, ICheckpointService } from "./checkpointService";
 export { INode, IOrderer, IOrdererConnection, IOrdererManager, IOrdererSocket } from "./orderer";
 export { MaxBatchSize, PendingBoxcar } from "./pendingBoxcar";
 export { IMessageBatch, IPublisher, ITopic } from "./publisher";
@@ -148,4 +148,10 @@ export {
 export { TokenGenerator } from "./token";
 export { clientConnectivityStorageId, IUsageData, signalUsageStorageId } from "./usageData";
 export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
-export { IWebSocketTracker, ITokenRevocationManager, createCompositeTokenId } from "./tokenManager";
+export {
+	IWebSocketTracker,
+	ITokenRevocationManager,
+	ITokenRevocationResponse,
+	TokenRevocationError,
+	createCompositeTokenId
+} from "./tokenRevocationManager";

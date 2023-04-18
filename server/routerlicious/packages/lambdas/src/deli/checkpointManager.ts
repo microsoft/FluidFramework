@@ -4,8 +4,8 @@
  */
 
 import {
-    CheckpointService,
 	ICheckpointRepository,
+	ICheckpointService,
 	IDeliState,
 	IDocumentRepository,
 	IQueuedMessage,
@@ -53,7 +53,7 @@ export function createDeliCheckpointManagerFromCollection(
 	documentId: string,
 	documentRepository: IDocumentRepository,
 	checkpointRepository: ICheckpointRepository,
-    checkpointService: CheckpointService,
+    checkpointService: ICheckpointService,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
 		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {

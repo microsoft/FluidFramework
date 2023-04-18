@@ -5,6 +5,7 @@
 
 import type { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { getW3CData } from "@fluidframework/driver-base";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
@@ -19,15 +20,22 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
-	GitManager,
-	ISummaryUploadManager,
-	WholeSummaryUploadManager,
+	INormalizedWholeSummary,
+	IWholeFlatSummary,
 } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 import { IRouterliciousDriverPolicies } from "./policies";
-import { convertSnapshotAndBlobsToSummaryTree } from "./treeUtils";
+import {
+	convertSnapshotAndBlobsToSummaryTree,
+	evalBlobsAndTrees,
+	validateBlobsAndTrees,
+} from "./treeUtils";
+import { GitManager } from "./gitManager";
+import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
+import { ISummaryUploadManager } from "./storageContracts";
+import { IR11sResponse } from "./restWrapper";
 
 const latestSnapshotId: string = "latest";
 
@@ -96,7 +104,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 			async () => {
 				const manager = await this.getStorageManager();
-				return manager.getCommits(id, count);
+				return (await manager.getCommits(id, count)).content;
 			},
 		);
 		return commits.map((commit) => ({
@@ -134,7 +142,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 			async (event) => {
 				const manager = await this.getStorageManager();
-				const response = await manager.getBlob(blobId);
+				const response = (await manager.getBlob(blobId)).content;
 				event.end({
 					size: response.size,
 				});
@@ -183,9 +191,9 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				const manager = await this.getStorageManager();
 				const response = await manager.getSummary(summaryHandle.handle);
 				event.end({
-					size: response.trees[0]?.entries.length,
+					size: response.content.trees[0]?.entries.length,
 				});
-				return response;
+				return response.content;
 			},
 		);
 
@@ -208,7 +216,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				const manager = await this.getStorageManager();
 				const response = await manager
 					.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
-					.then((r) => ({ id: r.sha, url: r.url }));
+					.then((r) => ({ id: r.content.sha, url: r.content.url }));
 				event.end({
 					blobId: response.id,
 				});
@@ -231,7 +239,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			};
 		}
 
-		const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
+		const normalizedWholeSummary = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
 				eventName: "getWholeFlatSummary",
@@ -239,20 +247,34 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 			async (event) => {
 				const manager = await this.getStorageManager(disableCache);
-				const response = await manager.getSummary(versionId);
+				const response: IR11sResponse<IWholeFlatSummary> = await manager.getSummary(
+					versionId,
+				);
+				const start = performance.now();
+				const snapshot: INormalizedWholeSummary =
+					convertWholeFlatSummaryToSnapshotTreeAndBlobs(response.content);
+				const snapshotConversionTime = performance.now() - start;
+				validateBlobsAndTrees(snapshot.snapshotTree);
+				const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
+
 				event.end({
-					size: response.trees[0]?.entries.length,
+					size: response.content.trees[0]?.entries.length,
+					trees,
+					blobs: numBlobs,
+					encodedBlobsSize,
+					...response.propsToLog,
+					snapshotConversionTime,
+					...getW3CData(response.requestUrl, "xmlhttprequest"),
 				});
-				return response;
+				return snapshot;
 			},
 		);
-		const normalizedWholeSummary =
-			convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
+
 		assert(
 			normalizedWholeSummary.snapshotTree.id !== undefined,
 			0x275 /* "Root tree should contain the id" */,
 		);
-		const wholeFlatSummaryId: string = wholeFlatSummary.id;
+		const wholeFlatSummaryId: string = normalizedWholeSummary.snapshotTree.id;
 		const snapshotTreeVersion = {
 			id: wholeFlatSummaryId,
 			snapshotTree: normalizedWholeSummary.snapshotTree,

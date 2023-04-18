@@ -140,6 +140,9 @@ usage:
   clientConnectivityCountingEnabled: false
   signalUsageCountingEnabled: false
 
+shared:
+  transientTenants: []
+
 mongodb:
   operationsDbEndpoint: mongodb_url
   globalDbEndpoint: mongoglobaldb_url

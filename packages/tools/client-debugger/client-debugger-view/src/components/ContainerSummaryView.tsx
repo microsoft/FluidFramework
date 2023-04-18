@@ -3,18 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
+import { IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
+import {
+	Button,
+	Badge,
+	createTableColumn,
+	Table,
+	TableRow,
+	TableCell,
+	TableCellLayout,
+	TableColumnDefinition,
+	TableColumnSizingOptions,
+	useTableFeatures,
+	useTableColumnSizing_unstable,
+} from "@fluentui/react-components";
+import {
+	PlugConnected24Regular,
+	PlugDisconnected24Regular,
+	Delete24Regular,
+} from "@fluentui/react-icons";
 import React from "react";
 
-import { ContainerStateMetadata } from "@fluid-tools/client-debugger";
+import {
+	CloseContainer,
+	ConnectContainer,
+	ContainerStateChange,
+	ContainerStateMetadata,
+	DisconnectContainer,
+	GetContainerState,
+	handleIncomingMessage,
+	HasContainerId,
+	IMessageRelay,
+	InboundHandlers,
+	ISourcedDevtoolsMessage,
+} from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
-import { HasClientDebugger } from "../CommonProps";
 import { initializeFluentUiIcons } from "../InitializeIcons";
-import { useMyClientConnection, useMyClientId } from "../ReactHooks";
 import { connectionStateToString } from "../Utilities";
+import { useMessageRelay } from "../MessageRelayContext";
+import { Waiting } from "./Waiting";
 
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
@@ -26,77 +56,220 @@ initializeFluentUiIcons();
 /**
  * {@link ContainerSummaryView} input props.
  */
-export type ContainerSummaryViewProps = HasClientDebugger;
+export type ContainerSummaryViewProps = HasContainerId;
+
+const columnsDef: TableColumnDefinition<Item>[] = [
+	createTableColumn<Item>({
+		columnId: "containerProperty",
+	}),
+	createTableColumn<Item>({
+		columnId: "value",
+	}),
+];
+
+/**
+ * Simple representation of each row of data in the table
+ */
+interface Item {
+	/*
+	 * The type of container property, ie: Container/Audience ID etc
+	 */
+	property: string;
+	/*
+	 * The value of the property.
+	 */
+	value: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function DataRow(label: string, id: string | undefined, columnProps: any): React.ReactElement {
+	return (
+		<TableRow>
+			<TableCell
+				{
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+					...columnProps.getTableCellProps("containerProperty")
+				}
+			>
+				<b>{label}</b>
+			</TableCell>
+			<TableCell>{id}</TableCell>
+		</TableRow>
+	);
+}
+
+function ContainerStatusRow(statusComponents: string[]): React.ReactElement {
+	return (
+		<TableRow>
+			<TableCell>
+				<b>Status</b>
+			</TableCell>
+			<TableCell>
+				<TableCellLayout
+					media={((): JSX.Element => {
+						switch (statusComponents[0]) {
+							case "attaching":
+								return (
+									<Badge shape="rounded" color="warning">
+										{statusComponents[0]}
+									</Badge>
+								);
+							case "detached":
+								return (
+									<Badge shape="rounded" color="danger">
+										{statusComponents[0]}
+									</Badge>
+								);
+							default:
+								return (
+									<Badge shape="rounded" color="success">
+										{statusComponents[0]}
+									</Badge>
+								);
+						}
+					})()}
+				>
+					{statusComponents[1] === "Connected" ? (
+						<Badge shape="rounded" color="success">
+							{statusComponents[1]}
+						</Badge>
+					) : (
+						<Badge shape="rounded" color="danger">
+							{statusComponents[1]}
+						</Badge>
+					)}
+				</TableCellLayout>
+			</TableCell>
+		</TableRow>
+	);
+}
 
 /**
  * Debugger view displaying basic Container stats.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
-	const { clientDebugger } = props;
-	const { container, containerNickname, containerId } = clientDebugger;
+	const { containerId } = props;
+	const items: Item[] = [];
+	const messageRelay: IMessageRelay = useMessageRelay();
 
-	const myClientId = useMyClientId(clientDebugger);
-	const myClientConnection = useMyClientConnection(clientDebugger);
+	const [containerState, setContainerState] = React.useState<
+		ContainerStateMetadata | undefined
+	>();
+	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
+	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
+		containerProperty: {
+			idealWidth: 80,
+			minWidth: 80,
+		},
+	});
 
-	// #endregion
-
-	// #region Container State
-
-	const [containerAttachState, setContainerAttachState] = React.useState<AttachState>(
-		container.attachState,
-	);
-	const [containerConnectionState, setContainerConnectionState] = React.useState<ConnectionState>(
-		container.connectionState,
-	);
-	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
+	const { columnSizing_unstable, tableRef } = useTableFeatures({ columns, items }, [
+		useTableColumnSizing_unstable({ columnSizingOptions }),
+	]);
 
 	React.useEffect(() => {
-		function onContainerAttached(): void {
-			setContainerAttachState(container.attachState);
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			[ContainerStateChange.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateChange.Message;
+				if (message.data.containerId === containerId) {
+					setContainerState(message.data.containerState);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the webpage.
+		 */
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: "ContainerSummaryView", // TODO: fix
+			});
 		}
 
-		function onContainerConnectionChange(): void {
-			setContainerConnectionState(container.connectionState);
-		}
+		messageRelay.on("message", messageHandler);
 
-		function onContainerClosed(): void {
-			setIsContainerClosed(true);
-		}
+		// Reset state with Container data, to ensure we aren't displaying stale data (for the wrong container) while we
+		// wait for a response to the message sent below. Especially relevant for the Container-related views because this
+		// component wont be unloaded and reloaded if the user just changes the menu selection from one Container to another.
+		// eslint-disable-next-line unicorn/no-useless-undefined
+		setContainerState(undefined);
 
-		container.on("attached", onContainerAttached);
-		container.on("connected", onContainerConnectionChange);
-		container.on("disconnected", onContainerConnectionChange);
-		container.on("closed", onContainerClosed);
-
-		setContainerAttachState(container.attachState);
-		setContainerConnectionState(container.connectionState);
-		setIsContainerClosed(container.closed);
+		// Request state info for the newly specified containerId
+		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
 
 		return (): void => {
-			container.off("attached", onContainerAttached);
-			container.off("connected", onContainerConnectionChange);
-			container.off("disconnected", onContainerConnectionChange);
-			container.off("closed", onContainerClosed);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [container, setContainerAttachState, setContainerConnectionState, setIsContainerClosed]);
+	}, [containerId, setContainerState, messageRelay]);
+
+	if (containerState === undefined) {
+		return <Waiting label="Waiting for Container Summary data." />;
+	}
+
+	function tryConnect(): void {
+		messageRelay.postMessage(
+			ConnectContainer.createMessage({
+				containerId,
+			}),
+		);
+	}
+
+	function forceDisconnect(): void {
+		messageRelay.postMessage(
+			DisconnectContainer.createMessage({
+				containerId,
+				/* TODO: Specify debugger reason here once it is supported */
+			}),
+		);
+	}
+
+	function closeContainer(): void {
+		messageRelay.postMessage(
+			CloseContainer.createMessage({
+				containerId,
+				/* TODO: Specify debugger reason here once it is supported */
+			}),
+		);
+	}
+
+	// Build up status string
+	const statusComponents: string[] = [];
+	if (closed) {
+		statusComponents.push("Closed");
+	} else {
+		statusComponents.push(containerState.attachState);
+		if (containerState.attachState === AttachState.Attached) {
+			statusComponents.push(connectionStateToString(containerState.connectionState));
+		}
+	}
 
 	return (
-		<_ContainerSummaryView
-			id={containerId}
-			nickname={containerNickname}
-			attachState={containerAttachState}
-			connectionState={containerConnectionState}
-			closed={isContainerClosed}
-			clientId={myClientId}
-			audienceId={myClientConnection?.user.id}
-			tryConnect={(): void => container.connect()}
-			forceDisconnect={(): void =>
-				container.disconnect(/* TODO: Specify debugger reason here once it is supported */)
-			}
-			closeContainer={(): void =>
-				container.close(/* TODO: Specify debugger reason here once it is supported */)
-			}
-		/>
+		<Stack>
+			<StackItem>
+				<Table size="extra-small" ref={tableRef}>
+					{DataRow("Container", containerState.id, columnSizing_unstable)}
+					{ContainerStatusRow(statusComponents)}
+					{DataRow("Client ID", containerState.clientId, columnSizing_unstable)}
+					{DataRow("Audience ID", containerState.audienceId, columnSizing_unstable)}
+				</Table>
+			</StackItem>
+			<StackItem align="end">
+				<ActionsBar
+					isContainerConnected={
+						containerState.connectionState === ConnectionState.Connected
+					}
+					isContainerClosed={containerState.closed}
+					tryConnect={tryConnect}
+					forceDisconnect={forceDisconnect}
+					closeContainer={closeContainer}
+				/>
+			</StackItem>
+		</Stack>
 	);
 }
 
@@ -126,92 +299,14 @@ export interface IContainerActions {
 	closeContainer?: () => void;
 }
 
-/**
- * {@link _ContainerSummaryView} input props.
- */
-export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {}
-
-/**
- * Debugger view displaying basic Container stats.
- *
- * @remarks Operates strictly on raw data, so it can be potentially re-used in contexts that don't have
- * direct access to the Client Debugger.
- *
- * @internal
- */
-export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React.ReactElement {
-	const {
-		id,
-		attachState,
-		connectionState,
-		closed,
-		clientId,
-		audienceId,
-		tryConnect,
-		forceDisconnect,
-		closeContainer,
-	} = props;
-
-	// Build up status string
-	const statusComponents: string[] = [];
-	if (closed) {
-		statusComponents.push("Closed");
-	} else {
-		statusComponents.push(attachState);
-		if (attachState === AttachState.Attached) {
-			statusComponents.push(connectionStateToString(connectionState));
-		}
-	}
-	const statusString = statusComponents.join(" | ");
-
-	return (
-		<Stack className="container-summary-view">
-			<StackItem>
-				<span>
-					<b>Container ID</b>: {id}
-				</span>
-			</StackItem>
-			<StackItem>
-				<span>
-					<b>Status</b>: {statusString}
-				</span>
-			</StackItem>
-			<StackItem>
-				{clientId === undefined ? (
-					<></>
-				) : (
-					<span>
-						<b>Client ID</b>: {clientId}
-					</span>
-				)}
-			</StackItem>
-			<StackItem>
-				{audienceId === undefined ? (
-					<></>
-				) : (
-					<span>
-						<b>Audience ID</b>: {audienceId}
-					</span>
-				)}
-			</StackItem>
-			<StackItem align="end">
-				<ActionsBar
-					isContainerConnected={connectionState === ConnectionState.Connected}
-					tryConnect={tryConnect}
-					forceDisconnect={forceDisconnect}
-					closeContainer={closeContainer}
-				/>
-			</StackItem>
-		</Stack>
-	);
-}
-
 interface ActionsBarProps extends IContainerActions {
 	isContainerConnected: boolean;
+	isContainerClosed: boolean;
 }
 
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
-	const { isContainerConnected, tryConnect, forceDisconnect, closeContainer } = props;
+	const { isContainerConnected, isContainerClosed, tryConnect, forceDisconnect, closeContainer } =
+		props;
 
 	const connectButtonTooltipId = useId("connect-button-tooltip");
 	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
@@ -219,32 +314,35 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 
 	const changeConnectionStateButton = isContainerConnected ? (
 		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
-			<IconButton
+			<Button
+				icon={<PlugDisconnected24Regular />}
 				onClick={forceDisconnect}
-				disabled={forceDisconnect === undefined}
-				menuIconProps={{ iconName: "PlugDisconnected" }}
-				aria-describedby={disconnectButtonTooltipId}
-			/>
+				disabled={forceDisconnect === undefined || isContainerClosed}
+			>
+				Disconnect Container
+			</Button>
 		</TooltipHost>
 	) : (
 		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
-			<IconButton
+			<Button
+				icon={<PlugConnected24Regular />}
 				onClick={tryConnect}
-				disabled={tryConnect === undefined}
-				menuIconProps={{ iconName: "PlugConnected" }}
-				aria-describedby={connectButtonTooltipId}
-			/>
+				disabled={tryConnect === undefined || isContainerClosed}
+			>
+				Connect Container
+			</Button>
 		</TooltipHost>
 	);
 
 	const disposeContainerButton = (
 		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
-			<IconButton
+			<Button
+				icon={<Delete24Regular />}
 				onClick={closeContainer}
-				disabled={closeContainer === undefined}
-				menuIconProps={{ iconName: "Delete" }}
-				aria-describedby={disposeContainerButtonTooltipId}
-			/>
+				disabled={closeContainer === undefined || isContainerClosed}
+			>
+				Close Container
+			</Button>
 		</TooltipHost>
 	);
 

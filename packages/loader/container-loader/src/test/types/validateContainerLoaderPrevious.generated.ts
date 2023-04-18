@@ -71,6 +71,7 @@ declare function get_old_InterfaceDeclaration_IContainerConfig():
 declare function use_current_InterfaceDeclaration_IContainerConfig(
     use: TypeOnly<current.IContainerConfig>);
 use_current_InterfaceDeclaration_IContainerConfig(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerConfig());
 
 /*
@@ -83,6 +84,7 @@ declare function get_current_InterfaceDeclaration_IContainerConfig():
 declare function use_old_InterfaceDeclaration_IContainerConfig(
     use: TypeOnly<old.IContainerConfig>);
 use_old_InterfaceDeclaration_IContainerConfig(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerConfig());
 
 /*
@@ -239,6 +241,7 @@ declare function get_old_InterfaceDeclaration_IPendingContainerState():
 declare function use_current_InterfaceDeclaration_IPendingContainerState(
     use: TypeOnly<current.IPendingContainerState>);
 use_current_InterfaceDeclaration_IPendingContainerState(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IPendingContainerState());
 
 /*
@@ -251,6 +254,7 @@ declare function get_current_InterfaceDeclaration_IPendingContainerState():
 declare function use_old_InterfaceDeclaration_IPendingContainerState(
     use: TypeOnly<old.IPendingContainerState>);
 use_old_InterfaceDeclaration_IPendingContainerState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPendingContainerState());
 
 /*

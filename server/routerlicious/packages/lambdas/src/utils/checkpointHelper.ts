@@ -31,4 +31,3 @@ export interface ICheckpoint {
 	// time in milliseconds since the last checkpoint
 	lastCheckpointTime: number;
 }
-

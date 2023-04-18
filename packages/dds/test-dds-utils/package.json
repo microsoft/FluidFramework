@@ -50,7 +50,11 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"mocha": "^10.2.0"
 	},
 	"devDependencies": {

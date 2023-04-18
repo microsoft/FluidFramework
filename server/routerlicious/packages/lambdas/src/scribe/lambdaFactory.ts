@@ -73,6 +73,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly getDeltasViaAlfred: boolean,
+		private readonly transientTenants: string[],
 		private readonly checkpointService: CheckpointService,
 	) {
 		super();
@@ -268,6 +269,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			latestSummary.protocolHead,
 			opsSinceLastSummary,
 			scribeSessionMetric,
+			new Set(this.transientTenants),
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

@@ -160,7 +160,19 @@ export interface IContainerEvents extends IEvent {
 	(event: "disconnected", listener: () => void);
 
 	/**
-	 * Emitted when a {@link AttachState.Detached | detached} container is
+	 * Emitted when a {@link AttachState.Detached | detached} container begins the process of
+	 * {@link AttachState.Attaching | attached} to the Fluid service.
+	 *
+	 * @see
+	 *
+	 * - {@link IContainer.attachState}
+	 *
+	 * - {@link IContainer.attach}
+	 */
+	(event: "attaching", listener: () => void);
+
+	/**
+	 * Emitted when the {@link AttachState.Attaching | attaching} process is complete and the container is
 	 * {@link AttachState.Attached | attached} to the Fluid service.
 	 *
 	 * @see
