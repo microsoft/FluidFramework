@@ -4,9 +4,9 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { LocalReferencePosition, PropertySet } from "@fluidframework/merge-tree";
+import { LocalReferencePosition, PropertySet, ReferenceType } from "@fluidframework/merge-tree";
 import { SequenceInterval } from "./intervalCollection";
-import { SharedString } from "./sharedString";
+import { SharedString, SharedStringSegment } from "./sharedString";
 
 const IntervalEventType = {
 	CHANGE: 0,
@@ -59,8 +59,20 @@ export function appendLocalDeleteToRevertibles(
 	interval: SequenceInterval,
 	revertibles: IntervalRevertible[],
 ) {
-	const startRef = interval.start;
-	const endRef = interval.end;
+	const startSeg = interval.start.getSegment() as SharedStringSegment;
+	const endSeg = interval.end.getSegment() as SharedStringSegment;
+	const startRef = string.createLocalReferencePosition(
+		startSeg,
+		interval.start.getOffset(),
+		ReferenceType.RangeBegin,
+		startSeg.properties,
+	);
+	const endRef = string.createLocalReferencePosition(
+		endSeg,
+		interval.end.getOffset(),
+		ReferenceType.RangeEnd,
+		endSeg.properties,
+	);
 	revertibles.push({
 		event: IntervalEventType.DELETE,
 		interval,
@@ -77,8 +89,20 @@ export function appendLocalChangeToRevertibles(
 	previousInterval: SequenceInterval,
 	revertibles: IntervalRevertible[],
 ) {
-	const prevStartRef = previousInterval.start;
-	const prevEndRef = previousInterval.end;
+	const startSeg = previousInterval.start.getSegment() as SharedStringSegment;
+	const endSeg = previousInterval.end.getSegment() as SharedStringSegment;
+	const prevStartRef = string.createLocalReferencePosition(
+		startSeg,
+		previousInterval.start.getOffset(),
+		ReferenceType.RangeBegin,
+		startSeg.properties,
+	);
+	const prevEndRef = string.createLocalReferencePosition(
+		endSeg,
+		previousInterval.end.getOffset(),
+		ReferenceType.RangeEnd,
+		endSeg.properties,
+	);
 	revertibles.push({
 		event: IntervalEventType.CHANGE,
 		interval: newInterval,
@@ -122,6 +146,9 @@ function revertLocalDelete(
 	const type = revertible.interval.intervalType;
 	const props = revertible.interval.properties;
 	string.getIntervalCollection(label).add(start, end, type, props);
+
+	string.removeLocalReferencePosition(revertible.start);
+	string.removeLocalReferencePosition(revertible.end);
 }
 
 function revertLocalChange(
@@ -132,8 +159,10 @@ function revertLocalChange(
 	const id = revertible.interval.getIntervalId();
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-
 	string.getIntervalCollection(label).change(id, start, end);
+
+	string.removeLocalReferencePosition(revertible.start);
+	string.removeLocalReferencePosition(revertible.end);
 }
 
 function revertLocalPropertyChanged(
