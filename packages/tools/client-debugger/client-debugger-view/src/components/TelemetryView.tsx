@@ -10,7 +10,20 @@ import {
 	Stack,
 	StackItem,
 } from "@fluentui/react";
-import React from "react";
+import {
+	ToggleButton,
+	DataGridBody,
+	DataGridRow,
+	DataGrid,
+	DataGridHeader,
+	DataGridHeaderCell,
+	DataGridCell,
+	TableCellLayout,
+	TableColumnDefinition,
+	createTableColumn,
+} from "@fluentui/react-components";
+import { Info24Regular, Info24Filled } from "@fluentui/react-icons";
+import React, { useState } from "react";
 
 import {
 	GetTelemetryHistory,
@@ -104,10 +117,121 @@ export function TelemetryView(): React.ReactElement {
 		};
 	}, [messageRelay, setTelemetryEvents]);
 
+	/**
+	 * Interface for each item in the telemetry table.
+	 */
+	interface Item {
+		category: string;
+		eventName: string;
+		information: string;
+	}
+
+	const items: Item[] =
+		telemetryEvents !== undefined
+			? telemetryEvents?.map((message) => {
+					return {
+						category: message.logContent.category,
+						eventName: message.logContent.eventName,
+						information: JSON.stringify(
+							message.logContent,
+							jsonSerializationTransformer,
+							"  ",
+						),
+					};
+			  })
+			: [];
+
+	const columns: TableColumnDefinition<Item>[] = [
+		createTableColumn<Item>({
+			columnId: "category",
+			renderHeaderCell: () => {
+				return <b>Category</b>;
+			},
+			renderCell: (message) => {
+				return <TableCellLayout>{message.category}</TableCellLayout>;
+			},
+		}),
+		createTableColumn<Item>({
+			columnId: "eventName",
+			renderHeaderCell: () => {
+				return <b>Event Name</b>;
+			},
+			renderCell: (message) => {
+				return (
+					<div style={{ maxWidth: 160, whiteSpace: "normal", wordWrap: "break-word" }}>
+						{message.eventName.slice("fluid:telemetry:".length)}
+					</div>
+				);
+			},
+		}),
+		createTableColumn<Item>({
+			columnId: "information",
+			renderHeaderCell: () => {
+				return <b>Information</b>;
+			},
+			renderCell: (message) => {
+				// eslint-disable-next-line react-hooks/rules-of-hooks
+				const [expanded, setExpanded] = useState(false);
+				const toggleExpanded = (): void => {
+					setExpanded(!expanded);
+				};
+				return (
+					<div>
+						<ToggleButton
+							checked={expanded}
+							icon={expanded ? <Info24Filled /> : <Info24Regular />}
+							size="small"
+							onClick={toggleExpanded}
+						>
+							{expanded ? "Hide" : "Show"} Info
+						</ToggleButton>
+						{expanded && <pre>{message.information}</pre>}
+					</div>
+				);
+			},
+		}),
+	];
+
 	const log_view =
 		telemetryEvents !== undefined ? (
 			<>
 				<h3>Telemetry events (newest first):</h3>
+				<DataGrid
+					items={items}
+					columns={columns}
+					resizableColumns
+					columnSizingOptions={{
+						category: {
+							minWidth: 65,
+							idealWidth: 80,
+						},
+						eventType: {
+							minWidth: 60,
+							idealWidth: 150,
+						},
+						information: {
+							minWidth: 60,
+							idealWidth: 100,
+						},
+					}}
+				>
+					<DataGridHeader>
+						<DataGridRow style={{ whiteSpace: "normal" }}>
+							{({ renderHeaderCell }): JSX.Element => (
+								<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
+							)}
+						</DataGridRow>
+					</DataGridHeader>
+					<DataGridBody<Item>>
+						{({ item, rowId }): JSX.Element => (
+							<DataGridRow<Item> key={rowId}>
+								{({ renderCell }): JSX.Element => (
+									<DataGridCell>{renderCell(item)}</DataGridCell>
+								)}
+							</DataGridRow>
+						)}
+					</DataGridBody>
+				</DataGrid>
 				<ul>
 					{telemetryEvents.slice(0, maxEventsToDisplay).map((message, index) => (
 						<div
