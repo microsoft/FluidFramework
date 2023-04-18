@@ -350,17 +350,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
-		const { revision } = parseStashedOpContent(content)
+		const { revision } = parseStashedOpContent(content);
 		const [commit] = this.editManager.findLocalCommit(revision);
 		this.submitCommit(commit);
 	}
 
-	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		const {revision, changeset} = parseStashedOpContent(content)
-		const decodedChangeset = this.changeFamily.encoder.decodeJson(
-			formatVersion,
-			changeset,
-		);
+	protected applyStashedOp(content: any): undefined {
+		const { revision, changeset } = content as Message;
+		const decodedChangeset = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
 		this.addLocalChange(decodedChangeset, revision);
 		return;
 	}
@@ -480,12 +477,20 @@ function scopeStorageService(
 	};
 }
 
-function parseStashedOpContent(content: JsonCompatibleReadOnly): {revision: StableId, changeset: JsonCompatibleReadOnly} {
+/**
+ * validates that the stashed ops content is an object which contains valid revision id and changeset and returns them
+ * @param content - stashed op content
+ * @returns an object with the revision id and changeset
+ */
+function parseStashedOpContent(content: JsonCompatibleReadOnly): {
+	revision: StableId;
+	changeset: JsonCompatibleReadOnly;
+} {
 	assert(isJsonObject(content), "expected content to be an object");
 	assert(
 		typeof content.revision === "string" && isStableId(content.revision),
 		"expected revision id to be valid stable id",
 	);
-	assert(content.changeset !== undefined, "expected changeset to be defined")
-	return {revision: content.revision, changeset: content.changeset}
+	assert(content.changeset !== undefined, "expected changeset to be defined");
+	return { revision: content.revision, changeset: content.changeset };
 }
