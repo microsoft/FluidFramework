@@ -44,22 +44,22 @@ export class OdspDeltaStorageService {
 		telemetryProps: ITelemetryProperties,
 		scenarioName?: string,
 	): Promise<IDeltasFetchResult> {
-		return PerformanceEvent.timedExecAsync(
-			this.logger,
-			{
-				eventName: "OpsFetch",
-				from,
-				to,
-				...telemetryProps,
-				reason: scenarioName,
-			},
-			async (event) =>
-				getWithRetryForTokenRefresh(async (options) => {
-					// Note - this call ends up in getSocketStorageDiscovery() and can refresh token
-					// Thus it needs to be done before we call getStorageToken() to reduce extra calls
-					const baseUrl = this.buildUrl(from, to);
-					const storageToken = await this.getStorageToken(options, "DeltaStorage");
+		return getWithRetryForTokenRefresh(async (options) => {
+			// Note - this call ends up in getSocketStorageDiscovery() and can refresh token
+			// Thus it needs to be done before we call getStorageToken() to reduce extra calls
+			const baseUrl = this.buildUrl(from, to);
+			const storageToken = await this.getStorageToken(options, "DeltaStorage");
 
+			return PerformanceEvent.timedExecAsync(
+				this.logger,
+				{
+					eventName: "OpsFetch",
+					from,
+					to,
+					...telemetryProps,
+					reason: scenarioName,
+				},
+				async (event) => {
 					const formBoundary = uuid();
 					let postBody = `--${formBoundary}\r\n`;
 					postBody += `Authorization: Bearer ${storageToken}\r\n`;
@@ -105,7 +105,6 @@ export class OdspDeltaStorageService {
 					event.end({
 						headers: Object.keys(headers).length !== 0 ? true : undefined,
 						length: messages.length,
-						successDuration: response.duration, // this duration for single attempt!
 						...response.propsToLog,
 						attempts: options.refresh ? 2 : 1,
 					});
@@ -113,8 +112,9 @@ export class OdspDeltaStorageService {
 					// It is assumed that server always returns all the ops that it has in the range that was requested.
 					// This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
 					return { messages, partialResult: false };
-				}),
-		);
+				},
+			);
+		});
 	}
 
 	public buildUrl(from: number, to: number) {
