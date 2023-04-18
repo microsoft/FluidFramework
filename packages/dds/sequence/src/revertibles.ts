@@ -102,7 +102,7 @@ export function appendLocalPropertyChangedToRevertibles(
 
 	return revertibles;
 }
-
+// Uses of referenceRangeLabels will be removed once AB#4081 is completed.
 function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.ADD>,
