@@ -7,7 +7,7 @@
 
 import Path from "path";
 
-import Puppeteer, { Browser, Page } from "puppeteer";
+import Puppeteer, { Browser, Page, Target } from "puppeteer";
 
 // Paths are relative to src/test
 const extensionPath = Path.resolve(__dirname, "..", "..", "dist");
@@ -36,15 +36,15 @@ describe("Devtools Chromium extension integration tests", () => {
 	beforeEach(async () => {
 		const targets = await browser!.targets();
 
-		const backgroundPageTarget = targets.find(
-			(_target) => (_target.type() as unknown) === "background_page",
+		const backgroundTarget: Target | undefined = targets.find(
+			(_target) => _target.type() === "service_worker",
 		);
 
-		if (backgroundPageTarget === undefined) {
+		if (backgroundTarget === undefined) {
 			throw new Error("Could not find background page.");
 		}
 
-		await backgroundPageTarget.page();
+		const backgroundWorker = await backgroundTarget.worker();
 
 		// Creates a new tab
 		page = await browser!.newPage();
