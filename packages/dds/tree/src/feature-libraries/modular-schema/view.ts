@@ -16,6 +16,8 @@ import {
 	AdaptedViewSchema,
 	Compatibility,
 	FieldAdapter,
+	SchemaDataAndPolicy,
+	SchemaPolicy,
 } from "../../core";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
 import { allowsRepoSuperset, isNeverTree } from "./comparison";
@@ -181,8 +183,11 @@ export interface FieldViewSchema<Kind extends FieldKind = FieldKind> extends Fie
 export interface ViewSchemaCollection {
 	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
+	readonly policy: SchemaPolicy;
 }
 
 {
-	type _test = requireAssignableTo<ViewSchemaCollection, SchemaData>;
+	// ViewSchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
+	// but want to be compatible with it, so check that here:
+	type _test = requireAssignableTo<ViewSchemaCollection, SchemaDataAndPolicy>;
 }

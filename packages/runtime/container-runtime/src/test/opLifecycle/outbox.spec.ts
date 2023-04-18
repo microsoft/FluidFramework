@@ -16,7 +16,14 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../../pendingStateManager";
-import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../opLifecycle";
+import {
+	BatchMessage,
+	IBatch,
+	OpCompressor,
+	OpGroupingManager,
+	OpSplitter,
+	Outbox,
+} from "../../opLifecycle";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -193,6 +200,7 @@ describe("Outbox", () => {
 				disablePartialFlush: params.disablePartialFlush ?? false,
 			},
 			logger: mockLogger,
+			groupingManager: new OpGroupingManager(false),
 		});
 
 	beforeEach(() => {

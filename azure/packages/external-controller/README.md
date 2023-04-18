@@ -67,8 +67,30 @@ the endpoint URL would point to the Tinylicious instance on the default values o
 
 To launch the local Tinylicious service instance, run `npm run start:tinylicious` from your terminal window.
 
-When running the live Azure Fluid Relay Instance, we would require the tenant ID and service discovery endpoint URL. We make use of
-`AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
+When using a live Azure Fluid Relay instance, we need to provide the tenant ID, tenant secret and service discovery endpoint URL for our Azure Fluid Relay instance.
+
+We can use the `InsecureTokenProvider` or a custom token provider similar to `AzureFunctionTokenProvider` to authorize requests to the live Azure Fluid Relay Instance.
+
+**Note for Fluid developers:** You can use [this tool](../../../tools/getkeys) to retrieve test tenant details. After running getkeys, the env variable `fluid__test__driver__frs` will contain the tenant details.
+
+We can run the `AzureClient` with the `InsecureTokenProvider` with code like this:
+
+```typescript
+const connectionConfig: AzureConnectionConfig = useAzure
+	? {
+			type: "remote",
+			tenantId: "YOUR-TENANT-ID-HERE",
+			tokenProvider: new InsecureTokenProvider("YOUR-SECRET-HERE", user),
+			endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
+	  }
+	: {
+			type: "local",
+			tokenProvider: new InsecureTokenProvider("fooBar", user),
+			endpoint: "http://localhost:7070",
+	  };
+```
+
+We use the `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
 making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and
 userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret
 to generate and sign the token such that the service will accept it.

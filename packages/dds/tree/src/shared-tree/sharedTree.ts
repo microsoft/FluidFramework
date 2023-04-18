@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -24,6 +25,7 @@ import {
 	AnchorSetRootEvents,
 	symbolFromKey,
 	GlobalFieldKey,
+	GraphCommit,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -45,9 +47,12 @@ import {
 	IdentifierIndex,
 	EditableTree,
 	Identifier,
+	SchemaAware,
+	ModularChangeset,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, TransactionResult } from "../util";
+import { brand, fail, TransactionResult } from "../util";
+import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -163,6 +168,12 @@ export interface ISharedTreeView extends AnchorLocator {
 	fork(): ISharedTreeFork;
 
 	/**
+	 * Apply all the new changes on the given view to this view.
+	 * @param view - a view which was created by a call to `fork()`. It is not modified by this operation.
+	 */
+	merge(view: ISharedTreeFork): void;
+
+	/**
 	 * Events about this view.
 	 */
 	readonly events: ISubscribable<ViewEvents>;
@@ -176,6 +187,36 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * A map of nodes that have been recorded by the identifier index.
 	 */
 	readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+
+	/**
+	 * Takes in a tree and returns a view of it that conforms to the view schema.
+	 * The returned view referees to and can edit the provided one: it is not a fork of it.
+	 * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
+	 *
+	 * If the tree is uninitialized (has no nodes or schema at all),
+	 * it is initialized to the config's initial tree and the provided schema are stored.
+	 * This is done even if `AllowedUpdateType.None`.
+	 *
+	 * @remarks
+	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
+	 * Other approach tend to have leave easy to make mistakes.
+	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
+	 * or call it unconditionally leaving an app that can only create new documents.
+	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
+	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
+	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
+	 * on the create code-path (for example how a schematized factory might do it),
+	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
+	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
+	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+	 *
+	 * TODO:
+	 * - Implement schema-aware API for return type.
+	 * - Support adapters for handling out of schema data.
+	 */
+	schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView;
 }
 
 /**
@@ -184,24 +225,10 @@ export interface ISharedTreeView extends AnchorLocator {
  */
 export interface ISharedTreeFork extends ISharedTreeView {
 	/**
-	 * Rebase the changes that have been applied to this view over all the changes in the base view that have
-	 * occurred since this view last pulled (or was forked).
+	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
+	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
 	 */
-	pull(): void;
-
-	/**
-	 * Apply all the changes on this view to the base view from which it was forked.
-	 * If the base view has new changes since this view last pulled (or was forked),
-	 * then this view's changes will be rebased over those first.
-	 * After the merge completes, this view may no longer be forked or mutated.
-	 */
-	merge(): void;
-
-	/**
-	 * Whether or not this view has been merged into its base view via `merge()`.
-	 * If it has, then it may no longer be forked or mutated.
-	 */
-	isMerged(): boolean;
+	rebaseOnto(view: ISharedTreeView): void;
 }
 
 /**
@@ -232,7 +259,7 @@ export const identifierKeySymbol = symbolFromKey(identifierKey);
  *
  * TODO: detail compatibility requirements.
  */
-class SharedTree
+export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
@@ -287,6 +314,12 @@ class SharedTree
 		});
 	}
 
+	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView {
+		return schematizeView(this, config);
+	}
+
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);
 	}
@@ -313,6 +346,14 @@ class SharedTree
 			context,
 			this.identifiedNodes.clone(context),
 		);
+	}
+
+	public merge(view: ISharedTreeFork): void {
+		this.mergeBranch(getForkBranch(view));
+	}
+
+	public override getLocalBranchHead(): GraphCommit<ModularChangeset> {
+		return super.getLocalBranchHead();
 	}
 
 	/**
@@ -377,18 +418,18 @@ export class SharedTreeFactory implements IChannelFactory {
 	}
 }
 
-class SharedTreeFork implements ISharedTreeFork {
+export class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
 
 	public constructor(
-		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		public readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly context: EditableTreeContext,
 		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		branch.on("onChange", (change) => {
+		branch.on("change", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
 			this.identifiedNodes.scanIdentifiers(this.context);
@@ -411,12 +452,14 @@ class SharedTreeFork implements ISharedTreeFork {
 		inProgress: () => this.branch.isTransacting(),
 	};
 
-	public locate(anchor: Anchor): AnchorNode | undefined {
-		return this.forest.anchors.locate(anchor);
+	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView {
+		return schematizeView(this, config);
 	}
 
-	public pull(): void {
-		this.branch.pull();
+	public locate(anchor: Anchor): AnchorNode | undefined {
+		return this.forest.anchors.locate(anchor);
 	}
 
 	public fork(): ISharedTreeFork {
@@ -435,12 +478,12 @@ class SharedTreeFork implements ISharedTreeFork {
 		);
 	}
 
-	public merge(): void {
-		this.branch.merge();
+	public rebaseOnto(view: ISharedTreeView): void {
+		this.branch.rebaseOnto(getHeadCommit(view));
 	}
 
-	public isMerged(): boolean {
-		return this.branch.isMerged();
+	public merge(view: ISharedTreeFork): void {
+		this.branch.merge(getForkBranch(view));
 	}
 
 	public get root(): UnwrappedEditableField {
@@ -471,3 +514,27 @@ export function runSynchronous(
 		? view.transaction.abort()
 		: view.transaction.commit();
 }
+
+// #region Extraction functions
+// The following two functions assume the underlying classes/implementations of `ISharedTreeView` and `ISharedTreeFork`.
+// While `instanceof` checks are in general bad practice or code smell, these are justifiable because:
+// 1. `SharedTree` and `SharedTreeFork` are private and meant to be the only implementations of `ISharedTreeView` and `ISharedTreeFork`.
+// 2. The `ISharedTreeView` and `ISharedTreeFork` interfaces are not meant to specify input contracts, but exist solely to reduce the API provided by the underlying classes.
+//    It is never expected that a user would create their own object or class which satisfies `ISharedTreeView` or `ISharedTreeFork`.
+function getHeadCommit(view: ISharedTreeView): GraphCommit<DefaultChangeset> {
+	if (view instanceof SharedTree) {
+		return view.getLocalBranchHead();
+	} else if (view instanceof SharedTreeFork) {
+		return view.branch.getHead();
+	}
+
+	fail("Unsupported ISharedTreeView implementation");
+}
+
+function getForkBranch(
+	fork: ISharedTreeFork,
+): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+	assert(fork instanceof SharedTreeFork, "Unsupported ISharedTreeFork implementation");
+	return fork.branch;
+}
+// #endregion Extraction functions

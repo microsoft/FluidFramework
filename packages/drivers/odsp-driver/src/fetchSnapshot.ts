@@ -6,7 +6,8 @@
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
+import { assert, fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { getW3CData } from "@fluidframework/driver-base";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { isFluidError, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
@@ -384,67 +385,6 @@ async function fetchLatestSnapshotCore(
 			const snapshot = parsedSnapshotContents.content;
 			const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
 
-			// From: https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming
-			// fetchStart: immediately before the browser starts to fetch the resource.
-			// requestStart: immediately before the browser starts requesting the resource from the server
-			// responseStart: immediately after the browser receives the first byte of the response from the server.
-			// responseEnd: immediately after the browser receives the last byte of the resource
-			//              or immediately before the transport connection is closed, whichever comes first.
-			// secureConnectionStart: immediately before the browser starts the handshake process to secure the
-			//              current connection. If a secure connection is not used, this property returns zero.
-			// startTime: Time when the resource fetch started. This value is equivalent to fetchStart.
-			// domainLookupStart: immediately before the browser starts the domain name lookup for the resource.
-			// domainLookupEnd: immediately after the browser finishes the domain name lookup for the resource.
-			// redirectStart: start time of the fetch which that initiates the redirect.
-			// redirectEnd: immediately after receiving the last byte of the response of the last redirect.
-			let dnsLookupTime: number | undefined; // domainLookupEnd - domainLookupStart
-			let redirectTime: number | undefined; // redirectEnd - redirectStart
-			let tcpHandshakeTime: number | undefined; // connectEnd  - connectStart
-			let secureConnectionTime: number | undefined; // connectEnd  - secureConnectionStart
-			let responseNetworkTime: number | undefined; // responsEnd - responseStart
-			let fetchStartToResponseEndTime: number | undefined; // responseEnd  - fetchStart
-			let reqStartToResponseEndTime: number | undefined; // responseEnd - requestStart
-			let networkTime: number | undefined; // responseEnd - startTime
-			const spReqDuration = odspResponse.headers.get("sprequestduration");
-
-			// getEntriesByType is only available in browser performance object
-			const resources1 = performance.getEntriesByType?.("resource") ?? [];
-			// Usually the latest fetch call is to the end of resources, so we start from the end.
-			for (let i = resources1.length - 1; i > 0; i--) {
-				const indResTime = resources1[i] as PerformanceResourceTiming;
-				const resource_name = indResTime.name.toString();
-				const resource_initiatortype = indResTime.initiatorType;
-				if (
-					resource_initiatortype.localeCompare("fetch") === 0 &&
-					resource_name.localeCompare(response.requestUrl) === 0
-				) {
-					redirectTime = indResTime.redirectEnd - indResTime.redirectStart;
-					dnsLookupTime = indResTime.domainLookupEnd - indResTime.domainLookupStart;
-					tcpHandshakeTime = indResTime.connectEnd - indResTime.connectStart;
-					secureConnectionTime =
-						indResTime.secureConnectionStart > 0
-							? indResTime.connectEnd - indResTime.secureConnectionStart
-							: undefined;
-					responseNetworkTime =
-						indResTime.responseStart > 0
-							? indResTime.responseEnd - indResTime.responseStart
-							: undefined;
-					fetchStartToResponseEndTime =
-						indResTime.fetchStart > 0
-							? indResTime.responseEnd - indResTime.fetchStart
-							: undefined;
-					reqStartToResponseEndTime =
-						indResTime.requestStart > 0
-							? indResTime.responseEnd - indResTime.requestStart
-							: undefined;
-					networkTime = fetchStartToResponseEndTime;
-					if (spReqDuration !== undefined && networkTime !== undefined) {
-						networkTime = networkTime - parseInt(spReqDuration, 10);
-					}
-					break;
-				}
-			}
-
 			// There are some scenarios in ODSP where we cannot cache, trees/latest will explicitly tell us when we
 			// cannot cache using an HTTP response header.
 			const canCache =
@@ -493,26 +433,6 @@ async function fetchLatestSnapshotCore(
 				ops: snapshot.ops?.length ?? 0,
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
 				headers: Object.keys(response.requestHeaders).length !== 0 ? true : undefined,
-				// Interval between the first fetch until the last byte of the last redirect.
-				redirectTime,
-				// Interval between start and finish of the domain name lookup for the resource.
-				dnsLookupTime,
-				// Interval to receive all (first to last) bytes form the server.
-				responseNetworkTime,
-				// Time to establish the connection to the server to retrieve the resource.
-				tcpHandshakeTime,
-				// Time from the end of the connection until the inital handshake process to secure the connection.
-				secureConnectionTime,
-				// Interval between the initial fetch until the last byte is received.
-				// Likely same as fetchTime + receiveContentTime.
-				fetchStartToResponseEndTime,
-				// reqStartToResponseEndTime = fetchStartToResponseEndTime - <initial TCP handshake>
-				// Interval between starting the request for the resource until receiving the last byte.
-				reqStartToResponseEndTime,
-				// networkTime = fetchStartToResponseEndTime - sprequestduration
-				// Interval between starting the request for the resource until receiving the last byte but
-				// excluding the snaphot request duration indicated on the snapshot response header.
-				networkTime,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers
@@ -524,6 +444,7 @@ async function fetchLatestSnapshotCore(
 				// This time likely is very closely correlated with networkTime, i.e. time it takes to receive
 				// actual content (starting measuring from first bite / end of response header)
 				receiveContentTime,
+				...getW3CData(response.requestUrl, "fetch"),
 				// Sharing link telemetry regarding sharing link redeem status and performance. Ex: FRL; dur=100,
 				// Azure Fluid Relay service; desc=S, FRP; desc=False. Here, FRL is the duration taken for redeem,
 				// Azure Fluid Relay service is the redeem status (S means success), and FRP is a flag to indicate

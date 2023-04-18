@@ -5,9 +5,9 @@
 import { strict as assert } from "assert";
 import { AsyncReducer } from "@fluid-internal/stochastic-test-utils";
 import { singleTextCursor } from "../../../feature-libraries";
-import { brand, fail, TransactionResult } from "../../../util";
+import { brand, fail } from "../../../util";
 import { ITestTreeProvider, toJsonableTree } from "../../utils";
-import { ISharedTree, runSynchronous } from "../../../shared-tree";
+import { ISharedTree } from "../../../shared-tree";
 import { FuzzChange, FuzzTestState, Operation } from "./fuzzEditGenerators";
 
 export const fuzzReducer: {
@@ -16,7 +16,7 @@ export const fuzzReducer: {
 	edit: async (state, operation) => {
 		const { index, contents } = operation;
 		const tree = state.testTreeProvider.trees[index];
-		applyFuzzChange(tree, contents, TransactionResult.Commit);
+		applyFuzzChange(tree, contents);
 		return state;
 	},
 	synchronize: async (state) => {
@@ -37,38 +37,40 @@ export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 	}
 }
 
-function applyFuzzChange(
-	tree: ISharedTree,
-	contents: FuzzChange,
-	transactionResult: TransactionResult,
-): void {
+function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
 	switch (contents.fuzzType) {
-		case "insert":
-			runSynchronous(tree, () => {
-				const field = tree.editor.sequenceField(contents.parent, contents.field);
-				field.insert(
-					contents.index,
-					singleTextCursor({ type: brand("Test"), value: contents.value }),
-				);
-				return transactionResult;
-			});
+		case "insert": {
+			const field = tree.editor.sequenceField(contents.parent, contents.field);
+			field.insert(
+				contents.index,
+				singleTextCursor({ type: brand("Test"), value: contents.value }),
+			);
 			break;
-		case "delete":
-			runSynchronous(tree, () => {
-				const field = tree.editor.sequenceField(
-					contents.firstNode?.parent,
-					contents.firstNode?.parentField,
-				);
-				field.delete(contents.firstNode?.parentIndex, contents.count);
-				return transactionResult;
-			});
+		}
+		case "delete": {
+			const field = tree.editor.sequenceField(
+				contents.firstNode?.parent,
+				contents.firstNode?.parentField,
+			);
+			field.delete(contents.firstNode?.parentIndex, contents.count);
 			break;
-		case "setPayload":
-			runSynchronous(tree, () => {
-				tree.editor.setValue(contents.path, contents.value);
-				return transactionResult;
-			});
+		}
+		case "setPayload": {
+			tree.editor.setValue(contents.path, contents.value);
 			break;
+		}
+		case "transactionStart": {
+			tree.transaction.start();
+			break;
+		}
+		case "transactionCommit": {
+			tree.transaction.commit();
+			break;
+		}
+		case "transactionAbort": {
+			tree.transaction.abort();
+			break;
+		}
 		default:
 			fail("Invalid edit.");
 	}

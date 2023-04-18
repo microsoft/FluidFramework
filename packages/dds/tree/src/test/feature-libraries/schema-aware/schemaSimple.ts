@@ -39,24 +39,18 @@ export const appSchemaData = SchemaAware.typedSchemaData(
 // Schema aware types
 export type Number = SchemaAware.NodeDataFor<
 	typeof appSchemaData,
-	SchemaAware.ApiMode.Normalized,
+	SchemaAware.ApiMode.Editable,
 	typeof numberSchema
 >;
 
 export type Point = SchemaAware.NodeDataFor<
 	typeof appSchemaData,
-	SchemaAware.ApiMode.Normalized,
+	SchemaAware.ApiMode.Editable,
 	typeof pointSchema
 >;
 
 // Example Use
 {
-	const point: Point = {
-		[typeNameSymbol]: pointSchema.name,
-		x: 1,
-		y: 2,
-	};
-
 	function dotProduct(a: Point, b: Point): number {
 		return a.x * b.x + a.y * b.y;
 	}

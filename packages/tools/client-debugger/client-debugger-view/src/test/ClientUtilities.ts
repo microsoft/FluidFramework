@@ -42,7 +42,7 @@ export interface ContainerInfo {
 	containerNickname?: string;
 }
 
-function initializeTinyliciousClient(logger: ITelemetryBaseLogger): TinyliciousClient {
+function initializeTinyliciousClient(logger?: ITelemetryBaseLogger): TinyliciousClient {
 	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
 	return new TinyliciousClient({
 		logger,
@@ -53,15 +53,16 @@ function initializeTinyliciousClient(logger: ITelemetryBaseLogger): TinyliciousC
  * Creates a new Fluid Container from the provided client and container schema.
  *
  * @param containerSchema - Schema with which to create the container.
- * @param setContentsPreAttach - Optional callback for setting initial content state on the
+ * @param setContentsPreAttach - (optional) Callback for setting initial content state on the
  * container *before* it is attached.
+ * @param logger - (optional) Telemetry logger to provide to client initialization.
  * @param containerNickname - See {@link ContainerInfo.containerNickname}.
  *
  * @throws If container creation or attaching fails for any reason.
  */
 export async function createFluidContainer(
 	containerSchema: ContainerSchema,
-	logger: ITelemetryBaseLogger,
+	logger?: ITelemetryBaseLogger,
 	setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
 	containerNickname?: string,
 ): Promise<ContainerInfo> {
@@ -96,6 +97,7 @@ export async function createFluidContainer(
 		console.error(`Encountered error attaching Fluid container: "${error}".`);
 		throw error;
 	}
+
 	console.log("Fluid container attached!");
 
 	return {
@@ -110,6 +112,7 @@ export async function createFluidContainer(
  *
  * @param containerId - The unique ID of the existing Fluid Container being loaded.
  * @param containerSchema - Schema with which to load the Container.
+ * @param logger - (optional) Telemetry logger to provide to client initialization.
  * @param containerNickname - See {@link ContainerInfo.containerNickname}.
  *
  * @throws If no container exists with the specified ID, or if loading / connecting fails for any reason.
@@ -117,7 +120,7 @@ export async function createFluidContainer(
 export async function loadExistingFluidContainer(
 	containerId: string,
 	containerSchema: ContainerSchema,
-	logger: ITelemetryBaseLogger,
+	logger?: ITelemetryBaseLogger,
 	containerNickname?: string,
 ): Promise<ContainerInfo> {
 	// Initialize Tinylicious client

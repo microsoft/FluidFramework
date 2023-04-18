@@ -5,7 +5,7 @@
 
 import {
 	devtoolsMessageSource,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	isDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 
@@ -39,7 +39,7 @@ chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
 	 * Relay messages if they conform to our expected format.
 	 */
 	function relayMessageFromPageToBackground(
-		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void {
 		const message = event.data;
 
@@ -59,7 +59,7 @@ chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
 	globalThis.addEventListener("message", relayMessageFromPageToBackground);
 
 	// Relay messages from the Background Worker to the inspected window.
-	backgroundPort.onMessage.addListener((message: Partial<ISourcedDebuggerMessage>) => {
+	backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
 		if (isDebuggerMessage(message) && message.source === extensionMessageSource) {

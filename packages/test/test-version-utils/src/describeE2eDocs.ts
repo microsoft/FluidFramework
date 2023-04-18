@@ -4,6 +4,7 @@
  */
 
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
@@ -33,11 +34,13 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 		testTitle: "10Mb Map",
 		documentType: "LargeDocumentMap",
 		minSampleCount: 2,
+		supportedEndpoints: ["local", "odsp"],
 	},
 	{
 		testTitle: "5Mb Map",
 		documentType: "MediumDocumentMap",
 		minSampleCount: 2,
+		supportedEndpoints: ["local", "odsp"],
 	},
 	{
 		testTitle: "250 DataStores - 750 DDSs",
@@ -57,6 +60,7 @@ export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks
 export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType | string | undefined;
+	supportedEndpoints?: TestDriverTypes[];
 	/**
 	 * Minimum number of iterations when running performance tests against the document.
 	 */

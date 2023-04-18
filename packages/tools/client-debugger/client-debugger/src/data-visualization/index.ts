@@ -10,20 +10,22 @@ export {
 	SharedObjectVisualizers,
 	DataVisualizerEvents,
 	DataVisualizerGraph,
+	visualizeChildData,
 	VisualizerNode,
 } from "./DataVisualization";
 export {
 	defaultVisualizers,
 	visualizeSharedCell,
 	visualizeSharedCounter,
+	visualizeSharedDirectory,
 	visualizeSharedMap,
+	visualizeSharedMatrix,
 	visualizeSharedString,
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers";
 export {
 	createHandleNode,
 	FluidHandleNode,
-	FluidObjectId,
 	FluidObjectNode,
 	FluidObjectNodeBase,
 	FluidObjectTreeNode,

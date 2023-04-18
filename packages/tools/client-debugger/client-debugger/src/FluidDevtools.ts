@@ -8,15 +8,20 @@ import { UsageError } from "@fluidframework/container-utils";
 import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
 import { IContainerDevtools } from "./IContainerDevtools";
 import {
-	ContainerListMessage,
+	ContainerList,
+	DevtoolsFeatures,
+	GetContainerList,
+	GetDevtoolsFeatures,
 	handleIncomingWindowMessage,
-	ISourcedDebuggerMessage,
 	InboundHandlers,
+	ISourcedDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
 import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
 import { ContainerMetadata } from "./ContainerMetadata";
+import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
+import { DevtoolsLogger } from "./DevtoolsLogger";
 
 // TODOs:
 // - Devtools disposal
@@ -57,6 +62,18 @@ export function getContainerAlreadyRegisteredErrorText(containerId: string): str
  */
 export interface FluidDevtoolsProps {
 	/**
+	 * (optional) telemetry logger associated with the Fluid runtime.
+	 *
+	 * @remarks
+	 *
+	 * Note: {@link FluidDevtools} does not register this logger with the Fluid runtime; that must be done separately.
+	 *
+	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
+	 * external listeners.
+	 */
+	logger?: DevtoolsLogger;
+
+	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
 	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainerDevtools}.
@@ -74,14 +91,18 @@ export interface FluidDevtoolsProps {
  *
  * **Messages it listens for:**
  *
- * - {@link GetContainerListMessage}: When received, {@link ContainerListMessage} will be posted in response.
+ * - {@link GetDevtoolsFeatures.Message}: When received, {@link DevtoolsFeatures.Message} will be posted in response.
+ *
+ * - {@link GetContainerList.Message}: When received, {@link ContainerList.Message} will be posted in response.
  *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
- * - {@link ContainerListMessage}: Posted whenever the list of registered
- * containers changes, or when requested (via {@link GetContainerListMessage}).
+ * - {@link DevtoolsFeatures.Message}: Posted only when requested via {@link GetDevtoolsFeatures.Message}.
+ *
+ * - {@link ContainerList.Message}: Posted whenever the list of registered Containers changes, or when requested
+ * (via {@link GetContainerList.Message}).
  *
  * TODO: Document others as they are added.
  *
@@ -91,6 +112,11 @@ export class FluidDevtools
 	extends TypedEventEmitter<FluidDevtoolsEvents>
 	implements IFluidDevtools
 {
+	/**
+	 * {@inheritDoc IFluidDevtools.logger}
+	 */
+	public readonly logger: DevtoolsLogger | undefined;
+
 	/**
 	 * Stores Container-level devtools instances registered with this object.
 	 * Maps from Container IDs to the corresponding devtools instance.
@@ -108,7 +134,11 @@ export class FluidDevtools
 	 * Handlers for inbound messages specific to FluidDevTools.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		["GET_CONTAINER_LIST"]: () => {
+		[GetDevtoolsFeatures.MessageType]: () => {
+			this.postSupportedFeatures();
+			return true;
+		},
+		[GetContainerList.MessageType]: () => {
 			this.postContainerList();
 			return true;
 		},
@@ -118,7 +148,7 @@ export class FluidDevtools
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		handleIncomingWindowMessage(
 			event,
@@ -128,7 +158,21 @@ export class FluidDevtools
 	};
 
 	/**
-	 * Posts a {@link ContainerListMessage} to the window (globalThis).
+	 * Posts {@link DevtoolsFeatures.Message} to the window (globalThis) with the set of features supported by
+	 * this instance.
+	 */
+	private readonly postSupportedFeatures = (): void => {
+		const supportedFeatures = this.getSupportedFeatures();
+		postMessagesToWindow(
+			devtoolsMessageLoggingOptions,
+			DevtoolsFeatures.createMessage({
+				features: supportedFeatures,
+			}),
+		);
+	};
+
+	/**
+	 * Posts a {@link ContainerList.Message} to the window (globalThis).
 	 */
 	private readonly postContainerList = (): void => {
 		const containers: ContainerMetadata[] = this.getAllContainerDevtools().map(
@@ -138,12 +182,12 @@ export class FluidDevtools
 			}),
 		);
 
-		postMessagesToWindow<ContainerListMessage>(devtoolsMessageLoggingOptions, {
-			type: "CONTAINER_LIST",
-			data: {
+		postMessagesToWindow(
+			devtoolsMessageLoggingOptions,
+			ContainerList.createMessage({
 				containers,
-			},
-		});
+			}),
+		);
 	};
 
 	// #endregion
@@ -161,6 +205,8 @@ export class FluidDevtools
 				);
 			}
 		}
+
+		this.logger = props?.logger;
 
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
@@ -220,6 +266,15 @@ export class FluidDevtools
 		}
 
 		return this.containers.get(containerId);
+	}
+
+	/**
+	 * Gets the set of features supported by this instance.
+	 */
+	private getSupportedFeatures(): DevtoolsFeatureFlags {
+		return {
+			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+		};
 	}
 
 	/**

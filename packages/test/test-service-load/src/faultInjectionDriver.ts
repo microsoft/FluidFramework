@@ -150,7 +150,6 @@ export class FaultInjectionDocumentDeltaConnection
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
 	implements IDocumentDeltaConnection, IDisposable
 {
-	private _disposed: boolean = false;
 	constructor(private readonly internal: IDocumentDeltaConnection, private online: boolean) {
 		super();
 		this.on("newListener", (event) => this.forwardEvent(event));
@@ -173,7 +172,7 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public get disposed() {
-		return this._disposed;
+		return this.internal.disposed;
 	}
 
 	public get clientId() {
@@ -237,13 +236,15 @@ export class FaultInjectionDocumentDeltaConnection
 	 * Disconnects the given delta connection
 	 */
 	public dispose(): void {
-		this._disposed = true;
 		this.events.forEach((listener, event) => this.internal.off(event, listener));
 		this.internal.dispose();
 	}
 
 	public injectNack(docId: string, canRetry: boolean | undefined) {
-		assert(!this.disposed, "cannot inject nack into closed delta connection");
+		// Cannot inject nack into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		const nack: Partial<INack> = {
 			content: {
 				code: canRetry === true ? 500 : 403,
@@ -255,7 +256,10 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public injectError(canRetry: boolean | undefined) {
-		assert(!this.disposed, "cannot inject error into closed delta connection");
+		// Cannot inject error into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		// https://nodejs.org/api/events.html#events_error_events
 		assert(
 			this.listenerCount("error") > 0,
@@ -265,7 +269,10 @@ export class FaultInjectionDocumentDeltaConnection
 	}
 
 	public injectDisconnect() {
-		assert(!this.disposed, "cannot inject disconnect into closed delta connection");
+		// Cannot inject disconnect into closed delta connection. So don't do anything.
+		if (this.disposed) {
+			return;
+		}
 		this.emit("disconnect", "FaultInjectionDisconnect");
 	}
 

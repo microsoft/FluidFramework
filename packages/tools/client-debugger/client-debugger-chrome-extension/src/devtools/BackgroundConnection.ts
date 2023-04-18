@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-	IDebuggerMessage,
-	ISourcedDebuggerMessage,
+	IDevtoolsMessage,
+	ISourcedDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
 	isDebuggerMessage,
@@ -75,7 +75,7 @@ export class BackgroundConnection
 		/**
 		 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
 		 * method will get this value written to their 'source' property.
-		 * @see {@link @fluid-tools/client-debugger#ISourcedDebuggerMessage}
+		 * @see {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage}
 		 */
 		private readonly messageSource: string,
 	) {
@@ -114,8 +114,8 @@ export class BackgroundConnection
 	 *
 	 * @remarks These messages are mostly for the debugger, but some are for the Background Script itself (for initialization).
 	 */
-	public postMessage(message: IDebuggerMessage): void {
-		const sourcedMessage: ISourcedDebuggerMessage = {
+	public postMessage(message: IDevtoolsMessage): void {
+		const sourcedMessage: ISourcedDevtoolsMessage = {
 			...message,
 			source: this.messageSource,
 		};
@@ -128,10 +128,10 @@ export class BackgroundConnection
 
 	/**
 	 * Handler for incoming messages from {@link backgroundServiceConnection}.
-	 * Messages are forwarded on to subscribers for valid {@link ISourcedDebuggerMessage}s from the expected source.
+	 * Messages are forwarded on to subscribers for valid {@link ISourcedDevtoolsMessage}s from the expected source.
 	 */
 	private readonly onBackgroundServiceMessage = (
-		message: Partial<ISourcedDebuggerMessage>,
+		message: Partial<ISourcedDevtoolsMessage>,
 	): boolean => {
 		if (!isDebuggerMessage(message)) {
 			return false;

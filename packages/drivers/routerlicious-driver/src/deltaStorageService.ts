@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { getW3CData } from "@fluidframework/driver-base";
 import {
 	IDeltaStorageService,
 	IDocumentDeltaStorageService,
@@ -13,8 +14,8 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { RestWrapper } from "@fluidframework/server-services-client";
 import { DocumentStorageService } from "./documentStorageService";
+import { RestWrapper } from "./restWrapperBase";
 
 const MaxBatchDeltas = 2000; // Maximum number of ops we can fetch at a time
 
@@ -120,9 +121,16 @@ export class DeltaStorageService implements IDeltaStorageService {
 					to,
 				});
 				event.end({
-					count: response.length,
+					length: response.content.length,
+					details: JSON.stringify({
+						firstOpSeqNumber: response.content[0]?.sequenceNumber,
+						lastOpSeqNumber:
+							response.content[response.content.length - 1]?.sequenceNumber,
+					}),
+					...response.propsToLog,
+					...getW3CData(response.requestUrl, "xmlhttprequest"),
 				});
-				return response;
+				return response.content;
 			},
 		);
 

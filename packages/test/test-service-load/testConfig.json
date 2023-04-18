@@ -27,13 +27,20 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Container.summarizeProtocolTree2": [true, false]
+						"Fluid.Container.summarizeProtocolTree2": [true, false],
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
 					}
 				},
 				"odsp-odsp-df": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
-						"Fluid.Container.summarizeProtocolTree2": [true, false]
+						"Fluid.Container.summarizeProtocolTree2": [true, false],
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
+					}
+				},
+				"tinylicious": {
+					"configurations": {
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
 					}
 				}
 			},
@@ -59,6 +66,13 @@
 				"opSizeinBytes": 214800,
 				"largeOpRate": 2000,
 				"numClients": 12
+			},
+			"optionOverrides": {
+				"routerlicious": {
+					"configurations": {
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
+					}
+				}
 			}
 		},
 		"full": {
@@ -85,7 +99,8 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Container.summarizeProtocolTree2": [true, false]
+						"Fluid.Container.summarizeProtocolTree2": [true, false],
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
 					}
 				}
 			}

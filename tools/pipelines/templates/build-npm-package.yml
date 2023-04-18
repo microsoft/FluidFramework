@@ -97,6 +97,12 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+  default: "^"
+
 # If true, then this pipeline will check and format package.json files according to prettier settings.
 - name: usesPrettier
   type: boolean
@@ -183,6 +189,7 @@ stages:
 
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
+                interdependencyRange='${{ parameters.interdependencyRange }}'
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -239,25 +246,9 @@ stages:
             version: 16.x
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-          - task: Cache@2
-            displayName: Cache pnpm store
-            inputs:
-              # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
-              # in the cache key
-              key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
-              path: ${{ variables.pnpmStorePath }}
-              restoreKeys: |
-                pnpm-store | "$(Agent.OS)"
-
-          - task: Bash@3
-            displayName: Install and configure pnpm
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                corepack enable
-                pnpm -v
-                pnpm config set store-dir $(pnpmStorePath)
+          - template: include-install-pnpm.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
 
         - task: Bash@3
           displayName: Install dependencies
@@ -267,14 +258,19 @@ stages:
             script: |
               ${{ parameters.packageManagerInstallCommand }}
 
-        # Set version
-        - template: include-set-package-version.yml
-          parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-            tagName: ${{ parameters.tagName }}
-            usesPrettier: ${{ parameters.usesPrettier }}
+        # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
+        # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
+        # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
+        # true, we use that to determine whether to set versions.
+        - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+          - template: include-set-package-version.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+              tagName: ${{ parameters.tagName }}
+              interdependencyRange: ${{ parameters.interdependencyRange }}
+              usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:

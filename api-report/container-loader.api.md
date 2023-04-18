@@ -23,6 +23,7 @@ import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
+import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
@@ -154,6 +155,9 @@ export class Loader implements IHostLoader {
 
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
+
+// @public
+export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
