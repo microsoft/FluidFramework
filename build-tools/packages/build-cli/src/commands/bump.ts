@@ -31,9 +31,9 @@ import { isReleaseGroup } from "../releaseGroups";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static summary =
-		"Bumps the version of a release group or package to the next minor, major, or patch version.";
+		"Bumps the version of a release group or package to the next minor, major, or patch version, or to a specific version, with control over the interdependency version ranges.";
 
-	static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release.`;
+	static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release, for example when moving a package from one release group to another.`;
 
 	static args = {
 		package_or_release_group: packageOrReleaseGroupArg,
@@ -51,16 +51,16 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				"An exact string to use as the version. The string must be a valid semver string.",
 			exclusive: ["bumpType", "scheme"],
 		}),
-		exactDepType: Flags.string({
-			description:
-				"When using the exact flag, controls the type of dependency that is used between packages within the release group.",
-			options: ["^", "~", ""],
-			default: "^",
-		}),
 		scheme: versionSchemeFlag({
 			description: "Override the version scheme used by the release group or package.",
 			required: false,
 			exclusive: ["exact"],
+		}),
+		exactDepType: Flags.string({
+			description:
+				'Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
+			options: ["^", "~", ""],
+			default: "^",
 		}),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
@@ -83,6 +83,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				"By default, the bump command will run npm install in any affected packages and commit the results to a new branch. You can skip these steps using the --no-commit and --no-install flags.",
 			command: "<%= config.bin %> <%= command.id %> server -t major --no-commit --no-install",
 		},
+		{
+			description:
+				"You can control how interdependencies between packages in a release group are expressed using the --exactDepType flag.",
+			command:
+				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --exactDepType "~"',
+		},
 	];
 
 	/**
@@ -103,6 +109,10 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error("ERROR: No dependency provided.");
 		}
 
+		if (bumpType === undefined && flags.exact === undefined) {
+			this.error(`One of the following must be provided: --bumpType, --exact`);
+		}
+
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
@@ -111,7 +121,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const updatedPackages: Package[] = [];
 
 		if (bumpType === undefined && exactVersion === null) {
-			this.error(`Either --bumpType or --exact must be provided.`);
+			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
 		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
@@ -179,7 +189,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
-		this.log(`Exact dependency type: ${exactDepType}`);
+		this.log(`Exact dependency type: ${exactDepType === "" ? "exact" : exactDepType}`);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
@@ -200,14 +210,14 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			}
 		}
 
-		const logs = await bumpReleaseGroup(
+		await bumpReleaseGroup(
 			context,
 			bumpArg,
 			packageOrReleaseGroup,
 			scheme,
 			exactDepType,
+			this.logger,
 		);
-		this.verbose(logs);
 
 		if (shouldInstall) {
 			if (!(await FluidRepo.ensureInstalled(updatedPackages, false))) {

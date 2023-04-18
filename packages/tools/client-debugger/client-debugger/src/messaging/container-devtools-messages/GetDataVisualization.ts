@@ -4,7 +4,7 @@
  */
 
 import { HasContainerId, HasFluidObjectId } from "../../CommonInterfaces";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetDataVisualization.Message}.
@@ -13,7 +13,7 @@ import { IDebuggerMessage } from "../Messages";
  */
 export namespace GetDataVisualization {
 	/**
-	 * {@link GetDataVisualization.Message} {@link IDebuggerMessage."type"}.
+	 * {@link GetDataVisualization.Message} {@link IDevtoolsMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -33,9 +33,9 @@ export namespace GetDataVisualization {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

@@ -207,6 +207,7 @@ export class ModularChangeFamily
 		for (const [field, changesForField] of fieldChanges) {
 			let composedField: FieldChange;
 			if (changesForField.length === 1) {
+				// BUG: This field might be affected by cross-field effects, so we must recurse into it.
 				composedField = changesForField[0];
 			} else {
 				const { fieldKind, changesets } = this.normalizeFieldChanges(

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDebuggerMessage } from "@fluid-tools/client-debugger";
+import { ISourcedDevtoolsMessage } from "@fluid-tools/client-debugger";
 
 /**
- * {@link DevToolsInitMessage} {@link @fluid-tools/client-debugger#ISourcedDebuggerMessage."type"}
+ * {@link DevToolsInitMessage} {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage."type"}
  */
 export const devToolsInitMessageType = "initialize-devtools";
 
@@ -25,13 +25,13 @@ export interface DevToolsInitMessageData {
  *
  * Sent from Devtools Script to the Background Script to establish connection with tab (Content Script).
  */
-export interface DevToolsInitMessage extends ISourcedDebuggerMessage {
+export interface DevToolsInitMessage extends ISourcedDevtoolsMessage {
 	type: typeof devToolsInitMessageType;
 	data: DevToolsInitMessageData;
 }
 
 /**
- * {@link DevToolsInitAcknowledgement} {@link @fluid-tools/client-debugger#ISourcedDebuggerMessage."type"}
+ * {@link DevToolsInitAcknowledgement} {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage."type"}
  */
 export const devToolsInitAcknowledgementType = "acknowledge-initialize-devtools";
 
@@ -40,7 +40,7 @@ export const devToolsInitAcknowledgementType = "acknowledge-initialize-devtools"
  *
  * Sent from the Background Script to the Devtools Script to acknowledge the received {@link DevToolsInitMessage} was processed.
  */
-export interface DevToolsInitAcknowledgement extends ISourcedDebuggerMessage {
+export interface DevToolsInitAcknowledgement extends ISourcedDevtoolsMessage {
 	type: typeof devToolsInitAcknowledgementType;
 	data: undefined;
 }

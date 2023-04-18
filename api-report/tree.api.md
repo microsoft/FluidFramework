@@ -772,8 +772,7 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 
 // @alpha
 export interface ISharedTreeFork extends ISharedTreeView {
-    merge(): void;
-    pull(): void;
+    rebaseOnto(view: ISharedTreeView): void;
 }
 
 // @alpha
@@ -784,6 +783,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): ISharedTreeFork;
     readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+    merge(view: ISharedTreeFork): void;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;

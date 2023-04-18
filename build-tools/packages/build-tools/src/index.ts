@@ -14,7 +14,6 @@ export { Context } from "./bumpVersion/context";
 export { createReleaseBump } from "./bumpVersion/createReleaseBump";
 export { GitRepo } from "./bumpVersion/gitRepo";
 export { releaseVersion } from "./bumpVersion/releaseVersion";
-export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
 export { FluidRepo, VersionDetails } from "./common/fluidRepo";
 export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
@@ -23,13 +22,6 @@ export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from 
 export { Package, PackageJson, updatePackageJsonFile } from "./common/npmPackage";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
-export {
-	execAsync,
-	execWithErrorAsync,
-	readJsonAsync,
-	readFileAsync,
-	writeFileAsync,
-} from "./common/utils";
 export { Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";
 export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/lib";

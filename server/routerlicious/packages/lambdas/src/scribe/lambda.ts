@@ -110,6 +110,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private protocolHead: number,
 		messages: ISequencedDocumentMessage[],
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
+		private readonly transientTenants: Set<string>,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -347,7 +348,9 @@ export class ScribeLambda implements IPartitionLambda {
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
 					this.noActiveClients = true;
-					if (this.serviceConfiguration.scribe.generateServiceSummary) {
+					const isTransientTenant = this.transientTenants.has(this.tenantId);
+
+					if (this.serviceConfiguration.scribe.generateServiceSummary && !isTransientTenant) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
 						const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);
 						try {
