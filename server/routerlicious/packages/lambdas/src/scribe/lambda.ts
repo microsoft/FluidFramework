@@ -110,7 +110,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private protocolHead: number,
 		messages: ISequencedDocumentMessage[],
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
-        private readonly transientTenants: Set<string>,
+    private readonly transientTenants: Set<string>,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -169,7 +169,7 @@ export class ScribeLambda implements IPartitionLambda {
 					continue;
 				}
 
-				const lastProtocolHandlerSequenceNumber =
+				const lastProtocolHandlerSequenceNumber: number =
 					this.pendingMessages.peekBack()?.sequenceNumber ??
 					this.protocolHandler.sequenceNumber;
 
@@ -179,11 +179,11 @@ export class ScribeLambda implements IPartitionLambda {
 				}
 
 				// Ensure protocol handler sequence numbers are monotonically increasing
-				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+				 
 				if (value.operation.sequenceNumber !== lastProtocolHandlerSequenceNumber + 1) {
 					// unexpected sequence number. if a pending message reader is available, ask for those ops
 					if (this.pendingMessageReader !== undefined) {
-						// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+						 
 						const from = lastProtocolHandlerSequenceNumber + 1;
 						const to = value.operation.sequenceNumber - 1;
 						const additionalPendingMessages =
@@ -348,7 +348,11 @@ export class ScribeLambda implements IPartitionLambda {
 						`${value.operation.minimumSequenceNumber} != ${value.operation.sequenceNumber}`,
 					);
 					this.noActiveClients = true;
-                    const isTransientTenant = this.transientTenants.has(this.tenantId);
+          const isTransientTenant = this.transientTenants.has(this.tenantId);
+
+					Lumberjack.info(`isTransientTenant: ${isTransientTenant}`, getLumberBaseProperties(this.documentId, this.tenantId));
+
+					Lumberjack.info(`Transient tenants ${JSON.stringify(this.transientTenants)}`, getLumberBaseProperties(this.documentId, this.tenantId));
 
 					if (this.serviceConfiguration.scribe.generateServiceSummary && !isTransientTenant) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;

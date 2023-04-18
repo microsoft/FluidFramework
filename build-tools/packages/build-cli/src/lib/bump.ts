@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import path from "node:path";
+import execa from "execa";
 import { writeFile, readJson } from "fs-extra";
 import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import * as semver from "semver";
@@ -13,7 +14,6 @@ import {
 	Logger,
 	Package,
 	VersionBag,
-	exec,
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import {
@@ -172,24 +172,43 @@ export async function bumpReleaseGroup(
 		: bumpType;
 
 	let name: string;
-	let cmd: string;
+	const cmds: [string, string[]][] = [];
 	let workingDir: string;
 
 	// Run npm version in each package to set its version in package.json. Also regenerates packageVersion.ts if needed.
 	if (releaseGroupOrPackage instanceof MonoRepo) {
 		workingDir = context.gitRepo.resolvedRoot;
 		name = releaseGroupOrPackage.kind;
-		cmd = `flub exec -g ${name} -- "npm version '${translatedVersion.version}' && npm run build:genver"`;
+		cmds.push(
+			[`flub`, [`exec`, "-g", name, "--", `"npm version ${translatedVersion.version}"`]],
+			[`npm`, ["run", "build:genver"]],
+		);
 	} else {
 		workingDir = releaseGroupOrPackage.directory;
 		name = releaseGroupOrPackage.name;
-		cmd = `npm version '${translatedVersion.version}'`;
+		cmds.push([`npm`, ["version", translatedVersion.version]]);
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
-			cmd += " && npm run build:genver";
+			cmds.push([`npm`, ["run", "build:genver"]]);
 		}
 	}
-	const results = await exec(cmd, workingDir, `Error bumping ${name}`);
-	log?.verbose(results);
+
+	for (const [cmd, args] of cmds) {
+		log?.verbose(`Running command: ${cmd} in ${workingDir}`);
+		try {
+			// TODO: The shell option should not need to be true. AB#4067
+			// eslint-disable-next-line no-await-in-loop
+			const results = await execa(cmd, args, {
+				cwd: workingDir,
+				stdio: "inherit",
+				shell: true,
+			});
+			if (results.all !== undefined) {
+				log?.verbose(results.all);
+			}
+		} catch (error: any) {
+			log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
+		}
+	}
 
 	if (releaseGroupOrPackage instanceof Package) {
 		// Return early; packages only need to be bumped using npm. The rest of the logic is only for release groups.

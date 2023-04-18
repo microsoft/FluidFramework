@@ -2,25 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Context, Logger, MonoRepo, Package, VersionDetails } from "@fluidframework/build-tools";
+import { ReleaseVersion, isPrereleaseVersion } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { strict as assert } from "assert";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
+import { readJsonSync } from "fs-extra";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
 import path from "path";
 import * as semver from "semver";
-
-import {
-	Context,
-	Logger,
-	MonoRepo,
-	Package,
-	VersionDetails,
-	readJsonAsync,
-} from "@fluidframework/build-tools";
-
-import { ReleaseVersion, isPrereleaseVersion } from "@fluid-tools/version-tools";
 
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
@@ -157,8 +149,7 @@ export async function npmCheckUpdates(
 		if (glob.endsWith("*")) {
 			for (const [pkgJsonPath, upgradedDeps] of Object.entries(result)) {
 				const jsonPath = path.join(repoPath, pkgJsonPath);
-				// eslint-disable-next-line no-await-in-loop
-				const { name } = await readJsonAsync(jsonPath);
+				const { name } = readJsonSync(jsonPath);
 				const pkg = context.fullPackageMap.get(name);
 				if (pkg === undefined) {
 					log?.warning(`Package not found in context: ${name}`);
@@ -176,8 +167,7 @@ export async function npmCheckUpdates(
 			}
 		} else {
 			const jsonPath = path.join(repoPath, glob, "package.json");
-			// eslint-disable-next-line no-await-in-loop
-			const { name } = await readJsonAsync(jsonPath);
+			const { name } = readJsonSync(jsonPath);
 			const pkg = context.fullPackageMap.get(name);
 			if (pkg === undefined) {
 				log?.warning(`Package not found in context: ${name}`);

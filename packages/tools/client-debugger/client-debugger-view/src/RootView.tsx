@@ -5,7 +5,6 @@
 import React from "react";
 
 import { IMessageRelay } from "@fluid-tools/client-debugger";
-
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
 
