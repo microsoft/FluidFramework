@@ -119,7 +119,7 @@ export class Interval implements ISerializableInterval {
     end: number;
     // (undocumented)
     getAdditionalPropertySets(): PropertySet[];
-    getIntervalId(): string | undefined;
+    getIntervalId(): string;
     // (undocumented)
     getProperties(): PropertySet;
     // @deprecated
