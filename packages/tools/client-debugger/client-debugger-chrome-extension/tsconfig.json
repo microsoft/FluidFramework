@@ -5,10 +5,11 @@
 		"outDir": "dist",
 		"composite": true,
 		"types": ["chrome", "jest", "node"],
-		"jsx": "react",
+		"jsx": "react-jsx",
 		"module": "es6",
 		"target": "es6",
 		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],
 }

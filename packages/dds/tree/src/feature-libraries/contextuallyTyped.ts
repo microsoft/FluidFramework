@@ -30,6 +30,7 @@ import {
 import { fieldKinds } from "./defaultFieldKinds";
 import { FieldKind, Multiplicity } from "./modular-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
+import { isPrimitive } from "./editable-tree";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -92,29 +93,6 @@ export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
 	}
 }
 
-export function allowsPrimitiveValueType(nodeValue: Value, schema: TreeSchema): boolean {
-	if (!isPrimitiveValue(nodeValue)) {
-		return false;
-	}
-	switch (schema.value) {
-		case ValueSchema.String:
-			return typeof nodeValue === "string";
-		case ValueSchema.Number:
-			return typeof nodeValue === "number";
-		case ValueSchema.Boolean:
-			return typeof nodeValue === "boolean";
-		default:
-			return false;
-	}
-}
-
-export function assertPrimitiveValueType(nodeValue: Value, schema: TreeSchema): void {
-	assert(
-		allowsPrimitiveValueType(nodeValue, schema),
-		0x4d3 /* unsupported schema for provided primitive */,
-	);
-}
-
 /**
  * @returns the key and the schema of the primary field out of the given tree schema.
  *
@@ -127,7 +105,7 @@ export function getPrimaryField(
 	// TODO: have a better mechanism for this. See note on EmptyKey.
 	const field = schema.localFields.get(EmptyKey);
 	if (field === undefined) {
-		return field;
+		return undefined;
 	}
 	return { key: EmptyKey, schema: field };
 }
@@ -307,7 +285,7 @@ export interface ContextuallyTypedNodeDataObject {
 }
 
 /**
- * Checks if data is schema-compatible.
+ * Checks if data might be schema-compatible.
  *
  * @returns false if `data` is incompatible with `type` based on a cheap/shallow check.
  *
@@ -320,7 +298,7 @@ function shallowCompatibilityTest(
 ): boolean {
 	const schema = lookupTreeSchema(schemaData, type);
 	if (isPrimitiveValue(data)) {
-		return allowsPrimitiveValueType(data, schema);
+		return isPrimitive(schema) && allowsValue(schema.value, data);
 	}
 	if (isArrayLike(data)) {
 		const primary = getPrimaryField(schema);
@@ -334,6 +312,14 @@ function shallowCompatibilityTest(
 	}
 	// For now, consider all not explicitly typed objects shallow compatible.
 	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
+
+	// Special case primitive schema to not be compatible with data with local fields.
+	if (isPrimitive(schema)) {
+		if (fieldKeysFromData(data).length > 0) {
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -341,6 +327,7 @@ function shallowCompatibilityTest(
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
+ * @alpha
  */
 export function cursorFromContextualData(
 	schemaData: SchemaDataAndPolicy,
@@ -395,7 +382,13 @@ export function applyTypesFromContext(
 	const type = possibleTypes[0];
 	const schema = lookupTreeSchema(schemaData, type);
 	if (isPrimitiveValue(data)) {
-		assertPrimitiveValueType(data, schema);
+		// This check avoids returning an out of schema node
+		// in the case where schema permits the value, but has required fields.
+		assert(isPrimitive(schema), "Schema must be primitive when providing a primitive value");
+		assert(
+			allowsValue(schema.value, data),
+			0x4d3 /* unsupported schema for provided primitive */,
+		);
 		return { value: data, type, fields: new Map() };
 	} else if (isArrayLike(data)) {
 		const primary = getPrimaryField(schema);
@@ -404,20 +397,17 @@ export function applyTypesFromContext(
 			0x4d6 /* array data reported comparable with the schema without a primary field */,
 		);
 		const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
-		const value = allowsValue(schema.value, data) ? data : undefined;
-		return { value, type, fields: new Map([[primary.key, children]]) };
+		return { value: undefined, type, fields: new Map([[primary.key, children]]) };
 	} else {
 		const fields: Map<FieldKey, MapTree[]> = new Map(
-			Reflect.ownKeys(data)
-				.filter((key) => typeof key === "string" || symbolIsFieldKey(key))
-				.map((key) => {
-					const childKey: FieldKey = brand(key);
-					const childSchema = getFieldSchema(childKey, schemaData, schema);
-					return [
-						childKey,
-						applyFieldTypesFromContext(schemaData, childSchema, data[childKey]),
-					];
-				}),
+			fieldKeysFromData(data).map((key) => {
+				const childKey: FieldKey = brand(key);
+				const childSchema = getFieldSchema(childKey, schemaData, schema);
+				return [
+					childKey,
+					applyFieldTypesFromContext(schemaData, childSchema, data[childKey]),
+				];
+			}),
 		);
 		const value = data[valueSymbol];
 		assert(
@@ -426,6 +416,13 @@ export function applyTypesFromContext(
 		);
 		return { value, type, fields };
 	}
+}
+
+function fieldKeysFromData(data: ContextuallyTypedNodeDataObject): FieldKey[] {
+	const keys: (string | symbol)[] = Reflect.ownKeys(data).filter(
+		(key) => typeof key === "string" || symbolIsFieldKey(key),
+	);
+	return keys as FieldKey[];
 }
 
 /**

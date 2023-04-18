@@ -5,6 +5,9 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLogger,
@@ -54,7 +57,6 @@ import {
 	ICommittedProposal,
 	IDocumentAttributes,
 	IDocumentMessage,
-	IProtocolState,
 	IQuorumClients,
 	IQuorumProposals,
 	ISequencedClient,
@@ -87,7 +89,12 @@ import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
 import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
-import { ContainerStorageAdapter } from "./containerStorageAdapter";
+import {
+	ContainerStorageAdapter,
+	getBlobContentsFromTree,
+	getBlobContentsFromTreeWithBlobContents,
+	ISerializableBlobContents,
+} from "./containerStorageAdapter";
 import { IConnectionStateHandler, createConnectionStateHandler } from "./connectionStateHandler";
 import { getProtocolSnapshotTree, getSnapshotTreeFromSerializedContainer } from "./utils";
 import {
@@ -105,6 +112,10 @@ const detachedContainerRefSeqNumber = 0;
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
+/**
+ * @deprecated this is an internal interface and will not longer be exported in future versions
+ * @internal
+ */
 export interface IContainerLoadOptions {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
@@ -125,6 +136,10 @@ export interface IContainerLoadOptions {
 	loadMode?: IContainerLoadMode;
 }
 
+/**
+ * @deprecated this is an internal interface and will not longer be exported in future versions
+ * @internal
+ */
 export interface IContainerConfig {
 	resolvedUrl?: IFluidResolvedUrl;
 	canReconnect?: boolean;
@@ -255,11 +270,27 @@ export async function ReportIfTooLong(
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
+ * @deprecated this is an internal interface and will not longer be exported in future versions
+ * @internal
  */
 export interface IPendingContainerState {
 	pendingRuntimeState: unknown;
+	/**
+	 * Snapshot from which container initially loaded.
+	 */
+	baseSnapshot: ISnapshotTree;
+	/**
+	 * Serializable blobs from the base snapshot. Used to load offline since
+	 * storage is not available.
+	 */
+	snapshotBlobs: ISerializableBlobContents;
+	/**
+	 * All ops since base snapshot sequence number up to the latest op
+	 * seen when the container was closed. Used to apply stashed (saved pending)
+	 * ops at the same sequence number at which they were made.
+	 */
+	savedOps: ISequencedDocumentMessage[];
 	url: string;
-	protocol: IProtocolState;
 	term: number;
 	clientId?: string;
 }
@@ -277,6 +308,7 @@ export class Container
 
 	/**
 	 * Load an existing container.
+	 * @internal
 	 */
 	public static async load(
 		loader: Loader,
@@ -470,6 +502,9 @@ export class Container
 	private _resolvedUrl: IFluidResolvedUrl | undefined;
 	private attachStarted = false;
 	private _dirtyContainer = false;
+	private readonly savedOps: ISequencedDocumentMessage[] = [];
+	private baseSnapshot?: ISnapshotTree;
+	private baseSnapshotBlobs?: ISerializableBlobContents;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -550,6 +585,14 @@ export class Container
 
 	public get clientDetails(): IClientDetails {
 		return this._deltaManager.clientDetails;
+	}
+
+	private get offlineLoadEnabled(): boolean {
+		// summarizer will not have any pending state we want to save
+		return (
+			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false) &&
+			this.clientDetails.capabilities.interactive
+		);
 	}
 
 	/**
@@ -634,6 +677,9 @@ export class Container
 		return await this._context.getEntryPoint?.();
 	}
 
+	/**
+	 * @internal
+	 */
 	constructor(
 		private readonly loader: Loader,
 		config: IContainerConfig,
@@ -697,13 +743,10 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		this.options = {
-			...this.loader.services.options,
-		};
+		this.options = cloneDeep(this.loader.services.options);
 
 		this._deltaManager = this.createDeltaManager();
 
-		this._clientId = config.serializedContainerState?.clientId;
 		this.connectionStateHandler = createConnectionStateHandler(
 			{
 				logger: this.mc.logger,
@@ -759,7 +802,7 @@ export class Container
 				},
 			},
 			this.deltaManager,
-			this._clientId,
+			config.serializedContainerState?.clientId,
 		);
 
 		this.on(savedContainerEvent, () => {
@@ -783,6 +826,7 @@ export class Container
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
+			config.serializedContainerState?.snapshotBlobs,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -948,6 +992,9 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
+		if (!this.offlineLoadEnabled) {
+			throw new UsageError("Can't get pending local state unless offline load is enabled");
+		}
 		assert(
 			this.attachState === AttachState.Attached,
 			0x0d1 /* "Container should be attached before close" */,
@@ -961,10 +1008,14 @@ export class Container
 			this._protocolHandler.attributes.term !== undefined,
 			0x37e /* Must have a valid protocol handler instance */,
 		);
+		assert(!!this.baseSnapshot, "no base snapshot");
+		assert(!!this.baseSnapshotBlobs, "no snapshot blobs");
 		const pendingState: IPendingContainerState = {
 			pendingRuntimeState: this.context.getPendingLocalState(),
+			baseSnapshot: this.baseSnapshot,
+			snapshotBlobs: this.baseSnapshotBlobs,
+			savedOps: this.savedOps,
 			url: this.resolvedUrl.url,
-			protocol: this.protocolHandler.getProtocolState(),
 			term: this._protocolHandler.attributes.term,
 			clientId: this.clientId,
 		};
@@ -1046,9 +1097,13 @@ export class Container
 						// starting to attach the container to storage.
 						// Also, this should only be fired in detached container.
 						this._attachState = AttachState.Attaching;
-						this.context.notifyAttaching(
-							getSnapshotTreeFromSerializedContainer(summary),
-						);
+						this.emit("attaching");
+						if (this.offlineLoadEnabled) {
+							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
+							this.baseSnapshot = snapshot;
+							this.baseSnapshotBlobs =
+								getBlobContentsFromTreeWithBlobContents(snapshot);
+						}
 					}
 
 					// Actually go and create the resolved document
@@ -1108,9 +1163,13 @@ export class Container
 						summary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 						this._attachState = AttachState.Attaching;
-						this.context.notifyAttaching(
-							getSnapshotTreeFromSerializedContainer(summary),
-						);
+						this.emit("attaching");
+						if (this.offlineLoadEnabled) {
+							const snapshot = getSnapshotTreeFromSerializedContainer(summary);
+							this.baseSnapshot = snapshot;
+							this.baseSnapshotBlobs =
+								getBlobContentsFromTreeWithBlobContents(snapshot);
+						}
 
 						await this.storageAdapter.uploadSummaryWithContext(summary, {
 							referenceSequenceNumber: 0,
@@ -1344,7 +1403,7 @@ export class Container
 
 		// Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
 		// DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-		if (loadMode.deltaConnection === undefined) {
+		if (loadMode.deltaConnection === undefined && !pendingLocalState) {
 			this.connectToDeltaStream(connectionArgs);
 		}
 
@@ -1364,20 +1423,30 @@ export class Container
 		const { snapshot, versionId } =
 			pendingLocalState === undefined
 				? await this.fetchSnapshotTree(specifiedVersion)
-				: { snapshot: undefined, versionId: undefined };
-		assert(
-			snapshot !== undefined || pendingLocalState !== undefined,
-			0x237 /* "Snapshot should exist" */,
+				: { snapshot: pendingLocalState.baseSnapshot, versionId: undefined };
+
+		if (pendingLocalState) {
+			this.baseSnapshot = pendingLocalState.baseSnapshot;
+			this.baseSnapshotBlobs = pendingLocalState.snapshotBlobs;
+		} else {
+			assert(snapshot !== undefined, 0x237 /* "Snapshot should exist" */);
+			if (this.offlineLoadEnabled) {
+				this.baseSnapshot = snapshot;
+				// Save contents of snapshot now, otherwise closeAndGetPendingLocalState() must be async
+				this.baseSnapshotBlobs = await getBlobContentsFromTree(snapshot, this.storage);
+			}
+		}
+
+		const attributes: IDocumentAttributes = await this.getDocumentAttributes(
+			this.storageAdapter,
+			snapshot,
 		);
 
-		const attributes: IDocumentAttributes =
-			pendingLocalState === undefined
-				? await this.getDocumentAttributes(this.storageAdapter, snapshot)
-				: {
-						sequenceNumber: pendingLocalState.protocol.sequenceNumber,
-						minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
-						term: pendingLocalState.term,
-				  };
+		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
+		const sequenceNumber =
+			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber;
+		const dmAttributes =
+			sequenceNumber !== undefined ? { ...attributes, sequenceNumber } : attributes;
 
 		let opsBeforeReturnP: Promise<void> | undefined;
 
@@ -1388,15 +1457,15 @@ export class Container
 				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this.attachDeltaManagerOpHandler(
-					attributes,
+					dmAttributes,
 					loadMode.deltaConnection !== "none" ? "all" : "none",
 				);
 				break;
 			case "cached":
-				opsBeforeReturnP = this.attachDeltaManagerOpHandler(attributes, "cached");
+				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "cached");
 				break;
 			case "all":
-				opsBeforeReturnP = this.attachDeltaManagerOpHandler(attributes, "all");
+				opsBeforeReturnP = this.attachDeltaManagerOpHandler(dmAttributes, "all");
 				break;
 			default:
 				unreachableCase(loadMode.opsBeforeReturn);
@@ -1404,22 +1473,7 @@ export class Container
 
 		// ...load in the existing quorum
 		// Initialize the protocol handler
-		if (pendingLocalState === undefined) {
-			await this.initializeProtocolStateFromSnapshot(
-				attributes,
-				this.storageAdapter,
-				snapshot,
-			);
-		} else {
-			this.initializeProtocolState(
-				attributes,
-				{
-					members: pendingLocalState.protocol.members,
-					proposals: pendingLocalState.protocol.proposals,
-					values: pendingLocalState.protocol.values,
-				}, // pending IQuorumSnapshot
-			);
-		}
+		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
 
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateContext(
@@ -1428,6 +1482,24 @@ export class Container
 			snapshot,
 			pendingLocalState?.pendingRuntimeState,
 		);
+
+		// replay saved ops
+		if (pendingLocalState) {
+			for (const message of pendingLocalState.savedOps) {
+				this.processRemoteMessage(message);
+
+				// allow runtime to apply stashed ops at this op's sequence number
+				await this.context.notifyOpReplay(message);
+			}
+			pendingLocalState.savedOps = [];
+
+			// now set clientId to stashed clientId so live ops are correctly processed as local
+			assert(
+				this.clientId === undefined,
+				"Unexpected clientId when setting stashed clientId",
+			);
+			this._clientId = pendingLocalState?.clientId;
+		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
 		// do not start op processing in such case - static version of Container.load() will handle it correctly.
@@ -1452,6 +1524,11 @@ export class Container
 
 			switch (loadMode.deltaConnection) {
 				case undefined:
+					if (pendingLocalState) {
+						// connect to delta stream now since we did not before
+						this.connectToDeltaStream(connectionArgs);
+					}
+				// intentional fallthrough
 				case "delayed":
 					assert(
 						this.inboundQueuePausedFromInit,
@@ -1897,10 +1974,7 @@ export class Container
 
 		// Both protocol and context should not be undefined if we got so far.
 
-		this.setContextConnectedState(
-			state,
-			this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false,
-		);
+		this.setContextConnectedState(state, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(state, this.clientId);
 		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
 
@@ -1999,6 +2073,9 @@ export class Container
 	}
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
+		if (this.offlineLoadEnabled) {
+			this.savedOps.push(message);
+		}
 		const local = this.clientId === message.clientId;
 
 		// Allow the protocol handler to process the message

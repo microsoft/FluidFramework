@@ -44,8 +44,9 @@ const testContainerConfig: ITestContainerConfig = {
 			summaryConfigOverrides: {
 				...DefaultSummaryConfiguration,
 				...{
-					minIdleTime: 1000,
-					maxIdleTime: 1000,
+					// Wasn't getting summaryAck before timeout (since we weight on number of ops, and the number of ops is lower in RunningSummarizer.ctor)
+					minIdleTime: 500,
+					maxIdleTime: 500,
 					maxTime: 1000 * 5,
 					initialSummarizerDelayMs: 0,
 					maxOps,

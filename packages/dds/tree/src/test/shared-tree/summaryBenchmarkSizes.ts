@@ -74,12 +74,13 @@ describe("Summary size benchmark", () => {
 		assert(summarySize > 1000);
 		assert(summarySize < 2000000);
 	});
-	// TODO: this should work, but currently hits batch size limits. Convert this into benchmark when fixed.
-	it("rejected for deep tree with 1000 nodes", async () => {
-		await assert.rejects(getInsertsSummaryTree(1000, TreeShape.Deep), {
-			message: "BatchTooLarge",
-		});
-	});
+	it("for a deep tree with 200 nodes.", async () => {
+		const summaryTree = await getInsertsSummaryTree(200, TreeShape.Deep);
+		const summaryString = JSON.stringify(summaryTree);
+		const summarySize = IsoBuffer.from(summaryString).byteLength;
+		assert(summarySize > 1000);
+		assert(summarySize < 10000000);
+	}).timeout(50000);
 });
 
 /**

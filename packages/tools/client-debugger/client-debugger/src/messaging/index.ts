@@ -13,40 +13,32 @@
  * by the Fluid Client Debugger.
  */
 
-export { debuggerMessageSource } from "./Constants";
+export { devtoolsMessageSource } from "./Constants";
 export {
-	HasContainerId,
-	ConnectContainerMessage,
-	ConnectContainerMessageData,
-	DisconnectContainerMessage,
-	DisconnectContainerMessageData,
-	CloseContainerMessage,
-	CloseContainerMessageData,
-	ContainerStateChangeMessage,
-	ContainerStateChangeMessageData,
-	ContainerStateHistoryMessage,
-	ContainerStateHistoryMessageData,
-	GetContainerStateMessage,
-	GetContainerStateMessageData,
-} from "./DebuggerMessages";
-export { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
+	AudienceSummary,
+	CloseContainer,
+	ConnectContainer,
+	ContainerDevtoolsFeatures,
+	ContainerStateChange,
+	ContainerStateHistory,
+	DataVisualization,
+	DisconnectContainer,
+	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
+	GetContainerState,
+	GetDataVisualization,
+	GetRootDataVisualizations,
+	RootDataVisualizations,
+} from "./container-devtools-messages";
 export {
-	GetContainerListMessage,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
-} from "./RegistryMessages";
-export {
-	GetAudienceMessage,
-	AudienceClientMetaData,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessage,
-} from "./AudienceMessages";
-export {
-	TelemetryHistoryMessage,
-	GetTelemetryHistoryMessage,
-	TelemetryEventMessage,
-	TelemetryEventMessageData,
-} from "./TelemetryMessages";
+	ContainerList,
+	DevtoolsFeatures,
+	GetContainerList,
+	GetDevtoolsFeatures,
+} from "./devtools-messages";
+export { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages";
+export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
+export { GetTelemetryHistory, TelemetryEvent, TelemetryHistory } from "./telemetry-messages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
