@@ -23,6 +23,7 @@ import {
 	OpGroupingManager,
 	OpSplitter,
 	Outbox,
+	BatchSequenceNumbers,
 } from "../../opLifecycle";
 import {
 	CompressionAlgorithms,
@@ -177,6 +178,8 @@ describe("Outbox", () => {
 		compressionAlgorithm: CompressionAlgorithms.lz4,
 	};
 
+	const currentSeqNumbers: BatchSequenceNumbers = {};
+
 	const getOutbox = (params: {
 		context: IContainerContext;
 		maxBatchSize?: number;
@@ -201,7 +204,7 @@ describe("Outbox", () => {
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(false),
-			getProcessedClientSequenceNumber: () => undefined,
+			getCurrentSequenceNumbers: () => currentSeqNumbers,
 		});
 
 	beforeEach(() => {
@@ -661,6 +664,8 @@ describe("Outbox", () => {
 			},
 		];
 
+		currentSeqNumbers.referenceSequenceNumber = 1;
+
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
 		outbox.flush();
@@ -728,6 +733,7 @@ describe("Outbox", () => {
 		it("Flushes all batches when an out of order message is detected in either flows", () => {
 			const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 			for (const op of ops) {
+				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
 				if (op.deserializedContent.type === ContainerMessageType.Attach) {
 					outbox.submitAttach(op);
 				} else {

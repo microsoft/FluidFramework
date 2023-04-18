@@ -1278,7 +1278,10 @@ export class ContainerRuntime
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
-			getProcessedClientSequenceNumber: () => this._processedClientSequenceNumber,
+			getCurrentSequenceNumbers: () => ({
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				clientSequenceNumber: this._processedClientSequenceNumber,
+			}),
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
