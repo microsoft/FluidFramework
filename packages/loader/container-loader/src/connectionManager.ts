@@ -289,6 +289,7 @@ export class ConnectionManager implements IConnectionManager {
 		if (outstandingOps !== isDirty) {
 			this.logger.sendTelemetryEvent({
 				eventName: "DesiredConnectionModeMismatch",
+				details: JSON.stringify({ outstandingOps, isDirty }),
 			});
 		}
 		return outstandingOps || isDirty;
