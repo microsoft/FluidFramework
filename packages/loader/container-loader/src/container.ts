@@ -291,6 +291,7 @@ export interface IPendingContainerState {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
+	term: number;
 	clientId?: string;
 }
 
@@ -1011,6 +1012,7 @@ export class Container
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
 			url: this.resolvedUrl.url,
+			term: 1,
 			clientId: this.clientId,
 		};
 
