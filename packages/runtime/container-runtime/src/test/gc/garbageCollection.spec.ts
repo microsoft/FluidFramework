@@ -16,7 +16,6 @@ import {
 	ISummarizeResult,
 	gcDeletedBlobKey,
 	channelsTreeName,
-	IGarbageCollectionSnapshotData,
 	gcTombstoneBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -48,6 +47,7 @@ import {
 	GCVersion,
 	disableSweepLogKey,
 	currentGCVersion,
+	IGarbageCollectionSnapshotData,
 } from "../../gc";
 import {
 	dataStoreAttributesBlobName,
