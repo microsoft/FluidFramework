@@ -24,7 +24,7 @@ async function renderAppView(target: HTMLElement): Promise<void> {
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup(): Promise<void> {
+export async function setupTestPage(): Promise<void> {
 	const appViewElement = document.querySelector("#app-view") as HTMLDivElement;
 	if (appViewElement === null) {
 		throw new Error("app-view element does not exist");
@@ -37,12 +37,3 @@ async function setup(): Promise<void> {
 	}
 	await renderDevtoolsView(devtoolsViewElement);
 }
-
-setup()
-	.then(() => {
-		console.log("App launched successfully!");
-	})
-	.catch((error) => {
-		console.error(error);
-		throw error;
-	});

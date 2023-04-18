@@ -7,7 +7,8 @@
 
 import Path from "path";
 
-import Puppeteer, { Browser, Page, Target } from "puppeteer";
+import Puppeteer, { Browser, Page } from "puppeteer";
+import { setupTestPage } from "./Setup";
 
 // Paths are relative to src/test
 const extensionPath = Path.resolve(__dirname, "..", "..", "dist");
@@ -26,6 +27,7 @@ describe("Devtools Chromium extension integration tests", () => {
 				"--no-sandbox",
 				"--disable-setuid-sandbox",
 				// Tell puppeteer we want to load the web extension
+				// This will ensure that the background script is launched.
 				`--disable-extensions-except=${extensionPath}`,
 				`--load-extension=${extensionPath}`,
 				"--show-component-extension-options",
@@ -34,21 +36,20 @@ describe("Devtools Chromium extension integration tests", () => {
 	}, 10_000);
 
 	beforeEach(async () => {
-		const targets = await browser!.targets();
-
-		const backgroundTarget: Target | undefined = targets.find(
-			(_target) => _target.type() === "service_worker",
+		// Find background script worker and wait for it to load
+		const extBackgroundTarget = await browser!.waitForTarget(
+			(t) => t.type() === "service_worker",
 		);
-
-		if (backgroundTarget === undefined) {
-			throw new Error("Could not find background page.");
-		}
-
-		const backgroundWorker = await backgroundTarget.worker();
+		await extBackgroundTarget.worker();
 
 		// Creates a new tab
 		page = await browser!.newPage();
-		await page.goto(`file://${__dirname}/index.html`, { waitUntil: "load" });
+		const response = await page.goto(`file://${__dirname}/index.html`, { waitUntil: "load" });
+		if (!(response?.ok() ?? false)) {
+			throw new Error("Couldn't navigate to page");
+		}
+
+		await setupTestPage();
 	});
 
 	afterEach(async () => {

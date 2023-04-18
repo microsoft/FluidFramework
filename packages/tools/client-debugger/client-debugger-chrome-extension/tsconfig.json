@@ -7,7 +7,7 @@
 		"types": ["chrome", "jest", "node", "puppeteer"],
 		"jsx": "react-jsx",
 		"module": "es6",
-		"target": "es6",
+		"target": "es2018",
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 	},
