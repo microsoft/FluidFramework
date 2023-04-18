@@ -7,6 +7,7 @@ import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
+    CheckpointService,
 	ICheckpoint,
 	ICheckpointRepository,
 	ICollection,
@@ -30,6 +31,8 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 		private readonly documentRepository: IDocumentRepository,
 		private readonly deliCheckpointRepository: ICheckpointRepository,
 		private readonly scribeCheckpointRepository: ICheckpointRepository,
+        private readonly deliCheckpointService: CheckpointService,
+        private readonly scribeCheckpointService: CheckpointService,
 		private readonly gitManager?: IGitManager,
 	) {}
 
@@ -62,6 +65,10 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
     public async scribeCheckpointRepositoryP(): Promise<ICheckpointRepository> {
 		return this.scribeCheckpointRepository;
 	}
+
+    public async checkpointServiceP(service: string): Promise<CheckpointService> {
+        return (service === "deli") ? this.deliCheckpointService : this.scribeCheckpointService;
+    }
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public deltaCollectionP(): Promise<ICollection<any>> {

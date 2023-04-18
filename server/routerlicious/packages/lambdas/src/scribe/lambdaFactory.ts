@@ -6,8 +6,8 @@
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
+    CheckpointService,
 	ControlMessageType,
-	ICheckpointRepository,
 	ICollection,
 	IContext,
 	IControlMessage,
@@ -37,7 +37,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid, restoreFromCheckpoint } from "../utils";
+import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
@@ -66,7 +66,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
-		private readonly checkpointRepository: ICheckpointRepository,
 		private readonly messageCollection: ICollection<ISequencedOperationMessage>,
 		private readonly producer: IProducer,
 		private readonly deltaManager: IDeltaService,
@@ -74,7 +73,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly getDeltasViaAlfred: boolean,
-		private readonly localCheckpointEnabled: boolean,
+		private readonly checkpointService: CheckpointService,
 	) {
 		super();
 	}
@@ -180,8 +179,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 				Lumberjack.info(checkpointMessage, lumberProperties);
 			}
 		} else {
-            lastCheckpoint = await restoreFromCheckpoint(documentId, tenantId, "scribe", this.localCheckpointEnabled, this.checkpointRepository, document);
-			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+            lastCheckpoint = await this.checkpointService.restoreFromCheckpoint(documentId, tenantId, "scribe", document) as IScribe;
+            opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
 		}
 
 		// Filter and keep ops after protocol state
@@ -232,11 +231,10 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			tenantId,
 			documentId,
 			this.documentRepository,
-			this.checkpointRepository,
 			this.messageCollection,
 			this.deltaManager,
 			this.getDeltasViaAlfred,
-			this.localCheckpointEnabled,
+            this.checkpointService,
 		);
 
 		const pendingMessageReader = new PendingMessageReader(

@@ -7,6 +7,7 @@
 import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
 import { GitManager } from "@fluidframework/server-services-client";
 import {
+    CheckpointService,
 	DefaultServiceConfiguration,
 	IProducer,
 	ITenantManager,
@@ -39,6 +40,7 @@ describe("Routerlicious", () => {
 			let testMongoManager: MongoManager;
 			let testDocumentRepository: TestNotImplementedDocumentRepository;
 			let testCheckpointRepository: TestNotImplementedCheckpointRepository;
+            let testCheckpointService: CheckpointService;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
 			let testContext: TestContext;
@@ -98,11 +100,13 @@ describe("Routerlicious", () => {
 					"getCheckpoint",
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
-				Sinon.replace(
+
+                Sinon.replace(
 					testCheckpointRepository,
 					"writeCheckpoint",
 					Sinon.fake.resolves(undefined),
 				);
+
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
 				testProducer = testKafka.createProducer();
@@ -122,7 +126,6 @@ describe("Routerlicious", () => {
 				let factory = new ScribeLambdaFactory(
 					testMongoManager,
 					testDocumentRepository,
-					testCheckpointRepository,
 					testMessageCollection,
 					testProducer,
 					testDeltaManager,
@@ -130,7 +133,7 @@ describe("Routerlicious", () => {
 					DefaultServiceConfiguration,
 					false,
 					false,
-					false,
+                    testCheckpointService,
 				);
 
 				testContext = new TestContext();

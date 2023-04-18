@@ -6,6 +6,7 @@
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
+    CheckpointService,
 	DefaultServiceConfiguration,
 	IPartitionLambda,
 	IProducer,
@@ -121,6 +122,7 @@ describe("Routerlicious", () => {
 				const mongoManager = new MongoManager(dbFactory);
 				const documentRepository = new TestNotImplementedDocumentRepository();
 				const checkpointRepository = new TestNotImplementedCheckpointRepository();
+                const checkpointService = new CheckpointService(checkpointRepository, documentRepository, false);
 				Sinon.replace(
 					documentRepository,
 					"readOne",
@@ -134,6 +136,7 @@ describe("Routerlicious", () => {
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
 				Sinon.replace(checkpointRepository, "writeCheckpoint", Sinon.fake.resolves(undefined));
+				Sinon.replace(checkpointService, "getLocalCheckpointEnabled", Sinon.fake.resolves(false));
 
 				testKafka = new TestKafka();
 				testForwardProducer = testKafka.createProducer();
@@ -149,13 +152,13 @@ describe("Routerlicious", () => {
 					mongoManager,
 					documentRepository,
 					checkpointRepository,
+                    checkpointService,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
 					undefined,
 					testReverseProducer,
 					DefaultServiceConfiguration,
-					false,
 				);
 				lambda = await factory.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
@@ -169,6 +172,7 @@ describe("Routerlicious", () => {
 					mongoManager,
 					documentRepository,
 					checkpointRepository,
+                    checkpointService,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -181,7 +185,6 @@ describe("Routerlicious", () => {
 							enableWriteClientSignals: true,
 						},
 					},
-					false,
 				);
 				lambdaWithSignals = await factoryWithSignals.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
@@ -192,6 +195,7 @@ describe("Routerlicious", () => {
 					mongoManager,
 					documentRepository,
 					checkpointRepository,
+                    checkpointService,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -204,7 +208,6 @@ describe("Routerlicious", () => {
 							maintainBatches: true,
 						},
 					},
-					false,
 				);
 				lambdaWithBatching = await factoryWithBatching.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },

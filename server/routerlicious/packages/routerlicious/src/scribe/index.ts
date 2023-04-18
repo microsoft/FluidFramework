@@ -135,10 +135,11 @@ export async function scribeCreate(
 		enforceDiscoveryFlow,
 	};
 
+    const checkpointService = new core.CheckpointService(checkpointRepository, documentRepository, localCheckpointEnabled);
+
 	return new ScribeLambdaFactory(
 		operationsDbManager,
 		documentRepository,
-		checkpointRepository,
 		scribeDeltas,
 		producer,
 		deltaManager,
@@ -146,7 +147,7 @@ export async function scribeCreate(
 		serviceConfiguration,
 		enableWholeSummaryUpload,
 		getDeltasViaAlfred,
-		localCheckpointEnabled,
+		checkpointService
 	);
 }
 

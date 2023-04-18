@@ -15,6 +15,8 @@ import {
 	IServiceConfiguration,
 	IDocumentRepository,
 	ICheckpointRepository,
+    CheckpointService,
+    IDocument,
 } from "@fluidframework/server-services-core";
 
 export interface IConcreteNode extends EventEmitter {
@@ -69,10 +71,12 @@ export interface ILocalOrdererSetup {
 	/**
 	 * @deprecated - use documentRepositoryP() instead
 	 */
-	documentP(): Promise<IDocumentDetails>;
+    documentCollectionP(): Promise<ICollection<IDocument>>;
+    documentP(): Promise<IDocumentDetails>;
 	documentRepositoryP(): Promise<IDocumentRepository>;
 	deliCheckpointRepositoryP(): Promise<ICheckpointRepository>;
 	scribeCheckpointRepositoryP(): Promise<ICheckpointRepository>;
+    checkpointServiceP(service: string): Promise<CheckpointService>;
 	deltaCollectionP(): Promise<ICollection<any>>;
 	scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>>;
 	protocolHeadP(): Promise<number>;

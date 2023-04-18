@@ -57,6 +57,7 @@ import {
 	IExtendClientControlMessageContents,
 	ISequencedSignalClient,
 	IClientManager,
+    CheckpointService,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -276,7 +277,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-		private readonly localCheckpointEnabled: boolean,
+        private readonly checkpointService: CheckpointService,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -342,7 +343,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.documentId,
 			checkpointManager,
 			context,
-			this.localCheckpointEnabled,
+            this.checkpointService
 		);
 
 		// start the activity idle timer when created

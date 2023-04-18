@@ -210,6 +210,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const scribeCollectionName = config.get("mongo:collectionNames:scribeDeltas");
 
 		// Setup for checkpoint collection
+        const deliLocalCheckpointEnabled = config.get("deli:localCheckpointEnabled");
+        const scribeLocalCheckpointEnabled = config.get("scribe:localCheckpointEnabled");
+
 		const operationsDb = await operationsDbMongoManager.getDatabase();
 		const checkpointsCollection =
 			operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
@@ -340,6 +343,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const scribeCheckpointRepository =
         new core.MongoCheckpointRepository(checkpointsCollection, "scribe");
 
+        const deliCheckpointService = new core.CheckpointService(deliCheckpointRepository, documentRepository, deliLocalCheckpointEnabled);
+        const scribeCheckpointService = new core.CheckpointService(scribeCheckpointRepository, documentRepository, scribeLocalCheckpointEnabled);
+
 		const databaseManager = new core.MongoDatabaseManager(
 			globalDbEnabled,
 			operationsDbMongoManager,
@@ -391,6 +397,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentRepository,
 			deliCheckpointRepository,
             scribeCheckpointRepository,
+            deliCheckpointService,
+            scribeCheckpointService,
 			60000,
 			() => new NodeWebSocketServer(4000),
 			taskMessageSender,

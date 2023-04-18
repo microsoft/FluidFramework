@@ -5,6 +5,7 @@
 
 import { delay } from "@fluidframework/common-utils";
 import {
+    CheckpointService,
 	ICollection,
 	IContext,
 	isRetryEnabled,
@@ -13,7 +14,6 @@ import {
 	runWithRetry,
 	IDeltaService,
 	IDocumentRepository,
-	ICheckpointRepository,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
@@ -28,11 +28,10 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		private readonly documentRepository: IDocumentRepository,
-		private readonly checkpointRepository: ICheckpointRepository,
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
 		private readonly getDeltasViaAlfred: boolean,
-		private readonly localCheckpointEnabled: boolean,
+        private readonly checkpointService: CheckpointService
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 	}
@@ -98,8 +97,7 @@ export class CheckpointManager implements ICheckpointManager {
 					);
 				}
 			}
-
-			await this.writeScribeCheckpointState(checkpoint, noActiveClients);
+            await this.checkpointService.writeCheckpointToCollection(this.documentId, this.tenantId, "scribe", checkpoint, !noActiveClients)
 		} else {
 			// The order of the three operations below is important.
 			// We start by writing out all pending messages to the database. This may be more messages that we would
@@ -129,7 +127,7 @@ export class CheckpointManager implements ICheckpointManager {
 			}
 
 			// Write out the full state first that we require to global & local DB
-			await this.writeScribeCheckpointState(checkpoint, noActiveClients);
+			await this.checkpointService.writeCheckpointToCollection(this.documentId, this.tenantId, "scribe", checkpoint, !noActiveClients)
 
 			// And then delete messagses that were already summarized.
 			await this.opCollection.deleteMany({
@@ -138,64 +136,6 @@ export class CheckpointManager implements ICheckpointManager {
 				"tenantId": this.tenantId,
 			});
 		}
-	}
-
-	private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
-		const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
-
-		if (!this.localCheckpointEnabled || !this.checkpointRepository) {
-			// Write to global collection when local checkpoints are disabled or there is no checkpoint repository
-			await this.writeScribeCheckpointToCollection(checkpoint, false);
-			return;
-		}
-
-		await (!noActiveClients
-			? this.writeScribeCheckpointToCollection(checkpoint, true)
-			: Promise.all([
-					this.checkpointRepository
-						.deleteCheckpoint(this.documentId, this.tenantId)
-						.catch((error) => {
-							Lumberjack.error(
-								`Error removing checkpoint data from the local database.`,
-								lumberProperties,
-								error,
-							);
-						}),
-					await this.writeScribeCheckpointToCollection(checkpoint, false),
-			  ]));
-	}
-
-	private async writeScribeCheckpointToCollection(checkpoint: IScribe, isLocal: boolean = false) {
-		const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
-		const checkpointFilter = {
-			documentId: this.documentId,
-			tenantId: this.tenantId,
-		};
-		const checkpointData = {
-			// MongoDB is particular about the format of stored JSON data. For this reason we store stringified
-			// given some data is user generated.
-			scribe: JSON.stringify(checkpoint),
-		};
-
-		await (isLocal
-			? this.checkpointRepository
-					.writeCheckpoint(this.documentId, this.tenantId, checkpoint)
-					.catch((error) => {
-						Lumberjack.error(
-							`Error writing checkpoint to local database`,
-							lumberProperties,
-							error,
-						);
-					})
-			: this.documentRepository
-					.updateOne(checkpointFilter, checkpointData, null)
-					.catch((error) => {
-						Lumberjack.error(
-							`Error removing checkpoint data from the global database.`,
-							lumberProperties,
-							error,
-						);
-					}));
 	}
 
 	/**
