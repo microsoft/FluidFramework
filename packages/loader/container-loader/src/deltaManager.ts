@@ -41,8 +41,9 @@ import {
 	extractSafePropertiesFromMessage,
 	DataProcessingError,
 } from "@fluidframework/container-utils";
-import { DeltaQueue } from "./deltaQueue";
 import { IConnectionManagerFactoryArgs, IConnectionManager } from "./contracts";
+import { DeltaQueue } from "./deltaQueue";
+import { OnlyValidTermValue } from "./protocol";
 
 export interface IConnectionArgs {
 	mode?: ConnectionMode;
@@ -979,7 +980,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Back-compat for older server with no term
 		if (message.term === undefined) {
-			message.term = 1;
+			message.term = OnlyValidTermValue;
 		}
 
 		if (this.handler === undefined) {

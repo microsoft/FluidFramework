@@ -1308,6 +1308,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			origin,
 			referenceSequenceNumber: message.operation.referenceSequenceNumber,
 			sequenceNumber,
+			// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
 			term: 1,
 			timestamp: message.timestamp,
 			traces: message.operation.traces,

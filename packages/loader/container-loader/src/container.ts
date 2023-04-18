@@ -105,7 +105,12 @@ import {
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
-import { IProtocolHandler, ProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
+import {
+	OnlyValidTermValue,
+	IProtocolHandler,
+	ProtocolHandler,
+	ProtocolHandlerBuilder,
+} from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1012,7 +1017,7 @@ export class Container
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
 			url: this.resolvedUrl.url,
-			term: 1,
+			term: OnlyValidTermValue,
 			clientId: this.clientId,
 		};
 
@@ -1564,7 +1569,7 @@ export class Container
 	private async createDetached(source: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
-			term: 1,
+			term: OnlyValidTermValue,
 			minimumSequenceNumber: 0,
 		};
 
@@ -1638,7 +1643,7 @@ export class Container
 			return {
 				minimumSequenceNumber: 0,
 				sequenceNumber: 0,
-				term: 1,
+				term: OnlyValidTermValue,
 			};
 		}
 

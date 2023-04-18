@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { ICreateTreeEntry, ITree } from "@fluidframework/gitresources";
 import {
 	IDocumentAttributes,
 	ITreeEntry,
 	FileMode,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { ICreateTreeEntry, ITree } from "@fluidframework/gitresources";
+import { OnlyValidTermValue } from "./protocol";
 import { IQuorumSnapshot } from "./quorum";
 
 export function getQuorumTreeEntries(
@@ -20,7 +21,7 @@ export function getQuorumTreeEntries(
 	const documentAttributes: IDocumentAttributes = {
 		minimumSequenceNumber,
 		sequenceNumber,
-		term: 1,
+		term: OnlyValidTermValue,
 	};
 
 	const entries: ITreeEntry[] = [

@@ -20,6 +20,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 
+// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+export const OnlyValidTermValue = 1 as const;
+
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {
 	ClientJoin = "join", // same value as MessageType.ClientJoin,
@@ -51,7 +54,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		super(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
-			1, // term
+			OnlyValidTermValue,
 			quorumSnapshot.members,
 			quorumSnapshot.proposals,
 			quorumSnapshot.values,
