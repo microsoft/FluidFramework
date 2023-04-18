@@ -731,7 +731,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 
 describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let config: ITestContainerConfig = {
+	const config: ITestContainerConfig = {
 		...testContainerConfig,
 		runtimeOptions: { ...testContainerConfig.runtimeOptions, enableRuntimeIdCompressor: true },
 	};
