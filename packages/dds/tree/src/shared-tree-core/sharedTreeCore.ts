@@ -225,6 +225,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
+	/**
+	 * Adds the local change to the editmanager and returns the commit with the given change.
+	 * @param change - The change to apply
+	 * @param revision - The revision to associate with the change.
+	 * @returns Commit object with the change, revision and localsessionid
+	 */
 	private addLocalChange(change: TChange, revision: RevisionTag): Commit<TChange> {
 		const commit = {
 			change,
@@ -244,9 +250,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) => {
-			return this.changeFamily.encoder.decodeJson(format, encodedChange);
-		};
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
+			this.changeFamily.encoder.decodeJson(format, encodedChange);
 		const commit = parseCommit(message.contents, decoder);
 
 		const delta = this.editManager.addSequencedChange(
@@ -347,18 +352,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
-		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) => {
-			return this.changeFamily.encoder.decodeJson(format, encodedChange);
-		};
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
+			this.changeFamily.encoder.decodeJson(format, encodedChange);
 		const { revision } = parseCommit(content, decoder);
 		const [commit] = this.editManager.findLocalCommit(revision);
 		this.submitCommit(commit);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) => {
-			return this.changeFamily.encoder.decodeJson(format, encodedChange);
-		};
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
+			this.changeFamily.encoder.decodeJson(format, encodedChange);
 		const { revision, change } = parseCommit(content, decoder);
 		this.addLocalChange(change, revision);
 		return;
