@@ -17,6 +17,7 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
     -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
     -   [Example configs](#example-configs)
     -   [How it works](#how-it-works)
+    -   [How grouped batching works](#how-grouped-batching-works)
 
 ## Compression
 
@@ -173,6 +174,8 @@ Additionally, as compression preserves the original uncompressed batch layout in
 On the receiving end, the client will accumulate chunks 1 and 2 and keep them in memory. When chunk 3 is received, the original large, decompressed op will be rebuilt, and the runtime will then process the batch as if it is a compressed batch.
 
 ## How grouped batching works
+
+**Note: There are plans to replace empty ops with something more efficient when doing grouped batching AB#4092**
 
 Given the following baseline batch:
 
