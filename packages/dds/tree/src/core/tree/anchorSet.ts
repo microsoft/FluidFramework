@@ -581,43 +581,37 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				maybeWithNode(
 					(p) => {
 						p.events.emit("childrenChanging", p);
-						if (parentField !== undefined) {
-							const upPath: UpPath = {
-								parent: p,
-								parentField,
-								parentIndex: start,
-							};
-							for (const [, visitors] of pathVisitors) {
-								visitors.forEach(({ onDelete: visitorOnDelete }) => {
-									visitorOnDelete(upPath, count);
-								});
-							}
-						}
 					},
 					() => this.events.emit("childrenChanging", this),
 				);
+				const upPath: UpPath = {
+					parent,
+					parentField,
+					parentIndex: start,
+				};
+				for (const visitors of pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.onDelete(upPath, count);
+					}
+				}
 				this.moveChildren(count, { parent, parentField, parentIndex: start }, undefined);
 			},
-			onInsert: (start: number, content: Delta.ProtoNode[]): void => {
+			onInsert: (start: number, content: Delta.ProtoNodes): void => {
 				assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
 				maybeWithNode(
-					(p) => {
-						p.events.emit("childrenChanging", p);
-						if (parentField !== undefined) {
-							const upPath: UpPath = {
-								parent: p,
-								parentField,
-								parentIndex: start,
-							};
-							for (const [, visitors] of pathVisitors) {
-								visitors.forEach(({ onInsert: visitorOnInsert }) => {
-									visitorOnInsert(upPath, content);
-								});
-							}
-						}
-					},
+					(p) => p.events.emit("childrenChanging", p),
 					() => this.events.emit("childrenChanging", this),
 				);
+				const upPath: UpPath = {
+					parent,
+					parentField,
+					parentIndex: start,
+				};
+				for (const visitors of pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.onInsert(upPath, content);
+					}
+				}
 				this.moveChildren(content.length, undefined, {
 					parent,
 					parentField,
@@ -645,12 +639,13 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			onSetValue: (value: Value): void => {
 				maybeWithNode((p) => {
 					p.events.emit("valueChanging", p, value);
-					for (const [, visitors] of pathVisitors) {
-						visitors.forEach(({ onSetValue: visitorOnSetValue }) => {
-							visitorOnSetValue(p, parentField, value);
-						});
-					}
 				});
+				assert(parent !== undefined, "Must be in a node to set its value");
+				for (const visitors of pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.onSetValue(parent, value);
+					}
+				}
 			},
 			enterNode: (index: number): void => {
 				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
