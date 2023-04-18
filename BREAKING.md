@@ -39,7 +39,8 @@ and verifying that the following expectation changes won't have any effects:
 -   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
 
 ### Testing support for LTS is moved from 0.45.0 to 1.3.4
-Internal end to end full-compatibility testing for the loader-runtime boundary has been bumped from the oldest loader LTS version in 0.45.0 to the new oldest loader LTS version 1.3.4. 
+
+Internal end to end full-compatibility testing for the loader-runtime boundary has been bumped from the oldest loader LTS version in 0.45.0 to the new oldest loader LTS version 1.3.4.
 
 ## 2.0.0-internal.4.1.0 Upcoming changes
 
