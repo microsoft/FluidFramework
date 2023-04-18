@@ -65,10 +65,10 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/map": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/merge-tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/sequence": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0"
+		"@fluidframework/map": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/merge-tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/sequence": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.13.1",
@@ -76,8 +76,8 @@
 		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@2.0.0-internal.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",

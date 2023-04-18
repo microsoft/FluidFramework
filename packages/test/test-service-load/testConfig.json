@@ -37,6 +37,11 @@
 						"Fluid.Container.summarizeProtocolTree2": [true, false],
 						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
 					}
+				},
+				"tinylicious": {
+					"configurations": {
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
+					}
 				}
 			},
 			"content": {
@@ -61,6 +66,13 @@
 				"opSizeinBytes": 214800,
 				"largeOpRate": 2000,
 				"numClients": 12
+			},
+			"optionOverrides": {
+				"routerlicious": {
+					"configurations": {
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
+					}
+				}
 			}
 		},
 		"full": {

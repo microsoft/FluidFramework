@@ -63,8 +63,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
@@ -73,8 +73,8 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/mocha": "^9.1.1",

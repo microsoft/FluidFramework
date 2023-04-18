@@ -78,15 +78,11 @@ jobs:
       inputs:
         version: 16.x
 
-    - task: Bash@3
-      displayName: Install and configure pnpm
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
-        script: |
-          corepack enable
-          pnpm -v
-          pnpm config set store-dir $(pnpmStorePath)
+    - template: include-install-pnpm.yml
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+        # This pipeline experiences a high failure rate when the cache is enabled, so we disable it
+        enableCache: false
 
     - task: Bash@3
       displayName: Install dependencies
