@@ -96,7 +96,7 @@ export function transformApiModel(
 
 			documents.set(
 				packageItem,
-				createDocumentForMultiEntryPointPackage(packageItem, config),
+				createDocumentForMultiEntryPointPackage(packageItem, packageEntryPoints, config),
 			);
 
 			for (const entryPoint of packageEntryPoints) {
@@ -147,7 +147,7 @@ function getDocumentItems(
  *
  * @returns The rendered Markdown document.
  */
-export function createDocumentForApiModel(
+function createDocumentForApiModel(
 	apiModel: ApiModel,
 	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
@@ -166,10 +166,13 @@ export function createDocumentForApiModel(
 }
 
 /**
- * TODO
+ * Creates a {@link DocumentNode} for an `ApiPackage` that has a single entry-point.
+ *
+ * Bubbles up the entry-point's contents into the package-level document to reduce indirection in the generated
+ * documentation.
  *
  * @param apiPackage - The package content to be rendered.
- * @param apiEntryPoint - The package content to be rendered.
+ * @param apiEntryPoint - The package's single entry-point.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  *
  * @returns The rendered Markdown document.
@@ -204,15 +207,19 @@ function createDocumentForSingleEntryPointPackage(
 }
 
 /**
- * TODO
+ * Creates a {@link DocumentNode} for an `ApiPackage` that has a 2 or more entry-points.
+ *
+ * The document will include a list of links to the entry-points, which will have their own documents generated.
  *
  * @param apiPackage - The package content to be rendered.
+ * @param apiEntryPoints - The package's single entry-point.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
  *
  * @returns The rendered Markdown document.
  */
 function createDocumentForMultiEntryPointPackage(
 	apiPackage: ApiPackage,
+	apiEntryPoints: readonly ApiEntryPoint[],
 	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
 	const { includeBreadcrumb, logger } = config;
@@ -227,7 +234,7 @@ function createDocumentForMultiEntryPointPackage(
 	}
 
 	// Render list of entry-points
-	const renderedEntryPointList = createEntryPointList(apiPackage.entryPoints, config);
+	const renderedEntryPointList = createEntryPointList(apiEntryPoints, config);
 	if (renderedEntryPointList !== undefined) {
 		sections.push(
 			wrapInSection([renderedEntryPointList], {
