@@ -40,7 +40,7 @@ import {
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { isStableId } from "../id-compressor";
+import { StableId, isStableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -350,28 +350,18 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
-		assert(isJsonObject(content), "expected content to be an object");
-		assert(
-			typeof content.revision === "string" && isStableId(content.revision),
-			"expected revision id to be valid stable id",
-		);
-		assert(isStableId(content.revision), "invalid stable ID");
-		const [commit] = this.editManager.findLocalCommit(content.revision);
+		const { revision } = parseStashedOpContent(content)
+		const [commit] = this.editManager.findLocalCommit(revision);
 		this.submitCommit(commit);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		assert(isJsonObject(content), "expected content to be an object");
-		assert(
-			typeof content.revision === "string" && isStableId(content.revision),
-			"expected revision id to be valid stable id",
-		);
-		assert(content.changeset !== undefined, "expected changeset to be defined");
+		const {revision, changeset} = parseStashedOpContent(content)
 		const decodedChangeset = this.changeFamily.encoder.decodeJson(
 			formatVersion,
-			content.changeset,
+			changeset,
 		);
-		this.addLocalChange(decodedChangeset, content.revision);
+		this.addLocalChange(decodedChangeset, revision);
 		return;
 	}
 
@@ -488,4 +478,14 @@ function scopeStorageService(
 			return service.list(`${scope}${path}`);
 		},
 	};
+}
+
+function parseStashedOpContent(content: JsonCompatibleReadOnly): {revision: StableId, changeset: JsonCompatibleReadOnly} {
+	assert(isJsonObject(content), "expected content to be an object");
+	assert(
+		typeof content.revision === "string" && isStableId(content.revision),
+		"expected revision id to be valid stable id",
+	);
+	assert(content.changeset !== undefined, "expected changeset to be defined")
+	return {revision: content.revision, changeset: content.changeset}
 }
