@@ -229,7 +229,11 @@ function createDocumentForMultiEntryPointPackage(
 	// Render list of entry-points
 	const renderedEntryPointList = createEntryPointList(apiPackage.entryPoints, config);
 	if (renderedEntryPointList !== undefined) {
-		sections.push(wrapInSection([renderedEntryPointList]));
+		sections.push(
+			wrapInSection([renderedEntryPointList], {
+				title: "Entry Points",
+			}),
+		);
 	}
 
 	logger.verbose(`Package document rendered successfully.`);
