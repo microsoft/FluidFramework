@@ -45,7 +45,12 @@ import { initializeFluentUiIcons } from "../InitializeIcons";
 import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
-import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
+import {
+	clientIdTooltipText,
+	containerKeyTooltipText,
+	containerStatusTooltipText,
+	userIdTooltipText,
+} from "./TooltipTexts";
 
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
@@ -301,6 +306,12 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						label="User ID"
 						infoTooltipContent={userIdTooltipText}
 						value={containerState.userId}
+						columnProps={columnSizing_unstable}
+					/>
+					<DataRow
+						label="Container Key"
+						infoTooltipContent={containerKeyTooltipText}
+						value={containerState.containerKey}
 						columnProps={columnSizing_unstable}
 					/>
 				</Table>

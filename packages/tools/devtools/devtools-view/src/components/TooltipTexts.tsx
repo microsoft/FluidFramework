@@ -39,6 +39,16 @@ export const containerStatusTooltipText = (
 );
 
 /**
+ * Description of the Container "ID" property in the summary view.
+ */
+export const containerKeyTooltipText = (
+	<div>
+		User-specified identifier that uniquely identifies the container within this session of
+		Fluid Devtools.
+	</div>
+);
+
+/**
  * Description of the Client's "Mode" property in the audience view.
  */
 export const clientModeTooltipText = (
