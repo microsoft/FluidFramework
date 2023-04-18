@@ -41,7 +41,11 @@ window["migrators"] = [];
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
-	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(new DemoCodeLoader());
+	const searchParams = new URLSearchParams(location.search);
+	const testMode = searchParams.get("testMode") !== null;
+	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
+		new DemoCodeLoader(testMode),
+	);
 	let id: string;
 	let model: IMigratableModel;
 
