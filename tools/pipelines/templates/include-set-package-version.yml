@@ -21,6 +21,11 @@ parameters:
   type: boolean
   default: true
 
+# The path to the pnpm store.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
+
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
 - name: interdependencyRange
@@ -41,20 +46,20 @@ steps:
         # more information.
         echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
 
+  - template: include-install-pnpm.yml
+    parameters:
+      buildDirectory: $(Build.SourcesDirectory)/build-tools
+      pnpmStorePath: ${{ parameters.pnpmStorePath }}
+
   - task: Bash@3
     name: InstallBuildTools
     displayName: Install Fluid Build Tools (from repo)
     inputs:
       targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: $(Build.SourcesDirectory)/build-tools
       script: |
-        pushd "$(Build.SourcesDirectory)/build-tools"
-        corepack enable
-        pnpm -v
-        pnpm config set store-dir $(pnpmStorePath)
-        pnpm i
+        pnpm i --frozen-lockfile
         pnpm build:compile
-        popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3

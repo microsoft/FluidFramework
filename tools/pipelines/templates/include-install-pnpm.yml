@@ -1,0 +1,47 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-install-pnpm
+#
+# This template can be included in pipelines to install pnpm with store caching enabled.
+
+parameters:
+# The path containing the project(s) to build.
+- name: buildDirectory
+  type: string
+
+# If set to false, the pnpm store will not be cached or restored from cache.
+- name: enableCache
+  type: boolean
+  default: true
+
+# The path to the pnpm store. The contents here will be cached and restored when using pnpm in a pipeline.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
+
+steps:
+- ${{ if eq(parameters.enableCache, true) }}:
+  - task: Cache@2
+    displayName: Cache pnpm store
+    timeoutInMinutes: 5
+    inputs:
+      # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+      # in the cache key
+      key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+      path: ${{ parameters.pnpmStorePath }}
+      restoreKeys: |
+        pnpm-store | "$(Agent.OS)"
+
+- task: Bash@3
+  displayName: Install and configure pnpm
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
+    # restoration, we want to continue even if it timed out.
+    condition: or(succeeded(), canceled())
+    script: |
+      corepack enable
+      pnpm -v
+      pnpm config set store-dir ${{ parameters.pnpmStorePath }}
