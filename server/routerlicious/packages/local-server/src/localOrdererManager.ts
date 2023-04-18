@@ -6,6 +6,7 @@
 import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
 import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
+	CheckpointService,
 	ICheckpointRepository,
 	IDatabaseManager,
 	IDocumentRepository,
@@ -93,6 +94,9 @@ export class LocalOrdererManager implements IOrdererManager {
             this.checkpointRepository ??
             new MongoCheckpointRepository(await this.databaseManager.getCheckpointCollection(), "scribe");
 
+		const deliCheckpointService = new CheckpointService(deliCheckpointRepository, documentRepository, false);
+		const scribeCheckpointService = new CheckpointService(scribeCheckpointRepository, documentRepository, false);
+
 		const orderer = await LocalOrderer.load(
 			this.storage,
 			this.databaseManager,
@@ -105,7 +109,9 @@ export class LocalOrdererManager implements IOrdererManager {
 			this.logger,
 			documentRepository,
 			deliCheckpointRepository,
-            scribeCheckpointRepository,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
 			gitManager,
 			undefined /* ILocalOrdererSetup */,
 			this.pubsub,

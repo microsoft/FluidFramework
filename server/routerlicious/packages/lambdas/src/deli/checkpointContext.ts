@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IDeliState } from "@fluidframework/server-services-core";
+import { CheckpointService, IContext, IDeliState } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { CheckpointReason } from "../utils";
 import { ICheckpointParams, IDeliCheckpointManager } from "./checkpointManager";
@@ -19,7 +19,7 @@ export class CheckpointContext {
 		private readonly id: string,
 		private readonly checkpointManager: IDeliCheckpointManager,
 		private readonly context: IContext,
-		private readonly localCheckpointEnabled: boolean,
+        private readonly checkpointService: CheckpointService,
 	) {}
 
 	/**
@@ -113,7 +113,7 @@ export class CheckpointContext {
 
 		// determine if checkpoint is local
 		const isLocal =
-			this.localCheckpointEnabled && checkpoint.reason !== CheckpointReason.NoClients;
+			this.checkpointService.getLocalCheckpointEnabled() && checkpoint.reason !== CheckpointReason.NoClients;
 
 		if (checkpoint.clear) {
 			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);

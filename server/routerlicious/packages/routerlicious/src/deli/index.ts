@@ -143,17 +143,19 @@ export async function deliCreate(
 		enforceDiscoveryFlow,
 	};
 
+    const checkpointService = new core.CheckpointService(checkpointRepository, documentRepository, localCheckpointEnabled);
+
 	return new DeliLambdaFactory(
 		operationsDbManager,
 		documentRepository,
 		checkpointRepository,
+        checkpointService,
 		tenantManager,
 		undefined,
 		combinedProducer,
 		undefined,
 		reverseProducer,
 		serviceConfiguration,
-		localCheckpointEnabled,
 	);
 }
 

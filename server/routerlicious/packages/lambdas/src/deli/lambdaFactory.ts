@@ -8,6 +8,7 @@ import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
+    CheckpointService,
 	ICheckpointRepository,
 	IClientManager,
 	IContext,
@@ -33,7 +34,7 @@ import {
 	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid, restoreFromCheckpoint } from "../utils";
+import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
@@ -63,13 +64,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly checkpointRepository: ICheckpointRepository,
+        private readonly checkpointService: CheckpointService,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
 		private readonly forwardProducer: IProducer,
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
-		private readonly localCheckpointEnabled: boolean,
 	) {
 		super();
 	}
@@ -139,7 +140,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			throw error;
 		}
 
-		let lastCheckpoint: IDeliState;
+		let lastCheckpoint;
 
 		// Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
 		// both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
@@ -183,7 +184,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
 			} else {
-                lastCheckpoint = await restoreFromCheckpoint(documentId, tenantId, "deli", this.localCheckpointEnabled, this.checkpointRepository, document);
+                lastCheckpoint = await this.checkpointService.restoreFromCheckpoint(documentId, tenantId, "deli", document);
 		    }
         }
 
@@ -218,6 +219,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			documentId,
 			this.documentRepository,
 			this.checkpointRepository,
+            this.checkpointService,
 		);
 
 		// Should the lambda reaize that term has flipped to send a no-op message at the beginning?
@@ -235,7 +237,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			this.serviceConfiguration,
 			sessionMetric,
 			sessionStartMetric,
-			this.localCheckpointEnabled,
+            this.checkpointService
 		);
 
 		deliLambda.on("close", (closeType) => {

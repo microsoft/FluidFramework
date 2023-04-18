@@ -4,12 +4,12 @@
  */
 
 import {
+    CheckpointService,
 	ICheckpointRepository,
 	IDeliState,
 	IDocumentRepository,
 	IQueuedMessage,
 } from "@fluidframework/server-services-core";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { CheckpointReason } from "../utils";
 
 export interface IDeliCheckpointManager {
@@ -53,66 +53,17 @@ export function createDeliCheckpointManagerFromCollection(
 	documentId: string,
 	documentRepository: IDocumentRepository,
 	checkpointRepository: ICheckpointRepository,
+    checkpointService: CheckpointService,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
 		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return isLocal ? checkpointRepository.writeCheckpoint(documentId, tenantId, checkpoint)
-				: documentRepository.updateOne(
-						{
-							documentId,
-							tenantId,
-						},
-						{
-							deli: JSON.stringify(checkpoint),
-						},
-				  );
+            return checkpointService.writeCheckpointToCollection(documentId, tenantId, "deli", checkpoint, isLocal);
 		},
 		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return isLocal
-				? checkpointRepository.removeServiceCheckpoint(documentId, tenantId)
-				: documentRepository.updateOne(
-						{
-							documentId,
-							tenantId,
-						},
-						{
-							deli: "",
-						},
-				  );
+			return checkpointService.removeCheckpointFromCollection(documentId, tenantId, "deli", isLocal)
 		},
 	};
 	return checkpointManager;
 }
 
-export async function getLatestCheckpoint(
-	tenantId: string,
-	documentId: string,
-	documentRepository: IDocumentRepository,
-	checkpointRepository: ICheckpointRepository,
-	localCheckpointEnabled?: boolean,
-	activeClients?: boolean,
-): Promise<any> {
-	if (localCheckpointEnabled === false) {
-		// Not using checkpointRepository, use document repository
-		return documentRepository.readOne({ documentId, tenantId });
-	}
-
-	if (activeClients === false) {
-		// Local checkpoints are enabled, but no active clients, use document repository
-		return documentRepository.readOne({ documentId, tenantId });
-	}
-
-	const checkpoint = await checkpointRepository
-		.getCheckpoint(documentId, tenantId)
-		.catch((error) => {
-			Lumberjack.error(
-				`Error reading checkpoint from checkpoint collection.`,
-				getLumberBaseProperties(documentId, tenantId),
-				error,
-			);
-		});
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return checkpoint ? checkpoint : documentRepository.readOne({ documentId, tenantId });
-}

@@ -12,6 +12,7 @@ import {
 } from "../../deli/checkpointManager";
 import { CheckpointReason } from "../../utils";
 import Sinon from "sinon";
+import { CheckpointService } from "@fluidframework/server-services-core";
 
 describe("Routerlicious", () => {
 	describe("Deli", () => {
@@ -21,6 +22,7 @@ describe("Routerlicious", () => {
 			let testCheckpointContext: CheckpointContext;
 			let testDocumentRepository: testUtils.TestNotImplementedDocumentRepository;
 			let testCheckpointRepository: testUtils.TestNotImplementedCheckpointRepository;
+            let testCheckpointService: CheckpointService;
 			let testContext: testUtils.TestContext;
 
 			function createCheckpoint(
@@ -66,13 +68,14 @@ describe("Routerlicious", () => {
 					testId,
 					testDocumentRepository,
 					testCheckpointRepository,
+                    testCheckpointService
 				);
 				testCheckpointContext = new CheckpointContext(
 					testTenant,
 					testId,
 					checkpointManager,
 					testContext,
-					false,
+					testCheckpointService,
 				);
 			});
 
