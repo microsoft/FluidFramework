@@ -81,6 +81,11 @@ export interface ApiItemTransformationOptions {
 
 	/**
 	 * Transformation to generate a {@link SectionNode} for a package `EntryPoint`.
+	 *
+	 * @remarks
+	 *
+	 * Note: for packages that have a single entry-point, this content will be bubbled up to the generated
+	 * package-level document to reduce unecessary indirection in the generated suite.
 	 */
 	transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
 
