@@ -431,11 +431,7 @@ describe("BlobManager", () => {
 			);
 			exceptionOccurred = true;
 		});
-		assert.strictEqual(
-			exceptionOccurred,
-			true,
-			"call did not fail as expected.",
-		);
+		assert.strictEqual(exceptionOccurred, true, "call did not fail as expected.");
 		await runtime.processAll();
 	});
 

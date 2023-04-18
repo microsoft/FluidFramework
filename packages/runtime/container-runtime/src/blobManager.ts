@@ -257,7 +257,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					minTTLInSeconds: pendingEntry.minTTLInSeconds,
 					expired,
 				});
-				if(expired) {
+				if (expired) {
 					this.deleteAndEmitsIfEmpty(localId);
 					throw new Error("Trying to send BlobAttachOp of expired blob");
 				}
