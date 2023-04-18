@@ -40,7 +40,7 @@ import {
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { StableId, isStableId } from "../id-compressor";
+import { isStableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -244,13 +244,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const { revision, originatorId: stableClientId, changeset } = message.contents as Message;
-		const changes = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
-		const commit: Commit<TChange> = {
-			revision,
-			sessionId: stableClientId,
-			change: changes,
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) => {
+			return this.changeFamily.encoder.decodeJson(format, encodedChange);
 		};
+		const commit = parseCommit(message.contents, decoder);
 
 		const delta = this.editManager.addSequencedChange(
 			commit,
@@ -350,15 +347,20 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
-		const { revision } = parseStashedOpContent(content);
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) => {
+			return this.changeFamily.encoder.decodeJson(format, encodedChange);
+		};
+		const { revision } = parseCommit(content, decoder);
 		const [commit] = this.editManager.findLocalCommit(revision);
 		this.submitCommit(commit);
 	}
 
-	protected applyStashedOp(content: any): undefined {
-		const { revision, changeset } = content as Message;
-		const decodedChangeset = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
-		this.addLocalChange(decodedChangeset, revision);
+	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) => {
+			return this.changeFamily.encoder.decodeJson(format, encodedChange);
+		};
+		const { revision, change } = parseCommit(content, decoder);
+		this.addLocalChange(change, revision);
 		return;
 	}
 
@@ -478,19 +480,21 @@ function scopeStorageService(
 }
 
 /**
- * validates that the stashed ops content is an object which contains valid revision id and changeset and returns them
- * @param content - stashed op content
- * @returns an object with the revision id and changeset
+ * validates that the message contents is an object which contains valid revisionId, sessionId, and changeset and returns a Commit
+ * @param content - message contents
+ * @returns a Commit object
  */
-function parseStashedOpContent(content: JsonCompatibleReadOnly): {
-	revision: StableId;
-	changeset: JsonCompatibleReadOnly;
-} {
+function parseCommit<TChange>(
+	content: JsonCompatibleReadOnly,
+	decoder: (format: number, changeContent: JsonCompatibleReadOnly) => TChange,
+): Commit<TChange> {
 	assert(isJsonObject(content), "expected content to be an object");
 	assert(
 		typeof content.revision === "string" && isStableId(content.revision),
 		"expected revision id to be valid stable id",
 	);
 	assert(content.changeset !== undefined, "expected changeset to be defined");
-	return { revision: content.revision, changeset: content.changeset };
+	assert(typeof content.originatorId === "string", "expected changeset to be defined");
+	const change = decoder(formatVersion, content.changeset);
+	return { revision: content.revision, sessionId: content.originatorId, change };
 }
