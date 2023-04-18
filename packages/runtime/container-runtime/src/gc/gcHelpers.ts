@@ -294,7 +294,10 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			childGCDetails = { gcData: { gcNodes: {} }, usedRoutes: [] };
 		}
 		// gcData should not undefined as its always at least initialized as  empty above.
-		assert(childGCDetails.gcData !== undefined, 0x5da /* Child GC data should have been initialized */);
+		assert(
+			childGCDetails.gcData !== undefined,
+			0x5da /* Child GC data should have been initialized */,
+		);
 		childGCDetails.gcData.gcNodes[childGCNodeId] = [...new Set(outboundRoutes)];
 		childGCDetailsMap.set(childId, childGCDetails);
 	}

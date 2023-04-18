@@ -396,7 +396,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			// Since `insertNodes` and `replaceNodes` have same merge semantics with `replaceNodes`
 			// being a bit more general purpose function, it's ok to just use that.
 			if (multiplicity !== Multiplicity.Sequence) {
-				assert(cursors.length <= 1, 0x5ce /* more than one top level node in non-sequence filed */);
+				assert(
+					cursors.length <= 1,
+					0x5ce /* more than one top level node in non-sequence filed */,
+				);
 				target.replaceField(fieldKey, cursors.length === 0 ? undefined : cursors[0]);
 			} else {
 				target.replaceField(fieldKey, cursors);
