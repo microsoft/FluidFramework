@@ -5,8 +5,10 @@
 
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { MergeTreeDeltaType } from "../ops";
+import { appendToMergeTreeDeltaRevertibles, MergeTreeDeltaRevertible } from "../revertibles";
 import { markRangeRemoved } from "./testUtils";
 import { loadSnapshot, TestString } from "./snapshot.utils";
+import { createRevertDriver } from "./testClient";
 
 describe("MergeTree remove", () => {
 	let summary;
@@ -60,6 +62,44 @@ describe("MergeTree remove", () => {
 			});
 		},
 	});
+
+	for (const length of [10, 100, 1000]) {
+		benchmark({
+			type: BenchmarkType.Measurement,
+			title: "remove large range of large tree with undo-redo",
+			category: "remove",
+			before: () => {
+				const str = new TestString("id", {});
+				for (let i = 0; i < length / 2; i++) {
+					str.append("a", true);
+					str.appendMarker(true);
+				}
+
+				str.applyPendingOps();
+				summary = str.getSummary();
+			},
+			benchmarkFnAsync: async () => {
+				const str = await loadSnapshot(summary);
+				const driver = createRevertDriver(str);
+
+				const revertibles: MergeTreeDeltaRevertible[] = [];
+				str.on("delta", (_op, delta) => {
+					appendToMergeTreeDeltaRevertibles(driver, delta, revertibles);
+				});
+
+				const op = str.removeRangeLocal(0, length - 1);
+				str.applyMsg(
+					str.makeOpMessage(
+						op,
+						/* seq */ length + 1,
+						/* refSeq */ length,
+						str.longClientId,
+						/* minSeq */ length,
+					),
+				);
+			},
+		});
+	}
 
 	benchmark({
 		type: BenchmarkType.Measurement,

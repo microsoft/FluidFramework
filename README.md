@@ -16,7 +16,17 @@ Hello World repo can be found at <https://github.com/microsoft/FluidHelloWorld>.
 
 Core Examples repo can be found at <https://github.com/microsoft/FluidExamples>.
 
-Have questions? Engage with other Fluid Framework users and developers in the [Discussions] section of our GitHub repo.
+Have questions? Engage with other Fluid Framework users and developers in the [Discussions](https://github.com/microsoft/FluidFramework/discussions) section of our GitHub repo.
+
+### Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.6`.
+While we use different ranges with interdependencies between packages, library consumers should always prefer `^`.
+
+Note that when depending on a library version of the form 2.0.0-internal.x.y.z, called the Fluid internal version
+scheme, you must use a `>= <` dependency range. Standard `^` and `~` ranges will not work as expected. See the
+[@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+package for more information including tools to convert between version schemes.
 
 ## Code structure
 
