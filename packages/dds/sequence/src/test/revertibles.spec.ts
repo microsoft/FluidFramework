@@ -54,7 +54,8 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
 		collection.removeIntervalById(id);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -67,7 +68,8 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
 		collection.change(id, 1, 6);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -79,7 +81,8 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
 		collection.changeProperties(id, { foo: "two" });
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -141,7 +144,8 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
 		});
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
 		collection.removeIntervalById(id);
 		containerRuntimeFactory.processAllMessages();
 
@@ -161,7 +165,8 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
 		});
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 7, IntervalType.Simple).getIntervalId();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 7, IntervalType.Simple).getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		sharedString2.insertText(5, " hi");

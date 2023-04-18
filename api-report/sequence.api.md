@@ -318,7 +318,7 @@ export class SequenceInterval implements ISerializableInterval {
     compareEnd(b: SequenceInterval): number;
     compareStart(b: SequenceInterval): number;
     end: LocalReferencePosition;
-    getIntervalId(): string;
+    getIntervalId(): string | undefined;
     // (undocumented)
     intervalType: IntervalType;
     // @deprecated

@@ -572,8 +572,11 @@ export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.getIntervalId}
 	 */
-	public getIntervalId(): string {
+	public getIntervalId(): string | undefined {
 		const id = this.properties?.[reservedIntervalIdKey];
+		if (id === undefined) {
+			return undefined;
+		}
 		return `${id}`;
 	}
 
