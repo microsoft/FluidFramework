@@ -30,7 +30,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 */
 	public trackCommit(commit: GraphCommit<TChange>): void {
 		if (commit.type === GraphCommitType.Undo) {
-			// Currently no need to handle undo commits
+			// TODO check if this is the correct commit?
+			this.headUndoableCommit = this.headUndoableCommit?.parent;
 			return;
 		}
 
@@ -45,7 +46,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	}
 
 	/**
-	 * Inverts the head undo commit and applies it as a local change.
+	 * Inverts the head undo commit and returns the inverted change.
+	 * This change can then be applied and tracked.
 	 */
 	public undo(): TChange | undefined {
 		const commitToUndo = this.headUndoableCommit;
@@ -55,9 +57,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			return undefined;
 		}
 
-		const { commit, parent, repairData } = commitToUndo;
-		// Removes this undo from the undo commit tree
-		this.headUndoableCommit = parent;
+		const { commit, repairData } = commitToUndo;
 
 		return this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
