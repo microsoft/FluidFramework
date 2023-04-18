@@ -116,6 +116,7 @@ describe("Routerlicious", () => {
 					DefaultServiceConfiguration,
 					false,
 					false,
+					[],
 				);
 
 				testContext = new TestContext();

@@ -51,7 +51,6 @@ export function getTelemetryFileValidationError(telemetryFile: string): string |
  * Validate the provided output format and default properties
  * @param format - desired output format of the telemetry
  * @param props - default properties to be added to every telemetry entry
- * @internal
  */
 export function validateAndParseTelemetryOptions(
 	format?: string,

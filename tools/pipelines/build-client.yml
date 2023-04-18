@@ -22,6 +22,17 @@ parameters:
     - default
     - skip
     - force
+- name: interdependencyRange
+  displayName: Range to use for interdependencies (only affects releases) (default = ~)
+  type: string
+  default: "~"
+  # The " " value (a space) is a hacky workaround. ADO doesn't support empty string, but we ultimately use this value as
+  # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
+  # empty string.
+  values:
+    - "^"
+    - "~"
+    - " "
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
@@ -42,6 +53,7 @@ trigger:
   paths:
     include:
     - packages
+    - azure
     - examples
     - experimental
     - lerna.json
@@ -49,9 +61,11 @@ trigger:
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
+    - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
@@ -67,6 +81,7 @@ pr:
   paths:
     include:
     - packages
+    - azure
     - examples
     - experimental
     - lerna.json
@@ -74,10 +89,12 @@ pr:
     - pnpm-lock.yaml
     - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
+    - tools/pipelines/build-azure.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
 
 extends:
   template: templates/build-npm-package.yml
@@ -86,6 +103,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
@@ -96,6 +114,7 @@ extends:
     taskLint: true
     taskLintName: ci:lint
     taskTest:
+    - webpack
     - ci:test:mocha
     - ci:test:jest
     - ci:test:realsvc:local

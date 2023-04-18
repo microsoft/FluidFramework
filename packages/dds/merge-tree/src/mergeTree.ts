@@ -32,6 +32,7 @@ import {
 	IncrementalMapState,
 	InsertContext,
 	internedSpaces,
+	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
 	ISegmentChanges,
@@ -40,6 +41,7 @@ import {
 	MergeBlock,
 	MergeNode,
 	MinListener,
+	reservedMarkerIdKey,
 	SegmentActions,
 	SegmentGroup,
 	toRemovalInfo,
@@ -81,7 +83,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
-import { Client, reservedMarkerIdKey } from ".";
+import { Client } from "./client";
 
 const minListenerComparer: Comparer<MinListener> = {
 	min: {
@@ -97,7 +99,7 @@ function isRemoved(segment: ISegment): boolean {
 	return toRemovalInfo(segment) !== undefined;
 }
 
-function isRemovedAndAcked(segment: ISegment): boolean {
+function isRemovedAndAcked(segment: ISegment): segment is ISegment & IRemovalInfo {
 	const removalInfo = toRemovalInfo(segment);
 	return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
 }
@@ -278,6 +280,15 @@ function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePo
 		return false;
 	}
 }
+
+/**
+ * Reference types which have special bookkeeping within the merge tree (in {@link HierMergeBlock}s)
+ * and thus require updating path lengths when changed.
+ *
+ * TODO:AB#4069: This functionality is old and not well-tested. It's not clear how much of it is needed--
+ * we should better test the parts that are necessary and remove the rest.
+ */
+const hierRefTypes = ReferenceType.NestBegin | ReferenceType.NestEnd | ReferenceType.Tile;
 
 function addNodeReferences(
 	mergeTree: MergeTree,
@@ -501,7 +512,6 @@ export const clientSeqComparer: Comparer<ClientSeq> = {
 };
 
 /**
- * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export interface LRUSegment {
@@ -511,6 +521,22 @@ export interface LRUSegment {
 
 export interface IRootMergeBlock extends IMergeBlock {
 	mergeTree?: MergeTree;
+}
+
+export function findRootMergeBlock(
+	segmentOrNode: IMergeNode | undefined,
+): IRootMergeBlock | undefined {
+	if (segmentOrNode === undefined) {
+		return undefined;
+	}
+	let maybeRoot: IRootMergeBlock | undefined = segmentOrNode.isLeaf()
+		? segmentOrNode.parent
+		: segmentOrNode;
+	while (maybeRoot?.parent !== undefined) {
+		maybeRoot = maybeRoot.parent;
+	}
+
+	return maybeRoot?.mergeTree !== undefined ? maybeRoot : undefined;
 }
 
 /**
@@ -529,11 +555,8 @@ export class MergeTree {
 	private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
 	public readonly collabWindow = new CollaborationWindow();
 
-	public pendingSegments: List<SegmentGroup> | undefined;
-	private segmentsToScour: Heap<LRUSegment> | undefined;
-	public get getSegmentsToScour(): Heap<LRUSegment> | undefined {
-		return this.segmentsToScour;
-	}
+	public readonly pendingSegments = new List<SegmentGroup>();
+	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
@@ -550,6 +573,17 @@ export class MergeTree {
 	private minSeqListeners: Heap<MinListener> | undefined;
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
+
+	/**
+	 * If we remove a contiguous range of segments, avoid duplicated tree traversal
+	 * for each segment removed, as this scales poorly
+	 */
+	private cachedSlideDestination:
+		| {
+				segmentToSlideDestination: Map<ISegment, ISegment | "detached">;
+				seq: number;
+		  }
+		| undefined;
 
 	public constructor(public options?: IMergeTreeOptions) {
 		this._root = this.makeBlock(0);
@@ -733,8 +767,6 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
-		this.segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
-		this.pendingSegments = new List<SegmentGroup>();
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
@@ -746,7 +778,7 @@ export class MergeTree {
 		//       segments from a snapshot.  We currently skip these for now.
 		if (segment.parent!.needsScour !== true && seq > this.collabWindow.currentSeq) {
 			segment.parent!.needsScour = true;
-			this.segmentsToScour!.add({ segment, maxSeq: seq });
+			this.segmentsToScour.add({ segment, maxSeq: seq });
 		}
 	}
 
@@ -815,28 +847,61 @@ export class MergeTree {
 	/**
 	 * @remarks Must only be used by client.
 	 * @param segment - The segment to slide from.
+	 * @param shouldCache - Whether to cache the sliding destination for this segment.
 	 * @returns The segment to.
 	 * @internal
 	 */
-	public _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined {
+	public _getSlideToSegment(
+		segment: ISegment | undefined,
+		shouldCache?: boolean,
+	): ISegment | undefined {
 		if (!segment || !isRemovedAndAcked(segment)) {
 			return segment;
 		}
+
+		if (this.cachedSlideDestination?.seq !== segment.removedSeq && shouldCache) {
+			this.cachedSlideDestination = {
+				segmentToSlideDestination: new Map<ISegment, ISegment>(),
+				seq: segment.removedSeq,
+			};
+		}
+
+		// cache slide destination of segments to improve the pathological case
+		// in which we slide the same segment multiple times
+		const cachedSegment = this.cachedSlideDestination?.segmentToSlideDestination.get(segment);
+		if (cachedSegment !== undefined && shouldCache) {
+			return cachedSegment === "detached" ? undefined : cachedSegment;
+		}
+		const segmentsWithSlidDst = new Set<ISegment>();
 		let slideToSegment: ISegment | undefined;
 		const goFurtherToFindSlideToSegment = (seg) => {
 			if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
 				slideToSegment = seg;
 				return false;
 			}
+			segmentsWithSlidDst.add(seg);
 			return true;
 		};
 		// Slide to the next farthest valid segment in the tree.
 		forwardExcursion(segment, goFurtherToFindSlideToSegment);
 		if (slideToSegment) {
+			if (shouldCache) {
+				for (const seg of segmentsWithSlidDst) {
+					this.cachedSlideDestination?.segmentToSlideDestination.set(seg, slideToSegment);
+				}
+			}
 			return slideToSegment;
 		}
 		// If no such segment is found, slide to the last valid segment.
 		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+		if (shouldCache) {
+			for (const seg of segmentsWithSlidDst) {
+				this.cachedSlideDestination?.segmentToSlideDestination.set(
+					seg,
+					slideToSegment ?? "detached",
+				);
+			}
+		}
 		return slideToSegment;
 	}
 
@@ -854,7 +919,7 @@ export class MergeTree {
 		if (segment.localRefs?.empty !== false) {
 			return;
 		}
-		const newSegment = this._getSlideToSegment(segment);
+		const newSegment = this._getSlideToSegment(segment, true);
 		if (newSegment) {
 			const localRefs = (newSegment.localRefs ??= new LocalReferenceCollection(newSegment));
 			if (newSegment.ordinal < segment.ordinal) {
@@ -871,7 +936,8 @@ export class MergeTree {
 				}
 			}
 		}
-		// TODO is it required to update the path lengths?
+		// TODO:AB#4069: This update might be avoidable by checking if the old segment
+		// had hierarchical refs before sliding using `segment.localRefs?.hierRefCount`.
 		if (newSegment) {
 			this.blockUpdatePathLengths(
 				newSegment.parent,
@@ -1282,18 +1348,16 @@ export class MergeTree {
 	 */
 	public ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
 		const seq = opArgs.sequencedMessage!.sequenceNumber;
-		const pendingSegmentGroup = this.pendingSegments!.shift()?.data;
+		const pendingSegmentGroup = this.pendingSegments.shift()?.data;
 		const nodesToUpdate: IMergeBlock[] = [];
 		let overwrite = false;
 		if (pendingSegmentGroup !== undefined) {
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
+			const overlappingRemoves: boolean[] = [];
 			pendingSegmentGroup.segments.map((pendingSegment) => {
 				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
 				overwrite = overlappingRemove || overwrite;
-
-				if (!overlappingRemove && opArgs.op.type === MergeTreeDeltaType.REMOVE) {
-					this.slideAckedRemovedSegmentReferences(pendingSegment);
-				}
+				overlappingRemoves.push(overlappingRemove);
 				if (MergeTree.options.zamboniSegments) {
 					this.addToLRUSet(pendingSegment, seq);
 				}
@@ -1304,6 +1368,34 @@ export class MergeTree {
 					segment: pendingSegment,
 				});
 			});
+
+			// Perform slides after all segments have been acked, so that
+			// positions after slide are final
+			if (opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+				// if the slide destination is further, then we have to slide
+				// references in reverse to preserve their order
+				const newSegment = this._getSlideToSegment(pendingSegmentGroup.segments[0]);
+				const shouldReverse =
+					pendingSegmentGroup.segments[0] &&
+					newSegment &&
+					pendingSegmentGroup.segments[0].ordinal < newSegment.ordinal;
+
+				let idx = shouldReverse ? pendingSegmentGroup.segments.length - 1 : 0;
+
+				while (idx >= 0 && idx < pendingSegmentGroup.segments.length) {
+					const pendingSegment = pendingSegmentGroup.segments[idx];
+					if (!overlappingRemoves[idx]) {
+						this.slideAckedRemovedSegmentReferences(pendingSegment);
+					}
+
+					if (shouldReverse) {
+						idx--;
+					} else {
+						idx++;
+					}
+				}
+			}
+
 			this.mergeTreeMaintenanceCallback?.(
 				{
 					deltaSegments,
@@ -1339,7 +1431,7 @@ export class MergeTree {
 			if (previousProps) {
 				_segmentGroup.previousProps = [];
 			}
-			this.pendingSegments!.push(_segmentGroup);
+			this.pendingSegments.push(_segmentGroup);
 		}
 
 		if (
@@ -2056,7 +2148,7 @@ export class MergeTree {
 	 */
 	public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup) {
 		if (op.type === MergeTreeDeltaType.REMOVE) {
-			const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
+			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
@@ -2102,7 +2194,7 @@ export class MergeTree {
 			op.type === MergeTreeDeltaType.INSERT ||
 			op.type === MergeTreeDeltaType.ANNOTATE
 		) {
-			const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
+			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;
 			if (
 				pendingSegmentGroup === undefined ||
 				pendingSegmentGroup !== localOpMetadata ||
@@ -2199,7 +2291,7 @@ export class MergeTree {
 		const segment = lref.getSegment();
 		if (segment) {
 			const removedRefs = segment?.localRefs?.removeLocalRef(lref);
-			if (removedRefs !== undefined) {
+			if (removedRefs !== undefined && refTypeIncludesFlag(lref, hierRefTypes)) {
 				this.blockUpdatePathLengths(
 					segment.parent,
 					TreeMaintenanceSequenceNumber,
@@ -2228,7 +2320,13 @@ export class MergeTree {
 
 		const segRef = localRefs.createLocalRef(offset, refType, properties);
 
-		this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber, LocalClientId);
+		if (refTypeIncludesFlag(refType, hierRefTypes)) {
+			this.blockUpdatePathLengths(
+				segment.parent,
+				TreeMaintenanceSequenceNumber,
+				LocalClientId,
+			);
+		}
 		return segRef;
 	}
 

@@ -9,6 +9,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': 0.11.0-135362
+      '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@rushstack/eslint-config': ^2.6.1
@@ -41,6 +42,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.11.0-135362
+      '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@rushstack/eslint-config': 2.6.2_4rqwsplhh2ekz63wktwk7d7ht4

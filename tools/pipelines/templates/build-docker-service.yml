@@ -74,6 +74,12 @@ parameters:
   type: string
   default: 'npm ci --unsafe-perm'
 
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+  default: "^"
+
 # If true, then this pipeline will check and format package.json files according to prettier settings.
 - name: usesPrettier
   type: boolean
@@ -170,6 +176,7 @@ stages:
             componentDetection=${{ variables.componentDetection }}
             publish=${{ variables.publish }}
             canRelease=${{ variables.canRelease }}
+            interdependencyRange='${{ parameters.interdependencyRange }}'
 
             pushImage=${{ variables.pushImage }}
             releaseImage=${{ variables.releaseImage }}
@@ -226,25 +233,9 @@ stages:
           requireNotice: ${{ eq(variables.releaseImage, true) }}
 
     - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-      - task: Cache@2
-        displayName: Cache pnpm store
-        inputs:
-          # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
-          # in the cache key
-          key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
-          path: ${{ variables.pnpmStorePath }}
-          restoreKeys: |
-            pnpm-store | "$(Agent.OS)"
-
-      - task: Bash@3
-        displayName: Install and configure pnpm
-        inputs:
-          targetType: 'inline'
-          workingDirectory: ${{ parameters.buildDirectory }}
-          script: |
-            corepack enable
-            pnpm -v
-            pnpm config set store-dir $(pnpmStorePath)
+      - template: include-install-pnpm.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
 
     # Set version
     - ${{ if eq(parameters.setVersion, true) }}:
@@ -261,6 +252,7 @@ stages:
           buildDirectory: ${{ parameters.buildDirectory }}
           buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+          interdependencyRange: ${{ parameters.interdependencyRange }}
           tagName: ${{ parameters.tagName }}
           usesPrettier: ${{ parameters.usesPrettier }}
     - ${{ if eq(parameters.setVersion, false) }}:

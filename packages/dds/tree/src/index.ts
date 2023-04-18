@@ -227,6 +227,14 @@ export {
 	ContextuallyTypedFieldData,
 	TreeViewSchema,
 	FieldViewSchema,
+	cursorFromContextualData,
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UntypedTreeCore,
+	UnwrappedUntypedField,
+	UnwrappedUntypedTree,
+	UntypedTreeOrPrimitive,
 } from "./feature-libraries";
 
 export {
@@ -239,7 +247,6 @@ export {
 	SharedTreeFactory,
 	ViewEvents,
 	SchematizeConfiguration,
-	schematizeView,
 } from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";
