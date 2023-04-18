@@ -40,6 +40,7 @@ import {
 	SchemaAware,
 	TypedSchema,
 	parentField,
+	contextSymbol,
 } from "../../../feature-libraries";
 
 import {
@@ -47,6 +48,11 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/editable-tree/editableTree";
+import {
+	ProxyContext,
+	// Allow importing from this specific file which is being tested:
+	/* eslint-disable-next-line import/no-internal-modules */
+} from "../../../feature-libraries/editable-tree/editableTreeContext";
 
 import {
 	fullSchemaData,
@@ -210,6 +216,18 @@ describe("editable-tree: read-only", () => {
 			};
 			assert.deepEqual(descriptor, expected);
 		}
+
+		{
+			const descriptor = Object.getOwnPropertyDescriptor(nameNode, contextSymbol);
+			assert(descriptor?.value instanceof ProxyContext);
+			const expected = {
+				configurable: true,
+				enumerable: false,
+				value: proxy[contextSymbol],
+				writable: false,
+			};
+			assert.deepEqual(descriptor, expected);
+		}
 	});
 
 	it("`typeSymbol` and `typeNameSymbol` work as expected", () => {
@@ -267,6 +285,7 @@ describe("editable-tree: read-only", () => {
 		assert(typeSymbol in personProxy);
 		assert(typeNameSymbol in personProxy);
 		assert(getField in personProxy);
+		assert(contextSymbol in personProxy);
 		// Check fields show up:
 		assert("age" in personProxy);
 		assert.equal(EmptyKey in personProxy, false);
@@ -600,6 +619,7 @@ describe("editable-tree: read-only", () => {
 			"fieldSchema",
 			"primaryType",
 			"parent",
+			"context",
 		]);
 		const act = [...proxy.address.phones].map(
 			(phone: UnwrappedEditableTree): Value | object => {

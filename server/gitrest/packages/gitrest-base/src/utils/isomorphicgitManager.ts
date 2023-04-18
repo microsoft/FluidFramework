@@ -29,8 +29,9 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 		directory: string,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean = false,
+        apiMetricsSamplingPeriod?: number,
 	) {
-		super(directory, lumberjackBaseProperties, enableRepositoryManagerMetrics);
+		super(directory, lumberjackBaseProperties, enableRepositoryManagerMetrics, apiMetricsSamplingPeriod);
 	}
 
 	protected async getCommitCore(sha: string): Promise<resources.ICommit> {
@@ -378,6 +379,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 		repoPerDocEnabled: boolean,
 		enableRepositoryManagerMetrics: boolean = false,
 		private readonly enableSlimGitInit: boolean = false,
+        apiMetricsSamplingPeriod?: number,
 	) {
 		super(
 			storageDirectoryConfig,
@@ -386,6 +388,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 			repoPerDocEnabled,
 			enableRepositoryManagerMetrics,
 			false /* enforceSynchronous */,
+            apiMetricsSamplingPeriod,
 		);
 	}
 
@@ -412,6 +415,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 		externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
+        apiMetricsSamplingPeriod?: number,
 	): IRepositoryManager {
 		return new IsomorphicGitRepositoryManager(
 			fileSystemManager,
@@ -420,6 +424,7 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 			gitdir,
 			lumberjackBaseProperties,
 			enableRepositoryManagerMetrics,
+            apiMetricsSamplingPeriod,
 		);
 	}
 

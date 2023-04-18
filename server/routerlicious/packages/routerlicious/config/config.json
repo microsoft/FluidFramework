@@ -60,13 +60,42 @@
 		"enableConnectionCountLogging": false,
 		"throttling": {
 			"restCallsPerTenant": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
+				"generalRestCall": {
+					"maxPerMs": 1000000,
+					"maxBurst": 1000000,
+					"minCooldownIntervalInMs": 1000000,
+					"minThrottleIntervalInMs": 1000000,
+					"maxInMemoryCacheSize": 1000,
+					"maxInMemoryCacheAgeInMs": 60000,
+					"enableEnhancedTelemetry": false
+				},
+				"createDoc": {
+					"maxPerMs": 1000000,
+					"maxBurst": 1000000,
+					"minCooldownIntervalInMs": 1000000,
+					"minThrottleIntervalInMs": 1000000,
+					"maxInMemoryCacheSize": 1000,
+					"maxInMemoryCacheAgeInMs": 60000,
+					"enableEnhancedTelemetry": false
+				},
+				"getDeltas": {
+					"maxPerMs": 1000000,
+					"maxBurst": 1000000,
+					"minCooldownIntervalInMs": 1000000,
+					"minThrottleIntervalInMs": 1000000,
+					"maxInMemoryCacheSize": 1000,
+					"maxInMemoryCacheAgeInMs": 60000,
+					"enableEnhancedTelemetry": false
+				},
+				"getSession": {
+					"maxPerMs": 1000000,
+					"maxBurst": 1000000,
+					"minCooldownIntervalInMs": 1000000,
+					"minThrottleIntervalInMs": 1000000,
+					"maxInMemoryCacheSize": 1000,
+					"maxInMemoryCacheAgeInMs": 60000,
+					"enableEnhancedTelemetry": false
+				}
 			},
 			"restCallsPerCluster": {
 				"createDoc": {
@@ -79,6 +108,15 @@
 					"enableEnhancedTelemetry": false
 				},
 				"getDeltas": {
+					"maxPerMs": 1000000,
+					"maxBurst": 1000000,
+					"minCooldownIntervalInMs": 1000000,
+					"minThrottleIntervalInMs": 1000000,
+					"maxInMemoryCacheSize": 1000,
+					"maxInMemoryCacheAgeInMs": 60000,
+					"enableEnhancedTelemetry": false
+				},
+				"getSession": {
 					"maxPerMs": 1000000,
 					"maxBurst": 1000000,
 					"minCooldownIntervalInMs": 1000000,
@@ -194,6 +232,9 @@
 		"clientConnectivityCountingEnabled": false,
 		"signalUsageCountingEnabled": false
 	},
+	"shared": {
+		"transientTenants": []
+	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
 		"maxTokenLifetimeSec": 3600,
@@ -231,7 +272,8 @@
 		"groupId": "scriptorium",
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
-		"enableTelemetry": true
+		"enableTelemetry": true,
+		"maxDbBatchSize": 1000
 	},
 	"copier": {
 		"topic": "rawdeltas",

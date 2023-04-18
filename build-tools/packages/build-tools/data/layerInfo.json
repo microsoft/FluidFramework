@@ -134,6 +134,7 @@
 			"Test-Utils": {
 				"dev": true,
 				"packages": [
+					"@fluid-internal/stochastic-test-utils",
 					"@fluid-internal/test-dds-utils",
 					"@fluidframework/local-driver",
 					"@fluidframework/test-runtime-utils",
@@ -185,6 +186,12 @@
 			"Server-Tools": {
 				"packages": ["tinylicious"],
 				"deps": ["Server-Libs"]
+			},
+			"GitRest": {
+				"dirs": ["server/gitrest/", "server/gitrest/packages/"]
+			},
+			"Historian": {
+				"dirs": ["server/historian/", "server/historian/packages/"]
 			}
 		}
 	},

@@ -10,5 +10,6 @@
 /* eslint-disable no-restricted-syntax */
 
 export * from "./ClientUtilities";
+export * from "./MockMessageRelay";
 
 /* eslint-enable no-restricted-syntax */

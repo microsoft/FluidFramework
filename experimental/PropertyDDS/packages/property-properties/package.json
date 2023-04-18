@@ -63,8 +63,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/property-changeset": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/property-common": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-experimental/property-changeset": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluid-experimental/property-common": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"ajv": "7.1.1",
 		"async": "^3.2.2",
 		"fastest-json-copy": "^1.0.1",
@@ -75,7 +75,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",
 		"chai": "^4.2.0",

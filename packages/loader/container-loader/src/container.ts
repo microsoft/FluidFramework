@@ -5,6 +5,9 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
+// eslint-disable-next-line import/no-internal-modules
+import cloneDeep from "lodash/cloneDeep";
+
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLogger,
@@ -109,6 +112,10 @@ const detachedContainerRefSeqNumber = 0;
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
+/**
+ * @deprecated this is an internal interface and will not longer be exported in future versions
+ * @internal
+ */
 export interface IContainerLoadOptions {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
@@ -130,6 +137,7 @@ export interface IContainerLoadOptions {
 }
 
 /**
+ * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface IContainerConfig {
@@ -262,6 +270,7 @@ export async function ReportIfTooLong(
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
+ * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface IPendingContainerState {
@@ -734,9 +743,7 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		this.options = {
-			...this.loader.services.options,
-		};
+		this.options = cloneDeep(this.loader.services.options);
 
 		this._deltaManager = this.createDeltaManager();
 
@@ -1967,10 +1974,7 @@ export class Container
 
 		// Both protocol and context should not be undefined if we got so far.
 
-		this.setContextConnectedState(
-			state,
-			this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false,
-		);
+		this.setContextConnectedState(state, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(state, this.clientId);
 		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
 

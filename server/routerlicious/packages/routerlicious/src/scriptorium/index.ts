@@ -17,7 +17,10 @@ import {
 } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
-export async function create(config: Provider, customizations?: Record<string, any>): Promise<IPartitionLambdaFactory> {
+export async function create(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<IPartitionLambdaFactory> {
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 	const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
@@ -33,6 +36,7 @@ export async function create(config: Provider, customizations?: Record<string, a
 	const deletionIntervalMs = config.get("mongo:deletionIntervalMs") as number;
 
 	const enableTelemetry = (config.get("scriptorium:enableTelemetry") as boolean) ?? false;
+	const maxDbBatchSize = config.get("scriptorium:maxDbBatchSize") as number;
 
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
@@ -51,9 +55,7 @@ export async function create(config: Provider, customizations?: Record<string, a
 
 	const documentRepository =
 		customizations?.documentRepository ??
-		new MongoDocumentRepository(
-			documentsCollectionDb.collection(documentsCollectionName),
-		);
+		new MongoDocumentRepository(documentsCollectionDb.collection(documentsCollectionName));
 	const opCollection = operationsDb.collection(deltasCollectionName);
 
 	if (createCosmosDBIndexes) {
@@ -99,5 +101,5 @@ export async function create(config: Provider, customizations?: Record<string, a
 		},
 	);
 
-	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, { enableTelemetry });
+	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, { enableTelemetry, maxDbBatchSize });
 }

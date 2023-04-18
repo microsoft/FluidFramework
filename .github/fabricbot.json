@@ -700,39 +700,12 @@
       "subCapability": "AutoMerge",
       "version": "1.0",
       "config": {
-        "taskName": "Automatically merge pull requests ",
+        "taskName": "Squash PRs in next",
         "label": "msftbot: merge-next",
-        "silentMode": false,
         "minMinutesOpen": "5",
-        "deleteBranches": true,
-        "allowAutoMergeInstructionsWithoutLabel": true,
-        "enforceDMPAsStatus": true,
-        "removeLabelOnPush": false,
-        "usePrDescriptionAsCommitMessage": true,
-        "requireAllStatuses": false,
-        "conditionalMergeTypes": [
-          {
-            "mergeType": "merge",
-            "condition": {
-              "placeholder": "labels",
-              "operator": "contains",
-              "label_name": "do-not-squash-merge"
-            }
-          },
-          {
-            "mergeType": "merge",
-            "condition": {
-              "placeholder": "labels",
-              "operator": "contains",
-              "label_name": "main-next-integrate"
-            }
-          }
-        ],
         "mergeType": "squash",
-        "requireSpecificCheckRuns": false,
-        "requireSpecificCheckRunsList": []
-      },
-      "disabled": false
+        "deleteBranches": true
+      }
     },
     {
       "taskType": "trigger",
