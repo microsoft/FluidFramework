@@ -433,6 +433,12 @@ async function getSingleOpBatch(
 			// If we got messages back, return them.  Return regardless of whether we got messages back if we didn't
 			// specify a "to", since we don't have an expectation of how many to receive.
 			if (messages.length !== 0 || !strongTo) {
+				// Report this event if we waited to fetch ops due to being offline or throttling.
+				telemetryEvent?.end({
+					duration: totalRetryAfterTime,
+					...props,
+					reason: scenarioName,
+				});
 				return { payload: messages, cancel: false, partial: partialResult };
 			}
 
@@ -486,12 +492,6 @@ async function getSingleOpBatch(
 				// If the error told us to wait, then we will wait for that specific amount rather than the default.
 				delay = retryAfter;
 			}
-		} finally {
-			telemetryEvent?.end({
-				duration: totalRetryAfterTime,
-				...props,
-				reason: scenarioName,
-			});
 		}
 
 		const waitStartTime = performance.now();
