@@ -18,7 +18,6 @@ import {
 import { DocumentNode } from "./documentation-domain";
 import {
 	MarkdownRenderConfiguration,
-	MarkdownRenderers,
 	getMarkdownRenderConfigurationWithDefaults,
 	renderDocumentAsMarkdown,
 } from "./markdown-renderer";
@@ -27,6 +26,7 @@ import {
  * This module contains the primary rendering entrypoints to the system.
  *
  * @remarks
+ *
  * This implementation is based on API-Documenter's standard MarkdownDocumenter implementation,
  * but has been updated to be used programmatically rather than just from a CLI, and to be more extensible.
  *
@@ -39,56 +39,72 @@ import {
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.
  *
  * @remarks
+ *
  * Which API members get their own documents and which get written to the contents of their parent is
  * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
- * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
- * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
+ * The generated nodes' {@link DocumentNode.filePath}s are determined by the provided output path and the
+ * following configuration properties:
+ *
+ * - {@link DocumentationSuiteOptions.documentBoundaries}
+ * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
+ *
+ * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
  */
 export function transformApiModel(
 	transformConfig: ApiItemTransformationConfiguration,
 ): DocumentNode[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(transformConfig);
-	const apiModel = config.apiModel;
+	const { apiModel, logger } = config;
 
-	config.logger.info(
-		`Generating Markdown documentation for API Model ${apiModel.displayName}...`,
-	);
+	logger.info(`Generating Markdown documentation for API Model ${apiModel.displayName}...`);
 
 	const documents: DocumentNode[] = [];
 
-	// Always render Model document
+	// Always render Model document (this is the "root" of the generated documentation suite).
 	documents.push(apiModelToDocument(apiModel, config));
 
+	const packages = apiModel.packages;
+
+	if (packages.length === 0) {
+		logger.warning("No packages found.");
+		return [];
+	}
+
+	// Filter out packages not wanted per user config
 	const filteredPackages = apiModel.packages.filter(
 		(apiPackage) => !config.skipPackage(apiPackage),
 	);
-	if (filteredPackages.length > 0) {
-		// For each package, walk the child graph to find API items which should be rendered to their own document
-		// per provided document boundaries configuration.
 
-		for (const packageItem of filteredPackages) {
-			// Always render documents for packages under the model
-			documents.push(apiPackageToDocument(packageItem, config));
+	if (filteredPackages.length === 0) {
+		logger.warning("No packages found after filtering per `skipPackages` configuration.");
+		return [];
+	}
 
-			const packageEntryPoints = packageItem.entryPoints;
-			if (packageEntryPoints.length !== 1) {
-				throw new Error(
-					`Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
-						"API-Extractor only supports single-entry packages, so this should not be possible.",
-				);
-			}
+	// For each package, walk the child graph to find API items which should be rendered to their own document
+	// per provided document boundaries configuration.
 
-			const packageEntryPointItem = packageEntryPoints[0];
+	for (const packageItem of filteredPackages) {
+		// Always render documents for packages under the model
+		documents.push(apiPackageToDocument(packageItem, config));
 
-			const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
-			for (const apiItem of packageDocumentItems) {
-				documents.push(apiItemToDocument(apiItem, config));
-			}
+		const packageEntryPoints = packageItem.entryPoints;
+		if (packageEntryPoints.length !== 1) {
+			throw new Error(
+				`Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
+					"API-Extractor only supports single-entry packages, so this should not be possible.",
+			);
+		}
+
+		const packageEntryPointItem = packageEntryPoints[0];
+
+		const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
+		for (const apiItem of packageDocumentItems) {
+			documents.push(apiItemToDocument(apiItem, config));
 		}
 	}
 
-	config.logger.success("Documents generated!");
+	logger.success("Documents generated!");
 
 	return documents;
 }
@@ -97,39 +113,56 @@ export function transformApiModel(
  * Renders the provided model and its contents, and writes each document to a file on disk.
  *
  * @remarks
+ *
  * Which API members get their own documents and which get written to the contents of their parent is
  * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
- * The file paths under which the files will be saved is determined by the provided output path and the
+ * The file paths under which the files will be generated is determined by the provided output path and the
  * following configuration properties:
  *
  * - {@link DocumentationSuiteOptions.documentBoundaries}
  * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
- * @param apiModel - The API model being processed.
- * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
- * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
- * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
- * @param customRenderers - Custom {@link DocumentationNode} Markdown renderers.
- * Specified per {@link DocumentationNode."type"}.
+ * @param transformConfig - Configuration for transforming API items into {@link DocumentationNode}s.
+ * @param renderConfig - Configuration for rendering {@link DocumentNode}s as Markdown.
+ * @param outputDirectoryPath - The directory under which the document files will be generated.
  */
 export async function renderApiModelAsMarkdown(
 	transformConfig: ApiItemTransformationConfiguration,
 	renderConfig: MarkdownRenderConfiguration,
 	outputDirectoryPath: string,
-	customRenderers?: MarkdownRenderers,
 ): Promise<void> {
 	const completeTransformConfig =
 		getApiItemTransformationConfigurationWithDefaults(transformConfig);
-	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(renderConfig);
-
-	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
 	const documents = transformApiModel(completeTransformConfig);
 
+	return renderDocumentsAsMarkdown(documents, renderConfig, outputDirectoryPath);
+}
+
+/**
+ * Renders the provided documents using Markdown syntax, and writes each document to a file on disk.
+ *
+ * @param documents - The documents to render. Each will be rendered to its own file on disk per
+ * {@link DocumentNode.filePath} (relative to the provided output directory).
+ *
+ * @param config - A partial {@link MarkdownRenderConfiguration}.
+ * Missing values will be filled in with system defaults.
+ *
+ * @param outputDirectoryPath - The directory under which the document files will be generated.
+ */
+export async function renderDocumentsAsMarkdown(
+	documents: DocumentNode[],
+	config: MarkdownRenderConfiguration,
+	outputDirectoryPath: string,
+): Promise<void> {
+	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(config);
+
+	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
+
 	await Promise.all(
 		documents.map(async (document) => {
-			const renderedDocument = renderDocumentAsMarkdown(document, customRenderers);
+			const renderedDocument = renderDocumentAsMarkdown(document, config);
 
 			const filePath = Path.join(outputDirectoryPath, document.filePath);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {
