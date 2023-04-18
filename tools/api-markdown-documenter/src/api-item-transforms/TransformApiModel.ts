@@ -260,7 +260,6 @@ function createDocumentForApiEntryPoint(
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
-		// TODO: this won't work due to filtering out entry-points
 		sections.push(wrapInSection([createBreadcrumbParagraph(apiEntryPoint, config)]));
 	}
 

@@ -354,25 +354,18 @@ export function createBreadcrumbParagraph(
 
 	const breadcrumbSeparator = new PlainTextNode(" > ");
 
-	const contents: DocumentationNode[] = [];
+	const links = ancestry.map((hierarchyItem) =>
+		LinkNode.createFromPlainTextLink(getLinkForApiItem(hierarchyItem, config)),
+	);
 
-	// Render ancestry links
-	let writtenAnythingYet = false;
-	for (const hierarchyItem of ancestry) {
-		// TODO: join helper?
-		if (writtenAnythingYet) {
-			contents.push(breadcrumbSeparator);
-		}
-		contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(hierarchyItem, config)));
+	// Add link for current document item
+	links.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
 
-		writtenAnythingYet = true;
-	}
-
-	// Render entry for the item itself
-	if (writtenAnythingYet) {
-		contents.push(breadcrumbSeparator);
-	}
-	contents.push(LinkNode.createFromPlainTextLink(getLinkForApiItem(apiItem, config)));
+	// Inject breadcrumb separator between each link
+	const contents: DocumentationNode[] = injectSeparator<DocumentationNode>(
+		links,
+		breadcrumbSeparator,
+	);
 
 	return new ParagraphNode(contents);
 }
