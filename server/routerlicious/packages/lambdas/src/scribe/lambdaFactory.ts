@@ -290,7 +290,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			latestSummary.protocolHead,
 			opsSinceLastSummary,
 			scribeSessionMetric,
-			this.transientTenants,
+			new Set(this.transientTenants),
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {
