@@ -355,9 +355,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
-			closeHandler: (error: any) => {
-				this.close(error);
-			},
+			closeHandler: (error: any) => this.close(error),
 			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
@@ -372,12 +370,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		});
 
 		this._inbound.on("error", (error) => {
-			const newError = DataProcessingError.wrapIfUnrecognized(
-				error,
-				"deltaManagerInboundErrorHandler",
-				this.lastMessage,
+			this.close(
+				DataProcessingError.wrapIfUnrecognized(
+					error,
+					"deltaManagerInboundErrorHandler",
+					this.lastMessage,
+				),
 			);
-			this.close(newError);
 		});
 
 		// Inbound signal queue
@@ -394,8 +393,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		});
 
 		this._inboundSignal.on("error", (error) => {
-			const newError = normalizeError(error);
-			this.close(newError);
+			this.close(normalizeError(error));
 		});
 
 		// Initially, all queues are created paused.
