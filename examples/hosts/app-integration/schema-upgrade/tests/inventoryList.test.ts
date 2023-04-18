@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IMigrator } from "@fluid-example/example-utils";
 import { globals } from "../jest.config";
 
 // Tests disabled -- requires Tinylicious to be running, which our test environment doesn't do.
@@ -40,7 +41,10 @@ describe("inventoryList", () => {
 
 	it("migrates and shows the correct code version after migration", async () => {
 		// Validate the migration status shows "one" initially
-		await page.waitForSelector(".migration-status");
+		await Promise.all([
+			page.waitForSelector("#sbs-left .migration-status"),
+			page.waitForSelector("#sbs-right .migration-status"),
+		]);
 		const leftContainsOne = await page.evaluate(() => {
 			const migrationStatusElements = document.querySelectorAll(".migration-status");
 			return migrationStatusElements[0]?.textContent?.includes("one") === true;
@@ -52,11 +56,24 @@ describe("inventoryList", () => {
 		await expect(leftContainsOne).toEqual(true);
 		await expect(rightContainsOne).toEqual(true);
 
+		const migratorsLength = await page.evaluate(() => {
+			return window["migrators"].length;
+		});
+		await expect(migratorsLength).toEqual(2);
+
+		// Get a promise that will resolve when both sides have finished migration
+		const migrationP = page.evaluate(() => {
+			const migrationPs = (window["migrators"] as IMigrator[]).map((migrator) => {
+				return new Promise<void>((resolve) => {
+					migrator.once("migrated", resolve);
+				});
+			});
+			return Promise.all(migrationPs);
+		});
+
 		await expect(page).toClick("button", { text: '"two"' });
 
-		await new Promise((resolve) => {
-			setTimeout(resolve, 500);
-		});
+		await migrationP;
 
 		// Validate the migration status shows "two" after the migration
 		const leftContainsTwo = await page.evaluate(() => {

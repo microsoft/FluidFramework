@@ -5,7 +5,6 @@
 
 import {
 	IMigratableModel,
-	IModelLoader,
 	IVersionedModel,
 	Migrator,
 	SessionStorageModelLoader,
@@ -33,17 +32,20 @@ const isIInventoryListAppModel = (model: IVersionedModel): model is IInventoryLi
 
 const getUrlForContainerId = (containerId: string) => `/#${containerId}`;
 
+// Store the migrators on the window so our tests can more easily observe the migration happening
+// eslint-disable-next-line @typescript-eslint/dot-notation
+window["migrators"] = [];
+
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(new DemoCodeLoader());
 	let id: string;
-	let modelLoader: IModelLoader<IMigratableModel>;
 	let model: IMigratableModel;
 
 	if (location.hash.length === 0) {
-		modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(new DemoCodeLoader());
 		// Normally our code loader is expected to match up with the version passed here.
 		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
 		// the version doesn't actually matter.
@@ -54,7 +56,6 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		id = await createResponse.attach();
 	} else {
 		id = location.hash.substring(1);
-		modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(new DemoCodeLoader());
 		model = await modelLoader.loadExisting(id);
 	}
 
@@ -90,6 +91,9 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		updateTabForId(migrator.currentModelId);
 		model = migrator.currentModel;
 	});
+
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["migrators"].push(migrator);
 
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
