@@ -102,7 +102,6 @@ scribe:
   name: scribe
   replicas: 8
   getDeltasViaAlfred: true
-  transientTenants: []
   checkpointHeuristics:
     enable: false
     idleTime: 10000
@@ -133,6 +132,9 @@ system:
 usage:
   clientConnectivityCountingEnabled: false
   signalUsageCountingEnabled: false
+
+shared:
+  transientTenants: []
 
 mongodb:
   operationsDbEndpoint: mongodb_url

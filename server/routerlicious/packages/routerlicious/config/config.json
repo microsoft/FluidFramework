@@ -218,8 +218,7 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"getDeltasViaAlfred": true,
-		"transientTenants": []
+		"getDeltasViaAlfred": true
 	},
 	"system": {
 		"httpServer": {
@@ -232,6 +231,9 @@
 	"usage": {
 		"clientConnectivityCountingEnabled": false,
 		"signalUsageCountingEnabled": false
+	},
+	"shared": {
+		"transientTenants": []
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
