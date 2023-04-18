@@ -34,6 +34,8 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
 
 The `IContainerRuntimeOptions.enableGroupedBatching` option has been added to the container runtime layer and is **off by default**. This option will group all batch messages under a new "grouped" message to be sent to the service. Upon receiving this new "grouped" message, the batch messages will be extracted and given the sequence number of the parent "grouped" message.
 
+The purpose for enabling grouped batching on top of compression is that regular compression won't include the empty messages in the chunks. Thus, if we have batches with many messages (i.e. more than 4k), we will go over the batch size limit just on empty op envelopes alone.
+
 See [below](#how-grouped-batching-works) for an example.
 
 ## Chunking for compression
