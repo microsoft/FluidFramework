@@ -309,12 +309,12 @@ describe("AnchorSet", () => {
 					}-${count}`,
 				)();
 			},
-			onInsert(path: UpPath, content: readonly Delta.ProtoNode[]): void {
+			onInsert(path: UpPath, content: Delta.ProtoNodes): void {
 				log.logger(
 					`visitSubtreeChange.onInsert-${String(path.parentField)}-${path.parentIndex}`,
 				)();
 			},
-			onSetValue(path: UpPath, field: FieldKey, value: Value): void {
+			onSetValue(path: UpPath, value: Value): void {
 				log.logger(`visitSubtreeChange.onSetValue-${value}`)();
 			},
 		};

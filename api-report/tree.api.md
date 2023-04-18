@@ -306,6 +306,7 @@ declare namespace Delta {
     export {
         Root,
         ProtoNode,
+        ProtoNodes,
         Mark,
         MarkList,
         Skip,
@@ -1188,12 +1189,11 @@ export interface PathRootPrefix {
 
 // @alpha
 export interface PathVisitor {
-    // (undocumented)
     onDelete(path: UpPath, count: number): void;
     // (undocumented)
-    onInsert(path: UpPath, content: readonly Delta.ProtoNode[]): void;
+    onInsert(path: UpPath, content: Delta.ProtoNodes): void;
     // (undocumented)
-    onSetValue(path: UpPath, field: FieldKey | undefined, value: Value): void;
+    onSetValue(path: UpPath, value: Value): void;
 }
 
 // @alpha
@@ -1231,6 +1231,9 @@ export abstract class ProgressiveEditBuilderBase<TChange> implements Progressive
 
 // @alpha
 type ProtoNode = ITreeCursorSynchronous;
+
+// @alpha
+type ProtoNodes = readonly ProtoNode[];
 
 // @alpha
 export const proxyTargetSymbol: unique symbol;
