@@ -54,6 +54,7 @@ export class OdspDeltaStorageService {
 				this.logger,
 				{
 					eventName: "OpsFetch",
+					attempts: options.refresh ? 2 : 1,
 					from,
 					to,
 					...telemetryProps,
@@ -106,7 +107,6 @@ export class OdspDeltaStorageService {
 						headers: Object.keys(headers).length !== 0 ? true : undefined,
 						length: messages.length,
 						...response.propsToLog,
-						attempts: options.refresh ? 2 : 1,
 					});
 
 					// It is assumed that server always returns all the ops that it has in the range that was requested.
