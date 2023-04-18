@@ -509,7 +509,7 @@ const defaultCompressionConfig = {
 
 const defaultChunkSizeInBytes = 204800;
 
-export const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
+const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
