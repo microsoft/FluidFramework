@@ -1763,7 +1763,6 @@ export class ContainerRuntime
 	 */
 	private async applyStashedIdAllocationOp(content: any) {
 		this.idCompressor = IdCompressor.deserialize(content.stashedState);
-		delete content.stashedState;
 	}
 
 	private async applyStashedOp(
@@ -3133,6 +3132,9 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.IdAllocation:
+				// Remove the stashed state from the op
+				// so that it doesn't go over the wire
+				delete content.stashedState;
 				this.submit(type, content, localOpMetadata);
 				break;
 			case ContainerMessageType.ChunkedOp:
