@@ -15,7 +15,7 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ISummaryConfiguration, defaultCloseSummarizerDelayMs } from "../containerRuntime";
+import { ISummaryConfiguration } from "../containerRuntime";
 import { opSize } from "../opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
@@ -46,7 +46,6 @@ import {
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
 const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
-const numberOfAttemptsOnRestartAsRecovery = 1; // Only summarize once
 
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
@@ -133,7 +132,6 @@ export class RunningSummarizer implements IDisposable {
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
-	private readonly shouldAbortOnSummaryFailure: boolean;
 
 	private enqueuedSummary:
 		| {
@@ -176,10 +174,6 @@ export class RunningSummarizer implements IDisposable {
 				all: telemetryProps,
 			}),
 		);
-
-		this.shouldAbortOnSummaryFailure =
-			this.mc.config.getString("Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod") ===
-			"restart";
 
 		if (configuration.state !== "disableHeuristics") {
 			assert(
@@ -601,10 +595,9 @@ export class RunningSummarizer implements IDisposable {
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
 				// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
-				let totalAttempts = this.shouldAbortOnSummaryFailure
-					? numberOfAttemptsOnRestartAsRecovery
-					: this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
-					  defaultNumberSummarizationAttempts;
+				let totalAttempts =
+					this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
+					defaultNumberSummarizationAttempts;
 
 				if (totalAttempts > attempts.length) {
 					this.mc.logger.sendTelemetryEvent({
@@ -673,30 +666,6 @@ export class RunningSummarizer implements IDisposable {
 							...summarizeProps,
 						});
 						await delay(delaySeconds * 1000);
-					}
-
-					if (this.shouldAbortOnSummaryFailure) {
-						// There's no need to delay here as we already have summarizeAttemptDelay given to us by the server.
-						if (delaySeconds === 0) {
-							const closeSummarizerDelayOverrideMs =
-								this.mc.config.getNumber(
-									"Fluid.ContainerRuntime.Test.CloseSummarizerOnSummaryStaleDelayOverrideMs",
-								) ?? defaultCloseSummarizerDelayMs;
-							await delay(closeSummarizerDelayOverrideMs);
-						}
-
-						this.mc.logger.sendTelemetryEvent(
-							{
-								eventName: "ClosingSummarizerOnSummaryStale",
-								reason,
-								message: lastResult?.message,
-							},
-							lastResult?.error,
-						);
-
-						this.stopSummarizerCallback("latestSummaryStateStale");
-						this.runtime.closeFn();
-						return;
 					}
 				}
 

@@ -913,6 +913,8 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
+	private readonly abnormalAckRecoveryMethod: string | undefined;
+	private readonly closeSummarizerDelayMs: number;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private _perfSignalData: IPerfSignalReport = {
@@ -1286,6 +1288,14 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
+		this.abnormalAckRecoveryMethod = this.mc.config.getString(
+			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
+		);
+		const closeSummarizerDelayOverride = this.mc.config.getNumber(
+			"Fluid.ContainerRuntime.Test.CloseSummarizerOnSummaryStaleDelayOverrideMs",
+		);
+		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
+
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
@@ -1426,6 +1436,8 @@ export class ContainerRuntime
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
+				abnormalAckRecoveryMethod: this.abnormalAckRecoveryMethod,
+				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -3213,16 +3225,8 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		const recoveryMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
-		);
-		if (recoveryMethod === "restart") {
+		if (this.abnormalAckRecoveryMethod === "restart") {
 			const error = new GenericError("Restarting summarizer instead of refreshing");
-
-			const closeSummarizerDelayOverrideMs =
-				this.mc.config.getNumber(
-					"Fluid.ContainerRuntime.Test.CloseSummarizerOnSummaryStaleDelayOverrideMs",
-				) ?? defaultCloseSummarizerDelayMs;
 
 			this.mc.logger.sendTelemetryEvent(
 				{
@@ -3231,13 +3235,13 @@ export class ContainerRuntime
 					codePath: event.eventName,
 					message: "Stopping fetch from storage",
 					versionId: versionId != null ? versionId : undefined,
-					closeSummarizerDelayMs: closeSummarizerDelayOverrideMs,
+					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
 				},
 				error,
 			);
 
 			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
-			await delay(closeSummarizerDelayOverrideMs);
+			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
 			throw error;
