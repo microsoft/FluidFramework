@@ -11,8 +11,8 @@ importers:
         specifier: 0.11.0-135362
         version: 0.11.0-135362(@types/node@16.18.16)
       '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^2.0.0-151899
+        version: 2.0.0-151899
       '@fluidframework/build-tools':
         specifier: 0.11.0-135362
         version: 0.11.0-135362(@types/node@16.18.16)
@@ -702,6 +702,11 @@ packages:
 
   /@fluidframework/build-common@1.1.0:
     resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+    dev: true
+
+  /@fluidframework/build-common@2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
+    hasBin: true
     dev: true
 
   /@fluidframework/build-tools@0.11.0-135362(@types/node@16.18.16):

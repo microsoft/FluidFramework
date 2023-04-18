@@ -9,7 +9,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': 0.11.0-135362
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@rushstack/eslint-config': ^2.6.1
@@ -42,7 +42,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.11.0-135362
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@rushstack/eslint-config': 2.6.2_4rqwsplhh2ekz63wktwk7d7ht4
@@ -617,6 +617,11 @@ packages:
 
   /@fluidframework/build-common/1.1.0:
     resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+    hasBin: true
+    dev: true
+
+  /@fluidframework/build-common/2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
     hasBin: true
     dev: true
 

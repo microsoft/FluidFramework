@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': ^1.3.6
@@ -41,7 +41,7 @@ importers:
       '@rushstack/node-core-library': 3.55.2_@types+node@18.15.11
       chalk: 4.1.2
     devDependencies:
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_bhanhq442dy43ncydsavgi4jfi
       '@fluidframework/eslint-config-fluid': 2.0.0_flcvfono3v34oogyclggnmpgme
       '@fluidframework/mocha-test-setup': 1.3.6
@@ -359,8 +359,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/build-common/1.1.0:
-    resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+  /@fluidframework/build-common/2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
     hasBin: true
     dev: true
 

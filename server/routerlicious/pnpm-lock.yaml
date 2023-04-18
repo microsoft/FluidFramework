@@ -9,7 +9,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
@@ -22,7 +22,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1
       '@microsoft/api-documenter': 7.21.6
       '@microsoft/api-extractor': 7.34.4
@@ -37,7 +37,7 @@ importers:
   packages/gitresources:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       concurrently: ^7.6.0
@@ -47,7 +47,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       concurrently: 7.6.0
@@ -59,7 +59,7 @@ importers:
   packages/kafka-orderer:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
@@ -75,7 +75,7 @@ importers:
       '@fluidframework/server-services-core': link:../services-core
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/node': 16.18.16
@@ -88,7 +88,7 @@ importers:
   packages/lambdas:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
@@ -158,7 +158,7 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils': link:../test-utils
@@ -185,7 +185,7 @@ importers:
   packages/lambdas-driver:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -219,7 +219,7 @@ importers:
       lodash: 4.17.21
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils': link:../test-utils
@@ -238,7 +238,7 @@ importers:
   packages/local-server:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -286,7 +286,7 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_c37x2qanekpkbiwu5ph4clysly
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_c37x2qanekpkbiwu5ph4clysly
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/jsrsasign': 8.0.13
@@ -311,7 +311,7 @@ importers:
   packages/memory-orderer:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -366,7 +366,7 @@ importers:
       ws: 7.5.9
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/mocha': 10.0.1
@@ -382,7 +382,7 @@ importers:
   packages/protocol-base:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -410,7 +410,7 @@ importers:
       lodash: 4.17.21
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@microsoft/api-extractor': 7.34.4_@types+node@16.18.16
@@ -429,7 +429,7 @@ importers:
   packages/routerlicious:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -486,7 +486,7 @@ importers:
       winston: 3.8.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server': link:../local-server
@@ -504,7 +504,7 @@ importers:
   packages/routerlicious-base:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -600,7 +600,7 @@ importers:
       ws: 7.5.9
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-local-server': link:../local-server
@@ -637,7 +637,7 @@ importers:
   packages/services:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -707,7 +707,7 @@ importers:
       winston: 3.8.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils': link:../test-utils
@@ -734,7 +734,7 @@ importers:
   packages/services-client:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -781,7 +781,7 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@microsoft/api-extractor': 7.34.4_@types+node@16.18.16
@@ -803,7 +803,7 @@ importers:
   packages/services-core:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -834,7 +834,7 @@ importers:
       nconf: 0.12.0
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       concurrently: 7.6.0
@@ -846,7 +846,7 @@ importers:
   packages/services-ordering-kafkanode:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-services-client': ^0.1041.1000
@@ -880,7 +880,7 @@ importers:
       sillyname: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils': link:../test-utils
@@ -901,7 +901,7 @@ importers:
   packages/services-ordering-rdkafka:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -936,7 +936,7 @@ importers:
       sillyname: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils': link:../test-utils
@@ -958,7 +958,7 @@ importers:
   packages/services-ordering-zookeeper:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-services-core': ^0.1041.1000
@@ -982,7 +982,7 @@ importers:
       zookeeper: 5.6.0
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils': link:../test-utils
@@ -1003,7 +1003,7 @@ importers:
   packages/services-shared:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -1069,7 +1069,7 @@ importers:
       winston: 3.8.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/body-parser': 1.19.2
@@ -1094,7 +1094,7 @@ importers:
   packages/services-telemetry:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -1122,7 +1122,7 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/mocha': 10.0.1
@@ -1141,7 +1141,7 @@ importers:
   packages/services-utils:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
@@ -1202,7 +1202,7 @@ importers:
       winston-transport: 4.5.0
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@fluidframework/server-test-utils': link:../test-utils
@@ -1230,7 +1230,7 @@ importers:
   packages/test-utils:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -1275,7 +1275,7 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@16.18.16
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/lodash': 4.14.184
@@ -1717,8 +1717,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/build-common/1.1.0:
-    resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+  /@fluidframework/build-common/2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
     hasBin: true
     dev: true
 

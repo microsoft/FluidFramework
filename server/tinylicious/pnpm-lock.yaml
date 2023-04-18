@@ -8,7 +8,7 @@ importers:
 
   .:
     specifiers:
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^0.1040.1000
@@ -107,7 +107,7 @@ importers:
       uuid: 8.3.2
       winston: 3.8.1
     devDependencies:
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': 1.2.3
       '@microsoft/api-extractor': 7.34.4_@types+node@16.18.21
@@ -199,8 +199,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/build-common/1.1.0:
-    resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+  /@fluidframework/build-common/2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
     hasBin: true
     dev: true
 
@@ -1469,7 +1469,7 @@ packages:
     dev: true
 
   /bindings/1.5.0:
-    resolution: {integrity: sha1-EDU8npRTNLwFEabZCzj7x8nFBN8=}
+    resolution: {integrity: sha512-p2q/t/mhvuOj/UeLlV6566GD/guowlr0hHxClI0W9m7MWYkL1F0hLo+0Aexs9HSPCtR1SXQ0TD3MMKrXZajbiQ==}
     requiresBuild: true
     dependencies:
       file-uri-to-path: 1.0.0
@@ -1855,7 +1855,7 @@ packages:
     dev: true
 
   /commander/9.5.0:
-    resolution: {integrity: sha1-vAjR61zt98y3l6lhmdQce8PmDTA=}
+    resolution: {integrity: sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ==}
     engines: {node: ^12.20.0 || >=14}
     requiresBuild: true
     dev: true
@@ -2869,7 +2869,7 @@ packages:
     dev: true
 
   /file-uri-to-path/1.0.0:
-    resolution: {integrity: sha1-VTp7hEb/b2hDWcRF8eN6BdrMM90=}
+    resolution: {integrity: sha512-0Zt+s3L7Vf1biwWZ29aARiVYLx7iMGnEUl9x33fbB/j3jR81u/O2LbqK+Bm1CDSNDKVtJ/YjwY7TUd5SkeLQLw==}
     requiresBuild: true
     dev: true
     optional: true
@@ -3056,7 +3056,7 @@ packages:
     dev: true
 
   /fsevents/1.2.13:
-    resolution: {integrity: sha1-8yXLBFVZJCi88Rs4M3DvcOO/zDg=}
+    resolution: {integrity: sha512-oWb1Z6mkHIskLzEJ/XWX0srkpkTQ7vaopMQkyaEIoq0fmtFVxOthb8cCxeT+p3ynTdkk/RZwbgG4brR5BeWECw==}
     engines: {node: '>= 4.0'}
     os: [darwin]
     deprecated: fsevents 1 will break on node v14+ and could be using insecure binaries. Upgrade to fsevents 2.
@@ -3068,7 +3068,7 @@ packages:
     optional: true
 
   /fsevents/2.3.2:
-    resolution: {integrity: sha1-ilJveLj99GI7cJ4Ll1xSwkwC/Ro=}
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
@@ -4264,7 +4264,7 @@ packages:
     dev: true
 
   /nan/2.17.0:
-    resolution: {integrity: sha1-wBUKI2ihgvAz6apRlex26kGhmcs=}
+    resolution: {integrity: sha512-2ZTgtl0nJsO0KQCjEpxcIr5D+Yv90plTitZt9JBfQvVJDS5seMl3FOvsh3+9CoYWXf/1l5OaZzzF6nDm4cagaQ==}
     requiresBuild: true
     dev: true
     optional: true

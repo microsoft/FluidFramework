@@ -12,7 +12,7 @@ importers:
       '@commitlint/cli': ^17.1.2
       '@commitlint/config-conventional': ^17.1.0
       '@commitlint/cz-commitlint': ^17.1.2
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
@@ -34,7 +34,7 @@ importers:
       '@commitlint/cli': 17.2.0
       '@commitlint/config-conventional': 17.2.0
       '@commitlint/cz-commitlint': 17.2.0_yes7iyjckc3rubj3ixzwc3ince
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.21.6
       '@microsoft/api-extractor': 7.34.4
@@ -56,7 +56,7 @@ importers:
   packages/build-cli:
     specifiers:
       '@fluid-tools/version-tools': ^0.14.0
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/build-tools': ^0.14.0
       '@fluidframework/bundle-size-tools': ^0.14.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -161,7 +161,7 @@ importers:
       table: 6.8.0
       type-fest: 2.19.0
     devDependencies:
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/async': 3.2.18
@@ -203,7 +203,7 @@ importers:
   packages/build-tools:
     specifiers:
       '@fluid-tools/version-tools': ^0.14.0
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/bundle-size-tools': ^0.14.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@octokit/core': ^4.0.5
@@ -289,7 +289,7 @@ importers:
       type-fest: 2.19.0
       yaml: 2.1.2
     devDependencies:
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/async': 3.2.15
       '@types/fs-extra': 8.1.2
@@ -317,7 +317,7 @@ importers:
 
   packages/bundle-size-tools:
     specifiers:
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.34.4
       '@types/jszip': ^3.4.1
@@ -346,7 +346,7 @@ importers:
       typescript: 4.5.5
       webpack: 5.76.2
     devDependencies:
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/jszip': 3.4.1
@@ -364,7 +364,7 @@ importers:
 
   packages/version-tools:
     specifiers:
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.0-151899
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.34.4
       '@oclif/core': ^2.4.0
@@ -411,7 +411,7 @@ importers:
       semver: 7.3.7
       table: 6.8.0
     devDependencies:
-      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-common': 2.0.0-151899
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@oclif/test': 2.3.8
@@ -954,8 +954,8 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/build-common/1.1.0:
-    resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
+  /@fluidframework/build-common/2.0.0-151899:
+    resolution: {integrity: sha512-rFiyJBrRJlgMHQZNs5FNQfn/0pup2j/ujb+y2X+gkDIVfVadBgSOlIkw7a78thEFpXf38j6b621vszxjlJBx7Q==}
     hasBin: true
     dev: true
 
