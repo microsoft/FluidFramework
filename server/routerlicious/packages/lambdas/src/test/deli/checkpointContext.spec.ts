@@ -12,7 +12,6 @@ import {
 } from "../../deli/checkpointManager";
 import { CheckpointReason } from "../../utils";
 import Sinon from "sinon";
-import { CheckpointService } from "@fluidframework/server-services-core";
 
 describe("Routerlicious", () => {
 	describe("Deli", () => {
@@ -22,7 +21,7 @@ describe("Routerlicious", () => {
 			let testCheckpointContext: CheckpointContext;
 			let testDocumentRepository: testUtils.TestNotImplementedDocumentRepository;
 			let testCheckpointRepository: testUtils.TestNotImplementedCheckpointRepository;
-            let testCheckpointService: CheckpointService;
+            let testCheckpointService: testUtils.TestNotImplementedCheckpointService;
 			let testContext: testUtils.TestContext;
 
 			function createCheckpoint(
@@ -61,8 +60,10 @@ describe("Routerlicious", () => {
 				testContext = new testUtils.TestContext();
 				testDocumentRepository = new testUtils.TestNotImplementedDocumentRepository();
 				testCheckpointRepository = new testUtils.TestNotImplementedCheckpointRepository();
+                testCheckpointService = new testUtils.TestNotImplementedCheckpointService();
 				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake());
 				Sinon.replace(testCheckpointRepository, "writeCheckpoint", Sinon.fake());
+                Sinon.replace(testCheckpointService, "writeCheckpointToCollection", Sinon.fake());
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					testTenant,
 					testId,

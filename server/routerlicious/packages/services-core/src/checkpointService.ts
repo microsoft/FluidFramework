@@ -7,7 +7,7 @@ import { ICheckpointRepository, IDocumentRepository } from "./database";
 import { IDeliState, IDocument, IScribe } from "./document";
 
 
- export class CheckpointService {
+ export class CheckpointService implements ICheckpointService {
 	constructor(
         private readonly checkpointRepository: ICheckpointRepository,
         private readonly documentRepository: IDocumentRepository,
@@ -169,3 +169,12 @@ import { IDeliState, IDocument, IScribe } from "./document";
     }
 
  }
+
+ export interface ICheckpointService {
+    getLocalCheckpointEnabled(): boolean;
+    writeCheckpointToCollection(documentId: string, tenantId: string, service: string, checkpoint: IScribe | IDeliState, isLocal: boolean) : Promise<void>;
+    removeCheckpointFromCollection(documentId: string, tenantId: string, service: string, isLocal: boolean) : Promise<void>;
+    restoreFromCheckpoint(documentId: string, tenantId: string, service: string, document: IDocument): Promise<IScribe | IDeliState>;
+    getLatestCheckpoint(tenantId: string, documentId: string, documentRepository: IDocumentRepository, checkpointRepository: ICheckpointRepository, localCheckpointEnabled?: boolean, activeClients?: boolean): Promise<any>;
+}
+
