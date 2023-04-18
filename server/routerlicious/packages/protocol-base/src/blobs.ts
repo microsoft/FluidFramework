@@ -15,7 +15,10 @@ import {
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
+
 /**
+ * @deprecated Please import the function from `@fluidframework/server-services-client`. It will be removed from server packages.
+ *
  * Take a summary object and returns its git mode.
  *
  * @param value - summary object

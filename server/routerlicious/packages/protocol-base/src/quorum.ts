@@ -32,11 +32,15 @@ class PendingProposal implements ISequencedProposal {
 }
 
 /**
+ * NOTE: for server usage - duplicated the code in `@fluidframework/server-services-client#utils.ts`
+ *
  * Snapshot format for a QuorumClients
  */
 export type QuorumClientsSnapshot = [string, ISequencedClient][];
 
 /**
+ * NOTE: for server usage - duplicated the code in `@fluidframework/server-services-client#utils.ts`
+ *
  * Snapshot format for a QuorumProposals
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -46,6 +50,8 @@ export type QuorumProposalsSnapshot = {
 };
 
 /**
+ * NOTE: for server usage - duplicated the code in `@fluidframework/server-services-client#utils.ts`
+ *
  * Snapshot format for a Quorum
  */
 export interface IQuorumSnapshot {

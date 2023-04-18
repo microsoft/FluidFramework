@@ -6,6 +6,9 @@
 import * as resources from "@fluidframework/gitresources";
 import {
 	FileMode,
+	ICommittedProposal,
+	ISequencedClient,
+	ISequencedProposal,
 	ISnapshotTreeEx,
 	ITreeEntry,
 	MessageType,
@@ -162,4 +165,46 @@ export function generateServiceProtocolEntries(deli: string, scribe: string): IT
 		},
 	});
 	return serviceProtocolEntries;
+}
+
+/**
+ * Take a summary object and returns its git mode.
+ *
+ * @param value - summary object
+ * @returns the git mode of summary object
+ */
+export function getGitMode(value: SummaryObject): string {
+	const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+	switch (type) {
+		case SummaryType.Blob:
+		case SummaryType.Attachment:
+			return FileMode.File;
+		case SummaryType.Tree:
+			return FileMode.Directory;
+		default:
+			unreachableCase(type, `Unknown type: ${type}`);
+	}
+}
+
+/**
+ * Snapshot format for a QuorumClients
+ */
+export type QuorumClientsSnapshot = [string, ISequencedClient][];
+
+/**
+ * Snapshot format for a QuorumProposals
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type QuorumProposalsSnapshot = {
+	proposals: [number, ISequencedProposal, string[]][];
+	values: [string, ICommittedProposal][];
+};
+
+/**
+ * Snapshot format for a Quorum
+ */
+export interface IQuorumSnapshot {
+	members: QuorumClientsSnapshot;
+	proposals: QuorumProposalsSnapshot["proposals"];
+	values: QuorumProposalsSnapshot["values"];
 }
