@@ -12,6 +12,7 @@ import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
+import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
@@ -37,6 +38,9 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
+
+// @public (undocumented)
+export function applyStorageCompression(documentServiceFactory: IDocumentServiceFactory, config?: ICompressionStorageConfig): IDocumentServiceFactory;
 
 // @public (undocumented)
 export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
@@ -159,6 +163,16 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 
 // @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
+
+// @public (undocumented)
+export interface ICompressionStorageConfig {
+    // Warning: (ae-forgotten-export) The symbol "SummaryCompressionAlgorithm" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    algorithm: SummaryCompressionAlgorithm;
+    // (undocumented)
+    minSizeToCompress: number;
+}
 
 // @public
 export class InsecureUrlResolver implements IUrlResolver {

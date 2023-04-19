@@ -40,6 +40,12 @@ export abstract class DocumentServiceProxy implements IDocumentService {
 		return this._service.resolvedUrl;
 	}
 
+	public saveStorage(storage: IDocumentStorageService): void {
+		if(this._service.saveStorage !== undefined) {
+			this._service.saveStorage(storage);
+		}
+	}
+
 
 }
 

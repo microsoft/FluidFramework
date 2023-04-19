@@ -4,7 +4,7 @@
  */
 
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { SummaryCompressionAlgorithm } from "./compression";
+import { SummaryCompressionAlgorithm, DocumentServiceFactoryCompressionAdapter, ICompressionStorageConfig} from "./compression";
 
 
 
@@ -15,11 +15,7 @@ export function applyStorageCompression(
 	if (config.algorithm === undefined) {
 		return documentServiceFactory;
 	}
-	return documentServiceFactory;
+	return new DocumentServiceFactoryCompressionAdapter(documentServiceFactory, config);
 }
 
-export interface ICompressionStorageConfig {
-	algorithm: SummaryCompressionAlgorithm;
-	minSizeToCompress: number;
-}
 

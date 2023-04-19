@@ -4,6 +4,8 @@
  */
 
 export {
-	SummaryCompressionAlgorithm,
-	DocumentStorageServiceCompressionAdapter as CompressionDocumentStorageAdapter,
+	SummaryCompressionAlgorithm, ICompressionStorageConfig
 } from "./documentStorageServiceCompressionAdapter";
+export {
+	DocumentServiceFactoryCompressionAdapter,
+} from "./documentServiceFactoryCompressionAdapter";

@@ -155,6 +155,7 @@ export interface IDocumentService {
     policies?: IDocumentServicePolicies;
     // (undocumented)
     resolvedUrl: IResolvedUrl;
+    saveStorage?(storage: IDocumentStorageService): void;
 }
 
 // @public (undocumented)

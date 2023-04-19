@@ -334,6 +334,13 @@ export interface IDocumentService {
 	connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
 
 	/**
+	 * This method saves the IDocumentStorageService into this instance. It is used to possibly
+	 * replace the cached internal storage by the storage wrapped by adapters so that the local class
+	 * methods of this instance also use the wrapped storage with adapters.  
+	 */
+	saveStorage?(storage: IDocumentStorageService): void;
+
+	/**
 	 * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).
 	 * Useful for storage to commit any pending state if any (including any local caching).
 	 * Please note that it does not remove the need for caller to close all active delta connections,

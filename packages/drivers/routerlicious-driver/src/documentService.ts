@@ -262,6 +262,10 @@ export class DocumentService implements api.IDocumentService {
 		}
 	}
 
+	public saveStorage(storage: api.IDocumentStorageService): void {
+		this.documentStorageService = storage as DocumentStorageService;
+	}
+
 	/**
 	 * Re-discover session URLs if necessary.
 	 */

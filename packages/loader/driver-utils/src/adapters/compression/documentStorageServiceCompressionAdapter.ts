@@ -5,17 +5,18 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { compress, decompress } from "lz4js";
-import {
-	ISummaryTree,
-	ISummaryBlob,
-	SummaryType,
-	ICreateBlobResponse,
-	SummaryObject,
-} from "@fluidframework/protocol-definitions";
 import { IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
+import {
+	ICreateBlobResponse,
+	ISummaryBlob,
+	ISummaryTree,
+	SummaryObject,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+import { compress, decompress } from "lz4js";
 import { DocumentStorageServiceProxy } from "../../documentStorageServiceProxy";
+
 import {
 	BlobHeaderBuilder,
 	readBlobHeader,
@@ -27,25 +28,30 @@ export enum SummaryCompressionAlgorithm {
 	None = 1,
 	LZ4 = 2,
 }
+export interface ICompressionStorageConfig {
+	algorithm: SummaryCompressionAlgorithm;
+	minSizeToCompress: number;
+}
+
 
 const algorithmKey = "ALG";
-const defaultMinSizeToCompress = 500;
 
 /**
  * This class extends the SummaryStorageAdapter so that it can apply various kinds of compressions
  * to the blob payload.
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
+	private readonly _algorithm: SummaryCompressionAlgorithm;
+	private readonly _minSizeToCompress: number;
+	
 	constructor(
 		service: IDocumentStorageService,
-		private readonly _algorithm: SummaryCompressionAlgorithm | undefined,
-		private readonly _minSizeToCompress: number | undefined,
-		private readonly _isUseB64OnCompressed: boolean | undefined,
+		private readonly _config: ICompressionStorageConfig,
+		private readonly _isUseB64OnCompressed = true,
 	) {
 		super(service);
-		if (this._minSizeToCompress === undefined) {
-			this._minSizeToCompress = defaultMinSizeToCompress;
-		}
+		this._algorithm = this._config.algorithm;
+		this._minSizeToCompress = this._config.minSizeToCompress;
 	}
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
@@ -86,7 +92,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			}
 			const compressed: ArrayBufferLike = this.encodeBlob(decompressed);
 			let newSummaryBlob;
-			if (this._isUseB64OnCompressed !== undefined && this._isUseB64OnCompressed) {
+			if (this._isUseB64OnCompressed) {
 				// TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummarPyBlob
 				// fails on assertion at 2 different generations of the hash which do not lead to
 				// the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
@@ -116,7 +122,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			return file;
 		} else {
 			if (this._algorithm === SummaryCompressionAlgorithm.LZ4) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				compressed = compress(file) as ArrayBufferLike;
 			} else {
 				throw new Error(`Unknown Algorithm ${this._algorithm}`);
@@ -146,7 +151,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		const input = skipHeader(compressedEncoded);
 		const myAlgorithm = Number(header.getValue(algorithmKey));
 		if (myAlgorithm === SummaryCompressionAlgorithm.LZ4) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			decompressed = decompress(input) as ArrayBufferLike;
 		} else {
 			throw new Error(`Unknown Algorithm ${this._algorithm}`);
@@ -176,7 +180,6 @@ export function recursivelyReplace(
 	// Otherwise descend into the object graph looking for IFluidHandle instances.
 	let clone: object | undefined;
 	for (const key of Object.keys(input)) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const value = input[key];
 
 		if (Boolean(value) && typeof value === "object") {
