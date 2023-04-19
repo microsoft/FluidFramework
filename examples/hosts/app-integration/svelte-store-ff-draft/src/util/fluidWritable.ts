@@ -19,7 +19,7 @@ import type { IFluidContainer } from "fluid-framework";
 class FluidStore<T> implements Writable<T> {
 	private readonly internalStore: Writable<T>;
 	private readonly fluidMap: SharedMap;
-    private static readonly KEY_CONST = "value";
+	private static readonly KEY_CONST = "value";
 
 	/**
 	 * Creates an instance of FluidStore and initializes it with the given FluidContainer and
