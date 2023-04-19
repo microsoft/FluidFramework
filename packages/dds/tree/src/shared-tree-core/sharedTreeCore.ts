@@ -233,7 +233,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	protected applyChange(change: TChange, revision?: RevisionTag): void {
 		const commit = this.addLocalChange(change, revision ?? mintRevisionTag());
-		if (this.transactions.size === 0) {
+		if (!this.isTransacting()) {
 			this.submitCommit(commit);
 		}
 	}
@@ -285,7 +285,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const { startRevision } = this.transactions.pop();
 		this.editor.exitTransaction();
 		const squashCommit = this.editManager.squashLocalChanges(startRevision);
-		this.submitCommit(squashCommit);
+		if (!this.isTransacting()) {
+			this.submitCommit(squashCommit);
+		}
 		return TransactionResult.Commit;
 	}
 

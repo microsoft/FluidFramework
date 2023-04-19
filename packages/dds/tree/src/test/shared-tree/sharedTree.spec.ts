@@ -1555,6 +1555,25 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(tree2), [42, 43]);
 		});
 
+		it("do not send an op after committing if nested", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			let opsReceived = 0;
+			tree2.on("op", () => (opsReceived += 1));
+			tree1.transaction.start();
+			tree1.transaction.start();
+			pushTestValueDirect(tree1, 42);
+			tree1.transaction.commit();
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 0);
+			assert.deepEqual(getTestValues(tree2), []);
+			pushTestValueDirect(tree1, 43);
+			tree1.transaction.commit();
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 1);
+			assert.deepEqual(getTestValues(tree2), [42, 43]);
+		});
+
 		it("process changes while detached", async () => {
 			const onCreate = (parent: ISharedTreeView) => {
 				parent.transaction.start();
@@ -1958,8 +1977,8 @@ function getTestValues({ forest }: ISharedTreeView): TreeValue[] {
 		while (readCursor.nextNode()) {
 			values.unshift(readCursor.value);
 		}
-		readCursor.free();
 	}
+	readCursor.free();
 	return values;
 }
 
