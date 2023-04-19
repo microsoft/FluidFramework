@@ -716,9 +716,7 @@ export class ContainerRuntime
 				if (loadSequenceNumberVerification === "log") {
 					logger.sendErrorEvent({ eventName: "SequenceNumberMismatch" }, error);
 				} else {
-					// Call both close and dispose as closeFn implementation will no longer dispose runtime in future
 					context.closeFn(error);
-					context.disposeFn?.(error);
 				}
 			}
 		}
