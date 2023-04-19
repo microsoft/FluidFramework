@@ -170,6 +170,26 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return false;
 	}
 
+	/**
+	 * @returns true iff this is a schema op and was submitted.
+	 *
+	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
+	 * See TODO on `SharedTree.processCore`.
+	 */
+	public tryResubmitOp(content: JsonCompatibleReadOnly): boolean {
+		const op: JsonCompatibleReadOnly = content;
+		if (isJsonObject(op) && op.type === "SchemaOp") {
+			assert(typeof op.data === "string", "expected string data for resubmitted schema op");
+			const schemaOp: SchemaOp = {
+				type: op.type,
+				data: op.data,
+			};
+			this.submit(schemaOp);
+			return true;
+		}
+		return false;
+	}
+
 	public update(newSchema: SchemaData): void {
 		const op: SchemaOp = { type: "SchemaOp", data: getSchemaString(newSchema) };
 		this.submit(op);
