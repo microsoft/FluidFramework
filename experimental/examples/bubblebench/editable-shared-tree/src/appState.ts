@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { brand, FieldKey } from "@fluid-internal/tree";
+import { cursorFromContextualData } from "@fluid-internal/tree";
 import { ClientWrapper } from "./client";
-import { ClientsField, Client, FlexClient, FlexBubble } from "./schema";
+import { ClientsField, FlexClient, FlexBubble, rootAppStateSchema } from "./schema";
 
 export class AppState implements IAppState {
-	static clientsFieldKey: FieldKey = brand("clients");
 	readonly localClient: ClientWrapper;
 
 	constructor(
@@ -17,9 +16,14 @@ export class AppState implements IAppState {
 		public height: number,
 		numBubbles: number,
 	) {
-		clientsSequence[clientsSequence.length] = this.createInitialClientNode(
-			numBubbles,
-		) as Client;
+		clientsSequence.insertNodes(
+			clientsSequence.length,
+			cursorFromContextualData(
+				clientsSequence.context.schema,
+				rootAppStateSchema.types,
+				this.createInitialClientNode(numBubbles),
+			),
+		);
 		this.localClient = new ClientWrapper(clientsSequence[clientsSequence.length - 1]);
 
 		console.log(

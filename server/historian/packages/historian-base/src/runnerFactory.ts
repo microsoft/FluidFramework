@@ -23,11 +23,15 @@ export class HistorianResources implements core.IResources {
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+		public tokenRevocationManager?: core.ITokenRevocationManager,
 	) {
 		this.webServerFactory = new services.BasicWebServerFactory();
 	}
 
 	public async dispose(): Promise<void> {
+		if (this.tokenRevocationManager) {
+			await this.tokenRevocationManager.close();
+		}
 		return;
 	}
 }
@@ -194,6 +198,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.restClusterThrottlers,
 			resources.cache,
 			resources.asyncLocalStorage,
+			resources.tokenRevocationManager,
 		);
 	}
 }

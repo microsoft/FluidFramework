@@ -198,6 +198,7 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
+	Identifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -222,9 +223,19 @@ export {
 	ContextuallyTypedFieldData,
 	TreeViewSchema,
 	FieldViewSchema,
+	cursorFromContextualData,
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UntypedTreeCore,
+	UnwrappedUntypedField,
+	UnwrappedUntypedTree,
+	UntypedTreeOrPrimitive,
 } from "./feature-libraries";
 
 export {
+	identifierKey,
+	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	ISharedTreeFork,
@@ -232,7 +243,6 @@ export {
 	SharedTreeFactory,
 	ViewEvents,
 	SchematizeConfiguration,
-	schematizeView,
 } from "./shared-tree";
 
 export type {

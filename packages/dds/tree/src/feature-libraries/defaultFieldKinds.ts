@@ -13,9 +13,9 @@ import {
 	TaggedChange,
 	ITreeCursorSynchronous,
 	tagChange,
-	TreeSchemaIdentifier,
 	FieldSchema,
 	RevisionTag,
+	TreeTypeSet,
 } from "../core";
 import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
@@ -54,10 +54,7 @@ function brandedFieldKind<
 	identifier: TName,
 	multiplicity: TMultiplicity,
 	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (
-		originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
-		superset: FieldSchema,
-	) => boolean,
+	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldSchema) => boolean,
 	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 ): BrandedFieldKind<TName, TMultiplicity, TEditor> {
 	return new FieldKind<TEditor, TMultiplicity>(
@@ -506,7 +503,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 			if (newNodeChanges.length > 0) {
 				assert(
 					fieldChange.newContent !== undefined,
-					"Shouldn't have new node changes if there is no new node",
+					0x5c4 /* Shouldn't have new node changes if there is no new node */,
 				);
 				fieldChange.newContent.changes = composeChild(newNodeChanges);
 			}

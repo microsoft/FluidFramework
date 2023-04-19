@@ -11,7 +11,7 @@ jobs:
       - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
         with:
           configuration-path: ".github/actions-labeler.yml"
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          repo-token: "${{ github.token }}"
           sync-labels: true # add/remove labels as modified paths in the PR change
   branches_label:
     runs-on: ubuntu-latest
@@ -19,4 +19,46 @@ jobs:
     steps:
       - uses: srvaroa/labeler@953347905ec8e4884e85c9957d24508e24119fc3 # ratchet:srvaroa/labeler@v1.3
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_TOKEN: "${{ github.token }}"
+
+  changeset_label:
+    name: Changeset check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+      # install and configure node, pnpm and the changeset tools
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+        with:
+          version: "^7"
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version: "16"
+      - name: Install tools
+        run: |
+          pnpm add -g @changesets/cli@2.26.0 changesets-format-with-issue-links@0.3.0
+
+      # Check whether a changeset was added. This step will have the outcome 'failure' if there is no changeset.
+      - id: changeset-status
+        name: Changeset status
+        continue-on-error: true
+        run: |
+          changeset status --since=${{ github.base_ref }}
+
+      # If a changeset is present, label it changeset-present
+      - uses: actions-ecosystem/action-add-labels@bd52874380e3909a1ac983768df6976535ece7f8 # ratchet:actions-ecosystem/action-add-labels@v1.1.0
+        name: Add changeset-present
+        if: steps.changeset-status.outcome == 'success'
+        with:
+          labels: changeset-present
+          github_token: ${{ github.token }}
+
+      # If a changeset is missing, remove the changeset-present label
+      - uses: actions-ecosystem/action-remove-labels@2ce5d41b4b6aa8503e285553f75ed56e0a40bae0 # ratchet:actions-ecosystem/action-remove-labels@v1.3.0
+        name: Remove changeset-present
+        if: steps.changeset-status.outcome == 'failure'
+        with:
+          labels: changeset-present
+          github_token: ${{ github.token }}

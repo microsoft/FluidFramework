@@ -77,7 +77,7 @@ function encodeForJson<TNodeChange>(
 			}
 		}
 	}
-	return jsonMarks as JsonCompatibleReadOnly;
+	return jsonMarks;
 }
 
 function decodeJson<TNodeChange>(

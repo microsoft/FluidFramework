@@ -140,10 +140,12 @@ export {
 } from "./change-family";
 
 export {
+	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	isRevisionTag,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,

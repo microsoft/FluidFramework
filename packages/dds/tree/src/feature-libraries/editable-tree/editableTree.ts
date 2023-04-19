@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	Value,
 	Anchor,
@@ -261,7 +261,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			case Multiplicity.Sequence: {
 				assert(
 					Array.isArray(newContent),
-					"It is invalid to replace the sequence field with a non array value.",
+					0x5cc /* It is invalid to replace the sequence field with a non array value. */,
 				);
 				const length = this.fieldLength(fieldKey);
 				/**
@@ -281,7 +281,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				);
 				assert(
 					newContent !== undefined,
-					"It is invalid to replace a value field with undefined",
+					0x5cd /* It is invalid to replace a value field with undefined */,
 				);
 				this.context.setValueField(path, fieldKey, newContent);
 				break;
@@ -314,15 +314,28 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {
-		assert(eventName === "changing", 0x5b3 /* unexpected eventName */);
-		const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", () => listener());
-		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
-			listener(),
-		);
-		return () => {
-			unsubscribeFromValueChange();
-			unsubscribeFromChildrenChange();
-		};
+		switch (eventName) {
+			case "changing": {
+				const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", listener);
+				const unsubscribeFromChildrenChange = this.anchorNode.on(
+					"childrenChanging",
+					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+				);
+				return () => {
+					unsubscribeFromValueChange();
+					unsubscribeFromChildrenChange();
+				};
+			}
+			case "subtreeChanging": {
+				const unsubscribeFromSubtreeChange = this.anchorNode.on(
+					"subtreeChanging",
+					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+				);
+				return unsubscribeFromSubtreeChange;
+			}
+			default:
+				unreachableCase(eventName);
+		}
 	}
 }
 
@@ -383,7 +396,10 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			// Since `insertNodes` and `replaceNodes` have same merge semantics with `replaceNodes`
 			// being a bit more general purpose function, it's ok to just use that.
 			if (multiplicity !== Multiplicity.Sequence) {
-				assert(cursors.length <= 1, "more than one top level node in non-sequence filed");
+				assert(
+					cursors.length <= 1,
+					0x5ce /* more than one top level node in non-sequence filed */,
+				);
 				target.replaceField(fieldKey, cursors.length === 0 ? undefined : cursors[0]);
 			} else {
 				target.replaceField(fieldKey, cursors);

@@ -5,12 +5,12 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-	IDebuggerMessage,
-	ISourcedDebuggerMessage,
+	IDevtoolsMessage,
+	ISourcedDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
 	isDebuggerMessage,
-	debuggerMessageSource,
+	devtoolsMessageSource,
 } from "@fluid-tools/client-debugger";
 
 /**
@@ -34,7 +34,7 @@ export class WindowMessageRelay
 		/**
 		 * All messages sent through the returned instance's {@link WindowMessageRelay.postMessage}
 		 * method will get this value written to their 'source' property.
-		 * @see {@link @fluid-tools/client-debugger#ISourcedDebuggerMessage}
+		 * @see {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage}
 		 */
 		private readonly messageSource: string,
 	) {
@@ -49,8 +49,8 @@ export class WindowMessageRelay
 	/**
 	 * Post message to the FluidDebugger which lives in the same window we are.
 	 */
-	public postMessage(message: IDebuggerMessage): void {
-		const sourcedMessage: ISourcedDebuggerMessage = {
+	public postMessage(message: IDevtoolsMessage): void {
+		const sourcedMessage: ISourcedDevtoolsMessage = {
 			...message,
 			source: this.messageSource,
 		};
@@ -59,13 +59,13 @@ export class WindowMessageRelay
 
 	/**
 	 * Handler for incoming messages from the window object.
-	 * Messages are forwarded on to subscribers for valid {@link ISourcedDebuggerMessage}s from the expected source.
+	 * Messages are forwarded on to subscribers for valid {@link ISourcedDevtoolsMessage}s from the expected source.
 	 */
 	private readonly onWindowMessage = (
-		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		const message = event.data;
-		if (isDebuggerMessage(message) && message.source === debuggerMessageSource) {
+		if (isDebuggerMessage(message) && message.source === devtoolsMessageSource) {
 			// Forward incoming message onto subscribers.
 			this.emit("message", message);
 		}

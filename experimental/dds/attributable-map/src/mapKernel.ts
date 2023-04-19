@@ -6,7 +6,9 @@
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { IMapOptions, ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -23,12 +25,16 @@ import { ILocalValue, LocalValueMaker, makeSerializable } from "./localValues";
 interface IMapMessageHandler {
 	/**
 	 * Apply the given operation.
-	 * @param op - The map operation to apply
+	 * @param message - The message to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	process(op: IMapOperation, local: boolean, localOpMetadata: MapLocalOpMetadata): void;
+	process(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: MapLocalOpMetadata,
+	): void;
 
 	/**
 	 * Communicate the operation to remote clients.
@@ -125,9 +131,9 @@ function createKeyLocalOpMetadata(
 }
 
 /**
- * A SharedMap is a map-like distributed data structure.
+ * An AttributableMap is a map-like distributed data structure.
  */
-export class MapKernel {
+export class AttributableMapKernel {
 	/**
 	 * The number of key/value pairs stored in the map.
 	 */
@@ -165,8 +171,10 @@ export class MapKernel {
 	 */
 	private readonly localValueMaker: LocalValueMaker;
 
+	private attribution: Map<string, AttributionKey> | undefined;
+
 	/**
-	 * Create a new shared map kernel.
+	 * Create a new attributable-map kernel.
 	 * @param serializer - The serializer to serialize / parse handles
 	 * @param handle - The handle of the shared object using the kernel
 	 * @param submitMessage - A callback to submit a message through the shared object
@@ -180,9 +188,13 @@ export class MapKernel {
 		private readonly submitMessage: (op: unknown, localOpMetadata: unknown) => void,
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
+		private readonly options?: IMapOptions,
 	) {
 		this.localValueMaker = new LocalValueMaker(serializer);
 		this.messageHandlers = this.getMessageHandlers();
+		if (options?.attribution?.track) {
+			this.attribution = new Map();
+		}
 	}
 
 	/**
@@ -294,8 +306,9 @@ export class MapKernel {
 		const localValue = this.localValueMaker.fromInMemory(value);
 		const serializableValue = makeSerializable(localValue, this.serializer, this.handle);
 
-		// Set the value locally.
+		// Set the value and attribution locally.
 		const previousValue = this.setCore(key, localValue, true);
+		this.setAttribution(key);
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -318,6 +331,7 @@ export class MapKernel {
 	public delete(key: string): boolean {
 		// Delete the key locally first.
 		const previousValue = this.deleteCore(key, true);
+		this.deleteAttribution(key);
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -354,6 +368,50 @@ export class MapKernel {
 	}
 
 	/**
+	 * Get the attribution about the target key
+	 * @param key - Key to track
+	 * @returns The Attribution Key if the attribution tracking is enabled and key exists, otherwise undefined
+	 */
+	public getAttribution(key: string): AttributionKey | undefined {
+		return this.attribution?.get(key);
+	}
+
+	/**
+	 * Get the whole attribution table
+	 * @returns The attribution table if the attribution tracking is enabled, otherwise undefined
+	 */
+
+	public getAllAttribution(): Map<string, AttributionKey> | undefined {
+		return this.attribution;
+	}
+
+	private setAttribution(key: string, message?: ISequencedDocumentMessage): void {
+		if (this.options?.attribution?.track) {
+			if (message) {
+				this.attribution?.set(key, { type: "op", seq: message.sequenceNumber });
+			} else {
+				if (this.isAttached()) {
+					this.attribution?.set(key, { type: "local" });
+				} else {
+					this.attribution?.set(key, { type: "detached", id: 0 });
+				}
+			}
+		}
+	}
+
+	private deleteAttribution(key: string): void {
+		if (this.options?.attribution?.track) {
+			this.attribution?.delete(key);
+		}
+	}
+
+	private clearAllAttribution(): void {
+		if (this.options?.attribution?.track) {
+			this.attribution?.clear();
+		}
+	}
+
+	/**
 	 * Serializes the data stored in the shared map to a JSON string
 	 * @param serializer - The serializer to use to serialize handles in its values.
 	 * @returns A JSON string containing serialized map data
@@ -361,7 +419,24 @@ export class MapKernel {
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
-			serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
+			const attribution = this.options?.attribution?.track
+				? this.attribution?.get(key)
+				: undefined;
+
+			assert(
+				!attribution || attribution.type !== "local",
+				"The attribution for summarization should not be local type",
+			);
+
+			serializableMapData[key] = localValue.makeSerialized(
+				serializer,
+				this.handle,
+				attribution
+					? attribution.type === "op"
+						? attribution.seq
+						: attribution
+					: undefined,
+			);
 		}
 		return serializableMapData;
 	}
@@ -380,7 +455,7 @@ export class MapKernel {
 
 	/**
 	 * Populate the kernel with the given map data.
-	 * @param data - A JSON string containing serialized map data
+	 * @param json - A JSON string containing serialized map data
 	 */
 	public populateFromSerializable(json: IMapDataObjectSerializable): void {
 		for (const [key, serializable] of Object.entries(json)) {
@@ -390,6 +465,18 @@ export class MapKernel {
 			};
 
 			this.data.set(localValue.key, localValue.value);
+			if (serializable.attribution) {
+				// create the attribution table once there exists attribution key in the loaded content
+				this.attribution ??= new Map();
+				if (typeof serializable.attribution === "number") {
+					this.attribution.set(localValue.key, {
+						type: "op",
+						seq: serializable.attribution,
+					});
+				} else {
+					this.attribution.set(localValue.key, serializable.attribution);
+				}
+			}
 		}
 	}
 
@@ -424,18 +511,23 @@ export class MapKernel {
 
 	/**
 	 * Process the given op if a handler is registered.
-	 * @param op - The message to process
+	 * @param message - The message to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 * @returns True if the operation was processed, false otherwise.
 	 */
-	public tryProcessMessage(op: IMapOperation, local: boolean, localOpMetadata: unknown): boolean {
+	public tryProcessMessage(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): boolean {
+		const op: IMapOperation = message.contents;
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
 		}
-		handler.process(op, local, localOpMetadata as MapLocalOpMetadata);
+		handler.process(message, local, localOpMetadata as MapLocalOpMetadata);
 		return true;
 	}
 
@@ -580,17 +672,18 @@ export class MapKernel {
 	/**
 	 * If our local operations that have not yet been ack'd will eventually overwrite an incoming operation, we should
 	 * not process the incoming operation.
-	 * @param op - Operation to check
+	 * @param message - Message to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 * @returns True if the operation should be processed, false otherwise
 	 */
 	private needProcessKeyOperation(
-		op: IMapKeyOperation,
+		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
+		const op: IMapKeyOperation = message.contents;
 		if (this.pendingClearMessageIds.length > 0) {
 			if (local) {
 				assert(
@@ -623,6 +716,12 @@ export class MapKernel {
 				if (pendingMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
 				}
+				// Process the attribution
+				if (op.type === "set") {
+					this.setAttribution(op.key, message);
+				} else {
+					this.deleteAttribution(op.key);
+				}
 			}
 			return false;
 		}
@@ -638,7 +737,7 @@ export class MapKernel {
 	private getMessageHandlers(): Map<string, IMapMessageHandler> {
 		const messageHandlers = new Map<string, IMapMessageHandler>();
 		messageHandlers.set("clear", {
-			process: (op: IMapClearOperation, local, localOpMetadata) => {
+			process: (message: ISequencedDocumentMessage, local, localOpMetadata) => {
 				if (local) {
 					assert(
 						isClearLocalOpMetadata(localOpMetadata),
@@ -649,12 +748,14 @@ export class MapKernel {
 						pendingClearMessageId === localOpMetadata.pendingMessageId,
 						0x2fb /* pendingMessageId does not match */,
 					);
+					this.clearAllAttribution();
 					return;
 				}
 				if (this.pendingKeys.size > 0) {
 					this.clearExceptPendingKeys();
 					return;
 				}
+				this.clearAllAttribution();
 				this.clearCore(local);
 			},
 			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
@@ -678,10 +779,12 @@ export class MapKernel {
 			},
 		});
 		messageHandlers.set("delete", {
-			process: (op: IMapDeleteOperation, local, localOpMetadata) => {
-				if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
+			process: (message: ISequencedDocumentMessage, local, localOpMetadata) => {
+				const op: IMapDeleteOperation = message.contents;
+				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}
+				this.deleteAttribution(op.key);
 				this.deleteCore(op.key, local);
 			},
 			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
@@ -694,12 +797,14 @@ export class MapKernel {
 			},
 		});
 		messageHandlers.set("set", {
-			process: (op: IMapSetOperation, local, localOpMetadata) => {
-				if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
+			process: (message: ISequencedDocumentMessage, local, localOpMetadata) => {
+				const op: IMapSetOperation = message.contents;
+				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}
 
 				// needProcessKeyOperation should have returned false if local is true
+				this.setAttribution(op.key, message);
 				const context = this.makeLocal(op.key, op.value);
 				this.setCore(op.key, context, local);
 			},
