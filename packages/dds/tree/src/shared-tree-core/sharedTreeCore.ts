@@ -241,7 +241,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param revision - The revision to associate with the change.
 	 * @returns Commit object with the change, revision and localsessionid
 	 */
-	private addLocalChange(change: TChange, revision: RevisionTag, type?: GraphCommitType): Commit<TChange> {
+	private addLocalChange(
+		change: TChange,
+		revision: RevisionTag,
+		type?: GraphCommitType,
+	): Commit<TChange> {
 		const commit = {
 			change,
 			revision,

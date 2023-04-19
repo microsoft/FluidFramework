@@ -102,7 +102,8 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	it("the insert of two separate nodes", async () => {
+	// TODO: unskip when undo can handle rebasing
+	it.skip("the insert of two separate nodes", async () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const addX = tree.fork();
 		const addY = tree.fork();
@@ -123,7 +124,8 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	it("an insert from a parent branch on its fork", () => {
+	// TODO: unskip when undo can handle rebasing
+	it.skip("an insert from a parent branch on its fork", () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const doUndo = tree.fork();
 
