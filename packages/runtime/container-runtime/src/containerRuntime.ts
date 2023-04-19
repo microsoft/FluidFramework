@@ -793,11 +793,7 @@ export class ContainerRuntime
 	}
 
 	public get closeFn(): (error?: ICriticalContainerError) => void {
-		// Also call disposeFn to retain functionality of runtime being disposed on close
-		return (error?: ICriticalContainerError) => {
-			this.context.closeFn(error);
-			this.context.disposeFn?.(error);
-		};
+		return this.context.closeFn;
 	}
 
 	public get flushMode(): FlushMode {

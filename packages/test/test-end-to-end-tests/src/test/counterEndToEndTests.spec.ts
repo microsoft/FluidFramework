@@ -219,7 +219,7 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 
 			assert.notEqual(error, undefined, "No error");
 			assert.ok(error?.message.startsWith("RollbackError:"), "Unexpected error message");
-			assert.equal(containerRuntime.disposed, true);
+			assert.equal(container.closed, true);
 		},
 	);
 });
