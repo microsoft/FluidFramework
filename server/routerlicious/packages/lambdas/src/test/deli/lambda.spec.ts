@@ -136,7 +136,7 @@ describe("Routerlicious", () => {
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
 				Sinon.replace(checkpointRepository, "writeCheckpoint", Sinon.fake.resolves(undefined));
-				Sinon.replace(checkpointService, "getLocalCheckpointEnabled", Sinon.fake.resolves(false));
+                Sinon.replace(checkpointService, "writeCheckpointToCollection", Sinon.fake.resolves(undefined));
 
 				testKafka = new TestKafka();
 				testForwardProducer = testKafka.createProducer();

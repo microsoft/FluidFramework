@@ -11,13 +11,10 @@ import { IDeliState, IDocument, IScribe } from "./document";
 	constructor(
         private readonly checkpointRepository: ICheckpointRepository,
         private readonly documentRepository: IDocumentRepository,
-        private readonly localCheckpointEnabled: boolean,
+        private readonly isLocalCheckpointEnabled: boolean,
     ) {
     }
-
-    getLocalCheckpointEnabled() {
-        return this.localCheckpointEnabled;
-    }
+     localCheckpointEnabled: boolean = this.isLocalCheckpointEnabled;
 
     async writeCheckpointToCollection(documentId: string, tenantId: string, service: string, checkpoint: IScribe | IDeliState, isLocal: boolean = false) {
         const lumberProperties = getLumberBaseProperties(documentId, tenantId);
@@ -164,14 +161,14 @@ import { IDeliState, IDocument, IScribe } from "./document";
                     error,
                 );
             });
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
         return checkpoint ? checkpoint : documentRepository.readOne({ documentId, tenantId });
     }
 
  }
 
  export interface ICheckpointService {
-    getLocalCheckpointEnabled(): boolean;
+    localCheckpointEnabled: boolean;
     writeCheckpointToCollection(documentId: string, tenantId: string, service: string, checkpoint: IScribe | IDeliState, isLocal: boolean) : Promise<void>;
     removeCheckpointFromCollection(documentId: string, tenantId: string, service: string, isLocal: boolean) : Promise<void>;
     restoreFromCheckpoint(documentId: string, tenantId: string, service: string, document: IDocument): Promise<IScribe | IDeliState>;

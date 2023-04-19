@@ -7,8 +7,8 @@
 import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
 import { GitManager } from "@fluidframework/server-services-client";
 import {
-    CheckpointService,
 	DefaultServiceConfiguration,
+	ICheckpointService,
 	IProducer,
 	ITenantManager,
 	MongoManager,
@@ -24,6 +24,7 @@ import {
 	TestKafka,
 	TestTenantManager,
 	TestNotImplementedCheckpointRepository,
+	TestNotImplementedCheckpointService,
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
@@ -40,7 +41,7 @@ describe("Routerlicious", () => {
 			let testMongoManager: MongoManager;
 			let testDocumentRepository: TestNotImplementedDocumentRepository;
 			let testCheckpointRepository: TestNotImplementedCheckpointRepository;
-            let testCheckpointService: CheckpointService;
+            let testCheckpointService: ICheckpointService;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
 			let testContext: TestContext;
@@ -106,6 +107,9 @@ describe("Routerlicious", () => {
 					"writeCheckpoint",
 					Sinon.fake.resolves(undefined),
 				);
+
+                testCheckpointService = new TestNotImplementedCheckpointService();
+                Sinon.replace(testCheckpointService, "writeCheckpointToCollection", Sinon.fake());
 
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
