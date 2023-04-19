@@ -573,9 +573,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			}
 		};
 
-		 // Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
-		 // The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
-		 // by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
+		// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
+		// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
+		// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
 		const pathVisitors: Map<PathNode, PathVisitor[]> = new Map();
 
 		const visitor: DeltaVisitor = {
