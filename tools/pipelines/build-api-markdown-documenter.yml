@@ -17,7 +17,7 @@ parameters:
 - name: publishOverride
   displayName: Publish Override (default = skip)
   type: string
-  default: skip
+  default: default
   values:
     - default
     - skip

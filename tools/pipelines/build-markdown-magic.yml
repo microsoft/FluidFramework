@@ -17,7 +17,7 @@ parameters:
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
-  default: default
+  default: skip
   values:
     - default
     - skip
