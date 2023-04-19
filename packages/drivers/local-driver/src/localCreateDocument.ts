@@ -37,7 +37,8 @@ export async function createDocument(
 		id,
 		appSummary,
 		sequenceNumber,
-		documentAttributes.term ?? 1,
+		// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+		1, // term
 		defaultHash,
 		resolvedUrl.endpoints.ordererUrl ?? "",
 		resolvedUrl.endpoints.storageUrl ?? "",
