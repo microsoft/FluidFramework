@@ -204,7 +204,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		isUndoRedoCommit?: UndoRedoManagerCommitType,
 	): void {
 		// Nested transactions are tracked as part of the outermost transaction
-		if (this.transactions.size === 0) {
+		if (!this.isTransacting()) {
 			this.undoRedoManager.trackCommit(commit, isUndoRedoCommit);
 		}
 
@@ -283,7 +283,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	public startTransaction(repairStore?: RepairDataStore): void {
-		if (this.transactions.size === 0) {
+		if (!isTransacting()) {
 			// If this is the start of a transaction stack, freeze the undo redo manager's
 			// repair data store provider so that repair data can be captured based on the
 			// state of the branch at the start of the transaction.
