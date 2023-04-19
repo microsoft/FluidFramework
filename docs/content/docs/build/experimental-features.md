@@ -28,7 +28,7 @@ When a [container]({{< relref "containers.md" >}}) is loaded, there will be seve
 
 ## Usage
 
-The following is an example of how to enable experimental features with `AzureClient` and `Loader`.
+The following is an example of how to enable experimental features with `AzureClient`.
 
 1. First, implement [IConfigProviderBase]({{< relref "docs/apis/telemetry-utils/iconfigproviderbase-interface" >}}). For example:
 
@@ -53,18 +53,6 @@ The following is an example of how to enable experimental features with `AzureCl
     const azureClient = new AzureClient({ 
       connection: connectionProps, 
       logger: myLogger, 
-      configProvider: configProvider(featureGates),
-    });
-    ```
-
-    To enable using `Loader` follow steps 1 and 2, then call the previously defined `configProvider` function with `featureGates` as the input, and pass the result in the `Loader` constructor.
-
-    ```typescript
-    const loader = new Loader({
-      urlResolver: myUrlResolver,
-      documentServiceFactory: myDocumentServiceFactory,
-      codeLoader: myCodeLoader,
-      logger: myLogger,
       configProvider: configProvider(featureGates),
     });
     ```
