@@ -188,7 +188,7 @@ const expandNode: NodeAction<IExpandedMap> = (
 	if (!isPrimitive(nodeType) || nodeType.value === ValueSchema.Serializable) {
 		expanded[id] = true;
 	}
-	forEachField(expandField, expanded, sharedTree, node, id);
+	return forEachField(expandField, expanded, sharedTree, node, id);
 };
 
 const expandField: FieldAction<IExpandedMap> = (
@@ -267,6 +267,7 @@ const nodeToTableRow: NodeAction<IEditableTreeRow[]> = (
 		}
 	}
 	rows.push(newRow);
+	return rows;
 };
 
 const fieldToTableRow: FieldAction<IEditableTreeRow[]> = (

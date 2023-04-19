@@ -61,7 +61,7 @@ export type NodeAction<T> = (
 	sharedTree: ISharedTree,
 	node: EditableTree,
 	pathPrefix: string,
-) => void;
+) => T;
 
 export function stringifyKey(fieldKey: FieldKey): string {
 	if (isGlobalFieldKey(fieldKey) && symbolIsFieldKey(fieldKey)) {
@@ -147,7 +147,7 @@ export function forEachNode<T>(
 	result: T,
 	sharedTree: ISharedTree,
 	field: EditableField,
-	pathPrefix,
+	pathPrefix: string,
 ): T {
 	assert(isEditableField(field), "Expected field");
 	for (let index = 0; index < field.length; index++) {
