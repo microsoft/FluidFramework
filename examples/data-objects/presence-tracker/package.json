@@ -37,11 +37,11 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-experimental/data-objects": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-experimental/data-objects": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/tinylicious-client": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"fluid-framework": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0"
+		"@fluidframework/tinylicious-client": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"fluid-framework": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.13.1",

@@ -29,13 +29,13 @@
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
-		"@fluidframework/aqueduct": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/container-loader": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/container-runtime": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/map": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/matrix": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/odsp-driver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/sequence": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/aqueduct": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/container-loader": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/container-runtime": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/map": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/matrix": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/odsp-driver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/sequence": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"source-map-loader": "^2.0.0"
 	},
 	"devDependencies": {

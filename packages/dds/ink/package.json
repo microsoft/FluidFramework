@@ -64,12 +64,12 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/driver-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/datastore-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/driver-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/runtime-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
@@ -78,8 +78,8 @@
 		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/ink-previous": "npm:@fluidframework/ink@2.0.0-internal.4.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"concurrently": "^7.6.0",

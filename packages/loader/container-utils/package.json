@@ -66,9 +66,9 @@
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/container-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/container-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0"
+		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.13.1",
@@ -76,8 +76,8 @@
 		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/container-utils-previous": "npm:@fluidframework/container-utils@2.0.0-internal.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",
