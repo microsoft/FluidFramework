@@ -118,6 +118,9 @@
 			},
 			"TypeAliasDeclaration_SummarizerStopReason": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummarizerRuntime": {
+				"forwardCompat": false
 			}
 		}
 	}

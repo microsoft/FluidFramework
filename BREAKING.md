@@ -32,6 +32,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
 -   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
 -   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
+-   [ISummarizerRuntime on/off op required](#isummarizerruntime-onoff-op-required)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -79,6 +80,10 @@ The following types in the @fluidframework/container-loader package are not used
 -   IContainerConfig
 -   IPendingContainerState
 -   ISerializableBlobContents
+
+### ISummarizerRuntime on/off op required
+
+The `on("op")` and `off("op")` methods on `ISummarizerRuntime` are now required. These listener methods are needed to accurately run summary heuristics.
 
 # 2.0.0-internal.4.1.0
 
