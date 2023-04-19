@@ -64,7 +64,7 @@ describe("MergeTree insertion", () => {
 				});
 			}
 		},
-		beforeEachBatch: () => {
+		onCycle: () => {
 			startTree = constructTree(TREE_SIZE);
 		},
 	});
@@ -87,7 +87,7 @@ describe("MergeTree insertion", () => {
 				});
 			}
 		},
-		beforeEachBatch: () => {
+		onCycle: () => {
 			middleTree = constructTree(TREE_SIZE);
 		},
 	});
@@ -110,7 +110,7 @@ describe("MergeTree insertion", () => {
 				});
 			}
 		},
-		beforeEachBatch: () => {
+		onCycle: () => {
 			endTree = constructTree(TREE_SIZE);
 		},
 	});
