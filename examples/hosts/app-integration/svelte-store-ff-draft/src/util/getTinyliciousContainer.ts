@@ -10,10 +10,10 @@ const containerSchema: ContainerSchema = {
 };
 
 export async function getTinyliciousContainer(
-  containerId?: string
 ): Promise<IFluidContainer> {
   const client = new TinyliciousClient();
   let container: IFluidContainer;
+  const containerId = location.hash.substring(1);
 
   if (containerId) {
     try {

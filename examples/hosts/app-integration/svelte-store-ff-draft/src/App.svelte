@@ -7,8 +7,7 @@
   let syncedText;
 
   onMount(async () => {
-    const containerId = location.hash.substring(1);
-    const container = await getTinyliciousContainer(containerId);
+    const container = await getTinyliciousContainer();
     syncedText = fluidWritable(container);
     syncedText.subscribe((value) => {
       text = value;
