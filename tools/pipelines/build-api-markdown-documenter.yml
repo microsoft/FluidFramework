@@ -15,7 +15,7 @@ parameters:
     - prerelease
     - release
 - name: publishOverride
-  displayName: Publish Override (default = skip)
+  displayName: Publish Override (default = based on branch)
   type: string
   default: default
   values:
