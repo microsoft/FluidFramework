@@ -204,7 +204,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		isUndoRedoCommit?: UndoRedoManagerCommitType,
 	): void {
 		// Nested transactions are tracked as part of the outermost transaction
-		if (this.transactions.size === 0) {
+		if (!this.isTransacting()) {
 			this.undoRedoManager.trackCommit(commit, isUndoRedoCommit);
 		}
 
