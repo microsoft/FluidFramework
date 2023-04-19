@@ -6,7 +6,7 @@
 
 ### The foreman lambda was removed
 
-The foreman lambda in `server` has not been in use for a while. The `MessageType.RemoteHelp` has been removed from `protocol-definitions`, allowing us to finally remove the foreman lambda as well.
+The foreman lambda in `server` has not been in use for a while so we are removing it.
 
 ## 0.1038 Breaking Changes
 - [aggregate function from `MongoCollection` became async](#aggregate-function-from-MongoCollection-became-async)
