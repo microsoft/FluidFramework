@@ -500,13 +500,13 @@ function parseCommit<TChange>(
 	content: JsonCompatibleReadOnly,
 	codec: IMultiFormatCodec<TChange>,
 ): Commit<TChange> {
-	assert(isJsonObject(content), "expected content to be an object");
+	assert(isJsonObject(content), 0x5e4 /* expected content to be an object */);
 	assert(
 		typeof content.revision === "string" && isStableId(content.revision),
-		"expected revision id to be valid stable id",
+		0x5e5 /* expected revision id to be valid stable id */,
 	);
-	assert(content.changeset !== undefined, "expected changeset to be defined");
-	assert(typeof content.originatorId === "string", "expected changeset to be defined");
+	assert(content.changeset !== undefined, 0x5e7 /* expected changeset to be defined */);
+	assert(typeof content.originatorId === "string", 0x5e8 /* expected changeset to be defined */);
 	const change = codec.json.decode(content.changeset);
 	return { revision: content.revision, sessionId: content.originatorId, change };
 }

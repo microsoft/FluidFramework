@@ -226,7 +226,7 @@ export class Interval implements ISerializableInterval {
 	 */
 	public getIntervalId(): string {
 		const id = this.properties?.[reservedIntervalIdKey];
-		assert(id !== undefined, "interval ID should not be undefined");
+		assert(id !== undefined, 0x5e1 /* interval ID should not be undefined */);
 		return `${id}`;
 	}
 
@@ -572,7 +572,7 @@ export class SequenceInterval implements ISerializableInterval {
 	 */
 	public getIntervalId(): string {
 		const id = this.properties?.[reservedIntervalIdKey];
-		assert(id !== undefined, "interval ID should not be undefined");
+		assert(id !== undefined, 0x5e2 /* interval ID should not be undefined */);
 		return `${id}`;
 	}
 

@@ -115,7 +115,7 @@ export function makeCodecFamily<TDecoded>(
 	return {
 		resolve(formatVersion: number) {
 			const codec = codecs.get(formatVersion);
-			assert(codec !== undefined, "Requested coded for unsupported format.");
+			assert(codec !== undefined, 0x5e6 /* Requested coded for unsupported format. */);
 			return codec;
 		},
 		getSupportedFormats() {

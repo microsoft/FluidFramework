@@ -90,7 +90,7 @@ function makeV0Codec(
 		fieldKind: FieldKindIdentifier,
 	): IMultiFormatCodec<FieldChangeset> => {
 		const codec = fieldChangesetCodecs.get(fieldKind);
-		assert(codec !== undefined, "Tried to encode unsupported fieldKind");
+		assert(codec !== undefined, 0x5ea /* Tried to encode unsupported fieldKind */);
 		return codec;
 	};
 

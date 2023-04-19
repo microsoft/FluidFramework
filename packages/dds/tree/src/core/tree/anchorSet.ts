@@ -643,7 +643,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				maybeWithNode((p) => {
 					p.events.emit("valueChanging", p, value);
 				});
-				assert(parent !== undefined, "Must be in a node to set its value");
+				assert(parent !== undefined, 0x5e9 /* Must be in a node to set its value */);
 				for (const visitors of pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.onSetValue(parent, value);
