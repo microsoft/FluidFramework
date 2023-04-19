@@ -144,7 +144,6 @@ export function create(
 				id,
 				summary,
 				sequenceNumber,
-				1,
 				crypto.randomBytes(4).toString("hex"),
 				externalOrdererUrl,
 				externalHistorianUrl,

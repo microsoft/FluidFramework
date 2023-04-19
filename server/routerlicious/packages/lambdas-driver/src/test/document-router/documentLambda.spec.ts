@@ -6,7 +6,6 @@
 import {
 	DefaultServiceConfiguration,
 	IContextErrorData,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaFactory,
 	LambdaCloseType,
@@ -23,7 +22,7 @@ import { createTestModule, ITestLambdaModule } from "./testDocumentLambda";
 describe("document-router", () => {
 	describe("DocumentLambda", () => {
 		let testModule: ITestLambdaModule;
-		let factory: IPartitionLambdaFactory<IPartitionConfig>;
+		let factory: IPartitionLambdaFactory;
 		let lambda: IPartitionLambda;
 		let context: TestContext;
 		let defaultMessageFactory: MessageFactory;
@@ -38,7 +37,7 @@ describe("document-router", () => {
 				DefaultServiceConfiguration.documentLambda,
 			);
 			context = new TestContext();
-			lambda = await factory.create({ leaderEpoch: 0 }, context);
+			lambda = await factory.create(undefined, context);
 		});
 
 		afterEach(async () => {
