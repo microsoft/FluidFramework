@@ -644,7 +644,6 @@ export const shortCodeMap = {
 	"0x379": "index must be less than length",
 	"0x37a": "Cursor must be current to be used",
 	"0x37c": "Cannot wait for seqNumber below last processed sequence number",
-	"0x37e": "Must have a valid protocol handler instance",
 	"0x37f": "reentrancy?",
 	"0x380": "reentrancy?",
 	"0x381": "processDeltas() should run async",
@@ -1157,5 +1156,12 @@ export const shortCodeMap = {
 	"0x5dd": "cannot group ops with metadata",
 	"0x5de": "unexpected op metadata",
 	"0x5df": "Summarize should not be called when not tracking the summary",
-	"0x5e0": "Used route should always be an absolute route"
+	"0x5e0": "Used route should always be an absolute route",
+	"0x5e1": "interval ID should not be undefined",
+	"0x5e2": "interval ID should not be undefined",
+	"0x5e3": "expected string data for resubmitted schema op",
+	"0x5e4": "expected content to be an object",
+	"0x5e5": "expected revision id to be valid stable id",
+	"0x5e6": "expected changeset to be defined",
+	"0x5e7": "expected changeset to be defined"
 };
