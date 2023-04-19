@@ -543,7 +543,7 @@ function getHeadCommit(view: ISharedTreeView): GraphCommit<DefaultChangeset> {
 function getForkBranch(
 	fork: ISharedTreeFork,
 ): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
-	assert(fork instanceof SharedTreeFork, "Unsupported ISharedTreeFork implementation");
+	assert(fork instanceof SharedTreeFork, 0x5ca /* Unsupported ISharedTreeFork implementation */);
 	return fork.branch;
 }
 // #endregion Extraction functions

@@ -33,6 +33,7 @@ export interface AnchorEvents {
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanging(anchor: AnchorNode): void;
     valueChanging(anchor: AnchorNode, value: Value): void;
+    visitSubtreeChanging(anchor: AnchorNode): PathVisitor;
 }
 
 // @alpha (undocumented)
@@ -144,20 +145,12 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 // @alpha (undocumented)
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
 
-// @alpha
-export abstract class ChangeEncoder<TChange> {
-    decodeBinary(formatVersion: number, change: IsoBuffer): TChange;
-    abstract decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TChange;
-    encodeBinary(formatVersion: number, change: TChange): IsoBuffer;
-    abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
-}
-
 // @alpha (undocumented)
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
     // (undocumented)
     buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
     // (undocumented)
-    readonly encoder: ChangeEncoder<TChange>;
+    readonly codecs: ICodecFamily<TChange>;
     // (undocumented)
     intoDelta(change: TChange): Delta.Root;
     // (undocumented)
@@ -305,6 +298,7 @@ declare namespace Delta {
     export {
         Root,
         ProtoNode,
+        ProtoNodes,
         Mark,
         MarkList,
         Skip,
@@ -451,18 +445,12 @@ export interface FieldChange {
     revision?: RevisionTag;
 }
 
-// @alpha (undocumented)
-export interface FieldChangeEncoder<TChangeset> {
-    decodeJson(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder): TChangeset;
-    encodeForJson(formatVersion: number, change: TChangeset, encodeChild: NodeChangeEncoder): JsonCompatibleReadOnly;
-}
-
 // @alpha
 export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>> {
     // (undocumented)
-    editor: TEditor;
+    codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
     // (undocumented)
-    encoder: FieldChangeEncoder<TChangeset>;
+    editor: TEditor;
     // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
@@ -659,8 +647,25 @@ interface HasModifications<TTree = ProtoNode> {
     readonly setValue?: Value;
 }
 
+// @alpha (undocumented)
+export interface IBinaryCodec<TDecoded> extends IEncoder<TDecoded, IsoBuffer>, IDecoder<TDecoded, IsoBuffer> {
+}
+
+// @alpha
+export interface ICodecFamily<TDecoded> {
+    // (undocumented)
+    getSupportedFormats(): Iterable<number>;
+    // (undocumented)
+    resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
+}
+
 // @alpha
 export type IdAllocator = (count?: number) => ChangesetLocalId;
+
+// @alpha (undocumented)
+export interface IDecoder<TDecoded, TEncoded> {
+    decode(obj: TEncoded): TDecoded;
+}
 
 // @alpha
 export interface IDefaultEditBuilder {
@@ -699,6 +704,11 @@ export interface IEmitter<E extends Events<E>> {
     emitAndCollect<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): ReturnType<E[K]>[];
 }
 
+// @alpha (undocumented)
+export interface IEncoder<TDecoded, TEncoded> {
+    encode(obj: TDecoded): TEncoded;
+}
+
 // @alpha
 export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
@@ -707,6 +717,20 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     readonly schema: StoredSchemaRepository;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
+}
+
+// @alpha (undocumented)
+export interface IJsonCodec<TDecoded, TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
+}
+
+// @alpha
+export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> {
+    // (undocumented)
+    binary: IBinaryCodec<TDecoded>;
+    decode?: never;
+    encode?: never;
+    // (undocumented)
+    json: IJsonCodec<TDecoded, TJsonEncoded>;
 }
 
 // @alpha
@@ -985,9 +1009,9 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
     // (undocumented)
     buildEditor(changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet): ModularEditBuilder;
     // (undocumented)
-    compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset;
+    readonly codecs: ICodecFamily<ModularChangeset>;
     // (undocumented)
-    readonly encoder: ChangeEncoder<ModularChangeset>;
+    compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset;
     // (undocumented)
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
     // (undocumented)
@@ -1111,12 +1135,6 @@ export const neverTree: TreeSchema;
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 // @alpha (undocumented)
-export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
-
-// @alpha (undocumented)
-export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
-
-// @alpha (undocumented)
 export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
 // @alpha (undocumented)
@@ -1186,6 +1204,15 @@ export interface PathRootPrefix {
 }
 
 // @alpha
+export interface PathVisitor {
+    onDelete(path: UpPath, count: number): void;
+    // (undocumented)
+    onInsert(path: UpPath, content: Delta.ProtoNodes): void;
+    // (undocumented)
+    onSetValue(path: UpPath, value: Value): void;
+}
+
+// @alpha
 export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldUpPath): FieldUpPath;
 
 // @alpha
@@ -1220,6 +1247,9 @@ export abstract class ProgressiveEditBuilderBase<TChange> implements Progressive
 
 // @alpha
 type ProtoNode = ITreeCursorSynchronous;
+
+// @alpha
+type ProtoNodes = readonly ProtoNode[];
 
 // @alpha
 export const proxyTargetSymbol: unique symbol;

@@ -314,6 +314,7 @@ flowchart
         end
         core-->events-->util
         core-->id-compressor-->util
+        core-->codec-->util
         feature-->shared-tree-core
         shared-tree-core-->core
         shared-tree-->feature
