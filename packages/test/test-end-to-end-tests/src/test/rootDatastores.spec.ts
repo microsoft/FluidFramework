@@ -329,15 +329,7 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 				error: "malformedDataStoreAliasMessage",
 			},
 			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				error: "malformedDataStoreAliasMessage",
-			},
-			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "malformedDataStoreAliasMessage",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
 				error: "malformedDataStoreAliasMessage",
 			},
 		];

@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { DriverHeader, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ensureFluidResolvedUrl } from "../fluidResolvedUrl";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {
@@ -55,10 +54,9 @@ describe("Insecure Url Resolver Test", () => {
 
 	it("Test RequestUrl for a data store", async () => {
 		const resolvedUrl = await resolver.resolve(request);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(resolvedUrl?.url, expectedResolvedUrl, "resolved url is wrong");
 
 		const dataStoreId = "dataStore";
 		const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
@@ -73,10 +71,9 @@ describe("Insecure Url Resolver Test", () => {
 			headers: {},
 		};
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(resolvedUrl?.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
 	it("Test RequestUrl for url with data store ids", async () => {
@@ -85,12 +82,11 @@ describe("Insecure Url Resolver Test", () => {
 			headers: {},
 		};
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `fluid://${
 			new URL(ordererUrl).host
 		}/${tenantId}/${fileName}/dataStore1/dataStore2`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(resolvedUrl?.url, expectedResolvedUrl, "resolved url is wrong");
 
 		const dataStoreId = "dataStore";
 		const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
@@ -105,10 +101,9 @@ describe("Insecure Url Resolver Test", () => {
 			headers: {},
 		};
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(resolvedUrl?.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
 	it("Test RequestUrl for url with 2 slashes at the end", async () => {
@@ -117,10 +112,9 @@ describe("Insecure Url Resolver Test", () => {
 			headers: {},
 		};
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}//`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(resolvedUrl?.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
 	it("Test RequestUrl for url with special characters", async () => {
@@ -129,11 +123,10 @@ describe("Insecure Url Resolver Test", () => {
 			headers: {},
 		};
 		const resolvedUrl = await resolver.resolve(testRequest);
-		ensureFluidResolvedUrl(resolvedUrl);
 
 		const expectedResolvedUrl = `fluid://${
 			new URL(ordererUrl).host
 		}/${tenantId}/${fileName}/!@$123/dataStore!@$`;
-		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		assert.strictEqual(resolvedUrl?.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 });
