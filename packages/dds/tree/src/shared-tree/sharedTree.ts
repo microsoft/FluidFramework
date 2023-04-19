@@ -229,6 +229,12 @@ export interface ISharedTreeFork extends ISharedTreeView {
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
 	 */
 	rebaseOnto(view: ISharedTreeView): void;
+
+	/**
+	 * Dispose this fork, freezing its state and allowing the SharedTree to release resources required by it.
+	 * Attempts to further mutate or dispose this view will error.
+	 */
+	dispose(): void;
 }
 
 /**
@@ -501,6 +507,10 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public set root(data: ContextuallyTypedNodeData | undefined) {
 		this.context.unwrappedRoot = data;
+	}
+
+	public dispose(): void {
+		this.branch.dispose();
 	}
 }
 
