@@ -13,9 +13,6 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
     constructor(client: ApplicationInsights);
     // (undocumented)
     protected readonly baseLoggingClient: ApplicationInsights;
-    // (undocumented)
-    flush(): void;
-    // (undocumented)
     send(event: ITelemetryBaseEvent): void;
 }
 
