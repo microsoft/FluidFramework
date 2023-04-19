@@ -313,7 +313,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	protected mergeBranch(branch: SharedTreeBranch<TEditor, TChange>): void {
 		assert(
 			!branch.isTransacting(),
-			"Branch may not be merged while transaction is in progress",
+			0x5cb /* Branch may not be merged while transaction is in progress */,
 		);
 
 		const commits: GraphCommit<TChange>[] = [];

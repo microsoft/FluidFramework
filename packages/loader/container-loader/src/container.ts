@@ -1009,8 +1009,8 @@ export class Container
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
 		assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-		assert(!!this.baseSnapshot, "no base snapshot");
-		assert(!!this.baseSnapshotBlobs, "no snapshot blobs");
+		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
+		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
 		const pendingState: IPendingContainerState = {
 			pendingRuntimeState: this.context.getPendingLocalState(),
 			baseSnapshot: this.baseSnapshot,
@@ -1497,7 +1497,7 @@ export class Container
 			// now set clientId to stashed clientId so live ops are correctly processed as local
 			assert(
 				this.clientId === undefined,
-				"Unexpected clientId when setting stashed clientId",
+				0x5d6 /* Unexpected clientId when setting stashed clientId */,
 			);
 			this._clientId = pendingLocalState?.clientId;
 		}
