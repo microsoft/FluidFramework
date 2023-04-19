@@ -5,6 +5,7 @@
 
 export { IGCTestProvider, runGCTests } from "./gcTestRunner";
 export {
+	AddClient,
 	BaseOperation,
 	ChangeConnectionState,
 	Client,

@@ -690,6 +690,7 @@ function createPositionReferenceFromSegoff(
 	refType: ReferenceType,
 	op?: ISequencedDocumentMessage,
 	localSeq?: number,
+	fromSnapshot?: boolean,
 ): LocalReferencePosition {
 	if (segoff.segment) {
 		const ref = client.createLocalReferencePosition(
@@ -706,7 +707,12 @@ function createPositionReferenceFromSegoff(
 	// - References coming from a remote client (location may have been concurrently removed)
 	// - References being rebased to a new sequence number
 	//   (segment they originally referred to may have been removed with no suitable replacement)
-	if (!op && !localSeq && !refTypeIncludesFlag(refType, ReferenceType.Transient)) {
+	if (
+		!op &&
+		!localSeq &&
+		!fromSnapshot &&
+		!refTypeIncludesFlag(refType, ReferenceType.Transient)
+	) {
 		throw new UsageError("Non-transient references need segment");
 	}
 
@@ -739,7 +745,7 @@ function createPositionReference(
 		);
 		segoff = client.getContainingSegment(pos, undefined, localSeq);
 	}
-	return createPositionReferenceFromSegoff(client, segoff, refType, op, localSeq);
+	return createPositionReferenceFromSegoff(client, segoff, refType, op, localSeq, fromSnapshot);
 }
 
 export function createSequenceInterval(
