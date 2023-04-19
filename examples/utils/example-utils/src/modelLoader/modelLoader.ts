@@ -7,7 +7,6 @@ import type { IContainer, IHostLoader } from "@fluidframework/container-definiti
 import { ILoaderProps, Loader } from "@fluidframework/container-loader";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { create404Response, requestFluidObject } from "@fluidframework/runtime-utils";
 import type { IDetachedModel, IModelLoader, ModelMakerCallback } from "./interfaces";
 
@@ -105,9 +104,10 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 		// to stamp it on something that would rather not know it (e.g. the model).
 		const attach = async () => {
 			await container.attach(this.generateCreateNewRequest());
-			const resolved = container.resolvedUrl;
-			ensureFluidResolvedUrl(resolved);
-			return resolved.id;
+			if (container.resolvedUrl === undefined) {
+				throw new Error("Resolved Url not available on attached container");
+			}
+			return container.resolvedUrl.id;
 		};
 		return { model, attach };
 	}
