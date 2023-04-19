@@ -62,8 +62,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		const { commit, repairData } = commitToUndo;
 
-		return;
-		this.changeFamily.rebaser.invert(
+		return this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
 			false,
 			repairData,
