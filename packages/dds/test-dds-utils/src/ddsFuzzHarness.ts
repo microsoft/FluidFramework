@@ -70,7 +70,7 @@ export interface ChangeConnectionState {
 
 export interface AddClient {
 	type: "addClient";
-	addedChannelId: string;
+	addedClientId: string;
 }
 
 export interface Synchronize {
@@ -306,7 +306,7 @@ function mixinNewClient<
 			) {
 				return {
 					type: "addClient",
-					addedChannelId: makeFriendlyClientId(random, clients.length),
+					addedClientId: makeFriendlyClientId(random, clients.length),
 				};
 			}
 			return baseOp;
@@ -315,28 +315,12 @@ function mixinNewClient<
 
 	const reducer: Reducer<TOperation | AddClient, TState> = async (state, op) => {
 		if (isClientAddOp(op)) {
-			const { summary } = state.summarizerClient.channel.getAttachSummary();
-			const dataStoreRuntime = new MockFluidDataStoreRuntime();
-			const containerRuntime = state.containerRuntimeFactory.createContainerRuntime(
-				dataStoreRuntime,
-				{ minimumSequenceNumber: state.containerRuntimeFactory.sequenceNumber },
+			const newClient = await loadClient(
+				state.containerRuntimeFactory,
+				state.summarizerClient,
+				model.factory,
+				op.addedClientId,
 			);
-			const services: IChannelServices = {
-				deltaConnection: containerRuntime.createDeltaConnection(),
-				objectStorage: MockStorage.createFromSummary(summary),
-			};
-
-			const channel = (await model.factory.load(
-				dataStoreRuntime,
-				op.addedChannelId,
-				services,
-				model.factory.attributes,
-			)) as ReturnType<TChannelFactory["create"]>;
-			channel.connect(services);
-			const newClient: Client<TChannelFactory> = {
-				channel,
-				containerRuntime,
-			};
 			state.clients.push(newClient);
 			return state;
 		}
@@ -549,6 +533,36 @@ function createClient<TChannelFactory extends IChannelFactory>(
 	return { containerRuntime, channel: channel as ReturnType<TChannelFactory["create"]> };
 }
 
+async function loadClient<TChannelFactory extends IChannelFactory>(
+	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
+	summarizerClient: Client<TChannelFactory>,
+	factory: TChannelFactory,
+	clientId: string,
+): Promise<Client<TChannelFactory>> {
+	const { summary } = summarizerClient.channel.getAttachSummary();
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
+		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
+	});
+	const services: IChannelServices = {
+		deltaConnection: containerRuntime.createDeltaConnection(),
+		objectStorage: MockStorage.createFromSummary(summary),
+	};
+
+	const channel = (await factory.load(
+		dataStoreRuntime,
+		clientId,
+		services,
+		factory.attributes,
+	)) as ReturnType<TChannelFactory["create"]>;
+	channel.connect(services);
+	const newClient: Client<TChannelFactory> = {
+		channel,
+		containerRuntime,
+	};
+	return newClient;
+}
+
 /**
  * Gets a friendly ID for a client based on its index in the client list.
  * This exists purely for easier debugging--reasoning about client "A" is easier than reasoning
@@ -568,15 +582,18 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	itFn(`seed ${seed}`, async () => {
 		const random = makeRandom(seed);
 		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-		const clients = Array.from({ length: options.numberOfClients }, (_, index) =>
-			createClient(
-				containerRuntimeFactory,
-				model.factory,
-				makeFriendlyClientId(random, index),
+		const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
+
+		const clients = await Promise.all(
+			Array.from({ length: options.numberOfClients }, async (_, index) =>
+				loadClient(
+					containerRuntimeFactory,
+					summarizerClient,
+					model.factory,
+					makeFriendlyClientId(random, index),
+				),
 			),
 		);
-
-		const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
 
 		const initialState: DDSFuzzTestState<TChannelFactory> = {
 			clients,
