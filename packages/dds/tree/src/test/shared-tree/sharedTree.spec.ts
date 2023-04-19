@@ -671,8 +671,7 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(tree2), undefined);
 		});
 
-		// TODO: unskip once I fix the undo commit graph after rebasing
-		it.skip("can be rebased", async () => {
+		it("can be rebased", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 
