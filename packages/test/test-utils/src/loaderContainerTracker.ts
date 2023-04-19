@@ -188,7 +188,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * - this overlaps with !isDirty, but include task scheduler ops.
 	 * - Trailing NoOp is tracked and don't count as pending ops.
 	 *
-	 * Note that containers that were already pause will resume process and paused again once
+	 * Containers that are already pause will resume process and paused again once
 	 * everything is synchronized.  Containers that aren't paused will remain unpaused when this
 	 * function returns.
 	 */
@@ -560,7 +560,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Pause all queue activities on all tracked containers, and resume only
 	 * inbound to process ops until it is idle. All queues are left in the paused state
-	 * after the function
+	 * after the function.
+	 *
+	 * Pausing will switch the container to write mode. See `pauseProcessing`
 	 */
 	public async processIncoming(...containers: IContainer[]) {
 		return this.processQueue(containers, (container) => container.deltaManager.inbound);
@@ -571,8 +573,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * outbound to process ops until it is idle. All queues are left in the paused state
 	 * after the function.
 	 *
-	 * Note that the incoming queue may be unpaused before outbound ops being sent, to allow for
-	 * catch up and connection (processing join message)
+	 * Pausing will switch the container to write mode. See `pauseProcessing`
 	 */
 	public async processOutgoing(...containers: IContainer[]) {
 		return this.processQueue(containers, (container) => container.deltaManager.outbound);
