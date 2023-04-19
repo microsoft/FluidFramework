@@ -70,6 +70,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",
 		"concurrently": "^7.6.0",
+		"cross-env": "^7.0.3",
 		"eslint": "~8.6.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
