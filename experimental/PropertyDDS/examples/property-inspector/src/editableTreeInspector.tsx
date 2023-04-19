@@ -511,6 +511,8 @@ const getRenderer = (context: EditableTreeContext) => () => {
 export function renderApp(data: ISharedTree) {
 	sharedTree = data;
 	const { context } = data;
+	const t = typeNameSymbol;
+	const v = valueSymbol;
 	const render = getRenderer(context);
 	turnOffRenderOnForestUpdates = context.on("afterDelta", render);
 	render();
