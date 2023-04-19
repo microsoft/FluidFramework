@@ -8,13 +8,12 @@ import {
 	ChangeFamilyEditor,
 	ChangeRebaser,
 	GraphCommit,
-	GraphCommitType,
 	SessionId,
 	UndoRedoManager,
 	mintRevisionTag,
 } from "../../core";
 // eslint-disable-next-line import/no-internal-modules
-import { UndoableCommit } from "../../core/undo/undoRedoManager";
+import { UndoRedoManagerCommitType, UndoableCommit } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
 import { MockRepairDataStore, MockRepairDataStoreProvider } from "../utils";
 
@@ -42,13 +41,8 @@ describe("UndoRedoManager", () => {
 				repairData: new MockRepairDataStore(),
 			};
 			const manager = new TestUndoRedoManager(initialCommit);
-			const fakeInvertedCommit = createTestGraphCommit(
-				[0, 1],
-				2,
-				localSessionId,
-				GraphCommitType.Undo,
-			);
-			manager.trackCommit(fakeInvertedCommit);
+			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2, localSessionId);
+			manager.trackCommit(fakeInvertedCommit, UndoRedoManagerCommitType.Undo);
 			// The head undo commit will not be the new inverted commit
 			assert.equal(manager.getHeadUndoCommit(), initialCommit);
 		});
@@ -93,13 +87,11 @@ function createTestGraphCommit(
 	inputContext: readonly number[],
 	intention: number | number[],
 	sessionId: SessionId,
-	type?: GraphCommitType,
 	revision = mintRevisionTag(),
 ): GraphCommit<TestChange> {
 	return {
 		revision,
 		sessionId,
 		change: TestChange.mint(inputContext, intention),
-		type,
 	};
 }
