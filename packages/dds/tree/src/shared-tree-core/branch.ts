@@ -96,13 +96,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	public startTransaction(repairStore?: RepairDataStore): void {
-		if (this.transactions.size === 0) {
+		if (!this.isTransacting()) {
 			// If this is the start of a transaction stack, freeze the undo redo manager's
 			// repair data store provider so that repair data can be captured based on the
 			// state of the branch at the start of the transaction.
-			this.undoRedoManager.repairDataStoreProvider.freeze();
+			this.undoRedoManager.repairDataStoreProvider.freeze();			
 		}
-		if (!this.isTransacting()) {
+		this.transactions.push(this.head.revision, repairStore);
 		this.editor.enterTransaction();
 	}
 
