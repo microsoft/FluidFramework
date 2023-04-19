@@ -76,7 +76,6 @@ class MockRuntime
 			(blobPath: string) => this.isBlobDeleted(blobPath),
 			this,
 			undefined,
-			() => undefined,
 		);
 	}
 

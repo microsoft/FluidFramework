@@ -34,8 +34,9 @@ import {
 	RepairDataStore,
 	ChangeFamilyEditor,
 } from "../core";
-import { brand, JsonCompatibleReadOnly, TransactionResult } from "../util";
+import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
+import { isStableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -215,22 +216,30 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Defaults to a new, randomly generated, revision if not provided.
 	 */
 	protected applyChange(change: TChange, revision?: RevisionTag): void {
-		const commit = {
-			change,
-			revision: revision ?? mintRevisionTag(),
-			sessionId: this.editManager.localSessionId,
-		};
-		const delta = this.editManager.addLocalChange(commit.revision, change, false);
-		this.transactions.repairStore?.capture(
-			this.changeFamily.intoDelta(change),
-			commit.revision,
-		);
+		const commit = this.addLocalChange(change, revision ?? mintRevisionTag());
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
+	}
+
+	/**
+	 * Adds the local change to the editmanager and returns the commit with the given change.
+	 * @param change - The change to apply
+	 * @param revision - The revision to associate with the change.
+	 * @returns Commit object with the change, revision and localsessionid
+	 */
+	private addLocalChange(change: TChange, revision: RevisionTag): Commit<TChange> {
+		const commit = {
+			change,
+			revision,
+			sessionId: this.editManager.localSessionId,
+		};
+		const delta = this.editManager.addLocalChange(revision, change, false);
+		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
 
 		this.changeEvents.emit("newLocalChange", change);
 		this.changeEvents.emit("newLocalState", delta);
+		return commit;
 	}
 
 	protected processCore(
@@ -238,13 +247,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const { revision, originatorId: stableClientId, changeset } = message.contents as Message;
-		const changes = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
-		const commit: Commit<TChange> = {
-			revision,
-			sessionId: stableClientId,
-			change: changes,
-		};
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
+			this.changeFamily.encoder.decodeJson(format, encodedChange);
+		const commit = parseCommit(message.contents, decoder);
 
 		const delta = this.editManager.addSequencedChange(
 			commit,
@@ -348,8 +353,20 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	protected applyStashedOp(content: any): unknown {
-		throw new Error("Method not implemented.");
+	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
+			this.changeFamily.encoder.decodeJson(format, encodedChange);
+		const { revision } = parseCommit(content, decoder);
+		const [commit] = this.editManager.findLocalCommit(revision);
+		this.submitCommit(commit);
+	}
+
+	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
+		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
+			this.changeFamily.encoder.decodeJson(format, encodedChange);
+		const { revision, change } = parseCommit(content, decoder);
+		this.addLocalChange(change, revision);
+		return;
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
@@ -465,4 +482,24 @@ function scopeStorageService(
 			return service.list(`${scope}${path}`);
 		},
 	};
+}
+
+/**
+ * validates that the message contents is an object which contains valid revisionId, sessionId, and changeset and returns a Commit
+ * @param content - message contents
+ * @returns a Commit object
+ */
+function parseCommit<TChange>(
+	content: JsonCompatibleReadOnly,
+	decoder: (format: number, changeContent: JsonCompatibleReadOnly) => TChange,
+): Commit<TChange> {
+	assert(isJsonObject(content), "expected content to be an object");
+	assert(
+		typeof content.revision === "string" && isStableId(content.revision),
+		"expected revision id to be valid stable id",
+	);
+	assert(content.changeset !== undefined, "expected changeset to be defined");
+	assert(typeof content.originatorId === "string", "expected changeset to be defined");
+	const change = decoder(formatVersion, content.changeset);
+	return { revision: content.revision, sessionId: content.originatorId, change };
 }

@@ -135,7 +135,7 @@ export class OpSplitter {
 	 * @param batch - the compressed batch which needs to be processed
 	 * @returns A new adjusted batch which can be sent over the wire
 	 */
-	public splitCompressedBatch(batch: IBatch): IBatch {
+	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
+import { IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
 import {
+	Button,
 	Badge,
 	createTableColumn,
 	Table,
@@ -17,6 +18,11 @@ import {
 	useTableFeatures,
 	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
+import {
+	PlugConnected24Regular,
+	PlugDisconnected24Regular,
+	Delete24Regular,
+} from "@fluentui/react-icons";
 import React from "react";
 
 import {
@@ -257,6 +263,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					isContainerConnected={
 						containerState.connectionState === ConnectionState.Connected
 					}
+					isContainerClosed={containerState.closed}
 					tryConnect={tryConnect}
 					forceDisconnect={forceDisconnect}
 					closeContainer={closeContainer}
@@ -294,10 +301,12 @@ export interface IContainerActions {
 
 interface ActionsBarProps extends IContainerActions {
 	isContainerConnected: boolean;
+	isContainerClosed: boolean;
 }
 
 function ActionsBar(props: ActionsBarProps): React.ReactElement {
-	const { isContainerConnected, tryConnect, forceDisconnect, closeContainer } = props;
+	const { isContainerConnected, isContainerClosed, tryConnect, forceDisconnect, closeContainer } =
+		props;
 
 	const connectButtonTooltipId = useId("connect-button-tooltip");
 	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
@@ -305,32 +314,35 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 
 	const changeConnectionStateButton = isContainerConnected ? (
 		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
-			<IconButton
+			<Button
+				icon={<PlugDisconnected24Regular />}
 				onClick={forceDisconnect}
-				disabled={forceDisconnect === undefined}
-				menuIconProps={{ iconName: "PlugDisconnected" }}
-				aria-describedby={disconnectButtonTooltipId}
-			/>
+				disabled={forceDisconnect === undefined || isContainerClosed}
+			>
+				Disconnect Container
+			</Button>
 		</TooltipHost>
 	) : (
 		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
-			<IconButton
+			<Button
+				icon={<PlugConnected24Regular />}
 				onClick={tryConnect}
-				disabled={tryConnect === undefined}
-				menuIconProps={{ iconName: "PlugConnected" }}
-				aria-describedby={connectButtonTooltipId}
-			/>
+				disabled={tryConnect === undefined || isContainerClosed}
+			>
+				Connect Container
+			</Button>
 		</TooltipHost>
 	);
 
 	const disposeContainerButton = (
 		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
-			<IconButton
+			<Button
+				icon={<Delete24Regular />}
 				onClick={closeContainer}
-				disabled={closeContainer === undefined}
-				menuIconProps={{ iconName: "Delete" }}
-				aria-describedby={disposeContainerButtonTooltipId}
-			/>
+				disabled={closeContainer === undefined || isContainerClosed}
+			>
+				Close Container
+			</Button>
 		</TooltipHost>
 	);
 
