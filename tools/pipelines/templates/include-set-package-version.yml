@@ -21,6 +21,16 @@ parameters:
   type: boolean
   default: true
 
+# The path to the pnpm store.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
+
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+
 # Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -36,20 +46,20 @@ steps:
         # more information.
         echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
 
+  - template: include-install-pnpm.yml
+    parameters:
+      buildDirectory: $(Build.SourcesDirectory)/build-tools
+      pnpmStorePath: ${{ parameters.pnpmStorePath }}
+
   - task: Bash@3
     name: InstallBuildTools
     displayName: Install Fluid Build Tools (from repo)
     inputs:
       targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: $(Build.SourcesDirectory)/build-tools
       script: |
-        pushd "$(Build.SourcesDirectory)/build-tools"
-        corepack enable
-        pnpm -v
-        pnpm config set store-dir $(pnpmStorePath)
-        pnpm i
+        pnpm i --frozen-lockfile
         pnpm build:compile
-        popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
@@ -110,56 +120,16 @@ steps:
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
 
-# TODO: AB#2415
-# Only use `flub` for the client build, because there are issues with `flub` in the other cases and only the client
-# build uses a version scheme that lerna and npm don't handle correctly.
-- ${{ if eq(parameters.tagName, 'client') }}:
-  - task: Bash@3
-    displayName: Update Package Version (flub)
-    env:
-      VERSION_RELEASE: $(release)
-      RELEASE_GROUP: ${{ parameters.tagName }}
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        echo SETVERSION_VERSION=$SETVERSION_VERSION
-        echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
-        echo RELEASE_GROUP=$RELEASE_GROUP
-
-        if [ -f "lerna.json" ]; then
-          if [ "$VERSION_RELEASE" = "release" ]; then
-            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"^\" -xv"
-            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="^" -xv
-          else
-            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"\" -xv"
-            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="" -xv
-          fi
-        else
-          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
-        fi
-
-- ${{ if ne(parameters.tagName, 'client') }}:
-  - task: Bash@3
-    displayName: Update Package Version (lerna)
-    env:
-      VERSION_RELEASE: $(release)
-      RELEASE_GROUP: ${{ parameters.tagName }}
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        echo SETVERSION_VERSION=$SETVERSION_VERSION
-        if [ -f "lerna.json" ]; then
-          if [ "$VERSION_RELEASE" = "release" ]; then
-            # no need to run anything here, as the version in the package should be correct
-            npx lerna exec -- node $(Build.SourcesDirectory)/scripts/check-package-version.cjs
-            exit $?
-          fi
-          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
-        else
-          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
-        fi
+- task: Bash@3
+  displayName: Update Package Version (flub)
+  env:
+    VERSION_RELEASE: $(release)
+    RELEASE_GROUP: ${{ parameters.tagName }}
+    INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
+  inputs:
+    targetType: 'filePath'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
 - ${{ if eq(parameters.usesPrettier, true) }}:
   # package.json files are reformatted by the prior set version steps, so reformat them (and only them) with prettier

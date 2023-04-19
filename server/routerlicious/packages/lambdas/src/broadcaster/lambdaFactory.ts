@@ -8,7 +8,6 @@ import {
 	IContext,
 	IPublisher,
 	IPartitionLambda,
-	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
 	IServiceConfiguration,
 	IClientManager,
@@ -30,7 +29,7 @@ export class BroadcasterLambdaFactory extends EventEmitter implements IPartition
 	}
 
 	public async create(
-		config: IPartitionLambdaConfig,
+		config: undefined,
 		context: IContext,
 	): Promise<IPartitionLambda> {
 		return new BroadcasterLambda(

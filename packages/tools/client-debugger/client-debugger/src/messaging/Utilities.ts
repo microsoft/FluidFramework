@@ -4,7 +4,7 @@
  */
 
 import { devtoolsMessageSource } from "./Constants";
-import { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
+import { IDevtoolsMessage, ISourcedDevtoolsMessage } from "./Messages";
 
 /**
  * Posts the provided message to the window (globalThis).
@@ -17,11 +17,11 @@ import { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
  *
  * @internal
  */
-export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
+export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(
 	loggingOptions?: MessageLoggingOptions,
 	...messages: TMessage[]
 ): void {
-	const messagesWithSource: ISourcedDebuggerMessage[] = messages.map((message) => ({
+	const messagesWithSource: ISourcedDevtoolsMessage[] = messages.map((message) => ({
 		...message,
 		source: devtoolsMessageSource,
 	}));
@@ -39,16 +39,16 @@ export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 }
 
 /**
- * Handlers for incoming {@link ISourcedDebuggerMessage}s.
+ * Handlers for incoming {@link ISourcedDevtoolsMessage}s.
  *
  * @internal
  */
 export interface InboundHandlers {
 	/**
-	 * Mapping from {@link IDebuggerMessage."type"}s to a handler callback for that message type.
+	 * Mapping from {@link IDevtoolsMessage."type"}s to a handler callback for that message type.
 	 * @returns Whether or not the message was actually handled.
 	 */
-	[type: string]: (message: ISourcedDebuggerMessage) => boolean;
+	[type: string]: (message: ISourcedDevtoolsMessage) => boolean;
 }
 
 /**
@@ -79,7 +79,7 @@ export interface MessageLoggingOptions {
  * @internal
  */
 export function handleIncomingWindowMessage(
-	event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+	event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
@@ -100,7 +100,7 @@ export function handleIncomingWindowMessage(
  * @internal
  */
 export function handleIncomingMessage(
-	message: Partial<ISourcedDebuggerMessage>,
+	message: Partial<ISourcedDevtoolsMessage>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
@@ -126,12 +126,12 @@ export function handleIncomingMessage(
 }
 
 /**
- * Determines whether the provided event message data is an {@link ISourcedDebuggerMessage}.
+ * Determines whether the provided event message data is an {@link ISourcedDevtoolsMessage}.
  *
  * @internal
  */
 export function isDebuggerMessage(
-	value: Partial<ISourcedDebuggerMessage>,
-): value is ISourcedDebuggerMessage {
+	value: Partial<ISourcedDevtoolsMessage>,
+): value is ISourcedDevtoolsMessage {
 	return typeof value.source === "string" && value.type !== undefined;
 }

@@ -343,6 +343,7 @@ export interface IConnectableRuntime {
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    readonly enableGroupedBatching?: boolean;
     readonly enableOpReentryCheck?: boolean;
     readonly flushMode?: FlushMode;
     // (undocumented)
@@ -493,6 +494,10 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     disposeFn?(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    off?(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
+    // (undocumented)
+    on?(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
     readonly summarizerClientId: string | undefined;
 }
 

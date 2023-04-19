@@ -544,7 +544,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 			if (newNodeChanges.length > 0) {
 				assert(
 					fieldChange.newContent !== undefined,
-					"Shouldn't have new node changes if there is no new node",
+					0x5c4 /* Shouldn't have new node changes if there is no new node */,
 				);
 				fieldChange.newContent.changes = composeChild(newNodeChanges);
 			}

@@ -73,7 +73,7 @@ export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undef
 export function idAllocatorFromState(state: IdAllocationState): IdAllocator {
 	return (c?: number) => {
 		const count = c ?? 1;
-		assert(count > 0, "Must allocate at least one ID");
+		assert(count > 0, 0x5cf /* Must allocate at least one ID */);
 		const id: ChangesetLocalId = brand((state.maxId as number) + 1);
 		state.maxId = brand((state.maxId as number) + count);
 		return id;

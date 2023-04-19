@@ -56,7 +56,7 @@ export function schematizeView(
 				// These kinds are known to tolerate empty, so use the schema as is:
 				incrementalSchemaUpdate = config.schema;
 			} else {
-				assert(rootKind === FieldKinds.value.identifier, "Unexpected kind");
+				assert(rootKind === FieldKinds.value.identifier, 0x5c8 /* Unexpected kind */);
 				incrementalSchemaUpdate = {
 					...config.schema,
 					globalFieldSchema: new Map(config.schema.globalFieldSchema),
@@ -70,7 +70,7 @@ export function schematizeView(
 			// );
 			assert(
 				allowsRepoSuperset(defaultSchemaPolicy, incrementalSchemaUpdate, config.schema),
-				"Incremental Schema during update should be a allow a superset of the final schema",
+				0x5c9 /* Incremental Schema during update should be a allow a superset of the final schema */,
 			);
 			// Update to intermediate schema
 			tree.storedSchema.update(incrementalSchemaUpdate);

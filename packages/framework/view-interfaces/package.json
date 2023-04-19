@@ -38,7 +38,7 @@
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0"
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.13.1",
