@@ -138,7 +138,7 @@ interface PendingBlob {
 }
 
 export interface IPendingBlobs {
-	[id: string]: { blob: string; localUploadTime?: number; minTTLInSeconds?: number };
+	[id: string]: { blob: string };
 }
 
 export interface IBlobManagerEvents {
@@ -229,13 +229,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
-			if (entry.minTTLInSeconds && entry.localUploadTime) {
-				const timeLapseSinceLocalUpload = (Date.now() - entry.localUploadTime) / 1000;
-				// stashed entries with more than half-life in storage will not be reuploaded
-				if (entry.minTTLInSeconds - timeLapseSinceLocalUpload > entry.minTTLInSeconds / 2) {
-					return;
-				}
-			}
 			const blob = stringToBuffer(entry.blob, "base64");
 			this.pendingBlobs.set(localId, {
 				blob,
@@ -257,10 +250,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					minTTLInSeconds: pendingEntry.minTTLInSeconds,
 					expired,
 				});
-				if (expired) {
-					this.deleteAndEmitsIfEmpty(localId);
-					throw new Error("Trying to send BlobAttachOp of expired blob");
-				}
+				console.log("expired: ", expired, " secondsSinceUpload: ", secondsSinceUpload);
+				assert(!expired, "expired blob in storage");
 			}
 			return sendBlobAttachOp(localId, blobId);
 		};
@@ -883,11 +874,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public getPendingBlobs(): IPendingBlobs {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
-			blobs[key] = {
-				blob: bufferToString(entry.blob, "base64"),
-				localUploadTime: entry.uploadTime,
-				minTTLInSeconds: entry.minTTLInSeconds,
-			};
+			blobs[key] = { blob: bufferToString(entry.blob, "base64") };
 		}
 		return blobs;
 	}

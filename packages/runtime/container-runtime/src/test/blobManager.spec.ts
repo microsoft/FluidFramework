@@ -24,6 +24,7 @@ import {
 	TelemetryNullLogger,
 } from "@fluidframework/telemetry-utils";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
 import { sweepAttachmentBlobsKey } from "../gc";
 
@@ -41,16 +42,8 @@ abstract class BaseMockBlobStorage
 }
 
 class DedupeStorage extends BaseMockBlobStorage {
-	public async createBlob(blob: ArrayBufferLike) {
-		const id = await gitHashFile(blob as any);
-		this.blobs.set(id, blob);
-		return { id, minTTLInSeconds: MIN_TTL };
-	}
-}
-
-class DedupeTTLStorage extends BaseMockBlobStorage {
 	private _createBlobCount: number = 0;
-	private _min_TTL: number = 0.001; // 1ms to make blobs "expired" by default
+	private _min_TTL: number = 24 * 60 * 60; // same as ODSP
 
 	set min_TTL(minTTL: number) {
 		this._min_TTL = minTTL;
@@ -59,7 +52,6 @@ class DedupeTTLStorage extends BaseMockBlobStorage {
 	get createBlobCount(): number {
 		return this._createBlobCount;
 	}
-
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = await gitHashFile(blob as any);
 		this._createBlobCount += 1;
@@ -103,18 +95,13 @@ class MockRuntime
 	public gcTombstoneEnforcementAllowed: boolean = true;
 
 	public get storage() {
-		if (this.attachState === AttachState.Detached) {
-			return this.detachedStorage as unknown as IDocumentStorageService;
-		} else if (this._useTTLStorage) {
-			return this.attachedTTLStorage as unknown as IDocumentStorageService;
-		} else {
-			return this.attachedStorage as unknown as IDocumentStorageService;
-		}
+		return (this.attachState === AttachState.Detached
+			? this.detachedStorage
+			: this.attachedStorage) as unknown as IDocumentStorageService;
 	}
 
 	private processing = false;
 	public unprocessedBlobs = new Set();
-	private _useTTLStorage: boolean = false;
 
 	public getStorage() {
 		return {
@@ -142,10 +129,6 @@ class MockRuntime
 		} as unknown as IDocumentStorageService;
 	}
 
-	public set useTTLStorage(expired: boolean) {
-		this._useTTLStorage = expired;
-	}
-
 	public sendBlobAttachOp(localId: string, blobId?: string) {
 		this.ops.push({ metadata: { localId, blobId } });
 	}
@@ -167,7 +150,6 @@ class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public attachedTTLStorage = new DedupeTTLStorage();
 	public logger = this.mc.logger;
 
 	private ops: any[] = [];
@@ -416,39 +398,15 @@ describe("BlobManager", () => {
 	});
 
 	it("throw if expired", async () => {
-		let exceptionOccurred = false;
 		await runtime.attach();
-		runtime.useTTLStorage = true;
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processBlobs();
 		await handle;
-
-		await runtime.connect(50).catch((error) => {
-			assert.strictEqual(
-				error.message,
-				"Trying to send BlobAttachOp of expired blob",
-				"Unexpected exception thrown",
-			);
-			exceptionOccurred = true;
-		});
-		assert.strictEqual(exceptionOccurred, true, "call did not fail as expected.");
+		runtime.attachedStorage.min_TTL = 0.001;
+		// await runtime.connect(50);
+		const codeBlock = async () => runtime.connect(50);
+		assert.throws(codeBlock, (e) => validateAssertionError(e, "expired blob in storage"));
 		await runtime.processAll();
-	});
-
-	it("no reupload if not expired", async () => {
-		await runtime.attach();
-		runtime.useTTLStorage = true;
-		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
-		await runtime.processBlobs();
-		await handle;
-		runtime.attachedTTLStorage.min_TTL = 1; // min TTL enough to not expired
-		await runtime.connect(50);
-		await runtime.processAll();
-
-		const summaryData = validateSummary(runtime);
-		assert.strictEqual(runtime.attachedTTLStorage.createBlobCount, 1);
-		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
 	it("transition to offline while upload pending", async () => {
