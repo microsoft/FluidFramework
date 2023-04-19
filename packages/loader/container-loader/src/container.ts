@@ -858,7 +858,7 @@ export class Container
 		return this.protocolHandler.quorum;
 	}
 
-	public dispose?(error?: ICriticalContainerError) {
+	public dispose(error?: ICriticalContainerError) {
 		this._deltaManager.close(error, true /* doDispose */);
 		this.verifyClosed();
 	}
@@ -910,15 +910,6 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
-
-				this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
-
-				this.storageAdapter.dispose();
-
-				// Notify storage about critical errors. They may be due to disconnect between client & server knowledge
-				// about file, like file being overwritten in storage, but client having stale local cache.
-				// Driver need to ensure all caches are cleared on critical errors
-				this.service?.dispose(error);
 			} catch (exception) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
 			}
@@ -1187,7 +1178,6 @@ export class Container
 					const newError = normalizeError(error);
 					newError.addTelemetryProperties({ resolvedUrl: this.resolvedUrl?.url });
 					this.close(newError);
-					this.dispose?.(newError);
 					throw newError;
 				}
 			},
@@ -1334,7 +1324,6 @@ export class Container
 		// pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
 		const error = new GenericError("Existing context does not satisfy incoming proposal");
 		this.close(error);
-		this.dispose?.(error);
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1403,7 +1392,6 @@ export class Container
 			// if we have pendingLocalState we can load without storage; don't wait for connection
 			this.storageAdapter.connectToService(this.service).catch((error) => {
 				this.close(error);
-				this.dispose?.(error);
 			});
 		}
 
@@ -1721,7 +1709,6 @@ export class Container
 				this.processCodeProposal().catch((error) => {
 					const normalizedError = normalizeError(error);
 					this.close(normalizedError);
-					this.dispose?.(normalizedError);
 					throw error;
 				});
 			}
@@ -1995,7 +1982,6 @@ export class Container
 					{ messageType: type },
 				);
 				this.close(newError);
-				this.dispose?.(newError);
 				return -1;
 			}
 		}
@@ -2182,7 +2168,7 @@ export class Container
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
 			(message) => this.submitSignal(message),
-			(error?: ICriticalContainerError) => this.dispose?.(error),
+			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			Container.version,
 			(dirty: boolean) => this.updateDirtyContainerState(dirty),

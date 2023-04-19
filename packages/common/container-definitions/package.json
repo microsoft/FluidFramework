@@ -66,6 +66,9 @@
 		"broken": {
 			"InterfaceDeclaration_IContainer": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContainer": {
+				"forwardCompat": false
 			}
 		}
 	}
