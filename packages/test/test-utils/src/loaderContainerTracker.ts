@@ -180,20 +180,17 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * Make sure all the tracked containers are synchronized.
 	 *
 	 * No isDirty (non-readonly) containers
-	 *
 	 * No extra clientId in quorum of any container that is not tracked and still opened.
-	 *
 	 * - i.e. no pending Join/Leave message.
-	 *
 	 * No unresolved proposal (minSeqNum \>= lastProposalSeqNum)
-	 *
 	 * lastSequenceNumber of all container is the same
-	 *
 	 * clientSequenceNumberObserved is the same as clientSequenceNumber sent
-	 *
 	 * - this overlaps with !isDirty, but include task scheduler ops.
-	 *
 	 * - Trailing NoOp is tracked and don't count as pending ops.
+	 *
+	 * Note that containers that were already pause will resume process and paused again once
+	 * everything is synchronized.  Containers that aren't paused will remain unpaused when this
+	 * function returns.
 	 */
 	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
 		const resumed = this.resumeProcessing(...containers);
@@ -474,6 +471,11 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Pause all queue activities on the containers given, or all tracked containers
 	 * Any containers given that is not tracked will be ignored.
+	 *
+	 * When a container is paused, it is assumed that we want fine grain control over op
+	 * sequencing.  This function will prepare the container and force it into write mode to
+	 * avoid missing join messages or change the sequence of event when switching from read to
+	 * write mode.
 	 */
 	public async pauseProcessing(...containers: IContainer[]) {
 		const waitP: Promise<void>[] = [];
@@ -491,10 +493,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	}
 
 	/**
-	 * When we pause a container, it is assumed that we want fine grain control over
-	 * op sequencing.  This function will prepare the container so that it will be
-	 * connected in write mode for that purpose (to avoid missing join messages or
-	 * change the sequence of event when switching from read to write mode)
+	 * When a container is paused, it is assumed that we want fine grain control over op
+	 * sequencing.  This function will prepare the container and force it into write mode to
+	 * avoid missing join messages or change the sequence of event when switching from read to
+	 * write mode.
 	 *
 	 * @param container - the container to pause
 	 * @param record - the record for the container
