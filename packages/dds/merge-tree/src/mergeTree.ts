@@ -512,7 +512,6 @@ export const clientSeqComparer: Comparer<ClientSeq> = {
 };
 
 /**
- * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export interface LRUSegment {
@@ -556,11 +555,8 @@ export class MergeTree {
 	private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
 	public readonly collabWindow = new CollaborationWindow();
 
-	public pendingSegments: List<SegmentGroup> | undefined;
-	private segmentsToScour: Heap<LRUSegment> | undefined;
-	public get getSegmentsToScour(): Heap<LRUSegment> | undefined {
-		return this.segmentsToScour;
-	}
+	public readonly pendingSegments = new List<SegmentGroup>();
+	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
@@ -771,8 +767,6 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
-		this.segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
-		this.pendingSegments = new List<SegmentGroup>();
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
@@ -784,7 +778,7 @@ export class MergeTree {
 		//       segments from a snapshot.  We currently skip these for now.
 		if (segment.parent!.needsScour !== true && seq > this.collabWindow.currentSeq) {
 			segment.parent!.needsScour = true;
-			this.segmentsToScour!.add({ segment, maxSeq: seq });
+			this.segmentsToScour.add({ segment, maxSeq: seq });
 		}
 	}
 
@@ -1354,7 +1348,7 @@ export class MergeTree {
 	 */
 	public ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
 		const seq = opArgs.sequencedMessage!.sequenceNumber;
-		const pendingSegmentGroup = this.pendingSegments!.shift()?.data;
+		const pendingSegmentGroup = this.pendingSegments.shift()?.data;
 		const nodesToUpdate: IMergeBlock[] = [];
 		let overwrite = false;
 		if (pendingSegmentGroup !== undefined) {
@@ -1437,7 +1431,7 @@ export class MergeTree {
 			if (previousProps) {
 				_segmentGroup.previousProps = [];
 			}
-			this.pendingSegments!.push(_segmentGroup);
+			this.pendingSegments.push(_segmentGroup);
 		}
 
 		if (
@@ -2154,7 +2148,7 @@ export class MergeTree {
 	 */
 	public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup) {
 		if (op.type === MergeTreeDeltaType.REMOVE) {
-			const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
+			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
@@ -2200,7 +2194,7 @@ export class MergeTree {
 			op.type === MergeTreeDeltaType.INSERT ||
 			op.type === MergeTreeDeltaType.ANNOTATE
 		) {
-			const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
+			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;
 			if (
 				pendingSegmentGroup === undefined ||
 				pendingSegmentGroup !== localOpMetadata ||
