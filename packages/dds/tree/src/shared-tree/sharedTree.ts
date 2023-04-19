@@ -51,7 +51,7 @@ import {
 	ModularChangeset,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, fail, TransactionResult } from "../util";
+import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
 /**
@@ -372,6 +372,15 @@ export class SharedTree
 	) {
 		if (!this.storedSchema.tryHandleOp(message)) {
 			super.processCore(message, local, localOpMetadata);
+		}
+	}
+
+	protected override reSubmitCore(
+		content: JsonCompatibleReadOnly,
+		localOpMetadata: unknown,
+	): void {
+		if (!this.storedSchema.tryResubmitOp(content)) {
+			super.reSubmitCore(content, localOpMetadata);
 		}
 	}
 

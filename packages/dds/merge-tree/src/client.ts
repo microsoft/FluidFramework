@@ -710,7 +710,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentGroup: SegmentGroup,
 	): IMergeTreeDeltaOp[] {
 		assert(!!segmentGroup, 0x033 /* "Segment group undefined" */);
-		const NACKedSegmentGroup = this._mergeTree.pendingSegments?.shift()?.data;
+		const NACKedSegmentGroup = this._mergeTree.pendingSegments.shift()?.data;
 		assert(
 			segmentGroup === NACKedSegmentGroup,
 			0x034 /* "Segment group not at head of merge tree pending queue" */,
@@ -791,7 +791,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					refSeq: this.getCollabWindow().currentSeq,
 				};
 				segment.segmentGroups.enqueue(newSegmentGroup);
-				this._mergeTree.pendingSegments!.push(newSegmentGroup);
+				this._mergeTree.pendingSegments.push(newSegmentGroup);
 				opList.push(newOp);
 			}
 		}
