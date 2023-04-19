@@ -11,12 +11,7 @@ import {
 	EditableTree,
 	typeNameSymbol,
 	valueSymbol,
-	EditableTreeContext,
-	keyFromSymbol,
-	isEditableField,
 	EditableField,
-	isGlobalFieldKey,
-	symbolIsFieldKey,
 	isPrimitive,
 	typeSymbol,
 	isUnwrappedNode,
@@ -25,20 +20,10 @@ import {
 	ValueSchema,
 	ContextuallyTypedNodeDataObject,
 	isWritableArrayLike,
-	PrimitiveValue,
 	ISharedTree,
-	rootFieldKey,
-	symbolFromKey,
-	FieldKinds,
 	TreeSchemaIdentifier,
 	parentField,
 	getPrimaryField,
-	contextSymbol,
-	EmptyKey,
-	lookupTreeSchema,
-	neverTree,
-	SchemaDataAndPolicy,
-	lookupGlobalFieldSchema,
 } from "@fluid-internal/tree";
 import {
 	IDataCreationOptions,
@@ -53,7 +38,6 @@ import {
 	IEditableTreeRow,
 	IExpandedMap,
 } from "@fluid-experimental/property-inspector-table";
-import { addComplexTypeToSchema } from "@fluid-experimental/property-shared-tree-interop";
 
 import { Tabs, Tab, Button, Toolbar } from "@material-ui/core";
 import { makeStyles } from "@material-ui/styles";
@@ -63,6 +47,16 @@ import AutoSizer from "react-virtualized-auto-sizer";
 
 import { theme } from "./theme";
 import { getPerson } from "./demoPersonData";
+import {
+	FieldAction,
+	NodeAction,
+	forEachField,
+	forEachNode,
+	getNewNodeData,
+	isEmptyRoot,
+	isSequenceField,
+	stringifyKey,
+} from "./editableTreeTableUtilities";
 
 const useStyles = makeStyles(
 	{
@@ -135,24 +129,6 @@ export const handleDataCreationOptionGeneration = (
 	return { name: "property", options: templates };
 };
 
-const { sequence, value: valueKind } = FieldKinds;
-const defaultPrimitiveValues = {
-	Bool: false,
-	String: "",
-	Int8: 0,
-	Uint8: 0,
-	Int16: 0,
-	Uint16: 0,
-	Int32: 0,
-	Uint32: 0,
-	Float32: 0,
-	// Currently not supported by the SharedTree
-	Int64: 0,
-	Uint64: 0,
-	Float64: 0,
-	Reference: "",
-};
-
 /**
  * Current inspector implementation for the SharedTree does not support
  * the following features (partially including already listed in the schemaConverter):
@@ -163,55 +139,6 @@ const defaultPrimitiveValues = {
  * - polymorphic types (also, it's not supported by the PropertyDDS, in general)
  */
 
-let sharedTree: ISharedTree;
-function getNewNodeData(
-	schema: SchemaDataAndPolicy,
-	typeName: TreeSchemaIdentifier,
-): ContextuallyTypedNodeDataObject {
-	const newData = { [typeNameSymbol]: typeName };
-	const contextAndType = typeName.split("<");
-	if (contextAndType.length > 1) {
-		const context = contextAndType[0];
-		const subType = contextAndType[1].replace(/>/g, "");
-		const treeSchema = lookupTreeSchema(schema, typeName);
-		if (treeSchema === neverTree) {
-			// TODO: address this case to MSFT
-			// Ideally, one could expect that for every type there should be all sequence kind types.
-			sharedTree.storedSchema.update(addComplexTypeToSchema(schema, context, brand(subType)));
-		}
-		if (context === "array") {
-			newData[EmptyKey] = [];
-		}
-		return newData;
-	}
-	const newTreeSchema = lookupTreeSchema(schema, typeName);
-	// TODO: tbd if this code below could be moved to the EditableTree implementation
-	// for creation of fields and nodes, also having a "hook" to define own default values.
-	if (isPrimitive(newTreeSchema)) {
-		// avoid `undefined` as not supported by schema and UI
-		const defaultValue: PrimitiveValue = defaultPrimitiveValues[typeName];
-		newData[valueSymbol] = defaultValue;
-	} else {
-		newTreeSchema.localFields.forEach((fieldSchema, fieldKey) => {
-			if (fieldSchema.kind.identifier === valueKind.identifier) {
-				assert(fieldSchema.types?.size === 1, "Polymorphic types are not supported yet");
-				newData[fieldKey] = getNewNodeData(schema, [...fieldSchema.types][0]);
-			}
-		});
-		newTreeSchema.globalFields.forEach((globalFieldKey) => {
-			const fieldSchema = lookupGlobalFieldSchema(schema, globalFieldKey);
-			if (fieldSchema.kind.identifier === valueKind.identifier) {
-				assert(fieldSchema.types?.size === 1, "Polymorphic types are not supported yet");
-				const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
-				newData[globalFieldKeySymbol] = getNewNodeData(schema, [...fieldSchema.types][0]);
-			}
-		});
-	}
-	return newData;
-}
-
-let turnOffRenderOnForestUpdates: () => void | undefined;
-
 const tableProps: Partial<IInspectorTableProps> = {
 	columns: ["name", "value", "type"],
 	dataCreationHandler: async (
@@ -220,67 +147,74 @@ const tableProps: Partial<IInspectorTableProps> = {
 		typeid: string,
 		context: string,
 	) => {
-		let treeContext: EditableTreeContext;
-		// prevent re-render on forest updates while synchronously editing the tree
-		if (turnOffRenderOnForestUpdates) turnOffRenderOnForestUpdates();
 		const typeName = brand<TreeSchemaIdentifier>(typeid);
 		try {
 			if (isUnwrappedNode(rowData.parent)) {
-				treeContext = rowData.parent[contextSymbol];
 				const fieldKey = brand<FieldKey>(name);
 				(rowData.parent as ContextuallyTypedNodeDataObject)[fieldKey] = getNewNodeData(
-					treeContext.schema,
+					rowData.sharedTree,
 					context === "single"
 						? typeName
 						: brand<TreeSchemaIdentifier>(`${context}<${typeid}>`),
 				);
 			} else {
 				assert(isWritableArrayLike(rowData.parent), "expected writable ArrayLike");
-				treeContext = rowData.parent.context;
-				rowData.parent[Number(name)] = getNewNodeData(treeContext.schema, typeName);
+				rowData.parent[Number(name)] = getNewNodeData(rowData.sharedTree, typeName);
 			}
 		} catch (e) {
 			console.error(e);
-			treeContext = isUnwrappedNode(rowData.parent)
-				? rowData.parent[contextSymbol]
-				: rowData.parent.context;
 		}
-		// enable re-render on forest updates
-		const render = getRenderer(treeContext);
-		turnOffRenderOnForestUpdates = treeContext.on("afterDelta", render);
 	},
 	dataCreationOptionGenerationHandler: handleDataCreationOptionGeneration,
 	expandColumnKey: "name",
 	width: 1000,
 	height: 600,
-	expandAll: (data: EditableField): IExpandedMap => {
-		assert(isEditableField(data), "wrong root type");
-		return forEachNode(expandNode, { data }, {});
+	expandAll: (data: ISharedTree): IExpandedMap => {
+		const { root } = data.context;
+		return expandField({}, data, root, "");
 	},
 };
 
-type nodeAction<T> = (
-	result: T,
-	parent: EditableField,
-	pathPrefix: string,
-	node: EditableTree,
-	isSequence: boolean,
-) => void;
-type addOnAction<T> = (result: T, parent: EditableField | EditableTree, pathPrefix: string) => void;
-
-function expandNode(
+const expandNode: NodeAction<IExpandedMap> = (
 	expanded: IExpandedMap,
-	parent: EditableField,
+	sharedTree: ISharedTree,
+	node: EditableTree,
 	pathPrefix: string,
-	data: EditableTree,
-): void {
-	const id = getRowId(parent.fieldKey, data[parentField].index, pathPrefix);
-	const nodeType = data[typeSymbol];
+) => {
+	const { parent, index } = node[parentField];
+	const id = getRowId(parent.fieldKey, pathPrefix, index);
+	const nodeType = node[typeSymbol];
 	// TODO: e.g., how to properly schematize maps (`Serializable`)?
 	if (!isPrimitive(nodeType) || nodeType.value === ValueSchema.Serializable) {
 		expanded[id] = true;
 	}
-	forEachField(expandNode, expanded, { data }, id);
+	forEachField(expandField, expanded, sharedTree, node, id);
+};
+
+const expandField: FieldAction<IExpandedMap> = (
+	expanded: IExpandedMap,
+	sharedTree: ISharedTree,
+	field: EditableField,
+	pathPrefix: string,
+) => {
+	return forEachNode(expandNode, expanded, sharedTree, field, pathPrefix);
+};
+
+function addNewDataLine(
+	rows: IEditableTreeRow[],
+	sharedTree: ISharedTree,
+	parent: EditableField | EditableTree,
+	pathPrefix: string,
+): void {
+	rows.push({
+		id: `${pathPrefix}/Add`,
+		isNewDataRow: true,
+		parent,
+		value: "",
+		typeid: "",
+		name: "",
+		sharedTree,
+	});
 }
 
 // TODO: maybe discuss alternatives on how global fields must be converted into row IDs.
@@ -293,31 +227,20 @@ function expandNode(
 // and it will be more probable if we'll use just a string "myGlobalField" instead.
 // We might introduce a new special syntax for the IDs of global fields to avoid clashing,
 // but it seems that the default syntax already provides a very good safeguard though.
-const getRowId = (fieldKey: FieldKey, nodeIndex: number, pathPrefix: string): string =>
-	`${pathPrefix}/${String(fieldKey)}[${nodeIndex}]`;
+const getRowId = (fieldKey: FieldKey, pathPrefix: string, nodeIndex?: number): string =>
+	`${pathPrefix}/${String(fieldKey)}${nodeIndex ? `[${nodeIndex}]` : ""}`;
 
-function stringifyKey(fieldKey: FieldKey): string {
-	if (isGlobalFieldKey(fieldKey) && symbolIsFieldKey(fieldKey)) {
-		return keyFromSymbol(fieldKey);
-	}
-	return fieldKey;
-}
-
-function nodeToTableRow(
+const nodeToTableRow: NodeAction<IEditableTreeRow[]> = (
 	rows: IEditableTreeRow[],
-	parent: EditableField,
-	pathPrefix: string,
+	sharedTree: ISharedTree,
 	data: EditableTree,
-	isSequenceNode = false,
-): void {
+	pathPrefix: string,
+) => {
+	const { parent, index } = data[parentField];
 	const fieldKey = parent.fieldKey;
-	const nodeIndex = data[parentField].index;
-	const id = getRowId(fieldKey, nodeIndex, pathPrefix);
-	// TODO: this is a workaround, which must be replaced with the `EditableTreeUpPath` (not yet implemented)
-	// in order to get, if the field is a root field.
-	// For `EditableTreeUpPath`, see https://github.com/microsoft/FluidFramework/pull/12810#issuecomment-1303949419
-	const keyAsString = pathPrefix === "" ? "Person" : stringifyKey(fieldKey);
-	const name = isSequenceNode ? `[${nodeIndex}]` : keyAsString;
+	const id = getRowId(fieldKey, pathPrefix, index);
+	const keyAsString = parent.parent ? stringifyKey(fieldKey) : "Person";
+	const name = isSequenceField(parent) ? `[${index}]` : keyAsString;
 	const value = data[valueSymbol];
 	const typeid = data[typeNameSymbol];
 	const contextAndType = typeid.split("<");
@@ -331,76 +254,60 @@ function nodeToTableRow(
 		typeid,
 		parent,
 		data,
-		isEditableTree: true,
+		sharedTree,
 	};
 	const nodeType = data[typeSymbol];
 	// An addition `context !== "single"` is required since currently
 	// maps are considered to be primitive objects. tbd.
 	if (!isPrimitive(nodeType) || context !== "single") {
-		newRow.children = forEachField(nodeToTableRow, [], { data }, id, addNewDataLine);
-		// Prevent to create fields under a node already having a primary field.
+		newRow.children = forEachField(fieldToTableRow, [], sharedTree, data, id);
+		// Do not allow to create fields under a node having a primary field.
 		if (getPrimaryField(nodeType) === undefined) {
-			addNewDataLine(newRow.children, data, id);
+			addNewDataLine(newRow.children, sharedTree, data, id);
 		}
 	}
 	rows.push(newRow);
-}
+};
 
-function addNewDataLine(
+const fieldToTableRow: FieldAction<IEditableTreeRow[]> = (
 	rows: IEditableTreeRow[],
-	parent: EditableField | EditableTree,
+	sharedTree: ISharedTree,
+	field: EditableField,
 	pathPrefix: string,
-): void {
-	rows.push({
-		id: `${pathPrefix}/Add`,
-		isNewDataRow: true,
-		parent,
-		value: "",
-		typeid: "",
-		name: "",
-		isEditableTree: true,
-	});
-}
-
-function forEachField<T>(
-	nodeAction: nodeAction<T>,
-	data: T,
-	{ data: node }: Partial<IEditableTreeRow>,
-	pathPrefix: string,
-	addOnIfSequenceField?: addOnAction<T>,
-): T {
-	assert(isUnwrappedNode(node), "Expected node");
-	for (const field of node) {
-		forEachNode(nodeAction, { data: field }, data, pathPrefix, addOnIfSequenceField);
-	}
-	return data;
-}
-
-function isSequenceField(field: EditableField): boolean {
-	return field.fieldSchema.kind.identifier === sequence.identifier;
-}
-
-function forEachNode<T>(
-	nodeAction: nodeAction<T>,
-	{ data: field }: Partial<IEditableTreeRow>,
-	result: T,
-	pathPrefix = "",
-	addOnIfSequenceField?: addOnAction<T>,
-): T {
-	assert(isEditableField(field), "Expected field");
+) => {
 	const isSequence = isSequenceField(field);
-	for (let index = 0; index < field.length; index++) {
-		const node = field.getNode(index);
-		nodeAction(result, field, pathPrefix, node, isSequence);
+	// skip root and primary field sequences, as they don't require to render field rows
+	if (isSequence && field.parent && getPrimaryField(field.parent[typeSymbol]) === undefined) {
+		const id = getRowId(field.fieldKey, pathPrefix);
+		const children = forEachNode(nodeToTableRow, [], sharedTree, field, id);
+		addNewDataLine(children, sharedTree, field, id);
+		const fieldTypes: TreeSchemaIdentifier[] = [];
+		if (field.fieldSchema.types) {
+			field.fieldSchema.types.forEach((type) => fieldTypes.push(type));
+		} else {
+			fieldTypes.push(brand("any"));
+		}
+		assert(fieldTypes.length === 1, "Polymorphic fields are not supported yet");
+		const newRow: IEditableTreeRow = {
+			id,
+			name: stringifyKey(field.fieldKey),
+			context: "single",
+			isReference: false,
+			typeid: `sequence<${fieldTypes[0]}>`,
+			parent: field.parent,
+			data: field,
+			sharedTree,
+			children,
+		};
+		rows.push(newRow);
+	} else {
+		forEachNode(nodeToTableRow, rows, sharedTree, field, pathPrefix);
+		if (isEmptyRoot(field) || isSequence) {
+			addNewDataLine(rows, sharedTree, field, pathPrefix);
+		}
 	}
-	if ((isEmptyRoot(field) || isSequence) && addOnIfSequenceField !== undefined) {
-		addOnIfSequenceField(result, field, pathPrefix);
-	}
-	return result;
-}
-
-const isEmptyRoot = (field: EditableField): boolean =>
-	field.fieldKey === symbolFromKey(rootFieldKey) && field.length === 0;
+	return rows;
+};
 
 const editableTreeTableProps: Partial<IInspectorTableProps> = {
 	...tableProps,
@@ -409,8 +316,8 @@ const editableTreeTableProps: Partial<IInspectorTableProps> = {
 		value: valueCellRenderer,
 		type: typeCellRenderer,
 	},
-	toTableRows: (rowData: IEditableTreeRow): IEditableTreeRow[] => {
-		return forEachNode(nodeToTableRow, rowData, [], "", addNewDataLine);
+	toTableRows: ({ data }: { data: ISharedTree }): IEditableTreeRow[] => {
+		return fieldToTableRow([], data, data.context.root, "");
 	},
 };
 
@@ -432,8 +339,7 @@ function TabPanel(props: TabPanelProps) {
 
 export const InspectorApp = (props: any) => {
 	const classes = useStyles();
-	const context = props.data as EditableTreeContext;
-	const { root } = context;
+	const sharedTree = props.data as ISharedTree;
 
 	// const [json, setJson] = useState(editableTree);
 	const [tabIndex, setTabIndex] = useState(0);
@@ -454,7 +360,11 @@ export const InspectorApp = (props: any) => {
 						<div className={classes.verticalContainer}>
 							<Toolbar>
 								<Button
-									onClick={() => (context.root = getPerson())}
+									onClick={() =>
+										(sharedTree.root = isSequenceField(sharedTree.context.root)
+											? [getPerson()]
+											: getPerson())
+									}
 									variant="outlined"
 								>
 									Demo Person
@@ -488,7 +398,7 @@ export const InspectorApp = (props: any) => {
 													width={width}
 													height={height}
 													{...props}
-													data={root}
+													data={sharedTree}
 												/>
 											</TabPanel>
 										</div>
@@ -503,17 +413,14 @@ export const InspectorApp = (props: any) => {
 	);
 };
 
-const getRenderer = (context: EditableTreeContext) => () => {
-	context.clear();
-	ReactDOM.render(<InspectorApp data={context} />, document.getElementById("root")!);
-};
-
-export function renderApp(data: ISharedTree) {
-	sharedTree = data;
-	const { context } = data;
+export function renderApp(sharedTree: ISharedTree) {
+	const { context } = sharedTree;
 	const t = typeNameSymbol;
 	const v = valueSymbol;
-	const render = getRenderer(context);
-	turnOffRenderOnForestUpdates = context.on("afterDelta", render);
+	const render = () => {
+		context.clear();
+		ReactDOM.render(<InspectorApp data={sharedTree} />, document.getElementById("root")!);
+	};
+	sharedTree.events.on("afterBatch", render);
 	render();
 }

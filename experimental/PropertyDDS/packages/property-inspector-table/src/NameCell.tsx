@@ -77,22 +77,24 @@ const deletionHandler = (rowData: IInspectorRow) => {
 };
 
 const editableTreeDeletionHandler = async (rowData: IEditableTreeRow) => {
-	assert(isUnwrappedNode(rowData.data), "requires data as node");
-	assert(isEditableField(rowData.parent), "requires parent as field");
-	if (
-		rowData.data[parentField].parent.fieldSchema.kind.identifier === FieldKinds.value.identifier
-	) {
+	const field = isUnwrappedNode(rowData.data) ? rowData.data[parentField].parent : rowData.data;
+	assert(isEditableField(field), "requires field");
+	if (field.fieldSchema.kind.identifier === FieldKinds.value.identifier) {
 		return Promise.reject(
 			new Error(
 				`The field "${rowData.name}" is of a kind "value", which is forbidden to delete`,
 			),
 		);
 	}
-	// TODO: this works only now since SharedTree internals allow to delete nodes for any field kind.
-	// On the other hand, `delete rowData.parent[fieldKey]` requires to know the parent field of the node.
-	// This is one of the cases, which might be conventiently supported by the feature proposed in
-	// https://github.com/microsoft/FluidFramework/pull/12810#issuecomment-1303949419
-	rowData.parent.deleteNodes(rowData.data[parentField].index, 1);
+	if (isUnwrappedNode(rowData.data)) {
+		// TODO: this works only now since SharedTree internals allow to delete nodes for any field kind.
+		// On the other hand, `delete rowData.parent[fieldKey]` requires to know the parent field of the node.
+		// This is one of the cases, which might be conventiently supported by the feature proposed in
+		// https://github.com/microsoft/FluidFramework/pull/12810#issuecomment-1303949419
+		field.deleteNodes(rowData.data[parentField].index, 1);
+	} else {
+		field.deleteNodes(0);
+	}
 	return Promise.resolve(true);
 };
 

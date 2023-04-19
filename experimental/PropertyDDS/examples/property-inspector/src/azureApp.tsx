@@ -14,7 +14,7 @@ import { convertPropertyToSharedTreeStorageSchema as convertPSetSchema } from "@
 import { renderApp } from "./editableTreeInspector";
 import { getRootFieldSchema, personSchemaName, personPropertyDDSSchemas } from "./demoPersonData";
 
-const { optional } = FieldKinds;
+const { optional, sequence } = FieldKinds;
 
 class MySharedTree {
 	public static getFactory(): IChannelFactory {

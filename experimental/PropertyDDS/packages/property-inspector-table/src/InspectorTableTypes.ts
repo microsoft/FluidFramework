@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EditableField, EditableTree, Value } from "@fluid-internal/tree";
+import { EditableField, EditableTree, ISharedTree, Value } from "@fluid-internal/tree";
 
 import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseProperty } from "@fluid-experimental/property-properties";
@@ -64,7 +64,6 @@ export interface IRowData<T = never> {
 	isReference?: boolean;
 	context?: string;
 	isNewDataRow?: boolean;
-	isEditableTree?: boolean;
 }
 
 export type IToTableRowsProps = Pick<
@@ -125,6 +124,7 @@ export interface IEditableTreeRow extends IRowData<EditableTree | EditableField>
 	children?: IEditableTreeRow[];
 	value?: Value;
 	name: string;
+	sharedTree: ISharedTree;
 	// currently not supported
 	isConstant?: boolean;
 	// currently not supported
@@ -134,7 +134,7 @@ export interface IEditableTreeRow extends IRowData<EditableTree | EditableField>
 export function isEditableTreeRow(
 	data: IInspectorRow | IEditableTreeRow,
 ): data is IEditableTreeRow {
-	return !!data.isEditableTree;
+	return Reflect.has(data, "sharedTree");
 }
 
 /**

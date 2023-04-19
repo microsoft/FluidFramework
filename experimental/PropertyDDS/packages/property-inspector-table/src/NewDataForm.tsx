@@ -189,46 +189,48 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 	// - we can insert nodes only within the sequence or as an append to the tail
 	// - since currently UI does not support "inline" inserts, we always append meaning
 	// that the only possible name is a length of the sequence.
+	const [isCreating, setCreating] = useState(false);
 	const [inputName, setInputName] =
-		isEditableTreeRow(rowData) && isEditableField(rowData.parent)
+		!isCreating && isEditableTreeRow(rowData) && isEditableField(rowData.parent)
 			? useState(String(rowData.parent.length))
 			: useState("");
-	const [isCreating, setCreating] = useState(false);
 	const [isNamedProp, setIsNamedProp] = useState(false);
 
 	let parentTypeId;
 	let parentContext = "single";
 	let isNewNode = false;
 	if (isEditableTreeRow(rowData)) {
-		if (isUnwrappedNode(rowData.parent)) {
-			parentTypeId = rowData.parent[typeNameSymbol];
-			const contextAndType = parentTypeId.split("<");
-			if (contextAndType.length > 1) {
-				parentContext = contextAndType[0];
-				parentTypeId = contextAndType[1].replace(/>/g, "");
-			}
-		} else if (isEditableField(rowData.parent)) {
-			isNewNode = true;
-			// If it is an array, `rowData.parent` must be a primary field.
-			// We have to derive a "base" array type from the parent node type of `rowData.parent`
-			// since arrays are currently non-polymorphic, but support inherited types.
-			const parentNode = rowData.parent.parent;
-			if (
-				isUnwrappedNode(parentNode) &&
-				getPrimaryField(parentNode[typeSymbol]) !== undefined
-			) {
-				parentTypeId = parentNode[typeNameSymbol];
+		if (!isCreating) {
+			if (isUnwrappedNode(rowData.parent)) {
+				parentTypeId = rowData.parent[typeNameSymbol];
 				const contextAndType = parentTypeId.split("<");
 				if (contextAndType.length > 1) {
 					parentContext = contextAndType[0];
 					parentTypeId = contextAndType[1].replace(/>/g, "");
 				}
-			} else {
-				assert(
-					rowData.parent.fieldSchema.types?.size === 1,
-					"Polymorphic fields are not supported yet",
-				);
-				parentTypeId = [...rowData.parent.fieldSchema.types][0];
+			} else if (isEditableField(rowData.parent)) {
+				isNewNode = true;
+				// If it is an array, `rowData.parent` must be a primary field.
+				// We have to derive a "base" array type from the parent node type of `rowData.parent`
+				// since arrays are currently non-polymorphic, but support inherited types.
+				const parentNode = rowData.parent.parent;
+				if (
+					isUnwrappedNode(parentNode) &&
+					getPrimaryField(parentNode[typeSymbol]) !== undefined
+				) {
+					parentTypeId = parentNode[typeNameSymbol];
+					const contextAndType = parentTypeId.split("<");
+					if (contextAndType.length > 1) {
+						parentContext = contextAndType[0];
+						parentTypeId = contextAndType[1].replace(/>/g, "");
+					}
+				} else {
+					assert(
+						rowData.parent.fieldSchema.types?.size === 1,
+						"Polymorphic fields are not supported yet",
+					);
+					parentTypeId = [...rowData.parent.fieldSchema.types][0];
+				}
 			}
 		}
 	} else {
@@ -340,7 +342,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 		</Button>
 	);
 
-	const isSiblingFound = getSiblingIDs(rowData).includes(inputName);
+	const isSiblingFound = !isCreating && getSiblingIDs(rowData).includes(inputName);
 	const createBtn = (
 		<Button
 			id="createDataButton"
@@ -349,6 +351,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 			style={{ minWidth: "0px" }}
 			className={classNames(classes.button, classes.createButton)}
 			disabled={
+				isCreating ||
 				isSiblingFound ||
 				(rowData.parent &&
 					!notNamedCollections.includes(parentContext) &&
