@@ -96,7 +96,6 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 					</Divider>
 				</TreeItemLayout>
 				<Tree>
-					{/* <Divider appearance="brand"/> */}
 					<TreeDataView containerId={containerId} node={visualTree} />
 				</Tree>
 			</TreeItem>
