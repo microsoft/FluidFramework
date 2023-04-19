@@ -4,7 +4,7 @@
  */
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules
-import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
+import { TreeItemLayout } from "@fluentui/react-components/unstable";
 import { ValueNodeBase } from "@fluid-tools/client-debugger";
 import { ChevronCircleRight12Regular } from "@fluentui/react-icons";
 
@@ -22,15 +22,11 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { node } = props;
 
 	return (
-		<Tree>
-			<TreeItem>
-				<TreeItemLayout>
-					<ChevronCircleRight12Regular />
-					{`${node.metadata !== undefined ? `${node.metadata} : ` : ""}
+		<TreeItemLayout>
+			<ChevronCircleRight12Regular />
+			{`${node.metadata !== undefined ? `${node.metadata} : ` : ""}
 						${node.nodeKind}
 						${String(node.value)}`}{" "}
-				</TreeItemLayout>
-			</TreeItem>
-		</Tree>
+		</TreeItemLayout>
 	);
 }

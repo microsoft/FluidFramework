@@ -13,12 +13,9 @@ import {
 	HasFluidObjectId,
 	FluidObjectNode,
 } from "@fluid-tools/client-debugger";
-import { Divider } from "@fluentui/react-components";
-// eslint-disable-next-line import/no-internal-modules
-import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
-import { TreeDataView } from "./TreeDataView";
+import { TreeRenderHelper } from "./TreeRenderHelper";
 
 const loggingContext = "EXTENSION(HandleView)";
 
@@ -84,21 +81,5 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <Waiting />;
 	}
 
-	return (
-		<Tree>
-			<TreeItem>
-				<TreeItemLayout>
-					<Divider>
-						{" "}
-						{`${visualTree.metadata && visualTree.metadata} : ${
-							visualTree.nodeKind
-						}`}{" "}
-					</Divider>
-				</TreeItemLayout>
-				<Tree>
-					<TreeDataView containerId={containerId} node={visualTree} />
-				</Tree>
-			</TreeItem>
-		</Tree>
-	);
+	return <TreeRenderHelper containerId={containerId} node={visualTree} />;
 }

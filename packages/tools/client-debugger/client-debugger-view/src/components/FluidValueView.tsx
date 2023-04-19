@@ -4,7 +4,7 @@
  */
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules
-import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
+import { TreeItemLayout } from "@fluentui/react-components/unstable";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
 import { ChevronCircleRight12Regular } from "@fluentui/react-icons";
 
@@ -22,16 +22,12 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { node } = props;
 
 	return (
-		<Tree>
-			<TreeItem>
-				<TreeItemLayout>
-					<ChevronCircleRight12Regular />
-					{`${node.fluidObjectId}
+		<TreeItemLayout>
+			<ChevronCircleRight12Regular />
+			{`${node.fluidObjectId}
 						${node.metadata !== undefined ? `${node.metadata} : ` : ""}
 						${node.nodeKind} : 
 						${String(node.value)}`}
-				</TreeItemLayout>
-			</TreeItem>
-		</Tree>
+		</TreeItemLayout>
 	);
 }

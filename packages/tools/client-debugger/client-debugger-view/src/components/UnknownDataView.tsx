@@ -5,7 +5,7 @@
 import React from "react";
 import { UnknownObjectNode } from "@fluid-tools/client-debugger";
 // eslint-disable-next-line import/no-internal-modules
-import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
+import { TreeItemLayout } from "@fluentui/react-components/unstable";
 
 /**
  * {@link UnknownDataView} input props.
@@ -21,13 +21,9 @@ export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement
 	const { node } = props;
 
 	return (
-		<Tree>
-			<TreeItem>
-				<TreeItemLayout>
-					{" "}
-					Encountered an unrecognized kind of data object: {node.nodeKind}{" "}
-				</TreeItemLayout>
-			</TreeItem>
-		</Tree>
+		<TreeItemLayout>
+			{" "}
+			Encountered an unrecognized kind of data object: {node.nodeKind}{" "}
+		</TreeItemLayout>
 	);
 }
