@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { makeCodecFamily } from "../../codec";
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
@@ -10,8 +11,6 @@ import {
 	FieldChangeHandler,
 	NodeChangeset,
 	ToDelta,
-	NodeChangeEncoder,
-	NodeChangeDecoder,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
@@ -151,31 +150,32 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return rebased;
 		},
 	}),
-	encoder: {
-		encodeForJson(
-			formatVersion: number,
-			change: GenericChangeset,
-			encodeChild: NodeChangeEncoder,
-		): JsonCompatibleReadOnly {
-			const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset = change.map(
-				({ index, nodeChange }) => ({ index, nodeChange: encodeChild(nodeChange) }),
-			);
-			return encoded;
-		},
-		decodeJson: (
-			formatVersion: number,
-			change: JsonCompatibleReadOnly,
-			decodeChild: NodeChangeDecoder,
-		): GenericChangeset => {
-			const encoded = change as JsonCompatibleReadOnly[] & EncodedGenericChangeset;
-			return encoded.map(
-				({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
-					index,
-					nodeChange: decodeChild(nodeChange),
-				}),
-			);
-		},
-	},
+	codecsFactory: (childCodec) =>
+		makeCodecFamily([
+			[
+				0,
+				{
+					encode: (change: GenericChangeset): JsonCompatibleReadOnly => {
+						const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset =
+							change.map(({ index, nodeChange }) => ({
+								index,
+								nodeChange: childCodec.encode(nodeChange),
+							}));
+						return encoded;
+					},
+					decode: (change: JsonCompatibleReadOnly): GenericChangeset => {
+						const encoded = change as JsonCompatibleReadOnly[] &
+							EncodedGenericChangeset;
+						return encoded.map(
+							({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
+								index,
+								nodeChange: childCodec.decode(nodeChange),
+							}),
+						);
+					},
+				},
+			],
+		]),
 	editor: {
 		buildChildChange(index, change): GenericChangeset {
 			return [{ index, nodeChange: change }];

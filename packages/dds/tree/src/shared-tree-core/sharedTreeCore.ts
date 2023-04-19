@@ -22,6 +22,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
+import { IMultiFormatCodec } from "../codec";
 import {
 	ChangeFamily,
 	Commit,
@@ -117,6 +118,17 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly transactions = new TransactionStack();
 
 	/**
+	 * Used to encode and decode changes.
+	 *
+	 * @remarks - Since there is currently only one format, this can just be cached on the class.
+	 * With more write formats active, it may make sense to keep around the "usual" format codec
+	 * (the one for the current persisted configuration) and resolve codecs for different versions
+	 * as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
+	 * and an op needs to be interpreted which isn't written with the current configuration).
+	 */
+	private readonly changeCodec: IMultiFormatCodec<TChange>;
+
+	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
@@ -155,6 +167,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x350 /* Index summary element keys must be unique */,
 		);
 
+		this.changeCodec = changeFamily.codecs.resolve(formatVersion);
 		this.editor = this.changeFamily.buildEditor((change) => this.applyChange(change), anchors);
 	}
 
@@ -206,7 +219,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const message: Message = {
 			revision: commit.revision,
 			originatorId: this.editManager.localSessionId,
-			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, commit.change),
+			changeset: this.changeCodec.json.encode(commit.change),
 		};
 		this.submitLocalMessage(message);
 	}
@@ -250,9 +263,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
-			this.changeFamily.encoder.decodeJson(format, encodedChange);
-		const commit = parseCommit(message.contents, decoder);
+		const commit = parseCommit(message.contents, this.changeCodec);
 
 		const delta = this.editManager.addSequencedChange(
 			commit,
@@ -352,17 +363,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
-		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
-			this.changeFamily.encoder.decodeJson(format, encodedChange);
-		const { revision } = parseCommit(content, decoder);
+		const { revision } = parseCommit(content, this.changeCodec);
 		const [commit] = this.editManager.findLocalCommit(revision);
 		this.submitCommit(commit);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		const decoder = (format: number, encodedChange: JsonCompatibleReadOnly) =>
-			this.changeFamily.encoder.decodeJson(format, encodedChange);
-		const { revision, change } = parseCommit(content, decoder);
+		const { revision, change } = parseCommit(content, this.changeCodec);
 		this.addLocalChange(change, revision);
 		return;
 	}
@@ -489,7 +496,7 @@ function scopeStorageService(
  */
 function parseCommit<TChange>(
 	content: JsonCompatibleReadOnly,
-	decoder: (format: number, changeContent: JsonCompatibleReadOnly) => TChange,
+	codec: IMultiFormatCodec<TChange>,
 ): Commit<TChange> {
 	assert(isJsonObject(content), "expected content to be an object");
 	assert(
@@ -498,6 +505,6 @@ function parseCommit<TChange>(
 	);
 	assert(content.changeset !== undefined, "expected changeset to be defined");
 	assert(typeof content.originatorId === "string", "expected changeset to be defined");
-	const change = decoder(formatVersion, content.changeset);
+	const change = codec.json.decode(content.changeset);
 	return { revision: content.revision, sessionId: content.originatorId, change };
 }

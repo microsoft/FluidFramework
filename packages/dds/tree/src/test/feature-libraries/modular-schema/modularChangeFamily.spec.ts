@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-	FieldChangeEncoder,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldKind,
@@ -34,14 +33,15 @@ import {
 	mintRevisionTag,
 	tagRollbackInverse,
 } from "../../../core";
-import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { assertDeltaEqual, deepFreeze } from "../../utils";
+import { brand, fail } from "../../../util";
+import { assertDeltaEqual, deepFreeze, makeEncodingTestSuite } from "../../utils";
+import { makeCodecFamily, makeValueCodec } from "../../../codec";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
-	encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
+	codecsFactory: () => makeCodecFamily([[0, makeValueCodec<ValueChangeset>()]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change, deltaFromChild) =>
@@ -57,11 +57,6 @@ const valueField = new FieldKind(
 	(a, b) => false,
 	new Set(),
 );
-
-const singleNodeEncoder: FieldChangeEncoder<NodeChangeset> = {
-	encodeForJson: (formatVersion, change, encodeChild) => encodeChild(change),
-	decodeJson: (formatVersion, change, decodeChild) => decodeChild(change),
-};
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
@@ -81,7 +76,7 @@ const singleNodeEditor: FieldEditor<NodeChangeset> = {
 
 const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
-	encoder: singleNodeEncoder,
+	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
 	isEmpty: (change) => change.fieldChanges === undefined && change.valueChange === undefined,
@@ -662,27 +657,13 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	const encodingTestData: [string, ModularChangeset][] = [
-		["without constrain", rootChange1a],
-		["with constrain", rootChange3],
-	];
-
 	describe("Encoding", () => {
-		const version = 0;
-		for (const [name, data] of encodingTestData) {
-			describe(name, () => {
-				it("roundtrip", () => {
-					const encoded = family.encoder.encodeForJson(version, data);
-					const decoded = family.encoder.decodeJson(version, encoded);
-					assert.deepEqual(decoded, data);
-				});
-				it("json roundtrip", () => {
-					const encoded = JSON.stringify(family.encoder.encodeForJson(version, data));
-					const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
-					assert.deepEqual(decoded, data);
-				});
-			});
-		}
+		const encodingTestData: [string, ModularChangeset][] = [
+			["without constrain", rootChange1a],
+			["with constrain", rootChange3],
+		];
+
+		makeEncodingTestSuite(family.codecs, encodingTestData);
 	});
 
 	it("build child change", () => {
@@ -776,12 +757,17 @@ describe("ModularChangeFamily", () => {
 			rebaseWasTested = true;
 			return change;
 		};
+		const throwCodec = {
+			encode: () => fail("Should not be called"),
+			decode: () => fail("Should not be called"),
+		};
 		const handler = {
 			rebaser: {
 				compose,
 				rebase,
 			},
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
+			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
 		} as unknown as FieldChangeHandler<RevisionTag[]>;
 		const field = new FieldKind(
 			brand("ChecksRevIndexing"),
