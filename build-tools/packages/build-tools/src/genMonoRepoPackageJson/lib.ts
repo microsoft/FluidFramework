@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
+import path from "node:path";
+import { writeFile } from "node:fs/promises";
+import { readJson } from "fs-extra";
 
 import { commonOptions } from "../common/commonOptions";
 import { Logger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
-import { Package } from "../common/npmPackage";
-import { readJsonAsync, writeFileAsync } from "../common/utils";
+import { Package, PackageJson } from "../common/npmPackage";
 
 function format(n: number) {
 	return n.toString().padStart(4);
@@ -24,7 +25,7 @@ async function generateMonoRepoPackageLockJson(
 	log?: Logger,
 ) {
 	// Patching the package-lock file
-	const repoPackageLockJson = await readJsonAsync(
+	const repoPackageLockJson = await readJson(
 		path.join(monoRepo.repoPath, "lerna-package-lock.json"),
 	);
 
@@ -108,18 +109,10 @@ async function generateMonoRepoPackageLockJson(
 			topLevelTotalCount,
 		)} top level locked devDependencies`,
 	);
-	return writeFileAsync(
+	return writeFile(
 		path.join(monoRepo.repoPath, "repo-package-lock.json"),
 		JSON.stringify(repoPackageLockJson, undefined, 2),
 	);
-}
-
-interface PackageJson {
-	name: string;
-	version: string;
-	private?: boolean;
-	dependencies: { [key: string]: string };
-	devDependencies: { [key: string]: string };
 }
 
 function processDependencies(
@@ -134,7 +127,7 @@ function processDependencies(
 			continue;
 		}
 		const version = packageJson.dependencies[dep];
-		const existing = repoPackageJson.dependencies[dep];
+		const existing = repoPackageJson.dependencies?.[dep];
 		if (existing) {
 			if (existing !== version) {
 				throw new Error(
@@ -143,7 +136,7 @@ function processDependencies(
 			}
 			continue;
 		}
-		repoPackageJson.dependencies[dep] = version;
+		repoPackageJson.dependencies![dep] = version;
 		depCount++;
 	}
 	return depCount++;
@@ -161,8 +154,9 @@ function processDevDependencies(
 			continue;
 		}
 		const version = packageJson.devDependencies[dep];
-		const existing = repoPackageJson.dependencies[dep] ?? repoPackageJson.devDependencies[dep];
-		if (existing) {
+		const existing =
+			repoPackageJson.dependencies?.[dep] ?? repoPackageJson.devDependencies?.[dep];
+		if (existing !== undefined) {
 			if (existing !== version) {
 				throw new Error(
 					`Dependency version mismatch for ${dep}: ${existing} and ${version}`,
@@ -170,7 +164,7 @@ function processDevDependencies(
 			}
 			continue;
 		}
-		repoPackageJson.devDependencies[dep] = packageJson.devDependencies[dep];
+		repoPackageJson.devDependencies![dep] = packageJson.devDependencies[dep];
 		devDepCount++;
 	}
 	return devDepCount++;
@@ -188,9 +182,10 @@ export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, log
 		private: true,
 		dependencies: {},
 		devDependencies: {},
+		scripts: {},
 	};
 
-	const rootPackageJson = await readJsonAsync(path.join(monoRepo.repoPath, "package.json"));
+	const rootPackageJson = await readJson(path.join(monoRepo.repoPath, "package.json"));
 
 	let depCount = 0;
 	let devDepCount = 0;
@@ -204,7 +199,7 @@ export async function generateMonoRepoInstallPackageJson(monoRepo: MonoRepo, log
 	});
 	processDevDependencies(repoPackageJson, rootPackageJson, packageMap);
 
-	await writeFileAsync(
+	await writeFile(
 		path.join(monoRepo.repoPath, "repo-package.json"),
 		JSON.stringify(repoPackageJson, undefined, 2),
 	);

@@ -146,7 +146,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const client of state.clients) {
 		const taskManager = client.channel;
 		assert(taskManager);
-		if (loggingInfo.taskManagerNames.includes(taskManager.id)) {
+		if (loggingInfo.taskManagerNames.includes(client.containerRuntime.clientId)) {
 			console.log(
 				`TaskManager ${taskManager.id} (CanVolunteer: ${taskManager.canVolunteer()}):`,
 			);

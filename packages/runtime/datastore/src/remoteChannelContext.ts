@@ -11,7 +11,6 @@ import {
 	IChannel,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
-	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
@@ -202,62 +201,45 @@ export class RemoteChannelContext implements IChannelContext {
 			);
 		}
 
-		let factory: IChannelFactory | undefined;
-		// this is a backward compatibility case where
-		// the attach message doesn't include
-		// the attributes. Since old attach messages
-		// will not have attributes we need to keep
-		// this as long as we support old attach messages
-		if (attributes === undefined) {
-			if (this.attachMessageType === undefined) {
-				// TODO: dataStoreId may require a different tag from PackageData #7488
-				throw new DataCorruptionError("channelTypeNotAvailable", {
-					channelId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					dataStoreId: {
-						value: this.dataStoreContext.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
-				});
-			}
-			factory = this.registry.get(this.attachMessageType);
-			if (factory === undefined) {
-				// TODO: dataStoreId may require a different tag from PackageData #7488
-				throw new DataCorruptionError("channelFactoryNotRegisteredForAttachMessageType", {
-					channelId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					dataStoreId: {
-						value: this.dataStoreContext.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
-					channelFactoryType: this.attachMessageType,
-				});
-			}
-			attributes = factory.attributes;
-		} else {
-			factory = this.registry.get(attributes.type);
-			if (factory === undefined) {
-				// TODO: dataStoreId may require a different tag from PackageData #7488
-				throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
-					channelId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					dataStoreId: {
-						value: this.dataStoreContext.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
-					channelFactoryType: attributes.type,
-				});
-			}
+		// This is a backward compatibility case where the attach message doesn't include attributes. They must
+		// include attach message type.
+		// Since old attach messages will not have attributes, we need to keep this as long as we support old attach
+		// messages.
+		const channelFactoryType = attributes ? attributes.type : this.attachMessageType;
+		if (channelFactoryType === undefined) {
+			throw new DataCorruptionError("channelTypeNotAvailable", {
+				channelId: {
+					value: this.id,
+					tag: TelemetryDataTag.CodeArtifact,
+				},
+				dataStoreId: {
+					value: this.dataStoreContext.id,
+					tag: TelemetryDataTag.CodeArtifact,
+				},
+				dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+				channelFactoryType: this.attachMessageType,
+			});
 		}
+		const factory = this.registry.get(channelFactoryType);
+		if (factory === undefined) {
+			// TODO: dataStoreId may require a different tag from PackageData #7488
+			throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
+				channelId: {
+					value: this.id,
+					tag: TelemetryDataTag.CodeArtifact,
+				},
+				dataStoreId: {
+					value: this.dataStoreContext.id,
+					tag: TelemetryDataTag.CodeArtifact,
+				},
+				dataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+				channelFactoryType,
+			});
+		}
+
+		// This is a backward compatibility case where the attach message doesn't include attributes. Get the attributes
+		// from the factory.
+		attributes = attributes ?? factory.attributes;
 
 		// Compare snapshot version to collaborative object version
 		if (

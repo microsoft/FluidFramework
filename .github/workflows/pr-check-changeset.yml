@@ -1,0 +1,40 @@
+name: "Check changesets"
+
+on:
+  pull_request_target:
+    types: [labeled, unlabeled]
+
+jobs:
+  changesets-required:
+    name: Changesets required
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
+    steps:
+      - name: Required but missing
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-present') }}
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          recreate: true
+          message: |
+            This PR requires a changeset, but none is present. @tylerbutler, please review.
+
+      - name: Required and present
+        if: contains(github.event.pull_request.labels.*.name, 'changeset-present')
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          recreate: true
+          message: |
+            This PR requires a changeset and it has one! Good job!
+
+  changesets-not-required:
+    name: Changesets not required
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-required') }}
+    steps:
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          delete: true
+

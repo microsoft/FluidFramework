@@ -69,9 +69,15 @@ export {
 	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
+export {
+	ContainerDevtoolsFeature,
+	ContainerDevtoolsFeatureFlags,
+	DevtoolsFeature,
+	DevtoolsFeatureFlags,
+} from "./Features";
 export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
-export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
+export { DevtoolsLogger } from "./DevtoolsLogger";
 export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
@@ -83,22 +89,26 @@ export {
 	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
+	ContainerDevtoolsFeatures,
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
+	DevtoolsFeatures,
 	devtoolsMessageSource,
 	DisconnectContainer,
 	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
 	GetContainerList,
 	GetContainerState,
 	GetDataVisualization,
+	GetDevtoolsFeatures,
 	GetRootDataVisualizations,
 	GetTelemetryHistory,
-	IDebuggerMessage,
+	IDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,

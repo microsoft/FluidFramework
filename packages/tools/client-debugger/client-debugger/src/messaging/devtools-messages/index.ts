@@ -4,8 +4,10 @@
  */
 
 /**
- * This directory contains {@link IDebuggerMessage} types listened for and posted by {@link FluidDevtools}.
+ * This directory contains {@link IDevtoolsMessage} types listened for and posted by {@link FluidDevtools}.
  */
 
 export { ContainerList } from "./ContainerList";
+export { DevtoolsFeatures } from "./DevtoolsFeatures";
 export { GetContainerList } from "./GetContainerList";
+export { GetDevtoolsFeatures } from "./GetDevtoolsFeatures";

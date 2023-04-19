@@ -36,13 +36,13 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-tools/fluidapp-odsp-urlresolver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-tools/fluidapp-odsp-urlresolver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/odsp-driver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/tool-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/odsp-driver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/tool-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"express": "^4.16.3",
 		"nconf": "^0.12.0",
 		"webpack-dev-server": "~4.6.0"

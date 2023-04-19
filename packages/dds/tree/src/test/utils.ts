@@ -22,8 +22,10 @@ import {
 	ITestFluidObject,
 	createSummarizer,
 	summarizeNow,
+	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
 	FieldKinds,
@@ -54,6 +56,7 @@ import {
 	clonePath,
 } from "../core";
 import { brand, makeArray } from "../util";
+import { ICodecFamily } from "../codec";
 
 // Testing utilities
 
@@ -227,9 +230,19 @@ export class TestTreeProvider {
 	 * _i_ is the index of the tree in order of creation.
 	 */
 	public async createTree(): Promise<ISharedTree> {
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+		const testContainerConfig: ITestContainerConfig = {
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.Container.enableOfflineLoad": true,
+				}),
+			},
+		};
 		const container =
 			this.trees.length === 0
-				? await this.provider.makeTestContainer()
+				? await this.provider.makeTestContainer(testContainerConfig)
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
@@ -464,5 +477,41 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 		// Make a nice error message:
 		assert.deepEqual(clonePath(path), clonePath(expectedPath));
 		assert.fail("unequal paths, but clones compared equal");
+	}
+}
+
+/**
+ * Constructs a basic suite of round-trip tests for all versions of a codec family.
+ * This helper should generally be wrapped in a `describe` block.
+ */
+export function makeEncodingTestSuite<TDecoded>(
+	family: ICodecFamily<TDecoded>,
+	encodingTestData: [name: string, data: TDecoded][],
+): void {
+	for (const version of family.getSupportedFormats()) {
+		describe(`version ${version}`, () => {
+			const codec = family.resolve(version);
+			for (const [name, data] of encodingTestData) {
+				describe(name, () => {
+					it("json roundtrip", () => {
+						const encoded = codec.json.encode(data);
+						const decoded = codec.json.decode(encoded);
+						assert.deepEqual(decoded, data);
+					});
+
+					it("json roundtrip with stringification", () => {
+						const encoded = JSON.stringify(codec.json.encode(data));
+						const decoded = codec.json.decode(JSON.parse(encoded));
+						assert.deepEqual(decoded, data);
+					});
+
+					it("binary roundtrip", () => {
+						const encoded = codec.binary.encode(data);
+						const decoded = codec.binary.decode(encoded);
+						assert.deepEqual(decoded, data);
+					});
+				});
+			}
+		});
 	}
 }

@@ -266,7 +266,7 @@ interface LoggingInfo {
 
 function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const id of loggingInfo.clientIds) {
-		const { channel } = state.clients.find((s) => s.channel.id === id) ?? {};
+		const { channel } = state.clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		assert(channel);
 		const labels = channel.getIntervalCollectionLabels();
 		const interval = Array.from(labels)
