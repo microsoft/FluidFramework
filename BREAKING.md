@@ -34,6 +34,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
 -   [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
 -   [IContainer.dispose is now required](#IContainer.dispose-is-now-required)
+-         [Driver param removed from appendToMergeTreeDeltaRevertibles](#Driver-param-removed-from-appendToMergeTreeDeltaRevertibles)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -96,6 +97,15 @@ Please see the [Closure](packages/loader/container-loader/README.md#Closure) sec
 `IContainer.dispose` is now a required method. This method should dispose any resources and switch the container to a permanently disconnected state.
 
 Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+### Driver param removed from appendToMergeTreeDeltaRevertibles
+
+The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles has been removed. Additionally, the interface MergeTreeRevertibleDriver has been simplified, and no longer requires:
+
+-   createLocalReferencePosition
+-   localReferencePositionToPosition
+-   getPosition
+-   getContainingSegment
 
 # 2.0.0-internal.4.1.0
 
