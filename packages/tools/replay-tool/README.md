@@ -36,3 +36,6 @@ The second file is result of initializing new container with such snapshot (i.e.
 without processing any ops.
 The two files should be exactly the same! If they differ, that very likely points to a bug (and diff will point you where the bug is)!
 Occasionally we may need to change runtime to write out snapshots in predictable way (i.e. sort order matters to do efficient diffs, like order of data stores in snapshot, or order of blobs - these things do not matter to runtime, but matter a lot when doing diffing of two snapshots).
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

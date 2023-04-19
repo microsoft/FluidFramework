@@ -5,6 +5,9 @@ storing of user content on the user's machine in order to provide faster boot ex
 containers more than once. This implementation has a dependency on indexeddb, so it is intended to only be used in a browser
 context.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Usage
 
 ```typescript
@@ -50,6 +53,5 @@ deleteFluidCacheIndexDbInstance().catch(() => {});
 
 ## Trademark
 
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
-or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

@@ -1,6 +1,10 @@
 # @fluidframework/test-runtime-utils
 
-Test utilities for the Fluid Framework Runtime. Include mock implementation of various runtime interfaces, as well as a mock logger for validating a particular log sequence.
+Test utilities for the Fluid Framework Runtime. Include mock implementation of various runtime interfaces, as well as a
+mock logger for validating a particular log sequence.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Writing unit test for a DDS
 
@@ -43,3 +47,6 @@ To write a unit test for these scenarios, follow these steps:
 -   To reconnect the client, set `connection = true` on the `MockContainerRuntimeForReconnection`. This will trigger a `reSubmit` call on the DDS to resubmit unack'd / unsent ops.
 
 Examples - [sharedString](../sequence/src/test/sharedString.spec.ts), [consensusOrderedCollection](../consensus-ordered-collection/src/test/consensusOrderedCollection.spec.ts), [consensusRegisterCollection](../consensus-register-collection/src/test/consensusRegisterCollection.spec.ts).
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

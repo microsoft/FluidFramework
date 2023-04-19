@@ -2,6 +2,9 @@
 
 Utilities to use while developing and testing using the service-specific clients (i.e. `AzureClient`, `TinyliciousClient`) supplied by the FluidFramework.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## InsecureTokenProvider
 
 The `InsecureTokenProvider` provides a class for locally generating JWT tokens, signed using a tenant key, that can be sent to Fluid services. These tokens will be used to authenticate and identify which user is sending operations from the client.
@@ -43,3 +46,6 @@ A simple function that will generate a test user. This is to be used in conjunti
 ```javascript
 const tokenProvider = new InsecureTokenProvider("YOUR-TENANT-KEY-HERE", generateTestUser());
 ```
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

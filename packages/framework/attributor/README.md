@@ -2,6 +2,9 @@
 
 This package contains definitions and implementations for framework-provided attribution functionality.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Status
 
 All attribution APIs (both in this package and elsewhere in `@fluidframework` packages) are marked as [alpha](https://api-extractor.com/pages/tsdoc/tag_alpha/) to enable fast iteration (as third-party use is not officially supported, breaking API changes can be made in minor versions).
@@ -104,3 +107,6 @@ The current design of the mixin's behavior is therefore motivated by the ability
 The behavior of `"Fluid.Attribution.WriteOnNewFile"` supports the standard strategy of rolling out code that reads a new format and waiting for it to saturate before beginning to write that new format.
 "reading the new format" corresponds to using a container runtime initialized with `mixinAttributor`, and "writing the new format" to enabling `"Fluid.Attribution.WriteOnNewFile"` in configuration.
 During the "waiting to saturate" period, developers are free to experiment with turning the feature flag on locally and testing various compatability scenarios.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

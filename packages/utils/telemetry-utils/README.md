@@ -2,4 +2,5 @@
 
 Common telemetry utilities used by Fluid Framework
 
-See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

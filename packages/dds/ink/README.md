@@ -1,3 +1,4 @@
 # @fluidframework/ink
 
-Documentation available at https://fluidframework.com/docs/apis/ink/.
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

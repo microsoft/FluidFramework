@@ -1,5 +1,10 @@
 # @fluidframework/sequence
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+## Description
+
 The **@fluidframework/sequence** package supports distributed data structures which are list-like.
 Its main export is [SharedString][], a DDS for storing and simultaneously editing a sequence of text.
 

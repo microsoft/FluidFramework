@@ -3,6 +3,9 @@
 This package provides an implementation of an in-memory undo redo stack, as well as handlers for the SharedMap and
 SharedSegmentSequence distributed data structures.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Undo Redo Stack Manager
 
 The undo redo stack manager is where undo and redo commands are issued, and it holds the stack of all undoable and
@@ -59,3 +62,6 @@ TrackingGroup. This overhead manifests in a few ways:
 This object minimizes the number of TrackingGroups created, so this overhead is very low. This undo redo infrastructure
 is entirely in-memory so it does not affect other users or sessions. If custom IRevertible objects use TrackingGroups
 this overhead should be kept in mind to avoid possible performance issues.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

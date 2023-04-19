@@ -2,6 +2,9 @@
 
 The `fluid-framework` package bundles a collection of Fluid Framework client packages for easy use when paired with a corresponding service client package (ex. `@fluidframework/azure-client` & `@fluidframework/tinylicious-client`).
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Contents
 
 The `fluid-framework` package consists primarily of two portions: the `IFluidContainer` and a selection of distributed data structures (DDSes).
@@ -22,7 +25,8 @@ You'll use one or more DDS data structures in your container to model your colla
 
 Check out the Hello World tutorial using the `fluid-framework` package [here](https://fluidframework.com/docs/start/tutorial/).
 
-See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
 

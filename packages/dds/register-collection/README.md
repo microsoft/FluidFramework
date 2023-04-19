@@ -2,6 +2,9 @@
 
 A consensus register collection is a distributed data structure (DDS), which holds a set of registers and their versions generated during concurrent updates. In the simplest definition, two updates on a single register are concurrent if there is no causal relationship between them (i.e., neither knows about the other). On such cases of concurrent updates, a register internally stores all possible versions of a value.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ### Detecting concurrency in Fluid
 
 In distributed systems literaure, detecting conucurrency requires some form of logical/phsical clock. A popular technique used in replicated databases such as dynamodb is called version vectors where each key stores a collection of `[time, value]` tuples. `time` is essentially a reference clock used to decide concurrency amongst updates. Each update to a key includes the `time`, essentially to indicate how `caught up` the replica was during that update.

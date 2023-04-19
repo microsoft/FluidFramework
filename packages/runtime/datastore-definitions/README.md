@@ -2,6 +2,9 @@
 
 Interface `IFluidDataStoreRuntime` specifies the data store developer API.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Capabilities exposed on `IFluidDataStoreRuntime`
 
 _TODO: The full set of functionality is under review_
@@ -25,3 +28,6 @@ For this reason people usually stick the currentSeq on the signal, so other clie
 
 You can send a signal via the container or data store runtime. The container will emit the signal event on all signals,
 but a data store will emit the signal event only on signals emitted on that data store runtime.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

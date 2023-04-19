@@ -1,5 +1,8 @@
 # @fluidframework/counter
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Introduction
 
 The `SharedCounter` distributed data structure (DDS) is used to store an integer counter value that can be modified by multiple clients simultaneously.

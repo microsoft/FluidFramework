@@ -5,6 +5,9 @@ sequence of collaboratively edited items. MergeTree is used in both SharedSequen
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Operations
 
 The three basic operations provided by MergeTree are:

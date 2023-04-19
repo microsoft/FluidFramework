@@ -126,3 +126,6 @@ describe("fetch tool", () => {
 	});
 });
 ```
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

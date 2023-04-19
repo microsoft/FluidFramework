@@ -2,6 +2,9 @@
 
 An Ioc type library for synthesizing a FluidObject based on FluidObject providers.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 It allows for the creation of a `DependencyContainer` that can have FluidObjects registered with it
 based on their interface Symbol. So for example if I wanted to register something as `IFoo` I would
 need to provide and object that implements `IFoo` along side it.
@@ -224,3 +227,6 @@ console.log(bar.bar);
 
 The `DependencyContainer` takes one optional parameter which is the `parent`. When resolving providers the `DependencyContainer` will first
 check the current container then look in the parent.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

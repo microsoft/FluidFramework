@@ -1,5 +1,8 @@
 # @fluidframework/map
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## SharedMap
 
 The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting and

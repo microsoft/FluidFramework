@@ -1,5 +1,8 @@
 # @fluidframework/container-loader
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 **Topics covered below:**
 
 -   [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
@@ -219,3 +222,6 @@ This information can be used by a host to build appropriate UX that allows user 
 Note that when an active connection is in place, it's just a matter of time before changes will be flushed to storage unless there is some source of continuous local changes being generated that prevents container from ever being fully saved. But if there is no active connection, because the user is offline, for example, then a document may stay in a dirty state for very long time.
 
 `Container.isDirty` can be used to get current state of container.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

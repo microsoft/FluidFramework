@@ -2,6 +2,9 @@
 
 The tinylicious-client package provides a simple and powerful way to consume collaborative Fluid data with the Tinylicious service.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Using tinylicious-client
 
 The tinylicious-client package has a default `TinyliciousClient` class that allows you to interact with Fluid.
@@ -118,4 +121,5 @@ const text = await map1.get(); // Resolve the handle to get the object
 const text = await map1.get("text-unique-id").get();
 ```
 
-See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

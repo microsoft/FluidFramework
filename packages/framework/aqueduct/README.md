@@ -1,5 +1,8 @@
 # @fluidframework/aqueduct
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ![Aqueduct](https://publicdomainvectors.org/photos/johnny-automatic-Roman-aqueducts.png)
 
 The Aqueduct is a library for building Fluid objects and Fluid containers within the Fluid Framework. Its goal is to
@@ -195,6 +198,9 @@ Consider a scenario where you want to create a random color generator. I could c
 makes a request to the Container for `{url:"color"}` will intercept and return a custom `IResponse` of `{ status:200, type:"text/plain", value:"blue"}`.
 
 We use custom handlers to build the Container Services pattern.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
 

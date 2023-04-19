@@ -1,5 +1,8 @@
 # @fluidframework/agent-scheduler
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## AgentScheduler
 
 The `AgentScheduler` is a data object that can be used to assign tasks to unique clients.
@@ -22,9 +25,11 @@ export const MyDataObjectFactory = new DataObjectFactory(
     [],
     {},
     new Map([
-        AgentSchedulerFactory.registryEntry,
+      AgentSchedulerFactory.registryEntry,
     ]),
 );
 ```
 
-See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+

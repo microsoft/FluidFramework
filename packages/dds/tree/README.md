@@ -2,6 +2,9 @@
 
 This DDS is not yet ready for public consumption. For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Motivation
 
 There are a lot of different factors motivating the creation of this Tree DDS.

@@ -2,7 +2,8 @@
 
 Shared utilities for handling location change of container on server.
 
-See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Explanation of the scenario:
 
@@ -41,3 +42,6 @@ const response = await resolveWithLocationRedirectionHandling<IResponse>(
     logger, // logger which will help with the telemetry
 );
 ```
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

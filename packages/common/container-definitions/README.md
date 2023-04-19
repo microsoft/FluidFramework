@@ -9,3 +9,6 @@ Some important interfaces in here include:
     which allows the code supporting the running Container to be swapped out during a session.
 -   **IRuntime / IRuntimeFactory** - Contract necessary for the ContainerContext to "boot" a Container at runtime.
 -   **IDeltaManager / IDeltaQueue** - Abstraction over the Container's view of the ops being transmitted to/from storage.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

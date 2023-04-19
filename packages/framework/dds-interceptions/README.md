@@ -2,6 +2,9 @@
 
 This package provides factory methods to create a wrapper around some of the basic Distributed Data Structures (DDS) that support an interception callback. Apps can provide a callback when creating these wrappers and this callback will be called when the DDS is modified. This allows apps to support features such as basic user attribution on a SharedString.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Shared String With Interception
 
 It provides `createSharedStringWithInterception` that accepts a SharedString, the data store context and a callback, and returns a SharedString object:
@@ -61,3 +64,6 @@ It can be used to wrap a SharedDirectory or one of it's subdirectories to get an
 The original set operation and any operations in the callback function are batched, i.e., they are guaranteed to in order and will be applied together.
 
 Example: To support a feature like simple user attribution, in the callback, the app can set the user information in a sub directory of the original object against the same key.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
