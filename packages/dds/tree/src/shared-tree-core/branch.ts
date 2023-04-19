@@ -102,7 +102,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// state of the branch at the start of the transaction.
 			this.undoRedoManager.repairDataStoreProvider.freeze();
 		}
-		this.transactions.push(this.head.revision, repairStore);
+		if (!this.isTransacting()) {
 		this.editor.enterTransaction();
 	}
 
