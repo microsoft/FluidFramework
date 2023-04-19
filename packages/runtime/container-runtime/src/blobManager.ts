@@ -28,7 +28,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	ChildLogger,
 	loggerToMonitoringContext,
@@ -40,6 +40,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { GenericError } from "@fluidframework/container-utils";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
@@ -215,6 +216,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		private readonly isBlobDeleted: (blobPath: string) => boolean,
 		private readonly runtime: IBlobManagerRuntime,
 		stashedBlobs: IPendingBlobs = {},
+		private readonly close: (error?: ICriticalContainerError) => void,
 	) {
 		super();
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
@@ -251,7 +253,20 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					expired,
 				});
 				console.log("expired: ", expired, " secondsSinceUpload: ", secondsSinceUpload);
-				assert(!expired, "expired blob in storage");
+				if (expired) {
+					this.close(
+						new GenericError(
+							"Trying to submit a BlobAttach for expired blob",
+							undefined,
+							{
+								localId,
+								blobId,
+								entryStatus: pendingEntry.status,
+								secondsSinceUpload,
+							},
+						),
+					);
+				}
 			}
 			return sendBlobAttachOp(localId, blobId);
 		};

@@ -23,8 +23,6 @@ import {
 	MonitoringContext,
 	TelemetryNullLogger,
 } from "@fluidframework/telemetry-utils";
-
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
 import { sweepAttachmentBlobsKey } from "../gc";
 
@@ -89,7 +87,11 @@ class MockRuntime
 			(blobPath: string) => this.isBlobDeleted(blobPath),
 			this,
 			undefined,
+			() => this.sendClose(),
 		);
+	}
+	private sendClose(): void {
+		this.closed = true;
 	}
 
 	public gcTombstoneEnforcementAllowed: boolean = true;
@@ -147,6 +149,7 @@ class MockRuntime
 
 	public blobManager: BlobManager;
 	public connected = false;
+	public closed = false;
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
@@ -397,15 +400,14 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
-	it("throw if expired", async () => {
+	it("close container if expired", async () => {
 		await runtime.attach();
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processBlobs();
 		await handle;
-		runtime.attachedStorage.min_TTL = 0.001;
-		// await runtime.connect(50);
-		const codeBlock = async () => runtime.connect(50);
-		assert.throws(codeBlock, (e) => validateAssertionError(e, "expired blob in storage"));
+		runtime.attachedStorage.min_TTL = 0.001; // force expired TTL being less than connection time (50ms)
+		await runtime.connect(50);
+		assert.strictEqual(runtime.closed, true);
 		await runtime.processAll();
 	});
 
