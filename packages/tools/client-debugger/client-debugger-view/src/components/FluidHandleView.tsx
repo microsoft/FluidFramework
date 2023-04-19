@@ -13,6 +13,7 @@ import {
 	HasFluidObjectId,
 	FluidObjectNode,
 } from "@fluid-tools/client-debugger";
+import { Divider } from "@fluentui/react-components";
 // eslint-disable-next-line import/no-internal-modules
 import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { useMessageRelay } from "../MessageRelayContext";
@@ -87,9 +88,15 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		<Tree>
 			<TreeItem>
 				<TreeItemLayout>
-					{`${visualTree.metadata && visualTree.metadata} : ${visualTree.nodeKind}`}
+					<Divider>
+						{" "}
+						{`${visualTree.metadata && visualTree.metadata} : ${
+							visualTree.nodeKind
+						}`}{" "}
+					</Divider>
 				</TreeItemLayout>
 				<Tree>
+					{/* <Divider appearance="brand"/> */}
 					<TreeDataView containerId={containerId} node={visualTree} />
 				</Tree>
 			</TreeItem>

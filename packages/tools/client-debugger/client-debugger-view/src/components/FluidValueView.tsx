@@ -6,6 +6,7 @@ import React from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
+import { ChevronCircleRight12Regular } from "@fluentui/react-icons";
 
 /**
  * {@link ValueView} input props.
@@ -24,6 +25,7 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 		<Tree>
 			<TreeItem>
 				<TreeItemLayout>
+					<ChevronCircleRight12Regular />
 					{`${node.fluidObjectId}
 						${node.metadata !== undefined ? `${node.metadata} : ` : ""}
 						${node.nodeKind} : 

@@ -6,6 +6,7 @@ import React from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { HasContainerId, FluidObjectTreeNode } from "@fluid-tools/client-debugger";
+import { Divider } from "@fluentui/react-components";
 import { TreeDataView } from "./TreeDataView";
 
 /**
@@ -24,9 +25,9 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 		<Tree>
 			<TreeItem>
 				<TreeItemLayout>
-					{`${node.fluidObjectId} : 
+					<Divider>{`${node.fluidObjectId} : 
 							${node.metadata !== undefined ? `${node.metadata}` : ""}
-							${node.nodeKind}`}
+							${node.nodeKind}`}</Divider>
 				</TreeItemLayout>
 
 				<Tree>
