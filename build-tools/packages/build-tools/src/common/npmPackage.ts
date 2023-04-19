@@ -6,10 +6,12 @@ import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
 import * as fs from "fs";
-import { readFileSync, writeJsonSync } from "fs-extra";
+import { readFileSync, readJsonSync, writeJsonSync } from "fs-extra";
 import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
+
+import type { PackageJson as StandardPackageJson, SetRequired } from "type-fest";
 
 import { options } from "../fluidBuild/options";
 import { type IFluidBuildConfig, type ITypeValidationConfig } from "./fluidRepo";
@@ -22,7 +24,6 @@ import {
 	existsSync,
 	isSameFileOrDir,
 	lookUpDirSync,
-	readJsonSync,
 	rimrafWithErrorAsync,
 	unlinkAsync,
 } from "./utils";
@@ -30,43 +31,15 @@ import {
 const { info, verbose, errorLog: error } = defaultLogger;
 export type ScriptDependencies = { [key: string]: string[] };
 
-interface IPerson {
-	name: string;
-	email: string;
-	url: string;
-}
-
 /**
- * A type representing all relevant fields in package.json, including fluid-build-specific config.
+ * A type representing fluid-build-specific config that may be in package.json.
  */
-export interface PackageJson {
-	name: string;
-	version: string;
-	private: boolean;
-	description: string;
-	keywords: string[];
-	homepage: string;
-	bugs: { url: string; email: string };
-	license: string;
-	author: IPerson | string;
-	contributors: IPerson[];
-	files: string[];
-	main: string;
-	// Same as main but for browser based clients (check if webpack supports this)
-	browser: string;
-	bin: { [key: string]: string };
-	man: string | string[];
-	repository: string | { type: string; url: string; directory?: string };
-	scripts: { [key: string]: string | undefined };
-	config: { [key: string]: string };
-	dependencies: { [key: string]: string };
-	devDependencies: { [key: string]: string };
-	peerDependencies: { [key: string]: string };
-	bundledDependencies: { [key: string]: string };
-	optionalDependencies: { [key: string]: string };
-	engines: { node: string; npm: string };
-	os: string[];
-	cpu: string[];
+type FluidPackageJson = {
+	/**
+	 * nyc config
+	 */
+	nyc?: any;
+
 	/**
 	 * type compatibility test configuration. This only takes effect when set in the package.json of a package. Setting
 	 * it at the root of the repo or release group has no effect.
@@ -77,9 +50,18 @@ export interface PackageJson {
 	 * fluid-build config. Some properties only apply when set in the root or release group root package.json.
 	 */
 	fluidBuild?: IFluidBuildConfig;
+};
 
-	[key: string]: any;
-}
+/**
+ * A type representing all known fields in package.json, including fluid-build-specific config.
+ *
+ * By default all fields are optional, but we require that the name, dependencies, devDependencies, scripts, and version
+ * all be defined.
+ */
+export type PackageJson = SetRequired<
+	StandardPackageJson & FluidPackageJson,
+	"name" | "dependencies" | "devDependencies" | "scripts" | "version"
+>;
 
 export class Package {
 	private static packageCount: number = 0;
@@ -101,16 +83,17 @@ export class Package {
 		chalk.default.whiteBright,
 	];
 
-	public get packageJson(): PackageJson {
-		return this._packageJson;
-	}
+	private _packageJson: PackageJson;
 	private readonly packageId = Package.packageCount++;
 	private _matched: boolean = false;
 	private _markForBuild: boolean = false;
 
-	private _packageJson: PackageJson;
 	private _indent: string;
 	public readonly packageManager: PackageManager;
+	public get packageJson(): PackageJson {
+		return this._packageJson;
+	}
+
 	constructor(
 		private readonly packageJsonFileName: string,
 		public readonly group: string,
@@ -140,7 +123,7 @@ export class Package {
 	}
 
 	public get fluidBuildConfig(): IFluidBuildConfig | undefined {
-		return this._packageJson.fluidBuild;
+		return this.packageJson.fluidBuild;
 	}
 
 	public get isPublished(): boolean {
@@ -171,13 +154,22 @@ export class Package {
 		return Object.keys(this.packageJson.dependencies ?? {});
 	}
 
-	public get combinedDependencies() {
+	public get combinedDependencies(): Generator<
+		{
+			name: string;
+			version: string;
+			dev: boolean;
+		},
+		void
+	> {
 		const it = function* (packageJson: PackageJson) {
 			for (const item in packageJson.dependencies) {
-				yield { name: item, version: packageJson.dependencies[item], dev: false };
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				yield { name: item, version: packageJson.dependencies[item]!, dev: false };
 			}
 			for (const item in packageJson.devDependencies) {
-				yield { name: item, version: packageJson.devDependencies[item], dev: true };
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				yield { name: item, version: packageJson.devDependencies[item]!, dev: true };
 			}
 		};
 		return it(this.packageJson);

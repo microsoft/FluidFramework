@@ -120,6 +120,10 @@ const summarizeErrors = {
 	disconnect: "Summary cancelled due to summarizer or main client disconnect",
 } as const;
 
+// Helper functions to report failures and return.
+export const getFailMessage = (errorCode: keyof typeof summarizeErrors) =>
+	`${errorCode}: ${summarizeErrors[errorCode]}`;
+
 export class SummarizeResultBuilder {
 	public readonly summarySubmitted = new Deferred<SummarizeResultPart<SubmitSummaryResult>>();
 	public readonly summaryOpBroadcasted = new Deferred<
@@ -171,7 +175,6 @@ export class SummaryGenerator {
 		private readonly submitSummaryCallback: (
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
-		private readonly raiseSummarizingError: (errorMessage: string) => void,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLogger,
@@ -235,16 +238,12 @@ export class SummaryGenerator {
 			{ start: true, end: true, cancel: "generic" },
 		);
 
-		// Helper functions to report failures and return.
-		const getFailMessage = (errorCode: keyof typeof summarizeErrors) =>
-			`${errorCode}: ${summarizeErrors[errorCode]}`;
 		const fail = (
 			errorCode: keyof typeof summarizeErrors,
 			error?: any,
 			properties?: SummaryGeneratorTelemetry,
 			nackSummaryResult?: INackSummaryResult,
 		) => {
-			this.raiseSummarizingError(summarizeErrors[errorCode]);
 			// UploadSummary may fail with 429 and retryAfter - respect that
 			// Summary Nack also can have retryAfter, it's parsed below and comes as a property.
 			const retryAfterSeconds = getRetryDelaySecondsFromError(error);
@@ -257,17 +256,17 @@ export class SummaryGenerator {
 					? "generic"
 					: "error";
 
-			const message = getFailMessage(errorCode);
+			const reason = getFailMessage(errorCode);
 			summarizeEvent.cancel(
 				{
 					...properties,
-					reason: errorCode,
+					reason,
 					category,
 					retryAfterSeconds,
 				},
-				error ?? message,
+				error ?? reason,
 			); // disconnect & summaryAckTimeout do not have proper error.
-			resultsBuilder.fail(message, error, nackSummaryResult, retryAfterSeconds);
+			resultsBuilder.fail(reason, error, nackSummaryResult, retryAfterSeconds);
 		};
 
 		// Wait to generate and send summary
@@ -283,18 +282,19 @@ export class SummaryGenerator {
 				cancellationToken,
 			});
 
+			this.heuristicData.recordAttempt(summaryData.referenceSequenceNumber);
+
 			// Cumulatively add telemetry properties based on how far generateSummary went.
 			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
-			const opsSinceLastSummary =
-				referenceSequenceNumber -
-				this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
 			summarizeTelemetryProps = {
 				...summarizeTelemetryProps,
 				referenceSequenceNumber,
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
 				opsSinceLastAttempt:
 					referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
-				opsSinceLastSummary,
+				opsSinceLastSummary:
+					referenceSequenceNumber -
+					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 			summarizeTelemetryProps = this.addSummaryDataToTelemetryProps(
 				summaryData,
@@ -318,12 +318,15 @@ export class SummaryGenerator {
 			if (!fullTree && !summaryData.forcedFullTree) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
-				if (summarizedDataStoreCount > gcStateUpdatedDataStoreCount + opsSinceLastSummary) {
+				if (
+					summarizedDataStoreCount >
+					gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary
+				) {
 					logger.sendErrorEvent({
 						eventName: "IncrementalSummaryViolation",
 						summarizedDataStoreCount,
 						gcStateUpdatedDataStoreCount,
-						opsSinceLastSummary,
+						opsSinceLastSummary: this.heuristicData.opsSinceLastSummary,
 					});
 				}
 			}
@@ -334,7 +337,9 @@ export class SummaryGenerator {
 		} catch (error) {
 			return fail("submitSummaryFailure", error);
 		} finally {
-			this.heuristicData.recordAttempt(summaryData?.referenceSequenceNumber);
+			if (summaryData === undefined) {
+				this.heuristicData.recordAttempt();
+			}
 			this.summarizeTimer.clear();
 		}
 

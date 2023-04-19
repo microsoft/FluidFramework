@@ -344,7 +344,7 @@ export class ChildLogger extends TelemetryLogger {
 
 		// propagate the monitoring context
 		if (loggerIsMonitoringContext(baseLogger)) {
-			mixinMonitoringContext(this, new CachedConfigProvider(baseLogger.config));
+			mixinMonitoringContext(this, new CachedConfigProvider(this, baseLogger.config));
 		}
 	}
 

@@ -357,7 +357,7 @@ export class EditManager<
 		return this.changeFamily.intoDelta(composedInverse);
 	}
 
-	private findLocalCommit(
+	public findLocalCommit(
 		revision: RevisionTag,
 	): [commit: GraphCommit<TChangeset>, commitsAfter: GraphCommit<TChangeset>[]] {
 		const commits: GraphCommit<TChangeset>[] = [];

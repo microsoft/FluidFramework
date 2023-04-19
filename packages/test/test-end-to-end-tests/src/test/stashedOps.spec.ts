@@ -4,7 +4,7 @@
  */
 
 import assert from "assert";
-import { IContainer, IHostLoader } from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
@@ -30,7 +30,7 @@ import {
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
-import { IRequest } from "@fluidframework/core-interfaces";
+import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
@@ -237,6 +237,41 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		assert.strictEqual(map1.get(testKey), testValue);
+		assert.strictEqual(map2.get(testKey), testValue);
+		assert.strictEqual(cell1.get(), testValue);
+		assert.strictEqual(cell2.get(), testValue);
+		assert.strictEqual(counter1.value, testIncrementValue);
+		assert.strictEqual(counter2.value, testIncrementValue);
+		assert.strictEqual(directory1.get(testKey), testValue);
+		assert.strictEqual(directory2.get(testKey), testValue);
+	});
+
+	it.skip("connects in write mode and resends op when loaded with no delta connection", async function () {
+		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
+			const map = await d.getSharedObject<SharedMap>(mapId);
+			map.set(testKey, testValue);
+			const cell = await d.getSharedObject<SharedCell>(cellId);
+			cell.set(testValue);
+			const counter = await d.getSharedObject<SharedCounter>(counterId);
+			counter.increment(testIncrementValue);
+			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
+			directory.set(testKey, testValue);
+		});
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+		const container2 = await loader.resolve({ url, headers }, pendingOps);
+		container2.connect();
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
+		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
+
+		// this test is skipped because we currently timeout here
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
