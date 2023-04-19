@@ -56,7 +56,7 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 }
 
 export interface ClientSpec {
-	channelId: string;
+	clientId: string;
 }
 
 export interface BaseOperation {
@@ -463,7 +463,7 @@ function mixinSynchronization<
 	};
 }
 
-const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).channelId !== undefined;
+const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).clientId !== undefined;
 
 function mixinClientSelection<
 	TChannelFactory extends IChannelFactory,
@@ -491,14 +491,16 @@ function mixinClientSelection<
 				? done
 				: {
 						...baseOp,
-						channelId: client.channel.id,
+						clientId: client.containerRuntime.clientId,
 				  };
 		};
 	};
 
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		assert(isClientSpec(operation), "operation should have been given a client");
-		const client = state.clients.find((c) => c.channel.id === operation.channelId);
+		const client = state.clients.find(
+			(c) => c.containerRuntime.clientId === operation.clientId,
+		);
 		assert(client !== undefined);
 		return model.reducer(
 			{ ...state, channel: client.channel, client },
@@ -526,10 +528,14 @@ function makeUnreachableCodepathProxy<T extends object>(name: string): T {
 function createClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
 	factory: TChannelFactory,
-	id: string,
+	clientId: string,
 ): Client<TChannelFactory> {
-	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const channel: ReturnType<typeof factory.create> = factory.create(dataStoreRuntime, id);
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
+	// Note: we re-use the clientId for the channel id here despite connecting all clients to the same channel:
+	// this isn't how it would work in a real scenario, but the mocks don't use the channel id for any message
+	// routing behavior and making all of the object ids consistent helps with debugging and writing more informative
+	// consistency validation.
+	const channel: ReturnType<typeof factory.create> = factory.create(dataStoreRuntime, clientId);
 
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
