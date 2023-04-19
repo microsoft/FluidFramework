@@ -19,7 +19,7 @@ describe("DDS Fuzz Harness", () => {
 		it("update the quorum when a new client joins", () => {
 			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 			const addedClientIds: string[] = [];
-			containerRuntimeFactory.quorum.on("addMember", (clientId) => {
+			containerRuntimeFactory.quorum.on("addMember", (clientId: string) => {
 				addedClientIds.push(clientId);
 			});
 
