@@ -19,18 +19,20 @@ import { JsonCompatibleReadOnly, mapIterable } from "../util";
 import {
 	cachedValue,
 	ChangeFamily,
-	Commit,
-	EditManager,
 	ICachedValue,
-	SummaryData,
 	recordDependency,
 	SessionId,
-	SummaryBranch,
-	SequencedCommit,
 	ChangeEncoder,
 	ChangeFamilyEditor,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
+import {
+	Commit,
+	EditManager,
+	SequencedCommit,
+	SummarySessionBranch,
+	SummaryData,
+} from "./editManager";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
@@ -137,7 +139,10 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
  */
 interface ReadonlyJsonSummaryData {
 	readonly trunk: readonly Readonly<SequencedCommit<JsonCompatibleReadOnly>>[];
-	readonly branches: readonly [SessionId, Readonly<SummaryBranch<JsonCompatibleReadOnly>>][];
+	readonly branches: readonly [
+		SessionId,
+		Readonly<SummarySessionBranch<JsonCompatibleReadOnly>>,
+	][];
 }
 
 export interface CommitEncoder<TChange, TCommit extends Commit<TChange>> {

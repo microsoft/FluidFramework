@@ -7,8 +7,6 @@ import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
 import {
 	ChangeFamily,
-	Commit,
-	EditManager,
 	SessionId,
 	ChangeRebaser,
 	Delta,
@@ -16,7 +14,6 @@ import {
 	TaggedChange,
 	emptyDelta,
 	mintRevisionTag,
-	SeqNumber,
 	ChangeFamilyEditor,
 	makeAnonChange,
 } from "../../core";
@@ -31,6 +28,7 @@ import {
 	ConstrainedTestChangeRebaser,
 } from "../testChange";
 import { assertDeltaEqual } from "../utils";
+import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
 
 const rootKey: FieldKey = brand("root");
 
@@ -266,7 +264,7 @@ describe("EditManager", () => {
 			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
 		]);
 
-		it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
+		it("Evicts trunk commits according to a provided minimum sequence number", () => {
 			const { manager } = editManagerFactory({});
 			for (let i = 0; i < 10; ++i) {
 				manager.addSequencedChange(
@@ -276,12 +274,33 @@ describe("EditManager", () => {
 						sessionId: peer1,
 					},
 					brand(i),
-					brand(0),
+					brand(i - 1),
 				);
 			}
+
 			assert.equal(manager.getTrunk().length, 10);
 			manager.advanceMinimumSequenceNumber(brand(5));
-			assert(manager.getTrunk().length < 10);
+			assert.equal(manager.getTrunk().length, 5);
+			manager.advanceMinimumSequenceNumber(brand(10));
+			assert.equal(manager.getTrunk().length, 0);
+
+			for (let i = 10; i < 20; ++i) {
+				manager.addSequencedChange(
+					{
+						change: TestChange.mint([], []),
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(i),
+					brand(i - 1),
+				);
+			}
+
+			assert.equal(manager.getTrunk().length, 10);
+			manager.advanceMinimumSequenceNumber(brand(15));
+			assert.equal(manager.getTrunk().length, 5);
+			manager.advanceMinimumSequenceNumber(brand(20));
+			assert.equal(manager.getTrunk().length, 0);
 		});
 
 		it("Rebases anchors over local changes", () => {

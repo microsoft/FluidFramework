@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { mintRevisionTag, SummaryData } from "../../core";
+import { mintRevisionTag } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
-import { parseSummary, stringifySummary } from "../../shared-tree-core";
+import { SummaryData, parseSummary, stringifySummary } from "../../shared-tree-core";
 
 describe("EditManagerSummarizer", () => {
 	it("roundtrip", () => {

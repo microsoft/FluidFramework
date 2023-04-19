@@ -21,3 +21,13 @@ export {
 	parseSummary,
 	stringifySummary,
 } from "./editManagerSummarizer";
+
+export {
+	Commit,
+	EditManager,
+	minimumPossibleSequenceNumber,
+	SeqNumber,
+	SequencedCommit,
+	SummarySessionBranch,
+	SummaryData,
+} from "./editManager";

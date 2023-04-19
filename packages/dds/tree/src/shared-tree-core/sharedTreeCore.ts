@@ -24,14 +24,10 @@ import {
 import { v4 as uuid } from "uuid";
 import {
 	ChangeFamily,
-	Commit,
-	EditManager,
-	SeqNumber,
 	AnchorSet,
 	Delta,
 	RevisionTag,
 	mintRevisionTag,
-	minimumPossibleSequenceNumber,
 	Rebaser,
 	findAncestor,
 	GraphCommit,
@@ -43,6 +39,7 @@ import { createEmitter, TransformEvents } from "../events";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
+import { Commit, EditManager, SeqNumber, minimumPossibleSequenceNumber } from "./editManager";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -260,12 +257,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	public startTransaction(repairStore?: RepairDataStore): void {
+	protected startTransaction(repairStore?: RepairDataStore): void {
 		this.transactions.push(this.editManager.getLocalBranchHead().revision, repairStore);
 		this.editor.enterTransaction();
 	}
 
-	public commitTransaction(): TransactionResult.Commit {
+	protected commitTransaction(): TransactionResult.Commit {
 		const { startRevision } = this.transactions.pop();
 		this.editor.exitTransaction();
 		const squashCommit = this.editManager.squashLocalChanges(startRevision);
@@ -273,7 +270,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return TransactionResult.Commit;
 	}
 
-	public abortTransaction(): TransactionResult.Abort {
+	protected abortTransaction(): TransactionResult.Abort {
 		const { startRevision, repairStore } = this.transactions.pop();
 		this.editor.exitTransaction();
 		const delta = this.editManager.rollbackLocalChanges(startRevision, repairStore);
@@ -281,15 +278,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		return TransactionResult.Abort;
 	}
 
-	public isTransacting(): boolean {
+	protected isTransacting(): boolean {
 		return this.transactions.size !== 0;
 	}
 
 	/**
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.
+	 * @remarks
+	 * Branches are valid until they are disposed. Branches should be disposed when
+	 * they are no longer needed because it allows `SharedTreeCore` to free memory.
+	 * Branches are no longer guaranteed to be based off of the trunk once disposed.
 	 */
-	protected createBranch(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
+	protected createBranch(anchors?: AnchorSet): SharedTreeBranch<TEditor, TChange> {
 		const branch = new SharedTreeBranch(
 			this.editManager.getLocalBranchHead(),
 			this.editManager.localSessionId,
@@ -297,6 +298,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.changeFamily,
 			anchors,
 		);
+		this.editManager.registerBranch(branch);
 		return branch;
 	}
 

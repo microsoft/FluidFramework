@@ -5,9 +5,6 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/common-utils";
-import { ChangeFamily } from "../change-family";
-import { SimpleDependee } from "../dependency-tracking";
-import { AnchorSet, Delta, emptyDelta } from "../tree";
 import {
 	brand,
 	Brand,
@@ -17,26 +14,48 @@ import {
 	Mutable,
 	RecursiveReadonly,
 	zipIterables,
-} from "../../util";
+} from "../util";
 import {
+	AnchorSet,
+	assertIsRevisionTag,
+	ChangeFamily,
+	ChangeFamilyEditor,
+	Delta,
+	emptyDelta,
 	findAncestor,
 	findCommonAncestor,
-	mintCommit,
 	GraphCommit,
+	mintCommit,
+	mintRevisionTag,
+	ReadonlyRepairDataStore,
+	Rebaser,
 	RevisionTag,
 	SessionId,
-	Rebaser,
-	assertIsRevisionTag,
-	mintRevisionTag,
+	SimpleDependee,
 	tagChange,
 	TaggedChange,
-} from "../rebase";
-import { ReadonlyRepairDataStore } from "../repair";
+} from "../core";
+import { SharedTreeBranch } from ".";
 
-export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
-export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
+/**
+ * Contains a single change to the `SharedTree` and associated metadata
+ */
+export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
+/**
+ * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary
+ */
+export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
+	sequenceNumber: SeqNumber;
+}
+/**
+ * A commit in the commit graph that has been sequenced with a sequence number; these make up the trunk
+ */
+interface TrunkCommit<TChangeset> extends SequencedCommit<TChangeset> {
+	parent?: TrunkCommit<TChangeset>;
+}
 
+export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_INTEGER);
 const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
 
 /**
@@ -51,7 +70,7 @@ export class EditManager<
 	/**
 	 * The head commit of the "trunk" branch. The trunk represents the list of received sequenced changes.
 	 */
-	private trunk: GraphCommit<TChangeset>;
+	private trunk: TrunkCommit<TChangeset>;
 
 	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
@@ -65,21 +84,29 @@ export class EditManager<
 	 */
 	private localBranch: GraphCommit<TChangeset>;
 
-	private minimumSequenceNumber: number = -1;
+	/**
+	 * A map from sequence number to the number of branches that are based off of the commit on the trunk with that sequence number
+	 */
+	private readonly branchSequenceNumbers = new BTree<SeqNumber, number>();
+
+	/**
+	 * The sequence number of the newest commit on the trunk that has been received by all peers
+	 */
+	private minimumSequenceNumber: SeqNumber = brand(-1);
 
 	private readonly rebaser: Rebaser<TChangeset>;
 
 	/**
 	 * A map from a sequence number to the commit in the trunk which has that sequence number
 	 */
-	private readonly sequenceMap = new BTree<SeqNumber, GraphCommit<TChangeset>>();
+	private readonly sequenceMap = new BTree<SeqNumber, TrunkCommit<TChangeset>>();
 
 	/**
 	 * An immutable "origin" commit singleton on which the trunk is based.
 	 * This makes it possible to model the trunk in the same way as any other branch
 	 * (it branches off of a base commit) which simplifies some logic.
 	 */
-	private readonly trunkBase: GraphCommit<TChangeset>;
+	private readonly trunkBase: TrunkCommit<TChangeset>;
 
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
@@ -93,14 +120,69 @@ export class EditManager<
 			revision: nullRevisionTag,
 			sessionId: "",
 			change: changeFamily.rebaser.compose([]),
+			sequenceNumber: minimumPossibleSequenceNumber,
 		};
 		this.trunk = this.trunkBase;
 		this.localBranch = this.trunk;
 	}
 
 	/**
+	 * Make the given branch known to the `EditManager`. The `EditManager` will ensure that all registered
+	 * branches remain usable even as the minimum sequence number advances.
+	 * @param branch - the branch to register. All branches that fork from this branch, directly or transitively,
+	 * will also be registered.
+	 */
+	public registerBranch(branch: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): void {
+		const incrementBranchBaseCount = (
+			b: SharedTreeBranch<ChangeFamilyEditor, TChangeset>,
+		): SeqNumber => {
+			const trunkCommit = findCommonAncestor(this.trunk, b.getHead());
+			assert(isTrunkCommit(trunkCommit), "Expected commit to be on the trunk branch");
+			const branchCount =
+				this.branchSequenceNumbers.get(trunkCommit.sequenceNumber, 0) ??
+				fail("Expected default value");
+
+			this.branchSequenceNumbers.set(trunkCommit.sequenceNumber, branchCount + 1);
+			return trunkCommit.sequenceNumber;
+		};
+
+		const decrementBranchBaseCount = (sequenceNumber: SeqNumber): number => {
+			const branchCount =
+				this.branchSequenceNumbers.get(sequenceNumber, 0) ?? fail("Expected default value");
+
+			assert(branchCount >= 1, "Expected at least one branch base");
+			if (branchCount > 1) {
+				this.branchSequenceNumbers.set(sequenceNumber, branchCount - 1);
+			} else {
+				this.branchSequenceNumbers.delete(sequenceNumber);
+			}
+
+			return branchCount - 1;
+		};
+
+		// Record the sequence number of the branch's base commit on the trunk
+		const trunkBase = { sequenceNumber: incrementBranchBaseCount(branch) };
+		// Whenever the branch forks, register the new fork
+		const offFork = branch.on("fork", (f) => this.registerBranch(f));
+		// Whenever the branch is rebased, update our record of its base trunk commit
+		const offRebase = branch.on("rebase", () => {
+			decrementBranchBaseCount(trunkBase.sequenceNumber);
+			trunkBase.sequenceNumber = incrementBranchBaseCount(branch);
+		});
+		// When the branch is disposed, update our branch counter and trim the trunk
+		const offDispose = branch.on("dispose", () => {
+			if (decrementBranchBaseCount(trunkBase.sequenceNumber) === 0) {
+				this.trimTrunk();
+			}
+			offFork();
+			offRebase();
+			offDispose();
+		});
+	}
+
+	/**
 	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
-	 * @param minimumSequenceNumber - the minimum sequence number for all of the connected clients
+	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks
 	 */
 	public advanceMinimumSequenceNumber(minimumSequenceNumber: SeqNumber): void {
 		if (minimumSequenceNumber === this.minimumSequenceNumber) {
@@ -113,34 +195,74 @@ export class EditManager<
 		);
 
 		this.minimumSequenceNumber = minimumSequenceNumber;
+		this.trimTrunk();
+	}
 
-		const newTrunkTail = this.sequenceMap.getPairOrNextHigher(minimumSequenceNumber)?.[1];
-		this.sequenceMap.deleteRange(minimumPossibleSequenceNumber, minimumSequenceNumber, false);
+	/**
+	 * Examines the latest known minimum sequence number and the trunk bases of any registered branches to determine
+	 * if any commits on the trunk are unreferenced and unneeded for future computation; those found are evicted from the trunk.
+	 * @returns the number of commits that were removed from the trunk
+	 */
+	private trimTrunk(): number {
+		let deleted = 0;
+		/** The sequence number of the oldest commit on the trunk that will be retained */
+		let trunkTailSearchKey = this.minimumSequenceNumber;
+		// If there are any outstanding registered branches, get the one that is the oldest (has the "most behind" trunk base)
+		const minimumBranchBaseSequenceNumber = this.branchSequenceNumbers.minKey();
+		if (minimumBranchBaseSequenceNumber !== undefined) {
+			// If that branch is behind the minimum sequence number, we only want to evict commits older than it,
+			// even if those commits are behind the minimum sequence number
+			trunkTailSearchKey = brand(
+				Math.min(trunkTailSearchKey, minimumBranchBaseSequenceNumber),
+			);
+		}
 
-		if (newTrunkTail !== undefined) {
-			// This is dangerous. Commits ought to be immutable, but if they are then changing the trunk tail requires
-			// regenerating the entire commit graph. It is, in general, safe to chop off the tail like this if we know
-			// that there are no outstanding references to any of the commits being removed. For example, there must be
-			// no existing branches that are based off of any of the commits being removed.
-			(newTrunkTail as Mutable<GraphCommit<TChangeset>>).parent = this.trunkBase;
+		// The new tail of the trunk is the commit at or just past the new minimum trunk sequence number
+		const searchResult = this.sequenceMap.getPairOrNextHigher(trunkTailSearchKey);
+		if (searchResult !== undefined) {
+			const [_, newTrunkTail] = searchResult;
+			// Don't do any work if the commit found by the search is already the tail of the trunk
+			if (newTrunkTail.parent !== this.trunkBase) {
+				// This is dangerous. Commits ought to be immutable, but if they are then changing the trunk tail requires
+				// regenerating the entire commit graph. It is, in general, safe to chop off the tail like this if we know
+				// that there are no outstanding references to any of the commits being removed. For example, there must be
+				// no existing branches that are based off of any of the commits being removed.
+				(newTrunkTail as Mutable<TrunkCommit<TChangeset>>).parent = this.trunkBase;
 
-			for (const [sessionId, branch] of this.peerLocalBranches) {
-				// If a session branch falls behind the min sequence number, then we know that it has been abandoned by Fluid
-				// (because otherwise, it would have already been updated) and we should not receive any more updates for it.
-				if (findCommonAncestor(branch, this.trunkBase) === undefined) {
-					this.peerLocalBranches.delete(sessionId);
+				deleted = this.sequenceMap.deleteRange(
+					minimumPossibleSequenceNumber,
+					newTrunkTail.sequenceNumber,
+					false,
+				);
+
+				for (const [sessionId, branch] of this.peerLocalBranches) {
+					// If a session branch falls behind the min sequence number, then we know that its session has been abandoned by Fluid
+					// (because otherwise, it would have already been updated) and we expect not to receive any more updates for it.
+					if (findCommonAncestor(branch, newTrunkTail) === undefined) {
+						this.peerLocalBranches.delete(sessionId);
+					}
 				}
 			}
-
-			// TODO: when arbitrary local branching is added, the local branches will need to be considered here as well
+		} else {
+			// If no trunk commit is found, it means that all trunk commits are below the search key, so evict them all
+			assert(
+				this.branchSequenceNumbers.isEmpty,
+				"Expected no registered branches when clearing trunk",
+			);
+			this.trunk = this.trunkBase;
+			this.sequenceMap.clear();
+			this.peerLocalBranches.clear();
 		}
+
+		return deleted;
 	}
 
 	public isEmpty(): boolean {
 		return (
 			this.trunk === this.trunkBase &&
 			this.peerLocalBranches.size === 0 &&
-			this.localBranch === this.trunk
+			this.localBranch === this.trunk &&
+			this.minimumSequenceNumber === -1
 		);
 	}
 
@@ -193,7 +315,7 @@ export class EditManager<
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
 		this.sequenceMap.clear();
 		this.trunk = data.trunk.reduce((base, c) => {
-			const commit = mintCommit(base, c);
+			const commit = mintTrunkCommit(base, c);
 			this.sequenceMap.set(c.sequenceNumber, commit);
 			return commit;
 		}, this.trunkBase);
@@ -367,7 +489,7 @@ export class EditManager<
 	}
 
 	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {
-		this.trunk = mintCommit(this.trunk, commit);
+		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
 		this.sequenceMap.set(sequenceNumber, this.trunk);
 	}
 
@@ -393,10 +515,6 @@ export class EditManager<
 
 		return netChange;
 	}
-}
-
-export interface SequencedCommit<TChangeset> extends Commit<TChangeset> {
-	sequenceNumber: SeqNumber;
 }
 
 /**
@@ -428,4 +546,34 @@ function getPathFromBase<TChange>(
 		0x573 /* Expected branches to be related */,
 	);
 	return path;
+}
+
+function isTrunkCommit<TChange>(commit?: GraphCommit<TChange>): commit is TrunkCommit<TChange> {
+	return commit !== undefined && (commit as TrunkCommit<TChange>).sequenceNumber !== undefined;
+}
+
+function mintTrunkCommit<TChange>(
+	parent: TrunkCommit<TChange>,
+	commit: Commit<TChange>,
+	sequenceNumber: SeqNumber,
+): TrunkCommit<TChange>;
+function mintTrunkCommit<TChange>(
+	parent: TrunkCommit<TChange>,
+	commit: SequencedCommit<TChange>,
+): TrunkCommit<TChange>;
+function mintTrunkCommit<TChange>(
+	parent: TrunkCommit<TChange>,
+	commit: Commit<TChange>,
+	explicitSequenceNumber?: SeqNumber,
+): TrunkCommit<TChange> {
+	const sequenceNumber =
+		explicitSequenceNumber ?? (commit as SequencedCommit<TChange>).sequenceNumber;
+
+	return {
+		revision: commit.revision,
+		sessionId: commit.sessionId,
+		change: commit.change,
+		sequenceNumber,
+		parent,
+	};
 }
