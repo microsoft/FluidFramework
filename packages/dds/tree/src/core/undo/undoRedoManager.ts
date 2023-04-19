@@ -13,7 +13,7 @@ import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
-	 * @param repairDataStoryFactory - Factory function for creating {@link RepairDataStore}s to create and store repair
+	 * @param repairDataStoryFactory - Factory for creating {@link RepairDataStore}s to create and store repair
 	 * data for {@link UndoableCommit}s.
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
