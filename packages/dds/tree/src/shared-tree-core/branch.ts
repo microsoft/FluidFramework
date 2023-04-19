@@ -81,7 +81,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.transactions.repairStore?.capture(delta, this.head.revision);
 
 		// If this is not part of a transaction, add it to the undo commit tree
-		if (this.transactions.size === 0) {
+		if (!this.isTransacting()) {
 			this.undoRedoManager.trackCommit(this.head, isUndoRedoCommit);
 		}
 
