@@ -133,7 +133,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		"Load container unsuccessfully",
 		[
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -163,7 +162,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 				error: "expectedFailure",
 			},
 			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "expectedFailure" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "expectedFailure" },
 			{
 				eventName: "TestException",
 				error: "expectedFailure",
@@ -222,7 +220,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			assert(disconnectEventRaised, "Disconnected event should be raised");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.close();
+			container.dispose();
 		}
 	});
 
@@ -261,7 +259,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			assert.strictEqual(container.closed, false, "Container should not be closed");
 		} finally {
 			deltaConnection.removeAllListeners();
-			container.close();
+			container.dispose();
 		}
 	});
 
@@ -578,7 +576,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		let run = 0;
 		container.deltaManager.on("readonly", () => run++);
 
-		container.dispose?.();
+		container.dispose();
 		assert.strictEqual(
 			run,
 			0,
@@ -614,7 +612,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			() => runtimeDispose++,
 		);
 
-		container.dispose?.();
+		container.dispose();
 		assert.strictEqual(
 			containerDisposed,
 			1,
@@ -661,7 +659,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 
 		container.close();
-		container.dispose?.();
+		container.dispose();
 		assert.strictEqual(containerDisposed, 1, "Container should send disposed event");
 		assert.strictEqual(containerClosed, 1, "Container should send closed event");
 		assert.strictEqual(deltaManagerDisposed, 1, "DeltaManager should send disposed event");
