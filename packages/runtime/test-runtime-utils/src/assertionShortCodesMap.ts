@@ -1162,6 +1162,9 @@ export const shortCodeMap = {
 	"0x5e3": "expected string data for resubmitted schema op",
 	"0x5e4": "expected content to be an object",
 	"0x5e5": "expected revision id to be valid stable id",
-	"0x5e6": "expected changeset to be defined",
-	"0x5e7": "expected changeset to be defined"
+	"0x5e6": "Requested coded for unsupported format.",
+	"0x5e7": "expected changeset to be defined",
+	"0x5e8": "expected changeset to be defined",
+	"0x5e9": "Must be in a node to set its value",
+	"0x5ea": "Tried to encode unsupported fieldKind"
 };
