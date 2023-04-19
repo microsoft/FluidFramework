@@ -7675,6 +7675,55 @@ importers:
       rimraf: 4.4.0
       typescript: 4.5.5
 
+  packages/framework/client-logger/app-insights-logger:
+    specifiers:
+      '@fluidframework/common-definitions': ^0.20.1
+      '@microsoft/api-extractor': ^7.34.4
+      '@microsoft/applicationinsights-web': ^2.8.11
+      '@testing-library/dom': ^8.2.0
+      '@testing-library/jest-dom': ^5.16.5
+      '@types/jest': 22.2.3
+      '@types/testing-library__jest-dom': ^5.14.5
+      concurrently: ^7.6.0
+      copyfiles: ^2.4.1
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      eslint-plugin-jest: ~27.1.5
+      eslint-plugin-react: ~7.28.0
+      eslint-plugin-react-hooks: ~4.6.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      tinylicious: 0.7.2
+      ts-jest: ^26.4.4
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@microsoft/applicationinsights-web': 2.8.12
+    devDependencies:
+      '@microsoft/api-extractor': 7.34.4
+      '@testing-library/dom': 8.19.1
+      '@testing-library/jest-dom': 5.16.5
+      '@types/jest': 22.2.3
+      '@types/testing-library__jest-dom': 5.14.5
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-plugin-jest: 27.1.7_e7w73bdyuoy63spbnf7wdyrtai
+      eslint-plugin-react: 7.28.0_eslint@8.6.0
+      eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
+      jest: 26.6.3
+      jest-junit: 10.0.0
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      tinylicious: 0.7.2
+      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
+      ts-loader: 9.4.1_typescript@4.5.5
+      typescript: 4.5.5
+
   packages/framework/data-object-base:
     specifiers:
       '@fluid-tools/build-cli': ^0.13.1
@@ -19392,8 +19441,94 @@ packages:
       - '@types/node'
     dev: true
 
+  /@microsoft/applicationinsights-analytics-js/2.8.12:
+    resolution: {integrity: sha512-Gz6j3dCCiuSq8ks0ci2uXRZidxn8v28sGQ6xF/vpNv8/gjpV0k3vcFxzlMGEoEjVls6BkH8vYiu80JAwRb1Q4A==}
+    peerDependencies:
+      tslib: '*'
+    dependencies:
+      '@microsoft/applicationinsights-common': 2.8.12
+      '@microsoft/applicationinsights-core-js': 2.8.12
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    dev: false
+
+  /@microsoft/applicationinsights-channel-js/2.8.12:
+    resolution: {integrity: sha512-tBJnZ/eK/W3gVVgfS0kPDheiaZQeOJeZD2pOlSwnQeynmymbfVMqGwrTDBC8fsZCqwsfdgGoToLOwup8JyEgvQ==}
+    peerDependencies:
+      tslib: '*'
+    dependencies:
+      '@microsoft/applicationinsights-common': 2.8.12
+      '@microsoft/applicationinsights-core-js': 2.8.12
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    dev: false
+
+  /@microsoft/applicationinsights-common/2.8.12:
+    resolution: {integrity: sha512-7mxXaR6nHb23NG0xzf56ab5dqCDcG/gAM8MC9e0eCudE8EZ95nHwi1Mmnko6GCE6pzn4WjeHheId3YBETzYT7w==}
+    peerDependencies:
+      tslib: '*'
+    dependencies:
+      '@microsoft/applicationinsights-core-js': 2.8.12
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    dev: false
+
+  /@microsoft/applicationinsights-core-js/2.8.12:
+    resolution: {integrity: sha512-lA4epwWPBJ4awx07QQVCkoxygsl0qiTNoSYaR63hRE56ybu4kpp3tpYo/AfOI1DZMgKB8H0EwDz4vVmzUT3p/A==}
+    peerDependencies:
+      tslib: '*'
+    dependencies:
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    dev: false
+
+  /@microsoft/applicationinsights-dependencies-js/2.8.12:
+    resolution: {integrity: sha512-o+i7idIiE/Ew9GRHdonX7fcTs85TPhbIrcOhMn+gxAlwH7ttUPK0XNk4wrMwIy3t9k4jo0slEA7uxBZkTpN8cQ==}
+    peerDependencies:
+      tslib: '*'
+    dependencies:
+      '@microsoft/applicationinsights-common': 2.8.12
+      '@microsoft/applicationinsights-core-js': 2.8.12
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    dev: false
+
+  /@microsoft/applicationinsights-properties-js/2.8.12:
+    resolution: {integrity: sha512-1U5vgWOfQi3NxfknG3eTTI7sqUQrIG0q1jlweKRToPzQi/jEJbUXc4rENmGZG5+UMwdSYcotlefkTnhXHgF+5g==}
+    peerDependencies:
+      tslib: '*'
+    dependencies:
+      '@microsoft/applicationinsights-common': 2.8.12
+      '@microsoft/applicationinsights-core-js': 2.8.12
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    dev: false
+
+  /@microsoft/applicationinsights-shims/2.0.2:
+    resolution: {integrity: sha512-PoHEgsnmcqruLNHZ/amACqdJ6YYQpED0KSRe6J7gIJTtpZC1FfFU9b1fmDKDKtFoUSrPzEh1qzO3kmRZP0betg==}
+    dev: false
+
   /@microsoft/applicationinsights-web-snippet/1.0.1:
     resolution: {integrity: sha512-2IHAOaLauc8qaAitvWS+U931T+ze+7MNWrDHY47IENP5y2UA0vqJDu67kWZDdpCN1fFC77sfgfB+HV7SrKshnQ==}
+    dev: false
+
+  /@microsoft/applicationinsights-web/2.8.12:
+    resolution: {integrity: sha512-f2wWxNV/JG+qiK6GAeKrKmO9a7TLI6vdQZXuG/escU9sFtP0Lhsz0dFOF7kmkTc4Uv7zuv46DCA6MO6P0XSz9g==}
+    peerDependencies:
+      tslib: '*'
+    dependencies:
+      '@microsoft/applicationinsights-analytics-js': 2.8.12
+      '@microsoft/applicationinsights-channel-js': 2.8.12
+      '@microsoft/applicationinsights-common': 2.8.12
+      '@microsoft/applicationinsights-core-js': 2.8.12
+      '@microsoft/applicationinsights-dependencies-js': 2.8.12
+      '@microsoft/applicationinsights-properties-js': 2.8.12
+      '@microsoft/applicationinsights-shims': 2.0.2
+      '@microsoft/dynamicproto-js': 1.1.9
+    dev: false
+
+  /@microsoft/dynamicproto-js/1.1.9:
+    resolution: {integrity: sha512-n1VPsljTSkthsAFYdiWfC+DKzK2WwcRp83Y1YAqdX552BstvsDjft9YXppjUzp11BPsapDoO1LDgrDB0XVsfNQ==}
     dev: false
 
   /@microsoft/fetch-event-source/2.0.1:
@@ -22932,7 +23067,7 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/eslint-plugin/5.43.0_bbzbxlo3azetmd26uxywfchwoi:
+  /@typescript-eslint/eslint-plugin/5.43.0_i37r4pxnuonvhfobrnldva5ppi:
     resolution: {integrity: sha512-wNPzG+eDR6+hhW4yobEmpR36jrqqQv1vxBq5LJO3fBAktjkvekfr4BRl+3Fn1CM/A+s8/EiGUbOMDoYqWdbtXA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -22945,10 +23080,10 @@ packages:
     dependencies:
       '@typescript-eslint/parser': 5.9.1_kufnqfq7tb5rpdawkdb6g5smma
       '@typescript-eslint/scope-manager': 5.43.0
-      '@typescript-eslint/type-utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
-      '@typescript-eslint/utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
+      '@typescript-eslint/type-utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
       debug: 4.3.4
-      eslint: 8.28.0
+      eslint: 8.6.0
       ignore: 5.2.4
       natural-compare-lite: 1.4.0
       regexpp: 3.2.0
@@ -23126,7 +23261,7 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/type-utils/5.43.0_24w3dq2y5hvyqjdcjculbumysy:
+  /@typescript-eslint/type-utils/5.43.0_kufnqfq7tb5rpdawkdb6g5smma:
     resolution: {integrity: sha512-K21f+KY2/VvYggLf5Pk4tgBOPs2otTaIHy2zjclo7UZGLyFH86VfUOm5iq+OtDtxq/Zwu2I3ujDBykVW4Xtmtg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -23137,9 +23272,9 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/typescript-estree': 5.43.0_typescript@4.5.5
-      '@typescript-eslint/utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
+      '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
       debug: 4.3.4
-      eslint: 8.28.0
+      eslint: 8.6.0
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -23282,26 +23417,6 @@ packages:
       eslint: 8.6.0
       eslint-scope: 5.1.1
       eslint-utils: 3.0.0_eslint@8.6.0
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-    dev: true
-
-  /@typescript-eslint/utils/5.43.0_24w3dq2y5hvyqjdcjculbumysy:
-    resolution: {integrity: sha512-8nVpA6yX0sCjf7v/NDfeaOlyaIIqL7OaIGOWSPFqUKK59Gnumd3Wa+2l8oAaYO2lk0sO+SbWFWRSvhu8gLGv4A==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-    dependencies:
-      '@types/json-schema': 7.0.11
-      '@types/semver': 7.3.13
-      '@typescript-eslint/scope-manager': 5.43.0
-      '@typescript-eslint/types': 5.43.0
-      '@typescript-eslint/typescript-estree': 5.43.0_typescript@4.5.5
-      eslint: 8.28.0
-      eslint-scope: 5.1.1
-      eslint-utils: 3.0.0_eslint@8.28.0
-      semver: 7.3.8
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -28851,9 +28966,9 @@ packages:
   /eslint-plugin-editorconfig/3.2.0_4x3vxi7gdq53yv6dpzqqqrxppq:
     resolution: {integrity: sha512-XiUg69+qgv6BekkPCjP8+2DMODzPqtLV5i0Q9FO1v40P62pfodG1vjIihVbw/338hS5W26S+8MTtXaAlrg37QQ==}
     dependencies:
-      '@typescript-eslint/eslint-plugin': 5.43.0_bbzbxlo3azetmd26uxywfchwoi
+      '@typescript-eslint/eslint-plugin': 5.43.0_i37r4pxnuonvhfobrnldva5ppi
       editorconfig: 0.15.3
-      eslint: 8.28.0
+      eslint: 8.6.0
       klona: 2.0.5
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
@@ -42445,6 +42560,20 @@ packages:
       semver: 7.3.8
       typescript: 4.5.5
       webpack: 5.76.2_webpack-cli@4.10.0
+    dev: true
+
+  /ts-loader/9.4.1_typescript@4.5.5:
+    resolution: {integrity: sha512-384TYAqGs70rn9F0VBnh6BPTfhga7yFNdC5gXbQpDrBj9/KsT4iRkGqKXhziofHOlE2j6YEaiTYVGKKvPhGWvw==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      typescript: '*'
+      webpack: ^5.0.0 || 5.76.2
+    dependencies:
+      chalk: 4.1.2
+      enhanced-resolve: 5.11.0
+      micromatch: 4.0.5
+      semver: 7.3.8
+      typescript: 4.5.5
     dev: true
 
   /ts-log/2.2.5:
