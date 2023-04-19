@@ -1,9 +1,7 @@
 <script>
   import { onDestroy, onMount } from 'svelte';
-  import { getTinyliciousContainer } from './lib/getTinyliciousContainer';
-  import { fluidWritable } from './lib/fluidWritable';
-  import { writable } from "svelte/store";
-  
+  import { getTinyliciousContainer } from './util/getTinyliciousContainer';
+  import { fluidWritable } from './util/fluidWritable';
 
   let text = "";
   let syncedText;
