@@ -284,9 +284,8 @@ const fieldToTableRow: FieldAction<IEditableTreeRow[]> = (
 		const fieldTypes: TreeSchemaIdentifier[] = [];
 		if (field.fieldSchema.types) {
 			field.fieldSchema.types.forEach((type) => fieldTypes.push(type));
-		} else {
-			fieldTypes.push(brand("any"));
 		}
+		// note that "undefined types" means any types hence polymorphic
 		assert(fieldTypes.length === 1, "Polymorphic fields are not supported yet");
 		const newRow: IEditableTreeRow = {
 			id,
