@@ -229,7 +229,8 @@ interface LoggingInfo {
 
 function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: LoggingInfo): void {
 	for (const id of loggingInfo.clientIds) {
-		const { channel: sharedDirectory } = clients.find((s) => s.channel.id === id) ?? {};
+		const { channel: sharedDirectory } =
+			clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		if (sharedDirectory !== undefined) {
 			console.log(`Client ${id}:`);
 			console.log(
