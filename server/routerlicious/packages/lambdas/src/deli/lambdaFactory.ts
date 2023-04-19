@@ -8,8 +8,8 @@ import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-    CheckpointService,
 	ICheckpointRepository,
+	ICheckpointService,
 	IClientManager,
 	IContext,
 	IDeliState,
@@ -64,7 +64,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly checkpointRepository: ICheckpointRepository,
-        private readonly checkpointService: CheckpointService,
+        private readonly checkpointService: ICheckpointService,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
 		private readonly forwardProducer: IProducer,

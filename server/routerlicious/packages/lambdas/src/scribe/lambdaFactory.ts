@@ -6,8 +6,8 @@
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
-    CheckpointService,
 	ControlMessageType,
+    ICheckpointService,
 	ICollection,
 	IContext,
 	IControlMessage,
@@ -74,7 +74,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly getDeltasViaAlfred: boolean,
 		private readonly transientTenants: string[],
-		private readonly checkpointService: CheckpointService,
+		private readonly checkpointService: ICheckpointService,
 	) {
 		super();
 	}

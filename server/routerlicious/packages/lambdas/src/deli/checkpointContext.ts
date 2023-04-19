@@ -111,7 +111,7 @@ export class CheckpointContext {
 
 		let updateP: Promise<void>;
 
-        const localCheckpointEnabled = this.checkpointService.getLocalCheckpointEnabled();
+        const localCheckpointEnabled = this.checkpointService.localCheckpointEnabled;
 
 		// determine if checkpoint is local
 		const isLocal =

@@ -8,9 +8,7 @@ import { ICheckpointRepository, ICheckpointService, IDeliState, IDocument, IDocu
 const defaultErrorMsg = "Method not implemented. Provide your own mock.";
 
 export class TestNotImplementedCheckpointService implements ICheckpointService {
-    getLocalCheckpointEnabled(): boolean {
-        return false;
-    }
+    localCheckpointEnabled: boolean = false;
 
     async writeCheckpointToCollection(documentId: string, tenantId: string, service: string, checkpoint: IScribe | IDeliState, isLocal: boolean): Promise<void> {
         throw new Error(defaultErrorMsg);

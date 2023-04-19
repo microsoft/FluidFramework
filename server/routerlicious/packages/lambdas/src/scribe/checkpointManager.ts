@@ -5,7 +5,6 @@
 
 import { delay } from "@fluidframework/common-utils";
 import {
-    CheckpointService,
 	ICollection,
 	IContext,
 	isRetryEnabled,
@@ -14,6 +13,7 @@ import {
 	runWithRetry,
 	IDeltaService,
 	IDocumentRepository,
+    ICheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
@@ -31,7 +31,7 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
 		private readonly getDeltasViaAlfred: boolean,
-        private readonly checkpointService: CheckpointService
+        private readonly checkpointService: ICheckpointService
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 	}
