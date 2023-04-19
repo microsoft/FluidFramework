@@ -5,7 +5,8 @@
 
 import React from "react";
 import { HasContainerId, VisualTreeNode } from "@fluid-tools/client-debugger";
-import { Accordion } from "./utility-components/";
+// eslint-disable-next-line import/no-internal-modules
+import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { TreeDataView } from "./TreeDataView";
 
 /**
@@ -22,10 +23,18 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
 	return (
-		<Accordion header={<div>{`${node.metadata}, ${node.nodeKind}`}</div>}>
-			{Object.entries(node.children).map(([key, fluidObject], index) => {
-				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
-			})}
-		</Accordion>
+		<Tree>
+			<TreeItem>
+				<TreeItemLayout>{`${node.metadata}, ${node.nodeKind}`}</TreeItemLayout>
+
+				<Tree>
+					{Object.entries(node.children).map(([key, fluidObject], index) => {
+						return (
+							<TreeDataView key={key} containerId={containerId} node={fluidObject} />
+						);
+					})}
+				</Tree>
+			</TreeItem>
+		</Tree>
 	);
 }

@@ -13,8 +13,9 @@ import {
 	HasFluidObjectId,
 	FluidObjectNode,
 } from "@fluid-tools/client-debugger";
+// eslint-disable-next-line import/no-internal-modules
+import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { useMessageRelay } from "../MessageRelayContext";
-import { Accordion } from "./utility-components/";
 import { Waiting } from "./Waiting";
 import { TreeDataView } from "./TreeDataView";
 
@@ -83,14 +84,15 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}
 
 	return (
-		<Accordion
-			header={
-				<div>{`${visualTree.metadata && visualTree.metadata} : ${
-					visualTree.nodeKind
-				}`}</div>
-			}
-		>
-			<TreeDataView containerId={containerId} node={visualTree} />;
-		</Accordion>
+		<Tree>
+			<TreeItem>
+				<TreeItemLayout>
+					{`${visualTree.metadata && visualTree.metadata} : ${visualTree.nodeKind}`}
+				</TreeItemLayout>
+				<Tree>
+					<TreeDataView containerId={containerId} node={visualTree} />
+				</Tree>
+			</TreeItem>
+		</Tree>
 	);
 }

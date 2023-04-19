@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+// eslint-disable-next-line import/no-internal-modules
+import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { ValueNodeBase } from "@fluid-tools/client-debugger";
-import { Stack, StackItem, IStackStyles } from "@fluentui/react";
 
 /**
  * {@link ValueView} input props.
@@ -19,20 +20,16 @@ export interface ValueViewProps {
 export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { node } = props;
 
-	const stackStyles: IStackStyles = {
-		root: {
-			padding: "10px",
-			background: "rgb(237, 235, 233)",
-		},
-	};
-
 	return (
-		<Stack>
-			<StackItem styles={stackStyles}>
-				{`${node.metadata !== undefined ? `${node.metadata} : ` : ""}
+		<Tree>
+			<TreeItem>
+				<TreeItemLayout>
+					{" "}
+					{`${node.metadata !== undefined ? `${node.metadata} : ` : ""}
 						${node.nodeKind}
-						${String(node.value)}`}
-			</StackItem>
-		</Stack>
+						${String(node.value)}`}{" "}
+				</TreeItemLayout>
+			</TreeItem>
+		</Tree>
 	);
 }

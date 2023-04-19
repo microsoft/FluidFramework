@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+// eslint-disable-next-line import/no-internal-modules
+import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
-import { Stack, StackItem, IStackStyles } from "@fluentui/react";
 
 /**
  * {@link ValueView} input props.
@@ -18,21 +19,17 @@ export interface FluidValueViewProps {
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { node } = props;
-	const stackStyles: IStackStyles = {
-		root: {
-			padding: "15px",
-			background: "rgb(237, 235, 233)",
-		},
-	};
 
 	return (
-		<Stack>
-			<StackItem styles={stackStyles}>
-				{`${node.fluidObjectId}
+		<Tree>
+			<TreeItem>
+				<TreeItemLayout>
+					{`${node.fluidObjectId}
 						${node.metadata !== undefined ? `${node.metadata} : ` : ""}
 						${node.nodeKind} : 
 						${String(node.value)}`}
-			</StackItem>
-		</Stack>
+				</TreeItemLayout>
+			</TreeItem>
+		</Tree>
 	);
 }

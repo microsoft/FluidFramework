@@ -4,7 +4,8 @@
  */
 import React from "react";
 import { UnknownObjectNode } from "@fluid-tools/client-debugger";
-import { Stack, StackItem, IStackStyles } from "@fluentui/react";
+// eslint-disable-next-line import/no-internal-modules
+import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 
 /**
  * {@link UnknownDataView} input props.
@@ -19,18 +20,14 @@ export interface UnknownDataViewProps {
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
 	const { node } = props;
 
-	const stackStyles: IStackStyles = {
-		root: {
-			padding: "10px",
-			background: "rgb(237, 235, 233)",
-		},
-	};
-
 	return (
-		<Stack className="UnknownDataView">
-			<StackItem styles={stackStyles}>
-				Encountered an unrecognized kind of data object: {node.nodeKind}{" "}
-			</StackItem>
-		</Stack>
+		<Tree>
+			<TreeItem>
+				<TreeItemLayout>
+					{" "}
+					Encountered an unrecognized kind of data object: {node.nodeKind}{" "}
+				</TreeItemLayout>
+			</TreeItem>
+		</Tree>
 	);
 }
