@@ -100,7 +100,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// If this is the start of a transaction stack, freeze the undo redo manager's
 			// repair data store provider so that repair data can be captured based on the
 			// state of the branch at the start of the transaction.
-			this.undoRedoManager.repairDataStoreProvider.freeze();			
+			this.undoRedoManager.repairDataStoreProvider.freeze();
 		}
 		this.transactions.push(this.head.revision, repairStore);
 		this.editor.enterTransaction();
