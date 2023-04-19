@@ -10,7 +10,7 @@ const { merge } = require("webpack-merge");
 
 const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
 
-const testAppSrcPath = path.join(__dirname, "src", "test", "app");
+const testAppSrcPath = path.join(__dirname, "src", "app");
 
 module.exports = (env) => {
 	const isProduction = env && env.production;

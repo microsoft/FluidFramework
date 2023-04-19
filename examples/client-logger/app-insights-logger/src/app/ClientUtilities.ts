@@ -42,7 +42,7 @@ function initializeTinyliciousClient(): TinyliciousClient {
 	const appInsightsClient = new ApplicationInsights({
 		config: {
 			connectionString:
-			// Edit this with your app insights instance connection string
+				// Edit this with your app insights instance connection string
 				"",
 		},
 	});

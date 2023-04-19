@@ -3,4 +3,10 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This package provides a telemetry logger that will route typical Fluid telemetry to Azure App Insights.
+ *
+ * @packageDocumentation
+ */
+
 export { FluidAppInsightsLogger } from "./fluidAppInsightsLogger";

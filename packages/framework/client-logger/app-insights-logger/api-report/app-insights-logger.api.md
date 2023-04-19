@@ -10,12 +10,10 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
-    constructor(client: ApplicationInsights);
-    // (undocumented)
+    	constructor(client: ApplicationInsights);
+    	// (undocumented)
     protected readonly baseLoggingClient: ApplicationInsights;
-    send(event: ITelemetryBaseEvent): void;
+    	send(event: ITelemetryBaseEvent): void;
 }
-
-// (No @packageDocumentation comment for this package)
 
 ```
