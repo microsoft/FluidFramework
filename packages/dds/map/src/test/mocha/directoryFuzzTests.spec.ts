@@ -346,7 +346,7 @@ function assertEventualConsistencyCore(
 	}
 }
 
-describe.only("SharedDirectory fuzz", () => {
+describe("SharedDirectory fuzz", () => {
 	const model: DDSFuzzModel<DirectoryFactory, Operation> = {
 		workloadName: "default directory",
 		generatorFactory: () => takeAsync(100, makeOperationGenerator()),
