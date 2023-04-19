@@ -35,7 +35,7 @@ describe("UndoRedoManager", () => {
 			assert.equal(headUndoCommit?.parent, parent);
 		});
 
-		it("does not track undo commits", () => {
+		it("pops the head undoable commit when an undo commit is tracked", () => {
 			const initialCommit = {
 				commit: createTestGraphCommit([], 0, localSessionId),
 				repairData: new MockRepairDataStore(),
@@ -44,7 +44,7 @@ describe("UndoRedoManager", () => {
 			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2, localSessionId);
 			manager.trackCommit(fakeInvertedCommit, UndoRedoManagerCommitType.Undo);
 			// The head undo commit will not be the new inverted commit
-			assert.equal(manager.getHeadUndoCommit(), initialCommit);
+			assert.equal(manager.getHeadUndoCommit(), undefined);
 		});
 	});
 
@@ -55,9 +55,11 @@ describe("UndoRedoManager", () => {
 				repairData: new MockRepairDataStore(),
 			};
 			const manager = new TestUndoRedoManager(initialCommit);
-			const undoCommit = createTestGraphCommit([0], 1, localSessionId);
-			manager.trackCommit(undoCommit);
+			const undoableCommit = createTestGraphCommit([0], 1, localSessionId);
+			manager.trackCommit(undoableCommit);
 			manager.undo();
+			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2, localSessionId);
+			manager.trackCommit(fakeInvertedCommit, UndoRedoManagerCommitType.Undo);
 			assert.equal(manager.getHeadUndoCommit(), initialCommit);
 		});
 
