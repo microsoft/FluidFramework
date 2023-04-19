@@ -4,7 +4,7 @@
  */
 
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
-import { GraphCommit, GraphCommitType, tagChange } from "../rebase";
+import { GraphCommit, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
@@ -28,8 +28,11 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Adds the provided commit to the undo commit tree.
 	 * Should be called for all commits on the relevant branch, including undo commits.
 	 */
-	public trackCommit(commit: GraphCommit<TChange>): void {
-		if (commit.type === GraphCommitType.Undo) {
+	public trackCommit(
+		commit: GraphCommit<TChange>,
+		isUndoRedoCommit?: UndoRedoManagerCommitType,
+	): void {
+		if (isUndoRedoCommit === UndoRedoManagerCommitType.Undo) {
 			// TODO check if this is the correct commit?
 			this.headUndoableCommit = this.headUndoableCommit?.parent;
 			return;
@@ -59,7 +62,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		const { commit, repairData } = commitToUndo;
 
-		return this.changeFamily.rebaser.invert(
+		return;
+		this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
 			false,
 			repairData,
@@ -92,4 +96,12 @@ export interface UndoableCommit<TChange> {
 	readonly repairData: ReadonlyRepairDataStore;
 	/* The next undoable commit. */
 	readonly parent?: UndoableCommit<TChange>;
+}
+
+/**
+ * The type of a commit that was generated using the undo/redo manager.
+ */
+export enum UndoRedoManagerCommitType {
+	Undo,
+	Redo,
 }

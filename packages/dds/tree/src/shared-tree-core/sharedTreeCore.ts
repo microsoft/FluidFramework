@@ -38,8 +38,8 @@ import {
 	RepairDataStore,
 	ChangeFamilyEditor,
 	UndoRedoManager,
-	GraphCommitType,
 	IRepairDataStoreProvider,
+	UndoRedoManagerCommitType,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -199,10 +199,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		await Promise.all(loadSummaries);
 	}
 
-	private submitCommit(commit: Commit<TChange>): void {
+	private submitCommit(
+		commit: Commit<TChange>,
+		isUndoRedoCommit?: UndoRedoManagerCommitType,
+	): void {
 		// Nested transactions are tracked as part of the outermost transaction
 		if (this.transactions.size === 0) {
-			this.undoRedoManager.trackCommit(commit);
+			this.undoRedoManager.trackCommit(commit, isUndoRedoCommit);
 		}
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -228,10 +231,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param revision - The revision to associate with the change.
 	 * Defaults to a new, randomly generated, revision if not provided.
 	 */
-	protected applyChange(change: TChange, type?: GraphCommitType, revision?: RevisionTag): void {
-		const commit = this.addLocalChange(change, revision ?? mintRevisionTag(), type);
+	protected applyChange(
+		change: TChange,
+		revision?: RevisionTag,
+		isUndoRedoCommit?: UndoRedoManagerCommitType,
+	): void {
+		const commit = this.addLocalChange(change, revision ?? mintRevisionTag());
 		if (this.transactions.size === 0) {
-			this.submitCommit(commit);
+			this.submitCommit(commit, isUndoRedoCommit);
 		}
 	}
 
@@ -241,16 +248,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param revision - The revision to associate with the change.
 	 * @returns Commit object with the change, revision and localsessionid
 	 */
-	private addLocalChange(
-		change: TChange,
-		revision: RevisionTag,
-		type?: GraphCommitType,
-	): Commit<TChange> {
+	private addLocalChange(change: TChange, revision: RevisionTag): Commit<TChange> {
 		const commit = {
 			change,
 			revision,
 			sessionId: this.editManager.localSessionId,
-			type,
 		};
 		const delta = this.editManager.addLocalChange(revision, change, false);
 		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
@@ -322,7 +324,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		const undoChange = this.undoRedoManager.undo();
 		if (undoChange !== undefined) {
-			this.applyChange(undoChange, GraphCommitType.Undo);
+			this.applyChange(undoChange, undefined, UndoRedoManagerCommitType.Undo);
 		}
 	}
 
@@ -360,8 +362,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localBranchHead = this.editManager.getLocalBranchHead();
 		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
 		if (ancestor === localBranchHead) {
-			for (const { change, type, revision } of commits) {
-				this.applyChange(change, type, revision);
+			for (const { change, revision } of commits) {
+				this.applyChange(change, revision);
 				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 			}
 		} else {
@@ -369,8 +371,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const [newHead] = rebaser.rebaseBranch(branch.getHead(), this.getLocalBranchHead());
 			const changes: GraphCommit<TChange>[] = [];
 			findAncestor([newHead, changes], (c) => c === this.getLocalBranchHead());
-			for (const { change, type, revision } of changes) {
-				this.applyChange(change, type, revision);
+			for (const { change, revision } of changes) {
+				this.applyChange(change, revision);
 				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 			}
 		}

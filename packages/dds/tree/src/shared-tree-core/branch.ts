@@ -10,7 +10,6 @@ import {
 	ChangeFamilyEditor,
 	findAncestor,
 	GraphCommit,
-	GraphCommitType,
 	IRepairDataStoreProvider,
 	mintCommit,
 	mintRevisionTag,
@@ -19,6 +18,7 @@ import {
 	UndoRedoManager,
 	tagChange,
 	TaggedChange,
+	UndoRedoManagerCommitType,
 } from "../core";
 import { EventEmitter } from "../events";
 import { TransactionResult } from "../util";
@@ -69,13 +69,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 	}
 
-	private applyChange(change: TChange, type?: GraphCommitType): void {
+	private applyChange(change: TChange, isUndoRedoCommit?: UndoRedoManagerCommitType): void {
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
 			revision,
 			sessionId: this.sessionId,
 			change,
-			type,
 		});
 
 		const delta = this.changeFamily.intoDelta(change);
@@ -83,7 +82,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (this.transactions.size === 0) {
-			this.undoRedoManager.trackCommit(this.head);
+			this.undoRedoManager.trackCommit(this.head, isUndoRedoCommit);
 		}
 
 		this.emitAndRebaseAnchors(change);
@@ -182,7 +181,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const undoChange = this.undoRedoManager.undo();
 		if (undoChange !== undefined) {
-			this.applyChange(undoChange, GraphCommitType.Undo);
+			this.applyChange(undoChange, UndoRedoManagerCommitType.Undo);
 		}
 	}
 

@@ -9,7 +9,6 @@ export {
 	isRevisionTag,
 	mintCommit,
 	GraphCommit,
-	GraphCommitType,
 	RevisionTag,
 	SessionId,
 } from "./types";

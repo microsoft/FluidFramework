@@ -4,4 +4,4 @@
  */
 
 export { IRepairDataStoreProvider } from "./repairDataStoreProvider";
-export { UndoRedoManager } from "./undoRedoManager";
+export { UndoRedoManager, UndoRedoManagerCommitType } from "./undoRedoManager";
