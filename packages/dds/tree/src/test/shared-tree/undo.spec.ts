@@ -71,8 +71,38 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	// TODO: unskip once I fix the undo commit graph after rebasing
-	it.skip("the insert of two separate nodes", async () => {
+	it("the set of a node", async () => {
+		const tree = makeTree("A", "B", "C", "D");
+
+		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+		field.move(0, 2, 2);
+		expectJsonTree(tree, ["C", "D", "A", "B"]);
+
+		tree.undo();
+		expectJsonTree(tree, ["A", "B", "C", "D"]);
+	});
+
+	// TODO: See bug 4104
+	it.skip("the set of a node on a fork", async () => {
+		const tree = makeTree("A", "B", "C", "D");
+		const fork = tree.fork();
+
+		const field = fork.editor.sequenceField(undefined, rootFieldKeySymbol);
+		field.move(0, 2, 2);
+
+		expectJsonTree(fork, ["C", "D", "A", "B"]);
+
+		tree.merge(fork);
+
+		expectJsonTree(tree, ["C", "D", "A", "B"]);
+
+		fork.undo();
+		tree.merge(fork);
+
+		expectJsonTree(tree, ["A", "B", "C", "D"]);
+	});
+
+	it("the insert of two separate nodes", async () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const addX = tree.fork();
 		const addY = tree.fork();
@@ -93,13 +123,48 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	// TODO: unskip once I fix the undo commit graph after rebasing
+	it("an insert from a parent branch on its fork", () => {
+		const tree = makeTree("A", "B", "C", "D");
+		const doUndo = tree.fork();
+
+		insert(tree, 1, "x");
+		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
+
+		doUndo.rebaseOnto(tree);
+		expectJsonTree(doUndo, ["A", "x", "B", "C", "D"]);
+
+		doUndo.undo();
+		expectJsonTree(doUndo, ["A", "B", "C", "D"]);
+
+		tree.merge(doUndo);
+		expectJsonTree(tree, ["A", "B", "C", "D"]);
+	});
+
+	it("an insert from a fork on its parent", () => {
+		const tree = makeTree("A", "B", "C", "D");
+		const doUndo = tree.fork();
+
+		insert(doUndo, 1, "x");
+		expectJsonTree(doUndo, ["A", "x", "B", "C", "D"]);
+
+		tree.merge(doUndo);
+		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
+
+		tree.undo();
+		expectJsonTree(tree, ["A", "B", "C", "D"]);
+
+		doUndo.rebaseOnto(tree);
+		expectJsonTree(doUndo, ["A", "B", "C", "D"]);
+	});
+
+	// TODO: unskip this test once the bug that causes rebasing the undo commit to be empty is fixed.
 	it.skip("an insert that needs to be rebased over an insert on the base branch", () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const doUndo = tree.fork();
 
 		insert(tree, 1, "x");
 		insert(doUndo, 3, "y");
+		tree.merge(doUndo);
 
 		doUndo.undo();
 		tree.merge(doUndo);
