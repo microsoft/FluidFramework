@@ -17,8 +17,8 @@ import { ITestTreeProvider } from "../../utils";
 import {
 	CursorLocationType,
 	FieldKey,
+	FieldUpPath,
 	moveToDetachedField,
-	rootFieldKeySymbol,
 	UpPath,
 } from "../../../core";
 
@@ -45,7 +45,7 @@ export type FuzzFieldChange = FuzzInsert | FuzzDelete;
 
 export interface FieldEdit {
 	editType: "fieldEdit";
-	change: SequenceFieldEdit;
+	change: SequenceFieldEdit; // in the future, add `| OptionalFieldEdit | ValueFieldEdit`
 }
 
 export interface FuzzInsert {
@@ -128,99 +128,6 @@ const defaultEditGeneratorOpWeights = {
 	synchronize: 1,
 };
 
-export const makeInsertGenerator = (
-	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
-): AsyncGenerator<FuzzInsert, FuzzTestState> => {
-	type EditState = FuzzTestState & TreeContext;
-
-	async function insertGenerator(state: EditState): Promise<FuzzInsert> {
-		const trees = state.testTreeProvider.trees;
-		const tree = trees[state.treeIndex];
-		// generate edit for that specific tree
-		const path: UpPath = getRandomPlace(tree, state.random);
-		switch (path.parentField) {
-			case sequenceFieldKey:
-				return generateSequenceFieldInsertOp(path, state.random, state.treeIndex);
-			default:
-				// default case returns a sequence field edit for now.
-				return generateSequenceFieldInsertOp(path, state.random, state.treeIndex);
-		}
-	}
-
-	function generateSequenceFieldInsertOp(
-		path: UpPath,
-		random: IRandom,
-		treeIndex: number,
-	): FuzzInsert {
-		return {
-			type: "insert",
-			parent: path.parent,
-			field: path.parentField,
-			index: path.parentIndex,
-			value: random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-			treeIndex,
-		};
-	}
-
-	const baseInsertGenerator = createWeightedAsyncGenerator<FuzzInsert, EditState>([
-		[insertGenerator, opWeights.insert ?? 0],
-	]);
-
-	const buildOperation = (contents: FuzzInsert) => {
-		return contents;
-	};
-
-	return createAsyncGenerator<FuzzInsert, FuzzInsert>(baseInsertGenerator, buildOperation);
-};
-
-export const makeDeleteGenerator = (
-	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
-): AsyncGenerator<FuzzDelete, FuzzTestState> => {
-	type EditState = FuzzTestState & TreeContext;
-
-	async function deleteGenerator(state: EditState): Promise<FuzzDelete> {
-		const trees = state.testTreeProvider.trees;
-		const tree = trees[state.treeIndex];
-		// generate edit for that specific tree
-		const { firstNode, count } = getExistingRandomNodeRangePath(tree, state.random);
-		switch (firstNode.parentField) {
-			case sequenceFieldKey:
-				return generateSequenceFieldDeleteOp(firstNode, count, state.treeIndex);
-			default:
-				// default case returns a sequence field edit for now.
-				return generateSequenceFieldDeleteOp(firstNode, count, state.treeIndex);
-		}
-	}
-
-	function generateSequenceFieldDeleteOp(
-		firstNode: UpPath,
-		count: number,
-		treeIndex: number,
-	): FuzzDelete {
-		return {
-			type: "delete",
-			firstNode,
-			count,
-			treeIndex,
-		};
-	}
-
-	const baseDeleteGenerator = createWeightedAsyncGenerator<FuzzDelete, EditState>([
-		[
-			deleteGenerator,
-			opWeights.delete ?? 0,
-			({ testTreeProvider, treeIndex }) =>
-				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
-		],
-	]);
-
-	const buildOperation = (contents: FuzzDelete) => {
-		return contents;
-	};
-
-	return createAsyncGenerator<FuzzDelete, FuzzDelete>(baseDeleteGenerator, buildOperation);
-};
-
 export const makeNodeEditGenerator = (
 	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<NodeEdit, FuzzTestState> => {
@@ -262,45 +169,101 @@ export const makeNodeEditGenerator = (
 	);
 };
 
-export const makeSequenceFieldEditGenerator = (
-	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
-): AsyncGenerator<SequenceFieldEdit, FuzzTestState> => {
-	type EditState = FuzzTestState & TreeContext;
-
-	const baseSequenceFieldEditGenerator = createWeightedAsyncGenerator<FuzzFieldChange, EditState>(
-		[
-			[
-				makeDeleteGenerator(),
-				opWeights.delete ?? 0,
-				({ testTreeProvider, treeIndex }) =>
-					containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
-			],
-			[makeInsertGenerator(), opWeights.insert ?? 0],
-		],
-	);
-
-	const buildOperation = (contents: FuzzFieldChange) => {
-		const operation: SequenceFieldEdit = {
-			type: "sequence",
-			edit: contents,
-		};
-		return operation;
-	};
-
-	return createAsyncGenerator<FuzzFieldChange, SequenceFieldEdit>(
-		baseSequenceFieldEditGenerator,
-		buildOperation,
-	);
-};
-
 export const makeFieldEditGenerator = (
 	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<FieldEdit, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
+	async function fieldEditGenerator(state: EditState): Promise<SequenceFieldEdit> {
+		const trees = state.testTreeProvider.trees;
+		const tree = trees[state.treeIndex];
+		// generate edit for that specific tree
+		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree, state.random);
+		assert(fieldPath.parent !== undefined);
+		const fieldEditType = Array(opWeights.insert ?? 0)
+			.fill("insert")
+			.concat(Array(opWeights.delete ?? 0).fill("delete"));
+
+		switch (fieldKey) {
+			case sequenceFieldKey: {
+				const opType = count === 0 ? "insert" : state.random.pick(fieldEditType);
+				switch (opType) {
+					case "insert":
+						return generateSequenceFieldInsertOp(
+							fieldPath,
+							fieldKey,
+							state.random.integer(0, count),
+							state.random,
+							state.treeIndex,
+						);
+					case "delete":
+						return generateSequenceFieldDeleteOp(
+							fieldPath,
+							state.random,
+							count,
+							state.treeIndex,
+						);
+					default:
+						break;
+				}
+			}
+			default:
+				// default case returns a sequence field edit for now.
+				return generateSequenceFieldInsertOp(
+					fieldPath,
+					fieldKey,
+					state.random.integer(0, count),
+					state.random,
+					state.treeIndex,
+				);
+		}
+	}
+
+	function generateSequenceFieldDeleteOp(
+		fieldPath: FieldUpPath,
+		random: IRandom,
+		count: number,
+		treeIndex: number,
+	): SequenceFieldEdit {
+		const nodeIndex = random.integer(0, count - 1);
+		const rangeSize = random.integer(1, count - nodeIndex);
+		const firstNode: UpPath = {
+			parent: fieldPath.parent,
+			parentField: fieldPath.field,
+			parentIndex: nodeIndex,
+		};
+		const contents: FuzzDelete = {
+			type: "delete",
+			firstNode,
+			count: rangeSize,
+			treeIndex,
+		};
+		return { type: "sequence", edit: contents };
+	}
+
+	function generateSequenceFieldInsertOp(
+		fieldPath: FieldUpPath,
+		fieldKey: FieldKey,
+		fieldIndex: number,
+		random: IRandom,
+		treeIndex: number,
+	): SequenceFieldEdit {
+		const contents: FuzzInsert = {
+			type: "insert",
+			parent: fieldPath.parent,
+			field: fieldKey,
+			index: fieldIndex,
+			value: random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+			treeIndex,
+		};
+		return {
+			type: "sequence",
+			edit: contents,
+		};
+	}
 
 	const baseFieldEditGenerator = createWeightedAsyncGenerator<SequenceFieldEdit, EditState>([
 		[
-			makeSequenceFieldEditGenerator(),
+			fieldEditGenerator,
 			sumWeights([opWeights.insert, opWeights.delete]),
 			({ testTreeProvider, treeIndex }) =>
 				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
@@ -329,7 +292,6 @@ export const makeEditGenerator = (
 		[
 			makeFieldEditGenerator(),
 			sumWeights([opWeights.delete, opWeights.insert]),
-			// opWeights.insert ?? 0,
 			({ testTreeProvider, treeIndex }) =>
 				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
 		],
@@ -383,8 +345,7 @@ export const makeTransactionEditGenerator = (
 		],
 		[
 			transactionAbortGenerator,
-			0,
-			// opWeights.abort ?? 0,
+			opWeights.abort ?? 0,
 			({ testTreeProvider, treeIndex }) =>
 				transactionsInProgress(testTreeProvider.trees[treeIndex]),
 		],
@@ -458,41 +419,92 @@ const moves = {
 	nodes: ["stop", "firstField"],
 };
 
-const nodePlaceType = ["beforeNode", "afterNode", "belowNode"];
-
 const sequenceFieldKey: FieldKey = brand("sequenceField");
 
-function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
+export interface FieldPathWithCount {
+	fieldPath: FieldUpPath;
+	fieldKey: FieldKey;
+	count: number;
+}
+
+function getExistingFieldPath(tree: ISharedTree, random: IRandom): FieldPathWithCount {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	const firstNode = cursor.firstNode();
-	if (!firstNode) {
-		cursor.free();
-		return { parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 };
-	}
-	let currentPath = cursor.getPath();
-	assert(currentPath !== undefined);
-	const parentPath: UpPath = currentPath;
+	assert(firstNode, "tree must contain at least one node");
+	const firstPath = cursor.getPath();
+	assert(firstPath !== undefined, "firstPath must be defined");
+	let path: UpPath = firstPath;
 	const firstField = cursor.firstField();
+	let currentField = cursor.getFieldKey();
+	let currentFieldPath = cursor.getFieldPath();
+	let fieldNodes: number = cursor.getFieldLength();
 	if (!firstField) {
+		// no fields, return the rootnode
 		cursor.free();
-		return { parent: parentPath, parentField: sequenceFieldKey, parentIndex: 0 };
+		return {
+			fieldPath: currentFieldPath,
+			fieldKey: currentField,
+			count: fieldNodes,
+		};
 	}
-	currentPath = getExistingRandomNodePosition(tree, random);
-	const choosePath = random.pick(nodePlaceType);
-	switch (choosePath) {
-		case "beforeNode":
-			cursor.free();
-			return parentPath;
-		case "afterNode":
-			cursor.free();
-			return { ...parentPath, parentIndex: parentPath.parentIndex + 1 };
-		case "belowNode":
-			cursor.free();
-			return { parent: parentPath, parentField: sequenceFieldKey, parentIndex: 0 };
-		default:
-			fail(`Unexpected option ${choosePath}`);
+	currentField = cursor.getFieldKey();
+	currentFieldPath = cursor.getFieldPath();
+	fieldNodes = cursor.getFieldLength();
+	let nodeIndex: number = 0;
+
+	let currentMove = random.pick(moves.field);
+	assert(cursor.mode === CursorLocationType.Fields);
+
+	while (currentMove !== "stop") {
+		switch (currentMove) {
+			case "enterNode":
+				if (fieldNodes > 0) {
+					nodeIndex = random.integer(0, fieldNodes - 1);
+					cursor.enterNode(nodeIndex);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					path = cursor.getPath()!;
+					currentMove = random.pick(moves.nodes);
+				} else {
+					// if the node does not exist, return the most recently entered node
+					cursor.free();
+					return {
+						fieldPath: currentFieldPath,
+						fieldKey: currentField,
+						count: fieldNodes,
+					};
+				}
+				break;
+			case "firstField":
+				if (cursor.firstField()) {
+					currentMove = random.pick(moves.field);
+					fieldNodes = cursor.getFieldLength();
+					currentField = cursor.getFieldKey();
+					currentFieldPath = cursor.getFieldPath();
+				} else {
+					currentMove = "stop";
+				}
+				break;
+			case "nextField":
+				if (cursor.nextField()) {
+					currentMove = random.pick(moves.field);
+					fieldNodes = cursor.getFieldLength();
+					currentField = cursor.getFieldKey();
+					currentFieldPath = cursor.getFieldPath();
+				} else {
+					currentMove = "stop";
+				}
+				break;
+			default:
+				fail(`Unexpected move ${currentMove}`);
+		}
 	}
+	cursor.free();
+	return {
+		fieldPath: currentFieldPath,
+		fieldKey: currentField,
+		count: fieldNodes,
+	};
 }
 
 function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): UpPath {
