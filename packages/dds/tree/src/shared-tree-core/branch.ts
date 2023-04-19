@@ -59,7 +59,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		private readonly sessionId: string,
 		private readonly rebaser: Rebaser<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly undoRedoManager: UndoRedoManager<TChange, TEditor>,
+		public undoRedoManager: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
 	) {
 		super();

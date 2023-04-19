@@ -21,8 +21,12 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	public constructor(
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		protected headUndoableCommit?: UndoableCommit<TChange>,
+		private headUndoableCommit?: UndoableCommit<TChange>,
 	) {}
+
+	public get headUndoable(): UndoableCommit<TChange> | undefined {
+		return this.headUndoableCommit;
+	}
 
 	/**
 	 * Adds the provided commit to the undo commit tree.
@@ -70,7 +74,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	}
 
 	/**
-	 * Creates a copy of this `UndoRedoManager` with a reference to the same head undo commit.
+	 * Creates a copy of this `UndoRedoManager`.
 	 * @param repairDataStoreProvider - Optional {@link IRepairDataStoreProvider} to use for the new `UndoRedoManager`.
 	 * If one is not provided, the `repairDataStoreProvider` of this `UndoRedoManager` will be cloned.
 	 */
@@ -103,4 +107,34 @@ export interface UndoableCommit<TChange> {
 export enum UndoRedoManagerCommitType {
 	Undo,
 	Redo,
+}
+
+/**
+ * Marks the commits in the provided path as undoable or redoable.
+ * @param path - the path of commits that may or may not be undoable or redoable.
+ * @param headUndoableCommit - the head undoable commit of the undo commit tree that may contain the commits in the path.
+ */
+export function markCommits<TChange>(
+	path: GraphCommit<TChange>[],
+	headUndoableCommit?: UndoableCommit<TChange>,
+): { commit: GraphCommit<TChange>; isUndoable?: true }[] {
+	let currentUndoable: UndoableCommit<TChange> | undefined = headUndoableCommit;
+
+	if (currentUndoable === undefined) {
+		// If there are no undoable commits, none are marked
+		return path.map((commit) => ({ commit }));
+	}
+
+	// Walk up the commit tree to figure out which commits are undoable or redoable
+	return path
+		.reverse()
+		.map((commit) => {
+			const markedCommit: { commit: GraphCommit<TChange>; isUndoable?: true } = { commit };
+			if (commit.revision === currentUndoable?.commit.revision) {
+				markedCommit.isUndoable = true;
+				currentUndoable = currentUndoable?.parent;
+			}
+			return markedCommit;
+		})
+		.reverse();
 }

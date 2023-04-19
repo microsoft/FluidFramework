@@ -40,6 +40,7 @@ import {
 	UndoRedoManager,
 	IRepairDataStoreProvider,
 	UndoRedoManagerCommitType,
+	markCommits,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -202,9 +203,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private submitCommit(
 		commit: Commit<TChange>,
 		isUndoRedoCommit?: UndoRedoManagerCommitType,
+		skipUndoRedoManagerTracking = false,
 	): void {
 		// Nested transactions are tracked as part of the outermost transaction
-		if (!this.isTransacting()) {
+		if (!this.isTransacting() && !skipUndoRedoManagerTracking) {
 			this.undoRedoManager.trackCommit(commit, isUndoRedoCommit);
 		}
 
@@ -235,11 +237,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		change: TChange,
 		revision?: RevisionTag,
 		isUndoRedoCommit?: UndoRedoManagerCommitType,
-	): void {
+		skipUndoRedoManagerTracking = false,
+	): GraphCommit<TChange> {
 		const commit = this.addLocalChange(change, revision ?? mintRevisionTag());
 		if (this.transactions.size === 0) {
-			this.submitCommit(commit, isUndoRedoCommit);
+			this.submitCommit(commit, isUndoRedoCommit, skipUndoRedoManagerTracking);
 		}
+		return commit;
 	}
 
 	/**
@@ -362,19 +366,31 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localBranchHead = this.editManager.getLocalBranchHead();
 		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
 		if (ancestor === localBranchHead) {
-			for (const { change, revision } of commits) {
-				this.applyChange(change, revision);
-				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-			}
+			this.applyPathFromBranch(branch, commits);
 		} else {
 			const rebaser = new Rebaser(this.changeFamily.rebaser);
 			const [newHead] = rebaser.rebaseBranch(branch.getHead(), this.getLocalBranchHead());
 			const changes: GraphCommit<TChange>[] = [];
 			findAncestor([newHead, changes], (c) => c === this.getLocalBranchHead());
-			for (const { change, revision } of changes) {
-				this.applyChange(change, revision);
-				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+			this.applyPathFromBranch(branch, changes);
+		}
+	}
+
+	private applyPathFromBranch(
+		branch: SharedTreeBranch<TEditor, TChange>,
+		path: GraphCommit<TChange>[],
+	): void {
+		const markedCommits = markCommits(path, branch.undoRedoManager.headUndoable);
+		for (const {
+			commit: { change, revision },
+			isUndoable,
+		} of markedCommits) {
+			// Skip the UndoRedoManager tracking done within `submitCommit` and do it manually for undoable commits instead
+			const commit = this.applyChange(change, revision, undefined, true);
+			if (isUndoable) {
+				this.undoRedoManager.trackCommit(commit);
 			}
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		}
 	}
 
