@@ -2,7 +2,6 @@
 
 Utilities for writing unit tests for DDS in Fluid Framework.
 
-
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->

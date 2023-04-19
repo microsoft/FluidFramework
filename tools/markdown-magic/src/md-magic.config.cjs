@@ -106,7 +106,10 @@ const generateTrademarkSection = (includeHeading) => {
  */
 const generateDependencyGuidelines = (includeHeading) => {
 	const sectionBody = readTemplate("Dependency-Guidelines-Template.md");
-	return formattedSectionText(sectionBody, includeHeading ? "Using Fluid Framework libraries" : undefined);
+	return formattedSectionText(
+		sectionBody,
+		includeHeading ? "Using Fluid Framework libraries" : undefined,
+	);
 };
 
 /**
@@ -234,9 +237,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	const sections = [
-    generateDependencyGuidelines(true),
-  ];
+	const sections = [generateDependencyGuidelines(true)];
 	if (options.installation !== "FALSE") {
 		sections.push(generateInstallationSection(packageName, options.devDependency, true));
 	}

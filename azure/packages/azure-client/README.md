@@ -2,7 +2,6 @@
 
 The azure-client package provides a simple and powerful way to consume collaborative Fluid data with the Azure Fluid Relay service.
 
-
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
