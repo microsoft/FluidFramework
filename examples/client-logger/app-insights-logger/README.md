@@ -9,3 +9,7 @@ This package provides a simple Fluid application complete with a UI view in [Rea
 ## Starting the test:
 
 -   run `pnpm run start:test-app` and navigate to http://localhost:8080/ in your web browser.
+
+## Generating telemetry events:
+
+-   There will be telemetry events that flow automatically when you start the test app. In addition to these events, you can control creating telemetry events yourself by interacting with UI app, incremeting/decrementing the shared counter and editing the shared string provided in this example
