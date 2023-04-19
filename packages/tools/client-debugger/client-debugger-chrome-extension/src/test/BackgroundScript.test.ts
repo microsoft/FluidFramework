@@ -79,19 +79,11 @@ describe("Background script unit tests", () => {
 	it("Registers message listeners on load", async () => {
 		const { browser } = globals;
 
-		console.log("Starting test");
-
 		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
-
-		console.log("Listener set up");
 
 		loadBackgroundScript(globals);
 
-		console.log("Background script loaded.");
-
 		const onMessage = await onConnectListenerPromise;
-
-		console.log("Promise awaited.");
 
 		expect(typeof onMessage).to.equal("function");
 	});

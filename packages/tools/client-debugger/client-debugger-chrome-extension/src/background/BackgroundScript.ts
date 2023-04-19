@@ -173,6 +173,3 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 
 	devtoolsPort.onMessage.addListener(devtoolsMessageListener);
 });
-
-console.log("BACKGROUND: onConnect handler bound");
-console.log(browser.runtime);
