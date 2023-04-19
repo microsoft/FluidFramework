@@ -33,8 +33,6 @@ export class TransactionStack {
 	 * Pushes a new transaction onto the stack. That transaction becomes the current transaction.
 	 * @param startRevision - the revision of the latest commit when this transaction begins
 	 * @param repairStore - an optional repair data store for helping with undo or rollback operations
-	 * @param commitRepairStore - an optional repair data store that is scoped to the entire transaction stack,
-	 * is only used if this is the first transaction in the stack.
 	 */
 	public push(startRevision: RevisionTag, repairStore?: RepairDataStore): void {
 		this.stack.push({ startRevision, repairStore });
