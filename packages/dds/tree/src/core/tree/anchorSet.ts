@@ -9,6 +9,7 @@ import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../
 import { FieldKey, EmptyKey, Delta, visitDelta, DeltaVisitor } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";
+import { PathVisitor } from "./visithPath";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -117,6 +118,14 @@ export interface AnchorEvents {
 	 * Includes changes to this node itself.
 	 */
 	subtreeChanging(anchor: AnchorNode): void;
+
+	/**
+	 * Something in this tree is changing.
+	 * A {@link PathVisitor} traversing the subtree is returned.
+	 * Called on every parent (transitively) when a change is occurring.
+	 * Includes changes to this node itself.
+	 */
+	visitSubtreeChanging(anchor: AnchorNode): PathVisitor;
 
 	/**
 	 * Value on this node is changing.
@@ -564,21 +573,48 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			}
 		};
 
+		// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
+		// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
+		// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
+		const pathVisitors: Map<PathNode, PathVisitor[]> = new Map();
+
 		const visitor: DeltaVisitor = {
 			onDelete: (start: number, count: number): void => {
 				assert(parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
 				maybeWithNode(
-					(p) => p.events.emit("childrenChanging", p),
+					(p) => {
+						p.events.emit("childrenChanging", p);
+					},
 					() => this.events.emit("childrenChanging", this),
 				);
+				const upPath: UpPath = {
+					parent,
+					parentField,
+					parentIndex: start,
+				};
+				for (const visitors of pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.onDelete(upPath, count);
+					}
+				}
 				this.moveChildren(count, { parent, parentField, parentIndex: start }, undefined);
 			},
-			onInsert: (start: number, content: Delta.ProtoNode[]): void => {
+			onInsert: (start: number, content: Delta.ProtoNodes): void => {
 				assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
 				maybeWithNode(
 					(p) => p.events.emit("childrenChanging", p),
 					() => this.events.emit("childrenChanging", this),
 				);
+				const upPath: UpPath = {
+					parent,
+					parentField,
+					parentIndex: start,
+				};
+				for (const visitors of pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.onInsert(upPath, content);
+					}
+				}
 				this.moveChildren(content.length, undefined, {
 					parent,
 					parentField,
@@ -604,16 +640,38 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				this.moveChildren(count, srcPath, { parent, parentField, parentIndex: start });
 			},
 			onSetValue: (value: Value): void => {
-				maybeWithNode((p) => p.events.emit("valueChanging", p, value));
+				maybeWithNode((p) => {
+					p.events.emit("valueChanging", p, value);
+				});
+				assert(parent !== undefined, "Must be in a node to set its value");
+				for (const visitors of pathVisitors.values()) {
+					for (const pathVisitor of visitors) {
+						pathVisitor.onSetValue(parent, value);
+					}
+				}
 			},
 			enterNode: (index: number): void => {
 				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
 				parent = { parent, parentField, parentIndex: index };
 				parentField = undefined;
-				maybeWithNode((p) => p.events.emit("subtreeChanging", p));
+				maybeWithNode((p) => {
+					// avoid multiple pass side-effects
+					if (!pathVisitors.has(p)) {
+						const visitors: PathVisitor[] = p.events.emitAndCollect(
+							"visitSubtreeChanging",
+							p,
+						);
+						if (visitors.length > 0) pathVisitors.set(p, visitors);
+					}
+					p.events.emit("subtreeChanging", p);
+				});
 			},
 			exitNode: (index: number): void => {
 				assert(parent !== undefined, 0x3ac /* Must have parent node */);
+				maybeWithNode((p) => {
+					// Remove subtree path visitors added at this node if there are any
+					pathVisitors.delete(p);
+				});
 				parentField = parent.parentField;
 				parent = parent.parent;
 			},

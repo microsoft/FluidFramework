@@ -33,6 +33,7 @@ export interface AnchorEvents {
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanging(anchor: AnchorNode): void;
     valueChanging(anchor: AnchorNode, value: Value): void;
+    visitSubtreeChanging(anchor: AnchorNode): PathVisitor;
 }
 
 // @alpha (undocumented)
@@ -305,6 +306,7 @@ declare namespace Delta {
     export {
         Root,
         ProtoNode,
+        ProtoNodes,
         Mark,
         MarkList,
         Skip,
@@ -1186,6 +1188,15 @@ export interface PathRootPrefix {
 }
 
 // @alpha
+export interface PathVisitor {
+    onDelete(path: UpPath, count: number): void;
+    // (undocumented)
+    onInsert(path: UpPath, content: Delta.ProtoNodes): void;
+    // (undocumented)
+    onSetValue(path: UpPath, value: Value): void;
+}
+
+// @alpha
 export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldUpPath): FieldUpPath;
 
 // @alpha
@@ -1220,6 +1231,9 @@ export abstract class ProgressiveEditBuilderBase<TChange> implements Progressive
 
 // @alpha
 type ProtoNode = ITreeCursorSynchronous;
+
+// @alpha
+type ProtoNodes = readonly ProtoNode[];
 
 // @alpha
 export const proxyTargetSymbol: unique symbol;
