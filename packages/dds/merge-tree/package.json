@@ -165,6 +165,9 @@
 			},
 			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_MergeTreeRevertibleDriver": {
+				"backCompat": false
 			}
 		}
 	}
