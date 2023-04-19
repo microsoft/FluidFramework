@@ -228,6 +228,9 @@ data:
             "clientConnectivityCountingEnabled": "{{ .Values.usage.clientConnectivityCountingEnabled }}",
             "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
         },
+        "shared": {
+            "transientTenants": {{ toJson .Values.shared.transientTenants }}
+        },
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}",
             "maxTokenLifetimeSec": 3600,

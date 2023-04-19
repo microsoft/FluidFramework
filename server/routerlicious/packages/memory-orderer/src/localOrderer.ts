@@ -57,12 +57,10 @@ const DefaultScribe: IScribe = {
 const DefaultDeli: IDeliState = {
 	clients: undefined,
 	durableSequenceNumber: 0,
-	epoch: 0,
 	expHash1: defaultHash,
 	logOffset: -1,
 	sequenceNumber: 0,
 	signalClientConnectionNumber: 0,
-	term: 1,
 	lastSentMSN: 0,
 	nackMessages: undefined,
 	successfullyStartedLambdas: [],
@@ -319,7 +317,6 @@ export class LocalOrderer implements IOrderer {
 		const protocolHandler = new ProtocolOpHandler(
 			scribe.minimumSequenceNumber,
 			scribe.sequenceNumber,
-			1, // TODO (Change when local orderer also ticks epoch)
 			lastState.members,
 			lastState.proposals,
 			lastState.values,
@@ -357,17 +354,16 @@ export class LocalOrderer implements IOrderer {
 			this.tenantId,
 			this.documentId,
 			summaryWriter,
-			summaryReader,
 			undefined,
 			checkpointManager,
 			scribe,
 			this.serviceConfiguration,
 			this.rawDeltasKafka,
 			protocolHandler,
-			1, // TODO (Change when local orderer also ticks epoch)
 			protocolHead,
 			scribeMessages.map((message) => message.operation),
 			undefined,
+			new Set<string>(),
 		);
 	}
 

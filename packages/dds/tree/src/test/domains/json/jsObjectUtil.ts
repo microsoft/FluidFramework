@@ -19,7 +19,7 @@ function cloneObject(obj: JsonCompatibleObject | JsonCompatible[]): JsonCompatib
 				enumerable: true,
 				configurable: true,
 				writable: true,
-				value: clone(obj[key]),
+				value: clone(obj[key] as JsonCompatible),
 			});
 		}
 		return result;

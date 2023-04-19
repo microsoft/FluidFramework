@@ -771,8 +771,7 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 
 // @alpha
 export interface ISharedTreeFork extends ISharedTreeView {
-    merge(): void;
-    pull(): void;
+    rebaseOnto(view: ISharedTreeView): void;
 }
 
 // @alpha
@@ -783,6 +782,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): ISharedTreeFork;
     readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+    merge(view: ISharedTreeFork): void;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
@@ -894,12 +894,12 @@ export type JsonCompatible = string | number | boolean | null | JsonCompatible[]
 
 // @alpha
 export type JsonCompatibleObject = {
-    [P in string]: JsonCompatible;
+    [P in string]?: JsonCompatible;
 };
 
 // @alpha
 export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
-    readonly [P in string]: JsonCompatibleReadOnly | undefined;
+    readonly [P in string]?: JsonCompatibleReadOnly;
 };
 
 // @alpha (undocumented)

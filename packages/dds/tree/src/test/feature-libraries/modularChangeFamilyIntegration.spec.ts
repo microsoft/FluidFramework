@@ -26,6 +26,7 @@ const family = new ModularChangeFamily(fieldKinds);
 
 const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");
+const fieldC: FieldKey = brand("FieldC");
 
 describe("rebase", () => {
 	it("delete over cross-field move", () => {
@@ -51,6 +52,19 @@ describe("rebase", () => {
 		const expectedDelta = normalizeDelta(family.intoDelta(expected));
 		assert.deepEqual(rebasedDelta, expectedDelta);
 	});
+
+	// See bug 4071
+	it.skip("cross-field move composition", () => {
+		const editor = new DefaultEditBuilder(family, () => {}, new AnchorSet());
+		editor.move(undefined, fieldA, 0, 1, undefined, fieldB, 0);
+		editor.move(undefined, fieldB, 0, 1, undefined, fieldC, 0);
+		editor.move(undefined, fieldA, 0, 1, undefined, fieldC, 0);
+		const [move1, move2, expected] = editor.getChanges();
+		const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
+		const actualDelta = normalizeDelta(family.intoDelta(composed));
+		const expectedDelta = normalizeDelta(family.intoDelta(expected));
+		assert.deepEqual(actualDelta, expectedDelta);
+	});
 });
 
 function normalizeDelta(
@@ -63,7 +77,9 @@ function normalizeDelta(
 
 	const normalized = new Map();
 	for (const [field, marks] of delta) {
-		normalized.set(field, normalizeDeltaField(marks, genId, map));
+		if (marks.length > 0) {
+			normalized.set(field, normalizeDeltaField(marks, genId, map));
+		}
 	}
 
 	return normalized;

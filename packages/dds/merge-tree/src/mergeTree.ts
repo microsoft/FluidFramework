@@ -281,6 +281,15 @@ function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePo
 	}
 }
 
+/**
+ * Reference types which have special bookkeeping within the merge tree (in {@link HierMergeBlock}s)
+ * and thus require updating path lengths when changed.
+ *
+ * TODO:AB#4069: This functionality is old and not well-tested. It's not clear how much of it is needed--
+ * we should better test the parts that are necessary and remove the rest.
+ */
+const hierRefTypes = ReferenceType.NestBegin | ReferenceType.NestEnd | ReferenceType.Tile;
+
 function addNodeReferences(
 	mergeTree: MergeTree,
 	node: IMergeNode,
@@ -503,7 +512,6 @@ export const clientSeqComparer: Comparer<ClientSeq> = {
 };
 
 /**
- * @deprecated For internal use only. public export will be removed.
  * @internal
  */
 export interface LRUSegment {
@@ -547,11 +555,8 @@ export class MergeTree {
 	private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
 	public readonly collabWindow = new CollaborationWindow();
 
-	public pendingSegments: List<SegmentGroup> | undefined;
-	private segmentsToScour: Heap<LRUSegment> | undefined;
-	public get getSegmentsToScour(): Heap<LRUSegment> | undefined {
-		return this.segmentsToScour;
-	}
+	public readonly pendingSegments = new List<SegmentGroup>();
+	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
@@ -762,8 +767,6 @@ export class MergeTree {
 		this.collabWindow.minSeq = minSeq;
 		this.collabWindow.collaborating = true;
 		this.collabWindow.currentSeq = currentSeq;
-		this.segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
-		this.pendingSegments = new List<SegmentGroup>();
 		this.nodeUpdateLengthNewStructure(this.root, true);
 	}
 
@@ -775,7 +778,7 @@ export class MergeTree {
 		//       segments from a snapshot.  We currently skip these for now.
 		if (segment.parent!.needsScour !== true && seq > this.collabWindow.currentSeq) {
 			segment.parent!.needsScour = true;
-			this.segmentsToScour!.add({ segment, maxSeq: seq });
+			this.segmentsToScour.add({ segment, maxSeq: seq });
 		}
 	}
 
@@ -933,7 +936,8 @@ export class MergeTree {
 				}
 			}
 		}
-		// TODO is it required to update the path lengths?
+		// TODO:AB#4069: This update might be avoidable by checking if the old segment
+		// had hierarchical refs before sliding using `segment.localRefs?.hierRefCount`.
 		if (newSegment) {
 			this.blockUpdatePathLengths(
 				newSegment.parent,
@@ -1344,7 +1348,7 @@ export class MergeTree {
 	 */
 	public ackPendingSegment(opArgs: IMergeTreeDeltaOpArgs) {
 		const seq = opArgs.sequencedMessage!.sequenceNumber;
-		const pendingSegmentGroup = this.pendingSegments!.shift()?.data;
+		const pendingSegmentGroup = this.pendingSegments.shift()?.data;
 		const nodesToUpdate: IMergeBlock[] = [];
 		let overwrite = false;
 		if (pendingSegmentGroup !== undefined) {
@@ -1427,7 +1431,7 @@ export class MergeTree {
 			if (previousProps) {
 				_segmentGroup.previousProps = [];
 			}
-			this.pendingSegments!.push(_segmentGroup);
+			this.pendingSegments.push(_segmentGroup);
 		}
 
 		if (
@@ -2144,7 +2148,7 @@ export class MergeTree {
 	 */
 	public rollback(op: IMergeTreeDeltaOp, localOpMetadata: SegmentGroup) {
 		if (op.type === MergeTreeDeltaType.REMOVE) {
-			const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
+			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;
 			if (pendingSegmentGroup === undefined || pendingSegmentGroup !== localOpMetadata) {
 				throw new Error("Rollback op doesn't match last edit");
 			}
@@ -2190,7 +2194,7 @@ export class MergeTree {
 			op.type === MergeTreeDeltaType.INSERT ||
 			op.type === MergeTreeDeltaType.ANNOTATE
 		) {
-			const pendingSegmentGroup = this.pendingSegments?.pop?.()?.data;
+			const pendingSegmentGroup = this.pendingSegments.pop?.()?.data;
 			if (
 				pendingSegmentGroup === undefined ||
 				pendingSegmentGroup !== localOpMetadata ||
@@ -2287,7 +2291,7 @@ export class MergeTree {
 		const segment = lref.getSegment();
 		if (segment) {
 			const removedRefs = segment?.localRefs?.removeLocalRef(lref);
-			if (removedRefs !== undefined) {
+			if (removedRefs !== undefined && refTypeIncludesFlag(lref, hierRefTypes)) {
 				this.blockUpdatePathLengths(
 					segment.parent,
 					TreeMaintenanceSequenceNumber,
@@ -2316,7 +2320,13 @@ export class MergeTree {
 
 		const segRef = localRefs.createLocalRef(offset, refType, properties);
 
-		this.blockUpdatePathLengths(segment.parent, TreeMaintenanceSequenceNumber, LocalClientId);
+		if (refTypeIncludesFlag(refType, hierRefTypes)) {
+			this.blockUpdatePathLengths(
+				segment.parent,
+				TreeMaintenanceSequenceNumber,
+				LocalClientId,
+			);
+		}
 		return segRef;
 	}
 

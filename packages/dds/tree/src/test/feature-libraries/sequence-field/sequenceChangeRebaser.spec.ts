@@ -329,4 +329,14 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const delta = toDelta(actual);
 		assert.deepEqual(delta, []);
 	});
+
+	// See bug 4104
+	it.skip("sandwich rebase [move, undo]", () => {
+		const move = tagChange(Change.move(1, 1, 0), tag1);
+		const moveInverse = invert(move);
+		const undo = tagChange(moveInverse, tag2);
+		const moveRollback = tagRollbackInverse(moveInverse, tag3, tag1);
+		const rebasedUndo = rebaseTagged(undo, moveRollback, move);
+		assert.deepEqual(rebasedUndo, undo);
+	});
 });
