@@ -491,7 +491,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
-    disposeFn?(): void;
+    disposeFn(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
