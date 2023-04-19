@@ -14,10 +14,14 @@ import {
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging";
+// eslint-disable-next-line import/no-internal-modules
+import { browser } from "../utilities/Globals";
 import {
 	backgroundScriptMessageLoggingOptions,
 	formatBackgroundScriptMessageForLogging,
 } from "./Logging";
+
+type Port = chrome.runtime.Port;
 
 /**
  * This script runs as the extension's Background Worker.
@@ -37,9 +41,9 @@ import {
 console.log(formatBackgroundScriptMessageForLogging("Initializing Background Worker."));
 
 // Only establish messaging when activated by the Devtools Script.
-chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void => {
+browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 	// Note: this is captured by the devtoolsMessageListener lambda below.
-	let tabConnection: chrome.runtime.Port | undefined;
+	let tabConnection: Port | undefined;
 
 	/**
 	 * Listen for init messages from the Devtools Script, and instantiate tab (Content Script)
@@ -72,7 +76,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 			console.log(formatBackgroundScriptMessageForLogging(`Connecting to tab: ${tabId}.`));
 
 			// Wait until the tab is loaded.
-			chrome.tabs.get(tabId).then(
+			browser.tabs.get(tabId).then(
 				(tab) => {
 					if (tab.id !== tabId) {
 						throw new Error(
@@ -80,7 +84,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 						);
 					}
 
-					tabConnection = chrome.tabs.connect(tabId, { name: "Content Script" });
+					tabConnection = browser.tabs.connect(tabId, { name: "Content Script" });
 
 					console.log(
 						formatBackgroundScriptMessageForLogging(`Connected to tab: ${tabId}.`),
@@ -169,3 +173,6 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 
 	devtoolsPort.onMessage.addListener(devtoolsMessageListener);
 });
+
+console.log("BACKGROUND: onConnect handler bound");
+console.log(browser.runtime);

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { browser } from "../utilities";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 /**
@@ -22,7 +23,7 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 console.log(formatDevtoolsScriptMessageForLogging("Initializing Devtools Script."));
 
 // When our extension view is launched, open the root visualization view.
-chrome.devtools.panels.create(
+browser.devtools.panels.create(
 	"Fluid Framework Devtools",
 	"images/Icon.png",
 	"devtools/rootView.html",

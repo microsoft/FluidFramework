@@ -8,7 +8,9 @@ const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
 
 const sourceDirectoryPath = path.resolve(__dirname, "src");
-const buildDirectoryPath = path.resolve(__dirname, "dist");
+
+// Directory under which the final webpacked output will be saved.
+const bundleDirectoryPath = path.resolve(__dirname, "dist", "bundle");
 
 module.exports = {
 	mode: "development", // TODO: production
@@ -36,7 +38,7 @@ module.exports = {
 		"popup/PopupScript": path.join(sourceDirectoryPath, "popup", "PopupScript.ts"),
 	},
 	output: {
-		path: buildDirectoryPath,
+		path: bundleDirectoryPath,
 		filename: "[name].js",
 		publicPath: "",
 	},
