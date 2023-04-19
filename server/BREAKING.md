@@ -1,8 +1,11 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
 ## 0.1042 Breaking Changes
--  [The foreman lambda was removed](#messageType-remotehelp-and-the-foreman-lambda-was-removed)
+
+-  [The foreman lambda was removed](#the-foreman-lambda-was-removed)
+
 ### The foreman lambda was removed
+
 The foreman lambda in `server` has not been in use for a while. The `MessageType.RemoteHelp` has been removed from `protocol-definitions`, allowing us to finally remove the foreman lambda as well.
 
 ## 0.1038 Breaking Changes
