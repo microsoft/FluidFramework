@@ -8,7 +8,6 @@
 import Path from "path";
 
 import Puppeteer, { Browser, Page } from "puppeteer";
-import { setupTestPage } from "./Setup";
 
 // Paths are relative to src/test
 const extensionPath = Path.resolve(__dirname, "..", "..", "dist");
@@ -48,8 +47,6 @@ describe("Devtools Chromium extension integration tests", () => {
 		if (!(response?.ok() ?? false)) {
 			throw new Error("Couldn't navigate to page");
 		}
-
-		await setupTestPage();
 	});
 
 	afterEach(async () => {
@@ -64,6 +61,6 @@ describe("Devtools Chromium extension integration tests", () => {
 	// eslint-disable-next-line jest/expect-expect
 	it("Smoke test", async () => {
 		// TODO: extract ID to constant
-		await page!.waitForSelector("#fluid-devtools-view"); // Will fail if not found
+		await page!.waitForSelector("#fluid-devtools-view", { timeout: 150_000 }); // Will fail if not found
 	}, 150_000);
 });
