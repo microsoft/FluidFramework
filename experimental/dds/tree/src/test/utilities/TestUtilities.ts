@@ -4,6 +4,7 @@
  */
 
 import { resolve } from 'path';
+import { assert } from '@fluidframework/common-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
 import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
@@ -40,7 +41,7 @@ import {
 	SessionId,
 	StableNodeId,
 } from '../../Identifiers';
-import { assert, fail, identity, ReplaceRecursive } from '../../Common';
+import { fail, identity, ReplaceRecursive } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
 import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
