@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
 import { EditLog } from '../EditLog';
@@ -15,7 +16,7 @@ import {
 	SequencedEditResultCallback,
 } from '../LogViewer';
 import { EditId } from '../Identifiers';
-import { assert, copyPropertyIfDefined, fail } from '../Common';
+import { copyPropertyIfDefined, fail } from '../Common';
 import { initialTree } from '../InitialTree';
 import {
 	ChangeInternal,

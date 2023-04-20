@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import {
 	Generator,
 	createWeightedGenerator,
@@ -18,7 +18,7 @@ import {
 	BaseFuzzTestState,
 } from '@fluid-internal/stochastic-test-utils';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
+import { assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
 	createSessionId,
