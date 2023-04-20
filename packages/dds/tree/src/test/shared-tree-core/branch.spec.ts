@@ -10,6 +10,7 @@ import {
 	GraphCommit,
 	Rebaser,
 	RevisionTag,
+	UndoRedoManager,
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
@@ -22,6 +23,7 @@ import {
 	singleTextCursor,
 } from "../../feature-libraries";
 import { brand } from "../../util";
+import { MockRepairDataStoreProvider } from "../utils";
 
 describe("Branches", () => {
 	/** The tag used for the "origin commit" (the commit that all other commits share as a common ancestor) */
@@ -339,6 +341,7 @@ describe("Branches", () => {
 			"testSession",
 			new Rebaser(changeFamily.rebaser),
 			changeFamily,
+			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily),
 			new AnchorSet(),
 		);
 

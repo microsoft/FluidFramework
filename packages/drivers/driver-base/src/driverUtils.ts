@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { performance } from "@fluidframework/common-utils";
+
 /**
  * Extract and return the w3c data.
  * @param url - request url for which w3c data needs to be reported.

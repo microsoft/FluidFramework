@@ -182,3 +182,10 @@ export {
 } from "./edit-manager";
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
+
+export {
+	IRepairDataStoreProvider,
+	UndoRedoManager,
+	UndoRedoManagerCommitType,
+	markCommits,
+} from "./undo";

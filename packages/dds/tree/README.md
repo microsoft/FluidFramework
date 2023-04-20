@@ -331,6 +331,8 @@ flowchart
             schema-view-->schema-stored
             dependency-tracking
             forest-->tree
+            undo-->change-family
+            undo-->rebase
         end
         core-->events-->util
         core-->id-compressor-->util

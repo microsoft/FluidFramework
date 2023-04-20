@@ -4,7 +4,12 @@
  */
 
 import type { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import {
+	assert,
+	performance,
+	stringToBuffer,
+	Uint8ArrayToString,
+} from "@fluidframework/common-utils";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base";
 import {
 	IDocumentStorageService,
