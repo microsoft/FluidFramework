@@ -1,6 +1,6 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
-	"exclude": ["dist", "node_modules"],
+	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"strictNullChecks": false,
 		"rootDir": "./src",
@@ -8,6 +8,7 @@
 		"types": [
 			"node", // TODO: this package shouldn't depend on node, but current depends on node types
 		],
+		"composite": true,
 	},
 	"include": ["src/**/*"],
 }
