@@ -223,8 +223,8 @@ function decodeTree(schema: TreeSchemaFormat): TreeSchema {
  */
 export function getSchemaString(data: SchemaData): string {
 	const encoded = encodeRepo(data);
-	assert(Versioned.Check(encoded), "Encoded schema should be versioned");
-	assert(CompiledFormat.Check(encoded), "Encoded schema should validate");
+	assert(Versioned.Check(encoded), 0x5c6 /* Encoded schema should be versioned */);
+	assert(CompiledFormat.Check(encoded), 0x5c7 /* Encoded schema should validate */);
 	// Currently no Fluid handles are used, so just use JSON.stringify.
 	return JSON.stringify(encoded);
 }

@@ -35,6 +35,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
 -   [IContainer.dispose is now required](#IContainer.dispose-is-now-required)
 -   [ISummarizerRuntime on/off op required](#isummarizerruntime-onoff-op-required)
+-   [Driver param removed from appendToMergeTreeDeltaRevertibles](#Driver-param-removed-from-appendToMergeTreeDeltaRevertibles)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -101,6 +102,15 @@ Please see the [Closure](packages/loader/container-loader/README.md#Closure) sec
 ### ISummarizerRuntime on/off op required
 
 The `on("op")` and `off("op")` methods on `ISummarizerRuntime` are now required. These listener methods are needed to accurately run summary heuristics.
+
+### Driver param removed from appendToMergeTreeDeltaRevertibles
+
+The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles has been removed. Additionally, the interface MergeTreeRevertibleDriver has been simplified, and no longer requires:
+
+-   createLocalReferencePosition
+-   localReferencePositionToPosition
+-   getPosition
+-   getContainingSegment
 
 # 2.0.0-internal.4.1.0
 
