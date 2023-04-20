@@ -106,7 +106,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_getRandomInt": {
+			"RemovedVariableDeclaration_getRandomInt": {
 				"forwardCompat": false,
 				"backCompat": false
 			}
