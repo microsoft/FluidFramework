@@ -1,6 +1,10 @@
-# @fluid-internal/tree
+# @fluid-experimental/tree2
 
 ## 2.0.0-internal.4.1.0
+
+### Major Changes
+
+-   Renamed from `@fluid-internal/tree` to `@fluid-experimental/tree2` so that this package will be included in releases for experimental use.
 
 ### Minor Changes
 
