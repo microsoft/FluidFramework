@@ -78,7 +78,9 @@ function getTestSchema(fieldKind: FieldKind): SchemaData {
 	);
 }
 
-// TODO: Tests which are testing collaboration between multiple trees should be adjusted to not do that, or moved elsewhere (merge/collaboration is not the focus of this file).
+// TODO: There are two kinds of users of this in this file. Both should be changed:
+// Tests which are testing collaboration between multiple trees should be adjusted to not do that, or moved elsewhere (merge/collaboration is not the focus of this file).
+// Tests which are using a single tree should just use a MockFluidDataStoreRuntime instead of all the complexity of TestTreeProvider.
 function createSharedTrees(
 	schemaData: SchemaData,
 	data?: JsonableTree[],
