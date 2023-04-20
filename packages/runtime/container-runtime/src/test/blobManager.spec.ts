@@ -40,15 +40,10 @@ abstract class BaseMockBlobStorage
 }
 
 class DedupeStorage extends BaseMockBlobStorage {
-	private _createBlobCount: number = 0;
 	public minTTL: number = 24 * 60 * 60; // same as ODSP
 
-	get createBlobCount(): number {
-		return this._createBlobCount;
-	}
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = await gitHashFile(blob as any);
-		this._createBlobCount += 1;
 		this.blobs.set(id, blob);
 		return { id, minTTLInSeconds: this.minTTL };
 	}
