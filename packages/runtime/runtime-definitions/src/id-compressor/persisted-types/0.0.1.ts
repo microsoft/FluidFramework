@@ -185,3 +185,7 @@ export namespace IdCreationRange {
 	export type Override = readonly [id: UnackedLocalId, override: string];
 	export type Overrides = readonly [Override, ...Override[]];
 }
+
+export type IdCreationRangeWithStashedState = IdCreationRange & {
+	stashedState: SerializedIdCompressorWithOngoingSession;
+};

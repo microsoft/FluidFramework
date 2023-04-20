@@ -16,4 +16,5 @@ export {
 	SerializedSessionIdNormalizer,
 	UnackedLocalId,
 	VersionedSerializedIdCompressor,
+	IdCreationRangeWithStashedState,
 } from "./0.0.1";

@@ -95,6 +95,7 @@ import {
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
+	IdCreationRangeWithStashedState,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -1761,8 +1762,8 @@ export class ContainerRuntime
 	 * more hacky code to modify the batch before it gets sent out.
 	 * @param content - An IdAllocationOp with "stashedState", which is a representation of un-ack'd local state.
 	 */
-	private async applyStashedIdAllocationOp(content: any) {
-		this.idCompressor = IdCompressor.deserialize(content.stashedState);
+	private async applyStashedIdAllocationOp(op: IdCreationRangeWithStashedState) {
+		this.idCompressor = IdCompressor.deserialize(op.stashedState);
 	}
 
 	private async applyStashedOp(
@@ -1780,7 +1781,9 @@ export class ContainerRuntime
 						"Received an IdAllocation op without having the compressor enabled",
 					);
 				}
-				return this.applyStashedIdAllocationOp(op as unknown as IdCreationRange);
+				return this.applyStashedIdAllocationOp(
+					op as unknown as IdCreationRangeWithStashedState,
+				);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;

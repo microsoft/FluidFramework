@@ -16,6 +16,7 @@ export {
 	SerializedSessionIdNormalizer,
 	UnackedLocalId,
 	VersionedSerializedIdCompressor,
+	IdCreationRangeWithStashedState,
 } from "./persisted-types";
 
 export { IIdCompressorCore, IIdCompressor } from "./idCompressor";
