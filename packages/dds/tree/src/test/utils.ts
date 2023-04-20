@@ -520,6 +520,10 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 		// Noop
 	}
 
+	public applyDelta(change: Delta.Root): void {
+		// Noop
+	}
+
 	public createRepairData(): MockRepairDataStore {
 		return new MockRepairDataStore();
 	}
