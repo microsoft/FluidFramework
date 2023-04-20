@@ -16,7 +16,14 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../../pendingStateManager";
-import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../opLifecycle";
+import {
+	BatchMessage,
+	IBatch,
+	OpCompressor,
+	OpGroupingManager,
+	OpSplitter,
+	Outbox,
+} from "../../opLifecycle";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -100,7 +107,7 @@ describe("Outbox", () => {
 	const getMockSplitter = (enabled: boolean, chunkSizeInBytes: number): Partial<OpSplitter> => ({
 		chunkSizeInBytes,
 		isBatchChunkingEnabled: enabled,
-		splitCompressedBatch: (batch: IBatch): IBatch => {
+		splitFirstBatchMessage: (batch: IBatch): IBatch => {
 			state.batchesSplit.push(batch);
 			return batch;
 		},
@@ -193,6 +200,7 @@ describe("Outbox", () => {
 				disablePartialFlush: params.disablePartialFlush ?? false,
 			},
 			logger: mockLogger,
+			groupingManager: new OpGroupingManager(false),
 		});
 
 	beforeEach(() => {

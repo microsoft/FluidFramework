@@ -32,7 +32,7 @@ import {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	singleTextCursor,
-	ForestRepairDataStore,
+	repairDataStoreFromForest,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
@@ -66,7 +66,7 @@ describe("ChunkedForest", () => {
 		assert(!chunk.isShared());
 		compareForest(forest, [initialState]);
 
-		const repairStore = new ForestRepairDataStore(() => forest);
+		const repairStore = repairDataStoreFromForest(forest);
 		const delta: Delta.Root = new Map([
 			[rootFieldKeySymbol, [{ type: Delta.MarkType.Delete, count: 1 }]],
 		]);

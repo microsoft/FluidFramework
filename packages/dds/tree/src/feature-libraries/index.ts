@@ -83,7 +83,6 @@ export {
 	EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	FieldChangeEncoder,
 	FieldEditor,
 	NodeChangeset,
 	ValueChange,
@@ -96,8 +95,6 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeChangeEncoder,
-	NodeChangeDecoder,
 	CrossFieldManager,
 	CrossFieldTarget,
 	FieldKind,
@@ -122,7 +119,11 @@ export {
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
-export { ForestRepairDataStore } from "./forestRepairDataStore";
+export {
+	ForestRepairDataStore,
+	ForestRepairDataStoreProvider,
+	repairDataStoreFromForest,
+} from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";

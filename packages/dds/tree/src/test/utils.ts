@@ -22,8 +22,15 @@ import {
 	ITestFluidObject,
 	createSummarizer,
 	summarizeNow,
+	ITestContainerConfig,
 } from "@fluidframework/test-utils";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
 	FieldKinds,
@@ -52,8 +59,13 @@ import {
 	compareUpPaths,
 	UpPath,
 	clonePath,
+	RepairDataStore,
+	ITreeCursorSynchronous,
+	FieldKey,
+	IRepairDataStoreProvider,
 } from "../core";
 import { brand, makeArray } from "../util";
+import { ICodecFamily } from "../codec";
 
 // Testing utilities
 
@@ -155,9 +167,9 @@ export class TestTreeProvider {
 	/**
 	 * Create a new {@link TestTreeProvider} with a number of trees pre-initialized.
 	 * @param trees - the number of trees to initialize this provider with. This is the same as calling
+	 * {@link create} followed by {@link createTree} _trees_ times.
 	 * @param summarizeType - enum to manually, automatically, or disable summarization
 	 * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
-	 * {@link create} followed by {@link createTree} _trees_ times.
 	 *
 	 * @example
 	 * ```ts
@@ -227,10 +239,23 @@ export class TestTreeProvider {
 	 * _i_ is the index of the tree in order of creation.
 	 */
 	public async createTree(): Promise<ISharedTree> {
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+		const testContainerConfig: ITestContainerConfig = {
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.Container.enableOfflineLoad": true,
+				}),
+			},
+		};
 		const container =
 			this.trees.length === 0
-				? await this.provider.makeTestContainer()
-				: await this.provider.loadTestContainer();
+				? await this.provider.makeTestContainer(testContainerConfig)
+				: await this.provider.loadTestContainer({
+						// TODO: remove this once SharedTree has full reconnect logic implemented (AB#4023)
+						simulateReadConnectionUsingDelay: false,
+				  });
 
 		this._containers.push(container);
 		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
@@ -279,6 +304,58 @@ export class TestTreeProvider {
 				return Reflect.get(this.provider, prop, receiver) as unknown;
 			},
 		});
+	}
+}
+
+/**
+ * A test helper class that creates one or more SharedTrees connected to a mock runtime.
+ */
+export class TestTreeProviderLite {
+	private static readonly treeId = "TestSharedTree";
+	private readonly runtimeFactory = new MockContainerRuntimeFactory();
+	public readonly trees: readonly ISharedTree[];
+
+	/**
+	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
+	 * @param trees - the number of trees created by this provider.
+	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
+	 *
+	 * @example
+	 * ```ts
+	 * const provider = new TestTreeProviderLite(2);
+	 * assert(provider.trees[0].isAttached());
+	 * assert(provider.trees[1].isAttached());
+	 * provider.processMessages();
+	 * ```
+	 */
+	public constructor(trees = 1, private readonly factory = new SharedTreeFactory()) {
+		assert(trees >= 1, "Must initialize provider with at least one tree");
+		const t: ISharedTree[] = [];
+		for (let i = 0; i < trees; i++) {
+			const runtime = new MockFluidDataStoreRuntime();
+			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
+			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			tree.connect({
+				deltaConnection: containerRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			t.push(tree);
+		}
+		this.trees = t;
+	}
+
+	public processMessages(count?: number): void {
+		this.runtimeFactory.processSomeMessages(
+			count ?? this.runtimeFactory.outstandingMessageCount,
+		);
+	}
+
+	public get minimumSequenceNumber(): number {
+		return this.runtimeFactory.getMinSeq();
+	}
+
+	public get sequenceNumber(): number {
+		return this.runtimeFactory.sequenceNumber;
 	}
 }
 
@@ -464,5 +541,83 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 		// Make a nice error message:
 		assert.deepEqual(clonePath(path), clonePath(expectedPath));
 		assert.fail("unequal paths, but clones compared equal");
+	}
+}
+
+export class MockRepairDataStore implements RepairDataStore {
+	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
+
+	public capture(change: Delta.Root, revision: RevisionTag): void {
+		const existing = this.capturedData.get(revision);
+
+		if (existing === undefined) {
+			this.capturedData.set(revision, [revision]);
+		} else {
+			existing.push(revision);
+		}
+	}
+
+	public getNodes(
+		revision: RevisionTag,
+		path: UpPath | undefined,
+		key: FieldKey,
+		index: number,
+		count: number,
+	): ITreeCursorSynchronous[] {
+		throw new Error("Method not implemented.");
+	}
+
+	public getValue(revision: RevisionTag, path: UpPath): Value {
+		throw new Error("Method not implemented.");
+	}
+}
+
+export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
+	public freeze(): void {
+		// Noop
+	}
+
+	public createRepairData(): MockRepairDataStore {
+		return new MockRepairDataStore();
+	}
+
+	public clone(): IRepairDataStoreProvider {
+		return new MockRepairDataStoreProvider();
+	}
+}
+
+/**
+ * Constructs a basic suite of round-trip tests for all versions of a codec family.
+ * This helper should generally be wrapped in a `describe` block.
+ */
+export function makeEncodingTestSuite<TDecoded>(
+	family: ICodecFamily<TDecoded>,
+	encodingTestData: [name: string, data: TDecoded][],
+): void {
+	for (const version of family.getSupportedFormats()) {
+		describe(`version ${version}`, () => {
+			const codec = family.resolve(version);
+			for (const [name, data] of encodingTestData) {
+				describe(name, () => {
+					it("json roundtrip", () => {
+						const encoded = codec.json.encode(data);
+						const decoded = codec.json.decode(encoded);
+						assert.deepEqual(decoded, data);
+					});
+
+					it("json roundtrip with stringification", () => {
+						const encoded = JSON.stringify(codec.json.encode(data));
+						const decoded = codec.json.decode(JSON.parse(encoded));
+						assert.deepEqual(decoded, data);
+					});
+
+					it("binary roundtrip", () => {
+						const encoded = codec.binary.encode(data);
+						const decoded = codec.binary.decode(encoded);
+						assert.deepEqual(decoded, data);
+					});
+				});
+			}
+		});
 	}
 }

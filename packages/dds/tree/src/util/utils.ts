@@ -192,7 +192,7 @@ export type JsonCompatible =
  * but instead mostly restricts access to it.
  * @alpha
  */
-export type JsonCompatibleObject = { [P in string]: JsonCompatible };
+export type JsonCompatibleObject = { [P in string]?: JsonCompatible };
 
 /**
  * Use for readonly view of Json compatible data.
@@ -208,7 +208,7 @@ export type JsonCompatibleReadOnly =
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| readonly JsonCompatibleReadOnly[]
-	| { readonly [P in string]: JsonCompatibleReadOnly | undefined };
+	| { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
  * Returns if a particular json compatible value is an object.
@@ -216,6 +216,6 @@ export type JsonCompatibleReadOnly =
  */
 export function isJsonObject(
 	value: JsonCompatibleReadOnly,
-): value is { readonly [P in string]: JsonCompatibleReadOnly | undefined } {
+): value is { readonly [P in string]?: JsonCompatibleReadOnly } {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }

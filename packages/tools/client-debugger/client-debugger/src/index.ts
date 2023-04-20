@@ -43,13 +43,13 @@
  * @packageDocumentation
  */
 
-export { MemberChangeKind } from "./AudienceMetadata";
+export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
+export { FluidObjectId, HasContainerId, HasFluidObjectId } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
-	FluidObjectId,
 	FluidObjectNode,
 	FluidObjectNodeBase,
 	FluidObjectTreeNode,
@@ -69,10 +69,16 @@ export {
 	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
+export {
+	ContainerDevtoolsFeature,
+	ContainerDevtoolsFeatureFlags,
+	DevtoolsFeature,
+	DevtoolsFeatureFlags,
+} from "./Features";
 export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+export { DevtoolsLogger } from "./DevtoolsLogger";
 export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
-export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -80,66 +86,37 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
-	AudienceClientMetadata,
-	AudienceSummaryMessage,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessageType,
+	AudienceSummary,
+	CloseContainer,
+	ConnectContainer,
+	ContainerDevtoolsFeatures,
+	ContainerList,
+	ContainerStateChange,
+	ContainerStateHistory,
+	DataVisualization,
+	DevtoolsFeatures,
 	devtoolsMessageSource,
-	GetAudienceMessage,
-	GetAudienceMessageType,
-	HasContainerId,
-	HasFluidObjectId,
-	ConnectContainerMessage,
-	ConnectContainerMessageData,
-	ConnectContainerMessageType,
-	DisconnectContainerMessage,
-	DisconnectContainerMessageData,
-	DisconnectContainerMessageType,
-	CloseContainerMessage,
-	CloseContainerMessageData,
-	CloseContainerMessageType,
-	ContainerListMessage,
-	ContainerListMessageData,
-	ContainerListMessageType,
-	ContainerStateChangeMessage,
-	ContainerStateChangeMessageData,
-	ContainerStateChangeMessageType,
-	ContainerStateHistoryMessage,
-	ContainerStateHistoryMessageData,
-	ContainerStateHistoryMessageType,
-	DataVisualizationMessage,
-	DataVisualizationMessageData,
-	DataVisualizationMessageType,
-	GetContainerListMessage,
-	GetContainerListMessageType,
-	GetContainerStateMessage,
-	GetContainerStateMessageData,
-	GetContainerStateMessageType,
-	GetDataVisualizationMessage,
-	GetDataVisualizationMessageData,
-	GetDataVisualizationMessageType,
-	GetRootDataVisualizationsMessage,
-	GetRootDataVisualizationsMessageData,
-	GetRootDataVisualizationsMessageType,
-	IDebuggerMessage,
+	DisconnectContainer,
+	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
+	GetContainerList,
+	GetContainerState,
+	GetDataVisualization,
+	GetDevtoolsFeatures,
+	GetRootDataVisualizations,
+	GetTelemetryHistory,
+	IDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
-	ISourcedDebuggerMessage,
-	ITimestampedTelemetryEvent,
-	RootDataVisualizationsMessage,
-	RootDataVisualizationsMessageData,
-	RootDataVisualizationsMessageType,
-	TelemetryEventMessage,
-	TelemetryEventMessageData,
-	TelemetryEventMessageType,
-	TelemetryHistoryMessage,
-	TelemetryHistoryMessageType,
-	GetTelemetryHistoryMessage,
-	GetTelemetryHistoryMessageType,
+	ISourcedDevtoolsMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
 	isDebuggerMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	RootDataVisualizations,
+	TelemetryEvent,
+	TelemetryHistory,
 } from "./messaging";
+export { ITimestampedTelemetryEvent } from "./TelemetryMetadata";

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { ICodecFamily } from "../codec";
 import {
-	ChangeEncoder,
 	ChangeFamily,
 	ProgressiveEditBuilder,
 	ChangeRebaser,
@@ -51,8 +51,8 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.rebaser;
 	}
 
-	public get encoder(): ChangeEncoder<DefaultChangeset> {
-		return this.modularFamily.encoder;
+	public get codecs(): ICodecFamily<DefaultChangeset> {
+		return this.modularFamily.codecs;
 	}
 
 	public intoDelta(change: DefaultChangeset): Delta.Root {

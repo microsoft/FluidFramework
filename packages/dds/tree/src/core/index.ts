@@ -64,6 +64,7 @@ export {
 	setGenericTreeField,
 	rootFieldKeySymbol,
 	DeltaVisitor,
+	PathVisitor,
 	SparseNode,
 	getDescendant,
 	compareUpPaths,
@@ -133,7 +134,6 @@ export {
 } from "./schema-stored";
 
 export {
-	ChangeEncoder,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
@@ -141,10 +141,12 @@ export {
 } from "./change-family";
 
 export {
+	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	isRevisionTag,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
@@ -180,3 +182,10 @@ export {
 } from "./edit-manager";
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
+
+export {
+	IRepairDataStoreProvider,
+	UndoRedoManager,
+	UndoRedoManagerCommitType,
+	markCommits,
+} from "./undo";

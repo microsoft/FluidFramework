@@ -168,6 +168,7 @@ import {
 	Outbox,
 	OpSplitter,
 	RemoteMessageProcessor,
+	OpGroupingManager,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
@@ -205,7 +206,7 @@ export interface ISummaryBaseConfiguration {
 	/**
 	 * Defines the maximum allowed time to wait for a pending summary ack.
 	 * The maximum amount of time client will wait for a summarize is the minimum of
-	 * maxSummarizeAckWaitTime (currently 10 * 60 * 1000) and maxAckWaitTime.
+	 * maxSummarizeAckWaitTime (currently 3 * 60 * 1000) and maxAckWaitTime.
 	 */
 	maxAckWaitTime: number;
 	/**
@@ -301,7 +302,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
 	minOpsForLastSummaryAttempt: 10,
 
-	maxAckWaitTime: 10 * 60 * 1000, // 10 mins.
+	maxAckWaitTime: 3 * 60 * 1000, // 3 mins.
 
 	maxOpsSinceLastSummary: 7000,
 
@@ -402,6 +403,17 @@ export interface IContainerRuntimeOptions {
 	 * can be used to disable it at runtime.
 	 */
 	readonly enableOpReentryCheck?: boolean;
+	/**
+	 * If enabled, the runtime will group messages within a batch into a single
+	 * message to be sent to the service.
+	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
+	 *
+	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
+	 * flag can be used to disable it at runtime.
+	 *
+	 * @experimental Not ready for use.
+	 */
+	readonly enableGroupedBatching?: boolean;
 }
 
 /**
@@ -643,6 +655,7 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
+			enableGroupedBatching = false,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -726,6 +739,7 @@ export class ContainerRuntime
 				maxBatchSizeInBytes,
 				chunkSizeInBytes,
 				enableOpReentryCheck,
+				enableGroupedBatching,
 			},
 			containerScope,
 			logger,
@@ -1056,6 +1070,9 @@ export class ContainerRuntime
 		const disableChunking = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
 		);
+
+		const opGroupingManager = new OpGroupingManager(this.groupedBatchingEnabled);
+
 		const opSplitter = new OpSplitter(
 			chunks,
 			this.context.submitBatchFn,
@@ -1063,9 +1080,11 @@ export class ContainerRuntime
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
+
 		this.remoteMessageProcessor = new RemoteMessageProcessor(
 			opSplitter,
 			new OpDecompressor(this.mc.logger),
+			opGroupingManager,
 		);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
@@ -1193,9 +1212,15 @@ export class ContainerRuntime
 			() => this.storage,
 			(localId: string, blobId?: string) => {
 				if (!this.disposed) {
-					this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
-						localId,
-						blobId,
+					// eslint-disable-next-line @typescript-eslint/no-floating-promises
+					Promise.resolve().then(() => {
+						// Blob attaches need to be in their own batch (grouped batching would hide metadata)
+						this.flush();
+						this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
+							localId,
+							blobId,
+						});
+						this.flush();
 					});
 				}
 			},
@@ -1203,7 +1228,6 @@ export class ContainerRuntime
 			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			this,
 			pendingRuntimeState?.pendingAttachmentBlobs,
-			() => this.getCurrentReferenceTimestampMs(),
 		);
 
 		this.scheduleManager = new ScheduleManager(
@@ -1252,6 +1276,7 @@ export class ContainerRuntime
 				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
+			groupingManager: opGroupingManager,
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1400,6 +1425,7 @@ export class ContainerRuntime
 				disablePartialFlush,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
+			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1814,8 +1840,16 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
-		const message = this.remoteMessageProcessor.process(messageCopy);
+		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+			this.processCore(message, local, runtimeMessage);
+		}
+	}
 
+	private processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		runtimeMessage: boolean,
+	) {
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -1870,8 +1904,7 @@ export class ContainerRuntime
 					}
 			}
 
-			// For back-compat, notify only about runtime messages for now.
-			if (runtimeMessage) {
+			if (runtimeMessage || this.groupedBatchingEnabled) {
 				this.emit("op", message, runtimeMessage);
 			}
 
@@ -3177,6 +3210,26 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
+		const recoveryMethod = this.mc.config.getString(
+			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
+		);
+		if (recoveryMethod === "restart") {
+			const error = new GenericError("Restarting summarizer instead of refreshing");
+			this.mc.logger.sendTelemetryEvent(
+				{
+					...event,
+					eventName: "ClosingSummarizerOnSummaryStale",
+					codePath: event.eventName,
+					message: "Stopping fetch from storage",
+					versionId: versionId != null ? versionId : undefined,
+				},
+				error,
+			);
+			this._summarizer?.stop("latestSummaryStateStale");
+			this.closeFn();
+			throw error;
+		}
+
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
@@ -3315,6 +3368,13 @@ export class ContainerRuntime
 				`"minIdleTime" [${configuration.minIdleTime}] cannot be greater than "maxIdleTime" [${configuration.maxIdleTime}]`,
 			);
 		}
+	}
+
+	private get groupedBatchingEnabled(): boolean {
+		const killSwitch = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableGroupedBatching",
+		);
+		return killSwitch !== true && this.runtimeOptions.enableGroupedBatching;
 	}
 }
 
