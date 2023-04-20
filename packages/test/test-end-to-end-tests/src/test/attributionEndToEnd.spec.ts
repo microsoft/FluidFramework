@@ -122,7 +122,10 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 		},
 	});
 
-	it("Can attribute content from multiple collaborators", async () => {
+	it("Can attribute content from multiple collaborators", async function () {
+		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+			this.skip();
+		}
 		const attributor = createRuntimeAttributor();
 		const container1 = await provider.makeTestContainer(getTestConfig(attributor));
 		const sharedString1 = await sharedStringFromContainer(container1);
