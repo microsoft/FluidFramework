@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { assert, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {
 	getAuthorizationTokenFromCredentials,
@@ -99,11 +99,11 @@ export function getPropsToLogFromResponse(headers: {
 
 export class RouterliciousRestWrapper extends RestWrapper {
 	private readonly restLess = new RestLessClient();
+	private token: ITokenResponse | undefined;
 
 	constructor(
 		logger: ITelemetryLogger,
 		private readonly rateLimiter: RateLimiter,
-		private token: ITokenResponse,
 		private readonly fetchRefreshedToken: TokenFetcher,
 		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
 		private readonly useRestLess: boolean,
@@ -118,6 +118,10 @@ export class RouterliciousRestWrapper extends RestWrapper {
 		statusCode: number,
 		canRetry = true,
 	): Promise<IR11sResponse<T>> {
+		if (this.token === undefined) {
+			const token = await this.fetchRefreshedToken();
+			this.setToken(token);
+		}
 		const config = {
 			...requestConfig,
 			headers: this.generateHeaders(requestConfig.headers),
@@ -202,6 +206,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	private generateHeaders(
 		requestHeaders?: AxiosRequestHeaders | undefined,
 	): Record<string, string> {
+		assert(this.token !== undefined, "token should be present");
 		const correlationId = requestHeaders?.["x-correlation-id"] ?? uuid();
 
 		return {
@@ -215,8 +220,13 @@ export class RouterliciousRestWrapper extends RestWrapper {
 		};
 	}
 
-	public getToken(): ITokenResponse {
-		return this.token;
+	public async getToken(): Promise<ITokenResponse> {
+		if (this.token !== undefined) {
+			return this.token;
+		}
+		const token = await this.fetchRefreshedToken();
+		this.setToken(token);
+		return token;
 	}
 
 	public setToken(token: ITokenResponse) {
@@ -228,7 +238,6 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
 		logger: ITelemetryLogger,
 		rateLimiter: RateLimiter,
-		token: ITokenResponse,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
 		useRestLess: boolean,
@@ -238,7 +247,6 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		super(
 			logger,
 			rateLimiter,
-			token,
 			fetchToken,
 			getAuthorizationHeader,
 			useRestLess,
@@ -290,12 +298,9 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 			return getAuthorizationTokenFromCredentials(credentials);
 		};
 
-		const storagetoken = await fetchStorageToken();
-
 		const restWrapper = new RouterliciousStorageRestWrapper(
 			logger,
 			rateLimiter,
-			storagetoken,
 			fetchStorageToken,
 			getAuthorizationHeader,
 			useRestLess,
@@ -311,7 +316,6 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
 		logger: ITelemetryLogger,
 		rateLimiter: RateLimiter,
-		token: ITokenResponse,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
 		useRestLess: boolean,
@@ -321,7 +325,6 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 		super(
 			logger,
 			rateLimiter,
-			token,
 			fetchToken,
 			getAuthorizationHeader,
 			useRestLess,
@@ -364,12 +367,9 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 			);
 		};
 
-		const newtoken = await fetchOrdererToken();
-
 		const restWrapper = new RouterliciousOrdererRestWrapper(
 			logger,
 			rateLimiter,
-			newtoken,
 			fetchOrdererToken,
 			getAuthorizationHeader,
 			useRestLess,

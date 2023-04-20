@@ -87,3 +87,14 @@ export function getW3CData(url: string, initiatorType: string) {
 		reqStartToResponseEndTime,
 	};
 }
+
+// An implementation of Promise.race that gives you the winner of the promise race
+export async function promiseRaceWithWinner<T>(
+	promises: Promise<T>[],
+): Promise<{ index: number; value: T }> {
+	return new Promise((resolve, reject) => {
+		promises.forEach((p, index) => {
+			p.then((v) => resolve({ index, value: v })).catch(reject);
+		});
+	});
+}
