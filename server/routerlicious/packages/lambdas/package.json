@@ -100,5 +100,8 @@
 		"ts-loader": "^9.3.0",
 		"typescript": "~4.5.5",
 		"webpack": "^5.76.2"
+	},
+	"typeValidation": {
+		"broken": {}
 	}
 }
