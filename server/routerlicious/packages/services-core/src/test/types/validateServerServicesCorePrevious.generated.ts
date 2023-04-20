@@ -832,6 +832,30 @@ use_old_InterfaceDeclaration_IDocumentLambdaServerConfiguration(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDocumentRepository": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDocumentRepository():
+    TypeOnly<old.IDocumentRepository>;
+declare function use_current_InterfaceDeclaration_IDocumentRepository(
+    use: TypeOnly<current.IDocumentRepository>);
+use_current_InterfaceDeclaration_IDocumentRepository(
+    get_old_InterfaceDeclaration_IDocumentRepository());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDocumentRepository": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDocumentRepository():
+    TypeOnly<current.IDocumentRepository>;
+declare function use_old_InterfaceDeclaration_IDocumentRepository(
+    use: TypeOnly<old.IDocumentRepository>);
+use_old_InterfaceDeclaration_IDocumentRepository(
+    get_current_InterfaceDeclaration_IDocumentRepository());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDocumentStorage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDocumentStorage():
@@ -2320,6 +2344,54 @@ use_old_InterfaceDeclaration_ITicketedSignalMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITokenRevocationManager": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITokenRevocationManager():
+    TypeOnly<old.ITokenRevocationManager>;
+declare function use_current_InterfaceDeclaration_ITokenRevocationManager(
+    use: TypeOnly<current.ITokenRevocationManager>);
+use_current_InterfaceDeclaration_ITokenRevocationManager(
+    get_old_InterfaceDeclaration_ITokenRevocationManager());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITokenRevocationManager": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITokenRevocationManager():
+    TypeOnly<current.ITokenRevocationManager>;
+declare function use_old_InterfaceDeclaration_ITokenRevocationManager(
+    use: TypeOnly<old.ITokenRevocationManager>);
+use_old_InterfaceDeclaration_ITokenRevocationManager(
+    get_current_InterfaceDeclaration_ITokenRevocationManager());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITokenRevocationResponse": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITokenRevocationResponse():
+    TypeOnly<old.ITokenRevocationResponse>;
+declare function use_current_InterfaceDeclaration_ITokenRevocationResponse(
+    use: TypeOnly<current.ITokenRevocationResponse>);
+use_current_InterfaceDeclaration_ITokenRevocationResponse(
+    get_old_InterfaceDeclaration_ITokenRevocationResponse());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITokenRevocationResponse": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITokenRevocationResponse():
+    TypeOnly<current.ITokenRevocationResponse>;
+declare function use_old_InterfaceDeclaration_ITokenRevocationResponse(
+    use: TypeOnly<old.ITokenRevocationResponse>);
+use_old_InterfaceDeclaration_ITokenRevocationResponse(
+    get_current_InterfaceDeclaration_ITokenRevocationResponse());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ITopic": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ITopic():
@@ -2512,6 +2584,30 @@ use_old_InterfaceDeclaration_IWebSocketServer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IWebSocketTracker": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IWebSocketTracker():
+    TypeOnly<old.IWebSocketTracker>;
+declare function use_current_InterfaceDeclaration_IWebSocketTracker(
+    use: TypeOnly<current.IWebSocketTracker>);
+use_current_InterfaceDeclaration_IWebSocketTracker(
+    get_old_InterfaceDeclaration_IWebSocketTracker());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IWebSocketTracker": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IWebSocketTracker():
+    TypeOnly<current.IWebSocketTracker>;
+declare function use_old_InterfaceDeclaration_IWebSocketTracker(
+    use: TypeOnly<old.IWebSocketTracker>);
+use_old_InterfaceDeclaration_IWebSocketTracker(
+    get_current_InterfaceDeclaration_IWebSocketTracker());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IZookeeperClient": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IZookeeperClient():
@@ -2652,6 +2748,30 @@ declare function use_old_ClassDeclaration_MongoDatabaseManager(
     use: TypeOnly<old.MongoDatabaseManager>);
 use_old_ClassDeclaration_MongoDatabaseManager(
     get_current_ClassDeclaration_MongoDatabaseManager());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_MongoDocumentRepository": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_MongoDocumentRepository():
+    TypeOnly<old.MongoDocumentRepository>;
+declare function use_current_ClassDeclaration_MongoDocumentRepository(
+    use: TypeOnly<current.MongoDocumentRepository>);
+use_current_ClassDeclaration_MongoDocumentRepository(
+    get_old_ClassDeclaration_MongoDocumentRepository());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_MongoDocumentRepository": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_MongoDocumentRepository():
+    TypeOnly<current.MongoDocumentRepository>;
+declare function use_old_ClassDeclaration_MongoDocumentRepository(
+    use: TypeOnly<old.MongoDocumentRepository>);
+use_old_ClassDeclaration_MongoDocumentRepository(
+    get_current_ClassDeclaration_MongoDocumentRepository());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2944,6 +3064,30 @@ use_old_TypeAliasDeclaration_TokenGenerator(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TokenRevocationError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_TokenRevocationError():
+    TypeOnly<old.TokenRevocationError>;
+declare function use_current_ClassDeclaration_TokenRevocationError(
+    use: TypeOnly<current.TokenRevocationError>);
+use_current_ClassDeclaration_TokenRevocationError(
+    get_old_ClassDeclaration_TokenRevocationError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TokenRevocationError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_TokenRevocationError():
+    TypeOnly<current.TokenRevocationError>;
+declare function use_old_ClassDeclaration_TokenRevocationError(
+    use: TypeOnly<old.TokenRevocationError>);
+use_old_ClassDeclaration_TokenRevocationError(
+    get_current_ClassDeclaration_TokenRevocationError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ZookeeperClientConstructor": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ZookeeperClientConstructor():
@@ -3036,6 +3180,30 @@ declare function use_old_VariableDeclaration_clientConnectivityStorageId(
     use: TypeOnly<typeof old.clientConnectivityStorageId>);
 use_old_VariableDeclaration_clientConnectivityStorageId(
     get_current_VariableDeclaration_clientConnectivityStorageId());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createCompositeTokenId": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createCompositeTokenId():
+    TypeOnly<typeof old.createCompositeTokenId>;
+declare function use_current_FunctionDeclaration_createCompositeTokenId(
+    use: TypeOnly<typeof current.createCompositeTokenId>);
+use_current_FunctionDeclaration_createCompositeTokenId(
+    get_old_FunctionDeclaration_createCompositeTokenId());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createCompositeTokenId": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createCompositeTokenId():
+    TypeOnly<typeof current.createCompositeTokenId>;
+declare function use_old_FunctionDeclaration_createCompositeTokenId(
+    use: TypeOnly<typeof old.createCompositeTokenId>);
+use_old_FunctionDeclaration_createCompositeTokenId(
+    get_current_FunctionDeclaration_createCompositeTokenId());
 
 /*
 * Validate forward compat by using old type in place of current type

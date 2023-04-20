@@ -400,6 +400,30 @@ use_old_ClassDeclaration_TestKafka(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TestNotImplementedDocumentRepository": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_TestNotImplementedDocumentRepository():
+    TypeOnly<old.TestNotImplementedDocumentRepository>;
+declare function use_current_ClassDeclaration_TestNotImplementedDocumentRepository(
+    use: TypeOnly<current.TestNotImplementedDocumentRepository>);
+use_current_ClassDeclaration_TestNotImplementedDocumentRepository(
+    get_old_ClassDeclaration_TestNotImplementedDocumentRepository());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_TestNotImplementedDocumentRepository": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_TestNotImplementedDocumentRepository():
+    TypeOnly<current.TestNotImplementedDocumentRepository>;
+declare function use_old_ClassDeclaration_TestNotImplementedDocumentRepository(
+    use: TypeOnly<old.TestNotImplementedDocumentRepository>);
+use_old_ClassDeclaration_TestNotImplementedDocumentRepository(
+    get_current_ClassDeclaration_TestNotImplementedDocumentRepository());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_TestProducer": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_TestProducer():

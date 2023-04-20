@@ -16,6 +16,30 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DummyTokenRevocationManager": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_DummyTokenRevocationManager():
+    TypeOnly<old.DummyTokenRevocationManager>;
+declare function use_current_ClassDeclaration_DummyTokenRevocationManager(
+    use: TypeOnly<current.DummyTokenRevocationManager>);
+use_current_ClassDeclaration_DummyTokenRevocationManager(
+    get_old_ClassDeclaration_DummyTokenRevocationManager());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DummyTokenRevocationManager": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_DummyTokenRevocationManager():
+    TypeOnly<current.DummyTokenRevocationManager>;
+declare function use_old_ClassDeclaration_DummyTokenRevocationManager(
+    use: TypeOnly<old.DummyTokenRevocationManager>);
+use_old_ClassDeclaration_DummyTokenRevocationManager(
+    get_current_ClassDeclaration_DummyTokenRevocationManager());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidServiceError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FluidServiceError():
@@ -160,6 +184,30 @@ use_old_ClassDeclaration_ScheduledJob(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_WebSocketTracker": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_WebSocketTracker():
+    TypeOnly<old.WebSocketTracker>;
+declare function use_current_ClassDeclaration_WebSocketTracker(
+    use: TypeOnly<current.WebSocketTracker>);
+use_current_ClassDeclaration_WebSocketTracker(
+    get_old_ClassDeclaration_WebSocketTracker());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_WebSocketTracker": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_WebSocketTracker():
+    TypeOnly<current.WebSocketTracker>;
+declare function use_old_ClassDeclaration_WebSocketTracker(
+    use: TypeOnly<old.WebSocketTracker>);
+use_old_ClassDeclaration_WebSocketTracker(
+    get_current_ClassDeclaration_WebSocketTracker());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_WinstonLumberjackEngine": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_WinstonLumberjackEngine():
@@ -300,6 +348,30 @@ declare function use_old_FunctionDeclaration_deleteSummarizedOps(
     use: TypeOnly<typeof old.deleteSummarizedOps>);
 use_old_FunctionDeclaration_deleteSummarizedOps(
     get_current_FunctionDeclaration_deleteSummarizedOps());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_executeApiWithMetric": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_executeApiWithMetric():
+    TypeOnly<typeof old.executeApiWithMetric>;
+declare function use_current_FunctionDeclaration_executeApiWithMetric(
+    use: TypeOnly<typeof current.executeApiWithMetric>);
+use_current_FunctionDeclaration_executeApiWithMetric(
+    get_old_FunctionDeclaration_executeApiWithMetric());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_executeApiWithMetric": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_executeApiWithMetric():
+    TypeOnly<typeof current.executeApiWithMetric>;
+declare function use_old_FunctionDeclaration_executeApiWithMetric(
+    use: TypeOnly<typeof old.executeApiWithMetric>);
+use_old_FunctionDeclaration_executeApiWithMetric(
+    get_current_FunctionDeclaration_executeApiWithMetric());
 
 /*
 * Validate forward compat by using old type in place of current type

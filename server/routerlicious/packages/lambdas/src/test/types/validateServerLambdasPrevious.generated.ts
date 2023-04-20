@@ -856,18 +856,6 @@ use_old_VariableDeclaration_generateClientId(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_getRandomInt": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_getRandomInt": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_isDocumentSessionValid": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_isDocumentSessionValid():

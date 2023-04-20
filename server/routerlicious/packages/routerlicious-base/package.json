@@ -90,7 +90,7 @@
 		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server": "^0.1041.1000",
-		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@0.1039.1000",
+		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@0.1040.1000",
 		"@fluidframework/server-test-utils": "^0.1041.1000",
 		"@types/body-parser": "^1.19.2",
 		"@types/bytes": "^3.0.0",

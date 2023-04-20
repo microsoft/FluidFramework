@@ -1456,6 +1456,30 @@ use_old_FunctionDeclaration_getOrCreateRepository(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_getRandomInt": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_getRandomInt():
+    TypeOnly<typeof old.getRandomInt>;
+declare function use_current_VariableDeclaration_getRandomInt(
+    use: TypeOnly<typeof current.getRandomInt>);
+use_current_VariableDeclaration_getRandomInt(
+    get_old_VariableDeclaration_getRandomInt());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_getRandomInt": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_getRandomInt():
+    TypeOnly<typeof current.getRandomInt>;
+declare function use_old_VariableDeclaration_getRandomInt(
+    use: TypeOnly<typeof old.getRandomInt>);
+use_old_VariableDeclaration_getRandomInt(
+    get_current_VariableDeclaration_getRandomInt());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getRandomName": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getRandomName():
