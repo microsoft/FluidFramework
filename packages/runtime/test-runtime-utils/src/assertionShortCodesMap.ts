@@ -1166,5 +1166,6 @@ export const shortCodeMap = {
 	"0x5e7": "expected changeset to be defined",
 	"0x5e8": "expected changeset to be defined",
 	"0x5e9": "Must be in a node to set its value",
-	"0x5ea": "Tried to encode unsupported fieldKind"
+	"0x5ea": "Tried to encode unsupported fieldKind",
+	"0x5eb": "A modify mark must have length equal to one"
 };
