@@ -105,11 +105,6 @@
 		"webpack": "^5.76.2"
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedVariableDeclaration_getRandomInt": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

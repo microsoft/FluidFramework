@@ -122,14 +122,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_AlfredResources": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"VariableDeclaration_Constants": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

@@ -96,10 +96,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_ILocalOrdererSetup": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
