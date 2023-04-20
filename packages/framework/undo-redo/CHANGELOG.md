@@ -1,4 +1,4 @@
-# @fluidframework/tinylicious-client
+# @fluidframework/undo-redo
 
 ## 2.0.0-internal.4.1.0
 

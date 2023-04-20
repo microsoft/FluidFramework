@@ -1,4 +1,4 @@
-# @fluidframework/tinylicious-client
+# @fluidframework/driver-definitions
 
 ## 2.0.0-internal.4.1.0
 
