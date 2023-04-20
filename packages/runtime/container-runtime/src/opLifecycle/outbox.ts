@@ -194,7 +194,7 @@ export class Outbox {
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
 				? compressedBatch
-				: this.params.splitter.splitCompressedBatch(compressedBatch);
+				: this.params.splitter.splitFirstBatchMessage(compressedBatch);
 		}
 
 		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {

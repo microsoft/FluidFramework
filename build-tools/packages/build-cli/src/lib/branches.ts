@@ -242,13 +242,6 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
 export function getReleaseSourceForReleaseGroup(
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 ): ReleaseSource {
-	if (!isReleaseGroup(releaseGroupOrPackage)) {
-		return "direct";
-	}
-
-	if ([MonoRepoKind.BuildTools].includes(releaseGroupOrPackage)) {
-		return "interactive";
-	}
-
+	// All packages and release groups use release branches.
 	return "releaseBranches";
 }

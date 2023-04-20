@@ -5,10 +5,10 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
+import { assert } from '@fluidframework/common-utils';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import BTree from 'sorted-btree';
 import {
-	assert,
 	hasLength,
 	assertNotUndefined,
 	compareFiniteNumbers,
@@ -19,6 +19,7 @@ import {
 	getOrCreate,
 	Mutable,
 	setPropertyIfDefined,
+	assertWithMessage,
 } from '../Common';
 import {
 	LocalCompressedId,
@@ -426,7 +427,7 @@ export class IdCompressor {
 	 * @returns the session object for the supplied ID
 	 */
 	private createSession(sessionId: SessionId, attributionId: AttributionId | undefined): Session {
-		assert(!this.clustersAndOverridesInversion.has(sessionId));
+		assertWithMessage(!this.clustersAndOverridesInversion.has(sessionId));
 		const existingSession = this.sessions.get(sessionId);
 		if (existingSession !== undefined) {
 			fail('createSession must only be called once for each session ID.');
@@ -492,7 +493,7 @@ export class IdCompressor {
 	public takeNextCreationRange(): IdCreationRange {
 		const lastLocalInRange = -this.localIdCount as UnackedLocalId;
 		const lastTakenNormalized = this.lastTakenLocalId ?? 0;
-		assert(lastLocalInRange <= lastTakenNormalized);
+		assertWithMessage(lastLocalInRange <= lastTakenNormalized);
 
 		// The attribution ID is sent with each range, but it can be elided after the first IDs are allocated.
 		const sendAttributionId = this.lastTakenLocalId === undefined;
@@ -507,8 +508,8 @@ export class IdCompressor {
 				),
 			] as (readonly [UnackedLocalId, string])[];
 			if (hasLength(overrides, 1)) {
-				assert(overrides[0][0] <= firstLocalInRange);
-				assert(overrides[overrides.length - 1][0] >= lastLocalInRange);
+				assertWithMessage(overrides[0][0] <= firstLocalInRange);
+				assertWithMessage(overrides[overrides.length - 1][0] >= lastLocalInRange);
 				ids = {
 					overrides,
 				};
@@ -1674,7 +1675,9 @@ export class IdCompressor {
 			localSessionId = serializedSessionData[0];
 			const attributionIndex = serializedSessionData[1];
 			if (attributionIndex !== undefined) {
-				assert(serializedAttributionIds !== undefined && serializedAttributionIds.length > attributionIndex);
+				assertWithMessage(
+					serializedAttributionIds !== undefined && serializedAttributionIds.length > attributionIndex
+				);
 				attributionId = serializedAttributionIds[attributionIndex];
 			}
 			serializedLocalState = serializedWithSession.localState;
@@ -1810,7 +1813,7 @@ export class IdCompressor {
 			);
 		}
 
-		assert(
+		assertWithMessage(
 			compressor.localSession.lastFinalizedLocalId === undefined ||
 				compressor.localIdCount >= -compressor.localSession.lastFinalizedLocalId
 		);

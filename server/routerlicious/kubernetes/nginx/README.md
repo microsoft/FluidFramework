@@ -30,7 +30,8 @@ The deployed certificates for the CI environments are (`<namespace>/<name>`):
 
 ## Deploy Helm chart for the ingress controller
 
-**NOTE**: This will work for an rbac-enabled cluster. A non-rbac cluster will require non-trivial changes to these steps.
+**NOTE**: This will work for an rbac-enabled cluster.
+A non-rbac cluster will require non-trivial changes to these steps.
 
 First, define variables that depend on the environment.
 
@@ -50,19 +51,22 @@ HELM_RELEASE_NAME=ingress-controller-prod
 VALUES_FILE=values-prod.yaml
 ```
 
-Then define some common variables and deploy the Helm chart. In the following commands you can omit the optional key+value pairs to use the defaults defined in the Helm Chart.
+Then define some common variables and deploy the Helm chart.
+In the following command you can omit the `--set controller.image.*` overrides to use the defaults defined in the Helm Chart.
+For the appropriate values when deploying this to the FluidFramework team's internal test cluster, refer to our internal
+documentation.
 
 ```bash
 HELM_CHART_NAME=ingress-nginx
 HELM_CHART_REPO=https://kubernetes.github.io/ingress-nginx
-HELM_CHART_VERSION=4.2.1
+HELM_CHART_VERSION=4.6.0
 
 helm upgrade --install --set controller.image.registry=<registry> \
 	--set controller.image.image=<optional-repo-name> \
 	--set controller.image.tag=<optional-tag> \
 	--set controller.image.digest=<optional-digest> \
 	$HELM_RELEASE_NAME $HELM_CHART_NAME --version $HELM_CHART_VERSION --repo $HELM_CHART_REPO -f $VALUES_FILE --namespace $K8S_NAMESPACE --create-namespace
-
+```
 
 The output will include a command that you can use to check the status of the `Service` object, something similar to this:
 

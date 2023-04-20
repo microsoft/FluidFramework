@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from '@fluidframework/common-utils';
+import { assert, bufferToString } from '@fluidframework/common-utils';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import {
 	IFluidDataStoreRuntime,
@@ -23,7 +23,7 @@ import {
 import { ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
-import { assert, fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
+import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog';
 import {
 	EditId,
