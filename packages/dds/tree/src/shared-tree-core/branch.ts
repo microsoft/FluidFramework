@@ -124,7 +124,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			});
 
 			// If this transaction is not nested, add it to the undo commit tree
-			if (this.transactions.size === 0) {
+			if (!this.isTransacting()) {
 				this.undoRedoManager.trackCommit(this.head);
 			}
 

@@ -239,10 +239,21 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		isUndoRedoCommit?: UndoRedoManagerCommitType,
 		skipUndoRedoManagerTracking = false,
 	): GraphCommit<TChange> {
-		const commit = this.addLocalChange(change, revision ?? mintRevisionTag());
-		if (this.transactions.size === 0) {
+		const [commit, delta] = this.addLocalChange(
+			change,
+			revision ?? mintRevisionTag(),
+			isUndoRedoCommit,
+			skipUndoRedoManagerTracking,
+			false,
+		);
+
+		// submitCommit should not be called for stashed ops so this is kept separate from
+		// addLocalChange
+		if (!this.isTransacting()) {
 			this.submitCommit(commit, isUndoRedoCommit, skipUndoRedoManagerTracking);
 		}
+
+		this.emitLocalChange(change, delta);
 		return commit;
 	}
 
@@ -252,7 +263,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param revision - The revision to associate with the change.
 	 * @returns Commit object with the change, revision and localsessionid
 	 */
-	private addLocalChange(change: TChange, revision: RevisionTag): Commit<TChange> {
+	private addLocalChange(
+		change: TChange,
+		revision: RevisionTag,
+		isUndoRedoCommit?: UndoRedoManagerCommitType,
+		skipUndoRedoManagerTracking = false,
+		shouldEmitChange = true,
+	): [Commit<TChange>, Delta.Root] {
 		const commit = {
 			change,
 			revision,
@@ -261,9 +278,21 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const delta = this.editManager.addLocalChange(revision, change, false);
 		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
 
+		if (shouldEmitChange) {
+			// If this change should be emitted, track the commit in the undo redo manager
+			// before the local change is applied
+			if (!this.isTransacting() && !skipUndoRedoManagerTracking) {
+				this.undoRedoManager.trackCommit(commit, isUndoRedoCommit);
+			}
+			this.emitLocalChange(change, delta);
+		}
+
+		return [commit, delta];
+	}
+
+	private emitLocalChange(change: TChange, delta: Delta.Root) {
 		this.changeEvents.emit("newLocalChange", change);
 		this.changeEvents.emit("newLocalState", delta);
-		return commit;
 	}
 
 	protected processCore(
@@ -414,7 +443,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.changeFamily.encoder.decodeJson(format, encodedChange);
 		const { revision } = parseCommit(content, decoder);
 		const [commit] = this.editManager.findLocalCommit(revision);
-		this.submitCommit(commit);
+		// Skip tracking commits as undoable during resubmit.
+		this.submitCommit(commit, undefined, true);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
