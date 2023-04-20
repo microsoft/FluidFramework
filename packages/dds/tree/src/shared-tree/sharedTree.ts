@@ -51,7 +51,7 @@ import {
 	ModularChangeset,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, fail, TransactionResult } from "../util";
+import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
 /**
@@ -375,6 +375,15 @@ export class SharedTree
 		}
 	}
 
+	protected override reSubmitCore(
+		content: JsonCompatibleReadOnly,
+		localOpMetadata: unknown,
+	): void {
+		if (!this.storedSchema.tryResubmitOp(content)) {
+			super.reSubmitCore(content, localOpMetadata);
+		}
+	}
+
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
 		this.finishBatch();
@@ -534,7 +543,7 @@ function getHeadCommit(view: ISharedTreeView): GraphCommit<DefaultChangeset> {
 function getForkBranch(
 	fork: ISharedTreeFork,
 ): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
-	assert(fork instanceof SharedTreeFork, "Unsupported ISharedTreeFork implementation");
+	assert(fork instanceof SharedTreeFork, 0x5ca /* Unsupported ISharedTreeFork implementation */);
 	return fork.branch;
 }
 // #endregion Extraction functions

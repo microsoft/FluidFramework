@@ -41,5 +41,8 @@ export {
 } from "./changeset";
 export { SequenceChangeFamily, sequenceChangeFamily } from "./sequenceChangeFamily";
 export { SequenceChangeRebaser, sequenceChangeRebaser } from "./sequenceChangeRebaser";
-export { sequenceChangeEncoder, SequenceChangeset } from "./sequenceChangeset";
+export {
+	sequenceChangeCodecs as sequenceChangeEncoder,
+	SequenceChangeset,
+} from "./sequenceChangeset";
 export { NodePath, PlacePath, SequenceEditBuilder } from "./sequenceEditBuilder";
