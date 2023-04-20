@@ -59,7 +59,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		private readonly sessionId: string,
 		private readonly rebaser: Rebaser<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly undoRedoManager: UndoRedoManager<TChange, TEditor>,
+		public undoRedoManager: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
 	) {
 		super();
@@ -124,7 +124,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			});
 
 			// If this transaction is not nested, add it to the undo commit tree
-			if (this.transactions.size === 0) {
+			if (!this.isTransacting()) {
 				this.undoRedoManager.trackCommit(this.head);
 			}
 

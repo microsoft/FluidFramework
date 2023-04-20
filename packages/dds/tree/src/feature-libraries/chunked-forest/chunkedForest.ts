@@ -120,7 +120,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			onDelete: (index: number, count: number): void => {
 				visitor.onMoveOut(index, count);
 			},
-			onInsert: (index: number, content: Delta.ProtoNode[]): void => {
+			onInsert: (index: number, content: Delta.ProtoNodes): void => {
 				const chunks: TreeChunk[] = content.map((c) => chunkTree(c, this.chunker));
 				const field = this.newDetachedField();
 				this.roots.fields.set(detachedFieldAsKey(field), chunks);

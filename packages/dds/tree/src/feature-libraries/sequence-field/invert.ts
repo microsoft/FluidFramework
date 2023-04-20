@@ -124,14 +124,7 @@ function invertMark<TNodeChange>(
 				}
 				if (mark.lastDetachedBy === undefined) {
 					// The nodes were already revived, so the revive mark did not affect them.
-					return mark.changes === undefined
-						? [mark.count]
-						: [
-								{
-									type: "Modify",
-									changes: invertChild(mark.changes, inputIndex),
-								},
-						  ];
+					return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
 				}
 				// The nodes were not revived and could not be revived.
 				return [];
@@ -156,14 +149,7 @@ function invertMark<TNodeChange>(
 				}
 				if (mark.isDstConflicted) {
 					// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
-					return mark.changes === undefined
-						? [mark.count]
-						: [
-								{
-									type: "Modify",
-									changes: invertChild(mark.changes, inputIndex),
-								},
-						  ];
+					return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
 				}
 				if (mark.changes !== undefined) {
 					crossFieldManager.getOrCreate(
@@ -242,4 +228,18 @@ function transferMovedChanges<TNodeChange>(
 			}
 		}
 	}
+}
+
+function invertModifyOrSkip<TNodeChange>(
+	length: number,
+	changes: TNodeChange | undefined,
+	index: number,
+	inverter: NodeChangeInverter<TNodeChange>,
+): Mark<TNodeChange> {
+	if (changes !== undefined) {
+		assert(length === 1, "A modify mark must have length equal to one");
+		return { type: "Modify", changes: inverter(changes, index) };
+	}
+
+	return length;
 }
