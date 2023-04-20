@@ -1412,6 +1412,7 @@ export class ContainerRuntime
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
 			...this.dataStores.containerLoadStats,
+			dmInitialSeqNumber: this.deltaManager.initialSequenceNumber,
 			summaryNumber: loadSummaryNumber,
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
