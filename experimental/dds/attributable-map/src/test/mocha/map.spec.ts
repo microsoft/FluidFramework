@@ -28,7 +28,8 @@ function createConnectedMap(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
 	options?: IMapOptions,
-): AttributableMap {
+	useTestSharedMap: boolean = false,
+): AttributableMap | TestSharedMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
 
@@ -37,7 +38,10 @@ function createConnectedMap(
 		deltaConnection: containerRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map: AttributableMap = new AttributableMap(id, dataStoreRuntime, MapFactory.Attributes);
+
+	const map = useTestSharedMap
+		? new TestSharedMap(id, dataStoreRuntime, MapFactory.Attributes)
+		: new AttributableMap(id, dataStoreRuntime, MapFactory.Attributes);
 	map.connect(services);
 	return map;
 }
@@ -836,7 +840,7 @@ describe("Map", () => {
 				containerRuntimeFactory = new MockContainerRuntimeFactory();
 				// Connect the first map with attribution enabled.
 				map1 = createConnectedMap("map1", containerRuntimeFactory, options);
-				// Create a second map with attribution enabled.
+				// Create the second map with attribution enabled.
 				map2 = createConnectedMap("map2", containerRuntimeFactory, options);
 			});
 
@@ -966,6 +970,36 @@ describe("Map", () => {
 					{ type: "op", seq: 2 },
 					"The loaded map should have valid op-based attribution for the second entry",
 				);
+			});
+
+			it("can update attribution properly while applying stashed ops", async () => {
+				// Create the test map with attribution enabled and will be tested with applyStashedOps
+				const options: IMapOptions = { attribution: { track: true } };
+				containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const testMap = createConnectedMap(
+					"testMap",
+					containerRuntimeFactory,
+					options,
+					true,
+				) as TestSharedMap;
+
+				const serializable: ISerializableValue = { type: "Plain", value: "value" };
+				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
+				testMap.testApplyStashedOp(op);
+				assert.deepEqual(testMap.getAttribution("key"), { type: "local" });
+
+				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
+				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
+				testMap.testApplyStashedOp(op2);
+				assert.deepEqual(testMap.getAttribution("key2"), { type: "local" });
+
+				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
+				testMap.testApplyStashedOp(op3);
+				assert.equal(testMap.getAttribution("key2"), undefined);
+
+				const op4: IMapClearOperation = { type: "clear" };
+				testMap.testApplyStashedOp(op4);
+				assert.equal(testMap.getAllAttribution()?.size, 0);
 			});
 		});
 	});
