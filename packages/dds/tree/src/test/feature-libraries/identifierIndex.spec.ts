@@ -17,7 +17,7 @@ import {
 	SharedTreeFactory,
 } from "../../shared-tree";
 import { brand, compareSets } from "../../util";
-import { TestTreeProvider, initializeTestTree } from "../utils";
+import { TestTreeProviderLite, initializeTestTree } from "../utils";
 import {
 	createField,
 	FieldKinds,
@@ -67,8 +67,8 @@ describe("Node Identifier Index", () => {
 		assert(compareSets({ a: new Set(tree.identifiedNodes.keys()), b: new Set(ids) }));
 	}
 
-	it("can look up a node that was inserted", async () => {
-		const provider = await TestTreeProvider.create(1);
+	it("can look up a node that was inserted", () => {
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -84,8 +84,8 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, [id]);
 	});
 
-	it("can look up a deep node that was inserted", async () => {
-		const provider = await TestTreeProvider.create(1);
+	it("can look up a deep node that was inserted", () => {
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -117,8 +117,8 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, [id]);
 	});
 
-	it("can look up multiple nodes that were inserted at once", async () => {
-		const provider = await TestTreeProvider.create(1);
+	it("can look up multiple nodes that were inserted at once", () => {
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const ids = [makeId(), makeId(), makeId()];
 		initializeTestTree(
@@ -156,8 +156,8 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, ids);
 	});
 
-	it("can look up multiple nodes that were inserted over time", async () => {
-		const provider = await TestTreeProvider.create(1);
+	it("can look up multiple nodes that were inserted over time", () => {
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const idA = makeId();
 		initializeTestTree(
@@ -187,8 +187,8 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, [idA, idB]);
 	});
 
-	it("forgets about nodes that are deleted", async () => {
-		const provider = await TestTreeProvider.create(1);
+	it("forgets about nodes that are deleted", () => {
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -205,8 +205,8 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, []);
 	});
 
-	it("fails if multiple nodes have the same ID", async () => {
-		const provider = await TestTreeProvider.create(1);
+	it("fails if multiple nodes have the same ID", () => {
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		assert.throws(
@@ -238,7 +238,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("can look up a node that was loaded from summary", async () => {
-		const provider = await TestTreeProvider.create(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -251,7 +251,7 @@ describe("Node Identifier Index", () => {
 			},
 			nodeSchemaData,
 		);
-		await provider.ensureSynchronized();
+		provider.processMessages();
 		const summary = await tree.summarize();
 
 		const factory = new SharedTreeFactory();
@@ -268,7 +268,7 @@ describe("Node Identifier Index", () => {
 		assertIds(tree2, [id]);
 	});
 
-	it("skips nodes which have identifiers, but are not in schema", async () => {
+	it("skips nodes which have identifiers, but are not in schema", () => {
 		// This is missing the global identifier field on the node
 		const nodeSchemaNoIdentifier = TypedSchema.tree("node", {
 			local: { child: nodeFieldSchema },
@@ -282,7 +282,7 @@ describe("Node Identifier Index", () => {
 			identifierSchema,
 		);
 
-		const provider = await TestTreeProvider.create(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -297,8 +297,8 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, []);
 	});
 
-	it("skips nodes which have identifiers of the wrong type", async () => {
-		const provider = await TestTreeProvider.create(1);
+	it("skips nodes which have identifiers of the wrong type", () => {
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -313,9 +313,9 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, []);
 	});
 
-	it("skips nodes which should have identifiers, but do not", async () => {
+	it("skips nodes which should have identifiers, but do not", () => {
 		// This is policy choice rather than correctness. It could also fail.
-		const provider = await TestTreeProvider.create(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -330,7 +330,7 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, []);
 	});
 
-	it("is disabled if identifier field is not in the global schema", async () => {
+	it("is disabled if identifier field is not in the global schema", () => {
 		// This is missing the global identifier field
 		const nodeSchemaDataNoIdentifier = SchemaAware.typedSchemaData(
 			[[rootFieldKey, nodeFieldSchema]],
@@ -338,7 +338,7 @@ describe("Node Identifier Index", () => {
 			identifierSchema,
 		);
 
-		const provider = await TestTreeProvider.create(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -355,7 +355,7 @@ describe("Node Identifier Index", () => {
 		assert(!index.identifiersAreInSchema(tree.context.schema));
 	});
 
-	it("respects extra global fields", async () => {
+	it("respects extra global fields", () => {
 		// This is missing the global identifier field on the node, but has "extra global fields" enabled
 		const nodeSchemaNoIdentifier = TypedSchema.tree("node", {
 			local: { child: nodeFieldSchema },
@@ -370,7 +370,7 @@ describe("Node Identifier Index", () => {
 			identifierSchema,
 		);
 
-		const provider = await TestTreeProvider.create(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -386,8 +386,8 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, [id]);
 	});
 
-	it("is synchronized after each batch update", async () => {
-		const provider = await TestTreeProvider.create(1);
+	it("is synchronized after each batch update", () => {
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 
 		const id = makeId();
@@ -415,7 +415,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
-	it.skip("reacts to schema changes", async () => {
+	it.skip("reacts to schema changes", () => {
 		// This is missing the global identifier field on the node
 		const nodeSchemaNoIdentifier = TypedSchema.tree("node", {
 			local: { child: nodeFieldSchema },
@@ -429,7 +429,7 @@ describe("Node Identifier Index", () => {
 			identifierSchema,
 		);
 
-		const provider = await TestTreeProvider.create(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -450,14 +450,14 @@ describe("Node Identifier Index", () => {
 	});
 
 	function describeForkingTests(prefork: boolean): void {
-		async function getTree(): Promise<ISharedTreeView> {
-			const provider = await TestTreeProvider.create(1);
+		function getTree(): ISharedTreeView {
+			const provider = new TestTreeProviderLite();
 			const [tree] = provider.trees;
 			return prefork ? tree.fork() : tree;
 		}
 		describe(`forking from ${prefork ? "a fork" : "the root"}`, () => {
-			it("does not mutate the base when mutating a fork", async () => {
-				const tree = await getTree();
+			it("does not mutate the base when mutating a fork", () => {
+				const tree = getTree();
 				const id = makeId();
 				initializeTestTree(
 					tree,
@@ -478,8 +478,8 @@ describe("Node Identifier Index", () => {
 				assertIds(tree, []);
 			});
 
-			it("does not mutate the fork when mutating a base", async () => {
-				const tree = await getTree();
+			it("does not mutate the fork when mutating a base", () => {
+				const tree = getTree();
 				const id = makeId();
 				initializeTestTree(
 					tree,

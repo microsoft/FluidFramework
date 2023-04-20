@@ -24,6 +24,11 @@ import {
 	summarizeNow,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
@@ -158,9 +163,9 @@ export class TestTreeProvider {
 	/**
 	 * Create a new {@link TestTreeProvider} with a number of trees pre-initialized.
 	 * @param trees - the number of trees to initialize this provider with. This is the same as calling
+	 * {@link create} followed by {@link createTree} _trees_ times.
 	 * @param summarizeType - enum to manually, automatically, or disable summarization
 	 * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
-	 * {@link create} followed by {@link createTree} _trees_ times.
 	 *
 	 * @example
 	 * ```ts
@@ -295,6 +300,58 @@ export class TestTreeProvider {
 				return Reflect.get(this.provider, prop, receiver) as unknown;
 			},
 		});
+	}
+}
+
+/**
+ * A test helper class that creates one or more SharedTrees connected to a mock runtime.
+ */
+export class TestTreeProviderLite {
+	private static readonly treeId = "TestSharedTree";
+	private readonly runtimeFactory = new MockContainerRuntimeFactory();
+	public readonly trees: readonly ISharedTree[];
+
+	/**
+	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
+	 * @param trees - the number of trees created by this provider.
+	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
+	 *
+	 * @example
+	 * ```ts
+	 * const provider = new TestTreeProviderLite(2);
+	 * assert(provider.trees[0].isAttached());
+	 * assert(provider.trees[1].isAttached());
+	 * provider.processMessages();
+	 * ```
+	 */
+	public constructor(trees = 1, private readonly factory = new SharedTreeFactory()) {
+		assert(trees >= 1, "Must initialize provider with at least one tree");
+		const t: ISharedTree[] = [];
+		for (let i = 0; i < trees; i++) {
+			const runtime = new MockFluidDataStoreRuntime();
+			const tree = this.factory.create(runtime, TestTreeProviderLite.treeId);
+			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			tree.connect({
+				deltaConnection: containerRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			t.push(tree);
+		}
+		this.trees = t;
+	}
+
+	public processMessages(count?: number): void {
+		this.runtimeFactory.processSomeMessages(
+			count ?? this.runtimeFactory.outstandingMessageCount,
+		);
+	}
+
+	public get minimumSequenceNumber(): number {
+		return this.runtimeFactory.getMinSeq();
+	}
+
+	public get sequenceNumber(): number {
+		return this.runtimeFactory.sequenceNumber;
 	}
 }
 
