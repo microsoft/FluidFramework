@@ -9,7 +9,7 @@ import {
 	SchemaAware,
 	TypedSchema,
 	ValueSchema,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 
 export const float64 = TypedSchema.tree("number", { value: ValueSchema.Number });
 
