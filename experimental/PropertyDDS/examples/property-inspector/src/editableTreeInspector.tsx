@@ -24,6 +24,7 @@ import {
 	parentField,
 	getPrimaryField,
 	forEachField,
+	cursorFromContextualData,
 } from "@fluid-internal/tree";
 import {
 	IDataCreationOptions,
@@ -148,19 +149,27 @@ const tableProps: Partial<IInspectorTableProps> = {
 		typeid: string,
 		context: string,
 	) => {
+		const { parent, sharedTree } = rowData;
 		const typeName = brand<TreeSchemaIdentifier>(typeid);
 		try {
-			if (isUnwrappedNode(rowData.parent)) {
+			if (isUnwrappedNode(parent)) {
 				const fieldKey = brand<FieldKey>(name);
-				(rowData.parent as ContextuallyTypedNodeDataObject)[fieldKey] = getNewNodeData(
-					rowData.sharedTree,
+				(parent as ContextuallyTypedNodeDataObject)[fieldKey] = getNewNodeData(
+					sharedTree,
 					context === "single"
 						? typeName
 						: brand<TreeSchemaIdentifier>(`${context}<${typeid}>`),
 				);
 			} else {
-				assert(isWritableArrayLike(rowData.parent), "expected writable ArrayLike");
-				rowData.parent[Number(name)] = getNewNodeData(rowData.sharedTree, typeName);
+				assert(isWritableArrayLike(parent), "expected writable ArrayLike");
+				parent.insertNodes(
+					Number(name),
+					cursorFromContextualData(
+						sharedTree.storedSchema,
+						parent.fieldSchema.types,
+						getNewNodeData(sharedTree, typeName),
+					),
+				);
 			}
 		} catch (e) {
 			console.error(e);
@@ -184,11 +193,7 @@ function expandNode(
 	const { sharedTree, pathPrefix } = options;
 	const { parent, index } = node[parentField];
 	const id = getRowId(parent, pathPrefix, index);
-	const nodeType = node[typeSymbol];
-	const contextAndType = node[typeNameSymbol].split("<");
-	const context = contextAndType.length > 1 ? contextAndType[0] : "single";
-	// TODO: `context !== "single"` is required since maps are considered to be primitive objects.
-	if (!isPrimitive(nodeType) || context !== "single") {
+	if (!isPrimitive(node[typeSymbol])) {
 		expanded[id] = true;
 	}
 	return node[forEachField](expandField, expanded, { sharedTree, pathPrefix: id });
@@ -270,8 +275,7 @@ function nodeToTableRow(
 		sharedTree,
 	};
 	const nodeType = data[typeSymbol];
-	// TODO: `context !== "single"` is required since maps are considered to be primitive objects.
-	if (!isPrimitive(nodeType) || context !== "single") {
+	if (!isPrimitive(nodeType)) {
 		newRow.children = data[forEachField](fieldToTableRow, [], { sharedTree, pathPrefix: id });
 		// Do not allow to create fields under a node having a primary field.
 		if (getPrimaryField(nodeType) === undefined) {
