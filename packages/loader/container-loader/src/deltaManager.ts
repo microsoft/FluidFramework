@@ -638,11 +638,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	/**
 	 * Closes the connection and clears inbound & outbound queues.
 	 *
-	 * @param doDispose - should the DeltaManager treat this close call as a dispose?
-	 * Differences between close and dispose:
-	 * - dispose will emit "disposed" event while close emits "closed"
-	 * - dispose will remove all listeners
-	 * - dispose can be called after closure, but not vis versa
+	 * Differences from dispose:
+	 * - close will switch connection to readonly
+	 * - close emits "closed"
+	 * - close cannot be called after dispose
 	 */
 	public close(error?: ICriticalContainerError): void {
 		if (this._closed) {
@@ -656,7 +655,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	}
 
 	/**
-	 * TODO
+	 * Disposes the connection and clears the inbound & outbound queues.
+	 * 
+	 * Differences from close:
+	 * - dispose will emit "disposed"
+	 * - dispose will remove all listeners
+	 * - dispose can be called after closure
 	 */
 	public dispose(error?: ICriticalContainerError): void {
 		if (this._disposed) {
