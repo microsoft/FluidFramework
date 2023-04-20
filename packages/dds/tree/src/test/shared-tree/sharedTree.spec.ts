@@ -593,7 +593,9 @@ describe("SharedTree", () => {
 			const root = view.context.root.getNode(0);
 			const log: string[] = [];
 			const unsubscribe = root[on]("changing", () => log.push("change"));
-			const unsubscribeSubtree = root[on]("subtreeChanging", () => log.push("subtree"));
+			const unsubscribeSubtree = root[on]("subtreeChanging", () => {
+				log.push("subtree");
+			});
 			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root[valueSymbol] = 5;
@@ -627,9 +629,9 @@ describe("SharedTree", () => {
 			const unsubscribe = root[on]("changing", (upPath, val) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}-${val}`),
 			);
-			const unsubscribeSubtree = root[on]("subtreeChanging", (upPath) =>
-				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`),
-			);
+			const unsubscribeSubtree = root[on]("subtreeChanging", (upPath) => {
+				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
+			});
 			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root[valueSymbol] = 5;

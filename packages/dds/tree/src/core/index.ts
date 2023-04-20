@@ -65,6 +65,7 @@ export {
 	rootFieldKeySymbol,
 	DeltaVisitor,
 	PathVisitor,
+	isPathVisitor,
 	SparseNode,
 	getDescendant,
 	compareUpPaths,
@@ -88,6 +89,7 @@ export {
 	inCursorNode,
 	AnchorEvents,
 	AnchorSetRootEvents,
+	ProtoNodes,
 } from "./tree";
 
 export {

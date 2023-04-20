@@ -9,7 +9,7 @@ import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../
 import { FieldKey, EmptyKey, Delta, visitDelta, DeltaVisitor } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";
-import { PathVisitor } from "./visithPath";
+import { isPathVisitor, PathVisitor } from "./visithPath";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -114,18 +114,11 @@ export interface AnchorEvents {
 
 	/**
 	 * Something in this tree is changing.
+	 * The event can return {@link PathVisitor} traversing the subtree or `void`
 	 * Called on every parent (transitively) when a change is occurring.
 	 * Includes changes to this node itself.
 	 */
-	subtreeChanging(anchor: AnchorNode): void;
-
-	/**
-	 * Something in this tree is changing.
-	 * A {@link PathVisitor} traversing the subtree is returned.
-	 * Called on every parent (transitively) when a change is occurring.
-	 * Includes changes to this node itself.
-	 */
-	visitSubtreeChanging(anchor: AnchorNode): PathVisitor;
+	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
 
 	/**
 	 * Value on this node is changing.
@@ -646,6 +639,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				assert(parent !== undefined, 0x5e9 /* Must be in a node to set its value */);
 				for (const visitors of pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
+						console.log("onSetValue", typeof pathVisitor);
 						pathVisitor.onSetValue(parent, value);
 					}
 				}
@@ -657,13 +651,16 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				maybeWithNode((p) => {
 					// avoid multiple pass side-effects
 					if (!pathVisitors.has(p)) {
-						const visitors: PathVisitor[] = p.events.emitAndCollect(
-							"visitSubtreeChanging",
+						const visitors: (PathVisitor | void)[] = p.events.emitAndCollect(
+							"subtreeChanging",
 							p,
 						);
-						if (visitors.length > 0) pathVisitors.set(p, visitors);
+						if (visitors.length > 0)
+							pathVisitors.set(
+								p,
+								visitors.filter((v): v is PathVisitor => isPathVisitor(v)),
+							);
 					}
-					p.events.emit("subtreeChanging", p);
 				});
 			},
 			exitNode: (index: number): void => {
