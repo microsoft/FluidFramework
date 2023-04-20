@@ -17,7 +17,6 @@ import {
 	isUnwrappedNode,
 	brand,
 	FieldKey,
-	ValueSchema,
 	ContextuallyTypedNodeDataObject,
 	isWritableArrayLike,
 	ISharedTree,
@@ -48,8 +47,6 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { theme } from "./theme";
 import { getPerson } from "./demoPersonData";
 import {
-	FieldAction,
-	NodeAction,
 	forEachField,
 	forEachNode,
 	getNewNodeData,
@@ -139,6 +136,11 @@ export const handleDataCreationOptionGeneration = (
  * - polymorphic types (also, it's not supported by the PropertyDDS, in general)
  */
 
+interface IEditableTreeRowOptions {
+	sharedTree: ISharedTree;
+	pathPrefix: string;
+}
+
 const tableProps: Partial<IInspectorTableProps> = {
 	columns: ["name", "value", "type"],
 	dataCreationHandler: async (
@@ -171,34 +173,41 @@ const tableProps: Partial<IInspectorTableProps> = {
 	height: 600,
 	expandAll: (data: ISharedTree): IExpandedMap => {
 		const { root } = data.context;
-		return expandField({}, data, root, "");
+		return expandField(root, {}, { sharedTree: data, pathPrefix: "" });
 	},
 };
 
-const expandNode: NodeAction<IExpandedMap> = (
-	expanded: IExpandedMap,
-	sharedTree: ISharedTree,
+function expandNode(
 	node: EditableTree,
-	pathPrefix: string,
-) => {
+	expanded: IExpandedMap,
+	options: IEditableTreeRowOptions,
+): IExpandedMap {
+	const { sharedTree, pathPrefix } = options;
 	const { parent, index } = node[parentField];
-	const id = getRowId(parent.fieldKey, pathPrefix, index);
+	const id = getRowId(parent, pathPrefix, index);
 	const nodeType = node[typeSymbol];
-	// TODO: e.g., how to properly schematize maps (`Serializable`)?
-	if (!isPrimitive(nodeType) || nodeType.value === ValueSchema.Serializable) {
+	const contextAndType = node[typeNameSymbol].split("<");
+	const context = contextAndType.length > 1 ? contextAndType[0] : "single";
+	// TODO: `context !== "single"` is required since maps are considered to be primitive objects.
+	if (!isPrimitive(nodeType) || context !== "single") {
 		expanded[id] = true;
 	}
-	return forEachField(expandField, expanded, sharedTree, node, id);
-};
+	return forEachField(node, expandField, expanded, { sharedTree, pathPrefix: id });
+}
 
-const expandField: FieldAction<IExpandedMap> = (
-	expanded: IExpandedMap,
-	sharedTree: ISharedTree,
+function expandField(
 	field: EditableField,
-	pathPrefix: string,
-) => {
-	return forEachNode(expandNode, expanded, sharedTree, field, pathPrefix);
-};
+	expanded: IExpandedMap,
+	options: IEditableTreeRowOptions,
+): IExpandedMap {
+	const { pathPrefix } = options;
+	// skip root and primary field sequences, as they don't have field rows
+	if (isSequenceField(field) && field.parent && !getPrimaryField(field.parent[typeSymbol])) {
+		const id = getRowId(field, pathPrefix);
+		expanded[id] = true;
+	}
+	return forEachNode(field, expandNode, expanded, options);
+}
 
 function addNewDataLine(
 	rows: IEditableTreeRow[],
@@ -217,28 +226,33 @@ function addNewDataLine(
 	});
 }
 
-// TODO: maybe discuss alternatives on how global fields must be converted into row IDs.
-// Global fields in runtime are used as follows:
-// - as `GlobalFieldKeySymbol` (a symbol) => `Symbol(myGlobalField)` - used to read the tree data;
-// - as `GlobalFieldKey` (a string) => `myGlobalField` - used in `TreeSchema` and `JsonableTree`,
-// since global and local fields there are structurally separated.
-// Here we use "Symbol(myGlobalField)" (and not "myGlobalField") as a unique ID for this field,
-// since then a name clashing occurs iff one defines a local field "Symbol(myGlobalField)" for the same node,
-// and it will be more probable if we'll use just a string "myGlobalField" instead.
-// We might introduce a new special syntax for the IDs of global fields to avoid clashing,
-// but it seems that the default syntax already provides a very good safeguard though.
-const getRowId = (fieldKey: FieldKey, pathPrefix: string, nodeIndex?: number): string =>
-	`${pathPrefix}/${String(fieldKey)}${nodeIndex ? `[${nodeIndex}]` : ""}`;
+function getRowId(field: EditableField, pathPrefix: string, nodeIndex?: number): string {
+	if (isSequenceField(field) && nodeIndex !== undefined) {
+		return `${pathPrefix}[${nodeIndex}]`;
+	}
+	// TODO: maybe discuss alternatives on how global fields must be converted into row IDs.
+	// Global fields are used as follows:
+	// - `GlobalFieldKeySymbol` symbol (e.g. `Symbol(myGlobalField)`) is used in the tree data;
+	// - `GlobalFieldKey` string (e.g. `myGlobalField`) is used in the `TreeSchema`
+	//   and `JsonableTree` since global and local fields there are structurally separated.
+	// Here we use `String(fieldKey)` resulting in "Symbol(myGlobalField)" as a unique ID for this field
+	// instead of "myGlobalField" (provided by `stringifyKey` function), since otherwise
+	// it's less probable for a name clashing to occure e.g.
+	// if one defines a local field named "myGlobalField" for the same node.
+	// We might introduce a new special syntax for the IDs of global fields to avoid clashing,
+	// but it seems that the default syntax already provides a good safeguarding (at least for now).
+	return `${pathPrefix}/${String(field.fieldKey)}`;
+}
 
-const nodeToTableRow: NodeAction<IEditableTreeRow[]> = (
-	rows: IEditableTreeRow[],
-	sharedTree: ISharedTree,
+function nodeToTableRow(
 	data: EditableTree,
-	pathPrefix: string,
-) => {
+	rows: IEditableTreeRow[],
+	options: IEditableTreeRowOptions,
+): IEditableTreeRow[] {
+	const { sharedTree, pathPrefix } = options;
 	const { parent, index } = data[parentField];
 	const fieldKey = parent.fieldKey;
-	const id = getRowId(fieldKey, pathPrefix, index);
+	const id = getRowId(parent, pathPrefix, index);
 	const keyAsString = parent.parent ? stringifyKey(fieldKey) : "Person";
 	const name = isSequenceField(parent) ? `[${index}]` : keyAsString;
 	const value = data[valueSymbol];
@@ -257,10 +271,9 @@ const nodeToTableRow: NodeAction<IEditableTreeRow[]> = (
 		sharedTree,
 	};
 	const nodeType = data[typeSymbol];
-	// An addition `context !== "single"` is required since currently
-	// maps are considered to be primitive objects. tbd.
+	// TODO: `context !== "single"` is required since maps are considered to be primitive objects.
 	if (!isPrimitive(nodeType) || context !== "single") {
-		newRow.children = forEachField(fieldToTableRow, [], sharedTree, data, id);
+		newRow.children = forEachField(data, fieldToTableRow, [], { sharedTree, pathPrefix: id });
 		// Do not allow to create fields under a node having a primary field.
 		if (getPrimaryField(nodeType) === undefined) {
 			addNewDataLine(newRow.children, sharedTree, data, id);
@@ -268,19 +281,19 @@ const nodeToTableRow: NodeAction<IEditableTreeRow[]> = (
 	}
 	rows.push(newRow);
 	return rows;
-};
+}
 
-const fieldToTableRow: FieldAction<IEditableTreeRow[]> = (
-	rows: IEditableTreeRow[],
-	sharedTree: ISharedTree,
+function fieldToTableRow(
 	field: EditableField,
-	pathPrefix: string,
-) => {
+	rows: IEditableTreeRow[],
+	options: IEditableTreeRowOptions,
+): IEditableTreeRow[] {
+	const { sharedTree, pathPrefix } = options;
 	const isSequence = isSequenceField(field);
 	// skip root and primary field sequences, as they don't require to render field rows
 	if (isSequence && field.parent && getPrimaryField(field.parent[typeSymbol]) === undefined) {
-		const id = getRowId(field.fieldKey, pathPrefix);
-		const children = forEachNode(nodeToTableRow, [], sharedTree, field, id);
+		const id = getRowId(field, pathPrefix);
+		const children = forEachNode(field, nodeToTableRow, [], { sharedTree, pathPrefix: id });
 		addNewDataLine(children, sharedTree, field, id);
 		const fieldTypes: TreeSchemaIdentifier[] = [];
 		if (field.fieldSchema.types) {
@@ -301,13 +314,13 @@ const fieldToTableRow: FieldAction<IEditableTreeRow[]> = (
 		};
 		rows.push(newRow);
 	} else {
-		forEachNode(nodeToTableRow, rows, sharedTree, field, pathPrefix);
+		forEachNode(field, nodeToTableRow, rows, options);
 		if (isEmptyRoot(field) || isSequence) {
 			addNewDataLine(rows, sharedTree, field, pathPrefix);
 		}
 	}
 	return rows;
-};
+}
 
 const editableTreeTableProps: Partial<IInspectorTableProps> = {
 	...tableProps,
@@ -316,8 +329,8 @@ const editableTreeTableProps: Partial<IInspectorTableProps> = {
 		value: valueCellRenderer,
 		type: typeCellRenderer,
 	},
-	toTableRows: ({ data }: { data: ISharedTree }): IEditableTreeRow[] => {
-		return fieldToTableRow([], data, data.context.root, "");
+	toTableRows: ({ data: sharedTree }: { data: ISharedTree }): IEditableTreeRow[] => {
+		return fieldToTableRow(sharedTree.context.root, [], { sharedTree, pathPrefix: "" });
 	},
 };
 

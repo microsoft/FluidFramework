@@ -49,20 +49,6 @@ const defaultPrimitiveValues = {
 	Reference: "",
 };
 
-export type FieldAction<T> = (
-	result: T,
-	sharedTree: ISharedTree,
-	field: EditableField,
-	pathPrefix: string,
-) => T;
-
-export type NodeAction<T> = (
-	result: T,
-	sharedTree: ISharedTree,
-	node: EditableTree,
-	pathPrefix: string,
-) => T;
-
 export function stringifyKey(fieldKey: FieldKey): string {
 	if (isGlobalFieldKey(fieldKey) && symbolIsFieldKey(fieldKey)) {
 		return keyFromSymbol(fieldKey);
@@ -91,7 +77,8 @@ export function getNewNodeData(
 		const treeSchema = lookupTreeSchema(schema, typeName);
 		if (treeSchema === neverTree) {
 			// TODO: address this case to MSFT
-			// Ideally, one could expect that for every type there should be all sequence kind types.
+			// Ideally, one could expect `map`, `array` etc. complex types
+			// to be available "out-of-the-box" for every existing type.
 			sharedTree.storedSchema.update(addComplexTypeToSchema(schema, context, brand(subType)));
 		}
 		if (context === "array") {
@@ -128,31 +115,29 @@ export function getNewNodeData(
 	return newData;
 }
 
-export function forEachField<T>(
-	fieldAction: FieldAction<T>,
-	result: T,
-	sharedTree: ISharedTree,
+export function forEachField<T, O>(
 	node: EditableTree,
-	pathPrefix: string,
+	f: (field: EditableField, result: T, options: O) => T,
+	result: T,
+	options: O,
 ): T {
-	assert(isUnwrappedNode(node), "Expected node");
+	assert(isUnwrappedNode(node), "expected node");
 	for (const field of node) {
-		fieldAction(result, sharedTree, field, pathPrefix);
+		f(field, result, options);
 	}
 	return result;
 }
 
-export function forEachNode<T>(
-	nodeAction: NodeAction<T>,
-	result: T,
-	sharedTree: ISharedTree,
+export function forEachNode<T, O>(
 	field: EditableField,
-	pathPrefix: string,
+	f: (node: EditableTree, result: T, options: O) => T,
+	result: T,
+	options: O,
 ): T {
-	assert(isEditableField(field), "Expected field");
+	assert(isEditableField(field), "expected field");
+	// do not use iterator as it gives unwrapped nodes
 	for (let index = 0; index < field.length; index++) {
-		const node = field.getNode(index);
-		nodeAction(result, sharedTree, node, pathPrefix);
+		f(field.getNode(index), result, options);
 	}
 	return result;
 }
