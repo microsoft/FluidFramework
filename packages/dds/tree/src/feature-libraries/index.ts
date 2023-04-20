@@ -32,6 +32,7 @@ export {
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	forEachField,
 } from "./editable-tree";
 
 export {

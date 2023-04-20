@@ -76,6 +76,13 @@ export const contextSymbol: unique symbol = Symbol("editable-tree:context");
 export const on: unique symbol = Symbol("editable-tree:on");
 
 /**
+ * A symbol to visit each field of the {@link EditableTree}
+ * in contexts where string keys are already in use for fields.
+ * @alpha
+ */
+export const forEachField: unique symbol = Symbol("editable-tree:forEachField()");
+
+/**
  * Events for {@link EditableTree}.
  * These events are triggered while the internal data structures are being updated.
  * Thus these events must not trigger reading of the anchorSet or forest.
@@ -227,6 +234,15 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void;
+
+	/**
+	 * Applies `f` to each field of this node.
+	 */
+	[forEachField]<T, O>(
+		f: (field: EditableField, data: T, options: O) => T,
+		data: T,
+		options: O,
+	): T;
 }
 
 /**
@@ -340,4 +356,9 @@ export interface EditableField
 	 * all the insertions will be preserved.
 	 */
 	replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+
+	/**
+	 * Applies `f` to each node of this field.
+	 */
+	forEachNode<T, O>(f: (node: EditableTree, data: T, options: O) => T, data: T, options: O): T;
 }

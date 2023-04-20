@@ -228,6 +228,7 @@ export {
 	ContextuallyTypedFieldData,
 	TreeViewSchema,
 	FieldViewSchema,
+	forEachField,
 } from "./feature-libraries";
 
 export {

@@ -342,6 +342,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
     deleteNodes(index: number, count?: number): void;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
+    forEachNode<T, O>(f: (node: EditableTree, data: T, options: O) => T, data: T, options: O): T;
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
     readonly parent?: EditableTree;
@@ -352,6 +353,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     readonly [contextSymbol]: EditableTreeContext;
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
+    [forEachField]<T, O>(f: (field: EditableField, data: T, options: O) => T, data: T, options: O): T;
     [getField](fieldKey: FieldKey): EditableField;
     // (undocumented)
     [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
@@ -591,6 +593,9 @@ TypedSchema.FlattenKeys<{
     [typeNameSymbol]?: TName;
 } & TypedSchema.AllowOptional<ValueFieldTreeFromSchema<TValueSchema>>>
 ][TypedSchema._dummy];
+
+// @alpha
+export const forEachField: unique symbol;
 
 // @alpha
 export interface ForestEvents {

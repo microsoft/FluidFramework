@@ -227,6 +227,18 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const fieldPath = this.cursor.getFieldPath();
 		this.context.replaceNodes(fieldPath.parent, fieldPath.field, index, _count, newContent);
 	}
+
+	public forEachNode<T, O>(
+		f: (node: EditableTree, data: T, options: O) => T,
+		data: T,
+		options: O,
+	): T {
+		const result = data;
+		for (let index = 0; index < this.length; index++) {
+			f(this.getNode(index), result, options);
+		}
+		return result;
+	}
 }
 
 const editableFieldPropertySetWithoutLength = new Set<string>([
