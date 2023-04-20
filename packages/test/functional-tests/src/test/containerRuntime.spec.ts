@@ -144,7 +144,7 @@ describe("Container Runtime", () => {
 				);
 			});
 
-			await deltaManager.attachOpHandler(0, 0, 1, {
+			await deltaManager.attachOpHandler(0, 0, {
 				process(message: ISequencedDocumentMessage) {
 					processOp(message);
 					return {};
@@ -316,7 +316,7 @@ describe("Container Runtime", () => {
 						props,
 					),
 			);
-			await deltaManager2.attachOpHandler(0, 0, 1, {
+			await deltaManager2.attachOpHandler(0, 0, {
 				process(message: ISequencedDocumentMessage) {
 					processOp(message);
 					return {};

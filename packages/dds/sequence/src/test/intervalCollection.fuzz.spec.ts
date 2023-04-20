@@ -7,11 +7,11 @@ import * as path from "path";
 import { strict as assert } from "assert";
 import {
 	AcceptanceCondition,
-	combineReducers,
-	createWeightedGenerator,
-	Generator,
-	Reducer,
-	take,
+	combineReducersAsync as combineReducers,
+	createWeightedAsyncGenerator as createWeightedGenerator,
+	AsyncGenerator as Generator,
+	AsyncReducer as Reducer,
+	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
 import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
@@ -168,7 +168,7 @@ function makeOperationGenerator(
 		};
 	}
 
-	function addText(state: ClientOpState): AddText {
+	async function addText(state: ClientOpState): Promise<AddText> {
 		const { random, channel } = state;
 		return {
 			type: "addText",
@@ -177,11 +177,11 @@ function makeOperationGenerator(
 		};
 	}
 
-	function removeRange(state: ClientOpState): RemoveRange {
+	async function removeRange(state: ClientOpState): Promise<RemoveRange> {
 		return { type: "removeRange", ...exclusiveRange(state) };
 	}
 
-	function addInterval(state: ClientOpState): AddInterval {
+	async function addInterval(state: ClientOpState): Promise<AddInterval> {
 		return {
 			type: "addInterval",
 			...inclusiveRange(state),
@@ -190,14 +190,14 @@ function makeOperationGenerator(
 		};
 	}
 
-	function deleteInterval(state: ClientOpState): DeleteInterval {
+	async function deleteInterval(state: ClientOpState): Promise<DeleteInterval> {
 		return {
 			type: "deleteInterval",
 			...interval(state),
 		};
 	}
 
-	function changeInterval(state: ClientOpState): ChangeInterval {
+	async function changeInterval(state: ClientOpState): Promise<ChangeInterval> {
 		const { start, end } = inclusiveRange(state);
 		return {
 			type: "changeInterval",
@@ -207,7 +207,7 @@ function makeOperationGenerator(
 		};
 	}
 
-	function changeProperties(state: ClientOpState): ChangeProperties {
+	async function changeProperties(state: ClientOpState): Promise<ChangeProperties> {
 		return {
 			type: "changeProperties",
 			...interval(state),
@@ -266,7 +266,7 @@ interface LoggingInfo {
 
 function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const id of loggingInfo.clientIds) {
-		const { channel } = state.clients.find((s) => s.channel.id === id) ?? {};
+		const { channel } = state.clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		assert(channel);
 		const labels = channel.getIntervalCollectionLabels();
 		const interval = Array.from(labels)
@@ -292,36 +292,36 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 
 function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, ClientOpState> {
 	const withLogging =
-		<T>(baseReducer: (state: ClientOpState, operation: T) => void): Reducer<T, ClientOpState> =>
-		(state, operation) => {
+		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
+		async (state, operation) => {
 			if (loggingInfo !== undefined) {
 				logCurrentState(state, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
-			baseReducer(state, operation);
+			await baseReducer(state, operation);
 		};
 
 	const reducer = combineReducers<Operation, ClientOpState>({
-		addText: ({ channel }, { index, content }) => {
+		addText: async ({ channel }, { index, content }) => {
 			channel.insertText(index, content);
 		},
-		removeRange: ({ channel }, { start, end }) => {
+		removeRange: async ({ channel }, { start, end }) => {
 			channel.removeRange(start, end);
 		},
-		addInterval: ({ channel }, { start, end, collectionName, id }) => {
+		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
 		},
-		deleteInterval: ({ channel }, { id, collectionName }) => {
+		deleteInterval: async ({ channel }, { id, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.removeIntervalById(id);
 		},
-		changeInterval: ({ channel }, { id, start, end, collectionName }) => {
+		changeInterval: async ({ channel }, { id, start, end, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.change(id, start, end);
 		},
-		changeProperties: ({ channel }, { id, properties, collectionName }) => {
+		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
 		},
@@ -345,20 +345,25 @@ describe("IntervalCollection fuzz testing", () => {
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: 10 },
 		reconnectProbability: 0.1,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			maxNumberOfClients: 6,
+			clientAddProbability: 0.1,
+		},
 		defaultTestCount: 100,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-		// Uncomment this line to replay a specific seed:
+		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
+		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
 		parseOperations: (serialized: string) => {
-			let operations: Operation[] = JSON.parse(serialized);
-			// Replace this value with some other interval ID to filter replay of the test suite to only include
-			// interval operations with this ID.
-			const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-			if (filterIntervalId) {
-				operations = operations.filter((entry) =>
-					[undefined, filterIntervalId].includes((entry as any).id),
-				);
-			}
+			const operations: Operation[] = JSON.parse(serialized);
+			// Replace this value with some other interval ID and uncomment to filter replay of the test
+			// suite to only include interval operations with this ID.
+			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+			// if (filterIntervalId) {
+			// 	return operations.filter((entry) =>
+			// 		[undefined, filterIntervalId].includes((entry as any).id),
+			// 	);
+			// }
 			return operations;
 		},
 	});

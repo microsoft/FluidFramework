@@ -1,3 +1,5 @@
-# Changes across versions for the Tinylicious-Client
+# @fluidframework/tinylicious-client
 
--   [Changes across versions for the Tinylicious-Client](#changes-across-versions-for-the-tinylicious-client)
+## 2.0.0-internal.4.1.0
+
+Dependency updates only.

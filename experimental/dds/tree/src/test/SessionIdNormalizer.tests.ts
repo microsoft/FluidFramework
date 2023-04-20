@@ -4,7 +4,7 @@
  */
 
 import { benchmark, BenchmarkType } from '@fluid-tools/benchmark';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import {
 	BaseFuzzTestState,
 	chain,
@@ -16,7 +16,7 @@ import {
 	take,
 	makeRandom,
 } from '@fluid-internal/stochastic-test-utils';
-import { assert, fail } from '../Common';
+import { fail } from '../Common';
 import { isFinalId, isLocalId } from '../id-compressor';
 import { SessionIdNormalizer } from '../id-compressor/SessionIdNormalizer';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers';

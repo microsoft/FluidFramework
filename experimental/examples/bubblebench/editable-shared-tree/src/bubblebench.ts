@@ -8,7 +8,7 @@ import {
 	ISharedTree,
 	ISharedTreeView,
 	SharedTreeFactory,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./appState";

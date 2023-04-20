@@ -185,6 +185,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	it("attach sends ops with compression enabled", async function () {
+		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+			this.skip();
+		}
 		const container = await provider.makeTestContainer({
 			...testContainerConfig,
 			runtimeOptions: {
