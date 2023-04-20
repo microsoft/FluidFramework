@@ -494,10 +494,14 @@ async function getSingleOpBatch(
 			}
 		}
 
-		const waitStartTime = performance.now();
-		telemetryEvent = PerformanceEvent.start(logger, {
-			eventName: "GetDeltasWaitTime",
-		});
+		let waitStartTime = 0;
+		if (telemetryEvent === undefined) {
+			waitStartTime = performance.now();
+			telemetryEvent = PerformanceEvent.start(logger, {
+				eventName: "GetDeltasWaitTime",
+			});
+		}
+
 		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
