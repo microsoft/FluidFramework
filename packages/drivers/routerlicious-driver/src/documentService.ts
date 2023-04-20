@@ -266,6 +266,10 @@ export class DocumentService implements api.IDocumentService {
 		this.documentStorageService = storage as DocumentStorageService;
 	}
 
+	public hasStorage(): boolean {
+		return this.documentStorageService !== undefined;
+	}
+
 	/**
 	 * Re-discover session URLs if necessary.
 	 */

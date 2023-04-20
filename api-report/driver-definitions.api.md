@@ -152,6 +152,7 @@ export interface IDocumentService {
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
     dispose(error?: any): void;
+    hasStorage?(): boolean;
     policies?: IDocumentServicePolicies;
     // (undocumented)
     resolvedUrl: IResolvedUrl;

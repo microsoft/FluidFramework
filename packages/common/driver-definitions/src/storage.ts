@@ -336,9 +336,14 @@ export interface IDocumentService {
 	/**
 	 * This method saves the IDocumentStorageService into this instance. It is used to possibly
 	 * replace the cached internal storage by the storage wrapped by adapters so that the local class
-	 * methods of this instance also use the wrapped storage with adapters.  
+	 * methods of this instance also use the wrapped storage with adapters.
 	 */
 	saveStorage?(storage: IDocumentStorageService): void;
+
+	/**
+	 * This method returns true if there is a storage associated with this document service.
+	 */
+	hasStorage?(): boolean;
 
 	/**
 	 * Dispose storage. Called by storage consumer (Container) when it's done with storage (Container closed).

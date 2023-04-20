@@ -44,8 +44,19 @@ export abstract class DocumentServiceProxy implements IDocumentService {
 		if(this._service.saveStorage !== undefined) {
 			this._service.saveStorage(storage);
 		}
+		else {
+			throw new Error("saveStorage is not implemented");
+		}
 	}
 
+	public hasStorage(): boolean {
+		if(this._service.hasStorage !== undefined) {
+			return this._service.hasStorage();
+		}
+		else {
+			throw new Error("hasStorage is not implemented");
+		}
+	}
 
 }
 
