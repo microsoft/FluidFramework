@@ -656,7 +656,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	/**
 	 * Disposes the connection and clears the inbound & outbound queues.
-	 * 
+	 *
 	 * Differences from close:
 	 * - dispose will emit "disposed"
 	 * - dispose will remove all listeners
