@@ -48,29 +48,6 @@ describe("Background script unit tests", () => {
 		expect(typeof onConnect).to.equal("function");
 	});
 
-	// it("Reloads the target when enabled.", async () => {
-	// 	const sandbox = createSandbox();
-	// 	const globals = stubGlobals();
-	// 	const { browser } = globals;
-	// 	const tabId = 5;
-
-	// 	const reloadSpy = sandbox.spy(browser.tabs, "reload");
-	// 	const onMessagePromise = awaitListener(sandbox, browser.runtime.onMessage);
-
-	// 	loadBackgroundScript(globals);
-
-	// 	const onMessage = await onMessagePromise;
-
-	// 	// Simulate receiving `Events.enable` from the devtools panel.
-	// 	onMessage({ enable: {} }, { tab: { id: tabId } } as any, () => {});
-
-	// 	t.true(reloadSpy.calledOnce);
-	// 	t.is(reloadSpy.firstCall.args[0] as any, tabId);
-	// 	t.true((reloadSpy.firstCall.args as any)[1].bypassCache);
-
-	// 	sandbox.restore();
-	// });
-
 	it("Injects connects to the Content script upon initialization from Devtools script.", async () => {
 		const { browser } = globals;
 		const tabId = 37;
