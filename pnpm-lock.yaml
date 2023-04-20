@@ -9971,6 +9971,7 @@ importers:
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
+      '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/counter': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
@@ -25124,6 +25125,7 @@ packages:
 
   /base64-js/1.3.0:
     resolution: {integrity: sha512-ccav/yGvoa80BQDljCxsmmQ3Xvx60/UpBIij5QN21W3wBi/hhIC9OoO+KLpu9IJTS9j4DRVJ3aDDF9cMSoa2lw==}
+    dev: false
 
   /base64-js/1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -25548,7 +25550,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -25556,7 +25558,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true

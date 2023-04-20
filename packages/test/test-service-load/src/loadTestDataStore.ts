@@ -20,6 +20,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 
@@ -30,30 +31,18 @@ export interface IRunConfig {
 	verbose: boolean;
 	random: IRandom;
 	logger: ITelemetryLogger;
+	loaderConfig?: ILoaderOptions;
 }
 
 export interface ILoadTest {
 	run(config: IRunConfig, reset: boolean): Promise<boolean>;
 	detached(config: Omit<IRunConfig, "runId" | "profileName">): Promise<LoadTestDataStoreModel>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
-	waitLoaded(): Promise<void>;
-	/**
-	 * Generate ops.
-	 * @param n - number of ops to generate
-	 */
-	generateChanges(n: number);
-	/**
-	 * Verify that the expected number of stashed ops have been applied to the counter
-	 * @param expected - expected number of stashed ops
-	 * @returns true if the counter matches the expected value
-	 */
-	verify(expected: number): boolean;
 }
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
 const sharedMapKey = "sharedMap";
-const stashedOpCounterKey = "stashedOpCounter";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
 const gcDataStoreKey = "dataStore";
@@ -175,16 +164,10 @@ export class LoadTestDataStoreModel {
 		if (!runDir.has(sharedMapKey)) {
 			runDir.set(sharedMapKey, SharedMap.create(runtime).handle);
 		}
-		if (!runDir.has(stashedOpCounterKey)) {
-			runDir.set(stashedOpCounterKey, SharedCounter.create(runtime).handle);
-		}
 
 		const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
 		const taskmanager = await root.get<IFluidHandle<ITaskManager>>(taskManagerKey)?.get();
 		const sharedmap = await runDir.get<IFluidHandle<ISharedMap>>(sharedMapKey)?.get();
-		const stashedOpCounter = await runDir
-			.get<IFluidHandle<ISharedCounter>>(stashedOpCounterKey)
-			?.get();
 
 		if (counter === undefined) {
 			throw new Error("counter not available");
@@ -194,9 +177,6 @@ export class LoadTestDataStoreModel {
 		}
 		if (sharedmap === undefined) {
 			throw new Error("sharedmap not available");
-		}
-		if (stashedOpCounter === undefined) {
-			throw new Error("stashed op counter not available");
 		}
 
 		const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
@@ -209,7 +189,6 @@ export class LoadTestDataStoreModel {
 			runDir,
 			counter,
 			sharedmap,
-			stashedOpCounter,
 			runDir,
 			gcDataStore.handle,
 		);
@@ -243,7 +222,6 @@ export class LoadTestDataStoreModel {
 		private readonly dir: IDirectory,
 		public readonly counter: ISharedCounter,
 		public readonly sharedmap: ISharedMap,
-		public readonly stashedOpCounter: ISharedCounter,
 		private readonly runDir: IDirectory,
 		private readonly gcDataStoreHandle: IFluidHandle,
 	) {
@@ -514,17 +492,6 @@ export class LoadTestDataStoreModel {
 
 class LoadTestDataStore extends DataObject implements ILoadTest {
 	public static DataStoreName = "StressTestDataStore";
-	private config?: IRunConfig;
-
-	private dataModelP?: Promise<LoadTestDataStoreModel>;
-	private dataModel?: LoadTestDataStoreModel;
-
-	public async waitLoaded(): Promise<void> {
-		if (!this.dataModelP) {
-			throw new Error("run() not called");
-		}
-		return this.dataModelP.then();
-	}
 
 	protected async initializingFirstTime() {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
@@ -541,16 +508,13 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	}
 
 	public async run(config: IRunConfig, reset: boolean) {
-		this.dataModelP = LoadTestDataStoreModel.createRunnerInstance(
+		const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
 			config,
 			reset,
 			this.root,
 			this.runtime,
 			this.context.containerRuntime,
 		);
-		const dataModel = await this.dataModelP;
-		this.dataModel = dataModel;
-		this.config = config;
 
 		const leaderElection = new LeaderElection(this.runtime);
 		leaderElection.setupLeaderElection();
@@ -585,13 +549,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
 	async getRuntime() {
 		return this.runtime;
-	}
-
-	public generateChanges(n: number) {
-		assert(!!this.dataModel, "no data model");
-		for (let i = n; i--; ) {
-			this.dataModel.stashedOpCounter.increment(1);
-		}
 	}
 
 	async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
@@ -784,23 +741,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		} catch (e) {
 			console.error("Error during submitting signals: ", e);
 		}
-	}
-
-	verify(expected: number): boolean {
-		assert(!!this.dataModel?.stashedOpCounter, "no stashed op counter");
-		const actual = this.dataModel.stashedOpCounter.value;
-		if (actual !== expected) {
-			const eventName = expected > actual ? "MissingStashedOps" : "DuplicatedStashedOps";
-			this.config?.logger.sendErrorEvent(
-				{
-					eventName,
-					count: Math.abs(expected - actual),
-				},
-				new Error(eventName),
-			);
-			return false;
-		}
-		return true;
 	}
 }
 

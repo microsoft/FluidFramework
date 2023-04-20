@@ -133,7 +133,6 @@ interface PendingBlob {
 	storageId?: string;
 	handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
 	uploadP: Promise<void | ICreateBlobResponse>;
-	uploadP: Promise<ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
 }
