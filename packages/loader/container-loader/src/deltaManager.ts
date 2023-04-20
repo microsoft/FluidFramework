@@ -451,10 +451,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	public dispose() {
-		throw new Error("Not implemented.");
-	}
-
 	/**
 	 * Sets the sequence number from which inbound messages should be returned
 	 */
@@ -648,17 +644,38 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - dispose will remove all listeners
 	 * - dispose can be called after closure, but not vis versa
 	 */
-	public close(error?: ICriticalContainerError, doDispose?: boolean): void {
+	public close(error?: ICriticalContainerError): void {
 		if (this._closed) {
-			if (doDispose === true) {
-				this.disposeInternal(error);
-			}
 			return;
 		}
 		this._closed = true;
 
-		this.connectionManager.dispose(error, doDispose !== true);
+		this.connectionManager.dispose(error, true /* switchToReadonly */);
+		this.clearQueues();
+		this.emit("closed", error);
+	}
 
+	/**
+	 * TODO
+	 */
+	public dispose(error?: ICriticalContainerError): void {
+		if (this._disposed) {
+			return;
+		}
+		this._disposed = true;
+		this._closed = true; // We consider "disposed" as a further state than "closed"
+
+		this.connectionManager.dispose(error, false /* switchToReadonly */);
+		this.clearQueues();
+
+		// This needs to be the last thing we do (before removing listeners), as it causes
+		// Container to dispose context and break ability of data stores / runtime to "hear"
+		// from delta manager, including notification (above) about readonly state.
+		this.emit("disposed", error);
+		this.removeAllListeners();
+	}
+
+	private clearQueues() {
 		this.closeAbortController.abort();
 
 		this._inbound.clear();
@@ -671,25 +688,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Drop pending messages - this will ensure catchUp() does not go into infinite loop
 		this.pending = [];
-
-		if (doDispose === true) {
-			this.disposeInternal(error);
-		} else {
-			this.emit("closed", error);
-		}
-	}
-
-	private disposeInternal(error?: ICriticalContainerError): void {
-		if (this._disposed) {
-			return;
-		}
-		this._disposed = true;
-
-		// This needs to be the last thing we do (before removing listeners), as it causes
-		// Container to dispose context and break ability of data stores / runtime to "hear"
-		// from delta manager, including notification (above) about readonly state.
-		this.emit("disposed", error);
-		this.removeAllListeners();
 	}
 
 	public refreshDelayInfo(id: string) {

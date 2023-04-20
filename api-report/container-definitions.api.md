@@ -246,9 +246,13 @@ export interface IDeltaHandlerStrategy {
 }
 
 // @public
-export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender, IDisposable {
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
+    // (undocumented)
+    dispose(error?: ICriticalContainerError): void;
+    // (undocumented)
+    readonly disposed: boolean;
     readonly hasCheckpointSequenceNumber: boolean;
     readonly inbound: IDeltaQueue<T>;
     readonly inboundSignal: IDeltaQueue<ISignalMessage>;

@@ -19,6 +19,7 @@ import {
 	ISignalMessage,
 	ITokenClaims,
 } from "@fluidframework/protocol-definitions";
+import { ICriticalContainerError } from "./error";
 
 /**
  * Contract representing the result of a newly established connection to the server for syncing deltas.
@@ -159,10 +160,7 @@ export interface IDeltaManagerEvents extends IEvent {
 /**
  * Manages the transmission of ops between the runtime and storage.
  */
-export interface IDeltaManager<T, U>
-	extends IEventProvider<IDeltaManagerEvents>,
-		IDeltaSender,
-		IDisposable {
+export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
 	/** The queue of inbound delta messages */
 	readonly inbound: IDeltaQueue<T>;
 
@@ -212,6 +210,10 @@ export interface IDeltaManager<T, U>
 
 	/** Submit a signal to the service to be broadcast to other connected clients, but not persisted */
 	submitSignal(content: any): void;
+
+	dispose(error?: ICriticalContainerError): void;
+
+	readonly disposed: boolean;
 }
 
 /**
