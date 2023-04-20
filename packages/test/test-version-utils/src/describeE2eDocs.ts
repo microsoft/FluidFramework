@@ -4,6 +4,7 @@
  */
 
 import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	getUnexpectedLogErrorException,
 	ITestObjectProvider,
@@ -21,7 +22,37 @@ export type DocumentType =
 	/** Document with a SharedMap with a 5Mb entry */
 	| "MediumDocumentMap"
 	/** Document with a SharedMap with 2 x 5Mb entries */
-	| "LargeDocumentMap";
+	| "LargeDocumentMap"
+	/** Medium document with Multiple DataStores (each data store has 3 DDS) */
+	| "MediumDocumentMultipleDataStores"
+	/** Large document with Multiple DataStores (each data store has 3 DDS) */
+	| "LargeDocumentMultipleDataStores";
+
+// Default document types to be used during the performance E2E runs.
+const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
+	{
+		testTitle: "10Mb Map",
+		documentType: "LargeDocumentMap",
+		minSampleCount: 2,
+		supportedEndpoints: ["local", "odsp"],
+	},
+	{
+		testTitle: "5Mb Map",
+		documentType: "MediumDocumentMap",
+		minSampleCount: 2,
+		supportedEndpoints: ["local", "odsp"],
+	},
+	{
+		testTitle: "250 DataStores - 750 DDSs",
+		documentType: "MediumDocumentMultipleDataStores",
+		minSampleCount: 1,
+	},
+	{
+		testTitle: "500 DataStores - 1500 DDSs",
+		documentType: "LargeDocumentMultipleDataStores",
+		minSampleCount: 1,
+	},
+];
 
 export type BenchmarkType = "E2ETime" | "E2EMemory";
 export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
@@ -29,6 +60,7 @@ export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks
 export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType | string | undefined;
+	supportedEndpoints?: TestDriverTypes[];
 	/**
 	 * Minimum number of iterations when running performance tests against the document.
 	 */
@@ -157,20 +189,6 @@ function createE2EDocCompatSuite(
 		}
 	};
 }
-
-// Default document types to be used during the performance runs.
-const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
-	{
-		testTitle: "10Mb Map",
-		documentType: "LargeDocumentMap",
-		minSampleCount: 10,
-	},
-	{
-		testTitle: "5Mb Map",
-		documentType: "MediumDocumentMap",
-		minSampleCount: 10,
-	},
-];
 
 export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe(E2EDefaultDocumentTypes);
 

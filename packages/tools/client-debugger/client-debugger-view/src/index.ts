@@ -20,12 +20,4 @@ export { AudienceMember } from "./Audience";
 export { AudienceMemberViewProps } from "./components";
 export { MessageRelayContext } from "./MessageRelayContext";
 export { RootView, RootViewProps } from "./RootView";
-export {
-	defaultSharedObjectRenderers,
-	RenderChild,
-	RenderOptions,
-	RenderSharedObject,
-	SharedObjectRenderOptions,
-	SharedObjectType,
-} from "./RendererOptions";
 export { IMessageRelay } from "@fluid-tools/client-debugger";

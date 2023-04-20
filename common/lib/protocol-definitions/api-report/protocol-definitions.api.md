@@ -154,7 +154,6 @@ export interface ICreateBlobResponse {
 export interface IDocumentAttributes {
     minimumSequenceNumber: number;
     sequenceNumber: number;
-    term: number | undefined;
 }
 
 // @public
@@ -307,7 +306,6 @@ export interface ISequencedDocumentMessage {
     referenceSequenceNumber: number;
     sequenceNumber: number;
     serverMetadata?: any;
-    term: number | undefined;
     timestamp: number;
     traces?: ITrace[];
     type: string;
@@ -537,6 +535,7 @@ export enum MessageType {
     Operation = "op",
     Propose = "propose",
     Reject = "reject",
+    // @deprecated
     RemoteHelp = "remoteHelp",
     RoundTrip = "tripComplete",
     Summarize = "summarize",

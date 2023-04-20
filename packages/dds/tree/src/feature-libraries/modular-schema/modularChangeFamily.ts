@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { ICodecFamily } from "../../codec";
 import {
-	ChangeEncoder,
 	ChangeFamily,
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
@@ -28,7 +28,6 @@ import {
 	brand,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
-	JsonCompatibleReadOnly,
 	Mutable,
 	NestedMap,
 	nestedSetContains,
@@ -65,7 +64,7 @@ import {
 	genericFieldKind,
 	newGenericChangeset,
 } from "./genericFieldKind";
-import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding";
+import { makeModularChangeCodecFamily } from "./modularChangeEncoding";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -77,10 +76,10 @@ import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
-	public readonly encoder: ChangeEncoder<ModularChangeset>;
+	public readonly codecs: ICodecFamily<ModularChangeset>;
 
 	public constructor(public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-		this.encoder = new ModularChangeEncoder(this.fieldKinds);
+		this.codecs = makeModularChangeCodecFamily(this.fieldKinds);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -207,6 +206,7 @@ export class ModularChangeFamily
 		for (const [field, changesForField] of fieldChanges) {
 			let composedField: FieldChange;
 			if (changesForField.length === 1) {
+				// BUG: This field might be affected by cross-field effects, so we must recurse into it.
 				composedField = changesForField[0];
 			} else {
 				const { fieldKind, changesets } = this.normalizeFieldChanges(
@@ -1086,20 +1086,6 @@ function makeModularChangeset(
 		changeset.constraintViolationCount = constraintViolationCount;
 	}
 	return changeset;
-}
-
-class ModularChangeEncoder extends ChangeEncoder<ModularChangeset> {
-	public constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-		super();
-	}
-
-	public encodeForJson(formatVersion: number, change: ModularChangeset): JsonCompatibleReadOnly {
-		return encodeForJsonFormat0(this.fieldKinds, change);
-	}
-
-	public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): ModularChangeset {
-		return decodeJsonFormat0(this.fieldKinds, change);
-	}
 }
 
 /**

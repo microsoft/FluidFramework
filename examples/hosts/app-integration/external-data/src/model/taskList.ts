@@ -519,7 +519,11 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
  */
 export class BaseDocument extends DataObject implements IBaseDocument {
 	private readonly taskListCollection = new Map<string, TaskList>();
+	private readonly leaderKey = "leader";
 
+	/**
+	 * {@inheritDoc IBaseDocument.addTaskList}
+	 */
 	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
 		if (this.taskListCollection.has(props.externalTaskListId)) {
 			throw new Error(
@@ -538,8 +542,25 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 		this.emit("taskListCollectionChanged");
 	};
 
+	/**
+	 * {@inheritDoc IBaseDocument.getTaskList}
+	 */
 	public readonly getTaskList = (id: string): ITaskList | undefined => {
 		return this.taskListCollection.get(id);
+	};
+
+	/**
+	 * {@inheritDoc IBaseDocument.getLeader}
+	 */
+	public readonly getLeader = (): string | undefined => {
+		return this.root.get(this.leaderKey);
+	};
+
+	/**
+	 * {@inheritDoc IBaseDocument.setLeader}
+	 */
+	public readonly setLeader = (newLeader: string): void => {
+		this.root.set(this.leaderKey, newLeader);
 	};
 
 	protected async hasInitialized(): Promise<void> {
@@ -549,6 +570,10 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			this.taskListCollection.set(id, taskListResolved);
 		}
+		this.root.on("valueChanged", (changed) => {
+			const newLeader: string | undefined = this.root.get(changed.key);
+			this.emit("leaderChanged", newLeader);
+		});
 	}
 }
 

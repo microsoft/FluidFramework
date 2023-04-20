@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { readFileSync } from "fs-extra";
+import { readFileSync, readJsonSync } from "fs-extra";
 import * as path from "path";
 import YAML from "yaml";
 
@@ -10,7 +10,7 @@ import { fatal } from "../bumpVersion/utils";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { Logger, defaultLogger } from "./logging";
 import { Package, PackageJson, Packages } from "./npmPackage";
-import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } from "./utils";
+import { execWithErrorAsync, existsSync, rimrafWithErrorAsync } from "./utils";
 
 export type PackageManager = "npm" | "pnpm" | "yarn";
 
@@ -23,6 +23,8 @@ export enum MonoRepoKind {
 	Server = "server",
 	Azure = "azure",
 	BuildTools = "build-tools",
+	GitRest = "gitrest",
+	Historian = "historian",
 }
 
 /**
@@ -148,7 +150,11 @@ export class MonoRepo {
 			for (const dir of this._packageJson.workspaces as string[]) {
 				this.packages.push(...Packages.loadGlob(dir, kind, ignoredDirs, this));
 			}
-			this.workspaceGlobs = this._packageJson.workspaces;
+			if (this._packageJson.workspaces instanceof Array) {
+				this.workspaceGlobs = this._packageJson.workspaces;
+			} else {
+				fatal(`workspaces field in ${this.repoPath} is not an array.`);
+			}
 			return;
 		}
 		fatal(

@@ -51,7 +51,6 @@ import {
 	float64Schema,
 	Phones,
 	phonesSchema,
-	decimalSchema,
 	personJsonableTree,
 } from "./mockData";
 
@@ -127,19 +126,21 @@ describe("editable-tree: editing", () => {
 		// polymorphic field supports:
 		// - Float64 schema (number-based)
 		// - Int32 schema (number-based)
-		// - Decimal schema (string-based)
 		// - String schema
 		maybePerson.salary = {
 			[valueSymbol]: "100.1",
-			[typeNameSymbol]: decimalSchema.name,
+			[typeNameSymbol]: stringSchema.name,
 		};
-		// basic primitive data type does match the current node type
+		// unambiguous type
 		maybePerson.salary = "not ok";
-		// basic primitive data type does not match the current node type
+		// ambiguous type since there are multiple options which are numbers:
 		assert.throws(
 			() => (maybePerson.salary = 99.99),
-			(e) => validateAssertionError(e, "unsupported schema for provided primitive"),
-			"Expected exception was not thrown",
+			(e) =>
+				validateAssertionError(
+					e,
+					"data compatible with more than one type allowed by the schema",
+				),
 		);
 		// explicit typing
 		maybePerson.salary = {
@@ -194,7 +195,7 @@ describe("editable-tree: editing", () => {
 				[typeNameSymbol]: complexPhoneSchema.name,
 				prefix: "+1",
 				number: "2345",
-			};
+			} as unknown as ComplexPhone;
 		}
 
 		const globalPhonesKey: FieldKey = globalFieldSymbolSequencePhones;

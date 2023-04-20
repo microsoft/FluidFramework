@@ -55,7 +55,6 @@ export {
 	IContext,
 	IContextErrorData,
 	ILogger,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
@@ -102,7 +101,6 @@ export { IMessageBatch, IPublisher, ITopic } from "./publisher";
 export {
 	IConsumer,
 	IPartition,
-	IPartitionWithEpoch,
 	IPendingBoxcar,
 	IPendingMessage,
 	IProducer,
@@ -144,4 +142,10 @@ export {
 export { TokenGenerator } from "./token";
 export { clientConnectivityStorageId, IUsageData, signalUsageStorageId } from "./usageData";
 export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
-export { IWebSocketTracker, ITokenRevocationManager, createCompositeTokenId } from "./tokenManager";
+export {
+	IWebSocketTracker,
+	ITokenRevocationManager,
+	ITokenRevocationResponse,
+	TokenRevocationError,
+	createCompositeTokenId
+} from "./tokenRevocationManager";

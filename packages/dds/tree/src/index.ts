@@ -69,7 +69,6 @@ export {
 	SchemaDataAndPolicy,
 	lookupGlobalFieldSchema,
 	lookupTreeSchema,
-	ChangeEncoder,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
@@ -95,6 +94,7 @@ export {
 	AnchorSetRootEvents,
 	FieldKindSpecifier,
 	AllowedUpdateType,
+	PathVisitor,
 } from "./core";
 
 export {
@@ -155,7 +155,6 @@ export {
 	FieldChangeHandler,
 	FieldEditor,
 	FieldChangeRebaser,
-	FieldChangeEncoder,
 	NodeChangeset,
 	ValueChange,
 	FieldChangeMap,
@@ -166,8 +165,6 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeChangeEncoder,
-	NodeChangeDecoder,
 	CrossFieldManager,
 	CrossFieldTarget,
 	RevisionIndexer,
@@ -204,6 +201,7 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
+	Identifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -229,9 +227,19 @@ export {
 	TreeViewSchema,
 	FieldViewSchema,
 	forEachField,
+	cursorFromContextualData,
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UntypedTreeCore,
+	UnwrappedUntypedField,
+	UnwrappedUntypedTree,
+	UntypedTreeOrPrimitive,
 } from "./feature-libraries";
 
 export {
+	identifierKey,
+	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	ISharedTreeFork,
@@ -239,7 +247,15 @@ export {
 	SharedTreeFactory,
 	ViewEvents,
 	SchematizeConfiguration,
-	schematizeView,
 } from "./shared-tree";
+
+export type {
+	IBinaryCodec,
+	ICodecFamily,
+	IDecoder,
+	IEncoder,
+	IJsonCodec,
+	IMultiFormatCodec,
+} from "./codec";
 
 export { StableId, UuidString } from "./id-compressor";

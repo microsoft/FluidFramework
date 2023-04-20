@@ -14,6 +14,8 @@ import {
 	mintRevisionTag,
 	Rebaser,
 	RepairDataStore,
+	tagChange,
+	TaggedChange,
 } from "../core";
 import { EventEmitter } from "../events";
 import { TransactionResult } from "../util";
@@ -24,9 +26,11 @@ import { TransactionStack } from "./transactionStack";
  */
 export interface SharedTreeBranchEvents<TChange> {
 	/**
-	 * Fired any time the branch has a new change applied to it
+	 * Fired anytime the head of this branch changes.
+	 * @param change - the cumulative change to this branch's state.
+	 * This may be a composition of changes from multiple commits at once (e.g. after a rebase or merge).
 	 */
-	onChange(change: TChange): void;
+	change(change: TChange): void;
 }
 
 /**
@@ -35,38 +39,32 @@ export interface SharedTreeBranchEvents<TChange> {
 export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
 	SharedTreeBranchEvents<TChange>
 > {
-	private head: GraphCommit<TChange>;
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
-	private readonly forks = new Set<SharedTreeBranch<TEditor, TChange>>();
-	private disposed = false;
 
 	/**
-	 * @param getBaseBranch - a function which retrieves the head of the base branch
-	 * @param mergeIntoBase - a function which describes how to merge this branch into the base branch which created it.
-	 * It is responsible for rebasing the changes properly across branches and updating the head of the base branch.
-	 * It returns the net change to the child branch.
-	 * @param sessionId - the session ID used to author commits made by to this branch
-	 * @param rebaser - a rebaser to rebase this branch's changes when it pulls or merges
+	 * Construct a new branch.
+	 * @param head - the head of the branch
+	 * @param sessionId - the session ID used to author commits made by this branch
+	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
+	 * @param changeFamily - determines the set of changes that this branch can commit
+	 * @param anchors - an optional set of anchors that this branch will rebase whenever the branch head changes
 	 */
 	public constructor(
-		private readonly getBaseBranch: () => GraphCommit<TChange>,
-		private readonly mergeIntoBase: (forked: SharedTreeBranch<TEditor, TChange>) => TChange,
+		private head: GraphCommit<TChange>,
 		private readonly sessionId: string,
 		private readonly rebaser: Rebaser<TChange>,
-		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly anchors: AnchorSet,
+		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		private readonly anchors?: AnchorSet,
 	) {
 		super();
-		this.head = getBaseBranch();
 		this.editor = this.changeFamily.buildEditor(
-			(change) => this.applyChange(change, false),
-			anchors,
+			(change) => this.applyChange(change),
+			new AnchorSet(), // This branch class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.
 		);
 	}
 
-	public applyChange(change: TChange, rebaseAnchors = true): void {
-		this.assertNotDisposed();
+	private applyChange(change: TChange): void {
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
 			revision,
@@ -79,10 +77,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.head.revision,
 		);
 
-		if (rebaseAnchors) {
-			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-		}
-		this.emit("onChange", change);
+		this.emitAndRebaseAnchors(change);
 	}
 
 	/**
@@ -128,11 +123,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
+		const inverses: TaggedChange<TChange>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false, repairStore);
-			this.changeFamily.rebaser.rebaseAnchors(this.anchors, inverse);
-			this.emit("onChange", inverse);
+			inverses.push(tagChange(inverse, mintRevisionTag()));
 		}
+		this.emitAndRebaseAnchors(inverses);
 		return TransactionResult.Abort;
 	}
 
@@ -156,100 +152,101 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Rebase the changes that have been applied to this branch over all the changes in the base branch that have
-	 * occurred since this branch last pulled (or was forked).
-	 * @returns the net change to this branch
-	 */
-	public pull(): TChange {
-		this.assertNotDisposed();
-		const baseBranch = this.getBaseBranch();
-		if (this.head === baseBranch) {
-			// Not necessary for correctness, but skips needless rebase and event firing below
-			return this.rebaser.changeRebaser.compose([]);
-		}
-
-		const [newBranch, change] = this.rebaser.rebaseBranch(this.head, baseBranch);
-		this.head = newBranch;
-		this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-		this.emit("onChange", change);
-		return change;
-	}
-
-	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
+	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
 	 */
-	public fork(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
-		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(
-			() => this.head,
-			(forked) => {
-				// In this function, `this` is the base and `forked` is the fork being merged in
-				const changeToForked = forked.pull();
-				assert(
-					forked.getBaseBranch() === this.head,
-					0x594 /* Expected merging checkout branches to be related */,
-				);
-				const commits: GraphCommit<TChange>[] = [];
-				const ancestor = findAncestor([forked.head, commits], (c) => c === this.head);
-				assert(
-					ancestor === this.head,
-					0x595 /* Expected merging checkout branches to be related */,
-				);
-				this.head = forked.head;
-				assert(this.forks.delete(forked), 0x596 /* Invalid checkout merge */);
-				const change = this.rebaser.changeRebaser.compose(commits);
-				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-				this.emit("onChange", change);
-				return changeToForked;
-			},
+	public fork(anchors?: AnchorSet): SharedTreeBranch<TEditor, TChange> {
+		return new SharedTreeBranch(
+			this.head,
 			this.sessionId,
 			this.rebaser,
 			this.changeFamily,
 			anchors,
 		);
-		this.forks.add(fork);
-		return fork;
 	}
 
 	/**
-	 * Apply all the changes on this branch to the base branch from which it was forked. If the base branch has new
-	 * changes since this branch last pulled (or was forked), then this branch's changes will be rebased over those first.
-	 * After the merge completes, this branch may no longer be forked or mutated.
+	 * Rebase the changes that have been applied to this branch over all the divergent changes in the given branch.
+	 * After this operation completes, this branch will be based off of `branch`.
+	 * @param branch - the head of the branch to rebase onto
 	 * @returns the net change to this branch
 	 */
-	public merge(): TChange {
-		this.assertNotDisposed();
+	public rebaseOnto(branch: GraphCommit<TChange>): TChange {
+		// Rebase this branch onto the given branch
+		const rebaseResult = this.rebaseBranch(this.head, branch);
+		if (rebaseResult === undefined) {
+			return this.noChange;
+		}
+
+		// The net change to this branch is provided by the `rebaseBranch` API
+		const [newHead, change] = rebaseResult;
+		this.head = newHead;
+		return this.emitAndRebaseAnchors(change);
+	}
+
+	/**
+	 * Apply all the divergent changes on the given branch to this branch.
+	 * @returns the net change to this branch
+	 */
+	public merge(branch: SharedTreeBranch<TEditor, TChange>): TChange {
 		assert(
-			this.transactions.size === 0,
+			!branch.isTransacting(),
 			0x597 /* Branch may not be merged while transaction is in progress */,
 		);
-		const change = this.mergeIntoBase(this);
-		this.head = this.getBaseBranch();
-		this.dispose();
-		return change;
-	}
 
-	/**
-	 * Whether or not this branch has been merged into its base via `merge()`.
-	 * If it has, then it may no longer be forked or mutated.
-	 */
-	public isMerged(): boolean {
-		return this.disposed;
-	}
-
-	/**
-	 * Dispose this branch and all branches that descend from it (i.e. have been transitively forked).
-	 */
-	private dispose(): void {
-		this.assertNotDisposed();
-		this.disposed = true;
-		for (const fork of this.forks) {
-			fork.dispose();
+		// Rebase the given branch onto this branch
+		const rebaseResult = this.rebaseBranch(branch.head, this.head);
+		if (rebaseResult === undefined) {
+			return this.noChange;
 		}
+
+		// Compute the net change to this branch
+		const [newHead] = rebaseResult;
+		const changes: GraphCommit<TChange>[] = [];
+		findAncestor([newHead, changes], (c) => c === this.head);
+		this.head = newHead;
+		return this.emitAndRebaseAnchors(changes);
 	}
 
-	private assertNotDisposed(message?: string | number): void {
-		assert(!this.isMerged(), message ?? "Branch is already merged");
+	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
+	private rebaseBranch(
+		branchHead: GraphCommit<TChange>,
+		onto: GraphCommit<TChange>,
+	): ReturnType<Rebaser<TChange>["rebaseBranch"]> | undefined {
+		if (branchHead === onto) {
+			return undefined;
+		}
+
+		const rebaseResult = this.rebaser.rebaseBranch(branchHead, onto);
+		const [rebasedHead] = rebaseResult;
+		if (this.head === rebasedHead) {
+			return undefined;
+		}
+
+		return rebaseResult;
+	}
+
+	private emitAndRebaseAnchors(change: TChange | TaggedChange<TChange>[]): TChange {
+		let composedChange: TChange;
+		if (Array.isArray(change)) {
+			if (change.length === 0) {
+				return this.noChange;
+			}
+			composedChange = this.rebaser.changeRebaser.compose(change);
+		} else {
+			composedChange = change;
+		}
+
+		if (this.anchors !== undefined) {
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, composedChange);
+		}
+
+		this.emit("change", composedChange);
+		return composedChange;
+	}
+
+	private get noChange() {
+		return this.changeFamily.rebaser.compose([]);
 	}
 }

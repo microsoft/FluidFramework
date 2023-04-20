@@ -33,6 +33,7 @@ export interface AnchorEvents {
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanging(anchor: AnchorNode): void;
     valueChanging(anchor: AnchorNode, value: Value): void;
+    visitSubtreeChanging(anchor: AnchorNode): PathVisitor;
 }
 
 // @alpha (undocumented)
@@ -78,16 +79,17 @@ export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 
 // @alpha
 const enum ApiMode {
+    Editable = 1,
     Flexible = 0,
-    Normalized = 1,
+    Simple = 3,
     Wrapped = 2
 }
 
 // @alpha
-type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild> = {
+type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild, Mode extends ApiMode> = {
     [Multiplicity.Forbidden]: undefined;
     [Multiplicity.Optional]: undefined | TypedChild;
-    [Multiplicity.Sequence]: TypedChild[];
+    [Multiplicity.Sequence]: Mode extends ApiMode.Editable ? EditableSequenceField<TypedChild> : TypedChild[];
     [Multiplicity.Value]: TypedChild;
 }[TMultiplicity];
 
@@ -143,20 +145,12 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 // @alpha (undocumented)
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest;
 
-// @alpha
-export abstract class ChangeEncoder<TChange> {
-    decodeBinary(formatVersion: number, change: IsoBuffer): TChange;
-    abstract decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TChange;
-    encodeBinary(formatVersion: number, change: TChange): IsoBuffer;
-    abstract encodeForJson(formatVersion: number, change: TChange): JsonCompatibleReadOnly;
-}
-
 // @alpha (undocumented)
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
     // (undocumented)
     buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
     // (undocumented)
-    readonly encoder: ChangeEncoder<TChange>;
+    readonly codecs: ICodecFamily<TChange>;
     // (undocumented)
     intoDelta(change: TChange): Delta.Root;
     // (undocumented)
@@ -198,16 +192,17 @@ export interface ChildLocation {
 // @alpha
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
     [ApiMode.Flexible]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
-    [ApiMode.Normalized]: [Record<string, never>, TValueSchema] extends [
+    [ApiMode.Editable]: [Record<string, never>, TValueSchema] extends [
     TTypedFields,
     PrimitiveValueSchema
     ] ? TypedValue<TValueSchema> : TypedSchema.AllowOptionalNotFlattened<{
         [typeNameSymbol]: TName & TreeSchemaIdentifier;
-    } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields>;
+    } & ValueFieldTreeFromSchema<TValueSchema> & TTypedFields> & UntypedTreeCore;
     [ApiMode.Wrapped]: {
         [typeNameSymbol]: TName;
         [valueSymbol]: TypedValue<TValueSchema>;
     } & TTypedFields;
+    [ApiMode.Simple]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
 }[Mode];
 
 // @alpha
@@ -271,6 +266,9 @@ export interface CursorAdapter<TNode> {
     value(node: TNode): Value;
 }
 
+// @alpha
+export function cursorFromContextualData(schemaData: SchemaDataAndPolicy, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
+
 // @alpha (undocumented)
 export const enum CursorLocationType {
     Fields = 1,
@@ -300,6 +298,7 @@ declare namespace Delta {
     export {
         Root,
         ProtoNode,
+        ProtoNodes,
         Mark,
         MarkList,
         Skip,
@@ -336,7 +335,7 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 type _dummy = 0;
 
 // @alpha
-export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | ContextuallyTypedNodeData> {
+export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     readonly context: EditableTreeContext;
     deleteNodes(index: number, count?: number): void;
@@ -348,6 +347,9 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
     readonly parent?: EditableTree;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
+
+// @alpha (undocumented)
+type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<TypedChild>;
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
@@ -363,7 +365,6 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
     };
     readonly [proxyTargetSymbol]: object;
     [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
-    [Symbol.iterator](): IterableIterator<EditableField>;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: TreeSchema;
     [valueSymbol]: Value;
@@ -376,15 +377,16 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     free(): void;
     prepareForEdit(): void;
     get root(): EditableField;
-    set root(data: ContextuallyTypedNodeData | undefined);
+    set root(data: ContextuallyTypedFieldData);
     readonly schema: SchemaDataAndPolicy;
     get unwrappedRoot(): UnwrappedEditableField;
-    set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
+    set unwrappedRoot(data: ContextuallyTypedFieldData);
 }
 
 // @alpha
 export interface EditableTreeEvents {
-    changing(): void;
+    changing(upPath: UpPath, value: Value): void;
+    subtreeChanging(upPath: UpPath): void;
 }
 
 // @alpha
@@ -445,18 +447,12 @@ export interface FieldChange {
     revision?: RevisionTag;
 }
 
-// @alpha (undocumented)
-export interface FieldChangeEncoder<TChangeset> {
-    decodeJson(formatVersion: number, change: JsonCompatibleReadOnly, decodeChild: NodeChangeDecoder): TChangeset;
-    encodeForJson(formatVersion: number, change: TChangeset, encodeChild: NodeChangeEncoder): JsonCompatibleReadOnly;
-}
-
 // @alpha
 export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>> {
     // (undocumented)
-    editor: TEditor;
+    codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
     // (undocumented)
-    encoder: FieldChangeEncoder<TChangeset>;
+    editor: TEditor;
     // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
@@ -493,9 +489,9 @@ export type FieldKey = LocalFieldKey | GlobalFieldKeySymbol;
 
 // @alpha @sealed
 export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMultiplicity extends Multiplicity = Multiplicity> implements FieldKindSpecifier {
-    constructor(identifier: FieldKindIdentifier, multiplicity: TMultiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
+    constructor(identifier: FieldKindIdentifier, multiplicity: TMultiplicity, changeHandler: FieldChangeHandler<any, TEditor>, allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldSchema) => boolean, handlesEditsFrom: ReadonlySet<FieldKindIdentifier>);
     // (undocumented)
-    allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined, superset: FieldSchema): boolean;
+    allowsFieldSuperset(policy: FullSchemaPolicy, originalData: SchemaData, originalTypes: TreeTypeSet, superset: FieldSchema): boolean;
     // (undocumented)
     readonly changeHandler: FieldChangeHandler<any, TEditor>;
     // (undocumented)
@@ -656,8 +652,25 @@ interface HasModifications<TTree = ProtoNode> {
     readonly setValue?: Value;
 }
 
+// @alpha (undocumented)
+export interface IBinaryCodec<TDecoded> extends IEncoder<TDecoded, IsoBuffer>, IDecoder<TDecoded, IsoBuffer> {
+}
+
+// @alpha
+export interface ICodecFamily<TDecoded> {
+    // (undocumented)
+    getSupportedFormats(): Iterable<number>;
+    // (undocumented)
+    resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
+}
+
 // @alpha
 export type IdAllocator = (count?: number) => ChangesetLocalId;
+
+// @alpha (undocumented)
+export interface IDecoder<TDecoded, TEncoded> {
+    decode(obj: TEncoded): TDecoded;
+}
 
 // @alpha
 export interface IDefaultEditBuilder {
@@ -676,6 +689,15 @@ export interface IDefaultEditBuilder {
 }
 
 // @alpha
+export type Identifier = number;
+
+// @alpha
+export const identifierKey: GlobalFieldKey;
+
+// @alpha
+export const identifierKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
     applyDelta(delta: Delta.Root): void;
@@ -684,6 +706,12 @@ export interface IEditableForest extends IForestSubscription {
 // @alpha
 export interface IEmitter<E extends Events<E>> {
     emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+    emitAndCollect<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): ReturnType<E[K]>[];
+}
+
+// @alpha (undocumented)
+export interface IEncoder<TDecoded, TEncoded> {
+    encode(obj: TDecoded): TEncoded;
 }
 
 // @alpha
@@ -696,6 +724,20 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
 
+// @alpha (undocumented)
+export interface IJsonCodec<TDecoded, TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
+}
+
+// @alpha
+export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> {
+    // (undocumented)
+    binary: IBinaryCodec<TDecoded>;
+    decode?: never;
+    encode?: never;
+    // (undocumented)
+    json: IJsonCodec<TDecoded, TJsonEncoded>;
+}
+
 // @alpha
 interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly content: readonly TTree[];
@@ -706,17 +748,19 @@ interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 declare namespace InternalTypes {
     export {
         TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
-        TypedSchemaData,
         TypedTree,
         CollectOptions,
         TypedFields,
         ApplyMultiplicity,
         ValueFieldTreeFromSchema,
         FlexibleObject,
+        EditableSequenceField,
+        TypedField,
         NamesFromSchema,
         ValuesOf,
         TypedValue,
-        PrimitiveValueSchema
+        PrimitiveValueSchema,
+        UntypedSequenceField
     }
 }
 
@@ -756,9 +800,7 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 
 // @alpha
 export interface ISharedTreeFork extends ISharedTreeView {
-    isMerged(): boolean;
-    merge(): void;
-    pull(): void;
+    rebaseOnto(view: ISharedTreeView): void;
 }
 
 // @alpha
@@ -768,9 +810,12 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeFork;
+    readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+    merge(view: ISharedTreeFork): void;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    schematize<TSchema extends SchemaAware.TypedSchemaData>(config: SchematizeConfiguration<TSchema>): ISharedTreeView;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start(): void;
@@ -878,12 +923,12 @@ export type JsonCompatible = string | number | boolean | null | JsonCompatible[]
 
 // @alpha
 export type JsonCompatibleObject = {
-    [P in string]: JsonCompatible;
+    [P in string]?: JsonCompatible;
 };
 
 // @alpha
 export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
-    readonly [P in string]: JsonCompatibleReadOnly | undefined;
+    readonly [P in string]?: JsonCompatibleReadOnly;
 };
 
 // @alpha (undocumented)
@@ -975,9 +1020,9 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
     // (undocumented)
     buildEditor(changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet): ModularEditBuilder;
     // (undocumented)
-    compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset;
+    readonly codecs: ICodecFamily<ModularChangeset>;
     // (undocumented)
-    readonly encoder: ChangeEncoder<ModularChangeset>;
+    compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset;
     // (undocumented)
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
     // (undocumented)
@@ -1101,12 +1146,6 @@ export const neverTree: TreeSchema;
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 // @alpha (undocumented)
-export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
-
-// @alpha (undocumented)
-export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
-
-// @alpha (undocumented)
 export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
 // @alpha (undocumented)
@@ -1176,6 +1215,15 @@ export interface PathRootPrefix {
 }
 
 // @alpha
+export interface PathVisitor {
+    onDelete(path: UpPath, count: number): void;
+    // (undocumented)
+    onInsert(path: UpPath, content: Delta.ProtoNodes): void;
+    // (undocumented)
+    onSetValue(path: UpPath, value: Value): void;
+}
+
+// @alpha
 export function prefixFieldPath(prefix: PathRootPrefix | undefined, path: FieldUpPath): FieldUpPath;
 
 // @alpha
@@ -1210,6 +1258,9 @@ export abstract class ProgressiveEditBuilderBase<TChange> implements Progressive
 
 // @alpha
 type ProtoNode = ITreeCursorSynchronous;
+
+// @alpha
+type ProtoNodes = readonly ProtoNode[];
 
 // @alpha
 export const proxyTargetSymbol: unique symbol;
@@ -1290,6 +1341,8 @@ declare namespace SchemaAware {
         NodeDataFor,
         typedSchemaData,
         TypedNode,
+        TypedField,
+        TypedSchemaData,
         InternalTypes
     }
 }
@@ -1321,14 +1374,11 @@ export interface SchemaPolicy {
 }
 
 // @alpha
-export interface SchematizeConfiguration {
+export interface SchematizeConfiguration<TMap extends ViewSchemaCollection = ViewSchemaCollection> {
     readonly allowedSchemaModifications: AllowedUpdateType;
     readonly initialTree: ContextuallyTypedFieldData;
-    readonly schema: ViewSchemaCollection;
+    readonly schema: TMap;
 }
-
-// @alpha
-export function schematizeView(tree: ISharedTreeView, config: SchematizeConfiguration): ISharedTreeView;
 
 // @alpha (undocumented)
 export interface SequenceFieldEditBuilder {
@@ -1502,11 +1552,16 @@ export interface TreeViewSchema extends TreeSchema {
 }
 
 // @alpha
+type TypedField<TMap extends TypedSchemaData, Mode extends ApiMode, TField extends TypedSchema.FieldSchemaTypeInfo> = [
+ApplyMultiplicity<TField["kind"]["multiplicity"], TypeSetToTypedTrees<TMap, Mode, TField["types"]>, Mode>
+][TypedSchema._dummy];
+
+// @alpha
 type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
     [key: string]: TypedSchema.FieldSchemaTypeInfo;
 }> = [
     {
-    [key in keyof TFields]: ApplyMultiplicity<TFields[key]["kind"]["multiplicity"], TypeSetToTypedTrees<TMap, Mode, TFields[key]["types"]>>;
+    [key in keyof TFields]: TypedField<TMap, Mode, TFields[key]>;
 }
 ][TypedSchema._dummy];
 
@@ -1555,11 +1610,13 @@ declare namespace TypedSchema {
 export { TypedSchema }
 
 // @alpha
-interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
+interface TypedSchemaData extends ViewSchemaCollection {
     // (undocumented)
-    allTypes: readonly string[];
+    readonly allTypes: readonly string[];
     // (undocumented)
-    treeSchemaObject: Record<string, any>;
+    readonly policy: FullSchemaPolicy;
+    // (undocumented)
+    readonly treeSchemaObject: Record<string, any>;
 }
 
 // @alpha
@@ -1624,10 +1681,72 @@ function unrestrictedFieldSchema<TKind extends FieldKind>(kind: TKind): {
 };
 
 // @alpha
+export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
+    readonly context: UntypedTreeContext;
+    readonly fieldKey: FieldKey;
+    readonly fieldSchema: FieldSchema;
+    getNode(index: number): UntypedTree;
+    readonly parent?: UntypedTree;
+}
+
+// @alpha
+interface UntypedSequenceField extends UntypedField {
+    readonly context: UntypedTreeContext;
+    deleteNodes(index: number, count?: number): void;
+    readonly fieldKey: FieldKey;
+    readonly fieldSchema: FieldSchema & {
+        readonly kind: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
+    };
+    getNode(index: number): UntypedTree;
+    insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    readonly parent?: UntypedTree;
+    replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+}
+
+// @alpha
+export interface UntypedTree extends UntypedTreeCore {
+    readonly [typeNameSymbol]: TreeSchemaIdentifier;
+    readonly [valueSymbol]: Value;
+    readonly [key: FieldKey]: UnwrappedUntypedField;
+}
+
+// @alpha
+export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
+    clear(): void;
+    free(): void;
+    prepareForEdit(): void;
+    readonly root: UntypedField;
+    readonly schema: SchemaDataAndPolicy;
+    readonly unwrappedRoot: UnwrappedUntypedField;
+}
+
+// @alpha
+export interface UntypedTreeCore extends Iterable<UntypedField> {
+    readonly [contextSymbol]: UntypedTreeContext;
+    [getField](fieldKey: FieldKey): UntypedField;
+    // (undocumented)
+    [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
+    readonly [parentField]: {
+        readonly parent: UntypedField;
+        readonly index: number;
+    };
+    readonly [typeSymbol]: TreeSchema;
+}
+
+// @alpha
+export type UntypedTreeOrPrimitive = UntypedTree | PrimitiveValue;
+
+// @alpha
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
 
 // @alpha
 export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
+
+// @alpha
+export type UnwrappedUntypedField = UnwrappedUntypedTree | undefined | UntypedField;
+
+// @alpha
+export type UnwrappedUntypedTree = UntypedTreeOrPrimitive | UntypedField;
 
 // @alpha
 export interface UpPath<TParent = UpPathDefault> {
@@ -1704,6 +1823,8 @@ export interface ViewEvents {
 export interface ViewSchemaCollection {
     // (undocumented)
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
+    // (undocumented)
+    readonly policy: SchemaPolicy;
     // (undocumented)
     readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
 }

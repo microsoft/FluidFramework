@@ -43,7 +43,6 @@ import {
 	cloneGCData,
 	concatGarbageCollectionData,
 	getGCDataFromSnapshot,
-	getSnapshotDataFromOldSnapshotFormat,
 	sendGCUnexpectedUsageEvent,
 } from "./gcHelpers";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
@@ -202,12 +201,9 @@ export class GarbageCollector implements IGarbageCollector {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
 					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
 					if (gcSnapshotTree === undefined) {
-						// back-compat - Older documents will have the GC blobs in each data store's snapshot tree.
-						return getSnapshotDataFromOldSnapshotFormat(
-							baseSnapshot,
-							createParams.metadata,
-							readAndParseBlob,
-						);
+						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
+						// incremental gc summary will not work with older gc data as well
+						return undefined;
 					}
 
 					const snapshotData = await getGCDataFromSnapshot(

@@ -50,6 +50,24 @@ describe("parseBundleAndExportFile", () => {
 		});
 	});
 
+	it("fails on timeout", async () => {
+		const result = await parseBundleAndExportFile(
+			path.join(sampleCodeLoadersFolder, "timeoutCodeLoader.js"),
+			path.join(snapshotFolder, "odspSnapshot1.json"),
+			outputFilePath,
+			telemetryFile,
+			undefined,
+			undefined,
+			1,
+		);
+
+		assert(!result.success, "result should not be successful");
+		assert(
+			result.error?.message.toLowerCase().includes("timed out"),
+			`error message does not contain "timed out" [${result.error?.message}]`,
+		);
+	});
+
 	describe("Validate arguments", () => {
 		const snapshotFilePath = path.join(snapshotFolder, "odspSnapshot1.json");
 
@@ -110,6 +128,24 @@ describe("parseBundleAndExportFile", () => {
 			assert(
 				result.errorMessage.toLowerCase().includes("output file"),
 				`error message does not contain "output file" [${result.errorMessage}]`,
+			);
+		});
+
+		it("timeout", async () => {
+			const result = await parseBundleAndExportFile(
+				path.join(sampleCodeLoadersFolder, "sampleCodeLoader.js"),
+				snapshotFilePath,
+				outputFilePath,
+				telemetryFile,
+				undefined,
+				undefined,
+				-1,
+			);
+
+			assert(!result.success, "result should not be successful");
+			assert(
+				result.errorMessage.toLowerCase().includes("timeout"),
+				`error message does not contain "timeout" [${result.errorMessage}]`,
 			);
 		});
 	});

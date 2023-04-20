@@ -4,7 +4,8 @@
  */
 
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
-import { Brand, fail, Invariant, JsonCompatibleReadOnly } from "../../util";
+import { Brand, fail, Invariant } from "../../util";
+import { ICodecFamily, IJsonCodec } from "../../codec";
 import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
 
 /**
@@ -18,7 +19,7 @@ export interface FieldChangeHandler<
 > {
 	_typeCheck?: Invariant<TChangeset>;
 	rebaser: FieldChangeRebaser<TChangeset>;
-	encoder: FieldChangeEncoder<TChangeset>;
+	codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
 	editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
@@ -141,29 +142,6 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 /**
  * @alpha
  */
-export interface FieldChangeEncoder<TChangeset> {
-	/**
-	 * Encodes `change` into a JSON compatible object.
-	 */
-	encodeForJson(
-		formatVersion: number,
-		change: TChangeset,
-		encodeChild: NodeChangeEncoder,
-	): JsonCompatibleReadOnly;
-
-	/**
-	 * Decodes `change` from a JSON compatible object.
-	 */
-	decodeJson(
-		formatVersion: number,
-		change: JsonCompatibleReadOnly,
-		decodeChild: NodeChangeDecoder,
-	): TChangeset;
-}
-
-/**
- * @alpha
- */
 export interface FieldEditor<TChangeset> {
 	/**
 	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
@@ -207,16 +185,6 @@ export type NodeChangeRebaser = (
  * @alpha
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
-
-/**
- * @alpha
- */
-export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnly;
-
-/**
- * @alpha
- */
-export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
 /**
  * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
