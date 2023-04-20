@@ -97,10 +97,6 @@
 		"webpack-cli": "^4.9.2"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_ILocalOrdererSetup": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
