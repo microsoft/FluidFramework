@@ -366,8 +366,8 @@ describe("Editing", () => {
 			};
 
 			const e1 = tree1.runTransaction((forest, editor) => {
-				const field = editor.optionalField(undefined, rootFieldKeySymbol);
-				field.set(singleJsonCursor("41"), true);
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.insert(0, singleTextCursor({ type: jsonString.name, value: "42" }));
 			});
 
 			let sequenced = sequencer.sequence([e1]);
@@ -375,27 +375,22 @@ describe("Editing", () => {
 			tree2.receive(sequenced);
 
 			const e2 = tree1.runTransaction((forest, editor) => {
-				const field = editor.optionalField(undefined, rootFieldKeySymbol);
-				field.set(undefined, false);
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.delete(0, 1);
 			});
 
 			const e3 = tree2.runTransaction((forest, editor) => {
-				const field = editor.optionalField(undefined, rootFieldKeySymbol);
-				field.set(undefined, false);
-			});
-
-			const e4 = tree2.runTransaction((forest, editor) => {
 				editor.addNodeExistsConstraint(rootPath);
-				const field = editor.optionalField(undefined, rootFieldKeySymbol);
-				field.set(singleJsonCursor("42"), true);
+				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.insert(0, singleTextCursor({ type: jsonString.name, value: "43" }));
 			});
 
-			sequenced = sequencer.sequence([e2, e3, e4]);
+			sequenced = sequencer.sequence([e2, e3]);
 
 			tree1.receive(sequenced);
 			tree2.receive(sequenced);
 
-			expectJsonTree([tree1, tree2], ["42"]);
+			expectJsonTree([tree1, tree2], ["43"]);
 		});
 	});
 });
