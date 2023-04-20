@@ -378,7 +378,9 @@ export class SharedMatrix<T = any>
 
 		// Transfer handles and undo/redo tracking groups from the original segment to the
 		// newly inserted segment.
-		inserted.start = original.start;
+		if (original.start !== inserted.start) {
+			inserted.start = original.start;
+		}
 
 		// Invalidate the handleCache in case it was populated during the 'rowsChanged'
 		// callback, which occurs before the handle span is populated.
@@ -417,8 +419,9 @@ export class SharedMatrix<T = any>
 
 		// Transfer handles and undo/redo tracking groups from the original segment to the
 		// newly inserted segment.
-		inserted.start = original.start;
-
+		if (original.start !== inserted.start) {
+			inserted.start = original.start;
+		}
 		// Invalidate the handleCache in case it was populated during the 'colsChanged'
 		// callback, which occurs before the handle span is populated.
 		const colStart = this.cols.getPosition(inserted);
