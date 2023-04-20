@@ -190,6 +190,9 @@ export enum ContainerMessageType {
 
 	// Sets the alias of a root data store
 	Alias = "alias",
+
+	// Indicates object lifecycle transitions, e.g. when an object is deleted by GC or a reference is added from another object
+	Lifecycle = "lifecycle",
 }
 
 export interface ContainerRuntimeMessage {
@@ -1723,6 +1726,7 @@ export class ContainerRuntime
 				return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
+			case ContainerMessageType.Lifecycle:
 				return;
 			case ContainerMessageType.ChunkedOp:
 				throw new Error("chunkedOp not expected here");
@@ -1883,9 +1887,11 @@ export class ContainerRuntime
 					break;
 				case ContainerMessageType.ChunkedOp:
 				case ContainerMessageType.Rejoin:
+				case ContainerMessageType.Lifecycle: // Not yet implemented
 					break;
 				default:
 					if (runtimeMessage) {
+						((_: never) => {})(type); // compile-time protection from missed cases above
 						const error = DataProcessingError.create(
 							// Former assert 0x3ce
 							"Runtime message of unknown type",
@@ -3035,6 +3041,7 @@ export class ContainerRuntime
 				this.blobManager.reSubmit(opMetadata);
 				break;
 			case ContainerMessageType.Rejoin:
+			case ContainerMessageType.Lifecycle:
 				this.submit(type, content);
 				break;
 			default:

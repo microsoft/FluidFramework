@@ -385,3 +385,24 @@ export interface IGCResult {
 	/** The ids of nodes that are not-referenced or deleted in the referenced graph */
 	deletedNodeIds: string[];
 }
+
+/*
+ * Data type for ContainerRuntime "lifecycle" op contents
+ */
+export type ObjectLifecycleMessage =
+	| {
+			/** When a new reference is added to an object */
+			readonly type: "referenced";
+			/** The id of the object being referenced */
+			readonly id: string;
+	  }
+	| {
+			/** When GC deletes objects from the summary */
+			readonly type: "deleted";
+			/** The ids of the deleted objects */
+			readonly ids: string[];
+	  }
+	| {
+			/** Forward compat to log unrecognized types */
+			readonly type: string;
+	  };
