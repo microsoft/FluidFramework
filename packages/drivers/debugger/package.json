@@ -36,10 +36,10 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/driver-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/driver-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/replay-driver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/replay-driver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"jsonschema": "^1.2.6"
 	},
 	"devDependencies": {

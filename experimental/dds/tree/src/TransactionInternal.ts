@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail, Result } from './Common';
+import { assert } from '@fluidframework/common-utils';
+import { assertWithMessage, copyPropertyIfDefined, fail, Result } from './Common';
 import { NodeId, DetachedSequenceId, TraitLabel, isDetachedSequenceId } from './Identifiers';
 import { rangeFromStableRange } from './TreeViewUtilities';
 import {
@@ -773,7 +774,7 @@ export namespace TransactionInternal {
 			}
 			while (unprocessed.length > 0) {
 				const node = unprocessed.pop();
-				assert(node !== undefined && !isDetachedSequenceId(node));
+				assertWithMessage(node !== undefined && !isDetachedSequenceId(node));
 				const traits = new Map<TraitLabel, readonly NodeId[]>();
 				// eslint-disable-next-line no-restricted-syntax
 				for (const key in node.traits) {

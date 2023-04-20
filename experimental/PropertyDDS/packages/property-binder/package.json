@@ -68,9 +68,9 @@
 	},
 	"dependencies": {
 		"@babel/runtime": "^7.13.7",
-		"@fluid-experimental/property-changeset": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/property-dds": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/property-properties": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-experimental/property-changeset": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluid-experimental/property-dds": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluid-experimental/property-properties": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"lodash": "^4.17.21",
 		"underscore": "^1.13.6"
 	},
@@ -80,8 +80,8 @@
 		"@babel/plugin-transform-runtime": "^7.2.0",
 		"@babel/preset-env": "^7.2.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/test-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@types/jest": "22.2.3",
 		"@types/lodash": "^4.14.118",
 		"@types/node": "^14.18.38",

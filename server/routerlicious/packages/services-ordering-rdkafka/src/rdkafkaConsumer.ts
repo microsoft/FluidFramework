@@ -9,7 +9,6 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
 	IConsumer,
 	IPartition,
-	IPartitionWithEpoch,
 	IQueuedMessage,
 	IZookeeperClient,
 	ZookeeperClientConstructor,
@@ -243,8 +242,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				try {
 					this.isRebalancing = true;
 					const partitions = this.getPartitions(this.assignedPartitions);
-					const partitionsWithEpoch = await this.fetchPartitionEpochs(partitions);
-					this.emit("rebalanced", partitionsWithEpoch, err.code);
+					this.emit("rebalanced", partitions, err.code);
 
 					// cleanup things left over from the lost partitions
 					for (const partition of originalAssignedPartitions) {
@@ -502,32 +500,5 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				consumer.emit("rebalance.error", ex);
 			}
 		}
-	}
-
-	private async fetchPartitionEpochs(partitions: IPartition[]): Promise<IPartitionWithEpoch[]> {
-		let epochs: number[];
-
-		if (this.zooKeeperClient) {
-			const epochsP = new Array<Promise<number>>();
-			for (const partition of partitions) {
-				epochsP.push(
-					this.zooKeeperClient.getPartitionLeaderEpoch(this.topic, partition.partition),
-				);
-			}
-
-			epochs = await Promise.all(epochsP);
-		} else {
-			epochs = new Array(partitions.length).fill(0);
-		}
-
-		const partitionsWithEpoch: IPartitionWithEpoch[] = [];
-
-		for (let i = 0; i < partitions.length; ++i) {
-			const partitionWithEpoch = partitions[i] as IPartitionWithEpoch;
-			partitionWithEpoch.leaderEpoch = epochs[i];
-			partitionsWithEpoch.push(partitionWithEpoch);
-		}
-
-		return partitionsWithEpoch;
 	}
 }

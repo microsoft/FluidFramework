@@ -71,7 +71,7 @@ export function getGitMode(value: SummaryObject): string;
 export function getGitType(value: SummaryObject): "blob" | "tree";
 
 // @public (undocumented)
-export function getQuorumTreeEntries(documentId: string, minimumSequenceNumber: number, sequenceNumber: number, term: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
+export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
 // @public (undocumented)
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -131,7 +131,7 @@ export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: I
 
 // @public
 export class ProtocolOpHandler implements IProtocolHandler {
-    constructor(minimumSequenceNumber: number, sequenceNumber: number, term: number | undefined, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
+    constructor(minimumSequenceNumber: number, sequenceNumber: number, members: [string, ISequencedClient][], proposals: [number, ISequencedProposal, string[]][], values: [string, ICommittedProposal][], sendProposal: (key: string, value: any) => number);
     // (undocumented)
     get attributes(): IDocumentAttributes;
     // (undocumented)
@@ -149,8 +149,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
     setConnectionState(connected: boolean, clientId: string | undefined): void;
     // (undocumented)
     snapshot(): IQuorumSnapshot;
-    // (undocumented)
-    readonly term: number;
 }
 
 // @public

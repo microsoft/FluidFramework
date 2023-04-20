@@ -33,7 +33,7 @@ interface CompatConfig {
 // N and N - 1
 const defaultVersions = [0, -1];
 // we are currently supporting 0.45 long-term
-const LTSVersions = ["^0.45.0"];
+const LTSVersions = ["^1.3.4"];
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
 	if (compatVersion === 0) {

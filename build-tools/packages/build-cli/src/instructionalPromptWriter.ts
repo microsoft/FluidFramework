@@ -64,7 +64,7 @@ export const ADOPipelineLinks = new Map<ReleasePackage | ReleaseGroup | undefine
 	],
 	[
 		"@fluid-tools/benchmark",
-		"https://dev.azure.com/fluidframework/internal/_build?definitionId=96",
+		"https://dev.azure.com/fluidframework/internal/_build?definitionId=62",
 	],
 	[
 		"@fluidframework/test-tools",

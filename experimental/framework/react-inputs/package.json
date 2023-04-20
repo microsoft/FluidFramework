@@ -33,11 +33,11 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluidframework/cell": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/cell": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/merge-tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/sequence": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/merge-tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/sequence": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {
