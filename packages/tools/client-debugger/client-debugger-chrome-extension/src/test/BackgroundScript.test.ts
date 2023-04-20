@@ -3,23 +3,18 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable jest/no-commented-out-tests */
-
 import { expect } from "chai";
 
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
-// import { FetchEnd, FetchStart } from "hint/dist/src/lib/types/events";
-
 import { Globals } from "../utilities";
-import { awaitListener, stubGlobals } from "./Utilities";
+import { DevToolsInitMessage, extensionMessageSource } from "../messaging";
+import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
 const proxyquire = Proxyquire.noCallThru();
 
-// TODO: is this right?
-const backgroundScriptPath = "../background/BackgroundScript";
-// const contentScriptPath = "content-script/webhint.js";
+const backgroundScriptPath = "../background/BackgroundScript"; // Relative to this file
 
 /**
  * Require the background script using the provided `browser` APIs.
@@ -32,42 +27,6 @@ const loadBackgroundScript = (globals: Globals): void => {
 	});
 };
 
-// type InjectContentScript = (tabId: number) => Promise<void>;
-
-/**
- * Returns a method which can be invoked to trigger content script injection.
- *
- * @remarks
- *
- * Returned method accepts an argument specifying the `tabId` to inject to.
- *
- * Note: Must be called to get the method *before* loading the background script.
- *
- * Note: Returned method must be called *after* loading the background script.
- */
-// function prepareContentScriptInjection(
-// 	sandbox: SinonSandbox,
-// 	browser: typeof chrome,
-// ): InjectContentScript {
-// 	const onCommittedPromise = awaitListener(sandbox, browser.webNavigation.onCommitted);
-// 	const onMessagePromise = awaitListener(sandbox, browser.runtime.onMessage);
-
-// 	return async (tabId: number): Promise<void> => {
-// 		const onMessage = await onMessagePromise;
-
-// 		// Simulate receiving `Events.enable` from the devtools panel.
-// 		onMessage({ enable: { config: {} } }, { tab: { id: tabId } } as any, () => {});
-
-// 		const onCommitted = await onCommittedPromise;
-
-// 		// Simulate receiving `browser.webNavigation.onCommitted` to trigger content script injection.
-// 		onCommitted({
-// 			frameId: 0,
-// 			tabId,
-// 		} as unknown as chrome.webNavigation.WebNavigationTransitionCallbackDetails);
-// 	};
-// }
-
 describe("Background script unit tests", () => {
 	const globals = stubGlobals();
 	const sandbox = createSandbox();
@@ -76,16 +35,16 @@ describe("Background script unit tests", () => {
 		sandbox.restore(); // TODO: reset?
 	});
 
-	it("Registers message listeners on load", async () => {
+	it("Registers `onConnect` listener on load", async () => {
 		const { browser } = globals;
 
 		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
 		loadBackgroundScript(globals);
 
-		const onMessage = await onConnectListenerPromise;
+		const onConnect = await onConnectListenerPromise;
 
-		expect(typeof onMessage).to.equal("function");
+		expect(typeof onConnect).to.equal("function");
 	});
 
 	// it("Reloads the target when enabled.", async () => {
@@ -111,26 +70,74 @@ describe("Background script unit tests", () => {
 	// 	sandbox.restore();
 	// });
 
-	// it("Injects the content script when enabled.", async () => {
-	// 	const sandbox = createSandbox();
-	// 	const globals = stubGlobals();
-	// 	const { browser } = globals;
-	// 	const tabId = 7;
+	it("Injects the content script when enabled.", async () => {
+		const { browser } = globals;
+		const tabId = 37;
 
-	// 	const executeScriptSpy = sandbox.spy(browser.tabs, "executeScript");
-	// 	const injectContentScript = prepareContentScriptInjection(sandbox, browser);
+		const devtoolsPort = stubPort("devtools-port");
+		const tabPort = stubPort("tab-port");
 
-	// 	loadBackgroundScript(globals);
+		// Stub out necessary `tabs` calls for the Background script
+		let getCalled = false;
+		browser.tabs.get = async (_tabId: number): Promise<chrome.tabs.Tab> => {
+			getCalled = true;
+			expect(_tabId).to.equal(tabId);
+			return {
+				id: tabId,
+			} as unknown as chrome.tabs.Tab;
+		};
 
-	// 	await injectContentScript(tabId);
+		let connectCalled = false;
+		browser.tabs.connect = (
+			_tabId: number,
+			connectionInfo: chrome.tabs.ConnectInfo | undefined,
+		): chrome.runtime.Port => {
+			connectCalled = true;
+			expect(_tabId).to.equal(tabId);
+			expect(connectionInfo).to.deep.equal({ name: "Content Script" });
+			return tabPort;
+		};
 
-	// 	t.true(executeScriptSpy.calledOnce);
-	// 	t.is(executeScriptSpy.firstCall.args[0], tabId);
-	// 	t.is(executeScriptSpy.firstCall.args[1].file, contentScriptPath);
-	// 	t.is(executeScriptSpy.firstCall.args[1].runAt, "document_start");
+		// Spy on script execution so we can detect when the Content script is connected to
+		// const tabConnectScriptSpy = sandbox.spy(browser.tabs, "connect");
 
-	// 	sandbox.restore();
-	// });
+		// Inject our stubbed `onConnect`
+		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+
+		// Load the background script (with stubbed `onConnect`)
+		loadBackgroundScript(globals);
+
+		// Wait for onConnect handler to be registered by background script
+		const onConnect = await onConnectListenerPromise;
+
+		// Inject our stubbed `onMessage` into the Port we will pass to the Background script
+		const onMessageListenerPromise = awaitListener(sandbox, devtoolsPort.onMessage);
+
+		// Simulate background script connection init from the devtools
+		onConnect(devtoolsPort);
+
+		const onMessage = await onMessageListenerPromise;
+
+		// Simulate sending the init message from the devtools panel to the background script
+		const devtoolsInitMessage: DevToolsInitMessage = {
+			type: "initialize-devtools",
+			data: {
+				tabId,
+			},
+			source: extensionMessageSource,
+		};
+		onMessage(devtoolsInitMessage, devtoolsPort);
+
+		expect(getCalled).to.be.true;
+
+		// TODO: only called in continuation of tabs.get
+		// We need to wait in order to ensure this is called.
+		expect(connectCalled).to.be.true;
+
+		// expect(tabConnectScriptSpy.called).to.be.true;
+		// expect(tabConnectScriptSpy.firstCall.args[0]).to.equal(tabId);
+		// expect(tabConnectScriptSpy.firstCall.args[1]).to.equal("Content Script");
+	});
 
 	// it("Retries injecting the content script if it fails.", async () => {
 	// 	const sandbox = createSandbox();

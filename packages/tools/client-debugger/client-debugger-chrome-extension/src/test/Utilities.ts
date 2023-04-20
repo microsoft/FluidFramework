@@ -49,6 +49,19 @@ export function stubEvent(): chrome.events.Event<() => void> {
 }
 
 /**
+ * Stubs a Port for use in tests.
+ */
+export function stubPort(name: string): chrome.runtime.Port {
+	return {
+		name,
+		postMessage: (): void => {},
+		disconnect: (): void => {},
+		onDisconnect: stubEvent(),
+		onMessage: stubEvent(),
+	};
+}
+
+/**
  * Create and return a newly stubbed global `browser` and `fetch` instances.
  * Gives each test it's own set of stubs for parallel execution.
  */
@@ -59,7 +72,6 @@ export function stubGlobals(dom?: JSDOM): Globals {
 			onConnect: stubEvent(),
 			onMessage: stubEvent(),
 			sendMessage: (): void => {},
-			test: "Hello there!",
 		},
 		tabs: {
 			executeScript: (): void => {},

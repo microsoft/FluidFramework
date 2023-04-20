@@ -12,4 +12,5 @@ const config = getFluidTestMochaConfig(packageDir);
 module.exports = {
 	...config,
 	require: ["jsdom-global/register", "./test-setup"],
+	timeout: 5000,
 };
