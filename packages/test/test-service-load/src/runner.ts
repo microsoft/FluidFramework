@@ -279,7 +279,7 @@ async function runnerProcess(
 			);
 		} finally {
 			if (container?.closed === false) {
-				container?.close();
+				container?.dispose();
 			}
 			metricsCleanup();
 		}
@@ -387,7 +387,7 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close();
+								container.dispose();
 							}
 						}, leaveTime);
 					}
@@ -420,6 +420,7 @@ function scheduleOffline(
 		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
 			container.once("connected", () => resolve());
 			container.once("closed", () => resolve());
+			container.once("disposed", () => resolve());
 		} else {
 			resolve();
 		}
