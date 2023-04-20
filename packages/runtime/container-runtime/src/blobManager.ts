@@ -133,13 +133,13 @@ interface PendingBlob {
 	status: PendingBlobStatus;
 	storageId?: string;
 	handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
-	uploadP: Promise<ICreateBlobResponse>;
+	uploadP?: Promise<ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
 }
 
 export interface IPendingBlobs {
-	[id: string]: { blob: string };
+	[id: string]: { blob: string; uploadTime?: number, minTTLInSeconds: number };
 }
 
 export interface IBlobManagerEvents {
@@ -232,6 +232,19 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
 			const blob = stringToBuffer(entry.blob, "base64");
+			if (entry.minTTLInSeconds && entry.uploadTime) {
+				const timeLapseSinceLocalUpload = (Date.now() - entry.uploadTime) / 1000;
+				// stashed entries with more than half-life in storage will not be reuploaded  
+				if (entry.minTTLInSeconds - timeLapseSinceLocalUpload > entry.minTTLInSeconds / 2) {
+					this.pendingBlobs.set(localId, {
+						blob,
+						status: PendingBlobStatus.OfflinePendingOp,
+						handleP: new Deferred(),
+						uploadP: undefined,
+					});
+					return;
+				}
+			}
 			this.pendingBlobs.set(localId, {
 				blob,
 				status: PendingBlobStatus.OfflinePendingUpload,
@@ -252,7 +265,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					minTTLInSeconds: pendingEntry.minTTLInSeconds,
 					expired,
 				});
-				console.log("expired: ", expired, " secondsSinceUpload: ", secondsSinceUpload);
 				if (expired) {
 					this.close(
 						new GenericError(
@@ -889,7 +901,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public getPendingBlobs(): IPendingBlobs {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
-			blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+			blobs[key] = { blob: bufferToString(entry.blob, "base64"),
+			uploadTime: entry.uploadTime,
+			minTTLInSeconds: entry.minTTLInSeconds, };
 		}
 		return blobs;
 	}

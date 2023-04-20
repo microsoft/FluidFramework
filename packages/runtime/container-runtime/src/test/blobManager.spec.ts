@@ -41,11 +41,7 @@ abstract class BaseMockBlobStorage
 
 class DedupeStorage extends BaseMockBlobStorage {
 	private _createBlobCount: number = 0;
-	private _min_TTL: number = 24 * 60 * 60; // same as ODSP
-
-	set min_TTL(minTTL: number) {
-		this._min_TTL = minTTL;
-	}
+	public minTTL: number = 24 * 60 * 60; // same as ODSP
 
 	get createBlobCount(): number {
 		return this._createBlobCount;
@@ -54,7 +50,7 @@ class DedupeStorage extends BaseMockBlobStorage {
 		const id = await gitHashFile(blob as any);
 		this._createBlobCount += 1;
 		this.blobs.set(id, blob);
-		return { id, minTTLInSeconds: this._min_TTL };
+		return { id, minTTLInSeconds: this.minTTL };
 	}
 }
 
@@ -400,12 +396,25 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
 
-	it("close container if expired", async () => {
+	it("close container if blob expired", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
+		await createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs();
+		runtime.disconnect();
+		await new Promise<void>((resolve) => setTimeout(resolve, 50));
+		await runtime.connect();
+		assert.strictEqual(runtime.closed, true);
+		await runtime.processAll();
+	});
+	
+	it("close container if expired while connect", async () => {
 		await runtime.attach();
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processBlobs();
 		await handle;
-		runtime.attachedStorage.min_TTL = 0.001; // force expired TTL being less than connection time (50ms)
+		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
 		await runtime.connect(50);
 		assert.strictEqual(runtime.closed, true);
 		await runtime.processAll();
