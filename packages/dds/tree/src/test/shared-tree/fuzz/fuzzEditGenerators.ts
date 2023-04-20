@@ -110,26 +110,26 @@ export interface NodeRangePath {
 }
 
 export interface EditGeneratorOpWeights {
-	insert?: number;
-	delete?: number;
-	setPayload?: number;
-	start?: number;
-	commit?: number;
-	abort?: number;
-	synchronize?: number;
+	insert: number;
+	delete: number;
+	setPayload: number;
+	start: number;
+	commit: number;
+	abort: number;
+	synchronize: number;
 }
-const defaultEditGeneratorOpWeights = {
-	insert: 5,
-	delete: 1,
-	setPayload: 1,
-	start: 3,
-	commit: 1,
-	abort: 1,
-	synchronize: 1,
+const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
+	insert: 0,
+	delete: 0,
+	setPayload: 0,
+	start: 0,
+	commit: 0,
+	abort: 0,
+	synchronize: 0,
 };
 
 export const makeNodeEditGenerator = (
-	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
+	opWeights: Partial<EditGeneratorOpWeights>,
 ): AsyncGenerator<NodeEdit, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
 
@@ -147,12 +147,7 @@ export const makeNodeEditGenerator = (
 	}
 
 	const baseNodeEditGenerator = createWeightedAsyncGenerator<FuzzNodeEditChange, EditState>([
-		[
-			setPayloadGenerator,
-			opWeights.setPayload ?? 0,
-			({ testTreeProvider, treeIndex }) =>
-				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
-		],
+		[setPayloadGenerator, opWeights.setPayload ?? 0],
 	]);
 
 	const buildOperation = (contents: FuzzNodeEditChange) => {
@@ -170,7 +165,7 @@ export const makeNodeEditGenerator = (
 };
 
 export const makeFieldEditGenerator = (
-	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
+	opWeights: Partial<EditGeneratorOpWeights>,
 ): AsyncGenerator<FieldEdit, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
 	async function fieldEditGenerator(state: EditState): Promise<SequenceFieldEdit> {
@@ -285,17 +280,29 @@ export const makeFieldEditGenerator = (
 };
 
 export const makeEditGenerator = (
-	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
+	opWeights: Partial<EditGeneratorOpWeights>,
 ): AsyncGenerator<TreeEdit, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
 	const baseEditGenerator = createWeightedAsyncGenerator<FieldEdit | NodeEdit, EditState>([
 		[
-			makeFieldEditGenerator(),
-			sumWeights([opWeights.delete, opWeights.insert]),
+			makeFieldEditGenerator({
+				insert: passedOpWeights.insert,
+				delete: passedOpWeights.delete,
+			}),
+			sumWeights([passedOpWeights.delete, passedOpWeights.insert]),
 			({ testTreeProvider, treeIndex }) =>
 				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
 		],
-		[makeNodeEditGenerator(), opWeights.setPayload ?? 0],
+		[
+			makeNodeEditGenerator({ setPayload: passedOpWeights.setPayload }),
+			passedOpWeights.setPayload,
+			({ testTreeProvider, treeIndex }) =>
+				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
+		],
 	]);
 
 	const buildOperation = (contents: FieldEdit | NodeEdit) => {
@@ -310,10 +317,13 @@ export const makeEditGenerator = (
 };
 
 export const makeTransactionEditGenerator = (
-	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
+	opWeights: Partial<EditGeneratorOpWeights>,
 ): AsyncGenerator<TransactionBoundary, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
-
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
 	async function transactionStartGenerator(state: EditState): Promise<TransactionStartOp> {
 		return {
 			fuzzType: "transactionStart",
@@ -336,16 +346,16 @@ export const makeTransactionEditGenerator = (
 		FuzzTransactionEdit,
 		EditState
 	>([
-		[transactionStartGenerator, opWeights.start ?? 0],
+		[transactionStartGenerator, passedOpWeights.start],
 		[
 			transactionCommitGenerator,
-			opWeights.commit ?? 0,
+			passedOpWeights.commit,
 			({ testTreeProvider, treeIndex }) =>
 				transactionsInProgress(testTreeProvider.trees[treeIndex]),
 		],
 		[
 			transactionAbortGenerator,
-			opWeights.abort ?? 0,
+			passedOpWeights.abort,
 			({ testTreeProvider, treeIndex }) =>
 				transactionsInProgress(testTreeProvider.trees[treeIndex]),
 		],
@@ -388,17 +398,25 @@ function createAsyncGenerator<Op, OpOut>(
 }
 
 export function makeOpGenerator(
-	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
+	opWeights: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
 ): AsyncGenerator<Operation, FuzzTestState> {
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
 	const generatorWeights: AsyncWeights<Operation, FuzzTestState> = [
 		[
-			makeEditGenerator(opWeights),
-			sumWeights([opWeights.delete, opWeights.insert, opWeights.setPayload]),
+			makeEditGenerator(passedOpWeights),
+			sumWeights([
+				passedOpWeights.delete,
+				passedOpWeights.insert,
+				passedOpWeights.setPayload,
+			]),
 		],
-		[{ type: "synchronize" }, opWeights.synchronize ?? 0],
+		[{ type: "synchronize" }, passedOpWeights.synchronize],
 		[
-			makeTransactionEditGenerator(opWeights),
-			sumWeights([opWeights.abort, opWeights.commit, opWeights.start]),
+			makeTransactionEditGenerator(passedOpWeights),
+			sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]),
 		],
 	];
 	return createWeightedAsyncGenerator(generatorWeights);

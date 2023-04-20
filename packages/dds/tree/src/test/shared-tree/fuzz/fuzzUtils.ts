@@ -16,7 +16,7 @@ import { FuzzTestState, Operation, EditGeneratorOpWeights } from "./fuzzEditGene
 
 export function runFuzzBatch(
 	opGenerator: (
-		editGeneratorOpWeights?: EditGeneratorOpWeights,
+		editGeneratorOpWeights?: Partial<EditGeneratorOpWeights>,
 	) => AsyncGenerator<Operation, FuzzTestState>,
 	fuzzActions: (
 		generatorFactory: AsyncGenerator<Operation, FuzzTestState>,
@@ -26,7 +26,7 @@ export function runFuzzBatch(
 	opsPerRun: number,
 	runsPerBatch: number,
 	random: IRandom,
-	editGeneratorOpWeights?: EditGeneratorOpWeights,
+	editGeneratorOpWeights?: Partial<EditGeneratorOpWeights>,
 ): void {
 	const seed = random.integer(1, 1000000);
 	for (let i = 0; i < runsPerBatch; i++) {

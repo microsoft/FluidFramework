@@ -87,11 +87,11 @@ export async function performFuzzActionsAbort(
  *
  * See the "Fuzz - Top-Level" test suite for tests are more general in scope.
  */
-describe("Fuzz - Targeted", () => {
+describe.only("Fuzz - Targeted", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
-	const editGeneratorOpWeights: EditGeneratorOpWeights = {
+	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		setPayload: 1,
 	};
 	describe("Anchors are unaffected by aborted transaction", () => {
