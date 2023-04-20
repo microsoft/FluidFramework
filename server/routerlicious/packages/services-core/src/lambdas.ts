@@ -89,8 +89,7 @@ export interface IPartitionLambda {
 /**
  * Factory for creating lambda related objects
  */
-export interface IPartitionLambdaFactory<TConfig = undefined>
-	extends EventEmitter {
+export interface IPartitionLambdaFactory<TConfig = undefined> extends EventEmitter {
 	/**
 	 * Constructs a new lambda
 	 */
