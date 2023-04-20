@@ -326,6 +326,17 @@ export interface EditableField
 	insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
 
 	/**
+	 * Moves nodes from a source to destination.
+	 */
+	moveNodes(
+		sourceIndex: number,
+		count: number,
+		destPath: UpPath | undefined,
+		destField: FieldKey,
+		destIndex: number,
+	): void;
+
+	/**
 	 * Sequentially deletes the nodes from this field.
 	 *
 	 * @param index - the index of the first node to be deleted. It must be in a range of existing node indices.

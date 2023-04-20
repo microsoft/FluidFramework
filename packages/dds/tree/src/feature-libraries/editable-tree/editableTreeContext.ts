@@ -241,6 +241,26 @@ export class ProxyContext implements EditableTreeContext {
 		field.insert(index, newContent);
 	}
 
+	public moveNodes(
+		sourcePath: UpPath | undefined,
+		sourceField: FieldKey,
+		sourceIndex: number,
+		count: number,
+		destPath: UpPath | undefined,
+		destField: FieldKey,
+		destIndex: number,
+	): void {
+		this.editor.move(
+			sourcePath,
+			sourceField,
+			sourceIndex,
+			count,
+			destPath,
+			destField,
+			destIndex,
+		);
+	}
+
 	public deleteNodes(
 		path: UpPath | undefined,
 		fieldKey: FieldKey,

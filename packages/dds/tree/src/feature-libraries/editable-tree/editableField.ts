@@ -19,6 +19,8 @@ import {
 	FieldAnchor,
 	ITreeCursor,
 	inCursorNode,
+	UpPath,
+	FieldUpPath,
 } from "../../core";
 import { Multiplicity } from "../modular-schema";
 import {
@@ -184,6 +186,15 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		);
 		const fieldPath = this.cursor.getFieldPath();
 		this.context.insertNodes(fieldPath.parent, fieldPath.field, index, newContent);
+	}
+
+	public moveNodes(
+		sourceIndex: number,
+		count: number,
+		destFieldPath: FieldUpPath,
+		destIndex: number,
+	): void {
+		return;
 	}
 
 	public deleteNodes(index: number, count?: number): void {
