@@ -474,8 +474,7 @@ async function scheduleOffline(
 				e,
 			);
 			return undefined;
-		}
-	);
+		});
 }
 
 async function setupOpsMetrics(
