@@ -14,7 +14,7 @@ import {
 } from "../../../feature-libraries";
 import { ISharedTree } from "../../../shared-tree";
 import { brand } from "../../../util";
-import { ITestTreeProvider, TestTreeProvider } from "../../utils";
+import { TestTreeProviderLite } from "../../utils";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
@@ -22,12 +22,12 @@ import { ProxyContext } from "../../../feature-libraries/editable-tree/editableT
 
 import { fullSchemaData, int32Schema, personData, Person } from "./mockData";
 
-async function createSharedTrees(
+function createSharedTrees(
 	schemaData: SchemaData,
 	data: ContextuallyTypedNodeData,
 	numberOfTrees = 1,
-): Promise<readonly [ITestTreeProvider, readonly ISharedTree[]]> {
-	const provider = await TestTreeProvider.create(numberOfTrees);
+): readonly [TestTreeProviderLite, readonly ISharedTree[]] {
+	const provider = new TestTreeProviderLite(numberOfTrees);
 	for (const tree of provider.trees) {
 		assert(tree.isAttached());
 	}
@@ -38,13 +38,13 @@ async function createSharedTrees(
 		data,
 	);
 	provider.trees[0].context.root.insertNodes(0, root);
-	await provider.ensureSynchronized();
+	provider.processMessages();
 	return [provider, provider.trees];
 }
 
 describe("editable-tree context", () => {
-	it("can clear and reuse context", async () => {
-		const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, personData, 2);
+	it("can clear and reuse context", () => {
+		const [provider, [tree1, tree2]] = createSharedTrees(fullSchemaData, personData, 2);
 		const context2 = tree2.context;
 		const person1 = tree1.root as Person;
 
@@ -64,16 +64,16 @@ describe("editable-tree context", () => {
 		person1.age = brand(42);
 		assert.notDeepEqual(person1, person2);
 		// this would leak anchors if we constantly re-read the tree in the afterHandler without clear
-		await provider.ensureSynchronized();
+		provider.processMessages();
 		assert.deepEqual(person1, person2);
 		// check anchors are not leaking
 		context2.prepareForEdit();
 		assert.equal((context2 as ProxyContext).withAnchors.size, anchorsBefore);
 	});
 
-	it("can create fields while clearing the context in afterHandlers", async () => {
+	it("can create fields while clearing the context in afterHandlers", () => {
 		const ageField: FieldKey = brand("age");
-		const [, [tree]] = await createSharedTrees(fullSchemaData, personData);
+		const [, [tree]] = createSharedTrees(fullSchemaData, personData);
 
 		tree.context.on("afterDelta", () => {
 			tree.context.clear();

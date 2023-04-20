@@ -21,7 +21,12 @@ import {
 	SchemaAware,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
-import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
+import {
+	SharedTreeTestFactory,
+	SummarizeType,
+	TestTreeProvider,
+	TestTreeProviderLite,
+} from "../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
@@ -48,10 +53,10 @@ const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
 
 describe("SharedTree", () => {
-	it("reads only one node", async () => {
+	it("reads only one node", () => {
 		// This is a regression test for a scenario in which a transaction would apply its delta twice,
 		// inserting two nodes instead of just one
-		const provider = await TestTreeProvider.create(1);
+		const provider = new TestTreeProviderLite();
 		runSynchronous(provider.trees[0], (t) => {
 			const writeCursor = singleTextCursor({ type: brand("LonelyNode") });
 			const field = t.editor.sequenceField(undefined, rootFieldKeySymbol);
@@ -210,8 +215,8 @@ describe("SharedTree", () => {
 		validateRootField(tree2, ["A", "B", "C"]);
 	});
 
-	it("has bounded memory growth in EditManager", async () => {
-		const provider = await TestTreeProvider.create(2);
+	it("has bounded memory growth in EditManager", () => {
+		const provider = new TestTreeProviderLite(2);
 		const [tree1, tree2] = provider.trees;
 
 		// Make some arbitrary number of edits
@@ -219,14 +224,14 @@ describe("SharedTree", () => {
 			insert(tree1, 0, "");
 		}
 
-		await provider.ensureSynchronized();
+		provider.processMessages();
 
 		// These two edit will have ref numbers that correspond to the last of the above edits
 		insert(tree1, 0, "");
 		insert(tree2, 0, "");
 
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
-		await provider.ensureSynchronized();
+		provider.processMessages();
 
 		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
 		// if we'll ever expose some memory stats in which the trunk length would be included.
@@ -257,15 +262,15 @@ describe("SharedTree", () => {
 	});
 
 	describe("Editing", () => {
-		it("can insert and delete a node in a sequence field", async () => {
+		it("can insert and delete a node in a sequence field", () => {
 			const value = "42";
-			const provider = await TestTreeProvider.create(2);
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			// Insert node
 			setTestValue(tree1, value);
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate insertion
 			assert.equal(getTestValue(tree2), value);
@@ -273,15 +278,15 @@ describe("SharedTree", () => {
 			// Delete node
 			remove(tree1, 0, 1);
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), undefined);
 			assert.equal(getTestValue(tree2), undefined);
 		});
 
-		it("can handle competing deletes", async () => {
+		it("can handle competing deletes", () => {
 			for (const index of [0, 1, 2, 3]) {
-				const provider = await TestTreeProvider.create(4);
+				const provider = new TestTreeProviderLite(4);
 				const [tree1, tree2, tree3, tree4] = provider.trees;
 				const sequence: JsonableTree[] = [
 					{ type: brand("Number"), value: 0 },
@@ -290,13 +295,13 @@ describe("SharedTree", () => {
 					{ type: brand("Number"), value: 3 },
 				];
 				initializeTestTree(tree1, sequence);
-				await provider.ensureSynchronized();
+				provider.processMessages();
 
 				remove(tree1, index, 1);
 				remove(tree2, index, 1);
 				remove(tree3, index, 1);
 
-				await provider.ensureSynchronized();
+				provider.processMessages();
 
 				const expectedSequence = [0, 1, 2, 3];
 				expectedSequence.splice(index, 1);
@@ -307,9 +312,9 @@ describe("SharedTree", () => {
 			}
 		});
 
-		it("can insert and delete a node in an optional field", async () => {
+		it("can insert and delete a node in an optional field", () => {
 			const value = "42";
-			const provider = await TestTreeProvider.create(2);
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			// Insert node
@@ -321,7 +326,7 @@ describe("SharedTree", () => {
 				field.set(undefined, false);
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			assert.equal(getTestValue(tree1), undefined);
 			assert.equal(getTestValue(tree2), undefined);
 
@@ -331,13 +336,13 @@ describe("SharedTree", () => {
 				field.set(singleTextCursor({ type: brand("TestValue"), value: 43 }), true);
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			assert.equal(getTestValue(tree1), 43);
 			assert.equal(getTestValue(tree2), 43);
 		});
 
-		it("can edit a global field", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("can edit a global field", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			// Insert root node
@@ -357,7 +362,7 @@ describe("SharedTree", () => {
 				field.insert(0, writeCursor);
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate insertion
 			{
@@ -384,7 +389,7 @@ describe("SharedTree", () => {
 				field.delete(0, 1);
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate deletion
 			{
@@ -459,20 +464,20 @@ describe("SharedTree", () => {
 			validateTree(branch, [initialState]);
 		}
 
-		it("can abandon a transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("can abandon a transaction", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1] = provider.trees;
 			abortTransaction(tree1);
 		});
 
-		it("can abandon a transaction on a branch", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("can abandon a transaction on a branch", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree] = provider.trees;
 			abortTransaction(tree.fork());
 		});
 
-		it("can insert multiple nodes", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("can insert multiple nodes", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			// Insert nodes
@@ -486,7 +491,7 @@ describe("SharedTree", () => {
 				field.insert(1, singleTextCursor({ type: brand("Test"), value: 2 }));
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate insertion
 			{
@@ -501,8 +506,8 @@ describe("SharedTree", () => {
 			}
 		});
 
-		it("can move nodes across fields", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("can move nodes across fields", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			const initialState: JsonableTree = {
@@ -531,7 +536,7 @@ describe("SharedTree", () => {
 				tree1.editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const expectedState: JsonableTree = {
 				type: brand("Node"),
@@ -550,8 +555,8 @@ describe("SharedTree", () => {
 			validateTree(tree2, [expectedState]);
 		});
 
-		it("can make multiple moves in a transaction", async () => {
-			const provider = await TestTreeProvider.create(1);
+		it("can make multiple moves in a transaction", () => {
+			const provider = new TestTreeProviderLite();
 			const [tree] = provider.trees;
 
 			const initialState: JsonableTree = {
@@ -582,13 +587,146 @@ describe("SharedTree", () => {
 					qux: [{ type: brand("Node"), value: "a" }],
 				},
 			};
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateTree(tree, [expectedState]);
 		});
 	});
 
+	describe("Undo", () => {
+		it("does nothing if there are no commits in the undo stack", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, value);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(getTestValue(tree2), value);
+
+			// Undo node insertion
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(getTestValue(tree1), undefined);
+			assert.equal(getTestValue(tree2), undefined);
+
+			// Undo again
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(getTestValue(tree1), undefined);
+			assert.equal(getTestValue(tree2), undefined);
+		});
+
+		it("does not undo edits made remotely", async () => {
+			const value = "42";
+			const value2 = "43";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, value);
+			// Make a remote edit
+			setTestValue(tree2, value2);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			const readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			assert.ok(readCursor.firstNode());
+			assert.equal(readCursor.value, value);
+			assert.ok(readCursor.nextNode());
+			assert.equal(readCursor.value, value2);
+			readCursor.free();
+
+			// Undo
+			tree1.undo();
+			// Call undo to ensure it doesn't undo the change from tree2
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			const validationCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, validationCursor);
+			assert.ok(validationCursor.firstNode());
+			assert.equal(validationCursor.value, value2);
+			assert.equal(validationCursor.nextNode(), false);
+			validationCursor.free();
+			assert.equal(getTestValue(tree2), value2);
+		});
+
+		it("the insert of a node in a sequence field", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, value);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(getTestValue(tree2), value);
+
+			// Undo node insertion
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(getTestValue(tree1), undefined);
+			assert.equal(getTestValue(tree2), undefined);
+		});
+
+		// TODO: unskip once I fix the undo commit graph after rebasing
+		it.skip("can be rebased", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, "D");
+			setTestValue(tree1, "C");
+			setTestValue(tree1, "B");
+			setTestValue(tree1, "A");
+			await provider.ensureSynchronized();
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "A",
+				},
+				{
+					type: brand("TestValue"),
+					value: "B",
+				},
+				{
+					type: brand("TestValue"),
+					value: "C",
+				},
+				{
+					type: brand("TestValue"),
+					value: "D",
+				},
+			];
+
+			// Validate insertion
+			validateTree(tree2, expectedState);
+
+			// Insert nodes on both trees
+			insert(tree1, 1, "x");
+			insert(tree2, 3, "y");
+
+			// Undo node insertion on both trees
+			tree1.undo();
+			tree2.undo();
+			// The undo should be rebased to do nothing and this should not throw
+			await provider.ensureSynchronized();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+	});
+
 	describe("Events", () => {
-		it("triggers events for local and subtree changes", async () => {
+		it("triggers events for local and subtree changes", () => {
 			const view = testTreeView();
 			const root = view.context.root.getNode(0);
 			const log: string[] = [];
@@ -620,7 +758,7 @@ describe("SharedTree", () => {
 			]);
 		});
 
-		it("propagates path and value args for local and subtree changes", async () => {
+		it("propagates path and value args for local and subtree changes", () => {
 			const view = testTreeView();
 			const root = view.context.root.getNode(0);
 			const log: string[] = [];
@@ -658,28 +796,28 @@ describe("SharedTree", () => {
 	});
 
 	describe("Rebasing", () => {
-		it("can rebase two inserts", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("can rebase two inserts", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "y");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			insert(tree1, 0, "x");
 			insert(tree2, 1, "a", "c");
 			insert(tree2, 2, "b");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const expected = ["x", "y", "a", "b", "c"];
 			validateRootField(tree1, expected);
 			validateRootField(tree2, expected);
 		});
 
-		it("can rebase delete over move", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("can rebase delete over move", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			insert(tree1, 0, "a", "b");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Move b before a
 			runSynchronous(tree1, () => {
@@ -697,15 +835,15 @@ describe("SharedTree", () => {
 			// Delete b
 			remove(tree2, 1, 1);
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const expected = ["a"];
 			validateRootField(tree1, expected);
 			validateRootField(tree2, expected);
 		});
 
-		it("can rebase delete over cross-field move", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("can rebase delete over cross-field move", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			const initialState: JsonableTree = {
@@ -723,7 +861,7 @@ describe("SharedTree", () => {
 				},
 			};
 			initializeTestTree(tree1, initialState);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -742,7 +880,7 @@ describe("SharedTree", () => {
 				field.delete(2, 1);
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const expectedState: JsonableTree = {
 				type: brand("Node"),
@@ -759,8 +897,8 @@ describe("SharedTree", () => {
 			validateTree(tree2, [expectedState]);
 		});
 
-		it.skip("can rebase cross-field move over delete", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it.skip("can rebase cross-field move over delete", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			const initialState: JsonableTree = {
@@ -778,7 +916,7 @@ describe("SharedTree", () => {
 				},
 			};
 			initializeTestTree(tree1, initialState);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -797,7 +935,7 @@ describe("SharedTree", () => {
 				tree2.editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const expectedState: JsonableTree = {
 				type: brand("Node"),
@@ -813,6 +951,7 @@ describe("SharedTree", () => {
 			validateTree(tree1, [expectedState]);
 			validateTree(tree2, [expectedState]);
 		});
+
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
 			insert(provider.trees[0], 0, "a");
@@ -843,11 +982,11 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
-		it("transaction dropped when constraint violated", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("transaction dropped when constraint violated", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -864,16 +1003,16 @@ describe("SharedTree", () => {
 				tree1.editor.setValue(rootPath, "b");
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateRootField(tree1, ["c"]);
 			validateRootField(tree2, ["c"]);
 		});
 
-		it("transaction successful when constraint not violated", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("transaction successful when constraint not violated", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -890,16 +1029,16 @@ describe("SharedTree", () => {
 				tree1.editor.setValue(rootPath, "b");
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateRootField(tree1, ["b"]);
 			validateRootField(tree2, ["b"]);
 		});
 
-		it("transaction successful when constraint eventually fixed", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("transaction successful when constraint eventually fixed", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -924,16 +1063,16 @@ describe("SharedTree", () => {
 				tree1.editor.setValue(rootPath, "b");
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateRootField(provider.trees[0], ["b"]);
 			validateRootField(provider.trees[1], ["b"]);
 		});
 
-		it("transaction dropped with violated constraints on different fields", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("transaction dropped with violated constraints on different fields", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a", "x");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -960,16 +1099,16 @@ describe("SharedTree", () => {
 				tree1.editor.setValue(rootPath, "c");
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateRootField(tree1, ["b", "y"]);
 			validateRootField(tree2, ["b", "y"]);
 		});
 
-		it("transaction successful with constraints eventually fixed on different fields", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("transaction successful with constraints eventually fixed on different fields", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a", "x");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -1001,16 +1140,16 @@ describe("SharedTree", () => {
 				tree1.editor.setValue(rootPath, "c");
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateRootField(provider.trees[1], ["c", "x"]);
 			validateRootField(provider.trees[0], ["c", "x"]);
 		});
 
-		it("constraints violated delta is propagated", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("constraints violated delta is propagated", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a", "x");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -1036,16 +1175,16 @@ describe("SharedTree", () => {
 				tree1.editor.setValue(rootPath, "c");
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateRootField(tree1, ["b", "y"]);
 			validateRootField(tree2, ["b", "y"]);
 		});
 
-		it("uses first defined constraint for node in transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("uses first defined constraint for node in transaction", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -1063,16 +1202,16 @@ describe("SharedTree", () => {
 				tree1.editor.setValue(rootPath, "b");
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateRootField(tree1, ["b"]);
 			validateRootField(tree2, ["b"]);
 		});
 
-		it("ignores constraint on node after a node is changed in the same transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("ignores constraint on node after a node is changed in the same transaction", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const rootPath = {
 				parent: undefined,
@@ -1090,15 +1229,15 @@ describe("SharedTree", () => {
 				tree1.editor.addValueConstraint(rootPath, "b");
 			});
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateRootField(tree1, ["b"]);
 			validateRootField(tree2, ["b"]);
 		});
 	});
 
 	describe("Anchors", () => {
-		it("Anchors can be created and dereferenced", async () => {
-			const provider = await TestTreeProvider.create(1);
+		it("Anchors can be created and dereferenced", () => {
+			const provider = new TestTreeProviderLite();
 			const tree = provider.trees[0];
 
 			const initialState: JsonableTree = {
@@ -1136,7 +1275,7 @@ describe("SharedTree", () => {
 	});
 
 	describe("Views", () => {
-		itView("can fork and apply edits without affecting the parent", async (parent) => {
+		itView("can fork and apply edits without affecting the parent", (parent) => {
 			setTestValue(parent, "parent");
 			const child = parent.fork();
 			setTestValue(child, "child");
@@ -1144,7 +1283,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(child), ["parent", "child"]);
 		});
 
-		itView("can apply edits without affecting a fork", async (parent) => {
+		itView("can apply edits without affecting a fork", (parent) => {
 			const child = parent.fork();
 			assert.equal(getTestValue(parent), undefined);
 			assert.equal(getTestValue(child), undefined);
@@ -1153,14 +1292,14 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(child), undefined);
 		});
 
-		itView("can merge changes into a parent", async (parent) => {
+		itView("can merge changes into a parent", (parent) => {
 			const child = parent.fork();
 			setTestValue(child, "view");
 			parent.merge(child);
 			assert.equal(getTestValue(parent), "view");
 		});
 
-		itView("can rebase over a parent view", async (parent) => {
+		itView("can rebase over a parent view", (parent) => {
 			const child = parent.fork();
 			setTestValue(parent, "root");
 			assert.equal(getTestValue(child), undefined);
@@ -1168,7 +1307,7 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(child), "root");
 		});
 
-		itView("can rebase over a child view", async (view) => {
+		itView("can rebase over a child view", (view) => {
 			const parent = view.fork();
 			setTestValue(parent, "P1");
 			const child = parent.fork();
@@ -1179,7 +1318,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(parent), ["P1", "C1", "P2"]);
 		});
 
-		itView("merge changes through multiple views", async (viewA) => {
+		itView("merge changes through multiple views", (viewA) => {
 			const viewB = viewA.fork();
 			const viewC = viewB.fork();
 			const viewD = viewC.fork();
@@ -1192,7 +1331,7 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(viewC), "view");
 		});
 
-		itView("merge correctly when multiple ancestors are mutated", async (viewA) => {
+		itView("merge correctly when multiple ancestors are mutated", (viewA) => {
 			const viewB = viewA.fork();
 			const viewC = viewB.fork();
 			const viewD = viewC.fork();
@@ -1206,7 +1345,7 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(viewB), "D");
 		});
 
-		itView("can merge a parent view into a child", async (view) => {
+		itView("can merge a parent view into a child", (view) => {
 			const parent = view.fork();
 			setTestValue(parent, "P1");
 			const child = parent.fork();
@@ -1217,7 +1356,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(parent), ["P1", "P2"]);
 		});
 
-		itView("can perform a complicated merge scenario", async (viewA) => {
+		itView("can perform a complicated merge scenario", (viewA) => {
 			const viewB = viewA.fork();
 			const viewC = viewB.fork();
 			const viewD = viewC.fork();
@@ -1254,7 +1393,7 @@ describe("SharedTree", () => {
 			]);
 		});
 
-		itView("update anchors after applying a change", async (view) => {
+		itView("update anchors after applying a change", (view) => {
 			setTestValue(view, "A");
 			let cursor = view.forest.allocateCursor();
 			moveToDetachedField(view.forest, cursor);
@@ -1268,7 +1407,7 @@ describe("SharedTree", () => {
 			cursor.clear();
 		});
 
-		itView("update anchors after merging into a parent", async (parent) => {
+		itView("update anchors after merging into a parent", (parent) => {
 			setTestValue(parent, "A");
 			let cursor = parent.forest.allocateCursor();
 			moveToDetachedField(parent.forest, cursor);
@@ -1284,7 +1423,7 @@ describe("SharedTree", () => {
 			cursor.clear();
 		});
 
-		itView("can be mutated after merging", async (parent) => {
+		itView("can be mutated after merging", (parent) => {
 			const child = parent.fork();
 			setTestValue(child, "A");
 			parent.merge(child);
@@ -1295,7 +1434,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(parent), ["A", "B"]);
 		});
 
-		itView("can rebase after merging", async (parent) => {
+		itView("can rebase after merging", (parent) => {
 			const child = parent.fork();
 			setTestValue(child, "A");
 			parent.merge(child);
@@ -1304,14 +1443,14 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(child), ["A", "B"]);
 		});
 
-		itView("can be read after merging", async (parent) => {
+		itView("can be read after merging", (parent) => {
 			setTestValue(parent, "root");
 			const child = parent.fork();
 			parent.merge(child);
 			assert.equal(getTestValue(child), "root");
 		});
 
-		itView("properly fork the tree schema", async (parent) => {
+		itView("properly fork the tree schema", (parent) => {
 			const schemaA: SchemaData = {
 				treeSchema: new Map([]),
 				globalFieldSchema: new Map(),
@@ -1332,25 +1471,25 @@ describe("SharedTree", () => {
 			assert.equal(getSchema(child), "schemaB");
 		});
 
-		it("submit edits to Fluid when merging into the root view", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("submit edits to Fluid when merging into the root view", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			const baseView = tree1.fork();
 			const view = baseView.fork();
 			// Modify the view, but tree2 should remain unchanged until the edit merges all the way up
 			setTestValue(view, "42");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			assert.equal(getTestValue(tree2), undefined);
 			baseView.merge(view);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			assert.equal(getTestValue(tree2), undefined);
 			tree1.merge(baseView);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			assert.equal(getTestValue(tree2), "42");
 		});
 
-		it("do not squash commits", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("do not squash commits", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
@@ -1360,7 +1499,7 @@ describe("SharedTree", () => {
 			setTestValue(view, "B");
 			baseView.merge(view);
 			tree1.merge(baseView);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			assert.equal(opsReceived, 2);
 		});
 	});
@@ -1373,27 +1512,27 @@ describe("SharedTree", () => {
 			field.insert(0, nodes);
 		}
 
-		itView("update the tree while open", async (view) => {
+		itView("update the tree while open", (view) => {
 			view.transaction.start();
 			pushTestValueDirect(view, 42);
 			assert.equal(getTestValue(view), 42);
 		});
 
-		itView("update the tree after committing", async (view) => {
+		itView("update the tree after committing", (view) => {
 			view.transaction.start();
 			pushTestValueDirect(view, 42);
 			view.transaction.commit();
 			assert.equal(getTestValue(view), 42);
 		});
 
-		itView("revert the tree after aborting", async (view) => {
+		itView("revert the tree after aborting", (view) => {
 			view.transaction.start();
 			pushTestValueDirect(view, 42);
 			view.transaction.abort();
 			assert.equal(getTestValue(view), undefined);
 		});
 
-		itView("can nest", async (view) => {
+		itView("can nest", (view) => {
 			view.transaction.start();
 			pushTestValueDirect(view, "A");
 			view.transaction.start();
@@ -1405,7 +1544,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(view), ["A", "B"]);
 		});
 
-		itView("can span a view fork and merge", async (view) => {
+		itView("can span a view fork and merge", (view) => {
 			view.transaction.start();
 			const fork = view.fork();
 			pushTestValueDirect(fork, 42);
@@ -1414,7 +1553,7 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(view), 42);
 		});
 
-		itView("fail if in progress when view merges", async (view) => {
+		itView("fail if in progress when view merges", (view) => {
 			const fork = view.fork();
 			fork.transaction.start();
 			assert.throws(
@@ -1427,7 +1566,7 @@ describe("SharedTree", () => {
 			);
 		});
 
-		itView("do not close across forks", async (view) => {
+		itView("do not close across forks", (view) => {
 			view.transaction.start();
 			const fork = view.fork();
 			assert.throws(
@@ -1436,7 +1575,7 @@ describe("SharedTree", () => {
 			);
 		});
 
-		itView("do not affect pre-existing forks", async (view) => {
+		itView("do not affect pre-existing forks", (view) => {
 			const fork = view.fork();
 			pushTestValueDirect(view, "A");
 			fork.transaction.start();
@@ -1447,7 +1586,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(getTestValues(view), ["A", "B", "C"]);
 		});
 
-		itView("can commit over a branch that pulls", async (view) => {
+		itView("can commit over a branch that pulls", (view) => {
 			view.transaction.start();
 			pushTestValueDirect(view, 42);
 			const fork = view.fork();
@@ -1456,7 +1595,7 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(fork), 42);
 		});
 
-		itView("can handle a pull while in progress", async (view) => {
+		itView("can handle a pull while in progress", (view) => {
 			const fork = view.fork();
 			fork.transaction.start();
 			setTestValue(view, 42);
@@ -1466,7 +1605,7 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(fork), 42);
 		});
 
-		itView("update anchors correctly", async (view) => {
+		itView("update anchors correctly", (view) => {
 			setTestValue(view, "A");
 			let cursor = view.forest.allocateCursor();
 			moveToDetachedField(view.forest, cursor);
@@ -1480,7 +1619,7 @@ describe("SharedTree", () => {
 			cursor.clear();
 		});
 
-		itView("can handle a complicated scenario", async (view) => {
+		itView("can handle a complicated scenario", (view) => {
 			pushTestValueDirect(view, "A");
 			view.transaction.start();
 			pushTestValueDirect(view, "B");
@@ -1526,23 +1665,23 @@ describe("SharedTree", () => {
 			]);
 		});
 
-		it("don't send ops before committing", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("don't send ops before committing", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
 			tree1.transaction.start();
 			pushTestValueDirect(tree1, 42);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			assert.equal(opsReceived, 0);
 			tree1.transaction.commit();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			assert.equal(opsReceived, 1);
 			assert.deepEqual(getTestValue(tree2), 42);
 		});
 
-		it("send only one op after committing", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("send only one op after committing", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
@@ -1550,7 +1689,26 @@ describe("SharedTree", () => {
 			pushTestValueDirect(tree1, 42);
 			pushTestValueDirect(tree1, 43);
 			tree1.transaction.commit();
-			await provider.ensureSynchronized();
+			provider.processMessages();
+			assert.equal(opsReceived, 1);
+			assert.deepEqual(getTestValues(tree2), [42, 43]);
+		});
+
+		it("do not send an op after committing if nested", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			let opsReceived = 0;
+			tree2.on("op", () => (opsReceived += 1));
+			tree1.transaction.start();
+			tree1.transaction.start();
+			pushTestValueDirect(tree1, 42);
+			tree1.transaction.commit();
+			provider.processMessages();
+			assert.equal(opsReceived, 0);
+			assert.deepEqual(getTestValues(tree2), []);
+			pushTestValueDirect(tree1, 43);
+			tree1.transaction.commit();
+			provider.processMessages();
 			assert.equal(opsReceived, 1);
 			assert.deepEqual(getTestValues(tree2), [42, 43]);
 		});
@@ -1958,8 +2116,8 @@ function getTestValues({ forest }: ISharedTreeView): TreeValue[] {
 		while (readCursor.nextNode()) {
 			values.unshift(readCursor.value);
 		}
-		readCursor.free();
 	}
+	readCursor.free();
 	return values;
 }
 
@@ -2026,14 +2184,14 @@ function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
  * one where `view` is the root SharedTree view and the other where `view` is a fork.
  * This is useful for testing because both `SharedTree` and `SharedTreeFork` implement `ISharedTreeView` in different ways.
  */
-function itView(title: string, fn: (view: ISharedTreeView) => Promise<void>): void {
-	it(`${title} (root view)`, async () => {
-		const provider = await TestTreeProvider.create(1);
-		await fn(provider.trees[0]);
+function itView(title: string, fn: (view: ISharedTreeView) => void): void {
+	it(`${title} (root view)`, () => {
+		const provider = new TestTreeProviderLite();
+		fn(provider.trees[0]);
 	});
 
-	it(`${title} (forked view)`, async () => {
-		const provider = await TestTreeProvider.create(1);
-		await fn(provider.trees[0].fork());
+	it(`${title} (forked view)`, () => {
+		const provider = new TestTreeProviderLite();
+		fn(provider.trees[0].fork());
 	});
 }

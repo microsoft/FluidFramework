@@ -67,7 +67,6 @@ export {
 	SchemaData,
 	SchemaPolicy,
 	SchemaDataAndPolicy,
-	ChangeEncoder,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
@@ -93,6 +92,7 @@ export {
 	AnchorSetRootEvents,
 	FieldKindSpecifier,
 	AllowedUpdateType,
+	PathVisitor,
 } from "./core";
 
 export {
@@ -153,7 +153,6 @@ export {
 	FieldChangeHandler,
 	FieldEditor,
 	FieldChangeRebaser,
-	FieldChangeEncoder,
 	NodeChangeset,
 	ValueChange,
 	FieldChangeMap,
@@ -164,8 +163,6 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeChangeEncoder,
-	NodeChangeDecoder,
 	CrossFieldManager,
 	CrossFieldTarget,
 	RevisionIndexer,
@@ -248,5 +245,14 @@ export {
 	ViewEvents,
 	SchematizeConfiguration,
 } from "./shared-tree";
+
+export type {
+	IBinaryCodec,
+	ICodecFamily,
+	IDecoder,
+	IEncoder,
+	IJsonCodec,
+	IMultiFormatCodec,
+} from "./codec";
 
 export { StableId, UuidString } from "./id-compressor";

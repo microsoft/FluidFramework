@@ -10,7 +10,10 @@ import { fail } from "../util";
  * A helper class that organizes the state needed for managing nesting transactions.
  */
 export class TransactionStack {
-	private readonly stack: { startRevision: RevisionTag; repairStore?: RepairDataStore }[] = [];
+	private readonly stack: {
+		startRevision: RevisionTag;
+		repairStore?: RepairDataStore;
+	}[] = [];
 
 	/**
 	 * The number of transactions currently ongoing.
@@ -39,7 +42,10 @@ export class TransactionStack {
 	 * Ends the current transaction. Fails if there is currently no ongoing transaction.
 	 * @returns The revision that the closed transaction began on, and its repair data store if it has one.
 	 */
-	public pop(): { startRevision: RevisionTag; repairStore?: RepairDataStore } {
+	public pop(): {
+		startRevision: RevisionTag;
+		repairStore?: RepairDataStore;
+	} {
 		return this.stack.pop() ?? fail("No transaction is currently in progress");
 	}
 }
