@@ -25,8 +25,8 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
-	ISegment,
 	Client,
+	IJSONSegment,
 } from "@fluidframework/merge-tree";
 import { MatrixOp } from "./ops";
 import { PermutationVector, PermutationSegment } from "./permutationvector";
@@ -368,16 +368,17 @@ export class SharedMatrix<T = any>
 		this.submitRowMessage(this.rows.remove(rowStart, count));
 	}
 
-	/** @internal */ public _undoRemoveRows(segment: ISegment) {
-		const original = segment as PermutationSegment;
+	/** @internal */ public _undoRemoveRows(pos: number, spec: IJSONSegment) {
+		const original = PermutationSegment.fromJSONObject(spec);
 
 		// (Re)insert the removed number of rows at the original position.
-		const { op, inserted } = this.rows.insertRelative(original, original.cachedLength);
+		const op = this.rows.insertSegmentLocal(pos, original);
+		const inserted = this.rows.getContainingSegment(pos).segment as PermutationSegment;
 		this.submitRowMessage(op);
 
 		// Transfer handles and undo/redo tracking groups from the original segment to the
 		// newly inserted segment.
-		original.transferToReplacement(inserted);
+		inserted.start = original.start;
 
 		// Invalidate the handleCache in case it was populated during the 'rowsChanged'
 		// callback, which occurs before the handle span is populated.
@@ -407,16 +408,16 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	/** @internal */ public _undoRemoveCols(segment: ISegment) {
-		const original = segment as PermutationSegment;
-
-		// (Re)insert the removed number of columns at the original position.
-		const { op, inserted } = this.cols.insertRelative(original, original.cachedLength);
+	/** @internal */ public _undoRemoveCols(pos: number, spec: IJSONSegment) {
+		const original = PermutationSegment.fromJSONObject(spec);
+		// (Re)insert the removed number of rows at the original position.
+		const op = this.cols.insertSegmentLocal(pos, original);
+		const inserted = this.cols.getContainingSegment(pos).segment as PermutationSegment;
 		this.submitColMessage(op);
 
 		// Transfer handles and undo/redo tracking groups from the original segment to the
 		// newly inserted segment.
-		original.transferToReplacement(inserted);
+		inserted.start = original.start;
 
 		// Invalidate the handleCache in case it was populated during the 'colsChanged'
 		// callback, which occurs before the handle span is populated.

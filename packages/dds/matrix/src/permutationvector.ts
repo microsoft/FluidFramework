@@ -19,7 +19,6 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeMaintenanceCallbackArgs,
 	MergeTreeMaintenanceType,
-	ReferenceType,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
@@ -170,6 +169,7 @@ export class PermutationVector extends Client {
 			{
 				...runtime.options,
 				newMergeTreeSnapshotFormat: true, // Temporarily force new snapshot format until it is the default.
+				mergeTreeUseNewLengthCalculations: true,
 			},
 		); // (See https://github.com/microsoft/FluidFramework/issues/84)
 
@@ -179,18 +179,6 @@ export class PermutationVector extends Client {
 
 	public insert(start: number, length: number) {
 		return this.insertSegmentLocal(start, new PermutationSegment(length));
-	}
-
-	public insertRelative(segment: ISegment, length: number) {
-		const inserted = new PermutationSegment(length);
-
-		return {
-			op: this.insertAtReferencePositionLocal(
-				this.createLocalReferencePosition(segment, 0, ReferenceType.Transient, undefined),
-				inserted,
-			),
-			inserted,
-		};
 	}
 
 	public remove(start: number, length: number) {
@@ -346,24 +334,24 @@ export class PermutationVector extends Client {
 
 	private readonly onDelta = (
 		opArgs: IMergeTreeDeltaOpArgs,
-		{ operation, deltaSegments }: IMergeTreeDeltaCallbackArgs,
+		deltaArgs: IMergeTreeDeltaCallbackArgs,
 	) => {
+		const isLocal = opArgs.sequencedMessage === undefined;
+
+		// Notify the undo provider, if any is attached.
+		if (this.undo !== undefined && isLocal) {
+			this.undo.record(deltaArgs);
+		}
+
 		// Apply deltas in descending order to prevent positions from shifting.
-		const ranges = deltaSegments
+		const ranges = deltaArgs.deltaSegments
 			.map(({ segment }) => ({
 				segment: segment as PermutationSegment,
 				position: this.getPosition(segment),
 			}))
 			.sort((left, right) => left.position - right.position);
 
-		const isLocal = opArgs.sequencedMessage === undefined;
-
-		// Notify the undo provider, if any is attached.
-		if (this.undo !== undefined && isLocal) {
-			this.undo.record(operation, ranges);
-		}
-
-		switch (operation) {
+		switch (deltaArgs.operation) {
 			case MergeTreeDeltaType.INSERT:
 				// Pass 1: Perform any internal maintenance first to avoid reentrancy.
 				for (const { segment, position } of ranges) {
