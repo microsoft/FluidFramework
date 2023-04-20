@@ -42,8 +42,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"events": "^3.1.0"
 	},

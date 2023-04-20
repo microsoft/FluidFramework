@@ -25,11 +25,11 @@ export function zamboniSegments(
 	}
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
-		let segmentToScour = mergeTree.getSegmentsToScour!.peek();
+		let segmentToScour = mergeTree.segmentsToScour.peek();
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}
-		segmentToScour = mergeTree.getSegmentsToScour!.get();
+		segmentToScour = mergeTree.segmentsToScour.get();
 		// Only skip scouring if needs scour is explicitly false, not true or undefined
 		if (segmentToScour.segment!.parent && segmentToScour.segment!.parent.needsScour !== false) {
 			const block = segmentToScour.segment!.parent;

@@ -295,6 +295,7 @@ export class SummaryGenerator {
 				opsSinceLastSummary:
 					referenceSequenceNumber -
 					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
+				stage: summaryData.stage,
 			};
 			summarizeTelemetryProps = this.addSummaryDataToTelemetryProps(
 				summaryData,

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import execa from "execa";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
 
-import { execAsync, FluidRepo } from "@fluidframework/build-tools";
+import { FluidRepo } from "@fluidframework/build-tools";
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 
 import {
@@ -395,7 +396,7 @@ export const checkPolicy: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execAsync(`npm run policy-check`, {
+		const result = await execa(`npm run policy-check`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);
@@ -453,7 +454,7 @@ export const checkAssertTagging: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execAsync(`npm run policy-check:asserts`, {
+		const result = await execa(`npm run policy-check:asserts`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);

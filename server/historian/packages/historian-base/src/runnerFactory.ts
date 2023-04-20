@@ -23,7 +23,7 @@ export class HistorianResources implements core.IResources {
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
-		public readonly tokenRevocationManager?: core.ITokenRevocationManager,
+		public tokenRevocationManager?: core.ITokenRevocationManager,
 	) {
 		this.webServerFactory = new services.BasicWebServerFactory();
 	}

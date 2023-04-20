@@ -100,7 +100,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 	})();
 
 	return (
-		<div style={{ margin: "10px 0" }}>
+		<div className="migration-status" style={{ margin: "10px 0" }}>
 			<div>Using model: {model.version}</div>
 			<div>
 				Status:
