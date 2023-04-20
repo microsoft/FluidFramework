@@ -1076,6 +1076,52 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
+	it("not expired stashed blobs", async function () {
+		const container = await loadOffline(provider, { url });
+		const dataStore = await requestFluidObject<ITestFluidObject>(
+			container.container,
+			"default",
+		);
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
+		const handle = await dataStore.runtime.uploadBlob(
+			stringToBuffer("blob contents 1", "utf8"),
+		);
+		map.set("blob handle 1", handle);
+
+		container.connect();
+		await waitForContainerConnection(container.container, true);
+		const stashedChanges = container.container.closeAndGetPendingLocalState();
+
+		const container3 = await loadOffline(provider, { url }, stashedChanges);
+		const dataStore3 = await requestFluidObject<ITestFluidObject>(
+			container3.container,
+			"default",
+		);
+		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
+		// Blob is accessible locally while offline
+		assert.strictEqual(
+			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+			"blob contents 1",
+		);
+
+		container3.connect();
+		await waitForContainerConnection(container3.container, true);
+		await provider.ensureSynchronized();
+
+		// Blob is uploaded and accessible by all clients
+		assert.strictEqual(
+			bufferToString(await map1.get("blob handle 1").get(), "utf8"),
+			"blob contents 1",
+		);
+		assert.strictEqual(
+			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+			"blob contents 1",
+		);
+	});
+
+
 	it("offline attach", async function () {
 		const newMapId = "newMap";
 		let id;
