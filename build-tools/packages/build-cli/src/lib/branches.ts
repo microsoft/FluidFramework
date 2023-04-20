@@ -242,6 +242,6 @@ export function getDefaultBumpTypeForBranch(branchName: string): VersionBumpType
 export function getReleaseSourceForReleaseGroup(
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
 ): ReleaseSource {
-  // All packages and release groups use release branches.
+	// All packages and release groups use release branches.
 	return "releaseBranches";
 }
