@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from '@fluidframework/common-utils';
 import BTree from 'sorted-btree';
 import LRU from 'lru-cache';
-import { assert, fail, compareFiniteNumbers } from './Common';
+import { fail, compareFiniteNumbers } from './Common';
 
 /**
  * A revision corresponds to an index in an `EditLog`.

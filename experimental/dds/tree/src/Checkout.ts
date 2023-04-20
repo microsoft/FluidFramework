@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from '@fluidframework/common-utils';
 import { ChildLogger, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent, ITelemetryLogger, ITelemetryProperties } from '@fluidframework/common-definitions';
-import { assert, fail, RestOrArray, unwrapRestOrArray } from './Common';
+import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditId } from './Identifiers';
 import { CachingLogViewer } from './LogViewer';
 import { TreeView } from './TreeView';
@@ -257,7 +258,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	public applyChanges(changes: readonly Change[]): void;
 	public applyChanges(...changes: readonly Change[]): void;
 	public applyChanges(...changes: RestOrArray<Change>): void {
-		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
+		assert(this.currentEdit !== undefined, 'Changes must be applied as part of an ongoing edit.');
 		const changeArray = unwrapRestOrArray(changes);
 		const { status } = this.currentEdit.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
 		this.validateChangesApplied({ status, failure: this.currentEdit.failure });
@@ -272,7 +273,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	protected tryApplyChangesInternal(changes: readonly ChangeInternal[]): EditStatus;
 	protected tryApplyChangesInternal(...changes: readonly ChangeInternal[]): EditStatus;
 	protected tryApplyChangesInternal(...changes: RestOrArray<ChangeInternal>): EditStatus {
-		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
+		assert(this.currentEdit !== undefined, 'Changes must be applied as part of an ongoing edit.');
 		const changeArray = unwrapRestOrArray(changes);
 		const { status } = this.currentEdit.applyChanges(changeArray);
 		if (status === EditStatus.Applied) {
@@ -304,7 +305,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	public tryApplyEdit(...changes: RestOrArray<Change>): EditId | undefined {
 		this.openEdit();
 
-		assert(this.currentEdit, 'Changes must be applied as part of an ongoing edit.');
+		assert(this.currentEdit !== undefined, 'Changes must be applied as part of an ongoing edit.');
 		const changeArray = unwrapRestOrArray(changes);
 		const { status } = this.currentEdit.applyChanges(changeArray.map((c) => this.tree.internalizeChange(c)));
 		if (status === EditStatus.Applied) {
@@ -379,7 +380,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * @param editIds - the edits to revert
 	 */
 	public revert(editId: EditId): void {
-		assert(this.currentEdit !== undefined);
+		assertWithMessage(this.currentEdit !== undefined);
 		const index = this.tree.edits.getIndexOfId(editId);
 		const edit =
 			this.tree.edits.tryGetEditAtIndex(index) ?? fail('Edit with the specified ID does not exist in memory');
