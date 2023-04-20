@@ -1,4 +1,4 @@
-# @fluid-internal/tree
+# @fluid-experimental/tree2
 
 This DDS is not yet ready for public consumption. For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
 
@@ -110,7 +110,7 @@ graph TD;
         store["Data Store"]-->doc["Persisted Summaries"]
     end
     container["Fluid Container"]-->shared-tree
-    subgraph "@fluid-internal/tree"
+    subgraph "@fluid-experimental/tree2"
         shared-tree--"extends"-->shared-tree-core
         shared-tree-core-."reads".->doc
         shared-tree-core-->EditManager-->X["collab window & branches"]
@@ -154,7 +154,7 @@ could be added in the future.
 ```mermaid
 flowchart LR;
     doc["Persisted Summaries"]--"Summary+Trailing ops"-->shared-tree-core
-    subgraph "@fluid-internal/tree"
+    subgraph "@fluid-experimental/tree2"
         shared-tree--"configures"-->shared-tree-core
         shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
         ForestIndex--"Exposed by"-->checkout
@@ -201,7 +201,7 @@ This shows editing during a transaction:
 
 ```mermaid
 flowchart RL
-    subgraph "@fluid-internal/tree"
+    subgraph "@fluid-experimental/tree2"
         transaction--"collects edits in"-->ProgressiveEditBuilder
         ProgressiveEditBuilder--"updates anchors"-->AnchorSet
         ProgressiveEditBuilder--"deltas for edits"-->transaction
@@ -238,7 +238,7 @@ Also not shown is the (also usually unneeded) step of rebasing the changeset bef
 ```mermaid
 flowchart LR
     command["App's command callback"]--"commit"-->transaction
-    subgraph "@fluid-internal/tree"
+    subgraph "@fluid-experimental/tree2"
         transaction--"build"-->ProgressiveEditBuilder
         ProgressiveEditBuilder--"changeset"-->transaction
         transaction--"changeset (from builder)"-->core["shared-tree-core"]
@@ -255,7 +255,7 @@ rebases it as needed, and sends another delta to the indexes.
 ```mermaid
 graph LR;
     service["Fluid Service"]--"Sequenced Op"-->core["shared-tree-core"]
-    subgraph "@fluid-internal/tree"
+    subgraph "@fluid-experimental/tree2"
         core--"changeset"-->EditManager
         EditManager--"add changeset"-->remote["remote branch"]
         remote--"rebase into"-->main[main branch]
@@ -270,9 +270,9 @@ graph LR;
 
 ### Dependencies
 
-`@fluid-internal/tree` depends on the Fluid runtime (various packages in `@fluidframework/*`)
+`@fluid-experimental/tree2` depends on the Fluid runtime (various packages in `@fluidframework/*`)
 and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-internal`).
-`@fluid-internal/tree` is also complex,
+`@fluid-experimental/tree2` is also complex,
 so its implementation is broken up into several parts which have carefully controlled dependencies to help ensure the codebase is maintainable.
 The goal of this internal structuring is to make evolution and maintenance easy.
 Some of the principles used to guide this are:
@@ -318,7 +318,7 @@ In this diagram, some dependency arrows for dependencies which are already inclu
 ```mermaid
 flowchart
     direction TB
-    subgraph package ["@fluid-internal/tree"]
+    subgraph package ["@fluid-experimental/tree2"]
         direction TB
         subgraph core ["core libraries"]
             direction TB
