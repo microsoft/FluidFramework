@@ -36,7 +36,7 @@ import {
 	TypedSchema,
 	FieldKind,
 } from "../../../feature-libraries";
-import { ITestTreeProvider, TestTreeProvider } from "../../utils";
+import { TestTreeProviderLite } from "../../utils";
 import {
 	fullSchemaData,
 	Person,
@@ -78,15 +78,13 @@ function getTestSchema(fieldKind: FieldKind): SchemaData {
 	);
 }
 
-// TODO: There are two kinds of users of this in this file. Both should be changed:
-// Tests which are testing collaboration between multiple trees should be adjusted to not do that, or moved elsewhere (merge/collaboration is not the focus of this file).
-// Tests which are using a single tree should just use a MockFluidDataStoreRuntime instead of all the complexity of TestTreeProvider.
-async function createSharedTrees(
+// TODO: Tests which are testing collaboration between multiple trees should be adjusted to not do that, or moved elsewhere (merge/collaboration is not the focus of this file).
+function createSharedTrees(
 	schemaData: SchemaData,
 	data?: JsonableTree[],
 	numberOfTrees = 1,
-): Promise<readonly [ITestTreeProvider, readonly ISharedTree[]]> {
-	const provider = await TestTreeProvider.create(numberOfTrees);
+): readonly [TestTreeProviderLite, readonly ISharedTree[]] {
+	const provider = new TestTreeProviderLite(numberOfTrees);
 	for (const tree of provider.trees) {
 		assert(tree.isAttached());
 	}
@@ -94,7 +92,7 @@ async function createSharedTrees(
 	if (data !== undefined) {
 		provider.trees[0].context.root.insertNodes(0, data.map(singleTextCursor));
 	}
-	await provider.ensureSynchronized();
+	provider.processMessages();
 	return [provider, provider.trees];
 }
 
@@ -104,8 +102,8 @@ const testCases: (readonly [string, FieldKey])[] = [
 ];
 
 describe("editable-tree: editing", () => {
-	it("edit using contextually typed API", async () => {
-		const [, trees] = await createSharedTrees(fullSchemaData, [personJsonableTree()]);
+	it("edit using contextually typed API", () => {
+		const [, trees] = createSharedTrees(fullSchemaData, [personJsonableTree()]);
 		assert.equal((trees[0].root as Person).name, "Adam");
 		// delete optional root
 		trees[0].root = undefined;
@@ -238,8 +236,8 @@ describe("editable-tree: editing", () => {
 		});
 	});
 
-	it("edit using typed data model", async () => {
-		const [, trees] = await createSharedTrees(fullSchemaData);
+	it("edit using typed data model", () => {
+		const [, trees] = createSharedTrees(fullSchemaData);
 
 		trees[0].root = getPerson();
 		const person = trees[0].root as Person;
@@ -363,14 +361,12 @@ describe("editable-tree: editing", () => {
 		}
 	});
 
-	it("validates schema of values", async () => {
+	it("validates schema of values", () => {
 		const schemaData = SchemaAware.typedSchemaData(
 			[[rootFieldKey, TypedSchema.field(FieldKinds.value, stringSchema)]],
 			stringSchema,
 		);
-		const [, trees] = await createSharedTrees(schemaData, [
-			{ type: stringSchema.name, value: "x" },
-		]);
+		const [, trees] = createSharedTrees(schemaData, [{ type: stringSchema.name, value: "x" }]);
 		const root = trees[0].context.root.getNode(0);
 		// Confirm stetting value to a string does not error
 		root[valueSymbol] = "hi";
@@ -387,8 +383,8 @@ describe("editable-tree: editing", () => {
 
 	for (const [fieldDescription, fieldKey] of testCases) {
 		describe(`can create, edit and delete ${fieldDescription}`, () => {
-			it("as sequence field", async () => {
-				const [provider, trees] = await createSharedTrees(
+			it("as sequence field", () => {
+				const [provider, trees] = createSharedTrees(
 					getTestSchema(FieldKinds.sequence),
 					[{ type: rootSchemaName }],
 					2,
@@ -406,20 +402,20 @@ describe("editable-tree: editing", () => {
 				assert.equal(field_0[0], "foo");
 				assert.equal(field_0[1], "bar");
 				assert.equal(field_0[2], undefined);
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				const field_1 = trees[1].root[fieldKey];
 				assert.deepEqual(field_0, field_1);
 
 				// edit using assignment
 				field_0[0] = "buz";
 				assert.equal(field_0[0], "buz");
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
 
 				// edit using valueSymbol
 				field_0.getNode(0)[valueSymbol] = "via symbol";
 				assert.equal(field_0[0], "via symbol");
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
 
 				// delete
@@ -435,7 +431,7 @@ describe("editable-tree: editing", () => {
 				assert(!(fieldKey in trees[0].root));
 				assert.equal(field_0[0], undefined);
 				assert.equal(field_0.length, 0);
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
 
 				// create using `insertNodes()`
@@ -451,7 +447,7 @@ describe("editable-tree: editing", () => {
 				);
 				assert.equal(field_0[0], "first");
 				assert.equal(field_0[1], "second");
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
 
 				// edit using `replaceNodes()`
@@ -485,7 +481,7 @@ describe("editable-tree: editing", () => {
 					1,
 				);
 				assert.equal(field_0[1], "changed");
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
 
 				// delete using `deleteNodes()`
@@ -501,21 +497,21 @@ describe("editable-tree: editing", () => {
 					(e) => validateAssertionError(e, "Count must be non-negative."),
 					"Expected exception was not thrown",
 				);
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
 				field_0.deleteNodes(0, 5);
 				assert.equal(field_0.length, 0);
 				assert(!(fieldKey in trees[0].root));
 				assert.doesNotThrow(() => field_0.deleteNodes(0, 0));
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
 
 				trees[0].context.free();
 				trees[1].context.free();
 			});
 
-			it("as optional field", async () => {
-				const [provider, trees] = await createSharedTrees(
+			it("as optional field", () => {
+				const [provider, trees] = createSharedTrees(
 					getTestSchema(FieldKinds.optional),
 					[{ type: rootSchemaName }],
 					2,
@@ -540,17 +536,17 @@ describe("editable-tree: editing", () => {
 					fieldKey,
 					singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				);
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.equal(trees[1].root[fieldKey], "foo");
 
 				// edit using assignment
 				trees[0].root[fieldKey] = "bar";
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.equal(trees[0].root[fieldKey], "bar");
 
 				// edit using valueSymbol
 				trees[0].root[getField](fieldKey).getNode(0)[valueSymbol] = "via symbol";
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.equal(trees[1].root[fieldKey], "via symbol");
 
 				// edit using `replaceField()`
@@ -558,22 +554,22 @@ describe("editable-tree: editing", () => {
 					fieldKey,
 					singleTextCursor({ type: stringSchema.name, value: "replaced" }),
 				);
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.equal(trees[1].root[fieldKey], "replaced");
 
 				// delete
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete trees[0].root[fieldKey];
 				assert(!(fieldKey in trees[0].root));
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert(!(fieldKey in trees[1].root));
 				assert.equal(trees[0].root[fieldKey], undefined);
 				trees[0].context.free();
 				trees[1].context.free();
 			});
 
-			it("as value field", async () => {
-				const [provider, trees] = await createSharedTrees(
+			it("as value field", () => {
+				const [provider, trees] = createSharedTrees(
 					getTestSchema(FieldKinds.value),
 					[{ type: rootSchemaName }],
 					2,
@@ -601,17 +597,17 @@ describe("editable-tree: editing", () => {
 				// TODO: rework/remove this as soon as trees with value fields will be supported.
 				trees[0].root[getField](fieldKey).insertNodes(0, fieldContent);
 				assert.equal(trees[0].root[fieldKey], "foo");
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.equal(trees[1].root[fieldKey], "foo");
 
 				// edit using assignment
 				trees[0].root[fieldKey] = "bar";
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.equal(trees[1].root[fieldKey], "bar");
 
 				// edit using valueSymbol
 				trees[0].root[getField](fieldKey).getNode(0)[valueSymbol] = "via symbol";
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.equal(trees[1].root[fieldKey], "via symbol");
 
 				// edit using `replaceField()`
@@ -619,7 +615,7 @@ describe("editable-tree: editing", () => {
 					fieldKey,
 					singleTextCursor({ type: stringSchema.name, value: "replaced" }),
 				);
-				await provider.ensureSynchronized();
+				provider.processMessages();
 				assert.equal(trees[1].root[fieldKey], "replaced");
 
 				// delete
