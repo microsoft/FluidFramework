@@ -4,10 +4,10 @@
  */
 
 import BTree from 'sorted-btree';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { TypedEventEmitter, assert } from '@fluidframework/common-utils';
 import type { IEvent, ITelemetryLogger } from '@fluidframework/common-definitions';
 import { compareArrays } from '@fluidframework/core-utils';
-import { assert, fail } from './Common';
+import { fail } from './Common';
 import type { EditId } from './Identifiers';
 import type { StringInterner } from './StringInterner';
 import { Edit, EditLogSummary, EditWithoutId, FluidEditHandle } from './persisted-types';
@@ -387,7 +387,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 
 		if (orderedEdit.isLocal) {
 			const firstLocal = this.allEditIds.get(this.localEdits[0].id) ?? fail('edit not found');
-			assert(firstLocal.isLocal);
+			assert(firstLocal.isLocal, 'local edit should be local');
 			return (
 				this._earliestAvailableEditIndex +
 				this.numberOfSequencedEdits +
