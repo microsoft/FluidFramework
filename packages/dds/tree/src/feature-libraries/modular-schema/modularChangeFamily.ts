@@ -58,13 +58,9 @@ import {
 	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
-import {
-	convertGenericChange,
-	GenericChangeset,
-	genericFieldKind,
-	newGenericChangeset,
-} from "./genericFieldKind";
-import { makeModularChangeCodecFamily } from "./modularChangeEncoding";
+import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
+import { GenericChangeset } from "./genericFieldKindTypes";
+import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind

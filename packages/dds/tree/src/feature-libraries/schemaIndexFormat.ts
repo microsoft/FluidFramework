@@ -29,25 +29,6 @@ import { brand, fail } from "../util";
 
 const version = "1.0.0" as const;
 
-/**
- * Create a TypeBox string schema for a branded string type.
- * This only validates that the value is a string,
- * and not that it came from the correct branded type (that information is lost when serialized).
- */
-function brandedString<T extends string>(): TUnsafe<T> {
-	// This could use:
-	// return TypeSystem.CreateType<T>(name, (options, value) => typeof value === "string")();
-	// Since there isn't any useful custom validation to do and
-	// TUnsafe is documented as unsupported in `typebox/compiler`,
-	// opt for the compile time behavior like the above, but the runtime behavior of the built in string type.
-	return Type.String() as unknown as TUnsafe<T>;
-}
-
-const FieldKindIdentifier = brandedString<FieldKindIdentifier>();
-const TreeSchemaIdentifier = brandedString<TreeSchemaIdentifier>();
-const LocalFieldKey = brandedString<LocalFieldKey>();
-const GlobalFieldKey = brandedString<GlobalFieldKey>();
-
 const FieldSchemaFormat = Type.Object(
 	{
 		kind: FieldKindIdentifier,

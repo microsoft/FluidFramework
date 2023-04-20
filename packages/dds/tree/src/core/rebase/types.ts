@@ -5,11 +5,14 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { generateStableId, isStableId, StableId } from "../../id-compressor";
+import { brandedStringType } from "../../util";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
  */
 export type SessionId = string;
+
+export const RevisionTag = brandedStringType<StableId>();
 
 /**
  * A unique identifier for a commit. Commits that have been rebased, but are semantically

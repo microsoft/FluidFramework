@@ -8,6 +8,8 @@ export {
 	Brand,
 	BrandedType,
 	brandOpaque,
+	brandedNumberType,
+	brandedStringType,
 	extractFromOpaque,
 	ExtractFromOpaque,
 	NameFromBranded,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { TSchema, Type } from "@sinclair/typebox";
 import { GlobalFieldKey, LocalFieldKey } from "../schema-stored";
 import { GlobalFieldKeySymbol, keyFromSymbol, symbolFromKey } from "./globalFieldKeySymbol";
 import { FieldKey, NodeData } from "./types";
@@ -49,13 +50,8 @@ import { FieldKey, NodeData } from "./types";
 export interface FieldMapObject<TChild> {
 	[key: string]: TChild[];
 }
-
-/**
- * Json comparable tree node, generic over child type.
- * Json compatibility assumes `TChild` is also json compatible.
- * @alpha
- */
-export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
+export const FieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
+	Type.Record(Type.String(), Type.Array(tChild));
 
 /**
  * Json comparable field collection, generic over child type.
@@ -66,6 +62,20 @@ export interface GenericFieldsNode<TChild> {
 	[FieldScope.local]?: FieldMapObject<TChild>;
 	[FieldScope.global]?: FieldMapObject<TChild>;
 }
+export const GenericFieldsNode = <Schema extends TSchema>(tChild: Schema) =>
+	Type.Object({
+		[FieldScope.local]: Type.Optional(FieldMapObject(tChild)),
+		[FieldScope.global]: Type.Optional(FieldMapObject(tChild)),
+	});
+
+/**
+ * Json comparable tree node, generic over child type.
+ * Json compatibility assumes `TChild` is also json compatible.
+ * @alpha
+ */
+export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
+export const GenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
+	Type.Intersect([GenericFieldsNode(tChild), NodeData]);
 
 /**
  * A tree represented using plain JavaScript objects.
@@ -75,6 +85,7 @@ export interface GenericFieldsNode<TChild> {
  * @alpha
  */
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
+export const JsonableTree = Type.Recursive((Self) => GenericTreeNode(Self));
 
 /**
  * Derives the scope using the type of `key`.

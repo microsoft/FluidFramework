@@ -27,21 +27,27 @@ import {
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
+import { Static, Type } from "@sinclair/typebox";
+import { withSchemaValidation } from "../../codec/codec";
 
-/**
- * Format for encoding as json.
- */
-interface EncodedNodeChangeset {
-	valueChange?: ValueChange;
-	fieldChanges?: EncodedFieldChangeMap;
-	valueConstraint?: ValueConstraint;
+const ValueChange = Type.Any();
+const ValueConstraint = Type.Any();
+
+const EncodedFieldChange = Type.Object({
+	fieldKey: Type.Union([LocalFieldKey, GlobalFieldKey]),
+	keyIsGlobal: Type.Boolean(),
+	fieldKind: FieldKindIdentifier,
+	change: JsonCompatibleReadOnly,
+});
+
+interface EncodedFieldChange extends Static<typeof EncodedFieldChange> {
+	/**
+	 * Encoded in format selected by `fieldKind`
+	 */
+	change: JsonCompatibleReadOnly;
 }
 
-interface EncodedModularChangeset {
-	maxId?: ChangesetLocalId;
-	changes: EncodedFieldChangeMap;
-	revisions?: readonly RevisionInfo[];
-}
+const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
 
 /**
  * Format for encoding as json.
@@ -51,17 +57,26 @@ interface EncodedModularChangeset {
  * which can sometimes be an issue (for example handling that for "__proto__" can require care).
  * It also allows dealing with global vs local field key disambiguation via a flag on the field.
  */
-type EncodedFieldChangeMap = EncodedFieldChange[];
+type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
-interface EncodedFieldChange {
-	fieldKey: LocalFieldKey | GlobalFieldKey;
-	keyIsGlobal: boolean;
-	fieldKind: FieldKindIdentifier;
-	/**
-	 * Encoded in format selected by `fieldKind`
-	 */
-	change: JsonCompatibleReadOnly;
-}
+const EncodedNodeChangeset = Type.Object({
+	valueChange: Type.Optional(ValueChange),
+	fieldChanges: Type.Optional(EncodedFieldChangeMap),
+	valueConstraint: Type.Optional(ValueConstraint),
+});
+
+/**
+ * Format for encoding as json.
+ */
+type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
+
+const EncodedModularChangeset = Type.Object({
+	maxId: Type.Optional(ChangesetLocalId),
+	changes: EncodedFieldChangeMap,
+	revisions: Type.ReadonlyOptional(Type.Array(RevisionInfo)),
+});
+
+type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
 
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
@@ -71,6 +86,7 @@ function makeV0Codec(
 		decode: decodeNodeChangesetFromJson,
 	};
 
+	// TODO: Validate schemas appropriately.
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		IMultiFormatCodec<FieldChangeset>
@@ -197,6 +213,7 @@ function makeV0Codec(
 			}
 			return decoded;
 		},
+		encodedSchema: EncodedModularChangeset,
 	};
 }
 

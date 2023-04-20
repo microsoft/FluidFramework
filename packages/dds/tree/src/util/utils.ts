@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 
 /**
@@ -208,7 +209,9 @@ export type JsonCompatibleReadOnly =
 	// eslint-disable-next-line @rushstack/no-new-null
 	| null
 	| readonly JsonCompatibleReadOnly[]
-	| { readonly [P in string]: JsonCompatibleReadOnly | undefined };
+	| { readonly [P in string]?: JsonCompatibleReadOnly };
+// TODO: Assess if this is actually necessary in schemas, and if so evaluate perf/correctness of alternatives here.
+export const JsonCompatibleReadOnly = Type.Any();
 
 /**
  * Returns if a particular json compatible value is an object.

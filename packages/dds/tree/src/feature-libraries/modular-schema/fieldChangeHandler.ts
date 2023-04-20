@@ -7,6 +7,7 @@ import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag 
 import { Brand, fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
+import { Static, Type } from "@sinclair/typebox";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -273,11 +274,15 @@ export interface RevisionMetadataSource {
 	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
 
+export const RevisionInfo = Type.Object({
+	revision: Type.Readonly(RevisionTag),
+	rollbackOf: Type.Optional(RevisionTag),
+});
+
 /**
  * @alpha
  */
-export interface RevisionInfo {
-	readonly revision: RevisionTag;
+export interface RevisionInfo extends Static<typeof RevisionInfo> {
 	/**
 	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
 	 * The value corresponds to the `revision` of the original changeset being rolled back.

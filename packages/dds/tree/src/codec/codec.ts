@@ -4,6 +4,8 @@
  */
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { Static, TAnySchema, TSchema } from "@sinclair/typebox";
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
@@ -33,7 +35,9 @@ export interface IJsonCodec<
 	TDecoded,
 	TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly,
 > extends IEncoder<TDecoded, TEncoded>,
-		IDecoder<TDecoded, TEncoded> {}
+		IDecoder<TDecoded, TEncoded> {
+	encodedSchema?: TAnySchema;
+}
 
 /**
  * @remarks - TODO: We might consider using DataView or some kind of writer instead of IsoBuffer.
@@ -226,9 +230,32 @@ export const unitCodec: IMultiFormatCodec<0> = {
  * AB#4074 tracks making this function take a typebox schema and using it to validate objects.
  * Note: this might allow usage of Jsonable, since the type parameter would be inferrable from the schema.
  */
-export function makeValueCodec<T>(): IJsonCodec<T> {
+export function makeValueCodec<Schema extends TSchema>(schema: Schema): IJsonCodec<Static<Schema>> {
+	return withSchemaValidation(schema, {
+		encode: (x: Static<Schema>) => x as unknown as JsonCompatibleReadOnly,
+		decode: (x: JsonCompatibleReadOnly) => x as unknown as Static<Schema>,
+	});
+}
+
+// TODO: document and update above doc comment
+export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSchema>(
+	schema: EncodedSchema,
+	codec: IJsonCodec<TInMemoryFormat>,
+): IJsonCodec<TInMemoryFormat> {
+	const CompiledFormat = TypeCompiler.Compile(schema);
 	return {
-		encode: (obj: T) => obj as unknown as JsonCompatibleReadOnly,
-		decode: (obj: JsonCompatibleReadOnly) => obj as unknown as T,
+		encode: (obj: TInMemoryFormat) => {
+			const encoded = codec.encode(obj);
+			if (!CompiledFormat.Check(encoded)) {
+				fail("Encoded schema should validate");
+			}
+			return encoded;
+		},
+		decode: (encoded: JsonCompatibleReadOnly) => {
+			if (!CompiledFormat.Check(encoded)) {
+				fail("Encoded schema should validate");
+			}
+			return codec.decode(encoded) as unknown as TInMemoryFormat;
+		},
 	};
 }

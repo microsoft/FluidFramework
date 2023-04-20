@@ -8,6 +8,7 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema-stored";
 import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
 import { GlobalFieldKeySymbol, symbolFromKey } from "./globalFieldKeySymbol";
+import { Type } from "@sinclair/typebox";
 
 /**
  * Either LocalFieldKey or GlobalFieldKey.
@@ -190,3 +191,8 @@ export interface NodeData {
 	 */
 	readonly type: TreeSchemaIdentifier;
 }
+export const NodeData = Type.Object({
+	// TODO: Questions above could/should also apply here.
+	value: Type.Optional(Type.Any()),
+	type: Type.Readonly(TreeSchemaIdentifier),
+});

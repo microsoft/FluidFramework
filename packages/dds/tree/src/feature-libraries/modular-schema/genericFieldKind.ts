@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { makeCodecFamily } from "../../codec";
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
-import { brand, fail, JsonCompatibleReadOnly } from "../../util";
+import { brand, fail } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -19,39 +18,8 @@ import {
 	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
-
-/**
- * A field-kind-agnostic change to a single node within a field.
- */
-export interface GenericChange {
-	/**
-	 * Index within the field of the changed node.
-	 */
-	index: number;
-	/**
-	 * Change to the node.
-	 */
-	nodeChange: NodeChangeset;
-}
-
-/**
- * Encoded version of {@link GenericChange}
- */
-export interface EncodedGenericChange {
-	index: number;
-	// TODO: this format needs more documentation (ideally in the form of more specific types).
-	nodeChange: JsonCompatibleReadOnly;
-}
-
-/**
- * A field-agnostic set of changes to the elements of a field.
- */
-export type GenericChangeset = GenericChange[];
-
-/**
- * Encoded version of {@link GenericChangeset}
- */
-export type EncodedGenericChangeset = EncodedGenericChange[];
+import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
+import { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -150,32 +118,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return rebased;
 		},
 	}),
-	codecsFactory: (childCodec) =>
-		makeCodecFamily([
-			[
-				0,
-				{
-					encode: (change: GenericChangeset): JsonCompatibleReadOnly => {
-						const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset =
-							change.map(({ index, nodeChange }) => ({
-								index,
-								nodeChange: childCodec.encode(nodeChange),
-							}));
-						return encoded;
-					},
-					decode: (change: JsonCompatibleReadOnly): GenericChangeset => {
-						const encoded = change as JsonCompatibleReadOnly[] &
-							EncodedGenericChangeset;
-						return encoded.map(
-							({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
-								index,
-								nodeChange: childCodec.decode(nodeChange),
-							}),
-						);
-					},
-				},
-			],
-		]),
+	codecsFactory: makeGenericChangeCodec,
 	editor: {
 		buildChildChange(index, change): GenericChangeset {
 			return [{ index, nodeChange: change }];

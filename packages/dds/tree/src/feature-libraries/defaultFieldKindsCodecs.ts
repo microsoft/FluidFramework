@@ -5,19 +5,19 @@
 
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
-import { JsonCompatibleReadOnly } from "../util";
 import type { NodeUpdate, OptionalChangeset, ValueChangeset } from "./defaultFieldKindsTypes";
 import type { NodeChangeset } from "./modular-schema";
-import type {
+import {
 	EncodedValueChangeset,
 	EncodedOptionalChangeset,
 	EncodedNodeUpdate,
 } from "./defaultFieldKindsFormat";
+import { Type } from "@sinclair/typebox";
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
-	[0, makeValueCodec<number>()],
+	[0, makeValueCodec(Type.Number())],
 ]);
 
 export const makeValueFieldCodecFamily = (childCodec: IJsonCodec<NodeChangeset>) =>
@@ -27,12 +27,15 @@ export const makeOptionalFieldCodecFamily = (
 	childCodec: IJsonCodec<NodeChangeset>,
 ): ICodecFamily<OptionalChangeset> => makeCodecFamily([[0, makeOptionalFieldCodec(childCodec)]]);
 
-function makeValueFieldCodec(childCodec: IJsonCodec<NodeChangeset>): IJsonCodec<ValueChangeset> {
+function makeValueFieldCodec(
+	childCodec: IJsonCodec<NodeChangeset>,
+): IJsonCodec<ValueChangeset, EncodedValueChangeset> {
+	const nodeUpdateCodec = makeNodeUpdateCodec(childCodec);
 	return {
 		encode: (change: ValueChangeset) => {
-			const encoded: EncodedValueChangeset & JsonCompatibleReadOnly = {};
+			const encoded: EncodedValueChangeset = {};
 			if (change.value !== undefined) {
-				encoded.value = encodeNodeUpdate(change.value, childCodec);
+				encoded.value = nodeUpdateCodec.encode(change.value);
 			}
 
 			if (change.changes !== undefined) {
@@ -42,11 +45,10 @@ function makeValueFieldCodec(childCodec: IJsonCodec<NodeChangeset>): IJsonCodec<
 			return encoded;
 		},
 
-		decode: (change: JsonCompatibleReadOnly) => {
-			const encoded = change as EncodedValueChangeset;
+		decode: (encoded: EncodedValueChangeset) => {
 			const decoded: ValueChangeset = {};
 			if (encoded.value !== undefined) {
-				decoded.value = decodeNodeUpdate(encoded.value, childCodec);
+				decoded.value = nodeUpdateCodec.decode(encoded.value);
 			}
 
 			if (encoded.changes !== undefined) {
@@ -55,21 +57,23 @@ function makeValueFieldCodec(childCodec: IJsonCodec<NodeChangeset>): IJsonCodec<
 
 			return decoded;
 		},
+
+		encodedSchema: EncodedValueChangeset,
 	};
 }
 
 function makeOptionalFieldCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
-): IJsonCodec<OptionalChangeset> {
+): IJsonCodec<OptionalChangeset, EncodedOptionalChangeset> {
+	const nodeUpdateCodec = makeNodeUpdateCodec(childCodec);
 	return {
 		encode: (change: OptionalChangeset) => {
-			const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
+			const encoded: EncodedOptionalChangeset = {};
 			if (change.fieldChange !== undefined) {
 				encoded.fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
 				if (change.fieldChange.newContent !== undefined) {
-					encoded.fieldChange.newContent = encodeNodeUpdate(
+					encoded.fieldChange.newContent = nodeUpdateCodec.encode(
 						change.fieldChange.newContent,
-						childCodec,
 					);
 				}
 			}
@@ -81,8 +85,7 @@ function makeOptionalFieldCodec(
 			return encoded;
 		},
 
-		decode: (change: JsonCompatibleReadOnly) => {
-			const encoded = change as EncodedOptionalChangeset;
+		decode: (encoded: EncodedOptionalChangeset) => {
 			const decoded: OptionalChangeset = {};
 			if (encoded.fieldChange !== undefined) {
 				decoded.fieldChange = {
@@ -90,9 +93,8 @@ function makeOptionalFieldCodec(
 				};
 
 				if (encoded.fieldChange.newContent !== undefined) {
-					decoded.fieldChange.newContent = decodeNodeUpdate(
+					decoded.fieldChange.newContent = nodeUpdateCodec.decode(
 						encoded.fieldChange.newContent,
-						childCodec,
 					);
 				}
 			}
@@ -103,45 +105,47 @@ function makeOptionalFieldCodec(
 
 			return decoded;
 		},
+
+		encodedSchema: EncodedOptionalChangeset,
 	};
 }
 
-function encodeNodeUpdate(
-	update: NodeUpdate,
+function makeNodeUpdateCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
-): EncodedNodeUpdate {
-	const encoded: EncodedNodeUpdate =
-		"revert" in update
-			? {
-					revert: jsonableTreeFromCursor(update.revert),
-					revision: update.revision,
-			  }
-			: {
-					set: update.set,
-			  };
+): IJsonCodec<NodeUpdate, EncodedNodeUpdate> {
+	return {
+		encode: (update: NodeUpdate) => {
+			const encoded: EncodedNodeUpdate =
+				"revert" in update
+					? {
+							revert: jsonableTreeFromCursor(update.revert),
+							revision: update.revision,
+					  }
+					: {
+							set: update.set,
+					  };
 
-	if (update.changes !== undefined) {
-		encoded.changes = childCodec.encode(update.changes);
-	}
+			if (update.changes !== undefined) {
+				encoded.changes = childCodec.encode(update.changes);
+			}
 
-	return encoded;
-}
+			return encoded;
+		},
+		decode: (encoded: EncodedNodeUpdate) => {
+			const decoded: NodeUpdate =
+				"revert" in encoded
+					? {
+							revert: singleTextCursor(encoded.revert),
+							revision: encoded.revision,
+					  }
+					: { set: encoded.set };
 
-function decodeNodeUpdate(
-	encoded: EncodedNodeUpdate,
-	childCodec: IJsonCodec<NodeChangeset>,
-): NodeUpdate {
-	const decoded: NodeUpdate =
-		"revert" in encoded
-			? {
-					revert: singleTextCursor(encoded.revert),
-					revision: encoded.revision,
-			  }
-			: { set: encoded.set };
+			if (encoded.changes !== undefined) {
+				decoded.changes = childCodec.decode(encoded.changes);
+			}
 
-	if (encoded.changes !== undefined) {
-		decoded.changes = childCodec.decode(encoded.changes);
-	}
-
-	return decoded;
+			return decoded;
+		},
+		encodedSchema: EncodedNodeUpdate,
+	};
 }

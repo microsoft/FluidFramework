@@ -12,9 +12,10 @@ import {
 	Delta,
 	ChangeFamilyEditor,
 } from "../core";
-import { makeValueCodec } from "../codec";
+import { IJsonCodec, makeValueCodec } from "../codec";
 import { RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
+import { Type } from "@sinclair/typebox";
 
 export interface NonEmptyTestChange {
 	/**
@@ -194,7 +195,7 @@ export interface AnchorRebaseData {
 }
 
 const emptyChange: TestChange = { intentions: [] };
-const codec = makeValueCodec<TestChange>();
+const codec: IJsonCodec<TestChange> = makeValueCodec(Type.Any());
 
 export const TestChange = {
 	emptyChange,
