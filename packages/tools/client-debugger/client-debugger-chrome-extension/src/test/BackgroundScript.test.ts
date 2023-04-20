@@ -4,9 +4,10 @@
  */
 
 import { expect } from "chai";
-
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
+
+import { delay } from "@fluidframework/common-utils";
 
 import { Globals } from "../utilities";
 import { DevToolsInitMessage, extensionMessageSource } from "../messaging";
@@ -70,7 +71,7 @@ describe("Background script unit tests", () => {
 	// 	sandbox.restore();
 	// });
 
-	it("Injects the content script when enabled.", async () => {
+	it("Injects connects to the Content script upon initialization from Devtools script.", async () => {
 		const { browser } = globals;
 		const tabId = 37;
 
@@ -130,13 +131,10 @@ describe("Background script unit tests", () => {
 
 		expect(getCalled).to.be.true;
 
-		// TODO: only called in continuation of tabs.get
-		// We need to wait in order to ensure this is called.
+		// The background script calls `connect` in the continuation of a promise, so we need to delay to ensure
+		// that continuation runs before we check if the stub was called.
+		await delay(500);
 		expect(connectCalled).to.be.true;
-
-		// expect(tabConnectScriptSpy.called).to.be.true;
-		// expect(tabConnectScriptSpy.firstCall.args[0]).to.equal(tabId);
-		// expect(tabConnectScriptSpy.firstCall.args[1]).to.equal("Content Script");
 	});
 
 	// it("Retries injecting the content script if it fails.", async () => {
