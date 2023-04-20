@@ -7,15 +7,12 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	ISharedTree,
 	EditableField,
-	EditableTree,
 	FieldKey,
 	isGlobalFieldKey,
 	symbolIsFieldKey,
 	keyFromSymbol,
 	symbolFromKey,
 	rootFieldKey,
-	isUnwrappedNode,
-	isEditableField,
 	ContextuallyTypedNodeDataObject,
 	EmptyKey,
 	PrimitiveValue,
@@ -28,6 +25,7 @@ import {
 	typeNameSymbol,
 	valueSymbol,
 	FieldKinds,
+	FieldSchema,
 } from "@fluid-internal/tree";
 import { addComplexTypeToSchema } from "@fluid-experimental/property-shared-tree-interop";
 
@@ -64,6 +62,10 @@ export function isSequenceField(field: EditableField): boolean {
 	return field.fieldSchema.kind.identifier === sequence.identifier;
 }
 
+export function isValueFieldSchema(fieldSchema: FieldSchema): boolean {
+	return fieldSchema.kind.identifier === value.identifier;
+}
+
 export function getNewNodeData(
 	sharedTree: ISharedTree,
 	typeName: TreeSchemaIdentifier,
@@ -74,70 +76,39 @@ export function getNewNodeData(
 	if (contextAndType.length > 1) {
 		const context = contextAndType[0];
 		const subType = contextAndType[1].replace(/>/g, "");
-		const treeSchema = lookupTreeSchema(schema, typeName);
-		if (treeSchema === neverTree) {
+		if (lookupTreeSchema(schema, typeName) === neverTree) {
 			// TODO: address this case to MSFT
 			// Ideally, one could expect `map`, `array` etc. complex types
 			// to be available "out-of-the-box" for every existing type.
-			sharedTree.storedSchema.update(addComplexTypeToSchema(schema, context, brand(subType)));
+			schema.update(addComplexTypeToSchema(schema, context, brand(subType)));
 		}
 		if (context === "array") {
 			newData[EmptyKey] = [];
 		}
 		return newData;
 	}
-	const newTreeSchema = lookupTreeSchema(schema, typeName);
+	const treeSchema = lookupTreeSchema(schema, typeName);
 	// TODO: tbd if this code below could be moved to the EditableTree implementation
 	// for creation of fields and nodes, also having a "hook" to define own default values.
-	if (isPrimitive(newTreeSchema)) {
+	if (isPrimitive(treeSchema)) {
 		// avoid `undefined` as not supported by schema and UI
 		const defaultValue: PrimitiveValue = defaultPrimitiveValues[typeName];
 		newData[valueSymbol] = defaultValue;
 	} else {
-		newTreeSchema.localFields.forEach((fieldSchema, fieldKey) => {
-			if (fieldSchema.kind.identifier === value.identifier) {
+		treeSchema.localFields.forEach((fieldSchema, fieldKey) => {
+			if (isValueFieldSchema(fieldSchema)) {
 				assert(fieldSchema.types?.size === 1, "Polymorphic types are not supported yet");
 				newData[fieldKey] = getNewNodeData(sharedTree, [...fieldSchema.types][0]);
 			}
 		});
-		newTreeSchema.globalFields.forEach((globalFieldKey) => {
+		treeSchema.globalFields.forEach((globalFieldKey) => {
 			const fieldSchema = lookupGlobalFieldSchema(schema, globalFieldKey);
-			if (fieldSchema.kind.identifier === value.identifier) {
+			if (isValueFieldSchema(fieldSchema)) {
 				assert(fieldSchema.types?.size === 1, "Polymorphic types are not supported yet");
-				const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
-				newData[globalFieldKeySymbol] = getNewNodeData(
-					sharedTree,
-					[...fieldSchema.types][0],
-				);
+				const fieldKey = symbolFromKey(globalFieldKey);
+				newData[fieldKey] = getNewNodeData(sharedTree, [...fieldSchema.types][0]);
 			}
 		});
 	}
 	return newData;
-}
-
-export function forEachField<T, O>(
-	node: EditableTree,
-	f: (field: EditableField, result: T, options: O) => T,
-	result: T,
-	options: O,
-): T {
-	assert(isUnwrappedNode(node), "expected node");
-	for (const field of node) {
-		f(field, result, options);
-	}
-	return result;
-}
-
-export function forEachNode<T, O>(
-	field: EditableField,
-	f: (node: EditableTree, result: T, options: O) => T,
-	result: T,
-	options: O,
-): T {
-	assert(isEditableField(field), "expected field");
-	// do not use iterator as it gives unwrapped nodes
-	for (let index = 0; index < field.length; index++) {
-		f(field.getNode(index), result, options);
-	}
-	return result;
 }

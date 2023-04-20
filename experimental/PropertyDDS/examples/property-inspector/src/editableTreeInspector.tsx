@@ -23,6 +23,7 @@ import {
 	TreeSchemaIdentifier,
 	parentField,
 	getPrimaryField,
+	forEachField,
 } from "@fluid-internal/tree";
 import {
 	IDataCreationOptions,
@@ -47,8 +48,6 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import { theme } from "./theme";
 import { getPerson } from "./demoPersonData";
 import {
-	forEachField,
-	forEachNode,
 	getNewNodeData,
 	isEmptyRoot,
 	isSequenceField,
@@ -192,7 +191,7 @@ function expandNode(
 	if (!isPrimitive(nodeType) || context !== "single") {
 		expanded[id] = true;
 	}
-	return forEachField(node, expandField, expanded, { sharedTree, pathPrefix: id });
+	return node[forEachField](expandField, expanded, { sharedTree, pathPrefix: id });
 }
 
 function expandField(
@@ -206,7 +205,7 @@ function expandField(
 		const id = getRowId(field, pathPrefix);
 		expanded[id] = true;
 	}
-	return forEachNode(field, expandNode, expanded, options);
+	return field.forEachNode(expandNode, expanded, options);
 }
 
 function addNewDataLine(
@@ -273,7 +272,7 @@ function nodeToTableRow(
 	const nodeType = data[typeSymbol];
 	// TODO: `context !== "single"` is required since maps are considered to be primitive objects.
 	if (!isPrimitive(nodeType) || context !== "single") {
-		newRow.children = forEachField(data, fieldToTableRow, [], { sharedTree, pathPrefix: id });
+		newRow.children = data[forEachField](fieldToTableRow, [], { sharedTree, pathPrefix: id });
 		// Do not allow to create fields under a node having a primary field.
 		if (getPrimaryField(nodeType) === undefined) {
 			addNewDataLine(newRow.children, sharedTree, data, id);
@@ -292,21 +291,19 @@ function fieldToTableRow(
 	const isSequence = isSequenceField(field);
 	// skip root and primary field sequences, as they don't require to render field rows
 	if (isSequence && field.parent && getPrimaryField(field.parent[typeSymbol]) === undefined) {
-		const id = getRowId(field, pathPrefix);
-		const children = forEachNode(field, nodeToTableRow, [], { sharedTree, pathPrefix: id });
-		addNewDataLine(children, sharedTree, field, id);
-		const fieldTypes: TreeSchemaIdentifier[] = [];
-		if (field.fieldSchema.types) {
-			field.fieldSchema.types.forEach((type) => fieldTypes.push(type));
-		}
-		// note that "undefined types" means any types hence polymorphic
+		const fieldTypes: TreeSchemaIdentifier[] = [...(field.fieldSchema.types ?? [])];
+		// note that "undefined types" means any types hence also polymorphic
 		assert(fieldTypes.length === 1, "Polymorphic fields are not supported yet");
+		const typeid = `sequence<${fieldTypes[0]}>`;
+		const id = getRowId(field, pathPrefix);
+		const children = field.forEachNode(nodeToTableRow, [], { sharedTree, pathPrefix: id });
+		addNewDataLine(children, sharedTree, field, id);
 		const newRow: IEditableTreeRow = {
 			id,
 			name: stringifyKey(field.fieldKey),
 			context: "single",
 			isReference: false,
-			typeid: `sequence<${fieldTypes[0]}>`,
+			typeid,
 			parent: field.parent,
 			data: field,
 			sharedTree,
@@ -314,7 +311,7 @@ function fieldToTableRow(
 		};
 		rows.push(newRow);
 	} else {
-		forEachNode(field, nodeToTableRow, rows, options);
+		field.forEachNode(nodeToTableRow, rows, options);
 		if (isEmptyRoot(field) || isSequence) {
 			addNewDataLine(rows, sharedTree, field, pathPrefix);
 		}
