@@ -5,7 +5,6 @@
 
 import { fail, strict as assert } from "assert";
 import {
-	ChangeEncoder,
 	ChangeFamily,
 	ChangeRebaser,
 	TaggedChange,
@@ -15,7 +14,8 @@ import {
 	FieldKey,
 	emptyDelta,
 } from "../core";
-import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util";
+import { makeValueCodec, makeCodecFamily } from "../codec";
+import { RecursiveReadonly, brand } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -196,17 +196,7 @@ export interface AnchorRebaseData {
 }
 
 const emptyChange: TestChange = { intentions: [] };
-
-export class TestChangeEncoder extends ChangeEncoder<TestChange> {
-	public encodeForJson(formatVersion: number, change: TestChange): JsonCompatible {
-		return change as unknown as JsonCompatible;
-	}
-	public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TestChange {
-		return change as unknown as TestChange;
-	}
-}
-
-const encoder = new TestChangeEncoder();
+const codec = makeValueCodec<TestChange>();
 
 export const TestChange = {
 	emptyChange,
@@ -217,7 +207,7 @@ export const TestChange = {
 	rebaseAnchors,
 	checkChangeList,
 	toDelta,
-	encoder,
+	codec,
 };
 deepFreeze(TestChange);
 
@@ -272,7 +262,7 @@ const rootKey: FieldKey = brand("root");
 
 /**
  * This is a hack to encode arbitrary information (the intentions) into a Delta.
- * The resulting Delta does not represent a concrete change to a document tree.
+ * The resulting Delta does note represent a concrete change to a document tree.
  * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
  * `ChangeFamily.intoDelta` with the expected change.
  */
@@ -285,7 +275,7 @@ export function testChangeFamilyFactory(
 ): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
-		encoder: new TestChangeEncoder(),
+		codecs: makeCodecFamily<TestChange>([[0, TestChange.codec]]),
 		buildEditor: () => assert.fail("Unexpected call to buildEditor"),
 		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
 	};

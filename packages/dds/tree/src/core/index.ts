@@ -64,6 +64,7 @@ export {
 	setGenericTreeField,
 	rootFieldKeySymbol,
 	DeltaVisitor,
+	PathVisitor,
 	SparseNode,
 	getDescendant,
 	compareUpPaths,
@@ -133,7 +134,6 @@ export {
 } from "./schema-stored";
 
 export {
-	ChangeEncoder,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
