@@ -155,6 +155,7 @@ declare function get_current_ClassDeclaration_DeliLambda():
 declare function use_old_ClassDeclaration_DeliLambda(
     use: TypeOnly<old.DeliLambda>);
 use_old_ClassDeclaration_DeliLambda(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_DeliLambda());
 
 /*
@@ -275,6 +276,7 @@ declare function get_current_InterfaceDeclaration_ICheckpointParams():
 declare function use_old_InterfaceDeclaration_ICheckpointParams(
     use: TypeOnly<old.ICheckpointParams>);
 use_old_InterfaceDeclaration_ICheckpointParams(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICheckpointParams());
 
 /*
@@ -347,6 +349,7 @@ declare function get_current_InterfaceDeclaration_ILatestSummaryState():
 declare function use_old_InterfaceDeclaration_ILatestSummaryState(
     use: TypeOnly<old.ILatestSummaryState>);
 use_old_InterfaceDeclaration_ILatestSummaryState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILatestSummaryState());
 
 /*

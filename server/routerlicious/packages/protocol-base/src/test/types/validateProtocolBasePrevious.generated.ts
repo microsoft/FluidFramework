@@ -179,6 +179,7 @@ declare function get_current_ClassDeclaration_ProtocolOpHandler():
 declare function use_old_ClassDeclaration_ProtocolOpHandler(
     use: TypeOnly<old.ProtocolOpHandler>);
 use_old_ClassDeclaration_ProtocolOpHandler(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ProtocolOpHandler());
 
 /*

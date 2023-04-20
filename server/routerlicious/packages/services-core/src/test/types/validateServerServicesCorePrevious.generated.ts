@@ -683,6 +683,7 @@ declare function get_current_InterfaceDeclaration_IDeliState():
 declare function use_old_InterfaceDeclaration_IDeliState(
     use: TypeOnly<old.IDeliState>);
 use_old_InterfaceDeclaration_IDeliState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeliState());
 
 /*
@@ -1288,26 +1289,14 @@ use_old_InterfaceDeclaration_IPartition(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPartitionConfig": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IPartitionConfig": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IPartitionConfig():
-    TypeOnly<old.IPartitionConfig>;
-declare function use_current_InterfaceDeclaration_IPartitionConfig(
-    use: TypeOnly<current.IPartitionConfig>);
-use_current_InterfaceDeclaration_IPartitionConfig(
-    get_old_InterfaceDeclaration_IPartitionConfig());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPartitionConfig": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IPartitionConfig": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IPartitionConfig():
-    TypeOnly<current.IPartitionConfig>;
-declare function use_old_InterfaceDeclaration_IPartitionConfig(
-    use: TypeOnly<old.IPartitionConfig>);
-use_old_InterfaceDeclaration_IPartitionConfig(
-    get_current_InterfaceDeclaration_IPartitionConfig());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1355,6 +1344,7 @@ declare function get_current_InterfaceDeclaration_IPartitionLambdaConfig():
 declare function use_old_InterfaceDeclaration_IPartitionLambdaConfig(
     use: TypeOnly<old.IPartitionLambdaConfig>);
 use_old_InterfaceDeclaration_IPartitionLambdaConfig(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPartitionLambdaConfig());
 
 /*
@@ -1408,26 +1398,14 @@ use_old_InterfaceDeclaration_IPartitionLambdaPlugin(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPartitionWithEpoch": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IPartitionWithEpoch": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IPartitionWithEpoch():
-    TypeOnly<old.IPartitionWithEpoch>;
-declare function use_current_InterfaceDeclaration_IPartitionWithEpoch(
-    use: TypeOnly<current.IPartitionWithEpoch>);
-use_current_InterfaceDeclaration_IPartitionWithEpoch(
-    get_old_InterfaceDeclaration_IPartitionWithEpoch());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPartitionWithEpoch": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IPartitionWithEpoch": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IPartitionWithEpoch():
-    TypeOnly<current.IPartitionWithEpoch>;
-declare function use_old_InterfaceDeclaration_IPartitionWithEpoch(
-    use: TypeOnly<old.IPartitionWithEpoch>);
-use_old_InterfaceDeclaration_IPartitionWithEpoch(
-    get_current_InterfaceDeclaration_IPartitionWithEpoch());
 
 /*
 * Validate forward compat by using old type in place of current type

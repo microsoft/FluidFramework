@@ -54,6 +54,21 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IPartitionLambdaConfig": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPartitionConfig": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDeliState": {
+				"backCompat": false
+			}
+		}
 	}
 }
