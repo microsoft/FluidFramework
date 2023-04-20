@@ -170,6 +170,7 @@ export const nonDataStorePaths = [
 	".serviceProtocol",
 	blobsTreeName,
 	gcTreeKey,
+	idCompressorBlobName,
 ];
 
 export const dataStoreAttributesBlobName = ".component";

@@ -14,7 +14,7 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ContainerMessageType, ICompressionRuntimeOptions } from "../containerRuntime";
+import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager, estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
@@ -275,11 +275,6 @@ export class Outbox {
 		// Let the PendingStateManager know that a message was submitted.
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
-			if (message.deserializedContent.type === ContainerMessageType.IdAllocation) {
-				message.deserializedContent.contents.stashedState =
-					this.params.idCompressor?.serialize(true);
-			}
-
 			this.params.pendingStateManager.onSubmitMessage(
 				message.deserializedContent.type,
 				message.referenceSequenceNumber,

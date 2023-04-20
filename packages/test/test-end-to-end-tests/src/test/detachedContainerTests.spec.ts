@@ -912,8 +912,7 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const dataStore = response.value as ITestFluidObject;
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "/");
 		const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
 
 		// Generate an Id before attaching the container
@@ -924,10 +923,9 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 
 		// Create another container to test sync
 		const url: any = await container.getAbsoluteUrl("");
-		const loader2 = provider.makeTestLoader(testConfig) as Loader;
-		const container2 = await loader2.resolve({ url });
-		const response2 = await container2.request({ url: "/" });
-		const dataStore2 = response2.value as ITestFluidObject;
+		// const loader2 = provider.makeTestLoader(testConfig) as Loader;
+		const container2 = await provider.loadTestContainer(testConfig);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "/");
 		const testChannel2 = await dataStore2.getSharedObject<SharedCell>(sharedCellId);
 		// Generate an Id in the second attached container and send an op to send the Ids
 		(testChannel2 as any).runtime.idCompressor.generateCompressedId();

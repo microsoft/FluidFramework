@@ -750,12 +750,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 
 		await provider.ensureSynchronized();
 
-		const { summary } = await containerRuntime.summarize({
-			runGC: false,
-			fullTree: false,
-			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
-		});
+		const { summary } = await containerRuntime.summarize({ trackState: false });
 
 		assert(
 			summary.tree[".idCompressor"] !== undefined,
@@ -776,12 +771,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 		await provider.ensureSynchronized();
-		const { summary } = await containerRuntime.summarize({
-			runGC: false,
-			fullTree: false,
-			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
-		});
+		const { summary } = await containerRuntime.summarize({ trackState: false });
 
 		assert(
 			summary.tree[".idCompressor"] === undefined,
@@ -804,12 +794,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 		await provider.ensureSynchronized();
 
-		const { summary } = await containerRuntime.summarize({
-			runGC: false,
-			fullTree: false,
-			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
-		});
+		const { summary } = await containerRuntime.summarize({ trackState: false });
 
 		const compressorSummary = summary.tree[".idCompressor"];
 		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
@@ -839,12 +824,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 		await provider.ensureSynchronized();
 
-		const { summary } = await containerRuntime.summarize({
-			runGC: false,
-			fullTree: false,
-			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
-		});
+		const { summary } = await containerRuntime.summarize({ trackState: false });
 
 		const compressorSummary = summary.tree[".idCompressor"];
 		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
@@ -874,12 +854,7 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 		await provider.ensureSynchronized();
 
-		const { summary } = await containerRuntime.summarize({
-			runGC: false,
-			fullTree: false,
-			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
-		});
+		const { summary } = await containerRuntime.summarize({ trackState: false });
 
 		const compressorSummary = summary.tree[".idCompressor"];
 		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");

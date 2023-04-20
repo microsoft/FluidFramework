@@ -2898,6 +2898,34 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob);
 	}
 
+	private generateAndSubmitIdAllocationOp() {
+		let idAllocationBatchMessage: BatchMessage | undefined;
+		let idRange: IdCreationRange | undefined;
+		if (this.runtimeOptions.enableRuntimeIdCompressor === true) {
+			idRange = this.idCompressor?.takeNextCreationRange();
+			// Don't include the idRange if there weren't any Ids allocated
+			idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+		}
+
+		if (idRange !== undefined) {
+			const idAllocationMessage: ContainerRuntimeMessage = {
+				type: ContainerMessageType.IdAllocation,
+				contents: idRange,
+			};
+			idAllocationBatchMessage = {
+				contents: JSON.stringify(idAllocationMessage),
+				deserializedContent: idAllocationMessage,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				metadata: undefined,
+				localOpMetadata: this.idCompressor?.serialize(true),
+			};
+		}
+
+		if (idAllocationBatchMessage !== undefined) {
+			this.outbox.submit(idAllocationBatchMessage);
+		}
+	}
+
 	private submit(
 		type: ContainerMessageType,
 		contents: any,
@@ -2924,32 +2952,6 @@ export class ContainerRuntime
 			});
 		}
 
-		let idAllocationBatchMessage: BatchMessage | undefined;
-		if (type !== ContainerMessageType.IdAllocation) {
-			let idRange: IdCreationRange | undefined;
-			// Resubmitted ops will already have an idRange specified and taking the next creation range
-			// again will result in finalizations out of order
-			if (this.runtimeOptions.enableRuntimeIdCompressor === true) {
-				idRange = this.idCompressor?.takeNextCreationRange();
-				// Don't include the idRange if there weren't any Ids allocated
-				idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
-			}
-
-			if (idRange !== undefined) {
-				const idAllocationMessage: ContainerRuntimeMessage = {
-					type: ContainerMessageType.IdAllocation,
-					contents: idRange,
-				};
-				idAllocationBatchMessage = {
-					contents: JSON.stringify(idAllocationMessage),
-					deserializedContent: idAllocationMessage,
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-					metadata: undefined,
-					localOpMetadata: undefined,
-				};
-			}
-		}
-
 		const message: BatchMessage = {
 			contents: serializedContent,
 			deserializedContent: JSON.parse(serializedContent), // Deep copy in case caller changes reference object
@@ -2959,6 +2961,14 @@ export class ContainerRuntime
 		};
 
 		try {
+			// Submit an IdAllocation op if any Ids have been generated since
+			// the last op was submitted. Don't submit another if it's an IdAllocation
+			// op as that means we're in resubmission flow and we don't want to send
+			// IdRanges out of order.
+			if (type !== ContainerMessageType.IdAllocation) {
+				this.generateAndSubmitIdAllocationOp();
+			}
+
 			// If this is attach message for new data store, and we are in a batch, send this op out of order
 			// Is it safe:
 			//    Yes, this should be safe reordering. Newly created data stores are not visible through API surface.
@@ -2984,18 +2994,8 @@ export class ContainerRuntime
 				type === ContainerMessageType.Attach &&
 				this.disableAttachReorder !== true
 			) {
-				// Generate an Id allocation op if compressed Ids have been generated
-				if (idAllocationBatchMessage !== undefined) {
-					this.outbox.submit(idAllocationBatchMessage);
-				}
-
 				this.outbox.submitAttach(message);
 			} else {
-				// Generate an Id allocation op if compressed Ids have been generated
-				if (idAllocationBatchMessage !== undefined) {
-					this.outbox.submit(idAllocationBatchMessage);
-				}
-
 				this.outbox.submit(message);
 			}
 

@@ -86,6 +86,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 	let containerRuntime: ContainerRuntime;
 	let container1: IContainer;
+	let container2: IContainer;
 	let mainDataStore: TestDataObject;
 
 	let sharedMapContainer1: SharedMap;
@@ -105,7 +106,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		sharedMapContainer1 = mainDataStore.map;
 		sharedCellContainer1 = mainDataStore.sharedCell;
 
-		const container2 = await provider.loadContainer(runtimeFactory);
+		container2 = await provider.loadContainer(runtimeFactory);
 		const container2MainDataStore = await requestFluidObject<TestDataObject>(container2, "/");
 		sharedMapContainer2 = container2MainDataStore.map;
 
@@ -119,7 +120,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	});
 
 	it("Ids generated when disconnected are correctly resubmitted", async () => {
-		// Disconnect first container
+		// Disconnect the first container
 		container1.disconnect();
 
 		// Generate a new Id in the disconnected container
@@ -130,14 +131,15 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		// Generate a new Id in a connected container
 		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
 		// Trigger Id submission
+		sharedMapContainer2.set("key2", "value2");
 
 		// Reconnect the first container
 		// IdRange should be resubmitted and reflected in all compressors
 		container1.connect();
-		const id3 = getIdCompressor(sharedMapContainer1).generateCompressedId();
-		sharedMapContainer1.set("key2", "value2");
-		sharedMapContainer2.set("key3", "value3");
 		await waitForContainerConnection(container1);
+		const id3 = getIdCompressor(sharedMapContainer1).generateCompressedId();
+		sharedMapContainer1.set("key3", "value3");
+
 		await provider.ensureSynchronized();
 
 		assert.strictEqual(
