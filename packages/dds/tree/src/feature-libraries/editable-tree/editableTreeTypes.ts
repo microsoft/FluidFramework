@@ -328,13 +328,7 @@ export interface EditableField
 	/**
 	 * Moves nodes from a source to destination.
 	 */
-	moveNodes(
-		sourceIndex: number,
-		count: number,
-		destPath: UpPath | undefined,
-		destField: FieldKey,
-		destIndex: number,
-	): void;
+	moveNodes(sourceIndex: number, count: number, destIndex: number): void;
 
 	/**
 	 * Sequentially deletes the nodes from this field.

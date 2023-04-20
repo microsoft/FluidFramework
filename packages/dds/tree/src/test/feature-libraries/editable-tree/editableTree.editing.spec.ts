@@ -36,7 +36,7 @@ import {
 	TypedSchema,
 	FieldKind,
 } from "../../../feature-libraries";
-import { ITestTreeProvider, TestTreeProvider } from "../../utils";
+import { ITestTreeProvider, TestTreeProvider, toJsonableTree } from "../../utils";
 import {
 	fullSchemaData,
 	Person,
@@ -387,7 +387,7 @@ describe("editable-tree: editing", () => {
 
 	for (const [fieldDescription, fieldKey] of testCases) {
 		describe(`can create, edit and delete ${fieldDescription}`, () => {
-			it("as sequence field", async () => {
+			it.only("as sequence field", async () => {
 				const [provider, trees] = await createSharedTrees(
 					getTestSchema(FieldKinds.sequence),
 					[{ type: rootSchemaName }],
@@ -401,7 +401,11 @@ describe("editable-tree: editing", () => {
 					singleTextCursor({ type: stringSchema.name, value: "bar" }),
 				]);
 				const field_0 = trees[0].root[fieldKey];
+
 				assert(isEditableField(field_0));
+				const treeView1 = toJsonableTree(trees[0]);
+				field_0.moveNodes(0, 1, 1);
+				const treeView2 = toJsonableTree(trees[0]);
 				assert.equal(field_0.length, 2);
 				assert.equal(field_0[0], "foo");
 				assert.equal(field_0[1], "bar");
