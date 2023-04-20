@@ -310,7 +310,7 @@ export class TestTreeProviderLite {
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
-	 * @param trees - the number of trees to initialize this provider with.
+	 * @param trees - the number of trees created by this provider.
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 *
 	 * @example
@@ -321,7 +321,8 @@ export class TestTreeProviderLite {
 	 * provider.processMessages();
 	 * ```
 	 */
-	public constructor(trees = 0, private readonly factory = new SharedTreeFactory()) {
+	public constructor(trees = 1, private readonly factory = new SharedTreeFactory()) {
+		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
 			const runtime = new MockFluidDataStoreRuntime();

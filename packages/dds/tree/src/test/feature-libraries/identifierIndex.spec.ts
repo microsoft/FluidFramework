@@ -68,7 +68,7 @@ describe("Node Identifier Index", () => {
 	}
 
 	it("can look up a node that was inserted", () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -85,7 +85,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("can look up a deep node that was inserted", () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -118,7 +118,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("can look up multiple nodes that were inserted at once", () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const ids = [makeId(), makeId(), makeId()];
 		initializeTestTree(
@@ -157,7 +157,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("can look up multiple nodes that were inserted over time", () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const idA = makeId();
 		initializeTestTree(
@@ -188,7 +188,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("forgets about nodes that are deleted", () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -206,7 +206,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("fails if multiple nodes have the same ID", () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		assert.throws(
@@ -238,7 +238,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("can look up a node that was loaded from summary", async () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -282,7 +282,7 @@ describe("Node Identifier Index", () => {
 			identifierSchema,
 		);
 
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -298,7 +298,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("skips nodes which have identifiers of the wrong type", () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -315,7 +315,7 @@ describe("Node Identifier Index", () => {
 
 	it("skips nodes which should have identifiers, but do not", () => {
 		// This is policy choice rather than correctness. It could also fail.
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -338,7 +338,7 @@ describe("Node Identifier Index", () => {
 			identifierSchema,
 		);
 
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		initializeTestTree(
 			tree,
@@ -370,7 +370,7 @@ describe("Node Identifier Index", () => {
 			identifierSchema,
 		);
 
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -387,7 +387,7 @@ describe("Node Identifier Index", () => {
 	});
 
 	it("is synchronized after each batch update", () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 
 		const id = makeId();
@@ -429,7 +429,7 @@ describe("Node Identifier Index", () => {
 			identifierSchema,
 		);
 
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
 		const id = makeId();
 		initializeTestTree(
@@ -451,7 +451,7 @@ describe("Node Identifier Index", () => {
 
 	function describeForkingTests(prefork: boolean): void {
 		function getTree(): ISharedTreeView {
-			const provider = new TestTreeProviderLite(1);
+			const provider = new TestTreeProviderLite();
 			const [tree] = provider.trees;
 			return prefork ? tree.fork() : tree;
 		}

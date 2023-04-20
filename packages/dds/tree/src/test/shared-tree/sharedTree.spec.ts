@@ -56,7 +56,7 @@ describe("SharedTree", () => {
 	it("reads only one node", () => {
 		// This is a regression test for a scenario in which a transaction would apply its delta twice,
 		// inserting two nodes instead of just one
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		runSynchronous(provider.trees[0], (t) => {
 			const writeCursor = singleTextCursor({ type: brand("LonelyNode") });
 			const field = t.editor.sequenceField(undefined, rootFieldKeySymbol);
@@ -556,7 +556,7 @@ describe("SharedTree", () => {
 		});
 
 		it("can make multiple moves in a transaction", () => {
-			const provider = new TestTreeProviderLite(1);
+			const provider = new TestTreeProviderLite();
 			const [tree] = provider.trees;
 
 			const initialState: JsonableTree = {
@@ -1104,7 +1104,7 @@ describe("SharedTree", () => {
 
 	describe("Anchors", () => {
 		it("Anchors can be created and dereferenced", () => {
-			const provider = new TestTreeProviderLite(1);
+			const provider = new TestTreeProviderLite();
 			const tree = provider.trees[0];
 
 			const initialState: JsonableTree = {
@@ -2053,12 +2053,12 @@ function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
  */
 function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 	it(`${title} (root view)`, () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		fn(provider.trees[0]);
 	});
 
 	it(`${title} (forked view)`, () => {
-		const provider = new TestTreeProviderLite(1);
+		const provider = new TestTreeProviderLite();
 		fn(provider.trees[0].fork());
 	});
 }

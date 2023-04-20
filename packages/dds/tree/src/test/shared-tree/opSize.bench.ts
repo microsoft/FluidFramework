@@ -444,7 +444,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				percentile: number,
 				testName: string,
 			) => {
-				const provider = new TestTreeProviderLite(1);
+				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				initializeTestTree(provider.trees[0]);
 				deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
@@ -484,7 +484,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 
 		describe("1b. With Single transaction", () => {
 			const benchmarkInsertNodesWithSingleTx = (percentile: number, testName: string) => {
-				const provider = new TestTreeProviderLite(1);
+				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				initializeTestTree(provider.trees[0]);
 				deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
@@ -529,7 +529,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				percentile: number,
 				testName: string,
 			) => {
-				const provider = new TestTreeProviderLite(1);
+				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				const childByteSize = getSuccessfulOpByteSize("DELETE", "INDIVIDUAL", percentile);
 				initializeTestTree(
@@ -565,7 +565,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 
 		describe("2b. With Single transaction", () => {
 			const benchmarkDeleteNodesWithSingleTx = (percentile: number, testName: string) => {
-				const provider = new TestTreeProviderLite(1);
+				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				const childByteSize = getSuccessfulOpByteSize("DELETE", "SINGLE", percentile);
 				initializeTestTree(
@@ -603,7 +603,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 	describe("3. Edit Nodes", () => {
 		describe("3a. With Individual transactions", () => {
 			const benchmarkEditNodesWithIndividualTxs = (percentile: number, testName: string) => {
-				const provider = new TestTreeProviderLite(1);
+				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				// Note that the child node byte size for the intial tree here should be arbitrary
 				initializeTestTree(
@@ -651,7 +651,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 
 		describe("3b. With Single transaction", () => {
 			const benchmarkEditNodesWithSingleTx = (percentile: number, testName: string) => {
-				const provider = new TestTreeProviderLite(1);
+				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 				// Note that the child node byte size for the intial tree here should be arbitrary
 				initializeTestTree(
@@ -707,7 +707,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				deleteNodeCount: number,
 				editNodeCount: number,
 			) => {
-				const provider = new TestTreeProviderLite(1);
+				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 
 				// delete
@@ -910,7 +910,7 @@ describe("SharedTree Op Size Benchmarks", () => {
 				deleteNodeCount: number,
 				editNodeCount: number,
 			) => {
-				const provider = new TestTreeProviderLite(1);
+				const provider = new TestTreeProviderLite();
 				initializeOpDataCollection(provider, testName);
 
 				// delete
