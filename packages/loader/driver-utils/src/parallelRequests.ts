@@ -418,6 +418,7 @@ async function getSingleOpBatch(
 	let telemetryEvent: PerformanceEvent | undefined;
 	let retry: number = 0;
 	const nothing = { partial: false, cancel: true, payload: [] };
+	let waitStartTime: number = 0;
 
 	while (signal?.aborted !== true) {
 		retry++;
@@ -494,7 +495,6 @@ async function getSingleOpBatch(
 			}
 		}
 
-		let waitStartTime = 0;
 		if (telemetryEvent === undefined) {
 			waitStartTime = performance.now();
 			telemetryEvent = PerformanceEvent.start(logger, {
