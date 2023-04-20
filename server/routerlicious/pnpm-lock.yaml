@@ -65,6 +65,7 @@ importers:
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/server-kafka-orderer-previous': npm:@fluidframework/server-kafka-orderer@0.1039.1000
       '@fluidframework/server-services-core': ^0.1041.1000
       '@types/node': ^16.18.16
       concurrently: ^7.6.0
@@ -80,6 +81,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.13.1_@types+node@16.18.16
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
+      '@fluidframework/server-kafka-orderer-previous': /@fluidframework/server-kafka-orderer/0.1039.1000
       '@types/node': 16.18.16
       concurrently: 7.6.0
       eslint: 8.27.0
@@ -1887,7 +1889,6 @@ packages:
 
   /@fluidframework/common-definitions/0.20.1:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
-    dev: false
 
   /@fluidframework/common-utils/1.1.1:
     resolution: {integrity: sha512-XCPEFE1JAg+juQZYQQVZjHZJlM5+Wm9NxRbsnsix05M1tSq0p3SLqwgfaSGssXhLLX5QtG+aF1QD5a3LA1qtNQ==}
@@ -1899,7 +1900,6 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       sha.js: 2.4.11
-    dev: false
 
   /@fluidframework/eslint-config-fluid/2.0.0_4rqwsplhh2ekz63wktwk7d7ht4:
     resolution: {integrity: sha512-/az5CybW5XUZUOk9HMH0nUMtKx5AK+CRfHg35UyygTK+V2OmNRes/yCAbmxoQ1J1Vn2iow3Y/Sgw/oJygciugQ==}
@@ -1931,11 +1931,76 @@ packages:
     resolution: {integrity: sha512-O1LAJQL6/TGXZPKHLE8Z8J8KlQ5wpODP+Pj/Q7KvNYWkIUOWepXyq873MobT2adN4hlUdwia4jqif9jaNcIQBA==}
     dev: true
 
+  /@fluidframework/protocol-base/0.1039.1000:
+    resolution: {integrity: sha512-ohQTfRUugH3oHV1TAU+6KXUmQLZTpWW0EMx6Aa2XJZrd5IGHrJuFTo2RNsfeKKRQmdswbUG1DqrA2O6eJnEtkA==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.1.0
+      events: 3.3.0
+      lodash: 4.17.21
+    dev: true
+
   /@fluidframework/protocol-definitions/1.1.0:
     resolution: {integrity: sha512-Q4YA6FBlB2cHicgvfs9z3LPKnfZMdx5JrmIEGOmxFmom/l9EV1F43sXl6K9/j5se8tQ9V9L8drFbDzqVf37roQ==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-    dev: false
+
+  /@fluidframework/server-kafka-orderer/0.1039.1000:
+    resolution: {integrity: sha512-PS70RKkZmLGK1jMU8egkxivpi8qtrKuEPOxFSiq8IspR6qzkBeNGcfs197Fa9JJ89g3Mc/lsEMmT1SABNQhadg==}
+    dependencies:
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/server-services-core': 0.1039.1000
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@fluidframework/server-services-client/0.1039.1000:
+    resolution: {integrity: sha512-wyDH6VdcV5px+sCSAQ/5No/w+T0Mg6M7XZ5bTl/IBN/v05yxFZME3vUCt/zkviZSMYj2MoCkYT3YvD4BHAdrkw==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-base': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.1.0
+      axios: 0.26.1_debug@4.3.4
+      crc-32: 1.2.0
+      debug: 4.3.4
+      json-stringify-safe: 5.0.1
+      jsrsasign: 10.6.1
+      jwt-decode: 3.1.2
+      querystring: 0.2.0
+      sillyname: 0.1.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@fluidframework/server-services-core/0.1039.1000:
+    resolution: {integrity: sha512-9aRoIWjLNMTP3XpcngD03aXUnwbSSaejbqqEdgeN7vzvng9sL0BJVZSNfpB01H+DUbVn83IrGVzCyhzrpbZPQg==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-telemetry': 0.1039.1000
+      '@types/nconf': 0.10.3
+      '@types/node': 16.18.16
+      debug: 4.3.4
+      events: 3.3.0
+      nconf: 0.12.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@fluidframework/server-services-telemetry/0.1039.1000:
+    resolution: {integrity: sha512-nK8/xRCazYH5lF0FzDNmcKAulTb1fPFVhRUh2ZVKtCmcT5e/eJ5yukCRrkC4bNK0wnYBbXAd3PqWvX7tttgL5Q==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      json-stringify-safe: 5.0.1
+      path-browserify: 1.0.1
+      serialize-error: 8.1.0
+      uuid: 8.3.2
+    dev: true
 
   /@gar/promisify/1.1.3:
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
@@ -4009,7 +4074,6 @@ packages:
 
   /@types/events/3.0.0:
     resolution: {integrity: sha512-EaObqwIvayI5a8dCzhFrjKzVwKLxjoG9T6Ppd5CEo07LRKfQ8Yokw54r5+Wq7FaBQ+yXRvQAYPrHwya1/UFt9g==}
-    dev: false
 
   /@types/expect/1.20.4:
     resolution: {integrity: sha512-Q5Vn3yjTDyCMV50TB6VRIbQNxSE4OmZR86VSbGaNpfUolm0iePBB4KdEEHmxoY5sT2+2DIvXW0rvMDP2nHZ4Mg==}
@@ -5390,7 +5454,6 @@ packages:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
-    dev: false
 
   /buffermaker/1.2.1:
     resolution: {integrity: sha512-IdnyU2jDHU65U63JuVQNTHiWjPRH0CS3aYd/WPaEwyX84rFdukhOduAVb1jwUScmb5X0JWPw8NZOrhoLMiyAHQ==}
@@ -6281,7 +6344,6 @@ packages:
     dependencies:
       exit-on-epipe: 1.0.1
       printj: 1.1.2
-    dev: false
 
   /cross-spawn/6.0.5:
     resolution: {integrity: sha512-eTVLrBSt7fjbDygz805pMnstIs2VTBNkRm0qxZd+M7A5XDdxVRWO5MxGBXZhjY4cqLYLdtrGqRf8mBPmzwSpWQ==}
@@ -7383,7 +7445,6 @@ packages:
   /exit-on-epipe/1.0.1:
     resolution: {integrity: sha512-h2z5mrROTxce56S+pnvAV890uu7ls7f1kEvVGJbw1OlFH3/mlJ5bkXu0KRyW94v37zzHPiUd55iLn3DA7TjWpw==}
     engines: {node: '>=0.8'}
-    dev: false
 
   /expand-template/2.0.3:
     resolution: {integrity: sha512-XYfuKMvj4O35f/pOXLObndIRvyQ+/+6AhODh+OKWj9S9498pHHn/IMszH+gt0fBCRWMNfk1ZSp5x3AifmnI2vg==}
@@ -9402,7 +9463,6 @@ packages:
 
   /jsrsasign/10.6.1:
     resolution: {integrity: sha512-emiQ05haY9CRj1Ho/LiuCqr/+8RgJuWdiHYNglIg2Qjfz0n+pnUq9I2QHplXuOMO2EnAW1oCGC1++aU5VoWSlw==}
-    dev: false
 
   /jssm-viz-cli/5.86.3:
     resolution: {integrity: sha512-DRXs6z9xSdsXBTRxgMmIArd8zREY/3gY6GVuuioY8XAqj4iB18p5TsXk5nruOpnoeG81Wguk6WWJFmeXffy/Cg==}
@@ -9483,7 +9543,6 @@ packages:
 
   /jwt-decode/3.1.2:
     resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
-    dev: false
 
   /kafka-node/5.0.0:
     resolution: {integrity: sha512-dD2ga5gLcQhsq1yNoQdy1MU4x4z7YnXM5bcG9SdQuiNr5KKuAmXixH1Mggwdah5o7EfholFbcNDPSVA6BIfaug==}
@@ -10448,7 +10507,6 @@ packages:
       ini: 2.0.0
       secure-keys: 1.0.0
       yargs: 16.2.0
-    dev: false
 
   /negotiator/0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
@@ -11858,7 +11916,6 @@ packages:
     resolution: {integrity: sha512-zA2SmoLaxZyArQTOPj5LXecR+RagfPSU5Kw1qP+jkWeNlrq+eJZyY2oS68SU1Z/7/myXM4lo9716laOFAVStCQ==}
     engines: {node: '>=0.8'}
     hasBin: true
-    dev: false
 
   /proc-log/1.0.0:
     resolution: {integrity: sha512-aCk8AO51s+4JyuYGg3Q/a6gnrlDO09NpVWePtjp7xwphcoQ04x5WAfCyugcsbLooWcMJ87CLkD4+604IckEdhg==}
@@ -12595,7 +12652,6 @@ packages:
 
   /secure-keys/1.0.0:
     resolution: {integrity: sha512-nZi59hW3Sl5P3+wOO89eHBAAGwmCPd2aE1+dLZV5MO+ItQctIvAqihzaAXIQhvtH4KJPxM080HsnqltR2y8cWg==}
-    dev: false
 
   /seek-bzip/1.0.6:
     resolution: {integrity: sha512-e1QtP3YL5tWww8uKaOCQ18UxIT2laNBXHjV/S2WYCiK4udiv8lkG89KRIoCjUagnAmCBurjF4zEVX2ByBbnCjQ==}
@@ -12663,7 +12719,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       type-fest: 0.20.2
-    dev: false
 
   /serialize-javascript/6.0.0:
     resolution: {integrity: sha512-Qr3TosvguFt8ePWqsvRfrKyQXIiW+nGbYpy8XK24NQHE83caxWt+mIymTT19DGFbNWNLfEwsrkSmN64lVWB9ag==}
@@ -12698,7 +12753,6 @@ packages:
     dependencies:
       inherits: 2.0.4
       safe-buffer: 5.2.1
-    dev: false
 
   /shallow-clone/3.0.1:
     resolution: {integrity: sha512-/6KqX+GVUdqPuPPd2LxDDxzX6CAbjJehAAOKlNpqqUpAqPM6HeL8f+o3a+JsyGjn2lv0WY8UsTgUJjU9Ok55NA==}
@@ -12775,7 +12829,6 @@ packages:
 
   /sillyname/0.1.0:
     resolution: {integrity: sha512-GWA0Zont13ov+cMNw4T7nU4SCyW8jdhD3vjA5+qs8jr+09sCPxOf+FPS5zE0c9pYlCwD+NU/CiMimY462lgG9g==}
-    dev: false
 
   /simple-concat/1.0.1:
     resolution: {integrity: sha512-cSFtAPtRhljv69IK0hTVZQ+OfE9nePi/rtJmw5UjHeVyVroEqJXP1sFztKUy1qU+xvz3u/sfYJLa947b7nAN2Q==}
