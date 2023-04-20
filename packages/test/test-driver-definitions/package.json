@@ -83,8 +83,12 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"TypeAliasDeclaration_DriverEndpoint": {"backCompat": false},
-			"TypeAliasDeclaration_RouterliciousEndpoint": {"backCompat": false}
+			"TypeAliasDeclaration_DriverEndpoint": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_RouterliciousEndpoint": {
+				"backCompat": false
+			}
 		}
 	}
 }
