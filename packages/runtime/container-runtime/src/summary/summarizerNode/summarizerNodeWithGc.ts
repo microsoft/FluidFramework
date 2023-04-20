@@ -536,8 +536,8 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 						JSON.stringify(newSerializedRoutes),
 						{
 							referenceSequenceNumber: value.referenceSequenceNumber,
-							basePath: value.basePath,
-							localPath: value.localPath,
+							basePath: child.latestSummary.basePath,
+							localPath: child.latestSummary.localPath,
 						},
 					);
 					child.addPendingSummary(key, newLatestSummaryNode);

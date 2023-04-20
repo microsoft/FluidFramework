@@ -24,6 +24,8 @@ import {
 	IRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc";
+// eslint-disable-next-line import/no-internal-modules
+import { SummaryNode } from "../summary/summarizerNode/summarizerNodeUtils";
 import { cloneGCData } from "../gc";
 
 describe("SummarizerNodeWithGC Tests", () => {
@@ -420,6 +422,9 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
+			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
+			const leafNodeLatestSummary = (leafNode as any).latestSummary as SummaryNode;
+			assert.strictEqual(leafNodeLatestSummary.fullPath.toString(), leafNodePath);
 		});
 
 		it("Should add GC pending summary node created after parent node was summarized with empty used routes", async () => {
@@ -463,6 +468,9 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 			assert(result.latestSummaryUpdated === true, "should update");
 			assert(result.wasSummaryTracked === true, "should be tracked");
+			const leafNodePath = `${ids[0]}/${ids[1]}/${ids[2]}`;
+			const leafNodeLatestSummary = (leafNode as any).latestSummary as SummaryNode;
+			assert.strictEqual(leafNodeLatestSummary.fullPath.toString(), leafNodePath);
 		});
 	});
 });
