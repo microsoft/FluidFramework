@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 import { getPackagesSync } from "@manypkg/get-packages";
-import { readFileSync } from "node:fs";
-import * as path from "node:path";
+import { readFileSync, readJsonSync } from "fs-extra";
+import * as path from "path";
 import YAML from "yaml";
 
 import { IFluidBuildConfig } from "./fluidRepo";
 import { Logger, defaultLogger } from "./logging";
 import { Package, PackageJson } from "./npmPackage";
-import { execWithErrorAsync, existsSync, readJsonSync, rimrafWithErrorAsync } from "./utils";
+import { execWithErrorAsync, existsSync, rimrafWithErrorAsync } from "./utils";
 
 export type PackageManager = "npm" | "pnpm" | "yarn";
 
@@ -23,6 +23,8 @@ export enum MonoRepoKind {
 	Server = "server",
 	Azure = "azure",
 	BuildTools = "build-tools",
+	GitRest = "gitrest",
+	Historian = "historian",
 }
 
 /**
@@ -150,8 +152,8 @@ export class MonoRepo {
 		}
 
 		if (rootDir !== this.repoPath) {
-      // This is a sanity check. this.repoPath is the path passed in when creating the MonoRepo object, while rootDir is
-      // the dir that manypkg found. They should be the same.
+			// This is a sanity check. this.repoPath is the path passed in when creating the MonoRepo object, while rootDir is
+			// the dir that manypkg found. They should be the same.
 			throw new Error(`rootDir ${rootDir} does not match repoPath ${this.repoPath}`);
 		}
 

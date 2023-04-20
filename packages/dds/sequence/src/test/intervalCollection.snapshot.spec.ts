@@ -113,6 +113,20 @@ describe("IntervalCollection snapshotting", () => {
 		/* eslint-enable no-bitwise */
 	});
 
+	it("supports detached intervals", async () => {
+		const sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);
+		sharedString.removeRange(0, sharedString.getLength());
+		containerRuntimeFactory.processAllMessages();
+		const { summary: detachedSummary } = await sharedString.summarize();
+		const stringLoadedWithDetachedInterval = await loadSharedString(
+			containerRuntimeFactory,
+			"2",
+			detachedSummary,
+		);
+		const collection = stringLoadedWithDetachedInterval.getIntervalCollection("test");
+		assertIntervals(stringLoadedWithDetachedInterval, collection, [{ start: -1, end: -1 }]);
+	});
+
 	describe("enables operations on reload", () => {
 		let sharedString: SharedString;
 		let sharedString2: SharedString;

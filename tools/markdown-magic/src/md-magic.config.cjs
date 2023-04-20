@@ -100,6 +100,19 @@ const generateTrademarkSection = (includeHeading) => {
 };
 
 /**
+ * Generats a simple Markdown heading and contents with guidelines for taking dependencies on Fluid libraries.
+ *
+ * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
+ */
+const generateDependencyGuidelines = (includeHeading) => {
+	const sectionBody = readTemplate("Dependency-Guidelines-Template.md");
+	return formattedSectionText(
+		sectionBody,
+		includeHeading ? "Using Fluid Framework libraries" : undefined,
+	);
+};
+
+/**
  * Generates a Markdown heading and contents with a section pointing developers to our contribution guidelines.
  *
  * @param {boolean} includeHeading - Whether or not to include the heading in the generated contents.
@@ -224,7 +237,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	const sections = [];
+	const sections = [generateDependencyGuidelines(true)];
 	if (options.installation !== "FALSE") {
 		sections.push(generateInstallationSection(packageName, options.devDependency, true));
 	}
@@ -403,6 +416,21 @@ function readmeContributionGuidelinesSectionTransform(content, options, config) 
 }
 
 /**
+ * Generates a README section with fluid-framework dependency guidelines.
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {"TRUE" | "FALSE" | undefined} options.includeHeading - (optional) Whether or not to include a Markdown heading with the generated section contents.
+ * Default: `TRUE`.
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmeDependencyGuidelinesSectionTransform(content, options, config) {
+	const includeHeading = options.includeHeading !== "FALSE";
+	return formattedGeneratedContentBody(generateDependencyGuidelines(includeHeading));
+}
+
+/**
  * Generates a README "help" section.
  *
  * @param {object} content - The original document file contents.
@@ -515,6 +543,18 @@ module.exports = {
 		 * ```
 		 */
 		README_CONTRIBUTION_GUIDELINES_SECTION: readmeContributionGuidelinesSectionTransform,
+
+		/**
+		 * See {@link readmeContributionGuidelinesSectionTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_DEPENDENCY_GUIDELINES_SECTION: readmeDependencyGuidelinesSectionTransform,
 
 		/**
 		 * See {@link readmeHelpSectionTransform}.
