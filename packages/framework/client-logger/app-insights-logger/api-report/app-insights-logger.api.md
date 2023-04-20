@@ -8,12 +8,11 @@ import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 
-// @public (undocumented)
+// @public
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
-    	constructor(client: ApplicationInsights);
-    	// (undocumented)
+    constructor(client: ApplicationInsights);
     protected readonly baseLoggingClient: ApplicationInsights;
-    	send(event: ITelemetryBaseEvent): void;
+    send(event: ITelemetryBaseEvent): void;
 }
 
 ```

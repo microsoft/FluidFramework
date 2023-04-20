@@ -972,6 +972,7 @@ importers:
       tinylicious: 0.7.2
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
+      tslib: ^1.10.0
       typescript: ~4.5.5
       webpack: ^5.76.2
       webpack-cli: ^4.9.2
@@ -988,11 +989,13 @@ importers:
       '@fluidframework/counter': link:../../../packages/dds/counter
       '@fluidframework/datastore': link:../../../packages/runtime/datastore
       '@fluidframework/driver-definitions': link:../../../packages/common/driver-definitions
+      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/map': link:../../../packages/dds/map
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
-      '@microsoft/applicationinsights-web': 2.8.12
+      '@fluidframework/tinylicious-client': link:../../../packages/framework/tinylicious-client
+      '@microsoft/applicationinsights-web': 2.8.12_tslib@1.14.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     devDependencies:
@@ -1001,9 +1004,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.13.1_webpack-cli@4.10.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/fluid-static': link:../../../packages/framework/fluid-static
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@fluidframework/tinylicious-client': link:../../../packages/framework/tinylicious-client
       '@testing-library/dom': 8.19.1
       '@testing-library/jest-dom': 5.16.5
       '@testing-library/react': 12.1.5_sfoxds7t5ydpegc3knd667wn6m
@@ -1029,6 +1030,7 @@ importers:
       tinylicious: 0.7.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
+      tslib: 1.14.1
       typescript: 4.5.5
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_7grl5awahfdjaulopckzaywq64
@@ -7793,12 +7795,11 @@ importers:
   packages/framework/client-logger/app-insights-logger:
     specifiers:
       '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@microsoft/api-extractor': ^7.34.4
       '@microsoft/applicationinsights-web': ^2.8.11
-      '@testing-library/dom': ^8.2.0
-      '@testing-library/jest-dom': ^5.16.5
-      '@types/jest': 22.2.3
-      '@types/testing-library__jest-dom': ^5.14.5
+      '@types/mocha': ^9.1.1
+      '@types/sinon': ^7.0.13
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -7806,12 +7807,11 @@ importers:
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
-      jest: ^26.6.3
-      jest-junit: ^10.0.0
+      mocha: ^10.2.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
+      sinon: ^7.4.2
       tinylicious: 0.7.2
-      ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       tslib: ^1.10.0
       typescript: ~4.5.5
@@ -7820,24 +7820,22 @@ importers:
       '@fluidframework/common-definitions': 0.20.1
       '@microsoft/applicationinsights-web': 2.8.12_tslib@1.14.1
     devDependencies:
+      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.4
-      '@testing-library/dom': 8.19.1
-      '@testing-library/jest-dom': 5.16.5
-      '@types/jest': 22.2.3
-      '@types/testing-library__jest-dom': 5.14.5
+      '@types/mocha': 9.1.1
+      '@types/sinon': 7.5.2
       concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
-      eslint-plugin-jest: 27.1.7_e7w73bdyuoy63spbnf7wdyrtai
+      eslint-plugin-jest: 27.1.7_kufnqfq7tb5rpdawkdb6g5smma
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
-      jest: 26.6.3
-      jest-junit: 10.0.0
+      mocha: 10.2.0
       prettier: 2.6.2
       rimraf: 4.4.0
+      sinon: 7.5.0
       tinylicious: 0.7.2
-      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       tslib: 1.14.1
       typescript: 4.5.5
@@ -19560,17 +19558,6 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/applicationinsights-analytics-js/2.8.12:
-    resolution: {integrity: sha512-Gz6j3dCCiuSq8ks0ci2uXRZidxn8v28sGQ6xF/vpNv8/gjpV0k3vcFxzlMGEoEjVls6BkH8vYiu80JAwRb1Q4A==}
-    peerDependencies:
-      tslib: '*'
-    dependencies:
-      '@microsoft/applicationinsights-common': 2.8.12
-      '@microsoft/applicationinsights-core-js': 2.8.12
-      '@microsoft/applicationinsights-shims': 2.0.2
-      '@microsoft/dynamicproto-js': 1.1.9
-    dev: false
-
   /@microsoft/applicationinsights-analytics-js/2.8.12_tslib@1.14.1:
     resolution: {integrity: sha512-Gz6j3dCCiuSq8ks0ci2uXRZidxn8v28sGQ6xF/vpNv8/gjpV0k3vcFxzlMGEoEjVls6BkH8vYiu80JAwRb1Q4A==}
     peerDependencies:
@@ -19581,17 +19568,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
-
-  /@microsoft/applicationinsights-channel-js/2.8.12:
-    resolution: {integrity: sha512-tBJnZ/eK/W3gVVgfS0kPDheiaZQeOJeZD2pOlSwnQeynmymbfVMqGwrTDBC8fsZCqwsfdgGoToLOwup8JyEgvQ==}
-    peerDependencies:
-      tslib: '*'
-    dependencies:
-      '@microsoft/applicationinsights-common': 2.8.12
-      '@microsoft/applicationinsights-core-js': 2.8.12
-      '@microsoft/applicationinsights-shims': 2.0.2
-      '@microsoft/dynamicproto-js': 1.1.9
     dev: false
 
   /@microsoft/applicationinsights-channel-js/2.8.12_tslib@1.14.1:
@@ -19606,16 +19582,6 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@microsoft/applicationinsights-common/2.8.12:
-    resolution: {integrity: sha512-7mxXaR6nHb23NG0xzf56ab5dqCDcG/gAM8MC9e0eCudE8EZ95nHwi1Mmnko6GCE6pzn4WjeHheId3YBETzYT7w==}
-    peerDependencies:
-      tslib: '*'
-    dependencies:
-      '@microsoft/applicationinsights-core-js': 2.8.12
-      '@microsoft/applicationinsights-shims': 2.0.2
-      '@microsoft/dynamicproto-js': 1.1.9
-    dev: false
-
   /@microsoft/applicationinsights-common/2.8.12_tslib@1.14.1:
     resolution: {integrity: sha512-7mxXaR6nHb23NG0xzf56ab5dqCDcG/gAM8MC9e0eCudE8EZ95nHwi1Mmnko6GCE6pzn4WjeHheId3YBETzYT7w==}
     peerDependencies:
@@ -19625,15 +19591,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
-
-  /@microsoft/applicationinsights-core-js/2.8.12:
-    resolution: {integrity: sha512-lA4epwWPBJ4awx07QQVCkoxygsl0qiTNoSYaR63hRE56ybu4kpp3tpYo/AfOI1DZMgKB8H0EwDz4vVmzUT3p/A==}
-    peerDependencies:
-      tslib: '*'
-    dependencies:
-      '@microsoft/applicationinsights-shims': 2.0.2
-      '@microsoft/dynamicproto-js': 1.1.9
     dev: false
 
   /@microsoft/applicationinsights-core-js/2.8.12_tslib@1.14.1:
@@ -19646,17 +19603,6 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@microsoft/applicationinsights-dependencies-js/2.8.12:
-    resolution: {integrity: sha512-o+i7idIiE/Ew9GRHdonX7fcTs85TPhbIrcOhMn+gxAlwH7ttUPK0XNk4wrMwIy3t9k4jo0slEA7uxBZkTpN8cQ==}
-    peerDependencies:
-      tslib: '*'
-    dependencies:
-      '@microsoft/applicationinsights-common': 2.8.12
-      '@microsoft/applicationinsights-core-js': 2.8.12
-      '@microsoft/applicationinsights-shims': 2.0.2
-      '@microsoft/dynamicproto-js': 1.1.9
-    dev: false
-
   /@microsoft/applicationinsights-dependencies-js/2.8.12_tslib@1.14.1:
     resolution: {integrity: sha512-o+i7idIiE/Ew9GRHdonX7fcTs85TPhbIrcOhMn+gxAlwH7ttUPK0XNk4wrMwIy3t9k4jo0slEA7uxBZkTpN8cQ==}
     peerDependencies:
@@ -19667,17 +19613,6 @@ packages:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.9
       tslib: 1.14.1
-    dev: false
-
-  /@microsoft/applicationinsights-properties-js/2.8.12:
-    resolution: {integrity: sha512-1U5vgWOfQi3NxfknG3eTTI7sqUQrIG0q1jlweKRToPzQi/jEJbUXc4rENmGZG5+UMwdSYcotlefkTnhXHgF+5g==}
-    peerDependencies:
-      tslib: '*'
-    dependencies:
-      '@microsoft/applicationinsights-common': 2.8.12
-      '@microsoft/applicationinsights-core-js': 2.8.12
-      '@microsoft/applicationinsights-shims': 2.0.2
-      '@microsoft/dynamicproto-js': 1.1.9
     dev: false
 
   /@microsoft/applicationinsights-properties-js/2.8.12_tslib@1.14.1:
@@ -19698,21 +19633,6 @@ packages:
 
   /@microsoft/applicationinsights-web-snippet/1.0.1:
     resolution: {integrity: sha512-2IHAOaLauc8qaAitvWS+U931T+ze+7MNWrDHY47IENP5y2UA0vqJDu67kWZDdpCN1fFC77sfgfB+HV7SrKshnQ==}
-    dev: false
-
-  /@microsoft/applicationinsights-web/2.8.12:
-    resolution: {integrity: sha512-f2wWxNV/JG+qiK6GAeKrKmO9a7TLI6vdQZXuG/escU9sFtP0Lhsz0dFOF7kmkTc4Uv7zuv46DCA6MO6P0XSz9g==}
-    peerDependencies:
-      tslib: '*'
-    dependencies:
-      '@microsoft/applicationinsights-analytics-js': 2.8.12
-      '@microsoft/applicationinsights-channel-js': 2.8.12
-      '@microsoft/applicationinsights-common': 2.8.12
-      '@microsoft/applicationinsights-core-js': 2.8.12
-      '@microsoft/applicationinsights-dependencies-js': 2.8.12
-      '@microsoft/applicationinsights-properties-js': 2.8.12
-      '@microsoft/applicationinsights-shims': 2.0.2
-      '@microsoft/dynamicproto-js': 1.1.9
     dev: false
 
   /@microsoft/applicationinsights-web/2.8.12_tslib@1.14.1:
@@ -29281,6 +29201,26 @@ packages:
       '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
       eslint: 8.6.0
       jest: 26.6.3
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+    dev: true
+
+  /eslint-plugin-jest/27.1.7_kufnqfq7tb5rpdawkdb6g5smma:
+    resolution: {integrity: sha512-0QVzf+og4YI1Qr3UoprkqqhezAZjFffdi62b0IurkCXMqPtRW84/UT4CKsYT80h/D82LA9avjO/80Ou1LdgbaQ==}
+    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
+    peerDependencies:
+      '@typescript-eslint/eslint-plugin': ^5.0.0
+      eslint: ^7.0.0 || ^8.0.0
+      jest: '*'
+    peerDependenciesMeta:
+      '@typescript-eslint/eslint-plugin':
+        optional: true
+      jest:
+        optional: true
+    dependencies:
+      '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
+      eslint: 8.6.0
     transitivePeerDependencies:
       - supports-color
       - typescript

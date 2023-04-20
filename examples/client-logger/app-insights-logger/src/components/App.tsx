@@ -183,7 +183,9 @@ function TextView(props: TextViewProps): React.ReactElement {
 	return sharedText === undefined ? (
 		<h4> Loading...</h4>
 	) : (
-		<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+		<div data-testid="collaborative-text-area-widget">
+			<CollaborativeTextArea sharedStringHelper={new SharedStringHelper(sharedText)} />
+		</div>
 	);
 }
 
@@ -240,7 +242,10 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 	}, [counter, setCounterValue]);
 
 	return (
-		<div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
+		<div
+			data-testid="shared-counter-widget"
+			style={{ display: "flex", flexDirection: "row", gap: "10px" }}
+		>
 			<button
 				onClick={() => counter.increment(1)}
 				disabled={counterValue === 0}

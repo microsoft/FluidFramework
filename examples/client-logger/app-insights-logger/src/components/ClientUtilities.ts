@@ -42,8 +42,8 @@ function initializeTinyliciousClient(): TinyliciousClient {
 	const appInsightsClient = new ApplicationInsights({
 		config: {
 			connectionString:
-				// Edit this with your app insights instance connection string
-				"",
+				// Edit this with your app insights instance connection string (this is an example string)
+				"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 		},
 	});
 
