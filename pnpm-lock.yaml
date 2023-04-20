@@ -4370,7 +4370,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
@@ -4636,7 +4636,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-drivers': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
@@ -5523,7 +5523,7 @@ importers:
 
   packages/common/core-utils:
     specifiers:
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
@@ -5801,7 +5801,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
@@ -5879,7 +5879,7 @@ importers:
   packages/dds/matrix:
     specifiers:
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
@@ -5973,7 +5973,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-pairwise-generator': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
@@ -6255,7 +6255,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
@@ -6622,7 +6622,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-drivers': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
@@ -9500,7 +9500,7 @@ importers:
 
   packages/test/stochastic-test-utils:
     specifiers:
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -9715,7 +9715,7 @@ importers:
       '@fluid-internal/test-loader-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-pairwise-generator': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-version-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/agent-scheduler': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
