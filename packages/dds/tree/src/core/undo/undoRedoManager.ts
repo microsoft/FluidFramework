@@ -34,22 +34,24 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 */
 	public trackCommit(
 		commit: GraphCommit<TChange>,
-		isUndoRedoCommit?: UndoRedoManagerCommitType,
+		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
 	): void {
-		if (isUndoRedoCommit === UndoRedoManagerCommitType.Undo) {
-			// TODO check if this is the correct commit?
-			this.headUndoableCommit = this.headUndoableCommit?.parent;
-			return;
+		switch (undoRedoManagerCommitType) {
+			case UndoRedoManagerCommitType.Undo:
+				// TODO check if this is the correct commit?
+				this.headUndoableCommit = this.headUndoableCommit?.parent;
+				return;
+			default: {
+				const parent = this.headUndoableCommit;
+				const repairData = this.repairDataStoreProvider.createRepairData();
+				repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
+				this.headUndoableCommit = {
+					commit,
+					parent,
+					repairData,
+				};
+			}
 		}
-
-		const parent = this.headUndoableCommit;
-		const repairData = this.repairDataStoreProvider.createRepairData();
-		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
-		this.headUndoableCommit = {
-			commit,
-			parent,
-			repairData,
-		};
 	}
 
 	/**
@@ -102,9 +104,10 @@ export interface UndoableCommit<TChange> {
 }
 
 /**
- * The type of a commit that was generated using the undo/redo manager.
+ * The type of a commit in the context of undo/redo manager.
  */
 export enum UndoRedoManagerCommitType {
+	Undoable,
 	Undo,
 	Redo,
 }

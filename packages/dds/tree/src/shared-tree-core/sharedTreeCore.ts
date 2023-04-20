@@ -236,13 +236,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	protected applyChange(
 		change: TChange,
 		revision?: RevisionTag,
-		isUndoRedoCommit?: UndoRedoManagerCommitType,
-		skipUndoRedoManagerTracking = false,
+		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
+		skipUndoRedoManagerTracking?: boolean,
 	): GraphCommit<TChange> {
 		const [commit, delta] = this.addLocalChange(
 			change,
 			revision ?? mintRevisionTag(),
-			isUndoRedoCommit,
+			undoRedoManagerCommitType,
 			skipUndoRedoManagerTracking,
 			false,
 		);
@@ -250,7 +250,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// submitCommit should not be called for stashed ops so this is kept separate from
 		// addLocalChange
 		if (!this.isTransacting()) {
-			this.submitCommit(commit, isUndoRedoCommit, skipUndoRedoManagerTracking);
+			this.submitCommit(commit, undoRedoManagerCommitType, skipUndoRedoManagerTracking);
 		}
 
 		this.emitLocalChange(change, delta);
@@ -266,7 +266,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private addLocalChange(
 		change: TChange,
 		revision: RevisionTag,
-		isUndoRedoCommit?: UndoRedoManagerCommitType,
+		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
 		skipUndoRedoManagerTracking = false,
 		shouldEmitChange = true,
 	): [Commit<TChange>, Delta.Root] {
@@ -282,7 +282,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			// If this change should be emitted, track the commit in the undo redo manager
 			// before the local change is applied
 			if (!this.isTransacting() && !skipUndoRedoManagerTracking) {
-				this.undoRedoManager.trackCommit(commit, isUndoRedoCommit);
+				this.undoRedoManager.trackCommit(commit, undoRedoManagerCommitType);
 			}
 			this.emitLocalChange(change, delta);
 		}
@@ -414,11 +414,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit: { change, revision },
 			isUndoable,
 		} of markedCommits) {
-			// Skip the UndoRedoManager tracking done within `submitCommit` and do it manually for undoable commits instead
-			const commit = this.applyChange(change, revision, undefined, true);
-			if (isUndoable) {
-				this.undoRedoManager.trackCommit(commit);
-			}
+			// Only track commits that are undoable.
+			const commitType = isUndoable ? UndoRedoManagerCommitType.Undoable : undefined;
+			this.applyChange(change, revision, commitType, !isUndoable);
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		}
 	}
