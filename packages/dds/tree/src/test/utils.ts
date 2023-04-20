@@ -59,6 +59,10 @@ import {
 	compareUpPaths,
 	UpPath,
 	clonePath,
+	RepairDataStore,
+	ITreeCursorSynchronous,
+	FieldKey,
+	IRepairDataStoreProvider,
 } from "../core";
 import { brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
@@ -537,6 +541,48 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 		// Make a nice error message:
 		assert.deepEqual(clonePath(path), clonePath(expectedPath));
 		assert.fail("unequal paths, but clones compared equal");
+	}
+}
+
+export class MockRepairDataStore implements RepairDataStore {
+	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
+
+	public capture(change: Delta.Root, revision: RevisionTag): void {
+		const existing = this.capturedData.get(revision);
+
+		if (existing === undefined) {
+			this.capturedData.set(revision, [revision]);
+		} else {
+			existing.push(revision);
+		}
+	}
+
+	public getNodes(
+		revision: RevisionTag,
+		path: UpPath | undefined,
+		key: FieldKey,
+		index: number,
+		count: number,
+	): ITreeCursorSynchronous[] {
+		throw new Error("Method not implemented.");
+	}
+
+	public getValue(revision: RevisionTag, path: UpPath): Value {
+		throw new Error("Method not implemented.");
+	}
+}
+
+export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
+	public freeze(): void {
+		// Noop
+	}
+
+	public createRepairData(): MockRepairDataStore {
+		return new MockRepairDataStore();
+	}
+
+	public clone(): IRepairDataStoreProvider {
+		return new MockRepairDataStoreProvider();
 	}
 }
 

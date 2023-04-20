@@ -592,6 +592,139 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Undo", () => {
+		it("does nothing if there are no commits in the undo stack", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, value);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(getTestValue(tree2), value);
+
+			// Undo node insertion
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(getTestValue(tree1), undefined);
+			assert.equal(getTestValue(tree2), undefined);
+
+			// Undo again
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(getTestValue(tree1), undefined);
+			assert.equal(getTestValue(tree2), undefined);
+		});
+
+		it("does not undo edits made remotely", async () => {
+			const value = "42";
+			const value2 = "43";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, value);
+			// Make a remote edit
+			setTestValue(tree2, value2);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			const readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			assert.ok(readCursor.firstNode());
+			assert.equal(readCursor.value, value);
+			assert.ok(readCursor.nextNode());
+			assert.equal(readCursor.value, value2);
+			readCursor.free();
+
+			// Undo
+			tree1.undo();
+			// Call undo to ensure it doesn't undo the change from tree2
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			const validationCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, validationCursor);
+			assert.ok(validationCursor.firstNode());
+			assert.equal(validationCursor.value, value2);
+			assert.equal(validationCursor.nextNode(), false);
+			validationCursor.free();
+			assert.equal(getTestValue(tree2), value2);
+		});
+
+		it("the insert of a node in a sequence field", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, value);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(getTestValue(tree2), value);
+
+			// Undo node insertion
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(getTestValue(tree1), undefined);
+			assert.equal(getTestValue(tree2), undefined);
+		});
+
+		// TODO: unskip once I fix the undo commit graph after rebasing
+		it.skip("can be rebased", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, "D");
+			setTestValue(tree1, "C");
+			setTestValue(tree1, "B");
+			setTestValue(tree1, "A");
+			await provider.ensureSynchronized();
+
+			const expectedState: JsonableTree[] = [
+				{
+					type: brand("TestValue"),
+					value: "A",
+				},
+				{
+					type: brand("TestValue"),
+					value: "B",
+				},
+				{
+					type: brand("TestValue"),
+					value: "C",
+				},
+				{
+					type: brand("TestValue"),
+					value: "D",
+				},
+			];
+
+			// Validate insertion
+			validateTree(tree2, expectedState);
+
+			// Insert nodes on both trees
+			insert(tree1, 1, "x");
+			insert(tree2, 3, "y");
+
+			// Undo node insertion on both trees
+			tree1.undo();
+			tree2.undo();
+			// The undo should be rebased to do nothing and this should not throw
+			await provider.ensureSynchronized();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+	});
+
 	describe("Events", () => {
 		it("triggers events for local and subtree changes", () => {
 			const view = testTreeView();
