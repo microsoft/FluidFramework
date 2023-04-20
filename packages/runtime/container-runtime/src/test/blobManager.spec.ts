@@ -408,7 +408,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(runtime.closed, true);
 		await runtime.processAll();
 	});
-	
+
 	it("close container if expired while connect", async () => {
 		await runtime.attach();
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
