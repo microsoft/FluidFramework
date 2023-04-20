@@ -39,6 +39,8 @@ import {
 	GraphCommit,
 	ITreeCursorSynchronous,
 	RepairDataStore,
+	RevisionTag,
+	UndoRedoManagerCommitType,
 	rootFieldKeySymbol,
 } from "../../core";
 import {
@@ -50,12 +52,22 @@ import {
 } from "../../feature-libraries";
 import { TransactionResult, brand } from "../../util";
 import { ISubscribable } from "../../events";
-import { StableId } from "../../id-compressor";
+import { MockRepairDataStoreProvider } from "../utils";
 
 /** A `SharedTreeCore` with protected methods exposed but no additional behavior */
 class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
-	public override applyChange(change: ModularChangeset, revision?: StableId | undefined): void {
-		return super.applyChange(change, revision);
+	public override applyChange(
+		change: DefaultChangeset,
+		revision?: RevisionTag,
+		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
+		skipUndoRedoManagerTracking?: boolean,
+	): GraphCommit<DefaultChangeset> {
+		return super.applyChange(
+			change,
+			revision,
+			undoRedoManagerCommitType,
+			skipUndoRedoManagerTracking,
+		);
 	}
 
 	public override startTransaction(
@@ -77,7 +89,7 @@ class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChang
 	}
 
 	public override createBranch(): SharedTreeBranch<DefaultEditBuilder, ModularChangeset> {
-		return super.createBranch();
+		return super.createBranch(new MockRepairDataStoreProvider());
 	}
 
 	public override mergeBranch(
@@ -106,6 +118,7 @@ describe("SharedTreeCore", () => {
 					[],
 					defaultChangeFamily,
 					new AnchorSet(),
+					new MockRepairDataStoreProvider(),
 					"ChangeEventSharedTree",
 					runtime,
 					attributes,
@@ -370,6 +383,7 @@ describe("SharedTreeCore", () => {
 			indexes,
 			defaultChangeFamily,
 			new AnchorSet(),
+			new MockRepairDataStoreProvider(),
 			id,
 			runtime,
 			attributes,

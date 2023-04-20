@@ -11,6 +11,7 @@ import {
 	GraphCommit,
 	Rebaser,
 	RevisionTag,
+	UndoRedoManager,
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
@@ -23,6 +24,7 @@ import {
 	singleTextCursor,
 } from "../../feature-libraries";
 import { brand } from "../../util";
+import { MockRepairDataStoreProvider } from "../utils";
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
@@ -410,6 +412,7 @@ describe("Branches", () => {
 			"testSession",
 			new Rebaser(changeFamily.rebaser),
 			changeFamily,
+			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily),
 			new AnchorSet(),
 		);
 

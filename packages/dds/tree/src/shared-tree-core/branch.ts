@@ -10,12 +10,15 @@ import {
 	ChangeFamilyEditor,
 	findAncestor,
 	GraphCommit,
+	IRepairDataStoreProvider,
 	mintCommit,
 	mintRevisionTag,
 	Rebaser,
 	RepairDataStore,
+	UndoRedoManager,
 	tagChange,
 	TaggedChange,
+	UndoRedoManagerCommitType,
 } from "../core";
 import { EventEmitter } from "../events";
 import { TransactionResult } from "../util";
@@ -65,6 +68,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param sessionId - the session ID used to author commits made by this branch
 	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
 	 * @param changeFamily - determines the set of changes that this branch can commit
+	 * @param undoRedoManager - the undo/redo manager used to track undoable commits
 	 * @param anchors - an optional set of anchors that this branch will rebase whenever the branch head changes
 	 */
 	public constructor(
@@ -72,6 +76,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		private readonly sessionId: string,
 		private readonly rebaser: Rebaser<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		public undoRedoManager: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
 	) {
 		super();
@@ -81,7 +86,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 	}
 
-	private applyChange(change: TChange): void {
+	private applyChange(change: TChange, isUndoRedoCommit?: UndoRedoManagerCommitType): void {
 		this.assertNotDisposed();
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
@@ -90,10 +95,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			change,
 		});
 
-		this.transactions.repairStore?.capture(
-			this.changeFamily.intoDelta(change),
-			this.head.revision,
-		);
+		const delta = this.changeFamily.intoDelta(change);
+		this.transactions.repairStore?.capture(delta, this.head.revision);
+
+		// If this is not part of a transaction, add it to the undo commit tree
+		if (!this.isTransacting()) {
+			this.undoRedoManager.trackCommit(this.head, isUndoRedoCommit);
+		}
 
 		this.emitAndRebaseAnchors(change);
 	}
@@ -107,6 +115,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	public startTransaction(repairStore?: RepairDataStore): void {
 		this.assertNotDisposed();
+		if (!this.isTransacting()) {
+			// If this is the start of a transaction stack, freeze the undo redo manager's
+			// repair data store provider so that repair data can be captured based on the
+			// state of the branch at the start of the transaction.
+			this.undoRedoManager.repairDataStoreProvider.freeze();
+		}
 		this.transactions.push(this.head.revision, repairStore);
 		this.editor.enterTransaction();
 	}
@@ -128,6 +142,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				sessionId: this.sessionId,
 				change,
 			});
+
+			// If this transaction is not nested, add it to the undo commit tree
+			if (!this.isTransacting()) {
+				this.undoRedoManager.trackCommit(this.head);
+			}
 
 			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
 			// then update the repair data store for that transaction
@@ -173,17 +192,36 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
+	 * Undoes the last completed transaction made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 */
+	public undo(): void {
+		// TODO: allow this once it becomes possible to compose the changesets created by edits made
+		// within transactions and edits that represent completed transactions.
+		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
+
+		const undoChange = this.undoRedoManager.undo();
+		if (undoChange !== undefined) {
+			this.applyChange(undoChange, UndoRedoManagerCommitType.Undo);
+		}
+	}
+
+	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
 	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
 	 */
-	public fork(anchors?: AnchorSet): SharedTreeBranch<TEditor, TChange> {
+	public fork(
+		repairDataStoreProvider?: IRepairDataStoreProvider,
+		anchors?: AnchorSet,
+	): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			this.head,
 			this.sessionId,
 			this.rebaser,
 			this.changeFamily,
+			this.undoRedoManager.clone(repairDataStoreProvider),
 			anchors,
 		);
 		this.emit("fork", fork);

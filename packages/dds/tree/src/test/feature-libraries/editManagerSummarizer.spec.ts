@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { withDefaultBinaryEncoding } from "../../codec";
 import { mintRevisionTag } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
@@ -59,10 +60,11 @@ describe("EditManagerSummarizer", () => {
 				],
 			]),
 		};
-		const s1 = stringifySummary(input, TestChange.encoder);
-		const output = parseSummary(s1, TestChange.encoder);
+		const codec = withDefaultBinaryEncoding(TestChange.codec);
+		const s1 = stringifySummary(input, codec);
+		const output = parseSummary(s1, codec);
 		assert.deepEqual(output, input);
-		const s2 = stringifySummary(output, TestChange.encoder);
+		const s2 = stringifySummary(output, codec);
 		assert.equal(s1, s2);
 	});
 

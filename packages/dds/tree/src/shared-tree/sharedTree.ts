@@ -43,11 +43,12 @@ import {
 	buildForest,
 	ContextuallyTypedNodeData,
 	IDefaultEditBuilder,
-	ForestRepairDataStore,
 	IdentifierIndex,
 	EditableTree,
 	Identifier,
 	SchemaAware,
+	ForestRepairDataStoreProvider,
+	repairDataStoreFromForest,
 	ModularChangeset,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
@@ -128,6 +129,12 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
 	readonly editor: IDefaultEditBuilder;
+
+	/**
+	 * Undoes the last completed transaction made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 */
+	undo(): void;
 
 	/**
 	 * An collection of functions for managing transactions.
@@ -295,6 +302,7 @@ export class SharedTree
 			[schemaSummarizer, forestSummarizer],
 			defaultChangeFamily,
 			anchors,
+			new ForestRepairDataStoreProvider(forest, schema),
 			id,
 			runtime,
 			attributes,
@@ -306,7 +314,7 @@ export class SharedTree
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
 
 		this.transaction = {
-			start: () => this.startTransaction(new ForestRepairDataStore(() => this.forest)),
+			start: () => this.startTransaction(repairDataStoreFromForest(this.forest)),
 			commit: () => this.commitTransaction(),
 			abort: () => this.abortTransaction(),
 			inProgress: () => this.isTransacting(),
@@ -340,9 +348,12 @@ export class SharedTree
 
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
-		const branch = this.createBranch(anchors);
 		const schema = this.storedSchema.inner.clone();
 		const forest = this.forest.clone(schema, anchors);
+		const branch = this.createBranch(
+			new ForestRepairDataStoreProvider(forest, schema),
+			anchors,
+		);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -461,11 +472,15 @@ export class SharedTreeFork implements ISharedTreeFork {
 	}
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
-		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
+		start: () => this.branch.startTransaction(repairDataStoreFromForest(this.forest)),
 		commit: () => this.branch.commitTransaction(),
 		abort: () => this.branch.abortTransaction(),
 		inProgress: () => this.branch.isTransacting(),
 	};
+
+	public undo() {
+		this.branch.undo();
+	}
 
 	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
 		config: SchematizeConfiguration<TSchema>,
@@ -479,9 +494,10 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
-		const branch = this.branch.fork(anchors);
 		const storedSchema = this.storedSchema.clone();
 		const forest = this.forest.clone(storedSchema, anchors);
+		const repairDataStoreProvider = new ForestRepairDataStoreProvider(forest, storedSchema);
+		const branch = this.branch.fork(repairDataStoreProvider, anchors);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -553,7 +569,7 @@ function getHeadCommit(view: ISharedTreeView): GraphCommit<DefaultChangeset> {
 function getForkBranch(
 	fork: ISharedTreeFork,
 ): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
-	assert(fork instanceof SharedTreeFork, "Unsupported ISharedTreeFork implementation");
+	assert(fork instanceof SharedTreeFork, 0x5ca /* Unsupported ISharedTreeFork implementation */);
 	return fork.branch;
 }
 // #endregion Extraction functions

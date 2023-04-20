@@ -78,6 +78,7 @@ export {
 	isLocalKey,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
+export { PathVisitor } from "./visithPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";

@@ -89,7 +89,7 @@ export class IdentifierIndex<TField extends GlobalFieldKey>
 			this.nodes.clear();
 			for (let i = 0; i < context.root.length; i++) {
 				for (const [id, node] of this.findIdentifiers(context.root.getNode(i))) {
-					assert(!this.nodes.has(id), "Encountered duplicate node identifier");
+					assert(!this.nodes.has(id), 0x5c5 /* Encountered duplicate node identifier */);
 					this.nodes.set(id, node);
 				}
 			}
