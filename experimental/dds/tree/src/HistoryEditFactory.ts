@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from '@fluidframework/common-utils';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers';
-import { assert, fail } from './Common';
+import { fail } from './Common';
 import { rangeFromStableRange } from './TreeViewUtilities';
 import {
 	ChangeInternal,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
+import { assert, expect } from 'chai';
 import { v4, v5 } from 'uuid';
 import { MockLogger } from '@fluidframework/telemetry-utils';
 import { take } from '@fluid-internal/stochastic-test-utils';
@@ -22,7 +22,7 @@ import {
 	SessionId,
 	StableId,
 } from '../Identifiers';
-import { assert, assertNotUndefined, fail } from '../Common';
+import { assertNotUndefined, fail } from '../Common';
 import {
 	createSessionId,
 	incrementUuid,
