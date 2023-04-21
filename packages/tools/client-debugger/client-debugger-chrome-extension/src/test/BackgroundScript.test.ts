@@ -10,7 +10,6 @@ import { createSandbox } from "sinon";
 import { delay } from "@fluidframework/common-utils";
 import {
 	CloseContainer,
-	ISourcedDevtoolsMessage,
 	TelemetryEvent,
 	devtoolsMessageSource,
 } from "@fluid-tools/client-debugger";
@@ -163,7 +162,6 @@ describe("Background script unit tests", () => {
 		// Simulate background script connection init from the devtools
 		connectFromDevtools(devtoolsPort);
 
-		// Get
 		const sendMessageFromDevtools = await onMessageFromDevtoolsListenerPromise;
 		expect(typeof sendMessageFromDevtools).to.equal("function");
 
@@ -182,7 +180,7 @@ describe("Background script unit tests", () => {
 
 		// The background script calls `connect` in the continuation of a promise, so we need to delay to ensure
 		// that continuation runs before we attempt to access
-		await delay(500);
+		await delay(500); // TODO: is this actually needed?
 
 		const sendMessageFromTab = await onMessageFromTabListenerPromise;
 		expect(typeof sendMessageFromTab).to.equal("function");
@@ -190,20 +188,11 @@ describe("Background script unit tests", () => {
 		// Update our port stubs to correctly send messages to the Background script
 		devtoolsPort.postMessage = (message): void => {
 			console.log("devtoolsPort postMessage called!");
-			// Only forward messages originating from the extension
-			// (otherwise the message will loop endlessly between the ports)
-			if ((message as ISourcedDevtoolsMessage).source === extensionMessageSource) {
-				sendMessageFromDevtools(message, devtoolsPort);
-			}
+			sendMessageFromDevtools(message, devtoolsPort);
 		};
 		tabPort.postMessage = (message): void => {
 			console.log("tabPort postMessage called!");
-
-			// Only forward messages originating from the extension
-			// (otherwise the message will loop endlessly between the ports)
-			if ((message as ISourcedDevtoolsMessage).source === devtoolsMessageSource) {
-				sendMessageFromTab(message, tabPort);
-			}
+			sendMessageFromTab(message, tabPort);
 		};
 
 		console.log("TEST: Background script init complete!");
@@ -233,6 +222,25 @@ describe("Background script unit tests", () => {
 		expect(devtoolsPostMessageSpy.calledWith(tabMessage)).to.be.true;
 	});
 
+	it("Does not forward message with unrecognized source from Tab to Devtools script", async () => {
+		const { browser } = globals;
+
+		const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
+
+		// Spy on the Devtools port's `postMessage` so we can later verify if it was called.
+		const devtoolsPostMessageSpy = sandbox.spy(devtoolsPort, "postMessage");
+
+		// Post message from the Tab
+		const tabMessage = {
+			data: "some-data",
+			source: "unrecognized-source",
+		};
+		tabPort.postMessage(tabMessage);
+
+		// Verify that the message was forwarded to the Devtools port
+		expect(devtoolsPostMessageSpy.called).to.be.false;
+	});
+
 	it("Forwards Devtools message from Devtools script to Tab", async () => {
 		const { browser } = globals;
 
@@ -250,5 +258,24 @@ describe("Background script unit tests", () => {
 
 		// Verify that the message was forwarded to the Devtools port
 		expect(tabPostMessageSpy.calledWith(devtoolsMessage)).to.be.true;
+	});
+
+	it("Does not forward message with unrecognized source from Devtools script to Tab", async () => {
+		const { browser } = globals;
+
+		const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
+
+		// Spy on the Devtools port's `postMessage` so we can later verify if it was called.
+		const tabPostMessageSpy = sandbox.spy(tabPort, "postMessage");
+
+		// Post message from the Tab
+		const devtoolsMessage = {
+			data: "some-data",
+			source: "unrecognized-source",
+		};
+		devtoolsPort.postMessage(devtoolsMessage);
+
+		// Verify that the message was forwarded to the Devtools port
+		expect(tabPostMessageSpy.called).to.be.false;
 	});
 });
