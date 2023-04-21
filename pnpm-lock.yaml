@@ -4370,7 +4370,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -4420,7 +4420,7 @@ importers:
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_@types+node@14.18.38
@@ -4800,7 +4800,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-drivers': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -4867,7 +4867,7 @@ importers:
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
       '@fluid-internal/test-drivers': link:../../../packages/test/test-drivers
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_@types+node@14.18.38
@@ -5366,7 +5366,7 @@ importers:
   experimental/examples/tree-sample/tree-react-api:
     specifiers:
       '@fluid-experimental/tree2': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': ^0.46.0
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -5398,7 +5398,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       react: 17.0.2
     devDependencies:
-      '@fluid-tools/benchmark': 0.46.133527
+      '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_@types+node@14.18.38
@@ -5630,7 +5630,7 @@ importers:
 
   packages/common/core-utils:
     specifiers:
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -5654,7 +5654,7 @@ importers:
       source-map-support: ^0.5.16
       typescript: ~4.5.5
     devDependencies:
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_@types+node@14.18.38
@@ -5908,7 +5908,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -5958,7 +5958,7 @@ importers:
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_@types+node@14.18.38
@@ -5986,7 +5986,7 @@ importers:
   packages/dds/matrix:
     specifiers:
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -6046,7 +6046,7 @@ importers:
       tslib: 1.14.1
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_@types+node@14.18.38
@@ -6080,7 +6080,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-pairwise-generator': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -6132,7 +6132,7 @@ importers:
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-pairwise-generator': link:../../test/test-pairwise-generator
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_@types+node@14.18.38
@@ -6362,7 +6362,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -6419,7 +6419,7 @@ importers:
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': 0.47.0
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_@types+node@14.18.38
@@ -9715,7 +9715,7 @@ importers:
       '@fluid-internal/test-loader-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-pairwise-generator': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluid-internal/test-version-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
-      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/benchmark': ^0.47.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/agent-scheduler': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
@@ -14578,15 +14578,6 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
-    dev: true
-
-  /@fluid-tools/benchmark/0.46.133527:
-    resolution: {integrity: sha512-1cR7ZOiDhWAH2cUzqs2iBuGOjK5gGOyKVo3eQ8dAly6FJUccjkv/uP9y3TpVWoaCVCDJu/YLRe3bpS4UYncWTQ==}
-    dependencies:
-      benchmark: 2.1.4
-      chai: 4.3.7
-      easy-table: 1.2.0
-      mocha: 10.2.0
     dev: true
 
   /@fluid-tools/benchmark/0.47.0:
