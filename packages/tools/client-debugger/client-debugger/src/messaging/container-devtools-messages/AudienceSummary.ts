@@ -6,7 +6,7 @@
 import { HasContainerId } from "../../CommonInterfaces";
 import { AudienceChangeLogEntry } from "../../Logs";
 import { AudienceClientMetadata } from "../../AudienceMetadata";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link AudienceSummary.Message}.
@@ -15,7 +15,7 @@ import { IDebuggerMessage } from "../Messages";
  */
 export namespace AudienceSummary {
 	/**
-	 * {@link AudienceSummary.Message} {@link IDebuggerMessage."type"}.
+	 * {@link AudienceSummary.Message} {@link IDevtoolsMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -48,9 +48,9 @@ export namespace AudienceSummary {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

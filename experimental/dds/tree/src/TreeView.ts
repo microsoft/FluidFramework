@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, copyPropertyIfDefined, fail } from './Common';
+import { assert } from '@fluidframework/common-utils';
+import { copyPropertyIfDefined, fail } from './Common';
 import { NodeId, TraitLabel } from './Identifiers';
 import { Delta, Forest, isParentedForestNode } from './Forest';
 import { NodeData, Side } from './persisted-types';

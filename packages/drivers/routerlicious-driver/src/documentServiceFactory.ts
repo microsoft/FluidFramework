@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { getW3CData } from "@fluidframework/driver-base";
 import {
 	FiveDaysMs,
 	IDocumentService,
@@ -128,15 +129,17 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			},
 			async (event) => {
 				// @TODO: Remove returned "string" type when removing back-compat code
-				const postRes = await ordererRestWrapper.post<
-					{ id: string; token?: string; session?: ISession } | string
-				>(`/documents/${tenantId}`, {
-					summary: convertSummaryToCreateNewSummary(appSummary),
-					sequenceNumber: documentAttributes.sequenceNumber,
-					values: quorumValues,
-					enableDiscovery: this.driverPolicies.enableDiscovery,
-					generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
-				});
+				const postRes = (
+					await ordererRestWrapper.post<
+						{ id: string; token?: string; session?: ISession } | string
+					>(`/documents/${tenantId}`, {
+						summary: convertSummaryToCreateNewSummary(appSummary),
+						sequenceNumber: documentAttributes.sequenceNumber,
+						values: quorumValues,
+						enableDiscovery: this.driverPolicies.enableDiscovery,
+						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+					})
+				).content;
 
 				event.end({
 					docId: typeof postRes === "string" ? postRes : postRes.id,
@@ -253,11 +256,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					eventName: "DiscoverSession",
 					docId: documentId,
 				},
-				async () => {
+				async (event) => {
 					// The service responds with the current document session associated with the container.
-					return ordererRestWrapper.get<ISession>(
+					const response = await ordererRestWrapper.get<ISession>(
 						`${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`,
 					);
+					event.end({
+						...response.propsToLog,
+						...getW3CData(response.requestUrl, "xmlhttprequest"),
+					});
+					return response.content;
 				},
 			);
 			return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);

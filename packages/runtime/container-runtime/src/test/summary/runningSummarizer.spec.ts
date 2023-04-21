@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import sinon from "sinon";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -15,11 +15,19 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	MockLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
+import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { ISummaryConfiguration } from "../../containerRuntime";
 import {
+	getFailMessage,
 	neverCancelledSummaryToken,
 	RunningSummarizer,
 	SummaryCollection,
@@ -28,11 +36,23 @@ import {
 	ISummarizeHeuristicData,
 } from "../../summary";
 
-class MockRuntime {
+class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
+	disposed = false;
+
 	constructor(
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-	) {}
+	) {
+		super();
+	}
+
+	closeFn() {
+		this.disposed = true;
+	}
 }
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
@@ -43,6 +63,7 @@ describe("Runtime", () => {
 			let refreshLatestAckRunCount: number;
 			let clock: sinon.SinonFakeTimers;
 			let mockLogger: MockLogger;
+			let settings = {};
 			let mockDeltaManager: MockDeltaManager;
 			let summaryCollection: SummaryCollection;
 			let summarizer: RunningSummarizer;
@@ -93,6 +114,7 @@ describe("Runtime", () => {
 					type,
 				};
 				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage({ type }));
 				await flushPromises();
 			}
 
@@ -105,11 +127,12 @@ describe("Runtime", () => {
 					type: MessageType.NoOp,
 				};
 				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage({ type: MessageType.NoOp }));
 				await flushPromises();
 			}
 
 			function emitBroadcast(timestamp = Date.now()) {
-				mockDeltaManager.emit("op", {
+				const op = {
 					type: MessageType.Summarize,
 					clientId: summarizerClientId,
 					referenceSequenceNumber: lastRefSeq,
@@ -119,7 +142,9 @@ describe("Runtime", () => {
 						handle: "test-broadcast-handle",
 					},
 					timestamp,
-				});
+				};
+				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage(op));
 			}
 
 			async function emitAck() {
@@ -130,11 +155,13 @@ describe("Runtime", () => {
 					handle: "test-ack-handle",
 					summaryProposal,
 				};
-				mockDeltaManager.emit("op", {
+				const op = {
 					data: JSON.stringify(contents),
 					type: MessageType.SummaryAck,
 					sequenceNumber: ++lastRefSeq,
-				});
+				};
+				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage(op));
 
 				await flushPromises(); // let summarize run
 			}
@@ -148,11 +175,13 @@ describe("Runtime", () => {
 					retryAfter: retryAfterSeconds,
 					message: "test-nack",
 				};
-				mockDeltaManager.emit("op", {
+				const op = {
 					data: JSON.stringify(contents),
 					type: MessageType.SummaryNack,
 					sequenceNumber: ++lastRefSeq,
-				});
+				};
+				mockDeltaManager.emit("op", op);
+				mockRuntime.emit("op", op, isRuntimeMessage(op));
 
 				await flushPromises();
 			}
@@ -240,7 +269,6 @@ describe("Runtime", () => {
 					},
 					async (options) => {},
 					heuristicData,
-					() => {},
 					summaryCollection,
 					neverCancelledSummaryToken,
 					// stopSummarizerCallback
@@ -271,7 +299,11 @@ describe("Runtime", () => {
 				lastRefSeq = 0;
 				lastClientSeq = -1000; // negative/decrement for test
 				lastSummarySeq = 0; // negative/decrement for test
-				mockLogger = new MockLogger();
+				settings = {};
+				mockLogger = mixinMonitoringContext(
+					new MockLogger(),
+					configProvider(settings),
+				).logger;
 				mockDeltaManager = new MockDeltaManager();
 				mockRuntime = new MockRuntime(mockDeltaManager);
 				summaryCollection = new SummaryCollection(mockDeltaManager, mockLogger);
@@ -568,7 +600,7 @@ describe("Runtime", () => {
 							{
 								eventName: "Running:Summarize_cancel",
 								...retryProps1,
-								reason: "summaryNack",
+								reason: getFailMessage("summaryNack"),
 							},
 							{ eventName: "Running:Summarize_generate", ...retryProps2 },
 							{ eventName: "Running:Summarize_Op", ...retryProps2 },
@@ -596,7 +628,7 @@ describe("Runtime", () => {
 								{
 									eventName: "Running:Summarize_cancel",
 									...retryProps2,
-									reason: "summaryNack",
+									reason: getFailMessage("summaryNack"),
 								},
 								{ eventName: "Running:Summarize_generate", ...retryProps3 },
 								{ eventName: "Running:Summarize_Op", ...retryProps3 },
@@ -635,6 +667,61 @@ describe("Runtime", () => {
 					assert.strictEqual(stopCall, 0);
 					await emitNack();
 					assert.strictEqual(stopCall, 1);
+				});
+
+				it("Should not retry on failure when stopping instead of restarting", async () => {
+					settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
+					await startRunningSummarizer();
+					await emitNextOp();
+
+					// too early, should not run yet
+					await emitNextOp(summaryConfig.maxOps - 1);
+					assertRunCounts(0, 0, 0);
+
+					// now should run a normal run
+					await emitNextOp(1);
+					assertRunCounts(1, 0, 0);
+					const retryProps1 = {
+						summarizeCount: 1,
+						summaryAttemptsPerPhase: 1,
+						summaryAttempts: 1,
+						summaryAttemptPhase: 1,
+					};
+					assert(
+						mockLogger.matchEvents([
+							{ eventName: "Running:Summarize_generate", ...retryProps1 },
+							{ eventName: "Running:Summarize_Op", ...retryProps1 },
+						]),
+						"unexpected log sequence",
+					);
+
+					// should not run, because our summary hasn't been acked/nacked yet
+					await emitNextOp(summaryConfig.maxOps + 1);
+					assertRunCounts(1, 0, 0);
+
+					// should run with refresh after first nack
+					await emitNack();
+					assertRunCounts(2, 0, 0, "retry1 should be refreshLatestAck");
+					const retryProps2 = {
+						summarizeCount: 1,
+						summarizerSuccessfulAttempts: 0,
+					};
+					assert(
+						mockLogger.matchEvents([
+							{
+								eventName: "Running:Summarize_cancel",
+								...retryProps1,
+								reason: getFailMessage("summaryNack"),
+							},
+							{
+								eventName: "Running:ClosingSummarizerOnSummaryStale",
+								...retryProps2,
+							},
+						]),
+						"unexpected log sequence",
+					);
+					assert.strictEqual(stopCall, 1);
+					assert(mockRuntime.disposed, "runtime should be disposed!");
 				});
 
 				it("Should retry after delay on failures with retryAfter", async () => {
@@ -684,7 +771,7 @@ describe("Runtime", () => {
 							{
 								eventName: "Running:Summarize_cancel",
 								summarizeCount: 1,
-								reason: "summaryNack",
+								reason: getFailMessage("summaryNack"),
 							},
 							{
 								eventName: "Running:SummarizeAttemptDelay",
@@ -727,7 +814,7 @@ describe("Runtime", () => {
 								{
 									eventName: "Running:Summarize_cancel",
 									...retryProps2,
-									reason: "summaryNack",
+									reason: getFailMessage("summaryNack"),
 								},
 								{ eventName: "Running:SummarizeAttemptDelay", ...retryProps3 },
 								{ eventName: "Running:Summarize_generate", ...retryProps3 },

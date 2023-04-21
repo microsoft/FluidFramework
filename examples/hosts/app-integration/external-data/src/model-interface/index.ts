@@ -33,6 +33,16 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	readonly baseDocument: IBaseDocument;
 
 	/**
+	 * Sets the current leader of the document to the clientID that claimed leadership.
+	 */
+	readonly handleClaimLeadership: () => void;
+
+	/**
+	 * Returns the current client's ID.
+	 */
+	readonly getClientID: () => string | undefined;
+
+	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
 	 * from alfred while that signal is in prototype state on the dev branch.
 	 */
@@ -169,6 +179,11 @@ export interface IBaseDocumentEvents extends IEvent {
 	 * Emitted when task list collection has changed.
 	 */
 	(event: "taskListCollectionChanged", listener: () => void);
+
+	/**
+	 * Emitted when a client claims leadership.
+	 */
+	(event: "leaderChanged", listener: (newLeader: string) => void);
 }
 
 /**
@@ -189,10 +204,22 @@ export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	 * Add a task list with a specific id.
 	 */
 	readonly addTaskList: (props: IBaseDocumentInitialState) => void;
+
 	/**
 	 * Get the task list with the specified ID.
 	 */
 	readonly getTaskList: (id: string) => ITaskList | undefined;
+
+	/**
+	 * Gets the client ID of the current leader. Returns undefined when no client is leader.
+	 */
+	readonly getLeader: () => string | undefined;
+
+	/**
+	 * Updates the shared leader property to be the specified clientID
+	 * @param newLeader - the clientID of the new leader
+	 */
+	readonly setLeader: (newLeader: string) => void;
 }
 
 export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData";

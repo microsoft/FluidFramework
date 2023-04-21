@@ -49,6 +49,7 @@ export async function scribeCreate(
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const internalAlfredUrl = config.get("worker:alfredUrl");
 	const getDeltasViaAlfred = config.get("scribe:getDeltasViaAlfred") as boolean;
+	const transientTenants = config.get("shared:transientTenants") as string[];
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -136,6 +137,7 @@ export async function scribeCreate(
 		serviceConfiguration,
 		enableWholeSummaryUpload,
 		getDeltasViaAlfred,
+		transientTenants,
 	);
 }
 
