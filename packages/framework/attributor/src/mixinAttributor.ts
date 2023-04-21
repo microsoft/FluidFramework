@@ -134,8 +134,6 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				0x508 /* Audience must exist when instantiating attribution-providing runtime */,
 			);
 
-			// const logger = ChildLogger.create(context.taggedLogger, "Attributor");
-
 			const mc = loggerToMonitoringContext(context.taggedLogger);
 
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
@@ -156,14 +154,6 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 
 			const logger = ChildLogger.create(runtime.logger, "Attributor");
 
-			if (shouldTrackAttribution) {
-				// Add telemetry to track if the storage of attribution data was enabled in configuration or not
-				logger.sendTelemetryEvent({
-					eventName: "attribution_enabled",
-					attributionEnabledInConfig: true,
-				});
-			}
-
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution
 			// info or we need to summarize. All that really needs to happen immediately is to start recording
@@ -182,6 +172,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 						shouldTrackAttribution,
 					);
 					event.end({
+						attributionEnabledInConfig: shouldTrackAttribution,
 						attributionEnabledInDoc: runtime.runtimeAttributor
 							? runtime.runtimeAttributor.isEnabled
 							: false,
