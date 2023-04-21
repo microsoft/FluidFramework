@@ -5,6 +5,7 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	ChangeFamily,
 	SessionId,
@@ -28,6 +29,12 @@ import {
 } from "../testChange";
 import { assertDeltaEqual } from "../utils";
 import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
+import {
+	DefaultChangeFamily,
+	DefaultChangeset,
+	defaultChangeFamily,
+} from "../../feature-libraries";
+import { TestSharedTreeCore } from "./utils";
 
 type TestEditManager = EditManager<TestChange, TestChangeFamily>;
 
@@ -276,6 +283,64 @@ describe("EditManager", () => {
 			assert.equal(manager.getTrunk().length, 5);
 			manager.advanceMinimumSequenceNumber(brand(20));
 			assert.equal(manager.getTrunk().length, 0);
+		});
+
+		it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
+			const { manager } = editManagerFactory({});
+			manager.addSequencedChange(
+				{
+					change: TestChange.mint([], []),
+					revision: mintRevisionTag(),
+					sessionId: peer1,
+				},
+				brand(1),
+				brand(0),
+			);
+
+			assert.equal(manager.getTrunk().length, 1);
+			manager.addSequencedChange(
+				{
+					change: TestChange.mint([], []),
+					revision: mintRevisionTag(),
+					sessionId: peer1,
+				},
+				brand(2),
+				brand(1),
+			);
+
+			assert.equal(manager.getTrunk().length, 2);
+			manager.advanceMinimumSequenceNumber(brand(1));
+			assert.equal(manager.getTrunk().length, 2);
+
+			// If a change's sequence number is also the minimum sequence number,
+			// it should not be evicted
+			manager.addSequencedChange(
+				{
+					change: TestChange.mint([], []),
+					revision: mintRevisionTag(),
+					sessionId: peer1,
+				},
+				brand(3),
+				brand(3),
+			);
+
+			assert.equal(manager.getTrunk().length, 3);
+			manager.advanceMinimumSequenceNumber(brand(3));
+			assert.equal(manager.getTrunk().length, 1);
+		});
+
+		it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
+			const manager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
+				defaultChangeFamily,
+				"",
+			);
+			const tree = new TestSharedTreeCore();
+			const branch = tree.createBranch();
+			manager.registerBranch(branch);
+			assert.throws(
+				() => manager.registerBranch(branch),
+				(e) => validateAssertionError(e, "Branch was registered more than once"),
+			);
 		});
 
 		it("Rebases anchors over local changes", () => {

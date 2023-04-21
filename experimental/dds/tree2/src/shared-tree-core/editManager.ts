@@ -85,9 +85,13 @@ export class EditManager<
 	private localBranch: GraphCommit<TChangeset>;
 
 	/**
-	 * A map from sequence number to the number of branches that are based off of the commit on the trunk with that sequence number
+	 * Tracks where on the trunk all registered branches are based. Each key is the sequence number of a commit on
+	 * the trunk, and the value is the set of all branches who have that commit as their common ancestor with the trunk.
 	 */
-	private readonly branchSequenceNumbers = new BTree<SeqNumber, number>();
+	private readonly trunkBranches = new BTree<
+		SeqNumber,
+		Set<SharedTreeBranch<ChangeFamilyEditor, TChangeset>>
+	>();
 
 	/**
 	 * The sequence number of the newest commit on the trunk that has been received by all peers
@@ -133,47 +137,46 @@ export class EditManager<
 	 * will also be registered.
 	 */
 	public registerBranch(branch: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): void {
-		const incrementBranchBaseCount = (
-			b: SharedTreeBranch<ChangeFamilyEditor, TChangeset>,
-		): SeqNumber => {
+		const trackBranch = (b: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): SeqNumber => {
 			const trunkCommit = findCommonAncestor(this.trunk, b.getHead());
 			assert(isTrunkCommit(trunkCommit), "Expected commit to be on the trunk branch");
-			const branchCount =
-				this.branchSequenceNumbers.get(trunkCommit.sequenceNumber, 0) ??
-				fail("Expected default value");
+			const branches = getOrCreate(
+				this.trunkBranches,
+				trunkCommit.sequenceNumber,
+				() => new Set(),
+			);
 
-			this.branchSequenceNumbers.set(trunkCommit.sequenceNumber, branchCount + 1);
+			assert(!branches.has(b), "Branch was registered more than once");
+			branches.add(b);
 			return trunkCommit.sequenceNumber;
 		};
 
-		const decrementBranchBaseCount = (sequenceNumber: SeqNumber): number => {
-			const branchCount =
-				this.branchSequenceNumbers.get(sequenceNumber, 0) ?? fail("Expected default value");
+		const untrackBranch = (
+			b: SharedTreeBranch<ChangeFamilyEditor, TChangeset>,
+			sequenceNumber: SeqNumber,
+		): void => {
+			const branches =
+				this.trunkBranches.get(sequenceNumber) ?? fail("Expected branch to be tracked");
 
-			assert(branchCount >= 1, "Expected at least one branch base");
-			if (branchCount > 1) {
-				this.branchSequenceNumbers.set(sequenceNumber, branchCount - 1);
-			} else {
-				this.branchSequenceNumbers.delete(sequenceNumber);
+			assert(branches.delete(b), "Expected branch to be tracked");
+			if (branches.size === 0) {
+				this.trunkBranches.delete(sequenceNumber);
 			}
-
-			return branchCount - 1;
 		};
 
 		// Record the sequence number of the branch's base commit on the trunk
-		const trunkBase = { sequenceNumber: incrementBranchBaseCount(branch) };
+		const trunkBase = { sequenceNumber: trackBranch(branch) };
 		// Whenever the branch forks, register the new fork
 		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offRebase = branch.on("rebase", () => {
-			decrementBranchBaseCount(trunkBase.sequenceNumber);
-			trunkBase.sequenceNumber = incrementBranchBaseCount(branch);
+			untrackBranch(branch, trunkBase.sequenceNumber);
+			trunkBase.sequenceNumber = trackBranch(branch);
 		});
-		// When the branch is disposed, update our branch counter and trim the trunk
+		// When the branch is disposed, update our branch set and trim the trunk
 		const offDispose = branch.on("dispose", () => {
-			if (decrementBranchBaseCount(trunkBase.sequenceNumber) === 0) {
-				this.trimTrunk();
-			}
+			untrackBranch(branch, trunkBase.sequenceNumber);
+			this.trimTrunk();
 			offFork();
 			offRebase();
 			offDispose();
@@ -208,7 +211,7 @@ export class EditManager<
 		/** The sequence number of the oldest commit on the trunk that will be retained */
 		let trunkTailSearchKey = this.minimumSequenceNumber;
 		// If there are any outstanding registered branches, get the one that is the oldest (has the "most behind" trunk base)
-		const minimumBranchBaseSequenceNumber = this.branchSequenceNumbers.minKey();
+		const minimumBranchBaseSequenceNumber = this.trunkBranches.minKey();
 		if (minimumBranchBaseSequenceNumber !== undefined) {
 			// If that branch is behind the minimum sequence number, we only want to evict commits older than it,
 			// even if those commits are behind the minimum sequence number
@@ -246,7 +249,7 @@ export class EditManager<
 		} else {
 			// If no trunk commit is found, it means that all trunk commits are below the search key, so evict them all
 			assert(
-				this.branchSequenceNumbers.isEmpty,
+				this.trunkBranches.isEmpty,
 				"Expected no registered branches when clearing trunk",
 			);
 			this.trunk = this.trunkBase;

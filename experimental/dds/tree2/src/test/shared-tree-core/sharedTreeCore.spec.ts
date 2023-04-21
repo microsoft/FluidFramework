@@ -5,11 +5,7 @@
 import { strict as assert } from "assert";
 import { IEvent } from "@fluidframework/common-definitions";
 import { IsoBuffer, TypedEventEmitter } from "@fluidframework/common-utils";
-import {
-	IChannelAttributes,
-	IChannelStorageService,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions";
+import { IChannelAttributes, IChannelStorageService } from "@fluidframework/datastore-definitions";
 import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryContext,
@@ -26,82 +22,16 @@ import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
 	ChangeEvents,
 	EditManager,
-	SharedTreeBranch,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import {
-	AnchorSet,
-	ChangeFamily,
-	ChangeFamilyEditor,
-	GraphCommit,
-	ITreeCursorSynchronous,
-	RepairDataStore,
-	RevisionTag,
-	UndoRedoManagerCommitType,
-	rootFieldKeySymbol,
-} from "../../core";
-import {
-	defaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
-	ModularChangeset,
-	singleTextCursor,
-} from "../../feature-libraries";
-import { TransactionResult, brand } from "../../util";
+import { ChangeFamily, ChangeFamilyEditor, rootFieldKeySymbol } from "../../core";
+import { DefaultChangeset, DefaultEditBuilder, singleTextCursor } from "../../feature-libraries";
+import { brand } from "../../util";
 import { ISubscribable } from "../../events";
-import { MockRepairDataStoreProvider } from "../utils";
-
-/** A `SharedTreeCore` with protected methods exposed but no additional behavior */
-class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
-	public override applyChange(
-		change: DefaultChangeset,
-		revision?: RevisionTag,
-		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
-		skipUndoRedoManagerTracking?: boolean,
-	): GraphCommit<DefaultChangeset> {
-		return super.applyChange(
-			change,
-			revision,
-			undoRedoManagerCommitType,
-			skipUndoRedoManagerTracking,
-		);
-	}
-
-	public override startTransaction(
-		repairStore?: RepairDataStore<ITreeCursorSynchronous> | undefined,
-	): void {
-		return super.startTransaction(repairStore);
-	}
-
-	public override commitTransaction(): TransactionResult.Commit {
-		return super.commitTransaction();
-	}
-
-	public override abortTransaction(): TransactionResult.Abort {
-		return super.abortTransaction();
-	}
-
-	public override isTransacting(): boolean {
-		return super.isTransacting();
-	}
-
-	public override createBranch(): SharedTreeBranch<DefaultEditBuilder, ModularChangeset> {
-		return super.createBranch(new MockRepairDataStoreProvider());
-	}
-
-	public override mergeBranch(
-		branch: SharedTreeBranch<DefaultEditBuilder, ModularChangeset>,
-	): void {
-		return super.mergeBranch(branch);
-	}
-
-	public override getLocalBranchHead(): GraphCommit<ModularChangeset> {
-		return super.getLocalBranchHead();
-	}
-}
+import { TestSharedTreeCore } from "./utils";
 
 describe("SharedTreeCore", () => {
 	describe("emits", () => {
@@ -114,16 +44,7 @@ describe("SharedTreeCore", () => {
 					snapshotFormatVersion: "0.0.0",
 					packageVersion: "0.0.0",
 				};
-				super(
-					[],
-					defaultChangeFamily,
-					new AnchorSet(),
-					new MockRepairDataStoreProvider(),
-					"ChangeEventSharedTree",
-					runtime,
-					attributes,
-					"",
-				);
+				super();
 			}
 
 			public get events(): ISubscribable<ChangeEvents<DefaultChangeset>> {
@@ -307,7 +228,7 @@ describe("SharedTreeCore", () => {
 
 	it("evicts trunk commits behind the minimum sequence number", () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const tree = createTree([], runtime, "tree");
+		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		tree.connect({
 			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
@@ -332,28 +253,46 @@ describe("SharedTreeCore", () => {
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const tree = createTree([], runtime, "tree");
+		const tree = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		tree.connect({
 			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
 
+		// The following scenario tests that branches are tracked across rebases and untracked after disposal
+		//
+		//                                 trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
 		changeTree(tree);
-		factory.processAllMessages(); // Minimum sequence number === 0
+		factory.processAllMessages(); //          [1]
 		assert.equal(getTrunkLength(tree), 1);
 		const branch1 = tree.createBranch();
 		const branch2 = tree.createBranch();
+		const branch3 = branch2.fork();
 		changeTree(tree);
-		factory.processAllMessages(); // Minimum sequence number === 1
+		factory.processAllMessages(); //          [1 (b1, b2, b3), 2]
 		changeTree(tree);
-		// Normally, one commit would be evicted here, but it is preserved because there is a branch off of it
-		factory.processAllMessages(); // Minimum sequence number === 2
+		factory.processAllMessages(); //          [1 (b1, b2, b3), 2, 3]
 		assert.equal(getTrunkLength(tree), 3);
-		// Disposing all branches allows the commit to be evicted
-		branch1.dispose();
+		branch1.dispose(); //                     [1 (b2, b3), 2, 3]
 		assert.equal(getTrunkLength(tree), 3);
-		branch2.dispose();
+		branch2.dispose(); //                     [1 (b3), 2, 3]
+		assert.equal(getTrunkLength(tree), 3);
+		branch3.dispose(); //                     [x, 2, 3]
+		assert.equal(getTrunkLength(tree), 2);
+		const branch4 = tree.createBranch(); //   [x, 2, 3 (b4)]
+		changeTree(tree);
+		changeTree(tree);
+		factory.processAllMessages(); //          [x, x, 3 (b4), 4, 5]
+		assert.equal(getTrunkLength(tree), 3);
+		const branch5 = tree.createBranch(); //   [x, x, 3 (b4), 4, 5 (b5)]
+		branch4.rebaseOnto(branch5.getHead()); // [x, x, 3, 4, 5 (b4, b5)]
+		branch4.dispose(); //                     [x, x, 3, 4, 5 (b5)]
+		assert.equal(getTrunkLength(tree), 3);
+		changeTree(tree);
+		factory.processAllMessages(); //          [x, x, x, 4, 5 (b5)]
+		assert.equal(getTrunkLength(tree), 2);
+		branch5.dispose(); //                     [x, x, x, 4, 5]
 		assert.equal(getTrunkLength(tree), 2);
 	});
 
@@ -363,32 +302,8 @@ describe("SharedTreeCore", () => {
 
 	function createTree<TIndexes extends readonly Summarizable[]>(
 		indexes: TIndexes,
-	): TestSharedTreeCore;
-	function createTree<TIndexes extends readonly Summarizable[]>(
-		indexes: TIndexes,
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-	): TestSharedTreeCore;
-	function createTree<TIndexes extends readonly Summarizable[]>(
-		indexes: TIndexes,
-		runtime: IFluidDataStoreRuntime = new MockFluidDataStoreRuntime(),
-		id = "DefaultTestSharedTreeCore",
 	): TestSharedTreeCore {
-		const attributes: IChannelAttributes = {
-			type: "TestSharedTreeCore",
-			snapshotFormatVersion: "0.0.0",
-			packageVersion: "0.0.0",
-		};
-		return new TestSharedTreeCore(
-			indexes,
-			defaultChangeFamily,
-			new AnchorSet(),
-			new MockRepairDataStoreProvider(),
-			id,
-			runtime,
-			attributes,
-			"",
-		);
+		return new TestSharedTreeCore(undefined, undefined, indexes);
 	}
 
 	interface MockSummarizableEvents extends IEvent {
