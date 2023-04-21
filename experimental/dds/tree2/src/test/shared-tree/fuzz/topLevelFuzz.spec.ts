@@ -32,10 +32,12 @@ export async function performFuzzActions(
 
 	const initialState: FuzzTestState = {
 		random,
+		trees: provider.trees,
 		testTreeProvider: provider,
 		numberOfEdits: 0,
 	};
-	await initialState.testTreeProvider.ensureSynchronized();
+
+	await initialState.testTreeProvider?.ensureSynchronized();
 
 	const finalState = await performFuzzActionsAsync(
 		generator,
@@ -43,8 +45,8 @@ export async function performFuzzActions(
 		initialState,
 		saveInfo,
 	);
-	await finalState.testTreeProvider.ensureSynchronized();
-	checkTreesAreSynchronized(finalState.testTreeProvider);
+	await finalState.testTreeProvider?.ensureSynchronized();
+	checkTreesAreSynchronized(finalState.trees);
 	return finalState;
 }
 
