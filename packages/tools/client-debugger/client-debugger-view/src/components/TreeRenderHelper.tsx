@@ -3,11 +3,12 @@ import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-tools/client-
 // eslint-disable-next-line import/no-internal-modules
 import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { TreeDataView } from "./TreeDataView";
+import { RenderLabel } from "./RenderLabel";
 
 /**
  * TODO
  */
-export interface TreeRenderHelperProps extends HasContainerId, React.PropsWithChildren<unknown> {
+export interface TreeRenderHelperProps extends HasContainerId {
 	nodeKey?: string | undefined;
 	node: VisualNode;
 }
@@ -17,15 +18,19 @@ export interface TreeRenderHelperProps extends HasContainerId, React.PropsWithCh
  */
 export function TreeRenderHelper(props: TreeRenderHelperProps): React.ReactElement {
 	const { containerId, nodeKey, node } = props;
+	const itemSize = node.metadata?.size;
 
 	return node.nodeKind === VisualNodeKind.TreeNode ||
 		node.nodeKind === VisualNodeKind.FluidTreeNode ? (
 		<Tree aria-label="Root-Tree">
 			<TreeItem>
 				<TreeItemLayout>
-					{`${nodeKey === undefined ? node.typeMetadata : nodeKey}(${
-						node.typeMetadata === undefined ? node.nodeKind : node.typeMetadata
-					})`}
+					<RenderLabel
+						nodeKey={nodeKey}
+						nodeTypeMetadata={node.typeMetadata}
+						nodeKind={node.nodeKind}
+						itemSize={itemSize}
+					/>
 				</TreeItemLayout>
 
 				<Tree aria-label="Sub-Tree">

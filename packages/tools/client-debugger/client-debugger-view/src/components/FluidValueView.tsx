@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeItemLayout } from "@fluentui/react-components/unstable";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
-
+import { RenderLabel } from "./RenderLabel";
 /**
  * {@link ValueView} input props.
  */
@@ -22,7 +20,10 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { nodeKey, node } = props;
 
 	return (
-		// style={{ marginLeft: "65px" }}
-		<TreeItemLayout>{`${nodeKey}(${node.typeMetadata}): ${String(node.value)}`}</TreeItemLayout>
+		<RenderLabel
+			nodeKey={nodeKey}
+			nodeTypeMetadata={node.typeMetadata}
+			nodeValue={node.value}
+		/>
 	);
 }

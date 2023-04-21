@@ -4,8 +4,9 @@
  */
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules
-import { TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
+import { TreeItem } from "@fluentui/react-components/unstable";
 import { ValueNodeBase } from "@fluid-tools/client-debugger";
+import { RenderLabel } from "./RenderLabel";
 
 /**
  * {@link ValueView} input props.
@@ -23,9 +24,11 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 
 	return (
 		<TreeItem>
-			<TreeItemLayout>{`${nodeKey}(${node.typeMetadata}): ${String(
-				node.value,
-			)}`}</TreeItemLayout>
+			<RenderLabel
+				nodeKey={nodeKey}
+				nodeTypeMetadata={node.typeMetadata}
+				nodeValue={node.value}
+			/>
 		</TreeItem>
 	);
 }
