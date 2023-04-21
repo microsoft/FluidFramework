@@ -2,12 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { assert } from '@fluidframework/common-utils';
 import { isDetachedSequenceId } from './Identifiers';
 import type { Definition, DetachedSequenceId, InternedStringId, OpSpaceNodeId, TraitLabel } from './Identifiers';
 import type { StringInterner } from './StringInterner';
 import type { CompressedTraits, CompressedPlaceholderTree, PlaceholderTree, Payload } from './persisted-types';
 import type { ContextualizedNodeIdNormalizer } from './NodeIdUtilities';
-import { assert, fail, Mutable } from './Common';
+import { fail, Mutable } from './Common';
 
 /**
  * Compresses a given {@link PlaceholderTree} into a more compact serializable format.
