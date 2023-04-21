@@ -129,12 +129,12 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 		const container3 = await loadContainer(summaryVersion3);
 		const defaultDatastore3 = await requestFluidObject<ITestDataObject>(container3, "default");
 		const handle3 = defaultDatastore3._root.get<IFluidHandle<ITestDataObject>>("handle");
-		assert(handle3 !== undefined, "Should be able to retrieve stored datastore fluid handle");
+		assert(handle3 !== undefined, "Should be able to retrieve stored datastore Fluid handle");
 
 		// Realize the datastore and root dds
 		const dataObject3 = await handle3.get();
 		const ddsHandle3 = dataObject3._root.get<IFluidHandle<ISharedMap>>("handle");
-		assert(ddsHandle3 !== undefined, "Should be able to retrieve stored dds fluid handle");
+		assert(ddsHandle3 !== undefined, "Should be able to retrieve stored dds Fluid handle");
 		// Realize the dds and verify it acts as expected
 		const dds3 = await ddsHandle3.get();
 		assert(dds3.get("a") === "op", "DDS state should be consistent across clients");
