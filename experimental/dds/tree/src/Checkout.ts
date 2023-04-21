@@ -172,9 +172,10 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 		const { currentEdit } = this;
 		assert(currentEdit !== undefined, 0x601 /* An edit is not open. */);
 		this.currentEdit = undefined;
-		if (currentEdit.failure !== undefined) {
-			fail('Cannot close a transaction that has already failed. Use abortEdit instead.');
-		}
+		assert(
+			currentEdit.failure === undefined,
+			0x66d /* Cannot close a transaction that has already failed. Use abortEdit instead. */
+		);
 
 		const editingResult = currentEdit.close();
 		this.validateChangesApplied(editingResult);

@@ -1288,14 +1288,10 @@ export const shortCodeMap = {
 	"0x660": "",
 	"0x661": "unexpected detached ID",
 	"0x662": "unexpected detached ID",
-	"0x663": "Test error.",
-	"0x664": "Test error.",
-	"0x665": "Test error.",
-	"0x666": "Must allocate a non-zero number of IDs",
-	"0x667": "Test infra gave wrong originating client to TestIdData",
 	"0x668": "Version numbers should follow semantic versioning.",
 	"0x669": "tree must be a new SharedTree",
 	"0x66a": "Undo is not yet supported during transactions",
 	"0x66b": "Undo is not yet supported during transactions",
-	"0x66c": "A modify mark must have length equal to one"
+	"0x66c": "A modify mark must have length equal to one",
+	"0x66d": "Cannot close a transaction that has already failed. Use abortEdit instead."
 };
