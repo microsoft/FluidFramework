@@ -21,6 +21,7 @@ document.body.style.margin = "0px";
 const container = document.createElement("debugger");
 container.style.position = "absolute";
 container.style.height = "100%";
+container.style.width = "100%";
 document.body.append(container);
 
 BackgroundConnection.Initialize()
