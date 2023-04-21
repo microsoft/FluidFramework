@@ -282,7 +282,7 @@ async function runnerProcess(
 			);
 		} finally {
 			if (container?.closed === false) {
-				container?.dispose();
+				container?.close();
 			}
 			metricsCleanup();
 		}
@@ -390,7 +390,7 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.dispose();
+								container.close();
 							}
 						}, leaveTime);
 					}
