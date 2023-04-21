@@ -15,15 +15,19 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	createSummarizer,
+	summarizeNow,
 	waitForContainerConnection,
+	createSummarizerWithTestConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
 import { SharedCell } from "@fluidframework/cell";
 import { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 import { SharedObjectCore } from "@fluidframework/shared-object-base";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainer } from "@fluidframework/container-definitions";
+import { Loader } from "@fluidframework/container-loader";
 
 class TestDataObject extends DataObject {
 	public get _root() {
@@ -549,5 +553,209 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		);
 
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
+	});
+});
+
+describeNoCompat("IdCompressor in detached container", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	let request: IRequest;
+
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+		request = provider.driver.createCreateNewRequest(provider.documentId);
+	});
+
+	it("Compressors sync after detached container attaches and sends an op", async () => {
+		const testConfig: ITestContainerConfig = {
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			registry: [["sharedCell", SharedCell.getFactory()]],
+			runtimeOptions: {
+				enableRuntimeIdCompressor: true,
+			},
+		};
+		const loader = provider.makeTestLoader(testConfig);
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+
+		// Get the root dataStore from the detached container.
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "/");
+		const testChannel1 = await dataStore.getSharedObject<SharedCell>("sharedCell");
+
+		// Generate an Id before attaching the container
+		(testChannel1 as any).runtime.idCompressor.generateCompressedId();
+		// Attach the container. The generated Id won't be synced until another op
+		// is sent after attaching becuase most DDSs don't send ops until they are attached.
+		await container.attach(request);
+
+		// Create another container to test sync
+		const url: any = await container.getAbsoluteUrl("");
+		const loader2 = provider.makeTestLoader(testConfig) as Loader;
+		const container2 = await loader2.resolve({ url });
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "/");
+		const testChannel2 = await dataStore2.getSharedObject<SharedCell>("sharedCell");
+		// Generate an Id in the second attached container and send an op to send the Ids
+		(testChannel2 as any).runtime.idCompressor.generateCompressedId();
+		testChannel2.set("value");
+
+		await provider.ensureSynchronized();
+
+		// Send an op in the first container to get its Ids sent
+		testChannel1.set("value2");
+
+		await provider.ensureSynchronized();
+
+		// Compressor from second container will get the first 512 Ids (0-511)
+		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
+		// Compressor from first container gets second cluster starting at 512 after sending an op
+		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 512);
+	});
+});
+
+describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	const enabledConfig: ITestContainerConfig = {
+		runtimeOptions: { enableRuntimeIdCompressor: true },
+	};
+
+	const createContainer = async (config?: ITestContainerConfig): Promise<IContainer> =>
+		provider.makeTestContainer(config);
+
+	beforeEach(async () => {
+		provider = getTestObjectProvider();
+	});
+
+	it("Summary includes IdCompressor when enabled", async () => {
+		const container = await createContainer(enabledConfig);
+		const { summarizer } = await createSummarizerWithTestConfig(
+			provider,
+			container,
+			enabledConfig,
+		);
+		const { summaryTree } = await summarizeNow(summarizer);
+
+		assert(
+			summaryTree.tree[".idCompressor"] !== undefined,
+			"IdCompressor should be present in summary",
+		);
+	});
+
+	it("Summary does not include IdCompressor when disabled", async () => {
+		const container = await createContainer();
+		const { summarizer } = await createSummarizer(provider, container);
+		const { summaryTree } = await summarizeNow(summarizer);
+
+		assert(
+			summaryTree.tree[".idCompressor"] === undefined,
+			"IdCompressor should not be present in summary when not enabled",
+		);
+	});
+
+	it("Shouldn't include unack'd local ids in summary", async () => {
+		const container = await createContainer(enabledConfig);
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
+
+		const { summarizer } = await createSummarizerWithTestConfig(
+			provider,
+			container,
+			enabledConfig,
+		);
+
+		assert(idCompressor !== undefined, "IdCompressor should be present");
+		idCompressor.generateCompressedId();
+
+		await provider.ensureSynchronized();
+
+		const { summaryTree } = await summarizeNow(summarizer);
+
+		const compressorSummary = summaryTree.tree[".idCompressor"];
+		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
+		const summaryAsObj = JSON.parse((compressorSummary as any).content);
+		assert(
+			summaryAsObj.sessions.length === 0,
+			"Shouldn't have any local sessions as all ids are unack'd",
+		);
+		assert(
+			summaryAsObj.clusters.length === 0,
+			"Shouldn't have any local clusters as all ids are unack'd",
+		);
+	});
+
+	it("Includes ack'd ids in summary", async () => {
+		const container = await createContainer(enabledConfig);
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
+
+		const { summarizer } = await createSummarizerWithTestConfig(
+			provider,
+			container,
+			enabledConfig,
+		);
+
+		assert(idCompressor !== undefined, "IdCompressor should be present");
+
+		idCompressor.generateCompressedId();
+		defaultDataStore._root.set("key", "value");
+
+		await provider.ensureSynchronized();
+
+		const { summaryTree } = await summarizeNow(summarizer);
+
+		const compressorSummary = summaryTree.tree[".idCompressor"];
+		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
+		const summaryAsObj = JSON.parse((compressorSummary as any).content);
+		assert(
+			summaryAsObj.sessions.length === 1,
+			"Should have a local session as all ids are ack'd",
+		);
+		assert(
+			summaryAsObj.clusters.length === 1,
+			"Should have a local cluster as all ids are ack'd",
+		);
+	});
+
+	it("Newly connected container synchronizes from summary", async () => {
+		const container = await createContainer(enabledConfig);
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
+
+		const { summarizer: summarizer1 } = await createSummarizerWithTestConfig(
+			provider,
+			container,
+			enabledConfig,
+		);
+
+		assert(idCompressor !== undefined, "IdCompressor should be present");
+		idCompressor.generateCompressedId();
+		defaultDataStore._root.set("key", "value");
+		await provider.ensureSynchronized();
+
+		const { summaryTree: summaryTree1, summaryVersion: summaryVersion1 } = await summarizeNow(
+			summarizer1,
+		);
+
+		const compressorSummary = summaryTree1.tree[".idCompressor"];
+		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
+		const summaryAsObj = JSON.parse((compressorSummary as any).content);
+		assert(
+			summaryAsObj.sessions.length === 1,
+			"Should have a local session as all ids are ack'd",
+		);
+		assert(
+			summaryAsObj.clusters.length === 1,
+			"Should have a local cluster as all ids are ack'd",
+		);
+
+		const container2 = await provider.loadTestContainer(enabledConfig);
+		const container2DataStore = await requestFluidObject<ITestDataObject>(
+			container2,
+			"default",
+		);
+		const container2IdCompressor: IIdCompressor = (container2DataStore._root as any).runtime
+			.idCompressor;
+		assert(container2IdCompressor !== undefined, "Second IdCompressor should be present");
+		assert(
+			(container2IdCompressor as any).sessions.get(idCompressor.localSessionId) !== undefined,
+			"Should have the other compressor's session from summary",
+		);
 	});
 });

@@ -898,47 +898,4 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 			"Stored handle should match!!",
 		);
 	});
-
-	it("Compressors sync after detached container attaches and sends an op", async () => {
-		provider.reset();
-		const testConfig = {
-			...testContainerConfig,
-			runtimeOptions: {
-				...testContainerConfig.runtimeOptions,
-				enableRuntimeIdCompressor: true,
-			},
-		};
-		loader = provider.makeTestLoader(testConfig) as Loader;
-		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
-
-		// Get the root dataStore from the detached container.
-		const dataStore = await requestFluidObject<ITestFluidObject>(container, "/");
-		const testChannel1 = await dataStore.getSharedObject<SharedCell>(sharedCellId);
-
-		// Generate an Id before attaching the container
-		(testChannel1 as any).runtime.idCompressor.generateCompressedId();
-		// Attach the container. The generated Id won't be synced until another op
-		// is sent after attaching becuase most DDSs don't send ops until they are attached.
-		await container.attach(request);
-
-		// Create another container to test sync
-		const container2 = await provider.loadTestContainer(testConfig);
-		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "/");
-		const testChannel2 = await dataStore2.getSharedObject<SharedCell>(sharedCellId);
-		// Generate an Id in the second attached container and send an op to send the Ids
-		(testChannel2 as any).runtime.idCompressor.generateCompressedId();
-		testChannel2.set("value");
-
-		await provider.ensureSynchronized();
-
-		// Send an op in the first container to get its Ids sent
-		testChannel1.set("value2");
-
-		await provider.ensureSynchronized();
-
-		// Compressor from second container will get the first 512 Ids (0-511)
-		assert.strictEqual((testChannel2 as any).runtime.idCompressor.normalizeToOpSpace(-1), 0);
-		// Compressor from first container gets second cluster starting at 512 after sending an op
-		assert.strictEqual((testChannel1 as any).runtime.idCompressor.normalizeToOpSpace(-1), 512);
-	});
 });
