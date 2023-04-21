@@ -73,7 +73,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 
 			const { tabId } = (message as DevToolsInitMessage).data;
 
-			console.log(formatBackgroundScriptMessageForLogging(`Connecting to tab: ${tabId}.`));
+			console.log(formatBackgroundScriptMessageForLogging(`Connecting to tab: ${tabId}...`));
 
 			// Wait until the tab is loaded.
 			browser.tabs.get(tabId).then(
@@ -97,10 +97,12 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 							if (isDebuggerMessage(tabMessage)) {
 								relayMessageToPort(
 									tabMessage,
-									"CONTENT_SCRIPT",
+									"Content Script",
 									devtoolsPort,
 									backgroundScriptMessageLoggingOptions,
 								);
+							} else {
+								console.log("BACKGROUND: Skipping unrecognized message.");
 							}
 						},
 					);
@@ -163,7 +165,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 			} else {
 				relayMessageToPort(
 					message,
-					"Background Script",
+					"Devtools Script",
 					tabConnection,
 					backgroundScriptMessageLoggingOptions,
 				);

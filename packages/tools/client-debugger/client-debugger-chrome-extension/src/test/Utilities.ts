@@ -65,6 +65,7 @@ export function stubPort(name: string): chrome.runtime.Port {
  * Create and return a newly stubbed global `browser` and `fetch` instances.
  * Gives each test it's own set of stubs for parallel execution.
  */
+// TODO: remove dom arg?
 export function stubGlobals(dom?: JSDOM): Globals {
 	const stubbedBrowser = {
 		browserAction: { onClicked: stubEvent() },
@@ -77,6 +78,8 @@ export function stubGlobals(dom?: JSDOM): Globals {
 			executeScript: (): void => {},
 			reload: (): void => {},
 			sendMessage: (): void => {},
+			connect: (): void => {},
+			get: async (): Promise<void> => {},
 		},
 		webNavigation: { onCommitted: stubEvent() },
 	} as unknown as typeof chrome;
