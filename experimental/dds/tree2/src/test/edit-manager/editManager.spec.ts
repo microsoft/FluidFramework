@@ -30,7 +30,6 @@ import {
 	asDelta,
 } from "../testChange";
 import { assertDeltaEqual } from "../utils";
-import { makeCodecFamily } from "../../codec";
 
 type TestEditManager = EditManager<TestChange, TestChangeFamily>;
 

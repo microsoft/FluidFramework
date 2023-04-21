@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { makeCodecFamily } from "../../codec";
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
 import { brand, fail } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
