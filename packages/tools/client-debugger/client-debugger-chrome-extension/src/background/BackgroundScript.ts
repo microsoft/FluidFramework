@@ -109,12 +109,6 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 									devtoolsPort,
 									backgroundScriptMessageLoggingOptions,
 								);
-							} else {
-								console.log(
-									formatBackgroundScriptMessageForLogging(
-										`Skipping unrecognized message from tab "${tabId}".`,
-									),
-								);
 							}
 						},
 					);
@@ -132,7 +126,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 
 					console.log(
 						formatBackgroundScriptMessageForLogging(
-							"Informing DevTools script that tab connection is ready.",
+							"Informing Devtools script that tab connection is ready.",
 						),
 					);
 
@@ -182,12 +176,6 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 						"Devtools Script",
 						tabConnection,
 						backgroundScriptMessageLoggingOptions,
-					);
-				} else {
-					console.debug(
-						formatBackgroundScriptMessageForLogging(
-							`Skipping unrecognized message from Devtools script.`,
-						),
 					);
 				}
 			}

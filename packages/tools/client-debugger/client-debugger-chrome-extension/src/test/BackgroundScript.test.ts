@@ -187,15 +187,11 @@ describe("Background script unit tests", () => {
 
 		// Update our port stubs to correctly send messages to the Background script
 		devtoolsPort.postMessage = (message): void => {
-			console.log("devtoolsPort postMessage called!");
 			sendMessageFromDevtools(message, devtoolsPort);
 		};
 		tabPort.postMessage = (message): void => {
-			console.log("tabPort postMessage called!");
 			sendMessageFromTab(message, tabPort);
 		};
-
-		console.log("TEST: Background script init complete!");
 
 		return {
 			devtoolsPort,
