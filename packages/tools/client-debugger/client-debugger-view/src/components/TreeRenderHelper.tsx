@@ -1,26 +1,14 @@
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import React from "react";
 import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-tools/client-debugger";
 // eslint-disable-next-line import/no-internal-modules
 import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
-import { Divider } from "@fluentui/react-components";
 import { TreeDataView } from "./TreeDataView";
 
 /**
  * TODO
  */
-export interface TreeRenderHelperProps extends HasContainerId {
-	/**
-	 * TODO
-	 */
-	containerId: string;
-
-	/**
-	 * TODO
-	 */
+export interface TreeRenderHelperProps extends HasContainerId, React.PropsWithChildren<unknown> {
+	nodeKey?: string | undefined;
 	node: VisualNode;
 }
 
@@ -28,37 +16,35 @@ export interface TreeRenderHelperProps extends HasContainerId {
  * TODO
  */
 export function TreeRenderHelper(props: TreeRenderHelperProps): React.ReactElement {
-	const { containerId, node } = props;
+	const { containerId, nodeKey, node } = props;
 
 	return node.nodeKind === VisualNodeKind.TreeNode ||
 		node.nodeKind === VisualNodeKind.FluidTreeNode ? (
-		<Tree>
+		<Tree aria-label="Root-Tree">
 			<TreeItem>
 				<TreeItemLayout>
-					<Divider>
-						{`: ${node.metadata !== undefined ? `${node.metadata}` : ""}
-				${node.nodeKind}`}
-					</Divider>
+					{`${nodeKey === undefined ? node.typeMetadata : nodeKey}(${
+						node.typeMetadata === undefined ? node.nodeKind : node.typeMetadata
+					})`}
 				</TreeItemLayout>
-				<Tree>
+
+				<Tree aria-label="Sub-Tree">
 					{Object.entries(node.children).map(([key, fluidObject], index) => {
 						return (
-							<TreeDataView key={key} containerId={containerId} node={fluidObject} />
+							<TreeDataView
+								key={key}
+								containerId={containerId}
+								nodeKey={key}
+								node={fluidObject}
+							/>
 						);
 					})}
 				</Tree>
 			</TreeItem>
 		</Tree>
 	) : (
-		<Tree>
-			<TreeItem>
-				<TreeItemLayout>
-					<Divider>{` ${node.metadata && node.metadata} : ${node.nodeKind}`} </Divider>
-				</TreeItemLayout>
-				<Tree>
-					<TreeDataView containerId={containerId} node={node} />
-				</Tree>
-			</TreeItem>
-		</Tree>
+		<TreeItem>
+			<TreeDataView containerId={containerId} nodeKey={nodeKey} node={node} />
+		</TreeItem>
 	);
 }

@@ -16,6 +16,7 @@ import { UnknownDataView } from "./UnknownDataView";
  * {@link TreeDataView} input props.
  */
 export interface TreeDataViewProps extends HasContainerId {
+	nodeKey?: string;
 	node: VisualNode;
 }
 
@@ -23,13 +24,14 @@ export interface TreeDataViewProps extends HasContainerId {
  * Displays visual summary trees for DDS_s within the container based on the current node's type.
  */
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
-	const { containerId, node } = props;
+	const { containerId, nodeKey, node } = props;
+
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.
 		 */
 		case VisualNodeKind.TreeNode:
-			return <TreeView containerId={containerId} node={node} />;
+			return <TreeView containerId={containerId} nodeKey={nodeKey} node={node} />;
 		/**
 		 * FluidObjectNode with children.
 		 */
@@ -39,12 +41,12 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * Node with primitive value.
 		 */
 		case VisualNodeKind.ValueNode:
-			return <ValueView node={node} />;
+			return <ValueView nodeKey={nodeKey} node={node} />;
 		/**
 		 * FluidObjectNode with primitive value.
 		 */
 		case VisualNodeKind.FluidValueNode:
-			return <FluidValueView node={node} />;
+			return <FluidValueView nodeKey={nodeKey} node={node} />;
 		/**
 		 * Unknown data type.
 		 */
@@ -59,7 +61,13 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * POST request to FluidClientDebugger.
 		 */
 		case VisualNodeKind.FluidHandleNode:
-			return <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId} />;
+			return (
+				<FluidHandleView
+					containerId={containerId}
+					fluidObjectId={node.fluidObjectId}
+					nodeKey={nodeKey}
+				/>
+			);
 		default:
 			{
 				console.log("DevTools hit unknown data. This is NOT expected.");

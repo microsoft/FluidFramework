@@ -4,14 +4,14 @@
  */
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules
-import { TreeItemLayout } from "@fluentui/react-components/unstable";
+import { TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 import { ValueNodeBase } from "@fluid-tools/client-debugger";
-import { ChevronCircleRight12Regular } from "@fluentui/react-icons";
 
 /**
  * {@link ValueView} input props.
  */
 export interface ValueViewProps {
+	nodeKey: string | undefined;
 	node: ValueNodeBase;
 }
 
@@ -19,14 +19,13 @@ export interface ValueViewProps {
  * Render data with type VisualNodeKind.ValueNode and render its children.
  */
 export function ValueView(props: ValueViewProps): React.ReactElement {
-	const { node } = props;
+	const { nodeKey, node } = props;
 
 	return (
-		<TreeItemLayout>
-			<ChevronCircleRight12Regular />
-			{`${node.metadata !== undefined ? `${node.metadata} : ` : ""}
-						${node.nodeKind}
-						${String(node.value)}`}{" "}
-		</TreeItemLayout>
+		<TreeItem>
+			<TreeItemLayout>{`${nodeKey}(${node.typeMetadata}): ${String(
+				node.value,
+			)}`}</TreeItemLayout>
+		</TreeItem>
 	);
 }

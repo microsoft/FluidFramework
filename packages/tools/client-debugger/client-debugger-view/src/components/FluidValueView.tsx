@@ -6,12 +6,12 @@ import React from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeItemLayout } from "@fluentui/react-components/unstable";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
-import { ChevronCircleRight12Regular } from "@fluentui/react-icons";
 
 /**
  * {@link ValueView} input props.
  */
 export interface FluidValueViewProps {
+	nodeKey: string | undefined;
 	node: FluidObjectValueNode;
 }
 
@@ -19,15 +19,10 @@ export interface FluidValueViewProps {
  * Render data with type VisualNodeKind.FluidValueNode and render its children.
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
-	const { node } = props;
+	const { nodeKey, node } = props;
 
 	return (
-		<TreeItemLayout>
-			<ChevronCircleRight12Regular />
-			{`${node.fluidObjectId}
-						${node.metadata !== undefined ? `${node.metadata} : ` : ""}
-						${node.nodeKind} : 
-						${String(node.value)}`}
-		</TreeItemLayout>
+		// style={{ marginLeft: "65px" }}
+		<TreeItemLayout>{`${nodeKey}(${node.typeMetadata}): ${String(node.value)}`}</TreeItemLayout>
 	);
 }

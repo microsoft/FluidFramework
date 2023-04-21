@@ -22,7 +22,7 @@ export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): Reac
 
 	return (
 		<TreeItemLayout>
-			Encountered an unrecognized kind of Fluid object: {node.nodeKind}, {node.fluidObjectId}
+			{`Encountered an unrecognized kind of Fluid object: ${node.nodeKind}`}
 		</TreeItemLayout>
 	);
 }
