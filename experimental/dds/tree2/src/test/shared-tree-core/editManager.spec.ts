@@ -329,7 +329,7 @@ describe("EditManager", () => {
 			assert.equal(manager.getTrunk().length, 1);
 		});
 
-		it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
+		it("Errors when a branch is registered multiple times", () => {
 			const manager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 				defaultChangeFamily,
 				"",
