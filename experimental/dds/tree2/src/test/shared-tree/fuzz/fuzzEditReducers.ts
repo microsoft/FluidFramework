@@ -8,15 +8,15 @@ import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { ITestTreeProvider, toJsonableTree } from "../../utils";
 import { ISharedTree } from "../../../shared-tree";
+import { FuzzTestState } from "./fuzzEditGenerators";
 import {
-	FuzzTransactionEdit,
-	FuzzTestState,
-	Operation,
+	FieldEdit,
 	FuzzFieldChange,
 	FuzzNodeEditChange,
+	FuzzTransactionType,
 	NodeEdit,
-	FieldEdit,
-} from "./fuzzEditGenerators";
+	Operation,
+} from "./operationTypes";
 
 export const fuzzReducer: {
 	[K in Operation["type"]]: AsyncReducer<Extract<Operation, { type: K }>, FuzzTestState>;
@@ -109,7 +109,7 @@ function applyNodeEdit(tree: ISharedTree, change: FuzzNodeEditChange): void {
 			fail("Invalid edit.");
 	}
 }
-function applyTransactionEdit(tree: ISharedTree, contents: FuzzTransactionEdit): void {
+function applyTransactionEdit(tree: ISharedTree, contents: FuzzTransactionType): void {
 	switch (contents.fuzzType) {
 		case "transactionStart": {
 			tree.transaction.start();

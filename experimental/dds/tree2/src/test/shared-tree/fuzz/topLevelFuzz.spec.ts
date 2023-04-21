@@ -14,11 +14,11 @@ import {
 	FuzzTestState,
 	makeOpGenerator,
 	makeOpGeneratorFromFilePath,
-	Operation,
 	EditGeneratorOpWeights,
 } from "./fuzzEditGenerators";
 import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers";
 import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { Operation } from "./operationTypes";
 
 export async function performFuzzActions(
 	generator: AsyncGenerator<Operation, FuzzTestState>,

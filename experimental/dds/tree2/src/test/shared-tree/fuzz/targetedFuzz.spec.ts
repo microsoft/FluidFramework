@@ -12,14 +12,10 @@ import {
 import { moveToDetachedField, compareUpPaths, rootFieldKeySymbol, UpPath } from "../../../core";
 import { brand } from "../../../util";
 import { TestTreeProvider, SummarizeType, initializeTestTree, validateTree } from "../../utils";
-import {
-	FuzzTestState,
-	makeOpGenerator,
-	Operation,
-	EditGeneratorOpWeights,
-} from "./fuzzEditGenerators";
+import { FuzzTestState, makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { Operation } from "./operationTypes";
 
 export async function performFuzzActionsAbort(
 	generator: AsyncGenerator<Operation, FuzzTestState>,

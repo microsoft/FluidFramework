@@ -12,7 +12,8 @@ import {
 import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
 import { FieldKinds, namedTreeSchema } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { FuzzTestState, Operation, EditGeneratorOpWeights } from "./fuzzEditGenerators";
+import { FuzzTestState, EditGeneratorOpWeights } from "./fuzzEditGenerators";
+import { Operation } from "./operationTypes";
 
 export function runFuzzBatch(
 	opGenerator: (
