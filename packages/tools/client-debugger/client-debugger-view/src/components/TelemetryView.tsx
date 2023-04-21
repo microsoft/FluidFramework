@@ -11,6 +11,7 @@ import {
 	StackItem,
 } from "@fluentui/react";
 import {
+	tokens,
 	ToggleButton,
 	DataGridBody,
 	DataGridRow,
@@ -18,7 +19,6 @@ import {
 	DataGridHeader,
 	DataGridHeaderCell,
 	DataGridCell,
-	TableCellLayout,
 	TableColumnDefinition,
 	createTableColumn,
 } from "@fluentui/react-components";
@@ -40,34 +40,18 @@ import { Waiting } from "./Waiting";
 function mapEventCategoryToBackgroundColor(eventCategory: string): string {
 	switch (eventCategory) {
 		case "generic":
-			return "#b8ebf2";
+			return tokens.colorPaletteGreenForeground1;
 		case "performance":
-			return "#4cf5a3";
+			return tokens.colorPaletteBlueForeground2;
 		case "error":
-			return "#f54c4f";
+			return tokens.colorPaletteRedBackground3;
 		default:
-			return "#d2d3d4";
+			return tokens.colorNeutralBackground1;
 	}
 }
 
 /**
- * Function to transform the results when JSON-serializing telemetry events for display.
- * We already extract some of their properties to a different place in the UI, so it seems best to remove them from the
- * rendered JSON payload for a bit less bloat there.
- * @param key - The name of the property that's being serialized.
- * @param value - The value of the property that's being serialized.
- * @returns An updated value for the given key, or 'undefined' to remove the key from the serialized output.
- */
-function jsonSerializationTransformer(key, value): unknown {
-	// Filter out properties we display somewhere else in the UI
-	if (key === "eventName" || key === "category") {
-		return undefined;
-	}
-	return value;
-}
-
-/**
- * Set the default dislayed size to 100.
+ * Set the default displayed size to 100.
  */
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -76,12 +60,10 @@ const DEFAULT_PAGE_SIZE = 100;
  */
 export function TelemetryView(): React.ReactElement {
 	const messageRelay = useMessageRelay();
-
 	const [telemetryEvents, setTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
 	>();
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
-
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to telemetry.
@@ -132,13 +114,9 @@ export function TelemetryView(): React.ReactElement {
 					return {
 						category: message.logContent.category,
 						eventName: message.logContent.eventName,
-						information: JSON.stringify(
-							message.logContent,
-							jsonSerializationTransformer,
-							"  ",
-						),
+						information: JSON.stringify(message.logContent, undefined, 2),
 					};
-			  })
+			  }, [])
 			: [];
 
 	const columns: TableColumnDefinition<Item>[] = [
@@ -148,7 +126,16 @@ export function TelemetryView(): React.ReactElement {
 				return <b>Category</b>;
 			},
 			renderCell: (message) => {
-				return <TableCellLayout>{message.category}</TableCellLayout>;
+				return (
+					<div
+						style={{
+							color: mapEventCategoryToBackgroundColor(message.category),
+							fontWeight: 700,
+						}}
+					>
+						{message.category}
+					</div>
+				);
 			},
 		}),
 		createTableColumn<Item>({
@@ -159,6 +146,7 @@ export function TelemetryView(): React.ReactElement {
 			renderCell: (message) => {
 				return (
 					<div style={{ maxWidth: 160, whiteSpace: "normal", wordWrap: "break-word" }}>
+						{/* Since all events start with "fluid:telemetry:", we trim the start of the name */}
 						{message.eventName.slice("fluid:telemetry:".length)}
 					</div>
 				);
@@ -211,7 +199,7 @@ export function TelemetryView(): React.ReactElement {
 						},
 						information: {
 							minWidth: 60,
-							idealWidth: 100,
+							idealWidth: 250,
 						},
 					}}
 				>
@@ -232,41 +220,6 @@ export function TelemetryView(): React.ReactElement {
 						)}
 					</DataGridBody>
 				</DataGrid>
-				<ul>
-					{telemetryEvents.slice(0, maxEventsToDisplay).map((message, index) => (
-						<div
-							key={index}
-							style={{
-								border: "1px solid black",
-								backgroundColor: mapEventCategoryToBackgroundColor(
-									message.logContent.category,
-								),
-								padding: "5px",
-							}}
-						>
-							<h4 style={{ margin: "0px" }}>
-								EventName: {message.logContent.eventName}
-								<br />
-								Category: {message.logContent.category}
-								<br />
-								ContainerId: {message.logContent.containerId} (
-								{message.logContent.clientType})
-								<br />
-								DocumentId: {message.logContent.docId}
-								<br />
-								Timestamp: {new Date(message.timestamp).toLocaleString()}
-								<br />
-							</h4>
-							<p>
-								{JSON.stringify(
-									message.logContent,
-									jsonSerializationTransformer,
-									"  ",
-								)}
-							</p>
-						</div>
-					))}
-				</ul>
 			</>
 		) : (
 			<Waiting label={"Waiting for Telemetry events"} />
