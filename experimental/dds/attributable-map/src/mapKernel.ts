@@ -755,8 +755,8 @@ export class AttributableMapKernel {
 					this.clearExceptPendingKeys();
 					return;
 				}
-				this.clearAllAttribution();
 				this.clearCore(local);
+				this.clearAllAttribution();
 			},
 			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
 				assert(
@@ -774,6 +774,7 @@ export class AttributableMapKernel {
 			applyStashedOp: (op: IMapClearOperation) => {
 				const copy = new Map<string, ILocalValue>(this.data);
 				this.clearCore(true);
+				this.clearAllAttribution();
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				return createClearLocalOpMetadata(op, this.getMapClearMessageId(), copy);
 			},
@@ -784,8 +785,8 @@ export class AttributableMapKernel {
 				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}
-				this.deleteAttribution(op.key);
 				this.deleteCore(op.key, local);
+				this.deleteAttribution(op.key);
 			},
 			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -793,6 +794,7 @@ export class AttributableMapKernel {
 			applyStashedOp: (op: IMapDeleteOperation) => {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const previousValue = this.deleteCore(op.key, true);
+				this.deleteAttribution(op.key);
 				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
 			},
 		});
@@ -804,9 +806,9 @@ export class AttributableMapKernel {
 				}
 
 				// needProcessKeyOperation should have returned false if local is true
-				this.setAttribution(op.key, message);
 				const context = this.makeLocal(op.key, op.value);
 				this.setCore(op.key, context, local);
+				this.setAttribution(op.key, message);
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -815,6 +817,7 @@ export class AttributableMapKernel {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const context = this.makeLocal(op.key, op.value);
 				const previousValue = this.setCore(op.key, context, true);
+				this.setAttribution(op.key);
 				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
 			},
 		});
