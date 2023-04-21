@@ -26,8 +26,6 @@ import {
 	SummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc";
-// eslint-disable-next-line import/no-internal-modules
-import { SummaryNode } from "../summary/summarizerNode/summarizerNodeUtils";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
