@@ -23,10 +23,15 @@ export abstract class RestWrapper {
 		url: string,
 		queryString?: Record<string, unknown>,
 		headers?: AxiosRequestHeaders,
-        additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>,
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
 	): Promise<T> {
 		const options: AxiosRequestConfig = {
-            ...additionalOptions,
+			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
 			maxBodyLength: this.maxBodyLength,
@@ -42,10 +47,15 @@ export abstract class RestWrapper {
 		requestBody: any,
 		queryString?: Record<string, unknown>,
 		headers?: AxiosRequestHeaders,
-        additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>,
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
 	): Promise<T> {
 		const options: AxiosRequestConfig = {
-            ...additionalOptions,
+			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
 			headers,
@@ -61,10 +71,15 @@ export abstract class RestWrapper {
 		url: string,
 		queryString?: Record<string, unknown>,
 		headers?: AxiosRequestHeaders,
-        additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>,
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
 	): Promise<T> {
 		const options: AxiosRequestConfig = {
-            ...additionalOptions,
+			...additionalOptions,
 			baseURL: this.baseurl,
 			headers,
 			maxBodyLength: this.maxBodyLength,
@@ -80,10 +95,15 @@ export abstract class RestWrapper {
 		requestBody: any,
 		queryString?: Record<string, unknown>,
 		headers?: AxiosRequestHeaders,
-        additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>,
+		additionalOptions?: Partial<
+			Omit<
+				AxiosRequestConfig,
+				"baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url"
+			>
+		>,
 	): Promise<T> {
 		const options: AxiosRequestConfig = {
-            ...additionalOptions,
+			...additionalOptions,
 			baseURL: this.baseurl,
 			data: requestBody,
 			headers,
