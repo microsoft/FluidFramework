@@ -196,6 +196,9 @@ export class EditManager<
 		this.sequenceMap.clear();
 		this.trunk = data.trunk.reduce((base, c) => {
 			const commit = mintCommit(base, c);
+			this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
+				this.changeFamily.intoDelta(commit.change),
+			);
 			this.sequenceMap.set(c.sequenceNumber, commit);
 			return commit;
 		}, this.trunkBase);
