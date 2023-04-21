@@ -92,7 +92,7 @@ describe("Summary benchmarks", () => {
 		});
 	});
 
-	describe.only("load speed of", () => {
+	describe("load speed of", () => {
 		function runSummaryBenchmark(
 			numberOfNodes: number,
 			shape: TreeShape,
