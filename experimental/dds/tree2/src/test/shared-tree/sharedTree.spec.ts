@@ -711,14 +711,108 @@ describe("SharedTree", () => {
 
 			// Insert nodes on both trees
 			insert(tree1, 1, "x");
+			validateTree(tree1, [
+				{
+					type: brand("TestValue"),
+					value: "A",
+				},
+				{
+					type: brand("TestValue"),
+					value: "x",
+				},
+				{
+					type: brand("TestValue"),
+					value: "B",
+				},
+				{
+					type: brand("TestValue"),
+					value: "C",
+				},
+				{
+					type: brand("TestValue"),
+					value: "D",
+				},
+			]);
+
 			insert(tree2, 3, "y");
+			validateTree(tree2, [
+				{
+					type: brand("TestValue"),
+					value: "A",
+				},
+				{
+					type: brand("TestValue"),
+					value: "B",
+				},
+				{
+					type: brand("TestValue"),
+					value: "C",
+				},
+
+				{
+					type: brand("TestValue"),
+					value: "y",
+				},
+				{
+					type: brand("TestValue"),
+					value: "D",
+				},
+			]);
+
+			// Syncing will cause both trees to rebase their local changes
+			await provider.ensureSynchronized();
 
 			// Undo node insertion on both trees
 			tree1.undo();
-			tree2.undo();
-			// The undo should be rebased to do nothing and this should not throw
-			await provider.ensureSynchronized();
+			validateTree(tree1, [
+				{
+					type: brand("TestValue"),
+					value: "A",
+				},
+				{
+					type: brand("TestValue"),
+					value: "B",
+				},
+				{
+					type: brand("TestValue"),
+					value: "C",
+				},
 
+				{
+					type: brand("TestValue"),
+					value: "y",
+				},
+				{
+					type: brand("TestValue"),
+					value: "D",
+				},
+			]);
+
+			tree2.undo();
+			validateTree(tree2, [
+				{
+					type: brand("TestValue"),
+					value: "A",
+				},
+				{
+					type: brand("TestValue"),
+					value: "x",
+				},
+				{
+					type: brand("TestValue"),
+					value: "B",
+				},
+				{
+					type: brand("TestValue"),
+					value: "C",
+				},
+				{
+					type: brand("TestValue"),
+					value: "D",
+				},
+			]);
+
+			await provider.ensureSynchronized();
 			validateTree(tree1, expectedState);
 			validateTree(tree2, expectedState);
 		});

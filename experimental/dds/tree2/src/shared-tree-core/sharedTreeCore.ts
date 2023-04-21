@@ -100,7 +100,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
 > {
 	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly undoRedoManager: UndoRedoManager<TChange, TEditor>;
+	public undoRedoManager: UndoRedoManager<TChange, TEditor>;
 	private readonly summarizables: readonly Summarizable[];
 
 	/**
@@ -162,8 +162,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = uuid();
-		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
 		this.undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily);
+		this.editManager = new EditManager(
+			changeFamily,
+			localSessionId,
+			this.undoRedoManager.clone(),
+			anchors,
+		);
 		this.summarizables = [
 			new EditManagerSummarizer(runtime, this.editManager),
 			...summarizables,
@@ -229,7 +234,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
+			this.editManager.addSequencedChange(
+				commit,
+				newRevision,
+				this.detachedRevision,
+				this.undoRedoManager,
+			);
 		}
 		const message: Message = {
 			revision: commit.revision,
@@ -315,11 +325,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	) {
 		const commit = parseCommit(message.contents, this.changeCodec);
 
-		const delta = this.editManager.addSequencedChange(
+		const [delta, undoRedoManager] = this.editManager.addSequencedChange(
 			commit,
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
+			this.undoRedoManager,
 		);
+		this.undoRedoManager = undoRedoManager;
 		const sequencedChange = this.editManager.getLastSequencedChange();
 		this.changeEvents.emit("newSequencedChange", sequencedChange);
 		this.changeEvents.emit("newLocalState", delta);
@@ -414,7 +426,18 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const [newHead] = rebaser.rebaseBranch(branch.getHead(), this.getLocalBranchHead());
 			const changes: GraphCommit<TChange>[] = [];
 			findAncestor([newHead, changes], (c) => c === this.getLocalBranchHead());
-			this.applyPathFromBranch(branch, changes);
+
+			this.undoRedoManager = this.undoRedoManager.createUndoRedoManagerAfterRebase(
+				this.getLocalBranchHead(),
+				newHead,
+				this.undoRedoManager,
+				branch.undoRedoManager,
+			);
+
+			// Apply the changes without tracking them in the undo redo manager
+			changes.forEach(({ change, revision }) => {
+				this.applyChange(change, revision, undefined, true);
+			});
 		}
 	}
 

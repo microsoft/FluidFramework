@@ -32,6 +32,7 @@ import {
 	TaggedChange,
 } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
+import { UndoRedoManager } from "../undo";
 
 export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
@@ -85,6 +86,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
+		private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, any>,
 		public readonly anchors?: AnchorSet,
 	) {
 		super("EditManager");
@@ -237,22 +239,24 @@ export class EditManager<
 		newCommit: Commit<TChangeset>,
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
-	): Delta.Root {
+		undoRedoManager: UndoRedoManager<TChangeset, any>,
+	): [Delta.Root, UndoRedoManager<TChangeset, any>] {
 		if (newCommit.sessionId === this.localSessionId) {
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
 			// `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
 			// change in the incoming commit.
 			const localPath = getPathFromBase(this.localBranch, this.trunk);
 			// Get the first revision in the local branch, and then remove it
-			const { change } =
+			const commit =
 				localPath.shift() ??
 				fail(
 					"Received a sequenced change from the local session despite having no local changes",
 				);
-			this.pushToTrunk(sequenceNumber, { ...newCommit, change });
+			this.trunkUndoRedoManager.trackCommit(commit);
+			this.pushToTrunk(sequenceNumber, { ...newCommit, change: commit.change });
 			// TODO: Can this be optimized by simply mutating the localPath parent pointers? Is it safe to do that?
 			this.localBranch = localPath.reduce(mintCommit, this.trunk);
-			return emptyDelta;
+			return [emptyDelta, undoRedoManager];
 		}
 
 		// Get the revision that the remote change is based on
@@ -286,7 +290,9 @@ export class EditManager<
 			});
 		}
 
-		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
+		const [newChange, rebasedUndoRedoManager] =
+			this.rebaseLocalBranchOverTrunk(undoRedoManager);
+		return [this.changeFamily.intoDelta(newChange), rebasedUndoRedoManager];
 	}
 
 	public addLocalChange(
@@ -368,6 +374,9 @@ export class EditManager<
 
 	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {
 		this.trunk = mintCommit(this.trunk, commit);
+		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
+			this.changeFamily.intoDelta(commit.change),
+		);
 		this.sequenceMap.set(sequenceNumber, this.trunk);
 	}
 
@@ -379,10 +388,19 @@ export class EditManager<
 		});
 	}
 
-	private rebaseLocalBranchOverTrunk(): TChangeset {
+	private rebaseLocalBranchOverTrunk(
+		undoRedoManager: UndoRedoManager<TChangeset, any>,
+	): [TChangeset, UndoRedoManager<TChangeset, any>] {
 		const [newLocalChanges, netChange] = this.rebaser.rebaseBranch(
 			this.localBranch,
 			this.trunk,
+		);
+
+		const rebasedUndoRedoManager = undoRedoManager.createUndoRedoManagerAfterRebase(
+			this.trunk,
+			newLocalChanges,
+			this.trunkUndoRedoManager,
+			undoRedoManager,
 		);
 
 		this.localBranch = newLocalChanges;
@@ -391,7 +409,7 @@ export class EditManager<
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
 		}
 
-		return netChange;
+		return [netChange, rebasedUndoRedoManager];
 	}
 }
 

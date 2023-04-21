@@ -18,6 +18,7 @@ import {
 	SeqNumber,
 	ChangeFamilyEditor,
 	makeAnonChange,
+	UndoRedoManager,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -29,7 +30,7 @@ import {
 	testChangeFamilyFactory,
 	asDelta,
 } from "../testChange";
-import { assertDeltaEqual } from "../utils";
+import { MockRepairDataStoreProvider, assertDeltaEqual } from "../utils";
 
 type TestEditManager = EditManager<TestChange, TestChangeFamily>;
 
@@ -46,6 +47,7 @@ function editManagerFactory(options: {
 	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
 		options.sessionId ?? localSessionId,
+		new UndoRedoManager(new MockRepairDataStoreProvider(), family),
 		anchors,
 	);
 	return { manager, anchors, family };
@@ -242,7 +244,8 @@ describe("EditManager", () => {
 		]);
 
 		it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
-			const { manager } = editManagerFactory({});
+			const { manager, family } = editManagerFactory({});
+			const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 			for (let i = 0; i < 10; ++i) {
 				manager.addSequencedChange(
 					{
@@ -252,6 +255,7 @@ describe("EditManager", () => {
 					},
 					brand(i),
 					brand(0),
+					undoRedoManager,
 				);
 			}
 			assert.equal(manager.getTrunk().length, 10);
@@ -268,8 +272,9 @@ describe("EditManager", () => {
 		});
 
 		it("Rebases anchors over sequenced changes", () => {
-			const { manager, anchors } = editManagerFactory({});
+			const { manager, anchors, family } = editManagerFactory({});
 			const change = TestChange.mint([], 1);
+			const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 			manager.addSequencedChange(
 				{
 					change,
@@ -278,6 +283,7 @@ describe("EditManager", () => {
 				},
 				brand(1),
 				brand(0),
+				undoRedoManager,
 			);
 			assert.deepEqual(anchors.rebases, [change]);
 			assert.deepEqual(anchors.intentions, change.intentions);
@@ -311,7 +317,7 @@ describe("EditManager", () => {
 		it("Updates local branch when loading from summary", () => {
 			// This regression tests ensures that the local branch is rebased to the head of the trunk
 			// when the trunk is modified by a summary load
-			const { manager } = editManagerFactory({});
+			const { manager, family } = editManagerFactory({});
 			const revision = mintRevisionTag();
 			manager.loadSummaryData({
 				trunk: [
@@ -324,7 +330,8 @@ describe("EditManager", () => {
 				],
 				branches: new Map(),
 			});
-			const delta = manager.addSequencedChange(
+			const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
+			const [delta] = manager.addSequencedChange(
 				{
 					change: TestChange.mint([0, 1], [2]),
 					revision: mintRevisionTag(),
@@ -332,6 +339,7 @@ describe("EditManager", () => {
 				},
 				brand(2),
 				brand(1),
+				undoRedoManager,
 			);
 			// TODO: This is probably not the best way to assert that the change was rebased properly
 			assert.equal(delta.get("root" as FieldKey)?.length, 1);
@@ -496,7 +504,7 @@ function runUnitTestScenario(
 	rebaser?: ChangeRebaser<TestChange>,
 ): void {
 	const run = () => {
-		const { manager, anchors } = editManagerFactory({ rebaser });
+		const { manager, anchors, family } = editManagerFactory({ rebaser });
 		/**
 		 * An `EditManager` that is kept up to date with all sequenced edits.
 		 * Used as a source of summary data to spin-up `joiners`.
@@ -510,14 +518,20 @@ function runUnitTestScenario(
 		 * Used to check that summarization works properly.
 		 */
 		const joiners: TestEditManager[] = [];
+		const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 		/**
 		 * Local helper to update all the state that is dependent on the sequencing of new edits.
 		 */
 		const recordSequencedEdit = (commit: TestCommit): void => {
 			trunk.push(commit.seqNumber);
-			summarizer.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
+			summarizer.addSequencedChange(
+				commit,
+				commit.seqNumber,
+				commit.refNumber,
+				undoRedoManager,
+			);
 			for (const j of joiners) {
-				j.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
+				j.addSequencedChange(commit, commit.seqNumber, commit.refNumber, undoRedoManager);
 			}
 		};
 		/**
@@ -586,11 +600,14 @@ function runUnitTestScenario(
 							"Invalid test scenario: acknowledged commit does not mach oldest local change",
 						);
 					}
-					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
-					assert.deepEqual(
-						manager.addSequencedChange(commit, commit.seqNumber, commit.refNumber),
-						emptyDelta,
+					const [delta] = manager.addSequencedChange(
+						commit,
+						commit.seqNumber,
+						commit.refNumber,
+						undoRedoManager,
 					);
+					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
+					assert.deepEqual(delta, emptyDelta);
 					localRef = seq;
 					recordSequencedEdit(commit);
 					break;
@@ -636,10 +653,13 @@ function runUnitTestScenario(
 						seq,
 						...localIntentions,
 					];
-					assert.deepEqual(
-						manager.addSequencedChange(commit, commit.seqNumber, commit.refNumber),
-						asDelta(expected),
+					const [actual] = manager.addSequencedChange(
+						commit,
+						commit.seqNumber,
+						commit.refNumber,
+						undoRedoManager,
 					);
+					assert.deepEqual(actual, asDelta(expected));
 					if (step.expectedDelta !== undefined) {
 						// Verify that the test case was annotated with the right expectations.
 						assert.deepEqual(step.expectedDelta, expected);

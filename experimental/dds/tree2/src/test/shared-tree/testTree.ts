@@ -23,6 +23,7 @@ import {
 	SessionId,
 	RevisionTag,
 	makeAnonChange,
+	UndoRedoManager,
 } from "../../core";
 import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
 import {
@@ -32,6 +33,7 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
+	ForestRepairDataStoreProvider,
 } from "../../feature-libraries";
 import { brand, JsonCompatible } from "../../util";
 
@@ -85,6 +87,7 @@ export class TestTree {
 	public readonly sessionId: string;
 	public readonly forest: IEditableForest;
 	public readonly editManager: EditManager<DefaultChangeset, DefaultChangeFamily>;
+	public undoRedoManager: UndoRedoManager<DefaultChangeset, DefaultEditBuilder>;
 	public readonly schemaPolicy: SchemaPolicy;
 
 	private refNumber: number = -1;
@@ -102,9 +105,17 @@ export class TestTree {
 		this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
 		this.sessionId = options.sessionId ?? uuid();
 		this.forest = forest;
+		this.undoRedoManager = new UndoRedoManager(
+			new ForestRepairDataStoreProvider(
+				this.forest,
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy),
+			),
+			defaultChangeFamily,
+		);
 		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 			defaultChangeFamily,
 			this.sessionId,
+			this.undoRedoManager.clone(),
 			forest.anchors,
 		);
 	}
@@ -173,8 +184,14 @@ export class TestTree {
 			return;
 		}
 		for (const edit of edits) {
-			const delta = this.editManager.addSequencedChange(edit, edit.seqNumber, edit.refNumber);
+			const [delta, undoRedoManager] = this.editManager.addSequencedChange(
+				edit,
+				edit.seqNumber,
+				edit.refNumber,
+				this.undoRedoManager,
+			);
 			this.forest.applyDelta(delta);
+			this.undoRedoManager = undoRedoManager;
 			this._remoteEditsApplied += 1;
 			this.refNumber = edit.seqNumber;
 		}
