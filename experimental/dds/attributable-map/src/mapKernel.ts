@@ -874,7 +874,10 @@ export class AttributableMapKernel {
 	 * @param localOpMetadata - Metadata from the previous submit
 	 */
 	private resubmitMapKeyMessage(op: IMapKeyOperation, localOpMetadata: MapLocalOpMetadata): void {
-		assert(isMapKeyLocalOpMetadata(localOpMetadata), 0x5f4 /* Invalid localOpMetadata in submit */);
+		assert(
+			isMapKeyLocalOpMetadata(localOpMetadata),
+			0x5f4 /* Invalid localOpMetadata in submit */,
+		);
 
 		// clear the old pending message id
 		const pendingMessageIds = this.pendingKeys.get(op.key);

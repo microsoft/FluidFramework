@@ -324,7 +324,10 @@ export class SessionIdNormalizer<TRangeObject> {
 			const [_, lastAlignedLocal] = this.getAlignmentOfLastRange(firstLocal, finalRanges);
 			unalignedLocalCount = lastAlignedLocal - lastLocal;
 		}
-		assert(unalignedLocalCount > 0, 0x65c /* Final ID block should not be registered without an existing local range. */);
+		assert(
+			unalignedLocalCount > 0,
+			0x65c /* Final ID block should not be registered without an existing local range. */
+		);
 		const lastFinal = (firstFinalInBlock + Math.min(unalignedLocalCount, count) - 1) as FinalCompressedId;
 		this.addFinalIds(firstFinalInBlock, lastFinal, rangeObject);
 	}

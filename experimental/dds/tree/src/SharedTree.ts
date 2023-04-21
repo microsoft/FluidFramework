@@ -1442,7 +1442,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 								break;
 							}
 							case WriteFormat.v0_1_1: {
-								assert(this.stashedIdCompressor !== null, 0x632 /* Stashed op applied after expected window */);
+								assert(
+									this.stashedIdCompressor !== null,
+									0x632 /* Stashed op applied after expected window */
+								);
 								if (this.stashedIdCompressor === undefined) {
 									// Use a temporary compressor that will help translate the stashed ops
 									this.stashedIdCompressor = IdCompressor.deserialize(

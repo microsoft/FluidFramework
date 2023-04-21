@@ -738,9 +738,15 @@ export class IdCompressor {
 			for (let i = 0; i < overrides.length; i++) {
 				const [overriddenLocal, override] = overrides[i];
 				// Note: recall that local IDs are negative
-				assert(i === 0 || overriddenLocal < overrides[i - 1][0], 0x64a /* Override IDs must be in sorted order. */);
+				assert(
+					i === 0 || overriddenLocal < overrides[i - 1][0],
+					0x64a /* Override IDs must be in sorted order. */
+				);
 				assert(overriddenLocal < normalizedLastFinalizedLocal, 0x64b /* Ranges finalized out of order. */);
-				assert(overriddenLocal >= newLastFinalizedLocal, 0x64c /* Malformed range: override ID ahead of range start. */);
+				assert(
+					overriddenLocal >= newLastFinalizedLocal,
+					0x64c /* Malformed range: override ID ahead of range start. */
+				);
 				let cluster: IdCluster;
 				let overriddenFinal: FinalCompressedId;
 				if (localIdPivot !== undefined && overriddenLocal <= localIdPivot) {
