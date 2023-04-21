@@ -63,7 +63,7 @@ function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeNoCompat.only("Runtime IdCompressor", (getTestObjectProvider) => {
+describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const factory = new DataObjectFactory(
 		"TestDataObject",
