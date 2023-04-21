@@ -53,7 +53,6 @@ const usageErrorMessage = "Empty file summary creation isn't supported in this d
 
 const containerCloseAndDisposeUsageErrors = [
 	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
-	{ eventName: "fluid:telemetry:Container:ContainerDispose", error: usageErrorMessage },
 ];
 const ContainerCloseUsageError: ExpectedEvents = {
 	routerlicious: containerCloseAndDisposeUsageErrors,
@@ -185,6 +184,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	it("attach sends ops with compression enabled", async function () {
+		// Tracked by AB#4130, the test run on the tinylicous driver is disabled temporarily to ensure normal operation of the build-client package pipeline
 		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
 			this.skip();
 		}

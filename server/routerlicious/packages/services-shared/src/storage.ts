@@ -134,10 +134,7 @@ export class DocumentStorage implements IDocumentStorage {
 			[BaseTelemetryProperties.documentId]: documentId,
 		};
 
-		const protocolTree = this.createInitialProtocolTree(
-			sequenceNumber,
-			values,
-		);
+		const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
 		const fullTree = this.createFullTree(appTree, protocolTree);
 
 		const blobsShaCache = new Map<string, string>();
