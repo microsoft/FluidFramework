@@ -307,13 +307,6 @@ export class PermutationVector extends Client {
 		opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
 	) => {
-		const isLocal = opArgs.sequencedMessage === undefined;
-
-		// Notify the undo provider, if any is attached.
-		if (this.undo !== undefined && isLocal) {
-			this.undo.record(deltaArgs);
-		}
-
 		// Apply deltas in descending order to prevent positions from shifting.
 		const ranges = deltaArgs.deltaSegments
 			.map(({ segment }) => ({
@@ -321,6 +314,13 @@ export class PermutationVector extends Client {
 				position: this.getPosition(segment),
 			}))
 			.sort((left, right) => left.position - right.position);
+
+		const isLocal = opArgs.sequencedMessage === undefined;
+
+		// Notify the undo provider, if any is attached.
+		if (this.undo !== undefined && isLocal) {
+			this.undo.record(deltaArgs);
+		}
 
 		switch (deltaArgs.operation) {
 			case MergeTreeDeltaType.INSERT:

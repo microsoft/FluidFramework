@@ -376,8 +376,6 @@ export class SharedMatrix<T = any>
 		const inserted = this.rows.getContainingSegment(pos).segment as PermutationSegment;
 		this.submitRowMessage(op);
 
-		// Transfer handles and undo/redo tracking groups from the original segment to the
-		// newly inserted segment.
 		if (original.start !== inserted.start) {
 			inserted.start = original.start;
 		}
@@ -417,8 +415,6 @@ export class SharedMatrix<T = any>
 		const inserted = this.cols.getContainingSegment(pos).segment as PermutationSegment;
 		this.submitColMessage(op);
 
-		// Transfer handles and undo/redo tracking groups from the original segment to the
-		// newly inserted segment.
 		if (original.start !== inserted.start) {
 			inserted.start = original.start;
 		}
