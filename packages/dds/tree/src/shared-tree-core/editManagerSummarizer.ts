@@ -15,6 +15,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
+import { IMultiFormatCodec } from "../codec";
 import { JsonCompatibleReadOnly, mapIterable } from "../util";
 import {
 	cachedValue,
@@ -27,7 +28,6 @@ import {
 	SessionId,
 	SummaryBranch,
 	SequencedCommit,
-	ChangeEncoder,
 	ChangeFamilyEditor,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
@@ -39,6 +39,8 @@ const blobKey = "Blob";
 
 const stringKey = "String";
 
+const formatVersion = 0;
+
 /**
  * Provides methods for summarizing and loading an `EditManager`
  */
@@ -47,6 +49,12 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 
 	private readonly editDataBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
 
+	// Note: since there is only one format, this can just be cached on the class.
+	// With more write formats active, it may make sense to keep around the "usual" format codec
+	// (the one for the current persisted configuration) and resolve codecs for different versions
+	// as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
+	// and an op needs to be interpreted which isn't written with the current configuration).
+	private readonly changesetCodec: IMultiFormatCodec<TChangeset>;
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly editManager: EditManager<
@@ -54,11 +62,12 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
 	) {
+		this.changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
 		this.editDataBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.editManager);
 			const dataString = stringifySummary(
 				this.editManager.getSummaryData(),
-				this.editManager.changeFamily.encoder,
+				this.changesetCodec,
 			);
 			// For now we are not chunking the edit data, but still put it in a reusable blob:
 			return this.runtime.uploadBlob(IsoBuffer.from(dataString));
@@ -71,10 +80,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const dataString = stringifySummary(
-			this.editManager.getSummaryData(),
-			this.editManager.changeFamily.encoder,
-		);
+		const dataString = stringifySummary(this.editManager.getSummaryData(), this.changesetCodec);
 		return createSingleBlobSummary(stringKey, dataString);
 	}
 
@@ -126,7 +132,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		);
 
 		const dataString = bufferToString(schemaBuffer, "utf-8");
-		const data = parseSummary(dataString, this.editManager.changeFamily.encoder);
+		const data = parseSummary(dataString, this.changesetCodec);
 		this.editManager.loadSummaryData(data);
 	}
 }
@@ -140,18 +146,13 @@ interface ReadonlyJsonSummaryData {
 	readonly branches: readonly [SessionId, Readonly<SummaryBranch<JsonCompatibleReadOnly>>][];
 }
 
-export interface CommitEncoder<TChange, TCommit extends Commit<TChange>> {
-	readonly encode: (commit: TCommit) => SequencedCommit<JsonCompatibleReadOnly>;
-	readonly decode: (commit: SequencedCommit<JsonCompatibleReadOnly>) => SequencedCommit<TChange>;
-}
-
 export function parseSummary<TChangeset>(
 	summary: string,
-	encoder: ChangeEncoder<TChangeset>,
+	codec: IMultiFormatCodec<TChangeset>,
 ): SummaryData<TChangeset> {
 	const decodeCommit = <T extends Commit<JsonCompatibleReadOnly>>(commit: T) => ({
 		...commit,
-		change: encoder.decodeJson(0, commit.change),
+		change: codec.json.decode(commit.change),
 	});
 
 	const json: ReadonlyJsonSummaryData = JSON.parse(summary);
@@ -169,11 +170,11 @@ export function parseSummary<TChangeset>(
 
 export function stringifySummary<TChangeset>(
 	data: SummaryData<TChangeset>,
-	encoder: ChangeEncoder<TChangeset>,
+	codec: IMultiFormatCodec<TChangeset>,
 ): string {
 	const encodeCommit = <T extends Commit<TChangeset>>(commit: T) => ({
 		...commit,
-		change: encoder.encodeForJson(0, commit.change),
+		change: codec.json.encode(commit.change),
 	});
 
 	const json: ReadonlyJsonSummaryData = {

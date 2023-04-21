@@ -134,9 +134,26 @@ export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
 /**
  * The default representation for inserted content.
+ *
+ * TODO:
+ * Ownership and lifetime of data referenced by this cursor is unclear,
+ * so it is a poor abstraction for this use-case which needs to hold onto the data in a non-exclusive (readonly) way.
+ * Cursors can be one supported way to input data, but aren't a good storage format.
  * @alpha
  */
 export type ProtoNode = ITreeCursorSynchronous;
+
+/**
+ * The default representation a chunk (sub-sequence) of inserted content.
+ *
+ * TODO:
+ * See issue TODO with ProtoNode.
+ * Additionally, Cursors support sequences, so if using cursors, there are better ways to handle this than an array of cursors,
+ * like using a cursor over all the content (starting in fields mode).
+ * Long term something like TreeChunk should probably be used here.
+ * @alpha
+ */
+export type ProtoNodes = readonly ProtoNode[];
 
 /**
  * Represents a change being made to a part of the tree.

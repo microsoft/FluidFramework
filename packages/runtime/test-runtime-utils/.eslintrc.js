@@ -22,5 +22,11 @@ module.exports = {
 				"@typescript-eslint/comma-dangle": "off",
 			},
 		},
+		{
+			files: ["src/test/**"],
+			rules: {
+				"import/no-nodejs-modules": "off",
+			},
+		},
 	],
 };
