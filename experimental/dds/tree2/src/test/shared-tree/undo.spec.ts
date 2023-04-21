@@ -29,7 +29,7 @@ function makeTree(...json: string[]): ISharedTree {
 }
 
 describe("Undo", () => {
-	it("the insert of a node on the main branch from a fork", async () => {
+	it("the insert of a node on the main branch from a fork", () => {
 		const tree = makeTree("A");
 		const fork = tree.fork();
 
@@ -39,7 +39,7 @@ describe("Undo", () => {
 		expectJsonTree(tree, []);
 	});
 
-	it("the insert of a node on a fork", async () => {
+	it("the insert of a node on a fork", () => {
 		const tree = makeTree("A");
 		const fork = tree.fork();
 
@@ -53,7 +53,7 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A"]);
 	});
 
-	it("the delete of a node", async () => {
+	it("the delete of a node", () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const delAB = tree.fork();
 
@@ -71,7 +71,7 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	it("the set of a node", async () => {
+	it("the move of a node", () => {
 		const tree = makeTree("A", "B", "C", "D");
 
 		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
@@ -83,7 +83,7 @@ describe("Undo", () => {
 	});
 
 	// TODO: See bug 4104
-	it.skip("the set of a node on a fork", async () => {
+	it.skip("the move of a node on a fork", () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const fork = tree.fork();
 
@@ -102,8 +102,28 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
+	it("a move that has been rebased", () => {
+		const tree = makeTree("A", "B", "C", "D");
+		const moveB = tree.fork();
+
+		insert(tree, 1, "x");
+		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
+
+		const field = moveB.editor.sequenceField(undefined, rootFieldKeySymbol);
+		field.move(1, 1, 3);
+		expectJsonTree(moveB, ["A", "C", "D", "B"]);
+
+		moveB.rebaseOnto(tree);
+
+		expectJsonTree(moveB, ["A", "x", "C", "D", "B"]);
+
+		// Expect that undo on deleteB still undoes the deletion of B
+		moveB.undo();
+		expectJsonTree(moveB, ["A", "x", "B", "C", "D"]);
+	});
+
 	// TODO: unskip when undo can handle rebasing
-	it.skip("the insert of two separate nodes", async () => {
+	it.skip("the insert of two separate nodes", () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const addX = tree.fork();
 		const addY = tree.fork();

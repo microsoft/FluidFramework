@@ -71,7 +71,7 @@ describe("Branches", () => {
 		const tag1 = change(parent);
 		const tag2 = change(parent);
 		// Rebase the child onto the parent
-		child.rebaseOnto(parent.getHead());
+		child.rebaseOnto(parent.getHead(), parent.undoRedoManager);
 		assertBased(child, parent);
 		// Ensure that the changes are now present on the child
 		assertHistory(child, tag1, tag2);
@@ -85,7 +85,7 @@ describe("Branches", () => {
 		const tag1 = change(child);
 		const tag2 = change(child);
 		// Rebase the parent onto the child
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assertBased(parent, child);
 		// Ensure that the changes are now present on the parent
 		assertHistory(parent, tag1, tag2);
@@ -148,7 +148,7 @@ describe("Branches", () => {
 		assertHistory(parent, tagParent, tagChild, tagParent2);
 		// Apply a change to the child, then rebase the child onto the parent. The child should now be based on the parent's latest commit.
 		const tagChild2 = change(child);
-		child.rebaseOnto(parent.getHead());
+		child.rebaseOnto(parent.getHead(), parent.undoRedoManager);
 		assertBased(child, parent);
 		assertHistory(child, tagParent, tagChild, tagParent2, tagChild2);
 	});
@@ -175,7 +175,7 @@ describe("Branches", () => {
 		change(child);
 		assert.equal(changeEventCount, 1);
 		// Rebase the parent onto the child and ensure another change event is emitted
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assert.equal(changeEventCount, 2);
 	});
 
@@ -188,7 +188,7 @@ describe("Branches", () => {
 		change(parent);
 		assert.equal(changeEventCount, 1);
 		// Rebase the parent onto the child and ensure no change is emitted since the child has no new commits
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assert.equal(changeEventCount, 1);
 	});
 

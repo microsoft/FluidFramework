@@ -210,7 +210,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param branch - the head of the branch to rebase onto
 	 * @returns the net change to this branch
 	 */
-	public rebaseOnto(branch: GraphCommit<TChange>): TChange {
+	public rebaseOnto(
+		branch: GraphCommit<TChange>,
+		undoRedoManager: UndoRedoManager<TChange, TEditor>,
+	): TChange {
 		// Rebase this branch onto the given branch
 		const rebaseResult = this.rebaseBranch(this.head, branch);
 		if (rebaseResult === undefined) {
@@ -219,6 +222,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// The net change to this branch is provided by the `rebaseBranch` API
 		const [newHead, change] = rebaseResult;
+
+		this.undoRedoManager = this.undoRedoManager.createUndoRedoManagerAfterRebase(
+			branch,
+			newHead,
+			undoRedoManager,
+			this.undoRedoManager,
+		);
+
 		this.head = newHead;
 		return this.emitAndRebaseAnchors(change);
 	}
@@ -241,6 +252,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// Compute the net change to this branch
 		const [newHead] = rebaseResult;
+
+		this.undoRedoManager = this.undoRedoManager.createUndoRedoManagerAfterRebase(
+			this.head,
+			newHead,
+			this.undoRedoManager,
+			branch.undoRedoManager,
+		);
+
 		const changes: GraphCommit<TChange>[] = [];
 		findAncestor([newHead, changes], (c) => c === this.head);
 		this.head = newHead;
