@@ -366,11 +366,11 @@ export const StableRange = {
 			if (start.referenceTrait && end.referenceTrait) {
 				assert(
 					start.referenceTrait.parent === end.referenceTrait.parent,
-					'StableRange must be constructed with endpoints from the same trait'
+					0x5fe /* StableRange must be constructed with endpoints from the same trait */
 				);
 				assert(
 					start.referenceTrait.label === end.referenceTrait.label,
-					'StableRange must be constructed with endpoints from the same trait'
+					0x5ff /* StableRange must be constructed with endpoints from the same trait */
 				);
 			}
 			return { start, end };
