@@ -189,6 +189,7 @@ describe("Background script unit tests", () => {
 
 		// Update our port stubs to correctly send messages to the Background script
 		devtoolsPort.postMessage = (message): void => {
+			console.log("devtoolsPort postMessage called!");
 			// Only forward messages originating from the extension
 			// (otherwise the message will loop endlessly between the ports)
 			if ((message as ISourcedDevtoolsMessage).source === extensionMessageSource) {
@@ -196,6 +197,8 @@ describe("Background script unit tests", () => {
 			}
 		};
 		tabPort.postMessage = (message): void => {
+			console.log("tabPort postMessage called!");
+
 			// Only forward messages originating from the extension
 			// (otherwise the message will loop endlessly between the ports)
 			if ((message as ISourcedDevtoolsMessage).source === devtoolsMessageSource) {
@@ -223,8 +226,13 @@ describe("Background script unit tests", () => {
 
 		let wasMessageRelayedToDevtools = false;
 		devtoolsPort.onMessage.addListener((message) => {
+			console.log("devtoolsPort onMessage fired!");
 			expect(message).to.deep.equal(contentScriptMessage);
 			wasMessageRelayedToDevtools = true;
+		});
+
+		tabPort.onMessage.addListener((message) => {
+			console.log("tabPort onMessage fired!");
 		});
 
 		tabPort.postMessage(contentScriptMessage);
