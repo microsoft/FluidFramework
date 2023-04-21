@@ -224,6 +224,9 @@ async function runnerProcess(
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
+			// Retain old behavior of runtime being disposed on container close
+			container.once("closed", () => container?.dispose());
+
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
 				metricsCleanup = await setupOpsMetrics(
@@ -238,7 +241,6 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				container.once("closed", () => container?.dispose());
 				scheduleContainerClose(
 					container,
 					runConfig,
