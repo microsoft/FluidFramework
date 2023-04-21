@@ -403,35 +403,6 @@ function setupTelemetry(
 		});
 		stdErrLine++;
 	});
-
-	process.on("uncaughtException", (err, origin) => {
-		console.log(`Uncaught exception: ${err}\n` + `Exception origin: ${origin}`);
-		logger.send({
-			eventName: "Runner uncaught exception",
-			testHarnessEvent: true,
-			category: "error",
-			lineNo: stdErrLine,
-			runId,
-			username,
-			error: err,
-			origin,
-		});
-		throw new Error(`Uncaught exception: ${err}\n` + `Exception origin: ${origin}`);
-	});
-
-	process.on("unhandledRejection", (reason, promise) => {
-		console.log("Unhandled Rejection at:", promise, "reason:", reason);
-		logger.send({
-			eventName: "Runner unhandled rejection",
-			testHarnessEvent: true,
-			category: "error",
-			lineNo: stdErrLine,
-			runId,
-			username,
-			reason,
-		});
-		throw new Error(`Unhandled Rejection at: ${promise}. Reason: ${reason}`);
-	});
 }
 
 main().catch((error) => {
