@@ -28,7 +28,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { ConnectionState } from "@fluidframework/container-loader";
+import { ConnectionState, IPendingContainerState } from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
@@ -1093,6 +1093,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		container.connect();
 		await waitForContainerConnection(container.container, true);
 		const stashedChanges = container.container.closeAndGetPendingLocalState();
+		const parsedChanges = JSON.parse(stashedChanges) as IPendingContainerState;
+		const pendingBlobs = (parsedChanges.pendingRuntimeState as any).pendingAttachmentBlobs;
+		assert.strictEqual(Object.keys(pendingBlobs).length, 1, "no pending blob");
 
 		const container3 = await loadOffline(provider, { url }, stashedChanges);
 		const dataStore3 = await requestFluidObject<ITestFluidObject>(
