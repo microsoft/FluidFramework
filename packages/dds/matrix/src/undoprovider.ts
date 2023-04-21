@@ -109,7 +109,7 @@ export class MatrixUndoProvider<T> {
 				matrix._undoRemoveRows(pos, spec);
 			},
 			removeRange(start, end) {
-				matrix.removeRows(start, end);
+				matrix.removeRows(start, end - start);
 			},
 		});
 		cols.undo = new VectorUndoProvider(consumer, {
@@ -120,7 +120,7 @@ export class MatrixUndoProvider<T> {
 				matrix._undoRemoveCols(pos, spec);
 			},
 			removeRange(start, end) {
-				matrix.removeCols(start, end);
+				matrix.removeCols(start, end - start);
 			},
 		});
 	}
