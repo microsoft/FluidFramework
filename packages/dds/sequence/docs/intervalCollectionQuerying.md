@@ -15,7 +15,7 @@ The general strategy for achieving this goal splits into a few parts:
 
 1. Characterize `IntervalCollection` public APIs into operations and queries.
 1. Refactor `IntervalCollection`'s implementation to better compartmentalize its queries into indexing objects. Since it is already a light wrapper over LocalIntervalCollection (which is unexposed), this step doesn't need to affect the public API.
-1. Move query-based public APIs to a sub-object of IntervalCollection
+1. Move query-based public APIs to an object created using an IntervalCollection
 1. Make the set of query APIs injectable by application authors
 
 ## `IntervalCollection` API Overview
@@ -113,10 +113,27 @@ Each query API above requires some particular indexing of the set of intervals t
 The key idea is the interval index interface:
 
 ```typescript
+/**
+ * Collection of intervals.
+ *
+ * Implementers of this interface will typically implement additional APIs to support efficiently querying a collection
+ * of intervals in some manner, for example:
+ * - "find all intervals with start endpoint between these two points"
+ * - "find all intervals which overlap this range"
+ * etc.
+ */
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
-	/** @internal */
+	/**
+	 * Adds an interval to the index.
+	 * @remarks - Application code should never need to invoke this method on their index for production scenarios:
+	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
+	 */
 	add(interval: TInterval): void;
-	/** @internal */
+	/**
+	 * Removes an interval from the index.
+	 * @remarks - Application code should never need to invoke this method on their index for production scenarios:
+	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
+	 */
 	remove(interval: TInterval): void;
 }
 ```
@@ -187,26 +204,34 @@ Making the set of indexes customizable will involve changing the type of "indexe
 ## Making supported indexes customizable
 
 Finally, the supported set of indexes should be injected by the application author.
-If we want to do this while still providing a typesafe API for the application author, we'd need to make the type of "indexes" above generic.
-This gets pretty involved. Something like [this](https://www.typescriptlang.org/play?ts=4.7.4#code/JYOwLgpgTgZghgYwgAgJLmgNzgG3QEwgA8AeAFXUimxwD5kBvAWAChl3k598AKUKmgC5kFDNVwBKYZgD2wfAG5WHZFAgBbGZgh8xQkZSyTpcxawC+rVgHpryACIBXdeoCeyMK4AOEAM6tPH2QAZQgAR0cIECRDcRxkAF5kEGcAI2glFn5oeCRkAGEcYCiwRksssVyUVAAJCBwfKF8yqxZA6r1cAmIAMUQwGShXcliaeiSeBCKS4ULi8AAaZAALesbfYVq16F8JRPpRrpBCUlEBXFpW9rROvGPiACUIAHNgXzAhkdvx5CeuGRAOFcAEEoFA4MM1P9Ae4ANrvKCgZ5LQ53E59BADT5nIx0AC6lxYrCmcF8zQA8tooDg4F4vEjUd1Tqj6MB1F4cBoSs1Gfdmd9GMoOF5HKkighkG4AIqRIbAgAKqB4UmSaWgjFUEDAjigIGQAFYFMhyioRWLgBKuLw9gwTcLReLNZptMqWixyqwYI5omBgADkAgoZBKdAaXSGbcmZNpuBZjGwEtVg0dps6smmiqQ9TafSQM9eScSKEIlEYgLmGwOGptbrkhAAO7ILNh3P5yN85WZD0sBAA96a14I9xJWGwgDkWlDOaRY6WgYgcGDVJbEfOaOIeLxnGavZA72JfdKqU27ZOT0HH2Gxci0QgLMSA7el8yNjsZDgAGs-B5VgHD3BwEfIcPG8FA4FSScPBkH8UGuBhkEnbNwzzYRm2nPMC2IItwhvMs13ocwADoAlAm4zwgXsoHwHooBkdRzyfbFUSWURyIvIZkGISBjh5U9HheRjhhxOJaB+CsVFhABpZBQGQL9XBkGADD5BjgNJZBpK4qJ8GaFJ1HSKBkAAfmUtjBKkvFYQABi3YQQAgKk8WEJ4axAMhQK+Myhws2EAEYCS7VoSTJG413yGQcE5TE-RAL41xYplVMvTiiG4nTQtxRKBKHOLcVEwVK3YUATj8E9yMo6jaPo7LL1yuIEpUmqhh+b1CBgUAIHwbdOBAVxAqJFgvR9GLkGeLVUXCyKKN9AESCFdhWP49j3C0niMriLLluwktbxZVhaB4ebkBpdIcGEBEkQWI7iuIUrTKWwTWBVCaIqimbYuvUs71uBqvMvehxKrLUdT1VqIHa+yuvUgC+osILDz-Kbov9JIxrAF6kfengACJexcblsaWNRlokTJe0xmLCJuog-EIxCVzzQjpVlEFFVYIA) works in typescript 4.7 or later while retaining a relatively natural API, but is a bit of a mouthful.
-It's tempting to use index types, but they don't really behave in a typesafe fashion for this kind of problem.
+One option in this realm is to use a registration system at DDS creation time, but that gets [quite involved](https://www.typescriptlang.org/play?ts=4.7.4#code/JYOwLgpgTgZghgYwgAgJLmgNzgG3QEwgA8AeAFXUimxwD5kBvAWAChl3k598AKUKmgC5kFDNVwBKYZgD2wfAG5WHZFAgBbGZgh8xQkZSyTpcxawC+rVgHpryACIBXdeoCeyMK4AOEAM6tPH2QAZQgAR0cIECRDcRxkAF5kEGcAI2glFn5oeCRkAGEcYCiwRksssVyUVAAJCBwfKF8yqxZA6r1cAmIAMUQwGShXcliaeiSeBCKS4ULi8AAaZAALesbfYVq16F8JRPpRrpBCUlEBXFpW9rROvGPiACUIAHNgXzAhkdvx5CeuGRAOFcAEEoFA4MM1P9Ae4ANrvKCgZ5LQ53E59BADT5nIx0AC6lxYrCmcF8zQA8tooDg4F4vEjUd1Tqj6MB1F4cBoSs1Gfdmd9GMoOF5HKkighkG4AIqRIbAgAKqB4UmSaWgjFUEDAjigIGQAFYFMhyioRWLgBKuLw9gwTcLReLNZptMqWixyqwYI5omBgADkAgoZBKdAaXSGbcmZNpuBZjGwEtVg0dps6smmiqQ9TafSQM9eScSKEIlEYgLmGwOGptbrkhAAO7ILNh3P5yN85WZD0sBAA96a14I9xJWGwgDkWlDOaRY6WgYgcGDVJbEfOaOIeLxnGavZA72JfdKqU27ZOT0HH2Gxci0QgLMSA7el8yNjsZDgAGs-B5VgHD3BwEfIcPG8FA4FSScPBkH8UGuBhkEnbNwzzYRm2nPMC2IItwhvMs13ocwADoAlAm4zwgXsoHwHooBkdRzyfbFUSWURyIvIZkGISBjh5U9HheRjhhxOJaB+CsVFhABpZBQGQL9XBkGADD5BjgNJZBpK4qJ8GaFJ1HSKBkAAfmUtjBKkvFYQABi3YQQAgKk8WEJ4axAMhQK+Myhws2EAEYCS7VoSTJG413yGQcE5TE-RAL41xYplVMvTiiG4nTQtxRKBKHOLcVEwVK3YUATj8E9yMo6jaPo7LL1yuIEpUmqhh+b1CBgUAIHwbdOBAVxAqJFgvR9GLkGeLVUXCyKKN9AESCFdhWP49j3C0niMriLLluwktbxZVhaB4ebkBpdIcGEBEkQWI7iuIUrTKWwTWBVCaIqimbYuvUs71uBqvMvehxKrLUdT1VqIHa+yuvUgC+osILDz-Kbov9JIxrAF6kfengACJexcblsaWNRlokTJe0xmLCJuog-EIxCVzzQjpVlEFFVYIA).
 
-We could always opt for a less typesafe API but keep the same shape, dropping the generics and expecting consumers to cast to appropriate query-supporting interfaces.
+A simpler alternative which is also more flexible would involve punting the storage problem to the application.
+Specifically, IntervalCollection could support the following APIs:
 
-The other bit of making indexes customizable is determining where to allow application authors to inject that piece of customization.
-There are a couple natural options:
+```typescript
+export class IntervalCollection<TInterval extends ISerializableInterval> {
+	/**
+	 * Attaches an index to this collection.
+	 * All intervals which are part of this collection will be added to the index, and the index will automatically
+	 * be updated when this collection updates due to local or remote changes.
+	 *
+	 * @remarks - After attaching an index to an interval collection, applications should typically store this
+	 * index somewhere in their in-memory data model for future reference and querying.
+	 */
+	attachIndex(index: IntervalIndex<TInterval>): void;
+	/**
+	 * Detaches an index from this collection.
+	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
+	 * due to local or remote changes will no longer incur updates to the index.
+	 */
+	detachIndex(index: IntervalIndex<TInterval>): boolean;
+}
+```
 
-1. Configuration in `SharedStringFactory` scoped to all interval collections on that shared string
-2. An extra parameter to `getIntervalCollection`
-
-The first option is probably more convenient for most applications.
-It might be suboptimal for applications with multiple types of interval collections which have different needs.
-The second option would be better suited to such consumers.
-However, it raises some implementation questions, since applications can call `getIntervalCollection` multiple times for the same collection with a different set of indexes.
-I would lean toward going with the first option, though the issues with the second are overcomeable.
-
-In the typescript sample above, index factories are shown as taking a `Client` and `IIntervalHelpers` on construction.
-We may want to tweak this slightly, but it is all that's currently required.
+This would let the application easily pick-and-choose only the spatial querying functionality they needed.
+Conveniently, it also supports policies like disposing indexes which haven't been used in some time, or
+creating indexes that aggregate multiple interval collections.
 
 ### Supporting segoff-based queries
 
@@ -230,7 +255,6 @@ export interface IOverlappingSequenceIntervalsIndex
 ```
 
 The implementation could also easily share code with the generic overlapping intervals index.
-Since `SharedStringFactory` takes in `SequenceInterval` indexes, this should all typecheck nicely.
 
 ## Implementing `findIntervalsWithStartInRange`
 
