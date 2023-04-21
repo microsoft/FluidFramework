@@ -1095,7 +1095,11 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const stashedChanges = container.container.closeAndGetPendingLocalState();
 		const parsedChanges = JSON.parse(stashedChanges) as IPendingContainerState;
 		const pendingBlobs = (parsedChanges.pendingRuntimeState as any).pendingAttachmentBlobs;
+		// verify we have a blob in pending upload array
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1, "no pending blob");
+		const valuesArray = Object.values(pendingBlobs);
+		// verify that blob was uploaded
+		assert((valuesArray[0] as any).minTTLInSeconds);
 
 		const container3 = await loadOffline(provider, { url }, stashedChanges);
 		const dataStore3 = await requestFluidObject<ITestFluidObject>(
