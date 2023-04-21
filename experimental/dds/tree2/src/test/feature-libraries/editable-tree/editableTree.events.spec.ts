@@ -13,7 +13,6 @@ import {
 	AnchorNode,
 	IEditableForest,
 	PathVisitor,
-	isPathVisitor,
 	ProtoNodes,
 } from "../../../core";
 import { brand } from "../../../util";
@@ -113,7 +112,7 @@ describe("editable-tree: event subscription", () => {
 			return visitor;
 		});
 		const results: (void | PathVisitor)[] = emitter.emitAndCollect("subtreeChanging", node);
-		const visitors = results.filter((v): v is PathVisitor => isPathVisitor(v));
+		const visitors = results.filter((v): v is PathVisitor => v !== undefined);
 		const insertContent = [
 			singleTextCursor({
 				type: addressSchema.name,

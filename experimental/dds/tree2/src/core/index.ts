@@ -65,7 +65,6 @@ export {
 	rootFieldKeySymbol,
 	DeltaVisitor,
 	PathVisitor,
-	isPathVisitor,
 	SparseNode,
 	getDescendant,
 	compareUpPaths,

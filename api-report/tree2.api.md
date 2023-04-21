@@ -823,9 +823,6 @@ export interface ISharedTreeView extends AnchorLocator {
 // @alpha (undocumented)
 export function isNeverField(policy: FullSchemaPolicy, originalData: SchemaData, field: FieldSchema): boolean;
 
-// @alpha
-export function isPathVisitor(obj: any): obj is PathVisitor;
-
 // @alpha (undocumented)
 export function isPrimitive(schema: TreeSchema): boolean;
 

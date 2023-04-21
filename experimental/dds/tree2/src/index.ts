@@ -93,7 +93,6 @@ export {
 	FieldKindSpecifier,
 	AllowedUpdateType,
 	PathVisitor,
-	isPathVisitor,
 } from "./core";
 
 export {

@@ -9,7 +9,7 @@ import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../
 import { FieldKey, EmptyKey, Delta, visitDelta, DeltaVisitor } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";
-import { isPathVisitor, PathVisitor } from "./visithPath";
+import { PathVisitor } from "./visitPath";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -114,7 +114,7 @@ export interface AnchorEvents {
 
 	/**
 	 * Something in this tree is changing.
-	 * The event can return {@link PathVisitor} traversing the subtree or `void`
+	 * The event can optionally return a {@link PathVisitor} to traverse the subtree
 	 * Called on every parent (transitively) when a change is occurring.
 	 * Includes changes to this node itself.
 	 */
@@ -639,7 +639,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				assert(parent !== undefined, 0x5e9 /* Must be in a node to set its value */);
 				for (const visitors of pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
-						console.log("onSetValue", typeof pathVisitor);
 						pathVisitor.onSetValue(parent, value);
 					}
 				}
@@ -658,7 +657,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 						if (visitors.length > 0)
 							pathVisitors.set(
 								p,
-								visitors.filter((v): v is PathVisitor => isPathVisitor(v)),
+								visitors.filter((v): v is PathVisitor => v !== undefined),
 							);
 					}
 				});

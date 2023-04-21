@@ -39,22 +39,3 @@ export interface PathVisitor {
 	 */
 	onSetValue(path: UpPath, value: Value): void;
 }
-
-/**
- * Type guard function that checks if an object implements the `PathVisitor` interface.
- * @param obj - The object to be checked for `PathVisitor` interface implementation.
- * @returns A boolean value indicating whether the object implements the `PathVisitor` interface.
- * @alpha
- */
-export function isPathVisitor(obj: any): obj is PathVisitor {
-	return (
-		obj !== undefined &&
-		typeof obj === "object" &&
-		Object.prototype.hasOwnProperty.call(obj, "onDelete") &&
-		typeof obj.onDelete === "function" &&
-		Object.prototype.hasOwnProperty.call(obj, "onInsert") &&
-		typeof obj.onInsert === "function" &&
-		Object.prototype.hasOwnProperty.call(obj, "onSetValue") &&
-		typeof obj.onSetValue === "function"
-	);
-}
