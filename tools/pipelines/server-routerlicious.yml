@@ -31,9 +31,9 @@ parameters:
     - skip
     - force
 - name: buildToolsVersionToInstall
-  displayName: Fluid build tools version (default = installs version in repo)
+  displayName: Fluid build tools version ('repo' = installs version in repo)
   type: string
-  default: latest
+  default: "^0.15.0"
 
 trigger:
   branches:
