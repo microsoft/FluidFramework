@@ -40,7 +40,7 @@ abstract class BaseMockBlobStorage
 }
 
 class DedupeStorage extends BaseMockBlobStorage {
-	public minTTL: number = 24 * 60 * 60; // same as ODSP
+	public minTTL: number = MIN_TTL;
 
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = await gitHashFile(blob as any);
@@ -78,11 +78,8 @@ class MockRuntime
 			(blobPath: string) => this.isBlobDeleted(blobPath),
 			this,
 			undefined,
-			() => this.sendClose(),
+			() => (this.closed = true),
 		);
-	}
-	private sendClose(): void {
-		this.closed = true;
 	}
 
 	public gcTombstoneEnforcementAllowed: boolean = true;

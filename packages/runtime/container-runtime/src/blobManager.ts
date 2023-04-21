@@ -139,7 +139,7 @@ interface PendingBlob {
 }
 
 export interface IPendingBlobs {
-	[id: string]: { blob: string; uploadTime?: number; minTTLInSeconds: number };
+	[id: string]: { blob: string; uploadTime?: number; minTTLInSeconds?: number };
 }
 
 export interface IBlobManagerEvents {
@@ -216,7 +216,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		private readonly isBlobDeleted: (blobPath: string) => boolean,
 		private readonly runtime: IBlobManagerRuntime,
 		stashedBlobs: IPendingBlobs = {},
-		private readonly close: (error?: ICriticalContainerError) => void,
+		private readonly closeContainer: (error?: ICriticalContainerError) => void,
 	) {
 		super();
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
@@ -266,7 +266,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					expired,
 				});
 				if (expired) {
-					this.close(
+					// we want to avoid submitting ops with broken handles
+					this.closeContainer(
 						new GenericError(
 							"Trying to submit a BlobAttach for expired blob",
 							undefined,

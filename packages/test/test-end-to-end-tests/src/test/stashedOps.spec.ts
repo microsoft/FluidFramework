@@ -1121,7 +1121,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 	});
 
-
 	it("offline attach", async function () {
 		const newMapId = "newMap";
 		let id;
