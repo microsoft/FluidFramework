@@ -14,7 +14,7 @@ import {
 	ITestDriver,
 } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ILoadTestConfig } from "./testConfigFile";
+import { GcFailureExitCode, ILoadTestConfig } from "./testConfigFile";
 import {
 	createLogger,
 	createTestDriver,
@@ -289,11 +289,10 @@ function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
 			// Success
 			return { testcase: [{ _attr }] };
 		}
-		let failureReason = "";
-		// The returnCode is -2 for GC failures.
-		if (returnCode === -2) {
-			failureReason = "GC failure - check pipeline logs to find the error.";
-		}
+		const failureReason =
+			returnCode === GcFailureExitCode
+				? "GC failure - check pipeline logs to find the error."
+				: `Failure code ${returnCode}`;
 		return {
 			testcase: [
 				{ _attr },
@@ -403,6 +402,35 @@ function setupTelemetry(
 			error: data.split("\n")[0],
 		});
 		stdErrLine++;
+	});
+
+	process.on("uncaughtException", (err, origin) => {
+		console.log(`Uncaught exception: ${err}\n` + `Exception origin: ${origin}`);
+		logger.send({
+			eventName: "Runner uncaught exception",
+			testHarnessEvent: true,
+			category: "error",
+			lineNo: stdErrLine,
+			runId,
+			username,
+			error: err,
+			origin,
+		});
+		throw new Error(`Uncaught exception: ${err}\n` + `Exception origin: ${origin}`);
+	});
+
+	process.on("unhandledRejection", (reason, promise) => {
+		console.log("Unhandled Rejection at:", promise, "reason:", reason);
+		logger.send({
+			eventName: "Runner unhandled rejection",
+			testHarnessEvent: true,
+			category: "error",
+			lineNo: stdErrLine,
+			runId,
+			username,
+			reason,
+		});
+		throw new Error(`Unhandled Rejection at: ${promise}. Reason: ${reason}`);
 	});
 }
 

@@ -34,6 +34,7 @@ import {
 	generateLoaderOptions,
 	generateRuntimeOptions,
 } from "./optionsMatrix";
+import { GcFailureExitCode } from "./testConfigFile";
 
 function printStatus(runConfig: IRunConfig, message: string) {
 	if (runConfig.verbose) {
@@ -127,7 +128,7 @@ async function main() {
 		}
 	});
 
-	let result = -1;
+	let result = 255;
 	try {
 		result = await runnerProcess(
 			driver,
@@ -149,10 +150,7 @@ async function main() {
 		console.log(`xxxxxxxxx Runner failed. Error: ${JSON.stringify(e)}`);
 	} finally {
 		if (testFailed) {
-			result = -2;
-		}
-		if (result === -1) {
-			console.log(`xxxxxxxxx Test failed`);
+			result = GcFailureExitCode;
 		}
 		await safeExit(result, url, runId);
 	}
