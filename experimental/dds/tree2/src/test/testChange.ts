@@ -15,7 +15,7 @@ import {
 	FieldKey,
 	emptyDelta,
 } from "../core";
-import { IJsonCodec, makeValueCodec } from "../codec";
+import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
 import { deepFreeze } from "./utils";
 

@@ -12,6 +12,7 @@ import {
 	ITreeCursorSynchronous,
 	tagChange,
 	FieldSchema,
+	TreeTypeSet,
 } from "../core";
 import { brand, fail, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";

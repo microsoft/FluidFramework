@@ -38,7 +38,7 @@ function makeV0Codec<TNodeChange>(
 							} else {
 								jsonMarks.push(mark as Mark<TNodeChange> & JsonCompatible);
 							}
-		
+
 							break;
 						case "Revive": {
 							const content = mark.content.map(jsonableTreeFromCursor);

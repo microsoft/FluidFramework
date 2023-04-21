@@ -4822,7 +4822,7 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@microsoft/api-extractor': ^7.34.4
-      '@sinclair/typebox': ^0.25.21
+      '@sinclair/typebox': ^0.27.8
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
@@ -4860,7 +4860,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
-      '@sinclair/typebox': 0.25.21
+      '@sinclair/typebox': 0.27.8
       '@ungap/structured-clone': 0.3.4
       sorted-btree: 1.8.1
       uuid: 8.3.2
@@ -6684,18 +6684,9 @@ importers:
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-definitions': ^1.1.0
-      '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@microsoft/api-extractor': ^7.34.4
-      '@sinclair/typebox': ^0.25.21
-      '@types/diff': ^3.5.1
-      '@types/easy-table': ^0.0.32
+      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
+      '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0'
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       concurrently: ^7.6.0
@@ -6714,10 +6705,8 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
-      '@sinclair/typebox': 0.25.21
-      '@ungap/structured-clone': 0.3.4
-      sorted-btree: 1.8.1
-      uuid: 8.3.2
+      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
+      mocha: 10.2.0
     devDependencies:
       '@fluid-tools/build-cli': 0.15.0_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
@@ -24662,7 +24651,7 @@ packages:
   /axios/0.21.4_debug@4.3.2:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.2
+      follow-redirects: 1.15.2_debug@4.3.2
     transitivePeerDependencies:
       - debug
 
@@ -30138,6 +30127,17 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+
+  /follow-redirects/1.15.2_debug@4.3.2:
+    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dependencies:
+      debug: 4.3.2
 
   /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
