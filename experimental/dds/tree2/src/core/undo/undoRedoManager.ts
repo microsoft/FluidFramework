@@ -83,12 +83,52 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 */
 	public clone(
 		repairDataStoreProvider?: IRepairDataStoreProvider,
+		headUndoableCommit?: UndoableCommit<TChange>,
 	): UndoRedoManager<TChange, TEditor> {
 		return new UndoRedoManager(
 			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
 			this.changeFamily,
-			this.headUndoableCommit,
+			headUndoableCommit ?? this.headUndoableCommit,
 		);
+	}
+
+	/**
+	 * TODO Rename
+	 * @param baseHead - the head commit of the branch that was rebased onto.
+	 * @param rebasedHead - the head commit of the newly rebased branch.
+	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
+	 * @param originalUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased.
+	 */
+	public createUndoRedoManagerAfterRebase(
+		baseHead: GraphCommit<TChange>,
+		rebasedHead: GraphCommit<TChange>,
+		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
+		originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
+	): UndoRedoManager<TChange, TEditor> {
+		if (originalUndoRedoManager.headUndoable === undefined) {
+			// The branch that was rebased had no undoable edits so the new undo redo manager
+			// should be a copy of the undo redo manager from the base branch.
+			return baseUndoRedoManager.clone(this.repairDataStoreProvider);
+		}
+
+		const rebasedPath: GraphCommit<TChange>[] = [];
+		const ancestor = findCommonAncestor([baseHead], [rebasedHead, rebasedPath]);
+		assert(ancestor === baseHead, "The rebased head should be based off of the base branch.");
+
+		const markedCommits = markCommits(rebasedPath, originalUndoRedoManager.headUndoable);
+		// Create a complete clone of the base undo redo manager for tracking the rebased path
+		const undoRedoManager = baseUndoRedoManager.clone();
+
+		markedCommits.forEach(({ commit, isUndoable }) => {
+			if (isUndoable) {
+				undoRedoManager.trackCommit(commit, UndoRedoManagerCommitType.Undoable);
+			}
+			undoRedoManager.repairDataStoreProvider.applyDelta(
+				this.changeFamily.intoDelta(commit.change),
+			);
+		});
+
+		return this.clone(this.repairDataStoreProvider, undoRedoManager.headUndoable);
 	}
 }
 
@@ -141,41 +181,4 @@ export function markCommits<TChange>(
 			return markedCommit;
 		})
 		.reverse();
-}
-
-/**
- * 
- * @param baseHead - the head commit of the branch that was rebased onto.
- * @param rebasedHead - the head commit of the newly rebased branch.
- * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
- * @param undoRedoManagerToUpdate - the {@link UndoRedoManager} that should be cloned off of.
- * @param originalUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased.
- */
-export function createUndoRedoManagerAfterRebase<TChange, TEditor extends ChangeFamilyEditor>(
-	baseHead: GraphCommit<TChange>,
-	rebasedHead: GraphCommit<TChange>,
-	baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
-	originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
-	undoRedoManagerToUpdate: UndoRedoManager<TChange, TEditor>,
-): UndoRedoManager<TChange, TEditor> {
-	if (originalUndoRedoManager.headUndoable === undefined) {
-		// The branch that was rebased had no undoable edits so the new undo redo manager
-		// should be a copy of the undo redo manager from the base branch.
-		return baseUndoRedoManager.clone(undoRedoManagerToUpdate.repairDataStoreProvider);
-	}
-
-	const rebasedPath: GraphCommit<TChange>[] = [];
-	const ancestor = findCommonAncestor([baseHead], [rebasedHead, rebasedPath]);
-	assert(ancestor === baseHead, "The rebased head should be based off of the base branch.")
-
-	const markedCommits = markCommits(rebasedPath, originalUndoRedoManager.headUndoable);
-	// Create a complete clone of the base undo redo manager for tracking the rebased path
-	const undoRedoManager = baseUndoRedoManager.clone();
-
-	markedCommits.forEach(({ commit, isUndoable }) => {
-		if (isUndoable) {
-			undoRedoManager.trackCommit(commit, UndoRedoManagerCommitType.Undoable);
-		}
-		undoRedoManager.repairDataStoreProvider.applyDelta()
-	})
 }
