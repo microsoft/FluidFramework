@@ -128,36 +128,36 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		// Trigger Id submission
 		sharedMapContainer1.set("key", "value");
 
-		// Generate a new Id in a connected container
+		// Generate ids in a connected container but don't send them yet
 		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
-		// Trigger Id submission
-		sharedMapContainer2.set("key2", "value2");
+		const id3 = getIdCompressor(sharedMapContainer2).generateCompressedId();
 
 		// Reconnect the first container
 		// IdRange should be resubmitted and reflected in all compressors
 		container1.connect();
 		await waitForContainerConnection(container1);
-		const id3 = getIdCompressor(sharedMapContainer1).generateCompressedId();
-		sharedMapContainer1.set("key3", "value3");
+		await provider.ensureSynchronized();
 
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(id1),
+			0,
+			"First container should get first cluster and allocate Id 0",
+		);
+
+		// Send the id generated in the second, connected container
+		sharedMapContainer2.set("key2", "value2");
 		await provider.ensureSynchronized();
 
 		assert.strictEqual(
 			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id2),
-			0,
-			"Second container should get first cluster and allocate Id 0",
-		);
-
-		assert.strictEqual(
-			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(id1),
 			512,
-			"First container should get second cluster and allocate Id 512",
+			"Second container should get second cluster and allocate Id 512",
 		);
 
 		assert.strictEqual(
-			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(id3),
+			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id3),
 			513,
-			"Second Id from first container should get second cluster and allocate Id 513",
+			"Second Id from second container should get second cluster and allocate Id 513",
 		);
 	});
 
