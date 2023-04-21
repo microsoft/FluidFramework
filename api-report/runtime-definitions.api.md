@@ -190,6 +190,11 @@ export namespace IdCreationRange {
     export type Overrides = readonly [Override, ...Override[]];
 }
 
+// @public (undocumented)
+export type IdCreationRangeWithStashedState = IdCreationRange & {
+    stashedState: SerializedIdCompressorWithOngoingSession;
+};
+
 // @public
 export interface IEnvelope {
     address: string;
