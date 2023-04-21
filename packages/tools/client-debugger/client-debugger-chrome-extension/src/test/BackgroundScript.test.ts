@@ -9,7 +9,7 @@ import { createSandbox } from "sinon";
 
 import { delay } from "@fluidframework/common-utils";
 import {
-	// CloseContainer,
+	CloseContainer,
 	ISourcedDevtoolsMessage,
 	TelemetryEvent,
 	devtoolsMessageSource,
@@ -46,80 +46,80 @@ describe("Background script unit tests", () => {
 		globals = stubGlobals(); // Reset globals to ensure test-local modifications are cleared
 	});
 
-	// it("Registers `onConnect` listener on load", async () => {
-	// 	const { browser } = globals;
+	it("Registers `onConnect` listener on load", async () => {
+		const { browser } = globals;
 
-	// 	const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
-	// 	loadBackgroundScript(globals);
+		loadBackgroundScript(globals);
 
-	// 	const onConnectListener = await onConnectListenerPromise;
+		const onConnectListener = await onConnectListenerPromise;
 
-	// 	expect(typeof onConnectListener).to.equal("function");
-	// });
+		expect(typeof onConnectListener).to.equal("function");
+	});
 
-	// it("Injects connects to the Content script upon initialization from Devtools script.", async () => {
-	// 	const { browser } = globals;
-	// 	const tabId = 37;
+	it("Injects connects to the Content script upon initialization from Devtools script.", async () => {
+		const { browser } = globals;
+		const tabId = 37;
 
-	// 	const devtoolsPort = stubPort("devtools-port");
-	// 	const tabPort = stubPort("tab-port");
+		const devtoolsPort = stubPort("devtools-port");
+		const tabPort = stubPort("tab-port");
 
-	// 	// Stub out necessary `tabs` calls for the Background script
-	// 	let getCalled = false;
-	// 	browser.tabs.get = async (_tabId: number): Promise<chrome.tabs.Tab> => {
-	// 		getCalled = true;
-	// 		expect(_tabId).to.equal(tabId);
-	// 		return {
-	// 			id: tabId,
-	// 		} as unknown as chrome.tabs.Tab;
-	// 	};
+		// Stub out necessary `tabs` calls for the Background script
+		let getCalled = false;
+		browser.tabs.get = async (_tabId: number): Promise<chrome.tabs.Tab> => {
+			getCalled = true;
+			expect(_tabId).to.equal(tabId);
+			return {
+				id: tabId,
+			} as unknown as chrome.tabs.Tab;
+		};
 
-	// 	let connectCalled = false;
-	// 	browser.tabs.connect = (
-	// 		_tabId: number,
-	// 		connectionInfo: chrome.tabs.ConnectInfo | undefined,
-	// 	): Port => {
-	// 		connectCalled = true;
-	// 		expect(_tabId).to.equal(tabId);
-	// 		expect(connectionInfo).to.deep.equal({ name: "Content Script" });
-	// 		return tabPort;
-	// 	};
+		let connectCalled = false;
+		browser.tabs.connect = (
+			_tabId: number,
+			connectionInfo: chrome.tabs.ConnectInfo | undefined,
+		): Port => {
+			connectCalled = true;
+			expect(_tabId).to.equal(tabId);
+			expect(connectionInfo).to.deep.equal({ name: "Content Script" });
+			return tabPort;
+		};
 
-	// 	// Inject our stubbed `onConnect`
-	// 	const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
+		// Inject our stubbed `onConnect`
+		const onConnectListenerPromise = awaitListener(sandbox, browser.runtime.onConnect);
 
-	// 	// Load the background script (with stubbed `onConnect`)
-	// 	loadBackgroundScript(globals);
+		// Load the background script (with stubbed `onConnect`)
+		loadBackgroundScript(globals);
 
-	// 	// Wait for onConnect handler to be registered by background script
-	// 	const onConnectListener = await onConnectListenerPromise;
+		// Wait for onConnect handler to be registered by background script
+		const onConnectListener = await onConnectListenerPromise;
 
-	// 	// Inject our stubbed `onMessage` into the Port we will pass to the Background script
-	// 	const onMessageListenerPromise = awaitListener(sandbox, devtoolsPort.onMessage);
+		// Inject our stubbed `onMessage` into the Port we will pass to the Background script
+		const onMessageListenerPromise = awaitListener(sandbox, devtoolsPort.onMessage);
 
-	// 	// Simulate background script connection init from the devtools
-	// 	onConnectListener(devtoolsPort);
+		// Simulate background script connection init from the devtools
+		onConnectListener(devtoolsPort);
 
-	// 	const onMessageListener = await onMessageListenerPromise;
+		const onMessageListener = await onMessageListenerPromise;
 
-	// 	// Simulate sending the init message from the devtools panel to the background script
-	// 	const devtoolsInitMessage: DevToolsInitMessage = {
-	// 		type: "initialize-devtools",
-	// 		data: {
-	// 			tabId,
-	// 		},
-	// 		source: extensionMessageSource,
-	// 	};
-	// 	onMessageListener(devtoolsInitMessage, devtoolsPort);
+		// Simulate sending the init message from the devtools panel to the background script
+		const devtoolsInitMessage: DevToolsInitMessage = {
+			type: "initialize-devtools",
+			data: {
+				tabId,
+			},
+			source: extensionMessageSource,
+		};
+		onMessageListener(devtoolsInitMessage, devtoolsPort);
 
-	// 	expect(getCalled).to.be.true;
+		expect(getCalled).to.be.true;
 
-	// 	// The background script calls `connect` in the continuation of a promise, so we need to delay to ensure
-	// 	// that continuation runs before we check if the stub was called.
-	// 	await delay(500);
-	// 	expect(connectCalled).to.be.true;
-	// });
+		// The background script calls `connect` in the continuation of a promise, so we need to delay to ensure
+		// that continuation runs before we check if the stub was called.
+		await delay(500);
+		expect(connectCalled).to.be.true;
+	});
 
 	interface StubbedConnection {
 		devtoolsPort: Port;
@@ -214,50 +214,41 @@ describe("Background script unit tests", () => {
 		};
 	}
 
-	it("Forwards messages from Content script to Devtools script", async () => {
+	it("Forwards Devtools message from Tab to Devtools script", async () => {
 		const { browser } = globals;
 
 		const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
 
-		const contentScriptMessage = {
+		// Spy on the Devtools port's `postMessage` so we can later verify it was called.
+		const devtoolsPostMessageSpy = sandbox.spy(devtoolsPort, "postMessage");
+
+		// Post message from the Tab
+		const tabMessage = {
 			...TelemetryEvent.createMessage({} as unknown as TelemetryEvent.MessageData),
 			source: devtoolsMessageSource,
 		};
+		tabPort.postMessage(tabMessage);
 
-		let wasMessageRelayedToDevtools = false;
-		devtoolsPort.onMessage.addListener((message) => {
-			console.log("devtoolsPort onMessage fired!");
-			expect(message).to.deep.equal(contentScriptMessage);
-			wasMessageRelayedToDevtools = true;
-		});
-
-		tabPort.onMessage.addListener((message) => {
-			console.log("tabPort onMessage fired!");
-		});
-
-		tabPort.postMessage(contentScriptMessage);
-
-		expect(wasMessageRelayedToDevtools).to.be.true;
+		// Verify that the message was forwarded to the Devtools port
+		expect(devtoolsPostMessageSpy.calledWith(tabMessage)).to.be.true;
 	});
 
-	// it("Forwards messages from Content script to Devtools script", async () => {
-	// 	const { browser } = globals;
+	it("Forwards Devtools message from Devtools script to Tab", async () => {
+		const { browser } = globals;
 
-	// 	const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
+		const { devtoolsPort, tabPort } = await initializeBackgroundScript(browser);
 
-	// 	const contentScriptMessage = {
-	// 		...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
-	// 		source: extensionMessageSource,
-	// 	};
+		// Spy on the Devtools port's `postMessage` so we can later verify it was called.
+		const tabPostMessageSpy = sandbox.spy(tabPort, "postMessage");
 
-	// 	let wasMessageRelayedToTab = false;
-	// 	tabPort.onMessage.addListener((message) => {
-	// 		expect(message).to.deep.equal(contentScriptMessage);
-	// 		wasMessageRelayedToTab = true;
-	// 	});
+		// Post message from the Tab
+		const devtoolsMessage = {
+			...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
+			source: extensionMessageSource,
+		};
+		devtoolsPort.postMessage(devtoolsMessage);
 
-	// 	devtoolsPort.postMessage(contentScriptMessage);
-
-	// 	expect(wasMessageRelayedToTab).to.be.true;
-	// });
+		// Verify that the message was forwarded to the Devtools port
+		expect(tabPostMessageSpy.calledWith(devtoolsMessage)).to.be.true;
+	});
 });
