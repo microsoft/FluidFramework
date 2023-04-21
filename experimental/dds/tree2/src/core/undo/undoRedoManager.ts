@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
-import { GraphCommit, findCommonAncestor, tagChange } from "../rebase";
+import { GraphCommit, findAncestor, findCommonAncestor, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
@@ -58,8 +58,10 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
 	 * Inverts the head undo commit and returns the inverted change.
 	 * This change can then be applied and tracked.
+	 *
+	 * @param head - an optional commit to rebase the undo onto.
 	 */
-	public undo(): TChange | undefined {
+	public undo(head?: GraphCommit<TChange>): TChange | undefined {
 		const commitToUndo = this.headUndoableCommit;
 
 		if (commitToUndo === undefined) {
@@ -69,11 +71,24 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		const { commit, repairData } = commitToUndo;
 
-		return this.changeFamily.rebaser.invert(
+		let change = this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
 			false,
 			repairData,
 		);
+
+		if (head !== undefined) {
+			if (commit.revision !== head.revision) {
+				const pathAfterUndoable: GraphCommit<TChange>[] = [];
+				findAncestor([head, pathAfterUndoable], (c) => c.revision === commit.revision);
+				change = pathAfterUndoable.reduce(
+					(a, b) => this.changeFamily.rebaser.rebase(a, b),
+					change,
+				);
+			}
+		}
+
+		return change;
 	}
 
 	/**

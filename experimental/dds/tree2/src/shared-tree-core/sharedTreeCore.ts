@@ -380,7 +380,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
 
-		const undoChange = this.undoRedoManager.undo();
+		const undoChange = this.undoRedoManager.undo(this.getLocalBranchHead());
 		if (undoChange !== undefined) {
 			this.applyChange(undoChange, undefined, UndoRedoManagerCommitType.Undo);
 		}

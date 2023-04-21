@@ -677,6 +677,15 @@ describe("SharedTree", () => {
 			assert.equal(getTestValue(tree2), undefined);
 		});
 
+		function stringToJsonableTree(values: string[]): JsonableTree[] {
+			return values.map((value) => {
+				return {
+					type: brand("TestValue"),
+					value,
+				};
+			});
+		}
+
 		it("can be rebased", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
@@ -688,130 +697,72 @@ describe("SharedTree", () => {
 			setTestValue(tree1, "A");
 			await provider.ensureSynchronized();
 
-			const expectedState: JsonableTree[] = [
-				{
-					type: brand("TestValue"),
-					value: "A",
-				},
-				{
-					type: brand("TestValue"),
-					value: "B",
-				},
-				{
-					type: brand("TestValue"),
-					value: "C",
-				},
-				{
-					type: brand("TestValue"),
-					value: "D",
-				},
-			];
+			const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
 
 			// Validate insertion
 			validateTree(tree2, expectedState);
 
 			// Insert nodes on both trees
 			insert(tree1, 1, "x");
-			validateTree(tree1, [
-				{
-					type: brand("TestValue"),
-					value: "A",
-				},
-				{
-					type: brand("TestValue"),
-					value: "x",
-				},
-				{
-					type: brand("TestValue"),
-					value: "B",
-				},
-				{
-					type: brand("TestValue"),
-					value: "C",
-				},
-				{
-					type: brand("TestValue"),
-					value: "D",
-				},
-			]);
+			validateTree(tree1, stringToJsonableTree(["A", "x", "B", "C", "D"]));
 
 			insert(tree2, 3, "y");
-			validateTree(tree2, [
-				{
-					type: brand("TestValue"),
-					value: "A",
-				},
-				{
-					type: brand("TestValue"),
-					value: "B",
-				},
-				{
-					type: brand("TestValue"),
-					value: "C",
-				},
-
-				{
-					type: brand("TestValue"),
-					value: "y",
-				},
-				{
-					type: brand("TestValue"),
-					value: "D",
-				},
-			]);
+			validateTree(tree2, stringToJsonableTree(["A", "B", "C", "y", "D"]));
 
 			// Syncing will cause both trees to rebase their local changes
 			await provider.ensureSynchronized();
 
 			// Undo node insertion on both trees
 			tree1.undo();
-			validateTree(tree1, [
-				{
-					type: brand("TestValue"),
-					value: "A",
-				},
-				{
-					type: brand("TestValue"),
-					value: "B",
-				},
-				{
-					type: brand("TestValue"),
-					value: "C",
-				},
-
-				{
-					type: brand("TestValue"),
-					value: "y",
-				},
-				{
-					type: brand("TestValue"),
-					value: "D",
-				},
-			]);
+			validateTree(tree1, stringToJsonableTree(["A", "B", "C", "y", "D"]));
 
 			tree2.undo();
-			validateTree(tree2, [
-				{
-					type: brand("TestValue"),
-					value: "A",
-				},
-				{
-					type: brand("TestValue"),
-					value: "x",
-				},
-				{
-					type: brand("TestValue"),
-					value: "B",
-				},
-				{
-					type: brand("TestValue"),
-					value: "C",
-				},
-				{
-					type: brand("TestValue"),
-					value: "D",
-				},
-			]);
+			validateTree(tree2, stringToJsonableTree(["A", "x", "B", "C", "D"]));
+
+			await provider.ensureSynchronized();
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
+		it("updates rebased undoable commits in the correct order", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			setTestValue(tree1, "D");
+			setTestValue(tree1, "C");
+			setTestValue(tree1, "B");
+			setTestValue(tree1, "A");
+			await provider.ensureSynchronized();
+
+			const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
+
+			// Validate insertion
+			validateTree(tree2, expectedState);
+
+			// Insert a node on tree 2
+			insert(tree2, 4, "z");
+			validateTree(tree2, stringToJsonableTree(["A", "B", "C", "D", "z"]));
+
+			// Insert nodes on both trees
+			insert(tree1, 1, "x");
+			validateTree(tree1, stringToJsonableTree(["A", "x", "B", "C", "D"]));
+
+			insert(tree2, 3, "y");
+			validateTree(tree2, stringToJsonableTree(["A", "B", "C", "y", "D", "z"]));
+
+			// Syncing will cause both trees to rebase their local changes
+			await provider.ensureSynchronized();
+
+			// Undo node insertion on both trees
+			tree1.undo();
+			validateTree(tree1, stringToJsonableTree(["A", "B", "C", "y", "D", "z"]));
+
+			// First undo should be the insertion of y
+			tree2.undo();
+			validateTree(tree2, stringToJsonableTree(["A", "x", "B", "C", "D", "z"]));
+			tree2.undo();
+			validateTree(tree2, stringToJsonableTree(["A", "x", "B", "C", "D"]));
 
 			await provider.ensureSynchronized();
 			validateTree(tree1, expectedState);
