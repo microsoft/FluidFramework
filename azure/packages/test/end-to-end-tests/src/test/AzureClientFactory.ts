@@ -33,6 +33,9 @@ export function createAzureClient(
 		name: userName ?? uuid(),
 	};
 	const endPoint = process.env.azure__fluid__relay__service__endpoint as string;
+	if (endPoint === undefined) {
+		throw new Error("Azure FRS endpoint is missing");
+	}
 
 	// use AzureClient remote mode will run against live Azure Fluid Relay.
 	// Default to running Tinylicious for PR validation
