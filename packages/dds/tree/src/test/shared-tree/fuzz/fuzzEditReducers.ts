@@ -25,14 +25,14 @@ export const fuzzReducer: {
 		const { contents } = operation;
 		switch (contents.editType) {
 			case "fieldEdit": {
-				const index = contents.change.edit.treeIndex;
+				const index = operation.index;
 				const tree = state.testTreeProvider.trees[index];
 				applyFieldEdit(tree, contents);
 				break;
 			}
 			case "nodeEdit": {
 				const change = operation.contents as NodeEdit;
-				const index = change.edit.treeIndex;
+				const index = operation.index;
 				const tree = state.testTreeProvider.trees[index];
 				applyNodeEdit(tree, change.edit);
 				break;

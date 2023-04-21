@@ -29,6 +29,7 @@ export type TreeOperation = TreeEdit | TransactionBoundary;
 export interface TreeEdit {
 	type: "edit";
 	contents: FieldEdit | NodeEdit;
+	index: number;
 }
 
 export interface Synchronize {
@@ -131,6 +132,10 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 export const makeNodeEditGenerator = (
 	opWeights: Partial<EditGeneratorOpWeights>,
 ): AsyncGenerator<NodeEdit, FuzzTestState> => {
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
 	type EditState = FuzzTestState & TreeContext;
 
 	async function setPayloadGenerator(state: EditState): Promise<FuzzSetPayload> {
@@ -147,7 +152,7 @@ export const makeNodeEditGenerator = (
 	}
 
 	const baseNodeEditGenerator = createWeightedAsyncGenerator<FuzzNodeEditChange, EditState>([
-		[setPayloadGenerator, opWeights.setPayload ?? 0],
+		[setPayloadGenerator, passedOpWeights.setPayload],
 	]);
 
 	const buildOperation = (contents: FuzzNodeEditChange) => {
@@ -167,6 +172,10 @@ export const makeNodeEditGenerator = (
 export const makeFieldEditGenerator = (
 	opWeights: Partial<EditGeneratorOpWeights>,
 ): AsyncGenerator<FieldEdit, FuzzTestState> => {
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
 	type EditState = FuzzTestState & TreeContext;
 	async function fieldEditGenerator(state: EditState): Promise<SequenceFieldEdit> {
 		const trees = state.testTreeProvider.trees;
@@ -174,13 +183,15 @@ export const makeFieldEditGenerator = (
 		// generate edit for that specific tree
 		const { fieldPath, fieldKey, count } = getExistingFieldPath(tree, state.random);
 		assert(fieldPath.parent !== undefined);
-		const fieldEditType = Array(opWeights.insert ?? 0)
-			.fill("insert")
-			.concat(Array(opWeights.delete ?? 0).fill("delete"));
 
 		switch (fieldKey) {
 			case sequenceFieldKey: {
-				const opType = count === 0 ? "insert" : state.random.pick(fieldEditType);
+				const opWeightRatio =
+					passedOpWeights.delete !== 0
+						? passedOpWeights.insert / passedOpWeights.delete
+						: passedOpWeights.insert;
+				const opType =
+					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
 				switch (opType) {
 					case "insert":
 						return generateSequenceFieldInsertOp(
@@ -306,9 +317,22 @@ export const makeEditGenerator = (
 	]);
 
 	const buildOperation = (contents: FieldEdit | NodeEdit) => {
+		let index;
+		switch (contents.editType) {
+			case "fieldEdit":
+				index = contents.change.edit.treeIndex;
+				break;
+			case "nodeEdit":
+				index = contents.edit.treeIndex;
+				break;
+			default:
+				break;
+		}
+		assert(index !== undefined);
 		const operation: TreeEdit = {
 			type: "edit",
 			contents,
+			index,
 		};
 		return operation;
 	};
@@ -445,6 +469,17 @@ export interface FieldPathWithCount {
 	count: number;
 }
 
+/**
+ *
+ * @param tree - tree to find path from
+ * @param random - IRandom object to to generate random indices/values
+ * @returns an existing path to a fieldPath with the number of nodes under that field.
+ *
+ * This function starts at the root of the tree, and traverses through the tree by selecting a
+ * random move to perform every iteration (firstfield, nextfield, firstnode, nextnode, etc.)
+ * Once the move 'stop' is picked, the fieldPath of the most recent valid cursor location is returned
+ * TODO: provide the statistical properties of this function.
+ */
 function getExistingFieldPath(tree: ISharedTree, random: IRandom): FieldPathWithCount {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
