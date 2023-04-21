@@ -902,11 +902,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public getPendingBlobs(): IPendingBlobs {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
-			blobs[key] = {
-				blob: bufferToString(entry.blob, "base64"),
-				uploadTime: entry.uploadTime,
-				minTTLInSeconds: entry.minTTLInSeconds,
-			};
+			blobs[key] = entry.minTTLInSeconds
+				? {
+						blob: bufferToString(entry.blob, "base64"),
+						uploadTime: entry.uploadTime,
+						minTTLInSeconds: entry.minTTLInSeconds,
+				  }
+				: { blob: bufferToString(entry.blob, "base64") };
 		}
 		return blobs;
 	}
