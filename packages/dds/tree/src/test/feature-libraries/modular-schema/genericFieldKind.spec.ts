@@ -20,7 +20,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
-import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
+import { brand, fail } from "../../../util";
 import { fakeTaggedRepair as fakeRepair, makeEncodingTestSuite } from "../../utils";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../../../codec";
 

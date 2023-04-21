@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/common-utils";
 import { Serializable } from "@fluidframework/datastore-definitions";
 import { GlobalFieldKey, LocalFieldKey, TreeSchemaIdentifier } from "../schema-stored";
 import { brand, Brand, extractFromOpaque, Opaque } from "../../util";
 import { GlobalFieldKeySymbol, symbolFromKey } from "./globalFieldKeySymbol";
-import { Type } from "@sinclair/typebox";
 
 /**
  * Either LocalFieldKey or GlobalFieldKey.

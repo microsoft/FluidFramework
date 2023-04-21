@@ -3,6 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { Static, TAnySchema, Type } from "@sinclair/typebox";
+// TODO:
+// It is unclear if we would want to use the TypeBox compiler
+// (which generates code at runtime for maximum validation perf).
+// This might be an issue with security policies (ex: no eval) and/or more bundle size that we want.
+// We could disable validation or pull in a different validator (like ajv).
+// Only using its validation when testing is another option.
+// typebox documents using this internal module, so it should be ok to access.
+// eslint-disable-next-line import/no-internal-modules
+import { TypeCheck, TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
@@ -13,7 +23,7 @@ import {
 	LocalFieldKey,
 	symbolFromKey,
 } from "../../core";
-import { brand, JsonCompatibleReadOnly, Mutable } from "../../util";
+import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
 import { ICodecFamily, IJsonCodec, IMultiFormatCodec, makeCodecFamily } from "../../codec";
 import { ChangesetLocalId } from "./crossFieldQueries";
 import {
@@ -27,8 +37,6 @@ import {
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
-import { Static, Type } from "@sinclair/typebox";
-import { withSchemaValidation } from "../../codec/codec";
 
 const ValueChange = Type.Any();
 const ValueConstraint = Type.Any();
@@ -84,30 +92,37 @@ function makeV0Codec(
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset> = {
 		encode: encodeNodeChangesForJson,
 		decode: decodeNodeChangesetFromJson,
+		encodedSchema: EncodedNodeChangeset,
 	};
 
-	// TODO: Validate schemas appropriately.
+	const getMapEntry = (field: FieldKind) => {
+		const codec = field.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0);
+		return {
+			codec,
+			compiledSchema: codec.json.encodedSchema
+				? TypeCompiler.Compile(codec.json.encodedSchema)
+				: undefined,
+		};
+	};
+
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
-		IMultiFormatCodec<FieldChangeset>
-	> = new Map([
-		[
-			genericFieldKind.identifier,
-			genericFieldKind.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0),
-		],
-	]);
+		{
+			compiledSchema?: TypeCheck<TAnySchema>;
+			codec: IMultiFormatCodec<FieldChangeset>;
+		}
+	> = new Map([[genericFieldKind.identifier, getMapEntry(genericFieldKind)]]);
 
 	fieldKinds.forEach((fieldKind, identifier) => {
-		const codec = fieldKind.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0);
-		fieldChangesetCodecs.set(identifier, codec);
+		fieldChangesetCodecs.set(identifier, getMapEntry(fieldKind));
 	});
 
 	const getFieldChangesetCodec = (
 		fieldKind: FieldKindIdentifier,
-	): IMultiFormatCodec<FieldChangeset> => {
-		const codec = fieldChangesetCodecs.get(fieldKind);
-		assert(codec !== undefined, "Tried to encode unsupported fieldKind");
-		return codec;
+	): { codec: IMultiFormatCodec<FieldChangeset>; compiledSchema?: TypeCheck<TAnySchema> } => {
+		const entry = fieldChangesetCodecs.get(fieldKind);
+		assert(entry !== undefined, "Tried to encode unsupported fieldKind");
+		return entry;
 	};
 
 	function encodeFieldChangesForJson(
@@ -115,9 +130,11 @@ function makeV0Codec(
 	): EncodedFieldChangeMap & JsonCompatibleReadOnly {
 		const encodedFields: EncodedFieldChangeMap & JsonCompatibleReadOnly = [];
 		for (const [field, fieldChange] of change) {
-			const encodedChange = getFieldChangesetCodec(fieldChange.fieldKind).json.encode(
-				fieldChange.change,
-			);
+			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
+			const encodedChange = codec.json.encode(fieldChange.change);
+			if (compiledSchema !== undefined && !compiledSchema.Check(encodedChange)) {
+				fail("Encoded change didn't pass schema validation.");
+			}
 
 			const global = isGlobalFieldKey(field);
 			const fieldKey: LocalFieldKey | GlobalFieldKey = global ? keyFromSymbol(field) : field;
@@ -157,9 +174,11 @@ function makeV0Codec(
 	function decodeFieldChangesFromJson(encodedChange: EncodedFieldChangeMap): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
-			const fieldChangeset = getFieldChangesetCodec(field.fieldKind).json.decode(
-				field.change,
-			);
+			const { codec, compiledSchema } = getFieldChangesetCodec(field.fieldKind);
+			if (compiledSchema !== undefined && !compiledSchema.Check(field.change)) {
+				fail("Encoded change didn't pass schema validation.");
+			}
+			const fieldChangeset = codec.json.decode(field.change);
 
 			const fieldKey: FieldKey = field.keyIsGlobal
 				? symbolFromKey(brand<GlobalFieldKey>(field.fieldKey))

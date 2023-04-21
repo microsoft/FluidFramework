@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
+import { Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
+import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import type { NodeUpdate, OptionalChangeset, ValueChangeset } from "./defaultFieldKindsTypes";
 import type { NodeChangeset } from "./modular-schema";
 import {
@@ -12,7 +13,6 @@ import {
 	EncodedOptionalChangeset,
 	EncodedNodeUpdate,
 } from "./defaultFieldKindsFormat";
-import { Type } from "@sinclair/typebox";
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 

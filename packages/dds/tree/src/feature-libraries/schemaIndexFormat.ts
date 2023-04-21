@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TUnsafe, Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 // TODO:
 // It is unclear if we would want to use the TypeBox compiler
 // (which generates code at runtime for maximum validation perf).
@@ -34,7 +34,8 @@ const FieldSchemaFormat = Type.Object(
 		kind: FieldKindIdentifier,
 		types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
 	},
-	{ additionalProperties: false },
+	// TODO: Investigate behavioral change here due to typebox update.
+	// { additionalProperties: false },
 );
 
 const NamedLocalFieldSchemaFormat = Type.Intersect([

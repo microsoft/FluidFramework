@@ -4,6 +4,7 @@
  */
 
 import { fail, strict as assert } from "assert";
+import { Type } from "@sinclair/typebox";
 import {
 	ChangeFamily,
 	ChangeRebaser,
@@ -15,7 +16,6 @@ import {
 import { IJsonCodec, makeValueCodec } from "../codec";
 import { RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
-import { Type } from "@sinclair/typebox";
 
 export interface NonEmptyTestChange {
 	/**

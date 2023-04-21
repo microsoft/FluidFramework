@@ -11,6 +11,20 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
+import { Static } from '@sinclair/typebox';
+import { TAny } from '@sinclair/typebox';
+import { TAnySchema } from '@sinclair/typebox';
+import { TArray } from '@sinclair/typebox';
+import { TIntersect } from '@sinclair/typebox';
+import { TObject } from '@sinclair/typebox';
+import { TOptional } from '@sinclair/typebox';
+import { TReadonly } from '@sinclair/typebox';
+import { TRecord } from '@sinclair/typebox';
+import { TRecursive } from '@sinclair/typebox';
+import { TSchema } from '@sinclair/typebox';
+import { TString } from '@sinclair/typebox';
+import { TThis } from '@sinclair/typebox';
+import { TUnsafe } from '@sinclair/typebox';
 
 // @alpha
 export enum AllowedUpdateType {
@@ -175,6 +189,9 @@ export interface ChangeRebaser<TChangeset> {
 
 // @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+
+// @public (undocumented)
+export const ChangesetLocalId: TUnsafe<ChangesetLocalId>;
 
 // @alpha
 export type ChildCollection = FieldKey | RootField;
@@ -493,6 +510,9 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMul
 // @alpha
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
+// @public (undocumented)
+export const FieldKindIdentifier: TUnsafe<FieldKindIdentifier>;
+
 // @alpha (undocumented)
 export const FieldKinds: {
     readonly value: FieldKind<FieldEditor<any>, Multiplicity.Value>;
@@ -522,6 +542,9 @@ export interface FieldMapObject<TChild> {
     // (undocumented)
     [key: string]: TChild[];
 }
+
+// @public (undocumented)
+export const FieldMapObject: <Schema extends TSchema>(tChild: Schema) => TRecord<TString<string>, TArray<Schema>>;
 
 // @alpha (undocumented)
 type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
@@ -600,9 +623,24 @@ export interface GenericFieldsNode<TChild> {
     [FieldScope.global]?: FieldMapObject<TChild>;
 }
 
+// @public (undocumented)
+export const GenericFieldsNode: <Schema extends TSchema>(tChild: Schema) => TObject<    {
+fields: TOptional<TRecord<TString<string>, TArray<Schema>>>;
+globalFields: TOptional<TRecord<TString<string>, TArray<Schema>>>;
+}>;
+
 // @alpha
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
+
+// @public (undocumented)
+export const GenericTreeNode: <Schema extends TSchema>(tChild: Schema) => TIntersect<[TObject<    {
+fields: TOptional<TRecord<TString<string>, TArray<Schema>>>;
+globalFields: TOptional<TRecord<TString<string>, TArray<Schema>>>;
+}>, TObject<    {
+value: TOptional<TAny>;
+type: TReadonly<TUnsafe<TreeSchemaIdentifier>>;
+}>]>;
 
 // @alpha
 export const getField: unique symbol;
@@ -615,6 +653,9 @@ export function getPrimaryField(schema: TreeSchema): {
 
 // @alpha
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
+
+// @public (undocumented)
+export const GlobalFieldKey: TUnsafe<GlobalFieldKey>;
 
 // @alpha
 export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
@@ -702,6 +743,8 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 
 // @alpha (undocumented)
 export interface IJsonCodec<TDecoded, TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
+    // (undocumented)
+    encodedSchema?: TAnySchema;
 }
 
 // @alpha
@@ -873,6 +916,15 @@ export enum ITreeSubscriptionCursorState {
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 }
 
+// @public (undocumented)
+export const JsonableTree: TRecursive<TIntersect<[TObject<    {
+fields: TOptional<TRecord<TString<string>, TArray<TThis>>>;
+globalFields: TOptional<TRecord<TString<string>, TArray<TThis>>>;
+}>, TObject<    {
+value: TOptional<TAny>;
+type: TReadonly<TUnsafe<TreeSchemaIdentifier>>;
+}>]>>;
+
 // @alpha
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
@@ -901,8 +953,11 @@ export type JsonCompatibleObject = {
 
 // @alpha
 export type JsonCompatibleReadOnly = string | number | boolean | null | readonly JsonCompatibleReadOnly[] | {
-    readonly [P in string]: JsonCompatibleReadOnly | undefined;
+    readonly [P in string]?: JsonCompatibleReadOnly;
 };
+
+// @public (undocumented)
+export const JsonCompatibleReadOnly: TAny;
 
 // @alpha (undocumented)
 export const jsonNull: TypedSchema.LabeledTreeSchema<TypedSchema.TreeInfoFromBuilder<{}, "Json.Null">>;
@@ -947,6 +1002,9 @@ type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
 
 // @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
+
+// @public (undocumented)
+export const LocalFieldKey: TUnsafe<LocalFieldKey>;
 
 // @alpha
 export interface MakeNominal {
@@ -1132,6 +1190,12 @@ export interface NodeData {
     value?: TreeValue;
 }
 
+// @public (undocumented)
+export const NodeData: TObject<    {
+value: TOptional<TAny>;
+type: TReadonly<TUnsafe<TreeSchemaIdentifier>>;
+}>;
+
 // @alpha
 type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema> = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;
 
@@ -1249,10 +1313,14 @@ type RequiredFields<T> = [
 // @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
+// @public (undocumented)
+export const RevisionInfo: TObject<    {
+revision: TReadonly<TUnsafe<StableId>>;
+rollbackOf: TOptional<TUnsafe<StableId>>;
+}>;
+
 // @alpha (undocumented)
-export interface RevisionInfo {
-    // (undocumented)
-    readonly revision: RevisionTag;
+export interface RevisionInfo extends Static<typeof RevisionInfo> {
     readonly rollbackOf?: RevisionTag;
 }
 
@@ -1263,6 +1331,11 @@ export interface RevisionMetadataSource {
     // (undocumented)
     readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
+
+// Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @public, but its signature references "StableId" which is marked as @internal
+//
+// @public (undocumented)
+export const RevisionTag: TUnsafe<StableId>;
 
 // Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @alpha, but its signature references "StableId" which is marked as @internal
 //
@@ -1474,6 +1547,9 @@ export interface TreeSchemaBuilder {
 
 // @alpha
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
+
+// @public (undocumented)
+export const TreeSchemaIdentifier: TUnsafe<TreeSchemaIdentifier>;
 
 // @alpha
 interface TreeSchemaTypeInfo {
@@ -1716,6 +1792,11 @@ export interface ViewSchemaCollection {
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
+
+// Warnings were encountered during analysis:
+//
+// src/feature-libraries/modular-schema/fieldChangeHandler.ts:277:26 - (ae-incompatible-release-tags) The symbol "revision" is marked as @public, but its signature references "StableId" which is marked as @internal
+// src/feature-libraries/modular-schema/fieldChangeHandler.ts:277:26 - (ae-incompatible-release-tags) The symbol "rollbackOf" is marked as @public, but its signature references "StableId" which is marked as @internal
 
 // (No @packageDocumentation comment for this package)
 

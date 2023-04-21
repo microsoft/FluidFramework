@@ -252,7 +252,8 @@ export interface Delete<TNodeChange = NodeChangeType>
 	type: "Delete";
 	count: NodeCount;
 }
-export const Delete = <Schema extends TSchema>(tNodeChange: Schema) =>
+// Note: inconsistent naming here is to avoid shadowing Effects.Delete
+export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasRevisionTag,
 		HasChanges(tNodeChange),
@@ -420,7 +421,7 @@ export type Detach<TNodeChange = NodeChangeType> =
 	| MoveOut<TNodeChange>
 	| ReturnFrom<TNodeChange>;
 export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Delete(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
+	Type.Union([DeleteSchema(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
 
 export type MarkList<TNodeChange = NodeChangeType> = Mark<TNodeChange>[];
 
@@ -463,7 +464,8 @@ export const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([InputSpanningMark(tNodeChange), OutputSpanningMark(tNodeChange)]);
 
 export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
-export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) => Type.Array(tNodeChange);
+export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
+	Type.Array(Mark(tNodeChange));
 
 export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
 

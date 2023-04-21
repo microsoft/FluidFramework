@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { Static, Type } from "@sinclair/typebox";
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
-import { Static, Type } from "@sinclair/typebox";
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
