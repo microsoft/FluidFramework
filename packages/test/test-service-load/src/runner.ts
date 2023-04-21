@@ -224,6 +224,9 @@ async function runnerProcess(
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
+			// Retain old behavior of runtime being disposed on container close
+			container.once("closed", () => container?.dispose());
+
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
 				metricsCleanup = await setupOpsMetrics(
@@ -420,6 +423,7 @@ function scheduleOffline(
 		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
 			container.once("connected", () => resolve());
 			container.once("closed", () => resolve());
+			container.once("disposed", () => resolve());
 		} else {
 			resolve();
 		}
