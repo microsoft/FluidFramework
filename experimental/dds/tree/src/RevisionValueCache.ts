@@ -69,7 +69,7 @@ export class RevisionValueCache<TValue> {
 		 */
 		retainedRevision?: [Revision, TValue]
 	) {
-		assert(retentionWindowStart >= 0, 'retentionWindowStart must be initialized >= 0');
+		assert(retentionWindowStart >= 0, 0x62c /* retentionWindowStart must be initialized >= 0 */);
 		this.evictableRevisions = new LRU({
 			max: evictableSize,
 			noDisposeOnSet: true,

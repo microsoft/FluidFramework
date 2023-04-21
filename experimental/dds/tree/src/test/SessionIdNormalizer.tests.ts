@@ -267,13 +267,13 @@ function itWithNormalizer(title: string, itFn: (normalizer: SessionIdNormalizer<
 			assert(
 				(localExpected !== undefined && isLocalId(localExpected)) ||
 					(finalExpected !== undefined && isFinalId(finalExpected)),
-				'Test error.'
+				0x663 /* Test error. */
 			);
 			if (prevFinal !== undefined && finalExpected !== undefined) {
-				assert(finalExpected > prevFinal, 'Test error.');
+				assert(finalExpected > prevFinal, 0x664 /* Test error. */);
 			}
 			if (prevLocal !== undefined && localExpected !== undefined) {
-				assert(localExpected < prevLocal, 'Test error.');
+				assert(localExpected < prevLocal, 0x665 /* Test error. */);
 			}
 			prevLocal = localExpected;
 			prevFinal = finalExpected;

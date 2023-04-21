@@ -35,7 +35,7 @@ export function isParentedForestNode(node: ForestNode): node is ParentedForestNo
 	const parentedNode = node as ForestNode & Partial<ParentedForestNode>;
 	const hasParent = parentedNode.parentId !== undefined;
 	const hasTraitParent = parentedNode.traitParent !== undefined;
-	assert(hasParent === hasTraitParent, 'node must have either both parent and traitParent set or neither');
+	assert(hasParent === hasTraitParent, 0x610 /* node must have either both parent and traitParent set or neither */);
 	return hasParent;
 }
 
@@ -147,12 +147,12 @@ export class Forest {
 		for (const node of newNodes) {
 			const { identifier } = node;
 			for (const [traitLabel, trait] of node.traits) {
-				assert(trait.length > 0, 'any trait arrays present in a node must be non-empty');
+				assert(trait.length > 0, 0x611 /* any trait arrays present in a node must be non-empty */);
 				for (const childId of trait) {
 					const child = mutableNodes.get(childId);
 					if (child !== undefined) {
 						// A child already exists in the forest, and its parent is now being added
-						assert(!isParentedForestNode(child), 'can not give a child multiple parents');
+						assert(!isParentedForestNode(child), 0x612 /* can not give a child multiple parents */);
 						const parentedChild = {
 							definition: child.definition,
 							identifier: child.identifier,
@@ -174,7 +174,7 @@ export class Forest {
 		// Now add each node to the forest and apply any parentage information that was recorded above
 		for (const node of newNodes) {
 			const parentData = childToParent.get(node.identifier);
-			assert(!mutableNodes.has(node.identifier), 'can not add node with already existing id');
+			assert(!mutableNodes.has(node.identifier), 0x613 /* can not add node with already existing id */);
 			if (parentData !== undefined) {
 				// This is a child whom we haven't added yet, but whose parent we already added above. Supply the recorded parentage info.
 				const child = {
@@ -210,13 +210,13 @@ export class Forest {
 		index: number,
 		childIds: readonly NodeId[]
 	): Forest {
-		assert(index >= 0, 'invalid attach index');
+		assert(index >= 0, 0x614 /* invalid attach index */);
 		const parentNode = this.nodes.get(parentId);
-		assert(parentNode !== undefined, 'can not insert children under node that does not exist');
+		assert(parentNode !== undefined, 0x615 /* can not insert children under node that does not exist */);
 		const mutableNodes = this.nodes.clone();
 		const traits = new Map(parentNode.traits);
 		const trait = traits.get(label) ?? [];
-		assert(index <= trait.length, 'invalid attach index');
+		assert(index <= trait.length, 0x616 /* invalid attach index */);
 
 		// If there is nothing to insert, return early.
 		// This is good for performance, but also avoids an edge case where an empty trait could be created (which is an error).
@@ -229,7 +229,7 @@ export class Forest {
 
 		for (const childId of childIds) {
 			mutableNodes.editRange(childId, childId, true, (_, n) => {
-				assert(!isParentedForestNode(n), 'can not attach node that already has a parent');
+				assert(!isParentedForestNode(n), 0x617 /* can not attach node that already has a parent */);
 				const breakVal: { value: ParentedForestNode } = {
 					value: {
 						...n,
@@ -261,9 +261,9 @@ export class Forest {
 		startIndex: number,
 		endIndex: number
 	): { forest: Forest; detached: readonly NodeId[] } {
-		assert(startIndex >= 0 && endIndex >= startIndex, 'invalid detach index range');
+		assert(startIndex >= 0 && endIndex >= startIndex, 0x618 /* invalid detach index range */);
 		const parentNode = this.nodes.get(parentId);
-		assert(parentNode !== undefined, 'can not detach children under node that does not exist');
+		assert(parentNode !== undefined, 0x619 /* can not detach children under node that does not exist */);
 		if (startIndex === endIndex) {
 			return { forest: this, detached: [] };
 		}
@@ -271,7 +271,7 @@ export class Forest {
 		const mutableNodes = this.nodes.clone();
 		const traits = new Map(parentNode.traits);
 		const trait = traits.get(label) ?? [];
-		assert(endIndex <= trait.length, 'invalid detach index range');
+		assert(endIndex <= trait.length, 0x61a /* invalid detach index range */);
 		const detached: NodeId[] = trait.slice(startIndex, endIndex);
 		const newChildren = [...trait.slice(0, startIndex), ...trait.slice(endIndex)];
 		const deleteTrait = newChildren.length === 0;
@@ -313,7 +313,7 @@ export class Forest {
 	// eslint-disable-next-line @rushstack/no-new-null
 	public setValue(nodeId: NodeId, value: Payload | null): Forest {
 		const node = this.nodes.get(nodeId);
-		assert(node !== undefined, 'can not replace payload for node that does not exist');
+		assert(node !== undefined, 0x61b /* can not replace payload for node that does not exist */);
 		const mutableNodes = this.nodes.clone();
 		const newNode = { ...node };
 		if (value !== null) {
@@ -368,7 +368,7 @@ export class Forest {
 
 	private deleteRecursive(mutableNodes: BTree<NodeId, ForestNode>, id: NodeId, deleteChildren: boolean): void {
 		const node = mutableNodes.get(id) ?? fail('node to delete must exist');
-		assert(!isParentedForestNode(node), 'deleted nodes must be unparented');
+		assert(!isParentedForestNode(node), 0x61c /* deleted nodes must be unparented */);
 		mutableNodes.delete(id);
 		for (const trait of node.traits.values()) {
 			for (const childId of trait) {
@@ -401,24 +401,24 @@ export class Forest {
 			if (isParentedForestNode(node)) {
 				const parent = this.get(node.parentId);
 				const trait = parent.traits.get(node.traitParent);
-				assert(trait !== undefined, 'trait exists');
-				assert(trait.includes(node.identifier), 'node is parented incorrectly');
+				assert(trait !== undefined, 0x61d /* trait exists */);
+				assert(trait.includes(node.identifier), 0x61e /* node is parented incorrectly */);
 			}
 
 			for (const trait of node.traits.values()) {
-				assert(trait.length > 0, 'trait is present but empty');
+				assert(trait.length > 0, 0x61f /* trait is present but empty */);
 				for (const childId of trait) {
 					const child = this.nodes.get(childId);
-					assert(child !== undefined, 'child in trait is not in forest');
-					assert(isParentedForestNode(child), 'child is not parented');
-					assert(child.parentId === node.identifier, 'child parent pointer is incorrect');
+					assert(child !== undefined, 0x620 /* child in trait is not in forest */);
+					assert(isParentedForestNode(child), 0x621 /* child is not parented */);
+					assert(child.parentId === node.identifier, 0x622 /* child parent pointer is incorrect */);
 					assert(
 						!checkedChildren.has(childId),
-						'the item tree tree must not contain cycles or multi-parented nodes'
+						0x623 /* the item tree tree must not contain cycles or multi-parented nodes */
 					);
 					assert(
 						(child.parentId ?? fail('each node must have associated metadata')) === nodeId,
-						'cached parent is incorrect'
+						0x624 /* cached parent is incorrect */
 					);
 					checkedChildren.add(childId);
 				}
@@ -435,7 +435,7 @@ export class Forest {
 			fail('NodeId not found');
 		}
 
-		assert(isParentedForestNode(child), 'Node is not parented');
+		assert(isParentedForestNode(child), 0x625 /* Node is not parented */);
 		return { parentId: child.parentId, traitParent: child.traitParent };
 	}
 
