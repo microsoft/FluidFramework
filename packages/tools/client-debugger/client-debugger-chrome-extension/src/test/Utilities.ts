@@ -26,10 +26,8 @@ export async function awaitListener<T>(
 	event: { addListener: (fn: T) => void },
 ): Promise<T> {
 	return new Promise((resolve) => {
-		console.log("Stubbing...");
 		sandbox.stub(event, "addListener").get(() => {
 			return (fn: T): void => {
-				console.log("returning...");
 				resolve(fn);
 			};
 		});
