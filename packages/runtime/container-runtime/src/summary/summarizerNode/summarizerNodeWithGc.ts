@@ -69,7 +69,7 @@ class SummaryNodeWithGC extends SummaryNode {
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
-class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
+export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
 	// Tracks the work-in-progress used routes during summary.
 	private wipSerializedUsedRoutes: string | undefined;
 
