@@ -1077,6 +1077,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("not expired stashed blobs", async function () {
+		if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
+			this.skip();
+		}
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
 			container.container,
