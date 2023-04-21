@@ -16,6 +16,8 @@ import {
 	mintRevisionTag,
 	ChangeFamilyEditor,
 	makeAnonChange,
+	UndoRedoManager,
+	Rebaser,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -27,14 +29,13 @@ import {
 	testChangeFamilyFactory,
 	asDelta,
 } from "../testChange";
-import { assertDeltaEqual } from "../utils";
-import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
+import { MockRepairDataStoreProvider, assertDeltaEqual } from "../utils";
+import { Commit, EditManager, SeqNumber, SharedTreeBranch } from "../../shared-tree-core";
 import {
 	DefaultChangeFamily,
 	DefaultChangeset,
 	defaultChangeFamily,
 } from "../../feature-libraries";
-import { TestSharedTreeCore } from "./utils";
 
 type TestEditManager = EditManager<TestChange, TestChangeFamily>;
 
@@ -334,8 +335,13 @@ describe("EditManager", () => {
 				defaultChangeFamily,
 				"",
 			);
-			const tree = new TestSharedTreeCore();
-			const branch = tree.createBranch();
+			const branch = new SharedTreeBranch(
+				manager.getLocalBranchHead(),
+				"",
+				new Rebaser(defaultChangeFamily.rebaser),
+				defaultChangeFamily,
+				new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily),
+			);
 			manager.registerBranch(branch);
 			assert.throws(
 				() => manager.registerBranch(branch),
