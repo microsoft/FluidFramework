@@ -134,6 +134,15 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				0x508 /* Audience must exist when instantiating attribution-providing runtime */,
 			);
 
+			// const logger = ChildLogger.create(context.taggedLogger, "Attributor");
+
+			const mc = loggerToMonitoringContext(context.taggedLogger);
+
+			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
+			if (shouldTrackAttribution) {
+				(context.options.attribution ??= {}).track = true;
+			}
+
 			const runtime = (await Base.load(
 				context,
 				registryEntries,
@@ -146,13 +155,13 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
 			const logger = ChildLogger.create(runtime.logger, "Attributor");
-			const mc = loggerToMonitoringContext(context.taggedLogger);
 
-			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
-				(context.options.attribution ??= {}).track = true;
 				// Add telemetry to track if the storage of attribution data was enabled in configuration or not
-				logger.sendTelemetryEvent({ eventName: "load", attributionEnabledInConfig: true });
+				logger.sendTelemetryEvent({
+					eventName: "attribution_enabled",
+					attributionEnabledInConfig: true,
+				});
 			}
 
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
@@ -163,9 +172,8 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				logger,
 				{
 					eventName: "initialize",
-					attributionEnabledInDoc: runtime.runtimeAttributor.isEnabled,
 				},
-				async () => {
+				async (event) => {
 					void runtime.runtimeAttributor?.initialize(
 						deltaManager,
 						audience,
@@ -173,8 +181,12 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 						async (id) => runtime.storage.readBlob(id),
 						shouldTrackAttribution,
 					);
+					event.end({
+						attributionEnabledInDoc: runtime.runtimeAttributor
+							? runtime.runtimeAttributor.isEnabled
+							: false,
+					});
 				},
-				{ start: true, end: true },
 			);
 
 			return runtime;
