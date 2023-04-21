@@ -238,6 +238,7 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
+				container.once("closed", () => container?.dispose());
 				scheduleContainerClose(
 					container,
 					runConfig,
