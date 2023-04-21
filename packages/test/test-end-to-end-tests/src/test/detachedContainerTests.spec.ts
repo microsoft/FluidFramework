@@ -922,8 +922,6 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 		await container.attach(request);
 
 		// Create another container to test sync
-		const url: any = await container.getAbsoluteUrl("");
-		// const loader2 = provider.makeTestLoader(testConfig) as Loader;
 		const container2 = await provider.loadTestContainer(testConfig);
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "/");
 		const testChannel2 = await dataStore2.getSharedObject<SharedCell>(sharedCellId);

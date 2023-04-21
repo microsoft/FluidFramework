@@ -63,7 +63,7 @@ function getIdCompressor(dds: SharedObjectCore): IIdCompressor {
 	return (dds as any).runtime.idCompressor as IIdCompressor;
 }
 
-describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
+describeNoCompat.only("Runtime IdCompressor", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const factory = new DataObjectFactory(
 		"TestDataObject",
@@ -276,9 +276,10 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 		// Generate DDS ops so that the compressors synchronize
 		sharedMapContainer1.set("key", "value");
+		await provider.ensureSynchronized();
 		sharedMapContainer2.set("key2", "value2");
+		await provider.ensureSynchronized();
 		sharedMapContainer3.set("key3", "value3");
-
 		await provider.ensureSynchronized();
 
 		// After synchronization, each compressor should allocate a cluster. Because the order is deterministic
@@ -454,13 +455,11 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		const firstDecompressedIdContainer1 =
 			getIdCompressor(sharedMapContainer1).decompress(firstIdContainer1);
 		decompressedIds.push(firstDecompressedIdContainer1);
-		sharedMapContainer1.set(firstDecompressedIdContainer1, "value1");
 
-		[secondIdContainer2, thirdIdContainer2].forEach((id, index) => {
+		[secondIdContainer2, thirdIdContainer2].forEach((id) => {
 			assert(getIdCompressor(sharedMapContainer2) !== undefined, "IdCompressor is undefined");
 			const decompressedId = getIdCompressor(sharedMapContainer2).decompress(id);
 			decompressedIds.push(decompressedId);
-			sharedMapContainer2.set(decompressedId, `value${index + 2}`);
 		});
 
 		// should be negative
@@ -477,6 +476,13 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 			"Expected op space id to be < 0",
 		);
 
+		sharedMapContainer1.set(firstDecompressedIdContainer1, "value1");
+		await provider.ensureSynchronized();
+		[secondIdContainer2, thirdIdContainer2].forEach((id, index) => {
+			assert(getIdCompressor(sharedMapContainer2) !== undefined, "IdCompressor is undefined");
+			const decompressedId = getIdCompressor(sharedMapContainer2).decompress(id);
+			sharedMapContainer2.set(decompressedId, `value${index + 2}`);
+		});
 		await provider.ensureSynchronized();
 
 		assert.strictEqual(
