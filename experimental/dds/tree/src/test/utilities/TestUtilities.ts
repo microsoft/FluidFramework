@@ -499,7 +499,7 @@ export const versionComparator = (versionA: string, versionB: string): number =>
 
 	assert(
 		versionASplit.length === versionBSplit.length && versionASplit.length === 3,
-		'Version numbers should follow semantic versioning.'
+		0x668 /* Version numbers should follow semantic versioning. */
 	);
 
 	for (let i = 0; i < 3; ++i) {
@@ -524,7 +524,7 @@ export const versionComparator = (versionA: string, versionB: string): number =>
 export function setUpTestTree(idSource?: IdCompressor | SharedTree, expensiveValidation = false): TestTree {
 	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
 	if (source instanceof SharedTree) {
-		assert(source.edits.length === 0, 'tree must be a new SharedTree');
+		assert(source.edits.length === 0, 0x669 /* tree must be a new SharedTree */);
 		const getNormalizer = () => getIdNormalizerFromSharedTree(source);
 		const contextWrapper = {
 			normalizeToOpSpace: (id: NodeId) => getNormalizer().normalizeToOpSpace(id),

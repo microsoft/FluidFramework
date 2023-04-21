@@ -366,7 +366,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	public undo(): void {
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
-		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
+		assert(!this.isTransacting(), 0x66b /* Undo is not yet supported during transactions */);
 
 		const undoChange = this.undoRedoManager.undo();
 		if (undoChange !== undefined) {
