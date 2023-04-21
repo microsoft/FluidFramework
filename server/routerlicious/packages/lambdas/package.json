@@ -106,10 +106,19 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_DeliLambda": {"backCompat": false},
-			"InterfaceDeclaration_ICheckpointParams": {"backCompat": false},
-			"InterfaceDeclaration_ILatestSummaryState": {"backCompat": false},
-			"RemovedVariableDeclaration_getRandomInt": {"forwardCompat": false, "backCompat": false}
+			"ClassDeclaration_DeliLambda": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ICheckpointParams": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ILatestSummaryState": {
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_getRandomInt": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
 		}
 	}
 }

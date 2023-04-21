@@ -88,7 +88,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_ProtocolOpHandler": {"backCompat": false}
+			"ClassDeclaration_ProtocolOpHandler": {
+				"backCompat": false
+			}
 		}
 	}
 }

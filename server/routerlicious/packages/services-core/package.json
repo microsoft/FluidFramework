@@ -56,10 +56,20 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IDeliState": {"backCompat": false},
-			"RemovedInterfaceDeclaration_IPartitionConfig": {"backCompat": false, "forwardCompat": false},
-			"InterfaceDeclaration_IPartitionLambdaConfig": {"backCompat": false},
-			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {"forwardCompat": false, "backCompat": false}
+			"InterfaceDeclaration_IDeliState": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPartitionConfig": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IPartitionLambdaConfig": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
 		}
 	}
 }
