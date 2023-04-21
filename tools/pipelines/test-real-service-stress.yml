@@ -140,5 +140,5 @@ stages:
         timeoutInMinutes: 120
         testCommand: start:frs:canary
         env:
-          fluid__test__driver__frs-canary: $(automation-fluid-driver-frs-canary-stress-test)
+          fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
