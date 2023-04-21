@@ -109,6 +109,7 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 	});
 
 	it("Can attribute content from multiple collaborators", async function () {
+		// Tracked by AB#4130, the test run on the tinylicous driver is disabled temporarily to ensure normal operation of the build-client package pipeline
 		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
 			this.skip();
 		}
