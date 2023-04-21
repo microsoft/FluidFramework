@@ -1,4 +1,4 @@
-# gitrest
+# gitrest-release-group
 
 Provides a REST API to a GitHub repository. It's API is based off of GitHub's REST APIs.
 
