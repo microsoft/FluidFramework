@@ -2,25 +2,22 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DefaultPalette, Icon, IStackItemStyles, Stack, StackItem } from "@fluentui/react";
 import React from "react";
+import { Divider } from "@fluentui/react-components";
 
-import { IClient } from "@fluidframework/protocol-definitions";
 import {
-	HasContainerId,
-	AudienceChangeLogEntry,
-	AudienceClientMetaData,
-	IDebuggerMessage,
+	AudienceSummary,
+	GetAudienceSummary,
 	handleIncomingMessage,
+	HasContainerId,
+	IDevtoolsMessage,
 	InboundHandlers,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessage,
 } from "@fluid-tools/client-debugger";
-
+import { IClient } from "@fluidframework/protocol-definitions";
 import { useMessageRelay } from "../MessageRelayContext";
-import { combineMembersWithMultipleConnections } from "../Audience";
+import { AudienceStateTable } from "./AudienceStateTable";
+import { AudienceHistoryTable } from "./AudienceHistoryTable";
 import { Waiting } from "./Waiting";
-import { AudienceMemberView } from "./client-data-views";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
@@ -41,7 +38,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const messageRelay = useMessageRelay();
 
 	const [audienceData, setAudienceData] = React.useState<
-		AudienceSummaryMessageData | undefined
+		AudienceSummary.MessageData | undefined
 	>();
 
 	React.useEffect(() => {
@@ -49,8 +46,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to Audience
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["AUDIENCE_EVENT"]: (untypedMessage) => {
-				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
+			[AudienceSummary.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as AudienceSummary.Message;
 
 				setAudienceData(message.data);
 
@@ -61,7 +58,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<IDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
@@ -70,12 +67,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request the current Audience State of the Container
-		messageRelay.postMessage({
-			type: "GET_AUDIENCE",
-			data: {
+		messageRelay.postMessage(
+			GetAudienceSummary.createMessage({
 				containerId,
-			},
-		});
+			}),
+		);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -90,154 +86,60 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		(audience) => audience.clientId === audienceData.clientId,
 	)?.client;
 
+	const audienceStateItems: TransformedAudienceStateData[] = audienceData.audienceState.map(
+		(entry) => {
+			return {
+				clientId: entry.clientId,
+				userId: entry.client.user.id,
+				mode: entry.client.mode,
+				scopes: entry.client.scopes,
+				myClientConnection: myClientMetadata,
+			};
+		},
+	);
+
+	const nowTimeStamp = new Date();
+	const audienceHistoryItems: TransformedAudienceHistoryData[] = audienceData.audienceHistory
+		.map((entry) => {
+			const changeTimeStamp = new Date(entry.timestamp);
+			const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
+
+			return {
+				clientId: entry.clientId,
+				time: wasChangeToday
+					? changeTimeStamp.toTimeString()
+					: changeTimeStamp.toDateString(),
+				changeKind: entry.changeKind,
+			};
+		})
+		.reverse();
+
 	return (
-		<Stack
-			styles={{
-				root: {
-					height: "100%",
-				},
-			}}
-		>
-			<StackItem>
-				<h3>Audience members: ({audienceData.audienceState.length})</h3>
-				<MembersView
-					audience={audienceData.audienceState}
-					myClientId={audienceData.clientId}
-					myClientConnection={myClientMetadata}
-				/>
-			</StackItem>
-			<StackItem>
-				<h3>History</h3>
-				<HistoryView history={audienceData.audienceHistory} />
-			</StackItem>
-		</Stack>
+		<>
+			<Divider appearance="brand"> Audience State </Divider>
+			<AudienceStateTable audienceStateItems={audienceStateItems} />
+			<Divider appearance="brand"> Audience History </Divider>
+			<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems} />
+		</>
 	);
 }
 
 /**
- * {@link MembersView} input props.
+ * Transformed audience state data type to render audience state.
  */
-interface MembersViewProps {
-	/**
-	 * The current audience
-	 */
-	audience: AudienceClientMetaData[];
-
-	/**
-	 * My client ID, if the Container is connected.
-	 */
-	myClientId: string | undefined;
-
-	/**
-	 * My client connection data, if the Container is connected.
-	 */
+export interface TransformedAudienceStateData {
+	clientId: string;
+	userId: string;
+	mode: string;
+	scopes: string[];
 	myClientConnection: IClient | undefined;
 }
 
 /**
- * Displays a list of current audience members and their metadata.
+ * Transformed audience history data type to render audience history.
  */
-function MembersView(props: MembersViewProps): React.ReactElement {
-	const { audience, myClientId, myClientConnection } = props;
-
-	const transformedAudience = combineMembersWithMultipleConnections(audience);
-
-	const memberViews: React.ReactElement[] = [];
-	for (const member of transformedAudience.values()) {
-		memberViews.push(
-			<StackItem key={member.userId}>
-				<AudienceMemberView
-					audienceMember={member}
-					myClientId={myClientId}
-					myClientConnection={myClientConnection}
-				/>
-			</StackItem>,
-		);
-	}
-
-	return <Stack>{memberViews}</Stack>;
-}
-
-/**
- * {@link HistoryView} input props.
- */
-interface HistoryViewProps {
-	/**
-	 * History of audience changes tracked by the debugger.
-	 */
-	history: readonly AudienceChangeLogEntry[];
-}
-
-/**
- * Displays a historical log of audience member changes.
- */
-function HistoryView(props: HistoryViewProps): React.ReactElement {
-	const { history } = props;
-
-	const nowTimeStamp = new Date();
-	const historyViews: React.ReactElement[] = [];
-
-	// Reverse history such that newest events are displayed first
-	for (let i = history.length - 1; i >= 0; i--) {
-		const changeTimeStamp = new Date(history[i].timestamp);
-		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
-
-		const accordianBackgroundColor: IStackItemStyles = {
-			root: {
-				background: history[i].changeKind === "added" ? "#90ee90" : "#FF7377",
-				borderStyle: "solid",
-				borderWidth: 1,
-				borderColor: DefaultPalette.neutralTertiary,
-				padding: 3,
-			},
-		};
-
-		const iconStyle: IStackItemStyles = {
-			root: {
-				padding: 10,
-			},
-		};
-
-		historyViews.push(
-			<div key={`audience-history-info-${i}`}>
-				<Stack horizontal={true} styles={accordianBackgroundColor}>
-					<StackItem styles={iconStyle}>
-						<Icon
-							iconName={
-								history[i].changeKind === "added" ? "AddFriend" : "UserRemove"
-							}
-							title={
-								history[i].changeKind === "added" ? "Member Joined" : "Member Left"
-							}
-						/>
-					</StackItem>
-					<StackItem>
-						<div key={`${history[i].clientId}-${history[i].changeKind}`}>
-							<b>Client ID: </b>
-							{history[i].clientId}
-							<br />
-							<b>Time: </b>{" "}
-							{wasChangeToday
-								? changeTimeStamp.toTimeString()
-								: changeTimeStamp.toDateString()}
-							<br />
-						</div>
-					</StackItem>
-				</Stack>
-			</div>,
-		);
-	}
-
-	return (
-		<Stack
-			styles={{
-				root: {
-					overflowY: "auto",
-					height: "300px",
-				},
-			}}
-		>
-			<div style={{ overflowY: "scroll" }}>{historyViews}</div>
-		</Stack>
-	);
+export interface TransformedAudienceHistoryData {
+	clientId: string;
+	time: string;
+	changeKind: string;
 }

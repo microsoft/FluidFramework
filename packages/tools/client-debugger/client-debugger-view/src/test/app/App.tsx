@@ -14,18 +14,20 @@ import React from "react";
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { closeFluidClientDebugger, FluidDebuggerLogger } from "@fluid-tools/client-debugger";
+import {
+	DevtoolsLogger,
+	IFluidDevtools,
+	initializeFluidDevtools,
+} from "@fluid-tools/client-debugger";
 
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	ContainerInfo,
 	createFluidContainer,
-	initializeFluidClientDebugger,
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
 import { CounterWidget } from "../widgets";
@@ -92,10 +94,30 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 }
 
 /**
+ * Registers container described by the input `containerInfo` with the provided devtools instance.
+ */
+function registerContainerWithDevtools(
+	devtools: IFluidDevtools,
+	containerInfo: ContainerInfo,
+): void {
+	const fluidContainer = containerInfo.container as FluidContainer;
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE!();
+
+	devtools.registerContainerDevtools({
+		container: innerContainer,
+		containerId: containerInfo.containerId,
+		containerNickname: containerInfo.containerNickname,
+		containerData: fluidContainer.initialObjects,
+		dataVisualizers: undefined, // Use defaults
+	});
+}
+
+/**
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(logger: ITelemetryBaseLogger): {
+function useContainerInfo(devtools: IFluidDevtools): {
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;
 } {
@@ -116,31 +138,26 @@ function useContainerInfo(logger: ITelemetryBaseLogger): {
 				return containerId.length === 0
 					? createFluidContainer(
 							containerSchema,
-							logger,
+							devtools.logger,
 							populateRootMap,
 							containerNickname,
 					  )
 					: loadExistingFluidContainer(
 							containerId,
 							containerSchema,
-							logger,
+							devtools.logger,
 							containerNickname,
 					  );
 			}
 
-			getSharedFluidData().then(
-				(data) => {
-					if (getContainerIdFromLocation(window.location) !== data.containerId) {
-						window.location.hash = data.containerId;
-					}
+			getSharedFluidData().then((containerInfo) => {
+				if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
+					window.location.hash = containerInfo.containerId;
+				}
 
-					initializeFluidClientDebugger(data);
-					setSharedContainerInfo(data);
-				},
-				(error) => {
-					console.error(error);
-				},
-			);
+				setSharedContainerInfo(containerInfo);
+				registerContainerWithDevtools(devtools, containerInfo);
+			}, console.error);
 
 			async function getPrivateContainerData(): Promise<ContainerInfo> {
 				// Always create a new container for the private view.
@@ -148,29 +165,19 @@ function useContainerInfo(logger: ITelemetryBaseLogger): {
 
 				return createFluidContainer(
 					containerSchema,
-					logger,
+					devtools.logger,
 					populateRootMap,
 					"Private Container",
 				);
 			}
 
-			getPrivateContainerData().then(
-				(data) => {
-					initializeFluidClientDebugger(data);
-					setPrivateContainerInfo(data);
-				},
-				(error) => {
-					console.error(error);
-				},
-			);
+			getPrivateContainerData().then((containerInfo) => {
+				setPrivateContainerInfo(containerInfo);
+				registerContainerWithDevtools(devtools, containerInfo);
+			}, console.error);
 
 			return (): void => {
-				if (sharedContainerInfo !== undefined) {
-					closeFluidClientDebugger(sharedContainerInfo.containerId);
-				}
-				if (privateContainerInfo !== undefined) {
-					closeFluidClientDebugger(privateContainerInfo.containerId);
-				}
+				devtools?.dispose();
 			};
 		},
 		// This app never changes the containers after initialization, so we just want to run this effect once.
@@ -225,10 +232,18 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Fluid Debugger logger
-	const logger = FluidDebuggerLogger.create();
+	const logger = React.useMemo(() => DevtoolsLogger.create(), []);
+
+	// Initialize devtools
+	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);
+
+	React.useEffect(() => {
+		// Dispose of devtools resources on teardown to ensure message listeners are notified.
+		return (): void => devtools.dispose();
+	}, [devtools]);
 
 	// Load the collaborative SharedString object
-	const { privateContainer, sharedContainer } = useContainerInfo(logger);
+	const { privateContainer, sharedContainer } = useContainerInfo(devtools);
 
 	const view = (
 		<Stack horizontal>
@@ -262,6 +277,9 @@ export function App(): React.ReactElement {
  * {@link AppView} input props.
  */
 interface AppViewProps {
+	/**
+	 * Container and related metadata to be displayed.
+	 */
 	containerInfo: ContainerInfo;
 }
 
