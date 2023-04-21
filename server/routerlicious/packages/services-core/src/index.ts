@@ -147,5 +147,5 @@ export {
 	ITokenRevocationManager,
 	ITokenRevocationResponse,
 	TokenRevocationError,
-	createCompositeTokenId
+	createCompositeTokenId,
 } from "./tokenRevocationManager";

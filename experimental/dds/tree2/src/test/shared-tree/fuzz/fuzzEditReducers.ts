@@ -8,21 +8,50 @@ import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { ITestTreeProvider, toJsonableTree } from "../../utils";
 import { ISharedTree } from "../../../shared-tree";
-import { FuzzChange, FuzzTestState, Operation } from "./fuzzEditGenerators";
+import { FuzzTestState } from "./fuzzEditGenerators";
+import {
+	FieldEdit,
+	FuzzFieldChange,
+	FuzzNodeEditChange,
+	FuzzTransactionType,
+	NodeEdit,
+	Operation,
+} from "./operationTypes";
 
 export const fuzzReducer: {
 	[K in Operation["type"]]: AsyncReducer<Extract<Operation, { type: K }>, FuzzTestState>;
 } = {
 	edit: async (state, operation) => {
-		const { index, contents } = operation;
-		const tree = state.testTreeProvider.trees[index];
-		applyFuzzChange(tree, contents);
+		const { contents } = operation;
+		switch (contents.editType) {
+			case "fieldEdit": {
+				const index = operation.index;
+				const tree = state.testTreeProvider.trees[index];
+				applyFieldEdit(tree, contents);
+				break;
+			}
+			case "nodeEdit": {
+				const change = operation.contents as NodeEdit;
+				const index = operation.index;
+				const tree = state.testTreeProvider.trees[index];
+				applyNodeEdit(tree, change.edit);
+				break;
+			}
+			default:
+				break;
+		}
 		return state;
 	},
 	synchronize: async (state) => {
 		const { testTreeProvider } = state;
 		await testTreeProvider.ensureSynchronized();
 		checkTreesAreSynchronized(testTreeProvider);
+		return state;
+	},
+	transaction: async (state, operation) => {
+		const { contents, treeIndex } = operation;
+		const tree = state.testTreeProvider.trees[treeIndex];
+		applyTransactionEdit(tree, contents);
 		return state;
 	},
 };
@@ -37,28 +66,51 @@ export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 	}
 }
 
-function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
-	switch (contents.fuzzType) {
+function applyFieldEdit(tree: ISharedTree, fieldEdit: FieldEdit): void {
+	switch (fieldEdit.change.type) {
+		case "sequence":
+			applySequenceFieldEdit(tree, fieldEdit.change.edit);
+			break;
+		default:
+			break;
+	}
+}
+
+function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
+	switch (change.type) {
 		case "insert": {
-			const field = tree.editor.sequenceField(contents.parent, contents.field);
+			const field = tree.editor.sequenceField(change.parent, change.field);
 			field.insert(
-				contents.index,
-				singleTextCursor({ type: brand("Test"), value: contents.value }),
+				change.index,
+				singleTextCursor({ type: brand("Test"), value: change.value }),
 			);
 			break;
 		}
 		case "delete": {
 			const field = tree.editor.sequenceField(
-				contents.firstNode?.parent,
-				contents.firstNode?.parentField,
+				change.firstNode?.parent,
+				change.firstNode?.parentField,
 			);
-			field.delete(contents.firstNode?.parentIndex, contents.count);
+			field.delete(change.firstNode?.parentIndex, change.count);
 			break;
 		}
+		default:
+			fail("Invalid edit.");
+	}
+}
+
+function applyNodeEdit(tree: ISharedTree, change: FuzzNodeEditChange): void {
+	switch (change.nodeEditType) {
 		case "setPayload": {
-			tree.editor.setValue(contents.path, contents.value);
+			tree.editor.setValue(change.path, change.value);
 			break;
 		}
+		default:
+			fail("Invalid edit.");
+	}
+}
+function applyTransactionEdit(tree: ISharedTree, contents: FuzzTransactionType): void {
+	switch (contents.fuzzType) {
 		case "transactionStart": {
 			tree.transaction.start();
 			break;
