@@ -325,13 +325,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	) {
 		const commit = parseCommit(message.contents, this.changeCodec);
 
-		const [delta, undoRedoManager] = this.editManager.addSequencedChange(
+		const delta = this.editManager.addSequencedChange(
 			commit,
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 			this.undoRedoManager,
 		);
-		this.undoRedoManager = undoRedoManager;
 		const sequencedChange = this.editManager.getLastSequencedChange();
 		this.changeEvents.emit("newSequencedChange", sequencedChange);
 		this.changeEvents.emit("newLocalState", delta);
@@ -427,7 +426,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const changes: GraphCommit<TChange>[] = [];
 			findAncestor([newHead, changes], (c) => c === this.getLocalBranchHead());
 
-			this.undoRedoManager = this.undoRedoManager.createUndoRedoManagerAfterRebase(
+			this.undoRedoManager.updateAfterRebase(
 				this.getLocalBranchHead(),
 				newHead,
 				this.undoRedoManager,

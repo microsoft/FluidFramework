@@ -108,22 +108,22 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	}
 
 	/**
-	 * TODO Rename
+	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased.
 	 * @param baseHead - the head commit of the branch that was rebased onto.
 	 * @param rebasedHead - the head commit of the newly rebased branch.
 	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
 	 * @param originalUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased.
 	 */
-	public createUndoRedoManagerAfterRebase(
+	public updateAfterRebase(
 		baseHead: GraphCommit<TChange>,
 		rebasedHead: GraphCommit<TChange>,
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 		originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
-	): UndoRedoManager<TChange, TEditor> {
+	): void {
 		if (originalUndoRedoManager.headUndoable === undefined) {
 			// The branch that was rebased had no undoable edits so the new undo redo manager
 			// should be a copy of the undo redo manager from the base branch.
-			return baseUndoRedoManager.clone(this.repairDataStoreProvider);
+			this.headUndoableCommit = baseUndoRedoManager.headUndoable;
 		}
 
 		const rebasedPath: GraphCommit<TChange>[] = [];
@@ -143,7 +143,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			);
 		});
 
-		return this.clone(this.repairDataStoreProvider, undoRedoManager.headUndoable);
+		this.headUndoableCommit = undoRedoManager.headUndoable;
 	}
 }
 

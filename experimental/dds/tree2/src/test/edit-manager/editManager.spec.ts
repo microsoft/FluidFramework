@@ -331,7 +331,7 @@ describe("EditManager", () => {
 				branches: new Map(),
 			});
 			const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
-			const [delta] = manager.addSequencedChange(
+			const delta = manager.addSequencedChange(
 				{
 					change: TestChange.mint([0, 1], [2]),
 					revision: mintRevisionTag(),

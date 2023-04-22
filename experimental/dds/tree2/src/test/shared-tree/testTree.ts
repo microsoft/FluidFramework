@@ -184,14 +184,13 @@ export class TestTree {
 			return;
 		}
 		for (const edit of edits) {
-			const [delta, undoRedoManager] = this.editManager.addSequencedChange(
+			const delta = this.editManager.addSequencedChange(
 				edit,
 				edit.seqNumber,
 				edit.refNumber,
 				this.undoRedoManager,
 			);
 			this.forest.applyDelta(delta);
-			this.undoRedoManager = undoRedoManager;
 			this._remoteEditsApplied += 1;
 			this.refNumber = edit.seqNumber;
 		}

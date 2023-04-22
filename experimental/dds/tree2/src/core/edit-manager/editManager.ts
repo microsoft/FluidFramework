@@ -243,7 +243,7 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 		undoRedoManager: UndoRedoManager<TChangeset, any>,
-	): [Delta.Root, UndoRedoManager<TChangeset, any>] {
+	): Delta.Root {
 		if (newCommit.sessionId === this.localSessionId) {
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
 			// `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
@@ -259,7 +259,7 @@ export class EditManager<
 			this.pushToTrunk(sequenceNumber, { ...newCommit, change: commit.change });
 			// TODO: Can this be optimized by simply mutating the localPath parent pointers? Is it safe to do that?
 			this.localBranch = localPath.reduce(mintCommit, this.trunk);
-			return [emptyDelta, undoRedoManager];
+			return emptyDelta;
 		}
 
 		// Get the revision that the remote change is based on
@@ -293,9 +293,8 @@ export class EditManager<
 			});
 		}
 
-		const [newChange, rebasedUndoRedoManager] =
-			this.rebaseLocalBranchOverTrunk(undoRedoManager);
-		return [this.changeFamily.intoDelta(newChange), rebasedUndoRedoManager];
+		const newChange = this.rebaseLocalBranchOverTrunk(undoRedoManager);
+		return this.changeFamily.intoDelta(newChange);
 	}
 
 	public addLocalChange(
@@ -393,13 +392,13 @@ export class EditManager<
 
 	private rebaseLocalBranchOverTrunk(
 		undoRedoManager: UndoRedoManager<TChangeset, any>,
-	): [TChangeset, UndoRedoManager<TChangeset, any>] {
+	): TChangeset {
 		const [newLocalChanges, netChange] = this.rebaser.rebaseBranch(
 			this.localBranch,
 			this.trunk,
 		);
 
-		const rebasedUndoRedoManager = undoRedoManager.createUndoRedoManagerAfterRebase(
+		undoRedoManager.updateAfterRebase(
 			this.trunk,
 			newLocalChanges,
 			this.trunkUndoRedoManager,
@@ -412,7 +411,7 @@ export class EditManager<
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
 		}
 
-		return [netChange, rebasedUndoRedoManager];
+		return netChange;
 	}
 }
 

@@ -223,7 +223,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// The net change to this branch is provided by the `rebaseBranch` API
 		const [newHead, change] = rebaseResult;
 
-		this.undoRedoManager = this.undoRedoManager.createUndoRedoManagerAfterRebase(
+		this.undoRedoManager.updateAfterRebase(
 			branch,
 			newHead,
 			undoRedoManager,
@@ -253,7 +253,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Compute the net change to this branch
 		const [newHead] = rebaseResult;
 
-		this.undoRedoManager = this.undoRedoManager.createUndoRedoManagerAfterRebase(
+		this.undoRedoManager.updateAfterRebase(
 			this.head,
 			newHead,
 			this.undoRedoManager,
