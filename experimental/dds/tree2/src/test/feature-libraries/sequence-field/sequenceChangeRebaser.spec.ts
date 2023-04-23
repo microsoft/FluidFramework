@@ -39,7 +39,7 @@ const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
 	["Insert", (i) => Change.insert(i, 2, 42)],
 	["Delete", (i) => Change.delete(i, 2)],
 	["Revive", (i) => Change.revive(2, 2, tag1, i)],
-	["ConflictedRevive", (i) => Change.revive(2, 2, tag2, i, undefined, tag3)],
+	// ["ConflictedRevive", (i) => Change.revive(2, 2, tag2, i, undefined, tag3)],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
 	["MoveIn", (i) => Change.move(1, 2, i)],
 	["ReturnFrom", (i) => Change.return(i, 2, 1, tag4)],

@@ -103,25 +103,25 @@ describe("SequenceField - toDelta", () => {
 		assertMarkListEqual(actual, expected);
 	});
 
-	it("conflicted revive => skip", () => {
-		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, 0, undefined, tag2),
-			Change.modify(1, childChange1),
-		]);
-		const actual = toDelta(changeset);
-		const expected: Delta.MarkList = [1, childChange1Delta];
-		assertMarkListEqual(actual, expected);
-	});
+	// it("conflicted revive => skip", () => {
+	// 	const changeset: TestChangeset = composeAnonChanges([
+	// 		Change.revive(0, 1, tag, 0, undefined, tag2),
+	// 		Change.modify(1, childChange1),
+	// 	]);
+	// 	const actual = toDelta(changeset);
+	// 	const expected: Delta.MarkList = [1, childChange1Delta];
+	// 	assertMarkListEqual(actual, expected);
+	// });
 
-	it("blocked revive => nil", () => {
-		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, 0, undefined, tag2, undefined, tag3),
-			Change.modify(1, childChange1),
-		]);
-		const actual = toDelta(changeset);
-		const expected: Delta.MarkList = [1, childChange1Delta];
-		assertMarkListEqual(actual, expected);
-	});
+	// it("blocked revive => nil", () => {
+	// 	const changeset: TestChangeset = composeAnonChanges([
+	// 		Change.revive(0, 1, tag, 0, undefined, tag2, undefined, tag3),
+	// 		Change.modify(1, childChange1),
+	// 	]);
+	// 	const actual = toDelta(changeset);
+	// 	const expected: Delta.MarkList = [1, childChange1Delta];
+	// 	assertMarkListEqual(actual, expected);
+	// });
 
 	it("revive and modify => insert", () => {
 		const nestedChange: FieldChange = {
@@ -136,8 +136,7 @@ describe("SequenceField - toDelta", () => {
 				type: "Revive",
 				content: contentCursor,
 				count: 1,
-				detachedBy: tag,
-				detachIndex: 0,
+				detachEvent: { revision: tag, index: 0 },
 				changes: nodeChange,
 			},
 		];

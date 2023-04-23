@@ -9,7 +9,14 @@ import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
 import { Changeset, Mark, MarkList, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
-import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
+import {
+	areInputCellsEmpty,
+	getInputLength,
+	isConflictedReattach,
+	isObjMark,
+	isReattachConflicted,
+	isSkipMark,
+} from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (
 	change: TNodeChange,
@@ -106,15 +113,14 @@ function invertMark<TNodeChange>(
 				return [
 					{
 						type: "Revive",
-						detachedBy: mark.revision ?? revision,
-						detachIndex: inputIndex,
+						detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
 						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
 					},
 				];
 			}
 			case "Revive": {
-				if (!isConflicted(mark)) {
+				if (!isReattachConflicted(mark)) {
 					return [
 						{
 							type: "Delete",
@@ -122,7 +128,7 @@ function invertMark<TNodeChange>(
 						},
 					];
 				}
-				if (mark.lastDetachedBy === undefined) {
+				if (mark.detachEvent === undefined) {
 					// The nodes were already revived, so the revive mark did not affect them.
 					return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
 				}
@@ -139,7 +145,7 @@ function invertMark<TNodeChange>(
 			}
 			case "MoveOut":
 			case "ReturnFrom": {
-				if (isConflicted(mark)) {
+				if (areInputCellsEmpty(mark)) {
 					assert(
 						mark.changes === undefined,
 						0x4e1 /* Nested changes should have been moved to the destination of the move/return that detached them */,
@@ -147,7 +153,7 @@ function invertMark<TNodeChange>(
 					// The nodes were already detached so the mark had no effect
 					return [];
 				}
-				if (mark.isDstConflicted) {
+				if (mark.type === "ReturnFrom" && mark.isDstConflicted) {
 					// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
 					return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
 				}
@@ -165,43 +171,50 @@ function invertMark<TNodeChange>(
 						type: "ReturnTo",
 						id: mark.id,
 						count: mark.count,
-						detachedBy: mark.revision ?? revision,
-						detachIndex: inputIndex,
+						detachEvent: {
+							revision: mark.revision ?? revision ?? fail("Revision must be defined"),
+							index: inputIndex,
+						},
 					},
 				];
 			}
 			case "MoveIn":
 			case "ReturnTo": {
-				if (!isConflicted(mark)) {
-					if (mark.isSrcConflicted) {
-						// The nodes could have been attached but were not because of the source.
+				if (mark.isSrcConflicted) {
+					// The nodes could have been attached but were not because of the source.
+					return [];
+				}
+				if (mark.type === "ReturnTo") {
+					if (mark.detachEvent === undefined) {
+						// The nodes were already attached, so the mark did not affect them.
+						return [mark.count];
+					} else if (isConflictedReattach(mark)) {
+						// The nodes were not attached and could not be attached.
 						return [];
 					}
-					const invertedMark: ReturnFrom<TNodeChange> = {
-						type: "ReturnFrom",
-						id: mark.id,
-						count: mark.count,
-						detachedBy: mark.revision ?? revision,
-					};
-
-					const movedChanges = crossFieldManager.get(
-						CrossFieldTarget.Destination,
-						mark.revision ?? revision,
-						mark.id,
-						true,
-					);
-
-					if (movedChanges !== undefined) {
-						invertedMark.changes = movedChanges;
-					}
-					return [invertedMark];
 				}
-				if (mark.type === "ReturnTo" && mark.lastDetachedBy === undefined) {
-					// The nodes were already attached, so the mark did not affect them.
-					return [mark.count];
+
+				const invertedMark: ReturnFrom<TNodeChange> = {
+					type: "ReturnFrom",
+					id: mark.id,
+					count: mark.count,
+					// inverseOf: {
+					// 	revision: mark.revision ?? revision ?? fail("Revision must be defined"),
+					// 	index: inputIndex,
+					// },
+				};
+
+				const movedChanges = crossFieldManager.get(
+					CrossFieldTarget.Destination,
+					mark.revision ?? revision,
+					mark.id,
+					true,
+				);
+
+				if (movedChanges !== undefined) {
+					invertedMark.changes = movedChanges;
 				}
-				// The nodes were not attached and could not be attached.
-				return [];
+				return [invertedMark];
 			}
 			default:
 				fail("Not implemented");

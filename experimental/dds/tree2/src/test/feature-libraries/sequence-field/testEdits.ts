@@ -12,6 +12,8 @@ import { brand } from "../../../util";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachEvent } from "../../../feature-libraries/sequence-field/format";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -69,9 +71,8 @@ function createReviveChangeset(
 	detachedBy: RevisionTag,
 	detachIndex?: number,
 	reviver = fakeRepair,
-	conflictsWith?: RevisionTag,
 	linage?: SF.LineageEvent[],
-	lastDetachedBy?: RevisionTag,
+	lastDetach?: DetachEvent,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
 		startIndex,
@@ -81,15 +82,31 @@ function createReviveChangeset(
 		detachIndex,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
-	if (conflictsWith !== undefined) {
-		mark.conflictsWith = conflictsWith;
-	}
-	if (lastDetachedBy !== undefined) {
-		mark.lastDetachedBy = lastDetachedBy;
+	if (lastDetach !== undefined) {
+		mark.detachEvent = lastDetach;
 	}
 	if (linage !== undefined) {
 		mark.lineage = linage;
 	}
+	return markList;
+}
+
+function createBlockedReviveChangeset(
+	startIndex: number,
+	count: number,
+	detachedBy: RevisionTag,
+	detachIndex?: number,
+	reviver = fakeRepair,
+): SF.Changeset<never> {
+	const markList = SF.sequenceFieldEditor.revive(
+		startIndex,
+		count,
+		detachedBy,
+		reviver,
+		detachIndex,
+	);
+	const mark = markList[markList.length - 1] as SF.Reattach;
+	delete mark.detachEvent;
 	return markList;
 }
 
@@ -99,7 +116,6 @@ function createIntentionalReviveChangeset(
 	detachedBy: RevisionTag,
 	detachIndex?: number,
 	reviver = fakeRepair,
-	conflictsWith?: RevisionTag,
 	linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
@@ -111,9 +127,6 @@ function createIntentionalReviveChangeset(
 		true,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
-	if (conflictsWith !== undefined) {
-		mark.conflictsWith = conflictsWith;
-	}
 	if (linage !== undefined) {
 		mark.lineage = linage;
 	}
@@ -153,6 +166,7 @@ export const ChangeMaker = {
 	delete: createDeleteChangeset,
 	revive: createReviveChangeset,
 	intentionalRevive: createIntentionalReviveChangeset,
+	blockedRevive: createBlockedReviveChangeset,
 	move: createMoveChangeset,
 	return: createReturnChangeset,
 	modify: createModifyChangeset,

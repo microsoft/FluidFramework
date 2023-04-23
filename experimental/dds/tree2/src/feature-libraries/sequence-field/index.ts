@@ -40,8 +40,6 @@ export {
 	InputSpanningMark,
 	OutputSpanningMark,
 	SkipLikeReattach,
-	Conflicted,
-	CanConflict,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
@@ -58,7 +56,6 @@ export { amendCompose, compose, NodeChangeComposer } from "./compose";
 export {
 	areComposable,
 	areRebasable,
-	isActiveReattach,
 	getInputLength,
 	isDetachMark,
 	isReattach,
