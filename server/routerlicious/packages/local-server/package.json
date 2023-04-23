@@ -16,7 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:commonjs": "npm run tsc && npm run build:test",
+		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
@@ -27,13 +27,15 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run eslint",
-		"lint:fix": "npm run eslint:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive dist/test --unhandled-rejections=strict",
+		"test": "mocha --recursive dist/test/*.spec.js --unhandled-rejections=strict",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"nyc": {
 		"all": true,
@@ -70,10 +72,11 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.13.1",
+		"@fluid-tools/build-cli": "^0.15.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.13.1",
+		"@fluidframework/build-tools": "^0.15.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/server-local-server-previous": "npm:@fluidframework/server-local-server@0.1040.1000",
 		"@types/jsrsasign": "^8.0.8",
 		"@types/mocha": "^10.0.1",
 		"@types/nock": "^9.3.0",
@@ -92,5 +95,8 @@
 		"typescript": "~4.5.5",
 		"webpack": "^5.76.2",
 		"webpack-cli": "^4.9.2"
+	},
+	"typeValidation": {
+		"broken": {}
 	}
 }

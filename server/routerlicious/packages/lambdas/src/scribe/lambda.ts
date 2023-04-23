@@ -45,11 +45,7 @@ import {
 	CheckpointReason,
 	ICheckpoint,
 } from "../utils";
-import {
-	ICheckpointManager,
-	IPendingMessageReader,
-	ISummaryWriter,
-} from "./interfaces";
+import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
 
 export class ScribeLambda implements IPartitionLambda {
@@ -315,7 +311,10 @@ export class ScribeLambda implements IPartitionLambda {
 					this.noActiveClients = true;
 					const isTransientTenant = this.transientTenants.has(this.tenantId);
 
-					if (this.serviceConfiguration.scribe.generateServiceSummary && !isTransientTenant) {
+					if (
+						this.serviceConfiguration.scribe.generateServiceSummary &&
+						!isTransientTenant
+					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
 						const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);
 						try {
