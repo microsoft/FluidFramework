@@ -2,81 +2,82 @@
 # for more details.
 
 "area: build":
-  - ".github/*"
-  - ".github/workflows/**"
-  - "tools/pipelines/**"
+    - ".github/*"
+    - ".github/workflows/**"
+    - "tools/pipelines/**"
 
 "area: contributor experience":
-  - ".vscode/**"
+    - ".vscode/**"
 
 "area: dds":
-  - experimental/dds/**
-  - packages/dds/**
+    - experimental/dds/**
+    - packages/dds/**
 
 "area: dds: tree":
-  - experimental/dds/tree/**
-  - packages/dds/tree/**
+    - experimental/dds/tree/**
+    - experimental/dds/tree2/**
+    - packages/dds/tree/**
 
 "area: dds: propertydds":
-  - experimental/PropertyDDS/**
+    - experimental/PropertyDDS/**
 
 "area: dds: sharedstring":
-  - packages/dds/sequence/**
+    - packages/dds/sequence/**
 
 "area: definitions":
-  - common/lib/container-definitions/**
-  - common/lib/core-interfaces/**
-  - common/lib/driver-definitions/**
+    - common/lib/container-definitions/**
+    - common/lib/core-interfaces/**
+    - common/lib/driver-definitions/**
 
 "area: dev experience":
-  - experimental/framework/**
+    - experimental/framework/**
 
 "area: driver":
-  - packages/drivers/**
+    - packages/drivers/**
 
 "area: examples":
-  - examples/**
-  - experimental/examples/**
+    - examples/**
+    - experimental/examples/**
 
 "area: framework":
-  - packages/framework/**
+    - packages/framework/**
 
 "area: loader":
-  - packages/loader/**
+    - packages/loader/**
 
 "area: odsp-driver":
-  - packages/drivers/*odsp*/**
-  - packages/utils/odsp-doclib-utils/**
+    - packages/drivers/*odsp*/**
+    - packages/utils/odsp-doclib-utils/**
 
 # Add "area: repo" label to any root or .github changes
 "area: repo":
-  - any: ["*", ".github/**", "!BREAKING.md"]
+    - any: ["*", ".github/**", "!BREAKING.md"]
 
 "area: runtime":
-  - packages/runtime/**
+    - packages/runtime/**
 
 "area: server":
-  - server/**
+    - server/**
 
 "area: tests":
-  - packages/test/**
+    - packages/test/**
 
 "area: tools":
-  - any: ["common/build/**", "tools/**", "tools/pipelines/**"]
+    - any: ["common/build/**", "tools/**", "tools/pipelines/**"]
 
 "area: website":
-  - any: ["docs/**", "!docs/content/**"]
+    - any: ["docs/**", "!docs/content/**"]
 
 "breaking change":
-  - BREAKING.md
+    - BREAKING.md
 
 dependencies:
-  - lerna-package-lock.json
-  - package-lock.json
+    - lerna-package-lock.json
+    - package-lock.json
 
 documentation:
-  - docs/content/**
+    - docs/content/**
 
 # flag changes to public APIs so they can be reviewed to see if they're breaking
 "public api change":
-  - "**/api-report/**"
+    - "**/api-report/**"
