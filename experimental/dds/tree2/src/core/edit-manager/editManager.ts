@@ -293,8 +293,7 @@ export class EditManager<
 			});
 		}
 
-		const newChange = this.rebaseLocalBranchOverTrunk(undoRedoManager);
-		return this.changeFamily.intoDelta(newChange);
+		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk(undoRedoManager));
 	}
 
 	public addLocalChange(
