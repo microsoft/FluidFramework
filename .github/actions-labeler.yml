@@ -15,7 +15,7 @@
 
 "area: dds: tree":
   - experimental/dds/tree/**
-  - packages/dds/tree/**
+  - experimental/dds/tree2/**
 
 "area: dds: propertydds":
   - experimental/PropertyDDS/**
