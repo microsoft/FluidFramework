@@ -204,22 +204,22 @@ export enum IntervalStickiness {
 	/**
 	 * Interval expands to include segments inserted adjacent to the left
 	 */
-	Left,
+	Left = 0,
 
 	/**
 	 * Interval expands to include segments inserted adjacent to the right
 	 */
-	Right,
+	Right = 1,
 
 	/**
 	 * Interval expands to include all segments inserted adjacent to it
 	 */
-	Full,
+	Full = 2,
 
 	/**
 	 * Interval does not expand to include adjacent segments
 	 */
-	None,
+	None = 3,
 }
 
 /**
@@ -694,11 +694,9 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
-				stickiness === IntervalStickiness.Right ||
-					stickiness === IntervalStickiness.Full ||
-					!stickiness
-					? SlidingPreference.Right
-					: SlidingPreference.Left,
+				stickiness === IntervalStickiness.Left
+					? SlidingPreference.Left
+					: SlidingPreference.Right,
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -835,7 +833,6 @@ export function createSequenceInterval(
 		}
 	}
 
-	// todo: stickiness
 	const startLref = createPositionReference(
 		client,
 		start,
@@ -854,11 +851,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		undefined,
-		stickiness === IntervalStickiness.Right ||
-			stickiness === IntervalStickiness.Full ||
-			!stickiness
-			? SlidingPreference.Right
-			: SlidingPreference.Left,
+		stickiness === IntervalStickiness.Left ? SlidingPreference.Left : SlidingPreference.Right,
 	);
 	const rangeProp = {
 		[reservedRangeLabelsKey]: [label],
@@ -2265,10 +2258,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 					newEnd,
 					interval.end.refType,
 					op,
-					interval.stickiness === IntervalStickiness.Right ||
-						interval.stickiness === IntervalStickiness.Full
-						? SlidingPreference.Right
-						: SlidingPreference.Left,
+					interval.stickiness === IntervalStickiness.Left
+						? SlidingPreference.Left
+						: SlidingPreference.Right,
 				);
 				if (props) {
 					interval.end.addProperties(props);

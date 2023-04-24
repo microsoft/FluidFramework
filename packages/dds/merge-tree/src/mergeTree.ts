@@ -975,6 +975,8 @@ export class MergeTree {
 			}
 		}
 
+		// TODO:AB#4069: This update might be avoidable by checking if the old segment
+		// had hierarchical refs before sliding using `segment.localRefs?.hierRefCount`.
 		if (newRightSegment) {
 			this.blockUpdatePathLengths(
 				newRightSegment.parent,

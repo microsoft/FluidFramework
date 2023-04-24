@@ -18,8 +18,8 @@ import {
 } from "./referencePositions";
 
 export enum SlidingPreference {
-	Left,
-	Right,
+	Left = 0,
+	Right = 1,
 }
 
 /**
