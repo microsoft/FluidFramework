@@ -73,8 +73,8 @@ const ReferenceActivityType = {
 	CreateAndReference: 3,
 	/** Revive an unreferenced child object. */
 	Revive: 4,
-	/** Max value of enum. This is just used as the max value for generating an activity at random. */
-	Max: 5,
+	/** The count of enum values. This is used as the max value for generating an activity at random. */
+	Count: 5,
 };
 type ReferenceActivityType = typeof ReferenceActivityType[keyof typeof ReferenceActivityType];
 
@@ -86,8 +86,8 @@ const BlobActivityType = {
 	None: 0,
 	/** Get the blob via its handle. */
 	GetBlob: 1,
-	/** Max value of enum. This is just used as the max value for generating an activity at random. */
-	Max: 2,
+	/** The count of enum values. This is used as the max value for generating an activity at random. */
+	Count: 5,
 };
 type BlobActivityType = typeof BlobActivityType[keyof typeof BlobActivityType];
 
@@ -99,8 +99,8 @@ const LeafActivityType = {
 	None: 0,
 	/** Send one or more ops */
 	SendOps: 1,
-	/** Max value of enum. This is just used as the max value for generating an activity at random. */
-	Max: 2,
+	/** The count of enum values. This is used as the max value for generating an activity at random. */
+	Count: 5,
 };
 type LeafActivityType = typeof LeafActivityType[keyof typeof LeafActivityType];
 
@@ -146,7 +146,7 @@ class AttachmentBlobObject implements IGCActivityObject {
 	 * 2. None - Do nothing. This is to have summaries where no blobs are retrieved.
 	 */
 	private async runActivity(config: IRunConfig) {
-		const activityType = config.random.integer(0, BlobActivityType.Max - 1);
+		const activityType = config.random.integer(0, BlobActivityType.Count - 1);
 		switch (activityType) {
 			case BlobActivityType.GetBlob: {
 				await this.handle.get();
@@ -222,7 +222,7 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 	 * 2. None - Do nothing. This is to have summaries where this data store or its DDS does not change.
 	 */
 	private runActivity(config: IRunConfig) {
-		const activityType = config.random.integer(0, LeafActivityType.Max - 1);
+		const activityType = config.random.integer(0, LeafActivityType.Count - 1);
 		switch (activityType) {
 			case LeafActivityType.SendOps: {
 				this.counter.increment(1);
@@ -557,7 +557,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		const maxActivityIndex =
 			this.referencedDataObjects.length < maxRunningLeafDataObjects &&
 			this.referencedAttachmentBlobs.length < maxRunningAttachmentBlobs
-				? ReferenceActivityType.Max - 1
+				? ReferenceActivityType.Count - 1
 				: ReferenceActivityType.Unreference;
 		const activityType = config.random.integer(0, maxActivityIndex);
 		return Promise.all([
@@ -626,6 +626,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				break;
 			}
 			case ReferenceActivityType.None:
+			case ReferenceActivityType.AnotherNone:
 			default:
 				break;
 		}
@@ -701,6 +702,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				break;
 			}
 			case ReferenceActivityType.None:
+			case ReferenceActivityType.AnotherNone:
 			default:
 				break;
 		}
