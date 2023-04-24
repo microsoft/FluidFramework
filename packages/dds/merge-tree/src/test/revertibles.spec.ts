@@ -181,9 +181,9 @@ describe("MergeTree.Revertibles", () => {
 		logger.validate({ baseText: "123" });
 	});
 
-	it("revert overlapping remove", () => {
+	it("revert overlapping remove of multiple segments", () => {
 		const clients = createClientsAtInitialState(
-			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
+			{ initialState: "1-23", options: { mergeTreeUseNewLengthCalculations: true } },
 			"A",
 			"B",
 			"C",
@@ -200,11 +200,11 @@ describe("MergeTree.Revertibles", () => {
 			appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
 		});
 
-		ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq));
-		ops.push(clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq));
+		ops.push(clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 2), ++seq));
+		ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 2), ++seq));
 
 		ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
-		logger.validate({ baseText: "23" });
+		logger.validate({ baseText: "3" });
 
 		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
 
