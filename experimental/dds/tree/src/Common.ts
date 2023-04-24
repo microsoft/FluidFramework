@@ -78,8 +78,12 @@ export function compareStrings<T extends string>(a: T, b: T): number {
  * @param condition - A condition to assert is truthy
  * @param message - Message to be printed if assertion fails. Will print "Assertion failed" by default
  * @param containsPII - boolean flag for whether the message passed in contains personally identifying information (PII).
+ *
+ * @remarks
+ * To avoid collisions with assertShortCode tagging in Fluid Framework, this cannot be named "assert".
+ * When a non constant message is not needed, use `assert` from `@fluidframework/common-utils`;
  */
-export function assert(condition: unknown, message?: string, containsPII = false): asserts condition {
+export function assertWithMessage(condition: unknown, message?: string, containsPII = false): asserts condition {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 	if (!condition) {
 		fail(message, containsPII);
@@ -125,7 +129,7 @@ export function fail(message: string = defaultFailMessage, containsPII = false):
  * @param message - Message to be printed if assertion fails.
  */
 export function assertNotUndefined<T>(value: T | undefined, message = 'value must not be undefined'): T {
-	assert(value !== undefined, message);
+	assertWithMessage(value !== undefined, message);
 	return value;
 }
 
@@ -135,7 +139,7 @@ export function assertNotUndefined<T>(value: T | undefined, message = 'value mus
  * @param message - Message to be printed if assertion fails.
  */
 export function assertArrayOfOne<T>(array: readonly T[], message = 'array value must contain exactly one item'): T {
-	assert(array.length === 1, message);
+	assertWithMessage(array.length === 1, message);
 	return array[0];
 }
 

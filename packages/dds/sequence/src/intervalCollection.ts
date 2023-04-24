@@ -254,11 +254,9 @@ export class Interval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.getIntervalId}
 	 */
-	public getIntervalId(): string | undefined {
+	public getIntervalId(): string {
 		const id = this.properties?.[reservedIntervalIdKey];
-		if (id === undefined) {
-			return undefined;
-		}
+		assert(id !== undefined, 0x5e1 /* interval ID should not be undefined */);
 		return `${id}`;
 	}
 
@@ -606,11 +604,9 @@ export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.getIntervalId}
 	 */
-	public getIntervalId(): string | undefined {
+	public getIntervalId(): string {
 		const id = this.properties?.[reservedIntervalIdKey];
-		if (id === undefined) {
-			return undefined;
-		}
+		assert(id !== undefined, 0x5e2 /* interval ID should not be undefined */);
 		return `${id}`;
 	}
 
@@ -737,6 +733,7 @@ function createPositionReferenceFromSegoff(
 	refType: ReferenceType,
 	op?: ISequencedDocumentMessage,
 	localSeq?: number,
+	fromSnapshot?: boolean,
 	slidingPreference?: SlidingPreference,
 ): LocalReferencePosition {
 	if (segoff.segment) {
@@ -755,7 +752,12 @@ function createPositionReferenceFromSegoff(
 	// - References coming from a remote client (location may have been concurrently removed)
 	// - References being rebased to a new sequence number
 	//   (segment they originally referred to may have been removed with no suitable replacement)
-	if (!op && !localSeq && !refTypeIncludesFlag(refType, ReferenceType.Transient)) {
+	if (
+		!op &&
+		!localSeq &&
+		!fromSnapshot &&
+		!refTypeIncludesFlag(refType, ReferenceType.Transient)
+	) {
 		throw new UsageError("Non-transient references need segment");
 	}
 
@@ -789,12 +791,14 @@ function createPositionReference(
 		);
 		segoff = client.getContainingSegment(pos, undefined, localSeq);
 	}
+
 	return createPositionReferenceFromSegoff(
 		client,
 		segoff,
 		refType,
 		op,
 		localSeq,
+		fromSnapshot,
 		slidingPreference,
 	);
 }

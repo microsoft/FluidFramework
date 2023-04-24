@@ -289,7 +289,7 @@ describe("SharedString interval collections", () => {
 			beforeEach(() => {
 				sharedString.insertText(0, "01234");
 				collection = sharedString.getIntervalCollection("test");
-				collection2 = sharedString.getIntervalCollection("test");
+				collection2 = sharedString2.getIntervalCollection("test");
 				containerRuntimeFactory.processAllMessages();
 			});
 

@@ -4,7 +4,7 @@
  */
 
 import * as React from "react";
-import { ISharedTree } from "@fluid-internal/tree";
+import { ISharedTree } from "@fluid-experimental/tree2";
 import { useTree } from "@fluid-experimental/tree-react-api";
 import { Inventory } from "../schema";
 import { Counter } from "./counter";

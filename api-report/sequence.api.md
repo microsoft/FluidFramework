@@ -119,7 +119,7 @@ export class Interval implements ISerializableInterval {
     end: number;
     // (undocumented)
     getAdditionalPropertySets(): PropertySet[];
-    getIntervalId(): string | undefined;
+    getIntervalId(): string;
     // (undocumented)
     getProperties(): PropertySet;
     // @deprecated
@@ -318,7 +318,7 @@ export class SequenceInterval implements ISerializableInterval {
     compareEnd(b: SequenceInterval): number;
     compareStart(b: SequenceInterval): number;
     end: LocalReferencePosition;
-    getIntervalId(): string | undefined;
+    getIntervalId(): string;
     // (undocumented)
     intervalType: IntervalType;
     // @deprecated

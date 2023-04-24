@@ -108,7 +108,7 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 	const maybeRoot = findRootMergeBlock(segmentOrNode);
 	assert(
 		maybeRoot?.mergeTree !== undefined,
-		"trackable is invalid as it is not in a rooted merge tree.",
+		0x5c2 /* trackable is invalid as it is not in a rooted merge tree. */,
 	);
 	const mergeTree: PickPartial<MergeTreeWithRevert, "__mergeTreeRevertible"> =
 		maybeRoot.mergeTree;

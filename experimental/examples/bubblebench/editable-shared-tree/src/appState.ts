@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { cursorFromContextualData } from "@fluid-internal/tree";
+import { cursorFromContextualData } from "@fluid-experimental/tree2";
 import { ClientWrapper } from "./client";
 import { ClientsField, FlexClient, FlexBubble, rootAppStateSchema } from "./schema";
 
