@@ -114,5 +114,5 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 			t1.minBatchCount = obj.minSampleCount;
 		}
 		benchmark(t1);
-	}	
+	}
 }
