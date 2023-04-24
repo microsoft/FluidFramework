@@ -10585,6 +10585,69 @@ importers:
       webpack-dev-server: 4.6.0_x7pknmm2t3vm5puavzdpmh6qv4
       webpack-merge: 5.8.0
 
+  packages/tools/client-debugger/routerlicious-devtools:
+    specifiers:
+      '@fluid-tools/client-debugger': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.15.0
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/fluid-static': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
+      '@microsoft/api-extractor': ^7.34.4
+      '@types/chai': ^4.0.0
+      '@types/events': ^3.0.0
+      '@types/mocha': ^9.1.1
+      chai: ^4.2.0
+      concurrently: ^7.6.0
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      eslint-plugin-chai-expect: ~3.0.0
+      events: ^3.1.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nyc: ^15.1.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      typescript: ~4.5.5
+    dependencies:
+      '@fluid-tools/client-debugger': link:../client-debugger
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/fluid-static': link:../../../framework/fluid-static
+    devDependencies:
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.15.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
+      '@microsoft/api-extractor': 7.34.4
+      '@types/chai': 4.3.4
+      '@types/events': 3.0.0
+      '@types/mocha': 9.1.1
+      chai: 4.3.7
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
+      events: 3.3.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      nyc: 15.1.0
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      typescript: 4.5.5
+
   packages/tools/fetch-tool:
     specifiers:
       '@fluid-tools/build-cli': ^0.15.0
@@ -30480,7 +30543,7 @@ packages:
     resolution: {integrity: sha512-oWb1Z6mkHIskLzEJ/XWX0srkpkTQ7vaopMQkyaEIoq0fmtFVxOthb8cCxeT+p3ynTdkk/RZwbgG4brR5BeWECw==}
     engines: {node: '>= 4.0'}
     os: [darwin]
-    deprecated: fsevents 1 will break on node v14+ and could be using insecure binaries. Upgrade to fsevents 2.
+    deprecated: The v1 package contains DANGEROUS / INSECURE binaries. Upgrade to safe fsevents v2
     requiresBuild: true
     dependencies:
       bindings: 1.5.0
