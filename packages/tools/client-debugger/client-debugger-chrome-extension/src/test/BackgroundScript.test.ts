@@ -178,10 +178,6 @@ describe("Background script unit tests", () => {
 		};
 		sendMessageFromDevtools(devtoolsInitMessage, devtoolsPort);
 
-		// The background script calls `connect` in the continuation of a promise, so we need to delay to ensure
-		// that continuation runs before we attempt to access
-		await delay(500); // TODO: is this actually needed?
-
 		const sendMessageFromTab = await onMessageFromTabListenerPromise;
 		expect(typeof sendMessageFromTab).to.equal("function");
 
