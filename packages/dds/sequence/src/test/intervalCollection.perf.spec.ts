@@ -4,27 +4,28 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { ReferenceType } from "@fluidframework/merge-tree";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 
 /**
  * Note: Merge-tree has a number of perf tests for core operations (insert, remove, annotate).
  *
- * This file contains only interval perf tests currently, but addition to the suite should take
- * consideration to balance against existing merge-tree perf tests to avoid duplication.
+ * Addition to the suite should take consideration to balance against existing merge-tree perf tests
+ * to avoid duplication.
  */
 
 function runFindOverlappingIntervalsBenchmark({
 	intervalCount,
 	segmentCount,
 	segmentLength,
+	type,
 }: {
 	intervalCount: number;
 	segmentCount: number;
 	segmentLength: number;
+	type: BenchmarkType;
 }) {
 	let sharedString: SharedString;
 	let intervalCollection: IntervalCollection<SequenceInterval>;
@@ -53,7 +54,7 @@ function runFindOverlappingIntervalsBenchmark({
 		title: `findOverlappingIntervals on string of length ${
 			segmentCount * segmentLength
 		} with ${intervalCount} equally spaced intervals and ${segmentCount} segments`,
-		type: BenchmarkType.Measurement,
+		type,
 		benchmarkFn: () => {
 			const start = (segmentLength * segmentCount) / 2;
 			const end = start + segmentLength;
@@ -62,6 +63,8 @@ function runFindOverlappingIntervalsBenchmark({
 		before: setupSharedString,
 	});
 
+	// Note: this test would likely be covered by a suite of local reference perf tests. In lieu of that,
+	// it simulates flows that some consumers might use involving resolving the endpoints of their sequence intervals.
 	benchmark({
 		title: `findOverlappingIntervals on string of length ${
 			segmentCount * segmentLength
@@ -79,26 +82,27 @@ function runFindOverlappingIntervalsBenchmark({
 	});
 }
 
-describe.only("SharedString perf", () => {
-	describe("IntervalCollection", () => {
-		describe("findOverlappingIntervals", () => {
-			runFindOverlappingIntervalsBenchmark({
-				intervalCount: 200,
-				segmentCount: 1000,
-				segmentLength: 250,
-			});
+describe("IntervalCollection perf", () => {
+	describe("findOverlappingIntervals", () => {
+		runFindOverlappingIntervalsBenchmark({
+			intervalCount: 200,
+			segmentCount: 100,
+			segmentLength: 250,
+			type: BenchmarkType.Measurement,
+		});
 
-			runFindOverlappingIntervalsBenchmark({
-				intervalCount: 200,
-				segmentCount: 1000 * 250,
-				segmentLength: 1,
-			});
+		runFindOverlappingIntervalsBenchmark({
+			intervalCount: 200,
+			segmentCount: 100 * 250,
+			segmentLength: 1,
+			type: BenchmarkType.Perspective,
+		});
 
-			runFindOverlappingIntervalsBenchmark({
-				intervalCount: 2000,
-				segmentCount: 1000,
-				segmentLength: 250,
-			});
+		runFindOverlappingIntervalsBenchmark({
+			intervalCount: 2000,
+			segmentCount: 100,
+			segmentLength: 250,
+			type: BenchmarkType.Perspective,
 		});
 	});
 });
