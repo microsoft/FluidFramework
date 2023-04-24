@@ -10,7 +10,7 @@ import {
 	ValueSchema,
 	TypedSchema,
 	SchemaAware,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 
 // Aliases for conciseness
 const { value, sequence } = FieldKinds;

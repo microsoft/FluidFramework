@@ -14,13 +14,16 @@ import { IDeltaManager } from "@fluidframework/container-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryOpMessage, SummaryCollection } from "../../summary";
 
+// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+const OnlyValidTermValue = 1 as const;
+
 const summaryOp: ISummaryOpMessage = {
 	clientId: "cliendId",
 	clientSequenceNumber: 5,
 	minimumSequenceNumber: 5,
 	referenceSequenceNumber: 5,
 	sequenceNumber: 6,
-	term: 0,
+	term: OnlyValidTermValue,
 	timestamp: 6,
 	type: MessageType.Summarize,
 	contents: {
@@ -41,7 +44,7 @@ const summaryAck: ISequencedDocumentMessage & { data: string } = {
 	minimumSequenceNumber: summaryOp.sequenceNumber,
 	referenceSequenceNumber: summaryOp.sequenceNumber,
 	sequenceNumber: summaryOp.sequenceNumber + 1,
-	term: 0,
+	term: OnlyValidTermValue,
 	timestamp: summaryOp.timestamp + 1,
 	type: MessageType.SummaryAck,
 	contents: summaryAckContents,
@@ -58,7 +61,7 @@ const summaryNack: ISequencedDocumentMessage & { data: string } = {
 	minimumSequenceNumber: summaryOp.sequenceNumber,
 	referenceSequenceNumber: summaryOp.sequenceNumber,
 	sequenceNumber: summaryOp.sequenceNumber + 1,
-	term: 0,
+	term: OnlyValidTermValue,
 	timestamp: summaryOp.timestamp + 1,
 	type: MessageType.SummaryNack,
 	contents: summaryNackContents,

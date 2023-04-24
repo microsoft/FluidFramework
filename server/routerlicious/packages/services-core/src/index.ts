@@ -55,7 +55,6 @@ export {
 	IContext,
 	IContextErrorData,
 	ILogger,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
@@ -102,7 +101,6 @@ export { IMessageBatch, IPublisher, ITopic } from "./publisher";
 export {
 	IConsumer,
 	IPartition,
-	IPartitionWithEpoch,
 	IPendingBoxcar,
 	IPendingMessage,
 	IProducer,
@@ -149,5 +147,5 @@ export {
 	ITokenRevocationManager,
 	ITokenRevocationResponse,
 	TokenRevocationError,
-	createCompositeTokenId
+	createCompositeTokenId,
 } from "./tokenRevocationManager";
