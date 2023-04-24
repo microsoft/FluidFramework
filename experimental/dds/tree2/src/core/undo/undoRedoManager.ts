@@ -9,7 +9,7 @@ import { ReadonlyRepairDataStore } from "../repair";
 import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
 /**
- * Manages the undo commit tree and repair data associated with undoable commits.
+ * Manages the undo and redo commit trees and repair data associated with undoable and redoable commits.
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
@@ -22,35 +22,41 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private headUndoableCommit?: UndoableCommit<TChange>,
+		private headRedoableCommit?: RedoableCommit<TChange>,
 	) {}
 
 	public get headUndoable(): UndoableCommit<TChange> | undefined {
 		return this.headUndoableCommit;
 	}
 
+	public get headRedoable(): UndoableCommit<TChange> | undefined {
+		return this.headRedoableCommit;
+	}
+
 	/**
-	 * Adds the provided commit to the undo commit tree.
+	 * Adds the provided commit to the undo or redo commit tree, depending on the type of commit it is.
 	 * Should be called for all commits on the relevant branch, including undo commits.
+	 * If no commit type is passed in, it is assumed to an undoable commit.
 	 */
 	public trackCommit(
 		commit: GraphCommit<TChange>,
 		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
 	): void {
-		switch (undoRedoManagerCommitType) {
-			case UndoRedoManagerCommitType.Undo:
-				// TODO check if this is the correct commit?
-				this.headUndoableCommit = this.headUndoableCommit?.parent;
-				return;
-			default: {
-				const parent = this.headUndoableCommit;
-				const repairData = this.repairDataStoreProvider.createRepairData();
-				repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
-				this.headUndoableCommit = {
-					commit,
-					parent,
-					repairData,
-				};
-			}
+		const repairData = this.repairDataStoreProvider.createRepairData();
+		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
+
+		const parent = undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo ? this.headRedoableCommit : this.headUndoableCommit;
+
+		if (undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo) {
+			this.headUndoableCommit = this.headUndoableCommit?.parent;
+		} else if (undoRedoManagerCommitType === UndoRedoManagerCommitType.Redo) {
+			this.headRedoableCommit = this.headRedoableCommit?.parent;
+		}
+
+		this.headUndoableCommit = {
+			commit,
+			parent,
+			repairData,
 		}
 	}
 
@@ -87,6 +93,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
 			this.changeFamily,
 			this.headUndoableCommit,
+			this.headRedoableCommit,
 		);
 	}
 }
@@ -94,7 +101,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 /**
  * Represents a commit that can be undone.
  */
-export interface UndoableCommit<TChange> {
+interface UndoableCommit<TChange> {
 	/* The commit to undo */
 	readonly commit: GraphCommit<TChange>;
 	/* The repair data associated with the commit */
@@ -103,11 +110,14 @@ export interface UndoableCommit<TChange> {
 	readonly parent?: UndoableCommit<TChange>;
 }
 
+interface RedoableCommit<TChange> extends UndoableCommit<TChange> {}
+
 /**
  * The type of a commit in the context of undo/redo manager.
  */
 export enum UndoRedoManagerCommitType {
 	Undoable,
+	Redoable,
 	Undo,
 	Redo,
 }
