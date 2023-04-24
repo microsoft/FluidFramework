@@ -176,7 +176,11 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	 * @param containerConfig - the test container configuration
 	 */
 	const processOutOfOrderOp = async (featureGates: Record<string, ConfigTypes> = {}) => {
-		await setupContainers(testContainerConfig, featureGates);
+		await setupContainers(
+			// AB#3983 track work to removing this exception using simulateReadConnectionUsingDelay
+			{ simulateReadConnectionUsingDelay: false, ...testContainerConfig },
+			featureGates,
+		);
 
 		// Force the container into write-mode
 		dataObject1map.set("key0", "0");

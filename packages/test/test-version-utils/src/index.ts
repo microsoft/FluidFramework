@@ -27,6 +27,7 @@ export {
 	describeE2EDocsRuntime,
 	describeE2EDocRun,
 	getCurrentBenchmarkType,
+	isMemoryTest,
 } from "./describeE2eDocs";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
 export {

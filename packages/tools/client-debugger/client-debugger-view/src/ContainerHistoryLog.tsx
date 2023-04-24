@@ -23,6 +23,7 @@ import {
 	Attach24Regular,
 	LockClosed24Filled,
 } from "@fluentui/react-icons";
+import { Stack, StackItem, IStackItemStyles } from "@fluentui/react";
 import { ConnectionStateChangeLogEntry } from "@fluid-tools/client-debugger";
 
 /**
@@ -63,6 +64,21 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 				console.log("Unknown state type for container!");
 				return tokens.colorBrandBackgroundPressed; // black
 		}
+	};
+
+	const itemStyles: IStackItemStyles = {
+		root: {
+			paddingTop: "6px",
+			paddingBottom: "6px",
+		},
+	};
+
+	const itemStateStyle: IStackItemStyles = {
+		root: {
+			marginTop: "8px",
+			marginBottom: "8px",
+			marginLeft: "5px",
+		},
 	};
 
 	return (
@@ -114,8 +130,12 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 							}}
 						>
 							<TableCell>
-								{getStateIcon(item.newState)}
-								{item.newState}
+								<Stack horizontal>
+									<StackItem styles={itemStyles}>
+										{getStateIcon(item.newState)}
+									</StackItem>
+									<StackItem styles={itemStateStyle}>{item.newState}</StackItem>
+								</Stack>
 							</TableCell>
 							<TableCell>{timestampDisplay}</TableCell>
 						</TableRow>
