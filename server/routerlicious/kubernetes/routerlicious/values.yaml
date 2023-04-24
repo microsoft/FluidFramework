@@ -29,54 +29,14 @@ alfred:
         maxInMemoryCacheAgeInMs: 60000
         enableEnhancedTelemetry: false
     restCallsPerCluster:
-        createDoc:
-            maxPerMs: 1000000
-            maxBurst: 1000000
-            minCooldownIntervalInMs: 1000000
-            minThrottleIntervalInMs: 1000000
-            maxInMemoryCacheSize: 1000
-            maxInMemoryCacheAgeInMs: 60000
-            enableEnhancedTelemetry: false
-        getDeltas:
-            maxPerMs: 1000000
-            maxBurst: 1000000
-            minCooldownIntervalInMs: 1000000
-            minThrottleIntervalInMs: 1000000
-            maxInMemoryCacheSize: 1000
-            maxInMemoryCacheAgeInMs: 60000
-            enableEnhancedTelemetry: false
-    socketConnectionsPerTenant:
-        maxPerMs: 1000000
-        maxBurst: 1000000
-        minCooldownIntervalInMs: 1000000
-        minThrottleIntervalInMs: 1000000
-        maxInMemoryCacheSize: 1000
-        maxInMemoryCacheAgeInMs: 60000
-        enableEnhancedTelemetry: false
-    socketConnectionsPerCluster:
-        maxPerMs: 1000000
-        maxBurst: 1000000
-        minCooldownIntervalInMs: 1000000
-        minThrottleIntervalInMs: 1000000
-        maxInMemoryCacheSize: 1000
-        maxInMemoryCacheAgeInMs: 60000
-        enableEnhancedTelemetry: false
-    submitOps:
-        maxPerMs: 1000000
-        maxBurst: 1000000
-        minCooldownIntervalInMs: 1000000
-        minThrottleIntervalInMs: 1000000
-        maxInMemoryCacheSize: 1000
-        maxInMemoryCacheAgeInMs: 60000
-        enableEnhancedTelemetry: false
-    submitSignal:
-        maxPerMs: 1000000
-        maxBurst: 1000000
-        minCooldownIntervalInMs: 1000000
-        minThrottleIntervalInMs: 1000000
-        maxInMemoryCacheSize: 1000
-        maxInMemoryCacheAgeInMs: 60000
-        enableEnhancedTelemetry: false
+        createDoc: 
+            maxPerInterval: 1000000
+            intervalInMs: 1000000
+        getDeltas: disabled
+    socketConnectionsPerTenant: disabled
+    socketConnectionsPerCluster: disabled
+    submitOps: disabled
+    submitSignal: disabled
   socketIoAdapter:
     enableCustomSocketIoAdapter: true
     shouldDisableDefaultNamespace: false
@@ -107,10 +67,6 @@ scribe:
     idleTime: 10000
     maxTime: 60000
     maxMessages: 500
-
-foreman:
-  name: foreman
-  replicas: 8
 
 riddler:
   name: riddler

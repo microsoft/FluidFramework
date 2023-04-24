@@ -273,6 +273,25 @@ export class ConnectionManager implements IConnectionManager {
 			  };
 	}
 
+	public shouldJoinWrite(): boolean {
+		// We don't have to wait for ack for topmost NoOps. So subtract those.
+		const outstandingOps =
+			this.clientSequenceNumberObserved < this.clientSequenceNumber - this.localOpsToIgnore;
+
+		// Previous behavior was to force write mode here only when there are outstanding ops (besides
+		// no-ops). The dirty signal from runtime should provide the same behavior, but also support
+		// stashed ops that weren't submitted to container layer yet. For safety, we want to retain the
+		// same behavior whenever dirty is false.
+		const isDirty = this.containerDirty();
+		if (outstandingOps !== isDirty) {
+			this.logger.sendTelemetryEvent({
+				eventName: "DesiredConnectionModeMismatch",
+				details: JSON.stringify({ outstandingOps, isDirty }),
+			});
+		}
+		return outstandingOps || isDirty;
+	}
+
 	/**
 	 * Tells if container is in read-only mode.
 	 * Data stores should listen for "readonly" notifications and disallow user
@@ -319,7 +338,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
-		public readonly shouldJoinWrite: () => boolean,
+		public readonly containerDirty: () => boolean,
 		private client: IClient,
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLogger,

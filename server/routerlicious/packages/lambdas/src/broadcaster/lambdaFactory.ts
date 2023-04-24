@@ -28,10 +28,7 @@ export class BroadcasterLambdaFactory extends EventEmitter implements IPartition
 		});
 	}
 
-	public async create(
-		config: undefined,
-		context: IContext,
-	): Promise<IPartitionLambda> {
+	public async create(config: undefined, context: IContext): Promise<IPartitionLambda> {
 		return new BroadcasterLambda(
 			this.publisher,
 			context,
