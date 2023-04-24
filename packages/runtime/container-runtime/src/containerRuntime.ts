@@ -1134,7 +1134,15 @@ export class ContainerRuntime
 		this.heuristicsDisabled = this.isHeuristicsDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
-		if (this.runtimeOptions.enableRuntimeIdCompressor) {
+
+		// Enabling the compressor is a one-way operation. Once it's enabled for a document
+		// it is persisted in the container's metadata.
+		const compressorEnabled =
+			metadata?.idCompressorEnabled ??
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
+			this.runtimeOptions.enableRuntimeIdCompressor;
+
+		if (compressorEnabled) {
 			this.idCompressor =
 				serializedIdCompressor !== undefined
 					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
@@ -1638,6 +1646,7 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
+			idCompressorEnabled: this.idCompressor !== undefined,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -1650,7 +1659,7 @@ export class ContainerRuntime
 	) {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this.runtimeOptions.enableRuntimeIdCompressor && this.idCompressor !== undefined) {
+		if (this.idCompressor !== undefined) {
 			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
@@ -2904,8 +2913,8 @@ export class ContainerRuntime
 	private generateAndSubmitIdAllocationOp() {
 		let idAllocationBatchMessage: BatchMessage | undefined;
 		let idRange: IdCreationRange | undefined;
-		if (this.runtimeOptions.enableRuntimeIdCompressor === true) {
-			idRange = this.idCompressor?.takeNextCreationRange();
+		if (this.idCompressor !== undefined) {
+			idRange = this.idCompressor.takeNextCreationRange();
 			// Don't include the idRange if there weren't any Ids allocated
 			idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
 		}

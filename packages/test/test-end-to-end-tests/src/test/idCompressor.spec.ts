@@ -123,6 +123,29 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		await waitForContainerConnection(container3);
 	});
 
+	it("Ignores runtime option if container is created and IdCompressor has been previously enabled", async () => {
+		// Create a container without the runtime option to enable the compressor.
+		// The first container should set a metadata property that automatically should
+		// enable it for any other container runtimes that are created.
+		const runtimeFactoryWithoutCompressorEnabled =
+			new ContainerRuntimeFactoryWithDefaultDataStore(
+				factory,
+				[[factory.type, Promise.resolve(factory)]],
+				undefined,
+				undefined,
+				undefined,
+			);
+
+		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
+		const container4MainDataStore = await requestFluidObject<TestDataObject>(container4, "/");
+		const sharedMapContainer4 = container4MainDataStore.map;
+
+		assert(
+			getIdCompressor(sharedMapContainer4) !== undefined,
+			"Compressor should exist if it has ever been enabled",
+		);
+	});
+
 	it("Ids generated when disconnected are correctly resubmitted", async () => {
 		// Disconnect the first container
 		container1.disconnect();
