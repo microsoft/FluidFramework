@@ -171,16 +171,6 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export {
-	Commit,
-	EditManager,
-	minimumPossibleSequenceNumber,
-	SeqNumber,
-	SequencedCommit,
-	SummarySessionBranch as SummaryBranch,
-	SummaryData,
-} from "./edit-manager";
-
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
 
 export {
