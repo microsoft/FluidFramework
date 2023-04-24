@@ -16,7 +16,12 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import {
+	IntervalCollection,
+	IntervalStickiness,
+	IntervalType,
+	SequenceInterval,
+} from "../intervalCollection";
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -158,6 +163,124 @@ describe("SharedString interval collections", () => {
 			assertIntervals(sharedString2, collection2, [
 				{ start: sharedString2.getLength() - 1, end: sharedString2.getLength() - 1 },
 			]);
+		});
+
+		describe("interval stickiness", () => {
+			it("has left stickiness", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "Xabc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					3,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.Left,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(1, "def");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "Xdefabc", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
+			});
+
+			it("has left stickiness during delete inside interval", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "Xabc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					3,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.Left,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(1, "def");
+				containerRuntimeFactory.processAllMessages();
+				sharedString.removeRange(1, 3);
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "Xfabc", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 4 }]);
+			});
+
+			it("has left stickiness during delete of start of interval", () => {
+				// abc(Xdef]
+				// abc(Xghidef]
+				// (aghidef]
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abcXdef");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					3,
+					6,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.Left,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(4, "ghi");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "abcXghidef", "different text");
+				assertIntervals(sharedString, collection, [{ start: 3, end: 9 }]);
+
+				sharedString.removeRange(1, 4);
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "aghidef", "different text");
+				assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
+			});
+
+			it.skip("has left stickiness when spanning whole string and insertion at index 0", () => {
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					2,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.Left,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(0, "X");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "Xabc", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
+			});
+
+			it("has right stickiness", () => {
+				// [abc)
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					2,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.Right,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(2, "def");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "abdefc", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+			});
 		});
 
 		describe("remain consistent on double-delete", () => {

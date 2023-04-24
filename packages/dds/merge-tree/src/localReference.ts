@@ -17,6 +17,11 @@ import {
 	refTypeIncludesFlag,
 } from "./referencePositions";
 
+export enum SlidingPreference {
+	Left,
+	Right,
+}
+
 /**
  * @internal
  */
@@ -66,7 +71,11 @@ class LocalReference implements LocalReferencePosition {
 		return (this._trackingCollection ??= new TrackingGroupCollection(this));
 	}
 
-	constructor(public refType = ReferenceType.Simple, properties?: PropertySet) {
+	constructor(
+		public refType = ReferenceType.Simple,
+		properties?: PropertySet,
+		public readonly slidingPreference: SlidingPreference = SlidingPreference.Right,
+	) {
 		_validateReferenceType(refType);
 		this.properties = properties;
 	}
@@ -261,8 +270,9 @@ export class LocalReferenceCollection {
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
-		const ref = new LocalReference(refType, properties);
+		const ref = new LocalReference(refType, properties, slidingPreference);
 		ref.link(this.segment, offset, undefined);
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);

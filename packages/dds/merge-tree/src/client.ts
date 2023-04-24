@@ -20,7 +20,7 @@ import { UsageError } from "@fluidframework/container-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
-import { LocalReferencePosition } from "./localReference";
+import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
 	CollaborationWindow,
 	compareStrings,
@@ -379,12 +379,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
 			offset ?? 0,
 			refType,
 			properties,
+			slidingPreference,
 		);
 	}
 

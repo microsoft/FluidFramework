@@ -19,7 +19,11 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "./constants";
-import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
+import {
+	LocalReferenceCollection,
+	LocalReferencePosition,
+	SlidingPreference,
+} from "./localReference";
 import {
 	BaseSegment,
 	BlockAction,
@@ -859,6 +863,7 @@ export class MergeTree {
 	 */
 	public _getSlideToSegment(
 		segment: ISegment | undefined,
+		slidingPreference: SlidingPreference = SlidingPreference.Right,
 		shouldCache?: boolean,
 	): ISegment | undefined {
 		if (!segment || !isRemovedAndAcked(segment)) {
@@ -888,8 +893,13 @@ export class MergeTree {
 			segmentsWithSlidDst.add(seg);
 			return true;
 		};
-		// Slide to the next farthest valid segment in the tree.
-		forwardExcursion(segment, goFurtherToFindSlideToSegment);
+		// Slide to the next farthest valid segment in the tree
+		if (slidingPreference === SlidingPreference.Left) {
+			backwardExcursion(segment, goFurtherToFindSlideToSegment);
+		} else {
+			forwardExcursion(segment, goFurtherToFindSlideToSegment);
+		}
+
 		if (slideToSegment) {
 			if (shouldCache) {
 				for (const seg of segmentsWithSlidDst) {
@@ -898,8 +908,14 @@ export class MergeTree {
 			}
 			return slideToSegment;
 		}
+
 		// If no such segment is found, slide to the last valid segment.
-		backwardExcursion(segment, goFurtherToFindSlideToSegment);
+		if (slidingPreference === SlidingPreference.Left) {
+			forwardExcursion(segment, goFurtherToFindSlideToSegment);
+		} else {
+			backwardExcursion(segment, goFurtherToFindSlideToSegment);
+		}
+
 		if (shouldCache) {
 			for (const seg of segmentsWithSlidDst) {
 				this.cachedSlideDestination?.segmentToSlideDestination.set(
@@ -925,16 +941,38 @@ export class MergeTree {
 		if (segment.localRefs?.empty !== false) {
 			return;
 		}
-		const newSegment = this._getSlideToSegment(segment, true);
-		if (newSegment) {
-			const localRefs = (newSegment.localRefs ??= new LocalReferenceCollection(newSegment));
+
+		const newLeftSegment = this._getSlideToSegment(segment, SlidingPreference.Left);
+		const newRightSegment = this._getSlideToSegment(segment, SlidingPreference.Right);
+
+		const localLeftRefs =
+			newLeftSegment &&
+			(newLeftSegment.localRefs ??= new LocalReferenceCollection(newLeftSegment));
+		const localRightRefs =
+			newRightSegment &&
+			(newRightSegment.localRefs ??= new LocalReferenceCollection(newRightSegment));
+
+		const addRef = (
+			newSegment: ISegment,
+			refs: LocalReferenceCollection,
+			refPos: LocalReferencePosition,
+		) => {
 			if (newSegment.ordinal < segment.ordinal) {
-				localRefs.addAfterTombstones(segment.localRefs);
+				refs.addAfterTombstones([refPos]);
 			} else {
-				localRefs.addBeforeTombstones(segment.localRefs);
+				refs.addBeforeTombstones([refPos]);
 			}
-		} else {
-			for (const ref of segment.localRefs) {
+		};
+
+		for (const ref of segment.localRefs) {
+			if (ref.slidingPreference === SlidingPreference.Left && localLeftRefs) {
+				addRef(newLeftSegment, localLeftRefs, ref);
+			} else if (
+				(ref.slidingPreference === SlidingPreference.Right || !ref.slidingPreference) &&
+				localRightRefs
+			) {
+				addRef(newRightSegment, localRightRefs, ref);
+			} else {
 				if (!refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
 					ref.callbacks?.beforeSlide?.(ref);
 					segment.localRefs?.removeLocalRef(ref);
@@ -942,11 +980,17 @@ export class MergeTree {
 				}
 			}
 		}
-		// TODO:AB#4069: This update might be avoidable by checking if the old segment
-		// had hierarchical refs before sliding using `segment.localRefs?.hierRefCount`.
-		if (newSegment) {
+
+		if (newRightSegment) {
 			this.blockUpdatePathLengths(
-				newSegment.parent,
+				newRightSegment.parent,
+				TreeMaintenanceSequenceNumber,
+				LocalClientId,
+			);
+		}
+		if (newLeftSegment) {
+			this.blockUpdatePathLengths(
+				newLeftSegment.parent,
 				TreeMaintenanceSequenceNumber,
 				LocalClientId,
 			);
@@ -1781,6 +1825,7 @@ export class MergeTree {
 			}
 		}
 	}
+
 	private readonly splitLeafSegment = (
 		segment: ISegment | undefined,
 		pos: number,
@@ -2307,11 +2352,13 @@ export class MergeTree {
 			return removedRefs;
 		}
 	}
+
 	public createLocalReferencePosition(
 		segment: ISegment,
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
 		if (
 			isRemovedAndAcked(segment) &&
@@ -2324,7 +2371,7 @@ export class MergeTree {
 		const localRefs = segment.localRefs ?? new LocalReferenceCollection(segment);
 		segment.localRefs = localRefs;
 
-		const segRef = localRefs.createLocalRef(offset, refType, properties);
+		const segRef = localRefs.createLocalRef(offset, refType, properties, slidingPreference);
 
 		if (refTypeIncludesFlag(refType, hierRefTypes)) {
 			this.blockUpdatePathLengths(
