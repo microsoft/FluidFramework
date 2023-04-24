@@ -26,29 +26,12 @@ export async function awaitListener<T>(
 	event: { addListener: (fn: T) => void },
 ): Promise<T> {
 	return new Promise((resolve) => {
-		console.log("Stubbing...");
 		sandbox.stub(event, "addListener").get(() => {
 			return (fn: T): void => {
-				console.log("returning...");
 				resolve(fn);
 			};
 		});
 	});
-}
-
-/**
- * Test event
- */
-export class TestEvent<TEventData> {
-	private readonly listeners: Set<(data: TEventData) => void> = new Set();
-
-	public addListener(listener: (data: TEventData) => void): void {
-		this.listeners.add(listener);
-	}
-
-	public removeListener(listener: (data: TEventData) => void): void {
-		this.listeners.delete(listener);
-	}
 }
 
 /**
@@ -57,7 +40,10 @@ export class TestEvent<TEventData> {
  * event registrations can be individually watched by tests.
  */
 export function stubEvent(): chrome.events.Event<() => void> {
-	return new TestEvent() as unknown as chrome.events.Event<() => void>;
+	return {
+		addListener: () => {},
+		removeListener: () => {},
+	} as unknown as chrome.events.Event<() => void>;
 }
 
 /**

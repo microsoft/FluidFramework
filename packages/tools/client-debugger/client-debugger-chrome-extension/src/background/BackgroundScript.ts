@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDevtoolsMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
+import {
+	ISourcedDevtoolsMessage,
+	devtoolsMessageSource,
+	isDebuggerMessage,
+} from "@fluid-tools/client-debugger";
 
 import {
 	DevToolsInitAcknowledgement,
@@ -94,15 +98,17 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 
 					tabConnection.onMessage.addListener(
 						(tabMessage: Partial<ISourcedDevtoolsMessage>): void => {
-							if (isDebuggerMessage(tabMessage)) {
+							// Only forward messages coming from the devtools library on the page.
+							if (
+								isDebuggerMessage(tabMessage) &&
+								tabMessage.source === devtoolsMessageSource
+							) {
 								relayMessageToPort(
 									tabMessage,
 									"Content Script",
 									devtoolsPort,
 									backgroundScriptMessageLoggingOptions,
 								);
-							} else {
-								console.log("BACKGROUND: Skipping unrecognized message.");
 							}
 						},
 					);
@@ -120,7 +126,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 
 					console.log(
 						formatBackgroundScriptMessageForLogging(
-							"Informing DevTools script that tab connection is ready.",
+							"Informing Devtools script that tab connection is ready.",
 						),
 					);
 
@@ -163,12 +169,15 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 					message,
 				);
 			} else {
-				relayMessageToPort(
-					message,
-					"Devtools Script",
-					tabConnection,
-					backgroundScriptMessageLoggingOptions,
-				);
+				if (message.source === extensionMessageSource) {
+					// Only relay known messages from the extension
+					relayMessageToPort(
+						message,
+						"Devtools Script",
+						tabConnection,
+						backgroundScriptMessageLoggingOptions,
+					);
+				}
 			}
 		}
 	};
