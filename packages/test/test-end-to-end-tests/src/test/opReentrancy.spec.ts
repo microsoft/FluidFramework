@@ -46,6 +46,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		featureGates: Record<string, ConfigTypes> = {},
 	) => {
 		const configWithFeatureGates = {
+			// AB#3986 track work to removing this exception using simulateReadConnectionUsingDelay
+			simulateReadConnectionUsingDelay: false,
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
 		};

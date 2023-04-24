@@ -1,22 +1,8 @@
-# Changes across versions for the Fluid-Static
+# @fluidframework/fluid-static
 
--   [Changes across versions for the Fluid-Static](#changes-across-versions-for-the-fluid-static)
-    -   [0.39.0](#0390)
-        -   [[BREAKING] `'FluidStatic' instances have been moved to service specific packages`]
-            (#fluidstatic-instances-have-been-moved-to-service-specific-packages)
-            -   [Example](#example-4)
-        -   [[BREAKING] `'ContainerConfig' has been renamed to 'ContainerSchema'`](#containerconfig-has-been-renamed-to-containerschema)
-    -   [0.38.0](#0380)
-        -   [DDS object types are now supported](#dds-object-types-are-now-supported)
-            -   [Example](#example)
-        -   [`initialObjects` are avaiable as an object on the FluidContainer](#initialobjects-are-avaiable-as-an-object-on-the-fluidcontainer)
-            -   [Example](#example-1)
-        -   [[BREAKING] `ContainerConfig` has renames](#breaking-containerconfig-has-renames)
-            -   [Example](#example-2)
-        -   [[BREAKING] `CreateContainerConfig` has been removed](#breaking-createcontainerconfig-has-been-removed)
-        -   [[BREAKING] `getDataObject` is no longer avaiable](#breaking-getdataobject-is-no-longer-avaiable)
-        -   [[BREAKING] `createDataObject` is replaced by `create`](#breaking-createdataobject-is-replaced-by-create)
-            -   [Example](#example-3)
+## 2.0.0-internal.4.1.0
+
+Dependency updates only.
 
 ## 0.39.0
 

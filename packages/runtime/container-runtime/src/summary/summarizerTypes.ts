@@ -506,7 +506,9 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	/** Actual sequence number of the summary op proposal. */
 	| "summarySequenceNumber"
 	/** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
-	| "nackRetryAfter";
+	| "nackRetryAfter"
+	/** The stage at which the submit summary method failed at. This can help determine what type of failure we have */
+	| "stage";
 
 export type SummaryGeneratorTelemetry = Pick<
 	ITelemetryProperties,
