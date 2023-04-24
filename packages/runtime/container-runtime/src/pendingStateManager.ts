@@ -258,12 +258,6 @@ export class PendingStateManager implements IDisposable {
 			return;
 		}
 
-		if (pendingMessage.messageType === ContainerMessageType.IdAllocation) {
-			// The stashedState isn't sent over the wire so comparison of message
-			// contents will fail if we don't delete it here
-			delete pendingMessage.content.stashedState;
-		}
-
 		const pendingMessageContent = JSON.stringify(pendingMessage.content);
 		const messageContent = JSON.stringify(message.contents);
 
