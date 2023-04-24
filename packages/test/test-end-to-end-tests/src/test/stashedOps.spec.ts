@@ -249,7 +249,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(directory2.get(testKey), testValue);
 	});
 
-	it.skip("connects in write mode and resends op when loaded with no delta connection", async function () {
+	it("connects in write mode and resends op when loaded with no delta connection", async function () {
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
 			map.set(testKey, testValue);
@@ -270,8 +270,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
-
-		// this test is skipped because we currently timeout here
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
 		assert.strictEqual(map1.get(testKey), testValue);
@@ -802,12 +800,14 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		],
 		async () => {
 			const container = await provider.loadTestContainer(testContainerConfig);
-			await waitForContainerConnection(container);
+			const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+			// Force to write mode to get a leave message
+			dataStore.root.set("forceWrite", true);
+			await provider.ensureSynchronized();
+
 			const serializedClientId = container.clientId;
 			assert.ok(serializedClientId);
-			const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 
-			await provider.ensureSynchronized();
 			await provider.opProcessingController.pauseProcessing(container);
 			assert(dataStore.runtime.deltaManager.outbound.paused);
 
@@ -1225,7 +1225,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await provider2.ensureSynchronized();
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "no url");
-		await provider2.opProcessingController.pauseProcessing(container);
+		container.disconnect();
 
 		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);

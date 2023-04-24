@@ -12,6 +12,7 @@ import {
 	IWholeFlatSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { WholeSummaryDocumentStorageService } from "../wholeSummaryDocumentStorageService";
+import { IR11sResponse } from "../restWrapper";
 
 /* Blobs contained within source summary tree returned by git manager */
 const summaryBlobs: IWholeFlatSummaryBlob[] = [
@@ -131,8 +132,13 @@ const expectedSummary: ISummaryTree = {
 };
 
 class MockGitManager {
-	public async getSummary(sha: string): Promise<IWholeFlatSummary> {
-		return flatSummary;
+	public async getSummary(sha: string): Promise<IR11sResponse<IWholeFlatSummary>> {
+		return {
+			content: flatSummary,
+			headers: new Map(),
+			propsToLog: {},
+			requestUrl: "",
+		};
 	}
 }
 
