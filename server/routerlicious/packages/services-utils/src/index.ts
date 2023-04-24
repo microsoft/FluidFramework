@@ -36,6 +36,7 @@ export {
 	executeRedisMultiWithHmsetExpireAndLpush,
 	IRedisParameters,
 } from "./redisUtils";
+export { IThrottleConfig, ISimpleThrottleConfig, getThrottleConfig } from "./throttlerConfigs";
 export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 export { WebSocketTracker, DummyTokenRevocationManager } from "./tokenRevocationManager";

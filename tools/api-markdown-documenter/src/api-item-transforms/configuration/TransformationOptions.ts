@@ -7,6 +7,7 @@ import {
 	ApiClass,
 	ApiConstructSignature,
 	ApiConstructor,
+	ApiEntryPoint,
 	ApiEnum,
 	ApiEnumMember,
 	ApiFunction,
@@ -17,7 +18,6 @@ import {
 	ApiMethodSignature,
 	ApiModel,
 	ApiNamespace,
-	ApiPackage,
 	ApiPropertyItem,
 	ApiTypeAlias,
 	ApiVariable,
@@ -80,6 +80,16 @@ export interface ApiItemTransformationOptions {
 	>;
 
 	/**
+	 * Transformation to generate a {@link SectionNode} for a package `EntryPoint`.
+	 *
+	 * @remarks
+	 *
+	 * Note: for packages that have a single entry-point, this content will be bubbled up to the generated
+	 * package-level document to reduce unecessary indirection in the generated suite.
+	 */
+	transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
+
+	/**
 	 * Transformation to generate a {@link SectionNode} for an `Enum`.
 	 */
 	transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
@@ -126,11 +136,6 @@ export interface ApiItemTransformationOptions {
 	transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
 
 	/**
-	 * Transformation to generate a {@link SectionNode} for a `Package`.
-	 */
-	transformApiPackage?: TransformApiItemWithChildren<ApiPackage>;
-
-	/**
 	 * Transformation to generate a {@link SectionNode} for a `Property`.
 	 */
 	transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
@@ -165,6 +170,7 @@ const defaultApiItemTransformationOptions: Required<ApiItemTransformationOptions
 	transformApiCallSignature: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	transformApiClass: DefaultTransformationImplementations.transformApiClass,
 	transformApiConstructor: DefaultTransformationImplementations.transformApiFunctionLike,
+	transformApiEntryPoint: DefaultTransformationImplementations.transformApiEntryPoint,
 	transformApiEnum: DefaultTransformationImplementations.transformApiEnum,
 	transformApiEnumMember: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	transformApiFunction: DefaultTransformationImplementations.transformApiFunctionLike,
@@ -174,7 +180,6 @@ const defaultApiItemTransformationOptions: Required<ApiItemTransformationOptions
 	transformApiMethod: DefaultTransformationImplementations.transformApiFunctionLike,
 	transformApiModel: DefaultTransformationImplementations.transformApiModel,
 	transformApiNamespace: DefaultTransformationImplementations.transformApiNamespace,
-	transformApiPackage: DefaultTransformationImplementations.transformApiPackage,
 	transformApiProperty: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	transformApiTypeAlias: DefaultTransformationImplementations.transformApiItemWithoutChildren,
 	transformApiVariable: DefaultTransformationImplementations.transformApiItemWithoutChildren,

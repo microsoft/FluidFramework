@@ -107,7 +107,7 @@ describe("Outbox", () => {
 	const getMockSplitter = (enabled: boolean, chunkSizeInBytes: number): Partial<OpSplitter> => ({
 		chunkSizeInBytes,
 		isBatchChunkingEnabled: enabled,
-		splitCompressedBatch: (batch: IBatch): IBatch => {
+		splitFirstBatchMessage: (batch: IBatch): IBatch => {
 			state.batchesSplit.push(batch);
 			return batch;
 		},

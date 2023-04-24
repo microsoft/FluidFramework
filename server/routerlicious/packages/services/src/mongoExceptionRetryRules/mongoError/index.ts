@@ -223,11 +223,10 @@ class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 
 	public match(error: any): boolean {
 		return (
-			error.code === 1 &&
-			(error.errorDetails &&
-			(error.errorDetails as string).includes(ServiceUnavailableRule.errorDetails)) ||
-			(error.errmsg &&
-			(error.errmsg as string).includes(ServiceUnavailableRule.errorDetails))
+			(error.code === 1 &&
+				error.errorDetails &&
+				(error.errorDetails as string).includes(ServiceUnavailableRule.errorDetails)) ||
+			(error.errmsg && (error.errmsg as string).includes(ServiceUnavailableRule.errorDetails))
 		);
 	}
 }
@@ -278,8 +277,7 @@ class ConnectionClosedMongoErrorRule extends BaseMongoExceptionRetryRule {
 
 	public match(error: any): boolean {
 		return (
-			error.message &&
-			/^connection .+ closed$/.test(error.message as string) === true // matches any message of format "connection <some-info> closed"
+			error.message && /^connection .+ closed$/.test(error.message as string) === true // matches any message of format "connection <some-info> closed"
 		);
 	}
 }
