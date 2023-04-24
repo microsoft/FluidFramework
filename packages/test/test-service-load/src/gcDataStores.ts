@@ -87,7 +87,7 @@ const BlobActivityType = {
 	/** Get the blob via its handle. */
 	GetBlob: 1,
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
-	Count: 5,
+	Count: 2,
 };
 type BlobActivityType = typeof BlobActivityType[keyof typeof BlobActivityType];
 
@@ -100,7 +100,7 @@ const LeafActivityType = {
 	/** Send one or more ops */
 	SendOps: 1,
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
-	Count: 5,
+	Count: 2,
 };
 type LeafActivityType = typeof LeafActivityType[keyof typeof LeafActivityType];
 
