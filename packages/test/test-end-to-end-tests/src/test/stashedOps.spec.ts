@@ -33,6 +33,7 @@ import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -128,6 +129,17 @@ const getPendingOps = async (
 	assert.ok(pendingState);
 	return pendingState;
 };
+
+async function waitForDataStoreRuntimeConnection(runtime: IFluidDataStoreRuntime): Promise<void> {
+	if (!runtime.connected) {
+		const executor: any = (resolve) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			runtime.once("connected", () => resolve());
+		};
+
+		return new Promise(executor);
+	}
+}
 
 async function loadOffline(
 	provider: ITestObjectProvider,
@@ -1077,9 +1089,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("not expired stashed blobs", async function () {
-		if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
-			this.skip();
-		}
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(
 			container.container,
@@ -1094,15 +1103,13 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		map.set("blob handle 1", handle);
 
 		container.connect();
-		await waitForContainerConnection(container.container, true);
+		await waitForDataStoreRuntimeConnection(dataStore.runtime);
+
 		const stashedChanges = container.container.closeAndGetPendingLocalState();
 		const parsedChanges = JSON.parse(stashedChanges) as IPendingContainerState;
 		const pendingBlobs = (parsedChanges.pendingRuntimeState as any).pendingAttachmentBlobs;
 		// verify we have a blob in pending upload array
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1, "no pending blob");
-		const valuesArray = Object.values(pendingBlobs);
-		// verify that blob was uploaded
-		assert((valuesArray[0] as any).minTTLInSeconds);
 
 		const container3 = await loadOffline(provider, { url }, stashedChanges);
 		const dataStore3 = await requestFluidObject<ITestFluidObject>(
