@@ -224,9 +224,6 @@ async function runnerProcess(
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
-			// Retain old behavior of runtime being disposed on container close
-			container.once("closed", () => container?.dispose());
-
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
 				metricsCleanup = await setupOpsMetrics(
@@ -268,8 +265,18 @@ async function runnerProcess(
 				);
 			}
 
+			const closeDisposeProm = new Promise<boolean>((resolve) => {
+				const resAndClear = () => {
+					resolve(false);
+					container?.off("closed", resAndClear);
+					container?.off("disposed", resAndClear);
+				};
+				container?.once("closed", () => resAndClear);
+				container?.once("disposed", () => resAndClear);
+			});
+
 			printStatus(runConfig, `running`);
-			done = await test.run(runConfig, reset);
+			done = await Promise.race([closeDisposeProm, test.run(runConfig, reset)]);
 			reset = false;
 			printStatus(runConfig, done ? `finished` : "closed");
 		} catch (error) {
@@ -281,9 +288,7 @@ async function runnerProcess(
 				error,
 			);
 		} finally {
-			if (container?.closed === false) {
-				container?.close();
-			}
+			container?.dispose();
 			metricsCleanup();
 		}
 	}
