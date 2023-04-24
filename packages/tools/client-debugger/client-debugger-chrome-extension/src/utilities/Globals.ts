@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// TODO: audit what is actually needed here
-
 declare const browser: typeof chrome;
 
 // Normalize access to extension APIs across browsers.
