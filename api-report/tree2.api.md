@@ -795,6 +795,7 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 
 // @alpha
 export interface ISharedTreeFork extends ISharedTreeView {
+    dispose(): void;
     rebaseOnto(view: ISharedTreeView): void;
 }
 

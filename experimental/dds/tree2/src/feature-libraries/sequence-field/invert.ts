@@ -237,7 +237,7 @@ function invertModifyOrSkip<TNodeChange>(
 	inverter: NodeChangeInverter<TNodeChange>,
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
-		assert(length === 1, "A modify mark must have length equal to one");
+		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
 		return { type: "Modify", changes: inverter(changes, index) };
 	}
 

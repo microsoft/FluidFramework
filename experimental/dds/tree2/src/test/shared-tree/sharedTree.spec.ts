@@ -43,10 +43,10 @@ import {
 	fieldSchema,
 	GlobalFieldKey,
 	SchemaData,
-	EditManager,
 	ValueSchema,
 	AllowedUpdateType,
 } from "../../core";
+import { EditManager } from "../../shared-tree-core";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
