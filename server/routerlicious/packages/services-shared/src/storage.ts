@@ -43,6 +43,7 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly tenantManager: ITenantManager,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
+		private readonly storagePerDocEnabled: boolean,
 	) {}
 
 	/**
@@ -147,14 +148,32 @@ export class DocumentStorage implements IDocumentStorage {
 			lumberjackProperties,
 		);
 		let initialSummaryVersionId: string;
+		let initialStorageName: string | undefined;
 		try {
-			const handle = await uploadManager.writeSummaryTree(
+			const result = await uploadManager.writeSummaryTree(
 				fullTree /* summaryTree */,
 				"" /* parentHandle */,
 				"container" /* summaryType */,
 				0 /* sequenceNumber */,
 				true /* initial */,
 			);
+			const handle = result.id;
+			initialStorageName = result.initialStorageName;
+			initialSummaryUploadMetric.setProperty(
+				"enableWholeSummaryUpload",
+				this.enableWholeSummaryUpload,
+			);
+			initialSummaryUploadMetric.setProperty("initialStorageName", initialStorageName);
+			if (this.storagePerDocEnabled && !initialStorageName && this.enableWholeSummaryUpload) {
+				// we are ok with non whole summary upload, because we don't use storage name in OSS
+				// and enableWholeSummaryUpload is a FRS only thing that requires storage name. Using a warning instead
+				// of an error just in case there are some outliers that we don't know about.
+				Lumberjack.warning(
+					"Failed to get storage name for initial upload",
+					lumberjackProperties,
+				);
+			}
+
 			let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
 
 			if (!this.enableWholeSummaryUpload) {
@@ -235,7 +254,7 @@ export class DocumentStorage implements IDocumentStorage {
 
 		const createDocumentCollectionMetric = Lumberjack.newLumberMetric(
 			LumberEventName.CreateDocumentUpdateDocumentCollection,
-			lumberjackProperties,
+			{ ...lumberjackProperties, initialStorageName },
 		);
 
 		try {
@@ -252,6 +271,7 @@ export class DocumentStorage implements IDocumentStorage {
 					scribe: JSON.stringify(scribe),
 					tenantId,
 					version: "0.1",
+					storageName: initialStorageName,
 				},
 			);
 			createDocumentCollectionMetric.success("Successfully created document");

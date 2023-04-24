@@ -371,7 +371,8 @@ export interface ISummaryTree extends ISummaryTree_2 {
 
 // @public
 export interface ISummaryUploadManager {
-    writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
+    // Warning: (ae-forgotten-export) The symbol "SummaryUploadResult" needs to be exported by the entry point index.d.ts
+    writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<SummaryUploadResult>;
 }
 
 // @public (undocumented)
@@ -488,6 +489,8 @@ export interface IWholeSummaryTreeValueEntry extends IWholeSummaryTreeBaseEntry 
 export interface IWriteSummaryResponse {
     // (undocumented)
     id: string;
+    // (undocumented)
+    initialStorageName?: string;
 }
 
 // @public
@@ -559,7 +562,7 @@ export abstract class RestWrapper {
 export class SummaryTreeUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager, blobsShaCache: Map<string, string>, getPreviousFullSnapshot: (parentHandle: string) => Promise<ISnapshotTreeEx | null | undefined>);
     // (undocumented)
-    writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
+    writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<SummaryUploadResult>;
 }
 
 // @public
@@ -581,7 +584,7 @@ export type WholeSummaryTreeValue = IWholeSummaryTree | IWholeSummaryBlob;
 export class WholeSummaryUploadManager implements ISummaryUploadManager {
     constructor(manager: IGitManager);
     // (undocumented)
-    writeSummaryTree(summaryTree: ISummaryTree, parentHandle: string | undefined, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
+    writeSummaryTree(summaryTree: ISummaryTree, parentHandle: string | undefined, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<SummaryUploadResult>;
 }
 
 // (No @packageDocumentation comment for this package)

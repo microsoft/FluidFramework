@@ -97,3 +97,8 @@ export interface IOauthAccessInfo {
 	refreshToken: string;
 	expiresAt: string;
 }
+
+export interface IStorageNameProvider {
+	assignStorageName(tenantId: string, documentId: string): Promise<string>;
+	retrieveStorageName(tenantId: string, documentId: string): Promise<string>;
+}

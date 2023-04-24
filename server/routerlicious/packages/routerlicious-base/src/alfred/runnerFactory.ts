@@ -362,11 +362,13 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
+		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
 		const storage = new services.DocumentStorage(
 			documentRepository,
 			tenantManager,
 			enableWholeSummaryUpload,
 			opsCollection,
+			storagePerDocEnabled,
 		);
 
 		const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));

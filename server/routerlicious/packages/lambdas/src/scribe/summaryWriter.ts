@@ -793,7 +793,7 @@ export class SummaryWriter implements ISummaryWriter {
 			"container",
 			sequenceNumber,
 		);
-		return uploadHandle;
+		return uploadHandle.id;
 	}
 
 	private async createWholeServiceSummary(
@@ -822,7 +822,7 @@ export class SummaryWriter implements ISummaryWriter {
 			"container",
 			sequenceNumber,
 		);
-		return uploadHandle;
+		return uploadHandle.id;
 	}
 
 	// We should optimize our API so that we don't have to do this conversion.

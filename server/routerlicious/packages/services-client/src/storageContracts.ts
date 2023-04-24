@@ -26,6 +26,7 @@ export interface IWholeSummaryPayload {
 
 export interface IWriteSummaryResponse {
 	id: string;
+	initialStorageName?: string;
 }
 
 export type WholeSummaryTreeEntry = IWholeSummaryTreeValueEntry | IWholeSummaryTreeHandleEntry;

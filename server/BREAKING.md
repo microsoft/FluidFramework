@@ -1,4 +1,12 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
+## 0.1041 Breaking Changes
+- [writeSummaryTree function from `ISummaryUploadManager` returns new type](#writeSummaryTree-function-from-ISummaryUploadManager-returns-new-type)
+#### `writeSummaryTree` function from `ISummaryUploadManager` returns new type
+Before: returning ID of created tree as a string.
+
+- [DocumentStorage class take one additional boolean parameter](#DocumentStorage-class-take-one-additional-boolean-parameter)
+#### `DocumentStorage` class take one additional boolean parameter
+One more boolean parameter need for DocumentStorage class to indicate if storage is per tenant or per doc.
 
 ## 0.1042 Breaking Changes
 

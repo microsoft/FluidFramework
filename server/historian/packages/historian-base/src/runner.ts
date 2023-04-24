@@ -15,7 +15,7 @@ import {
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, ITenantService } from "./services";
+import { ICache, IStorageNameProvider, ITenantService } from "./services";
 import * as app from "./app";
 
 export class HistorianRunner implements IRunner {
@@ -29,6 +29,7 @@ export class HistorianRunner implements IRunner {
 		private readonly riddler: ITenantService,
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
+		private readonly storageNameProvider: IStorageNameProvider,
 		private readonly cache?: ICache,
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
@@ -43,6 +44,7 @@ export class HistorianRunner implements IRunner {
 			this.riddler,
 			this.restTenantThrottlers,
 			this.restClusterThrottlers,
+			this.storageNameProvider,
 			this.cache,
 			this.asyncLocalStorage,
 			this.tokenRevocationManager,

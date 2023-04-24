@@ -61,7 +61,7 @@ export class RestGitService {
 		private readonly documentId: string,
 		private readonly cache?: ICache,
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
-		private readonly storageName?: string,
+		public readonly storageName?: string,
 		private readonly storageUrl?: string,
 	) {
 		const defaultHeaders: AxiosRequestHeaders =
