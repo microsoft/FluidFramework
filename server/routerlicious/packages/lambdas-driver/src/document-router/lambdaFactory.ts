@@ -13,10 +13,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { DocumentLambda } from "./documentLambda";
 
-export class DocumentLambdaFactory
-	extends EventEmitter
-	implements IPartitionLambdaFactory
-{
+export class DocumentLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly documentLambdaFactory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
 		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,

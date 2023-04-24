@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedTreeView } from "@fluid-internal/tree";
+import { ISharedTreeView } from "@fluid-experimental/tree2";
 import React from "react";
 
 /**
