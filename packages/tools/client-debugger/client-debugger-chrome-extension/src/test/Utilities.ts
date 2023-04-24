@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { JSDOM } from "jsdom";
 import { SinonSandbox } from "sinon";
 
 import { Globals } from "../utilities";
@@ -63,8 +62,7 @@ export function stubPort(name: string): chrome.runtime.Port {
  * Create and return a newly stubbed global `browser` and `fetch` instances.
  * Gives each test it's own set of stubs for parallel execution.
  */
-// TODO: remove dom arg?
-export function stubGlobals(dom?: JSDOM): Globals {
+export function stubGlobals(): Globals {
 	const stubbedBrowser = {
 		browserAction: { onClicked: stubEvent() },
 		runtime: {
@@ -84,10 +82,10 @@ export function stubGlobals(dom?: JSDOM): Globals {
 
 	return {
 		browser: stubbedBrowser,
-		document: dom ? dom.window.document : undefined,
-		eval: dom ? dom.window.eval : undefined,
+		document: undefined,
+		eval: undefined,
 		fetch: (): void => {},
-		location: dom ? dom.window.location : undefined,
-		window: dom ? (dom.window as unknown as Window & typeof globalThis) : undefined,
+		location: undefined,
+		window: undefined,
 	};
 }
