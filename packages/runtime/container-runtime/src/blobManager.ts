@@ -241,6 +241,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						status: PendingBlobStatus.OfflinePendingOp,
 						handleP: new Deferred(),
 						uploadP: undefined,
+						uploadTime: entry.uploadTime,
+						minTTLInSeconds: entry.minTTLInSeconds,
 					});
 					return;
 				}
