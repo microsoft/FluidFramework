@@ -14,7 +14,7 @@ import {
 	ITestDriver,
 } from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ILoadTestConfig } from "./testConfigFile";
+import { GcFailureExitCode, ILoadTestConfig } from "./testConfigFile";
 import {
 	createLogger,
 	createTestDriver,
@@ -289,11 +289,10 @@ function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
 			// Success
 			return { testcase: [{ _attr }] };
 		}
-		let failureReason = "";
-		// The returnCode is -2 for GC failures.
-		if (returnCode === -2) {
-			failureReason = "GC failure - check pipeline logs to find the error.";
-		}
+		const failureReason =
+			returnCode === GcFailureExitCode
+				? "GC failure - check pipeline logs to find the error."
+				: `Failure code ${returnCode}`;
 		return {
 			testcase: [
 				{ _attr },

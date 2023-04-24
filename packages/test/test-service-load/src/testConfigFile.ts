@@ -9,6 +9,8 @@ import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ConfigTypes } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 
+export const GcFailureExitCode = 254;
+
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {
 	profiles: { [name: string]: ILoadTestConfig | undefined };
