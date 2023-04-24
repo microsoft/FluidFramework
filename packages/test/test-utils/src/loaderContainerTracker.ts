@@ -11,6 +11,7 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
+import { waitForContainerConnection } from "./containerUtils";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils";
@@ -24,6 +25,7 @@ interface ContainerRecord {
 
 	// LoaderContainerTracker paused state
 	paused: boolean;
+	pauseP?: Promise<void>; // promise for for the pause that is in progress
 
 	// Tracking trailing no-op that may or may be acked by the server so we can discount them
 	// See issue #5629
@@ -166,33 +168,35 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 * Make sure all the tracked containers are synchronized.
 	 *
 	 * No isDirty (non-readonly) containers
-	 *
 	 * No extra clientId in quorum of any container that is not tracked and still opened.
-	 *
 	 * - i.e. no pending Join/Leave message.
-	 *
 	 * No unresolved proposal (minSeqNum \>= lastProposalSeqNum)
-	 *
 	 * lastSequenceNumber of all container is the same
-	 *
 	 * clientSequenceNumberObserved is the same as clientSequenceNumber sent
-	 *
 	 * - this overlaps with !isDirty, but include task scheduler ops.
-	 *
 	 * - Trailing NoOp is tracked and don't count as pending ops.
+	 *
+	 * Containers that are already pause will resume process and paused again once
+	 * everything is synchronized.  Containers that aren't paused will remain unpaused when this
+	 * function returns.
 	 */
 	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
 		const resumed = this.resumeProcessing(...containers);
 
-		let waitingSequenceNumberSynchronized = false;
+		let waitingSequenceNumberSynchronized: string | undefined;
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
+			// yield a turn to allow side effect of resuming or the ops we just processed execute before we check
+			await new Promise<void>((resolve) => {
+				setTimeout(resolve, 0);
+			});
+
 			const containersToApply = this.getContainers(containers);
 			if (containersToApply.length === 0) {
 				break;
 			}
 
-			// Ignore readonly dirty containers, because it can't sent up and nothing can be done about it being dirty
+			// Ignore readonly dirty containers, because it can't sent ops and nothing can be done about it being dirty
 			const dirtyContainers = containersToApply.filter((c) => {
 				const { deltaManager, isDirty } = c;
 				return deltaManager.readOnlyInfo.readonly !== true && isDirty;
@@ -201,20 +205,22 @@ export class LoaderContainerTracker implements IOpProcessingController {
 				// Wait for all the leave messages
 				const pendingClients = this.getPendingClients(containersToApply);
 				if (pendingClients.length === 0) {
-					if (this.isSequenceNumberSynchronized(containersToApply)) {
+					const needSync = this.needSequenceNumberSynchronize(containersToApply);
+					if (needSync === undefined) {
 						// done, we are in sync
 						break;
 					}
-					if (!waitingSequenceNumberSynchronized) {
-						// Only write it out once
-						waitingSequenceNumberSynchronized = true;
-						debugWait("Waiting for sequence number synchronized");
-						await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
-							errorMsg: "Timeout on waiting for sequence number synchronized",
-						});
+					if (waitingSequenceNumberSynchronized !== needSync.reason) {
+						// Don't repeat writing to console if it is the same reason
+						waitingSequenceNumberSynchronized = needSync.reason;
+						debugWait(needSync.message);
 					}
+					// Wait for one inbounds ops which might change the state of things
+					await timeoutAwait(this.waitForAnyInboundOps(containersToApply), {
+						errorMsg: `Timeout on ${needSync.message}`,
+					});
 				} else {
-					waitingSequenceNumberSynchronized = false;
+					waitingSequenceNumberSynchronized = undefined;
 					await timeoutAwait(this.waitForPendingClients(pendingClients), {
 						errorMsg: "Timeout on waiting for pending join or leave op",
 					});
@@ -222,12 +228,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 			} else {
 				// Wait for all the containers to be saved
 				debugWait(
-					`Waiting container to be saved ${dirtyContainers.map(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						(c) => this.containers.get(c)!.index,
-					)}`,
+					`Waiting container to be saved ${this.containerIndexStrings(dirtyContainers)}`,
 				);
-				waitingSequenceNumberSynchronized = false;
+				waitingSequenceNumberSynchronized = undefined;
 				await Promise.all(
 					dirtyContainers.map(async (c) =>
 						Promise.race([
@@ -239,11 +242,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
 					),
 				);
 			}
-
-			// yield a turn to allow side effect of the ops we just processed execute before we check again
-			await new Promise<void>((resolve) => {
-				setTimeout(resolve, 0);
-			});
 		}
 
 		// Pause all container that was resumed
@@ -299,48 +297,78 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * @param containersToApply - the set of containers to check
 	 */
-	private isSequenceNumberSynchronized(containersToApply: IContainer[]) {
+	private needSequenceNumberSynchronize(containersToApply: IContainer[]) {
+		// If there is a pending proposal, wait for it to be accepted
+		const minSeqNum = containersToApply[0].deltaManager.minimumSequenceNumber;
+		if (minSeqNum < this.lastProposalSeqNum) {
+			return {
+				reason: "Proposal",
+				message: `waiting for MSN to advance to proposal at sequence number ${this.lastProposalSeqNum}`,
+			};
+		}
+
 		// clientSequenceNumber check detects ops in flight, both on the wire and in the outbound queue
 		// We need both client sequence number and isDirty check because:
 		// - Currently isDirty flag ignores ops for task scheduler, so we need the client sequence number check
 		// - But isDirty flags include ops during forceReadonly and disconnected, because we don't submit
 		//   the ops in the first place, clientSequenceNumber is not assigned
 
-		const isClientSequenceNumberSynchronized = containersToApply.every((container) => {
+		const containerWithInflightOps = containersToApply.filter((container) => {
 			if (container.deltaManager.readOnlyInfo.readonly === true) {
 				// Ignore readonly container. the clientSeqNum and clientSeqNumObserved might be out of sync
 				// because we transition to readonly when outbound is not empty or the in transit op got lost
-				return true;
+				return false;
 			}
 			// Note that in read only mode, the op won't be submitted
 			let deltaManager = container.deltaManager as any;
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const { trailingNoOps } = this.containers.get(container)!;
-			// Back-compat: clientSequenceNumber & clientSequenceNumberObserved moved to ConnectionManager in 0.53
+			// Back-compat: lastSubmittedClientId/clientSequenceNumber/clientSequenceNumberObserved moved to ConnectionManager in 0.53
 			if (!("clientSequenceNumber" in deltaManager)) {
 				deltaManager = deltaManager.connectionManager;
 			}
 			assert("clientSequenceNumber" in deltaManager, "no clientSequenceNumber");
 			assert("clientSequenceNumberObserved" in deltaManager, "no clientSequenceNumber");
+			// If last submittedClientId isn't the current clientId, then we haven't send any ops
 			return (
-				deltaManager.clientSequenceNumber ===
-				(deltaManager.clientSequenceNumberObserved as number) + trailingNoOps
+				deltaManager.lastSubmittedClientId === container.clientId &&
+				deltaManager.clientSequenceNumber !==
+					(deltaManager.clientSequenceNumberObserved as number) + trailingNoOps
 			);
 		});
 
-		if (!isClientSequenceNumberSynchronized) {
-			return false;
-		}
-
-		const minSeqNum = containersToApply[0].deltaManager.minimumSequenceNumber;
-		if (minSeqNum < this.lastProposalSeqNum) {
-			// There is an unresolved proposal
-			return false;
+		if (containerWithInflightOps.length !== 0) {
+			return {
+				reason: "InflightOps",
+				message: `waiting for containers with inflight ops: ${this.containerIndexStrings(
+					containerWithInflightOps,
+				)}`,
+			};
 		}
 
 		// Check to see if all the container has process the same number of ops.
-		const seqNum = containersToApply[0].deltaManager.lastSequenceNumber;
-		return containersToApply.every((c) => c.deltaManager.lastSequenceNumber === seqNum);
+		const maxSeqNum = Math.max(
+			...containersToApply.map((c) => c.deltaManager.lastSequenceNumber),
+		);
+		const containerWithPendingIncoming = containersToApply.filter(
+			(c) => c.deltaManager.lastSequenceNumber !== maxSeqNum,
+		);
+		if (containerWithPendingIncoming.length !== 0) {
+			return {
+				reason: "Pending",
+				message: `waiting for containers with pending incoming ops up to sequence number ${maxSeqNum}: ${this.containerIndexStrings(
+					containerWithPendingIncoming,
+				)}`,
+			};
+		}
+		return undefined;
+	}
+
+	private containerIndexStrings(containers: IContainer[]) {
+		return containers.map(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			(c) => this.containers.get(c)!.index,
+		);
 	}
 
 	/**
@@ -413,6 +441,10 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		const containersToApply = this.getContainers(containers);
 		for (const container of containersToApply) {
 			const record = this.containers.get(container);
+			assert(
+				record?.pauseP === undefined,
+				"Cannot resume container while pausing is in progress",
+			);
 			if (record?.paused === true) {
 				debugWait(`${record.index}: container resumed`);
 				container.deltaManager.inbound.resume();
@@ -427,26 +459,98 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Pause all queue activities on the containers given, or all tracked containers
 	 * Any containers given that is not tracked will be ignored.
+	 *
+	 * When a container is paused, it is assumed that we want fine grain control over op
+	 * sequencing.  This function will prepare the container and force it into write mode to
+	 * avoid missing join messages or change the sequence of event when switching from read to
+	 * write mode.
 	 */
 	public async pauseProcessing(...containers: IContainer[]) {
-		const pauseP: Promise<void>[] = [];
+		const waitP: Promise<void>[] = [];
 		const containersToApply = this.getContainers(containers);
 		for (const container of containersToApply) {
 			const record = this.containers.get(container);
 			if (record !== undefined && !record.paused) {
-				debugWait(`${record.index}: container paused`);
-				pauseP.push(container.deltaManager.inbound.pause());
-				pauseP.push(container.deltaManager.outbound.pause());
-				record.paused = true;
+				if (record.pauseP === undefined) {
+					record.pauseP = this.pauseContainer(container, record);
+				}
+				waitP.push(record.pauseP);
 			}
 		}
-		await Promise.all(pauseP);
+		await Promise.all(waitP);
+	}
+
+	/**
+	 * When a container is paused, it is assumed that we want fine grain control over op
+	 * sequencing.  This function will prepare the container and force it into write mode to
+	 * avoid missing join messages or change the sequence of event when switching from read to
+	 * write mode.
+	 *
+	 * @param container - the container to pause
+	 * @param record - the record for the container
+	 */
+	private async pauseContainer(container: IContainer, record: ContainerRecord) {
+		debugWait(`${record.index}: pausing container`);
+		assert(!container.deltaManager.outbound.paused, "Container should not be paused yet");
+		assert(!container.deltaManager.inbound.paused, "Container should not be paused yet");
+
+		// Pause outbound
+		debugWait(`${record.index}: pausing container outbound queues`);
+		await container.deltaManager.outbound.pause();
+
+		// Ensure the container is connected first.
+		if (container.connectionState !== ConnectionState.Connected) {
+			debugWait(`${record.index}: Wait for container connection`);
+			await waitForContainerConnection(container);
+		}
+
+		// Check if the container is in write mode
+		if (!container.deltaManager.active) {
+			let proposalP: Promise<boolean> | undefined;
+			if (container.deltaManager.outbound.idle) {
+				// Need to generate an op to force write mode
+				debugWait(`${record.index}: container force write connection`);
+				const maybeContainer = container as Partial<IContainer>;
+				const codeProposal = maybeContainer.getLoadedCodeDetails
+					? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					  container.getLoadedCodeDetails()!
+					: (container as any).chaincodePackage;
+
+				proposalP = container.proposeCodeDetails(codeProposal);
+			}
+
+			// Wait for nack
+			debugWait(`${record.index}: Wait for container disconnect`);
+			container.deltaManager.outbound.resume();
+			await new Promise<void>((resolve) => container.once("disconnected", resolve));
+			const accepted = proposalP ? await proposalP : false;
+			assert(!accepted, "A proposal in read mode should be rejected");
+			await container.deltaManager.outbound.pause();
+
+			// Ensure the container is reconnect.
+			if (container.connectionState !== ConnectionState.Connected) {
+				debugWait(`${record.index}: Wait for container reconnection`);
+				await waitForContainerConnection(container);
+			}
+		}
+
+		debugWait(`${record.index}: pausing container inbound queues`);
+
+		// Pause inbound
+		await container.deltaManager.inbound.pause();
+
+		debugWait(`${record.index}: container paused`);
+
+		record.pauseP = undefined;
+		record.paused = true;
 	}
 
 	/**
 	 * Pause all queue activities on all tracked containers, and resume only
 	 * inbound to process ops until it is idle. All queues are left in the paused state
-	 * after the function
+	 * after the function.
+	 *
+	 * Pausing will switch the container to write mode. See `pauseProcessing`
 	 */
 	public async processIncoming(...containers: IContainer[]) {
 		return this.processQueue(containers, (container) => container.deltaManager.inbound);
@@ -455,7 +559,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Pause all queue activities on all tracked containers, and resume only
 	 * outbound to process ops until it is idle. All queues are left in the paused state
-	 * after the function
+	 * after the function.
+	 *
+	 * Pausing will switch the container to write mode. See `pauseProcessing`
 	 */
 	public async processOutgoing(...containers: IContainer[]) {
 		return this.processQueue(containers, (container) => container.deltaManager.outbound);
@@ -472,9 +578,15 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		const resumed: IDeltaQueue<U>[] = [];
 
 		const containersToApply = this.getContainers(containers);
+
 		const inflightTracker = new Map<IContainer, number>();
 		const cleanup: (() => void)[] = [];
 		for (const container of containersToApply) {
+			assert(
+				container.deltaManager.active,
+				"Container should be connected in write mode already",
+			);
+
 			const queue = getQueue(container);
 
 			// track the outgoing ops (if any) to make sure they make the round trip to at least to the same client

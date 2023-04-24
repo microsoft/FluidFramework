@@ -802,12 +802,14 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		],
 		async () => {
 			const container = await provider.loadTestContainer(testContainerConfig);
-			await waitForContainerConnection(container);
+			const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+			// Force to write mode to get a leave message
+			dataStore.root.set("forceWrite", true);
+			await provider.ensureSynchronized();
+
 			const serializedClientId = container.clientId;
 			assert.ok(serializedClientId);
-			const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 
-			await provider.ensureSynchronized();
 			await provider.opProcessingController.pauseProcessing(container);
 			assert(dataStore.runtime.deltaManager.outbound.paused);
 
@@ -1225,7 +1227,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await provider2.ensureSynchronized();
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "no url");
-		await provider2.opProcessingController.pauseProcessing(container);
+		container.disconnect();
 
 		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);

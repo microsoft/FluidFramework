@@ -89,9 +89,13 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		const config = disableTombstoneFailureViaOption
 			? testContainerConfigWithFutureMinGcOption
 			: testContainerConfig;
-		return provider.loadTestContainer(config, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		return provider.loadTestContainer(
+			// AB#3982 track work to removing this exception using simulateReadConnectionUsingDelay
+			{ simulateReadConnectionUsingDelay: false, ...config },
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
 	}
 
 	const makeContainer = async (config: ITestContainerConfig = testContainerConfig) => {
