@@ -12,7 +12,6 @@ import {
 	addProperties,
 	Client,
 	compareReferencePositions,
-	ConflictAction,
 	createMap,
 	ICombiningOp,
 	ISegment,
@@ -800,8 +799,28 @@ export function createIntervalIndex() {
 	return lc;
 }
 
+/**
+ * Collection of intervals.
+ *
+ * Implementers of this interface will typically implement additional APIs to support efficiently querying a collection
+ * of intervals in some manner, for example:
+ * - "find all intervals with start endpoint between these two points"
+ * - "find all intervals which overlap this range"
+ * etc.
+ */
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
+	/**
+	 * Adds an interval to the index.
+	 * @remarks - Application code should never need to invoke this method on their index for production scenarios:
+	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
+	 */
 	add(interval: TInterval): void;
+
+	/**
+	 * Removes an interval from the index.
+	 * @remarks - Application code should never need to invoke this method on their index for production scenarios:
+	 * Fluid handles adding and removing intervals from an index in response to sequence or interval changes.
+	 */
 	remove(interval: TInterval): void;
 }
 
@@ -809,7 +828,6 @@ class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
 {
 	private readonly intervalTree = new IntervalTree<TInterval>();
-	private conflictResolver: IntervalConflictResolver<TInterval> | undefined;
 
 	constructor(
 		private readonly client: Client,
@@ -931,7 +949,7 @@ class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 	}
 
 	public add(interval: TInterval) {
-		this.intervalTree.put(interval, this.conflictResolver);
+		this.intervalTree.put(interval);
 	}
 }
 
