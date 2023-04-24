@@ -208,15 +208,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 		const scribeCollectionName = config.get("mongo:collectionNames:scribeDeltas");
 
-		// Foreman agent uploader does not run locally.
-		// TODO: Make agent uploader run locally.
-		const foremanConfig = config.get("foreman");
-		const taskMessageSender = services.createMessageSender(
-			config.get("rabbitmq"),
-			foremanConfig,
-		);
-		await taskMessageSender.initialize();
-
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 		const nodeManager = new NodeManager(operationsDbMongoManager, nodeCollectionName);
 		// This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
@@ -404,11 +395,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentRepository,
 			60000,
 			() => new NodeWebSocketServer(4000),
-			taskMessageSender,
-			tenantManager,
-			foremanConfig.permissions,
 			maxSendMessageSize,
-			utils.generateToken,
 			winston,
 		);
 		const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);

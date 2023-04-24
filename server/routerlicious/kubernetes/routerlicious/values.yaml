@@ -108,10 +108,6 @@ scribe:
     maxTime: 60000
     maxMessages: 500
 
-foreman:
-  name: foreman
-  replicas: 8
-
 riddler:
   name: riddler
   replicas: 2
