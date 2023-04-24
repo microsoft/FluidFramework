@@ -62,12 +62,19 @@ function getBlobIdFromHandle(blobHandle: IFluidHandle<ArrayBufferLike>) {
 const ReferenceActivityType = {
 	/** Don't do any referencing or unreferencing. */
 	None: 0,
-	/** Unreference a referenced child data object. */
-	Unreference: 1,
-	/** Create a child data object and reference it. */
-	CreateAndReference: 2,
-	/** Revive an unreferenced child data object. */
-	Revive: 3,
+	/**
+	 * Another don't do anything activity. This increases the chances of doing nothing which in turn increases
+	 * the changes of incremental summary for a data store. This scenario has known to cause GC bugs.
+	 */
+	AnotherNone: 1,
+	/** Unreference a referenced child object. */
+	Unreference: 2,
+	/** Create a child object and reference it. */
+	CreateAndReference: 3,
+	/** Revive an unreferenced child object. */
+	Revive: 4,
+	/** Max value of enum. This is just used as the max value for generating an activity at random. */
+	Max: 5,
 };
 type ReferenceActivityType = typeof ReferenceActivityType[keyof typeof ReferenceActivityType];
 
@@ -79,6 +86,8 @@ const BlobActivityType = {
 	None: 0,
 	/** Get the blob via its handle. */
 	GetBlob: 1,
+	/** Max value of enum. This is just used as the max value for generating an activity at random. */
+	Max: 2,
 };
 type BlobActivityType = typeof BlobActivityType[keyof typeof BlobActivityType];
 
@@ -90,6 +99,8 @@ const LeafActivityType = {
 	None: 0,
 	/** Send one or more ops */
 	SendOps: 1,
+	/** Max value of enum. This is just used as the max value for generating an activity at random. */
+	Max: 2,
 };
 type LeafActivityType = typeof LeafActivityType[keyof typeof LeafActivityType];
 
@@ -135,7 +146,7 @@ class AttachmentBlobObject implements IGCActivityObject {
 	 * 2. None - Do nothing. This is to have summaries where no blobs are retrieved.
 	 */
 	private async runActivity(config: IRunConfig) {
-		const activityType = config.random.integer(0, 1);
+		const activityType = config.random.integer(0, BlobActivityType.Max - 1);
 		switch (activityType) {
 			case BlobActivityType.GetBlob: {
 				await this.handle.get();
@@ -211,7 +222,7 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 	 * 2. None - Do nothing. This is to have summaries where this data store or its DDS does not change.
 	 */
 	private runActivity(config: IRunConfig) {
-		const activityType = config.random.integer(0, 1);
+		const activityType = config.random.integer(0, LeafActivityType.Max - 1);
 		switch (activityType) {
 			case LeafActivityType.SendOps: {
 				this.counter.increment(1);
@@ -546,7 +557,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		const maxActivityIndex =
 			this.referencedDataObjects.length < maxRunningLeafDataObjects &&
 			this.referencedAttachmentBlobs.length < maxRunningAttachmentBlobs
-				? ReferenceActivityType.Revive
+				? ReferenceActivityType.Max - 1
 				: ReferenceActivityType.Unreference;
 		const activityType = config.random.integer(0, maxActivityIndex);
 		return Promise.all([
