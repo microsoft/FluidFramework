@@ -203,10 +203,8 @@ export class SummaryWriter implements ISummaryWriter {
 
 			// At this point the summary op and its data are all valid and we can perform the write to history
 			const protocolEntries: ITreeEntry[] = getQuorumTreeEntries(
-				this.documentId,
 				checkpoint.protocolState.minimumSequenceNumber,
 				checkpoint.protocolState.sequenceNumber,
-				op.term ?? 1,
 				checkpoint.protocolState,
 			);
 

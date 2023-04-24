@@ -11,12 +11,16 @@ import {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import {
+	AttributionKey,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import { IFluidSerializer, SharedObject } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
-import { ISharedMap, ISharedMapEvents } from "./interfaces";
-import { IMapDataObjectSerializable, IMapOperation, MapKernel } from "./mapKernel";
+import { ISharedMap, IMapOptions, ISharedMapEvents } from "./interfaces";
+import { IMapDataObjectSerializable, IMapOperation, AttributableMapKernel } from "./mapKernel";
 import { pkgVersion } from "./packageVersion";
 
 interface IMapSerializationFormat {
@@ -27,7 +31,7 @@ interface IMapSerializationFormat {
 const snapshotFileName = "header";
 
 /**
- * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMap}.
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link AttributableMap}.
  *
  * @sealed
  */
@@ -69,7 +73,7 @@ export class MapFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<ISharedMap> {
-		const map = new SharedMap(id, runtime, attributes);
+		const map = new AttributableMap(id, runtime, attributes);
 		await map.load(services);
 
 		return map;
@@ -79,7 +83,7 @@ export class MapFactory implements IChannelFactory {
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
-		const map = new SharedMap(id, runtime, MapFactory.Attributes);
+		const map = new AttributableMap(id, runtime, MapFactory.Attributes);
 		map.initializeLocal();
 
 		return map;
@@ -89,7 +93,7 @@ export class MapFactory implements IChannelFactory {
 /**
  * {@inheritDoc ISharedMap}
  */
-export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+export class AttributableMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**
 	 * Create a new shared map.
 	 * @param runtime - The data store runtime that the new shared map belongs to.
@@ -97,19 +101,19 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * @returns Newly created shared map.
 	 *
 	 * @example
-	 * To create a `SharedMap`, call the static create method:
+	 * To create a `AttributableMap`, call the static create method:
 	 *
 	 * ```typescript
-	 * const myMap = SharedMap.create(this.runtime, id);
+	 * const myMap = AttributableMap.create(this.runtime, id);
 	 * ```
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap {
-		return runtime.createChannel(id, MapFactory.Type) as SharedMap;
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): AttributableMap {
+		return runtime.createChannel(id, MapFactory.Type) as AttributableMap;
 	}
 
 	/**
-	 * Get a factory for SharedMap to register with the data store.
-	 * @returns A factory that creates SharedMaps and loads them from storage.
+	 * Get a factory for AttributableMap to register with the data store.
+	 * @returns A factory that creates AttributableMap's and loads them from storage.
 	 */
 	public static getFactory(): IChannelFactory {
 		return new MapFactory();
@@ -118,15 +122,15 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * String representation for the class.
 	 */
-	public readonly [Symbol.toStringTag]: string = "SharedMap";
+	public readonly [Symbol.toStringTag]: string = "AttributableMap";
 
 	/**
 	 * MapKernel which manages actual map operations.
 	 */
-	private readonly kernel: MapKernel;
+	private readonly kernel: AttributableMapKernel;
 
 	/**
-	 * Do not call the constructor. Instead, you should use the {@link SharedMap.create | create method}.
+	 * Do not call the constructor. Instead, you should use the {@link AttributableMap.create | create method}.
 	 *
 	 * @param id - String identifier.
 	 * @param runtime - Data store runtime.
@@ -138,12 +142,13 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		attributes: IChannelAttributes,
 	) {
 		super(id, runtime, attributes, "fluid_map_");
-		this.kernel = new MapKernel(
+		this.kernel = new AttributableMapKernel(
 			this.serializer,
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			() => this.isAttached(),
 			this,
+			runtime.options as IMapOptions,
 		);
 	}
 
@@ -246,6 +251,23 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	}
 
 	/**
+	 * Get the attribution of one entry through its key
+	 * @param key - Key to track
+	 * @returns The attribution of related entry
+	 */
+	public getAttribution(key: string): AttributionKey | undefined {
+		return this.kernel.getAttribution(key);
+	}
+
+	/**
+	 * Get all attribution of the map
+	 * @returns All attribution in the map
+	 */
+	public getAllAttribution(): Map<string, AttributionKey> | undefined {
+		return this.kernel.getAllAttribution();
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
 	 * @internal
 	 */
@@ -281,7 +303,11 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		//    loads all blobs at once and partitioning schema has no impact on that process.
 		for (const key of Object.keys(data)) {
 			const value = data[key];
-			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+			if (
+				value.value &&
+				value.value.length + (value.attribution?.length ?? 0) >=
+					MinValueSizeSeparateSnapshotBlob
+			) {
 				const blobName = `blob${counter}`;
 				counter++;
 				blobs.push(blobName);
@@ -289,6 +315,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					[key]: {
 						type: value.type,
 						value: JSON.parse(value.value) as unknown,
+						attribution:
+							value.attribution === undefined
+								? undefined
+								: JSON.parse(value.attribution),
 					},
 				};
 				builder.addBlob(blobName, JSON.stringify(content));
@@ -296,6 +326,9 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 				currentSize += value.type.length + 21; // Approximation cost of property header
 				if (value.value) {
 					currentSize += value.value.length;
+				}
+				if (value.attribution) {
+					currentSize += value.attribution.length;
 				}
 
 				if (currentSize > MaxSnapshotBlobSize) {
@@ -312,6 +345,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 						value.value === undefined
 							? undefined
 							: (JSON.parse(value.value) as unknown),
+					attribution:
+						value.attribution === undefined ? undefined : JSON.parse(value.attribution),
 				};
 			}
 		}
@@ -377,11 +412,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		localOpMetadata: unknown,
 	): void {
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(
-				message.contents as IMapOperation,
-				local,
-				localOpMetadata,
-			);
+			this.kernel.tryProcessMessage(message, local, localOpMetadata);
 		}
 	}
 

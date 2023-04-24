@@ -217,10 +217,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private signalClientConnectionNumber: number;
 	private durableSequenceNumber: number;
 
-	// 'epoch' and 'term' are readonly and should never change when lambda is running.
-	private readonly term: number;
-	private readonly epoch: number;
-
 	private logOffset: number;
 
 	// Client sequence number mapping
@@ -302,8 +298,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.sequenceNumber = lastCheckpoint.sequenceNumber;
 		this.signalClientConnectionNumber = lastCheckpoint.signalClientConnectionNumber ?? 0;
 		this.lastHash = lastCheckpoint.expHash1 ?? defaultHash;
-		this.term = lastCheckpoint.term;
-		this.epoch = lastCheckpoint.epoch;
 		this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
 		this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
 		this.logOffset = lastCheckpoint.logOffset;
@@ -1314,7 +1308,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			origin,
 			referenceSequenceNumber: message.operation.referenceSequenceNumber,
 			sequenceNumber,
-			term: this.term,
+			// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+			term: 1,
 			timestamp: message.timestamp,
 			traces: message.operation.traces,
 			type: message.operation.type,
@@ -1655,12 +1650,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		return {
 			clients: this.clientSeqManager.cloneValues(),
 			durableSequenceNumber: this.durableSequenceNumber,
-			epoch: this.epoch,
 			expHash1: this.lastHash,
 			logOffset: this.logOffset,
 			sequenceNumber: this.sequenceNumber,
 			signalClientConnectionNumber: this.signalClientConnectionNumber,
-			term: this.term,
 			lastSentMSN: this.lastSentMSN,
 			nackMessages: Array.from(this.nackMessages),
 			successfullyStartedLambdas: this.successfullyStartedLambdas,

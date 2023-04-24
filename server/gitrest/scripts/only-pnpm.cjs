@@ -9,14 +9,16 @@
  */
 
 const message = `
-╔═════════════════════════════════════════════════════════════╗
-║                                                             ║
-║   Use "pnpm install" for installation in this project.      ║
-║                                                             ║
-║   If you don't have pnpm, install it via "npm i -g pnpm@7". ║
-║   For more details, see the README.                         ║
-║                                                             ║
-╚═════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║   Use "pnpm install" for installation in this project.           ║
+║                                                                  ║
+║   If you don't have pnpm, enable corepack via "corepack enable". ║
+║   Then run "pnpm install" to install dependencies.               ║
+║                                                                  ║
+║   For more details, see the README.                              ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
 `;
 
 const used_pnpm = process.env.npm_config_user_agent.startsWith(`pnpm`);

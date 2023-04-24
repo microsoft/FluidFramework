@@ -8,14 +8,12 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
+import { FluidObjectId } from "../CommonInterfaces";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
 	createHandleNode,
-	FluidObjectId,
 	FluidObjectNode,
 	VisualNodeKind,
-	VisualValueNode,
-	VisualTreeNode,
 	VisualChildNode,
 	Primitive,
 	RootHandleNode,
@@ -142,7 +140,7 @@ export class DataVisualizerGraph
 
 	public constructor(
 		/**
-		 * {@inheritDoc IFluidClientDebugger.containerData}
+		 * {@inheritDoc IContainerDevtools.containerData}
 		 */
 		private readonly rootData: Record<string, IFluidLoadable>,
 
@@ -371,44 +369,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * {@inheritDoc VisualizeChildData}
 	 */
 	private async renderChildData(data: unknown): Promise<VisualChildNode> {
-		if (typeof data !== "object" && typeof data !== "function") {
-			// Render primitives and falsy types via their string representation
-			const result: VisualValueNode = {
-				value: data as Primitive,
-				typeMetadata: typeof data,
-				nodeKind: VisualNodeKind.ValueNode,
-			};
-			return result;
-		} else if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
-			// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
-			const handle = data as IFluidHandle;
-			const fluidObjectId = await this.registerHandle(handle);
-
-			// If no ID was found, then the data is not a SharedObject.
-			// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
-			return fluidObjectId === undefined
-				? unknownObjectNode
-				: createHandleNode(fluidObjectId);
-		} else {
-			// Assume any other data must be a record of some kind (since DDS contents must be serializable)
-			// and simply recurse over its keys.
-			const childEntries = Object.entries(data as Record<string | number | symbol, unknown>);
-
-			const children: Record<string, VisualChildNode> = {};
-			await Promise.all(
-				childEntries.map(async ([key, value]) => {
-					const childNode = await this.renderChildData(value);
-					children[key] = childNode;
-				}),
-			);
-
-			const result: VisualTreeNode = {
-				children,
-				nodeKind: VisualNodeKind.TreeNode,
-				typeMetadata: "object",
-			};
-			return result;
-		}
+		return visualizeChildData(data, this.registerHandle);
 	}
 
 	/**
@@ -420,4 +381,64 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 			this._disposed = true;
 		}
 	}
+}
+
+/**
+ * See {@link VisualizeChildData}.
+ *
+ * @param data - The child data to (recursively) render.
+ * @param resolveHandle - Function which accepts an {@link @fluidframework/core-interfaces#IFluidHandle} and
+ * returns its resolved object ID.
+ *
+ * @privateRemarks Exported from this module for testing purposes. This is not intended to be exported by the package.
+ */
+export async function visualizeChildData(
+	data: unknown,
+	resolveHandle: (handle: IFluidHandle) => Promise<FluidObjectId | undefined>,
+): Promise<VisualChildNode> {
+	// Special case for `null` because `typeof null === "object"`.
+	if (data === null) {
+		return {
+			value: data,
+			typeMetadata: "null",
+			nodeKind: VisualNodeKind.ValueNode,
+		};
+	}
+
+	if (typeof data !== "object" && typeof data !== "function") {
+		// Render primitives and falsy types via their string representation
+		return {
+			value: data as Primitive,
+			typeMetadata: typeof data,
+			nodeKind: VisualNodeKind.ValueNode,
+		};
+	}
+
+	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
+		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
+		const handle = data as IFluidHandle;
+		const fluidObjectId = await resolveHandle(handle);
+
+		// If no ID was found, then the data is not a SharedObject.
+		// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
+		return fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
+	}
+
+	// Assume any other data must be a record of some kind (since DDS contents must be serializable)
+	// and simply recurse over its keys.
+	const childEntries = Object.entries(data as Record<string | number | symbol, unknown>);
+
+	const children: Record<string, VisualChildNode> = {};
+	await Promise.all(
+		childEntries.map(async ([key, value]) => {
+			const childNode = await visualizeChildData(value, resolveHandle);
+			children[key] = childNode;
+		}),
+	);
+
+	return {
+		children,
+		nodeKind: VisualNodeKind.TreeNode,
+		typeMetadata: "object",
+	};
 }

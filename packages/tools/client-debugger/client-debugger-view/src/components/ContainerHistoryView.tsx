@@ -2,19 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DefaultPalette, IStackItemStyles, Icon, Stack, StackItem } from "@fluentui/react";
 import React from "react";
-
+import { Divider } from "@fluentui/react-components";
 import {
 	ConnectionStateChangeLogEntry,
-	ContainerStateChangeKind,
-	ContainerStateHistoryMessage,
+	ContainerStateHistory,
+	GetContainerState,
 	handleIncomingMessage,
 	HasContainerId,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
+import { ContainerHistoryLog } from "../ContainerHistoryLog";
 import { Waiting } from "./Waiting";
 
 /**
@@ -40,8 +40,8 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["CONTAINER_STATE_HISTORY"]: (untypedMessage) => {
-				const message = untypedMessage as ContainerStateHistoryMessage;
+			[ContainerStateHistory.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateHistory.Message;
 				if (message.data.containerId === containerId) {
 					setContainerHistory(message.data.history);
 					return true;
@@ -53,7 +53,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		/**
 		 * Event handler for messages coming from the webpage.
 		 */
-		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: "ContainerHistoryView", // TODO: Fix
 			});
@@ -68,12 +68,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		setContainerHistory(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage({
-			type: "GET_CONTAINER_STATE",
-			data: {
-				containerId,
-			},
-		});
+		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -84,105 +79,10 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		return <Waiting label="Waiting for Container Summary data." />;
 	}
 
-	const nowTimeStamp = new Date();
-	const historyViews: React.ReactElement[] = [];
-
-	// Newest events are displayed first
-	for (let i = containerHistory.length - 1; i >= 0; i--) {
-		const changeTimeStamp = new Date(containerHistory[i].timestamp);
-		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
-
-		const accordionBackgroundColor: IStackItemStyles = {
-			root: {
-				background:
-					containerHistory[i].newState === ContainerStateChangeKind.Connected
-						? "#F0FFF0" // green
-						: containerHistory[i].newState === ContainerStateChangeKind.Attached
-						? "#F0FFFF" // blue
-						: containerHistory[i].newState === ContainerStateChangeKind.Disconnected
-						? "#FDF5E6" // yellow
-						: containerHistory[i].newState === ContainerStateChangeKind.Closed
-						? "#FFF0F5" // red
-						: containerHistory[i].newState === ContainerStateChangeKind.Disposed
-						? "#FFE4E1" // dark red
-						: "#C0C0C0", // grey for unknown state
-				borderStyle: "solid",
-				borderWidth: 1,
-				borderColor: DefaultPalette.neutralTertiary,
-				padding: 3,
-			},
-		};
-
-		const iconStyle: IStackItemStyles = {
-			root: {
-				padding: 10,
-			},
-		};
-
-		historyViews.push(
-			<div key={`container-history-info-${i}`}>
-				<Stack horizontal={true} styles={accordionBackgroundColor}>
-					<StackItem styles={iconStyle}>
-						<Icon
-							iconName={
-								containerHistory[i].newState === ContainerStateChangeKind.Connected
-									? "PlugConnected"
-									: containerHistory[i].newState ===
-									  ContainerStateChangeKind.Attached
-									? "Attach"
-									: containerHistory[i].newState ===
-									  ContainerStateChangeKind.Disconnected
-									? "PlugDisconnected"
-									: containerHistory[i].newState ===
-									  ContainerStateChangeKind.Disposed
-									? "RemoveLink"
-									: containerHistory[i].newState ===
-									  ContainerStateChangeKind.Closed
-									? "SkypeCircleMinus"
-									: "Help"
-							}
-						/>
-					</StackItem>
-					<StackItem>
-						<div
-							key={`${containerHistory[i].newState}-${containerHistory[i].timestamp}`}
-						>
-							<b>State: </b>
-							{containerHistory[i].newState}
-							<br />
-							<b>Time: </b>
-							{wasChangeToday
-								? changeTimeStamp.toTimeString()
-								: changeTimeStamp.toDateString()}
-							<br />
-						</div>
-					</StackItem>
-				</Stack>
-			</div>,
-		);
-	}
-
 	return (
-		<Stack
-			styles={{
-				root: {
-					height: "100%",
-				},
-			}}
-		>
-			<StackItem>
-				<h3>Container State History</h3>
-				<Stack
-					styles={{
-						root: {
-							overflowY: "auto",
-							height: "300px",
-						},
-					}}
-				>
-					<div style={{ overflowY: "scroll" }}>{historyViews}</div>
-				</Stack>
-			</StackItem>
-		</Stack>
+		<>
+			<Divider appearance="brand"> Container State Log </Divider>
+			<ContainerHistoryLog containerHistory={containerHistory} />
+		</>
 	);
 }
