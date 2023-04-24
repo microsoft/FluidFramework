@@ -141,4 +141,7 @@ export interface IDocument {
 	// Timestamp of when this document and related data will be hard deleted.
 	// The document is soft deleted if a scheduled deletion timestamp is present.
 	scheduledDeletionTime?: string;
+
+	// storage per doc locations
+	storageName?: string;
 }

@@ -59,11 +59,8 @@ export class TenantManager implements core.ITenantManager {
 		documentId: string,
 		includeDisabledTenant = false,
 	): Promise<core.ITenant> {
-		const restWrapper = new BasicRestWrapper();
 		const [details, gitManager] = await Promise.all([
-			restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`, {
-				includeDisabledTenant,
-			}),
+			this.getTenantConfig(tenantId, includeDisabledTenant),
 			this.getTenantGitManager(tenantId, documentId, includeDisabledTenant),
 		]);
 
@@ -80,7 +77,7 @@ export class TenantManager implements core.ITenantManager {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 		const key = await core.requestWithRetry(
 			async () => this.getKey(tenantId, includeDisabledTenant),
-			"getTenantGitManager_getKey" /* callName */,
+			"getContainerGitManager_getKey" /* callName */,
 			lumberProperties /* telemetryProperties */,
 		);
 
@@ -135,5 +132,15 @@ export class TenantManager implements core.ITenantManager {
 			{ includeDisabledTenant },
 		);
 		return result.key1;
+	}
+
+	private async getTenantConfig(
+		tenantId: string,
+		includeDisabledTenant = false,
+	): Promise<core.ITenantConfig> {
+		const restWrapper = new BasicRestWrapper();
+		return restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`, {
+			includeDisabledTenant,
+		});
 	}
 }

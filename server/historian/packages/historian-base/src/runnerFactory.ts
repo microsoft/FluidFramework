@@ -11,6 +11,7 @@ import winston from "winston";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
+import { IHistorianResourcesCustomizations } from "./overrides";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -21,6 +22,7 @@ export class HistorianResources implements core.IResources {
 		public readonly riddler: historianServices.ITenantService,
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
+		public readonly storageNameProvider: historianServices.IStorageNameProvider,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
@@ -37,7 +39,10 @@ export class HistorianResources implements core.IResources {
 }
 
 export class HistorianResourcesFactory implements core.IResourcesFactory<HistorianResources> {
-	public async create(config: Provider): Promise<HistorianResources> {
+	public async create(
+		config: Provider,
+		customizations?: IHistorianResourcesCustomizations,
+	): Promise<HistorianResources> {
 		const redisConfig = config.get("redis");
 		const redisOptions: Redis.RedisOptions = {
 			host: redisConfig.host,
@@ -175,12 +180,16 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		const port = normalizePort(process.env.PORT || "3000");
 
+		const storageNameProvider =
+			customizations?.storageNameProvider ?? new historianServices.StorageNameProvider();
+
 		return new HistorianResources(
 			config,
 			port,
 			riddler,
 			restTenantThrottlers,
 			restClusterThrottlers,
+			storageNameProvider,
 			gitCache,
 			asyncLocalStorage,
 		);
@@ -196,6 +205,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.riddler,
 			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
+			resources.storageNameProvider,
 			resources.cache,
 			resources.asyncLocalStorage,
 			resources.tokenRevocationManager,

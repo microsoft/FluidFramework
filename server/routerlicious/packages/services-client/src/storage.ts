@@ -119,6 +119,11 @@ export interface IGitManager {
 	getSummary(sha: string): Promise<IWholeFlatSummary>;
 }
 
+export interface SummaryUploadResult {
+	id: string;
+	initialStorageName?: string;
+}
+
 /**
  * Uploads a summary to storage.
  */
@@ -129,12 +134,12 @@ export interface ISummaryUploadManager {
 	 * @param parentHandle - Parent summary acked handle (if available from summary ack)
 	 * @param summaryType - type of summary being uploaded
 	 * @param sequenceNumber - optional reference sequence number of the summary
-	 * @returns Id of created tree as a string.
+	 * @returns SummaryUploadResult, containing created tree as a string and associated storage name.
 	 */
 	writeSummaryTree(
 		summaryTree: api.ISummaryTree,
 		parentHandle: string,
 		summaryType: IWholeSummaryPayloadType,
 		sequenceNumber?: number,
-	): Promise<string>;
+	): Promise<SummaryUploadResult>;
 }

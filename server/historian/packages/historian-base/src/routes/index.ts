@@ -7,7 +7,7 @@ import { AsyncLocalStorage } from "async_hooks";
 import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { ICache, ITenantService } from "../services";
+import { ICache, IStorageNameProvider, ITenantService } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -41,6 +41,7 @@ export function create(
 	tenantService: ITenantService,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	storageNameProvider: IStorageNameProvider,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	tokenRevocationManager?: ITokenRevocationManager,
@@ -51,6 +52,7 @@ export function create(
 				config,
 				tenantService,
 				restTenantThrottlers,
+				storageNameProvider,
 				cache,
 				asyncLocalStorage,
 				tokenRevocationManager,
@@ -59,6 +61,7 @@ export function create(
 				config,
 				tenantService,
 				restTenantThrottlers,
+				storageNameProvider,
 				cache,
 				asyncLocalStorage,
 				tokenRevocationManager,
@@ -67,6 +70,7 @@ export function create(
 				config,
 				tenantService,
 				restTenantThrottlers,
+				storageNameProvider,
 				cache,
 				asyncLocalStorage,
 				tokenRevocationManager,
@@ -75,6 +79,7 @@ export function create(
 				config,
 				tenantService,
 				restTenantThrottlers,
+				storageNameProvider,
 				cache,
 				asyncLocalStorage,
 				tokenRevocationManager,
@@ -83,6 +88,7 @@ export function create(
 				config,
 				tenantService,
 				restTenantThrottlers,
+				storageNameProvider,
 				cache,
 				asyncLocalStorage,
 				tokenRevocationManager,
@@ -93,6 +99,7 @@ export function create(
 				config,
 				tenantService,
 				restTenantThrottlers,
+				storageNameProvider,
 				cache,
 				asyncLocalStorage,
 				tokenRevocationManager,
@@ -101,6 +108,7 @@ export function create(
 				config,
 				tenantService,
 				restTenantThrottlers,
+				storageNameProvider,
 				cache,
 				asyncLocalStorage,
 				tokenRevocationManager,
@@ -109,6 +117,7 @@ export function create(
 				config,
 				tenantService,
 				restTenantThrottlers,
+				storageNameProvider,
 				cache,
 				asyncLocalStorage,
 				tokenRevocationManager,
@@ -119,6 +128,7 @@ export function create(
 			tenantService,
 			restTenantThrottlers,
 			restClusterThrottlers,
+			storageNameProvider,
 			cache,
 			asyncLocalStorage,
 			tokenRevocationManager,

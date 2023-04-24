@@ -4,7 +4,7 @@
  */
 
 import { ISummaryTree, IWholeSummaryPayload, IWholeSummaryPayloadType } from "./storageContracts";
-import { IGitManager, ISummaryUploadManager } from "./storage";
+import { IGitManager, ISummaryUploadManager, SummaryUploadResult } from "./storage";
 import { convertSummaryTreeToWholeSummaryTree } from "./storageUtils";
 
 /**
@@ -19,18 +19,18 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 		summaryType: IWholeSummaryPayloadType,
 		sequenceNumber: number = 0,
 		initial: boolean = false,
-	): Promise<string> {
-		const id = await this.writeSummaryTreeCore(
+	): Promise<SummaryUploadResult> {
+		const result = await this.writeSummaryTreeCore(
 			parentHandle,
 			summaryTree,
 			summaryType,
 			sequenceNumber,
 			initial,
 		);
-		if (!id) {
+		if (!result?.id) {
 			throw new Error(`Failed to write summary tree`);
 		}
-		return id;
+		return result;
 	}
 
 	private async writeSummaryTreeCore(
@@ -39,7 +39,7 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 		type: IWholeSummaryPayloadType,
 		sequenceNumber: number,
 		initial: boolean,
-	): Promise<string> {
+	): Promise<SummaryUploadResult> {
 		const snapshotTree = convertSummaryTreeToWholeSummaryTree(
 			parentHandle,
 			tree,
@@ -53,6 +53,9 @@ export class WholeSummaryUploadManager implements ISummaryUploadManager {
 			type,
 		};
 
-		return this.manager.createSummary(snapshotPayload, initial).then((response) => response.id);
+		return this.manager.createSummary(snapshotPayload, initial).then((response) => ({
+			id: response.id,
+			initialStorageName: response.initialStorageName,
+		}));
 	}
 }

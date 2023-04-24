@@ -18,7 +18,7 @@ import {
 	SummaryObject,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { ISummaryUploadManager, IGitManager } from "./storage";
+import { ISummaryUploadManager, IGitManager, SummaryUploadResult } from "./storage";
 import { IWholeSummaryPayloadType } from "./storageContracts";
 
 /**
@@ -39,9 +39,12 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		summaryType: IWholeSummaryPayloadType,
 		sequenceNumber?: number,
 		initial?: boolean,
-	): Promise<string> {
+	): Promise<SummaryUploadResult> {
 		const previousFullSnapshot = await this.getPreviousFullSnapshot(parentHandle);
-		return this.writeSummaryTreeCore(summaryTree, previousFullSnapshot ?? undefined);
+		const id = await this.writeSummaryTreeCore(summaryTree, previousFullSnapshot ?? undefined);
+		return {
+			id,
+		};
 	}
 
 	private async writeSummaryTreeCore(

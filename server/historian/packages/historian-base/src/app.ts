@@ -19,7 +19,7 @@ import {
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, ITenantService } from "./services";
+import { ICache, IStorageNameProvider, ITenantService } from "./services";
 import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
@@ -27,6 +27,7 @@ export function create(
 	tenantService: ITenantService,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	storageNameProvider: IStorageNameProvider,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	tokenRevocationManager?: ITokenRevocationManager,
@@ -78,6 +79,7 @@ export function create(
 		tenantService,
 		restTenantThrottlers,
 		restClusterThrottlers,
+		storageNameProvider,
 		cache,
 		asyncLocalStorage,
 		tokenRevocationManager,

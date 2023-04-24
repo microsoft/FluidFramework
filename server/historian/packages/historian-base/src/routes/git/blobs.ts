@@ -14,7 +14,7 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IStorageNameProvider, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -22,6 +22,7 @@ export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
 	restTenantThrottlers: Map<string, IThrottler>,
+	storageNameProvider: IStorageNameProvider,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	tokenRevocationManager?: ITokenRevocationManager,
@@ -41,14 +42,15 @@ export function create(
 		authorization: string,
 		body: git.ICreateBlobParams,
 	): Promise<git.ICreateBlobResponse> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameProvider,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createBlob(body);
 	}
 
@@ -58,14 +60,15 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<git.IBlob> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameProvider,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getBlob(sha, useCache);
 	}
 

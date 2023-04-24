@@ -41,6 +41,7 @@ export {
 	IDocumentStorage,
 	IScribe,
 } from "./document";
+export { IDocumentManager } from "./documentManager";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
 export {
 	IHttpServer,

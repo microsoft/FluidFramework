@@ -18,7 +18,8 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../services";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { ICache, IStorageNameProvider, ITenantService } from "../services";
 import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 
@@ -27,6 +28,7 @@ export function create(
 	tenantService: ITenantService,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	storageNameProvider: IStorageNameProvider,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	tokenRevocationManager?: ITokenRevocationManager,
@@ -77,20 +79,23 @@ export function create(
 		Constants.getSummaryThrottleIdPrefix,
 	);
 
+	const storagePerDocEnabled = config.get("storage:perDocEnabled");
+
 	async function getSummary(
 		tenantId: string,
 		authorization: string,
 		sha: string,
 		useCache: boolean,
 	): Promise<IWholeFlatSummary> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameProvider,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getSummary(sha, useCache);
 	}
 
@@ -100,15 +105,28 @@ export function create(
 		params: IWholeSummaryPayload,
 		initial?: boolean,
 	): Promise<IWriteSummaryResponse> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameProvider,
 			cache,
 			asyncLocalStorage,
-		);
-		return service.createSummary(params, initial);
+			initialUpload: initial,
+		});
+		const result = await service.createSummary(params, initial);
+		// TODO: change to dot-notation when new version publishes
+		if (initial) {
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			result["initialStorageName"] = service.storageName;
+		}
+		// TODO: change to dot-notation when new version publishes
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		if (storagePerDocEnabled && !result["initialStorageName"]) {
+			Lumberjack.warning("Storage name not found for create summary", result);
+		}
+		return result;
 	}
 
 	async function deleteSummary(
@@ -116,15 +134,16 @@ export function create(
 		authorization: string,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameProvider,
 			cache,
 			asyncLocalStorage,
-			true,
-		);
+			allowDisabledTenant: true,
+		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			deletionPs.push(

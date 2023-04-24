@@ -10,6 +10,7 @@ export {
 	IExternalStorage,
 	IOauthAccessInfo,
 	IStorage,
+	IStorageNameProvider,
 	ITenant,
 	ITenantCustomDataExternal,
 	ITenantService,
@@ -18,3 +19,4 @@ export { RedisCache } from "./redisCache";
 export { RedisTenantCache } from "./redisTenantCache";
 export { IDocument, RestGitService } from "./restGitService";
 export { RiddlerService } from "./riddlerService";
+export { StorageNameProvider } from "./storageNameProvider";

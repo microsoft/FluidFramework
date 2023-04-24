@@ -14,7 +14,7 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IStorageNameProvider, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -22,6 +22,7 @@ export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
 	restTenantThrottlers: Map<string, IThrottler>,
+	storageNameProvider: IStorageNameProvider,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	tokenRevocationManager?: ITokenRevocationManager,
@@ -42,14 +43,15 @@ export function create(
 		sha: string,
 		count: number,
 	): Promise<git.ICommitDetails[]> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameProvider,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getCommits(sha, count);
 	}
 

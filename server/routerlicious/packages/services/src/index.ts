@@ -4,6 +4,7 @@
  */
 
 export { getDbFactory } from "./dbFactory";
+export { DocumentManager } from "./documentManager";
 export { createProducer } from "./kafkaProducerFactory";
 export { createMessageReceiver } from "./messageReceiver";
 export { createMessageSender } from "./messageSender";
