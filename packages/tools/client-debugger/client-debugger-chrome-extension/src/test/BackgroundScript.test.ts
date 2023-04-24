@@ -41,7 +41,7 @@ describe("Background script unit tests", () => {
 	let globals: Globals = stubGlobals();
 
 	afterEach(() => {
-		sandbox.restore(); // TODO: reset?
+		sandbox.reset();
 		globals = stubGlobals(); // Reset globals to ensure test-local modifications are cleared
 	});
 
