@@ -124,24 +124,30 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			// The branch that was rebased had no undoable edits so the new undo redo manager
 			// should be a copy of the undo redo manager from the base branch.
 			this.headUndoableCommit = baseUndoRedoManager.headUndoable;
+			return;
 		}
 
 		const rebasedPath: GraphCommit<TChange>[] = [];
 		const ancestor = findCommonAncestor([baseHead], [rebasedHead, rebasedPath]);
 		assert(ancestor === baseHead, "The rebased head should be based off of the base branch.");
 
+		if (rebasedPath.length === 0) {
+			this.headUndoableCommit = baseUndoRedoManager.headUndoable;
+			return;
+		}
+
 		const markedCommits = markCommits(rebasedPath, originalUndoRedoManager.headUndoable);
 		// Create a complete clone of the base undo redo manager for tracking the rebased path
 		const undoRedoManager = baseUndoRedoManager.clone();
 
-		markedCommits.forEach(({ commit, isUndoable }) => {
+		for (const { commit, isUndoable } of markedCommits) {
 			if (isUndoable) {
 				undoRedoManager.trackCommit(commit, UndoRedoManagerCommitType.Undoable);
 			}
 			undoRedoManager.repairDataStoreProvider.applyDelta(
 				this.changeFamily.intoDelta(commit.change),
 			);
-		});
+		}
 
 		this.headUndoableCommit = undoRedoManager.headUndoable;
 	}
