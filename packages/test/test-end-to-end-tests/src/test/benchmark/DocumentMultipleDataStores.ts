@@ -7,6 +7,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	ISummarizer,
+	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -184,7 +185,15 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	 * as the goal is to simply measure the summarization data.
 	 * @returns the main container.
 	 */
-	public async loadDocument(): Promise<IContainer> {
+	public async loadDocument(options?: ISummaryRuntimeOptions): Promise<IContainer> {
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+			this.dataObjectFactory,
+			[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
+			undefined,
+			undefined,
+			{ ...runtimeOptions, summaryOptions: options },
+		);
+
 		const requestUrl = await this.props.provider.driver.createContainerUrl(
 			this.props.provider.documentId,
 			this._mainContainer?.resolvedUrl,
@@ -196,9 +205,10 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			url: requestUrl,
 		};
 
-		const loader = this.props.provider.createLoader([
-			[this.props.provider.defaultCodeDetails, this.runtimeFactory],
-		]);
+		const loader = this.props.provider.createLoader(
+			[[this.props.provider.defaultCodeDetails, runtimeFactory]],
+			{ configProvider: this.props.configProvider },
+		);
 		const container2 = await loader.resolve(request);
 		return container2;
 	}

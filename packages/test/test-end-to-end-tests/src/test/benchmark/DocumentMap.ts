@@ -22,7 +22,11 @@ import {
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { CompressionAlgorithms, ISummarizer } from "@fluidframework/container-runtime";
+import {
+	CompressionAlgorithms,
+	ISummarizer,
+	ISummaryRuntimeOptions,
+} from "@fluidframework/container-runtime";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 enum numberOfKeysInMap {
@@ -103,7 +107,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 				},
 				chunkSizeInBytes: 600 * 1024,
 			},
-			loaderProps: { logger: this.props.logger },
+			loaderProps: { logger: this.props.logger, configProvider: this.props.configProvider },
 		};
 
 		this.loader = this.props.provider.makeTestLoader(this.testContainerConfig);
@@ -129,8 +133,19 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		await waitForContainerConnection(this._mainContainer, true);
 	}
 
-	public async loadDocument(): Promise<IContainer> {
+	public async loadDocument(options?: ISummaryRuntimeOptions): Promise<IContainer> {
 		assert(this.loader !== undefined, "loader should be initialized when loading a document");
+		const testContainerConfig =
+			options !== undefined
+				? {
+						...this.testContainerConfig,
+						runtimeOptions: {
+							...this.testContainerConfig?.runtimeOptions,
+							summaryOptions: options,
+						},
+				  }
+				: this.testContainerConfig;
+		this.loader = this.props.provider.makeTestLoader(testContainerConfig);
 		const requestUrl = await this.props.provider.driver.createContainerUrl(
 			this.fileName,
 			this.containerUrl,

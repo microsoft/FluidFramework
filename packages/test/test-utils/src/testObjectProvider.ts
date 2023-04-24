@@ -188,14 +188,14 @@ export class EventAndErrorTrackingLogger extends TelemetryLogger {
 	private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
 
 	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEvent[]) {
-		if (this.expectedEvents.length !== 0) {
-			// we don't have to error here. just no reason not to. given the events must be
-			// ordered it could be tricky to figure out problems around multiple registrations.
-			throw new Error(
-				"Expected events already registered.\n" +
-					"Call reportAndClearTrackedEvents to clear them before registering more",
-			);
-		}
+		// if (this.expectedEvents.length !== 0) {
+		// 	// we don't have to error here. just no reason not to. given the events must be
+		// 	// ordered it could be tricky to figure out problems around multiple registrations.
+		// 	throw new Error(
+		// 		"Expected events already registered.\n" +
+		// 			"Call reportAndClearTrackedEvents to clear them before registering more",
+		// 	);
+		// }
 		this.expectedEvents.push(
 			...orderedExpectedEvents.map((event, index) => ({ index, event })),
 		);

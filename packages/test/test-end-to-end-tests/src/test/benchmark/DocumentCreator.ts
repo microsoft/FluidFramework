@@ -4,7 +4,11 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	IConfigProviderBase,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { DocumentType, BenchmarkType, isMemoryTest } from "@fluid-internal/test-version-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
@@ -14,7 +18,7 @@ import {
 	benchmarkMemory,
 	IMemoryTestObject,
 } from "@fluid-tools/benchmark";
-import { ISummarizer } from "@fluidframework/container-runtime";
+import { ISummarizer, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import { DocumentMap } from "./DocumentMap";
 import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
 
@@ -23,6 +27,7 @@ export interface IDocumentCreatorProps {
 	provider: ITestObjectProvider;
 	benchmarkType: BenchmarkType;
 	documentType: DocumentType | string | undefined;
+	configProvider?: IConfigProviderBase;
 }
 
 export interface IDocumentProps extends IDocumentCreatorProps {
@@ -39,7 +44,7 @@ export interface IDocumentLoader {
 	mainContainer: IContainer | undefined;
 	logger: ITelemetryLogger | undefined;
 	initializeDocument(): Promise<void>;
-	loadDocument(): Promise<IContainer>;
+	loadDocument(options?: ISummaryRuntimeOptions): Promise<IContainer>;
 }
 export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
 	summarize(summaryVersion?: string): Promise<ISummarizeResult>;
@@ -59,6 +64,11 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 			testDocumentType: props.documentType,
 		},
 	});
+
+	if (props.configProvider !== undefined) {
+		mixinMonitoringContext(logger, props.configProvider);
+	}
+
 	const documentProps: IDocumentProps = { ...props, logger };
 
 	switch (props.documentType) {
