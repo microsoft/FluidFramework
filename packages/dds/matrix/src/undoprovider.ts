@@ -134,11 +134,9 @@ export class MatrixUndoProvider<T> {
 		if (this.consumer !== undefined) {
 			this.consumer.pushToCurrentOperation({
 				revert: () => {
-					this.matrix.setCell(
-						this.rows.handleToPosition(rowHandle),
-						this.cols.handleToPosition(colHandle),
-						oldValue,
-					);
+					const rowPos = this.rows.handleToPosition(rowHandle);
+					const colPos = this.cols.handleToPosition(colHandle);
+					this.matrix.setCell(rowPos, colPos, oldValue);
 				},
 				discard: () => {},
 			});
