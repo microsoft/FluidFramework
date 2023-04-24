@@ -2131,7 +2131,7 @@ export class MergeTree {
 		// so we slide after eventing in case the consumer wants to make reference
 		// changes at remove time, like add a ref to track undo redo.
 		if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {
-			removedSegments.forEach((rSeg) => {
+			removedSegments.reverse().forEach((rSeg) => {
 				this.slideAckedRemovedSegmentReferences(rSeg.segment);
 			});
 		}
