@@ -7,7 +7,7 @@ import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unsta
  */
 type RenderSummaryTreeProps = React.PropsWithChildren<{
 	header: React.ReactElement | string;
-	children: JSX.Element[];
+	children: React.ReactElement<{ node: { children?: React.ReactElement } }>[];
 }>;
 
 /**
@@ -21,9 +21,19 @@ export function RenderSummaryTree(props: RenderSummaryTreeProps): React.ReactEle
 			<TreeItem>
 				<TreeItemLayout>{header}</TreeItemLayout>
 
+				{console.log("children:", children)}
+
 				<Tree aria-label="Sub-Tree">
 					{children?.map((child, index) => {
-						return <div key={index}>{child}</div>;
+						return (
+							<div key={index}>
+								{child.props.node.children ? (
+									<> {child} </>
+								) : (
+									<TreeItem>{child}</TreeItem>
+								)}
+							</div>
+						);
 					})}
 				</Tree>
 			</TreeItem>

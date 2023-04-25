@@ -4,8 +4,6 @@
  */
 import React from "react";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeItem } from "@fluentui/react-components/unstable";
 import { RenderLabel } from "./RenderLabel";
 /**
  * {@link ValueView} input props.
@@ -22,12 +20,10 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { nodeKey, node } = props;
 
 	return (
-		<TreeItem>
-			<RenderLabel
-				nodeKey={nodeKey}
-				nodeTypeMetadata={node.typeMetadata}
-				nodeValue={node.value}
-			/>
-		</TreeItem>
+		<RenderLabel
+			nodeKey={nodeKey}
+			nodeTypeMetadata={node.typeMetadata}
+			nodeValue={node.value}
+		/>
 	);
 }
