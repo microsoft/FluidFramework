@@ -47,16 +47,23 @@ jobs:
           mkdir manifests
           packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o manifests
 
-      # This action sets a "changes" output variable that contains the generated changelog text.
+      # This action sets a "changelog" output variable that contains the generated changelog text.
       - name: Generate changelog
         id: changelog
-        if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
-        uses: requarks/changelog-action@v1
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ github.token }}
-          fromTag: ${{ fromJson(env.RELEASE_JSON).tag }}
-          toTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
-          writeToFile: false
+
+      # This action sets a "changes" output variable that contains the generated changelog text.
+      # - name: Generate changelog
+      #   id: changelog
+      #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
+      #   uses: requarks/changelog-action@v1
+      #   with:
+      #     token: ${{ github.token }}
+      #     fromTag: ${{ fromJson(env.RELEASE_JSON).tag }}
+      #     toTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
+      #     writeToFile: false
 
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
@@ -74,7 +81,7 @@ jobs:
           name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
           omitNameDuringUpdate: false # always overwrite the name
 
-          body: ${{ steps.changelog.outputs.changes }}
+          body: ${{ steps.changelog.outputs.changelog }}
           omitBodyDuringUpdate: true # Don't overwrite the body
 
           artifacts: "build-tools/manifests/*.*"
