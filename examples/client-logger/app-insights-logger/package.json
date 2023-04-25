@@ -43,6 +43,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/react-inputs": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/app-insights-logger": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/container-loader": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/counter": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
@@ -50,7 +51,6 @@
 		"@fluidframework/map": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/sequence": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/tinylicious-client": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluid-internal/app-insights-logger": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@microsoft/applicationinsights-web": "^2.8.11",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1"
