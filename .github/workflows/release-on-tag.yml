@@ -101,14 +101,12 @@ jobs:
           name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
           omitNameDuringUpdate: false # always overwrite the name
 
-          # body: ${{ steps.changelog.outputs.changelog }}
           bodyFile: build-tools/auto-changelog.md
-          omitBodyDuringUpdate: false # Don't overwrite the body
+          omitBodyDuringUpdate: true # Don't overwrite the body
 
           artifacts: "build-tools/reports/*.*"
           artifactErrorsFailBuild: true
           tag: ${{ fromJson(env.RELEASE_JSON).tag }}
-          # generateReleaseNotes: true
 
       # - name: Create release
       #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch'

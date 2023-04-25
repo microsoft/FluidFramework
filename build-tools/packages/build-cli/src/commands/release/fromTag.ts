@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Args, Flags } from "@oclif/core";
+import { Args } from "@oclif/core";
 import semver from "semver";
 
 import { sortVersions } from "../../lib";
