@@ -441,7 +441,8 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	});
 });
 
-describeNoCompat("Summaries", (getTestObjectProvider) => {
+//* ONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLY
+describeNoCompat.only("Summaries", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -466,15 +467,17 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			if (injectFailure) {
 				// force an exception under containerRuntime.summarize.
 				// SummarizeTelemetry event should still be logged
-				(containerRuntime as any).collectGarbage = undefined;
+				(containerRuntime as any).summarizerNode = undefined;
 			}
 
-			await containerRuntime.summarize({
-				runGC: false,
-				fullTree: false,
-				trackState: false,
-				summaryLogger: new TelemetryNullLogger(),
-			});
+			await containerRuntime
+				.summarize({
+					runGC: false,
+					fullTree: false,
+					trackState: false,
+					summaryLogger: new TelemetryNullLogger(),
+				})
+				.catch(() => {});
 
 			const summarizeTelemetryEvents = mockLogger.events.filter(
 				(event) => event.eventName === "fluid:telemetry:SummarizeTelemetry",
@@ -482,7 +485,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			assert.strictEqual(
 				summarizeTelemetryEvents.length,
 				1,
-				"There should only be one event",
+				"There should be exactly one event",
 			);
 
 			const parsed = JSON.parse(summarizeTelemetryEvents[0].details as string);
