@@ -36,8 +36,8 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
 		"test:mocha": "npm run mocha",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
 		"test:verbose": "npm run test:mocha:verbose",
 		"tsc": "tsc",
 		"webpack": "webpack"
