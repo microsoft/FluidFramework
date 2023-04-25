@@ -76,8 +76,6 @@ export interface ContainerDevtoolsProps {
 	 */
 	containerData?: Record<string, IFluidLoadable>;
 
-	// TODO: Accept custom data visualizers.
-
 	/**
 	 * (optional) Nickname for the {@link ContainerDevtoolsProps.container | Container} / debugger instance.
 	 *
