@@ -10592,6 +10592,7 @@ importers:
       '@fluidframework/build-tools': ^0.15.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
@@ -10620,6 +10621,7 @@ importers:
       '@fluid-tools/client-debugger': link:../client-debugger
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-utils': link:../../../loader/container-utils
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
     devDependencies:
       '@fluidframework/build-common': 1.1.0
