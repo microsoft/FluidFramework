@@ -11,6 +11,7 @@ import {
 	TreeSchema,
 	ITreeCursor,
 	UpPath,
+	FieldUpPath,
 } from "../../core";
 import {
 	PrimitiveValue,
@@ -328,7 +329,12 @@ export interface EditableField
 	/**
 	 * Moves nodes from a source to destination.
 	 */
-	moveNodes(sourceIndex: number, count: number, destIndex: number): void;
+	moveNodes(
+		sourceIndex: number,
+		count: number,
+		destFieldPath: FieldUpPath,
+		destIndex: number,
+	): void;
 
 	/**
 	 * Sequentially deletes the nodes from this field.

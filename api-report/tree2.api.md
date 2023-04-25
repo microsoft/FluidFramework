@@ -343,6 +343,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     readonly fieldSchema: FieldSchema;
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    moveNodes(sourceIndex: number, count: number, destIndex: number): void;
     readonly parent?: EditableTree;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }

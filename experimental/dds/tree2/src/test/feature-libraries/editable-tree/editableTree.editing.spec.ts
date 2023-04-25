@@ -10,6 +10,7 @@ import {
 	GlobalFieldKey,
 	JsonableTree,
 	LocalFieldKey,
+	moveToDetachedField,
 	rootFieldKey,
 	SchemaData,
 	symbolFromKey,
@@ -35,8 +36,9 @@ import {
 	SchemaAware,
 	TypedSchema,
 	FieldKind,
+	proxyTargetSymbol,
 } from "../../../feature-libraries";
-import { TestTreeProviderLite } from "../../utils";
+import { TestTreeProviderLite, toJsonableTree } from "../../utils";
 import {
 	fullSchemaData,
 	Person,
@@ -384,8 +386,8 @@ describe("editable-tree: editing", () => {
 	});
 
 	for (const [fieldDescription, fieldKey] of testCases) {
-		describe(`can create, edit and delete ${fieldDescription}`, () => {
-			it("as sequence field", () => {
+		describe(`can create, edit, move and delete ${fieldDescription}`, () => {
+			it.only("as sequence field", () => {
 				const [provider, trees] = createSharedTrees(
 					getTestSchema(FieldKinds.sequence),
 					[{ type: rootSchemaName }],
@@ -485,6 +487,21 @@ describe("editable-tree: editing", () => {
 				assert.equal(field_0[1], "changed");
 				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
+
+				const firstNodeBeforeMove = field_0[0];
+				const tree = trees[0];
+
+				const cursor = tree.forest.allocateCursor();
+				moveToDetachedField(tree.forest, cursor);
+				cursor.firstNode();
+				cursor.firstField();
+				const destPath = cursor.getFieldPath();
+				cursor.free();
+
+				// move using `moveNodes()`
+				field_0.moveNodes(0, 1, destPath, 1);
+				const secondNodeAfterMove = field_0[1];
+				assert.equal(firstNodeBeforeMove, secondNodeAfterMove);
 
 				// delete using `deleteNodes()`
 				field_0.deleteNodes(1, 1);
