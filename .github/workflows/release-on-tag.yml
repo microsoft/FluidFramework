@@ -3,7 +3,7 @@ name: "release-on-tag"
 on:
   push:
     tags:
-      - "client_v*"
+      - "*_v*"
 
 jobs:
   patch-release:
@@ -47,35 +47,6 @@ jobs:
           mkdir reports
           packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o reports
 
-      # This action sets a "changelog" output variable that contains the generated changelog text.
-      # - name: Generate changelog
-      #   id: changelog
-      #   uses: heinrichreimer/github-changelog-generator-action@v2.3
-      #   with:
-      #     token: ${{ github.token }}
-      #     dueTag: ${{ fromJson(env.RELEASE_JSON).tag }}
-      #     sinceTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
-
-      # This action sets a "changes" output variable that contains the generated changelog text.
-      # - name: Generate changelog
-      #   id: changelog
-      #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
-      #   uses: requarks/changelog-action@v1
-      #   with:
-      #     token: ${{ github.token }}
-      #     fromTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
-      #     toTag: ${{ fromJson(env.RELEASE_JSON).tag }}
-      #     writeToFile: false
-
-      # This action sets a "changelog" output variable that contains the generated changelog text.
-      # - name: Generate changelog
-      #   uses: Bullrich/generate-release-changelog@master
-      #   id: changelog
-      #   with:
-      #     from-tag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
-      #     to-tag: ${{ fromJson(env.RELEASE_JSON).tag }}
-      #     type: ${{ fromJson(env.RELEASE_JSON).releaseType }}
-
       - name: Generate changelog
         run: |
           pnpm exec auto-changelog \
@@ -107,29 +78,3 @@ jobs:
           artifacts: "build-tools/reports/*.*"
           artifactErrorsFailBuild: true
           tag: ${{ fromJson(env.RELEASE_JSON).tag }}
-
-      # - name: Create release
-      #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
-      #   uses: marvinpinto/action-automatic-releases@latest
-      #   with:
-      #     repo_token: "${{ github.token }}"
-      #     automatic_release_tag: ${{ fromJson(env.RELEASE_JSON).tag }}
-      #     prerelease: false
-      #     draft: true
-      #     title: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
-      #     files: |
-      #       reports/*.*
-
-      # - name: Create release
-      #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     draft: true
-      #     prerelease: false
-      #     repo_token: "${{ github.token }}"
-      #     tag_name: ${{ fromJson(env.RELEASE_JSON).tag }}
-      #     name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
-      #     files: |
-      #       reports/*.*
-      #     fail_on_unmatched_files: true
-
