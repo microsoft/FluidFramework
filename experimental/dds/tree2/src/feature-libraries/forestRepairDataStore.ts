@@ -188,7 +188,7 @@ export function repairDataStoreFromForest(forest: IForestSubscription): ForestRe
 }
 
 export class ForestRepairDataStoreProvider implements IRepairDataStoreProvider {
-	private frozenForest: IEditableForest | undefined;
+	private frozenForest: IForestSubscription | undefined;
 
 	public constructor(
 		private readonly forest: IEditableForest,

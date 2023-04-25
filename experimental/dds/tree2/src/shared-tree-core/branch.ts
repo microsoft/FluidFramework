@@ -208,6 +208,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * Rebase the changes that have been applied to this branch over all the divergent changes in the given branch.
 	 * After this operation completes, this branch will be based off of `branch`.
 	 * @param branch - the head of the branch to rebase onto
+	 * @param undoRedoManager - the undo redo manager of the branch to rebase onto. This is necessary for updating the
+	 * undo redo manager of this branch.
 	 * @returns the net change to this branch
 	 */
 	public rebaseOnto(

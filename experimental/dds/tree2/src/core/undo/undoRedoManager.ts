@@ -93,8 +93,10 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Creates a copy of this `UndoRedoManager`.
-	 * @param repairDataStoreProvider - Optional {@link IRepairDataStoreProvider} to use for the new `UndoRedoManager`.
-	 * If one is not provided, the `repairDataStoreProvider` of this `UndoRedoManager` will be cloned.
+	 * @param repairDataStoreProvider - Optional {@link IRepairDataStoreProvider} to use for the new {@link UndoRedoManager}.
+	 * If one is not provided, the `repairDataStoreProvider` of this {@link UndoRedoManager} will be cloned.
+	 * @param headUndoableCommit - Optional head undoable commit, if one is not provided the head undoable commit
+	 * of this {@link UndoRedoManager} will be used.
 	 */
 	public clone(
 		repairDataStoreProvider?: IRepairDataStoreProvider,

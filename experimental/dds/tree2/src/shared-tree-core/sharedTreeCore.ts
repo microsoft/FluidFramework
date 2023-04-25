@@ -422,12 +422,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.applyPathFromBranch(branch, commits);
 		} else {
 			const rebaser = new Rebaser(this.changeFamily.rebaser);
-			const [newHead] = rebaser.rebaseBranch(branch.getHead(), this.getLocalBranchHead());
+			const [newHead] = rebaser.rebaseBranch(branch.getHead(), localBranchHead);
 			const changes: GraphCommit<TChange>[] = [];
-			findAncestor([newHead, changes], (c) => c === this.getLocalBranchHead());
+			findAncestor([newHead, changes], (c) => c === localBranchHead);
 
 			this.undoRedoManager.updateAfterRebase(
-				this.getLocalBranchHead(),
+				localBranchHead,
 				newHead,
 				this.undoRedoManager,
 				branch.undoRedoManager,
