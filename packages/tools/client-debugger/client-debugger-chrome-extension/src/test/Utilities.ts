@@ -8,17 +8,21 @@ import { SinonSandbox } from "sinon";
 import { Globals } from "../utilities";
 
 /**
- * Wait for a listener for the specified event to be registered.
+ * Wait for a listener to be registered for the specified event.
  *
  * @remarks
  *
- * Note: This must be called *before* loading the background script
- * because listeners are registered during initialization.
+ * Notes:
  *
- * Note: The returned `Promise` must NOT be `await`ed until *after*
- * loading the background script otherwise it won't resolve.
+ * * This must be called **before** running the logic that is expected to register the listener.
+ * Otherwise, the opportunity to intercept the registration is missed.
  *
- * @returns `Promise` that resolves with the registered listener.
+ * * The returned promise must be awaited **after** running the logic that is expected to register the listener.
+ *
+ * The returned promise will only resolve if and when a listener is registered for the specified event.
+ * If awaited in a test, the test will time out if no listener is registered.
+ *
+ * @returns `Promise` that resolves when a listener is registered, returning that listener callback.
  */
 export async function awaitListener<T>(
 	sandbox: SinonSandbox,
