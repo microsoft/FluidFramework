@@ -29,7 +29,6 @@ import {
 	Delta,
 	RevisionTag,
 	mintRevisionTag,
-	Rebaser,
 	findAncestor,
 	GraphCommit,
 	RepairDataStore,
@@ -38,6 +37,7 @@ import {
 	IRepairDataStoreProvider,
 	UndoRedoManagerCommitType,
 	markCommits,
+	rebaseBranch,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -386,7 +386,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const branch = new SharedTreeBranch(
 			this.editManager.getLocalBranchHead(),
 			this.editManager.localSessionId,
-			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
 			this.undoRedoManager.clone(repairDataStoreProvider),
 			anchors,
@@ -412,8 +411,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		if (ancestor === localBranchHead) {
 			this.applyPathFromBranch(branch, commits);
 		} else {
-			const rebaser = new Rebaser(this.changeFamily.rebaser);
-			const [newHead] = rebaser.rebaseBranch(branch.getHead(), this.getLocalBranchHead());
+			const [newHead] = rebaseBranch(
+				this.changeFamily.rebaser,
+				branch.getHead(),
+				this.getLocalBranchHead(),
+			);
 			const changes: GraphCommit<TChange>[] = [];
 			findAncestor([newHead, changes], (c) => c === this.getLocalBranchHead());
 			this.applyPathFromBranch(branch, changes);

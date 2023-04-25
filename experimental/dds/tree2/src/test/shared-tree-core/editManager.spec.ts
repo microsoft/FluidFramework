@@ -17,7 +17,6 @@ import {
 	ChangeFamilyEditor,
 	makeAnonChange,
 	UndoRedoManager,
-	Rebaser,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -338,7 +337,6 @@ describe("EditManager", () => {
 			const branch = new SharedTreeBranch(
 				manager.getLocalBranchHead(),
 				"",
-				new Rebaser(defaultChangeFamily.rebaser),
 				defaultChangeFamily,
 				new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily),
 			);
