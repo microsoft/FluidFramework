@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+
 import { UsageError } from "@fluidframework/container-utils";
 
 import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
@@ -18,7 +18,7 @@ import {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+import { IFluidDevtools } from "./IFluidDevtools";
 import { ContainerMetadata } from "./ContainerMetadata";
 import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
@@ -122,10 +122,7 @@ export interface FluidDevtoolsProps {
  *
  * @internal
  */
-export class FluidDevtools
-	extends TypedEventEmitter<FluidDevtoolsEvents>
-	implements IFluidDevtools
-{
+export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * {@inheritDoc IFluidDevtools.logger}
 	 */
@@ -214,8 +211,6 @@ export class FluidDevtools
 	// #endregion
 
 	public constructor(props?: FluidDevtoolsProps) {
-		super();
-
 		// Populate initial Container-level devtools
 		this.containers = new Map<string, ContainerDevtools>();
 		if (props?.initialContainers !== undefined) {
@@ -232,10 +227,6 @@ export class FluidDevtools
 
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
-
-		// Initiate message posting of container list updates.
-		this.on("containerDevtoolsRegistered", this.postContainerList);
-		this.on("containerDevtoolsClosed", this.postContainerList);
 
 		this._disposed = false;
 	}
@@ -261,7 +252,9 @@ export class FluidDevtools
 			dataVisualizers,
 		});
 		this.containers.set(containerId, containerDevtools);
-		this.emit("containerDevtoolsRegistered", containerId);
+
+		// Post message for container list change
+		this.postContainerList();
 	}
 
 	/**
@@ -280,7 +273,9 @@ export class FluidDevtools
 		} else {
 			containerDevtools.dispose();
 			this.containers.delete(containerId);
-			this.emit("containerDevtoolsClosed", containerId);
+
+			// Post message for container list change
+			this.postContainerList();
 		}
 	}
 
@@ -331,12 +326,13 @@ export class FluidDevtools
 		}
 
 		// Dispose of container-level devtools
-		for (const [containerId, containerDevtools] of this.containers) {
+		for (const [, containerDevtools] of this.containers) {
 			containerDevtools.dispose();
-			this.emit("containerDevtoolsClosed", containerId);
 		}
 		this.containers.clear();
-		this.postContainerList(); // Notify listeners that the list of Containers changed.
+
+		// Notify listeners that the list of Containers changed.
+		this.postContainerList();
 
 		this._disposed = true;
 	}
