@@ -3165,8 +3165,6 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.IdAllocation:
-				// Remove the stashed state from the op
-				// so that it doesn't go over the wire
 				this.submit(type, content, localOpMetadata);
 				break;
 			case ContainerMessageType.ChunkedOp:

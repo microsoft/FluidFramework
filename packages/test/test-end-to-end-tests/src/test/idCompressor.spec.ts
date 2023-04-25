@@ -123,131 +123,6 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		await waitForContainerConnection(container3);
 	});
 
-	it("Ignores runtime option if container is created and IdCompressor has been previously enabled", async () => {
-		// Create a container without the runtime option to enable the compressor.
-		// The first container should set a metadata property that automatically should
-		// enable it for any other container runtimes that are created.
-		const runtimeFactoryWithoutCompressorEnabled =
-			new ContainerRuntimeFactoryWithDefaultDataStore(
-				factory,
-				[[factory.type, Promise.resolve(factory)]],
-				undefined,
-				undefined,
-				undefined,
-			);
-
-		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
-		const container4MainDataStore = await requestFluidObject<TestDataObject>(container4, "/");
-		const sharedMapContainer4 = container4MainDataStore.map;
-
-		assert(
-			getIdCompressor(sharedMapContainer4) !== undefined,
-			"Compressor should exist if it has ever been enabled",
-		);
-	});
-
-	it("Ids generated when disconnected are correctly resubmitted", async () => {
-		// Disconnect the first container
-		container1.disconnect();
-
-		// Generate a new Id in the disconnected container
-		const id1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
-		// Trigger Id submission
-		sharedMapContainer1.set("key", "value");
-
-		// Generate ids in a connected container but don't send them yet
-		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
-		const id3 = getIdCompressor(sharedMapContainer2).generateCompressedId();
-
-		// Reconnect the first container
-		// IdRange should be resubmitted and reflected in all compressors
-		container1.connect();
-		await waitForContainerConnection(container1);
-		await provider.ensureSynchronized();
-
-		assert.strictEqual(
-			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(id1),
-			0,
-			"First container should get first cluster and allocate Id 0",
-		);
-
-		// Send the id generated in the second, connected container
-		sharedMapContainer2.set("key2", "value2");
-		await provider.ensureSynchronized();
-
-		assert.strictEqual(
-			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id2),
-			512,
-			"Second container should get second cluster and allocate Id 512",
-		);
-
-		assert.strictEqual(
-			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id3),
-			513,
-			"Second Id from second container should get second cluster and allocate Id 513",
-		);
-	});
-
-	// IdCompressor is at container runtime level, which means that individual DDSs
-	// in the same container and different DataStores should have the same underlying compressor state
-	it("DDSs in different DataStores have the same compressor state", async () => {
-		const dataStore2 = await factory.createInstance(containerRuntime);
-		mainDataStore.map.set("DataStore2", dataStore2.handle);
-
-		await provider.ensureSynchronized();
-		// 1 Id in the map compressor in the main DataStore, 1 in the cell compressor
-		// in the same DataStore, 1 in the map of DataStore2 should result in 3 local
-		// Ids in the same compressor
-		const compressedIds: SessionSpaceCompressedId[] = [];
-		compressedIds.push(getIdCompressor(sharedMapContainer1).generateCompressedId());
-		compressedIds.push(getIdCompressor(sharedCellContainer1).generateCompressedId());
-		compressedIds.push(getIdCompressor(dataStore2.map).generateCompressedId());
-
-		const decompressedIds: string[] = [];
-		compressedIds.forEach((id) => {
-			const decompressedId = getIdCompressor(sharedMapContainer1).decompress(id);
-
-			// All the compressors point to the same compressor and should all be able to
-			// decompress the local Id to the same decompressed Id
-			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach(
-				(compressor) => {
-					assert.strictEqual(compressor.decompress(id), decompressedId);
-				},
-			);
-
-			decompressedIds.push(decompressedId);
-		});
-
-		sharedMapContainer1.set("key", "value");
-
-		await provider.ensureSynchronized();
-
-		// Everything should be pointing to the same compressor. All
-		// compressors should have allocated the same number of local Ids.
-		assert.strictEqual(
-			(getIdCompressor(sharedMapContainer1) as any).localIdCount,
-			(getIdCompressor(sharedCellContainer1) as any).localIdCount,
-		);
-
-		assert.strictEqual(
-			(getIdCompressor(sharedMapContainer1) as any).localIdCount,
-			(getIdCompressor(dataStore2.map) as any).localIdCount,
-		);
-
-		decompressedIds.forEach((id, index) => {
-			// All compressors should be able to recompress the decompressed Ids
-			// back to the SessionSpace compressed Id: [-1, -2, -3]
-			const compressedId = getIdCompressor(sharedMapContainer1).recompress(id);
-			assert.strictEqual(compressedIds[index], compressedId);
-
-			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach(
-				(compressor) => {
-					assert.strictEqual(compressedId, compressor.recompress(id));
-				},
-			);
-		});
-	});
-
 	it("has no compressor if not enabled", async () => {
 		provider.reset();
 		const config: ITestContainerConfig = {
@@ -576,6 +451,131 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		);
 
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
+	});
+
+	it("Ignores runtime option if container is created and IdCompressor has been previously enabled", async () => {
+		// Create a container without the runtime option to enable the compressor.
+		// The first container should set a metadata property that automatically should
+		// enable it for any other container runtimes that are created.
+		const runtimeFactoryWithoutCompressorEnabled =
+			new ContainerRuntimeFactoryWithDefaultDataStore(
+				factory,
+				[[factory.type, Promise.resolve(factory)]],
+				undefined,
+				undefined,
+				undefined,
+			);
+
+		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
+		const container4MainDataStore = await requestFluidObject<TestDataObject>(container4, "/");
+		const sharedMapContainer4 = container4MainDataStore.map;
+
+		assert(
+			getIdCompressor(sharedMapContainer4) !== undefined,
+			"Compressor should exist if it has ever been enabled",
+		);
+	});
+
+	it("Ids generated when disconnected are correctly resubmitted", async () => {
+		// Disconnect the first container
+		container1.disconnect();
+
+		// Generate a new Id in the disconnected container
+		const id1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
+		// Trigger Id submission
+		sharedMapContainer1.set("key", "value");
+
+		// Generate ids in a connected container but don't send them yet
+		const id2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
+		const id3 = getIdCompressor(sharedMapContainer2).generateCompressedId();
+
+		// Reconnect the first container
+		// IdRange should be resubmitted and reflected in all compressors
+		container1.connect();
+		await waitForContainerConnection(container1);
+		await provider.ensureSynchronized();
+
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(id1),
+			0,
+			"First container should get first cluster and allocate Id 0",
+		);
+
+		// Send the id generated in the second, connected container
+		sharedMapContainer2.set("key2", "value2");
+		await provider.ensureSynchronized();
+
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id2),
+			512,
+			"Second container should get second cluster and allocate Id 512",
+		);
+
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(id3),
+			513,
+			"Second Id from second container should get second cluster and allocate Id 513",
+		);
+	});
+
+	// IdCompressor is at container runtime level, which means that individual DDSs
+	// in the same container and different DataStores should have the same underlying compressor state
+	it("DDSs in different DataStores have the same compressor state", async () => {
+		const dataStore2 = await factory.createInstance(containerRuntime);
+		mainDataStore.map.set("DataStore2", dataStore2.handle);
+
+		await provider.ensureSynchronized();
+		// 1 Id in the map compressor in the main DataStore, 1 in the cell compressor
+		// in the same DataStore, 1 in the map of DataStore2 should result in 3 local
+		// Ids in the same compressor
+		const compressedIds: SessionSpaceCompressedId[] = [];
+		compressedIds.push(getIdCompressor(sharedMapContainer1).generateCompressedId());
+		compressedIds.push(getIdCompressor(sharedCellContainer1).generateCompressedId());
+		compressedIds.push(getIdCompressor(dataStore2.map).generateCompressedId());
+
+		const decompressedIds: string[] = [];
+		compressedIds.forEach((id) => {
+			const decompressedId = getIdCompressor(sharedMapContainer1).decompress(id);
+
+			// All the compressors point to the same compressor and should all be able to
+			// decompress the local Id to the same decompressed Id
+			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach(
+				(compressor) => {
+					assert.strictEqual(compressor.decompress(id), decompressedId);
+				},
+			);
+
+			decompressedIds.push(decompressedId);
+		});
+
+		sharedMapContainer1.set("key", "value");
+
+		await provider.ensureSynchronized();
+
+		// Everything should be pointing to the same compressor. All
+		// compressors should have allocated the same number of local Ids.
+		assert.strictEqual(
+			(getIdCompressor(sharedMapContainer1) as any).localIdCount,
+			(getIdCompressor(sharedCellContainer1) as any).localIdCount,
+		);
+
+		assert.strictEqual(
+			(getIdCompressor(sharedMapContainer1) as any).localIdCount,
+			(getIdCompressor(dataStore2.map) as any).localIdCount,
+		);
+
+		decompressedIds.forEach((id, index) => {
+			// All compressors should be able to recompress the decompressed Ids
+			// back to the SessionSpace compressed Id: [-1, -2, -3]
+			const compressedId = getIdCompressor(sharedMapContainer1).recompress(id);
+			assert.strictEqual(compressedIds[index], compressedId);
+
+			[getIdCompressor(sharedCellContainer1), getIdCompressor(dataStore2.map)].forEach(
+				(compressor) => {
+					assert.strictEqual(compressedId, compressor.recompress(id));
+				},
+			);
+		});
 	});
 });
 
