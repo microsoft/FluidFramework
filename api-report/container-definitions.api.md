@@ -143,6 +143,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getEntryPoint?(): Promise<FluidObject | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
+    getPendingLocalState(): string;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
