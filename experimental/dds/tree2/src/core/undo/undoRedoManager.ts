@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
-import { GraphCommit, findAncestor, findCommonAncestor, tagChange } from "../rebase";
+import { GraphCommit, findCommonAncestor, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
@@ -77,15 +77,14 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairData,
 		);
 
-		if (head !== undefined) {
-			if (commit.revision !== head.revision) {
-				const pathAfterUndoable: GraphCommit<TChange>[] = [];
-				findAncestor([head, pathAfterUndoable], (c) => c.revision === commit.revision);
-				change = pathAfterUndoable.reduce(
-					(a, b) => this.changeFamily.rebaser.rebase(a, b),
-					change,
-				);
-			}
+		if (head !== undefined && commit.revision !== head.revision) {
+			const pathAfterUndoable: GraphCommit<TChange>[] = [];
+			const ancestor = findCommonAncestor([commit], [head, pathAfterUndoable]);
+			assert(ancestor === commit, "The head commit should be based off the undoable commit.");
+			change = pathAfterUndoable.reduce(
+				(a, b) => this.changeFamily.rebaser.rebase(a, b),
+				change,
+			);
 		}
 
 		return change;

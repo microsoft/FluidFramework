@@ -255,9 +255,7 @@ export class EditManager<
 				fail(
 					"Received a sequenced change from the local session despite having no local changes",
 				);
-			const trunkCommit = { ...newCommit, change: commit.change };
-			this.trunkUndoRedoManager.trackCommit(trunkCommit);
-			this.pushToTrunk(sequenceNumber, trunkCommit);
+			this.pushToTrunk(sequenceNumber, { ...newCommit, change: commit.change }, true);
 			// TODO: Can this be optimized by simply mutating the localPath parent pointers? Is it safe to do that?
 			this.localBranch = localPath.reduce(mintCommit, this.trunk);
 			return emptyDelta;
@@ -374,8 +372,15 @@ export class EditManager<
 		return [commit, commits];
 	}
 
-	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {
+	private pushToTrunk(
+		sequenceNumber: SeqNumber,
+		commit: Commit<TChangeset>,
+		local = false,
+	): void {
 		this.trunk = mintCommit(this.trunk, commit);
+		if (local) {
+			this.trunkUndoRedoManager.trackCommit(this.trunk);
+		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
 			this.changeFamily.intoDelta(commit.change),
 		);
