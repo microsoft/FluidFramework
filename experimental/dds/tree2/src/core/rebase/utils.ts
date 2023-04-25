@@ -60,11 +60,11 @@ export function rebaseBranch<TChange>(
  * //   \
  * //   (B')-(D')-(F) <- Branch Y
  * //
- * // If Branch Y is rebased onto commit C of Branch X, the branches must at least look like this afterwards:
+ * // If Branch Y is rebased onto commit C of Branch X, the branches must at least look like this afterwards (B was cancelled out):
  * //
  * // (A)-(B)-(C)-(D)-(E) <- Branch X
  * //           \
- * //           (B'')-(D'')-(F') <- Branch Y'
+ * //           (D'')-(F') <- Branch Y'
  * //
  * // But this function will recognize that B is equivalent to B' and D is equivalent to D', and instead produce:
  * //
