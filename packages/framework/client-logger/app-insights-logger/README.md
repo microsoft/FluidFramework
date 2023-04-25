@@ -36,7 +36,7 @@ Here is an example usage:
 	// Example of sending an event to app insights using the FluidAppInsightsLogger directly
 	logger.send({category: "mockEvent",	eventName: "mockEventName"});
 
-	// More commonly, we would provide the logger to the instance of the Fluid client your application is using to create Fluid Containers. This enables Fluid telemetry to be automatically sent to App Insights as your Fluid App is running.
+	// More commonly, we would provide the logger to the instance of the Fluid Loader used by your application. This enables Fluid telemetry to be automatically sent to App Insights as your Fluid App is running.
 	const tinyliciousClient = new TinyliciousClient({
 		logger: logger
 	});
