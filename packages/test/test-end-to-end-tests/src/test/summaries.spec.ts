@@ -441,8 +441,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	});
 });
 
-//* ONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLYONLY
-describeNoCompat.only("Summaries", (getTestObjectProvider) => {
+describeNoCompat("Summaries", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
