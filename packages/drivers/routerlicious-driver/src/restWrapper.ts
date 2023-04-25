@@ -118,13 +118,9 @@ export class RouterliciousRestWrapper extends RestWrapper {
 		statusCode: number,
 		canRetry = true,
 	): Promise<IR11sResponse<T>> {
-		if (this.token === undefined) {
-			const token = await this.fetchRefreshedToken();
-			this.setToken(token);
-		}
 		const config = {
 			...requestConfig,
-			headers: this.generateHeaders(requestConfig.headers),
+			headers: await this.generateHeaders(requestConfig.headers),
 		};
 
 		const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
@@ -203,10 +199,11 @@ export class RouterliciousRestWrapper extends RestWrapper {
 		);
 	}
 
-	private generateHeaders(
+	private async generateHeaders(
 		requestHeaders?: AxiosRequestHeaders | undefined,
-	): Record<string, string> {
-		assert(this.token !== undefined, "token should be present");
+	): Promise<Record<string, string>> {
+		const token = await this.getToken();
+		assert(token !== undefined, "token should be present");
 		const correlationId = requestHeaders?.["x-correlation-id"] ?? uuid();
 
 		return {
@@ -216,7 +213,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 			"x-correlation-id": correlationId as string,
 			"x-driver-version": driverVersion,
 			// NOTE: If this.authorizationHeader is undefined, should "Authorization" be removed entirely?
-			"Authorization": this.getAuthorizationHeader(this.token),
+			"Authorization": this.getAuthorizationHeader(token),
 		};
 	}
 
