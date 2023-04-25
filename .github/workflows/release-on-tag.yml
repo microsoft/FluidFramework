@@ -32,7 +32,6 @@ jobs:
           corepack enable
           pnpm install --frozen-lockfile
           pnpm run build:compile
-          # pnpm install --global packages/build-cli
 
       - name: Check out tag
         run: |
