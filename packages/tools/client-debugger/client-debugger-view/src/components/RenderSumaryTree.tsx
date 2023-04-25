@@ -29,7 +29,7 @@ export function RenderSummaryTree(props: RenderSummaryTreeProps): React.ReactEle
 	const { header, children } = props;
 
 	return (
-		<Tree aria-label="Root-Tree">
+		<Tree aria-label="Root-Tree" data-testid="expand-button">
 			<TreeItem>
 				<TreeItemLayout>{header}</TreeItemLayout>
 				<Tree aria-label="Sub-Tree">

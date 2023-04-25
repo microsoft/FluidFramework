@@ -110,7 +110,7 @@ describe("VisualTreeView component tests", () => {
 		const expandButton = await screen.findByTestId("expand-button");
 		await userEvent.click(expandButton);
 
-		await screen.findByText(/Hello world/);
+		await screen.findByText(/test-node-key/);
 
 		// TODO: Add test support for complex container DDS.
 		// await screen.findByText(/1/);
