@@ -93,6 +93,12 @@ export function getW3CData(url: string, initiatorType: string): {
     reqStartToResponseEndTime: number | undefined;
 };
 
+// @public (undocumented)
+export function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{
+    index: number;
+    value: T;
+}>;
+
 // (No @packageDocumentation comment for this package)
 
 ```

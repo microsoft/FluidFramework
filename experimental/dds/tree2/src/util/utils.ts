@@ -7,11 +7,10 @@ import structuredClone from "@ungap/structured-clone";
 
 /**
  * Subset of Map interface.
- * @alpha
  */
 export interface MapGetSet<K, V> {
 	get(key: K): V | undefined;
-	set(key: K, value: V): this;
+	set(key: K, value: V): void;
 }
 
 /**

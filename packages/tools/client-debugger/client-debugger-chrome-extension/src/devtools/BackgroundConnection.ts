@@ -21,6 +21,7 @@ import {
 	postMessageToPort,
 	TypedPortConnection,
 } from "../messaging";
+import { browser } from "../utilities";
 import {
 	devtoolsScriptMessageLoggingOptions,
 	formatDevtoolsScriptMessageForLogging,
@@ -84,7 +85,7 @@ export class BackgroundConnection
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
 
 		// Create a connection to the background page
-		this.backgroundServiceConnection = chrome.runtime.connect({
+		this.backgroundServiceConnection = browser.runtime.connect({
 			name: "Background Script",
 		});
 
@@ -93,7 +94,7 @@ export class BackgroundConnection
 			source: this.messageSource,
 			type: devToolsInitMessageType,
 			data: {
-				tabId: chrome.devtools.inspectedWindow.tabId,
+				tabId: browser.devtools.inspectedWindow.tabId,
 			},
 		};
 		postMessageToPort(
