@@ -433,7 +433,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				branch.undoRedoManager,
 			);
 
-			// Apply the changes without tracking them in the undo redo manager
+			// Apply the changes without tracking them in the undo redo manager because
+			// `updateAfterRebase` takes care of tracking any applicable commits in the rebased branch.
 			changes.forEach(({ change, revision }) => {
 				this.applyChange(change, revision, undefined, true);
 			});
