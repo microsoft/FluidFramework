@@ -2,21 +2,20 @@
 
 Minimal sample demonstrating use of the SharedTree API.
 
-<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
 
 You can run this example using the following steps:
 
-1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
-1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
+1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      `npm run build:fast -- --nolint @fluid-experimental/tree-api`
-1. Run `npm start` from this directory (experimental/examples/tree-api) and open <http://localhost:8080> in a web browser to see the app running.
+      `pnpm run build:fast --nolint @fluid-experimental/inventory-app`
+1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 

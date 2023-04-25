@@ -33,23 +33,46 @@ const testContainerConfig: ITestContainerConfig = {
 function assertAttributionMatches(
 	sharedCell: SharedCell,
 	attributor: IRuntimeAttributor,
-	expected: Partial<AttributionInfo> | "detached",
+	expected: Partial<AttributionInfo> | "detached" | "local" | undefined,
 ): void {
 	const key = sharedCell.getAttribution();
 
-	if (expected === "detached") {
-		assert(
-			key === undefined,
-			`The attribuiton should not be recorded in detached state currently`,
-		);
-	} else {
-		assert(key !== undefined, `The cell had no attribution information`);
-		const { timestamp, user } = attributor.get(key) ?? {};
-		if (expected.timestamp !== undefined) {
-			assert.equal(timestamp, expected.timestamp);
-		}
-		if (expected.user !== undefined) {
-			assert.deepEqual(user, expected.user);
+	switch (expected) {
+		case "detached":
+			assert.deepEqual(
+				key,
+				{ type: "detached", id: 0 },
+				"expected attribution key to be detached",
+			);
+			assert.equal(
+				attributor.has(key),
+				false,
+				"Expected RuntimeAttributor to not attribute detached key.",
+			);
+			break;
+		case "local":
+			assert.deepEqual(key, { type: "local" });
+			assert.equal(
+				attributor.has(key),
+				false,
+				"Expected RuntimeAttributor to not attribute local key.",
+			);
+			break;
+		case undefined:
+			assert.deepEqual(key, expected);
+			break;
+		default: {
+			if (key === undefined) {
+				assert.fail("Expected a defined key, but got an undefined one");
+			}
+			const { timestamp, user } = attributor.get(key) ?? {};
+			if (expected.timestamp !== undefined) {
+				assert.equal(timestamp, expected.timestamp);
+			}
+			if (expected.user !== undefined) {
+				assert.deepEqual(user, expected.user);
+			}
+			break;
 		}
 	}
 }
@@ -85,22 +108,29 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 		},
 	});
 
-	it("Can attribute content from multiple collaborators", async () => {
+	it("Can attribute content from multiple collaborators", async function () {
+		// Tracked by AB#4130, the test run on the tinylicous driver is disabled temporarily to ensure normal operation of the build-client package pipeline
+		if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
+			this.skip();
+		}
 		const attributor = createRuntimeAttributor();
 		const container1 = await provider.makeTestContainer(getTestConfig(attributor));
 		const sharedCell1 = await sharedCellFromContainer(container1);
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const sharedCell2 = await sharedCellFromContainer(container2);
 
-		sharedCell1.set(1);
-		await provider.ensureSynchronized();
-		sharedCell2.set(2);
-		await provider.ensureSynchronized();
-
 		assert(
 			container1.clientId !== undefined && container2.clientId !== undefined,
 			"Both containers should have client ids.",
 		);
+
+		sharedCell1.set(1);
+		assertAttributionMatches(sharedCell1, attributor, "local");
+		await provider.ensureSynchronized();
+
+		sharedCell2.set(2);
+		await provider.ensureSynchronized();
+
 		assertAttributionMatches(sharedCell1, attributor, {
 			user: container1.audience.getMember(container2.clientId)?.user,
 		});
@@ -124,10 +154,10 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 		const sharedCell1 = await sharedCellFromContainer(container1);
 
 		sharedCell1.set(1);
+		assertAttributionMatches(sharedCell1, attributor, "detached");
+
 		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
 		await provider.ensureSynchronized();
-
-		assertAttributionMatches(sharedCell1, attributor, "detached");
 
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined);

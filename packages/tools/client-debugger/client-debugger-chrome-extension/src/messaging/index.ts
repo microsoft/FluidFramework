@@ -4,7 +4,6 @@
  */
 
 export { extensionMessageSource } from "./Constants";
-export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	devToolsInitMessageType,
 	DevToolsInitMessageData,

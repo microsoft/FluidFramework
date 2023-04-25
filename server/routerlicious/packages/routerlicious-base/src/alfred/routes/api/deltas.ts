@@ -27,7 +27,7 @@ export function create(
 	tenantManager: ITenantManager,
 	deltaService: IDeltaService,
 	appTenants: IAlfredTenant[],
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
@@ -39,8 +39,14 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
-	const getDeltasThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const getDeltasTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+		throttleIdSuffix: Constants.getDeltasThrottleIdPrefix,
+	};
+
+	const getDeltasClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: Constants.getDeltasThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
@@ -61,7 +67,7 @@ export function create(
 		["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
 		validateRequestParams("tenantId", "id"),
 		verifyStorageToken(tenantManager, config, tokenManager),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
@@ -87,7 +93,7 @@ export function create(
 		"/raw/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		verifyStorageToken(tenantManager, config, tokenManager),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
@@ -111,9 +117,13 @@ export function create(
 		throttle(
 			clusterThrottlers.get(Constants.getDeltasThrottleIdPrefix),
 			winston,
-			getDeltasThrottleOptions,
+			getDeltasClusterThrottleOptions,
 		),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(
+			tenantThrottlers.get(Constants.getDeltasThrottleIdPrefix),
+			winston,
+			getDeltasTenantThrottleOptions,
+		),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);

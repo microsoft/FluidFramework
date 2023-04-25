@@ -533,7 +533,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 
 			for (interval of intervalArray) {
 				const id = interval.getIntervalId();
-				intervals2.removeIntervalById(id as string);
+				intervals2.removeIntervalById(id);
 			}
 
 			await provider.ensureSynchronized();
@@ -565,13 +565,13 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			let id1;
 			let id2;
 
-			await provider.ensureSynchronized();
-
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
+
+			await provider.ensureSynchronized();
 
 			// Conflicting adds
 			interval1 = intervals1.add(0, 0, IntervalType.SlideOnRemove);
@@ -664,7 +664,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 				assert.strictEqual(interval1?.getIntervalId(), id1);
 				assert.strictEqual(interval2?.getIntervalId(), id1);
 				for (interval1 of intervals1) {
-					const id: string = interval1?.getIntervalId() as string;
+					const id: string = interval1?.getIntervalId();
 					assert.strictEqual(
 						interval1?.start.getOffset(),
 						intervals2.getIntervalById(id)?.start.getOffset(),
@@ -677,7 +677,7 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 					);
 				}
 				for (interval2 of intervals2) {
-					const id: string = interval2?.getIntervalId() as string;
+					const id: string = interval2?.getIntervalId();
 					assert.strictEqual(
 						interval2?.start.getOffset(),
 						intervals1.getIntervalById(id)?.start.getOffset(),

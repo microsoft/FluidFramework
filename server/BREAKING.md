@@ -1,5 +1,13 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
+## 0.1042 Breaking Changes
+
+-  [The foreman lambda was removed](#the-foreman-lambda-was-removed)
+
+### The foreman lambda was removed
+
+The foreman lambda in `server` has not been in use for a while so we are removing it.
+
 ## 0.1038 Breaking Changes
 - [aggregate function from `MongoCollection` became async](#aggregate-function-from-MongoCollection-became-async)
 #### `aggregate` function from `MongoCollection` became async
@@ -21,7 +29,7 @@ export class AlfredResources implements core.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public restTenantThrottler: core.IThrottler,
+        public restTenantThrottlers: Map<string, core.IThrottler>,
         public restClusterThrottlers: Map<string, core.IThrottler>,
         public socketConnectTenantThrottler: core.IThrottler,
         public socketConnectClusterThrottler: core.IThrottler,
@@ -51,7 +59,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             webSocketLibrary,
             orderManager,
             tenantManager,
-            restTenantThrottler,
+            restTenantThrottlers,
             restClusterThrottler,
             socketConnectTenantThrottler,
             socketConnectClusterThrottler

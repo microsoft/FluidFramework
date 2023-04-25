@@ -16,7 +16,6 @@ import {
 	DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
-	canRetryOnError,
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
@@ -139,6 +138,7 @@ export class OdspDelayLoadedDeltaStream {
 			const joinSessionPromise = this.joinSession(
 				requestWebsocketTokenFromJoinSession,
 				options,
+				false /* isRefreshingJoinSession */,
 			);
 			const [websocketEndpoint, websocketToken] = await Promise.all([
 				joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
@@ -212,11 +212,20 @@ export class OdspDelayLoadedDeltaStream {
 		}
 	}
 
-	private async scheduleJoinSessionRefresh(delta: number, requestSocketToken: boolean) {
+	private async scheduleJoinSessionRefresh(
+		delta: number,
+		requestSocketToken: boolean,
+		clientId: string | undefined,
+	) {
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
 				getWithRetryForTokenRefresh(async (options) => {
-					await this.joinSession(requestSocketToken, options);
+					await this.joinSession(
+						requestSocketToken,
+						options,
+						true /* isRefreshingJoinSession */,
+						clientId,
+					);
 					resolve();
 				}).catch((error) => {
 					reject(error);
@@ -225,8 +234,39 @@ export class OdspDelayLoadedDeltaStream {
 		});
 	}
 
-	private async joinSession(requestSocketToken: boolean, options: TokenFetchOptionsEx) {
-		const response = await this.joinSessionCore(requestSocketToken, options).catch((e) => {
+	private async joinSession(
+		requestSocketToken: boolean,
+		options: TokenFetchOptionsEx,
+		isRefreshingJoinSession: boolean,
+		clientId?: string,
+	) {
+		// If this call is to refresh the join session for the current connection but we are already disconnected in
+		// the meantime or disconnected and then reconnected then do not make the call. However, we should not have
+		// come here if that is the case because timer should have been disposed, but due to race condition with the
+		// timer we should not make the call and throw error.
+		if (
+			isRefreshingJoinSession &&
+			(this.currentConnection === undefined ||
+				(clientId !== undefined && this.currentConnection.clientId !== clientId))
+		) {
+			this.clearJoinSessionTimer();
+			throw new NonRetryableError(
+				"JoinSessionRefreshTimerNotCancelled",
+				DriverErrorType.genericError,
+				{
+					driverVersion,
+					details: JSON.stringify({
+						schedulerClientId: clientId,
+						currentClientId: this.currentConnection?.clientId,
+					}),
+				},
+			);
+		}
+		const response = await this.joinSessionCore(
+			requestSocketToken,
+			options,
+			isRefreshingJoinSession,
+		).catch((e) => {
 			if (hasFacetCodes(e) && e.facetCodes !== undefined) {
 				for (const code of e.facetCodes) {
 					switch (code) {
@@ -252,6 +292,7 @@ export class OdspDelayLoadedDeltaStream {
 	private async joinSessionCore(
 		requestSocketToken: boolean,
 		options: TokenFetchOptionsEx,
+		isRefreshingJoinSession: boolean,
 	): Promise<ISocketStorageDiscovery> {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
@@ -267,6 +308,7 @@ export class OdspDelayLoadedDeltaStream {
 				requestSocketToken,
 				options,
 				disableJoinSessionRefresh,
+				isRefreshingJoinSession,
 				this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
 			);
 			return {
@@ -310,18 +352,16 @@ export class OdspDelayLoadedDeltaStream {
 				this.scheduleJoinSessionRefresh(
 					response.refreshAfterDeltaMs,
 					requestSocketToken,
+					this.currentConnection?.clientId,
 				).catch((error) => {
-					const canRetry = canRetryOnError(error);
-					// Only record error event in case it is non retriable.
-					if (!canRetry) {
-						this.mc.logger.sendErrorEvent(
-							{
-								eventName: "JoinSessionRefreshError",
-								details: JSON.stringify(props),
-							},
-							error,
-						);
-					}
+					// Log the error and do nothing as the reconnection would fetch the join session.
+					this.mc.logger.sendTelemetryEvent(
+						{
+							eventName: "JoinSessionRefreshError",
+							details: JSON.stringify(props),
+						},
+						error,
+					);
 				});
 			} else {
 				// Logging just for informational purposes to help with debugging as this is a new feature.

@@ -4,10 +4,10 @@
  */
 import * as fs from 'fs';
 import { join } from 'path';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import { v5 } from 'uuid';
 import { Change, StablePlace, StableRange } from '../ChangeTypes';
-import { assert, fail, RecursiveMutable } from '../Common';
+import { fail, RecursiveMutable } from '../Common';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities';
 import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
 import { initialTree } from '../InitialTree';
@@ -337,6 +337,13 @@ export function runSummaryTests(title: string): void {
 					await testObjectProvider.ensureSynchronized();
 					await expectSharedTreesEqual(resubmitTree, tree);
 					await expectSharedTreesEqual(tree, await createSummaryTestTree(WriteFormat.v0_1_1, true));
+
+					// https://dev.azure.com/fluidframework/internal/_workitems/edit/3347
+					const events = testObjectProvider.logger.reportAndClearTrackedEvents();
+					expect(events.unexpectedErrors.length).to.equal(1);
+					expect(events.unexpectedErrors[0].eventName).to.equal(
+						'fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch'
+					);
 				});
 
 				it('Normalizes a denormalized summary containing nodes with empty traits', async () => {

@@ -53,12 +53,13 @@ export enum MessageType {
 	SummaryNack = "summaryNack",
 
 	/**
-	 * Channel operation (op).
+	 * Operation (op) produced by container runtime.
 	 */
 	Operation = "op",
 
 	/**
 	 * Message to indicate the need of a remote agent for a document.
+	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
 	 */
 	RemoteHelp = "remoteHelp",
 
@@ -219,11 +220,6 @@ export interface ISequencedDocumentMessage {
 	 * The sequenced identifier.
 	 */
 	sequenceNumber: number;
-
-	/**
-	 * The term identifier.
-	 */
-	term: number | undefined;
 
 	/**
 	 * The minimum sequence number for all connected clients.

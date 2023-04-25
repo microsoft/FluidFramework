@@ -27,7 +27,8 @@ export async function deleteSummarizedOps(
 	const uniqueDocumentsCursorFromOps = await opCollection.aggregate([
 		{ $group: { _id: { documentId: "$documentId", tenantId: "$tenantId" } } },
 	]);
-	const uniqueDocumentsFromOps: {tenantId: string, documentId: string}[] = await uniqueDocumentsCursorFromOps.toArray();
+	const uniqueDocumentsFromOps: { tenantId: string; documentId: string }[] =
+		await uniqueDocumentsCursorFromOps.toArray();
 
 	const currentEpochTime = new Date().getTime();
 	const epochTimeBeforeOfflineWindow = currentEpochTime - offlineWindowMs;
@@ -36,7 +37,10 @@ export async function deleteSummarizedOps(
 	for (const doc of uniqueDocumentsFromOps) {
 		const lumberjackProperties = getLumberBaseProperties(doc.documentId, doc.tenantId);
 		try {
-			const realDoc = await documentRepository.readOne({documentId: doc.documentId, tenantId: doc.tenantId});
+			const realDoc = await documentRepository.readOne({
+				documentId: doc.documentId,
+				tenantId: doc.tenantId,
+			});
 			const lastSummarySequenceNumber = JSON.parse(realDoc.scribe).lastSummarySequenceNumber;
 
 			// first "soft delete" operations older than the offline window, which have been summarised

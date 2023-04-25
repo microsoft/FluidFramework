@@ -135,7 +135,7 @@ export class OpSplitter {
 	 * @param batch - the compressed batch which needs to be processed
 	 * @returns A new adjusted batch which can be sent over the wire
 	 */
-	public splitCompressedBatch(batch: IBatch): IBatch {
+	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
 		assert(
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
@@ -152,10 +152,6 @@ export class OpSplitter {
 		);
 
 		const firstMessage = batch.content[0]; // we expect this to be the large compressed op, which needs to be split
-		assert(
-			firstMessage.metadata?.compressed === true || firstMessage.compression !== undefined,
-			0x517 /* Batch needs to be compressed */,
-		);
 		assert(
 			(firstMessage.contents?.length ?? 0) >= this.chunkSizeInBytes,
 			0x518 /* First message in the batch needs to be chunkable */,
