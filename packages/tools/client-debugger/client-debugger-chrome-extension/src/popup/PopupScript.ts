@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { browser } from "../utilities";
+
 /**
  * This module is the extensions "pop-up" script.
  * It runs when the extension's action button is clicked.
@@ -17,7 +19,7 @@
 //   If not, we may want to display an error message with a link to docs explaining how to
 //   use the debugger.
 
-chrome.tabs.query({ active: true, currentWindow: true }, (tab) => {
+browser.tabs.query({ active: true, currentWindow: true }, (tab) => {
 	const popupElement = document.createElement("div");
 	popupElement.id = "fluid-client-debugger-popup";
 	popupElement.style.height = "100%";
