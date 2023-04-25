@@ -40,7 +40,7 @@ import {
 	TokenGenerator,
 	IDocumentRepository,
 	ICheckpointRepository,
-    CheckpointService,
+	CheckpointService,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -108,21 +108,21 @@ export class LocalOrderer implements IOrderer {
 		documentRepository: IDocumentRepository,
 		deliCheckpointRepository: ICheckpointRepository,
 		scribeCheckpointRepository: ICheckpointRepository,
-        deliCheckpointService: CheckpointService,
-        scribeCheckpointService: CheckpointService,
+		deliCheckpointService: CheckpointService,
+		scribeCheckpointService: CheckpointService,
 		gitManager?: IGitManager,
 		setup: ILocalOrdererSetup = new LocalOrdererSetup(
-            tenantId,
-            documentId,
-            storage,
-            databaseManager,
-            documentRepository,
-            deliCheckpointRepository,
-            scribeCheckpointRepository,
-            deliCheckpointService,
-            scribeCheckpointService,
-            gitManager
-        ),
+			tenantId,
+			documentId,
+			storage,
+			databaseManager,
+			documentRepository,
+			deliCheckpointRepository,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
+			gitManager,
+		),
 		pubSub: IPubSub = new PubSub(),
 		broadcasterContext: IContext = new LocalContext(logger),
 		scriptoriumContext: IContext = new LocalContext(logger),
@@ -307,16 +307,12 @@ export class LocalOrderer implements IOrderer {
 			this.setup,
 			this.deliContext,
 			async (lambdaSetup, context) => {
-				const documentRepository = await lambdaSetup.documentRepositoryP();
-				const deliCheckpointRepository = await lambdaSetup.deliCheckpointRepositoryP();
-                const checkpointService = await lambdaSetup.checkpointServiceP("deli");
+				const checkpointService = await lambdaSetup.checkpointServiceP("deli");
 				const lastCheckpoint = JSON.parse(this.dbObject.deli);
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					this.tenantId,
 					this.documentId,
-					documentRepository,
-					deliCheckpointRepository,
-                    checkpointService
+					checkpointService,
 				);
 				return new DeliLambda(
 					context,
@@ -362,7 +358,7 @@ export class LocalOrderer implements IOrderer {
 			scribeMessages,
 		] = await Promise.all([
 			setup.documentRepositoryP(),
-            setup.scribeCheckpointRepositoryP(),
+			setup.scribeCheckpointRepositoryP(),
 			setup.scribeDeltaCollectionP(),
 			setup.protocolHeadP(),
 			setup.scribeMessagesP(),
@@ -401,11 +397,11 @@ export class LocalOrderer implements IOrderer {
 			false /* getDeltasViaAlfred */,
 		);
 
-        const checkpointService = new CheckpointService(
-            localCheckpointCollection,
-            documentRepository,
-            false
-        )
+		const checkpointService = new CheckpointService(
+			localCheckpointCollection,
+			documentRepository,
+			false,
+		);
 
 		const checkpointManager = new CheckpointManager(
 			context,
@@ -415,7 +411,7 @@ export class LocalOrderer implements IOrderer {
 			scribeMessagesCollection,
 			null /* deltaService */,
 			false /* getDeltasViaAlfred */,
-            checkpointService
+			checkpointService,
 		);
 
 		return new ScribeLambda(

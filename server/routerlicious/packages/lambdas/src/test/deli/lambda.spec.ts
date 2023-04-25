@@ -136,7 +136,7 @@ describe("Routerlicious", () => {
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
 				Sinon.replace(checkpointRepository, "writeCheckpoint", Sinon.fake.resolves(undefined));
-                Sinon.replace(checkpointService, "writeCheckpointToCollection", Sinon.fake.resolves(undefined));
+                Sinon.replace(checkpointService, "writeCheckpoint", Sinon.fake.resolves(undefined));
 
 				testKafka = new TestKafka();
 				testForwardProducer = testKafka.createProducer();
@@ -151,7 +151,6 @@ describe("Routerlicious", () => {
 				factory = new DeliLambdaFactory(
 					mongoManager,
 					documentRepository,
-					checkpointRepository,
                     checkpointService,
 					testTenantManager,
 					undefined,
@@ -171,7 +170,6 @@ describe("Routerlicious", () => {
 				factoryWithSignals = new DeliLambdaFactory(
 					mongoManager,
 					documentRepository,
-					checkpointRepository,
                     checkpointService,
 					testTenantManager,
 					undefined,
@@ -194,7 +192,6 @@ describe("Routerlicious", () => {
 				factoryWithBatching = new DeliLambdaFactory(
 					mongoManager,
 					documentRepository,
-					checkpointRepository,
                     checkpointService,
 					testTenantManager,
 					undefined,

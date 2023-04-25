@@ -20,7 +20,6 @@ describe("Routerlicious", () => {
 			const testTenant = "test";
 			let testCheckpointContext: CheckpointContext;
 			let testDocumentRepository: testUtils.TestNotImplementedDocumentRepository;
-			let testCheckpointRepository: testUtils.TestNotImplementedCheckpointRepository;
             let testCheckpointService: testUtils.TestNotImplementedCheckpointService;
 			let testContext: testUtils.TestContext;
 
@@ -59,16 +58,12 @@ describe("Routerlicious", () => {
 			beforeEach(() => {
 				testContext = new testUtils.TestContext();
 				testDocumentRepository = new testUtils.TestNotImplementedDocumentRepository();
-				testCheckpointRepository = new testUtils.TestNotImplementedCheckpointRepository();
                 testCheckpointService = new testUtils.TestNotImplementedCheckpointService();
 				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake());
-				Sinon.replace(testCheckpointRepository, "writeCheckpoint", Sinon.fake());
-                Sinon.replace(testCheckpointService, "writeCheckpointToCollection", Sinon.fake());
+                Sinon.replace(testCheckpointService, "writeCheckpoint", Sinon.fake());
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					testTenant,
 					testId,
-					testDocumentRepository,
-					testCheckpointRepository,
                     testCheckpointService
 				);
 				testCheckpointContext = new CheckpointContext(

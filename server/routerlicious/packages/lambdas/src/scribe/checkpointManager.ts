@@ -13,7 +13,7 @@ import {
 	runWithRetry,
 	IDeltaService,
 	IDocumentRepository,
-    ICheckpointService,
+	ICheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
@@ -31,7 +31,7 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
 		private readonly getDeltasViaAlfred: boolean,
-        private readonly checkpointService: ICheckpointService
+		private readonly checkpointService: ICheckpointService,
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 	}
@@ -97,7 +97,13 @@ export class CheckpointManager implements ICheckpointManager {
 					);
 				}
 			}
-            await this.checkpointService.writeCheckpointToCollection(this.documentId, this.tenantId, "scribe", checkpoint, !noActiveClients)
+			await this.checkpointService.writeCheckpoint(
+				this.documentId,
+				this.tenantId,
+				"scribe",
+				checkpoint,
+				!noActiveClients,
+			);
 		} else {
 			// The order of the three operations below is important.
 			// We start by writing out all pending messages to the database. This may be more messages that we would
@@ -127,7 +133,13 @@ export class CheckpointManager implements ICheckpointManager {
 			}
 
 			// Write out the full state first that we require to global & local DB
-			await this.checkpointService.writeCheckpointToCollection(this.documentId, this.tenantId, "scribe", checkpoint, !noActiveClients)
+			await this.checkpointService.writeCheckpoint(
+				this.documentId,
+				this.tenantId,
+				"scribe",
+				checkpoint,
+				!noActiveClients,
+			);
 
 			// And then delete messagses that were already summarized.
 			await this.opCollection.deleteMany({

@@ -109,7 +109,7 @@ describe("Routerlicious", () => {
 				);
 
                 testCheckpointService = new TestNotImplementedCheckpointService();
-                Sinon.replace(testCheckpointService, "writeCheckpointToCollection", Sinon.fake());
+                Sinon.replace(testCheckpointService, "writeCheckpoint", Sinon.fake());
 
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
