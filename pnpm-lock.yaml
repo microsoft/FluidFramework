@@ -9826,6 +9826,7 @@ importers:
       mocha: 10.2.0
       semver: 7.3.8
       sinon: 7.5.0
+      source-map-support: 0.5.21
       start-server-and-test: 1.14.0
       tinylicious: 0.7.2
       url: 0.11.0
@@ -9844,7 +9845,6 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.0
-      source-map-support: 0.5.21
       typescript: 4.5.5
 
   packages/test/test-gc-sweep-tests:
