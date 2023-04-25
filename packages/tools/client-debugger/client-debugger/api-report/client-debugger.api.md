@@ -73,7 +73,7 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 }
 
 // @internal @sealed
-export class ContainerDevtools extends TypedEventEmitter<ContainerDevtoolsEvents> implements IContainerDevtools {
+export class ContainerDevtools implements IContainerDevtools {
     constructor(props: ContainerDevtoolsProps);
     get audience(): IAudience;
     readonly container: IContainer;
@@ -85,11 +85,6 @@ export class ContainerDevtools extends TypedEventEmitter<ContainerDevtoolsEvents
     get disposed(): boolean;
     getAudienceHistory(): readonly AudienceChangeLogEntry[];
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
-}
-
-// @public
-export interface ContainerDevtoolsEvents extends IEvent {
-    (event: "disposed", listener: () => void): any;
 }
 
 // @public
@@ -395,7 +390,7 @@ export interface HasFluidObjectId {
 }
 
 // @public
-export interface IContainerDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
+export interface IContainerDevtools extends IDisposable {
     readonly audience: IAudience;
     readonly container: IContainer;
     readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;

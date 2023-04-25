@@ -75,7 +75,7 @@ export {
 	DevtoolsFeature,
 	DevtoolsFeatureFlags,
 } from "./Features";
-export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
+export { IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
 export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
