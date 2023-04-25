@@ -10,7 +10,7 @@ import { RenderLabel } from "./RenderLabel";
  * {@link ValueView} input props.
  */
 export interface ValueViewProps {
-	nodeKey: string | undefined;
+	nodeKey: string;
 	node: ValueNodeBase;
 }
 

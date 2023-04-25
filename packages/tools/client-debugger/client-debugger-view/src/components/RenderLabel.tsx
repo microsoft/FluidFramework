@@ -9,18 +9,37 @@ import { TreeItemLayout } from "@fluentui/react-components/unstable";
 import { tokens } from "@fluentui/react-components";
 
 /**
- * TODO
+ * Input props to {@link RenderLabel}
  */
 export interface RenderLabelProps {
-	nodeKey: string | undefined;
+	/**
+	 * Key of the child node from Record {@link VisauTree}.
+	 */
+	nodeKey: string;
+
+	/**
+	 * Type of the object.
+	 */
 	nodeTypeMetadata?: string | undefined;
+
+	/**
+	 * Nodekinds to filter rendering pattern in {@link TreeDataView}.
+	 */
 	nodeKind?: string;
+
+	/**
+	 * Size of the children inside the data.
+	 */
 	itemSize?: Primitive;
+
+	/**
+	 * Primitive value of the node if node is {@link VisualNodeKind.FluidValueNode} or {@link VisualNodeKind.ValueNode}
+	 */
 	nodeValue?: Primitive;
 }
 
 /**
- * TODO
+ * Renders the header of the item.
  */
 export function RenderLabel(props: RenderLabelProps): React.ReactElement {
 	const { nodeKey, nodeTypeMetadata, nodeKind, itemSize, nodeValue } = props;

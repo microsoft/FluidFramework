@@ -13,7 +13,7 @@ import { RenderLabel } from "./RenderLabel";
  * {@link TreeView} input props.
  */
 export interface TreeViewProps extends HasContainerId {
-	nodeKey: string | undefined;
+	nodeKey: string;
 	node: VisualTreeNode;
 }
 

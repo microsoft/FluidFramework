@@ -16,7 +16,7 @@ import { UnknownDataView } from "./UnknownDataView";
  * {@link TreeDataView} input props.
  */
 export interface TreeDataViewProps extends HasContainerId {
-	nodeKey?: string;
+	nodeKey: string;
 	node: VisualNode;
 }
 

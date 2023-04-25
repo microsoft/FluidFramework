@@ -23,7 +23,7 @@ const loggingContext = "EXTENSION(HandleView)";
  * {@link FluidHandleView} input props.
  */
 export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {
-	nodeKey?: string;
+	nodeKey: string;
 }
 
 /**

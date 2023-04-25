@@ -3,15 +3,22 @@ import React from "react";
 import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 
 /**
- * TODO
+ * Input to {@link RenderSumaryTree}
  */
 type RenderSummaryTreeProps = React.PropsWithChildren<{
+	/**
+	 * Header label created by {@link RenderLabel}.
+	 */
 	header: React.ReactElement | string;
+
+	/**
+	 * List of child React Elements populated by recursion.
+	 */
 	children: React.ReactElement<{ node: { children?: React.ReactElement } }>[];
 }>;
 
 /**
- * TODO
+ * Outlays the React element populated by components in {@link TreeDataView}.
  */
 export function RenderSummaryTree(props: RenderSummaryTreeProps): React.ReactElement {
 	const { header, children } = props;
@@ -20,9 +27,6 @@ export function RenderSummaryTree(props: RenderSummaryTreeProps): React.ReactEle
 		<Tree aria-label="Root-Tree">
 			<TreeItem>
 				<TreeItemLayout>{header}</TreeItemLayout>
-
-				{console.log("children:", children)}
-
 				<Tree aria-label="Sub-Tree">
 					{children?.map((child, index) => {
 						return (

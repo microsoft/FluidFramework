@@ -12,7 +12,7 @@ import { RenderLabel } from "./RenderLabel";
  * {@link TreeView} input props.
  */
 export interface FluidTreeViewProps extends HasContainerId {
-	nodeKey: string | undefined;
+	nodeKey: string;
 	node: FluidObjectTreeNode;
 }
 

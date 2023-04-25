@@ -9,7 +9,7 @@ import { RenderLabel } from "./RenderLabel";
  * {@link ValueView} input props.
  */
 export interface FluidValueViewProps {
-	nodeKey: string | undefined;
+	nodeKey: string;
 	node: FluidObjectValueNode;
 }
 
