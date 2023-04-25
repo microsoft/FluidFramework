@@ -38,18 +38,6 @@ jobs:
         run: |
           git checkout ${{ github.ref }}
 
-      # - name: Get release type
-      #   id: releaseType
-      #   run: |
-      #     # RJSON=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --json | jq -c)
-      #     # echo "RELEASE_JSON=$RJSON" >> "$GITHUB_OUTPUT"
-      #     RGROUP=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --releaseGroup)
-      #     echo "RELEASE_GROUP=$RGROUP" >> "$GITHUB_OUTPUT"
-      #     RTYPE=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --releaseType)
-      #     echo "RELEASE_TYPE=$RTYPE" >> "$GITHUB_OUTPUT"
-      #     RVERSION=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --version)
-      #     echo "RELEASE_VERSION=$RVERSION" >> "$GITHUB_OUTPUT"
-
       - name: Get release JSON
         run: |
           echo "RELEASE_JSON=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --json | jq -c)" >> $GITHUB_ENV
@@ -57,7 +45,7 @@ jobs:
       - name: Create manifests
         run: |
           mkdir manifests
-          packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).releaseGroup }} -o manifests
+          packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o manifests
 
       - name: Create release
         if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
@@ -65,6 +53,6 @@ jobs:
         with:
           repo_token: "${{ github.token }}"
           prerelease: false
-          title: "Fluid Framework v${{ steps.releaseType.outputs.RELEASE_VERSION }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
+          title: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
           files: |
             manifests/*.*
