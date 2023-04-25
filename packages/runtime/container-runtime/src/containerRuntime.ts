@@ -1466,7 +1466,7 @@ export class ContainerRuntime
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
-				idCompressorEnabled: compressorEnabled,
+				idCompressorEnabled: compressorEnabled ? true : undefined,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,

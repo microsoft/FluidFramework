@@ -1119,6 +1119,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionDisabled": true,
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
+					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1136,6 +1137,7 @@ describe("Runtime", () => {
 							disableCompression: true,
 							disableOpReentryCheck: false,
 							disableChunking: true,
+							idCompressorEnabled: true,
 						}),
 					},
 				]);

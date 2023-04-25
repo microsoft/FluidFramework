@@ -250,7 +250,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(directory2.get(testKey), testValue);
 	});
 
-	it.only("resends compressed Ids and correctly assumes session", async function () {
+	it("resends compressed Ids and correctly assumes session", async function () {
 		let mapCompressedId;
 		let cellCompressedId;
 		let directoryCompressedId;
