@@ -454,10 +454,7 @@ describe("SequenceField - Compose", () => {
 		];
 		const deletion: SF.Changeset = [{ type: "Delete", count: 2 }];
 		const actual = shallowCompose([tagChange(revive, tag2), tagChange(deletion, tag3)]);
-		const expected: SF.Changeset = [
-			{ type: "Modify", changes: nodeChange, detachEvent },
-			{ type: "Delete", revision: tag3, count: 1 },
-		];
+		const expected: SF.Changeset = [{ type: "Delete", revision: tag3, count: 1 }];
 		assert.deepEqual(actual, expected);
 	});
 
@@ -793,6 +790,17 @@ describe("SequenceField - Compose", () => {
 			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }], id: brand(3) },
 		];
 		assert.deepEqual(actual, expected);
+	});
+
+	it("move ○ modify", () => {
+		const move = Change.move(0, 1, 1);
+		const nodeChange = TestChange.mint([], 42);
+		const modify = Change.modify(1, nodeChange);
+		const expected: SF.Changeset<TestChange> = [
+			{ type: "MoveOut", id: brand(0), count: 1, changes: nodeChange },
+			1,
+			{ type: "MoveIn", id: brand(0), count: 1 },
+		];
 	});
 
 	it("move ○ delete", () => {

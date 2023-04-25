@@ -48,7 +48,14 @@ import {
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
-import { getMoveEffect, getOrAddEffect, MoveEffect, MoveEffectTable } from "./moveEffectTable";
+import {
+	getMoveEffect,
+	getOrAddEffect,
+	isMoveMark,
+	MoveEffect,
+	MoveEffectTable,
+	PairedMarkUpdate,
+} from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 
 /**
@@ -338,7 +345,14 @@ function rebaseMark<TNodeChange>(
 				"A new attach should not be rebased over its cell being emptied",
 			);
 
-			// TODO: Need to mark move dest as unmuted.
+			if (isMoveMark(rebasedMark)) {
+				getOrAddEffect(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					rebasedMark.revision,
+					rebasedMark.id,
+				).pairedMarkStatus = PairedMarkUpdate.Deactivated;
+			}
 			rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseInputOffset);
 		}
 	} else if (markFillsCells(baseMark)) {
@@ -346,7 +360,14 @@ function rebaseMark<TNodeChange>(
 			isExistingCellMark(rebasedMark),
 			"Only an ExistingCellMark can target an empty cell",
 		);
-		// TODO: Need to mark move dest as muted.
+		if (isMoveMark(rebasedMark)) {
+			getOrAddEffect(
+				moveEffects,
+				CrossFieldTarget.Destination,
+				rebasedMark.revision,
+				rebasedMark.id,
+			).pairedMarkStatus = PairedMarkUpdate.Reactivated;
+		}
 		rebasedMark = withoutDetachEvent(rebasedMark);
 	}
 	return rebasedMark;
@@ -568,17 +589,19 @@ function compareCellPositions(
 	newMark: EmptyInputCellMark<unknown>,
 ): number {
 	const baseId = getCellInputId(baseMark, baseRevision);
+	assert(baseId !== undefined, "baseMark should have cell ID");
 	const newId = getCellInputId(newMark, undefined);
-	if (baseId.revision === newId.revision) {
+	if (baseId.revision === newId?.revision) {
 		return baseId.index - newId.index;
 	}
 
 	// TODO: Function should take in `reattachOffset` and use it to compute offsets.
 	// TODO: Reconcile indexes and offsets.
-	const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
-	if (offsetInBase !== undefined) {
-		// TODO: Is this block reachable?
-		return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
+	if (newId !== undefined) {
+		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
+		if (offsetInBase !== undefined) {
+			return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
+		}
 	}
 
 	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseId.revision);

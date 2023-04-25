@@ -235,6 +235,14 @@ function applyMoveEffectsToDest<T>(
 			count: childEffect.count,
 		};
 
+		if (newMark.type === "ReturnTo" && newMark.detachEvent !== undefined) {
+			assert(effect.count !== undefined, "Should have a count when splitting a mark");
+			newMark.detachEvent = {
+				...newMark.detachEvent,
+				index: newMark.detachEvent.index + effect.count,
+			};
+		}
+
 		// TODO: Split detachEvent if necessary
 		result.push(...applyMoveEffectsToDest(newMark, revision, effects, consumeEffect));
 	}

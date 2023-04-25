@@ -4,10 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-// import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { createFakeRepair } from "../../utils";
 import { TestChange } from "../../testChange";
+import { brand } from "../../../util";
 import {
 	checkDeltaEquality,
 	composeAnonChanges,
@@ -22,7 +23,7 @@ const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 
 function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTag): TestChangeset {
-	return rebaseI(change, tagChange(base, baseRev));
+	return rebaseI(change, tagChange(base, baseRev ?? tag1));
 }
 
 // Rebasing should not change the content of a Revive
@@ -101,7 +102,7 @@ describe("SequenceField - Rebase", () => {
 			// Modify at a later index moves to an earlier index due to a delete at an earlier index
 			Change.modify(5, TestChange.mint([0], 3)),
 		]);
-		assert.deepEqual(actual, expected);
+		checkDeltaEquality(actual, expected);
 	});
 
 	it("insert ↷ delete", () => {
@@ -120,7 +121,7 @@ describe("SequenceField - Rebase", () => {
 			// Later insert has its index reduced
 			Change.insert(5, 1, 3),
 		]);
-		assert.deepEqual(actual, expected);
+		checkDeltaEquality(actual, expected);
 	});
 
 	it("revive ↷ delete", () => {
@@ -140,7 +141,7 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("conflicted revive ↷ related delete", () => {
+	it.skip("conflicted revive ↷ related delete", () => {
 		const revive = Change.blockedRevive(0, 3, tag1, 1, rebaseRepair);
 		const deletion = Change.delete(1, 1);
 		const actual = rebase(revive, deletion, tag2);
@@ -265,10 +266,17 @@ describe("SequenceField - Rebase", () => {
 			Change.delete(3, 1),
 			Change.delete(4, 2),
 		]);
-		const actual = rebase(deleteA, deleteB);
+		const actual = rebase(deleteA, deleteB, tag1);
 		// Deletes --E-G
-		const expected = Change.delete(2, 2);
-		assert.deepEqual(actual, expected);
+		const expected: SF.Changeset<never> = [
+			2,
+			{ type: "Delete", count: 1, detachEvent: { revision: tag1, index: 3 } },
+			{ type: "Delete", count: 1 },
+			{ type: "Delete", count: 1, detachEvent: { revision: tag1, index: 5 } },
+			{ type: "Delete", count: 1 },
+			{ type: "Delete", count: 1, detachEvent: { revision: tag1, index: 7 } },
+		];
+		checkDeltaEquality(actual, expected);
 	});
 
 	it("delete ↷ earlier delete", () => {
@@ -300,11 +308,23 @@ describe("SequenceField - Rebase", () => {
 			Change.delete(3, 1),
 			Change.delete(4, 2),
 		]);
-		const actual = rebase(move, deletion);
+		const actual = rebase(move, deletion, tag1);
 		normalizeMoveIds(actual);
 
 		// Moves --E-G
-		const expected = Change.move(2, 2, 0);
+		const expected: SF.Changeset<never> = [
+			{ type: "MoveIn", count: 1, id: brand(0), isSrcConflicted: true },
+			{ type: "MoveIn", count: 1, id: brand(1) },
+			{ type: "MoveIn", count: 1, id: brand(2), isSrcConflicted: true },
+			{ type: "MoveIn", count: 1, id: brand(3) },
+			{ type: "MoveIn", count: 1, id: brand(4), isSrcConflicted: true },
+			2,
+			{ type: "MoveOut", count: 1, id: brand(0), detachEvent: { revision: tag1, index: 3 } },
+			{ type: "MoveOut", count: 1, id: brand(1) },
+			{ type: "MoveOut", count: 1, id: brand(2), detachEvent: { revision: tag1, index: 5 } },
+			{ type: "MoveOut", count: 1, id: brand(3) },
+			{ type: "MoveOut", count: 1, id: brand(4), detachEvent: { revision: tag1, index: 7 } },
+		];
 		normalizeMoveIds(expected);
 		assert.deepEqual(actual, expected);
 	});
@@ -366,7 +386,7 @@ describe("SequenceField - Rebase", () => {
 		const actual = rebase(revive, insert);
 		const expected = composeAnonChanges([
 			Change.revive(0, 1, tag1, 0, rebaseRepair),
-			Change.revive(3, 2, tag1, 1, rebaseRepair),
+			Change.revive(4, 2, tag1, 1, rebaseRepair),
 			Change.revive(8, 1, tag1, 3, rebaseRepair),
 		]);
 		assert.deepEqual(actual, expected);

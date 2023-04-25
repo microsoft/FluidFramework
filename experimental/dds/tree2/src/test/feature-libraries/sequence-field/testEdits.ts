@@ -65,6 +65,16 @@ function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<n
 	return SF.sequenceFieldEditor.delete(startIndex, size);
 }
 
+function createMutedDeleteChangeset(
+	index: number,
+	size: number,
+	detachEvent: DetachEvent,
+): SF.Changeset<never> {
+	const changeset = createDeleteChangeset(index, size);
+	(changeset[changeset.length - 1] as SF.Delete).detachEvent = detachEvent;
+	return changeset;
+}
+
 function createReviveChangeset(
 	startIndex: number,
 	count: number,
@@ -164,6 +174,7 @@ function createModifyChangeset<TNodeChange>(
 export const ChangeMaker = {
 	insert: createInsertChangeset,
 	delete: createDeleteChangeset,
+	mutedDelete: createMutedDeleteChangeset,
 	revive: createReviveChangeset,
 	intentionalRevive: createIntentionalReviveChangeset,
 	blockedRevive: createBlockedReviveChangeset,

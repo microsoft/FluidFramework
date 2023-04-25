@@ -122,5 +122,10 @@ function deltaFromNodeChange<TNodeChange>(
 		return length;
 	}
 	assert(length === 1, "Modifying mark must be length one");
-	return deltaFromChild(change);
+	const modify = deltaFromChild(change);
+	return isEmptyModify(modify) ? 1 : modify;
+}
+
+function isEmptyModify(modify: Delta.Modify): boolean {
+	return modify.fields === undefined && modify.setValue === undefined;
 }

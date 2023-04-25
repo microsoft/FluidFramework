@@ -168,6 +168,18 @@ function composeMarks<TNodeChange>(
 	if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
+		const moveInId = getMarkMoveId(baseMark);
+		if (nodeChange !== undefined && moveInId !== undefined) {
+			assert(isMoveMark(baseMark), "Only move marks have move IDs");
+			getOrAddEffect(
+				moveEffects,
+				CrossFieldTarget.Source,
+				baseMark.revision,
+				baseMark.id,
+				true,
+			).modifyAfter = nodeChange;
+			return baseMark;
+		}
 		return withNodeChange(baseMark, nodeChange);
 	} else if (areInputCellsEmpty(baseMark)) {
 		const moveInId = getMarkMoveId(baseMark);
@@ -202,8 +214,10 @@ function composeMarks<TNodeChange>(
 			assert(nodeChange === undefined, "TODO: Support transient inserts");
 			return 0;
 		}
-		const length = getMarkLength(baseMark);
-		return createModifyMark(length, nodeChange, getCellInputId(baseMark, undefined));
+		// TODO: Create a modify or transient insert mark.
+		// const length = getMarkLength(baseMark);
+		// return createModifyMark(length, nodeChange, getCellInputId(baseMark, undefined));
+		return 0;
 	} else {
 		const length = getMarkLength(baseMark);
 		return createModifyMark(length, nodeChange);
@@ -416,12 +430,12 @@ export class ComposeQueue<T> {
 			let baseCellId: DetachEvent;
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), "Only detach marks can empty cells");
-				if (baseMark.revision === undefined) {
+				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
+				if (baseRevision === undefined) {
 					// This case should only happen when squashing a transaction.
 					assert(isNewAttach(newMark), "Unhandled case");
 					return this.dequeueNew();
 				}
-				const baseRevision = baseMark.revision ?? fail("Must have revision");
 				baseCellId = {
 					revision: baseRevision,
 					index: this.baseIndex.getIndex(baseRevision),
@@ -543,6 +557,7 @@ function compareCellPositions(
 	newRevision: RevisionTag | undefined,
 ): number {
 	const newId = getCellInputId(newMark, newRevision);
+	assert(newId !== undefined, "Should have cell ID");
 	if (baseCellId.revision === newId.revision) {
 		return baseCellId.index - newId.index;
 	}

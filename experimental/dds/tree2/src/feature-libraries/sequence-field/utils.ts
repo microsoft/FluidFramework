@@ -128,10 +128,14 @@ export function areEqualDetachEvents(a: DetachEvent, b: DetachEvent): boolean {
 export function getCellInputId(
 	mark: EmptyInputCellMark<unknown>,
 	revision: RevisionTag | undefined,
-): DetachEvent {
+): DetachEvent | undefined {
 	if (isNewAttach(mark)) {
-		// TODO: Should use an ID for this attach instead of incorrectly specifying the index as 0.
-		return { revision: mark.revision ?? revision ?? fail("Must have a revision"), index: 0 };
+		const rev = mark.revision ?? revision;
+		if (rev !== undefined) {
+			// TODO: Should use an ID for this attach instead of incorrectly specifying the index as 0.
+			return { revision: rev, index: 0 };
+		}
+		return undefined;
 	}
 
 	return mark.detachEvent;
