@@ -86,6 +86,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
+		public readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, any>,
 		private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, any>,
 		public readonly anchors?: AnchorSet,
 	) {
@@ -242,7 +243,6 @@ export class EditManager<
 		newCommit: Commit<TChangeset>,
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
-		undoRedoManager: UndoRedoManager<TChangeset, any>,
 	): Delta.Root {
 		if (newCommit.sessionId === this.localSessionId) {
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
@@ -294,7 +294,7 @@ export class EditManager<
 			});
 		}
 
-		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk(undoRedoManager));
+		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
 	}
 
 	public addLocalChange(
@@ -390,19 +390,17 @@ export class EditManager<
 		});
 	}
 
-	private rebaseLocalBranchOverTrunk(
-		undoRedoManager: UndoRedoManager<TChangeset, any>,
-	): TChangeset {
+	private rebaseLocalBranchOverTrunk(): TChangeset {
 		const [newLocalChanges, netChange] = this.rebaser.rebaseBranch(
 			this.localBranch,
 			this.trunk,
 		);
 
-		undoRedoManager.updateAfterRebase(
+		this.localBranchUndoRedoManager.updateAfterRebase(
 			this.trunk,
 			newLocalChanges,
 			this.trunkUndoRedoManager,
-			undoRedoManager,
+			this.localBranchUndoRedoManager,
 		);
 
 		this.localBranch = newLocalChanges;

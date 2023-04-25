@@ -44,10 +44,12 @@ function editManagerFactory(options: {
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
+	const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
 		options.sessionId ?? localSessionId,
-		new UndoRedoManager(new MockRepairDataStoreProvider(), family),
+		undoRedoManager,
+		undoRedoManager.clone(),
 		anchors,
 	);
 	return { manager, anchors, family };
@@ -255,7 +257,6 @@ describe("EditManager", () => {
 					},
 					brand(i),
 					brand(0),
-					undoRedoManager,
 				);
 			}
 			assert.equal(manager.getTrunk().length, 10);
@@ -283,7 +284,6 @@ describe("EditManager", () => {
 				},
 				brand(1),
 				brand(0),
-				undoRedoManager,
 			);
 			assert.deepEqual(anchors.rebases, [change]);
 			assert.deepEqual(anchors.intentions, change.intentions);
@@ -339,7 +339,6 @@ describe("EditManager", () => {
 				},
 				brand(2),
 				brand(1),
-				undoRedoManager,
 			);
 			// TODO: This is probably not the best way to assert that the change was rebased properly
 			assert.equal(delta.get("root" as FieldKey)?.length, 1);
@@ -524,14 +523,9 @@ function runUnitTestScenario(
 		 */
 		const recordSequencedEdit = (commit: TestCommit): void => {
 			trunk.push(commit.seqNumber);
-			summarizer.addSequencedChange(
-				commit,
-				commit.seqNumber,
-				commit.refNumber,
-				undoRedoManager,
-			);
+			summarizer.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
 			for (const j of joiners) {
-				j.addSequencedChange(commit, commit.seqNumber, commit.refNumber, undoRedoManager);
+				j.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
 			}
 		};
 		/**
@@ -600,11 +594,10 @@ function runUnitTestScenario(
 							"Invalid test scenario: acknowledged commit does not mach oldest local change",
 						);
 					}
-					const [delta] = manager.addSequencedChange(
+					const delta = manager.addSequencedChange(
 						commit,
 						commit.seqNumber,
 						commit.refNumber,
-						undoRedoManager,
 					);
 					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
 					assert.deepEqual(delta, emptyDelta);
@@ -653,11 +646,10 @@ function runUnitTestScenario(
 						seq,
 						...localIntentions,
 					];
-					const [actual] = manager.addSequencedChange(
+					const actual = manager.addSequencedChange(
 						commit,
 						commit.seqNumber,
 						commit.refNumber,
-						undoRedoManager,
 					);
 					assert.deepEqual(actual, asDelta(expected));
 					if (step.expectedDelta !== undefined) {

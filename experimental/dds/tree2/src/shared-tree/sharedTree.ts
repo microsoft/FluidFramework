@@ -341,6 +341,10 @@ export class SharedTree
 		this.context.unwrappedRoot = data;
 	}
 
+	public get undoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
+		return this.editManager.localBranchUndoRedoManager;
+	}
+
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
 		const schema = this.storedSchema.inner.clone();
