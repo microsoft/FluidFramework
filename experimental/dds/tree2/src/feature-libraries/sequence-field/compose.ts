@@ -557,17 +557,17 @@ function compareCellPositions(
 	newRevision: RevisionTag | undefined,
 ): number {
 	const newId = getCellInputId(newMark, newRevision);
-	assert(newId !== undefined, "Should have cell ID");
-	if (baseCellId.revision === newId.revision) {
+	if (baseCellId.revision === newId?.revision) {
 		return baseCellId.index - newId.index;
 	}
 
 	// TODO: Function should take in `reattachOffset` and use it to compute offsets.
 	// TODO: Reconcile indexes and offsets.
-	const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
-	if (offsetInBase !== undefined) {
-		// TODO: Is this block reachable?
-		return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
+	if (newId !== undefined) {
+		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
+		if (offsetInBase !== undefined) {
+			return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
+		}
 	}
 
 	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseCellId.revision);

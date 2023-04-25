@@ -329,7 +329,7 @@ function rebaseMark<TNodeChange>(
 		const moveId = getMarkMoveId(baseMark);
 		if (moveId !== undefined) {
 			if (markFollowsMoves(rebasedMark)) {
-				sendMarkToDest(rebasedMark, moveEffects, baseMarkIntention, moveId);
+				sendMarkToDest(rebasedMark, moveEffects, baseRevision, moveId);
 				return 0;
 			}
 
@@ -337,24 +337,24 @@ function rebaseMark<TNodeChange>(
 			if (nodeChange !== undefined) {
 				rebasedMark = withNodeChange(rebasedMark, undefined);
 				const modify: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
-				sendMarkToDest(modify, moveEffects, baseMarkIntention, moveId);
+				sendMarkToDest(modify, moveEffects, baseRevision, moveId);
 			}
-		} else {
-			assert(
-				!isNewAttach(rebasedMark),
-				"A new attach should not be rebased over its cell being emptied",
-			);
-
-			if (isMoveMark(rebasedMark)) {
-				getOrAddEffect(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					rebasedMark.revision,
-					rebasedMark.id,
-				).pairedMarkStatus = PairedMarkUpdate.Deactivated;
-			}
-			rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseInputOffset);
 		}
+
+		assert(
+			!isNewAttach(rebasedMark),
+			"A new attach should not be rebased over its cell being emptied",
+		);
+
+		if (isMoveMark(rebasedMark)) {
+			getOrAddEffect(
+				moveEffects,
+				CrossFieldTarget.Destination,
+				rebasedMark.revision,
+				rebasedMark.id,
+			).pairedMarkStatus = PairedMarkUpdate.Deactivated;
+		}
+		rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseInputOffset);
 	} else if (markFillsCells(baseMark)) {
 		assert(
 			isExistingCellMark(rebasedMark),
