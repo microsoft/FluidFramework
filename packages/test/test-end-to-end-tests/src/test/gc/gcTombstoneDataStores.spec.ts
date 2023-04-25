@@ -299,11 +299,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					error: "Context is tombstoned! Call site [process]",
 					errorType: "dataCorruptionError",
 				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerDispose",
-					error: "Context is tombstoned! Call site [process]",
-					errorType: "dataCorruptionError",
-				},
 			],
 			async () => {
 				const { unreferencedId, summarizer, summaryVersion, summarizingContainer } =
@@ -356,11 +351,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Context is tombstoned! Call site [process]",
-					errorType: "dataCorruptionError",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerDispose",
 					error: "Context is tombstoned! Call site [process]",
 					errorType: "dataCorruptionError",
 				},
@@ -457,11 +447,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
-					error: "Context is tombstoned! Call site [processSignal]",
-					errorType: "dataCorruptionError",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerDispose",
 					error: "Context is tombstoned! Call site [processSignal]",
 					errorType: "dataCorruptionError",
 				},

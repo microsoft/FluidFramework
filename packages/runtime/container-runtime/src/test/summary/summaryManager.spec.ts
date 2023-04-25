@@ -40,6 +40,19 @@ class MockRuntime {
 	constructor(
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 	) {}
+	public on(
+		_event: "op",
+		_listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	) {
+		return this;
+	}
+
+	public off(
+		_event: "op",
+		_listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	) {
+		return this;
+	}
 }
 
 describe("Summary Manager", () => {
