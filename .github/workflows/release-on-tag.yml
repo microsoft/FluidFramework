@@ -6,8 +6,8 @@ on:
       - "client_v*"
 
 jobs:
-  tagged-release:
-    name: Tagged Release
+  patch-release:
+    name: Create patch release
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -32,7 +32,7 @@ jobs:
           corepack enable
           pnpm install --frozen-lockfile
           pnpm run build:compile
-          pnpm install --global packages/build-cli
+          # pnpm install --global packages/build-cli
 
       - name: Check out tag
         run: |
