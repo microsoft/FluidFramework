@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluid-example/bubblebench-common";
-import { cursorFromContextualData } from "@fluid-internal/tree";
+import { cursorFromContextualData } from "@fluid-experimental/tree2";
 import { BubbleWrapper } from "./bubble";
 import { Client, FlexBubble } from "./schema";
 

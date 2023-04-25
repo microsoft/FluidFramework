@@ -93,7 +93,11 @@ export class DummyTokenRevocationManager implements ITokenRevocationManager {
 	}
 
 	// Revoke the access of a token given its jwtId
-	public async revokeToken(tenantId: string, documentId: string, jwtId: string): Promise<ITokenRevocationResponse> {
+	public async revokeToken(
+		tenantId: string,
+		documentId: string,
+		jwtId: string,
+	): Promise<ITokenRevocationResponse> {
 		Lumberjack.info(`DummyTokenManager revokeToken called`);
 		throw new NetworkError(501, "Token revocation is not supported for now", false, true);
 	}

@@ -83,7 +83,7 @@ export class SquaresApp {
 			(property) => {
 				assert(
 					property instanceof ContainerProperty,
-					"Property should always be a ContainerProperty.",
+					0x5eb /* Property should always be a ContainerProperty. */,
 				);
 
 				const values = property.getValues<any>();
