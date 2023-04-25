@@ -356,41 +356,26 @@ describe("Editing", () => {
 
 		it.only("node exists constraint", () => {
 			const sequencer = new Sequencer();
-			const tree1 = TestTree.fromJson([]);
+			const tree1 = TestTree.fromJson(["a", "b", "c"]);
 			const tree2 = tree1.fork();
 
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-
-			const e1 = tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(0, singleTextCursor({ type: jsonString.name, value: "42" }));
+			const e1 = remove(tree1, 1, 1);
+			const e2 = tree2.runTransaction((forest, editor) => {
+				editor.addNodeExistsConstraint({
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 1,
+				});
+				editor
+					.sequenceField(undefined, rootFieldKeySymbol)
+					.insert(0, singleTextCursor({ type: jsonString.name, value: "x" }));
 			});
 
-			let sequenced = sequencer.sequence([e1]);
-			tree1.receive(sequenced);
-			tree2.receive(sequenced);
-
-			const e2 = tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.delete(0, 1);
-			});
-
-			const e3 = tree2.runTransaction((forest, editor) => {
-				editor.addNodeExistsConstraint(rootPath);
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(0, singleTextCursor({ type: jsonString.name, value: "43" }));
-			});
-
-			sequenced = sequencer.sequence([e2, e3]);
+			const sequenced = sequencer.sequence([e1, e2]);
 
 			tree1.receive(sequenced);
 			tree2.receive(sequenced);
-
-			expectJsonTree([tree1, tree2], ["43"]);
+			expectJsonTree([tree1, tree2], ["a", "c"]);
 		});
 	});
 });

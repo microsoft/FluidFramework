@@ -1042,6 +1042,8 @@ export interface ModularChangeset extends HasFieldChanges {
 export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChangeset> implements ProgressiveEditBuilder<ModularChangeset> {
     constructor(family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>, changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet);
     // (undocumented)
+    addNodeExistsConstraint(path: UpPath): void;
+    // (undocumented)
     addValueConstraint(path: UpPath, currentValue: Value): void;
     // (undocumented)
     apply(change: ModularChangeset): void;
@@ -1144,6 +1146,8 @@ export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: 
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
+    // (undocumented)
+    nodeExistsConstraint?: NodeExistsConstraint;
     // (undocumented)
     valueChange?: ValueChange;
     // (undocumented)
