@@ -4,24 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-import { SharedTreeFactory } from "@fluid-internal/tree";
+import { AllowedUpdateType, ISharedTreeView, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import React from "react";
 import { SinonSandbox, createSandbox } from "sinon";
 import { useTree } from "..";
-import { Inventory } from "./schema/inventorySchema";
-import { appSchemaData } from "./schema/appSchema";
+import { schema, Inventory } from "./schema";
 
 describe("useTree()", () => {
-	function createLocalTree(id: string) {
+	function createLocalTree(id: string): ISharedTreeView {
 		const factory = new SharedTreeFactory();
 		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
-		tree.storedSchema.update(appSchemaData);
-		tree.root = {
-			nuts: 0,
-			bolts: 0,
-		};
-		return tree;
+		const treeView: ISharedTreeView = tree.schematize({
+			schema,
+			initialTree: {
+				nuts: 0,
+				bolts: 0,
+			},
+			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+		});
+		return treeView;
 	}
 
 	// Mock 'React.setState()'

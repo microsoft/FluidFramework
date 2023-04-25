@@ -32,8 +32,10 @@ import {
 	convertToSummaryTree,
 	create404Response,
 	createResponseError,
+	GCDataBuilder,
 	responseToException,
 	SummaryTreeBuilder,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
@@ -46,7 +48,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
-import { GCDataBuilder, unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { DataStoreContexts } from "./dataStoreContexts";
 import {
 	ContainerRuntime,

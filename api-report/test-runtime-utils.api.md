@@ -591,7 +591,7 @@ export class MockStorage implements IChannelStorageService {
 }
 
 // @public
-export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean;
+export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean;
 
 // (No @packageDocumentation comment for this package)
 

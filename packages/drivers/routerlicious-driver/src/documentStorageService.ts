@@ -10,15 +10,16 @@ import {
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
-import { GitManager } from "@fluidframework/server-services-client";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils";
+import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
+import { GitManager } from "./gitManager";
 import { ISnapshotTreeVersion } from "./definitions";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
@@ -35,7 +36,8 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
-		snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
+		snapshotTreeCache?: ICache<INormalizedWholeSummary>,
+		shreddedSummaryTreeCache?: ICache<ISnapshotTreeVersion>,
 		noCacheGitManager?: GitManager,
 		getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,
 	): IDocumentStorageService {
@@ -58,7 +60,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 					policies,
 					driverPolicies,
 					blobCache,
-					snapshotTreeCache,
+					shreddedSummaryTreeCache,
 					getStorageManager,
 			  );
 		// TODO: worth prefetching latest summary making version + snapshot call with WholeSummary storage?
@@ -78,7 +80,8 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
-		snapshotTreeCache?: ICache<ISnapshotTreeVersion>,
+		snapshotTreeCache?: ICache<INormalizedWholeSummary>,
+		shreddedSummaryTreeCache?: ICache<ISnapshotTreeVersion>,
 		public noCacheGitManager?: GitManager,
 		getStorageManager?: (disableCache?: boolean) => Promise<GitManager>,
 	) {
@@ -91,6 +94,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 				driverPolicies,
 				blobCache,
 				snapshotTreeCache,
+				shreddedSummaryTreeCache,
 				noCacheGitManager,
 				getStorageManager,
 			),

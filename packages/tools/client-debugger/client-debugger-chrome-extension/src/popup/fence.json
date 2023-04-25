@@ -1,4 +1,4 @@
 {
 	"tags": ["popup"],
-	"imports": ["react-components"]
+	"imports": []
 }
