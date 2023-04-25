@@ -181,7 +181,7 @@ describe("MergeTree.Revertibles", () => {
 
 	it("revert overlapping remove", () => {
 		const clients = createClientsAtInitialState(
-			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
+			{ initialState: "1-23", options: { mergeTreeUseNewLengthCalculations: true } },
 			"A",
 			"B",
 			"C",
