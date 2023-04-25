@@ -20,10 +20,6 @@ services:
         ports:
             - "5862:5858"
         command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/kafka-service/index.js scribe /usr/src/server/packages/routerlicious/dist/scribe/index.js
-    foreman:
-        ports:
-            - "5863:5858"
-        command: node --inspect=0.0.0.0:5858 packages/routerlicious/dist/kafka-service/index.js foreman /usr/src/server/packages/routerlicious/dist/foreman/index.js
     riddler:
         ports:
             - "5865:5858"

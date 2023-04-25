@@ -1796,6 +1796,7 @@ export class Container
 			(props: IConnectionManagerFactoryArgs) =>
 				new ConnectionManager(
 					serviceProvider,
+					() => this.isDirty,
 					this.client,
 					this._canReconnect,
 					ChildLogger.create(this.subLogger, "ConnectionManager"),

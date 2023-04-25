@@ -13,10 +13,7 @@ import {
 	IOrderer,
 	IOrdererManager,
 	IServiceConfiguration,
-	ITaskMessageSender,
-	ITenantManager,
 	MongoDocumentRepository,
-	TokenGenerator,
 } from "@fluidframework/server-services-core";
 
 export class LocalOrdererManager implements IOrdererManager {
@@ -28,10 +25,6 @@ export class LocalOrdererManager implements IOrdererManager {
 	constructor(
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
-		private readonly tenantManager: ITenantManager,
-		private readonly taskMessageSender: ITaskMessageSender,
-		private readonly permission: any, // Can probably remove
-		private readonly tokenGenerator: TokenGenerator,
 		private readonly createHistorian: (tenant: string) => Promise<IHistorian>,
 		private readonly logger: ILogger,
 		private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
@@ -88,10 +81,6 @@ export class LocalOrdererManager implements IOrdererManager {
 			this.databaseManager,
 			tenantId,
 			documentId,
-			this.taskMessageSender,
-			this.tenantManager,
-			this.permission,
-			this.tokenGenerator,
 			this.logger,
 			documentRepository,
 			gitManager,
@@ -99,7 +88,6 @@ export class LocalOrdererManager implements IOrdererManager {
 			this.pubsub,
 			undefined /* broadcasterContext */,
 			undefined /* scriptoriumContext */,
-			undefined /* foremanContext */,
 			undefined /* scribeContext */,
 			undefined /* deliContext */,
 			undefined /* moiraContext */,
@@ -109,7 +97,6 @@ export class LocalOrdererManager implements IOrdererManager {
 		const lambdas = [
 			orderer.broadcasterLambda,
 			orderer.deliLambda,
-			orderer.foremanLambda,
 			orderer.scribeLambda,
 			orderer.scriptoriumLambda,
 		];

@@ -11,7 +11,6 @@ import {
 	CheckpointManager,
 	createDeliCheckpointManagerFromCollection,
 	DeliLambda,
-	ForemanLambda,
 	MoiraLambda,
 	ScribeLambda,
 	ScriptoriumLambda,
@@ -32,12 +31,9 @@ import {
 	IPublisher,
 	IScribe,
 	IServiceConfiguration,
-	ITaskMessageSender,
-	ITenantManager,
 	ITopic,
 	IWebSocket,
 	ILogger,
-	TokenGenerator,
 	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
@@ -96,10 +92,6 @@ export class LocalOrderer implements IOrderer {
 		databaseManager: IDatabaseManager,
 		tenantId: string,
 		documentId: string,
-		taskMessageSender: ITaskMessageSender,
-		tenantManager: ITenantManager,
-		permission: any,
-		tokenGenerator: TokenGenerator,
 		logger: ILogger,
 		documentRepository: IDocumentRepository,
 		gitManager?: IGitManager,
@@ -114,7 +106,6 @@ export class LocalOrderer implements IOrderer {
 		pubSub: IPubSub = new PubSub(),
 		broadcasterContext: IContext = new LocalContext(logger),
 		scriptoriumContext: IContext = new LocalContext(logger),
-		foremanContext: IContext = new LocalContext(logger),
 		scribeContext: IContext = new LocalContext(logger),
 		deliContext: IContext = new LocalContext(logger),
 		moiraContext: IContext = new LocalContext(logger),
@@ -127,15 +118,10 @@ export class LocalOrderer implements IOrderer {
 			documentDetails,
 			tenantId,
 			documentId,
-			taskMessageSender,
-			tenantManager,
 			gitManager,
-			permission,
-			tokenGenerator,
 			pubSub,
 			broadcasterContext,
 			scriptoriumContext,
-			foremanContext,
 			scribeContext,
 			deliContext,
 			moiraContext,
@@ -147,7 +133,6 @@ export class LocalOrderer implements IOrderer {
 	public deltasKafka: LocalKafka;
 
 	public scriptoriumLambda: LocalLambdaController | undefined;
-	public foremanLambda: LocalLambdaController | undefined;
 	public moiraLambda: LocalLambdaController | undefined;
 	public scribeLambda: LocalLambdaController | undefined;
 	public deliLambda: LocalLambdaController | undefined;
@@ -162,15 +147,10 @@ export class LocalOrderer implements IOrderer {
 		private readonly details: IDocumentDetails,
 		private readonly tenantId: string,
 		private readonly documentId: string,
-		private readonly taskMessageSender: ITaskMessageSender,
-		private readonly tenantManager: ITenantManager,
 		private readonly gitManager: IGitManager | undefined,
-		private readonly permission: any,
-		private readonly foremanTokenGenrator: TokenGenerator,
 		private readonly pubSub: IPubSub,
 		private readonly broadcasterContext: IContext,
 		private readonly scriptoriumContext: IContext,
-		private readonly foremanContext: IContext,
 		private readonly scribeContext: IContext,
 		private readonly deliContext: IContext,
 		private readonly moiraContext: IContext,
@@ -261,22 +241,6 @@ export class LocalOrderer implements IOrderer {
 					context,
 					this.serviceConfiguration,
 					undefined,
-				),
-		);
-
-		this.foremanLambda = new LocalLambdaController(
-			this.deltasKafka,
-			this.setup,
-			this.foremanContext,
-			async (_, context) =>
-				new ForemanLambda(
-					this.taskMessageSender,
-					this.tenantManager,
-					this.foremanTokenGenrator,
-					this.permission,
-					context,
-					this.tenantId,
-					this.documentId,
 				),
 		);
 
@@ -414,11 +378,6 @@ export class LocalOrderer implements IOrderer {
 			this.scriptoriumLambda.start();
 		}
 
-		if (this.foremanLambda) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.foremanLambda.start();
-		}
-
 		if (this.scribeLambda) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.scribeLambda.start();
@@ -448,11 +407,6 @@ export class LocalOrderer implements IOrderer {
 		if (this.scriptoriumLambda) {
 			this.scriptoriumLambda.close();
 			this.scriptoriumLambda = undefined;
-		}
-
-		if (this.foremanLambda) {
-			this.foremanLambda.close();
-			this.foremanLambda = undefined;
 		}
 
 		if (this.scribeLambda) {

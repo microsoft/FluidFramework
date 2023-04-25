@@ -48,7 +48,10 @@ const getDefaultCheckpoint = (): IDeliState => {
 	};
 };
 
-export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionLambdaConfig> {
+export class DeliLambdaFactory
+	extends EventEmitter
+	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
+{
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
