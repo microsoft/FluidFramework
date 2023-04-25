@@ -68,13 +68,22 @@ jobs:
       #     writeToFile: false
 
       # This action sets a "changelog" output variable that contains the generated changelog text.
+      # - name: Generate changelog
+      #   uses: Bullrich/generate-release-changelog@master
+      #   id: changelog
+      #   with:
+      #     from-tag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
+      #     to-tag: ${{ fromJson(env.RELEASE_JSON).tag }}
+      #     type: ${{ fromJson(env.RELEASE_JSON).releaseType }}
+
       - name: Generate changelog
-        uses: Bullrich/generate-release-changelog@master
-        id: changelog
-        with:
-          from-tag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
-          to-tag: ${{ fromJson(env.RELEASE_JSON).tag }}
-          type: ${{ fromJson(env.RELEASE_JSON).releaseType }}
+        run: |
+          auto-changelog \
+          --starting-version ${{ fromJson(env.RELEASE_JSON).previousTag }} \
+          --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
+          --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
+          --output auto-changelog.md \
+          --template changelog.hbs
 
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
@@ -92,7 +101,8 @@ jobs:
           name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
           omitNameDuringUpdate: false # always overwrite the name
 
-          body: ${{ steps.changelog.outputs.changelog }}
+          # body: ${{ steps.changelog.outputs.changelog }}
+          bodyFile: build-tools/auto-changelog.md
           omitBodyDuringUpdate: false # Don't overwrite the body
 
           artifacts: "build-tools/reports/*.*"
