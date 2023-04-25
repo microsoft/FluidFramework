@@ -32,9 +32,8 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 export interface AnchorEvents {
     afterDelete(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
-    subtreeChanging(anchor: AnchorNode): void;
+    subtreeChanging(anchor: AnchorNode): PathVisitor | void;
     valueChanging(anchor: AnchorNode, value: Value): void;
-    visitSubtreeChanging(anchor: AnchorNode): PathVisitor;
 }
 
 // @alpha (undocumented)
@@ -385,7 +384,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 // @alpha
 export interface EditableTreeEvents {
     changing(upPath: UpPath, value: Value): void;
-    subtreeChanging(upPath: UpPath): void;
+    subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
 // @alpha
@@ -1211,7 +1210,6 @@ export interface PathVisitor {
     onDelete(path: UpPath, count: number): void;
     // (undocumented)
     onInsert(path: UpPath, content: Delta.ProtoNodes): void;
-    // (undocumented)
     onSetValue(path: UpPath, value: Value): void;
 }
 

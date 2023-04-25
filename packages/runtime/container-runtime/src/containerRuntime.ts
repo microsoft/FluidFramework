@@ -1487,6 +1487,7 @@ export class ContainerRuntime
 				disablePartialFlush,
 				idCompressorEnabled: compressorEnabled ? true : undefined,
 				abnormalAckRecoveryMethod: this.summaryStateUpdateMethod,
+				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
