@@ -4824,7 +4824,7 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
-      '@sinclair/typebox': ^0.25.21
+      '@sinclair/typebox': ^0.28.6
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
@@ -4862,7 +4862,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
-      '@sinclair/typebox': 0.25.21
+      '@sinclair/typebox': 0.28.6
       '@ungap/structured-clone': 0.3.4
       sorted-btree: 1.8.1
       uuid: 8.3.2
@@ -20777,6 +20777,11 @@ packages:
 
   /@sinclair/typebox/0.25.21:
     resolution: {integrity: sha512-gFukHN4t8K4+wVC+ECqeqwzBDeFeTzBXroBTqE6vcWrQGbEUpHO7LYdG0f4xnvYq4VOEwITSlHlp0JBAIFMS/g==}
+    dev: true
+
+  /@sinclair/typebox/0.28.6:
+    resolution: {integrity: sha512-dIlAWjH0O0zK2w0YDhLX0vYy75sE0Ie+w9NL3hWCXbegQZMgTc7RVMeNLUem6PDwN1YvKo8oZIFXEsqTM7pVDw==}
+    dev: false
 
   /@sindresorhus/is/0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}
