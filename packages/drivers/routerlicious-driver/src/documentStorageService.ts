@@ -14,13 +14,13 @@ import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils";
-import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
 import { GitManager } from "./gitManager";
 import { ISnapshotTreeVersion } from "./definitions";
+import { INormalizedWholeSummary } from "./contracts";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private _logTailSha: string | undefined = undefined;
