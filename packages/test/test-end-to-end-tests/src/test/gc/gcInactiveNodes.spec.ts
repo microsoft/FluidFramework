@@ -315,7 +315,12 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 				// Load a non-summarizer container from the above summary that uses the mock logger.
 				const container2 = await provider.loadTestContainer(
-					{ ...testContainerConfig, loaderProps: { logger: mockLogger } },
+					{
+						// AB#3982 track work to removing this exception using simulateReadConnectionUsingDelay
+						simulateReadConnectionUsingDelay: false,
+						...testContainerConfig,
+						loaderProps: { logger: mockLogger },
+					},
 					{ [LoaderHeader.version]: summaryVersion1 },
 				);
 

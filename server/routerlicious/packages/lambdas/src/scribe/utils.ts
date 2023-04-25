@@ -15,9 +15,7 @@ import {
 	RawOperationType,
 } from "@fluidframework/server-services-core";
 
-export const initializeProtocol = (
-	protocolState: IProtocolState,
-): ProtocolOpHandler =>
+export const initializeProtocol = (protocolState: IProtocolState): ProtocolOpHandler =>
 	new ProtocolOpHandler(
 		protocolState.minimumSequenceNumber,
 		protocolState.sequenceNumber,

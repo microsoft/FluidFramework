@@ -47,9 +47,13 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 	let provider: ITestObjectProvider;
 
 	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		return provider.loadTestContainer(
+			// AB#3982 track work to removing this exception using simulateReadConnectionUsingDelay
+			{ simulateReadConnectionUsingDelay: false, ...testContainerConfig },
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
 	}
 
 	describe("Attachment blobs in attached container", () => {

@@ -565,13 +565,13 @@ describeNoCompat("SharedInterval", (getTestObjectProvider) => {
 			let id1;
 			let id2;
 
-			await provider.ensureSynchronized();
-
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
 			const intervals2 = sharedString2.getIntervalCollection("intervals");
+
+			await provider.ensureSynchronized();
 
 			// Conflicting adds
 			interval1 = intervals1.add(0, 0, IntervalType.SlideOnRemove);

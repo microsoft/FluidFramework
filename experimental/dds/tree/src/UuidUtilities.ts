@@ -4,7 +4,7 @@
  */
 
 import { v4, NIL } from 'uuid';
-import { assert } from './Common';
+import { assertWithMessage } from './Common';
 import { StableId, UuidString } from './Identifiers';
 
 const hexadecimalCharCodes = Array.from('09afAF').map((c) => c.charCodeAt(0)) as [
@@ -31,7 +31,7 @@ export const nilUuid = assertIsUuidString(NIL);
  * Asserts that the given string is a UUID
  */
 export function assertIsUuidString(uuidString: string): UuidString {
-	assert(isUuidString(uuidString), `${uuidString} is not an UuidString`);
+	assertWithMessage(isUuidString(uuidString), `${uuidString} is not an UuidString`);
 	return uuidString;
 }
 
@@ -73,7 +73,7 @@ export function generateStableId(): StableId {
  * Asserts that the given string is a stable ID.
  */
 export function assertIsStableId(stableId: string): StableId {
-	assert(isStableId(stableId), `${stableId} is not a StableId.`);
+	assertWithMessage(isStableId(stableId), `${stableId} is not a StableId.`);
 	return stableId;
 }
 
