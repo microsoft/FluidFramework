@@ -23,7 +23,8 @@ import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
-import { DeltaService } from "./services";
+import { DeltaService, StorageNameAllocator } from "./services";
+import { IAlfredResourcesCustomizations } from "./override";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -128,7 +129,7 @@ export class AlfredResources implements core.IResources {
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
 	public async create(
 		config: Provider,
-		customizations?: Record<string, any>,
+		customizations?: IAlfredResourcesCustomizations,
 	): Promise<AlfredResources> {
 		// Producer used to publish messages
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -362,11 +363,16 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
+		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
+		const storageNameAllocator = storagePerDocEnabled
+			? customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager)
+			: undefined;
 		const storage = new services.DocumentStorage(
 			documentRepository,
 			tenantManager,
 			enableWholeSummaryUpload,
 			opsCollection,
+			storageNameAllocator,
 		);
 
 		const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));

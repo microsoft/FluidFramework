@@ -10,4 +10,4 @@ export {
 	AlfredRunnerFactory,
 	OrdererManager,
 } from "./runnerFactory";
-export { DeltaService } from "./services";
+export { DeltaService, StorageNameAllocator } from "./services";
