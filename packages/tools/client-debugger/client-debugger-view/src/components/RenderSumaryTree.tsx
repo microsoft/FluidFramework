@@ -19,7 +19,7 @@ type RenderSummaryTreeProps = React.PropsWithChildren<{
 	/**
 	 * List of child React Elements populated by recursion.
 	 */
-	children: React.ReactElement<{ node: { children?: React.ReactElement } }>[];
+	children: React.ReactElement[];
 }>;
 
 /**
@@ -35,13 +35,8 @@ export function RenderSummaryTree(props: RenderSummaryTreeProps): React.ReactEle
 				<Tree aria-label="Sub-Tree">
 					{children?.map((child, index) => {
 						return (
-							<div key={index}>
-								{child.props.node.children ? (
-									<> {child} </>
-								) : (
-									<TreeItem>{child}</TreeItem>
-								)}
-							</div>
+							// TODO: Wrap with <TreeItem>
+							<>{child}</>
 						);
 					})}
 				</Tree>

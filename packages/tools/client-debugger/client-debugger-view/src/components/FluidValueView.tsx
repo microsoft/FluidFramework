@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeItem } from "@fluentui/react-components/unstable";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
 import { RenderLabel } from "./RenderLabel";
 /**
@@ -20,6 +22,13 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node } = props;
 
 	return (
-		<RenderLabel label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
+		// TODO: Remove TreeItem
+		<TreeItem>
+			<RenderLabel
+				label={label}
+				nodeTypeMetadata={node.typeMetadata}
+				nodeValue={node.value}
+			/>
+		</TreeItem>
 	);
 }
