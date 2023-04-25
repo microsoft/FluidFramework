@@ -266,6 +266,7 @@ export interface FluidDevtoolsEvents extends IEvent {
 
 // @public
 export interface FluidDevtoolsProps {
+    dataVisualizers?: Record<string, VisualizeSharedObject>;
     initialContainers?: ContainerDevtoolsProps[];
     logger?: DevtoolsLogger;
 }
