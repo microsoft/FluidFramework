@@ -265,18 +265,8 @@ async function runnerProcess(
 				);
 			}
 
-			const closeDisposeProm = new Promise<boolean>((resolve) => {
-				const resAndClear = () => {
-					resolve(false);
-					container?.off("closed", resAndClear);
-					container?.off("disposed", resAndClear);
-				};
-				container?.once("closed", () => resAndClear);
-				container?.once("disposed", () => resAndClear);
-			});
-
 			printStatus(runConfig, `running`);
-			done = await Promise.race([closeDisposeProm, test.run(runConfig, reset)]);
+			done = await test.run(runConfig, reset);
 			reset = false;
 			printStatus(runConfig, done ? `finished` : "closed");
 		} catch (error) {
