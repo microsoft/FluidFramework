@@ -15,7 +15,7 @@ import { assert, delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedMap } from "@fluidframework/map";
+import { IValueChanged, SharedMap } from "@fluidframework/map";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRunConfig } from "./loadTestDataStore";
 
@@ -264,6 +264,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 	protected _nodeId: string | undefined;
 	protected running: boolean = false;
+	protected activityFailed: boolean = false;
 
 	/** Unique id that is used to generate unique blob content. */
 	private readonly uniqueBlobContentId: string = uuid();
@@ -342,59 +343,60 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 * before those ops were summarizer. So, it would receive those ops after the load and should start / stop
 	 * activity accordingly.
 	 */
-	private setupEventHandlers() {
-		this.dataObjectMap.on("valueChanged", (changed, local) => {
+	private setupEventHandlers(config: IRunConfig, id?: string) {
+		const activityRunner = async (
+			changed: IValueChanged,
+			local: boolean,
+			activityObjectMap: SharedMap,
+		) => {
 			if (local || !changed.key.startsWith(this.nodeId)) {
 				return;
 			}
 
-			if (this.dataObjectMap.has(changed.key)) {
-				const dataObjectHandle = this.dataObjectMap.get(
+			if (activityObjectMap.has(changed.key)) {
+				const activityObjectHandle = activityObjectMap.get<IFluidHandle<IGCActivityObject>>(
 					changed.key,
-				) as IFluidHandle<IGCActivityObject>;
-				dataObjectHandle
-					.get()
-					.then((dataObject: IGCActivityObject) => {
-						dataObject
-							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
-							.catch((error) => {});
-					})
-					.catch((error) => {});
+				);
+				assert(
+					activityObjectHandle !== undefined,
+					`Could not find handle for ${changed.key}`,
+				);
+				const activityObject = await activityObjectHandle.get();
+				const result = await activityObject.run(
+					this.childRunConfig,
+					`${this.nodeId}/${changed.key}`,
+				);
+				if (result === false) {
+					this.activityFailed = true;
+				}
 			} else {
-				const dataObjectHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
-				dataObjectHandle
-					.get()
-					.then((dataObject: IGCActivityObject) => {
-						dataObject.stop();
-					})
-					.catch((error) => {});
+				const activityObjectHandle =
+					changed.previousValue as IFluidHandle<IGCActivityObject>;
+				const activityObject = await activityObjectHandle.get();
+				activityObject.stop();
 			}
+		};
+
+		this.dataObjectMap.on("valueChanged", (changed, local) => {
+			activityRunner(changed, local, this.dataObjectMap).catch((error) => {
+				config.logger.sendErrorEvent({
+					eventName: "ActivityRunFailedError",
+					id,
+					error,
+				});
+				this.activityFailed = true;
+			});
 		});
 
 		this.blobMap.on("valueChanged", (changed, local) => {
-			if (local || !changed.key.startsWith(this.nodeId)) {
-				return;
-			}
-
-			if (this.blobMap.has(changed.key)) {
-				const blobHandle = this.blobMap.get(changed.key) as IFluidHandle<IGCActivityObject>;
-				blobHandle
-					.get()
-					.then((blobObject: IGCActivityObject) => {
-						blobObject
-							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
-							.catch((error) => {});
-					})
-					.catch((error) => {});
-			} else {
-				const blobHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
-				blobHandle
-					.get()
-					.then((blobObject: IGCActivityObject) => {
-						blobObject.stop();
-					})
-					.catch((error) => {});
-			}
+			activityRunner(changed, local, this.blobMap).catch((error) => {
+				config.logger.sendErrorEvent({
+					eventName: "ActivityRunFailedError",
+					id,
+					error,
+				});
+				this.activityFailed = true;
+			});
 		});
 	}
 
@@ -487,47 +489,47 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		const delayBetweenOpsMs = (60 * 1000) / opRatePerMin;
 
 		let localSendCount = 0;
-		let activityFailed = false;
 
 		// Set up the listener that would run / stop activity from previous run of this client.
-		this.setupEventHandlers();
+		this.setupEventHandlers(config, id);
 
 		// Initialize referenced objects, if any and run activity on them.
 		await this.initialize();
-		this.runInitialActivity()
-			.then((results: boolean[]) => {
-				for (const result of results) {
-					if (result === false) {
-						activityFailed = true;
-						break;
+
+		const activityRunner = (
+			activityFn: (config?: IRunConfig) => Promise<boolean[]>,
+			activityName: string,
+		) => {
+			activityFn(config)
+				.then((results) => {
+					for (const result of results) {
+						if (result === false) {
+							this.activityFailed = true;
+							break;
+						}
 					}
-				}
-			})
-			.catch((error) => {
-				activityFailed = true;
-			});
+				})
+				.catch((error) => {
+					config.logger.sendErrorEvent({
+						eventName: `${activityName}RunFailedError`,
+						id,
+						error,
+					});
+					this.activityFailed = true;
+				});
+		};
+
+		activityRunner(async () => this.runInitialActivity(), "InitialActivity");
 
 		while (
 			this.running &&
 			this.counter.value < totalSendCount &&
 			!this.runtime.disposed &&
-			!activityFailed
+			!this.activityFailed
 		) {
 			// After every activityThresholdOpCount ops, run activities.
 			if (localSendCount % activityThresholdOpCount === 0) {
-				// We do not await for the activity because we want any objects created to run asynchronously.
-				this.runActivity(config)
-					.then((results: boolean[]) => {
-						for (const result of results) {
-							if (result === false) {
-								activityFailed = true;
-								break;
-							}
-						}
-					})
-					.catch((error) => {
-						activityFailed = true;
-					});
+				activityRunner(async () => this.runActivity(config), "Activity");
 			}
 
 			this.counter.increment(1);
@@ -537,7 +539,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
 		}
 		this.stop();
-		const notDone = this.runtime.disposed || activityFailed;
+		const notDone = this.runtime.disposed || this.activityFailed;
 		return !notDone;
 	}
 
@@ -735,9 +737,7 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 
 		this._nodeId = id;
 
-		/**
-		 * Just some weird math to get the ids of two other clients to collaborate with.
-		 */
+		// Just some weird math to get the ids of two other clients to collaborate with.
 		const halfClients = Math.floor(config.testConfig.numClients / 2);
 		const myRunId = config.runId + 1;
 		const partnerRunId1 = ((myRunId + halfClients) % config.testConfig.numClients) + 1;
@@ -748,46 +748,48 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 		 * Set up an event handler that listens for changes in the data object map meaning that a child data object
 		 * was referenced or unreferenced by a client.
 		 */
-		this.dataObjectMap.on("valueChanged", (changed, local) => {
+		const partnerActivityRunner = async (changed: IValueChanged, local: boolean) => {
 			if (local) {
 				return;
 			}
 
-			/**
-			 * Only collaborate with two other partner clients. If we collaborate with all clients, there would be too
-			 * many ops and we might get throttled.
-			 */
+			// Only collaborate with two other partner clients. If we collaborate with all clients, there would be too
+			// many ops and we might get throttled.
 			if (!changed.key.startsWith(partnerId1) && !changed.key.startsWith(partnerId2)) {
 				return;
 			}
 
-			/**
-			 * If a new data object was referenced, run our corresponding local data object.
-			 * If a data object was unreferenced, stop running our corresponding local data object.
-			 * TODO: Handle scenario where these data objects fail. Also, when we are asked to stop, we should stop these
-			 * data objects as well.
-			 */
+			// If a new data object was referenced, run our corresponding local data object.
+			// If a data object was unreferenced, stop running our corresponding local data object.
 			if (this.dataObjectMap.has(changed.key)) {
-				const dataObjectHandle = this.dataObjectMap.get(
+				const dataObjectHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(
 					changed.key,
-				) as IFluidHandle<IGCActivityObject>;
-				dataObjectHandle
-					.get()
-					.then((dataObject: IGCActivityObject) => {
-						dataObject
-							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
-							.catch((error) => {});
-					})
-					.catch((error) => {});
+				);
+				assert(dataObjectHandle !== undefined, `Could not find handle for ${changed.key}`);
+				const dataObject = await dataObjectHandle.get();
+				const result = await dataObject.run(
+					this.childRunConfig,
+					`${this.nodeId}/${changed.key}`,
+				);
+				if (result === false) {
+					this.activityFailed = true;
+				}
 			} else {
 				const dataObjectHandle = changed.previousValue as IFluidHandle<IGCActivityObject>;
-				dataObjectHandle
-					.get()
-					.then((dataObject: IGCActivityObject) => {
-						dataObject.stop();
-					})
-					.catch((error) => {});
+				const dataObject = await dataObjectHandle.get();
+				dataObject.stop();
 			}
+		};
+
+		this.dataObjectMap.on("valueChanged", (changed, local) => {
+			partnerActivityRunner(changed, local).catch((error) => {
+				config.logger.sendErrorEvent({
+					eventName: "PartnerActivityRunFailedError",
+					id,
+					error,
+				});
+				this.activityFailed = true;
+			});
 		});
 
 		return super.run(config, id);
