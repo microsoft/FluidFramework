@@ -41,8 +41,8 @@ jobs:
       - name: Get release type
         id: releaseType
         run: |
-          RJSON=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --json)
-          echo "RELEASE_JSON=$RJSON" >> "$GITHUB_OUTPUT"
+          # RJSON=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --json | jq -c)
+          # echo "RELEASE_JSON=$RJSON" >> "$GITHUB_OUTPUT"
           RGROUP=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --releaseGroup)
           echo "RELEASE_GROUP=$RGROUP" >> "$GITHUB_OUTPUT"
           RTYPE=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --releaseType)
@@ -50,17 +50,21 @@ jobs:
           RVERSION=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --version)
           echo "RELEASE_VERSION=$RVERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Get release JSON
+        run: |
+          echo "RELEASE_JSON=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --json | jq -c)" >> $GITHUB_ENV
+
       - name: Create manifests
         run: |
           mkdir manifests
-          packages/build-cli/bin/run release report -g ${{ steps.releaseType.outputs.RELEASE_GROUP }} -o manifests
+          packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).releaseGroup }} -o manifests
 
       - name: Create release
-        if: steps.releaseType.outputs.RELEASE_TYPE == 'patch'
+        if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ github.token }}"
           prerelease: false
-          title: "Fluid Framework v${{ steps.releaseType.outputs.RELEASE_VERSION }} (${{ steps.releaseType.outputs.RELEASE_TYPE }})"
+          title: "Fluid Framework v${{ steps.releaseType.outputs.RELEASE_VERSION }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
           files: |
             manifests/*.*
