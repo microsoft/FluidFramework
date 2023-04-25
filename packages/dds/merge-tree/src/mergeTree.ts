@@ -946,26 +946,29 @@ export class MergeTree {
 			newRightSegment &&
 			(newRightSegment.localRefs ??= new LocalReferenceCollection(newRightSegment));
 
-		const addRef = (
+		const addRefs = (
 			newSegment: ISegment,
 			refs: LocalReferenceCollection,
-			refPos: LocalReferencePosition,
+			refPos: LocalReferencePosition[],
 		) => {
 			if (newSegment.ordinal < segment.ordinal) {
-				refs.addAfterTombstones([refPos]);
+				refs.addAfterTombstones(refPos);
 			} else {
-				refs.addBeforeTombstones([refPos]);
+				refs.addBeforeTombstones(refPos);
 			}
 		};
 
+		const leftRefs: LocalReferencePosition[] = [];
+		const rightRefs: LocalReferencePosition[] = [];
+
 		for (const ref of segment.localRefs) {
 			if (ref.slidingPreference === SlidingPreference.Left && localLeftRefs) {
-				addRef(newLeftSegment, localLeftRefs, ref);
+				leftRefs.push(ref);
 			} else if (
 				(ref.slidingPreference === SlidingPreference.Right || !ref.slidingPreference) &&
 				localRightRefs
 			) {
-				addRef(newRightSegment, localRightRefs, ref);
+				rightRefs.push(ref);
 			} else {
 				if (!refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
 					ref.callbacks?.beforeSlide?.(ref);
@@ -973,6 +976,14 @@ export class MergeTree {
 					ref.callbacks?.afterSlide?.(ref);
 				}
 			}
+		}
+
+		if (newRightSegment && localRightRefs && rightRefs.length > 0) {
+			addRefs(newRightSegment, localRightRefs, rightRefs);
+		}
+
+		if (newLeftSegment && localLeftRefs && leftRefs.length > 0) {
+			addRefs(newLeftSegment, localLeftRefs, leftRefs);
 		}
 
 		// TODO:AB#4069: This update might be avoidable by checking if the old segment
