@@ -9,7 +9,7 @@ import {
 	ISourcedDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 	devtoolsMessageSource,
 } from "@fluid-tools/client-debugger";
 
@@ -134,7 +134,7 @@ export class BackgroundConnection
 	private readonly onBackgroundServiceMessage = (
 		message: Partial<ISourcedDevtoolsMessage>,
 	): boolean => {
-		if (!isDebuggerMessage(message)) {
+		if (!isDevtoolsMessage(message)) {
 			return false;
 		}
 

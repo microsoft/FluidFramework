@@ -440,7 +440,7 @@ export interface InboundHandlers {
 export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
-export function isDebuggerMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;
+export function isDevtoolsMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;
 
 // @public
 export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
