@@ -19,14 +19,35 @@ export interface FluidContainerDevtoolsProps {
 	container: IFluidContainer;
 
 	/**
+	 * The ID of the {@link FluidContainerDevtoolsProps.container | Container}.
+	 */
+	containerId: string;
+
+	/**
 	 * (optional) Nickname for the {@link FluidContainerDevtoolsProps.container | Container} / debugger instance.
 	 *
 	 * @remarks
 	 *
 	 * Associated tooling may take advantage of this to differentiate between instances using
 	 * semantically meaningful information.
+	 *
+	 * If not provided, the {@link ContainerDevtoolsProps.containerId} will be used for the purpose of distinguishing
+	 * instances.
 	 */
 	containerNickname?: string;
+
+	/**
+	 * (optional) Configurations for generating visual representations of
+	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link FluidContainerDevtoolsProps.containerData}.
+	 *
+	 * @remarks
+	 *
+	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
+	 * default visualization implementations.
+	 *
+	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
+	 */
+	dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 /**
@@ -105,7 +126,17 @@ export class RouterliciousDevtools {
 	}
 
 	/**
-	 * {@inheritDoc IContainerDevtools.dispose}
+	 * {@inheritDoc IRouterliciousDevtools.registerContainerDevtools}
+	 */
+	public registerContainerDevtools(containerProps: FluidContainerDevtoolsProps): void {
+		const mappedContainerProps = mapContainerProps(containerProps);
+		if (mappedContainerProps !== undefined) {
+			this._devtools.registerContainerDevtools(mappedContainerProps);
+		}
+	}
+
+	/**
+	 * {@inheritDoc IRouterliciousDevtools.dispose}
 	 */
 	public dispose(): void {
 		this._devtools.dispose();
@@ -124,43 +155,44 @@ export class RouterliciousDevtools {
  * TODO
  */
 export function initializeDevtools(props: RouterliciousDevtoolsProps): RouterliciousDevtools {
-	const { dataVisualizers, initialContainers, logger } = props;
+	const { initialContainers, logger } = props;
 
-	const mappedContainerProps: ContainerDevtoolsProps[] = mapContainerProps(
-		initialContainers,
-		dataVisualizers,
-	);
+	let mappedInitialContainers: ContainerDevtoolsProps[] | undefined;
+	if (initialContainers !== undefined) {
+		mappedInitialContainers = [];
+		for (const containerProps of initialContainers) {
+			const mappedContainerProps = mapContainerProps(containerProps);
+			if (mappedContainerProps !== undefined) {
+				mappedInitialContainers.push(mappedContainerProps);
+			}
+		}
+	}
 
 	const innerDevtools = initializeFluidDevtools({
 		logger,
-		initialContainers: mappedContainerProps,
+		initialContainers: mappedInitialContainers,
 	});
 
 	return new RouterliciousDevtools(innerDevtools);
 }
 
 function mapContainerProps(
-	containers: FluidContainerDevtoolsProps[] | undefined,
-	dataVisualizers?: Record<string, VisualizeSharedObject>,
-): ContainerDevtoolsProps[] | undefined {
-	if (containers === undefined) {
+	containerProps: FluidContainerDevtoolsProps,
+): ContainerDevtoolsProps | undefined {
+	const { container, containerId, containerNickname, dataVisualizers } = containerProps;
+	const fluidContainer = container as FluidContainer;
+
+	if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
+		console.error("Missing Container accessor on FluidContainer.");
 		return undefined;
 	}
 
-	const mappedContainerProps: ContainerDevtoolsProps[] = [];
-	for (const containerProps of containers) {
-		const { container, containerNickname } = containerProps;
-		if ((container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
-			console.error("Missing Container accessor on FluidContainer.");
-		} else {
-			const innerContainer = (container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE();
-			mappedContainerProps.push({
-				container: innerContainer,
-				containerId: container.id,
-				containerNickname,
-				containerData: container.initialObjects,
-				dataVisualizers,
-			});
-		}
-	}
+	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE();
+	return {
+		container: innerContainer,
+		containerId,
+		containerNickname,
+		containerData: container.initialObjects,
+		dataVisualizers,
+	};
 }
