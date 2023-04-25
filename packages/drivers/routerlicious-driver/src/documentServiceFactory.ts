@@ -24,7 +24,7 @@ import {
 	RateLimiter,
 } from "@fluidframework/driver-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { ISession } from "@fluidframework/server-services-client";
+import { INormalizedWholeSummary, ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
@@ -55,7 +55,8 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
-	private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;
+	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary> = new NullCache();
+	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> = new NullCache();
 
 	constructor(
 		private readonly tokenProvider: ITokenProvider,
@@ -69,9 +70,17 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			...driverPolicies,
 		};
 		this.blobCache = new InMemoryCache<ArrayBufferLike>();
-		this.snapshotTreeCache = this.driverPolicies.enableInternalSummaryCaching
-			? new InMemoryCache<ISnapshotTreeVersion>(snapshotCacheExpiryMs)
-			: new NullCache<ISnapshotTreeVersion>();
+		if (this.driverPolicies.enableInternalSummaryCaching) {
+			if (this.driverPolicies.enableWholeSummaryUpload) {
+				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSummary>(
+					snapshotCacheExpiryMs,
+				);
+			} else {
+				this.shreddedSummaryTreeCache = new InMemoryCache<ISnapshotTreeVersion>(
+					snapshotCacheExpiryMs,
+				);
+			}
+		}
 	}
 
 	/**
@@ -307,7 +316,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			documentStorageServicePolicies,
 			this.driverPolicies,
 			this.blobCache,
-			this.snapshotTreeCache,
+			this.wholeSnapshotTreeCache,
+			this.shreddedSummaryTreeCache,
 			discoverFluidResolvedUrl,
 		);
 	}
