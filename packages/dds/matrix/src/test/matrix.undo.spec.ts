@@ -547,6 +547,8 @@ describe("Matrix", () => {
 				if (this.currentTest?.err === undefined) {
 					// Paranoid check that the matrices are have converged on the same state.
 					await expect(undefined as any);
+				} else {
+					console.log(this.currentTest?.err);
 				}
 
 				matrix1.closeMatrix(consumer1);
@@ -555,7 +557,7 @@ describe("Matrix", () => {
 
 			singleClientTests();
 
-			it.only("reorder row insertion via undo/redo", async () => {
+			it("reorder row insertion via undo/redo", async () => {
 				matrix1.insertCols(/* start: */ 0, /* count: */ 2);
 				undo1.closeCurrentOperation();
 
