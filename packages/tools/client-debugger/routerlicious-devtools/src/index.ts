@@ -9,4 +9,7 @@
  * @packageDocumentation
  */
 
-export {} from "./RouterliciousDevtools";
+export { IRouterliciousDevtools } from "./IRouterliciousDevtools";
+export { RouterliciousContainerDevtoolsProps } from "./RouterliciousContainerDevtoolsProps";
+export { initializeDevtools } from "./RouterliciousDevtools";
+export { RouterliciousDevtoolsProps } from "./RouterliciousDevtoolsProps";

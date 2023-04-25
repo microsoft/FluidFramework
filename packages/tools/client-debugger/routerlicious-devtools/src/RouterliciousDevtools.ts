@@ -1,93 +1,17 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import {
 	ContainerDevtoolsProps,
-	DevtoolsLogger,
 	IFluidDevtools,
 	initializeFluidDevtools,
-	VisualizeSharedObject,
 } from "@fluid-tools/client-debugger";
-import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
+import { FluidContainer } from "@fluidframework/fluid-static";
 
-/**
- * Properties for configuring Devtools for an individual {@link IFluidContainer}.
- *
- * @public
- */
-export interface FluidContainerDevtoolsProps {
-	/**
-	 * The Container with which the {@link ContainerDevtools} instance will be associated.
-	 */
-	container: IFluidContainer;
-
-	/**
-	 * The ID of the {@link FluidContainerDevtoolsProps.container | Container}.
-	 */
-	containerId: string;
-
-	/**
-	 * (optional) Nickname for the {@link FluidContainerDevtoolsProps.container | Container} / debugger instance.
-	 *
-	 * @remarks
-	 *
-	 * Associated tooling may take advantage of this to differentiate between instances using
-	 * semantically meaningful information.
-	 *
-	 * If not provided, the {@link ContainerDevtoolsProps.containerId} will be used for the purpose of distinguishing
-	 * instances.
-	 */
-	containerNickname?: string;
-
-	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link FluidContainerDevtoolsProps.containerData}.
-	 *
-	 * @remarks
-	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
-	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
-}
-
-/**
- * Properties for configuring a {@link FluidDevtools}.
- *
- * @public
- */
-export interface RouterliciousDevtoolsProps {
-	/**
-	 * (optional) telemetry logger associated with the Fluid runtime.
-	 *
-	 * @remarks
-	 *
-	 * Note: {@link FluidDevtools} does not register this logger with the Fluid runtime; that must be done separately.
-	 *
-	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
-	 * external listeners.
-	 */
-	logger?: DevtoolsLogger;
-
-	/**
-	 * (optional) List of Containers to initialize the devtools with.
-	 *
-	 * @remarks Additional Containers can be registered with the Devtools via {@link IRouterliciousDevtools.registerContainerDevtools}.
-	 */
-	initialContainers?: FluidContainerDevtoolsProps[];
-
-	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link FluidContainerDevtoolsProps.containerData}.
-	 *
-	 * @remarks
-	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
-	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
-}
+import { IRouterliciousDevtools } from "./IRouterliciousDevtools";
+import { RouterliciousDevtoolsProps } from "./RouterliciousDevtoolsProps";
+import { RouterliciousContainerDevtoolsProps } from "./RouterliciousContainerDevtoolsProps";
 
 /**
  * {@link IRouterliciousDevtools} implementation.
@@ -99,10 +23,10 @@ export interface RouterliciousDevtoolsProps {
  * @sealed
  * @internal
  */
-export class RouterliciousDevtools {
+export class RouterliciousDevtools
 	// extends TypedEventEmitter<ContainerDevtoolsEvents>
-	// implements IContainerDevtools
-
+	implements IRouterliciousDevtools
+{
 	/**
 	 * Inner Devtools instance.
 	 */
@@ -117,7 +41,7 @@ export class RouterliciousDevtools {
 	/**
 	 * {@inheritDoc IRouterliciousDevtools.registerContainerDevtools}
 	 */
-	public registerContainerDevtools(containerProps: FluidContainerDevtoolsProps): void {
+	public registerContainerDevtools(containerProps: RouterliciousContainerDevtoolsProps): void {
 		const mappedContainerProps = mapContainerProps(containerProps);
 		if (mappedContainerProps !== undefined) {
 			this._devtools.registerContainerDevtools(mappedContainerProps);
@@ -141,8 +65,10 @@ export class RouterliciousDevtools {
 
 /**
  * TODO
+ *
+ * @public
  */
-export function initializeDevtools(props: RouterliciousDevtoolsProps): RouterliciousDevtools {
+export function initializeDevtools(props: RouterliciousDevtoolsProps): IRouterliciousDevtools {
 	const { initialContainers, logger } = props;
 
 	let mappedInitialContainers: ContainerDevtoolsProps[] | undefined;
@@ -165,7 +91,7 @@ export function initializeDevtools(props: RouterliciousDevtoolsProps): Routerlic
 }
 
 function mapContainerProps(
-	containerProps: FluidContainerDevtoolsProps,
+	containerProps: RouterliciousContainerDevtoolsProps,
 ): ContainerDevtoolsProps | undefined {
 	const { container, containerId, containerNickname, dataVisualizers } = containerProps;
 	const fluidContainer = container as FluidContainer;
