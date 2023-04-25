@@ -5,6 +5,10 @@
 import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
 
 import {
+	IRouterliciousDevtools,
+	initializeDevtools,
+} from "@fluid-experimental/routerlicious-devtools";
+import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
@@ -103,6 +107,8 @@ async function initializeNewContainer(
 	return [diceRollerController1Props, diceRollerController2Props];
 }
 
+let devtools: IRouterliciousDevtools | undefined;
+
 async function start(): Promise<void> {
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 	// and hook to the Telemetry system
@@ -110,6 +116,7 @@ async function start(): Promise<void> {
 		connection: connectionConfig,
 	};
 	const client = new AzureClient(clientProps);
+
 	let container: IFluidContainer;
 	let services: AzureContainerServices;
 	let id: string;
@@ -152,10 +159,26 @@ async function start(): Promise<void> {
 	const diceRollerController1 = new DiceRollerController(diceRollerController1Props);
 	const diceRollerController2 = new DiceRollerController(diceRollerController2Props);
 
+	// Initialize Devtools
+	// TODO: logger
+	devtools = initializeDevtools({
+		logger: undefined,
+		initialContainers: [
+			{
+				container,
+				containerId: id,
+				containerNickname: "Dice Roller Container",
+			},
+		],
+	});
+
 	const contentDiv = document.getElementById("content") as HTMLDivElement;
 	contentDiv.append(
 		makeAppView([diceRollerController1, diceRollerController2], services.audience),
 	);
 }
 
-start().catch(console.error);
+start().catch((error) => {
+	console.error(error);
+	devtools?.dispose();
+});

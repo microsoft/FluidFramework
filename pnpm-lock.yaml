@@ -212,6 +212,7 @@ importers:
 
   azure/packages/external-controller:
     specifiers:
+      '@fluid-experimental/routerlicious-devtools': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/azure-client': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
@@ -256,6 +257,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-experimental/routerlicious-devtools': link:../../../packages/tools/client-debugger/routerlicious-devtools
       '@fluidframework/azure-client': link:../azure-client
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
