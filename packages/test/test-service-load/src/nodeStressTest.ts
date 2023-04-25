@@ -71,6 +71,7 @@ async function main() {
 			"Flag indicating whether to create a document corresponding \
         to the testId passed",
 		)
+		.option("--ring <ring>", "Which ring to use")
 		.parse(process.argv);
 
 	const driver: TestDriverTypes = commander.driver;
@@ -85,6 +86,7 @@ async function main() {
 	const credFile: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
 	const createTestId: boolean = commander.createTestId ?? false;
+	const ring: string | undefined = commander.ring;
 
 	const profile = getProfile(profileName);
 
@@ -105,6 +107,7 @@ async function main() {
 		createTestId,
 		testUsers,
 		profileName,
+		ring,
 	});
 }
 
@@ -123,6 +126,7 @@ async function orchestratorProcess(
 		createTestId?: boolean;
 		testUsers?: ITestUserConfig;
 		profileName: string;
+		ring: string | undefined,
 	},
 ) {
 	const url = await (args.testId !== undefined && args.createTestId === false
@@ -152,6 +156,7 @@ async function orchestratorProcess(
 		driverEndpointName: testDriver.endpointName,
 		profile: args.profileName,
 		runId: undefined,
+		ring: args.ring,
 	});
 
 	const runnerArgs: string[][] = [];
