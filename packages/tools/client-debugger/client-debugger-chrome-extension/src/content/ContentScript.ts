@@ -6,7 +6,7 @@
 import {
 	devtoolsMessageSource,
 	ISourcedDevtoolsMessage,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 } from "@fluid-tools/client-debugger";
 
 import { extensionMessageSource, relayMessageToPort, relayMessageToWindow } from "../messaging";
@@ -48,7 +48,7 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 
 		// Only relay message if it is one of ours, and if the source is the window's debugger
 		// (and not a message originating from the extension).
-		if (isDebuggerMessage(message) && message.source === devtoolsMessageSource) {
+		if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
 			relayMessageToPort(
 				message,
 				"webpage",
@@ -65,7 +65,7 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
-		if (isDebuggerMessage(message) && message.source === extensionMessageSource) {
+		if (isDevtoolsMessage(message) && message.source === extensionMessageSource) {
 			relayMessageToWindow(
 				message,
 				"Background Worker worker",
