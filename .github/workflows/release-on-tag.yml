@@ -52,7 +52,9 @@ jobs:
         uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ github.token }}"
+          automatic_release_tag: ${{ fromJson(env.RELEASE_JSON).tag }}
           prerelease: false
+          draft: true
           title: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
           files: |
             manifests/*.*

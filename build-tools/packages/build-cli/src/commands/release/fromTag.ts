@@ -64,13 +64,14 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 
 	async run(): Promise<{
 		packageOrReleaseGroup: ReleaseGroup | ReleasePackage;
+    tag: string;
 		releaseType: VersionBumpType;
 		version: ReleaseVersion;
 	}> {
 		const tagInput = this.args.tag;
 		const context = await this.getContext();
 
-		const [releaseGroup, version] = parseTag(tagInput);
+		const [releaseGroup, version, tag] = parseTag(tagInput);
 		this.releaseGroupOrPackage = releaseGroup;
 
 		this.releaseData = await this.collectReleaseData(
@@ -112,6 +113,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		// When the --json flag is passed, the command will return the raw data as JSON.
 		return {
 			packageOrReleaseGroup: this.releaseGroupOrPackage,
+      tag,
 			releaseType,
 			version: version.version,
 		};
@@ -120,7 +122,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 
 const pre = "refs/tags/";
 
-const parseTag = (input: string): [ReleaseGroup, semver.SemVer] => {
+const parseTag = (input: string): [ReleaseGroup, semver.SemVer, string] => {
 	const tag = input.startsWith(pre) ? input.slice(pre.length) : input;
 	const [rg, ver] = tag.split("_v");
 	if (!isReleaseGroup(rg)) {
@@ -132,5 +134,5 @@ const parseTag = (input: string): [ReleaseGroup, semver.SemVer] => {
 		throw new Error(`Invalid version parsed from tag: ${ver}`);
 	}
 
-	return [rg, version];
+	return [rg, version, tag];
 };
