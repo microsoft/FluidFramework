@@ -48,6 +48,7 @@ jobs:
           packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o manifests
 
       - name: Create GH release
+        if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: false
@@ -59,7 +60,6 @@ jobs:
           tag: ${{ fromJson(env.RELEASE_JSON).tag }}
           generateReleaseNotes: true
 
-          bodyFile: "body.md"
       # - name: Create release
       #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
       #   uses: marvinpinto/action-automatic-releases@latest
