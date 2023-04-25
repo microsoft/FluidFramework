@@ -33,7 +33,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod"] = "restart";
-		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 10000;
+		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
 	});
 
 	itExpects(
