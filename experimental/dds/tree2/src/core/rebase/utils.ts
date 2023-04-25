@@ -133,8 +133,6 @@ export function rebaseBranch<TChange>(
 				...inverses,
 				...targetRebasePath,
 			]);
-			// let change = rebaseChangeOverChanges(changeRebaser, c.change, inverses);
-			// change = rebaseChangeOverChanges(changeRebaser, change, targetRebasePath);
 			effectiveBase = {
 				revision: c.revision,
 				sessionId: c.sessionId,
