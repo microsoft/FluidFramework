@@ -12,7 +12,10 @@ import { generateToken, getCorrelationId } from "@fluidframework/server-services
  * Manager to fetch document from Alfred using the internal URL.
  */
 export class DocumentManager implements IDocumentManager {
-	constructor(private readonly internalAlfredUrl: string, private readonly tenantManager: ITenantManager) {}
+	constructor(
+		private readonly internalAlfredUrl: string,
+		private readonly tenantManager: ITenantManager,
+	) {}
 
 	public async readDocument(tenantId: string, documentId: string): Promise<IDocument> {
 		const restWrapper = await this.getBasicRestWrapper(tenantId, documentId);
