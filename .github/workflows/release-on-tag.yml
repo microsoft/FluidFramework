@@ -1,0 +1,66 @@
+name: "release-on-tag"
+
+on:
+  push:
+    tags:
+      - "client_v*"
+
+jobs:
+  tagged-release:
+    name: Tagged Release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./build-tools
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+
+      # - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+      #   with:
+      #     version: "^7"
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version: "14"
+          cache: "pnpm"
+          cache-dependency-path: build-tools/pnpm-lock.yaml
+
+      - name: Install Fluid build tools
+        run: |
+          corepack enable
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
+          pnpm install --global packages/build-cli
+
+      - name: Check out tag
+        run: |
+          git checkout ${{ github.ref }}
+
+      - name: Get release type
+        id: releaseType
+        run: |
+          RJSON=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --json)
+          echo "RELEASE_JSON=$RJSON" >> "$GITHUB_OUTPUT"
+          RGROUP=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --releaseGroup)
+          echo "RELEASE_GROUP=$RGROUP" >> "$GITHUB_OUTPUT"
+          RTYPE=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --releaseType)
+          echo "RELEASE_TYPE=$RTYPE" >> "$GITHUB_OUTPUT"
+          RVERSION=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --version)
+          echo "RELEASE_VERSION=$RVERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create manifests
+        run: |
+          mkdir manifests
+          packages/build-cli/bin/run release report -g ${{ steps.releaseType.outputs.RELEASE_GROUP }} -o manifests
+
+      - name: Create release
+        if: steps.releaseType.outputs.RELEASE_TYPE == 'patch'
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ github.token }}"
+          prerelease: false
+          title: "Fluid Framework v${{ steps.releaseType.outputs.RELEASE_VERSION }} (${{ steps.releaseType.outputs.RELEASE_TYPE }})"
+          files: |
+            manifests/*.*

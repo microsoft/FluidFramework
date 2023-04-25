@@ -4,6 +4,7 @@
 Release commands are used to manage the Fluid release process.
 
 * [`flub release`](#flub-release)
+* [`flub release fromTag TAG`](#flub-release-fromtag-tag)
 * [`flub release history`](#flub-release-history)
 * [`flub release report`](#flub-release-report)
 
@@ -46,6 +47,24 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release.ts)_
+
+## `flub release fromTag TAG`
+
+Determines release information from a git tag.
+
+```
+USAGE
+  $ flub release fromTag TAG [-v] [--json]
+
+FLAGS
+  -v, --verbose  Verbose logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Determines release information from a git tag.
+```
 
 ## `flub release history`
 
