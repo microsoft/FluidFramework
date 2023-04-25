@@ -57,15 +57,24 @@ jobs:
       #     sinceTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
 
       # This action sets a "changes" output variable that contains the generated changelog text.
+      # - name: Generate changelog
+      #   id: changelog
+      #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
+      #   uses: requarks/changelog-action@v1
+      #   with:
+      #     token: ${{ github.token }}
+      #     fromTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
+      #     toTag: ${{ fromJson(env.RELEASE_JSON).tag }}
+      #     writeToFile: false
+
+      # This action sets a "changelog" output variable that contains the generated changelog text.
       - name: Generate changelog
+        uses: Bullrich/generate-release-changelog@master
         id: changelog
-        if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
-        uses: requarks/changelog-action@v1
         with:
-          token: ${{ github.token }}
-          fromTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
-          toTag: ${{ fromJson(env.RELEASE_JSON).tag }}
-          writeToFile: false
+          from-tag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
+          to-tag: ${{ fromJson(env.RELEASE_JSON).tag }}
+          type: ${{ fromJson(env.RELEASE_JSON).releaseType }}
 
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
@@ -83,7 +92,7 @@ jobs:
           name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
           omitNameDuringUpdate: false # always overwrite the name
 
-          body: ${{ steps.changelog.outputs.changes }}
+          body: ${{ steps.changelog.outputs.changelog }}
           omitBodyDuringUpdate: false # Don't overwrite the body
 
           artifacts: "build-tools/reports/*.*"
