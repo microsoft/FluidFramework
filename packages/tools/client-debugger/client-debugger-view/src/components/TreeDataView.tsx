@@ -36,7 +36,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * FluidObjectNode with children.
 		 */
 		case VisualNodeKind.FluidTreeNode:
-			return <FluidTreeView containerId={containerId} node={node} />;
+			return <FluidTreeView containerId={containerId} nodeKey={nodeKey} node={node} />;
 		/**
 		 * Node with primitive value.
 		 */

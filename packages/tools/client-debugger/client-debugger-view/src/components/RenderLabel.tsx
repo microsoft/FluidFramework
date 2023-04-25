@@ -13,7 +13,7 @@ import { tokens } from "@fluentui/react-components";
  */
 export interface RenderLabelProps {
 	nodeKey: string | undefined;
-	nodeTypeMetadata: string | undefined;
+	nodeTypeMetadata?: string | undefined;
 	nodeKind?: string;
 	itemSize?: Primitive;
 	nodeValue?: Primitive;

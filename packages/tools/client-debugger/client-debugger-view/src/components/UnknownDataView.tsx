@@ -23,7 +23,6 @@ export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement
 	return (
 		<TreeItem>
 			<TreeItemLayout>
-				{" "}
 				{`Encountered an unrecognized kind of data object: ${node.nodeKind}`}{" "}
 			</TreeItemLayout>
 		</TreeItem>

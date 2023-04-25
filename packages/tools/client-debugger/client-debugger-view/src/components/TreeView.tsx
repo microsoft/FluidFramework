@@ -5,7 +5,9 @@
 
 import React from "react";
 import { HasContainerId, VisualTreeNode } from "@fluid-tools/client-debugger";
-import { TreeRenderHelper } from "./TreeRenderHelper";
+import { RenderSummaryTree } from "./RenderSumaryTree";
+import { TreeDataView } from "./TreeDataView";
+import { RenderLabel } from "./RenderLabel";
 
 /**
  * {@link TreeView} input props.
@@ -21,5 +23,18 @@ export interface TreeViewProps extends HasContainerId {
 export function TreeView(props: TreeViewProps): React.ReactElement {
 	const { containerId, nodeKey, node } = props;
 
-	return <TreeRenderHelper containerId={containerId} nodeKey={nodeKey} node={node} />;
+	const childNodes = Object.entries(node.children).map(([key, fluidObject]) => (
+		<TreeDataView key={key} containerId={containerId} nodeKey={key} node={fluidObject} />
+	));
+
+	const header = (
+		<RenderLabel
+			nodeKey={nodeKey}
+			nodeTypeMetadata={node.typeMetadata}
+			nodeKind={node.nodeKind}
+			itemSize={node.metadata?.size}
+		/>
+	);
+
+	return <RenderSummaryTree header={header}>{childNodes}</RenderSummaryTree>;
 }

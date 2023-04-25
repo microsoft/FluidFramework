@@ -24,6 +24,7 @@ import { MessageRelayContext } from "../MessageRelayContext";
 import { MockMessageRelay } from "./MockMessageRelay";
 
 const CONTAINERID = "test-container-id";
+const NODEKEY = "test-node-key";
 
 describe("VisualTreeView component tests", () => {
 	// eslint-disable-next-line jest/expect-expect
@@ -101,7 +102,7 @@ describe("VisualTreeView component tests", () => {
 
 		render(
 			<MessageRelayContext.Provider value={messageRelay}>
-				<FluidTreeView containerId={CONTAINERID} node={treeData} />,
+				<FluidTreeView containerId={CONTAINERID} nodeKey={NODEKEY} node={treeData} />,
 			</MessageRelayContext.Provider>,
 		);
 

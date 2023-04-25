@@ -15,7 +15,7 @@ import {
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
-import { TreeRenderHelper } from "./TreeRenderHelper";
+import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "EXTENSION(HandleView)";
 
@@ -83,5 +83,5 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <Waiting />;
 	}
 
-	return <TreeRenderHelper containerId={containerId} nodeKey={nodeKey} node={visualTree} />;
+	return <TreeDataView containerId={containerId} nodeKey={nodeKey} node={visualTree} />;
 }

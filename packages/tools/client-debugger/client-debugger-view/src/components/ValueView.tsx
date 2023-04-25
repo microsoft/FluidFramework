@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+import { ValueNodeBase } from "@fluid-tools/client-debugger";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeItem } from "@fluentui/react-components/unstable";
-import { ValueNodeBase } from "@fluid-tools/client-debugger";
 import { RenderLabel } from "./RenderLabel";
 
 /**
