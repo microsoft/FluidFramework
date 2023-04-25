@@ -176,9 +176,19 @@ async function start(): Promise<void> {
 	contentDiv.append(
 		makeAppView([diceRollerController1, diceRollerController2], services.audience),
 	);
+
+	// Ensure that devtools are disposed on teardown.
+	window.addEventListener("beforeunload", () => {
+		disposeDevtools();
+	});
 }
 
 start().catch((error) => {
+	disposeDevtools();
 	console.error(error);
-	devtools?.dispose();
 });
+
+function disposeDevtools(): void {
+	devtools?.dispose();
+	devtools = undefined;
+}
