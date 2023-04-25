@@ -8,7 +8,6 @@ import { assert } from "@fluidframework/common-utils";
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { IIdCompressor, IIdCompressorCore } from "@fluidframework/runtime-definitions";
 import {
 	ChildLogger,
 	loggerToMonitoringContext,
@@ -37,7 +36,6 @@ export interface IOutboxParameters {
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
 	readonly logger: ITelemetryLogger;
-	readonly idCompressor?: IIdCompressorCore & IIdCompressor;
 	readonly groupingManager: OpGroupingManager;
 }
 

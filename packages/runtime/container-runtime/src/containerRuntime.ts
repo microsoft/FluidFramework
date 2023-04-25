@@ -1319,7 +1319,6 @@ export class ContainerRuntime
 				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
-			idCompressor: this.idCompressor,
 			groupingManager: opGroupingManager,
 		});
 
@@ -1467,6 +1466,7 @@ export class ContainerRuntime
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
+				idCompressorEnabled: compressorEnabled,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -1959,7 +1959,7 @@ export class ContainerRuntime
 							"Received an IdAllocation op without having the compressor enabled",
 						);
 					}
-					this.idCompressor?.finalizeCreationRange(message.contents as IdCreationRange);
+					this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
 					break;
 				case ContainerMessageType.ChunkedOp:
 				case ContainerMessageType.Rejoin:
@@ -3146,7 +3146,6 @@ export class ContainerRuntime
 			case ContainerMessageType.IdAllocation:
 				// Remove the stashed state from the op
 				// so that it doesn't go over the wire
-				delete content.stashedState;
 				this.submit(type, content, localOpMetadata);
 				break;
 			case ContainerMessageType.ChunkedOp:
