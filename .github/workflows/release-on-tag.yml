@@ -53,6 +53,8 @@ jobs:
         uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ github.token }}
+          dueTag: ${{ fromJson(env.RELEASE_JSON).tag }}
+          sinceTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
 
       # This action sets a "changes" output variable that contains the generated changelog text.
       # - name: Generate changelog
@@ -61,8 +63,8 @@ jobs:
       #   uses: requarks/changelog-action@v1
       #   with:
       #     token: ${{ github.token }}
-      #     fromTag: ${{ fromJson(env.RELEASE_JSON).tag }}
-      #     toTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
+      #     fromTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
+      #     toTag: ${{ fromJson(env.RELEASE_JSON).tag }}
       #     writeToFile: false
 
       - name: Create GH release
@@ -81,8 +83,8 @@ jobs:
           name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
           omitNameDuringUpdate: false # always overwrite the name
 
-          body: ${{ steps.changelog.outputs.changelog }}
-          omitBodyDuringUpdate: true # Don't overwrite the body
+          body: ${{ steps.changelog.outputs.changes }}
+          omitBodyDuringUpdate: false # Don't overwrite the body
 
           artifacts: "build-tools/manifests/*.*"
           artifactErrorsFailBuild: true
