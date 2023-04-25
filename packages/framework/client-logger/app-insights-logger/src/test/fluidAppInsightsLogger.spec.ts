@@ -16,12 +16,9 @@ describe("FluidAppInsightsLogger", () => {
 					"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 			},
 		});
-		const loadAppInsightsSpy = spy(appInsightsClient, "loadAppInsights");
 		const trackEventSpy = spy(appInsightsClient, "trackEvent");
 
 		const logger = new FluidAppInsightsLogger(appInsightsClient);
-
-		assert.calledOnce(loadAppInsightsSpy);
 
 		const mockTelemetryEvent = {
 			category: "mockEvent",
