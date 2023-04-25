@@ -338,9 +338,6 @@ export class FluidDevtools
 		this.containers.clear();
 		this.postContainerList(); // Notify listeners that the list of Containers changed.
 
-		// Notify listeners that the devtools have been disposed.
-		this.emit("devtoolsDisposed");
-
 		this._disposed = true;
 	}
 }

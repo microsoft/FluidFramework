@@ -260,8 +260,6 @@ export interface FluidDevtoolsEvents extends IEvent {
     (event: "containerDevtoolsRegistered", listener: (containerId: string) => void): void;
     // @eventProperty
     (event: "containerDevtoolsClosed", listener: (containerId: string) => void): void;
-    // @eventProperty
-    (event: "devtoolsDisposed", listener: () => void): void;
 }
 
 // @public
