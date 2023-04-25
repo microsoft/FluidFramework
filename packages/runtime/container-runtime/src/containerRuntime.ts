@@ -1646,7 +1646,7 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorEnabled: this.idCompressor !== undefined,
+			idCompressorEnabled: this.idCompressor !== undefined ? true : undefined,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
