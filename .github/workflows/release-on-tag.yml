@@ -47,14 +47,41 @@ jobs:
           mkdir manifests
           packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o manifests
 
-      - name: Create release
-        if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
-        uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Create GH release
+        uses: ncipollo/release-action@v1
         with:
-          repo_token: "${{ github.token }}"
-          automatic_release_tag: ${{ fromJson(env.RELEASE_JSON).tag }}
-          prerelease: false
+          allowUpdates: false
+          artifacts: "manifests/*.*"
+          artifactErrorsFailBuild: true
           draft: true
-          title: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
-          files: |
-            manifests/*.*
+          skipIfReleaseExists: true
+          name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
+          tag: ${{ fromJson(env.RELEASE_JSON).tag }}
+          generateReleaseNotes: true
+
+          bodyFile: "body.md"
+      # - name: Create release
+      #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
+      #   uses: marvinpinto/action-automatic-releases@latest
+      #   with:
+      #     repo_token: "${{ github.token }}"
+      #     automatic_release_tag: ${{ fromJson(env.RELEASE_JSON).tag }}
+      #     prerelease: false
+      #     draft: true
+      #     title: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
+      #     files: |
+      #       manifests/*.*
+
+      # - name: Create release
+      #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     draft: true
+      #     prerelease: false
+      #     repo_token: "${{ github.token }}"
+      #     tag_name: ${{ fromJson(env.RELEASE_JSON).tag }}
+      #     name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
+      #     files: |
+      #       manifests/*.*
+      #     fail_on_unmatched_files: true
+

@@ -65,6 +65,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 	async run(): Promise<{
 		packageOrReleaseGroup: ReleaseGroup | ReleasePackage;
     tag: string;
+    date?: Date;
 		releaseType: VersionBumpType;
 		version: ReleaseVersion;
 	}> {
@@ -114,6 +115,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		return {
 			packageOrReleaseGroup: this.releaseGroupOrPackage,
       tag,
+      date: release.latestReleasedVersion.date,
 			releaseType,
 			version: version.version,
 		};
