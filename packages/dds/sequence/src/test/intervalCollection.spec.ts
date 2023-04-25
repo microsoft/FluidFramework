@@ -239,6 +239,7 @@ describe("SharedString interval collections", () => {
 				assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
 			});
 
+			// skipped: endpoint behavior of sticky intervals is not currently implemented
 			it.skip("has left stickiness when spanning whole string and insertion at index 0", () => {
 				const collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "abc");
@@ -280,6 +281,31 @@ describe("SharedString interval collections", () => {
 				assert.strictEqual(sharedString.getText(), "abdefc", "different text");
 
 				assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+			});
+
+			it("has right stickiness during delete of end of interval", () => {
+				// [abcX)
+				// [abcf)
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abcXdef");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					3,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.Right,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+
+				containerRuntimeFactory.processAllMessages();
+
+				sharedString.removeRange(3, 6);
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "abcf", "different text");
+				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
 			});
 		});
 
