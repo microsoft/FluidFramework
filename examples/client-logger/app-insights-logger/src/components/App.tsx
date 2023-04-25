@@ -151,7 +151,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 	return (
 		<div style={{ padding: "10px" }}>
 			<div style={{ padding: "10px" }}>
-				<h4>{containerId}</h4>
+				<h4>{`Container Id: ${containerId}`}</h4>
 			</div>
 
 			<div style={{ padding: "10px" }}>
@@ -230,16 +230,10 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 	const [counterValue, setCounterValue] = React.useState<number>(counter.value);
 
 	React.useEffect(() => {
-		function updateCounterValue(newValue: number): void {
-			setCounterValue(Math.max(newValue, 0));
-		}
-
-		counter.on("incremented", updateCounterValue);
-
-		return (): void => {
-			counter.off("incremented", updateCounterValue);
-		};
-	}, [counter, setCounterValue]);
+		counter.on("incremented", () => {
+			setCounterValue(counter.value);
+		});
+	}, [counter]);
 
 	return (
 		<div
@@ -247,7 +241,7 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 			style={{ display: "flex", flexDirection: "row", gap: "10px" }}
 		>
 			<button
-				onClick={() => counter.increment(1)}
+				onClick={() => counter.increment(-1)}
 				disabled={counterValue === 0}
 				aria-describedby={"decrement-counter-button"}
 			>
@@ -257,7 +251,7 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 			<div>{counterValue}</div>
 
 			<button
-				onClick={() => counter.increment(-1)}
+				onClick={() => counter.increment(1)}
 				aria-describedby={"increment-counter-button"}
 			>
 				Increment
