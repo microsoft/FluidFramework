@@ -50,8 +50,11 @@ export function rebaseBranch<TChange>(
  * @param newBase - the commit to rebase the source branch onto.
  * @param targetHead - The head of the branch that `newBase` belongs to. Must be `newBase` or a descendent of `newBase`.
  * @returns the head of a rebased source branch and the cumulative change to the source branch
- * @remarks This function will rebase the source branch _farther_ than `newBase` if the source branch's next commits after
- * `newBase` match those on the target branch. For example:
+ * @remarks While a single branch must not have multiple commits with the same revision tag (that will result in undefined
+ * behavior), there may be a commit on the source branch with the same revision tag as a commit on the target branch. If such
+ * a pair is encountered while rebasing, it will be "cancelled out" in the new branch. Additionally, this function will rebase
+ * the source branch _farther_ than `newBase` if the source branch's next commits after `newBase` match those on the target branch.
+ * For example:
  * ```
  * // (A)-(B)-(C)-(D)-(E) <- Branch X
  * //   \
