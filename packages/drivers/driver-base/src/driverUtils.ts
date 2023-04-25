@@ -45,13 +45,7 @@ export function getW3CData(url: string, initiatorType: string) {
 	let w3cStartTime: number | undefined; // W3C Start time = fetchStart time
 
 	// getEntriesByType is only available in browser performance object
-	// const resources1 = performance.getEntriesByType?.("resource") ?? [];
-	let resources1;
-	try {
-		resources1 = performance.getEntriesByType?.("resource") ?? [];
-	} catch (e) {
-		resources1 = [];
-	}
+	const resources1 = performance.getEntriesByType?.("resource") ?? [];
 	// Usually the latest fetch call is to the end of resources, so we start from the end.
 	for (let i = resources1.length - 1; i > 0; i--) {
 		const indResTime = resources1[i] as PerformanceResourceTiming;
