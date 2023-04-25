@@ -42,10 +42,10 @@ jobs:
         run: |
           echo "RELEASE_JSON=$(packages/build-cli/bin/run release fromTag ${{ github.ref }} --json | jq -c)" >> $GITHUB_ENV
 
-      - name: Create manifests
+      - name: Create release reports (manifests)
         run: |
-          mkdir manifests
-          packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o manifests
+          mkdir reports
+          packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o reports
 
       # This action sets a "changelog" output variable that contains the generated changelog text.
       # - name: Generate changelog
@@ -86,7 +86,7 @@ jobs:
           body: ${{ steps.changelog.outputs.changes }}
           omitBodyDuringUpdate: false # Don't overwrite the body
 
-          artifacts: "build-tools/manifests/*.*"
+          artifacts: "build-tools/reports/*.*"
           artifactErrorsFailBuild: true
           tag: ${{ fromJson(env.RELEASE_JSON).tag }}
           # generateReleaseNotes: true
@@ -101,7 +101,7 @@ jobs:
       #     draft: true
       #     title: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
       #     files: |
-      #       manifests/*.*
+      #       reports/*.*
 
       # - name: Create release
       #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch'
@@ -113,6 +113,6 @@ jobs:
       #     tag_name: ${{ fromJson(env.RELEASE_JSON).tag }}
       #     name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
       #     files: |
-      #       manifests/*.*
+      #       reports/*.*
       #     fail_on_unmatched_files: true
 
