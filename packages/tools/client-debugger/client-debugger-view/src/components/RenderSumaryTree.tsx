@@ -36,7 +36,7 @@ export function RenderSummaryTree(props: RenderSummaryTreeProps): React.ReactEle
 					{children?.map((child, index) => {
 						return (
 							// TODO: Wrap with <TreeItem>
-							<>{child}</>
+							<div key={index}>{child}</div>
 						);
 					})}
 				</Tree>

@@ -23,6 +23,7 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { label, node } = props;
 
 	return (
+		// TODO: Remove TreeItem
 		<TreeItem>
 			<RenderLabel
 				label={label}

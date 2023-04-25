@@ -47,7 +47,7 @@ export function RenderLabel(props: RenderLabelProps): React.ReactElement {
 	return (
 		<>
 			{nodeValue !== undefined ? (
-				<TreeItemLayout>
+				<TreeItemLayout style={{ marginLeft: "25px" }}>
 					{`${label}`}
 					<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
 						({nodeTypeMetadata})
