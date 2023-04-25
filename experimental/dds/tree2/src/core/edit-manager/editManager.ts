@@ -255,8 +255,9 @@ export class EditManager<
 				fail(
 					"Received a sequenced change from the local session despite having no local changes",
 				);
-			this.trunkUndoRedoManager.trackCommit(commit);
-			this.pushToTrunk(sequenceNumber, { ...newCommit, change: commit.change });
+			const trunkCommit = { ...newCommit, change: commit.change };
+			this.trunkUndoRedoManager.trackCommit(trunkCommit);
+			this.pushToTrunk(sequenceNumber, trunkCommit);
 			// TODO: Can this be optimized by simply mutating the localPath parent pointers? Is it safe to do that?
 			this.localBranch = localPath.reduce(mintCommit, this.trunk);
 			return emptyDelta;
