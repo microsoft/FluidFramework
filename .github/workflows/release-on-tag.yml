@@ -47,18 +47,40 @@ jobs:
           mkdir manifests
           packages/build-cli/bin/run release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o manifests
 
+      # This action sets a "changes" output variable that contains the generated changelog text.
+      - name: Generate changelog
+        id: changelog
+        if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
+        uses: requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          fromTag: ${{ fromJson(env.RELEASE_JSON).tag }}
+          toTag: ${{ fromJson(env.RELEASE_JSON).previousTag }}
+          writeToFile: false
+
       - name: Create GH release
         if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
         uses: ncipollo/release-action@v1
         with:
-          allowUpdates: false
-          artifacts: "manifests/*.*"
-          artifactErrorsFailBuild: true
-          draft: true
+          # Allow updates to existing releases.
+          allowUpdates: true
+
+          # Will skip if a published (non-draft) release already exists.
           skipIfReleaseExists: true
+
+          draft: true
+          omitDraftDuringUpdate: true # don't change the draft state when updating
+
           name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
+          omitNameDuringUpdate: false # always overwrite the name
+
+          body: ${{ steps.changelog.outputs.changes }}
+          omitBodyDuringUpdate: true # Don't overwrite the body
+
+          artifacts: "build-tools/manifests/*.*"
+          artifactErrorsFailBuild: true
           tag: ${{ fromJson(env.RELEASE_JSON).tag }}
-          generateReleaseNotes: true
+          # generateReleaseNotes: true
 
       # - name: Create release
       #   if: fromJson(env.RELEASE_JSON).releaseType == 'patch'

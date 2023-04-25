@@ -68,6 +68,8 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
     date?: Date;
 		releaseType: VersionBumpType;
 		version: ReleaseVersion;
+    previousVersion?: ReleaseVersion;
+    previousTag?: string,
 	}> {
 		const tagInput = this.args.tag;
 		const context = await this.getContext();
@@ -112,12 +114,15 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		}
 
 		// When the --json flag is passed, the command will return the raw data as JSON.
+    const previousVersion = release.previousReleasedVersion?.version;
 		return {
 			packageOrReleaseGroup: this.releaseGroupOrPackage,
       tag,
       date: release.latestReleasedVersion.date,
 			releaseType,
 			version: version.version,
+      previousVersion,
+      previousTag: previousVersion === undefined ? undefined : `${this.releaseGroupOrPackage}_v${previousVersion}`
 		};
 	}
 }
