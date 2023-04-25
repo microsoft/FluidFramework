@@ -108,21 +108,10 @@ export class RouterliciousDevtools {
 	 */
 	private readonly _devtools: IFluidDevtools;
 
-	/**
-	 * Whether or not the instance has been disposed yet.
-	 *
-	 * @remarks Not related to Container disposal.
-	 *
-	 * @see {@link IRouterliciousDevtools.dispose}
-	 */
-	private _disposed: boolean;
-
 	public constructor(_devtools: IFluidDevtools) {
 		// super();
 
 		this._devtools = _devtools;
-
-		this._disposed = false;
 	}
 
 	/**
@@ -140,14 +129,13 @@ export class RouterliciousDevtools {
 	 */
 	public dispose(): void {
 		this._devtools.dispose();
-		this._disposed = true;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
-		return this._disposed;
+		return this._devtools.disposed;
 	}
 }
 
