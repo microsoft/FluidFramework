@@ -7,19 +7,20 @@ import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
- * An implementation of ITelemetryBaseLogger that routes Fluid telemetry
- * events to Azure App Insights using the App Insights trackEvent API
- * @public
+ * An implementation of {@link @fluidframework/common-definitions#ITelemetryBaseLogger | ITelemetryBaseLogger}
+ * that routes Fluid telemetry events to Azure App Insights using the App Insights trackEvent API
+ * @sealed
  */
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**
-	 * The Azure ApplicationInsights client utilized by this logger
+	 * The Azure ApplicationInsights client utilized by this logger.
+	 * The ApplicationInsights MUST be initialized with client.loadAppInsights()
+	 * or else logging will not occur.
 	 */
 	protected readonly baseLoggingClient: ApplicationInsights;
 
 	public constructor(client: ApplicationInsights) {
 		this.baseLoggingClient = client;
-		this.baseLoggingClient.loadAppInsights();
 	}
 
 	/**

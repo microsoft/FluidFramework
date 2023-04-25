@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { FluidAppInsightsLogger } from "@fluidframework/app-insights-logger";
+import { FluidAppInsightsLogger } from "@fluid-internal/app-insights-logger";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
@@ -46,6 +46,8 @@ function initializeTinyliciousClient(): TinyliciousClient {
 				"InstrumentationKey=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/;LiveEndpoint=https://westus2.livediagnostics.monitor.azure.com/",
 		},
 	});
+
+	// appInsightsClient.loadAppInsights();
 
 	return new TinyliciousClient({
 		logger: new FluidAppInsightsLogger(appInsightsClient),
