@@ -15,7 +15,7 @@ export interface RenderLabelProps {
 	/**
 	 * Key of the child node from Record {@link VisauTree}.
 	 */
-	nodeKey: string;
+	label: string;
 
 	/**
 	 * Type of the object.
@@ -42,13 +42,13 @@ export interface RenderLabelProps {
  * Renders the header of the item.
  */
 export function RenderLabel(props: RenderLabelProps): React.ReactElement {
-	const { nodeKey, nodeTypeMetadata, nodeKind, itemSize, nodeValue } = props;
+	const { label, nodeTypeMetadata, nodeKind, itemSize, nodeValue } = props;
 
 	return (
 		<>
 			{nodeValue !== undefined ? (
 				<TreeItemLayout>
-					{`${nodeKey}`}
+					{`${label}`}
 					<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
 						({nodeTypeMetadata})
 					</span>
@@ -56,7 +56,7 @@ export function RenderLabel(props: RenderLabelProps): React.ReactElement {
 				</TreeItemLayout>
 			) : (
 				<TreeItemLayout>
-					{`${nodeKey === undefined ? nodeTypeMetadata : nodeKey}`}
+					{`${label === undefined ? nodeTypeMetadata : label}`}
 					<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
 						({nodeTypeMetadata === undefined ? nodeKind : nodeTypeMetadata})
 					</span>

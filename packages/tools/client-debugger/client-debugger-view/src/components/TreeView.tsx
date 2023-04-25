@@ -13,7 +13,7 @@ import { RenderLabel } from "./RenderLabel";
  * {@link TreeView} input props.
  */
 export interface TreeViewProps extends HasContainerId {
-	nodeKey: string;
+	label: string;
 	node: VisualTreeNode;
 }
 
@@ -21,15 +21,15 @@ export interface TreeViewProps extends HasContainerId {
  * Render data with type VisualNodeKind.TreeNode and render its children.
  */
 export function TreeView(props: TreeViewProps): React.ReactElement {
-	const { containerId, nodeKey, node } = props;
+	const { containerId, label, node } = props;
 
 	const childNodes = Object.entries(node.children).map(([key, fluidObject]) => (
-		<TreeDataView key={key} containerId={containerId} nodeKey={key} node={fluidObject} />
+		<TreeDataView key={key} containerId={containerId} label={key} node={fluidObject} />
 	));
 
 	const header = (
 		<RenderLabel
-			nodeKey={nodeKey}
+			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			nodeKind={node.nodeKind}
 			itemSize={node.metadata?.size}

@@ -16,7 +16,7 @@ import { UnknownDataView } from "./UnknownDataView";
  * {@link TreeDataView} input props.
  */
 export interface TreeDataViewProps extends HasContainerId {
-	nodeKey: string;
+	label: string;
 	node: VisualNode;
 }
 
@@ -24,29 +24,29 @@ export interface TreeDataViewProps extends HasContainerId {
  * Displays visual summary trees for DDS_s within the container based on the current node's type.
  */
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
-	const { containerId, nodeKey, node } = props;
+	const { containerId, label, node } = props;
 
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.
 		 */
 		case VisualNodeKind.TreeNode:
-			return <TreeView containerId={containerId} nodeKey={nodeKey} node={node} />;
+			return <TreeView containerId={containerId} label={label} node={node} />;
 		/**
 		 * FluidObjectNode with children.
 		 */
 		case VisualNodeKind.FluidTreeNode:
-			return <FluidTreeView containerId={containerId} nodeKey={nodeKey} node={node} />;
+			return <FluidTreeView containerId={containerId} label={label} node={node} />;
 		/**
 		 * Node with primitive value.
 		 */
 		case VisualNodeKind.ValueNode:
-			return <ValueView nodeKey={nodeKey} node={node} />;
+			return <ValueView label={label} node={node} />;
 		/**
 		 * FluidObjectNode with primitive value.
 		 */
 		case VisualNodeKind.FluidValueNode:
-			return <FluidValueView nodeKey={nodeKey} node={node} />;
+			return <FluidValueView label={label} node={node} />;
 		/**
 		 * Unknown data type.
 		 */
@@ -65,7 +65,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 				<FluidHandleView
 					containerId={containerId}
 					fluidObjectId={node.fluidObjectId}
-					nodeKey={nodeKey}
+					label={label}
 				/>
 			);
 		default:

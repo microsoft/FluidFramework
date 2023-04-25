@@ -9,7 +9,7 @@ import { RenderLabel } from "./RenderLabel";
  * {@link ValueView} input props.
  */
 export interface FluidValueViewProps {
-	nodeKey: string;
+	label: string;
 	node: FluidObjectValueNode;
 }
 
@@ -17,13 +17,9 @@ export interface FluidValueViewProps {
  * Render data with type VisualNodeKind.FluidValueNode and render its children.
  */
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
-	const { nodeKey, node } = props;
+	const { label, node } = props;
 
 	return (
-		<RenderLabel
-			nodeKey={nodeKey}
-			nodeTypeMetadata={node.typeMetadata}
-			nodeValue={node.value}
-		/>
+		<RenderLabel label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
 	);
 }

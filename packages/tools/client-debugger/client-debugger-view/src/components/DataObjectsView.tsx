@@ -86,7 +86,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 					<TreeDataView
 						key={key}
 						containerId={containerId}
-						nodeKey={key}
+						label={key}
 						node={fluidObject}
 					/>
 				);

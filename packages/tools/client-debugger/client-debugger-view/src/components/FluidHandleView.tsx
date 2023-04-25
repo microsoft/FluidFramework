@@ -23,14 +23,14 @@ const loggingContext = "EXTENSION(HandleView)";
  * {@link FluidHandleView} input props.
  */
 export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {
-	nodeKey: string;
+	label: string;
 }
 
 /**
  * Render data with type VisualNodeKind.FluidHandleNode and render its children.
  */
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
-	const { containerId, fluidObjectId, nodeKey } = props;
+	const { containerId, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
 
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
@@ -83,5 +83,5 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <Waiting />;
 	}
 
-	return <TreeDataView containerId={containerId} nodeKey={nodeKey} node={visualTree} />;
+	return <TreeDataView containerId={containerId} label={label} node={visualTree} />;
 }

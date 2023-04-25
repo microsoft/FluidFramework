@@ -10,7 +10,7 @@ import { RenderLabel } from "./RenderLabel";
  * {@link ValueView} input props.
  */
 export interface ValueViewProps {
-	nodeKey: string;
+	label: string;
 	node: ValueNodeBase;
 }
 
@@ -18,13 +18,9 @@ export interface ValueViewProps {
  * Render data with type VisualNodeKind.ValueNode and render its children.
  */
 export function ValueView(props: ValueViewProps): React.ReactElement {
-	const { nodeKey, node } = props;
+	const { label, node } = props;
 
 	return (
-		<RenderLabel
-			nodeKey={nodeKey}
-			nodeTypeMetadata={node.typeMetadata}
-			nodeValue={node.value}
-		/>
+		<RenderLabel label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
 	);
 }
