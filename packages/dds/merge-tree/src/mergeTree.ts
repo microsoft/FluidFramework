@@ -847,7 +847,7 @@ export class MergeTree {
 	 */
 	public _getSlideToSegment(
 		segment: ISegment | undefined,
-		cache?: Map<ISegment, ISegment | "detached">,
+		cache?: Map<ISegment, { seg?: ISegment }>,
 	): ISegment | undefined {
 		if (!segment || !isRemovedAndAcked(segment)) {
 			return segment;
@@ -855,36 +855,29 @@ export class MergeTree {
 
 		const cachedSegment = cache?.get(segment);
 		if (cachedSegment !== undefined) {
-			return cachedSegment === "detached" ? undefined : cachedSegment;
+			return cachedSegment.seg;
 		}
-		const segmentsWithSlidDst: ISegment[] = [];
-		let slideToSegment: ISegment | undefined;
+		const result: { seg?: ISegment } = {};
+		cache?.set(segment, result);
 		const goFurtherToFindSlideToSegment = (seg) => {
 			if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
-				slideToSegment = seg;
+				result.seg = seg;
 				return false;
 			}
-			if (cache !== undefined) {
-				segmentsWithSlidDst.push(seg);
+			if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
+				cache.set(seg, result);
 			}
 			return true;
 		};
 		// Slide to the next farthest valid segment in the tree.
 		forwardExcursion(segment, goFurtherToFindSlideToSegment);
-		if (slideToSegment) {
-			for (const seg of segmentsWithSlidDst) {
-				cache?.set(seg, slideToSegment);
-			}
-			return slideToSegment;
+		if (result.seg !== undefined) {
+			return result.seg;
 		}
 
 		// If no such segment is found, slide to the last valid segment.
 		backwardExcursion(segment, goFurtherToFindSlideToSegment);
-		for (const seg of segmentsWithSlidDst) {
-			cache?.set(seg, slideToSegment ?? "detached");
-		}
-
-		return slideToSegment;
+		return result.seg;
 	}
 
 	/**
@@ -900,46 +893,29 @@ export class MergeTree {
 	 * @param segments - An array of (not necessarily contiguous) segments with increasing ordinals.
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
-		const detachRefs = (segment: ISegment) => {
-			for (const ref of segment.localRefs ?? []) {
-				if (!refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
-					ref.callbacks?.beforeSlide?.(ref);
-					segment.localRefs?.removeLocalRef(ref);
-					ref.callbacks?.afterSlide?.(ref);
-				}
-			}
-		};
 		// References are slid in groups to preserve their order.
 		let currentSlideDestination: ISegment | undefined;
-		let currentSlideDirection: "forward" | "backward" | undefined;
-		let currentSlideGroup: ISegment[] = [];
-		const slide = (
-			from: ISegment,
-			to: ISegment | undefined,
-			direction: "forward" | "backward",
-		) => {
-			if (to !== undefined) {
-				const localRefs = (to.localRefs ??= new LocalReferenceCollection(to));
-				if (direction === "forward") {
-					localRefs.addBeforeTombstones(from.localRefs!);
-				} else {
-					localRefs.addAfterTombstones(from.localRefs!);
-				}
-			} else {
-				detachRefs(from);
-			}
-		};
-
+		let currentSlideIsForward: boolean | undefined;
+		let currentSlideGroup: LocalReferenceCollection[] = [];
 		const slideGroup = () => {
-			if (currentSlideDirection !== undefined) {
-				if (currentSlideDirection === "forward") {
-					for (let i = currentSlideGroup.length - 1; i >= 0; i--) {
-						const segment = currentSlideGroup[i];
-						slide(segment, currentSlideDestination, currentSlideDirection);
+			if (currentSlideIsForward !== undefined) {
+				if (currentSlideDestination !== undefined) {
+					const localRefs = (currentSlideDestination.localRefs ??=
+						new LocalReferenceCollection(currentSlideDestination));
+					if (currentSlideIsForward) {
+						localRefs.addBeforeTombstones(...currentSlideGroup);
+					} else {
+						localRefs.addAfterTombstones(...currentSlideGroup);
 					}
 				} else {
-					for (const segment of currentSlideGroup) {
-						slide(segment, currentSlideDestination, currentSlideDirection);
+					for (const collection of currentSlideGroup) {
+						for (const ref of collection) {
+							if (!refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
+								ref.callbacks?.beforeSlide?.(ref);
+								collection.removeLocalRef(ref);
+								ref.callbacks?.afterSlide?.(ref);
+							}
+						}
 					}
 				}
 
@@ -954,7 +930,7 @@ export class MergeTree {
 				}
 			}
 		};
-		const segmentCache = new Map<ISegment, ISegment | "detached">();
+		const segmentCache = new Map<ISegment, { seg?: ISegment }>();
 		for (const segment of segments) {
 			assert(
 				isRemovedAndAcked(segment),
@@ -964,23 +940,19 @@ export class MergeTree {
 				continue;
 			}
 			const slideToSegment = this._getSlideToSegment(segment, segmentCache);
-			const slideDirection =
-				slideToSegment === undefined
-					? "backward"
-					: slideToSegment.ordinal > segment.ordinal
-					? "forward"
-					: "backward";
+			const slideIsForward =
+				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
 
 			if (
 				slideToSegment !== currentSlideDestination ||
-				slideDirection !== currentSlideDirection
+				slideIsForward !== currentSlideIsForward
 			) {
 				slideGroup();
-				currentSlideGroup = [segment];
+				currentSlideGroup = [segment.localRefs];
 				currentSlideDestination = slideToSegment;
-				currentSlideDirection = slideDirection;
+				currentSlideIsForward = slideIsForward;
 			} else {
-				currentSlideGroup.push(segment);
+				currentSlideGroup.push(segment.localRefs);
 			}
 		}
 		slideGroup();
