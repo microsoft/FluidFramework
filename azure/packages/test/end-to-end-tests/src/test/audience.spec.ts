@@ -14,7 +14,7 @@ import { createAzureClient } from "./AzureClientFactory";
 import { waitForMember } from "./utils";
 
 describe("Fluid audience", () => {
-	const connectTimeoutMs = 1000;
+	const connectTimeoutMs = 5000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
 

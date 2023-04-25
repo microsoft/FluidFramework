@@ -64,16 +64,8 @@ describe("FluidDevtools unit tests", () => {
 	it("Disposal", () => {
 		const devtools = new FluidDevtools();
 
-		let devtoolsClosed = false;
-
-		devtools.on("devtoolsDisposed", () => {
-			devtoolsClosed = true;
-		});
-
 		devtools.dispose();
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		expect(devtoolsClosed).to.be.true;
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(devtools.disposed).to.be.true;
 

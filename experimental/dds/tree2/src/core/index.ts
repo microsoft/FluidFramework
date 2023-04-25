@@ -158,7 +158,8 @@ export {
 	SessionId,
 	mintCommit,
 	mintRevisionTag,
-	Rebaser,
+	rebaseBranch,
+	rebaseChange,
 } from "./rebase";
 
 export {

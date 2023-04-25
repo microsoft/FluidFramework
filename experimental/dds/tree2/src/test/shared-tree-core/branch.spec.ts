@@ -9,7 +9,6 @@ import { SharedTreeBranch } from "../../shared-tree-core";
 import {
 	AnchorSet,
 	GraphCommit,
-	Rebaser,
 	RevisionTag,
 	UndoRedoManager,
 	assertIsRevisionTag,
@@ -410,7 +409,6 @@ describe("Branches", () => {
 		const branch = new SharedTreeBranch(
 			initCommit,
 			"testSession",
-			new Rebaser(changeFamily.rebaser),
 			changeFamily,
 			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily),
 			new AnchorSet(),

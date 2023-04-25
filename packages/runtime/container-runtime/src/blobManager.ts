@@ -28,7 +28,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	ChildLogger,
 	loggerToMonitoringContext,
@@ -40,6 +40,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { GenericError } from "@fluidframework/container-utils";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
@@ -132,13 +133,13 @@ interface PendingBlob {
 	status: PendingBlobStatus;
 	storageId?: string;
 	handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
-	uploadP: Promise<ICreateBlobResponse>;
+	uploadP?: Promise<ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
 }
 
 export interface IPendingBlobs {
-	[id: string]: { blob: string };
+	[id: string]: { blob: string; uploadTime?: number; minTTLInSeconds?: number };
 }
 
 export interface IBlobManagerEvents {
@@ -215,6 +216,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		private readonly isBlobDeleted: (blobPath: string) => boolean,
 		private readonly runtime: IBlobManagerRuntime,
 		stashedBlobs: IPendingBlobs = {},
+		private readonly closeContainer: (error?: ICriticalContainerError) => void,
 	) {
 		super();
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.runtime.logger, "BlobManager"));
@@ -230,6 +232,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Begin uploading stashed blobs from previous container instance
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
 			const blob = stringToBuffer(entry.blob, "base64");
+			if (entry.minTTLInSeconds && entry.uploadTime) {
+				const timeLapseSinceLocalUpload = (Date.now() - entry.uploadTime) / 1000;
+				// stashed entries with more than half-life in storage will not be reuploaded
+				if (entry.minTTLInSeconds - timeLapseSinceLocalUpload > entry.minTTLInSeconds / 2) {
+					this.pendingBlobs.set(localId, {
+						blob,
+						status: PendingBlobStatus.OfflinePendingOp,
+						handleP: new Deferred(),
+						uploadP: undefined,
+						uploadTime: entry.uploadTime,
+						minTTLInSeconds: entry.minTTLInSeconds,
+					});
+					return;
+				}
+			}
 			this.pendingBlobs.set(localId, {
 				blob,
 				status: PendingBlobStatus.OfflinePendingUpload,
@@ -250,6 +267,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					minTTLInSeconds: pendingEntry.minTTLInSeconds,
 					expired,
 				});
+				if (expired) {
+					// we want to avoid submitting ops with broken handles
+					this.closeContainer(
+						new GenericError(
+							"Trying to submit a BlobAttach for expired blob",
+							undefined,
+							{
+								localId,
+								blobId,
+								entryStatus: pendingEntry.status,
+								secondsSinceUpload,
+							},
+						),
+					);
+				}
 			}
 			return sendBlobAttachOp(localId, blobId);
 		};
@@ -872,7 +904,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public getPendingBlobs(): IPendingBlobs {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
-			blobs[key] = { blob: bufferToString(entry.blob, "base64") };
+			blobs[key] = entry.minTTLInSeconds
+				? {
+						blob: bufferToString(entry.blob, "base64"),
+						uploadTime: entry.uploadTime,
+						minTTLInSeconds: entry.minTTLInSeconds,
+				  }
+				: { blob: bufferToString(entry.blob, "base64") };
 		}
 		return blobs;
 	}
