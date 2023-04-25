@@ -509,6 +509,11 @@ const defaultCompressionConfig = {
 
 const defaultChunkSizeInBytes = 204800;
 
+/**
+ * Instead of refreshing from latest because we do not have 100% confidence in the state
+ * of the current system, we should close the summarizer and let it recover.
+ * This delay's goal is to prevent tight restart loops
+ */
 const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
 
 /**
@@ -913,7 +918,7 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
-	private readonly abnormalAckRecoveryMethod: string | undefined;
+	private readonly summaryStateUpdateMethod: string | undefined;
 	private readonly closeSummarizerDelayMs: number;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
@@ -1288,11 +1293,11 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
-		this.abnormalAckRecoveryMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
+		this.summaryStateUpdateMethod = this.mc.config.getString(
+			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod",
 		);
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
-			"Fluid.ContainerRuntime.Test.CloseSummarizerOnSummaryStaleDelayOverrideMs",
+			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
 		);
 		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
@@ -1436,7 +1441,7 @@ export class ContainerRuntime
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
-				abnormalAckRecoveryMethod: this.abnormalAckRecoveryMethod,
+				abnormalAckRecoveryMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -3225,7 +3230,7 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		if (this.abnormalAckRecoveryMethod === "restart") {
+		if (this.summaryStateUpdateMethod === "restart") {
 			const error = new GenericError("Restarting summarizer instead of refreshing");
 
 			this.mc.logger.sendTelemetryEvent(
