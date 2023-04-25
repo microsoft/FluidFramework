@@ -78,7 +78,7 @@ jobs:
 
       - name: Generate changelog
         run: |
-          auto-changelog \
+          pnpm exec auto-changelog \
           --starting-version ${{ fromJson(env.RELEASE_JSON).previousTag }} \
           --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
