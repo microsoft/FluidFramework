@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-internal/routerlicious-devtools",
+	"name": "@fluid-experimental/routerlicious-devtools",
 	"version": "2.0.0-internal.4.2.0",
 	"private": true,
 	"description": "Fluid devtools for Routerlicious Client APIs",
