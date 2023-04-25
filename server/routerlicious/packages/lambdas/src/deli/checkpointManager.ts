@@ -4,10 +4,8 @@
  */
 
 import {
-	ICheckpointRepository,
 	ICheckpointService,
 	IDeliState,
-	IDocumentRepository,
 	IQueuedMessage,
 } from "@fluidframework/server-services-core";
 import { CheckpointReason } from "../utils";
@@ -51,17 +49,15 @@ export interface ICheckpointParams {
 export function createDeliCheckpointManagerFromCollection(
 	tenantId: string,
 	documentId: string,
-	documentRepository: IDocumentRepository,
-	checkpointRepository: ICheckpointRepository,
     checkpointService: ICheckpointService,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
 		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
-            return checkpointService.writeCheckpointToCollection(documentId, tenantId, "deli", checkpoint, isLocal);
+            return checkpointService.writeCheckpoint(documentId, tenantId, "deli", checkpoint, isLocal);
 		},
 		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return checkpointService.removeCheckpointFromCollection(documentId, tenantId, "deli", isLocal)
+			return checkpointService.clearCheckpoint(documentId, tenantId, "deli", isLocal)
 		},
 	};
 	return checkpointManager;

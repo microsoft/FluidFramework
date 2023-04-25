@@ -148,7 +148,6 @@ export async function deliCreate(
 	return new DeliLambdaFactory(
 		operationsDbManager,
 		documentRepository,
-		checkpointRepository,
         checkpointService,
 		tenantManager,
 		undefined,

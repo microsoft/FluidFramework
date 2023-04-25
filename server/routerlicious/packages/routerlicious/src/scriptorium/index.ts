@@ -6,7 +6,9 @@
 import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
 import {
+	CheckpointService,
 	IPartitionLambdaFactory,
+	MongoCheckpointRepository,
 	MongoDocumentRepository,
 	MongoManager,
 } from "@fluidframework/server-services-core";
@@ -25,6 +27,7 @@ export async function create(
 	const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const documentsCollectionName = config.get("mongo:collectionNames:documents");
+	const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 	const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes") as boolean;
 
 	const softDeletionRetentionPeriodMs = config.get(
@@ -56,6 +59,21 @@ export async function create(
 	const documentRepository =
 		customizations?.documentRepository ??
 		new MongoDocumentRepository(documentsCollectionDb.collection(documentsCollectionName));
+
+	// Required for checkpoint service
+	const checkpointRepository = new MongoCheckpointRepository(
+		operationsDb.collection(checkpointsCollectionName),
+		undefined /* checkpoint type */,
+	);
+	const deliLocalCheckpointEnabled = config.get("deli:localCheckpointEnabled");
+	const scribeLocalCheckpointEnabled = config.get("deli:localCheckpointEnabled");
+	const isLocalCheckpointEnabled = deliLocalCheckpointEnabled || scribeLocalCheckpointEnabled;
+
+	const checkpointService = new CheckpointService(
+		checkpointRepository,
+		documentRepository,
+		isLocalCheckpointEnabled,
+	);
 	const opCollection = operationsDb.collection(deltasCollectionName);
 
 	if (createCosmosDBIndexes) {
@@ -87,11 +105,11 @@ export async function create(
 		async () =>
 			deleteSummarizedOps(
 				opCollection,
-				documentRepository,
 				softDeletionRetentionPeriodMs,
 				offlineWindowMs,
 				softDeletionEnabled,
 				permanentDeletionEnabled,
+				checkpointService,
 			),
 		deletionIntervalMs,
 		"deleteSummarizedOps",
@@ -101,5 +119,8 @@ export async function create(
 		},
 	);
 
-	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, { enableTelemetry, maxDbBatchSize });
+	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, {
+		enableTelemetry,
+		maxDbBatchSize,
+	});
 }

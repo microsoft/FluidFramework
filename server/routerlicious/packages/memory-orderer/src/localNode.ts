@@ -21,7 +21,7 @@ import {
 	DefaultServiceConfiguration,
 	IDocumentRepository,
 	ICheckpointRepository,
-    CheckpointService,
+	CheckpointService,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import sillyname from "sillyname";
@@ -74,8 +74,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		documentRepository: IDocumentRepository,
 		deliCheckpointRepository: ICheckpointRepository,
 		scribeCheckpointRepository: ICheckpointRepository,
-        deliCheckpointService: CheckpointService,
-        scribeCheckpointService: CheckpointService,
+		deliCheckpointService: CheckpointService,
+		scribeCheckpointService: CheckpointService,
 		timeoutLength: number,
 		webSocketServerFactory: () => IWebSocketServer,
 		taskMessageSender: ITaskMessageSender,
@@ -95,9 +95,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			databaseManager,
 			documentRepository,
 			deliCheckpointRepository,
-            scribeCheckpointRepository,
-            deliCheckpointService,
-            scribeCheckpointService,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
 			timeoutLength,
 			taskMessageSender,
 			tenantManager,
@@ -173,8 +173,8 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		private readonly documentRepository: IDocumentRepository,
 		private readonly deliCheckpointRepository: ICheckpointRepository,
 		private readonly scribeCheckpointRepository: ICheckpointRepository,
-        private readonly deliCheckpointService: CheckpointService,
-        private readonly scribeCheckpointService: CheckpointService,
+		private readonly deliCheckpointService: CheckpointService,
+		private readonly scribeCheckpointService: CheckpointService,
 		private readonly timeoutLength: number,
 		private readonly taskMessageSender: ITaskMessageSender,
 		private readonly tenantManager: ITenantManager,
@@ -281,9 +281,9 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			this.logger,
 			this.documentRepository,
 			this.deliCheckpointRepository,
-            this.scribeCheckpointRepository,
-            this.deliCheckpointService,
-            this.scribeCheckpointService
+			this.scribeCheckpointRepository,
+			this.deliCheckpointService,
+			this.scribeCheckpointService,
 		);
 		assert(!this.orderMap.has(fullId));
 		this.orderMap.set(fullId, orderer);
