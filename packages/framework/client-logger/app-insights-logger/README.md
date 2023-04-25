@@ -1,4 +1,4 @@
-# @fluidframework/app-insights-logger
+# @fluid-internal/app-insights-logger
 
 ## This `app-insights-logger` package provides a Fluid telemetry logger that will route Fluid telemetry to Azure App Insights using the `ApplicationInsights.trackEvent` API provided by the `@microsoft/applicationinsights-web` package. The logger is intended for use by browser based web applications, not NodeJS applications [as stated by the App Insights Web SDK.](https://learn.microsoft.com/en-us/azure/azure-monitor/app/app-insights-overview?tabs=net)
 
