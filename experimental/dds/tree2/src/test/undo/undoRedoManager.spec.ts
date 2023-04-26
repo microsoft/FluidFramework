@@ -79,7 +79,7 @@ function undoRedoManagerFactory(
 	return new UndoRedoManager(
 		new MockRepairDataStoreProvider(),
 		testChangeFamilyFactory(rebaser),
-		() => undefined,
+		undefined,
 		headUndoCommit,
 	);
 }

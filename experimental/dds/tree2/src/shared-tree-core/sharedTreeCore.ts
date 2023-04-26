@@ -161,19 +161,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = uuid();
-		// The following getHead functions should not be called until editManager has been constructed.
-		const getHeadLocal = () => this.editManager.getLocalBranchHead();
-		const getHeadTrunk = () => this.editManager.getLastCommit();
-		const undoRedoManager = new UndoRedoManager(
-			repairDataStoreProvider,
-			changeFamily,
-			getHeadLocal.bind(this),
+		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily, () =>
+			this.editManager.getLocalBranchHead(),
 		);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
 			undoRedoManager,
-			undoRedoManager.clone(getHeadTrunk.bind(this)),
+			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
 			anchors,
 		);
 		this.summarizables = [
@@ -397,13 +392,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		anchors: AnchorSet,
 		repairDataStoreProvider: IRepairDataStoreProvider,
 	): SharedTreeBranch<TEditor, TChange> {
-		const getHead = () => branch.getHead();
 		const branch: SharedTreeBranch<TEditor, TChange> = new SharedTreeBranch(
 			this.editManager.getLocalBranchHead(),
 			this.editManager.localSessionId,
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
-			this.editManager.localBranchUndoRedoManager.clone(getHead, repairDataStoreProvider),
+			this.editManager.localBranchUndoRedoManager.clone(
+				() => branch.getHead(),
+				repairDataStoreProvider,
+			),
 			anchors,
 		);
 		return branch;

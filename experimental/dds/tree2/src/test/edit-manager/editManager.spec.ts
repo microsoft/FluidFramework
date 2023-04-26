@@ -44,11 +44,7 @@ function editManagerFactory(options: {
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const undoRedoManager = new UndoRedoManager(
-		new MockRepairDataStoreProvider(),
-		family,
-		() => undefined,
-	);
+	const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
 		options.sessionId ?? localSessionId,
@@ -250,7 +246,7 @@ describe("EditManager", () => {
 		]);
 
 		it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
-			const { manager, family } = editManagerFactory({});
+			const { manager } = editManagerFactory({});
 			for (let i = 0; i < 10; ++i) {
 				manager.addSequencedChange(
 					{
@@ -276,7 +272,7 @@ describe("EditManager", () => {
 		});
 
 		it("Rebases anchors over sequenced changes", () => {
-			const { manager, anchors, family } = editManagerFactory({});
+			const { manager, anchors } = editManagerFactory({});
 			const change = TestChange.mint([], 1);
 			manager.addSequencedChange(
 				{
@@ -319,7 +315,7 @@ describe("EditManager", () => {
 		it("Updates local branch when loading from summary", () => {
 			// This regression tests ensures that the local branch is rebased to the head of the trunk
 			// when the trunk is modified by a summary load
-			const { manager, family } = editManagerFactory({});
+			const { manager } = editManagerFactory({});
 			const revision = mintRevisionTag();
 			manager.loadSummaryData({
 				trunk: [
@@ -646,12 +642,12 @@ function runUnitTestScenario(
 						seq,
 						...localIntentions,
 					];
-					const actual = manager.addSequencedChange(
+					const delta = manager.addSequencedChange(
 						commit,
 						commit.seqNumber,
 						commit.refNumber,
 					);
-					assert.deepEqual(actual, asDelta(expected));
+					assert.deepEqual(delta, asDelta(expected));
 					if (step.expectedDelta !== undefined) {
 						// Verify that the test case was annotated with the right expectations.
 						assert.deepEqual(step.expectedDelta, expected);

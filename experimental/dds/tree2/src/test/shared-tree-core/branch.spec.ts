@@ -336,13 +336,14 @@ describe("Branches", () => {
 			sessionId: "testSession",
 		};
 
-		const getHead = () => branch.getHead();
 		const branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> = new SharedTreeBranch(
 			initCommit,
 			"testSession",
 			new Rebaser(changeFamily.rebaser),
 			changeFamily,
-			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily, getHead),
+			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily, () =>
+				branch.getHead(),
+			),
 			new AnchorSet(),
 		);
 

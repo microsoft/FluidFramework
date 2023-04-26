@@ -104,21 +104,19 @@ export class TestTree {
 		this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
 		this.sessionId = options.sessionId ?? uuid();
 		this.forest = forest;
-		const getHeadLocal = () => this.editManager.getLocalBranchHead();
-		const getHeadTrunk = () => this.editManager.getLastCommit();
 		const undoRedoManager = new UndoRedoManager(
 			new ForestRepairDataStoreProvider(
 				this.forest,
 				new InMemoryStoredSchemaRepository(defaultSchemaPolicy),
 			),
 			defaultChangeFamily,
-			getHeadLocal.bind(this),
+			() => this.editManager.getLocalBranchHead(),
 		);
 		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 			defaultChangeFamily,
 			this.sessionId,
 			undoRedoManager,
-			undoRedoManager.clone(getHeadTrunk.bind(this)),
+			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
 			forest.anchors,
 		);
 	}

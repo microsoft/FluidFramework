@@ -82,6 +82,12 @@ export class EditManager<
 	 */
 	private readonly trunkBase: GraphCommit<TChangeset>;
 
+	/**
+	 * @param localBranchUndoRedoManager - the {@link UndoRedoManager} associated with the local branch.
+	 * localBranchUndoRedoManager.getHead can not be called within this constructor.
+	 * @param trunkUndoRedoManager - the {@link UndoRedoManager} associated with the trunk.
+	 * trunkUndoRedoManager.getHead can not be called within this constructor.
+	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
@@ -223,10 +229,10 @@ export class EditManager<
 	}
 
 	public getLastSequencedChange(): TChangeset {
-		return (this.getLastCommit() ?? fail("No sequenced changes")).change;
+		return (this.getTrunkHead() ?? fail("No sequenced changes")).change;
 	}
 
-	public getLastCommit(): GraphCommit<TChangeset> | undefined {
+	public getTrunkHead(): GraphCommit<TChangeset> {
 		return this.trunk;
 	}
 

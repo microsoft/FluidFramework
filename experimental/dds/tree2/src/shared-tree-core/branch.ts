@@ -51,7 +51,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param sessionId - the session ID used to author commits made by this branch
 	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
 	 * @param changeFamily - determines the set of changes that this branch can commit
-	 * @param undoRedoManager - the undo/redo manager used to track undoable commits
+	 * @param undoRedoManager - the undo/redo manager used to track undoable commits. undoRedoManager.getHead
+	 * can not be called within this constructor.
 	 * @param anchors - an optional set of anchors that this branch will rebase whenever the branch head changes
 	 */
 	public constructor(
@@ -67,8 +68,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			(change) => this.applyChange(change),
 			new AnchorSet(), // This branch class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.
 		);
-
-		// Do not call undoRedoManager.getHead within this constructor.
 	}
 
 	private applyChange(change: TChange, isUndoRedoCommit?: UndoRedoManagerCommitType): void {
@@ -196,14 +195,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		repairDataStoreProvider?: IRepairDataStoreProvider,
 		anchors?: AnchorSet,
 	): SharedTreeBranch<TEditor, TChange> {
-		// getHead is not safe to call until the branch has been constructed.
-		const getHead = (): GraphCommit<TChange> => fork.getHead();
 		const fork = new SharedTreeBranch(
 			this.head,
 			this.sessionId,
 			this.rebaser,
 			this.changeFamily,
-			this.undoRedoManager.clone(getHead, repairDataStoreProvider),
+			this.undoRedoManager.clone(
+				(): GraphCommit<TChange> => fork.getHead(),
+				repairDataStoreProvider,
+			),
 			anchors,
 		);
 		return fork;
@@ -255,7 +255,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Compute the net change to this branch
 		const [newHead] = rebaseResult;
 
-		this.undoRedoManager.updateAfterMerge(this.head, newHead, branch.undoRedoManager);
+		this.undoRedoManager.updateAfterMerge(newHead, branch.undoRedoManager);
 
 		const changes: GraphCommit<TChange>[] = [];
 		findAncestor([newHead, changes], (c) => c === this.head);
