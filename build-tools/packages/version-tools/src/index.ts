@@ -6,6 +6,8 @@
 export {
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
+	InterdependencyRange,
+	InterdependencyRangeTypes,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionBumpTypeExtended,

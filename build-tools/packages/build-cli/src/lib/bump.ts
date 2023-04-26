@@ -18,6 +18,7 @@ import {
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import {
+	InterdependencyRange,
 	VersionChangeType,
 	VersionScheme,
 	bumpRange,
@@ -164,7 +165,7 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
-	exactDependencyType?: "~" | "^" | "",
+	exactDependencyType?: InterdependencyRange,
 	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)
@@ -230,13 +231,14 @@ export async function bumpReleaseGroup(
 		return;
 	}
 
-	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
-	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of
-	// truth".
 	assert(
 		exactDependencyType !== undefined,
 		"exactDependencyType must be defined when bumping a release group",
 	);
+
+	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
+	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of
+	// truth".
 	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
 	const [lernaJson, prettierConfig] = await Promise.all([
 		readJson(lernaPath),

@@ -10,6 +10,18 @@ import type { SemVer } from "semver";
 export type ReleaseVersion = string;
 
 /**
+ * An array of the valid interdependency range types. The interdependency range determines how dependencies between
+ * packages within the same release group are specified.
+ */
+export const InterdependencyRangeTypes = ["^", "~", ""] as const;
+
+/**
+ * A type representing the different types of interdependency ranges that can be specified for release groups. The
+ * interdependency range determines how dependencies between packages within the same release group are specified.
+ */
+export type InterdependencyRange = typeof InterdependencyRangeTypes[number];
+
+/**
  * A type defining the three basic version bump types:
  *
  * - major

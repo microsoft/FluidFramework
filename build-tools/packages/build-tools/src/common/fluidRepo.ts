@@ -4,7 +4,7 @@
  */
 import * as path from "path";
 
-import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
+import { InterdependencyRange, ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 
 import { getFluidBuildConfig } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
@@ -183,7 +183,7 @@ export interface IFluidRepoPackage {
 	 */
 	ignoredDirs?: string[];
 
-	defaultInterdependencyType?: "^" | "~" | "";
+	defaultInterdependencyType?: InterdependencyRange;
 }
 
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];

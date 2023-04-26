@@ -11,6 +11,8 @@ import * as semver from "semver";
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
 
 import {
+	InterdependencyRange,
+	InterdependencyRangeTypes,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionChangeType,
@@ -59,7 +61,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		exactDepType: Flags.string({
 			description:
 				'Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
-			options: ["^", "~", ""],
+			options: [...InterdependencyRangeTypes],
 		}),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
@@ -115,7 +117,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
-		let exactDepType: "~" | "^" | "" | undefined;
+		let exactDepType: InterdependencyRange | undefined;
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
 
@@ -194,7 +196,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
 		this.log(
-			`Exact dependency type: ${(exactDepType ?? "n/a") === "" ? "exact" : exactDepType}`,
+			`Exact dependency type: ${
+				exactDepType === undefined ? "n/a" : exactDepType === "" ? "exact" : exactDepType
+			}`,
 		);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
