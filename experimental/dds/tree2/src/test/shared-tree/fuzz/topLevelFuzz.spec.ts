@@ -33,6 +33,7 @@ export async function performFuzzActions(
 	const initialState: FuzzTestState = {
 		random,
 		trees: provider.trees,
+		containers: provider.containers,
 		testTreeProvider: provider,
 		numberOfEdits: 0,
 	};

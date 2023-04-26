@@ -14,6 +14,7 @@ import {
 	asyncGeneratorFromArray,
 } from "@fluid-internal/stochastic-test-utils";
 import { safelyParseJSON } from "@fluidframework/common-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { ISharedTree } from "../../../shared-tree";
 import { brand, fail } from "../../../util";
 import { ITestTreeProvider } from "../../utils";
@@ -25,6 +26,8 @@ import {
 	UpPath,
 } from "../../../core";
 import {
+	ConnectionOps,
+	DisconnectionOp,
 	FieldEdit,
 	FuzzDelete,
 	FuzzInsert,
@@ -44,6 +47,7 @@ import {
 
 export interface FuzzTestState extends BaseFuzzTestState {
 	trees: readonly ISharedTree[];
+	containers?: readonly IContainer[];
 	testTreeProvider?: ITestTreeProvider;
 	numberOfEdits: number;
 }
@@ -336,6 +340,16 @@ export const makeTransactionEditGenerator = (
 		buildOperation,
 	);
 };
+
+export function makeConnectionOpGenerator(): AsyncGenerator<ConnectionOps, FuzzTestState>;
+{
+	type EditState = FuzzTestState & TreeContext;
+	async function disconnectionOpGenerator(state: EditState): Promise<DisconnectionOp> {
+		return {
+			type: "disconnect",
+		};
+	}
+}
 
 function createAsyncGenerator<Op, OpOut>(
 	baseGenerator: (state: FuzzTestState & TreeContext) => Promise<Op | typeof done>,

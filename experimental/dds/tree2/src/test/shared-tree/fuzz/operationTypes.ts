@@ -84,6 +84,18 @@ export interface NodeRangePath {
 	count: number;
 }
 
+export interface DisconnectionOp {
+	index: number;
+	isObserver: boolean;
+}
+
+export interface ReconnectionOp {
+	index: number;
+	isObserver: boolean;
+}
+
+export type ConnectionOps = DisconnectionOp | ReconnectionOp;
+
 export interface EditGeneratorOpWeights {
 	insert: number;
 	delete: number;
