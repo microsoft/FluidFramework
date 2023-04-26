@@ -34,7 +34,7 @@ jobs:
           flub commands
       - name: Get release metadata JSON
         run: |
-          $(flub release fromTag ${{ github.ref }} --json | jq -c) > release-metadata.json
+          flub release fromTag ${{ github.ref }} --json | jq -c > release-metadata.json
       - name: Upload release metadata JSON
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
         with:
