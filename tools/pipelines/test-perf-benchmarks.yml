@@ -393,7 +393,7 @@ stages:
       dependsOn: []
       variables:
         # Use contention-lock variable groups when appropriate. Note that null gets coalesced into an empty string.
-        ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
+        - ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
           - group: ${{ endpointObject.lockVariableGroupName }}
 
         # The following two paths are defined by the npm scripts invocations in @fluid-internal/test-end-to-end-tests
