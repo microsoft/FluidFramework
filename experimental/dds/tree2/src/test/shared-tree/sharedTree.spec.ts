@@ -622,24 +622,34 @@ describe("SharedTree", () => {
 
 		it("does not undo edits made remotely", async () => {
 			const value = "42";
-			const value2 = "43";
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 
-			// Insert node
-			setTestValue(tree1, value);
-			// Make a remote edit
-			setTestValue(tree2, value2);
+			const initialState: JsonableTree = {
+				type: brand("TestValue"),
+				value: "A",
+			};
+			initializeTestTree(tree2, initialState);
 			await provider.ensureSynchronized();
 
-			// Validate insertion
-			const readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			assert.ok(readCursor.firstNode());
-			assert.equal(readCursor.value, value);
-			assert.ok(readCursor.nextNode());
-			assert.equal(readCursor.value, value2);
-			readCursor.free();
+			assert.equal(getTestValue(tree1), "A");
+
+			// Insert node
+			insert(tree1, 0, value);
+			await provider.ensureSynchronized();
+
+			const testValuesAfterInsertion = getTestValues(tree1);
+			assert.equal(testValuesAfterInsertion[0], "A");
+			assert.equal(testValuesAfterInsertion[1], value);
+
+			// Make a remote edit
+			remove(tree2, 1, 1);
+			await provider.ensureSynchronized();
+
+			// Validate insertion and deletion
+			const testValuesAfterDeletion = getTestValues(tree1);
+			assert.equal(testValuesAfterDeletion.length, 1);
+			assert.equal(testValuesAfterDeletion[0], value);
 
 			// Undo
 			tree1.undo();
@@ -647,13 +657,8 @@ describe("SharedTree", () => {
 			tree1.undo();
 			await provider.ensureSynchronized();
 
-			const validationCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, validationCursor);
-			assert.ok(validationCursor.firstNode());
-			assert.equal(validationCursor.value, value2);
-			assert.equal(validationCursor.nextNode(), false);
-			validationCursor.free();
-			assert.equal(getTestValue(tree2), value2);
+			assert.equal(getTestValues(tree1).length, 0);
+			assert.equal(getTestValues(tree2).length, 0);
 		});
 
 		it("the insert of a node in a sequence field", async () => {
