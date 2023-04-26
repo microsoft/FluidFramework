@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import { IDocumentServiceFactory, IUrlResolver } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { applyStorageCompression, ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
 	ContainerSchema,
 	DOProviderContainerRuntimeFactory,
@@ -65,10 +65,27 @@ export class AzureClient {
 		// The local service implementation differs from the Azure Fluid Relay in blob
 		// storage format. Azure Fluid Relay supports whole summary upload. Local currently does not.
 		const isRemoteConnection = isAzureRemoteConnectionConfig(this.props.connection);
-		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
-			this.props.connection.tokenProvider,
-			{ enableWholeSummaryUpload: isRemoteConnection, enableDiscovery: isRemoteConnection },
-		);
+		const origDocumentServiceFactory: IDocumentServiceFactory =
+			new RouterliciousDocumentServiceFactory(this.props.connection.tokenProvider, {
+				enableWholeSummaryUpload: isRemoteConnection,
+				enableDiscovery: isRemoteConnection,
+			});
+		let wrappedDocumentServiceFactory: IDocumentServiceFactory = origDocumentServiceFactory;
+		if (props.summaryCompression !== undefined) {
+			if (typeof props.summaryCompression === "boolean") {
+				if (props.summaryCompression) {
+					wrappedDocumentServiceFactory = applyStorageCompression(
+						origDocumentServiceFactory,
+					);
+				}
+			} else {
+				wrappedDocumentServiceFactory = applyStorageCompression(
+					origDocumentServiceFactory,
+					props.summaryCompression,
+				);
+			}
+		}
+		this.documentServiceFactory = wrappedDocumentServiceFactory;
 		this.configProvider = props.configProvider;
 	}
 
