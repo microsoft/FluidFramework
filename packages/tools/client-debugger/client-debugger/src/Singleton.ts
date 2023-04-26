@@ -14,7 +14,9 @@ import { IFluidDevtools } from "./IFluidDevtools";
 let devtools: IFluidDevtools | undefined;
 
 // Ensure we close Devtools singleton before page close / refresh.
-window.addEventListener("beforeunload", () => closeDevtools());
+if (typeof window !== "undefined") {
+	window.addEventListener("beforeunload", () => closeDevtools());
+}
 
 /**
  * Initializes the Devtools.
