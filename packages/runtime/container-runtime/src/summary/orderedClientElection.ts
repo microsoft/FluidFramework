@@ -421,7 +421,7 @@ export class OrderedClientElection
 				electedClientId: this._electedClient?.clientId,
 				electedParentId: this._electedParent?.clientId,
 				electionSequenceNumber: sequenceNumber,
-				isSummarizer:isSummarizerClient,
+				isSummarizer: isSummarizerClient,
 			});
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
