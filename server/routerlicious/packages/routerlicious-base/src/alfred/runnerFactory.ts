@@ -226,7 +226,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			{
 				tenantId: 1,
 			},
-			true,
+			false,
 		);
 
 		// Foreman agent uploader does not run locally.
