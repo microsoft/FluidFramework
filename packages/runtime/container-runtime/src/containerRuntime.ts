@@ -2426,31 +2426,33 @@ export class ContainerRuntime
 			runSweep,
 		});
 
-		let gcStats: IGCStats | undefined;
-		if (runGC) {
-			gcStats = await this.collectGarbage(
-				{ logger: summaryLogger, runSweep, fullGC },
+		try {
+			let gcStats: IGCStats | undefined;
+			if (runGC) {
+				gcStats = await this.collectGarbage(
+					{ logger: summaryLogger, runSweep, fullGC },
+					telemetryContext,
+				);
+			}
+
+			const { stats, summary } = await this.summarizerNode.summarize(
+				fullTree,
+				trackState,
 				telemetryContext,
 			);
+
+			assert(
+				summary.type === SummaryType.Tree,
+				0x12f /* "Container Runtime's summarize should always return a tree" */,
+			);
+
+			return { stats, summary, gcStats };
+		} finally {
+			this.logger.sendTelemetryEvent({
+				eventName: "SummarizeTelemetry",
+				details: telemetryContext.serialize(),
+			});
 		}
-
-		const { stats, summary } = await this.summarizerNode.summarize(
-			fullTree,
-			trackState,
-			telemetryContext,
-		);
-
-		this.logger.sendTelemetryEvent({
-			eventName: "SummarizeTelemetry",
-			details: telemetryContext.serialize(),
-		});
-
-		assert(
-			summary.type === SummaryType.Tree,
-			0x12f /* "Container Runtime's summarize should always return a tree" */,
-		);
-
-		return { stats, summary, gcStats };
 	}
 
 	/**

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -18,7 +17,7 @@ import {
 	RootHandleNode,
 	VisualizeSharedObject,
 } from "./data-visualization";
-import { IContainerDevtools, ContainerDevtoolsEvents } from "./IContainerDevtools";
+import { IContainerDevtools } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
 	AudienceSummary,
@@ -156,10 +155,7 @@ export interface ContainerDevtoolsProps {
  * @sealed
  * @internal
  */
-export class ContainerDevtools
-	extends TypedEventEmitter<ContainerDevtoolsEvents>
-	implements IContainerDevtools
-{
+export class ContainerDevtools implements IContainerDevtools {
 	/**
 	 * {@inheritDoc IContainerDevtools.containerId}
 	 */
@@ -461,8 +457,6 @@ export class ContainerDevtools
 
 	// #endregion
 
-	private readonly debuggerDisposedHandler = (): boolean => this.emit("disposed");
-
 	/**
 	 * Message logging options used by the debugger.
 	 */
@@ -480,8 +474,6 @@ export class ContainerDevtools
 	private _disposed: boolean;
 
 	public constructor(props: ContainerDevtoolsProps) {
-		super();
-
 		this.containerId = props.containerId;
 		this.containerData = props.containerData;
 		this.container = props.container;
@@ -555,8 +547,6 @@ export class ContainerDevtools
 		this.dataVisualizer?.off("update", this.dataUpdateHandler);
 		this.dataVisualizer?.dispose();
 		this.dataVisualizer = undefined;
-
-		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 
 		this._disposed = true;
 	}
