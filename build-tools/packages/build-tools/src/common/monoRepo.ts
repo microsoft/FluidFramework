@@ -87,6 +87,7 @@ export class MonoRepo {
 	constructor(
 		public readonly kind: MonoRepoKind,
 		public readonly repoPath: string,
+		public readonly interdependencyType: "^" | "~" | "",
 		ignoredDirs?: string[],
 		private readonly logger: Logger = defaultLogger,
 	) {

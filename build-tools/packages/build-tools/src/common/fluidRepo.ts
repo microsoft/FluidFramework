@@ -182,6 +182,8 @@ export interface IFluidRepoPackage {
 	 * An array of paths under `directory` that should be ignored.
 	 */
 	ignoredDirs?: string[];
+
+	defaultInterdependencyType?: "^" | "~" | "";
 }
 
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
@@ -222,7 +224,7 @@ export class FluidRepo {
 	constructor(
 		public readonly resolvedRoot: string,
 		services: boolean,
-		private readonly logger: Logger = defaultLogger,
+		private readonly log: Logger = defaultLogger,
 	) {
 		const packageManifest = getFluidBuildConfig(resolvedRoot);
 
@@ -250,8 +252,20 @@ export class FluidRepo {
 		for (const group in packageManifest.repoPackages) {
 			const item = normalizeEntry(packageManifest.repoPackages[group]);
 			if (isMonoRepoKind(group)) {
-				const { directory, ignoredDirs } = item as IFluidRepoPackage;
-				const monorepo = new MonoRepo(group, directory, ignoredDirs, logger);
+				const { directory, ignoredDirs, defaultInterdependencyType } =
+					item as IFluidRepoPackage;
+				if (defaultInterdependencyType === undefined) {
+					log?.warning(
+						`No defaultInterdependencyType specified for ${group} monorepo. Defaulting to "^"`,
+					);
+				}
+				const monorepo = new MonoRepo(
+					group,
+					directory,
+					defaultInterdependencyType ?? "^",
+					ignoredDirs,
+					log,
+				);
 				this.releaseGroups.set(group, monorepo);
 				loadedPackages.push(...monorepo.packages);
 			} else if (group !== "services" || services) {

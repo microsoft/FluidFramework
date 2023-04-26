@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "node:assert";
 import path from "node:path";
 import execa from "execa";
 import { writeFile, readJson } from "fs-extra";
@@ -163,8 +164,7 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
-	// eslint-disable-next-line default-param-last
-	exactDependencyType: "~" | "^" | "" = "^",
+	exactDependencyType?: "~" | "^" | "",
 	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)
@@ -231,7 +231,12 @@ export async function bumpReleaseGroup(
 	}
 
 	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
-	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
+	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of
+	// truth".
+	assert(
+		exactDependencyType !== undefined,
+		"exactDependencyType must be defined when bumping a release group",
+	);
 	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
 	const [lernaJson, prettierConfig] = await Promise.all([
 		readJson(lernaPath),

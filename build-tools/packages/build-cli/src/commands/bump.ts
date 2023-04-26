@@ -60,7 +60,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			description:
 				'Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
 			options: ["^", "~", ""],
-			default: "^",
 		}),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
@@ -116,7 +115,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
-		const exactDepType = flags.exactDepType ?? "^";
+		let exactDepType: "~" | "^" | "" | undefined;
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
 
@@ -124,13 +123,17 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
-		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
-			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
-			// that the exactDepType will be one of the enum values.
-			this.error(`Invalid exactDepType: ${exactDepType}`);
-		}
-
 		if (isReleaseGroup(args.package_or_release_group)) {
+			if (
+				flags.exactDepType !== undefined &&
+				flags.exactDepType !== "" &&
+				flags.exactDepType !== "^" &&
+				flags.exactDepType !== "~"
+			) {
+				// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
+				// that the exactDepType will be one of the enum values.
+				this.error(`Invalid exactDepType: ${exactDepType}`);
+			}
 			const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
 			assert(
 				releaseRepo !== undefined,
@@ -139,6 +142,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
+			exactDepType = flags.exactDepType ?? releaseRepo.interdependencyType;
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
@@ -189,7 +193,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
-		this.log(`Exact dependency type: ${exactDepType === "" ? "exact" : exactDepType}`);
+		this.log(
+			`Exact dependency type: ${(exactDepType ?? "n/a") === "" ? "exact" : exactDepType}`,
+		);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
