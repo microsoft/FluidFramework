@@ -9,7 +9,7 @@ import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 /**
- * Necessary props to render {@link RootView}.
+ * {@link DevtoolsPanel} input props.
  */
 export interface RootViewProps {
 	/**
@@ -21,7 +21,7 @@ export interface RootViewProps {
 }
 
 /**
- * Top-level component for the Fluid debugger.
+ * Top-level view for the Fluid Devtools
  */
 export function RootView(props: RootViewProps): React.ReactElement {
 	return (
