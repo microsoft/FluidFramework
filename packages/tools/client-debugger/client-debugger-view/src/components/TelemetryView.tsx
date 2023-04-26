@@ -226,7 +226,7 @@ export function TelemetryView(): React.ReactElement {
 			},
 			renderCell: (message) => {
 				return (
-					<div style={{ minWidth: "260px", overflowWrap: "anywhere" }}>
+					<div>
 						{/* Since all events start with "fluid:telemetry:", we trim the start of the name */}
 						{message.eventName.slice("fluid:telemetry:".length)}
 					</div>
@@ -329,12 +329,12 @@ export function TelemetryView(): React.ReactElement {
 					resizableColumns
 					columnSizingOptions={{
 						category: {
-							minWidth: 130,
-							idealWidth: 130,
+							minWidth: 120,
+							idealWidth: 120,
 						},
-						eventType: {
-							minWidth: 250,
-							idealWidth: 250,
+						eventName: {
+							minWidth: 375,
+							idealWidth: 375,
 						},
 						information: {
 							minWidth: 250,
