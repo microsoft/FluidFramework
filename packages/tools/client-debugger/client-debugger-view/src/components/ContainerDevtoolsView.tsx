@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
+import { Stack } from "@fluentui/react";
+import { Tab, TabList, TabValue, SelectTabData, SelectTabEvent } from "@fluentui/react-components";
 import {
 	ContainerDevtoolsFeature,
 	ContainerDevtoolsFeatureFlags,
@@ -116,7 +117,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const { containerId, supportedFeatures } = props;
 
 	// Inner view selection
-	const [innerViewSelection, setInnerViewSelection] = React.useState<PanelView>(
+	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
 		supportedFeatures[ContainerDevtoolsFeature.ContainerData] === true
 			? PanelView.ContainerData
 			: PanelView.ContainerStateHistory,
@@ -137,6 +138,10 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 	}
 
+	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {
+		setInnerViewSelection(data.value);
+	};
+
 	return (
 		<Stack
 			tokens={{
@@ -155,10 +160,17 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 			</Stack.Item>
 			<Stack.Item style={{ width: "100%", height: "100%", overflowY: "auto" }}>
 				<Stack tokens={{ childrenGap: 10 }}>
-					<PanelViewSelectionMenu
-						currentSelection={innerViewSelection}
-						updateSelection={setInnerViewSelection}
-					/>
+					<TabList selectedValue={innerViewSelection} onTabSelect={onTabSelect}>
+						<Tab id="Data" value="Data">
+							Data
+						</Tab>
+						<Tab id="Audience" value="Audience">
+							Audience
+						</Tab>
+						<Tab id="States" value="States">
+							States
+						</Tab>
+					</TabList>
 					{innerView}
 				</Stack>
 			</Stack.Item>
@@ -188,74 +200,4 @@ enum PanelView {
 	// TODOs:
 	// - Network stats
 	// - Ops/message latency stats
-}
-
-/**
- * {@link PanelViewSelectionMenu} input props.
- */
-interface PanelViewSelectionMenuProps {
-	/**
-	 * The currently selected inner view.
-	 */
-	currentSelection: PanelView;
-
-	/**
-	 * Updates the inner view to the one specified.
-	 */
-	updateSelection(newSelection: PanelView): void;
-}
-
-/**
- * Menu for selecting the inner view to be displayed within the view for the currently selected container.
- */
-function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
-	const { currentSelection, updateSelection } = props;
-
-	const options: IOverflowSetItemProps[] = Object.entries(PanelView).map(([_, flag]) => ({
-		key: flag,
-	}));
-
-	/**
-	 * Specifies how to render an individual menu option.
-	 */
-	function onRenderItem(item: IOverflowSetItemProps): React.ReactElement {
-		return (
-			<Link
-				aria-label={item.key}
-				styles={{ root: { marginRight: 10 } }}
-				disabled={item.key === currentSelection}
-				onClick={(): void => updateSelection(item.key as PanelView)}
-			>
-				{item.key}
-			</Link>
-		);
-	}
-
-	/**
-	 * Specifies how to render any overflow options in the menu.
-	 */
-	function onRenderOverflowButton(
-		overflowItems: IOverflowSetItemProps[] | undefined,
-	): React.ReactElement {
-		return overflowItems === undefined ? (
-			<></>
-		) : (
-			<IconButton
-				title="More options"
-				menuIconProps={{ iconName: "More" }}
-				menuProps={{ items: overflowItems }}
-			/>
-		);
-	}
-
-	return (
-		<OverflowSet
-			aria-label="Container sub-view selection"
-			items={options}
-			// TODO: We can add additional menu options here. Reserved for less-frequently used views items.
-			// overflowItems={}
-			onRenderItem={onRenderItem}
-			onRenderOverflowButton={onRenderOverflowButton}
-		/>
-	);
 }
