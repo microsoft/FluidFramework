@@ -19,11 +19,7 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import {
-	DevtoolsLogger,
-	initializeContainerDevtools,
-	initializeDevtools,
-} from "@fluid-tools/client-debugger";
+import { DevtoolsLogger, IFluidDevtools, initializeDevtools } from "@fluid-tools/client-debugger";
 
 import {
 	ContainerInfo,
@@ -96,12 +92,15 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 /**
  * Registers container described by the input `containerInfo` with the provided devtools instance.
  */
-function registerContainerWithDevtools(containerInfo: ContainerInfo): void {
+function registerContainerWithDevtools(
+	devtools: IFluidDevtools,
+	containerInfo: ContainerInfo,
+): void {
 	const fluidContainer = containerInfo.container as FluidContainer;
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE!();
 
-	initializeContainerDevtools({
+	devtools.registerContainerDevtools({
 		container: innerContainer,
 		containerId: containerInfo.containerId,
 		containerNickname: containerInfo.containerNickname,
@@ -114,7 +113,10 @@ function registerContainerWithDevtools(containerInfo: ContainerInfo): void {
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(logger: DevtoolsLogger): {
+function useContainerInfo(
+	devtools: IFluidDevtools,
+	logger: DevtoolsLogger,
+): {
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;
 } {
@@ -153,7 +155,7 @@ function useContainerInfo(logger: DevtoolsLogger): {
 				}
 
 				setSharedContainerInfo(containerInfo);
-				registerContainerWithDevtools(containerInfo);
+				registerContainerWithDevtools(devtools, containerInfo);
 			}, console.error);
 
 			async function getPrivateContainerData(): Promise<ContainerInfo> {
@@ -170,7 +172,7 @@ function useContainerInfo(logger: DevtoolsLogger): {
 
 			getPrivateContainerData().then((containerInfo) => {
 				setPrivateContainerInfo(containerInfo);
-				registerContainerWithDevtools(containerInfo);
+				registerContainerWithDevtools(devtools, containerInfo);
 			}, console.error);
 		},
 		// This app never changes the containers after initialization, so we just want to run this effect once.
@@ -228,12 +230,10 @@ export function App(): React.ReactElement {
 	const logger = React.useMemo(() => DevtoolsLogger.create(), []);
 
 	// Initialize Devtools
-	React.useEffect(() => {
-		initializeDevtools({ logger });
-	}, [logger]);
+	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
 
 	// Initialize the containers
-	const { privateContainer, sharedContainer } = useContainerInfo(logger);
+	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger);
 
 	const view = (
 		<Stack horizontal>

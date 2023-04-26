@@ -17,8 +17,12 @@ import { createMockContainer } from "./Utilities";
 // - Test window messaging
 
 describe("FluidDevtools unit tests", () => {
+	afterEach(() => {
+		FluidDevtools.tryGet()?.dispose();
+	});
+
 	it("Container change events", () => {
-		const devtools = new FluidDevtools();
+		const devtools = FluidDevtools.initialize();
 
 		expect(devtools.getAllContainerDevtools().length).to.equal(0);
 
@@ -48,7 +52,7 @@ describe("FluidDevtools unit tests", () => {
 	});
 
 	it("Disposal", () => {
-		const devtools = new FluidDevtools();
+		const devtools = FluidDevtools.initialize();
 
 		devtools.dispose();
 
@@ -72,7 +76,7 @@ describe("FluidDevtools unit tests", () => {
 	});
 
 	it("Registering a duplicate Container ID throws", () => {
-		const devtools = new FluidDevtools();
+		const devtools = FluidDevtools.initialize();
 
 		const containerId = "test-container-id";
 
