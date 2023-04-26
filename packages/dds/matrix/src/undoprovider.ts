@@ -137,9 +137,12 @@ export class MatrixUndoProvider<T> {
 		if (this.consumer !== undefined) {
 			this.consumer.pushToCurrentOperation({
 				revert: () => {
-					const rowPos = this.rows.handleToPosition(rowHandle);
-					const colPos = this.cols.handleToPosition(colHandle);
-					this.matrix.setCell(rowPos, colPos, oldValue);
+					const row = this.rows.handleToPosition(rowHandle);
+					const col = this.cols.handleToPosition(colHandle);
+					// if the row/column no longer exists, we cannot set the cell
+					if (row < this.matrix.rowCount && col < this.matrix.colCount) {
+						this.matrix.setCell(row, col, oldValue);
+					}
 				},
 				discard: () => {},
 			});
