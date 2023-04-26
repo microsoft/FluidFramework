@@ -51,7 +51,7 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
 	id: string;
 	
 	/**
-	 * TODO
+	 * URL for the Fluid resource.
 	 */
 	url: string;
 	
@@ -91,11 +91,11 @@ export interface IContainerPackageInfo {
  */
 export interface IUrlResolver {
 	/**
-	 * TODO
+	 * Resolves the provided request to a Fluid resource URL.
 	 * 
 	 * @privateRemarks
 	 * 
-	 * Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
+	 * Like DNS, this should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
 	 * the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
 	 * or do we split the token access from this?
 	 */
@@ -140,7 +140,7 @@ export interface DriverPreCheckInfo {
  */
 export enum DriverHeader {
 	/**
-	 * Key to indicate whether the request for summarizer
+	 * Key to indicate whether or not the request is for the summarizer client.
 	 */
 	summarizingClient = "fluid-client-summarizer",
 	
