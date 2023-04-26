@@ -393,7 +393,7 @@ describe("Matrix", () => {
 			// Summarizes the given `SharedMatrix`, loads the summary into a 2nd SharedMatrix, vets that the two are
 			// equivalent, and then returns the 2nd matrix.
 			async function summarize<T>(matrix: SharedMatrix<T>) {
-				// Create a summay
+				// Create a summary
 				const objectStorage = MockStorage.createFromSummary(
 					matrix.getAttachSummary().summary,
 				);
@@ -485,14 +485,14 @@ describe("Matrix", () => {
 			before(() => {
 				expect = async (expected?: readonly (readonly any[])[]) => {
 					containerRuntimeFactory.processAllMessages();
-
 					const actual1 = extract(matrix1);
 					const actual2 = extract(matrix2);
 
-					assert.deepEqual(actual1, actual2);
-
 					if (expected !== undefined) {
-						assert.deepEqual(actual1, expected);
+						assert.deepEqual(actual1, expected, "matrix1 doesn't match expected");
+						assert.deepEqual(actual2, expected, "matrix2 doesn't match expected");
+					} else {
+						assert.deepEqual(actual1, actual2, "matrix1 does not match matrix2");
 					}
 
 					for (const consumer of [consumer1, consumer2]) {
@@ -649,7 +649,7 @@ describe("Matrix", () => {
 				// A known weakness of our current undo implementation is that undoing a
 				// removal reinserts the segment at it's start position.
 				//
-				// This can lead to percieved reordering when a remove/re-insert races with
+				// This can lead to perceived reordering when a remove/re-insert races with
 				// an insertion that splits the original segment.
 				//
 				// (See https://github.com/microsoft/FluidFramework/issues/3964)

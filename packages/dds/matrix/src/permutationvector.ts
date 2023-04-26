@@ -19,7 +19,6 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeMaintenanceCallbackArgs,
 	MergeTreeMaintenanceType,
-	toRemovalInfo,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
@@ -226,11 +225,11 @@ export class PermutationVector extends Client {
 		let containingSegment!: PermutationSegment;
 		let containingOffset: number;
 
-		this.walkAllSegments((segment) => {
+		this.walkSegments((segment) => {
 			const { start, cachedLength } = segment as PermutationSegment;
 
 			// If the segment is unallocated, skip it.
-			if (!isHandleValid(start) || toRemovalInfo(segment) !== undefined) {
+			if (!isHandleValid(start)) {
 				return true;
 			}
 
