@@ -210,7 +210,14 @@ export type JsonCompatibleReadOnly =
 	| null
 	| readonly JsonCompatibleReadOnly[]
 	| { readonly [P in string]?: JsonCompatibleReadOnly };
-// TODO: Assess if this is actually necessary in schemas, and if so evaluate perf/correctness of alternatives here.
+
+/**
+ * This type is not exported by the package index (due to `export type`) but it stil shows up in the API report due
+ * to https://github.com/microsoft/rushstack/issues/3616.
+ * @internal
+ * @remarks - TODO: Assess if this is actually necessary in schemas, and if so evaluate perf/correctness of
+ * alternatives here.
+ */
 export const JsonCompatibleReadOnly = Type.Any();
 
 /**

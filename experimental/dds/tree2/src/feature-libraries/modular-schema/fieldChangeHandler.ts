@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Static, Type } from "@sinclair/typebox";
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
@@ -274,15 +273,11 @@ export interface RevisionMetadataSource {
 	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
 
-export const RevisionInfo = Type.Object({
-	revision: Type.Readonly(RevisionTag),
-	rollbackOf: Type.Optional(RevisionTag),
-});
-
 /**
  * @alpha
  */
-export interface RevisionInfo extends Static<typeof RevisionInfo> {
+export interface RevisionInfo {
+	readonly revision: RevisionTag;
 	/**
 	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
 	 * The value corresponds to the `revision` of the original changeset being rolled back.

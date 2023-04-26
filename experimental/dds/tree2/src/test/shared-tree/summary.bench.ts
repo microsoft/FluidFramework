@@ -14,6 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { ISharedTree, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import { brand } from "../../util";
@@ -28,7 +29,6 @@ import {
 } from "../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
-import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 

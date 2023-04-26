@@ -4,14 +4,14 @@
  */
 
 import { TSchema, Type } from "@sinclair/typebox";
-import { ITreeCursorSynchronous, JsonableTree, RevisionTag } from "../../core";
+import { ITreeCursorSynchronous, EncodedJsonableTree, RevisionTag } from "../../core";
 import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
 
 /**
  * The contents of a node to be created
  */
-export type ProtoNode = JsonableTree;
-export const ProtoNode = JsonableTree;
+export type ProtoNode = EncodedJsonableTree;
+export const ProtoNode = EncodedJsonableTree;
 
 export type NodeCount = number;
 export const NodeCount = Type.Number();

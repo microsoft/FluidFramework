@@ -4,20 +4,20 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { JsonableTree, RevisionTag } from "../core";
+import { EncodedJsonableTree, RevisionTag } from "../core";
 // TODO: Resolve uses of JsonCompatibleReadonly, consider making this take in the child type at the schema level. (TSchema)
 import { JsonCompatibleReadOnly } from "../util";
 
 export const EncodedNodeUpdate = Type.Union([
 	Type.Object({
-		set: JsonableTree,
+		set: EncodedJsonableTree,
 		changes: Type.Optional(JsonCompatibleReadOnly),
 	}),
 	Type.Object({
 		/**
 		 * The node being restored.
 		 */
-		revert: JsonableTree,
+		revert: EncodedJsonableTree,
 		revision: Type.Optional(RevisionTag),
 		changes: Type.Optional(JsonCompatibleReadOnly),
 	}),

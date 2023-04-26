@@ -95,27 +95,25 @@ export {
 	PathVisitor,
 } from "./core";
 
-export {
+export { extractFromOpaque, brand, brandOpaque, fail, TransactionResult } from "./util";
+export type {
 	Brand,
 	BrandedType,
 	Opaque,
-	extractFromOpaque,
 	MakeNominal,
 	Invariant,
+	isAny,
 	Contravariant,
 	Covariant,
 	ExtractFromOpaque,
-	isAny,
-	brand,
-	brandOpaque,
 	ValueFromBranded,
 	NameFromBranded,
-	JsonCompatibleReadOnly,
+	NestedMap,
 	JsonCompatible,
 	JsonCompatibleObject,
-	NestedMap,
-	fail,
-	TransactionResult,
+	// Note: this is the only type that motivates separating types from values in the public API,
+	// as it has a TypeBox schema by the same name.
+	JsonCompatibleReadOnly,
 } from "./util";
 
 export {

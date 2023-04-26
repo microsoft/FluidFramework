@@ -21,6 +21,7 @@ import {
 	isGlobalFieldKey,
 	keyFromSymbol,
 	LocalFieldKey,
+	RevisionTag,
 	symbolFromKey,
 } from "../../core";
 import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
@@ -38,6 +39,7 @@ import {
 import { FieldKind } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 
+// TODO: Make corresponding encoded types for these, validating their schema.
 const ValueChange = Type.Any();
 const ValueConstraint = Type.Any();
 
@@ -73,6 +75,11 @@ const EncodedNodeChangeset = Type.Object({
 	valueConstraint: Type.Optional(ValueConstraint),
 });
 
+const EncodedRevisionInfo = Type.Object({
+	revision: Type.Readonly(RevisionTag),
+	rollbackOf: Type.ReadonlyOptional(RevisionTag),
+});
+
 /**
  * Format for encoding as json.
  */
@@ -81,7 +88,7 @@ type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 const EncodedModularChangeset = Type.Object({
 	maxId: Type.Optional(ChangesetLocalId),
 	changes: EncodedFieldChangeMap,
-	revisions: Type.ReadonlyOptional(Type.Array(RevisionInfo)),
+	revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
 });
 
 type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;

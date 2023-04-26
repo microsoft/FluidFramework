@@ -11,19 +11,8 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { Static } from '@sinclair/typebox';
 import { TAny } from '@sinclair/typebox';
 import { TAnySchema } from '@sinclair/typebox';
-import { TArray } from '@sinclair/typebox';
-import { TIntersect } from '@sinclair/typebox';
-import { TObject } from '@sinclair/typebox';
-import { TOptional } from '@sinclair/typebox';
-import { TReadonly } from '@sinclair/typebox';
-import { TRecord } from '@sinclair/typebox';
-import { TRecursive } from '@sinclair/typebox';
-import { TSchema } from '@sinclair/typebox';
-import { TString } from '@sinclair/typebox';
-import { TThis } from '@sinclair/typebox';
 import { TUnsafe } from '@sinclair/typebox';
 
 // @alpha
@@ -553,9 +542,6 @@ export interface FieldMapObject<TChild> {
     [key: string]: TChild[];
 }
 
-// @public (undocumented)
-export const FieldMapObject: <Schema extends TSchema>(tChild: Schema) => TRecord<TString<string>, TArray<Schema>>;
-
 // @alpha (undocumented)
 type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
@@ -633,24 +619,9 @@ export interface GenericFieldsNode<TChild> {
     [FieldScope.global]?: FieldMapObject<TChild>;
 }
 
-// @public (undocumented)
-export const GenericFieldsNode: <Schema extends TSchema>(tChild: Schema) => TObject<    {
-fields: TOptional<TRecord<TString<string>, TArray<Schema>>>;
-globalFields: TOptional<TRecord<TString<string>, TArray<Schema>>>;
-}>;
-
 // @alpha
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {
 }
-
-// @public (undocumented)
-export const GenericTreeNode: <Schema extends TSchema>(tChild: Schema) => TIntersect<[TObject<    {
-fields: TOptional<TRecord<TString<string>, TArray<Schema>>>;
-globalFields: TOptional<TRecord<TString<string>, TArray<Schema>>>;
-}>, TObject<    {
-value: TOptional<TAny>;
-type: TReadonly<TUnsafe<TreeSchemaIdentifier>>;
-}>]>;
 
 // @alpha
 export const getField: unique symbol;
@@ -939,15 +910,6 @@ export enum ITreeSubscriptionCursorState {
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 }
 
-// @public (undocumented)
-export const JsonableTree: TRecursive<TIntersect<[TObject<    {
-fields: TOptional<TRecord<TString<string>, TArray<TThis>>>;
-globalFields: TOptional<TRecord<TString<string>, TArray<TThis>>>;
-}>, TObject<    {
-value: TOptional<TAny>;
-type: TReadonly<TUnsafe<TreeSchemaIdentifier>>;
-}>]>>;
-
 // @alpha
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
@@ -979,7 +941,7 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
     readonly [P in string]?: JsonCompatibleReadOnly;
 };
 
-// @public (undocumented)
+// @internal
 export const JsonCompatibleReadOnly: TAny;
 
 // @alpha (undocumented)
@@ -1213,12 +1175,6 @@ export interface NodeData {
     value?: TreeValue;
 }
 
-// @public (undocumented)
-export const NodeData: TObject<    {
-value: TOptional<TAny>;
-type: TReadonly<TUnsafe<TreeSchemaIdentifier>>;
-}>;
-
 // @alpha
 type NodeDataFor<TMap extends TypedSchemaData, Mode extends ApiMode, TSchema extends TypedSchema.LabeledTreeSchema> = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;
 
@@ -1348,14 +1304,10 @@ type RequiredFields<T> = [
 // @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
-// @public (undocumented)
-export const RevisionInfo: TObject<    {
-revision: TReadonly<TUnsafe<StableId>>;
-rollbackOf: TOptional<TUnsafe<StableId>>;
-}>;
-
 // @alpha (undocumented)
-export interface RevisionInfo extends Static<typeof RevisionInfo> {
+export interface RevisionInfo {
+    // (undocumented)
+    readonly revision: RevisionTag;
     readonly rollbackOf?: RevisionTag;
 }
 
@@ -1897,11 +1849,6 @@ export interface ViewSchemaCollection {
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
-
-// Warnings were encountered during analysis:
-//
-// src/feature-libraries/modular-schema/fieldChangeHandler.ts:277:26 - (ae-incompatible-release-tags) The symbol "revision" is marked as @public, but its signature references "StableId" which is marked as @internal
-// src/feature-libraries/modular-schema/fieldChangeHandler.ts:277:26 - (ae-incompatible-release-tags) The symbol "rollbackOf" is marked as @public, but its signature references "StableId" which is marked as @internal
 
 // (No @packageDocumentation comment for this package)
 
