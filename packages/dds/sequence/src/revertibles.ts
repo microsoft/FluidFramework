@@ -64,13 +64,15 @@ export function appendLocalDeleteToRevertibles(
 	const startRef = string.createLocalReferencePosition(
 		startSeg,
 		interval.start.getOffset(),
-		ReferenceType.RangeBegin,
+		// eslint-disable-next-line no-bitwise
+		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
 		startSeg.properties,
 	);
 	const endRef = string.createLocalReferencePosition(
 		endSeg,
 		interval.end.getOffset(),
-		ReferenceType.RangeEnd,
+		// eslint-disable-next-line no-bitwise
+		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 		endSeg.properties,
 	);
 	revertibles.push({
@@ -94,13 +96,15 @@ export function appendLocalChangeToRevertibles(
 	const prevStartRef = string.createLocalReferencePosition(
 		startSeg,
 		previousInterval.start.getOffset(),
-		ReferenceType.RangeBegin,
+		// eslint-disable-next-line no-bitwise
+		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
 		startSeg.properties,
 	);
 	const prevEndRef = string.createLocalReferencePosition(
 		endSeg,
 		previousInterval.end.getOffset(),
-		ReferenceType.RangeEnd,
+		// eslint-disable-next-line no-bitwise
+		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 		endSeg.properties,
 	);
 	revertibles.push({
