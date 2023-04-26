@@ -86,18 +86,16 @@ function getPrimaryArrayKey(
  */
 export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField {
 	public readonly fieldKey: FieldKey;
-	public readonly fieldSchema: FieldSchema;
 	public readonly [arrayLikeMarkerSymbol]: true;
 
 	public constructor(
 		context: ProxyContext,
-		fieldSchema: FieldSchema,
+		public readonly fieldSchema: FieldSchema,
 		cursor: ITreeSubscriptionCursor,
 	) {
-		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		super(context, cursor);
+		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		this.fieldKey = cursor.getFieldKey();
-		this.fieldSchema = fieldSchema;
 		this[arrayLikeMarkerSymbol] = true;
 	}
 
@@ -184,7 +182,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			0x456 /* Index must be less than or equal to length. */,
 		);
 		const fieldPath = this.cursor.getFieldPath();
-		this.context.insertNodes(fieldPath.parent, fieldPath.field, index, newContent);
+		this.context.insertNodes(fieldPath, index, newContent);
 	}
 
 	public moveNodes(
@@ -224,7 +222,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const maxCount = this.length - index;
 		const _count = count === undefined || count > maxCount ? maxCount : count;
 		const fieldPath = this.cursor.getFieldPath();
-		this.context.deleteNodes(fieldPath.parent, fieldPath.field, index, _count);
+		this.context.deleteNodes(fieldPath, index, _count);
 	}
 
 	public replaceNodes(
@@ -250,7 +248,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const maxCount = this.length - index;
 		const _count = count === undefined || count > maxCount ? maxCount : count;
 		const fieldPath = this.cursor.getFieldPath();
-		this.context.replaceNodes(fieldPath.parent, fieldPath.field, index, _count, newContent);
+		this.context.replaceNodes(fieldPath, index, _count, newContent);
 	}
 }
 

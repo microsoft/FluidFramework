@@ -318,10 +318,7 @@ describe("AnchorSet", () => {
 				log.logger(`visitSubtreeChange.onSetValue-${value}`)();
 			},
 		};
-		const unsubscribePathVisitor = node0.on(
-			"visitSubtreeChanging",
-			(n: AnchorNode) => pathVisitor,
-		);
+		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
 		anchors.applyDelta(makeDelta(insertMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 4])));
 		log.expect([["visitSubtreeChange.onInsert-foo-4", 1]]);
 		log.clear();

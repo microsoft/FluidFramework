@@ -248,7 +248,7 @@ describe("Garbage Collection configurations", () => {
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
 				sweepEnabled: false, // Hardcoded, not used
-				gcFeature: currentGCVersion,
+				gcFeature: stableGCVersion,
 			};
 			assert.deepEqual(
 				outputMetadata,
@@ -314,7 +314,7 @@ describe("Garbage Collection configurations", () => {
 			assert(gc.configs.sweepTimeoutMs !== undefined, "sweepTimeoutMs incorrect");
 			assert.equal(
 				gc.summaryStateTracker.latestSummaryGCVersion,
-				currentGCVersion,
+				stableGCVersion,
 				"latestSummaryGCVersion incorrect",
 			);
 		});
@@ -407,7 +407,7 @@ describe("Garbage Collection configurations", () => {
 		it("Metadata Roundtrip", () => {
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
-				gcFeature: currentGCVersion,
+				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: { tombstoneGeneration: 2, sweepGeneration: 2 },
@@ -444,7 +444,7 @@ describe("Garbage Collection configurations", () => {
 		it("Metadata Roundtrip with only sweepGeneration", () => {
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
-				gcFeature: currentGCVersion,
+				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
 				gcFeatureMatrix: { sweepGeneration: 2, tombstoneGeneration: undefined },
@@ -625,7 +625,7 @@ describe("Garbage Collection configurations", () => {
 
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false,
-				gcFeature: currentGCVersion,
+				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				sweepTimeoutMs: expectedSweepTimeoutMs,
 				gcFeatureMatrix: undefined,

@@ -13,12 +13,12 @@ import {
 	IRepairDataStoreProvider,
 	mintCommit,
 	mintRevisionTag,
-	Rebaser,
 	RepairDataStore,
 	UndoRedoManager,
 	tagChange,
 	TaggedChange,
 	UndoRedoManagerCommitType,
+	rebaseBranch,
 } from "../core";
 import { EventEmitter } from "../events";
 import { TransactionResult } from "../util";
@@ -27,23 +27,40 @@ import { TransactionStack } from "./transactionStack";
 /**
  * The events emitted by a `SharedTreeBranch`
  */
-export interface SharedTreeBranchEvents<TChange> {
+export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TChange> {
 	/**
 	 * Fired anytime the head of this branch changes.
 	 * @param change - the cumulative change to this branch's state.
 	 * This may be a composition of changes from multiple commits at once (e.g. after a rebase or merge).
 	 */
 	change(change: TChange): void;
+
+	/**
+	 * Fired when this branch forks
+	 * @param fork - the new branch that forked off of this branch
+	 */
+	fork(fork: SharedTreeBranch<TEditor, TChange>): void;
+
+	/**
+	 * Fired after this branch is rebased
+	 */
+	rebase(): void;
+
+	/**
+	 * Fired after this branch is disposed
+	 */
+	dispose(): void;
 }
 
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
 export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
-	SharedTreeBranchEvents<TChange>
+	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
+	private disposed = false;
 
 	/**
 	 * Construct a new branch.
@@ -57,7 +74,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		private readonly sessionId: string,
-		private readonly rebaser: Rebaser<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		public undoRedoManager: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
@@ -70,6 +86,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	private applyChange(change: TChange, isUndoRedoCommit?: UndoRedoManagerCommitType): void {
+		this.assertNotDisposed();
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
 			revision,
@@ -96,6 +113,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	public startTransaction(repairStore?: RepairDataStore): void {
+		this.assertNotDisposed();
 		if (!this.isTransacting()) {
 			// If this is the start of a transaction stack, freeze the undo redo manager's
 			// repair data store provider so that repair data can be captured based on the
@@ -107,7 +125,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	public commitTransaction(): TransactionResult.Commit {
-		const [startCommit, commits, _repairStore] = this.popTransaction();
+		this.assertNotDisposed();
+		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
 
 		// Anonymize the commits from this transaction by stripping their revision tags.
@@ -139,6 +158,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	public abortTransaction(): TransactionResult.Abort {
+		this.assertNotDisposed();
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
@@ -194,14 +214,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		repairDataStoreProvider?: IRepairDataStoreProvider,
 		anchors?: AnchorSet,
 	): SharedTreeBranch<TEditor, TChange> {
-		return new SharedTreeBranch(
+		this.assertNotDisposed();
+		const fork = new SharedTreeBranch(
 			this.head,
 			this.sessionId,
-			this.rebaser,
 			this.changeFamily,
 			this.undoRedoManager.clone(repairDataStoreProvider),
 			anchors,
 		);
+		this.emit("fork", fork);
+		return fork;
 	}
 
 	/**
@@ -211,6 +233,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @returns the net change to this branch
 	 */
 	public rebaseOnto(branch: GraphCommit<TChange>): TChange {
+		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
 		const rebaseResult = this.rebaseBranch(this.head, branch);
 		if (rebaseResult === undefined) {
@@ -220,7 +243,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// The net change to this branch is provided by the `rebaseBranch` API
 		const [newHead, change] = rebaseResult;
 		this.head = newHead;
-		return this.emitAndRebaseAnchors(change);
+		const composedChange = this.emitAndRebaseAnchors(change);
+		this.emit("rebase");
+		return composedChange;
 	}
 
 	/**
@@ -228,6 +253,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @returns the net change to this branch
 	 */
 	public merge(branch: SharedTreeBranch<TEditor, TChange>): TChange {
+		this.assertNotDisposed();
 		assert(
 			!branch.isTransacting(),
 			0x597 /* Branch may not be merged while transaction is in progress */,
@@ -251,12 +277,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private rebaseBranch(
 		branchHead: GraphCommit<TChange>,
 		onto: GraphCommit<TChange>,
-	): ReturnType<Rebaser<TChange>["rebaseBranch"]> | undefined {
+	): [newSourceHead: GraphCommit<TChange>, sourceChange: TChange] | undefined {
 		if (branchHead === onto) {
 			return undefined;
 		}
 
-		const rebaseResult = this.rebaser.rebaseBranch(branchHead, onto);
+		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, branchHead, onto);
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {
 			return undefined;
@@ -265,13 +291,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return rebaseResult;
 	}
 
+	/**
+	 * Dispose this branch, freezing its state.
+	 * Attempts to further mutate or dispose the branch will error.
+	 */
+	public dispose(): void {
+		this.assertNotDisposed();
+		this.disposed = true;
+		this.emit("dispose");
+	}
+
 	private emitAndRebaseAnchors(change: TChange | TaggedChange<TChange>[]): TChange {
 		let composedChange: TChange;
 		if (Array.isArray(change)) {
 			if (change.length === 0) {
 				return this.noChange;
 			}
-			composedChange = this.rebaser.changeRebaser.compose(change);
+			composedChange = this.changeFamily.rebaser.compose(change);
 		} else {
 			composedChange = change;
 		}
@@ -286,5 +322,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 	private get noChange() {
 		return this.changeFamily.rebaser.compose([]);
+	}
+
+	private assertNotDisposed(): void {
+		assert(!this.disposed, "Branch is disposed");
 	}
 }

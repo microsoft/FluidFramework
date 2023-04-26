@@ -5,19 +5,18 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	ChangeFamily,
-	Commit,
-	EditManager,
 	SessionId,
 	ChangeRebaser,
 	FieldKey,
 	TaggedChange,
 	emptyDelta,
 	mintRevisionTag,
-	SeqNumber,
 	ChangeFamilyEditor,
 	makeAnonChange,
+	UndoRedoManager,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -29,7 +28,13 @@ import {
 	testChangeFamilyFactory,
 	asDelta,
 } from "../testChange";
-import { assertDeltaEqual } from "../utils";
+import { MockRepairDataStoreProvider, assertDeltaEqual } from "../utils";
+import { Commit, EditManager, SeqNumber, SharedTreeBranch } from "../../shared-tree-core";
+import {
+	DefaultChangeFamily,
+	DefaultChangeset,
+	defaultChangeFamily,
+} from "../../feature-libraries";
 
 type TestEditManager = EditManager<TestChange, TestChangeFamily>;
 
@@ -241,7 +246,7 @@ describe("EditManager", () => {
 			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
 		]);
 
-		it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
+		it("Evicts trunk commits according to a provided minimum sequence number", () => {
 			const { manager } = editManagerFactory({});
 			for (let i = 0; i < 10; ++i) {
 				manager.addSequencedChange(
@@ -251,12 +256,95 @@ describe("EditManager", () => {
 						sessionId: peer1,
 					},
 					brand(i),
-					brand(0),
+					brand(i - 1),
 				);
 			}
+
 			assert.equal(manager.getTrunk().length, 10);
 			manager.advanceMinimumSequenceNumber(brand(5));
-			assert(manager.getTrunk().length < 10);
+			assert.equal(manager.getTrunk().length, 5);
+			manager.advanceMinimumSequenceNumber(brand(10));
+			assert.equal(manager.getTrunk().length, 0);
+
+			for (let i = 10; i < 20; ++i) {
+				manager.addSequencedChange(
+					{
+						change: TestChange.mint([], []),
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(i),
+					brand(i - 1),
+				);
+			}
+
+			assert.equal(manager.getTrunk().length, 10);
+			manager.advanceMinimumSequenceNumber(brand(15));
+			assert.equal(manager.getTrunk().length, 5);
+			manager.advanceMinimumSequenceNumber(brand(20));
+			assert.equal(manager.getTrunk().length, 0);
+		});
+
+		it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
+			const { manager } = editManagerFactory({});
+			manager.addSequencedChange(
+				{
+					change: TestChange.mint([], []),
+					revision: mintRevisionTag(),
+					sessionId: peer1,
+				},
+				brand(1),
+				brand(0),
+			);
+
+			assert.equal(manager.getTrunk().length, 1);
+			manager.addSequencedChange(
+				{
+					change: TestChange.mint([], []),
+					revision: mintRevisionTag(),
+					sessionId: peer1,
+				},
+				brand(2),
+				brand(1),
+			);
+
+			assert.equal(manager.getTrunk().length, 2);
+			manager.advanceMinimumSequenceNumber(brand(1));
+			assert.equal(manager.getTrunk().length, 2);
+
+			// If a change's sequence number is also the minimum sequence number,
+			// it should not be evicted
+			manager.addSequencedChange(
+				{
+					change: TestChange.mint([], []),
+					revision: mintRevisionTag(),
+					sessionId: peer1,
+				},
+				brand(3),
+				brand(3),
+			);
+
+			assert.equal(manager.getTrunk().length, 3);
+			manager.advanceMinimumSequenceNumber(brand(3));
+			assert.equal(manager.getTrunk().length, 1);
+		});
+
+		it("Errors when a branch is registered multiple times", () => {
+			const manager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
+				defaultChangeFamily,
+				"",
+			);
+			const branch = new SharedTreeBranch(
+				manager.getLocalBranchHead(),
+				"",
+				defaultChangeFamily,
+				new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily),
+			);
+			manager.registerBranch(branch);
+			assert.throws(
+				() => manager.registerBranch(branch),
+				(e) => validateAssertionError(e, "Branch was registered more than once"),
+			);
 		});
 
 		it("Rebases anchors over local changes", () => {

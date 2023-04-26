@@ -185,50 +185,26 @@ use_old_ClassDeclaration_DeliLambdaFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ForemanLambda": {"forwardCompat": false}
+* "RemovedClassDeclaration_ForemanLambda": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_ForemanLambda():
-    TypeOnly<old.ForemanLambda>;
-declare function use_current_ClassDeclaration_ForemanLambda(
-    use: TypeOnly<current.ForemanLambda>);
-use_current_ClassDeclaration_ForemanLambda(
-    get_old_ClassDeclaration_ForemanLambda());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ForemanLambda": {"backCompat": false}
+* "RemovedClassDeclaration_ForemanLambda": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_ForemanLambda():
-    TypeOnly<current.ForemanLambda>;
-declare function use_old_ClassDeclaration_ForemanLambda(
-    use: TypeOnly<old.ForemanLambda>);
-use_old_ClassDeclaration_ForemanLambda(
-    get_current_ClassDeclaration_ForemanLambda());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ForemanLambdaFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_ForemanLambdaFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_ForemanLambdaFactory():
-    TypeOnly<old.ForemanLambdaFactory>;
-declare function use_current_ClassDeclaration_ForemanLambdaFactory(
-    use: TypeOnly<current.ForemanLambdaFactory>);
-use_current_ClassDeclaration_ForemanLambdaFactory(
-    get_old_ClassDeclaration_ForemanLambdaFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_ForemanLambdaFactory": {"backCompat": false}
+* "RemovedClassDeclaration_ForemanLambdaFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_ForemanLambdaFactory():
-    TypeOnly<current.ForemanLambdaFactory>;
-declare function use_old_ClassDeclaration_ForemanLambdaFactory(
-    use: TypeOnly<old.ForemanLambdaFactory>);
-use_old_ClassDeclaration_ForemanLambdaFactory(
-    get_current_ClassDeclaration_ForemanLambdaFactory());
 
 /*
 * Validate forward compat by using old type in place of current type

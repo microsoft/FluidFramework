@@ -6,7 +6,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/dds/tree"
+		"directory": "experimental/dds/tree2"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -33,7 +33,7 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"postpack": "tar -cf ./tree.test-files.tar ./src/test ./dist/test",
+		"postpack": "tar -cf ./experimental-tree2.test-files.tar ./src/test ./dist/test",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",

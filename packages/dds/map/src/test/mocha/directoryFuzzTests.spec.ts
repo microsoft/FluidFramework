@@ -4,89 +4,60 @@
  */
 
 import * as dirPath from "path";
-import { mkdirSync } from "fs";
 import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
 	AsyncReducer,
-	BaseFuzzTestState,
-	createFuzzDescribe,
+	combineReducersAsync,
 	createWeightedAsyncGenerator,
-	interleaveAsync,
-	makeRandom,
-	performFuzzActionsAsync,
-	SaveInfo,
 	takeAsync,
 } from "@fluid-internal/stochastic-test-utils";
 import {
-	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils";
-import { IChannelServices } from "@fluidframework/datastore-definitions";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
+	Client,
+	createDDSFuzzSuite,
+	DDSFuzzModel,
+	DDSFuzzTestState,
+} from "@fluid-internal/test-dds-utils";
+import { DirectoryFactory } from "../../directory";
 import { IDirectory } from "../../interfaces";
 
-interface Client {
-	sharedDirectory: SharedDirectory;
-	containerRuntime: MockContainerRuntimeForReconnection;
-}
+type FuzzTestState = DDSFuzzTestState<DirectoryFactory>;
 
-interface FuzzTestState extends BaseFuzzTestState {
-	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
-	clients: Client[];
-}
-
-interface ClientSpec {
-	directoryId: string;
-}
-
-interface SetKey extends ClientSpec {
+interface SetKey {
 	type: "set";
 	path: string;
 	key: string;
 	value: string;
 }
 
-interface ClearKeys extends ClientSpec {
+interface ClearKeys {
 	type: "clear";
 	path: string;
 }
 
-interface DeleteKey extends ClientSpec {
+interface DeleteKey {
 	type: "delete";
 	path: string;
 	key: string;
 }
 
-interface CreateSubDirectory extends ClientSpec {
+interface CreateSubDirectory {
 	type: "createSubDirectory";
 	path: string;
 	name: string;
 }
 
-interface DeleteSubDirectory extends ClientSpec {
+interface DeleteSubDirectory {
 	type: "deleteSubDirectory";
 	path: string;
 	name: string;
-}
-
-interface LoadNewClient {
-	type: "loadNewClient";
-}
-
-interface Synchronize {
-	type: "synchronize";
 }
 
 type KeyOperation = SetKey | DeleteKey | ClearKeys;
 
 type SubDirectoryOperation = CreateSubDirectory | DeleteSubDirectory;
 
-type ClientOperation = KeyOperation | SubDirectoryOperation;
-
-type Operation = ClientOperation | Synchronize | LoadNewClient;
+type Operation = KeyOperation | SubDirectoryOperation;
 
 interface OperationGenerationConfig {
 	validateInterval: number;
@@ -106,12 +77,11 @@ function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
 ): AsyncGenerator<Operation, FuzzTestState> {
 	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
-	type ClientOpState = FuzzTestState & { sharedDirectory: SharedDirectory };
 
 	// All subsequent helper functions are generators; note that they don't actually apply any operations.
-	function pickAbsolutePathForCreateDirectoryOp(state: ClientOpState): string {
-		const { random, sharedDirectory } = state;
-		let dir: IDirectory = sharedDirectory;
+	function pickAbsolutePathForCreateDirectoryOp(state: FuzzTestState): string {
+		const { random, channel } = state;
+		let dir: IDirectory = channel;
 		for (;;) {
 			assert(dir !== undefined, "Directory should be defined");
 			const subDirectories: IDirectory[] = [];
@@ -136,11 +106,11 @@ function makeOperationGenerator(
 		return dir.absolutePath;
 	}
 
-	function pickAbsolutePathForDeleteDirectoryOp(state: ClientOpState): string {
-		const { random, sharedDirectory } = state;
-		let parentDir: IDirectory = sharedDirectory;
+	function pickAbsolutePathForDeleteDirectoryOp(state: FuzzTestState): string {
+		const { random, channel } = state;
+		let parentDir: IDirectory = channel;
 		const subDirectories: IDirectory[] = [];
-		for (const [_, b] of sharedDirectory.subdirectories()) {
+		for (const [_, b] of channel.subdirectories()) {
 			subDirectories.push(b);
 		}
 		let dirToDelete = random.pick<IDirectory>(subDirectories);
@@ -161,9 +131,9 @@ function makeOperationGenerator(
 		return parentDir.absolutePath;
 	}
 
-	function pickAbsolutePathForKeyOps(state: ClientOpState, shouldHaveKey: boolean): string {
-		const { random, sharedDirectory } = state;
-		let parentDir: IDirectory = sharedDirectory;
+	function pickAbsolutePathForKeyOps(state: FuzzTestState, shouldHaveKey: boolean): string {
+		const { random, channel } = state;
+		let parentDir: IDirectory = channel;
 		for (;;) {
 			assert(parentDir !== undefined, "Directory should be defined");
 			const subDirs: IDirectory[] = [];
@@ -180,20 +150,18 @@ function makeOperationGenerator(
 		return parentDir.absolutePath;
 	}
 
-	async function createSubDirectory(state: ClientOpState): Promise<CreateSubDirectory> {
-		const { random, sharedDirectory } = state;
+	async function createSubDirectory(state: FuzzTestState): Promise<CreateSubDirectory> {
 		return {
 			type: "createSubDirectory",
-			directoryId: sharedDirectory.id,
-			name: random.pick(options.subDirectoryNamePool),
+			name: state.random.pick(options.subDirectoryNamePool),
 			path: pickAbsolutePathForCreateDirectoryOp(state),
 		};
 	}
 
-	async function deleteSubDirectory(state: ClientOpState): Promise<DeleteSubDirectory> {
-		const { random, sharedDirectory } = state;
+	async function deleteSubDirectory(state: FuzzTestState): Promise<DeleteSubDirectory> {
+		const { random, channel } = state;
 		const path = pickAbsolutePathForDeleteDirectoryOp(state);
-		const parentDir = sharedDirectory.getWorkingDirectory(path);
+		const parentDir = channel.getWorkingDirectory(path);
 		assert(parentDir !== undefined, "parent dir should be defined");
 		assert(
 			parentDir.countSubDirectory && parentDir.countSubDirectory() > 0,
@@ -205,74 +173,51 @@ function makeOperationGenerator(
 		}
 		return {
 			type: "deleteSubDirectory",
-			directoryId: sharedDirectory.id,
 			name: random.pick<string>(subDirName),
 			path,
 		};
 	}
 
-	async function setKey(state: ClientOpState): Promise<SetKey> {
-		const { random, sharedDirectory } = state;
+	async function setKey(state: FuzzTestState): Promise<SetKey> {
+		const { random } = state;
 		return {
 			type: "set",
 			key: random.pick(options.keyNamePool),
 			path: pickAbsolutePathForKeyOps(state, false),
 			value: random.string(random.integer(0, 4)),
-			directoryId: sharedDirectory.id,
 		};
 	}
 
-	async function clearKeys(state: ClientOpState): Promise<ClearKeys> {
+	async function clearKeys(state: FuzzTestState): Promise<ClearKeys> {
 		return {
 			type: "clear",
 			path: pickAbsolutePathForKeyOps(state, true),
-			directoryId: state.sharedDirectory.id,
 		};
 	}
 
-	async function deleteKey(state: ClientOpState): Promise<DeleteKey> {
-		const { random, sharedDirectory } = state;
+	async function deleteKey(state: FuzzTestState): Promise<DeleteKey> {
+		const { random, channel } = state;
 		const path = pickAbsolutePathForKeyOps(state, true);
-		const dir = sharedDirectory.getWorkingDirectory(path);
+		const dir = channel.getWorkingDirectory(path);
 		assert(dir, "dir should exist");
 		return {
 			type: "delete",
 			key: random.pick([...dir.keys()]),
 			path,
-			directoryId: sharedDirectory.id,
 		};
 	}
 
-	async function loadNewClient(): Promise<LoadNewClient> {
-		return {
-			type: "loadNewClient",
-		};
-	}
-
-	const clientBaseOperationGenerator = createWeightedAsyncGenerator<Operation, ClientOpState>([
+	return createWeightedAsyncGenerator<Operation, FuzzTestState>([
 		[createSubDirectory, 2],
 		[
 			deleteSubDirectory,
 			1,
-			(state: ClientOpState): boolean => state.sharedDirectory.countSubDirectory() > 0,
+			(state: FuzzTestState): boolean => (state.channel.countSubDirectory?.() ?? 0) > 0,
 		],
 		[setKey, 5],
-		[deleteKey, 2, (state: ClientOpState): boolean => state.sharedDirectory.size > 0],
-		[clearKeys, 1, (state: ClientOpState): boolean => state.sharedDirectory.size > 0],
-		[loadNewClient, 1],
+		[deleteKey, 2, (state: FuzzTestState): boolean => state.channel.size > 0],
+		[clearKeys, 1, (state: FuzzTestState): boolean => state.channel.size > 0],
 	]);
-
-	const clientOperationGenerator = async (state: FuzzTestState) =>
-		clientBaseOperationGenerator({
-			...state,
-			sharedDirectory: state.random.pick(state.clients).sharedDirectory,
-		});
-
-	return interleaveAsync(
-		clientOperationGenerator,
-		async () => ({ type: "synchronize" }),
-		options.validateInterval,
-	);
 }
 
 interface LoggingInfo {
@@ -282,9 +227,10 @@ interface LoggingInfo {
 	printConsoleLogs?: boolean;
 }
 
-function logCurrentState(clients: Client[], loggingInfo: LoggingInfo): void {
+function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: LoggingInfo): void {
 	for (const id of loggingInfo.clientIds) {
-		const { sharedDirectory } = clients.find((s) => s.sharedDirectory.id === id) ?? {};
+		const { channel: sharedDirectory } =
+			clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		if (sharedDirectory !== undefined) {
 			console.log(`Client ${id}:`);
 			console.log(
@@ -295,19 +241,9 @@ function logCurrentState(clients: Client[], loggingInfo: LoggingInfo): void {
 	}
 }
 
-async function runSharedDirectoryFuzz(
-	generator: AsyncGenerator<Operation, FuzzTestState>,
-	initialState: FuzzTestState,
-	summarizerClient: Client,
-	saveInfo?: SaveInfo,
-	loggingInfo?: LoggingInfo,
-): Promise<void> {
-	// Small wrapper to avoid having to return the same state repeatedly; all operations in this suite mutate.
-	// Also a reasonable point to inject logging of incremental state.
-	const statefully =
-		<T>(
-			statefulReducer: (state: FuzzTestState, operation: T) => Promise<void>,
-		): AsyncReducer<T, FuzzTestState> =>
+function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTestState> {
+	const withLogging =
+		<T>(baseReducer: AsyncReducer<T, FuzzTestState>): AsyncReducer<T, FuzzTestState> =>
 		async (state, operation) => {
 			if (loggingInfo !== undefined) {
 				if (loggingInfo.printConsoleLogs) {
@@ -316,188 +252,50 @@ async function runSharedDirectoryFuzz(
 					console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 				}
 			}
-			await statefulReducer(state, operation);
+			try {
+				await baseReducer(state, operation);
+			} catch (error) {
+				if (loggingInfo !== undefined) {
+					logCurrentState(state.clients, loggingInfo);
+				}
+				throw error;
+			}
 			return state;
 		};
 
-	await performFuzzActionsAsync(
-		generator,
-		{
-			createSubDirectory: statefully(async ({ clients }, { directoryId, path, name }) => {
-				const { sharedDirectory } =
-					clients.find((c) => c.sharedDirectory.id === directoryId) ?? {};
-				assert(sharedDirectory);
-				const dir = sharedDirectory.getWorkingDirectory(path);
-				assert(dir);
-				dir.createSubDirectory(name);
-			}),
-			deleteSubDirectory: statefully(async ({ clients }, { directoryId, path, name }) => {
-				const { sharedDirectory } =
-					clients.find((c) => c.sharedDirectory.id === directoryId) ?? {};
-				assert(sharedDirectory);
-				const dir = sharedDirectory.getWorkingDirectory(path);
-				assert(dir);
-				dir.deleteSubDirectory(name);
-			}),
-			set: statefully(async ({ clients }, { directoryId, path, key, value }) => {
-				const { sharedDirectory } =
-					clients.find((c) => c.sharedDirectory.id === directoryId) ?? {};
-				assert(sharedDirectory);
-				const dir = sharedDirectory.getWorkingDirectory(path);
-				assert(dir);
-				dir.set(key, value);
-			}),
-			clear: statefully(async ({ clients }, { directoryId, path }) => {
-				const { sharedDirectory } =
-					clients.find((c) => c.sharedDirectory.id === directoryId) ?? {};
-				assert(sharedDirectory);
-				const dir = sharedDirectory.getWorkingDirectory(path);
-				assert(dir);
-				dir.clear();
-			}),
-			delete: statefully(async ({ clients }, { directoryId, path, key }) => {
-				const { sharedDirectory } =
-					clients.find((c) => c.sharedDirectory.id === directoryId) ?? {};
-				assert(sharedDirectory);
-				const dir = sharedDirectory.getWorkingDirectory(path);
-				assert(dir);
-				dir.delete(key);
-			}),
-			synchronize: statefully(async ({ containerRuntimeFactory, clients }) => {
-				// Summarizer client will also process messages as part of this.
-				containerRuntimeFactory.processAllMessages();
-				try {
-					assertEventuallyConsistentDirectoryState(clients);
-				} catch (error) {
-					if (loggingInfo !== undefined) {
-						logCurrentState(clients, loggingInfo);
-					}
-					throw error;
-				}
-			}),
-			loadNewClient: statefully(async ({ containerRuntimeFactory, clients }) => {
-				const summaryAtMinSeq = summarizerClient.sharedDirectory.getAttachSummary();
-				const dataStoreRuntime = new MockFluidDataStoreRuntime();
-				const sharedDirectory = new SharedDirectory(
-					String.fromCharCode(clients.length + 1 + 65),
-					dataStoreRuntime,
-					DirectoryFactory.Attributes,
-				);
-				const containerRuntime = containerRuntimeFactory.createContainerRuntime(
-					dataStoreRuntime,
-					{ minimumSequenceNumber: containerRuntimeFactory.sequenceNumber },
-				);
-				const services: IChannelServices = {
-					deltaConnection: containerRuntime.createDeltaConnection(),
-					objectStorage: MockStorage.createFromSummary(summaryAtMinSeq.summary),
-				};
-
-				await sharedDirectory.load(services);
-				sharedDirectory.connect(services);
-				const newClient: Client = {
-					sharedDirectory,
-					containerRuntime,
-				};
-				clients.push(newClient);
-				loggingInfo?.clientIds.push(sharedDirectory.id);
-			}),
+	const reducer: AsyncReducer<Operation, FuzzTestState> = combineReducersAsync({
+		createSubDirectory: async ({ channel }, { path, name }) => {
+			const dir = channel.getWorkingDirectory(path);
+			assert(dir);
+			dir.createSubDirectory(name);
 		},
-		initialState,
-		saveInfo,
-	);
-}
-
-const describeFuzz = createFuzzDescribe({ defaultTestCount: 10 });
-
-describeFuzz("SharedDirectory fuzz testing", ({ testCount }) => {
-	const directory = dirPath.join(__dirname, "../../../src/test/mocha/results");
-	function getPath(seed: number): string {
-		return dirPath.join(directory, `${seed}.json`);
-	}
-
-	before(() => {
-		mkdirSync(directory, { recursive: true });
+		deleteSubDirectory: async ({ channel }, { path, name }) => {
+			const dir = channel.getWorkingDirectory(path);
+			assert(dir);
+			dir.deleteSubDirectory(name);
+		},
+		set: async ({ channel }, { path, key, value }) => {
+			const dir = channel.getWorkingDirectory(path);
+			assert(dir);
+			dir.set(key, value);
+		},
+		clear: async ({ channel }, { path }) => {
+			const dir = channel.getWorkingDirectory(path);
+			assert(dir);
+			dir.clear();
+		},
+		delete: async ({ channel }, { path, key }) => {
+			const dir = channel.getWorkingDirectory(path);
+			assert(dir);
+			dir.delete(key);
+		},
 	});
 
-	function runTests(
-		seed: number,
-		generator: AsyncGenerator<Operation, FuzzTestState>,
-		loggingInfo?: LoggingInfo,
-	): void {
-		it(`with default config, seed ${seed}`, async () => {
-			// 1 client will act as summarizer and it will just process ops and not submit any op.
-			const numClients = 4;
+	return withLogging(reducer);
+}
 
-			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-			const clients = Array.from({ length: numClients }, (_, index) => {
-				const dataStoreRuntime = new MockFluidDataStoreRuntime();
-				const sharedDirectory = new SharedDirectory(
-					String.fromCharCode(index + 65),
-					dataStoreRuntime,
-					DirectoryFactory.Attributes,
-				);
-				const containerRuntime =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-				const services: IChannelServices = {
-					deltaConnection: containerRuntime.createDeltaConnection(),
-					objectStorage: new MockStorage(),
-				};
-
-				sharedDirectory.initializeLocal();
-				sharedDirectory.connect(services);
-				return { containerRuntime, sharedDirectory };
-			});
-
-			// Remove the summarizer client so that it does not get chosen to submit ops.
-			const summarizerClient = clients.pop();
-			assert(
-				summarizerClient !== undefined && clients.length === numClients - 1,
-				"summarizer client should be defined",
-			);
-			const clientIds: string[] = [];
-			for (const c of clients) {
-				clientIds.push(c.sharedDirectory.id);
-			}
-
-			const initialState: FuzzTestState = {
-				clients,
-				containerRuntimeFactory,
-				random: makeRandom(seed),
-			};
-
-			await runSharedDirectoryFuzz(
-				generator,
-				initialState,
-				summarizerClient,
-				{ saveOnFailure: true, filepath: getPath(seed) },
-				loggingInfo ?? { clientIds, printConsoleLogs: false },
-			);
-		});
-	}
-
-	for (let i = 0; i < testCount; i++) {
-		const generator = takeAsync(200, makeOperationGenerator({ validateInterval: 10 }));
-		runTests(i, generator);
-	}
-});
-
-/**
- * Validates that all shared directories in the provided array are consistent in the underlying keys/values
- * and sub directories recursively.
- * */
-function assertEventuallyConsistentDirectoryState(clients: Client[]): void {
-	const connectedClients = clients.filter((client) => client.containerRuntime.connected);
-	if (connectedClients.length < 2) {
-		// No two strings are expected to be consistent.
-		return;
-	}
-	const first = connectedClients[0].sharedDirectory;
-	for (const { sharedDirectory: second } of connectedClients.slice(1)) {
-		assertEventualConsistencyCore(
-			first.getWorkingDirectory("/"),
-			second.getWorkingDirectory("/"),
-		);
-	}
+function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
+	assertEventualConsistencyCore(first.getWorkingDirectory("/"), second.getWorkingDirectory("/"));
 }
 
 function assertEventualConsistencyCore(
@@ -547,3 +345,34 @@ function assertEventualConsistencyCore(
 		assertEventualConsistencyCore(subDirectory1, subDirectory2);
 	}
 }
+
+describe("SharedDirectory fuzz", () => {
+	const model: DDSFuzzModel<DirectoryFactory, Operation> = {
+		workloadName: "default directory",
+		generatorFactory: () => takeAsync(100, makeOperationGenerator()),
+		reducer: makeReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
+		validateConsistency: assertEquivalentDirectories,
+		factory: new DirectoryFactory(),
+	};
+
+	createDDSFuzzSuite(model, {
+		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
+		/**
+		 * TODO: This test suite currently fails with reconnect enabled.
+		 * AB#4064 tracks fixing any eventual consistency issues and enabling this (or a similar model with
+		 * reconnection enabled).
+		 */
+		reconnectProbability: 0,
+		numberOfClients: 3,
+		clientJoinOptions: {
+			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
+			// was refactored to use the DDS fuzz harness.
+			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
+			clientAddProbability: 0.08,
+		},
+		defaultTestCount: 10,
+		// Uncomment this line to replay a specific seed from its failure file:
+		// replay: 0,
+		saveFailures: { directory: dirPath.join(__dirname, "../../../src/test/mocha/results") },
+	});
+});
