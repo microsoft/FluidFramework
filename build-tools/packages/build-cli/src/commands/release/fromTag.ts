@@ -72,25 +72,23 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		if (taggedReleaseIndex === -1) {
 			this.error(`Release matching version '${version.version}' not found`);
 		}
+
 		const prevVersionDetails = versions[taggedReleaseIndex + 1];
-		this.warning(
-			`Previous index: ${taggedReleaseIndex + 1} version: ${prevVersionDetails?.version}`,
-		);
 		if (prevVersionDetails === undefined) {
 			this.error(`No previous release found`);
 		}
 
-		const releaseType = detectBumpType(prevVersionDetails?.version, version);
+		const previousVersion = prevVersionDetails?.version;
+		const releaseType = detectBumpType(previousVersion, version);
 		if (releaseType === undefined) {
 			this.error(
-				`Unable to determine release type for ${prevVersionDetails?.version} -> ${version.version}`,
+				`Unable to determine release type for ${previousVersion} -> ${version.version}`,
 			);
 		}
 
 		this.log(`${this.releaseGroupOrPackage} v${version.version} (${releaseType})`);
 
 		// When the --json flag is passed, the command will return the raw data as JSON.
-		const previousVersion = prevVersionDetails?.version;
 		return {
 			packageOrReleaseGroup: this.releaseGroupOrPackage,
 			tag,
