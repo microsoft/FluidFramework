@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { IClient } from "@fluidframework/protocol-definitions";
+
 /**
  * Kind of audience member change.
  *
@@ -18,4 +20,21 @@ export enum MemberChangeKind {
 	 * An audience member was removed.
 	 */
 	Removed = "Removed",
+}
+
+/**
+ * Metadata of clients within the Audience.
+ *
+ * @public
+ */
+export interface AudienceClientMetadata {
+	/**
+	 * Local users's clientId.
+	 */
+	clientId: string;
+
+	/**
+	 * Metadata about the client that was added or removed.
+	 */
+	client: IClient;
 }

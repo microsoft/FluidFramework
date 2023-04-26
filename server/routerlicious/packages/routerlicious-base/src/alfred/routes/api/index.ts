@@ -5,9 +5,8 @@
 
 import {
 	ICache,
-	ICollection,
 	IDeltaService,
-	IDocument,
+	IDocumentRepository,
 	IDocumentStorage,
 	IProducer,
 	ITenantManager,
@@ -25,14 +24,14 @@ import * as documents from "./documents";
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
 	deltaService: IDeltaService,
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
@@ -41,19 +40,19 @@ export function create(
 		tenantManager,
 		deltaService,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		tokenManager,
 	);
 	const documentsRoute = documents.create(
 		storage,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
 		config,
 		tenantManager,
-		documentsCollection,
+		documentRepository,
 		tokenManager,
 	);
 	const apiRoute = api.create(
@@ -61,7 +60,7 @@ export function create(
 		producer,
 		tenantManager,
 		storage,
-		tenantThrottler,
+		tenantThrottlers,
 		tokenManager,
 	);
 

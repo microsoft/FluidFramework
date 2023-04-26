@@ -18,16 +18,14 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import {
-	GitManager,
-	ISummaryUploadManager,
-	SummaryTreeUploadManager,
-} from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache, InMemoryCache } from "./cache";
 import { RetriableGitManager } from "./retriableGitManager";
 import { ISnapshotTreeVersion } from "./definitions";
+import { GitManager } from "./gitManager";
+import { ISummaryUploadManager } from "./storageContracts";
+import { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
 
 const isNode = typeof window === "undefined";
 
@@ -85,7 +83,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 			},
 			async () => {
 				const manager = await this.getStorageManager();
-				return manager.getCommits(id, count);
+				return (await manager.getCommits(id, count)).content;
 			},
 		);
 		return commits.map((commit) => ({
@@ -121,7 +119,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 			},
 			async (event) => {
 				const manager = await this.getStorageManager();
-				const response = await manager.getTree(requestVersion!.treeId);
+				const response = (await manager.getTree(requestVersion!.treeId)).content;
 				event.end({
 					size: response.tree.length,
 				});
@@ -150,7 +148,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 			},
 			async (event) => {
 				const manager = await this.getStorageManager();
-				const response = await manager.getBlob(blobId);
+				const response = (await manager.getBlob(blobId)).content;
 				event.end({
 					size: response.size,
 				});
@@ -203,7 +201,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 				const manager = await this.getStorageManager();
 				const response = await manager
 					.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
-					.then((r) => ({ id: r.sha, url: r.url }));
+					.then((r) => ({ id: r.content.sha, url: r.content.url }));
 				event.end({
 					blobId: response.id,
 				});

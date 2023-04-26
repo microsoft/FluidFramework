@@ -39,7 +39,12 @@ export interface IResourcesFactory<T extends IResources> {
 	/**
 	 * Creates a new set of resources
 	 */
-	create(config: nconf.Provider): Promise<T>;
+	create(config: nconf.Provider, customizations?: Record<string, any>): Promise<T>;
+
+	/**
+	 * Create a new set of customizations for resource factory to provide overrides.
+	 */
+	customize?(config: nconf.Provider): Promise<Record<string, any>>;
 }
 
 /**

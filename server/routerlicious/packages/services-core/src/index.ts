@@ -28,6 +28,7 @@ export {
 	IDb,
 	IDbEvents,
 	IDbFactory,
+	IDocumentRepository,
 	IRetryable,
 	isRetryEnabled,
 } from "./database";
@@ -54,7 +55,6 @@ export {
 	IContext,
 	IContextErrorData,
 	ILogger,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
@@ -94,13 +94,13 @@ export {
 export { DefaultMetricClient, IMetricClient } from "./metricClient";
 export { MongoManager } from "./mongo";
 export { MongoDatabaseManager } from "./mongoDatabaseManager";
+export { MongoDocumentRepository } from "./mongoDocumentRepository";
 export { INode, IOrderer, IOrdererConnection, IOrdererManager, IOrdererSocket } from "./orderer";
 export { MaxBatchSize, PendingBoxcar } from "./pendingBoxcar";
 export { IMessageBatch, IPublisher, ITopic } from "./publisher";
 export {
 	IConsumer,
 	IPartition,
-	IPartitionWithEpoch,
 	IPendingBoxcar,
 	IPendingMessage,
 	IProducer,
@@ -142,4 +142,10 @@ export {
 export { TokenGenerator } from "./token";
 export { clientConnectivityStorageId, IUsageData, signalUsageStorageId } from "./usageData";
 export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
-export { IWebSocketTracker, ITokenRevocationManager, createCompositeTokenId } from "./tokenManager";
+export {
+	IWebSocketTracker,
+	ITokenRevocationManager,
+	ITokenRevocationResponse,
+	TokenRevocationError,
+	createCompositeTokenId,
+} from "./tokenRevocationManager";

@@ -4,16 +4,19 @@
  */
 
 import {
-	debuggerMessageSource,
-	IDebuggerMessage,
-	isDebuggerMessage,
+	devtoolsMessageSource,
+	ISourcedDevtoolsMessage,
+	isDevtoolsMessage,
 } from "@fluid-tools/client-debugger";
 
 import { extensionMessageSource, relayMessageToPort, relayMessageToWindow } from "../messaging";
+import { browser } from "../utilities";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
 } from "./Logging";
+
+type Port = chrome.runtime.Port;
 
 /**
  * This module is the extension's Content Script.
@@ -32,17 +35,20 @@ import {
 console.log(formatContentScriptMessageForLogging("Initializing Content Script."));
 
 // Only establish messaging when activated by the Background Worker.
-chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
+browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	console.log(formatContentScriptMessageForLogging("Connection added from Background Worker."));
 
 	/**
 	 * Relay messages if they conform to our expected format.
 	 */
-	function relayMessageFromPageToBackground(event: MessageEvent): void {
-		const message = event.data as Partial<IDebuggerMessage>;
+	function relayMessageFromPageToBackground(
+		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
+	): void {
+		const message = event.data;
+
 		// Only relay message if it is one of ours, and if the source is the window's debugger
 		// (and not a message originating from the extension).
-		if (isDebuggerMessage(message) && message.source === debuggerMessageSource) {
+		if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
 			relayMessageToPort(
 				message,
 				"webpage",
@@ -56,10 +62,10 @@ chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
 	globalThis.addEventListener("message", relayMessageFromPageToBackground);
 
 	// Relay messages from the Background Worker to the inspected window.
-	backgroundPort.onMessage.addListener((message: Partial<IDebuggerMessage>) => {
+	backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
-		if (isDebuggerMessage(message) && message.source === extensionMessageSource) {
+		if (isDevtoolsMessage(message) && message.source === extensionMessageSource) {
 			relayMessageToWindow(
 				message,
 				"Background Worker worker",

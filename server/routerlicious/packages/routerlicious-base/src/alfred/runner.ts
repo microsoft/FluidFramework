@@ -7,9 +7,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
-	ICollection,
 	IDeltaService,
-	IDocument,
 	IDocumentStorage,
 	IOrdererManager,
 	IProducer,
@@ -19,6 +17,7 @@ import {
 	IThrottleAndUsageStorageManager,
 	IWebServer,
 	IWebServerFactory,
+	IDocumentRepository,
 	ITokenRevocationManager,
 	IWebSocketTracker,
 } from "@fluidframework/server-services-core";
@@ -40,7 +39,7 @@ export class AlfredRunner implements IRunner {
 		private readonly port: string | number,
 		private readonly orderManager: IOrdererManager,
 		private readonly tenantManager: ITenantManager,
-		private readonly restTenantThrottler: IThrottler,
+		private readonly restTenantThrottlers: Map<string, IThrottler>,
 		private readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly socketConnectTenantThrottler: IThrottler,
 		private readonly socketConnectClusterThrottler: IThrottler,
@@ -53,7 +52,7 @@ export class AlfredRunner implements IRunner {
 		private readonly deltaService: IDeltaService,
 		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
-		private readonly documentsCollection: ICollection<IDocument>,
+		private readonly documentRepository: IDocumentRepository,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
@@ -69,14 +68,14 @@ export class AlfredRunner implements IRunner {
 		const alfred = app.create(
 			this.config,
 			this.tenantManager,
-			this.restTenantThrottler,
+			this.restTenantThrottlers,
 			this.restClusterThrottlers,
 			this.singleUseTokenCache,
 			this.storage,
 			this.appTenants,
 			this.deltaService,
 			this.producer,
-			this.documentsCollection,
+			this.documentRepository,
 			this.tokenManager,
 		);
 		alfred.set("port", this.port);

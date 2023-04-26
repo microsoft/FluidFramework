@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.0.1",
+	"version": "0.15.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,6 +78,7 @@
 		"@commitlint/cli": "^17.1.2",
 		"@commitlint/config-conventional": "^17.1.0",
 		"@commitlint/cz-commitlint": "^17.1.2",
+		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/test-tools": "^0.2.3074",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -99,7 +100,7 @@
 	"engines": {
 		"node": ">=14.17.0"
 	},
-	"packageManager": "pnpm@7.14.2",
+	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
 	"pnpm": {
 		"peerDependencyRules": {
 			"allowedVersions": {

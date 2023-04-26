@@ -263,14 +263,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
 				summaryTime: Date.now(),
 			} as const),
-			(errorMessage: string) => {
-				if (!this._disposed) {
-					this.logger.sendErrorEvent(
-						{ eventName: "summarizingError" },
-						createSummarizingWarning(errorMessage, true),
-					);
-				}
-			},
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,

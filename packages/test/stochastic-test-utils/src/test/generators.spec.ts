@@ -10,6 +10,7 @@ import {
 	chainAsync,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
+	ExitBehavior,
 	generatorFromArray,
 	interleave,
 	interleaveAsync,
@@ -235,6 +236,34 @@ describe("generators", () => {
 				["a", "b", "c", 1, "d", 2, 3, 4],
 			);
 		});
+
+		describe("with ExitBehavior.OnEitherExhausted", () => {
+			it("exits after generator 1 halts", () => {
+				assertGeneratorProduces(
+					interleave<number | string, void>(
+						alphabetGeneratorFactory(),
+						repeat(1),
+						1,
+						1,
+						ExitBehavior.OnEitherExhausted,
+					),
+					["a", 1, "b", 1, "c", 1, "d", 1],
+				);
+			});
+
+			it("exits after generator 2 halts", () => {
+				assertGeneratorProduces(
+					interleave<number | string, void>(
+						repeat(1),
+						alphabetGeneratorFactory(),
+						1,
+						1,
+						ExitBehavior.OnEitherExhausted,
+					),
+					[1, "a", 1, "b", 1, "c", 1, "d", 1],
+				);
+			});
+		});
 	});
 
 	describe("interleaveAsync", () => {
@@ -301,6 +330,34 @@ describe("generators", () => {
 				),
 				["a", "b", "c", 1, "d", 2, 3, 4],
 			);
+		});
+
+		describe("with ExitBehavior.OnEitherExhausted", () => {
+			it("exits after generator 1 halts", async () => {
+				await assertAsyncGeneratorProduces(
+					interleaveAsync<number | string, void>(
+						alphabetGeneratorFactory(),
+						repeatAsync(1),
+						1,
+						1,
+						ExitBehavior.OnEitherExhausted,
+					),
+					["a", 1, "b", 1, "c", 1, "d", 1],
+				);
+			});
+
+			it("exits after generator 2 halts", async () => {
+				await assertAsyncGeneratorProduces(
+					interleaveAsync<number | string, void>(
+						repeatAsync(1),
+						alphabetGeneratorFactory(),
+						1,
+						1,
+						ExitBehavior.OnEitherExhausted,
+					),
+					[1, "a", 1, "b", 1, "c", 1, "d", 1],
+				);
+			});
 		});
 	});
 

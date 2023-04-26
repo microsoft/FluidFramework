@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { combineReducers, combineReducersAsync } from "./combineReducers";
 export {
 	createFuzzDescribe,
 	defaultOptions,
@@ -20,6 +21,7 @@ export {
 	chainIterables,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
+	ExitBehavior,
 	generatorFromArray,
 	interleave,
 	interleaveAsync,

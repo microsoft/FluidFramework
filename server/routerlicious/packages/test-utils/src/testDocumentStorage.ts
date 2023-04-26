@@ -65,7 +65,6 @@ export class TestDocumentStorage implements IDocumentStorage {
 		documentId: string,
 		summary: ISummaryTree,
 		sequenceNumber: number,
-		term: number,
 		initialHash: string,
 		ordererUrl: string,
 		historianUrl: string,
@@ -85,10 +84,8 @@ export class TestDocumentStorage implements IDocumentStorage {
 			values,
 		};
 		const entries: ITreeEntry[] = getQuorumTreeEntries(
-			documentId,
 			sequenceNumber,
 			sequenceNumber,
-			term,
 			quorumSnapshot,
 		);
 
@@ -122,8 +119,6 @@ export class TestDocumentStorage implements IDocumentStorage {
 			logOffset: -1,
 			sequenceNumber,
 			signalClientConnectionNumber: 0,
-			epoch: undefined,
-			term: 1,
 			lastSentMSN: 0,
 			nackMessages: undefined,
 			successfullyStartedLambdas: [],
