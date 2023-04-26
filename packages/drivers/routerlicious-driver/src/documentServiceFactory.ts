@@ -24,7 +24,7 @@ import {
 	RateLimiter,
 } from "@fluidframework/driver-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { INormalizedWholeSummary, ISession } from "@fluidframework/server-services-client";
+import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
@@ -34,6 +34,7 @@ import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl }
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
+import { INormalizedWholeSummary } from "./contracts";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
