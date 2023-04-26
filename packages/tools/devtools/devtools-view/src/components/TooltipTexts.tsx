@@ -39,13 +39,10 @@ export const containerStatusTooltipText = (
 );
 
 /**
- * Description of the Container "ID" property in the summary view.
+ * Description of the Container "Resolved URL" property in the summary view.
  */
-export const containerKeyTooltipText = (
-	<div>
-		User-specified identifier that uniquely identifies the container within this session of
-		Fluid Devtools.
-	</div>
+export const containerResolvedUrlTooltipText = (
+	<div>URL that identifies the container within the current loader.</div>
 );
 
 /**

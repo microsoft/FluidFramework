@@ -5,6 +5,7 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { HasContainerKey } from "./CommonInterfaces";
 
 /**
@@ -39,4 +40,9 @@ export interface ContainerStateMetadata extends HasContainerKey {
 	 * @remarks Will be undefined when the Container is not connected.
 	 */
 	userId?: string;
+
+	/**
+	 * The container's resolved URL, once it has been attached.
+	 */
+	resolvedUrl?: IResolvedUrl;
 }

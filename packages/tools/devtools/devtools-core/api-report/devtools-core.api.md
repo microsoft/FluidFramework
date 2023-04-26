@@ -12,6 +12,7 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
@@ -155,6 +156,7 @@ export interface ContainerStateMetadata extends HasContainerKey {
     closed: boolean;
     // (undocumented)
     connectionState: ConnectionState;
+    resolvedUrl?: IResolvedUrl;
     userId?: string;
 }
 

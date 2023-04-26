@@ -553,6 +553,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 			closed: this.container.closed,
 			clientId: this.container.clientId,
 			userId: clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
+			resolvedUrl: this.container.resolvedUrl,
 		};
 	}
 

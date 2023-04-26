@@ -40,6 +40,7 @@ import {
 } from "@fluid-experimental/devtools-core";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 import { initializeFluentUiIcons } from "../InitializeIcons";
 import { connectionStateToString } from "../Utilities";
@@ -47,7 +48,7 @@ import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import {
 	clientIdTooltipText,
-	containerKeyTooltipText,
+	containerResolvedUrlTooltipText,
 	containerStatusTooltipText,
 	userIdTooltipText,
 } from "./TooltipTexts";
@@ -309,9 +310,12 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						columnProps={columnSizing_unstable}
 					/>
 					<DataRow
-						label="Container Key"
-						infoTooltipContent={containerKeyTooltipText}
-						value={containerState.containerKey}
+						label="Resolved URL"
+						infoTooltipContent={containerResolvedUrlTooltipText}
+						value={
+							(containerState.resolvedUrl as IResolvedUrl)?.url ??
+							"Container is not attached"
+						}
 						columnProps={columnSizing_unstable}
 					/>
 				</Table>
