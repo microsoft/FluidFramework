@@ -221,6 +221,11 @@ function expectJsonTree(actual: ISharedTreeView | ISharedTreeView[], expected: s
 	}
 }
 
+/**
+ * Runs the given test function as two tests,
+ * one where `view` is the root SharedTree view and the other where `view` is a fork.
+ * This is useful for testing because both `SharedTree` and `SharedTreeFork` implement `ISharedTreeView` in different ways.
+ */
 function itView(
 	title: string,
 	initialData: string | string[],
