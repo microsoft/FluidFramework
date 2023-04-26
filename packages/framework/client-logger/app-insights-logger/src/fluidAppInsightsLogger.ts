@@ -19,7 +19,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 * The ApplicationInsights instance MUST be initialized with client.loadAppInsights()
 	 * or else logging will not occur.
 	 */
-	protected readonly baseLoggingClient: ApplicationInsights;
+	private readonly baseLoggingClient: ApplicationInsights;
 
 	public constructor(client: ApplicationInsights) {
 		this.baseLoggingClient = client;
