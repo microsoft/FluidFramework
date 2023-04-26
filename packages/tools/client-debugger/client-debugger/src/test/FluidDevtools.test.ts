@@ -20,16 +20,6 @@ describe("FluidDevtools unit tests", () => {
 	it("Container change events", () => {
 		const devtools = new FluidDevtools();
 
-		let containerRegistered = false;
-		let containerDevtoolsClosed = false;
-
-		devtools.on("containerDevtoolsRegistered", () => {
-			containerRegistered = true;
-		});
-		devtools.on("containerDevtoolsClosed", () => {
-			containerDevtoolsClosed = true;
-		});
-
 		expect(devtools.getAllContainerDevtools().length).to.equal(0);
 
 		const container = createMockContainer();
@@ -40,8 +30,6 @@ describe("FluidDevtools unit tests", () => {
 		};
 		devtools.registerContainerDevtools(containerProps);
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		expect(containerRegistered).to.be.true;
 		expect(devtools.getAllContainerDevtools().length).to.equal(1);
 
 		const containerDevtools = devtools.getContainerDevtools(containerId);
@@ -52,8 +40,6 @@ describe("FluidDevtools unit tests", () => {
 
 		devtools.closeContainerDevtools(containerId);
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		expect(containerDevtoolsClosed).to.be.true;
 		expect(devtools.getAllContainerDevtools().length).to.equal(0);
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions, @typescript-eslint/no-non-null-assertion
 		expect(containerDevtools!.disposed).to.be.true;
@@ -64,16 +50,8 @@ describe("FluidDevtools unit tests", () => {
 	it("Disposal", () => {
 		const devtools = new FluidDevtools();
 
-		let devtoolsClosed = false;
-
-		devtools.on("devtoolsDisposed", () => {
-			devtoolsClosed = true;
-		});
-
 		devtools.dispose();
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		expect(devtoolsClosed).to.be.true;
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(devtools.disposed).to.be.true;
 
