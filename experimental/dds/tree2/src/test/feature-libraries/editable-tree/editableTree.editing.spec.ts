@@ -36,9 +36,8 @@ import {
 	SchemaAware,
 	TypedSchema,
 	FieldKind,
-	proxyTargetSymbol,
 } from "../../../feature-libraries";
-import { TestTreeProviderLite, toJsonableTree } from "../../utils";
+import { TestTreeProviderLite } from "../../utils";
 import {
 	fullSchemaData,
 	Person,
@@ -387,7 +386,7 @@ describe("editable-tree: editing", () => {
 
 	for (const [fieldDescription, fieldKey] of testCases) {
 		describe(`can create, edit, move and delete ${fieldDescription}`, () => {
-			it.only("as sequence field", () => {
+			it("as sequence field", () => {
 				const [provider, trees] = createSharedTrees(
 					getTestSchema(FieldKinds.sequence),
 					[{ type: rootSchemaName }],
