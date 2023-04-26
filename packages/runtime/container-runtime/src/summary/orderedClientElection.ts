@@ -420,7 +420,8 @@ export class OrderedClientElection
 				eventName: "SummarizerClientElected",
 				electedClientId: this._electedClient?.clientId,
 				electedParentId: this._electedParent?.clientId,
-				sequenceNumber,
+				electionSequenceNumber: sequenceNumber,
+				isSummarizer:isSummarizerClient,
 			});
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
@@ -433,7 +434,7 @@ export class OrderedClientElection
 				eventName: "SummarizerParentElected",
 				electedClientId: this._electedClient?.clientId,
 				electedParentId: this._electedParent?.clientId,
-				sequenceNumber,
+				electionSequenceNumber: sequenceNumber,
 			});
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
