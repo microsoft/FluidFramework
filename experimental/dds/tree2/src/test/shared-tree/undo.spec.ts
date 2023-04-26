@@ -222,3 +222,20 @@ function expectJsonTree(actual: ISharedTreeView | ISharedTreeView[], expected: s
 		assert.deepEqual(roots, expected);
 	}
 }
+
+/**
+ * Runs the given test function as two tests,
+ * one where `view` is the root SharedTree view and the other where `view` is a fork.
+ * This is useful for testing because both `SharedTree` and `SharedTreeFork` implement `ISharedTreeView` in different ways.
+ */
+function itView(title: string, fn: (view: ISharedTreeView, fork: ISharedTreeView) => void): void {
+	it(`${title} (root view)`, () => {
+		const provider = new TestTreeProviderLite();
+		fn(provider.trees[0]);
+	});
+
+	it(`${title} (forked view)`, () => {
+		const provider = new TestTreeProviderLite();
+		fn(provider.trees[0].fork());
+	});
+}

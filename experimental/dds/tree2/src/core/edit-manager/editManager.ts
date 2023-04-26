@@ -99,6 +99,8 @@ export class EditManager<
 		};
 		this.trunk = this.trunkBase;
 		this.localBranch = this.trunk;
+
+		// Do not call `getHead` for either of the undo redo managers within this constructor.
 	}
 
 	/**
@@ -224,7 +226,7 @@ export class EditManager<
 		return (this.getLastCommit() ?? fail("No sequenced changes")).change;
 	}
 
-	public getLastCommit(): Commit<TChangeset> | undefined {
+	public getLastCommit(): GraphCommit<TChangeset> | undefined {
 		return this.trunk;
 	}
 
@@ -402,10 +404,8 @@ export class EditManager<
 		);
 
 		this.localBranchUndoRedoManager.updateAfterRebase(
-			this.trunk,
 			newLocalChanges,
 			this.trunkUndoRedoManager,
-			this.localBranchUndoRedoManager,
 		);
 
 		this.localBranch = newLocalChanges;

@@ -17,11 +17,13 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * @param repairDataStoryFactory - Factory for creating {@link RepairDataStore}s to create and store repair
 	 * data for {@link UndoableCommit}s.
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
+	 * @param getHead - Function for retrieving the head commit of the branch associated with this undo redo manager.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
 	 */
 	public constructor(
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		private readonly getHead: () => GraphCommit<TChange> | undefined,
 		private headUndoableCommit?: UndoableCommit<TChange>,
 	) {}
 
@@ -58,10 +60,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
 	 * Inverts the head undo commit and returns the inverted change.
 	 * This change can then be applied and tracked.
-	 *
-	 * @param head - an optional commit to rebase the undo onto.
 	 */
-	public undo(head?: GraphCommit<TChange>): TChange | undefined {
+	public undo(): TChange | undefined {
 		const commitToUndo = this.headUndoableCommit;
 
 		if (commitToUndo === undefined) {
@@ -77,6 +77,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairData,
 		);
 
+		// Rebase the inverted change onto any commits that occurred after the undoable commits.
+		const head = this.getHead();
 		if (head !== undefined && commit.revision !== head.revision) {
 			const pathAfterUndoable: GraphCommit<TChange>[] = [];
 			const ancestor = findCommonAncestor([commit], [head, pathAfterUndoable]);
@@ -92,30 +94,58 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Creates a copy of this `UndoRedoManager`.
+	 * @param getHead - Optional function to use for retrieving the head commit for the branch associated with the 
+	 * the new {@link UndoRedoManager}. If one is not provided, the one from this {@link UndoRedoManager} will be used.
 	 * @param repairDataStoreProvider - Optional {@link IRepairDataStoreProvider} to use for the new {@link UndoRedoManager}.
 	 * If one is not provided, the `repairDataStoreProvider` of this {@link UndoRedoManager} will be cloned.
 	 * @param headUndoableCommit - Optional head undoable commit, if one is not provided the head undoable commit
 	 * of this {@link UndoRedoManager} will be used.
 	 */
 	public clone(
+		getHead?: () => GraphCommit<TChange> | undefined,
 		repairDataStoreProvider?: IRepairDataStoreProvider,
 		headUndoableCommit?: UndoableCommit<TChange>,
 	): UndoRedoManager<TChange, TEditor> {
 		return new UndoRedoManager(
 			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
 			this.changeFamily,
+			getHead ?? this.getHead,
 			headUndoableCommit ?? this.headUndoableCommit,
 		);
 	}
 
 	/**
-	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased.
+	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased after merging.
 	 * @param baseHead - the head commit of the branch that was rebased onto.
 	 * @param rebasedHead - the head commit of the newly rebased branch.
-	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
 	 * @param originalUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased.
 	 */
+	public updateAfterMerge(
+		baseHead: GraphCommit<TChange>,
+		rebasedHead: GraphCommit<TChange>,
+		originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
+	): void {
+		this.updateBasedOnNewCommits(baseHead, rebasedHead, this, originalUndoRedoManager);
+	}
+
+	/**
+	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased.
+	 * @param rebasedHead - the head commit of the newly rebased branch.
+	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
+	 */
 	public updateAfterRebase(
+		rebasedHead: GraphCommit<TChange>,
+		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
+	): void {
+		const baseHead = baseUndoRedoManager.getHead();
+		if (baseHead === undefined) {
+			// Return early if there was nothing to rebase onto.
+			return;
+		}
+		this.updateBasedOnNewCommits(baseHead, rebasedHead, baseUndoRedoManager, this);
+	}
+
+	private updateBasedOnNewCommits(
 		baseHead: GraphCommit<TChange>,
 		rebasedHead: GraphCommit<TChange>,
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,

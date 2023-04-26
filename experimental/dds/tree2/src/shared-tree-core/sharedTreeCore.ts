@@ -161,12 +161,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = uuid();
-		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily);
+		// The following getHead functions should not be called until editManager has been constructed.
+		const getHeadLocal = () => this.editManager.getLocalBranchHead();
+		const getHeadTrunk = () => this.editManager.getLastCommit();
+		const undoRedoManager = new UndoRedoManager(
+			repairDataStoreProvider,
+			changeFamily,
+			getHeadLocal.bind(this),
+		);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
 			undoRedoManager,
-			undoRedoManager.clone(),
+			undoRedoManager.clone(getHeadTrunk.bind(this)),
 			anchors,
 		);
 		this.summarizables = [
@@ -376,9 +383,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
 
-		const undoChange = this.editManager.localBranchUndoRedoManager.undo(
-			this.getLocalBranchHead(),
-		);
+		const undoChange = this.editManager.localBranchUndoRedoManager.undo();
 		if (undoChange !== undefined) {
 			this.applyChange(undoChange, undefined, UndoRedoManagerCommitType.Undo);
 		}
@@ -392,12 +397,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		anchors: AnchorSet,
 		repairDataStoreProvider: IRepairDataStoreProvider,
 	): SharedTreeBranch<TEditor, TChange> {
+		const getHead = () => branch.getHead();
 		const branch: SharedTreeBranch<TEditor, TChange> = new SharedTreeBranch(
 			this.editManager.getLocalBranchHead(),
 			this.editManager.localSessionId,
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
-			this.editManager.localBranchUndoRedoManager.clone(repairDataStoreProvider),
+			this.editManager.localBranchUndoRedoManager.clone(getHead, repairDataStoreProvider),
 			anchors,
 		);
 		return branch;
@@ -426,10 +432,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			findAncestor([newHead, changes], (c) => c === localBranchHead);
 
 			this.editManager.localBranchUndoRedoManager.updateAfterRebase(
-				localBranchHead,
 				newHead,
 				this.editManager.localBranchUndoRedoManager,
-				branch.undoRedoManager,
 			);
 
 			// Apply the changes without tracking them in the undo redo manager because

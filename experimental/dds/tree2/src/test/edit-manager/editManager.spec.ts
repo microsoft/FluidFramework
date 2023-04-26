@@ -44,7 +44,11 @@ function editManagerFactory(options: {
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
+	const undoRedoManager = new UndoRedoManager(
+		new MockRepairDataStoreProvider(),
+		family,
+		() => undefined,
+	);
 	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
 		options.sessionId ?? localSessionId,
@@ -247,7 +251,6 @@ describe("EditManager", () => {
 
 		it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
 			const { manager, family } = editManagerFactory({});
-			const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 			for (let i = 0; i < 10; ++i) {
 				manager.addSequencedChange(
 					{
@@ -275,7 +278,6 @@ describe("EditManager", () => {
 		it("Rebases anchors over sequenced changes", () => {
 			const { manager, anchors, family } = editManagerFactory({});
 			const change = TestChange.mint([], 1);
-			const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 			manager.addSequencedChange(
 				{
 					change,
@@ -330,7 +332,6 @@ describe("EditManager", () => {
 				],
 				branches: new Map(),
 			});
-			const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 			const delta = manager.addSequencedChange(
 				{
 					change: TestChange.mint([0, 1], [2]),
@@ -517,7 +518,6 @@ function runUnitTestScenario(
 		 * Used to check that summarization works properly.
 		 */
 		const joiners: TestEditManager[] = [];
-		const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 		/**
 		 * Local helper to update all the state that is dependent on the sequencing of new edits.
 		 */
