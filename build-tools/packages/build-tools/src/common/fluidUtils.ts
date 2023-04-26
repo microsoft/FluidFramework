@@ -2,13 +2,15 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as path from "path";
+import * as path from "node:path";
+import { existsSync } from "node:fs";
 import { cosmiconfigSync } from "cosmiconfig";
 
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
 import { defaultLogger } from "./logging";
-import { existsSync, lookUpDirAsync, readJsonAsync, realpathAsync } from "./utils";
+import { lookUpDirAsync, realpathAsync } from "./utils";
+import { readJson } from "fs-extra";
 
 const { verbose } = defaultLogger;
 
@@ -41,7 +43,7 @@ async function isFluidRootPackage(dir: string) {
 		return false;
 	}
 
-	const parsed = await readJsonAsync(filename);
+	const parsed = await readJson(filename);
 	if (parsed.name === "root" && parsed.private === true) {
 		return true;
 	}

@@ -112,7 +112,7 @@ export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	RootDataVisualizations,

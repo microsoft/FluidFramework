@@ -124,7 +124,7 @@ export interface IClient {
 }
 
 /**
- * A client that has been acknowledged by the sequencer.
+ * A {@link IClient} that has been acknowledged by the sequencer.
  */
 export interface ISequencedClient {
 	/**
@@ -177,7 +177,7 @@ export interface IClientJoin {
 	clientId: string;
 
 	/**
-	 * Details about the joining client (i.e. browser based, server, CPU, memory, etc...).
+	 * The underlying client details.
 	 */
 	detail: IClient;
 }

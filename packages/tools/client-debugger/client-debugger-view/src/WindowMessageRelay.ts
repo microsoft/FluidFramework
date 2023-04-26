@@ -9,7 +9,7 @@ import {
 	ISourcedDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 	devtoolsMessageSource,
 } from "@fluid-tools/client-debugger";
 
@@ -65,7 +65,7 @@ export class WindowMessageRelay
 		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		const message = event.data;
-		if (isDebuggerMessage(message) && message.source === devtoolsMessageSource) {
+		if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
 			// Forward incoming message onto subscribers.
 			this.emit("message", message);
 		}

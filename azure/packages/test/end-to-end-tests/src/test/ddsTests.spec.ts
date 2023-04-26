@@ -15,7 +15,7 @@ import { CounterTestDataObject, TestDataObject } from "./TestDataObject";
 import { mapWait } from "./utils";
 
 describe("Fluid data updates", () => {
-	const connectTimeoutMs = 1000;
+	const connectTimeoutMs = 5000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
 

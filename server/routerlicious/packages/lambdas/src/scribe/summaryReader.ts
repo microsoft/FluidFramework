@@ -120,7 +120,6 @@ export class SummaryReader implements ISummaryReader {
 				const deli = deliContent
 					? (JSON.parse(bufferToString(deliContent, "utf8")) as IDeliState)
 					: this.getDefaultDeli();
-				const term = deli.term;
 				const messages = opsContent
 					? (JSON.parse(
 							bufferToString(opsContent, "utf8"),
@@ -141,7 +140,6 @@ export class SummaryReader implements ISummaryReader {
 				summaryReaderMetric.success(`Successfully read whole summary`);
 
 				return {
-					term,
 					protocolHead: attributes.sequenceNumber,
 					scribe,
 					messages,
@@ -222,7 +220,6 @@ export class SummaryReader implements ISummaryReader {
 				const deli = deliContent
 					? (JSON.parse(toUtf8(deliContent.content, deliContent.encoding)) as IDeliState)
 					: this.getDefaultDeli();
-				const term = deli.term;
 				const messages = opsContent
 					? (JSON.parse(
 							toUtf8(opsContent.content, opsContent.encoding),
@@ -243,7 +240,6 @@ export class SummaryReader implements ISummaryReader {
 				summaryReaderMetric.success(`Successfully read summary`);
 
 				return {
-					term,
 					protocolHead: attributes.sequenceNumber,
 					scribe,
 					messages,
@@ -261,7 +257,6 @@ export class SummaryReader implements ISummaryReader {
 
 	private getDefaultSummaryState(): ILatestSummaryState {
 		return {
-			term: 1,
 			protocolHead: 0,
 			scribe: "",
 			messages: [],
@@ -274,7 +269,8 @@ export class SummaryReader implements ISummaryReader {
 		return {
 			sequenceNumber: 0,
 			minimumSequenceNumber: 0,
-			term: undefined,
+			// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+			term: 1,
 		};
 	}
 
@@ -292,8 +288,6 @@ export class SummaryReader implements ISummaryReader {
 			sequenceNumber: 0,
 			signalClientConnectionNumber: 0,
 			expHash1: "",
-			epoch: 0,
-			term: 1,
 			lastSentMSN: undefined,
 			nackMessages: undefined,
 			successfullyStartedLambdas: [],

@@ -186,6 +186,28 @@
 			"Server-Tools": {
 				"packages": ["tinylicious"],
 				"deps": ["Server-Libs"]
+			},
+			"GitRest": {
+				"dirs": ["server/gitrest/", "server/gitrest/packages/"],
+				"deps": [
+					"Server-Libs",
+					"Base-Utils",
+					"Base-Definitions",
+					"Protocol-Utils",
+					"Protocol-Definitions",
+					"Server-Shared-Utils"
+				]
+			},
+			"Historian": {
+				"dirs": ["server/historian/", "server/historian/packages/"],
+				"deps": [
+					"Server-Libs",
+					"Base-Utils",
+					"Base-Definitions",
+					"Protocol-Utils",
+					"Protocol-Definitions",
+					"Server-Shared-Utils"
+				]
 			}
 		}
 	},

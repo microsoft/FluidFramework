@@ -8,7 +8,6 @@ import * as api from "@fluidframework/driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { GitManager, Historian, RestWrapper } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -22,6 +21,10 @@ import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { GitManager } from "./gitManager";
+import { Historian } from "./historian";
+import { RestWrapper } from "./restWrapperBase";
+import { INormalizedWholeSummary } from "./contracts";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -61,7 +64,8 @@ export class DocumentService implements api.IDocumentService {
 		private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
-		private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
+		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary>,
+		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
 	) {}
 
@@ -105,14 +109,9 @@ export class DocumentService implements api.IDocumentService {
 					this.driverPolicies.enableRestLess,
 					this.storageUrl,
 				);
-				const historian = new Historian(this.storageUrl, true, false, storageRestWrapper);
+				const historian = new Historian(true, false, storageRestWrapper);
 				this.storageManager = new GitManager(historian);
-				const noCacheHistorian = new Historian(
-					this.storageUrl,
-					true,
-					true,
-					storageRestWrapper,
-				);
+				const noCacheHistorian = new Historian(true, true, storageRestWrapper);
 				this.noCacheStorageManager = new GitManager(noCacheHistorian);
 			}
 
@@ -128,7 +127,8 @@ export class DocumentService implements api.IDocumentService {
 			this.documentStorageServicePolicies,
 			this.driverPolicies,
 			this.blobCache,
-			this.snapshotTreeCache,
+			this.wholeSnapshotTreeCache,
+			this.shreddedSummaryTreeCache,
 			noCacheStorageManager,
 			getStorageManager,
 		);
@@ -187,7 +187,7 @@ export class DocumentService implements api.IDocumentService {
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
 		const connect = async (refreshToken?: boolean) => {
-			let ordererToken = this.ordererRestWrapper.getToken();
+			let ordererToken = await this.ordererRestWrapper.getToken();
 			if (this.shouldUpdateDiscoveredSessionInfo()) {
 				await this.refreshDiscovery();
 			}

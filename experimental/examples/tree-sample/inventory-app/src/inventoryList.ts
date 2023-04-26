@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { ISharedTree, SharedTreeFactory } from "@fluid-internal/tree";
+import { ISharedTree, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { schema } from "./schema";
 

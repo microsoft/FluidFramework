@@ -493,16 +493,16 @@ export const handlers: Handler[] = [
 			const manifest = getFluidBuildConfig(root);
 			const tildeDependencies = getTildeDependencies(manifest);
 			if (dependencies !== undefined) {
-				for (const [dep, ver] of Object.entries(json.dependencies)) {
-					if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
+				for (const [dep, ver] of Object.entries(dependencies)) {
+					if (tildeDependencies.includes(dep) && !ver?.startsWith("~")) {
 						ret.push(`Dependencies on ${dep} must use tilde (~) dependencies.`);
 					}
 				}
 			}
 
 			if (devDependencies !== undefined) {
-				for (const [dep, ver] of Object.entries(json.devDependencies)) {
-					if (tildeDependencies.includes(dep) && !ver.startsWith("~")) {
+				for (const [dep, ver] of Object.entries(devDependencies)) {
+					if (tildeDependencies.includes(dep) && !ver?.startsWith("~")) {
 						ret.push(`devDependencies on ${dep} must use tilde (~) dependencies.`);
 					}
 				}
@@ -610,12 +610,12 @@ export const handlers: Handler[] = [
 						hasPrettierScriptResolver ||
 						hasPrettierFixScriptResolver
 					) {
-						const formatScript = json.scripts.format?.includes("lerna");
-						const prettierScript = json.scripts.prettier?.includes("--ignore-path");
+						const formatScript = json.scripts?.format?.includes("lerna");
+						const prettierScript = json.scripts?.prettier?.includes("--ignore-path");
 						const prettierFixScript =
-							json.scripts["prettier:fix"]?.includes("--ignore-path");
+							json.scripts?.["prettier:fix"]?.includes("--ignore-path");
 
-						if (!formatScript) {
+						if (json.scripts !== undefined && !formatScript) {
 							json.scripts.format = "npm run prettier:fix";
 
 							if (!prettierScript) {

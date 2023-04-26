@@ -32,7 +32,7 @@ describe('SharedTreeQuerier', () => {
 	}
 
 	function intNode(idContext: NodeIdContext, value: number): ChangeNode {
-		assert(value === Math.round(value), 'Not an int');
+		assert(value === Math.round(value), 0x5f8 /* Not an int */);
 		return {
 			definition: 'Int' as Definition,
 			identifier: idContext.generateNodeId(),
@@ -178,14 +178,14 @@ describe('SharedTreeQuerier', () => {
 	}
 
 	function getPizzas(query: Maybe<Query>): Pizza[] {
-		assert(query !== null && query !== undefined, 'Query returned null unexpectedly');
-		assert(query.pizzas !== null && query.pizzas !== undefined, 'Query returned no pizzas');
+		assert(query !== null && query !== undefined, 0x5f9 /* Query returned null unexpectedly */);
+		assert(query.pizzas !== null && query.pizzas !== undefined, 0x5fa /* Query returned no pizzas */);
 		return query.pizzas;
 	}
 
 	function getDrinks(query: Maybe<Query>): Drink[] {
-		assert(query !== null && query !== undefined, 'Query returned null unexpectedly');
-		assert(query.drinks !== null && query.drinks !== undefined, 'Query returned no pizzas');
+		assert(query !== null && query !== undefined, 0x5fb /* Query returned null unexpectedly */);
+		assert(query.drinks !== null && query.drinks !== undefined, 0x5fc /* Query returned no pizzas */);
 		return query.drinks;
 	}
 

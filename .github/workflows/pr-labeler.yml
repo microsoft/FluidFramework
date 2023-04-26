@@ -25,7 +25,11 @@ jobs:
     name: Changeset check
     runs-on: ubuntu-latest
     steps:
-      # install and configure the node, pnpm and the changeset tools
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+      # install and configure node, pnpm and the changeset tools
       - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
         with:
           version: "^7"
@@ -41,7 +45,7 @@ jobs:
         name: Changeset status
         continue-on-error: true
         run: |
-          changeset status --since=${{ env.GITHUB_REF_NAME }}
+          changeset status --since=${{ github.base_ref }}
 
       # If a changeset is present, label it changeset-present
       - uses: actions-ecosystem/action-add-labels@bd52874380e3909a1ac983768df6976535ece7f8 # ratchet:actions-ecosystem/action-add-labels@v1.1.0
