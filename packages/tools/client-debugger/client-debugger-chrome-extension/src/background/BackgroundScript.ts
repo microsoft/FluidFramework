@@ -6,7 +6,7 @@
 import {
 	ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 } from "@fluid-tools/client-debugger";
 
 import {
@@ -54,7 +54,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 	 * connections as needed.
 	 */
 	const devtoolsMessageListener = (message: Partial<ISourcedDevtoolsMessage>): void => {
-		if (!isDebuggerMessage(message)) {
+		if (!isDevtoolsMessage(message)) {
 			// Since this handler is attached strictly to our Devtools Script port,
 			// we should *only* see our own messages.
 			console.error(
@@ -100,7 +100,7 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 						(tabMessage: Partial<ISourcedDevtoolsMessage>): void => {
 							// Only forward messages coming from the devtools library on the page.
 							if (
-								isDebuggerMessage(tabMessage) &&
+								isDevtoolsMessage(tabMessage) &&
 								tabMessage.source === devtoolsMessageSource
 							) {
 								relayMessageToPort(
