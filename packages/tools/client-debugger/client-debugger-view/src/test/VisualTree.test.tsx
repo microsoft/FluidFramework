@@ -24,6 +24,7 @@ import { MessageRelayContext } from "../MessageRelayContext";
 import { MockMessageRelay } from "./MockMessageRelay";
 
 const CONTAINERID = "test-container-id";
+const LABEL = "test-node-key";
 
 describe("VisualTreeView component tests", () => {
 	// eslint-disable-next-line jest/expect-expect
@@ -101,7 +102,7 @@ describe("VisualTreeView component tests", () => {
 
 		render(
 			<MessageRelayContext.Provider value={messageRelay}>
-				<FluidTreeView containerId={CONTAINERID} node={treeData} />,
+				<FluidTreeView containerId={CONTAINERID} label={LABEL} node={treeData} />,
 			</MessageRelayContext.Provider>,
 		);
 
@@ -109,7 +110,7 @@ describe("VisualTreeView component tests", () => {
 		const expandButton = await screen.findByTestId("expand-button");
 		await userEvent.click(expandButton);
 
-		await screen.findByText(/Hello world/);
+		await screen.findByText(/test-node-key/);
 
 		// TODO: Add test support for complex container DDS.
 		// await screen.findByText(/1/);

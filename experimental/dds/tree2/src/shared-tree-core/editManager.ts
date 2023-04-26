@@ -28,7 +28,8 @@ import {
 	mintCommit,
 	mintRevisionTag,
 	ReadonlyRepairDataStore,
-	Rebaser,
+	rebaseBranch,
+	rebaseChange,
 	RevisionTag,
 	SessionId,
 	SimpleDependee,
@@ -98,8 +99,6 @@ export class EditManager<
 	 */
 	private minimumSequenceNumber: SeqNumber = brand(-1);
 
-	private readonly rebaser: Rebaser<TChangeset>;
-
 	/**
 	 * A map from a sequence number to the commit in the trunk which has that sequence number
 	 */
@@ -119,7 +118,6 @@ export class EditManager<
 		public readonly anchors?: AnchorSet,
 	) {
 		super("EditManager");
-		this.rebaser = new Rebaser(changeFamily.rebaser);
 		this.trunkBase = {
 			revision: nullRevisionTag,
 			sessionId: "",
@@ -386,7 +384,8 @@ export class EditManager<
 
 		// Rebase that branch over the part of the trunk up to the base revision
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
-		const [rebasedBranch] = this.rebaser.rebaseBranch(
+		const [rebasedBranch] = rebaseBranch(
+			this.changeFamily.rebaser,
 			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
 			baseRevisionInTrunk,
 			this.trunk,
@@ -397,7 +396,8 @@ export class EditManager<
 			this.pushToTrunk(sequenceNumber, newCommit);
 			this.peerLocalBranches.set(newCommit.sessionId, this.trunk);
 		} else {
-			const newChangeFullyRebased = this.rebaser.rebaseChange(
+			const newChangeFullyRebased = rebaseChange(
+				this.changeFamily.rebaser,
 				newCommit.change,
 				rebasedBranch,
 				this.trunk,
@@ -505,7 +505,8 @@ export class EditManager<
 	}
 
 	private rebaseLocalBranchOverTrunk(): TChangeset {
-		const [newLocalChanges, netChange] = this.rebaser.rebaseBranch(
+		const [newLocalChanges, netChange] = rebaseBranch(
+			this.changeFamily.rebaser,
 			this.localBranch,
 			this.trunk,
 		);

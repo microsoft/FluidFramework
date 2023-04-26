@@ -18,7 +18,6 @@ import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
 export interface AudienceChangeLogEntry extends LogEntry {
@@ -73,7 +72,7 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 }
 
 // @internal @sealed
-export class ContainerDevtools extends TypedEventEmitter<ContainerDevtoolsEvents> implements IContainerDevtools {
+export class ContainerDevtools implements IContainerDevtools {
     constructor(props: ContainerDevtoolsProps);
     get audience(): IAudience;
     readonly container: IContainer;
@@ -85,11 +84,6 @@ export class ContainerDevtools extends TypedEventEmitter<ContainerDevtoolsEvents
     get disposed(): boolean;
     getAudienceHistory(): readonly AudienceChangeLogEntry[];
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
-}
-
-// @public
-export interface ContainerDevtoolsEvents extends IEvent {
-    (event: "disposed", listener: () => void): any;
 }
 
 // @public
@@ -241,7 +235,7 @@ export namespace DisconnectContainer {
 }
 
 // @internal
-export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implements IFluidDevtools {
+export class FluidDevtools implements IFluidDevtools {
     constructor(props?: FluidDevtoolsProps);
     closeContainerDevtools(containerId: string): void;
     // (undocumented)
@@ -255,17 +249,8 @@ export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implem
 }
 
 // @public
-export interface FluidDevtoolsEvents extends IEvent {
-    // @eventProperty
-    (event: "containerDevtoolsRegistered", listener: (containerId: string) => void): void;
-    // @eventProperty
-    (event: "containerDevtoolsClosed", listener: (containerId: string) => void): void;
-    // @eventProperty
-    (event: "devtoolsDisposed", listener: () => void): void;
-}
-
-// @public
 export interface FluidDevtoolsProps {
+    dataVisualizers?: Record<string, VisualizeSharedObject>;
     initialContainers?: ContainerDevtoolsProps[];
     logger?: DevtoolsLogger;
 }
@@ -396,7 +381,7 @@ export interface HasFluidObjectId {
 }
 
 // @public
-export interface IContainerDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
+export interface IContainerDevtools extends IDisposable {
     readonly audience: IAudience;
     readonly container: IContainer;
     readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
@@ -414,7 +399,7 @@ export interface IDevtoolsMessage<TData = unknown> {
 }
 
 // @public
-export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDisposable {
+export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerId: string): void;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
@@ -441,7 +426,7 @@ export interface InboundHandlers {
 export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
-export function isDebuggerMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;
+export function isDevtoolsMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;
 
 // @public
 export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
