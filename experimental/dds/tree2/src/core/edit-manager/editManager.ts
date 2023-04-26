@@ -252,12 +252,12 @@ export class EditManager<
 			// change in the incoming commit.
 			const localPath = getPathFromBase(this.localBranch, this.trunk);
 			// Get the first revision in the local branch, and then remove it
-			const commit =
+			const { change } =
 				localPath.shift() ??
 				fail(
 					"Received a sequenced change from the local session despite having no local changes",
 				);
-			this.pushToTrunk(sequenceNumber, { ...newCommit, change: commit.change }, true);
+			this.pushToTrunk(sequenceNumber, { ...newCommit, change }, true);
 			// TODO: Can this be optimized by simply mutating the localPath parent pointers? Is it safe to do that?
 			this.localBranch = localPath.reduce(mintCommit, this.trunk);
 			return emptyDelta;
