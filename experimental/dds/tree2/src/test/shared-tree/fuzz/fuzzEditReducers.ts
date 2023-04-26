@@ -11,6 +11,7 @@ import { ISharedTree } from "../../../shared-tree";
 import { FuzzTestState } from "./fuzzEditGenerators";
 import {
 	FieldEdit,
+	FuzzDelete,
 	FuzzFieldChange,
 	FuzzNodeEditChange,
 	FuzzTransactionType,
@@ -72,6 +73,12 @@ function applyFieldEdit(tree: ISharedTree, fieldEdit: FieldEdit): void {
 		case "sequence":
 			applySequenceFieldEdit(tree, fieldEdit.change.edit);
 			break;
+		case "value":
+			applyValueFieldEdit(tree, fieldEdit.change.edit);
+			break;
+		case "optional":
+			applyOptionalFieldEdit(tree, fieldEdit.change.edit);
+			break;
 		default:
 			break;
 	}
@@ -100,10 +107,46 @@ function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 	}
 }
 
+function applyValueFieldEdit(tree: ISharedTree, change: FuzzDelete): void {
+	const field = tree.editor.sequenceField(
+		change.firstNode?.parent,
+		change.firstNode?.parentField,
+	);
+	field.delete(change.firstNode?.parentIndex, change.count);
+}
+
+function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
+	switch (change.type) {
+		case "insert": {
+			const field = tree.editor.optionalField(change.parent, change.field);
+			field.set(singleTextCursor({ type: brand("Test"), value: change.value }), false);
+			break;
+		}
+		case "delete": {
+			const field = tree.editor.optionalField(
+				change.firstNode?.parent,
+				change.firstNode?.parentField,
+			);
+			field.set(undefined, true);
+			break;
+		}
+		default:
+			fail("Invalid edit.");
+	}
+}
+
 function applyNodeEdit(tree: ISharedTree, change: FuzzNodeEditChange): void {
-	switch (change.nodeEditType) {
-		case "setPayload": {
-			tree.editor.setValue(change.path, change.value);
+	switch (change.type) {
+		case "sequence": {
+			tree.editor.setValue(change.edit.path, change.edit.value);
+			break;
+		}
+		case "value": {
+			tree.editor.setValue(change.edit.path, change.edit.value);
+			break;
+		}
+		case "optional": {
+			tree.editor.setValue(change.edit.path, change.edit.value);
 			break;
 		}
 		default:
