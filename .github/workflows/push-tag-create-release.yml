@@ -26,7 +26,7 @@ jobs:
       - name: Install Fluid build tools
         run: |
           corepack enable
-          pnpm add --global @fluid-tools/build-cli@0.16.0-0
+          pnpm add --global @fluid-tools/build-cli@^0.16.0-0
 
           # Info for debugging
           which flub
