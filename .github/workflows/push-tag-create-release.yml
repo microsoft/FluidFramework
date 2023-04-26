@@ -6,8 +6,8 @@ on:
       - "*_v*"
 
 jobs:
-  release-metadata:
-    name: Get release metadata
+  create-release:
+    name: Create GitHub release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
