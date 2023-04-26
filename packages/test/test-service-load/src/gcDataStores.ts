@@ -92,15 +92,17 @@ const BlobActivityType = {
 type BlobActivityType = typeof BlobActivityType[keyof typeof BlobActivityType];
 
 /**
- * Activities that can be performed by the leaf blob object.
+ * Activities that can be performed by the leaf data object.
  */
 const LeafActivityType = {
 	/** Don't do anything. */
 	None: 0,
-	/** Send one or more ops */
-	SendOps: 1,
+	/** Update one of the DDSes in the data object. */
+	UpdateOneDDS: 1,
+	/** Update all the DDSes in the data object. */
+	UpdateAllDDS: 2,
 	/** The count of enum values. This is used as the max value for generating an activity at random. */
-	Count: 2,
+	Count: 3,
 };
 type LeafActivityType = typeof LeafActivityType[keyof typeof LeafActivityType];
 
@@ -195,6 +197,28 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 
 	private running: boolean = false;
 
+	private readonly counter2Key = "counter2";
+	private _counter2: SharedCounter | undefined;
+	protected get counter2(): SharedCounter {
+		assert(
+			this._counter2 !== undefined,
+			"Counter 2 cannot be retrieving before initialization",
+		);
+		return this._counter2;
+	}
+
+	protected async initializingFirstTime(): Promise<void> {
+		await super.initializingFirstTime();
+		this.root.set<IFluidHandle>(this.counter2Key, SharedCounter.create(this.runtime).handle);
+	}
+
+	protected async hasInitialized(): Promise<void> {
+		await super.hasInitialized();
+		const handle = this.root.get<IFluidHandle<SharedCounter>>(this.counter2Key);
+		assert(handle !== undefined, "The counter 2 handle should exist on initialization");
+		this._counter2 = await handle.get();
+	}
+
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
 		if (this.running) {
 			return true;
@@ -218,14 +242,28 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 
 	/**
 	 * Runs one of the following activity at random:
-	 * 1. GetBlob - Retrieves the blob associated with the IFluidHandle.
+	 * 1. UpdateOneDDS - Updates one of the DDSes by sending ops for it. When this happens, chances are that the other
+	 * DDS will do incremental summary in the next summary which is an important scenario to test.
+	 * 2. UpdateAllDDS - Updates all the DDSes by sending ops for them.
 	 * 2. None - Do nothing. This is to have summaries where this data store or its DDS does not change.
 	 */
 	private runActivity(config: IRunConfig) {
 		const activityType = config.random.integer(0, LeafActivityType.Count - 1);
 		switch (activityType) {
-			case LeafActivityType.SendOps: {
+			case LeafActivityType.UpdateOneDDS: {
+				// Randomly choose one of the counters to increment.
+				const ddsIndex = config.random.integer(0, 1);
+				if (ddsIndex === 0) {
+					this.counter.increment(1);
+				} else {
+					this.counter2.increment(1);
+				}
+				break;
+			}
+			case LeafActivityType.UpdateAllDDS: {
+				// Increment both the DDSes.
 				this.counter.increment(1);
+				this.counter2.increment(1);
 				break;
 			}
 			case LeafActivityType.None:
@@ -572,6 +610,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 * 2. Unreference - Unreference the oldest referenced data object and asks it to stop running.
 	 * 3. Revive - Re-reference the oldest unreferenced data object and ask it to run.
 	 * 4. None - Do nothing. This is to have summaries where no references changed leading to incremental GC.
+	 * 5. AnotherNone - Same as None. This is added to increase the changes of doing nothing.
 	 */
 	private async runDataObjectActivity(activityType: ReferenceActivityType): Promise<boolean> {
 		switch (activityType) {
