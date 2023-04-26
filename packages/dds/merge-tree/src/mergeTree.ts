@@ -857,31 +857,27 @@ export class MergeTree {
 		if (cachedSegment !== undefined) {
 			return cachedSegment.seg;
 		}
-		const slideDest: { seg?: ISegment } = {};
-		const goFurtherToFindSlideToSegment = (seg: ISegment) => {
+		const result: { seg?: ISegment } = {};
+		cache?.set(segment, result);
+		const goFurtherToFindSlideToSegment = (seg) => {
 			if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
-				slideDest.seg = seg;
+				result.seg = seg;
 				return false;
 			}
-			if (
-				cache !== undefined &&
-				isRemovedAndAcked(segment) &&
-				seg.removedSeq === segment.removedSeq
-			) {
-				cache.set(seg, slideDest);
+			if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
+				cache.set(seg, result);
 			}
 			return true;
 		};
 		// Slide to the next farthest valid segment in the tree.
 		forwardExcursion(segment, goFurtherToFindSlideToSegment);
-		if (slideDest.seg) {
-			return slideDest.seg;
+		if (result.seg !== undefined) {
+			return result.seg;
 		}
 
 		// If no such segment is found, slide to the last valid segment.
 		backwardExcursion(segment, goFurtherToFindSlideToSegment);
-
-		return slideDest.seg;
+		return result.seg;
 	}
 
 	/**
@@ -899,15 +895,14 @@ export class MergeTree {
 	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
 		// References are slid in groups to preserve their order.
 		let currentSlideDestination: ISegment | undefined;
-		let currentSlideForward: boolean | undefined;
+		let currentSlideIsForward: boolean | undefined;
 		let currentSlideGroup: LocalReferenceCollection[] = [];
-
 		const slideGroup = () => {
-			if (currentSlideGroup.length > 0) {
+			if (currentSlideIsForward !== undefined) {
 				if (currentSlideDestination !== undefined) {
 					const localRefs = (currentSlideDestination.localRefs ??=
 						new LocalReferenceCollection(currentSlideDestination));
-					if (currentSlideForward) {
+					if (currentSlideIsForward) {
 						localRefs.addBeforeTombstones(...currentSlideGroup);
 					} else {
 						localRefs.addAfterTombstones(...currentSlideGroup);
@@ -945,17 +940,17 @@ export class MergeTree {
 				continue;
 			}
 			const slideToSegment = this._getSlideToSegment(segment, segmentCache);
-			const slideDirection =
-				slideToSegment === undefined ? undefined : slideToSegment.ordinal > segment.ordinal;
+			const slideIsForward =
+				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
 
 			if (
 				slideToSegment !== currentSlideDestination ||
-				slideDirection !== currentSlideForward
+				slideIsForward !== currentSlideIsForward
 			) {
 				slideGroup();
 				currentSlideGroup = [segment.localRefs];
 				currentSlideDestination = slideToSegment;
-				currentSlideForward = slideDirection;
+				currentSlideIsForward = slideIsForward;
 			} else {
 				currentSlideGroup.push(segment.localRefs);
 			}

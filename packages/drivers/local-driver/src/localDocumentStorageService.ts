@@ -26,6 +26,7 @@ import {
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createDocument } from "./localCreateDocument";
 
+const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
 export class LocalDocumentStorageService implements IDocumentStorageService {
 	// The values of this cache is useless. We only need the keys. So we are always putting
 	// empty strings as values.
@@ -108,7 +109,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const uint8ArrayFile = new Uint8Array(file);
 		return this.manager
 			.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
-			.then((r) => ({ id: r.sha, url: r.url }));
+			.then((r) => ({ id: r.sha, url: r.url, minTTLInSeconds }));
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {

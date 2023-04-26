@@ -27,14 +27,6 @@ export interface FluidDevtoolsEvents extends IEvent {
 	 * @eventProperty
 	 */
 	(event: "containerDevtoolsClosed", listener: (containerId: string) => void): void;
-
-	/**
-	 * Emitted when the {@link IFluidDevtools} instance is
-	 * {@link @fluidframework/common-definitions#IDisposable.dispose | disposed};
-	 *
-	 * @eventProperty
-	 */
-	(event: "devtoolsDisposed", listener: () => void): void;
 }
 
 /**
