@@ -31,6 +31,7 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
 	assert,
+	delay,
 	LazyPromise,
 	Trace,
 	TypedEventEmitter,
@@ -509,6 +510,13 @@ const defaultCompressionConfig = {
 const defaultChunkSizeInBytes = 204800;
 
 /**
+ * Instead of refreshing from latest because we do not have 100% confidence in the state
+ * of the current system, we should close the summarizer and let it recover.
+ * This delay's goal is to prevent tight restart loops
+ */
+const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
+
+/**
  * @deprecated - use ContainerRuntimeMessage instead
  */
 export enum RuntimeMessage {
@@ -910,6 +918,8 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
+	private readonly summaryStateUpdateMethod: string | undefined;
+	private readonly closeSummarizerDelayMs: number;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private _perfSignalData: IPerfSignalReport = {
@@ -1283,6 +1293,14 @@ export class ContainerRuntime
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
 
+		this.summaryStateUpdateMethod = this.mc.config.getString(
+			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod",
+		);
+		const closeSummarizerDelayOverride = this.mc.config.getNumber(
+			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
+		);
+		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
+
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
 		this.dirtyContainer =
@@ -1423,6 +1441,8 @@ export class ContainerRuntime
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
+				abnormalAckRecoveryMethod: this.summaryStateUpdateMethod,
+				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -3231,11 +3251,9 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		const recoveryMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
-		);
-		if (recoveryMethod === "restart") {
+		if (this.summaryStateUpdateMethod === "restart") {
 			const error = new GenericError("Restarting summarizer instead of refreshing");
+
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3243,9 +3261,13 @@ export class ContainerRuntime
 					codePath: event.eventName,
 					message: "Stopping fetch from storage",
 					versionId: versionId != null ? versionId : undefined,
+					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
 				},
 				error,
 			);
+
+			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
+			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
 			throw error;

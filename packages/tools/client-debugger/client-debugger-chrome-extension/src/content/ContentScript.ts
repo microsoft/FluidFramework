@@ -10,10 +10,13 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { extensionMessageSource, relayMessageToPort, relayMessageToWindow } from "../messaging";
+import { browser } from "../utilities";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
 } from "./Logging";
+
+type Port = chrome.runtime.Port;
 
 /**
  * This module is the extension's Content Script.
@@ -32,7 +35,7 @@ import {
 console.log(formatContentScriptMessageForLogging("Initializing Content Script."));
 
 // Only establish messaging when activated by the Background Worker.
-chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
+browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	console.log(formatContentScriptMessageForLogging("Connection added from Background Worker."));
 
 	/**
