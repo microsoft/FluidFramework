@@ -11,12 +11,12 @@ import { ValueView } from "./ValueView";
 import { FluidValueView } from "./FluidValueView";
 import { UnknownFluidObjectView } from "./UnknownFluidObjectView";
 import { UnknownDataView } from "./UnknownDataView";
+import { HasLabel } from "./CommonInterfaces";
 
 /**
  * {@link TreeDataView} input props.
  */
-export interface TreeDataViewProps extends HasContainerId {
-	label: string;
+export interface TreeDataViewProps extends HasContainerId, HasLabel {
 	node: VisualNode;
 }
 

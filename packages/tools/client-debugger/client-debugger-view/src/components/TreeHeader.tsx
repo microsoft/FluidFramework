@@ -9,9 +9,9 @@ import { TreeItemLayout } from "@fluentui/react-components/unstable";
 import { tokens } from "@fluentui/react-components";
 
 /**
- * Input props to {@link RenderLabel}
+ * Input props to {@link TreeHeader}
  */
-export interface RenderLabelProps {
+export interface TreeHeaderProps {
 	/**
 	 * Key of the child node from Record {@link VisauTree}.
 	 */
@@ -41,32 +41,28 @@ export interface RenderLabelProps {
 /**
  * Renders the header of the item.
  */
-export function RenderLabel(props: RenderLabelProps): React.ReactElement {
+export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	const { label, nodeTypeMetadata, nodeKind, itemSize, nodeValue } = props;
 
-	return (
-		<>
-			{nodeValue !== undefined ? (
-				<TreeItemLayout style={{ marginLeft: "25px" }}>
-					{`${label}`}
-					<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
-						({nodeTypeMetadata})
-					</span>
-					{`: ${String(nodeValue)}`}
-				</TreeItemLayout>
-			) : (
-				<TreeItemLayout>
-					{`${label === undefined ? nodeTypeMetadata : label}`}
-					<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
-						({nodeTypeMetadata === undefined ? nodeKind : nodeTypeMetadata})
-					</span>
-					{`${
-						itemSize === undefined
-							? ""
-							: `${String(itemSize)} ${itemSize === 1 ? "item" : "items"}`
-					}`}
-				</TreeItemLayout>
-			)}
-		</>
+	return nodeValue !== undefined ? (
+		<TreeItemLayout style={{ marginLeft: "25px" }}>
+			{`${label}`}
+			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
+				({nodeTypeMetadata})
+			</span>
+			{`: ${String(nodeValue)}`}
+		</TreeItemLayout>
+	) : (
+		<TreeItemLayout>
+			{`${label === undefined ? nodeTypeMetadata : label}`}
+			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
+				({nodeTypeMetadata === undefined ? nodeKind : nodeTypeMetadata})
+			</span>
+			{`${
+				itemSize === undefined
+					? ""
+					: `${String(itemSize)} ${itemSize === 1 ? "item" : "items"}`
+			}`}
+		</TreeItemLayout>
 	);
 }

@@ -16,15 +16,14 @@ import {
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import { TreeDataView } from "./TreeDataView";
+import { HasLabel } from "./CommonInterfaces";
 
 const loggingContext = "EXTENSION(HandleView)";
 
 /**
  * {@link FluidHandleView} input props.
  */
-export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {
-	label: string;
-}
+export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId, HasLabel {}
 
 /**
  * Render data with type VisualNodeKind.FluidHandleNode and render its children.

@@ -6,12 +6,13 @@ import React from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeItem } from "@fluentui/react-components/unstable";
 import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
-import { RenderLabel } from "./RenderLabel";
+import { TreeHeader } from "./TreeHeader";
+import { HasLabel } from "./CommonInterfaces";
+
 /**
  * {@link ValueView} input props.
  */
-export interface FluidValueViewProps {
-	label: string;
+export interface FluidValueViewProps extends HasLabel {
 	node: FluidObjectValueNode;
 }
 
@@ -24,11 +25,7 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	return (
 		// TODO: Remove TreeItem
 		<TreeItem>
-			<RenderLabel
-				label={label}
-				nodeTypeMetadata={node.typeMetadata}
-				nodeValue={node.value}
-			/>
+			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
 		</TreeItem>
 	);
 }

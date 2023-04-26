@@ -4,8 +4,6 @@
  */
 import React from "react";
 import { UnknownObjectNode } from "@fluid-tools/client-debugger";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeItemLayout } from "@fluentui/react-components/unstable";
 
 /**
  * {@link UnknownDataView} input props.
@@ -20,9 +18,5 @@ export interface UnknownDataViewProps {
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
 	const { node } = props;
 
-	return (
-		<TreeItemLayout>
-			{`Encountered an unrecognized kind of data object: ${node.nodeKind}`}{" "}
-		</TreeItemLayout>
-	);
+	return <div>{`Encountered an unrecognized kind of data object: ${node.nodeKind}`} </div>;
 }

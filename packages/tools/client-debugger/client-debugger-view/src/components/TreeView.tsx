@@ -5,15 +5,15 @@
 
 import React from "react";
 import { HasContainerId, VisualTreeNode } from "@fluid-tools/client-debugger";
-import { RenderSummaryTree } from "./RenderSumaryTree";
+import { Tree } from "./Tree";
 import { TreeDataView } from "./TreeDataView";
-import { RenderLabel } from "./RenderLabel";
+import { TreeHeader } from "./TreeHeader";
+import { HasLabel } from "./CommonInterfaces";
 
 /**
  * {@link TreeView} input props.
  */
-export interface TreeViewProps extends HasContainerId {
-	label: string;
+export interface TreeViewProps extends HasContainerId, HasLabel {
 	node: VisualTreeNode;
 }
 
@@ -28,7 +28,7 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 	));
 
 	const header = (
-		<RenderLabel
+		<TreeHeader
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
 			nodeKind={node.nodeKind}
@@ -36,5 +36,5 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 		/>
 	);
 
-	return <RenderSummaryTree header={header}>{childNodes}</RenderSummaryTree>;
+	return <Tree header={header}>{childNodes}</Tree>;
 }

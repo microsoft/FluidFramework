@@ -6,13 +6,13 @@ import React from "react";
 import { ValueNodeBase } from "@fluid-tools/client-debugger";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeItem } from "@fluentui/react-components/unstable";
-import { RenderLabel } from "./RenderLabel";
+import { TreeHeader } from "./TreeHeader";
+import { HasLabel } from "./CommonInterfaces";
 
 /**
  * {@link ValueView} input props.
  */
-export interface ValueViewProps {
-	label: string;
+export interface ValueViewProps extends HasLabel {
 	node: ValueNodeBase;
 }
 
@@ -25,11 +25,7 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 	return (
 		// TODO: Remove TreeItem
 		<TreeItem>
-			<RenderLabel
-				label={label}
-				nodeTypeMetadata={node.typeMetadata}
-				nodeValue={node.value}
-			/>
+			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
 		</TreeItem>
 	);
 }

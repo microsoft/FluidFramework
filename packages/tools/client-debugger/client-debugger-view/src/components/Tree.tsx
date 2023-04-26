@@ -5,14 +5,14 @@
 
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules
-import { Tree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
+import { Tree as FluentTree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 
 /**
- * Input to {@link RenderSumaryTree}
+ * Input to {@link Tree}
  */
-type RenderSummaryTreeProps = React.PropsWithChildren<{
+type TreeProps = React.PropsWithChildren<{
 	/**
-	 * Header label created by {@link RenderLabel}.
+	 * Header label created by {@link TreeHeader}.
 	 */
 	header: React.ReactElement | string;
 
@@ -25,22 +25,22 @@ type RenderSummaryTreeProps = React.PropsWithChildren<{
 /**
  * Outlays the React element populated by components in {@link TreeDataView}.
  */
-export function RenderSummaryTree(props: RenderSummaryTreeProps): React.ReactElement {
+export function Tree(props: TreeProps): React.ReactElement {
 	const { header, children } = props;
 
 	return (
-		<Tree aria-label="Root-Tree" data-testid="expand-button">
+		<FluentTree aria-label="Root-Tree" data-testid="expand-button">
 			<TreeItem>
 				<TreeItemLayout>{header}</TreeItemLayout>
-				<Tree aria-label="Sub-Tree">
-					{children?.map((child, index) => {
+				<FluentTree aria-label="Sub-Tree">
+					{React.Children?.map(children, (child, index) => {
 						return (
 							// TODO: Wrap with <TreeItem>
 							<div key={index}>{child}</div>
 						);
 					})}
-				</Tree>
+				</FluentTree>
 			</TreeItem>
-		</Tree>
+		</FluentTree>
 	);
 }
