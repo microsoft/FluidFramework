@@ -1288,6 +1288,10 @@ export class ContainerRuntime
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
+			getCurrentSequenceNumbers: () => ({
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				clientSequenceNumber: this._processedClientSequenceNumber,
+			}),
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1866,6 +1870,8 @@ export class ContainerRuntime
 		}
 	}
 
+	private _processedClientSequenceNumber: number | undefined;
+
 	private processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -1875,6 +1881,8 @@ export class ContainerRuntime
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
 		this.scheduleManager.beforeOpProcessing(message);
+
+		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
 			let localOpMetadata: unknown;
