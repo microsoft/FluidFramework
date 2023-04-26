@@ -16,8 +16,9 @@
  * @packageDocumentation
  */
 
-export { AudienceMember } from "./Audience";
-export { AudienceMemberViewProps } from "./components";
 export { MessageRelayContext } from "./MessageRelayContext";
 export { RootView, RootViewProps } from "./RootView";
+export { WindowMessageRelay } from "./WindowMessageRelay";
+
+// Convenience re-exports
 export { IMessageRelay } from "@fluid-tools/client-debugger";
