@@ -42,15 +42,18 @@ describe("Undo", () => {
 	it("the insert of a node on a fork", () => {
 		const tree = makeTree("A");
 		const fork = tree.fork();
+		const fork2 = fork.fork();
 
-		insert(fork, 1, "x");
+		insert(fork2, 1, "x");
 
-		expectJsonTree(fork, ["A", "x"]);
+		expectJsonTree(fork2, ["A", "x"]);
 
-		fork.undo();
-		tree.merge(fork);
+		fork2.undo();
+		tree.merge(fork2);
+		fork.merge(fork2);
 
 		expectJsonTree(tree, ["A"]);
+		expectJsonTree(fork, ["A"]);
 	});
 
 	it("the delete of a node", () => {
@@ -86,20 +89,25 @@ describe("Undo", () => {
 	it.skip("the move of a node on a fork", () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const fork = tree.fork();
+		const fork2 = fork.fork();
 
-		const field = fork.editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = fork2.editor.sequenceField(undefined, rootFieldKeySymbol);
 		field.move(0, 2, 2);
 
-		expectJsonTree(fork, ["C", "D", "A", "B"]);
+		expectJsonTree(fork2, ["C", "D", "A", "B"]);
 
-		tree.merge(fork);
+		tree.merge(fork2);
+		fork.merge(fork2);
 
 		expectJsonTree(tree, ["C", "D", "A", "B"]);
+		expectJsonTree(fork, ["C", "D", "A", "B"]);
 
-		fork.undo();
-		tree.merge(fork);
+		fork2.undo();
+		tree.merge(fork2);
+		fork.merge(fork2);
 
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
+		expectJsonTree(fork, ["A", "B", "C", "D"]);
 	});
 
 	it("a move that has been rebased", () => {
@@ -221,21 +229,4 @@ function expectJsonTree(actual: ISharedTreeView | ISharedTreeView[], expected: s
 		const roots = [...tree.context.root];
 		assert.deepEqual(roots, expected);
 	}
-}
-
-/**
- * Runs the given test function as two tests,
- * one where `view` is the root SharedTree view and the other where `view` is a fork.
- * This is useful for testing because both `SharedTree` and `SharedTreeFork` implement `ISharedTreeView` in different ways.
- */
-function itView(title: string, fn: (view: ISharedTreeView, fork: ISharedTreeView) => void): void {
-	it(`${title} (root view)`, () => {
-		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0]);
-	});
-
-	it(`${title} (forked view)`, () => {
-		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].fork());
-	});
 }
