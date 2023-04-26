@@ -121,6 +121,7 @@ export interface FluidDevtoolsProps {
  * TODO: Document others as they are added.
  *
  * @internal
+ * @sealed
  */
 export class FluidDevtools
 	extends TypedEventEmitter<FluidDevtoolsEvents>
@@ -340,19 +341,6 @@ export class FluidDevtools
 
 		this._disposed = true;
 	}
-}
-
-/**
- * Initializes a {@link IFluidDevtools}.
- *
- * @remarks The consumer takes ownership of this object, and is responsible for disposing of it when appropriate.
- *
- * @privateRemarks This is exposed as a static function to avoid exporting {@link FluidDevtools} publicly.
- *
- * @public
- */
-export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
-	return new FluidDevtools(props);
 }
 
 /**

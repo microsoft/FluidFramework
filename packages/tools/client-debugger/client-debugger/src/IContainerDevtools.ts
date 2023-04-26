@@ -16,7 +16,7 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 /**
  * Events emitted by {@link IContainerDevtools}.
  *
- * @public
+ * @internal
  */
 export interface ContainerDevtoolsEvents extends IEvent {
 	/**
@@ -32,7 +32,7 @@ export interface ContainerDevtoolsEvents extends IEvent {
  * {@link @fluidframework/container-definitions#IContainer} and
  * {@link @fluidframework/container-definitions#IAudience}.
  *
- * @public
+ * @internal
  */
 export interface IContainerDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
 	/**

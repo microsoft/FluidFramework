@@ -6,7 +6,7 @@
 /**
  * Describes features supported by {@link FluidDevtools}.
  *
- * @public
+ * @internal
  */
 export enum DevtoolsFeature {
 	/**
@@ -29,7 +29,7 @@ export enum DevtoolsFeature {
  * By adding a flag to this object for new features, consumers can easily verify whether or not that feature
  * is supported by the {@link FluidDevtools} instance before attempting to use it.
  *
- * @public
+ * @internal
  */
 export type DevtoolsFeatureFlags = {
 	/**
@@ -41,7 +41,7 @@ export type DevtoolsFeatureFlags = {
 /**
  * Describes features supported by {@link ContainerDevtools}.
  *
- * @public
+ * @internal
  */
 export enum ContainerDevtoolsFeature {
 	/**
@@ -66,7 +66,7 @@ export enum ContainerDevtoolsFeature {
  * By adding a flag to this object for new features, consumers can easily verify whether or not that feature
  * is supported by the corresponding {@link ContainerDevtools} instance before attempting to use it.
  *
- * @public
+ * @internal
  */
 export type ContainerDevtoolsFeatureFlags = {
 	/**

@@ -4,28 +4,27 @@
  */
 
 /**
- * Contains a simple API for initializing debug sessions for recording and propogating information
- * about a given {@link @fluidframework/container-definitions#IContainer | Fluid Container} and its
- * {@link @fluidframework/container-definitions#Audience}.
- *
- * Debugger instances are created per `Container` instance and are bound to the `globalThis` context
- * to be accessible to related tools.
- *
- * - See the package README for more details on related tools that are enabled via these debugger instances.
+ * TODO
  *
  * @remarks
  *
+ * TODO: Update this
+ *
  * The general usage pattern for this library is to first initialize a debugger for a given Fluid Client
  * ({@link @fluidframework/container-definitions#IContainer} and {@link @fluidframework/container-definitions#IAudience})
- * by calling {@link initializeFluidClientDebugger} during application setup / any time after your container has been
+ * by calling {@link initializeDevtools} during application setup / any time after your container has been
  * attached.
  *
- * Then, during application teardown, call {@link closeFluidClientDebugger} to clean up the debugger and its resources.
+ * The Devtools instance will automatically dispose of itself as a part of the Window's unload operation
+ * (when the page is closed, refreshed, etc.).
+ * That said, if you wish to manually close the Devtools at some earlier stage in your application lifecycle, you may call {@link closeDevtools} to do so.
  *
  * @example Initialization
  *
+ * TODO: Update this
+ *
  * ```typescript
- * initializeFluidClientDebugger({
+ * initializeDevtools({
  *  containerId,
  *  container,
  *  containerData: {
@@ -36,8 +35,10 @@
  *
  * @example Disposal
  *
+ * TODO: Update this
+ *
  * ```typescript
- * closeFluidClientDebugger(containerId);
+ * closeDevtools(containerId);
  * ```
  *
  * @packageDocumentation
@@ -78,7 +79,7 @@ export {
 export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
-export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
+export { FluidDevtools, FluidDevtoolsProps } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -119,4 +120,10 @@ export {
 	TelemetryEvent,
 	TelemetryHistory,
 } from "./messaging";
+export {
+	closeContainerDevtools,
+	closeDevtools,
+	initializeContainerDevtools,
+	initializeDevtools,
+} from "./Singleton";
 export { ITimestampedTelemetryEvent } from "./TelemetryMetadata";

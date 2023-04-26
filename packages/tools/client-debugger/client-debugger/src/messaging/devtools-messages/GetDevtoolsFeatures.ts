@@ -8,13 +8,13 @@ import { IDevtoolsMessage } from "../Messages";
 /**
  * Encapsulates types and logic related to {@link GetDevtoolsFeatures.Message}.
  *
- * @public
+ * @internal
  */
 export namespace GetDevtoolsFeatures {
 	/**
 	 * {@link GetDevtoolsFeatures.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "GET_DEVTOOLS_FEATURES";
 
@@ -22,7 +22,7 @@ export namespace GetDevtoolsFeatures {
 	 * Inbound message requesting the set of features supported by the {@link FluidDevtools} instance.
 	 * Will result in the {@link DevtoolsFeatures.Message} message being posted.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<undefined> {
 		/**
@@ -34,7 +34,7 @@ export namespace GetDevtoolsFeatures {
 	/**
 	 * Creates a {@link GetDevtoolsFeatures.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(): Message {
 		return {

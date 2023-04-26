@@ -9,20 +9,20 @@ import { IDevtoolsMessage } from "../Messages";
 /**
  * Encapsulates types and logic related to {@link GetContainerDevtoolsFeatures.Message}.
  *
- * @public
+ * @internal
  */
 export namespace GetContainerDevtoolsFeatures {
 	/**
 	 * {@link GetContainerDevtoolsFeatures.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "GET_CONTAINER_DEVTOOLS_FEATURES";
 
 	/**
 	 * Message data format used by {@link ContainerDevtoolsFeatures.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export type MessageData = HasContainerId;
 
@@ -32,7 +32,7 @@ export namespace GetContainerDevtoolsFeatures {
 	 *
 	 * Will result in the {@link ContainerDevtoolsFeatures.Message} message being posted.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -45,7 +45,7 @@ export namespace GetContainerDevtoolsFeatures {
 	 * Creates a {@link ContainerDevtoolsFeatures.Message} from the provided
 	 * {@link ContainerDevtoolsFeatures.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

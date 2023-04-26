@@ -21,8 +21,8 @@ import { SharedString } from "@fluidframework/sequence";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import {
 	DevtoolsLogger,
-	IFluidDevtools,
-	initializeFluidDevtools,
+	initializeContainerDevtools,
+	initializeDevtools,
 } from "@fluid-tools/client-debugger";
 
 import {
@@ -96,15 +96,12 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 /**
  * Registers container described by the input `containerInfo` with the provided devtools instance.
  */
-function registerContainerWithDevtools(
-	devtools: IFluidDevtools,
-	containerInfo: ContainerInfo,
-): void {
+function registerContainerWithDevtools(containerInfo: ContainerInfo): void {
 	const fluidContainer = containerInfo.container as FluidContainer;
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE!();
 
-	devtools.registerContainerDevtools({
+	initializeContainerDevtools({
 		container: innerContainer,
 		containerId: containerInfo.containerId,
 		containerNickname: containerInfo.containerNickname,
@@ -117,7 +114,7 @@ function registerContainerWithDevtools(
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(devtools: IFluidDevtools): {
+function useContainerInfo(logger: DevtoolsLogger): {
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;
 } {
@@ -138,14 +135,14 @@ function useContainerInfo(devtools: IFluidDevtools): {
 				return containerId.length === 0
 					? createFluidContainer(
 							containerSchema,
-							devtools.logger,
+							logger,
 							populateRootMap,
 							containerNickname,
 					  )
 					: loadExistingFluidContainer(
 							containerId,
 							containerSchema,
-							devtools.logger,
+							logger,
 							containerNickname,
 					  );
 			}
@@ -156,7 +153,7 @@ function useContainerInfo(devtools: IFluidDevtools): {
 				}
 
 				setSharedContainerInfo(containerInfo);
-				registerContainerWithDevtools(devtools, containerInfo);
+				registerContainerWithDevtools(containerInfo);
 			}, console.error);
 
 			async function getPrivateContainerData(): Promise<ContainerInfo> {
@@ -165,7 +162,7 @@ function useContainerInfo(devtools: IFluidDevtools): {
 
 				return createFluidContainer(
 					containerSchema,
-					devtools.logger,
+					logger,
 					populateRootMap,
 					"Private Container",
 				);
@@ -173,12 +170,8 @@ function useContainerInfo(devtools: IFluidDevtools): {
 
 			getPrivateContainerData().then((containerInfo) => {
 				setPrivateContainerInfo(containerInfo);
-				registerContainerWithDevtools(devtools, containerInfo);
+				registerContainerWithDevtools(containerInfo);
 			}, console.error);
-
-			return (): void => {
-				devtools?.dispose();
-			};
 		},
 		// This app never changes the containers after initialization, so we just want to run this effect once.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -234,16 +227,13 @@ export function App(): React.ReactElement {
 	// Initialize the Fluid Debugger logger
 	const logger = React.useMemo(() => DevtoolsLogger.create(), []);
 
-	// Initialize devtools
-	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);
-
+	// Initialize Devtools
 	React.useEffect(() => {
-		// Dispose of devtools resources on teardown to ensure message listeners are notified.
-		return (): void => devtools.dispose();
-	}, [devtools]);
+		initializeDevtools({ logger });
+	}, [logger]);
 
-	// Load the collaborative SharedString object
-	const { privateContainer, sharedContainer } = useContainerInfo(devtools);
+	// Initialize the containers
+	const { privateContainer, sharedContainer } = useContainerInfo(logger);
 
 	const view = (
 		<Stack horizontal>

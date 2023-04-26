@@ -38,7 +38,7 @@ export interface FluidDevtoolsEvents extends IEvent {
  * Supports registering {@link IContainerDevtools | Container-level Devtools} objects for specific
  * {@link @fluidframework/container-definitions#IContainer}s (via {@link IFluidDevtools.registerContainerDevtools}).
  *
- * @public
+ * @internal
  */
 export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDisposable {
 	/**
