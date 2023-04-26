@@ -1,4 +1,4 @@
-name: "release-on-tag"
+name: "push-tag-create-release"
 
 on:
   push:
@@ -6,6 +6,23 @@ on:
       - "*_v*"
 
 jobs:
+  release-type:
+    name: Determine release type (path/minor/major)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+        with:
+          version: "^7"
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
   patch-release:
     name: Create patch release
     runs-on: ubuntu-latest
@@ -30,7 +47,7 @@ jobs:
       - name: Install Fluid build tools
         run: |
           corepack enable
-          pnpm install --frozen-lockfile
+          pnpm add --global @fluid-tools/build-cli@0.16.0-0
           pnpm run build:compile
 
       - name: Check out tag

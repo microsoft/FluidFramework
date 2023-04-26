@@ -1,0 +1,84 @@
+name: "push-tag-create-reports"
+
+on:
+  push:
+    tags:
+      - "*_v*"
+
+jobs:
+  release-type:
+    name: Determine release type (path/minor/major)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+        with:
+          version: "^7"
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+  create-reports:
+    name: Create report files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+        with:
+          version: "^7"
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Check out tag
+        run: |
+          git checkout ${{ github.ref }}
+
+      - name: Create release reports (manifests)
+        run: |
+          mkdir reports
+          pnpm exec flub release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o reports
+
+      - name: Generate changelog
+        run: |
+          # starting and ending versions are the same because we want to generate a changelog for a single release
+          pnpm exec auto-changelog \
+          --starting-version ${{ fromJson(env.RELEASE_JSON).tag }} \
+          --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
+          --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
+          --output auto-changelog.md \
+          --template changelog.hbs
+
+      - name: Create GH release
+        if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
+        uses: ncipollo/release-action@main
+        with:
+          # Allow updates to existing releases.
+          allowUpdates: true
+
+          # Will skip if a published (non-draft) release already exists.
+          skipIfReleaseExists: true
+
+          draft: true
+          omitDraftDuringUpdate: true # don't change the draft state when updating
+
+          name: "Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})"
+          omitNameDuringUpdate: false # always overwrite the name
+
+          bodyFile: build-tools/auto-changelog.md
+          omitBodyDuringUpdate: true # Don't overwrite the body
+
+          artifacts: "build-tools/reports/*.*"
+          artifactErrorsFailBuild: true
+          tag: ${{ fromJson(env.RELEASE_JSON).tag }}
