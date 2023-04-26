@@ -14,22 +14,22 @@ import {
 	FluidObjectNode,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
-import { Accordion } from "./utility-components/";
 import { Waiting } from "./Waiting";
 import { TreeDataView } from "./TreeDataView";
+import { HasLabel } from "./CommonInterfaces";
 
 const loggingContext = "EXTENSION(HandleView)";
 
 /**
  * {@link FluidHandleView} input props.
  */
-export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {}
+export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId, HasLabel {}
 
 /**
  * Render data with type VisualNodeKind.FluidHandleNode and render its children.
  */
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
-	const { containerId, fluidObjectId } = props;
+	const { containerId, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
 
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
@@ -82,15 +82,5 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <Waiting />;
 	}
 
-	return (
-		<Accordion
-			header={
-				<div>{`${visualTree.metadata && visualTree.metadata} : ${
-					visualTree.nodeKind
-				}`}</div>
-			}
-		>
-			<TreeDataView containerId={containerId} node={visualTree} />;
-		</Accordion>
-	);
+	return <TreeDataView containerId={containerId} label={label} node={visualTree} />;
 }

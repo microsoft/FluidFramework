@@ -13,12 +13,12 @@ import {
 	IRepairDataStoreProvider,
 	mintCommit,
 	mintRevisionTag,
-	Rebaser,
 	RepairDataStore,
 	UndoRedoManager,
 	tagChange,
 	TaggedChange,
 	UndoRedoManagerCommitType,
+	rebaseBranch,
 } from "../core";
 import { EventEmitter } from "../events";
 import { TransactionResult } from "../util";
@@ -74,7 +74,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		private readonly sessionId: string,
-		private readonly rebaser: Rebaser<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		public undoRedoManager: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
@@ -219,7 +218,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const fork = new SharedTreeBranch(
 			this.head,
 			this.sessionId,
-			this.rebaser,
 			this.changeFamily,
 			this.undoRedoManager.clone(repairDataStoreProvider),
 			anchors,
@@ -279,12 +277,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private rebaseBranch(
 		branchHead: GraphCommit<TChange>,
 		onto: GraphCommit<TChange>,
-	): ReturnType<Rebaser<TChange>["rebaseBranch"]> | undefined {
+	): [newSourceHead: GraphCommit<TChange>, sourceChange: TChange] | undefined {
 		if (branchHead === onto) {
 			return undefined;
 		}
 
-		const rebaseResult = this.rebaser.rebaseBranch(branchHead, onto);
+		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, branchHead, onto);
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {
 			return undefined;
@@ -309,7 +307,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			if (change.length === 0) {
 				return this.noChange;
 			}
-			composedChange = this.rebaser.changeRebaser.compose(change);
+			composedChange = this.changeFamily.rebaser.compose(change);
 		} else {
 			composedChange = change;
 		}
