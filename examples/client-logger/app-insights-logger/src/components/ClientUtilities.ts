@@ -47,7 +47,7 @@ function initializeTinyliciousClient(): TinyliciousClient {
 		},
 	});
 
-	// appInsightsClient.loadAppInsights();
+	appInsightsClient.loadAppInsights();
 
 	return new TinyliciousClient({
 		logger: new FluidAppInsightsLogger(appInsightsClient),
