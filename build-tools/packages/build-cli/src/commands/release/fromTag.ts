@@ -2,13 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
 
 import { sortVersions } from "../../lib";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
-import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
 
 /**
  * The `release fromTag` command is used to get release information from a git tag.
@@ -67,8 +67,6 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		);
 
 		const release = this.releaseData[this.releaseGroupOrPackage];
-		this.verbose(JSON.stringify(release, undefined, 2));
-
 		const versions = sortVersions([...release.versions], "version");
 		const taggedReleaseIndex = versions.findIndex((v) => v.version === version.version);
 		if (taggedReleaseIndex === -1) {
