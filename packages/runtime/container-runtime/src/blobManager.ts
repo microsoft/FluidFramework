@@ -944,7 +944,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							blob: bufferToString(entry.blob, "base64"),
 							uploadTime: entry.uploadTime,
 							minTTLInSeconds: entry.minTTLInSeconds,
-					}
+					  }
 					: { blob: bufferToString(entry.blob, "base64") };
 			}
 		}
