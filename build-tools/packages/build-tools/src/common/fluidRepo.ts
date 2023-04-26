@@ -242,6 +242,7 @@ export class FluidRepo {
 			return {
 				directory,
 				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
+				defaultInterdependencyType: item.defaultInterdependencyType,
 			};
 		};
 		const loadOneEntry = (item: IFluidRepoPackage, group: string) => {
