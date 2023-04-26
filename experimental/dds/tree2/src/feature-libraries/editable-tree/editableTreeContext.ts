@@ -14,9 +14,9 @@ import {
 	Value,
 	ITreeCursor,
 	UpPath,
-	FieldKey,
 	SchemaDataAndPolicy,
 	ForestEvents,
+	FieldUpPath,
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
@@ -212,57 +212,45 @@ export class ProxyContext implements EditableTreeContext {
 		this.editor.setValue(path, value);
 	}
 
-	public setValueField(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
-		newContent: ITreeCursor,
-	): void {
-		const field = this.editor.valueField(path, fieldKey);
-		field.set(newContent);
+	public setValueField(field: FieldUpPath, newContent: ITreeCursor): void {
+		const fieldEditor = this.editor.valueField(field);
+		fieldEditor.set(newContent);
 	}
 
 	public setOptionalField(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
+		field: FieldUpPath,
 		newContent: ITreeCursor | undefined,
 		wasEmpty: boolean,
 	): void {
-		const field = this.editor.optionalField(path, fieldKey);
-		field.set(newContent, wasEmpty);
+		const fieldEditor = this.editor.optionalField(field);
+		fieldEditor.set(newContent, wasEmpty);
 	}
 
 	public insertNodes(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
+		field: FieldUpPath,
 		index: number,
 		newContent: ITreeCursor | ITreeCursor[],
 	): void {
-		const field = this.editor.sequenceField(path, fieldKey);
-		field.insert(index, newContent);
+		const fieldEditor = this.editor.sequenceField(field);
+		fieldEditor.insert(index, newContent);
 	}
 
-	public deleteNodes(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
-		index: number,
-		count: number,
-	): void {
-		const field = this.editor.sequenceField(path, fieldKey);
-		field.delete(index, count);
+	public deleteNodes(field: FieldUpPath, index: number, count: number): void {
+		const fieldEditor = this.editor.sequenceField(field);
+		fieldEditor.delete(index, count);
 	}
 
 	public replaceNodes(
-		path: UpPath | undefined,
-		fieldKey: FieldKey,
+		field: FieldUpPath,
 		index: number,
 		count: number,
 		newContent: ITreeCursor | ITreeCursor[],
 	): void {
-		const field = this.editor.sequenceField(path, fieldKey);
-		field.delete(index, count);
+		const fieldEditor = this.editor.sequenceField(field);
+		fieldEditor.delete(index, count);
 
 		if (!Array.isArray(newContent) || newContent.length > 0) {
-			field.insert(index, newContent);
+			fieldEditor.insert(index, newContent);
 		}
 	}
 

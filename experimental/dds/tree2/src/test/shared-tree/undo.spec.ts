@@ -23,7 +23,7 @@ const schema: SchemaData = {
 function makeTree(...json: string[]): ISharedTree {
 	const tree = factory.create(runtime, "TestSharedTree");
 	tree.storedSchema.update(schema);
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.insert(0, json.map(singleJsonCursor));
 	return tree;
 }
@@ -74,7 +74,7 @@ describe("Undo", () => {
 	it("the set of a node", async () => {
 		const tree = makeTree("A", "B", "C", "D");
 
-		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 		field.move(0, 2, 2);
 		expectJsonTree(tree, ["C", "D", "A", "B"]);
 
@@ -87,7 +87,7 @@ describe("Undo", () => {
 		const tree = makeTree("A", "B", "C", "D");
 		const fork = tree.fork();
 
-		const field = fork.editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = fork.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 		field.move(0, 2, 2);
 
 		expectJsonTree(fork, ["C", "D", "A", "B"]);
@@ -185,13 +185,13 @@ describe("Undo", () => {
  * @param value - The value of the inserted node.
  */
 function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
 	field.insert(index, nodes);
 }
 
 function remove(tree: ISharedTreeView, index: number, count: number): void {
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.delete(index, count);
 }
 

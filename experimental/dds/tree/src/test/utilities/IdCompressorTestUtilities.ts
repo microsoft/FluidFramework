@@ -297,7 +297,8 @@ export class IdCompressorTestNetwork {
 		numIds: number,
 		overrides: { [index: number]: string } = {}
 	): OpSpaceCompressedId[] | IdCreationRange {
-		assert(numIds > 0, 'Must allocate a non-zero number of IDs');
+		// Must allocate a non-zero number of IDs
+		assert(numIds > 0);
 		const compressor = this.compressors.get(client);
 		let nextIdIndex = 0;
 		const opSpaceIds: OpSpaceCompressedId[] = [];
@@ -465,10 +466,8 @@ export class IdCompressorTestNetwork {
 				const sessionSpaceIdA = idDataA.id;
 				const idIndex = getOrCreate(idIndicesAggregator, idDataA.originatingClient, () => 0);
 				originatingClient ??= idDataA.originatingClient;
-				assert(
-					idDataA.originatingClient === originatingClient,
-					'Test infra gave wrong originating client to TestIdData'
-				);
+				//  Test infra gave wrong originating client to TestIdData
+				assert(idDataA.originatingClient === originatingClient);
 				const attributionA = compressorA.attributeId(idDataA.id);
 				if (attributionA !== attributionIds.get(idDataA.originatingClient)) {
 					// Unification

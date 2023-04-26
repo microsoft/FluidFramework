@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/view-adapters",
-	"version": "2.0.0-internal.4.1.0",
+	"version": "2.0.0-internal.4.2.0",
 	"description": "View adapters for rendering views of alternate or unknown UI frameworks",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,7 +15,7 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
@@ -38,8 +38,8 @@
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
-		"@fluidframework/view-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/view-interfaces": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"react": "^17.0.1",
 		"react-dom": "^17.0.1"
 	},
@@ -48,7 +48,7 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.15.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/view-adapters-previous": "npm:@fluidframework/view-adapters@2.0.0-internal.4.0.0",
+		"@fluidframework/view-adapters-previous": "npm:@fluidframework/view-adapters@2.0.0-internal.4.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/react": "^17.0.44",
 		"@types/react-dom": "^17.0.18",

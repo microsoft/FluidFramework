@@ -35,7 +35,7 @@ export interface ITestDriver {
 export type OdspEndpoint = "odsp" | "odsp-df";
 
 // @public (undocumented)
-export type RouterliciousEndpoint = "frs" | "r11s" | "docker";
+export type RouterliciousEndpoint = "frs" | "frsCanary" | "r11s" | "docker";
 
 // @public (undocumented)
 export type TestDriverTypes = "tinylicious" | "t9s" | "routerlicious" | "r11s" | "odsp" | "local";

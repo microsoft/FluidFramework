@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-client-utils",
-	"version": "2.0.0-internal.4.1.0",
+	"version": "2.0.0-internal.4.2.0",
 	"description": "Fluid client development and test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -40,7 +40,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"sillyname": "^0.1.0",
 		"uuid": "^8.3.1"
 	},
@@ -49,7 +49,7 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.15.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/test-client-utils-previous": "npm:@fluidframework/test-client-utils@2.0.0-internal.4.0.0",
+		"@fluidframework/test-client-utils-previous": "npm:@fluidframework/test-client-utils@2.0.0-internal.4.1.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/uuid": "^8.3.0",
 		"concurrently": "^7.6.0",

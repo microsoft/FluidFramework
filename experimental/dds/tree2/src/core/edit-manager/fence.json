@@ -1,5 +1,0 @@
-{
-	"tags": ["edit-manager"],
-	"exports": ["index"],
-	"imports": ["change-family", "dependency-tracking", "rebase", "repair", "tree", "util"]
-}

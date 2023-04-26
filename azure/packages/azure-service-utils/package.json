@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-service-utils",
-	"version": "2.0.0-internal.4.1.0",
+	"version": "2.0.0-internal.4.2.0",
 	"description": "Helper service-side utilities for connecting to Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -45,7 +45,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.15.0",
-		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@1.1.1",
+		"@fluidframework/azure-service-utils-previous": "npm:@fluidframework/azure-service-utils@2.0.0-internal.4.1.0",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.15.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",

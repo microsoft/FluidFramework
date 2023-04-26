@@ -594,7 +594,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			return false;
 		}
 
-		assert(this.runtime.clientId !== undefined, 'Client id should be set if connected.');
+		assert(this.runtime.clientId !== undefined, 0x62d /* Client id should be set if connected. */);
 
 		const quorum = this.runtime.getQuorum();
 		const selfSequencedClient = quorum.getMember(this.runtime.clientId);
@@ -754,7 +754,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		if (this.editLog.numberOfLocalEdits > 0) {
 			assert(
 				this.runtime.attachState !== AttachState.Attached,
-				'Summarizing should not occur with local edits except on first attach.'
+				0x62e /* Summarizing should not occur with local edits except on first attach. */
 			);
 			if (this.writeFormat === WriteFormat.v0_1_1) {
 				// Since we're the first client to attach, we can safely finalize ourselves since we're the only ones who have made IDs.
@@ -766,7 +766,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 			this.editLog.sequenceLocalEdits();
 		}
 
-		assert(this.editLog.numberOfLocalEdits === 0, 'generateSummary must not be called with local edits');
+		assert(this.editLog.numberOfLocalEdits === 0, 0x62f /* generateSummary must not be called with local edits */);
 		return this.generateSummary();
 	}
 
@@ -823,7 +823,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 
 		assert(
 			this.idCompressor.getAllIdsFromLocalSession().next().done === true,
-			'Summary load should not be executed after local state is created.'
+			0x630 /* Summary load should not be executed after local state is created. */
 		);
 
 		let convertedSummary: SummaryContents;
@@ -1395,7 +1395,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	private submitOp(content: SharedTreeOp | SharedTreeOp_0_0_2, localOpMetadata: unknown = undefined): void {
 		assert(
 			compareSummaryFormatVersions(content.version, this.writeFormat) === 0,
-			'Attempted to submit op of wrong version'
+			0x631 /* Attempted to submit op of wrong version */
 		);
 		this.submitLocalMessage(content, localOpMetadata);
 	}
@@ -1442,7 +1442,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 								break;
 							}
 							case WriteFormat.v0_1_1: {
-								assert(this.stashedIdCompressor !== null, 'Stashed op applied after expected window');
+								assert(
+									this.stashedIdCompressor !== null,
+									0x632 /* Stashed op applied after expected window */
+								);
 								if (this.stashedIdCompressor === undefined) {
 									// Use a temporary compressor that will help translate the stashed ops
 									this.stashedIdCompressor = IdCompressor.deserialize(

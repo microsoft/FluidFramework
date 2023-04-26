@@ -75,8 +75,8 @@ export {
 	DevtoolsFeature,
 	DevtoolsFeatureFlags,
 } from "./Features";
-export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
-export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+export { IContainerDevtools } from "./IContainerDevtools";
+export { IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
 export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export {
@@ -112,7 +112,7 @@ export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	RootDataVisualizations,
