@@ -12,8 +12,8 @@ import { ContainerDevtoolsProps } from "./ContainerDevtools";
  *
  * @remarks
  *
- * Supports registering {@link IContainerDevtools | Container-level Devtools} objects for specific
- * {@link @fluidframework/container-definitions#IContainer}s (via {@link IFluidDevtools.registerContainerDevtools}).
+ * Supports registering {@link @fluidframework/container-definitions#IContainer}s for Container-level stats
+ * (via {@link IFluidDevtools.registerContainerDevtools}).
  *
  * @public
  */
