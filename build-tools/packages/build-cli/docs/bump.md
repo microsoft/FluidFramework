@@ -13,24 +13,29 @@ Bumps the version of a release group or package to the next minor, major, or pat
 ```
 USAGE
   $ flub bump PACKAGE_OR_RELEASE_GROUP [-v] [-t major|minor|patch | --exact <value>] [--scheme
-    semver|internal|virtualPatch | ] [--exactDepType ^|~|] [-x | --install | --commit |  |  | ]
+    semver|internal|virtualPatch | ] [--exactDepType ^|~|] [--interdependencyType ^|~|] [-x | --install | --commit |  |
+    | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 FLAGS
-  -t, --bumpType=<option>  Bump the release group or package to the next version according to this bump type.
-                           <options: major|minor|patch>
-  -v, --verbose            Verbose logging.
-  -x, --skipChecks         Skip all checks.
-  --[no-]commit            Commit changes to a new branch.
-  --exact=<value>          An exact string to use as the version. The string must be a valid semver string.
-  --exactDepType=<option>  Controls the type of dependency that is used between packages within the release group. Use
-                           "" to indicate exact dependencies.
-                           <options: ^|~|>
-  --[no-]install           Update lockfiles by running 'npm install' automatically.
-  --scheme=<option>        Override the version scheme used by the release group or package.
-                           <options: semver|internal|virtualPatch>
+  -t, --bumpType=<option>         Bump the release group or package to the next version according to this bump type.
+                                  <options: major|minor|patch>
+  -v, --verbose                   Verbose logging.
+  -x, --skipChecks                Skip all checks.
+  --[no-]commit                   Commit changes to a new branch.
+  --exact=<value>                 An exact string to use as the version. The string must be a valid semver string.
+  --exactDepType=<option>         [DEPRECATED - Use interdependencyType instead.] Controls the type of dependency that
+                                  is used between packages within the release group. Use "" to indicate exact
+                                  dependencies.
+                                  <options: ^|~|>
+  --[no-]install                  Update lockfiles by running 'npm install' automatically.
+  --interdependencyType=<option>  Controls the type of dependency that is used between packages within the release
+                                  group. Use "" to indicate exact dependencies.
+                                  <options: ^|~|>
+  --scheme=<option>               Override the version scheme used by the release group or package.
+                                  <options: semver|internal|virtualPatch>
 
 DESCRIPTION
   Bumps the version of a release group or package to the next minor, major, or patch version, or to a specific version,
@@ -54,10 +59,10 @@ EXAMPLES
 
     $ flub bump server -t major --no-commit --no-install
 
-  You can control how interdependencies between packages in a release group are expressed using the --exactDepType
-  flag.
+  You can control how interdependencies between packages in a release group are expressed using the
+  --interdependencyType flag.
 
-    $ flub bump client --exact 2.0.0-internal.4.1.0 --exactDepType "~"
+    $ flub bump client --exact 2.0.0-internal.4.1.0 --interdependencyType "~"
 ```
 
 _See code: [src/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bump.ts)_

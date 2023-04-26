@@ -183,7 +183,7 @@ export interface IFluidRepoPackage {
 	 */
 	ignoredDirs?: string[];
 
-	defaultInterdependencyType?: InterdependencyRange;
+	defaultInterdependencyType: InterdependencyRange;
 }
 
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
@@ -236,7 +236,14 @@ export class FluidRepo {
 				return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
 			}
 			if (typeof item === "string") {
-				return { directory: path.join(resolvedRoot, item), ignoredDirs: undefined };
+				log?.warning(
+					`No defaultInterdependencyType setting found for '${item}'. Defaulting to "^".`,
+				);
+				return {
+					directory: path.join(resolvedRoot, item),
+					ignoredDirs: undefined,
+					defaultInterdependencyType: "^",
+				};
 			}
 			const directory = path.join(resolvedRoot, item.directory);
 			return {
@@ -257,7 +264,7 @@ export class FluidRepo {
 					item as IFluidRepoPackage;
 				if (defaultInterdependencyType === undefined) {
 					log?.warning(
-						`No defaultInterdependencyType specified for ${group} monorepo. Defaulting to "^"`,
+						`No defaultInterdependencyType specified for ${group} release group. Defaulting to "^".`,
 					);
 				}
 				const monorepo = new MonoRepo(
