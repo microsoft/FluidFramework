@@ -60,6 +60,16 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}),
 		exactDepType: Flags.string({
 			description:
+				'[DEPRECATED - Use interdependencyType instead.] Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
+			options: [...InterdependencyRangeTypes],
+			deprecated: {
+				to: "interdependencyType",
+				message: "The exactDepType flag is deprecated. Use interdependencyType instead.",
+				version: "0.16.0",
+			},
+		}),
+		interdependencyType: Flags.string({
+			description:
 				'Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
 			options: [...InterdependencyRangeTypes],
 		}),
@@ -86,9 +96,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		},
 		{
 			description:
-				"You can control how interdependencies between packages in a release group are expressed using the --exactDepType flag.",
+				"You can control how interdependencies between packages in a release group are expressed using the --interdependencyType flag.",
 			command:
-				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --exactDepType "~"',
+				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --interdependencyType "~"',
 		},
 	];
 
@@ -117,7 +127,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
-		let exactDepType: InterdependencyRange | undefined;
+		let interdependencyType: InterdependencyRange | undefined;
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
 
@@ -127,14 +137,14 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		if (isReleaseGroup(args.package_or_release_group)) {
 			if (
-				flags.exactDepType !== undefined &&
-				flags.exactDepType !== "" &&
-				flags.exactDepType !== "^" &&
-				flags.exactDepType !== "~"
+				flags.interdependencyType !== undefined &&
+				flags.interdependencyType !== "" &&
+				flags.interdependencyType !== "^" &&
+				flags.interdependencyType !== "~"
 			) {
 				// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
-				// that the exactDepType will be one of the enum values.
-				this.error(`Invalid exactDepType: ${exactDepType}`);
+				// that the interdependencyType will be one of the enum values.
+				this.error(`Invalid interdependencyType: ${interdependencyType}`);
 			}
 			const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
 			assert(
@@ -144,7 +154,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
-			exactDepType = flags.exactDepType ?? releaseRepo.interdependencyType;
+			interdependencyType = flags.interdependencyType ?? releaseRepo.interdependencyType;
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
@@ -196,8 +206,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
 		this.log(
-			`Exact dependency type: ${
-				exactDepType === undefined ? "n/a" : exactDepType === "" ? "exact" : exactDepType
+			`Interdependency type: ${
+				interdependencyType === undefined
+					? "n/a"
+					: interdependencyType === ""
+					? "exact"
+					: interdependencyType
 			}`,
 		);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
@@ -225,7 +239,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			bumpArg,
 			packageOrReleaseGroup,
 			scheme,
-			exactDepType,
+			interdependencyType,
 			this.logger,
 		);
 

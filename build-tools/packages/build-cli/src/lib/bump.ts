@@ -154,7 +154,7 @@ export async function bumpPackageDependencies(
  * @param bumpType - The bump type. Can be a SemVer object to set an exact version.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
- * @param exactDependencyType - The type of dependency to use on packages within the release group.
+ * @param interdependencyType - The type of dependency to use on packages within the release group.
  * @param log - A logger to use.
  *
  * @internal
@@ -165,7 +165,7 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
-	exactDependencyType?: InterdependencyRange,
+	interdependencyType?: InterdependencyRange,
 	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)
@@ -232,7 +232,7 @@ export async function bumpReleaseGroup(
 	}
 
 	assert(
-		exactDependencyType !== undefined,
+		interdependencyType !== undefined,
 		"exactDependencyType must be defined when bumping a release group",
 	);
 
@@ -266,11 +266,11 @@ export async function bumpReleaseGroup(
 	let range: string;
 	if (scheme === "internal" || scheme === "internalPrerelease") {
 		range =
-			exactDependencyType === ""
+			interdependencyType === ""
 				? translatedVersion.version
-				: getVersionRange(translatedVersion, exactDependencyType);
+				: getVersionRange(translatedVersion, interdependencyType);
 	} else {
-		range = `${exactDependencyType}${translatedVersion.version}`;
+		range = `${interdependencyType}${translatedVersion.version}`;
 	}
 
 	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
