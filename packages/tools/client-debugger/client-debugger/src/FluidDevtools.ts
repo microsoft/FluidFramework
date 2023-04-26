@@ -125,7 +125,7 @@ export interface FluidDevtoolsProps {
  */
 export class FluidDevtools implements IFluidDevtools {
 	/**
-	 * {@inheritDoc IFluidDevtools.logger}
+	 * (optional) Telemetry logger associated with the Fluid runtime.
 	 */
 	public readonly logger: DevtoolsLogger | undefined;
 
@@ -281,7 +281,8 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * {@inheritDoc IFluidDevtools.getContainerDevtools}
+	 * Gets the registed Container Devtools associated with the provided Container ID, if one exists.
+	 * Otherwise returns `undefined`.
 	 */
 	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {
 		if (this.disposed) {
@@ -301,7 +302,7 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * {@inheritDoc IFluidDevtools.getAllContainerDevtools}
+	 * Gets all Container-level devtools instances.
 	 */
 	public getAllContainerDevtools(): readonly IContainerDevtools[] {
 		if (this.disposed) {

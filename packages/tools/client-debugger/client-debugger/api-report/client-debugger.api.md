@@ -404,12 +404,9 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @internal
+// @public
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerId: string): void;
-    getAllContainerDevtools(): readonly IContainerDevtools[];
-    getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    readonly logger: DevtoolsLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
