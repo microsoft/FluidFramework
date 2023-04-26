@@ -17,6 +17,7 @@ importers:
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
       '@octokit/core': ^4.0.5
+      auto-changelog: ^2.4.0
       c8: ^7.7.1
       changesets-format-with-issue-links: ^0.3.0
       concurrently: ^7.6.0
@@ -40,6 +41,7 @@ importers:
       '@microsoft/api-documenter': 7.21.6
       '@microsoft/api-extractor': 7.34.4
       '@octokit/core': 4.2.0
+      auto-changelog: 2.4.0
       c8: 7.7.1
       changesets-format-with-issue-links: 0.3.0_@changesets+cli@2.26.1
       concurrently: 7.6.0
@@ -24578,6 +24580,20 @@ packages:
   /auto-bind/4.0.0:
     resolution: {integrity: sha512-Hdw8qdNiqdJ8LqT0iK0sVzkFbzg6fhnQqqfWhBDxcHZvU75+B+ayzTy8x+k5Ix0Y92XOhOUlx74ps+bA6BeYMQ==}
     engines: {node: '>=8'}
+
+  /auto-changelog/2.4.0:
+    resolution: {integrity: sha512-vh17hko1c0ItsEcw6m7qPRf3m45u+XK5QyCrrBFViElZ8jnKrPC1roSznrd1fIB/0vR/zawdECCRJtTuqIXaJw==}
+    engines: {node: '>=8.3'}
+    hasBin: true
+    dependencies:
+      commander: 7.2.0
+      handlebars: 4.7.7
+      node-fetch: 2.6.9
+      parse-github-url: 1.0.2
+      semver: 7.3.8
+    transitivePeerDependencies:
+      - encoding
+    dev: true
 
   /autoprefixer/9.8.8:
     resolution: {integrity: sha512-eM9d/swFopRt5gdJ7jrpCwgvEMIayITpojhkkSMRsFHYuH5bkSQ4p/9qTEHtmNudUZh22Tehu7I6CxAW0IXTKA==}
