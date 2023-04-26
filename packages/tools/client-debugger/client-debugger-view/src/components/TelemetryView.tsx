@@ -12,6 +12,8 @@ import {
 } from "@fluentui/react";
 import {
 	tokens,
+	Combobox,
+	ComboboxProps,
 	ToggleButton,
 	DataGridBody,
 	DataGridRow,
@@ -19,6 +21,9 @@ import {
 	DataGridHeader,
 	DataGridHeaderCell,
 	DataGridCell,
+	Dropdown as DropDown,
+	DropdownProps,
+	Option,
 	TableColumnDefinition,
 	createTableColumn,
 } from "@fluentui/react-components";
@@ -64,6 +69,37 @@ export function TelemetryView(): React.ReactElement {
 		ITimestampedTelemetryEvent[] | undefined
 	>();
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
+	const [selectedCategory, setSelectedCategory] = useState("");
+	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
+		ITimestampedTelemetryEvent[] | undefined
+	>();
+	const [customSearch, setCustomSearch] = React.useState("");
+	const [eventNameOptions, setEventNameOptions] = useState<string[]>([]);
+	const [matchingOptions, setMatchingOptions] = React.useState([...eventNameOptions]);
+
+	React.useEffect(() => {
+		// Create list of all event names
+		setEventNameOptions([
+			...new Set(
+				telemetryEvents?.map((event) =>
+					event.logContent.eventName.slice("fluid:telemetry:".length),
+				),
+			),
+		]);
+		// Initialy matching options are all options
+		setMatchingOptions(eventNameOptions.sort());
+		const filteredEvents = telemetryEvents?.filter((event) => {
+			return (
+				(selectedCategory === "" ||
+					selectedCategory === "All" ||
+					event.logContent.category === selectedCategory) &&
+				(customSearch === "" ||
+					event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch)
+			);
+		});
+		setFilteredTelemetryEvents(filteredEvents);
+	}, [telemetryEvents, selectedCategory, customSearch]);
+
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to telemetry.
@@ -109,8 +145,8 @@ export function TelemetryView(): React.ReactElement {
 	}
 
 	const items: Item[] =
-		telemetryEvents !== undefined
-			? telemetryEvents?.map((message) => {
+		filteredTelemetryEvents !== undefined
+			? filteredTelemetryEvents?.map((message) => {
 					return {
 						category: message.logContent.category,
 						eventName: message.logContent.eventName,
@@ -123,7 +159,23 @@ export function TelemetryView(): React.ReactElement {
 		createTableColumn<Item>({
 			columnId: "category",
 			renderHeaderCell: () => {
-				return <b>Category</b>;
+				return (
+					<div>
+						<h2 style={{ marginBottom: 0 }}>Category</h2>
+						<DropDown
+							placeholder="Filter Category"
+							size="small"
+							onOptionSelect={handleCategoryChange}
+							style={{ minWidth: "120px" }}
+						>
+							{getCategories().map((option) => (
+								<Option style={{ minWidth: "120px" }} key={option.key}>
+									{option.text}
+								</Option>
+							))}
+						</DropDown>
+					</div>
+				);
 			},
 			renderCell: (message) => {
 				return (
@@ -141,11 +193,40 @@ export function TelemetryView(): React.ReactElement {
 		createTableColumn<Item>({
 			columnId: "eventName",
 			renderHeaderCell: () => {
-				return <b>Event Name</b>;
+				return (
+					<div>
+						<h2 style={{ marginBottom: 0 }}>Event Name</h2>
+						<Combobox
+							freeform
+							size="small"
+							placeholder="Select an event"
+							onChange={onChange}
+							onOptionSelect={handleEventNameSelect}
+						>
+							{customSearch ? (
+								<Option
+									key="freeform"
+									style={{ overflowWrap: "anywhere" }}
+									text={customSearch}
+								>
+									Search for `{customSearch}`
+								</Option>
+							) : undefined}
+							{matchingOptions.map((option) => (
+								<Option
+									key={option}
+									style={{ fontSize: "12px", overflowWrap: "anywhere" }}
+								>
+									{option}
+								</Option>
+							))}
+						</Combobox>
+					</div>
+				);
 			},
 			renderCell: (message) => {
 				return (
-					<div style={{ maxWidth: 160, whiteSpace: "normal", wordWrap: "break-word" }}>
+					<div style={{ minWidth: "260px", overflowWrap: "anywhere" }}>
 						{/* Since all events start with "fluid:telemetry:", we trim the start of the name */}
 						{message.eventName.slice("fluid:telemetry:".length)}
 					</div>
@@ -155,7 +236,11 @@ export function TelemetryView(): React.ReactElement {
 		createTableColumn<Item>({
 			columnId: "information",
 			renderHeaderCell: () => {
-				return <b>Information</b>;
+				return (
+					<div>
+						<h2>Category</h2>
+					</div>
+				);
 			},
 			renderCell: (message) => {
 				// eslint-disable-next-line react-hooks/rules-of-hooks
@@ -180,6 +265,60 @@ export function TelemetryView(): React.ReactElement {
 		}),
 	];
 
+	/**
+	 * Gets list of valid categories for displayed telemetry events.
+	 * @returns list of option
+	 */
+	function getCategories(): { key: string; text: string }[] {
+		const categories = [
+			...new Set(filteredTelemetryEvents?.map((event) => event.logContent.category)),
+		];
+		const dropdownOptions = categories.map((category) => {
+			return {
+				key: category,
+				text: category,
+			};
+		});
+		dropdownOptions.push({ key: "All", text: "All" });
+		return dropdownOptions.sort();
+	}
+
+	const handleCategoryChange: DropdownProps["onOptionSelect"] = (event, data) => {
+		const category = data.optionText !== undefined ? data.optionText : "";
+		setSelectedCategory(category);
+	};
+
+	/**
+	 * Event handler that updates table to display events matching text in event name filter.
+	 */
+	const onChange: ComboboxProps["onChange"] = (event) => {
+		const value = event.target.value.trim();
+		const matches = eventNameOptions.filter((option) =>
+			option.toLowerCase().includes(value.toLowerCase()),
+		);
+		setMatchingOptions(matches);
+		if (value.length > 0 && matches.length === 0) {
+			setCustomSearch(value);
+		} else {
+			setCustomSearch("");
+		}
+	};
+	/**
+	 * Handler for when user selects an option in event name filter.
+	 */
+	const handleEventNameSelect: ComboboxProps["onOptionSelect"] = (event, data) => {
+		let matchingOption = false;
+		if (data.optionText !== undefined) {
+			matchingOption = eventNameOptions.includes(data.optionText);
+		}
+		if (matchingOption) {
+			const search = data.optionText !== undefined ? data.optionText : "";
+			setCustomSearch(search);
+		} else {
+			setCustomSearch("");
+		}
+	};
+
 	const log_view =
 		telemetryEvents !== undefined ? (
 			<>
@@ -190,15 +329,15 @@ export function TelemetryView(): React.ReactElement {
 					resizableColumns
 					columnSizingOptions={{
 						category: {
-							minWidth: 65,
-							idealWidth: 80,
+							minWidth: 130,
+							idealWidth: 130,
 						},
 						eventType: {
-							minWidth: 60,
-							idealWidth: 150,
+							minWidth: 250,
+							idealWidth: 250,
 						},
 						information: {
-							minWidth: 60,
+							minWidth: 250,
 							idealWidth: 250,
 						},
 					}}
