@@ -26,6 +26,7 @@ import {
 } from "../../../core";
 import {
 	FieldEdit,
+	FieldEditTypes,
 	FuzzDelete,
 	FuzzInsert,
 	FuzzNodeEditChange,
@@ -34,12 +35,14 @@ import {
 	NodeEdit,
 	NodeRangePath,
 	Operation,
+	OptionalFieldEdit,
 	SequenceFieldEdit,
 	TransactionAbortOp,
 	TransactionBoundary,
 	TransactionCommitOp,
 	TransactionStartOp,
 	TreeEdit,
+	ValueFieldEdit,
 } from "./operationTypes";
 
 export interface FuzzTestState extends BaseFuzzTestState {
@@ -80,17 +83,35 @@ export const makeNodeEditGenerator = (
 	};
 	type EditState = FuzzTestState & TreeContext;
 
-	async function setPayloadGenerator(state: EditState): Promise<FuzzSetPayload> {
+	async function setPayloadGenerator(state: EditState): Promise<FuzzNodeEditChange> {
 		const trees = state.trees;
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
 		const path = getExistingRandomNodePosition(tree, state.random);
-		return {
+		const setPayload: FuzzSetPayload = {
 			nodeEditType: "setPayload",
 			path,
 			value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 			treeIndex: state.treeIndex,
 		};
+		switch (path.parentField) {
+			case sequenceFieldKey:
+			default:
+				return {
+					type: "sequence",
+					edit: setPayload,
+				};
+			case valueFieldKey:
+				return {
+					type: "value",
+					edit: setPayload,
+				};
+			case optionalFieldKey:
+				return {
+					type: "optional",
+					edit: setPayload,
+				};
+		}
 	}
 
 	const baseNodeEditGenerator = createWeightedAsyncGenerator<FuzzNodeEditChange, EditState>([
@@ -119,7 +140,7 @@ export const makeFieldEditGenerator = (
 		...opWeights,
 	};
 	type EditState = FuzzTestState & TreeContext;
-	async function fieldEditGenerator(state: EditState): Promise<SequenceFieldEdit> {
+	async function fieldEditGenerator(state: EditState): Promise<FieldEditTypes> {
 		const trees = state.trees;
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
@@ -128,10 +149,7 @@ export const makeFieldEditGenerator = (
 
 		switch (fieldKey) {
 			case sequenceFieldKey: {
-				const opWeightRatio =
-					passedOpWeights.delete !== 0
-						? passedOpWeights.insert / passedOpWeights.delete
-						: passedOpWeights.insert;
+				const opWeightRatio = passedOpWeights.insert / passedOpWeights.delete;
 				const opType =
 					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
 				switch (opType) {
@@ -154,6 +172,28 @@ export const makeFieldEditGenerator = (
 						break;
 				}
 			}
+			case valueFieldKey: {
+				return generateValueFieldDeleteOp(fieldPath, state.treeIndex);
+			}
+			case optionalFieldKey: {
+				const opWeightRatio = passedOpWeights.insert / passedOpWeights.delete;
+				const opType =
+					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
+				switch (opType) {
+					case "insert":
+						return generateSequenceFieldInsertOp(
+							fieldPath,
+							fieldKey,
+							state.random.integer(0, count),
+							state.random,
+							state.treeIndex,
+						);
+					case "delete":
+						return generateOptionaFieldDeleteOp(fieldPath, state.treeIndex);
+					default:
+						break;
+				}
+			}
 			default:
 				// default case returns a sequence field edit for now.
 				return generateSequenceFieldInsertOp(
@@ -166,6 +206,25 @@ export const makeFieldEditGenerator = (
 		}
 	}
 
+	function generateDeleteEdit(
+		fieldPath: FieldUpPath,
+		count: number,
+		treeIndex: number,
+		nodeIndex: number,
+	): FuzzDelete {
+		const firstNode: UpPath = {
+			parent: fieldPath.parent,
+			parentField: fieldPath.field,
+			parentIndex: nodeIndex,
+		};
+		return {
+			type: "delete",
+			firstNode,
+			count,
+			treeIndex,
+		};
+	}
+
 	function generateSequenceFieldDeleteOp(
 		fieldPath: FieldUpPath,
 		random: IRandom,
@@ -174,18 +233,21 @@ export const makeFieldEditGenerator = (
 	): SequenceFieldEdit {
 		const nodeIndex = random.integer(0, count - 1);
 		const rangeSize = random.integer(1, count - nodeIndex);
-		const firstNode: UpPath = {
-			parent: fieldPath.parent,
-			parentField: fieldPath.field,
-			parentIndex: nodeIndex,
-		};
-		const contents: FuzzDelete = {
-			type: "delete",
-			firstNode,
-			count: rangeSize,
-			treeIndex,
-		};
+		const contents = generateDeleteEdit(fieldPath, rangeSize, treeIndex, nodeIndex);
 		return { type: "sequence", edit: contents };
+	}
+
+	function generateValueFieldDeleteOp(fieldPath: FieldUpPath, treeIndex: number): ValueFieldEdit {
+		const contents = generateDeleteEdit(fieldPath, 1, treeIndex, 0);
+		return { type: "value", edit: contents };
+	}
+
+	function generateOptionaFieldDeleteOp(
+		fieldPath: FieldUpPath,
+		treeIndex: number,
+	): OptionalFieldEdit {
+		const contents = generateDeleteEdit(fieldPath, 1, treeIndex, 0);
+		return { type: "optional", edit: contents };
 	}
 
 	function generateSequenceFieldInsertOp(
@@ -209,7 +271,7 @@ export const makeFieldEditGenerator = (
 		};
 	}
 
-	const baseFieldEditGenerator = createWeightedAsyncGenerator<SequenceFieldEdit, EditState>([
+	const baseFieldEditGenerator = createWeightedAsyncGenerator<FieldEditTypes, EditState>([
 		[
 			fieldEditGenerator,
 			sumWeights([opWeights.insert, opWeights.delete]),
@@ -217,7 +279,7 @@ export const makeFieldEditGenerator = (
 		],
 	]);
 
-	const buildOperation = (contents: SequenceFieldEdit) => {
+	const buildOperation = (contents: FieldEditTypes) => {
 		const operation: FieldEdit = {
 			editType: "fieldEdit",
 			change: contents,
@@ -225,10 +287,7 @@ export const makeFieldEditGenerator = (
 		return operation;
 	};
 
-	return createAsyncGenerator<SequenceFieldEdit, FieldEdit>(
-		baseFieldEditGenerator,
-		buildOperation,
-	);
+	return createAsyncGenerator<FieldEditTypes, FieldEdit>(baseFieldEditGenerator, buildOperation);
 };
 
 export const makeEditGenerator = (
@@ -262,7 +321,7 @@ export const makeEditGenerator = (
 				index = contents.change.edit.treeIndex;
 				break;
 			case "nodeEdit":
-				index = contents.edit.treeIndex;
+				index = contents.edit.edit.treeIndex;
 				break;
 			default:
 				break;
@@ -407,6 +466,8 @@ const moves = {
 };
 
 const sequenceFieldKey: FieldKey = brand("sequenceField");
+const valueFieldKey: FieldKey = brand("valueField");
+const optionalFieldKey: FieldKey = brand("optionalField");
 
 export interface FieldPathWithCount {
 	fieldPath: FieldUpPath;
