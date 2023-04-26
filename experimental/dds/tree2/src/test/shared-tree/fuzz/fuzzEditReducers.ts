@@ -8,6 +8,7 @@ import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { toJsonableTree } from "../../utils";
 import { ISharedTree } from "../../../shared-tree";
+import { FieldUpPath } from "../../../core";
 import { FuzzTestState } from "./fuzzEditGenerators";
 import {
 	FieldEdit,
@@ -108,25 +109,31 @@ function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 }
 
 function applyValueFieldEdit(tree: ISharedTree, change: FuzzDelete): void {
-	const field = tree.editor.sequenceField(
-		change.firstNode?.parent,
-		change.firstNode?.parentField,
-	);
+	const fieldPath: FieldUpPath = {
+		parent: change.firstNode?.parent,
+		field: change.firstNode?.parentField,
+	};
+	const field = tree.editor.sequenceField(fieldPath);
 	field.delete(change.firstNode?.parentIndex, change.count);
 }
 
 function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
-			const field = tree.editor.optionalField(change.parent, change.field);
+			const fieldPath: FieldUpPath = {
+				parent: change.parent,
+				field: change.field,
+			};
+			const field = tree.editor.optionalField(fieldPath);
 			field.set(singleTextCursor({ type: brand("Test"), value: change.value }), false);
 			break;
 		}
 		case "delete": {
-			const field = tree.editor.optionalField(
-				change.firstNode?.parent,
-				change.firstNode?.parentField,
-			);
+			const fieldPath: FieldUpPath = {
+				parent: change.firstNode?.parent,
+				field: change.firstNode?.parentField,
+			};
+			const field = tree.editor.optionalField(fieldPath);
 			field.set(undefined, true);
 			break;
 		}
