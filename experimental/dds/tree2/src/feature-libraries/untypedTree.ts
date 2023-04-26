@@ -158,7 +158,7 @@ export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
 
 	/**
 	 * Gets a node of this field by its index without unwrapping.
-	 * Note that the node must exists at the given index.
+	 * Note that a node must exist at the given index.
 	 */
 	getNode(index: number): UntypedTree;
 }
