@@ -410,7 +410,7 @@ export class LoadTestDataStoreModel {
 	}
 
 	public async volunteerForTask() {
-		if (this.isPermanentlyDisconnected()) {
+		if (this.runtime.disposed) {
 			return;
 		}
 		if (!this.assigned()) {
@@ -485,13 +485,6 @@ export class LoadTestDataStoreModel {
 				!disposed ? `quorum: ${this.runtime.getQuorum().getMembers().size}` : "",
 			);
 		}
-	}
-
-	private isPermanentlyDisconnected(): boolean {
-		return (
-			this.runtime.disposed ||
-			(!this.runtime.connected && this.runtime.deltaManager.readOnlyInfo.readonly === true)
-		);
 	}
 }
 
@@ -667,7 +660,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  };
 
 		try {
-			while (dataModel.counter.value < clientSendCount && !this.isPermanentlyDisconnected()) {
+			while (dataModel.counter.value < clientSendCount && !this.disposed) {
 				// this enables a quick ramp down. due to restart, some clients can lag
 				// leading to a slow ramp down. so if there are less than half the clients
 				// and it's partner is done, return true to complete the runner.
@@ -684,7 +677,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			}
 
 			reportOpCount("Completed");
-			return !this.isPermanentlyDisconnected();
+			return !this.runtime.disposed;
 		} catch (error: any) {
 			reportOpCount("Exception", error);
 			throw error;
@@ -733,7 +726,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const signalsGapMs = cycleMs / signalsPerCycle;
 		let submittedSignals = 0;
 		try {
-			while (submittedSignals < clientSignalsSendCount && !this.isPermanentlyDisconnected()) {
+			while (submittedSignals < clientSignalsSendCount && !this.runtime.disposed) {
 				// all the clients are sending signals;
 				// with signals, there is no particular need to have staggered writers and readers
 				if (this.runtime.connected) {
@@ -746,13 +739,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		} catch (e) {
 			console.error("Error during submitting signals: ", e);
 		}
-	}
-
-	private isPermanentlyDisconnected(): boolean {
-		return (
-			this.runtime.disposed ||
-			(!this.runtime.connected && this.runtime.deltaManager.readOnlyInfo.readonly === true)
-		);
 	}
 }
 

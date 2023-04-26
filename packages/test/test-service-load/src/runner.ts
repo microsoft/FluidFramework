@@ -15,7 +15,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { Deferred, assert } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
@@ -224,6 +224,16 @@ async function runnerProcess(
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
+			const closeDisposeProm = new Deferred<boolean>();
+			const resolveCloseDispose = () => {
+				closeDisposeProm.resolve(false);
+				container?.off("closed", resolveCloseDispose);
+				container?.off("disposed", resolveCloseDispose);
+			};
+
+			container?.on("closed", resolveCloseDispose);
+			container?.on("disposed", resolveCloseDispose);
+
 			if (enableOpsMetrics) {
 				const testRuntime = await test.getRuntime();
 				metricsCleanup = await setupOpsMetrics(
@@ -266,7 +276,7 @@ async function runnerProcess(
 			}
 
 			printStatus(runConfig, `running`);
-			done = await test.run(runConfig, reset);
+			done = await Promise.race([closeDisposeProm.promise, test.run(runConfig, reset)]);
 			reset = false;
 			printStatus(runConfig, done ? `finished` : "closed");
 		} catch (error) {
