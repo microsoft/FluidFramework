@@ -87,7 +87,7 @@ function applyFieldEdit(tree: ISharedTree, fieldEdit: FieldEdit): void {
 function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
-			const field = tree.editor.sequenceField(change.parent, change.field);
+			const field = tree.editor.sequenceField({ parent: change.parent, field: change.field });
 			field.insert(
 				change.index,
 				singleTextCursor({ type: brand("Test"), value: change.value }),
@@ -95,10 +95,10 @@ function applySequenceFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 			break;
 		}
 		case "delete": {
-			const field = tree.editor.sequenceField(
-				change.firstNode?.parent,
-				change.firstNode?.parentField,
-			);
+			const field = tree.editor.sequenceField({
+				parent: change.firstNode?.parent,
+				field: change.firstNode?.parentField,
+			});
 			field.delete(change.firstNode?.parentIndex, change.count);
 			break;
 		}
