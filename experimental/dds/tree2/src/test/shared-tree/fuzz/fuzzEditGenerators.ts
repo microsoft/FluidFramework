@@ -206,7 +206,7 @@ export const makeFieldEditGenerator = (
 		}
 	}
 
-	function generateDeleteOp(
+	function generateDeleteEdit(
 		fieldPath: FieldUpPath,
 		count: number,
 		treeIndex: number,
@@ -233,12 +233,12 @@ export const makeFieldEditGenerator = (
 	): SequenceFieldEdit {
 		const nodeIndex = random.integer(0, count - 1);
 		const rangeSize = random.integer(1, count - nodeIndex);
-		const contents = generateDeleteOp(fieldPath, rangeSize, treeIndex, nodeIndex);
+		const contents = generateDeleteEdit(fieldPath, rangeSize, treeIndex, nodeIndex);
 		return { type: "sequence", edit: contents };
 	}
 
 	function generateValueFieldDeleteOp(fieldPath: FieldUpPath, treeIndex: number): ValueFieldEdit {
-		const contents = generateDeleteOp(fieldPath, 1, treeIndex, 0);
+		const contents = generateDeleteEdit(fieldPath, 1, treeIndex, 0);
 		return { type: "value", edit: contents };
 	}
 
@@ -246,7 +246,7 @@ export const makeFieldEditGenerator = (
 		fieldPath: FieldUpPath,
 		treeIndex: number,
 	): OptionalFieldEdit {
-		const contents = generateDeleteOp(fieldPath, 1, treeIndex, 0);
+		const contents = generateDeleteEdit(fieldPath, 1, treeIndex, 0);
 		return { type: "optional", edit: contents };
 	}
 
