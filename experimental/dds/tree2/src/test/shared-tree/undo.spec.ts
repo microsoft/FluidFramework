@@ -29,49 +29,44 @@ function makeTree(...json: string[]): ISharedTree {
 }
 
 describe("Undo", () => {
-	it("the insert of a node on the main branch from a fork", () => {
-		const tree = makeTree("A");
-		const fork = tree.fork();
+	itView("the insert of a node on the main branch from a fork", "A", (view) => {
+		const fork = view.fork();
 
 		fork.undo();
-		tree.merge(fork);
+		view.merge(fork);
 
-		expectJsonTree(tree, []);
+		expectJsonTree(view, []);
 	});
 
-	it("the insert of a node on a fork", () => {
-		const tree = makeTree("A");
-		const fork = tree.fork();
-		const fork2 = fork.fork();
+	itView("the insert of a node on a fork", "A", (view) => {
+		const fork = view.fork();
 
-		insert(fork2, 1, "x");
+		insert(fork, 1, "x");
 
-		expectJsonTree(fork2, ["A", "x"]);
+		expectJsonTree(fork, ["A", "x"]);
 
-		fork2.undo();
-		tree.merge(fork2);
-		fork.merge(fork2);
+		fork.undo();
+		view.merge(fork);
 
-		expectJsonTree(tree, ["A"]);
+		expectJsonTree(view, ["A"]);
 		expectJsonTree(fork, ["A"]);
 	});
 
-	it("the delete of a node", () => {
-		const tree = makeTree("A", "B", "C", "D");
-		const delAB = tree.fork();
+	itView("the delete of a node", ["A", "B", "C", "D"], (view) => {
+		const fork = view.fork();
 
-		remove(delAB, 0, 2);
+		remove(fork, 0, 2);
 
-		expectJsonTree(delAB, ["C", "D"]);
+		expectJsonTree(fork, ["C", "D"]);
 
-		tree.merge(delAB);
+		view.merge(fork);
 
-		expectJsonTree(tree, ["C", "D"]);
+		expectJsonTree(view, ["C", "D"]);
 
-		delAB.undo();
-		tree.merge(delAB);
+		fork.undo();
+		view.merge(fork);
 
-		expectJsonTree(tree, ["A", "B", "C", "D"]);
+		expectJsonTree(view, ["A", "B", "C", "D"]);
 	});
 
 	it("the move of a node", () => {
@@ -85,121 +80,116 @@ describe("Undo", () => {
 		expectJsonTree(tree, ["A", "B", "C", "D"]);
 	});
 
-	// TODO: See bug 4104
-	it.skip("the move of a node on a fork", () => {
-		const tree = makeTree("A", "B", "C", "D");
-		const fork = tree.fork();
-		const fork2 = fork.fork();
+	itView("a move that has been rebased", ["A", "B", "C", "D"], (view) => {
+		const fork = view.fork();
 
-		const field = fork2.editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.move(0, 2, 2);
+		insert(view, 1, "x");
+		expectJsonTree(view, ["A", "x", "B", "C", "D"]);
 
-		expectJsonTree(fork2, ["C", "D", "A", "B"]);
+		const field = fork.editor.sequenceField(undefined, rootFieldKeySymbol);
+		field.move(1, 1, 3);
+		expectJsonTree(fork, ["A", "C", "D", "B"]);
 
-		tree.merge(fork2);
-		fork.merge(fork2);
+		fork.rebaseOnto(view);
 
-		expectJsonTree(tree, ["C", "D", "A", "B"]);
-		expectJsonTree(fork, ["C", "D", "A", "B"]);
+		expectJsonTree(fork, ["A", "x", "C", "D", "B"]);
 
-		fork2.undo();
-		tree.merge(fork2);
-		fork.merge(fork2);
+		// Expect that undo on deleteB still undoes the deletion of B
+		fork.undo();
+		expectJsonTree(fork, ["A", "x", "B", "C", "D"]);
+	});
 
-		expectJsonTree(tree, ["A", "B", "C", "D"]);
+	itView("an insert from a fork on its parent", ["A", "B", "C", "D"], (view) => {
+		const fork = view.fork();
+
+		insert(fork, 1, "x");
+		expectJsonTree(fork, ["A", "x", "B", "C", "D"]);
+
+		view.merge(fork);
+		expectJsonTree(view, ["A", "x", "B", "C", "D"]);
+
+		view.undo();
+		expectJsonTree(view, ["A", "B", "C", "D"]);
+
+		fork.rebaseOnto(view);
 		expectJsonTree(fork, ["A", "B", "C", "D"]);
 	});
 
-	it("a move that has been rebased", () => {
-		const tree = makeTree("A", "B", "C", "D");
-		const moveB = tree.fork();
+	describe.skip("tests that are being skipped due to bugs", () => {
+		// TODO: See bug 4104
+		itView("the move of a node on a fork", ["A", "B", "C", "D"], (view) => {
+			const fork2 = view.fork();
 
-		insert(tree, 1, "x");
-		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
+			const field = fork2.editor.sequenceField(undefined, rootFieldKeySymbol);
+			field.move(0, 2, 2);
 
-		const field = moveB.editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.move(1, 1, 3);
-		expectJsonTree(moveB, ["A", "C", "D", "B"]);
+			expectJsonTree(fork2, ["C", "D", "A", "B"]);
 
-		moveB.rebaseOnto(tree);
+			view.merge(fork2);
 
-		expectJsonTree(moveB, ["A", "x", "C", "D", "B"]);
+			expectJsonTree(view, ["C", "D", "A", "B"]);
 
-		// Expect that undo on deleteB still undoes the deletion of B
-		moveB.undo();
-		expectJsonTree(moveB, ["A", "x", "B", "C", "D"]);
-	});
+			fork2.undo();
+			view.merge(fork2);
 
-	// TODO: unskip when undo can handle rebasing
-	it.skip("the insert of two separate nodes", () => {
-		const tree = makeTree("A", "B", "C", "D");
-		const addX = tree.fork();
-		const addY = tree.fork();
+			expectJsonTree(view, ["A", "B", "C", "D"]);
+		});
 
-		insert(addX, 1, "x");
-		insert(addY, 3, "y");
+		// TODO: unskip when undo can handle rebasing
+		itView("the insert of two separate nodes", ["A", "B", "C", "D"], (view) => {
+			const addX = view.fork();
+			const addY = view.fork();
 
-		tree.merge(addX);
-		tree.merge(addY);
+			insert(addX, 1, "x");
+			insert(addY, 3, "y");
 
-		expectJsonTree(tree, ["A", "x", "B", "C", "y", "D"]);
+			view.merge(addX);
+			view.merge(addY);
 
-		addX.undo();
-		addY.undo();
-		tree.merge(addX);
-		tree.merge(addY);
+			expectJsonTree(view, ["A", "x", "B", "C", "y", "D"]);
 
-		expectJsonTree(tree, ["A", "B", "C", "D"]);
-	});
+			addX.undo();
+			addY.undo();
+			view.merge(addX);
+			view.merge(addY);
 
-	// TODO: unskip when undo can handle rebasing
-	it.skip("an insert from a parent branch on its fork", () => {
-		const tree = makeTree("A", "B", "C", "D");
-		const doUndo = tree.fork();
+			expectJsonTree(view, ["A", "B", "C", "D"]);
+		});
 
-		insert(tree, 1, "x");
-		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
+		// TODO: unskip when undo can handle rebasing
+		itView("an insert from a parent branch on its fork", ["A", "B", "C", "D"], (view) => {
+			const fork = view.fork();
 
-		doUndo.rebaseOnto(tree);
-		expectJsonTree(doUndo, ["A", "x", "B", "C", "D"]);
+			insert(view, 1, "x");
+			expectJsonTree(view, ["A", "x", "B", "C", "D"]);
 
-		doUndo.undo();
-		expectJsonTree(doUndo, ["A", "B", "C", "D"]);
+			fork.rebaseOnto(view);
+			expectJsonTree(fork, ["A", "x", "B", "C", "D"]);
 
-		tree.merge(doUndo);
-		expectJsonTree(tree, ["A", "B", "C", "D"]);
-	});
+			fork.undo();
+			expectJsonTree(fork, ["A", "B", "C", "D"]);
 
-	it("an insert from a fork on its parent", () => {
-		const tree = makeTree("A", "B", "C", "D");
-		const doUndo = tree.fork();
+			view.merge(fork);
+			expectJsonTree(view, ["A", "B", "C", "D"]);
+		});
 
-		insert(doUndo, 1, "x");
-		expectJsonTree(doUndo, ["A", "x", "B", "C", "D"]);
+		// TODO: unskip this test once the bug that causes rebasing the undo commit to be empty is fixed.
+		itView(
+			"an insert that needs to be rebased over an insert on the base branch",
+			["A", "B", "C", "D"],
+			(view) => {
+				const fork = view.fork();
 
-		tree.merge(doUndo);
-		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
+				insert(view, 1, "x");
+				insert(fork, 3, "y");
+				view.merge(fork);
 
-		tree.undo();
-		expectJsonTree(tree, ["A", "B", "C", "D"]);
+				fork.undo();
+				view.merge(fork);
 
-		doUndo.rebaseOnto(tree);
-		expectJsonTree(doUndo, ["A", "B", "C", "D"]);
-	});
-
-	// TODO: unskip this test once the bug that causes rebasing the undo commit to be empty is fixed.
-	it.skip("an insert that needs to be rebased over an insert on the base branch", () => {
-		const tree = makeTree("A", "B", "C", "D");
-		const doUndo = tree.fork();
-
-		insert(tree, 1, "x");
-		insert(doUndo, 3, "y");
-		tree.merge(doUndo);
-
-		doUndo.undo();
-		tree.merge(doUndo);
-
-		expectJsonTree(tree, ["A", "x", "B", "C", "D"]);
+				expectJsonTree(view, ["A", "x", "B", "C", "D"]);
+			},
+		);
 	});
 });
 
@@ -229,4 +219,20 @@ function expectJsonTree(actual: ISharedTreeView | ISharedTreeView[], expected: s
 		const roots = [...tree.context.root];
 		assert.deepEqual(roots, expected);
 	}
+}
+
+function itView(
+	title: string,
+	initialData: string | string[],
+	fn: (view: ISharedTreeView) => void,
+): void {
+	it(`${title} (root view)`, () => {
+		const view = makeTree(...initialData);
+		fn(view);
+	});
+
+	it(`${title} (forked view)`, () => {
+		const view = makeTree(...initialData);
+		fn(view.fork());
+	});
 }
