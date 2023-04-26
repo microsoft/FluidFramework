@@ -238,7 +238,7 @@ export function TelemetryView(): React.ReactElement {
 			renderHeaderCell: () => {
 				return (
 					<div>
-						<h2>Category</h2>
+						<h2>Information</h2>
 					</div>
 				);
 			},
