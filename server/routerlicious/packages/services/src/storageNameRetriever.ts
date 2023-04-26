@@ -6,7 +6,7 @@
 import { IStorageNameRetriever } from "@fluidframework/server-services-core";
 
 /**
- * Manager to fetch deltas from Alfred using the internal URL.
+ * Retriever to fetch storage name used for document.
  */
 export class StorageNameRetriever implements IStorageNameRetriever {
 	public constructor() {}

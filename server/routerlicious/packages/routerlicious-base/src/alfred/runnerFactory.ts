@@ -24,7 +24,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
 import { DeltaService, StorageNameAllocator } from "./services";
-import { IAlfredResourcesCustomizations } from "./override";
+import { IAlfredResourcesCustomizations } from ".";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;

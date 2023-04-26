@@ -99,7 +99,7 @@ export function create(
 		authorization: string,
 		params: IWholeSummaryPayload,
 		initial?: boolean,
-		initialStorageName?: string,
+		storageName?: string,
 	): Promise<IWriteSummaryResponse> {
 		const service = await utils.createGitService({
 			config,
@@ -109,7 +109,7 @@ export function create(
 			cache,
 			asyncLocalStorage,
 			initialUpload: initial,
-			initialStorageName,
+			storageName,
 		});
 		return service.createSummary(params, initial);
 	}

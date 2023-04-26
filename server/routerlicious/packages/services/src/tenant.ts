@@ -79,7 +79,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 		const key = await core.requestWithRetry(
 			async () => this.getKey(tenantId, includeDisabledTenant),
-			"getContainerGitManager_getKey" /* callName */,
+			"getTenantGitManager_getKey" /* callName */,
 			lumberProperties /* telemetryProperties */,
 		);
 

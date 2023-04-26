@@ -68,7 +68,7 @@ export class createGitServiceArgs {
 	cache?: ICache;
 	asyncLocalStorage?: AsyncLocalStorage<string>;
 	initialUpload?: boolean = false;
-	initialStorageName?: string;
+	storageName?: string;
 	allowDisabledTenant?: boolean = false;
 }
 
@@ -81,7 +81,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		cache,
 		asyncLocalStorage,
 		initialUpload,
-		initialStorageName,
+		storageName,
 		allowDisabledTenant,
 	} = createArgs;
 	const token = parseToken(tenantId, authorization);
@@ -95,8 +95,8 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
-	const storageName =
-		initialUpload && initialStorageName ? initialStorageName : customData?.storageName;
+	const calculatedStorageName =
+		initialUpload && storageName ? storageName : customData?.storageName;
 	const service = new RestGitService(
 		details.storage,
 		writeToExternalStorage,
@@ -104,7 +104,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		documentId,
 		cache,
 		asyncLocalStorage,
-		storageName,
+		calculatedStorageName,
 		storageUrl,
 	);
 	return service;

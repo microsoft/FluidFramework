@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IAlfredResourcesCustomizations } from "./override";
+export { IAlfredResourcesCustomizations } from "./customizations";
 export { AlfredRunner } from "./runner";
 export {
 	AlfredResources,
