@@ -225,7 +225,7 @@ export class PermutationVector extends Client {
 		let containingSegment!: PermutationSegment;
 		let containingOffset: number;
 
-		this.walkSegments((segment) => {
+		this.walkAllSegments((segment) => {
 			const { start, cachedLength } = segment as PermutationSegment;
 
 			// If the segment is unallocated, skip it.

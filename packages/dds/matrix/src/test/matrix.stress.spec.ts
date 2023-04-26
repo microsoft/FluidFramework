@@ -378,8 +378,8 @@ describe("Matrix", () => {
 				seed: 0x84d43a0a,
 			},
 			{
-				numClients: 3,
-				numOps: 100,
+				numClients: 5,
+				numOps: 1500,
 				syncProbability: 0.2,
 				disconnectProbability: 0,
 				undoRedoProbability: 0.2,
