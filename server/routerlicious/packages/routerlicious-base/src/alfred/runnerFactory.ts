@@ -222,6 +222,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			},
 			true,
 		);
+		await checkpointsCollection.createIndex(
+			{
+				tenantId: 1,
+			},
+			true,
+		);
 
 		// Foreman agent uploader does not run locally.
 		// TODO: Make agent uploader run locally.
