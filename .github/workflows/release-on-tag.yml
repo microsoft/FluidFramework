@@ -48,8 +48,9 @@ jobs:
 
       - name: Generate changelog
         run: |
+          # starting and ending versions are the same because we want to generate a changelog for a single release
           pnpm exec auto-changelog \
-          --starting-version ${{ fromJson(env.RELEASE_JSON).previousTag }} \
+          --starting-version ${{ fromJson(env.RELEASE_JSON).tag }} \
           --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
           --output auto-changelog.md \
