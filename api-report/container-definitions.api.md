@@ -143,7 +143,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getEntryPoint?(): Promise<FluidObject | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
-    getPendingLocalState(): string;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
     readonly isDirty: boolean;
@@ -227,6 +226,11 @@ export interface IContainerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
+}
+
+// @internal
+export interface IContainerExperimental extends IContainer {
+    getPendingLocalState(): string;
 }
 
 // @public (undocumented)

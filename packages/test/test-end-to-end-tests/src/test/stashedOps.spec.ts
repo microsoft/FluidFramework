@@ -4,7 +4,12 @@
  */
 
 import assert from "assert";
-import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IContainerExperimental,
+	IHostLoader,
+	LoaderHeader,
+} from "@fluidframework/container-definitions";
 import { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
@@ -1274,7 +1279,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("get pending state without close resends ops", async () => {
-		const container = await provider.loadTestContainer(testContainerConfig);
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
 
 		// pause outgoing ops so we can detect dropped stashed changes
 		await container.deltaManager.outbound.pause();
@@ -1317,7 +1324,9 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("get pending state without close doesn't duplicate ops", async () => {
-		const container = await provider.loadTestContainer(testContainerConfig);
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
 
 		let pendingState;
 		// always delete stash blob on "connected" event

@@ -374,16 +374,6 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	closeAndGetPendingLocalState(): string;
 
 	/**
-	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
-	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
-	 * container emits a "connected" event.
-	 * @returns serialized blob that can be passed to Loader.resolve()
-	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
-	 */
-	getPendingLocalState(): string;
-
-	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.
 	 *
 	 * The returned promise will be true when the proposal is accepted, and false if the proposal is rejected.
@@ -666,4 +656,20 @@ export interface IPendingLocalState {
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 	blobsContents: { [path: string]: ArrayBufferLike };
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };
+}
+
+/**
+ * IContainer interface that includes experimental features still under development.
+ * @internal
+ */
+export interface IContainerExperimental extends IContainer {
+	/**
+	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
+	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
+	 * container emits a "connected" event.
+	 * @returns serialized blob that can be passed to Loader.resolve()
+	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
+	 */
+	getPendingLocalState(): string;
 }
