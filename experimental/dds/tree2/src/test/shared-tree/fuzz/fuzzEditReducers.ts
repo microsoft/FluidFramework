@@ -137,14 +137,8 @@ function applyOptionalFieldEdit(tree: ISharedTree, change: FuzzFieldChange): voi
 
 function applyNodeEdit(tree: ISharedTree, change: FuzzNodeEditChange): void {
 	switch (change.type) {
-		case "sequence": {
-			tree.editor.setValue(change.edit.path, change.edit.value);
-			break;
-		}
-		case "value": {
-			tree.editor.setValue(change.edit.path, change.edit.value);
-			break;
-		}
+		case "sequence":
+		case "value":
 		case "optional": {
 			tree.editor.setValue(change.edit.path, change.edit.value);
 			break;

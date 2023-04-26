@@ -96,6 +96,7 @@ export const makeNodeEditGenerator = (
 		};
 		switch (path.parentField) {
 			case sequenceFieldKey:
+			default:
 				return {
 					type: "sequence",
 					edit: setPayload,
@@ -108,12 +109,6 @@ export const makeNodeEditGenerator = (
 			case optionalFieldKey:
 				return {
 					type: "optional",
-					edit: setPayload,
-				};
-			default:
-				// default case returns a sequenceNodeEdit
-				return {
-					type: "sequence",
 					edit: setPayload,
 				};
 		}
@@ -154,10 +149,7 @@ export const makeFieldEditGenerator = (
 
 		switch (fieldKey) {
 			case sequenceFieldKey: {
-				const opWeightRatio =
-					passedOpWeights.delete !== 0
-						? passedOpWeights.insert / passedOpWeights.delete
-						: passedOpWeights.insert;
+				const opWeightRatio = passedOpWeights.insert / passedOpWeights.delete;
 				const opType =
 					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
 				switch (opType) {
@@ -184,10 +176,7 @@ export const makeFieldEditGenerator = (
 				return generateValueFieldDeleteOp(fieldPath, state.treeIndex);
 			}
 			case optionalFieldKey: {
-				const opWeightRatio =
-					passedOpWeights.delete !== 0
-						? passedOpWeights.insert / passedOpWeights.delete
-						: passedOpWeights.insert;
+				const opWeightRatio = passedOpWeights.insert / passedOpWeights.delete;
 				const opType =
 					count === 0 && state.random.bool(opWeightRatio) ? "insert" : "delete";
 				switch (opType) {
@@ -217,6 +206,25 @@ export const makeFieldEditGenerator = (
 		}
 	}
 
+	function generateDeleteOp(
+		fieldPath: FieldUpPath,
+		count: number,
+		treeIndex: number,
+		nodeIndex: number,
+	): FuzzDelete {
+		const firstNode: UpPath = {
+			parent: fieldPath.parent,
+			parentField: fieldPath.field,
+			parentIndex: nodeIndex,
+		};
+		return {
+			type: "delete",
+			firstNode,
+			count,
+			treeIndex,
+		};
+	}
+
 	function generateSequenceFieldDeleteOp(
 		fieldPath: FieldUpPath,
 		random: IRandom,
@@ -225,32 +233,12 @@ export const makeFieldEditGenerator = (
 	): SequenceFieldEdit {
 		const nodeIndex = random.integer(0, count - 1);
 		const rangeSize = random.integer(1, count - nodeIndex);
-		const firstNode: UpPath = {
-			parent: fieldPath.parent,
-			parentField: fieldPath.field,
-			parentIndex: nodeIndex,
-		};
-		const contents: FuzzDelete = {
-			type: "delete",
-			firstNode,
-			count: rangeSize,
-			treeIndex,
-		};
+		const contents = generateDeleteOp(fieldPath, rangeSize, treeIndex, nodeIndex);
 		return { type: "sequence", edit: contents };
 	}
 
 	function generateValueFieldDeleteOp(fieldPath: FieldUpPath, treeIndex: number): ValueFieldEdit {
-		const firstNode: UpPath = {
-			parent: fieldPath.parent,
-			parentField: fieldPath.field,
-			parentIndex: 0,
-		};
-		const contents: FuzzDelete = {
-			type: "delete",
-			firstNode,
-			count: 1,
-			treeIndex,
-		};
+		const contents = generateDeleteOp(fieldPath, 1, treeIndex, 0);
 		return { type: "value", edit: contents };
 	}
 
@@ -258,17 +246,7 @@ export const makeFieldEditGenerator = (
 		fieldPath: FieldUpPath,
 		treeIndex: number,
 	): OptionalFieldEdit {
-		const firstNode: UpPath = {
-			parent: fieldPath.parent,
-			parentField: fieldPath.field,
-			parentIndex: 0,
-		};
-		const contents: FuzzDelete = {
-			type: "delete",
-			firstNode,
-			count: 1,
-			treeIndex,
-		};
+		const contents = generateDeleteOp(fieldPath, 1, treeIndex, 0);
 		return { type: "optional", edit: contents };
 	}
 

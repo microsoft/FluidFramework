@@ -29,7 +29,7 @@ export type FuzzFieldChange = FuzzInsert | FuzzDelete;
 
 export interface FieldEdit {
 	editType: "fieldEdit";
-	change: SequenceFieldEdit | ValueFieldEdit | OptionalFieldEdit; // in the future, add `| OptionalFieldEdit | ValueFieldEdit`
+	change: FieldEditTypes;
 }
 
 export interface FuzzInsert {
