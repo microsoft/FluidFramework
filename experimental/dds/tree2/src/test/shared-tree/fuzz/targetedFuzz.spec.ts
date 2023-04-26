@@ -11,15 +11,17 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { moveToDetachedField, compareUpPaths, rootFieldKeySymbol, UpPath } from "../../../core";
 import { brand } from "../../../util";
-import { TestTreeProvider, SummarizeType, initializeTestTree, validateTree } from "../../utils";
 import {
-	FuzzTestState,
-	makeOpGenerator,
-	Operation,
-	EditGeneratorOpWeights,
-} from "./fuzzEditGenerators";
+	TestTreeProvider,
+	SummarizeType,
+	initializeTestTree,
+	validateTree,
+	toJsonableTree,
+} from "../../utils";
+import { FuzzTestState, makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { initialTreeState, makeTree, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { Operation } from "./operationTypes";
 
 export async function performFuzzActionsAbort(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
@@ -46,6 +48,7 @@ export async function performFuzzActionsAbort(
 
 	const initialState: FuzzTestState = {
 		random,
+		trees: provider.trees,
 		testTreeProvider: provider,
 		numberOfEdits: 0,
 	};
@@ -80,6 +83,35 @@ export async function performFuzzActionsAbort(
 	return finalState;
 }
 
+export async function performFuzzActionsComposeVsIndividual(
+	generator: AsyncGenerator<Operation, FuzzTestState>,
+	seed: number,
+	saveInfo?: SaveInfo,
+): Promise<FuzzTestState> {
+	const random = makeRandom(seed);
+
+	const tree = makeTree(initialTreeState);
+	const initialState: FuzzTestState = {
+		random,
+		trees: [tree],
+		numberOfEdits: 0,
+	};
+
+	tree.transaction.start();
+	const finalState = await performFuzzActionsAsync(
+		generator,
+		fuzzReducer,
+		initialState,
+		saveInfo,
+	);
+
+	const treeViewBeforeCommit = toJsonableTree(tree);
+	tree.transaction.commit();
+	validateTree(tree, treeViewBeforeCommit);
+
+	return finalState;
+}
+
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
  * They should typically use SharedTree's branching APIs to emulate multiple clients concurrently editing the document
@@ -91,7 +123,7 @@ describe("Fuzz - Targeted", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
-	const editGeneratorOpWeights: EditGeneratorOpWeights = {
+	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		setPayload: 1,
 	};
 	describe("Anchors are unaffected by aborted transaction", () => {
@@ -102,6 +134,21 @@ describe("Fuzz - Targeted", () => {
 			runsPerBatch,
 			random,
 			editGeneratorOpWeights,
+		);
+	});
+	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
+		setPayload: 1,
+		insert: 1,
+		delete: 1,
+	};
+	describe("Composed vs individual changes converge to the same tree", () => {
+		runFuzzBatch(
+			makeOpGenerator,
+			performFuzzActionsComposeVsIndividual,
+			opsPerRun,
+			runsPerBatch,
+			random,
+			composeVsIndividualWeights,
 		);
 	});
 });

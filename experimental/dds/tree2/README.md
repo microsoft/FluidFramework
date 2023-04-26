@@ -323,10 +323,9 @@ flowchart
         subgraph core ["core libraries"]
             direction TB
             forest-->schema-stored
-            change-family-->repair
-            edit-manager-->change-family
-            rebase-->repair
             rebase-->tree
+            change-family-->repair
+            rebase-->repair
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
             dependency-tracking

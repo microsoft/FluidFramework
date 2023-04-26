@@ -14,7 +14,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc && npm run build:test",
+		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
@@ -22,13 +22,15 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run eslint",
-		"lint:fix": "npm run eslint:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive dist/test --unhandled-rejections=strict",
+		"test": "mocha --recursive dist/test/*.spec.js --unhandled-rejections=strict",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"nyc": {
 		"all": true,
@@ -66,10 +68,11 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.13.1",
+		"@fluid-tools/build-cli": "^0.15.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.13.1",
+		"@fluidframework/build-tools": "^0.15.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/server-test-utils-previous": "npm:@fluidframework/server-test-utils@0.1040.1000",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^16.18.16",
@@ -83,5 +86,8 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"typescript": "~4.5.5"
+	},
+	"typeValidation": {
+		"broken": {}
 	}
 }

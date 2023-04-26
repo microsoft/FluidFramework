@@ -62,7 +62,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 				this.container = await documentWrapper.loadDocument();
 				assert(this.container !== undefined, "container needs to be defined.");
 				await provider.ensureSynchronized();
-
+				assert(this.container.closed !== true, "container needs to be open.");
 				this.summarizerClient = await documentWrapper.summarize(summaryVersion);
 				assert(
 					this.summarizerClient.summaryVersion !== undefined,

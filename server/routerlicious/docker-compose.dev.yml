@@ -20,10 +20,6 @@ services:
         volumes:
             - .:/usr/src/server
             - /usr/src/server/node_modules
-    foreman:
-        volumes:
-            - .:/usr/src/server
-            - /usr/src/server/node_modules
     riddler:
         volumes:
             - .:/usr/src/server

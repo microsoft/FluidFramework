@@ -4,12 +4,15 @@
  */
 import React from "react";
 import { HasContainerId, FluidObjectTreeNode } from "@fluid-tools/client-debugger";
-import { Accordion } from "./utility-components/";
+import { Tree } from "./Tree";
 import { TreeDataView } from "./TreeDataView";
+import { TreeHeader } from "./TreeHeader";
+import { HasLabel } from "./CommonInterfaces";
+
 /**
  * {@link TreeView} input props.
  */
-export interface FluidTreeViewProps extends HasContainerId {
+export interface FluidTreeViewProps extends HasContainerId, HasLabel {
 	node: FluidObjectTreeNode;
 }
 
@@ -17,20 +20,20 @@ export interface FluidTreeViewProps extends HasContainerId {
  * Render data with type VisualNodeKind.FluidTreeNode and render its children.
  */
 export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
-	const { containerId, node } = props;
-	return (
-		<Accordion
-			header={
-				<div>
-					{`${node.fluidObjectId} : 
-						${node.metadata !== undefined ? `${node.metadata}` : ""}
-						${node.nodeKind}`}
-				</div>
-			}
-		>
-			{Object.entries(node.children).map(([key, fluidObject], index) => {
-				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
-			})}
-		</Accordion>
+	const { containerId, label, node } = props;
+
+	const childNodes = Object.entries(node.children).map(([key, fluidObject]) => (
+		<TreeDataView key={key} containerId={containerId} label={key} node={fluidObject} />
+	));
+
+	const header = (
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			nodeKind={node.nodeKind}
+			itemSize={node.metadata?.size}
+		/>
 	);
+
+	return <Tree header={header}>{childNodes}</Tree>;
 }

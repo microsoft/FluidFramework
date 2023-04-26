@@ -88,6 +88,7 @@ export {
 	inCursorNode,
 	AnchorEvents,
 	AnchorSetRootEvents,
+	ProtoNodes,
 } from "./tree";
 
 export {
@@ -158,7 +159,8 @@ export {
 	SessionId,
 	mintCommit,
 	mintRevisionTag,
-	Rebaser,
+	rebaseBranch,
+	rebaseChange,
 } from "./rebase";
 
 export {
@@ -170,16 +172,6 @@ export {
 	TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view";
-
-export {
-	Commit,
-	EditManager,
-	minimumPossibleSequenceNumber,
-	SeqNumber,
-	SequencedCommit,
-	SummarySessionBranch as SummaryBranch,
-	SummaryData,
-} from "./edit-manager";
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
 
