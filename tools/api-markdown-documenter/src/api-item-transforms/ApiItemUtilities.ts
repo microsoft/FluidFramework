@@ -10,6 +10,7 @@ import {
 	ApiConstructSignature,
 	ApiConstructor,
 	ApiDocumentedItem,
+	ApiEntryPoint,
 	ApiFunction,
 	ApiIndexSignature,
 	ApiItem,
@@ -71,7 +72,7 @@ export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 /**
  * `ApiItem` union type representing module-like API kinds.
  */
-export type ApiModuleLike = ApiPackage | ApiNamespace;
+export type ApiModuleLike = ApiEntryPoint | ApiNamespace;
 
 /**
  * Represents an API item modifier.
@@ -483,11 +484,12 @@ export function doesItemKindRequireOwnDocument(
 	kind: ApiItemKind,
 	documentBoundaries: DocumentBoundaries,
 ): boolean {
-	if (kind === ApiItemKind.Model || kind === ApiItemKind.Package) {
+	if (
+		kind === ApiItemKind.EntryPoint ||
+		kind === ApiItemKind.Model ||
+		kind === ApiItemKind.Package
+	) {
 		return true;
-	}
-	if (kind === ApiItemKind.EntryPoint) {
-		return false;
 	}
 	return documentBoundaries.includes(kind);
 }
@@ -535,6 +537,8 @@ export function doesItemKindGenerateHierarchy(
 		return true;
 	}
 	if (kind === ApiItemKind.EntryPoint) {
+		// The same API item within a package can be included in multiple entry-points, so it doesn't make sense to
+		// include it in generated hierarchy.
 		return false;
 	}
 	return hierarchyBoundaries.includes(kind);

@@ -11,7 +11,6 @@ import {
 	CheckpointManager,
 	createDeliCheckpointManagerFromCollection,
 	DeliLambda,
-	ForemanLambda,
 	MoiraLambda,
 	ScribeLambda,
 	ScriptoriumLambda,
@@ -32,12 +31,9 @@ import {
 	IPublisher,
 	IScribe,
 	IServiceConfiguration,
-	ITaskMessageSender,
-	ITenantManager,
 	ITopic,
 	IWebSocket,
 	ILogger,
-	TokenGenerator,
 	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
@@ -61,12 +57,10 @@ const DefaultScribe: IScribe = {
 const DefaultDeli: IDeliState = {
 	clients: undefined,
 	durableSequenceNumber: 0,
-	epoch: 0,
 	expHash1: defaultHash,
 	logOffset: -1,
 	sequenceNumber: 0,
 	signalClientConnectionNumber: 0,
-	term: 1,
 	lastSentMSN: 0,
 	nackMessages: undefined,
 	successfullyStartedLambdas: [],
@@ -98,10 +92,6 @@ export class LocalOrderer implements IOrderer {
 		databaseManager: IDatabaseManager,
 		tenantId: string,
 		documentId: string,
-		taskMessageSender: ITaskMessageSender,
-		tenantManager: ITenantManager,
-		permission: any,
-		tokenGenerator: TokenGenerator,
 		logger: ILogger,
 		documentRepository: IDocumentRepository,
 		gitManager?: IGitManager,
@@ -116,7 +106,6 @@ export class LocalOrderer implements IOrderer {
 		pubSub: IPubSub = new PubSub(),
 		broadcasterContext: IContext = new LocalContext(logger),
 		scriptoriumContext: IContext = new LocalContext(logger),
-		foremanContext: IContext = new LocalContext(logger),
 		scribeContext: IContext = new LocalContext(logger),
 		deliContext: IContext = new LocalContext(logger),
 		moiraContext: IContext = new LocalContext(logger),
@@ -129,15 +118,10 @@ export class LocalOrderer implements IOrderer {
 			documentDetails,
 			tenantId,
 			documentId,
-			taskMessageSender,
-			tenantManager,
 			gitManager,
-			permission,
-			tokenGenerator,
 			pubSub,
 			broadcasterContext,
 			scriptoriumContext,
-			foremanContext,
 			scribeContext,
 			deliContext,
 			moiraContext,
@@ -149,7 +133,6 @@ export class LocalOrderer implements IOrderer {
 	public deltasKafka: LocalKafka;
 
 	public scriptoriumLambda: LocalLambdaController | undefined;
-	public foremanLambda: LocalLambdaController | undefined;
 	public moiraLambda: LocalLambdaController | undefined;
 	public scribeLambda: LocalLambdaController | undefined;
 	public deliLambda: LocalLambdaController | undefined;
@@ -164,15 +147,10 @@ export class LocalOrderer implements IOrderer {
 		private readonly details: IDocumentDetails,
 		private readonly tenantId: string,
 		private readonly documentId: string,
-		private readonly taskMessageSender: ITaskMessageSender,
-		private readonly tenantManager: ITenantManager,
 		private readonly gitManager: IGitManager | undefined,
-		private readonly permission: any,
-		private readonly foremanTokenGenrator: TokenGenerator,
 		private readonly pubSub: IPubSub,
 		private readonly broadcasterContext: IContext,
 		private readonly scriptoriumContext: IContext,
-		private readonly foremanContext: IContext,
 		private readonly scribeContext: IContext,
 		private readonly deliContext: IContext,
 		private readonly moiraContext: IContext,
@@ -266,22 +244,6 @@ export class LocalOrderer implements IOrderer {
 				),
 		);
 
-		this.foremanLambda = new LocalLambdaController(
-			this.deltasKafka,
-			this.setup,
-			this.foremanContext,
-			async (_, context) =>
-				new ForemanLambda(
-					this.taskMessageSender,
-					this.tenantManager,
-					this.foremanTokenGenrator,
-					this.permission,
-					context,
-					this.tenantId,
-					this.documentId,
-				),
-		);
-
 		if (this.gitManager) {
 			this.scribeLambda = new LocalLambdaController(
 				this.deltasKafka,
@@ -355,7 +317,6 @@ export class LocalOrderer implements IOrderer {
 		const protocolHandler = new ProtocolOpHandler(
 			scribe.minimumSequenceNumber,
 			scribe.sequenceNumber,
-			1, // TODO (Change when local orderer also ticks epoch)
 			lastState.members,
 			lastState.proposals,
 			lastState.values,
@@ -393,17 +354,16 @@ export class LocalOrderer implements IOrderer {
 			this.tenantId,
 			this.documentId,
 			summaryWriter,
-			summaryReader,
 			undefined,
 			checkpointManager,
 			scribe,
 			this.serviceConfiguration,
 			this.rawDeltasKafka,
 			protocolHandler,
-			1, // TODO (Change when local orderer also ticks epoch)
 			protocolHead,
 			scribeMessages.map((message) => message.operation),
 			undefined,
+			new Set<string>(),
 		);
 	}
 
@@ -416,11 +376,6 @@ export class LocalOrderer implements IOrderer {
 		if (this.scriptoriumLambda) {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.scriptoriumLambda.start();
-		}
-
-		if (this.foremanLambda) {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.foremanLambda.start();
 		}
 
 		if (this.scribeLambda) {
@@ -452,11 +407,6 @@ export class LocalOrderer implements IOrderer {
 		if (this.scriptoriumLambda) {
 			this.scriptoriumLambda.close();
 			this.scriptoriumLambda = undefined;
-		}
-
-		if (this.foremanLambda) {
-			this.foremanLambda.close();
-			this.foremanLambda = undefined;
 		}
 
 		if (this.scribeLambda) {

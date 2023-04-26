@@ -5,7 +5,7 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { DocumentType, BenchmarkType } from "@fluid-internal/test-version-utils";
+import { DocumentType, BenchmarkType, isMemoryTest } from "@fluid-internal/test-version-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
@@ -90,27 +90,29 @@ export interface IBenchmarkParameters {
  * @param params - The {@link IBenchmarkParameters} parameters for the test.
  */
 export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T) {
-	const t: IMemoryTestObject = {
-		title,
-		...obj,
-		run: obj.run.bind(obj),
-		beforeIteration: obj.beforeIteration?.bind(obj),
-		afterIteration: obj.afterIteration?.bind(obj),
-		before: obj.before?.bind(obj),
-		after: obj.after?.bind(obj),
-	};
-	benchmarkMemory(t);
-
-	const t1: BenchmarkArguments = {
-		title,
-		...obj,
-		benchmarkFnAsync: obj.run.bind(obj),
-		before: obj.before?.bind(obj),
-		after: obj.after?.bind(obj),
-		beforeEachBatch: obj.beforeEachBatch?.bind(obj),
-	};
-	if (obj.minSampleCount !== undefined) {
-		t1.minBatchCount = obj.minSampleCount;
+	if (isMemoryTest()) {
+		const t: IMemoryTestObject = {
+			title,
+			...obj,
+			run: obj.run.bind(obj),
+			beforeIteration: obj.beforeIteration?.bind(obj),
+			afterIteration: obj.afterIteration?.bind(obj),
+			before: obj.before?.bind(obj),
+			after: obj.after?.bind(obj),
+		};
+		benchmarkMemory(t);
+	} else {
+		const t1: BenchmarkArguments = {
+			title,
+			...obj,
+			benchmarkFnAsync: obj.run.bind(obj),
+			before: obj.before?.bind(obj),
+			after: obj.after?.bind(obj),
+			beforeEachBatch: obj.beforeEachBatch?.bind(obj),
+		};
+		if (obj.minSampleCount !== undefined) {
+			t1.minBatchCount = obj.minSampleCount;
+		}
+		benchmark(t1);
 	}
-	benchmark(t1);
 }
