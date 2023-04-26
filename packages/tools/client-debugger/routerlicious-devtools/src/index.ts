@@ -4,15 +4,16 @@
  */
 import {
 	ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
+	IFluidDevtools as IDevtoolsBase,
 	initializeDevtools as initializeDevtoolsBase,
-	initializeContainerDevtools as initializeContainerDevtoolsBase,
 	DevtoolsLogger,
 	VisualizeSharedObject,
 } from "@fluid-tools/client-debugger";
+import { IDisposable } from "@fluidframework/common-definitions";
 import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
- * Properties for configuring the Devtools.
+ * Properties for configuring {@link IDevtools}.
  *
  * @public
  */
@@ -32,7 +33,7 @@ export interface DevtoolsProps {
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
-	 * @remarks Additional Containers can be registered with the Devtools via {@link initializeContainerDevtools}.
+	 * @remarks Additional Containers can be registered with the Devtools via {@link IDevtools.registerContainerDevtools}.
 	 */
 	initialContainers?: ContainerDevtoolsProps[];
 
@@ -99,11 +100,80 @@ export interface ContainerDevtoolsProps {
 }
 
 /**
+ * Fluid Devtools. A single, global instance is used to generate and communicate stats associated with the general Fluid
+ * runtime (i.e., it is not associated with any single Framework entity).
+ *
+ * @remarks
+ *
+ * Supports registering {@link @fluidframework/fluid-static#IFluidContainer}s for Container-level stats
+ * (via {@link IDevtools.registerContainerDevtools}).
+ *
+ * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
+ * disposed of on Window unload.
+ * If you wish to dispose of it earlier, you may call its {@link @fluidframework/common-definitions#IDisposable.dispose} method.
+ *
+ * @public
+ */
+export interface IDevtools extends IDisposable {
+	/**
+	 * Initializes a {@link IDevtools} from the provided properties and stores it for future reference.
+	 *
+	 * @throws Will throw if devtools have already been registered for the specified Container ID.
+	 */
+	registerContainerDevtools(props: ContainerDevtoolsProps): void;
+
+	/**
+	 * Closes registered Container-level Devtools associated with the provided ID.
+	 */
+	closeContainerDevtools(id: string): void;
+}
+
+class Devtools implements IDevtools {
+	public constructor(
+		/**
+		 * Handle to the underlying Devtools instance (singleton).
+		 */
+		private readonly _devtools: IDevtoolsBase,
+	) {}
+
+	/**
+	 * {@inheritDoc IDevtools.registerContainerDevtools}
+	 */
+	public registerContainerDevtools(props: ContainerDevtoolsProps): void {
+		const mappedProps = mapContainerProps(props);
+		if (mappedProps !== undefined) {
+			this._devtools.registerContainerDevtools(mappedProps);
+		}
+	}
+
+	/**
+	 * {@inheritDoc IDevtools.closeContainerDevtools}
+	 */
+	public closeContainerDevtools(id: string): void {
+		this._devtools.closeContainerDevtools(id);
+	}
+
+	/**
+	 * {@inheritDoc IDevtools.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._devtools.disposed;
+	}
+
+	/**
+	 * {@inheritDoc IDevtools.dispose}
+	 */
+	public dispose(): void {
+		this._devtools.dispose();
+	}
+}
+
+/**
  * TODO
  *
  * @public
  */
-export function initializeDevtools(props: DevtoolsProps): void {
+export function initializeDevtools(props: DevtoolsProps): IDevtools {
 	const { initialContainers, logger } = props;
 
 	let mappedInitialContainers: ContainerDevtoolsPropsBase[] | undefined;
@@ -117,26 +187,12 @@ export function initializeDevtools(props: DevtoolsProps): void {
 		}
 	}
 
-	initializeDevtoolsBase({
+	const baseDevtools = initializeDevtoolsBase({
 		logger,
 		initialContainers: mappedInitialContainers,
 	});
+	return new Devtools(baseDevtools);
 }
-
-/**
- * TODO
- *
- * @public
- */
-export function initializeContainerDevtools(props: ContainerDevtoolsProps): void {
-	const mappedProps = mapContainerProps(props);
-	if (mappedProps !== undefined) {
-		initializeContainerDevtoolsBase(mappedProps);
-	}
-}
-
-// Convenience re-exports
-export { closeDevtools, closeContainerDevtools } from "@fluid-tools/client-debugger";
 
 /**
  * TODO

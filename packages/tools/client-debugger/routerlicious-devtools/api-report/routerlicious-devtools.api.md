@@ -4,15 +4,10 @@
 
 ```ts
 
-import { closeContainerDevtools } from '@fluid-tools/client-debugger';
-import { closeDevtools } from '@fluid-tools/client-debugger';
 import { DevtoolsLogger } from '@fluid-tools/client-debugger';
+import { IDisposable } from '@fluidframework/common-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { VisualizeSharedObject } from '@fluid-tools/client-debugger';
-
-export { closeContainerDevtools }
-
-export { closeDevtools }
 
 // @public
 export interface ContainerDevtoolsProps {
@@ -30,10 +25,13 @@ export interface DevtoolsProps {
 }
 
 // @public
-export function initializeContainerDevtools(props: ContainerDevtoolsProps): void;
+export interface IDevtools extends IDisposable {
+    closeContainerDevtools(id: string): void;
+    registerContainerDevtools(props: ContainerDevtoolsProps): void;
+}
 
 // @public
-export function initializeDevtools(props: DevtoolsProps): void;
+export function initializeDevtools(props: DevtoolsProps): IDevtools;
 
 // (No @packageDocumentation comment for this package)
 
