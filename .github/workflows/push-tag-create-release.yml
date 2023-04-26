@@ -68,6 +68,8 @@ jobs:
         # This changelog is only for client patch releases
         if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
         run: |
+          pnpm install --frozen-lockfile
+
           # starting and ending versions are the same because we want to generate a changelog for a single release
           pnpm exec auto-changelog \
           --starting-version ${{ fromJson(env.RELEASE_JSON).tag }} \
