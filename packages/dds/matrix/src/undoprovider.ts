@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/merge-tree";
 import { MatrixItem, SharedMatrix } from "./matrix";
 import { Handle, isHandleValid } from "./handletable";
-import { PermutationVector } from "./permutationvector";
+import { PermutationSegment, PermutationVector } from "./permutationvector";
 import { IUndoConsumer } from "./types";
 
 export class VectorUndoProvider {
@@ -46,8 +46,11 @@ export class VectorUndoProvider {
 			);
 
 			switch (deltaArgs.operation) {
-				case MergeTreeDeltaType.INSERT:
 				case MergeTreeDeltaType.REMOVE:
+					deltaArgs.deltaSegments.forEach((d) =>
+						(d.segment as PermutationSegment).reset(),
+					);
+				case MergeTreeDeltaType.INSERT:
 					if (this.currentOp !== deltaArgs.operation) {
 						this.pushRevertible(revertibles);
 					}

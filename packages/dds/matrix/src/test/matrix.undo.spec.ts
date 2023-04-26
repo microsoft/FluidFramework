@@ -589,8 +589,8 @@ describe("Matrix", () => {
 
 				undo1.redoOperation();
 				await expect([
-					[0, 1],
 					[2, 3],
+					[0, 1],
 				]);
 
 				undo1.undoOperation();
