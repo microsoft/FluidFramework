@@ -153,7 +153,6 @@ export interface ContainerDevtoolsProps {
  * TODO: Document others as they are added.
  *
  * @sealed
- * @internal
  */
 export class ContainerDevtools implements IContainerDevtools {
 	/**

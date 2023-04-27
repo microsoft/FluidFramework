@@ -24,10 +24,6 @@ import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
 import { VisualizeSharedObject } from "./data-visualization";
 
-// TODOs:
-// - Devtools disposal
-// - Clear devtools on `window.beforeunload`, to ensure we do not hold onto stale resources.
-
 /**
  * Message logging options used by the root devtools.
  */
@@ -45,7 +41,7 @@ export const useAfterDisposeErrorText =
 
 /**
  * Error text thrown when a user attempts to register a {@link IContainerDevtools} instance for an ID that is already
- * registered with the {@link FluidDevtools}.
+ * registered with the {@link IFluidDevtools}.
  *
  * @privateRemarks Exported for test purposes only.
  */
@@ -57,7 +53,7 @@ export function getContainerAlreadyRegisteredErrorText(containerId: string): str
 }
 
 /**
- * Properties for configuring an {@link IFluidDevtools}.
+ * Properties for configuring the Devtools.
  *
  * @public
  */
@@ -120,7 +116,6 @@ export interface FluidDevtoolsProps {
  *
  * TODO: Document others as they are added.
  *
- * @internal
  * @sealed
  */
 export class FluidDevtools implements IFluidDevtools {
