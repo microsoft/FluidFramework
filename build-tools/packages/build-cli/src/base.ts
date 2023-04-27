@@ -235,23 +235,3 @@ export abstract class BaseCommand<T extends typeof Command>
 		}
 	}
 }
-
-export abstract class BaseGitRepoCommand<
-	T extends typeof Command & { flags: typeof BaseGitRepoCommand.flags },
-> extends BaseCommand<T> {
-	static flags = {
-		branch: Flags.string({
-			char: "b",
-			description: "The branch to compare against.",
-		}),
-		...BaseCommand.flags,
-	};
-
-	protected repo: Repository | undefined;
-
-	public async init(): Promise<void> {
-		await super.init();
-		const context = await this.getContext();
-		this.repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
-	}
-}
