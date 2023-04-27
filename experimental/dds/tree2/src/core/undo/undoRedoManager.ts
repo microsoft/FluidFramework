@@ -35,11 +35,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Adds the provided commit to the undo commit tree.
 	 * Should be called for all commits on the relevant branch, including undo commits.
 	 */
-	public trackCommit(
-		commit: GraphCommit<TChange>,
-		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
-	): void {
-		switch (undoRedoManagerCommitType) {
+	public trackCommit(commit: GraphCommit<TChange>, type: UndoRedoManagerCommitType): void {
+		switch (type) {
 			case UndoRedoManagerCommitType.Undo:
 				// TODO check if this is the correct commit?
 				this.headUndoableCommit = this.headUndoableCommit?.parent;

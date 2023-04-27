@@ -10,8 +10,8 @@ import {
 	GraphCommit,
 	ITreeCursorSynchronous,
 	RepairDataStore,
-	RevisionTag,
 	UndoRedoManagerCommitType,
+	mintRevisionTag,
 } from "../../core";
 import {
 	defaultChangeFamily,
@@ -50,16 +50,10 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 
 	public override applyChange(
 		change: DefaultChangeset,
-		revision?: RevisionTag,
-		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
-		skipUndoRedoManagerTracking?: boolean,
+		revision = mintRevisionTag(),
+		undoRedoType?: UndoRedoManagerCommitType,
 	): GraphCommit<DefaultChangeset> {
-		return super.applyChange(
-			change,
-			revision,
-			undoRedoManagerCommitType,
-			skipUndoRedoManagerTracking,
-		);
+		return super.applyChange(change, revision, undoRedoType);
 	}
 
 	public override startTransaction(
