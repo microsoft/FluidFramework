@@ -26,13 +26,13 @@ export namespace DevtoolsFeatures {
 	 */
 	export interface MessageData {
 		/**
-		 * Describes the set of features supported by the {@link FluidDevtools} instance.
+		 * Describes the set of features supported by the {@link IFluidDevtools} instance.
 		 */
 		features: Features;
 	}
 
 	/**
-	 * Outbound message containing the set of features supported by the {@link FluidDevtools} instance.
+	 * Outbound message containing the set of features supported by the {@link IFluidDevtools} instance.
 	 *
 	 * @public
 	 */

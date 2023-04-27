@@ -71,21 +71,6 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
     clientId: string | undefined;
 }
 
-// @internal @sealed
-export class ContainerDevtools implements IContainerDevtools {
-    constructor(props: ContainerDevtoolsProps);
-    get audience(): IAudience;
-    readonly container: IContainer;
-    readonly containerData?: Record<string, IFluidLoadable>;
-    readonly containerId: string;
-    readonly containerNickname?: string;
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    getAudienceHistory(): readonly AudienceChangeLogEntry[];
-    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
-}
-
 // @public
 export enum ContainerDevtoolsFeature {
     ContainerData = "container-data"
@@ -232,20 +217,6 @@ export namespace DisconnectContainer {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId;
-}
-
-// @internal
-export class FluidDevtools implements IFluidDevtools {
-    constructor(props?: FluidDevtoolsProps);
-    closeContainerDevtools(containerId: string): void;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    getAllContainerDevtools(): readonly IContainerDevtools[];
-    getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    readonly logger: DevtoolsLogger | undefined;
-    registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
 // @public
