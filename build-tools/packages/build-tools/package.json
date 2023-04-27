@@ -113,5 +113,13 @@
 	},
 	"engines": {
 		"node": ">=14.13.0"
+	},
+	"pnpm": {
+		"updateConfig": {
+			"ignoreDependencies": [
+				"type-fest",
+				"typescript"
+			]
+		}
 	}
 }

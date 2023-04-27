@@ -2,6 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Context, Package } from "@fluidframework/build-tools";
+import path from "node:path";
+import readPkgUp from "read-pkg-up";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 
 // false positive?
@@ -9,6 +12,7 @@ import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
 import { CommandLogger } from "../logging";
+import { ReleaseGroup } from "../releaseGroups";
 
 /**
  * Default options passed to the git client.
@@ -82,15 +86,21 @@ export class Repository {
 		}
 	}
 
-	public async getMergBase(branch: string, remote: string): Promise<string> {
+	/**
+	 * @param branch - The branch to compare against.
+	 * @param remote - The remote to compare against.
+	 * @param localRef - The local ref to compare against. Defaults to HEAD.
+	 * @returns The ref of the merge base between the current HEAD and the remote branch.
+	 */
+	public async getMergeBase(branch: string, remote: string, localRef = "HEAD"): Promise<string> {
 		const base = await this.gitClient
-			.fetch() // make sure we have the latest remote refs
-			.raw("merge-base", `refs/remotes/${remote}/${branch}`, `HEAD`);
+			.fetch("--all") // make sure we have the latest remote refs
+			.raw("merge-base", `refs/remotes/${remote}/${branch}`, localRef);
 		return base;
 	}
 
-	public async getChangedFilesSinceRef(ref: string, remote: string): Promise<string[]> {
-		const divergedAt = await this.getMergBase(ref, remote);
+	private async getChangedFilesSinceRef(ref: string, remote: string): Promise<string[]> {
+		const divergedAt = await this.getMergeBase(ref, remote);
 		// Now we can find which files we added
 		const added = await this.gitClient
 			.fetch() // make sure we have the latest remote refs
@@ -100,5 +110,57 @@ export class Repository {
 			.split("\n")
 			.filter((value) => value !== null && value !== undefined && value !== "");
 		return files;
+	}
+
+	private async getChangedDirectoriesSinceRef(ref: string, remote: string): Promise<string[]> {
+		const files = await this.getChangedFilesSinceRef(ref, remote);
+		const dirs = new Set(files.map((f) => path.dirname(f)));
+		return [...dirs];
+	}
+
+	/**
+	 * Gets the changed files, directories, release groups, and packages since the given ref.
+	 *
+	 * @param ref - The ref to compare against.
+	 * @param remote - The remote to compare against.
+	 * @param context - The Context.
+	 * @returns An object containing the changed files, directories, release groups, and packages. The groups may overlap.
+	 * That is, if a single package in a release group is changed, the releaseGroups value will contain that group, and
+	 * the packages value will contain only the single package. Also, if two packages are changed, one within a release
+	 * group and one independent, the packages value will contain both packages.
+	 */
+	public async getChangedSinceRef(
+		ref: string,
+		remote: string,
+		context: Context,
+	): Promise<{
+		files: string[];
+		dirs: string[];
+		releaseGroups: ReleaseGroup[];
+		packages: Package[];
+	}> {
+		const files = await this.getChangedFilesSinceRef(ref, remote);
+		const dirs = await this.getChangedDirectoriesSinceRef(ref, remote);
+
+		const changedPackages = [
+			...new Set(
+				dirs
+					.map((dir) => readPkgUp.sync({ cwd: dir })?.packageJson.name)
+					.filter((name): name is string => name !== undefined),
+			),
+		]
+			.map((name) => context.fullPackageMap.get(name))
+			.filter((pkg): pkg is Package => pkg !== undefined);
+
+		const changedReleaseGroups = [
+			...new Set(changedPackages.map((pkg) => pkg.monoRepo?.kind)),
+		].filter((rg): rg is ReleaseGroup => rg !== undefined);
+
+		return {
+			files,
+			dirs,
+			releaseGroups: changedReleaseGroups,
+			packages: changedPackages,
+		};
 	}
 }
