@@ -56,12 +56,6 @@ export namespace CloseContainer {
     export type MessageData = HasContainerId;
 }
 
-// @public
-export function closeContainerDevtools(containerId: string): void;
-
-// @public
-export function closeDevtools(): void;
-
 // @internal
 export namespace ConnectContainer {
     const MessageType = "CONNECT_CONTAINER";
@@ -75,21 +69,6 @@ export namespace ConnectContainer {
 // @internal
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
-}
-
-// @internal @sealed
-export class ContainerDevtools implements IContainerDevtools {
-    constructor(props: ContainerDevtoolsProps);
-    get audience(): IAudience;
-    readonly container: IContainer;
-    readonly containerData?: Record<string, IFluidLoadable>;
-    readonly containerId: string;
-    readonly containerNickname?: string;
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    getAudienceHistory(): readonly AudienceChangeLogEntry[];
-    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
 }
 
 // @internal
@@ -238,20 +217,6 @@ export namespace DisconnectContainer {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId;
-}
-
-// @internal @sealed
-export class FluidDevtools implements IFluidDevtools {
-    constructor(props?: FluidDevtoolsProps);
-    closeContainerDevtools(containerId: string): void;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    getAllContainerDevtools(): readonly IContainerDevtools[];
-    getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    readonly logger: DevtoolsLogger | undefined;
-    registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
 // @public
@@ -404,12 +369,9 @@ export interface IDevtoolsMessage<TData = unknown> {
     type: string;
 }
 
-// @internal
+// @public
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerId: string): void;
-    getAllContainerDevtools(): readonly IContainerDevtools[];
-    getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    readonly logger: DevtoolsLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
@@ -429,10 +391,7 @@ export interface InboundHandlers {
 }
 
 // @public
-export function initializeContainerDevtools(props: ContainerDevtoolsProps): void;
-
-// @public
-export function initializeDevtools(props?: FluidDevtoolsProps): void;
+export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
 export function isDevtoolsMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;

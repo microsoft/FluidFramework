@@ -4,24 +4,12 @@
 
 ```ts
 
-import { IClient } from '@fluidframework/protocol-definitions';
 import { IDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
+import { IMessageRelayEvents } from '@fluid-tools/client-debugger';
 import { ISourcedDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
-
-// @public
-export interface AudienceMember {
-    clients: Map<string, IClient>;
-    userId: string;
-}
-
-// @public
-export interface AudienceMemberViewProps {
-    audienceMember: AudienceMember;
-    myClientConnection: IClient | undefined;
-    myClientId: string | undefined;
-}
+import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 export { IMessageRelay }
 
@@ -34,6 +22,13 @@ export function RootView(props: RootViewProps): React_2.ReactElement;
 // @public
 export interface RootViewProps {
     messageRelay: IMessageRelay;
+}
+
+// @public
+export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
+    constructor(
+    messageSource: string);
+    postMessage(message: IDevtoolsMessage): void;
 }
 
 ```

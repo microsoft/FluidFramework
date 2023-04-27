@@ -8,20 +8,9 @@ declare const browser: typeof chrome;
 // Normalize access to extension APIs across browsers.
 const _browser: typeof chrome = typeof browser !== "undefined" ? browser : chrome;
 
-// Include references to web browser globals to facilitate mocks during testing.
-const _document = document;
-const _eval = eval; // eslint-disable-line no-eval
-const _location = location;
-const _MutationObserver = MutationObserver;
-const _window = window;
-
 export {
 	_browser as browser,
-	_document as document,
-	_eval as eval,
-	_location as location,
-	_MutationObserver as MutationObserver,
-	_window as window,
+	// TODO: other globals as necessary
 };
 
 /**
@@ -29,9 +18,5 @@ export {
  */
 export interface Globals {
 	browser: typeof chrome;
-	document?: Document;
-	eval?: (script: string) => unknown;
-	fetch?: () => void;
-	location?: Location;
-	window?: Window & typeof globalThis;
+	// TODO: other globals as necessary
 }
