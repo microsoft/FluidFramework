@@ -59,7 +59,13 @@ module.exports = {
 			process: "process/browser",
 		}),
 		new CopyPlugin({
-			patterns: [{ from: ".", to: ".", context: "public" }],
+			patterns: [
+				// Copy assets from `public`
+				{ from: ".", to: ".", context: "public" },
+
+				// Copy HTML resources from source
+				{ from: "**/*.html", to: ".", context: "src" },
+			],
 		}),
 	],
 };
