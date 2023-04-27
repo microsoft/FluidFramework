@@ -18,7 +18,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 		protected readonly lumberjackBaseProperties: Record<string, any>,
 		private readonly enableRepositoryManagerMetrics: boolean = false,
 		private readonly apiMetricsSamplingPeriod?: number,
-	) { }
+	) {}
 
 	protected abstract getCommitCore(sha: string): Promise<git.ICommit>;
 	protected abstract getCommitsCore(
@@ -113,7 +113,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 			this.apiMetricsSamplingPeriod,
 			{
 				...this.lumberjackBaseProperties,
-				[BaseGitRestTelemetryProperties.sha]: sha
+				[BaseGitRestTelemetryProperties.sha]: sha,
 			},
 		);
 	}
@@ -247,7 +247,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 			this.apiMetricsSamplingPeriod,
 			{
 				...this.lumberjackBaseProperties,
-				[BaseGitRestTelemetryProperties.tag]: tagId
+				[BaseGitRestTelemetryProperties.tag]: tagId,
 			},
 		);
 	}

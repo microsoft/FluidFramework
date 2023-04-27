@@ -4,31 +4,17 @@
 
 ```ts
 
-import { IDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
-import { IMessageRelayEvents } from '@fluid-tools/client-debugger';
-import { ISourcedDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-export { IMessageRelay }
 
 // @public
-export const MessageRelayContext: React_2.Context<IMessageRelay<IDevtoolsMessage<unknown>, ISourcedDevtoolsMessage<unknown>> | undefined>;
+export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;
 
 // @public
-export function RootView(props: RootViewProps): React_2.ReactElement;
-
-// @public
-export interface RootViewProps {
+export interface DevtoolsPanelProps {
     messageRelay: IMessageRelay;
 }
 
-// @public
-export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
-    constructor(
-    messageSource: string);
-    postMessage(message: IDevtoolsMessage): void;
-}
+export { IMessageRelay }
 
 ```

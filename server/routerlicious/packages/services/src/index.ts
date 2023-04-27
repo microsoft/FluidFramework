@@ -4,6 +4,7 @@
  */
 
 export { getDbFactory } from "./dbFactory";
+export { DocumentManager } from "./documentManager";
 export { createProducer } from "./kafkaProducerFactory";
 export { createMessageReceiver } from "./messageReceiver";
 export { createMessageSender } from "./messageSender";
@@ -16,6 +17,7 @@ export { ClientManager } from "./redisClientManager";
 export { RedisThrottleAndUsageStorageManager } from "./redisThrottleAndUsageStorageManager";
 export { SecretManager } from "./secretManager";
 export { SocketIoRedisPublisher, SocketIoRedisTopic } from "./socketIoRedisPublisher";
+export { StorageNameRetriever } from "./storageNameRetriever";
 export { Tenant, TenantManager } from "./tenant";
 export { Throttler } from "./throttler";
 export { ThrottlerHelper } from "./throttlerHelper";

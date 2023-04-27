@@ -20,14 +20,15 @@ import {
 import {
 	ICollection,
 	IDeliState,
+	IDocument,
 	IDocumentDetails,
+	IDocumentRepository,
 	IDocumentStorage,
 	IScribe,
+	ISequencedOperationMessage,
+	IStorageNameAllocator,
 	ITenantManager,
 	SequencedOperationType,
-	IDocument,
-	ISequencedOperationMessage,
-	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
@@ -43,6 +44,7 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly tenantManager: ITenantManager,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
+		private readonly storageNameAssigner: IStorageNameAllocator,
 	) {}
 
 	/**
@@ -127,12 +129,28 @@ export class DocumentStorage implements IDocumentStorage {
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
 	): Promise<IDocumentDetails> {
-		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
+		const gitManager = await this.tenantManager.getTenantGitManager(
+			tenantId,
+			documentId,
+			storageName,
+		);
 
+		const storageNameAssignerEnabled = !!this.storageNameAssigner;
 		const lumberjackProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			[BaseTelemetryProperties.documentId]: documentId,
+			storageName,
+			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
+			storageNameAssignerExists: storageNameAssignerEnabled,
 		};
+		if (storageNameAssignerEnabled && !storageName) {
+			// Using a warning instead of an error just in case there are some outliers that we don't know about.
+			Lumberjack.warning(
+				"Failed to get storage name for new document.",
+				lumberjackProperties,
+			);
+		}
 
 		const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
 		const fullTree = this.createFullTree(appTree, protocolTree);
@@ -155,6 +173,7 @@ export class DocumentStorage implements IDocumentStorage {
 				0 /* sequenceNumber */,
 				true /* initial */,
 			);
+
 			let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
 
 			if (!this.enableWholeSummaryUpload) {
@@ -252,6 +271,7 @@ export class DocumentStorage implements IDocumentStorage {
 					scribe: JSON.stringify(scribe),
 					tenantId,
 					version: "0.1",
+					storageName,
 				},
 			);
 			createDocumentCollectionMetric.success("Successfully created document");
@@ -394,6 +414,10 @@ export class DocumentStorage implements IDocumentStorage {
 			);
 
 			const inSummary = await foundInSummaryP;
+			Lumberjack.warning("Backfilling document from summary!", {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+				[BaseTelemetryProperties.documentId]: documentId,
+			});
 
 			// Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
 			const value = inSummary
