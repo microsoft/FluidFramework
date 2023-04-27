@@ -350,7 +350,10 @@ export class ScribeLambda implements IPartitionLambda {
 					this.noActiveClients = true;
 					const isTransientTenant = this.transientTenants.has(this.tenantId);
 
-					if (this.serviceConfiguration.scribe.generateServiceSummary && !isTransientTenant) {
+					if (
+						this.serviceConfiguration.scribe.generateServiceSummary &&
+						!isTransientTenant
+					) {
 						const operation = value.operation as ISequencedDocumentAugmentedMessage;
 						const scribeCheckpoint = this.generateScribeCheckpoint(this.lastOffset);
 						try {
