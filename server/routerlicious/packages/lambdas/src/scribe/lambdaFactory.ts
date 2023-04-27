@@ -61,7 +61,10 @@ const DefaultScribe: IScribe = {
 	validParentSummaries: undefined,
 };
 
-export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionLambdaConfig> {
+export class ScribeLambdaFactory
+	extends EventEmitter
+	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
+{
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,

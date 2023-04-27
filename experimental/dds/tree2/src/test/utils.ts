@@ -33,6 +33,9 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
+	defaultChangeFamily,
+	DefaultChangeset,
+	DefaultEditBuilder,
 	FieldKinds,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
@@ -63,6 +66,7 @@ import {
 	ITreeCursorSynchronous,
 	FieldKey,
 	IRepairDataStoreProvider,
+	UndoRedoManager,
 } from "../core";
 import { brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
@@ -531,7 +535,7 @@ export function initializeTestTree(
 	tree.storedSchema.update(schema);
 	// Apply an edit to the tree which inserts a node with a value
 	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.insert(0, writeCursor);
 }
 
@@ -588,6 +592,10 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 	public clone(): IRepairDataStoreProvider {
 		return new MockRepairDataStoreProvider();
 	}
+}
+
+export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
+	return new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily);
 }
 
 /**

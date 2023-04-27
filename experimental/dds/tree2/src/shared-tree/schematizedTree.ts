@@ -80,7 +80,9 @@ export function schematizeView(
 				lookupGlobalFieldSchema(config.schema, rootFieldKey),
 				config.initialTree,
 			);
-			tree.editor.sequenceField(undefined, rootFieldKeySymbol).insert(0, newContent);
+			tree.editor
+				.sequenceField({ parent: undefined, field: rootFieldKeySymbol })
+				.insert(0, newContent);
 
 			// If intermediate schema is not final desired schema, update to the final schema:
 			if (incrementalSchemaUpdate !== config.schema) {

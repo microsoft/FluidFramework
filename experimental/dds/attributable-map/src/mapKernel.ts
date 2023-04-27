@@ -425,7 +425,7 @@ export class AttributableMapKernel {
 
 			assert(
 				!attribution || attribution.type !== "local",
-				"The attribution for summarization should not be local type",
+				0x5ec /* The attribution for summarization should not be local type */,
 			);
 
 			serializableMapData[key] = localValue.makeSerialized(
@@ -690,7 +690,7 @@ export class AttributableMapKernel {
 					localOpMetadata !== undefined &&
 						isMapKeyLocalOpMetadata(localOpMetadata) &&
 						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
-					0x013 /* "Received out of order op when there is an unackd clear message" */,
+					0x5ed /* Received out of order op when there is an unackd clear message */,
 				);
 			}
 			// If we have an unack'd clear, we can ignore all ops.
@@ -704,13 +704,13 @@ export class AttributableMapKernel {
 			if (local) {
 				assert(
 					localOpMetadata !== undefined && isMapKeyLocalOpMetadata(localOpMetadata),
-					0x014 /* pendingMessageId is missing from the local client's operation */,
+					0x5ee /* pendingMessageId is missing from the local client's operation */,
 				);
 				const pendingMessageIds = this.pendingKeys.get(op.key);
 				assert(
 					pendingMessageIds !== undefined &&
 						pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-					0x2fa /* Unexpected pending message received */,
+					0x5ef /* Unexpected pending message received */,
 				);
 				pendingMessageIds.shift();
 				if (pendingMessageIds.length === 0) {
@@ -741,12 +741,12 @@ export class AttributableMapKernel {
 				if (local) {
 					assert(
 						isClearLocalOpMetadata(localOpMetadata),
-						0x015 /* "pendingMessageId is missing from the local client's clear operation" */,
+						0x5f0 /* pendingMessageId is missing from the local client's clear operation */,
 					);
 					const pendingClearMessageId = this.pendingClearMessageIds.shift();
 					assert(
 						pendingClearMessageId === localOpMetadata.pendingMessageId,
-						0x2fb /* pendingMessageId does not match */,
+						0x5f1 /* pendingMessageId does not match */,
 					);
 					this.clearAllAttribution();
 					return;
@@ -755,25 +755,26 @@ export class AttributableMapKernel {
 					this.clearExceptPendingKeys();
 					return;
 				}
-				this.clearAllAttribution();
 				this.clearCore(local);
+				this.clearAllAttribution();
 			},
 			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
 				assert(
 					isClearLocalOpMetadata(localOpMetadata),
-					0x2fc /* Invalid localOpMetadata for clear */,
+					0x5f2 /* Invalid localOpMetadata for clear */,
 				);
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const pendingClearMessageId = this.pendingClearMessageIds.shift();
 				assert(
 					pendingClearMessageId === localOpMetadata.pendingMessageId,
-					0x2fd /* pendingMessageId does not match */,
+					0x5f3 /* pendingMessageId does not match */,
 				);
 				this.submitMapClearMessage(op, localOpMetadata.previousMap);
 			},
 			applyStashedOp: (op: IMapClearOperation) => {
 				const copy = new Map<string, ILocalValue>(this.data);
 				this.clearCore(true);
+				this.clearAllAttribution();
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				return createClearLocalOpMetadata(op, this.getMapClearMessageId(), copy);
 			},
@@ -784,8 +785,8 @@ export class AttributableMapKernel {
 				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}
-				this.deleteAttribution(op.key);
 				this.deleteCore(op.key, local);
+				this.deleteAttribution(op.key);
 			},
 			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -793,6 +794,7 @@ export class AttributableMapKernel {
 			applyStashedOp: (op: IMapDeleteOperation) => {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const previousValue = this.deleteCore(op.key, true);
+				this.deleteAttribution(op.key);
 				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
 			},
 		});
@@ -804,9 +806,9 @@ export class AttributableMapKernel {
 				}
 
 				// needProcessKeyOperation should have returned false if local is true
-				this.setAttribution(op.key, message);
 				const context = this.makeLocal(op.key, op.value);
 				this.setCore(op.key, context, local);
+				this.setAttribution(op.key, message);
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -815,6 +817,7 @@ export class AttributableMapKernel {
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const context = this.makeLocal(op.key, op.value);
 				const previousValue = this.setCore(op.key, context, true);
+				this.setAttribution(op.key);
 				return createKeyLocalOpMetadata(op, this.getMapKeyMessageId(op), previousValue);
 			},
 		});
@@ -873,7 +876,7 @@ export class AttributableMapKernel {
 	private resubmitMapKeyMessage(op: IMapKeyOperation, localOpMetadata: MapLocalOpMetadata): void {
 		assert(
 			isMapKeyLocalOpMetadata(localOpMetadata),
-			0x2fe /* Invalid localOpMetadata in submit */,
+			0x5f4 /* Invalid localOpMetadata in submit */,
 		);
 
 		// clear the old pending message id
@@ -881,7 +884,7 @@ export class AttributableMapKernel {
 		assert(
 			pendingMessageIds !== undefined &&
 				pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-			0x2ff /* Unexpected pending message received */,
+			0x5f5 /* Unexpected pending message received */,
 		);
 		pendingMessageIds.shift();
 		if (pendingMessageIds.length === 0) {

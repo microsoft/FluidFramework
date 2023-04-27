@@ -31,6 +31,7 @@ import {
 } from "@fluidframework/container-runtime-definitions";
 import {
 	assert,
+	delay,
 	LazyPromise,
 	Trace,
 	TypedEventEmitter,
@@ -509,6 +510,13 @@ const defaultCompressionConfig = {
 const defaultChunkSizeInBytes = 204800;
 
 /**
+ * Instead of refreshing from latest because we do not have 100% confidence in the state
+ * of the current system, we should close the summarizer and let it recover.
+ * This delay's goal is to prevent tight restart loops
+ */
+const defaultCloseSummarizerDelayMs = 10000; // 10 seconds
+
+/**
  * @deprecated - use ContainerRuntimeMessage instead
  */
 export enum RuntimeMessage {
@@ -910,6 +918,8 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly enableOpReentryCheck: boolean;
 	private readonly disableAttachReorder: boolean | undefined;
+	private readonly summaryStateUpdateMethod: string | undefined;
+	private readonly closeSummarizerDelayMs: number;
 
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private _perfSignalData: IPerfSignalReport = {
@@ -1228,6 +1238,7 @@ export class ContainerRuntime
 			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			this,
 			pendingRuntimeState?.pendingAttachmentBlobs,
+			(error?: ICriticalContainerError) => this.closeFn(error),
 		);
 
 		this.scheduleManager = new ScheduleManager(
@@ -1277,11 +1288,23 @@ export class ContainerRuntime
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
+			getCurrentSequenceNumbers: () => ({
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				clientSequenceNumber: this._processedClientSequenceNumber,
+			}),
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
 		});
+
+		this.summaryStateUpdateMethod = this.mc.config.getString(
+			"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod",
+		);
+		const closeSummarizerDelayOverride = this.mc.config.getNumber(
+			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
+		);
+		this.closeSummarizerDelayMs = closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
@@ -1423,6 +1446,8 @@ export class ContainerRuntime
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
+				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
+				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
@@ -1845,6 +1870,8 @@ export class ContainerRuntime
 		}
 	}
 
+	private _processedClientSequenceNumber: number | undefined;
+
 	private processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -1854,6 +1881,8 @@ export class ContainerRuntime
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
 		this.scheduleManager.beforeOpProcessing(message);
+
+		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
 			let localOpMetadata: unknown;
@@ -2324,31 +2353,33 @@ export class ContainerRuntime
 			runSweep,
 		});
 
-		let gcStats: IGCStats | undefined;
-		if (runGC) {
-			gcStats = await this.collectGarbage(
-				{ logger: summaryLogger, runSweep, fullGC },
+		try {
+			let gcStats: IGCStats | undefined;
+			if (runGC) {
+				gcStats = await this.collectGarbage(
+					{ logger: summaryLogger, runSweep, fullGC },
+					telemetryContext,
+				);
+			}
+
+			const { stats, summary } = await this.summarizerNode.summarize(
+				fullTree,
+				trackState,
 				telemetryContext,
 			);
+
+			assert(
+				summary.type === SummaryType.Tree,
+				0x12f /* "Container Runtime's summarize should always return a tree" */,
+			);
+
+			return { stats, summary, gcStats };
+		} finally {
+			this.logger.sendTelemetryEvent({
+				eventName: "SummarizeTelemetry",
+				details: telemetryContext.serialize(),
+			});
 		}
-
-		const { stats, summary } = await this.summarizerNode.summarize(
-			fullTree,
-			trackState,
-			telemetryContext,
-		);
-
-		this.logger.sendTelemetryEvent({
-			eventName: "SummarizeTelemetry",
-			details: telemetryContext.serialize(),
-		});
-
-		assert(
-			summary.type === SummaryType.Tree,
-			0x12f /* "Container Runtime's summarize should always return a tree" */,
-		);
-
-		return { stats, summary, gcStats };
 	}
 
 	/**
@@ -3210,11 +3241,9 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		const recoveryMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
-		);
-		if (recoveryMethod === "restart") {
+		if (this.summaryStateUpdateMethod === "restart") {
 			const error = new GenericError("Restarting summarizer instead of refreshing");
+
 			this.mc.logger.sendTelemetryEvent(
 				{
 					...event,
@@ -3222,9 +3251,13 @@ export class ContainerRuntime
 					codePath: event.eventName,
 					message: "Stopping fetch from storage",
 					versionId: versionId != null ? versionId : undefined,
+					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
 				},
 				error,
 			);
+
+			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
+			await delay(this.closeSummarizerDelayMs);
 			this._summarizer?.stop("latestSummaryStateStale");
 			this.closeFn();
 			throw error;

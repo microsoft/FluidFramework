@@ -8,7 +8,9 @@ const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
 
 const sourceDirectoryPath = path.resolve(__dirname, "src");
-const buildDirectoryPath = path.resolve(__dirname, "dist");
+
+// Directory under which the final webpacked output will be saved.
+const bundleDirectoryPath = path.resolve(__dirname, "dist", "bundle");
 
 module.exports = {
 	mode: "development", // TODO: production
@@ -16,7 +18,11 @@ module.exports = {
 	entry: {
 		// The Devtools script and view
 		"devtools/DevtoolsScript": path.join(sourceDirectoryPath, "devtools", "DevtoolsScript.ts"),
-		"devtools/RootView": path.join(sourceDirectoryPath, "devtools", "RootView.tsx"),
+		"devtools/InitializeViewScript": path.join(
+			sourceDirectoryPath,
+			"devtools",
+			"InitializeViewScript.ts",
+		),
 
 		// The Background script
 		"background/BackgroundScript": path.join(
@@ -32,7 +38,7 @@ module.exports = {
 		"popup/PopupScript": path.join(sourceDirectoryPath, "popup", "PopupScript.ts"),
 	},
 	output: {
-		path: buildDirectoryPath,
+		path: bundleDirectoryPath,
 		filename: "[name].js",
 		publicPath: "",
 	},
@@ -53,7 +59,13 @@ module.exports = {
 			process: "process/browser",
 		}),
 		new CopyPlugin({
-			patterns: [{ from: ".", to: ".", context: "public" }],
+			patterns: [
+				// Copy assets from `public`
+				{ from: ".", to: ".", context: "public" },
+
+				// Copy HTML resources from source
+				{ from: "**/*.html", to: ".", context: "src" },
+			],
 		}),
 	],
 };

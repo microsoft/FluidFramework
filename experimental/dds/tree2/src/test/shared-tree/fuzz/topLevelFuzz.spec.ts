@@ -14,11 +14,11 @@ import {
 	FuzzTestState,
 	makeOpGenerator,
 	makeOpGeneratorFromFilePath,
-	Operation,
 	EditGeneratorOpWeights,
 } from "./fuzzEditGenerators";
 import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers";
 import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { Operation } from "./operationTypes";
 
 export async function performFuzzActions(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
@@ -32,10 +32,11 @@ export async function performFuzzActions(
 
 	const initialState: FuzzTestState = {
 		random,
+		trees: provider.trees,
 		testTreeProvider: provider,
 		numberOfEdits: 0,
 	};
-	await initialState.testTreeProvider.ensureSynchronized();
+	await initialState.testTreeProvider?.ensureSynchronized();
 
 	const finalState = await performFuzzActionsAsync(
 		generator,
@@ -43,8 +44,8 @@ export async function performFuzzActions(
 		initialState,
 		saveInfo,
 	);
-	await finalState.testTreeProvider.ensureSynchronized();
-	checkTreesAreSynchronized(finalState.testTreeProvider);
+	await finalState.testTreeProvider?.ensureSynchronized();
+	checkTreesAreSynchronized(finalState.trees);
 	return finalState;
 }
 
@@ -62,7 +63,7 @@ describe("Fuzz - Top-Level", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
-	const editGeneratorOpWeights: EditGeneratorOpWeights = {
+	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		setPayload: 1,
 	};
 	/**

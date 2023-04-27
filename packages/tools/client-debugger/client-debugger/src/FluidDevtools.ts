@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+
 import { UsageError } from "@fluidframework/container-utils";
 
 import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
@@ -18,10 +18,11 @@ import {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+import { IFluidDevtools } from "./IFluidDevtools";
 import { ContainerMetadata } from "./ContainerMetadata";
 import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
+import { VisualizeSharedObject } from "./data-visualization";
 
 // TODOs:
 // - Devtools disposal
@@ -79,6 +80,19 @@ export interface FluidDevtoolsProps {
 	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainerDevtools}.
 	 */
 	initialContainers?: ContainerDevtoolsProps[];
+
+	/**
+	 * (optional) Configurations for generating visual representations of
+	 * {@link @fluidframework/shared-object-base#ISharedObject}s associated with individual Containers.
+	 *
+	 * @remarks
+	 *
+	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
+	 * default visualization implementations.
+	 *
+	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
+	 */
+	dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 /**
@@ -108,10 +122,7 @@ export interface FluidDevtoolsProps {
  *
  * @internal
  */
-export class FluidDevtools
-	extends TypedEventEmitter<FluidDevtoolsEvents>
-	implements IFluidDevtools
-{
+export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * {@inheritDoc IFluidDevtools.logger}
 	 */
@@ -122,6 +133,13 @@ export class FluidDevtools
 	 * Maps from Container IDs to the corresponding devtools instance.
 	 */
 	private readonly containers: Map<string, ContainerDevtools>;
+
+	/**
+	 * Global data visualizers to apply to all {@link IContainerDevtools} instances registered with this object.
+	 *
+	 * @remarks If the user specifies data visualizers alongside a specific Container, those will take precedence over these.
+	 */
+	private readonly dataVisualizers?: Record<string, VisualizeSharedObject>;
 
 	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
@@ -193,8 +211,6 @@ export class FluidDevtools
 	// #endregion
 
 	public constructor(props?: FluidDevtoolsProps) {
-		super();
-
 		// Populate initial Container-level devtools
 		this.containers = new Map<string, ContainerDevtools>();
 		if (props?.initialContainers !== undefined) {
@@ -207,13 +223,10 @@ export class FluidDevtools
 		}
 
 		this.logger = props?.logger;
+		this.dataVisualizers = props?.dataVisualizers;
 
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
-
-		// Initiate message posting of container list updates.
-		this.on("containerDevtoolsRegistered", this.postContainerList);
-		this.on("containerDevtoolsClosed", this.postContainerList);
 
 		this._disposed = false;
 	}
@@ -226,15 +239,22 @@ export class FluidDevtools
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		const { containerId } = props;
+		const { containerId, dataVisualizers: containerVisualizers } = props;
 
 		if (this.containers.has(containerId)) {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerId));
 		}
 
-		const containerDevtools = new ContainerDevtools(props);
+		const dataVisualizers = mergeDataVisualizers(this.dataVisualizers, containerVisualizers);
+
+		const containerDevtools = new ContainerDevtools({
+			...props,
+			dataVisualizers,
+		});
 		this.containers.set(containerId, containerDevtools);
-		this.emit("containerDevtoolsRegistered", containerId);
+
+		// Post message for container list change
+		this.postContainerList();
 	}
 
 	/**
@@ -253,7 +273,9 @@ export class FluidDevtools
 		} else {
 			containerDevtools.dispose();
 			this.containers.delete(containerId);
-			this.emit("containerDevtoolsClosed", containerId);
+
+			// Post message for container list change
+			this.postContainerList();
 		}
 	}
 
@@ -304,15 +326,13 @@ export class FluidDevtools
 		}
 
 		// Dispose of container-level devtools
-		for (const [containerId, containerDevtools] of this.containers) {
+		for (const [, containerDevtools] of this.containers) {
 			containerDevtools.dispose();
-			this.emit("containerDevtoolsClosed", containerId);
 		}
 		this.containers.clear();
-		this.postContainerList(); // Notify listeners that the list of Containers changed.
 
-		// Notify listeners that the devtools have been disposed.
-		this.emit("devtoolsDisposed");
+		// Notify listeners that the list of Containers changed.
+		this.postContainerList();
 
 		this._disposed = true;
 	}
@@ -329,4 +349,24 @@ export class FluidDevtools
  */
 export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return new FluidDevtools(props);
+}
+
+/**
+ * Merges an optional set of global visualizers with an optional set of Container-local visualizers, such that
+ * Container-level visualizers take precedence when present.
+ */
+function mergeDataVisualizers(
+	globalVisualizers?: Record<string, VisualizeSharedObject>,
+	containerVisualizers?: Record<string, VisualizeSharedObject>,
+): Record<string, VisualizeSharedObject> | undefined {
+	if (globalVisualizers === undefined) {
+		return containerVisualizers;
+	}
+	if (containerVisualizers === undefined) {
+		return globalVisualizers;
+	}
+	return {
+		...globalVisualizers,
+		...containerVisualizers,
+	};
 }

@@ -64,6 +64,7 @@ describe("Loader", () => {
 					(props: IConnectionManagerFactoryArgs) =>
 						new ConnectionManager(
 							() => service,
+							() => false,
 							client as IClient,
 							reconnectAllowed,
 							logger,

@@ -7,8 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import {
 	AnchorSet,
-	Commit,
-	EditManager,
 	mintRevisionTag,
 	IEditableForest,
 	IForestSubscription,
@@ -19,7 +17,6 @@ import {
 	moveToDetachedField,
 	SchemaData,
 	SchemaPolicy,
-	SeqNumber,
 	SessionId,
 	RevisionTag,
 	makeAnonChange,
@@ -36,6 +33,7 @@ import {
 	ForestRepairDataStoreProvider,
 } from "../../feature-libraries";
 import { brand, JsonCompatible } from "../../util";
+import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
 
 export interface TestTreeEdit {
 	sessionId: SessionId;

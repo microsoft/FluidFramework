@@ -73,5 +73,4 @@ export {
 	MoveEffectTable,
 	MoveEffect,
 	PairedMarkUpdate,
-	splitMarkOnOutput,
 } from "./moveEffectTable";
