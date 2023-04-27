@@ -10,6 +10,7 @@ export * from "./client-data-views";
 
 export * from "./AudienceView";
 export * from "./ContainerDevtoolsView";
+export * from "./ContainerHistoryLog";
 export * from "./ContainerHistoryView";
 export * from "./ContainerSummaryView";
 export * from "./FluidHandleView";
