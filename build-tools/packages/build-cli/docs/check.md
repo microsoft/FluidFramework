@@ -9,6 +9,8 @@ Check commands are used to verify repo state, apply policy, etc.
 
 ## `flub check changeset`
 
+Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.
+
 ```
 USAGE
   $ flub check changeset -b <value> [-v]
@@ -16,6 +18,15 @@ USAGE
 FLAGS
   -b, --branch=<value>  (required) The branch to compare against.
   -v, --verbose         Verbose logging.
+
+EXAMPLES
+  Check if a changeset was added when compared to the 'main' branch.
+
+    $ flub check changeset -b main
+
+  Check if a changeset was added when compared to the 'next' branch.
+
+    $ flub check changeset -b next
 ```
 
 ## `flub check layers`
