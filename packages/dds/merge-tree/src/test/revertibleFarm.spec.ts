@@ -85,11 +85,7 @@ describe("MergeTree.Client", () => {
 					const clientBDriver = createRevertDriver(clients.B);
 					const deltaCallback = (op, delta) => {
 						if (op.sequencedMessage === undefined) {
-							appendToMergeTreeDeltaRevertibles(
-								clientBDriver,
-								delta,
-								clientB_Revertibles,
-							);
+							appendToMergeTreeDeltaRevertibles(delta, clientB_Revertibles);
 						}
 					};
 
@@ -205,6 +201,7 @@ describe("MergeTree.Client", () => {
 						errorPrefix: "After Re-Revert (redo)",
 						baseText: redoBaseText,
 					});
+					logger.dispose();
 				}
 			});
 		}

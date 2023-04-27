@@ -65,30 +65,6 @@ export interface MergeTreeRevertibleDriver {
 	insertFromSpec(pos: number, spec: IJSONSegment);
 	removeRange(start: number, end: number);
 	annotateRange(start: number, end: number, props: PropertySet);
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	createLocalReferencePosition(
-		segment: ISegment,
-		offset: number,
-		refType: ReferenceType,
-		properties: PropertySet | undefined,
-	): LocalReferencePosition;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	localReferencePositionToPosition(lref: LocalReferencePosition): number;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	getPosition(segment: ISegment): number;
-	/**
-	 * @deprecated This function will be removed from this interface in the next release
-	 */
-	getContainingSegment(pos: number): {
-		segment: ISegment | undefined;
-		offset: number | undefined;
-	};
 }
 
 /**
@@ -108,7 +84,7 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 	const maybeRoot = findRootMergeBlock(segmentOrNode);
 	assert(
 		maybeRoot?.mergeTree !== undefined,
-		"trackable is invalid as it is not in a rooted merge tree.",
+		0x5c2 /* trackable is invalid as it is not in a rooted merge tree. */,
 	);
 	const mergeTree: PickPartial<MergeTreeWithRevert, "__mergeTreeRevertible"> =
 		maybeRoot.mergeTree;
@@ -219,7 +195,6 @@ function appendLocalAnnotateToRevertibles(
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
-	driver: MergeTreeRevertibleDriver,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {

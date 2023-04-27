@@ -64,6 +64,7 @@ describe("Loader", () => {
 					(props: IConnectionManagerFactoryArgs) =>
 						new ConnectionManager(
 							() => service,
+							() => false,
 							client as IClient,
 							reconnectAllowed,
 							logger,
@@ -81,7 +82,7 @@ describe("Loader", () => {
 					noopCountFrequency,
 				);
 
-				await deltaManager.attachOpHandler(0, 0, 1, {
+				await deltaManager.attachOpHandler(0, 0, {
 					process: (message) =>
 						tracker.scheduleSequenceNumberUpdate(message, immediateNoOp),
 					processSignal() {},

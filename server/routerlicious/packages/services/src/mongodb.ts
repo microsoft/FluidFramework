@@ -5,7 +5,13 @@
 
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
-import { AggregationCursor, Collection, FindOneOptions, MongoClient, MongoClientOptions } from "mongodb";
+import {
+	AggregationCursor,
+	Collection,
+	FindOneOptions,
+	MongoClient,
+	MongoClientOptions,
+} from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -326,7 +332,12 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.collection.updateOne(filter, update, options);
 	}
 
-	private async updateManyCore(filter: any, set: any, addToSet: any, options: any): Promise<void> {
+	private async updateManyCore(
+		filter: any,
+		set: any,
+		addToSet: any,
+		options: any,
+	): Promise<void> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -387,7 +398,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		if (error) {
 			try {
 				Object.keys(error).forEach((key) => {
-					if (key === "_id" || /^\d+$/.test(key)) { // skip mongodb's ObjectId and array indexes
+					if (key === "_id" || /^\d+$/.test(key)) {
+						// skip mongodb's ObjectId and array indexes
 						return;
 					} else if (typeof error[key] === "object") {
 						this.sanitizeError(error[key]);

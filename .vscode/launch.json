@@ -283,20 +283,6 @@
 		},
 		{
 			"type": "node",
-			"request": "attach",
-			"name": "Attach to foreman",
-			"address": "localhost",
-			"port": 5863,
-			"restart": true,
-			"sourceMaps": true,
-			"localRoot": "${workspaceFolder}/server/routerlicious",
-			"remoteRoot": "/usr/src/server",
-			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
-			"protocol": "inspector",
-			"trace": "sm"
-		},
-		{
-			"type": "node",
 			"request": "launch",
 			"name": "Debug Current Mocha Test",
 			"env": {

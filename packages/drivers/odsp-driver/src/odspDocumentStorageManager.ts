@@ -8,6 +8,7 @@ import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, performance } from "@fluidframework/common-utils";
 import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
+import { promiseRaceWithWinner } from "@fluidframework/driver-base";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";
 import { RateLimiter, NonRetryableError } from "@fluidframework/driver-utils";
 import {
@@ -40,17 +41,6 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
-
-// An implementation of Promise.race that gives you the winner of the promise race
-async function promiseRaceWithWinner<T>(
-	promises: Promise<T>[],
-): Promise<{ index: number; value: T }> {
-	return new Promise((resolve, reject) => {
-		promises.forEach((p, index) => {
-			p.then((v) => resolve({ index, value: v })).catch(reject);
-		});
-	});
-}
 
 interface GetVersionsTelemetryProps {
 	cacheEntryAge?: number;

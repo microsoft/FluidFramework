@@ -1,5 +1,0 @@
-{
-	"tags": ["modular-schema"],
-	"exports": ["index"],
-	"imports": ["util", "core", "feature-libraries"]
-}

@@ -102,7 +102,12 @@ import {
 import { CollabWindowTracker } from "./collabWindowTracker";
 import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
-import { IProtocolHandler, ProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
+import {
+	OnlyValidTermValue,
+	IProtocolHandler,
+	ProtocolHandler,
+	ProtocolHandlerBuilder,
+} from "./protocol";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -993,19 +998,15 @@ export class Container
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
 		assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-		assert(
-			this._protocolHandler.attributes.term !== undefined,
-			0x37e /* Must have a valid protocol handler instance */,
-		);
-		assert(!!this.baseSnapshot, "no base snapshot");
-		assert(!!this.baseSnapshotBlobs, "no snapshot blobs");
+		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
+		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
 		const pendingState: IPendingContainerState = {
 			pendingRuntimeState: this.context.getPendingLocalState(),
 			baseSnapshot: this.baseSnapshot,
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
 			url: this.resolvedUrl.url,
-			term: this._protocolHandler.attributes.term,
+			term: OnlyValidTermValue,
 			clientId: this.clientId,
 		};
 
@@ -1474,7 +1475,7 @@ export class Container
 			// now set clientId to stashed clientId so live ops are correctly processed as local
 			assert(
 				this.clientId === undefined,
-				"Unexpected clientId when setting stashed clientId",
+				0x5d6 /* Unexpected clientId when setting stashed clientId */,
 			);
 			this._clientId = pendingLocalState?.clientId;
 		}
@@ -1546,7 +1547,7 @@ export class Container
 	private async createDetached(source: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
-			term: 1,
+			term: OnlyValidTermValue,
 			minimumSequenceNumber: 0,
 		};
 
@@ -1620,7 +1621,7 @@ export class Container
 			return {
 				minimumSequenceNumber: 0,
 				sequenceNumber: 0,
-				term: 1,
+				term: OnlyValidTermValue,
 			};
 		}
 
@@ -1631,11 +1632,6 @@ export class Container
 				: tree.blobs[".attributes"];
 
 		const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-
-		// Backward compatibility for older summaries with no term
-		if (attributes.term === undefined) {
-			attributes.term = 1;
-		}
 
 		return attributes;
 	}
@@ -1800,6 +1796,7 @@ export class Container
 			(props: IConnectionManagerFactoryArgs) =>
 				new ConnectionManager(
 					serviceProvider,
+					() => this.isDirty,
 					this.client,
 					this._canReconnect,
 					ChildLogger.create(this.subLogger, "ConnectionManager"),
@@ -1861,7 +1858,6 @@ export class Container
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
-			attributes.term ?? 1,
 			{
 				process: (message) => this.processRemoteMessage(message),
 				processSignal: (message) => {

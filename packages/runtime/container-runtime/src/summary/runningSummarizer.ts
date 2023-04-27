@@ -46,7 +46,6 @@ import {
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
 const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
-const numberOfAttemptsOnRestartAsRecovery = 1; // Only summarize once
 
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
@@ -133,7 +132,6 @@ export class RunningSummarizer implements IDisposable {
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
-	private readonly shouldAbortOnSummaryFailure: boolean;
 
 	private enqueuedSummary:
 		| {
@@ -176,10 +174,6 @@ export class RunningSummarizer implements IDisposable {
 				all: telemetryProps,
 			}),
 		);
-
-		this.shouldAbortOnSummaryFailure =
-			this.mc.config.getString("Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod") ===
-			"restart";
 
 		if (configuration.state !== "disableHeuristics") {
 			assert(
@@ -258,7 +252,7 @@ export class RunningSummarizer implements IDisposable {
 		// Can remove and only listen to runtime once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
 		// Tracked by AB#3883
 		this.runtime.deltaManager.on("op", this.deltaManagerListener);
-		this.runtime.on?.("op", this.runtimeListener);
+		this.runtime.on("op", this.runtimeListener);
 	}
 
 	private async handleSummaryAck(): Promise<number> {
@@ -353,7 +347,7 @@ export class RunningSummarizer implements IDisposable {
 
 	public dispose(): void {
 		this.runtime.deltaManager.off("op", this.deltaManagerListener);
-		this.runtime.off?.("op", this.runtimeListener);
+		this.runtime.off("op", this.runtimeListener);
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
@@ -601,10 +595,9 @@ export class RunningSummarizer implements IDisposable {
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
 				// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
-				let totalAttempts = this.shouldAbortOnSummaryFailure
-					? numberOfAttemptsOnRestartAsRecovery
-					: this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
-					  defaultNumberSummarizationAttempts;
+				let totalAttempts =
+					this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
+					defaultNumberSummarizationAttempts;
 
 				if (totalAttempts > attempts.length) {
 					this.mc.logger.sendTelemetryEvent({
@@ -676,20 +669,6 @@ export class RunningSummarizer implements IDisposable {
 					}
 				}
 
-				if (this.shouldAbortOnSummaryFailure) {
-					this.mc.logger.sendTelemetryEvent(
-						{
-							eventName: "ClosingSummarizerOnSummaryStale",
-							reason,
-							message: lastResult?.message,
-						},
-						lastResult?.error,
-					);
-
-					this.stopSummarizerCallback("latestSummaryStateStale");
-					this.runtime.closeFn();
-					return;
-				}
 				// If all attempts failed, log error (with last attempt info) and close the summarizer container
 				this.mc.logger.sendErrorEvent(
 					{

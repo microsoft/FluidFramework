@@ -20,12 +20,23 @@ export const inventoryListId = "default-inventory-list";
 export const migrationToolId = "migration-tool";
 
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
-	constructor() {
+	/**
+	 * Constructor for the factory. Supports a test mode which spawns the summarizer instantly.
+	 * @param testMode - True to enable instant summarizer spawning.
+	 */
+	public constructor(testMode: boolean) {
 		super(
 			new Map([
 				InventoryListInstantiationFactory.registryEntry,
 				MigrationToolInstantiationFactory.registryEntry,
 			]), // registryEntries
+			testMode
+				? {
+						summaryOptions: {
+							initialSummarizerDelayMs: 0,
+						},
+				  }
+				: undefined,
 		);
 	}
 

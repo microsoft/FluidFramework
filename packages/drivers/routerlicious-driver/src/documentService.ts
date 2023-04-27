@@ -8,6 +8,7 @@ import * as api from "@fluidframework/driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -63,7 +64,8 @@ export class DocumentService implements api.IDocumentService {
 		private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
-		private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
+		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary>,
+		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
 	) {}
 
@@ -125,7 +127,8 @@ export class DocumentService implements api.IDocumentService {
 			this.documentStorageServicePolicies,
 			this.driverPolicies,
 			this.blobCache,
-			this.snapshotTreeCache,
+			this.wholeSnapshotTreeCache,
+			this.shreddedSummaryTreeCache,
 			noCacheStorageManager,
 			getStorageManager,
 		);
@@ -184,7 +187,7 @@ export class DocumentService implements api.IDocumentService {
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
 		const connect = async (refreshToken?: boolean) => {
-			let ordererToken = this.ordererRestWrapper.getToken();
+			let ordererToken = await this.ordererRestWrapper.getToken();
 			if (this.shouldUpdateDiscoveredSessionInfo()) {
 				await this.refreshDiscovery();
 			}
