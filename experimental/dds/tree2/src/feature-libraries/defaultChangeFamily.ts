@@ -114,6 +114,7 @@ export interface IDefaultEditBuilder {
 	): void;
 
 	addValueConstraint(path: UpPath, value: Value): void;
+	addNodeExistsConstraint(path: UpPath): void;
 }
 
 /**

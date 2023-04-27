@@ -659,7 +659,7 @@ export class ModularChangeFamily
 			const rebasedField = fieldKind.changeHandler.rebaser.rebase(
 				fieldChangeset,
 				taggedBaseChange,
-				(child, baseChild) =>
+				(child, baseChild, deleted) =>
 					this.rebaseNodeChange(
 						child,
 						baseChild !== undefined ? { revision, change: baseChild } : undefined,
@@ -669,6 +669,7 @@ export class ModularChangeFamily
 						fieldFilter,
 						revisionMetadata,
 						constraintState,
+						deleted,
 					),
 				genId,
 				manager,
@@ -750,6 +751,7 @@ export class ModularChangeFamily
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
+		deleted: boolean = false,
 	): NodeChangeset | undefined {
 		if (change === undefined && over?.change?.fieldChanges === undefined) {
 			return undefined;
@@ -790,6 +792,10 @@ export class ModularChangeFamily
 			rebasedChange.valueConstraint = change.valueConstraint;
 		}
 
+		if (change?.nodeExistsConstraint !== undefined) {
+			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
+		}
+
 		// We only care if a violated constraint is fixed or if a non-violated
 		// constraint becomes violated
 		if (rebasedChange.valueConstraint !== undefined && over?.change.valueChange !== undefined) {
@@ -802,6 +808,16 @@ export class ModularChangeFamily
 					violated: violatedByOver,
 				};
 				constraintState.violationCount += violatedByOver ? 1 : -1;
+			}
+		}
+
+		// If there's a node exists constraint and we deleted the node, increment the violation count
+		if (rebasedChange.nodeExistsConstraint !== undefined && deleted === true) {
+			// Only increment the violation count if the constraint wasn't already violated
+			// TODO: Decrement if constraint is fixed by rebasing (node is revived)
+			if (rebasedChange.nodeExistsConstraint.violated !== true) {
+				rebasedChange.nodeExistsConstraint.violated = true;
+				constraintState.violationCount += 1;
 			}
 		}
 
@@ -922,7 +938,8 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 	return (
 		change.fieldChanges === undefined &&
 		change.valueChange === undefined &&
-		change.valueConstraint === undefined
+		change.valueConstraint === undefined &&
+		change.nodeExistsConstraint === undefined
 	);
 }
 
