@@ -198,7 +198,7 @@ export const describeE2EDocsRuntime: DescribeE2EDocSuite =
 export const describeE2EDocsMemory: DescribeE2EDocSuite =
 	createE2EDocsDescribeWithType("Memory benchmarks");
 
-function isMemoryTest(): boolean {
+export function isMemoryTest(): boolean {
 	let isMemoryUsageTest: boolean = false;
 	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
 	for (const flag of ["--grep", "--fgrep"]) {
@@ -210,7 +210,6 @@ function isMemoryTest(): boolean {
 	}
 	const isMemTest: boolean =
 		process.env.FLUID_E2E_MEMORY !== undefined ? true : isMemoryUsageTest ?? false;
-	console.log(`isMemTest: ${isMemTest}`);
 	return isMemTest;
 }
 

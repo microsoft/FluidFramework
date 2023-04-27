@@ -88,6 +88,7 @@ export {
 	inCursorNode,
 	AnchorEvents,
 	AnchorSetRootEvents,
+	ProtoNodes,
 } from "./tree";
 
 export {
@@ -158,7 +159,8 @@ export {
 	SessionId,
 	mintCommit,
 	mintRevisionTag,
-	Rebaser,
+	rebaseBranch,
+	rebaseChange,
 } from "./rebase";
 
 export {

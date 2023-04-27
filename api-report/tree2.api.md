@@ -31,9 +31,8 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 export interface AnchorEvents {
     afterDelete(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
-    subtreeChanging(anchor: AnchorNode): void;
+    subtreeChanging(anchor: AnchorNode): PathVisitor | void;
     valueChanging(anchor: AnchorNode, value: Value): void;
-    visitSubtreeChanging(anchor: AnchorNode): PathVisitor;
 }
 
 // @alpha (undocumented)
@@ -384,7 +383,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 // @alpha
 export interface EditableTreeEvents {
     changing(upPath: UpPath, value: Value): void;
-    subtreeChanging(upPath: UpPath): void;
+    subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
 // @alpha
@@ -395,11 +394,9 @@ export interface EditDescription {
     // (undocumented)
     change: FieldChangeset;
     // (undocumented)
-    field: FieldKey;
+    field: FieldUpPath;
     // (undocumented)
     fieldKind: FieldKindIdentifier;
-    // (undocumented)
-    path: UpPath | undefined;
 }
 
 // @alpha
@@ -672,15 +669,15 @@ export interface IDefaultEditBuilder {
     // (undocumented)
     addValueConstraint(path: UpPath, value: Value): void;
     // (undocumented)
-    move(sourcePath: UpPath | undefined, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath | undefined, destField: FieldKey, destIndex: number): void;
+    move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destIndex: number): void;
     // (undocumented)
-    optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
+    optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
     // (undocumented)
-    sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder;
+    sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     // (undocumented)
-    valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder;
+    valueField(field: FieldUpPath): ValueFieldEditBuilder;
 }
 
 // @alpha
@@ -1053,7 +1050,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     generateId(count?: number): ChangesetLocalId;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
-    submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
+    submitChange(field: FieldUpPath, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
     // (undocumented)
     submitChanges(changes: EditDescription[], maxId?: ChangesetLocalId): void;
 }
@@ -1210,7 +1207,6 @@ export interface PathVisitor {
     onDelete(path: UpPath, count: number): void;
     // (undocumented)
     onInsert(path: UpPath, content: Delta.ProtoNodes): void;
-    // (undocumented)
     onSetValue(path: UpPath, value: Value): void;
 }
 

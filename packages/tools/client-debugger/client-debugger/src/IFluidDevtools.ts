@@ -2,40 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
 
 import { ContainerDevtoolsProps } from "./ContainerDevtools";
 import { DevtoolsLogger } from "./DevtoolsLogger";
 import { IContainerDevtools } from "./IContainerDevtools";
-
-/**
- * Events emitted by {@link IFluidDevtools}.
- *
- * @public
- */
-export interface FluidDevtoolsEvents extends IEvent {
-	/**
-	 * Emitted when a {@link IContainerDevtools} is registered for a Container.
-	 *
-	 * @eventProperty
-	 */
-	(event: "containerDevtoolsRegistered", listener: (containerId: string) => void): void;
-
-	/**
-	 * Emitted when a {@link IContainerDevtools} is closed for a Container.
-	 *
-	 * @eventProperty
-	 */
-	(event: "containerDevtoolsClosed", listener: (containerId: string) => void): void;
-
-	/**
-	 * Emitted when the {@link IFluidDevtools} instance is
-	 * {@link @fluidframework/common-definitions#IDisposable.dispose | disposed};
-	 *
-	 * @eventProperty
-	 */
-	(event: "devtoolsDisposed", listener: () => void): void;
-}
 
 /**
  * Fluid Devtools. A single instance is used to generate and communicate stats associated with the general Fluid
@@ -48,7 +19,7 @@ export interface FluidDevtoolsEvents extends IEvent {
  *
  * @public
  */
-export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDisposable {
+export interface IFluidDevtools extends IDisposable {
 	/**
 	 * (optional) telemetry logger associated with the Fluid runtime.
 	 */
