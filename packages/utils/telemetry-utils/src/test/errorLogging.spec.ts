@@ -348,12 +348,12 @@ describe("Error Logging", () => {
 			errorAsAny.p1 = "one";
 			errorAsAny.p4 = 4;
 			errorAsAny.p5 = { value: 5, tag: "CodeArtifact" };
-			errorAsAny.pii6 = { value: 5, tag: "UserData" };
+			errorAsAny.userData6 = { value: 5, tag: "UserData" };
 			const props = loggingError.getTelemetryProperties();
 			assert.strictEqual(props.p1, "one");
 			assert.strictEqual(props.p4, 4);
 			assert.deepStrictEqual(props.p5, { value: 5, tag: "CodeArtifact" });
-			assert.deepStrictEqual(props.pii6, { value: 5, tag: "UserData" });
+			assert.deepStrictEqual(props.userData6, { value: 5, tag: "UserData" });
 		});
 		it("Set invalid props via 'as any' - excluded from getTelemetryProperties, overwrites", () => {
 			const loggingError = new LoggingError("myMessage", { p1: 1, p2: "two", p3: true });

@@ -128,57 +128,51 @@ function useContainerInfo(
 	>();
 
 	// Get the Fluid Data data on app startup and store in the state
-	React.useEffect(
-		() => {
-			async function getSharedFluidData(): Promise<ContainerInfo> {
-				const containerNickname = "Shared Container";
+	React.useEffect(() => {
+		async function getSharedFluidData(): Promise<ContainerInfo> {
+			const containerNickname = "Shared Container";
 
-				const containerId = getContainerIdFromLocation(window.location);
-				return containerId.length === 0
-					? createFluidContainer(
-							containerSchema,
-							logger,
-							populateRootMap,
-							containerNickname,
-					  )
-					: loadExistingFluidContainer(
-							containerId,
-							containerSchema,
-							logger,
-							containerNickname,
-					  );
+			const containerId = getContainerIdFromLocation(window.location);
+			return containerId.length === 0
+				? createFluidContainer(containerSchema, logger, populateRootMap, containerNickname)
+				: loadExistingFluidContainer(
+						containerId,
+						containerSchema,
+						logger,
+						containerNickname,
+				  );
+		}
+
+		getSharedFluidData().then((containerInfo) => {
+			if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
+				window.location.hash = containerInfo.containerId;
 			}
 
-			getSharedFluidData().then((containerInfo) => {
-				if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
-					window.location.hash = containerInfo.containerId;
-				}
+			setSharedContainerInfo(containerInfo);
+			registerContainerWithDevtools(devtools, containerInfo);
+		}, console.error);
 
-				setSharedContainerInfo(containerInfo);
-				registerContainerWithDevtools(devtools, containerInfo);
-			}, console.error);
+		async function getPrivateContainerData(): Promise<ContainerInfo> {
+			// Always create a new container for the private view.
+			// This isn't shared with other collaborators.
 
-			async function getPrivateContainerData(): Promise<ContainerInfo> {
-				// Always create a new container for the private view.
-				// This isn't shared with other collaborators.
+			return createFluidContainer(
+				containerSchema,
+				logger,
+				populateRootMap,
+				"Private Container",
+			);
+		}
 
-				return createFluidContainer(
-					containerSchema,
-					logger,
-					populateRootMap,
-					"Private Container",
-				);
-			}
+		getPrivateContainerData().then((containerInfo) => {
+			setPrivateContainerInfo(containerInfo);
+			registerContainerWithDevtools(devtools, containerInfo);
+		}, console.error);
 
-			getPrivateContainerData().then((containerInfo) => {
-				setPrivateContainerInfo(containerInfo);
-				registerContainerWithDevtools(devtools, containerInfo);
-			}, console.error);
-		},
-		// This app never changes the containers after initialization, so we just want to run this effect once.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
-	);
+		return (): void => {
+			devtools?.dispose();
+		};
+	}, [devtools, logger]);
 
 	return { sharedContainer: sharedContainerInfo, privateContainer: privateContainerInfo };
 }
@@ -232,7 +226,14 @@ export function App(): React.ReactElement {
 	// Initialize Devtools
 	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
 
-	// Initialize the containers
+	React.useEffect(() => {
+		// Dispose of devtools resources on teardown to ensure message listeners are notified.
+		// Note that this isn't strictly necessary, as the Devtools will dispose of themselves on
+		// window unload, but it is here for example completeness.
+		return (): void => devtools.dispose();
+	}, [devtools]);
+
+	// Load the collaborative SharedString object
 	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger);
 
 	const view = (

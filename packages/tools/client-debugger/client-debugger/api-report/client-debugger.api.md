@@ -6,7 +6,6 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
-import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
@@ -349,18 +348,6 @@ export interface HasContainerId {
 // @internal
 export interface HasFluidObjectId {
     fluidObjectId: FluidObjectId;
-}
-
-// @internal
-export interface IContainerDevtools extends IDisposable {
-    readonly audience: IAudience;
-    readonly container: IContainer;
-    readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
-    readonly containerId: string;
-    readonly containerNickname?: string;
-    dispose(): void;
-    getAudienceHistory(): readonly AudienceChangeLogEntry[];
-    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
 }
 
 // @internal

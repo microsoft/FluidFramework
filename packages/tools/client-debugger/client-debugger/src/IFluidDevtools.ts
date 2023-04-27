@@ -23,15 +23,19 @@ import { ContainerDevtoolsProps } from "./ContainerDevtools";
  */
 export interface IFluidDevtools extends IDisposable {
 	/**
-	 * Initializes a {@link IContainerDevtools} from the provided properties and stores it for future reference.
+	 * Registers the provided {@link @fluidframework/container-definitions#IContainer} with the Devtools to begin
+	 * generating stats for it.
+	 *
+	 * @remarks To remove the Container from the Devtools, call {@link IFluidDevtools.closeContainerDevtools}.
 	 *
 	 * @throws Will throw if devtools have already been registered for the specified Container ID.
 	 */
 	registerContainerDevtools(props: ContainerDevtoolsProps): void;
 
 	/**
-	 * Closes ({@link IContainerDevtools.dispose | disposes}) a registered Container devtools associated with the
-	 * provided Container ID.
+	 * Removes the Container with the specified ID from the Devtools.
+	 *
+	 * @remarks Will no-op if no such Container is registered.
 	 */
 	closeContainerDevtools(containerId: string): void;
 }

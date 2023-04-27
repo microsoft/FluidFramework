@@ -338,15 +338,6 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Gets the set of features supported by this instance.
-	 */
-	private getSupportedFeatures(): DevtoolsFeatureFlags {
-		return {
-			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
-		};
-	}
-
-	/**
 	 * Gets all Container-level devtools instances.
 	 */
 	public getAllContainerDevtools(): readonly IContainerDevtools[] {
@@ -389,6 +380,15 @@ export class FluidDevtools implements IFluidDevtools {
 		globalThis.removeEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
 
 		this._disposed = true;
+	}
+
+	/**
+	 * Gets the set of features supported by this instance.
+	 */
+	private getSupportedFeatures(): DevtoolsFeatureFlags {
+		return {
+			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+		};
 	}
 }
 
