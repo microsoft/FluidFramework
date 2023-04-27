@@ -30,12 +30,15 @@ module.exports = {
 	overrides: [
 		{
 			// Overrides for test files
-			files: ["*.spec.ts", "*.test.ts", "src/test/**"],
-			plugins: ["jest"],
-			extends: ["plugin:jest/recommended"],
+			files: ["*.test.ts", "src/test/**"],
+			plugins: ["chai-expect"],
+			extends: ["plugin:chai-expect/recommended"],
 			rules: {
 				"import/no-nodejs-modules": "off",
-				"unicorn/prefer-module": "off",
+				// "unicorn/prefer-module": "off",
+
+				// Superceded by chai-expect rule
+				"@typescript-eslint/no-unused-expressions": "off",
 			},
 		},
 	],

@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from '@fluidframework/common-utils';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { DetachedSequenceId, isDetachedSequenceId, NodeId } from './Identifiers';
-import { assert, fail } from './Common';
+import { fail } from './Common';
 import { rangeFromStableRange } from './TreeViewUtilities';
 import {
 	ChangeInternal,
@@ -68,8 +69,14 @@ export function revert(
 			case ChangeTypeInternal.Build: {
 				// Save nodes added to the detached state for use in future changes
 				const { destination, source } = change;
-				assert(!builtNodes.has(destination), `Cannot revert Build: destination is already used by a Build`);
-				assert(!detachedNodes.has(destination), `Cannot revert Build: destination is already used by a Detach`);
+				assert(
+					!builtNodes.has(destination),
+					0x626 /* Cannot revert Build: destination is already used by a Build */
+				);
+				assert(
+					!detachedNodes.has(destination),
+					0x627 /* Cannot revert Build: destination is already used by a Detach */
+				);
 				builtNodes.set(
 					destination,
 					source.reduce((ids: NodeId[], curr: BuildNodeInternal) => {

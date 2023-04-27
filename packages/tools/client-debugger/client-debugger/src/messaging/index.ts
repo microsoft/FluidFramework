@@ -43,7 +43,7 @@ export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./Utilities";

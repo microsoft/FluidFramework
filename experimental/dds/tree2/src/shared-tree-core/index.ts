@@ -16,3 +16,13 @@ export {
 export { TransactionStack } from "./transactionStack";
 
 export { EditManagerSummarizer, parseSummary, stringifySummary } from "./editManagerSummarizer";
+
+export {
+	Commit,
+	EditManager,
+	minimumPossibleSequenceNumber,
+	SeqNumber,
+	SequencedCommit,
+	SummarySessionBranch,
+	SummaryData,
+} from "./editManager";
