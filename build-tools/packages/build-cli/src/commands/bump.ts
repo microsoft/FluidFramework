@@ -109,7 +109,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error("ERROR: No dependency provided.");
 		}
 
-		// can be removed once server team owns their releases
+		// eslint-disable-next-line no-warning-comments
+		// TODO: can be removed once server team owns server releases
 		if (args.package_or_release_group === MonoRepoKind.Server && flags.bumpType === "minor") {
 			this.error(`ERROR: Server release are always a ${chalk.bold("MAJOR")} release`);
 		}
