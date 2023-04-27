@@ -6,7 +6,7 @@
 /**
  * Structure of a message used for communication from/to the Fluid Client Debugger.
  *
- * @public
+ * @internal
  */
 export interface IDevtoolsMessage<TData = unknown> {
 	/**
@@ -25,7 +25,7 @@ export interface IDevtoolsMessage<TData = unknown> {
 /**
  * Message structure expected for window event listeners used by the Fluid Client Debugger.
  *
- * @public
+ * @internal
  */
 export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
 	/**

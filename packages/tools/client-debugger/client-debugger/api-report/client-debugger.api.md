@@ -31,7 +31,7 @@ export interface AudienceClientMetadata {
     clientId: string;
 }
 
-// @public
+// @internal
 export namespace AudienceSummary {
     const MessageType = "AUDIENCE_SUMMARY";
     export function createMessage(data: MessageData): Message;
@@ -45,7 +45,7 @@ export namespace AudienceSummary {
     }
 }
 
-// @public
+// @internal
 export namespace CloseContainer {
     const MessageType = "CLOSE_CONTAINER";
     export function createMessage(data: MessageData): Message;
@@ -55,7 +55,7 @@ export namespace CloseContainer {
     export type MessageData = HasContainerId;
 }
 
-// @public
+// @internal
 export namespace ConnectContainer {
     const MessageType = "CONNECT_CONTAINER";
     export function createMessage(data: MessageData): Message;
@@ -80,7 +80,7 @@ export type ContainerDevtoolsFeatureFlags = {
     [Feature in ContainerDevtoolsFeature]?: boolean;
 };
 
-// @public
+// @internal
 export namespace ContainerDevtoolsFeatures {
     const MessageType = "CONTAINER_DEVTOOLS_FEATURES";
     export function createMessage(data: MessageData): Message;
@@ -101,7 +101,7 @@ export interface ContainerDevtoolsProps {
     dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
-// @public
+// @internal
 export namespace ContainerList {
     const MessageType = "CONTAINER_LIST";
     export function createMessage(data: MessageData): Message;
@@ -119,7 +119,7 @@ export interface ContainerMetadata {
     nickname?: string;
 }
 
-// @public
+// @internal
 export namespace ContainerStateChange {
     const MessageType = "CONTAINER_STATE_CHANGE";
     export function createMessage(data: MessageData): Message;
@@ -140,7 +140,7 @@ export enum ContainerStateChangeKind {
     Disposed = "disposed"
 }
 
-// @public
+// @internal
 export namespace ContainerStateHistory {
     const MessageType = "CONTAINER_STATE_HISTORY";
     export function createMessage(data: MessageData): Message;
@@ -164,7 +164,7 @@ export interface ContainerStateMetadata extends ContainerMetadata {
     connectionState: ConnectionState;
 }
 
-// @public
+// @internal
 export namespace DataVisualization {
     const MessageType = "DATA_VISUALIZATION";
     export function createMessage(data: MessageData): Message;
@@ -186,7 +186,7 @@ export type DevtoolsFeatureFlags = {
     [Feature in DevtoolsFeature]?: boolean;
 };
 
-// @public
+// @internal
 export namespace DevtoolsFeatures {
     const MessageType = "DEVTOOLS_FEATURES";
     export function createMessage(data: MessageData): Message;
@@ -205,10 +205,10 @@ export class DevtoolsLogger extends TelemetryLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
+// @internal
 export const devtoolsMessageSource: string;
 
-// @public
+// @internal
 export namespace DisconnectContainer {
     const MessageType = "DISCONNECT_CONTAINER";
     export function createMessage(data: MessageData): Message;
@@ -257,7 +257,7 @@ export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
     nodeKind: VisualNodeKind.FluidUnknownObjectNode;
 }
 
-// @public
+// @internal
 export namespace GetAudienceSummary {
     const MessageType = "GET_AUDIENCE_SUMMARY";
     export function createMessage(data: MessageData): Message;
@@ -267,7 +267,7 @@ export namespace GetAudienceSummary {
     export type MessageData = HasContainerId;
 }
 
-// @public
+// @internal
 export namespace GetContainerDevtoolsFeatures {
     const MessageType = "GET_CONTAINER_DEVTOOLS_FEATURES";
     export function createMessage(data: MessageData): Message;
@@ -277,7 +277,7 @@ export namespace GetContainerDevtoolsFeatures {
     export type MessageData = HasContainerId;
 }
 
-// @public
+// @internal
 export namespace GetContainerList {
     const MessageType = "GET_CONTAINER_LIST";
     export function createMessage(): Message;
@@ -286,7 +286,7 @@ export namespace GetContainerList {
     }
 }
 
-// @public
+// @internal
 export namespace GetContainerState {
     const MessageType = "GET_CONTAINER_STATE";
     export function createMessage(data: MessageData): Message;
@@ -296,7 +296,7 @@ export namespace GetContainerState {
     export type MessageData = HasContainerId;
 }
 
-// @public
+// @internal
 export namespace GetDataVisualization {
     const MessageType = "GET_DATA_VISUALIZATION";
     export function createMessage(data: MessageData): Message;
@@ -306,7 +306,7 @@ export namespace GetDataVisualization {
     export type MessageData = HasContainerId & HasFluidObjectId;
 }
 
-// @public
+// @internal
 export namespace GetDevtoolsFeatures {
     const MessageType = "GET_DEVTOOLS_FEATURES";
     export function createMessage(): Message;
@@ -315,7 +315,7 @@ export namespace GetDevtoolsFeatures {
     }
 }
 
-// @public
+// @internal
 export namespace GetRootDataVisualizations {
     const MessageType = "GET_ROOT_DATA_VISUALIZATIONS";
     export function createMessage(data: MessageData): Message;
@@ -325,7 +325,7 @@ export namespace GetRootDataVisualizations {
     export type MessageData = HasContainerId;
 }
 
-// @public
+// @internal
 export namespace GetTelemetryHistory {
     const MessageType = "GET_TELEMETRY_HISTORY";
     export function createMessage(): Message;
@@ -350,7 +350,7 @@ export interface HasFluidObjectId {
     fluidObjectId: FluidObjectId;
 }
 
-// @public
+// @internal
 export interface IDevtoolsMessage<TData = unknown> {
     data: TData;
     type: string;
@@ -383,7 +383,7 @@ export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevto
 // @internal
 export function isDevtoolsMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;
 
-// @public
+// @internal
 export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
     source: string;
 }
@@ -416,7 +416,7 @@ export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(loggingO
 // @public
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
 
-// @public
+// @internal
 export namespace RootDataVisualizations {
     const MessageType = "ROOT_DATA_VISUALIZATIONS";
     export function createMessage(data: MessageData): Message;
@@ -436,7 +436,7 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
 }
 
-// @public
+// @internal
 export namespace TelemetryEvent {
     const MessageType = "TELEMETRY_EVENT";
     export function createMessage(data: MessageData): Message;
@@ -448,7 +448,7 @@ export namespace TelemetryEvent {
     }
 }
 
-// @public
+// @internal
 export namespace TelemetryHistory {
     const MessageType = "TELEMETRY_HISTORY";
     export function createMessage(data: MessageData): Message;
