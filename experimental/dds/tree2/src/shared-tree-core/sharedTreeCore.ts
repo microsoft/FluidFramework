@@ -426,7 +426,16 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localBranchHead = this.editManager.getLocalBranchHead();
 		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
 		if (ancestor === localBranchHead) {
-			this.applyPathFromBranch(branch, commits);
+			const markedCommits = markCommits(commits, branch.undoRedoManager.headUndoable);
+			for (const {
+				commit: { change, revision },
+				isUndoable,
+			} of markedCommits) {
+				// Only track commits that are undoable.
+				const commitType = isUndoable ? UndoRedoManagerCommitType.Undoable : undefined;
+				this.applyChange(change, revision, commitType, !isUndoable);
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+			}
 		} else {
 			const [newHead] = rebaseBranch(
 				this.changeFamily.rebaser,
@@ -445,23 +454,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			// `updateAfterRebase` takes care of tracking any applicable commits in the rebased branch.
 			changes.forEach(({ change, revision }) => {
 				this.applyChange(change, revision, undefined, true);
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 			});
-		}
-	}
-
-	private applyPathFromBranch(
-		branch: SharedTreeBranch<TEditor, TChange>,
-		path: GraphCommit<TChange>[],
-	): void {
-		const markedCommits = markCommits(path, branch.undoRedoManager.headUndoable);
-		for (const {
-			commit: { change, revision },
-			isUndoable,
-		} of markedCommits) {
-			// Only track commits that are undoable.
-			const commitType = isUndoable ? UndoRedoManagerCommitType.Undoable : undefined;
-			this.applyChange(change, revision, commitType, !isUndoable);
-			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		}
 	}
 
