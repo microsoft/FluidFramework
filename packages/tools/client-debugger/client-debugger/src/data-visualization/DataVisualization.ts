@@ -306,6 +306,13 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 */
 	private _disposed: boolean;
 
+	/**
+	 * Handles the returned promise for {@link onOpHandler}.
+	 */
+	private readonly syncOpHandler = (): void => {
+		this.onOpHandler().catch((error) => console.error(error));
+	};
+
 	public constructor(
 		/**
 		 * The Fluid object whose data will be emitted in visualized form when requested / whenever its data is updated.
@@ -337,10 +344,6 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 
 		this._disposed = false;
 	}
-
-	private readonly syncOpHandler = (): void => {
-		this.onOpHandler().catch((error) => console.error(error));
-	};
 
 	/**
 	 * {@inheritDoc IDisposable.disposed}
