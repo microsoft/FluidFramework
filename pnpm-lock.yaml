@@ -10499,6 +10499,7 @@ importers:
       '@fluid-tools/client-debugger': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
+      '@fluidframework/cell': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
@@ -10560,6 +10561,7 @@ importers:
       '@fluentui/react-tabs': 9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-tools/client-debugger': link:../client-debugger
+      '@fluidframework/cell': link:../../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
