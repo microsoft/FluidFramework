@@ -291,9 +291,14 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * Will broadcast an updated visual tree representation of the DDS's data via the
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
-	private readonly onOpHandler = (): boolean => {
-		this.emitVisualUpdate();
-		return true;
+	private readonly onOpHandler = async (): Promise<boolean> => {
+		try {
+			await this.emitVisualUpdate();
+			return true;
+		} catch (error) {
+			console.error(error);
+			return false;
+		}
 	};
 
 	/**
@@ -328,10 +333,14 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	) {
 		super();
 
-		this.sharedObject.on("op", this.onOpHandler);
+		this.sharedObject.on("op", this.syncOpHandler);
 
 		this._disposed = false;
 	}
+
+	private readonly syncOpHandler = (): void => {
+		this.onOpHandler().catch((error) => console.error(error));
+	};
 
 	/**
 	 * {@inheritDoc IDisposable.disposed}
@@ -345,10 +354,13 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * {@link VisualizerNode.sharedObject}'s current state as an
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
-	private emitVisualUpdate(): void {
-		this.render().then((visualTree: FluidObjectNode) => {
+	private async emitVisualUpdate(): Promise<void> {
+		try {
+			const visualTree: FluidObjectNode = await this.render();
 			this.emit("update", visualTree);
-		}, console.error);
+		} catch (error) {
+			console.log(error);
+		}
 	}
 
 	/**
@@ -380,7 +392,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 */
 	public dispose(): void {
 		if (!this._disposed) {
-			this.sharedObject.off("op", this.onOpHandler);
+			this.sharedObject.off("op", this.syncOpHandler);
 			this._disposed = true;
 		}
 	}
