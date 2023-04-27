@@ -11,14 +11,11 @@ Check commands are used to verify repo state, apply policy, etc.
 
 ```
 USAGE
-  $ flub check changeset -b <value> [-v] [--json]
+  $ flub check changeset -b <value> [-v]
 
 FLAGS
   -b, --branch=<value>  (required) The branch to compare against.
   -v, --verbose         Verbose logging.
-
-GLOBAL FLAGS
-  --json  Format output as json.
 ```
 
 ## `flub check layers`
