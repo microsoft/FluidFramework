@@ -12,8 +12,10 @@ export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
 export type MarkList<TNodeChange = NodeChangeType, TMark = Mark<TNodeChange>> = TMark[];
 
 export type Mark<TNodeChange = NodeChangeType> =
-	| InputSpanningMark<TNodeChange>
-	| OutputSpanningMark<TNodeChange>;
+	| Skip
+	| Modify<TNodeChange>
+	| Attach<TNodeChange>
+	| Detach<TNodeChange>;
 
 export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
 
@@ -22,40 +24,6 @@ export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>
  * The spanned cells may be populated (e.g., "Delete") or not (e.g., "Revive").
  */
 export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
-
-/**
- * A mark that spans one or more nodes in the input context of its changeset.
- */
-export type InputSpanningMark<TNodeChange> =
-	| Skip
-	| Detach<TNodeChange>
-	| Modify<TNodeChange>
-	| SkipLikeReattach<TNodeChange>;
-
-/**
- * A mark that spans one or more nodes in the output context of its changeset.
- */
-export type OutputSpanningMark<TNodeChange> =
-	| Skip
-	| NewAttach<TNodeChange>
-	| Modify<TNodeChange>
-	| Reattach<TNodeChange>;
-
-/**
- * A Reattach whose target nodes are already reattached and have not been detached by some other change.
- * Such a Reattach has no effect when applied and is therefore akin to a Skip mark.
- */
-export type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> & {
-	lastDeletedBy?: never;
-};
-
-/**
- * A Detach with a conflicted destination.
- * Such a Detach has no effect when applied and is therefore akin to a Skip mark.
- */
-export type SkipLikeDetach<TNodeChange> = (MoveOut<TNodeChange> | ReturnFrom<TNodeChange>) & {
-	isDstConflicted: true;
-};
 
 export interface Modify<TNodeChange = NodeChangeType> extends CellMark {
 	type: "Modify";

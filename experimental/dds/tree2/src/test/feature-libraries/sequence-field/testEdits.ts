@@ -126,7 +126,8 @@ function createIntentionalReviveChangeset(
 	detachedBy: RevisionTag,
 	detachIndex?: number,
 	reviver = fakeRepair,
-	linage?: SF.LineageEvent[],
+	lineage?: SF.LineageEvent[],
+	inverseOf?: DetachEvent,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
 		startIndex,
@@ -137,8 +138,12 @@ function createIntentionalReviveChangeset(
 		true,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
-	if (linage !== undefined) {
-		mark.lineage = linage;
+	if (lineage !== undefined) {
+		mark.lineage = lineage;
+	}
+
+	if (inverseOf !== undefined) {
+		mark.inverseOf = inverseOf;
 	}
 	return markList;
 }

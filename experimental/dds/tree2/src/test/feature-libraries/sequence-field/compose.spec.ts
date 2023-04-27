@@ -15,7 +15,7 @@ import { ChangesetLocalId, RevisionInfo, SequenceField as SF } from "../../../fe
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
-import { ChangeMaker as Change, TestChangeset, cases } from "./testEdits";
+import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -720,22 +720,6 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([makeAnonChange(reviveA), makeAnonChange(reviveB)]);
 		assert.deepEqual(actual, expected);
 	});
-
-	// it("revive ○ conflicted revive", () => {
-	// 	const reviveA = Change.revive(0, 2, tag1, 0);
-	// 	const reviveB = Change.revive(0, 2, tag1, 0, undefined, tag2);
-	// 	const expected: SF.Changeset = [
-	// 		{
-	// 			type: "Revive",
-	// 			content: fakeRepair(tag1, 0, 2),
-	// 			count: 2,
-	// 			detachEvent: { revision: tag1, index: 0 },
-	// 			revision: tag2,
-	// 		},
-	// 	];
-	// 	const actual = shallowCompose([tagChange(reviveA, tag2), makeAnonChange(reviveB)]);
-	// 	assert.deepEqual(actual, expected);
-	// });
 
 	it("insert ○ revive", () => {
 		const insert: SF.Changeset = [
