@@ -233,9 +233,9 @@ function useContainerInfo(
 	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
 		ContainerInfo | undefined
 	>();
-	const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
-		ContainerInfo | undefined
-	>();
+	// const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
+	// 	ContainerInfo | undefined
+	// >();
 
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
@@ -255,24 +255,24 @@ function useContainerInfo(
 			registerContainerWithDevtools(devtools, containerInfo.container, sharedContainerKey);
 		}, console.error);
 
-		async function getPrivateContainerData(): Promise<ContainerInfo> {
-			// Always create a new container for the private view.
-			// This isn't shared with other collaborators.
+		// async function getPrivateContainerData(): Promise<ContainerInfo> {
+		// 	// Always create a new container for the private view.
+		// 	// This isn't shared with other collaborators.
 
-			return createFluidContainer(containerSchema, logger, populateRootMap);
-		}
+		// 	return createFluidContainer(containerSchema, logger, populateRootMap);
+		// }
 
-		getPrivateContainerData().then((containerInfo) => {
-			setPrivateContainerInfo(containerInfo);
-			registerContainerWithDevtools(devtools, containerInfo.container, privateContainerKey);
-		}, console.error);
+		// getPrivateContainerData().then((containerInfo) => {
+		// 	setPrivateContainerInfo(containerInfo);
+		// 	registerContainerWithDevtools(devtools, containerInfo.container, privateContainerKey);
+		// }, console.error);
 
 		return (): void => {
 			devtools?.dispose();
 		};
 	}, [devtools, logger]);
 
-	return { sharedContainer: sharedContainerInfo, privateContainer: privateContainerInfo };
+	return { sharedContainer: sharedContainerInfo, privateContainer: undefined };
 }
 
 const appTheme: BrandVariants = {
