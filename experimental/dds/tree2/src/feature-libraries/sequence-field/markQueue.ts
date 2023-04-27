@@ -7,13 +7,14 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { IdAllocator } from "../modular-schema";
 import { InputSpanningMark, Mark } from "./format";
+import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
 import {
-	applyMoveEffectsToMark,
-	MoveEffectTable,
+	isBlockedReattach,
+	isInputSpanningMark,
+	isOutputSpanningMark,
 	splitMarkOnInput,
 	splitMarkOnOutput,
-} from "./moveEffectTable";
-import { isBlockedReattach, isInputSpanningMark, isOutputSpanningMark } from "./utils";
+} from "./utils";
 
 export class MarkQueue<T> {
 	private readonly stack: Mark<T>[] = [];
