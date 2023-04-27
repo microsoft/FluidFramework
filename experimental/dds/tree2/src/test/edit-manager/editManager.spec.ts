@@ -500,7 +500,7 @@ function runUnitTestScenario(
 	rebaser?: ChangeRebaser<TestChange>,
 ): void {
 	const run = () => {
-		const { manager, anchors, family } = editManagerFactory({ rebaser });
+		const { manager, anchors } = editManagerFactory({ rebaser });
 		/**
 		 * An `EditManager` that is kept up to date with all sequenced edits.
 		 * Used as a source of summary data to spin-up `joiners`.

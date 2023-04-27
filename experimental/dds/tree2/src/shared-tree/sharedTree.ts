@@ -341,8 +341,8 @@ export class SharedTree
 		this.context.unwrappedRoot = data;
 	}
 
-	public get undoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-		return this.editManager.localBranchUndoRedoManager;
+	public override get undoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
+		return this.undoRedoManager;
 	}
 
 	public fork(): ISharedTreeFork {

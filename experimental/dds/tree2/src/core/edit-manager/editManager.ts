@@ -105,8 +105,6 @@ export class EditManager<
 		};
 		this.trunk = this.trunkBase;
 		this.localBranch = this.trunk;
-
-		// Do not call `getHead` for either of the undo redo managers within this constructor.
 	}
 
 	/**

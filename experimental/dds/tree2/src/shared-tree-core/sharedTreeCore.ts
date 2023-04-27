@@ -99,7 +99,7 @@ export interface ChangeEvents<TChangeset> {
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject<
 	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
 > {
-	protected readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
+	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 
 	/**
@@ -367,6 +367,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	public isTransacting(): boolean {
 		return this.transactions.size !== 0;
+	}
+
+	protected get undoRedoManager(): UndoRedoManager<TChange, TEditor> {
+		return this.editManager.localBranchUndoRedoManager;
 	}
 
 	/**
