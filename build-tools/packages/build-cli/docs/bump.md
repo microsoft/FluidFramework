@@ -108,15 +108,10 @@ EXAMPLES
   Bump dependencies on packages in the server release group to the greatest released version in the client release
   group. Include pre-release versions.
 
-    $ flub bump deps server -g client -t greatest -p
+    $ flub bump deps server -g client -t greatest --prerelease
 
   Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with
   release ranges.
 
     $ flub bump deps server -t latest
-
-  Bump dependencies on packages in server release group to the latest released version in the client release group
-  against main branch. Include pre-release versions.
-
-    $ flub bump deps server -g client -t latest -b main --prerelease
 ```

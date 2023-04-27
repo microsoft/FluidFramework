@@ -90,18 +90,13 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		{
 			description:
 				"Bump dependencies on packages in the server release group to the greatest released version in the client release group. Include pre-release versions.",
-			command: "<%= config.bin %> <%= command.id %> server -g client -t greatest -p",
+			command:
+				"<%= config.bin %> <%= command.id %> server -g client -t greatest --prerelease",
 		},
 		{
 			description:
 				"Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with release ranges.",
 			command: "<%= config.bin %> <%= command.id %> server -t latest",
-		},
-		{
-			description:
-				"Bump dependencies on packages in server release group to the latest released version in the client release group against main branch. Include pre-release versions.",
-			command:
-				"<%= config.bin %> <%= command.id %> server -g client -t latest -b main --prerelease",
 		},
 	];
 
