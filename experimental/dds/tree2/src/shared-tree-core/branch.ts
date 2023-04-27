@@ -81,12 +81,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor(
-			(change) => this.applyChange(change),
+			(change) => this.applyChange(change, UndoRedoManagerCommitType.Undoable),
 			new AnchorSet(), // This branch class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.
 		);
 	}
 
-	private applyChange(change: TChange, isUndoRedoCommit?: UndoRedoManagerCommitType): void {
+	private applyChange(change: TChange, undoRedoType: UndoRedoManagerCommitType): void {
 		this.assertNotDisposed();
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
@@ -100,7 +100,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (!this.isTransacting()) {
-			this.undoRedoManager.trackCommit(this.head, isUndoRedoCommit);
+			this.undoRedoManager.trackCommit(this.head, undoRedoType);
 		}
 
 		this.emitAndRebaseAnchors(change);
@@ -145,7 +145,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 			// If this transaction is not nested, add it to the undo commit tree
 			if (!this.isTransacting()) {
-				this.undoRedoManager.trackCommit(this.head);
+				this.undoRedoManager.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
 			}
 
 			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
