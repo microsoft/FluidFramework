@@ -13,15 +13,13 @@ import {
     ISnapshotTree,
     IVersion,
 } from "@fluidframework/protocol-definitions";
-import {
-    GitManager,
-} from "@fluidframework/server-services-client";
 import { DocumentStorageServiceProxy, PrefetchDocumentStorageService } from "@fluidframework/driver-utils";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService";
 import { ISnapshotTreeVersion } from "./definitions";
+import { GitManager } from "./gitManager";
 
 export class DocumentStorageService extends DocumentStorageServiceProxy {
     private _logTailSha: string | undefined = undefined;

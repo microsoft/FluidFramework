@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { getW3CData } from "@fluidframework/driver-base";
 import type { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
     assert,
@@ -15,9 +16,6 @@ import {
     IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
 import {
-    convertSnapshotAndBlobsToSummaryTree,
-} from "@fluidframework/driver-utils";
-import {
     ICreateBlobResponse,
     ISnapshotTree,
     ISummaryHandle,
@@ -25,15 +23,23 @@ import {
     IVersion,
 } from "@fluidframework/protocol-definitions";
 import {
-    convertWholeFlatSummaryToSnapshotTreeAndBlobs,
-    GitManager,
-    ISummaryUploadManager,
-    WholeSummaryUploadManager,
+	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
+	INormalizedWholeSummary,
+	IWholeFlatSummary,
 } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
 import { IRouterliciousDriverPolicies } from "./policies";
+import {
+	convertSnapshotAndBlobsToSummaryTree,
+	evalBlobsAndTrees,
+	validateBlobsAndTrees,
+} from "./treeUtils";
+import { GitManager } from "./gitManager";
+import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
+import { ISummaryUploadManager } from "./storageContracts";
+import { IR11sResponse } from "./restWrapper";
 
 const latestSnapshotId: string = "latest";
 
@@ -84,26 +90,26 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             }];
         }
 
-        // Otherwise, get the latest version of the document as normal.
-        const id = versionId ? versionId : this.id;
-        const commits = await PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "getVersions",
-                versionId: id,
-                count,
-            },
-            async () => {
-                const manager = await this.getStorageManager();
-                return manager.getCommits(id, count);
-            },
-        );
-        return commits.map((commit) => ({
-            date: commit.commit.author.date,
-            id: commit.sha,
-            treeId: commit.commit.tree.sha,
-        }));
-    }
+		// Otherwise, get the latest version of the document as normal.
+		const id = versionId ? versionId : this.id;
+		const commits = await PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: "getVersions",
+				versionId: id,
+				count,
+			},
+			async () => {
+				const manager = await this.getStorageManager();
+				return (await manager.getCommits(id, count)).content;
+			},
+		);
+		return commits.map((commit) => ({
+			date: commit.commit.author.date,
+			id: commit.sha,
+			treeId: commit.commit.tree.sha,
+		}));
+	}
 
     public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
         let requestVersion = version;
@@ -125,22 +131,22 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             return cachedBlob;
         }
 
-        const blob = await PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "readBlob",
-                blobId,
-            },
-            async (event) => {
-                const manager = await this.getStorageManager();
-                const response = await manager.getBlob(blobId);
-                event.end({
-                    size: response.size,
-                });
-                return response;
-            },
-        );
-        const bufferValue = stringToBuffer(blob.content, blob.encoding);
+		const blob = await PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: "readBlob",
+				blobId,
+			},
+			async (event) => {
+				const manager = await this.getStorageManager();
+				const response = (await manager.getBlob(blobId)).content;
+				event.end({
+					size: response.size,
+				});
+				return response;
+			},
+		);
+		const bufferValue = stringToBuffer(blob.content, blob.encoding);
 
         await this.blobCache.put(this.getCacheKey(blob.sha), bufferValue);
 
@@ -161,48 +167,47 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
         return summaryHandle;
     }
 
-    public async downloadSummary(summaryHandle: ISummaryHandle): Promise<ISummaryTree> {
-        const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "getWholeFlatSummary",
-                treeId: summaryHandle.handle,
-            },
-            async (event) => {
-                const manager = await this.getStorageManager();
-                const response = await manager.getSummary(summaryHandle.handle);
-                event.end({
-                    size: response.trees[0]?.entries.length,
-                });
-                return response;
-            },
-        );
+	public async downloadSummary(summaryHandle: ISummaryHandle): Promise<ISummaryTree> {
+		const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: "getWholeFlatSummary",
+				treeId: summaryHandle.handle,
+			},
+			async (event) => {
+				const manager = await this.getStorageManager();
+				const response = await manager.getSummary(summaryHandle.handle);
+				event.end({
+					size: response.content.trees[0]?.entries.length,
+				});
+				return response.content;
+			},
+		);
 
         const { blobs, snapshotTree } = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary, "");
         return convertSnapshotAndBlobsToSummaryTree(snapshotTree, blobs);
     }
 
-    public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-        const uint8ArrayFile = new Uint8Array(file);
-        return PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "createBlob",
-                size: uint8ArrayFile.length,
-            },
-            async (event) => {
-                const manager = await this.getStorageManager();
-                const response = await manager.createBlob(
-                    Uint8ArrayToString(
-                        uint8ArrayFile, "base64"),
-                    "base64").then((r) => ({ id: r.sha, url: r.url }));
-                event.end({
-                    blobId: response.id,
-                });
-                return response;
-            },
-        );
-    }
+	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
+		const uint8ArrayFile = new Uint8Array(file);
+		return PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: "createBlob",
+				size: uint8ArrayFile.length,
+			},
+			async (event) => {
+				const manager = await this.getStorageManager();
+				const response = await manager
+					.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
+					.then((r) => ({ id: r.content.sha, url: r.content.url }));
+				event.end({
+					blobId: response.id,
+				});
+				return response;
+			},
+		);
+	}
 
     private async fetchAndCacheSnapshotTree(versionId: string, disableCache?: boolean): Promise<ISnapshotTreeVersion> {
         const cachedSnapshotTreeVersion = await this.snapshotTreeCache.get(this.getCacheKey(versionId));
@@ -210,26 +215,46 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
             return { id: cachedSnapshotTreeVersion.id, snapshotTree: cachedSnapshotTreeVersion.snapshotTree };
         }
 
-        const wholeFlatSummary = await PerformanceEvent.timedExecAsync(
-            this.logger,
-            {
-                eventName: "getWholeFlatSummary",
-                treeId: versionId,
-            },
-            async (event) => {
-                const manager = await this.getStorageManager(disableCache);
-                const response = await manager.getSummary(versionId);
-                event.end({
-                    size: response.trees[0]?.entries.length,
-                });
-                return response;
-            },
-        );
-        const normalizedWholeSummary = convertWholeFlatSummaryToSnapshotTreeAndBlobs(wholeFlatSummary);
-        const wholeFlatSummaryId: string = wholeFlatSummary.id;
-        const snapshotTreeId = normalizedWholeSummary.snapshotTree.id;
-        assert(snapshotTreeId !== undefined, 0x275 /* "Root tree should contain the id" */);
-        const snapshotTreeVersion = { id: wholeFlatSummaryId, snapshotTree: normalizedWholeSummary.snapshotTree };
+		const normalizedWholeSummary = await PerformanceEvent.timedExecAsync(
+			this.logger,
+			{
+				eventName: "getWholeFlatSummary",
+				treeId: versionId,
+			},
+			async (event) => {
+				const manager = await this.getStorageManager(disableCache);
+				const response: IR11sResponse<IWholeFlatSummary> = await manager.getSummary(
+					versionId,
+				);
+				const start = performance.now();
+				const snapshot: INormalizedWholeSummary =
+					convertWholeFlatSummaryToSnapshotTreeAndBlobs(response.content);
+				const snapshotConversionTime = performance.now() - start;
+				validateBlobsAndTrees(snapshot.snapshotTree);
+				const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
+
+				event.end({
+					size: response.content.trees[0]?.entries.length,
+					trees,
+					blobs: numBlobs,
+					encodedBlobsSize,
+					...response.propsToLog,
+					snapshotConversionTime,
+					...getW3CData(response.requestUrl, "xmlhttprequest"),
+				});
+				return snapshot;
+			},
+		);
+
+		assert(
+			normalizedWholeSummary.snapshotTree.id !== undefined,
+			0x275 /* "Root tree should contain the id" */,
+		);
+		const wholeFlatSummaryId: string = normalizedWholeSummary.snapshotTree.id;
+		const snapshotTreeVersion = {
+			id: wholeFlatSummaryId,
+			snapshotTree: normalizedWholeSummary.snapshotTree,
+		};
 
         const cachePs: Promise<any>[] = [
             this.snapshotTreeCache.put(

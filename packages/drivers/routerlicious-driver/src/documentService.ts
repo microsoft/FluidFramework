@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import * as api from "@fluidframework/driver-definitions";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { GitManager, Historian, RestWrapper } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -20,6 +19,10 @@ import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
+import { pkgVersion as driverVersion } from "./packageVersion";
+import { GitManager } from "./gitManager";
+import { Historian } from "./historian";
+import { RestWrapper } from "./restWrapperBase";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -79,35 +82,33 @@ export class DocumentService implements api.IDocumentService {
             return new NullBlobStorageService();
         }
 
-        const getStorageManager = async (disableCache?: boolean): Promise<GitManager> => {
-            const shouldUpdateDiscoveredSessionInfo = this.shouldUpdateDiscoveredSessionInfo();
-            if (shouldUpdateDiscoveredSessionInfo) {
-                await this.refreshDiscovery();
-            }
-            if (!this.storageManager || !this.noCacheStorageManager || shouldUpdateDiscoveredSessionInfo) {
-                const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests);
-                const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
-                    this.tenantId,
-                    this.documentId,
-                    this.tokenProvider,
-                    this.logger,
-                    rateLimiter,
-                    this.driverPolicies.enableRestLess,
-                    this.storageUrl,
-                );
-                const historian = new Historian(
-                    this.storageUrl,
-                    true,
-                    false,
-                    storageRestWrapper);
-                this.storageManager = new GitManager(historian);
-                const noCacheHistorian = new Historian(
-                    this.storageUrl,
-                    true,
-                    true,
-                    storageRestWrapper);
-                this.noCacheStorageManager = new GitManager(noCacheHistorian);
-            }
+		const getStorageManager = async (disableCache?: boolean): Promise<GitManager> => {
+			const shouldUpdateDiscoveredSessionInfo = this.shouldUpdateDiscoveredSessionInfo();
+			if (shouldUpdateDiscoveredSessionInfo) {
+				await this.refreshDiscovery();
+			}
+			if (
+				!this.storageManager ||
+				!this.noCacheStorageManager ||
+				shouldUpdateDiscoveredSessionInfo
+			) {
+				const rateLimiter = new RateLimiter(
+					this.driverPolicies.maxConcurrentStorageRequests,
+				);
+				const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+					this.tenantId,
+					this.documentId,
+					this.tokenProvider,
+					this.logger,
+					rateLimiter,
+					this.driverPolicies.enableRestLess,
+					this.storageUrl,
+				);
+				const historian = new Historian(true, false, storageRestWrapper);
+				this.storageManager = new GitManager(historian);
+				const noCacheHistorian = new Historian(true, true, storageRestWrapper);
+				this.noCacheStorageManager = new GitManager(noCacheHistorian);
+			}
 
             return disableCache ? this.noCacheStorageManager : this.storageManager;
         };

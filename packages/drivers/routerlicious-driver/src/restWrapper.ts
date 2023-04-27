@@ -2,25 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as querystring from "querystring";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+
+import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {
-    getAuthorizationTokenFromCredentials,
-    RestLessClient,
-    RestWrapper,
+	getAuthorizationTokenFromCredentials,
+	RestLessClient,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";
 import { v4 as uuid } from "uuid";
 import { throwR11sNetworkError } from "./errorUtils";
-import { ITokenProvider } from "./tokens";
+import { ITokenProvider, ITokenResponse } from "./tokens";
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { QueryStringType, RestWrapper } from "./restWrapperBase";
 
 type AuthorizationHeaderGetter = (refresh?: boolean) => Promise<string | undefined>;
+type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 
 const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfig): [RequestInfo, RequestInit] => {
     const requestInfo: string = requestConfig.baseURL !== undefined
@@ -36,45 +37,156 @@ const axiosRequestConfigToFetchRequestConfig = (requestConfig: AxiosRequestConfi
     return [requestInfo, requestInit];
 };
 
+export interface IR11sResponse<T> {
+	content: T;
+	headers: Map<string, string>;
+	propsToLog: ITelemetryProperties;
+	requestUrl: string;
+}
+
+/**
+ * A utility function to create a r11s response without any additional props as we might not have them always.
+ * @param content - response which is equivalent to content.
+ * @returns - a r11s response without any extra props.
+ */
+export function createR11sResponseFromContent<T>(content: T): IR11sResponse<T> {
+	return {
+		content,
+		headers: new Map(),
+		propsToLog: {},
+		requestUrl: "",
+	};
+}
+
+function headersToMap(headers: Headers) {
+	const newHeaders = new Map<string, string>();
+	for (const [key, value] of headers.entries()) {
+		newHeaders.set(key, value);
+	}
+	return newHeaders;
+}
+
+export function getPropsToLogFromResponse(headers: {
+	get: (id: string) => string | undefined | null;
+}) {
+	interface LoggingHeader {
+		headerName: string;
+		logName: string;
+	}
+
+	// We rename headers so that otel doesn't scrub them away. Otel doesn't allow
+	// certain characters in headers including '-'
+	const headersToLog: LoggingHeader[] = [
+		{ headerName: "x-correlation-id", logName: "requestCorrelationId" },
+		{ headerName: "content-encoding", logName: "contentEncoding" },
+		{ headerName: "content-type", logName: "contentType" },
+	];
+	const additionalProps: ITelemetryProperties = {
+		contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
+	};
+	headersToLog.forEach((header) => {
+		const headerValue = headers.get(header.headerName);
+		if (headerValue !== undefined && headerValue !== null) {
+			additionalProps[header.logName] = headerValue;
+		}
+	});
+
+	return additionalProps;
+}
+
 export class RouterliciousRestWrapper extends RestWrapper {
     private authorizationHeader: string | undefined;
     private readonly restLess = new RestLessClient();
 
-    constructor(
-        logger: ITelemetryLogger,
-        private readonly rateLimiter: RateLimiter,
-        private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
-        private readonly useRestLess: boolean,
-        baseurl?: string,
-        defaultQueryString: querystring.ParsedUrlQueryInput = {},
-    ) {
-        super(baseurl, defaultQueryString);
-    }
+	constructor(
+		logger: ITelemetryLogger,
+		private readonly rateLimiter: RateLimiter,
+		private token: ITokenResponse,
+		private readonly fetchRefreshedToken: TokenFetcher,
+		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
+		private readonly useRestLess: boolean,
+		baseurl?: string,
+		defaultQueryString: QueryStringType = {},
+	) {
+		super(baseurl, defaultQueryString);
+	}
 
     public async load() {
         this.authorizationHeader = await this.getAuthorizationHeader();
     }
 
-    protected async request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry = true): Promise<T> {
-        const config = {
-            ...requestConfig,
-            headers: this.generateHeaders(requestConfig.headers),
-        };
+	protected async request<T>(
+		requestConfig: AxiosRequestConfig,
+		statusCode: number,
+		canRetry = true,
+	): Promise<IR11sResponse<T>> {
+		const config = {
+			...requestConfig,
+			headers: this.generateHeaders(requestConfig.headers),
+		};
 
         const translatedConfig = this.useRestLess ? this.restLess.translate(config) : config;
         const fetchRequestConfig = axiosRequestConfigToFetchRequestConfig(translatedConfig);
 
-        const response: Response = await this.rateLimiter.schedule(async () => fetch(...fetchRequestConfig)
-            .catch(async (error) => {
-                // Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
-                const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
-                throwR11sNetworkError(
-                    isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error));
-            }));
+		const res = await this.rateLimiter.schedule(async () => {
+			const perfStart = performance.now();
+			const result = await fetch(...fetchRequestConfig).catch(async (error) => {
+				// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
+				const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
+				throwR11sNetworkError(
+					isNetworkError ? `NetworkError: ${error.message}` : safeStringify(error),
+				);
+			});
+			return {
+				response: result,
+				duration: performance.now() - perfStart,
+			};
+		});
 
-        const responseBody: any = response.headers.get("content-type")?.includes("application/json")
-            ? await response.json()
-            : await response.text();
+		const response = res.response;
+
+		let start = performance.now();
+		const text = await response.text();
+		const receiveContentTime = performance.now() - start;
+
+		const bodySize = text.length;
+		start = performance.now();
+		const responseBody: any = response.headers.get("content-type")?.includes("application/json")
+			? JSON.parse(text)
+			: text;
+		const parseTime = performance.now() - start;
+
+		// Success
+		if (response.ok || response.status === statusCode) {
+			const result = responseBody as T;
+			const headers = headersToMap(response.headers);
+			return {
+				content: result,
+				headers,
+				requestUrl: fetchRequestConfig[0].toString(),
+				propsToLog: {
+					...getPropsToLogFromResponse(headers),
+					bodySize,
+					receiveContentTime,
+					parseTime,
+					fetchTime: res.duration,
+				},
+			};
+		}
+		// Failure
+		if (response.status === 401 && canRetry) {
+			// Refresh Authorization header and retry once
+			this.token = await this.fetchRefreshedToken(true /* refreshToken */);
+			return this.request<T>(config, statusCode, false);
+		}
+		if (response.status === 429 && responseBody?.retryAfter > 0) {
+			// Retry based on retryAfter[Seconds]
+			return new Promise<IR11sResponse<T>>((resolve, reject) =>
+				setTimeout(() => {
+					this.request<T>(config, statusCode).then(resolve).catch(reject);
+				}, responseBody.retryAfter * 1000),
+			);
+		}
 
         // Success
         if (response.ok || response.status === statusCode) {
@@ -122,16 +234,27 @@ export class RouterliciousRestWrapper extends RestWrapper {
 }
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
-    private constructor(
-        logger: ITelemetryLogger,
-        rateLimiter: RateLimiter,
-        getAuthorizationHeader: AuthorizationHeaderGetter,
-        useRestLess: boolean,
-        baseurl?: string,
-        defaultQueryString: querystring.ParsedUrlQueryInput = {},
-    ) {
-        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
-    }
+	private constructor(
+		logger: ITelemetryLogger,
+		rateLimiter: RateLimiter,
+		token: ITokenResponse,
+		fetchToken: TokenFetcher,
+		getAuthorizationHeader: AuthorizationHeaderGetter,
+		useRestLess: boolean,
+		baseurl?: string,
+		defaultQueryString: QueryStringType = {},
+	) {
+		super(
+			logger,
+			rateLimiter,
+			token,
+			fetchToken,
+			getAuthorizationHeader,
+			useRestLess,
+			baseurl,
+			defaultQueryString,
+		);
+	}
 
     public static async load(
         tenantId: string,
@@ -168,8 +291,37 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
             );
         };
 
-        const restWrapper = new RouterliciousStorageRestWrapper(
-            logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
+        const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
+			return PerformanceEvent.timedExecAsync(
+				logger,
+				{
+					eventName: "FetchStorageToken",
+					docId: documentId,
+				},
+				async () => {
+					// Craft credentials using tenant id and token
+					const storageToken = await tokenProvider.fetchStorageToken(
+						tenantId,
+						documentId,
+						refreshToken,
+					);
+					return storageToken;
+				},
+			);
+		};
+
+		const storagetoken = await fetchStorageToken();
+
+		const restWrapper = new RouterliciousStorageRestWrapper(
+			logger,
+			rateLimiter,
+			storagetoken,
+			fetchStorageToken,
+			getAuthorizationHeader,
+			useRestLess,
+			baseurl,
+			defaultQueryString,
+		);
         try {
             await restWrapper.load();
         } catch (e) {
@@ -183,16 +335,27 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 }
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
-    private constructor(
-        logger: ITelemetryLogger,
-        rateLimiter: RateLimiter,
-        getAuthorizationHeader: AuthorizationHeaderGetter,
-        useRestLess: boolean,
-        baseurl?: string,
-        defaultQueryString: querystring.ParsedUrlQueryInput = {},
-    ) {
-        super(logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl, defaultQueryString);
-    }
+	private constructor(
+		logger: ITelemetryLogger,
+		rateLimiter: RateLimiter,
+		token: ITokenResponse,
+		fetchToken: TokenFetcher,
+		getAuthorizationHeader: AuthorizationHeaderGetter,
+		useRestLess: boolean,
+		baseurl?: string,
+		defaultQueryString: QueryStringType = {},
+	) {
+		super(
+			logger,
+			rateLimiter,
+			token,
+			fetchToken,
+			getAuthorizationHeader,
+			useRestLess,
+			baseurl,
+			defaultQueryString,
+		);
+	}
 
     public static async load(
         tenantId: string,
@@ -221,8 +384,35 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
             );
         };
 
-        const restWrapper = new RouterliciousOrdererRestWrapper(
-            logger, rateLimiter, getAuthorizationHeader, useRestLess, baseurl);
+        const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
+			return PerformanceEvent.timedExecAsync(
+				logger,
+				{
+					eventName: "FetchOrdererToken",
+					docId: documentId,
+				},
+				async () => {
+					const ordererToken = await tokenProvider.fetchOrdererToken(
+						tenantId,
+						documentId,
+						refreshToken,
+					);
+					return ordererToken;
+				},
+			);
+        };
+
+		const newtoken = await fetchOrdererToken();
+
+		const restWrapper = new RouterliciousOrdererRestWrapper(
+			logger,
+			rateLimiter,
+			newtoken,
+			fetchOrdererToken,
+			getAuthorizationHeader,
+			useRestLess,
+			baseurl,
+		);
         try {
             await restWrapper.load();
         } catch (e) {

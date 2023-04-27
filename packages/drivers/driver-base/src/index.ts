@@ -4,3 +4,4 @@
  */
 
 export * from "./documentDeltaConnection";
+export { getW3CData } from "./driverUtils";
