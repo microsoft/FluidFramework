@@ -4,7 +4,7 @@
  */
 import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
 
-import { initializeDevtools } from "@fluid-experimental/routerlicious-devtools";
+import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/routerlicious-devtools";
 import {
 	AzureClient,
 	AzureContainerServices,
@@ -105,10 +105,13 @@ async function initializeNewContainer(
 }
 
 async function start(): Promise<void> {
+	const logger = DevtoolsLogger.create("test-namespace");
+
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 	// and hook to the Telemetry system
 	const clientProps = {
 		connection: connectionConfig,
+		logger,
 	};
 	const client = new AzureClient(clientProps);
 
@@ -155,9 +158,8 @@ async function start(): Promise<void> {
 	const diceRollerController2 = new DiceRollerController(diceRollerController2Props);
 
 	// Initialize Devtools
-	// TODO: logger
 	initializeDevtools({
-		logger: undefined,
+		logger,
 		initialContainers: [
 			{
 				container,
