@@ -261,7 +261,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param undoRedoType - if provided, the new commit will be tracked for undo/redo
 	 * @returns the new commit that was appended to the root local branch
 	 */
-	protected applyChange(
+	private applyChange(
 		change: TChange,
 		revision: RevisionTag,
 		undoRedoType: UndoRedoManagerCommitType | undefined,
