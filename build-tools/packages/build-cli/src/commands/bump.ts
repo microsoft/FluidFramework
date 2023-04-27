@@ -8,7 +8,7 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as semver from "semver";
 
-import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepo, MonoRepoKind, Package } from "@fluidframework/build-tools";
 
 import {
 	ReleaseVersion,
@@ -107,6 +107,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		if (args.package_or_release_group === undefined) {
 			this.error("ERROR: No dependency provided.");
+		}
+
+		// can be removed once server team owns their releases
+		if (args.package_or_release_group === MonoRepoKind.Server && flags.bumpType === "minor") {
+			this.error(`ERROR: Server release are always a ${chalk.bold("MAJOR")} release`);
 		}
 
 		if (bumpType === undefined && flags.exact === undefined) {

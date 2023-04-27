@@ -6,7 +6,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
 
-import { FluidRepo } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepoKind } from "@fluidframework/build-tools";
 
 import { packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
@@ -67,6 +67,10 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		commit: checkFlags.commit,
 		install: checkFlags.install,
 		skipChecks: skipCheckFlag,
+		branchName: Flags.string({
+			char: "b",
+			description: "Takes in the branch name as main or next",
+		}),
 		...BaseCommand.flags,
 	};
 
@@ -92,6 +96,12 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				"Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with release ranges.",
 			command: "<%= config.bin %> <%= command.id %> server -t latest",
 		},
+		{
+			description:
+				"Bump dependencies on packages in server release group to the latest released version in the client release group against main branch. Include pre-release versions.",
+			command:
+				"<%= config.bin %> <%= command.id %> server -g client -t latest -b main --prerelease",
+		},
 	];
 
 	/**
@@ -112,6 +122,24 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		if (args.package_or_release_group === undefined) {
 			this.error("ERROR: No dependency provided.");
+		}
+
+		// can be removed once server team owns their releases
+		if (args.package_or_release_group === MonoRepoKind.Server && flags.updateType === "minor") {
+			this.error(`ERROR: Server release are always a ${chalk.bold("MAJOR")} release`);
+		}
+
+		if (args.package_or_release_group === MonoRepoKind.Server && flags.prerelease === true) {
+			this.info(
+				`${chalk.red.bold(
+					"Client packages on main branch should NOT be consuming prereleases from server. Server prereleases should be consumed in next branch only",
+				)}`,
+			);
+			if (flags.branchName === "undefined" || flags.branchName === "main") {
+				this.error(
+					`Server prereleases should be consumed in ${chalk.bold("next")} branch only`,
+				);
+			}
 		}
 
 		/**
