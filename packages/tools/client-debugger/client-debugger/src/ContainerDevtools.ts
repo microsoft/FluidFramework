@@ -51,7 +51,7 @@ import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Featu
  */
 export interface ContainerDevtoolsProps {
 	/**
-	 * The Container with which the {@link ContainerDevtools} instance will be associated.
+	 * The Container with which the {@link IContainerDevtools} instance will be associated.
 	 */
 	container: IContainer;
 
@@ -153,7 +153,6 @@ export interface ContainerDevtoolsProps {
  * TODO: Document others as they are added.
  *
  * @sealed
- * @internal
  */
 export class ContainerDevtools implements IContainerDevtools {
 	/**

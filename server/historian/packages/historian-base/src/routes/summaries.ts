@@ -83,14 +83,14 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<IWholeFlatSummary> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getSummary(sha, useCache);
 	}
 
@@ -99,15 +99,18 @@ export function create(
 		authorization: string,
 		params: IWholeSummaryPayload,
 		initial?: boolean,
+		storageName?: string,
 	): Promise<IWriteSummaryResponse> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+			initialUpload: initial,
+			storageName,
+		});
 		return service.createSummary(params, initial);
 	}
 
@@ -116,15 +119,15 @@ export function create(
 		authorization: string,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-			true,
-		);
+			allowDisabledTenant: true,
+		});
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			deletionPs.push(
@@ -181,6 +184,7 @@ export function create(
 				request.get("Authorization"),
 				request.body,
 				initial,
+				request.get("StorageName"),
 			);
 
 			utils.handleResponse(summaryP, response, false, undefined, 201);

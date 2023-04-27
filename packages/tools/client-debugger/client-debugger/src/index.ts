@@ -46,7 +46,7 @@
 export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
 export { FluidObjectId, HasContainerId, HasFluidObjectId } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
-export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
+export { ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
@@ -78,7 +78,7 @@ export {
 export { IContainerDevtools } from "./IContainerDevtools";
 export { IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
-export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
+export { FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
