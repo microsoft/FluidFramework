@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Lazy } from "@fluidframework/common-utils";
+import * as semver from "semver";
+import { Lazy, assert } from "@fluidframework/common-utils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
 import {
@@ -32,7 +33,9 @@ interface CompatConfig {
 
 // N and N - 1
 const defaultVersions = [0, -1];
-// we are currently supporting 0.45 long-term
+// Set to true to test back-compat loader and loader-driver scenarios for older versions
+const fullBackCompat = false;
+// we are currently supporting 1.3.4 long-term
 const LTSVersions = ["^1.3.4"];
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
@@ -130,6 +133,45 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 	];
 };
 
+const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
+	return [
+		{
+			name: `compat FULL ${compatVersion} - older loader`,
+			kind: CompatKind.Loader,
+			compatVersion,
+			loader: compatVersion,
+		},
+		{
+			name: `compat FULL ${compatVersion} - older loader + older driver`,
+			kind: CompatKind.LoaderDriver,
+			compatVersion,
+			driver: compatVersion,
+			loader: compatVersion,
+		},
+	];
+};
+
+const genFullBackCompatConfig = (): CompatConfig[] => {
+	const _configList: CompatConfig[] = [];
+	// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
+	let semverInternal: string | undefined;
+	if (pkgVersion.startsWith("2.0.0-internal.")) {
+		semverInternal = pkgVersion.split("internal.")[1];
+	}
+
+	if (pkgVersion.startsWith("2.0.0-dev.")) {
+		semverInternal = pkgVersion.split("dev.")[1];
+	}
+
+	assert(semverInternal !== undefined, "Unexpected pkg version");
+	const semverVal = new semver.SemVer(semverInternal);
+	const num = semverVal.major;
+	for (let i = 1; i < num; i++) {
+		_configList.push(...genBackCompatConfig(0 - i));
+	}
+	return _configList;
+};
+
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	// set it in the env for parallel workers
 	if (compatKind) {
@@ -148,6 +190,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		defaultVersions.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
+		if (fullBackCompat) {
+			_configList.push(...genFullBackCompatConfig());
+		}
 		LTSVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
@@ -157,6 +202,8 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 				LTSVersions.forEach((lts) => {
 					_configList.push(...genLTSConfig(lts));
 				});
+			} else if (value === "FULL") {
+				_configList.push(...genFullBackCompatConfig());
 			} else {
 				const num = parseInt(value, 10);
 				if (num.toString() === value) {

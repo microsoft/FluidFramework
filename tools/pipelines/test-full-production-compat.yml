@@ -1,0 +1,178 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# test-real-service-e2e pipeline testing loader-runtime compatibility for all up-to-date minor versions
+
+name: $(Build.BuildId)
+
+trigger: none
+pr: none
+
+schedules:
+  - cron: "00 0,4,8,12,16,20 * * MON,TUE,WED,THU,FRI,SAT"
+    displayName: Scheduled Tests every 4 hours of the day
+    branches:
+      include:
+      - main
+      - next
+    always: true
+
+resources:
+  pipelines:
+  - pipeline: client   # Name of the pipeline resource
+    source: Build - client packages
+    branch: main # Default branch for manual/scheduled triggers if none is selected
+
+variables:
+- group: prague-key-vault
+- name: testWorkspace
+  value: $(Pipeline.Workspace)/test
+- name: testPackage
+  value: "@fluid-internal/test-end-to-end-tests"
+  readonly: true
+
+lockBehavior: sequential
+stages:
+  # end-to-end tests local server
+  - stage:
+    displayName: e2e - local server
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        testCommand: test:realsvc:local:report
+        splitTestVariants:
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: full-compat
+            flags: --compatVersion=FULL
+          - name: LTS
+            flags: --compatVersion=LTS
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # end-to-end tests tinylicious
+  - stage:
+    displayName: e2e - tinylicious
+    dependsOn: []
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        testCommand: test:realsvc:tinylicious:report
+        splitTestVariants:
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: full-compat
+            flags: --compatVersion=FULL
+          - name: LTS
+            flags: --compatVersion=LTS
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+          # Disable colorization for tinylicious logs (not useful when printing to a file)
+          logger__colorize: false
+          logger__morganFormat: tiny
+        additionalSteps:
+
+        # Publish the tinylicious log
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Tinylicious Log
+          inputs:
+            # NOTE: this depends on knowledge of what the template does and where it puts things.
+            # If the template changes its logic, we might need to adjust this path.
+            targetPath: '${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}/tinylicious.log'
+            artifactName: 'tinyliciousLog'
+            publishLocation: 'pipeline'
+
+  # end-to-end tests routerlicious
+  - stage:
+    displayName: e2e - routerlicious
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-r11s-lock
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        testCommand: test:realsvc:routerlicious:report
+        continueOnError: true
+        r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
+        splitTestVariants:
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: full-compat
+            flags: --compatVersion=FULL
+          - name: LTS
+            flags: --compatVersion=LTS
+        env:
+          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # end-to-end tests frs
+  - stage:
+    displayName: e2e - frs
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-frs-lock
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        timeoutInMinutes: 360
+        continueOnError: true
+        testCommand: test:realsvc:frs:report
+        splitTestVariants:
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: full-compat
+            flags: --compatVersion=FULL
+          - name: LTS
+            flags: --compatVersion=LTS
+        env:
+          fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+
+  # end-to-end tests odsp
+  - stage:
+    displayName:  e2e - odsp
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: e2e-odsp-lock
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Small
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        timeoutInMinutes: 360
+        continueOnError: true
+        testCommand: test:realsvc:odsp:report
+        splitTestVariants:
+          - name: Non-compat
+            flags: --compatVersion=0
+          - name: full-compat
+            flags: --compatVersion=FULL --tenantIndex=0
+          - name: LTS
+            flags: --compatVersion=LTS --tenantIndex=2
+        env:
+          login__microsoft__clientId: $(login-microsoft-clientId)
+          login__microsoft__secret: $(login-microsoft-secret)
+          login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
