@@ -22,17 +22,29 @@ import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalC
 import { SharedStringFactory } from "../sequenceFactory";
 import { assertIntervals } from "./intervalUtils";
 
-describe("Sequence.Revertibles with Local Edits", () => {
+describe.only("Sequence.Revertibles with Local Edits", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 	let collection: IntervalCollection<SequenceInterval>;
 	let revertibles: IntervalRevertible[];
+	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	const stringFactory = new SharedStringFactory();
 
 	beforeEach(() => {
+		containerRuntimeFactory = new MockContainerRuntimeFactory();
+
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime1.local = true;
+		dataStoreRuntime1.local = false;
 		sharedString = stringFactory.create(dataStoreRuntime1, "shared-string-1");
+
+		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+		const services1 = {
+			deltaConnection: containerRuntime1.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		};
+		sharedString.initializeLocal();
+		sharedString.connect(services1);
+
 		collection = sharedString.getIntervalCollection("test");
 		revertibles = [];
 	});
@@ -64,7 +76,6 @@ describe("Sequence.Revertibles with Local Edits", () => {
 	it("revert direct interval change", () => {
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
 			appendLocalChangeToRevertibles(sharedString, interval, previousInterval, revertibles);
-			console.log(`${revertibles.length}`);
 		});
 
 		sharedString.insertText(0, "hello world");
@@ -90,11 +101,93 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		const int = collection.getIntervalById(id);
 		assert.equal(int?.properties.foo, "one");
 	});
+	it("reverts multiple interval adds", () => {
+		collection.on("addInterval", (interval, local, op) => {
+			appendLocalAddToRevertibles(interval, revertibles);
+		});
+
+		sharedString.insertText(0, "hello world");
+		collection.add(0, 5, IntervalType.Simple);
+		collection.add(5, 7, IntervalType.Simple);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, []);
+	});
+	it("reverts multiple interval removes", () => {
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id2 = collection.add(5, 7, IntervalType.Simple).getIntervalId()!;
+		collection.removeIntervalById(id);
+		collection.removeIntervalById(id2);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [
+			{ start: 0, end: 5 },
+			{ start: 5, end: 7 },
+		]);
+	});
+	it("performs multiple reverts on the same interval", () => {
+		collection.on("addInterval", (interval, local, op) => {
+			appendLocalAddToRevertibles(interval, revertibles);
+		});
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendLocalChangeToRevertibles(sharedString, interval, previousInterval, revertibles);
+		});
+
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		collection.change(id, 3, 8);
+		collection.removeIntervalById(id);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, []);
+	});
+	it("performs two local changes, then reverts the first", () => {
+		collection.on("addInterval", (interval, local, op) => {
+			appendLocalAddToRevertibles(interval, revertibles);
+		});
+
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		collection.change(id, 3, 8);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, []);
+	});
+	it("performs two local changes, acks the second, and then reverts the first", () => {
+		collection.on("addInterval", (interval, local, op) => {
+			appendLocalAddToRevertibles(interval, revertibles);
+		});
+
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+
+		collection.change(id, 3, 8);
+		containerRuntimeFactory.processOneMessage();
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, []);
+	});
 });
-describe("Sequence.Revertibles with Remote Edits", () => {
+describe.only("Sequence.Revertibles with Remote Edits", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 	let collection: IntervalCollection<SequenceInterval>;
+	let collection2: IntervalCollection<SequenceInterval>;
 	let revertibles: IntervalRevertible[];
 
 	let sharedString2: SharedString;
@@ -138,8 +231,10 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		revertibles = [];
 		collection = sharedString.getIntervalCollection("test");
+		collection2 = sharedString2.getIntervalCollection("test");
 	});
-	it("remote delete interacting with reverting an interval remove", () => {
+
+	it("remote string remove interacting with reverting an interval remove", () => {
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
 		});
@@ -156,11 +251,30 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		containerRuntimeFactory.processAllMessages();
 
 		assert.equal(sharedString.getText(), sharedString2.getText());
-		// These endpoints will be updated when interval sliding is fixed.
-		assertIntervals(sharedString, collection, [{ start: 0, end: 3 /* end: 5 */ }]);
-		assertIntervals(sharedString2, collection, [{ start: 0, end: 3 /* end: 5 */ }]);
+		assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 3 }]);
 	});
-	it("remote add interacting with reverting an interval delete", () => {
+	it("remote string remove that shares an endpoint with a removed interval that gets reverted", () => {
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		collection.removeIntervalById(id);
+		containerRuntimeFactory.processAllMessages();
+
+		sharedString2.removeRange(0, 3);
+		containerRuntimeFactory.processAllMessages();
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assert.equal(sharedString.getText(), sharedString2.getText());
+		assertIntervals(sharedString, collection, [{ start: 0, end: 2 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 2 }]);
+	});
+	it("remote string add interacting with reverting an interval remove", () => {
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
 		});
@@ -169,8 +283,8 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		const id = collection.add(0, 7, IntervalType.Simple).getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
-		sharedString2.insertText(5, " hi");
 		collection.removeIntervalById(id);
+		sharedString2.insertText(5, " hi");
 		containerRuntimeFactory.processAllMessages();
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -178,5 +292,178 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		assert.equal(sharedString.getText(), sharedString2.getText());
 		assertIntervals(sharedString, collection, [{ start: 0, end: 10 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 10 }]);
+	});
+	it("remote interval change interacting with reverting an interval remove", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		collection.removeIntervalById(id);
+		containerRuntimeFactory.processAllMessages();
+
+		collection2.change(id, 3, 8);
+		containerRuntimeFactory.processAllMessages();
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
+	});
+	it("acked remote interval change interacting with reverting an interval change", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection2.change(id, 3, 8);
+
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendLocalChangeToRevertibles(sharedString, interval, previousInterval, revertibles);
+		});
+		collection.change(id, 4, 9);
+		containerRuntimeFactory.processOneMessage();
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
+	});
+	it("remote interval change interacting with reverting an interval remove", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		collection.removeIntervalById(id);
+		containerRuntimeFactory.processOneMessage();
+
+		collection2.change(id, 3, 8);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
+	});
+	it("remote interval remove interacting with reverting an interval property change", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
+			appendLocalPropertyChangedToRevertibles(interval, propertyDeltas, revertibles);
+		});
+		collection.changeProperties(id, { foo: "two" });
+		containerRuntimeFactory.processAllMessages();
+
+		collection2.removeIntervalById(id);
+
+		containerRuntimeFactory.processAllMessages();
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, []);
+		assertIntervals(sharedString2, collection2, []);
+	});
+	it("remote interval remove interacting with reverting an interval remove", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		collection.removeIntervalById(id);
+		containerRuntimeFactory.processAllMessages();
+
+		collection2.removeIntervalById(id);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
+	});
+	it("remote interval property change interacting with reverting an interval remove", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		collection.removeIntervalById(id);
+		containerRuntimeFactory.processAllMessages();
+
+		collection2.changeProperties(id, { foo: "two" });
+		containerRuntimeFactory.processAllMessages();
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
+		const int = collection.getIntervalById(id);
+		assert.equal(int?.properties.foo, "one");
+	});
+	it("remote interval property change interacting with reverting an interval add", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection.on("addInterval", (interval, local, op) => {
+			appendLocalAddToRevertibles(interval, revertibles);
+		});
+		collection.add(2, 7, IntervalType.Simple);
+		containerRuntimeFactory.processAllMessages();
+
+		collection2.changeProperties(id, { foo: "two" });
+		containerRuntimeFactory.processAllMessages();
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
+		const int = collection.getIntervalById(id);
+		assert.equal(int?.properties.foo, "two");
+	});
+	it("remote interval property change interacting with reverting an interval change", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendLocalChangeToRevertibles(sharedString, interval, previousInterval, revertibles);
+		});
+		collection.change(id, 3, 8);
+		containerRuntimeFactory.processAllMessages();
+
+		collection2.changeProperties(id, { foo: "two" });
+		containerRuntimeFactory.processAllMessages();
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
+		const int = collection.getIntervalById(id);
+		assert.equal(int?.properties.foo, "two");
 	});
 });
