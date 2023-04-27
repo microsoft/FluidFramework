@@ -38,7 +38,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Adds the provided commit to the undo or redo commit tree, depending on the type of commit it is.
-	 * Should be called for all commits on the relevant branch, including undo commits.
+	 * Should be called for all commits on the relevant branch, including undo and redo commits.
 	 * If no commit type is passed in, it is assumed to an undoable commit.
 	 */
 	public trackCommit(
@@ -48,34 +48,75 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		const repairData = this.repairDataStoreProvider.createRepairData();
 		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
 
-		const parent = undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo ? this.headRedoableCommit : this.headUndoableCommit;
-
-		if (undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo) {
-			this.headUndoableCommit = this.headUndoableCommit?.parent;
-		} else if (undoRedoManagerCommitType === UndoRedoManagerCommitType.Redo) {
-			this.headRedoableCommit = this.headRedoableCommit?.parent;
-		}
-
-		this.headUndoableCommit = {
+		const parent =
+			undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo
+				? this.headRedoableCommit
+				: this.headUndoableCommit;
+		const undoableOrRedoable = {
 			commit,
 			parent,
 			repairData,
+		};
+
+		if (undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo) {
+		} else if (undoRedoManagerCommitType === UndoRedoManagerCommitType.Redo) {
+		}
+
+		switch (undoRedoManagerCommitType) {
+			// Both undo commits and redoable commits result in a new head redoable commit
+			// being pushed to the redoable commit stack but only undo commits need to pop from the
+			// undoable commit stack.
+			case UndoRedoManagerCommitType.Undo:
+				this.headUndoableCommit = this.headUndoableCommit?.parent;
+			case UndoRedoManagerCommitType.Redoable:
+				this.headRedoableCommit = undoableOrRedoable;
+				break;
+			// Both redo commits and undoable commits result in a new head undoable commit
+			// being pushed to the undoable commit stack but only redo commits need to pop from the
+			// redoable commit stack.
+			case UndoRedoManagerCommitType.Redo:
+				this.headRedoableCommit = this.headRedoableCommit?.parent;
+			case UndoRedoManagerCommitType.Undoable:
+			default:
+				this.headRedoableCommit = undoableOrRedoable;
+				break;
 		}
 	}
 
 	/**
-	 * Inverts the head undo commit and returns the inverted change.
+	 * Inverts the head undoable commit and returns the inverted change.
 	 * This change can then be applied and tracked.
 	 */
 	public undo(): TChange | undefined {
-		const commitToUndo = this.headUndoableCommit;
+		const undoableCommit = this.headUndoableCommit;
 
-		if (commitToUndo === undefined) {
+		if (undoableCommit === undefined) {
 			// No undoable commits, exit early
 			return undefined;
 		}
 
-		const { commit, repairData } = commitToUndo;
+		return this.createInvertedChange(undoableCommit);
+	}
+
+	/**
+	 * Inverts the head redoable commit and returns the inverted change.
+	 * This change can then be applied and tracked.
+	 */
+	public redo(): TChange | undefined {
+		const redoableCommit = this.headRedoableCommit;
+
+		if (redoableCommit === undefined) {
+			// No undoable commits, exit early
+			return undefined;
+		}
+
+		return this.createInvertedChange(redoableCommit);
+	}
+
+	private createInvertedChange(
+		undoableOrRedoable: UndoableCommit<TChange> | RedoableCommit<TChange>,
+	): TChange {
+		const { commit, repairData } = undoableOrRedoable;
 
 		let change = this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
@@ -198,7 +239,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 /**
  * Represents a commit that can be undone.
  */
-interface UndoableCommit<TChange> {
+export interface UndoableCommit<TChange> {
 	/* The commit to undo */
 	readonly commit: GraphCommit<TChange>;
 	/* The repair data associated with the commit */

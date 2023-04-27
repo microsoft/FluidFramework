@@ -386,6 +386,21 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	/**
+	 * Redoes the last completed undo made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 */
+	public redo(): void {
+		// TODO: allow this once it becomes possible to compose the changesets created by edits made
+		// within transactions and edits that represent completed transactions.
+		assert(!this.isTransacting(), 0x66b /* Undo is not yet supported during transactions */);
+
+		const redoChange = this.editManager.localBranchUndoRedoManager.redo();
+		if (redoChange !== undefined) {
+			this.applyChange(redoChange, undefined, UndoRedoManagerCommitType.Redo);
+		}
+	}
+
+	/**
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.
 	 * @remarks

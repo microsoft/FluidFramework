@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 import {
 	ChangeFamilyEditor,
 	ChangeRebaser,
@@ -35,6 +35,10 @@ describe("UndoRedoManager", () => {
 			assert.equal(headUndoCommit?.parent, parent);
 		});
 
+		it("should create an redoable commit with the provided commit as the child", () => {
+			fail();
+		});
+
 		it("pops the head undoable commit when an undo commit is tracked", () => {
 			const initialCommit = {
 				commit: createTestGraphCommit([], 0, localSessionId),
@@ -46,10 +50,22 @@ describe("UndoRedoManager", () => {
 			// The head undo commit will not be the new inverted commit
 			assert.equal(manager.headUndoable, undefined);
 		});
+
+		it("pops the head undoable commit and pushes to the redoable commit tree when a redo commit is tracked", () => {
+			fail();
+		});
+
+		it("should add undoable commits to the undoable commit tree without changing the redoable commit tree", () => {
+			fail();
+		});
+
+		it("should add redoable commits to the redoable commit tree without changing the undoable commit tree", () => {
+			fail();
+		});
 	});
 
 	describe("undo", () => {
-		it("should undo the head undo commit", () => {
+		it("should create an invert of the head undoable commit", () => {
 			const initialCommit = {
 				commit: createTestGraphCommit([], 0, localSessionId),
 				repairData: new MockRepairDataStore(),
@@ -63,11 +79,19 @@ describe("UndoRedoManager", () => {
 			assert.equal(manager.headUndoable, initialCommit);
 		});
 
-		it("should do nothing if there is no head undo commit", () => {
+		it("should create an invert of the head redoable commit", () => {
+			fail();
+		});
+
+		it("should return undefined if there is no head undoble commit", () => {
 			const manager = undoRedoManagerFactory();
 			manager.undo();
 
 			assert.equal(manager.headUndoable, undefined);
+		});
+
+		it("should return undefined if there is no head redoble commit", () => {
+			fail();
 		});
 	});
 });

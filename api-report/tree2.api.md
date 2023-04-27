@@ -805,6 +805,7 @@ export interface ISharedTreeView extends AnchorLocator {
     fork(): ISharedTreeFork;
     readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
     merge(view: ISharedTreeFork): void;
+    redo(): void;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
