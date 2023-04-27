@@ -85,11 +85,13 @@ export interface NodeRangePath {
 }
 
 export interface DisconnectionOp {
+	type: "disconnect";
 	index: number;
 	isObserver: boolean;
 }
 
 export interface ReconnectionOp {
+	type: "reconnect";
 	index: number;
 	isObserver: boolean;
 }
