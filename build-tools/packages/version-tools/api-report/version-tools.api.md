@@ -53,6 +53,9 @@ export function isVersionBumpTypeExtended(type: VersionChangeType | string): typ
 export function isVersionScheme(scheme: string): scheme is VersionScheme;
 
 // @public
+export const parseWorkspaceProtocol: (version: string) => [boolean, string];
+
+// @public
 export type ReleaseVersion = string;
 
 // @public (undocumented)
@@ -78,6 +81,9 @@ export type VersionChangeTypeExtended = VersionBumpTypeExtended | SemVer;
 
 // @public
 export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virtualPatch";
+
+// @public
+export const WORKSPACE_PROTOCOL_PREFIX: string;
 
 // (No @packageDocumentation comment for this package)
 

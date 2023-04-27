@@ -7,6 +7,7 @@ import * as semver from "semver";
 import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
 	bumpInternalVersion,
+	detectInternalVersionConstraintType,
 	fromInternalScheme,
 	getVersionRange,
 	isInternalVersionScheme,
@@ -14,13 +15,15 @@ import {
 } from "./internalVersionScheme";
 import { bumpVersionScheme, detectVersionScheme } from "./schemes";
 import { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";
+import { parseWorkspaceProtocol, WORKSPACE_PROTOCOL_PREFIX } from "./workspace";
 
 /**
  * Return the version RANGE incremented by the bump type (major, minor, or patch).
  *
  * @remarks
  *
- * Only simple "^" and "~" ranges and Fluid internal version scheme ranges are supported.
+ * Supports Fluid internal version scheme ranges, and both standard semvers and Fluid internal versions with a "^" or
+ * "~".
  *
  * @param range - A dependency range string to increment.
  * @param bumpType - The type of bump.
@@ -32,17 +35,40 @@ export function bumpRange(
 	bumpType: VersionBumpTypeExtended,
 	prerelease = false,
 ): string {
-	if (semver.validRange(range) === null) {
-		throw new Error(`${range} is not a valid semver range.`);
+	const [isWorkspaceProtocol, rangeToBump] = parseWorkspaceProtocol(range);
+
+	if (semver.validRange(rangeToBump) === null && rangeToBump.length !== 1) {
+		throw new Error(`${rangeToBump} is not a valid semver range.`);
 	}
 
-	const scheme = detectVersionScheme(range);
+	/** The range operator (e.g. ~, ^, *, \<, \>). */
+	const operator = rangeToBump[0];
+
+	/** True if the range has no version; it's an operator only. We only expect this when using the workspace protocol. */
+	const operatorOnly = rangeToBump.length === 1;
+
+	if (operatorOnly) {
+		if (!isWorkspaceProtocol) {
+			throw new Error(
+				`${rangeToBump} is not a valid semver range. Did you mean to use the workspace protocol?`,
+			);
+		}
+
+		// Return the original range since this is a workspace protocol range with no explicit version.
+		return range;
+	}
+
+	// if the string is both a valid range and a valid version, then it's a precise version constraint.
+	const isPreciseVersion =
+		semver.validRange(rangeToBump) !== null && semver.valid(rangeToBump) !== null;
+	const scheme = detectVersionScheme(rangeToBump);
+	let newRange: string;
+
 	switch (scheme) {
+		// case "internal":
 		case "virtualPatch":
 		case "semver": {
-			const operator = range.slice(0, 1);
-			const isPreciseVersion = operator !== "^" && operator !== "~";
-			const original = isPreciseVersion ? range : range.slice(1);
+			const original = isPreciseVersion ? rangeToBump : rangeToBump.slice(1);
 			const parsedVersion = semver.parse(original);
 			const originalNoPrerelease = `${parsedVersion?.major}.${parsedVersion?.minor}.${parsedVersion?.patch}`;
 			const newVersion =
@@ -54,47 +80,35 @@ export function bumpRange(
 			if (newVersion === null) {
 				throw new Error(`Failed to increment ${original}.`);
 			}
-			return `${isPreciseVersion ? "" : operator}${newVersion}${prerelease ? "-0" : ""}`;
+			newRange = `${isPreciseVersion ? "" : operator}${newVersion}${prerelease ? "-0" : ""}`;
+			break;
 		}
 
 		case "internal": {
-			const constraintType = detectConstraintType(range);
-			const original = semver.minVersion(range);
+			const original = semver.minVersion(rangeToBump);
 			if (original === null) {
-				throw new Error(`Couldn't determine minVersion from ${range}.`);
+				throw new Error(`Couldn't determine minVersion from ${rangeToBump}.`);
 			}
 			const newVersion = bumpInternalVersion(original, bumpType);
-			return getVersionRange(newVersion, constraintType);
+			const constraintType = detectInternalVersionConstraintType(rangeToBump);
+
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (isWorkspaceProtocol) {
+				// When using the workspace protocol, we should use ~ and ^ ranges, even for Fluid internal versions.
+				newRange = `${isPreciseVersion ? "" : operator}${newVersion}`;
+			} else {
+				// Otherwise use >= < ranges for internal versions.
+				newRange = getVersionRange(newVersion, constraintType);
+			}
+			break;
 		}
 
 		default: {
 			throw new Error(`${scheme} wasn't handled. Was a new version scheme added?`);
 		}
 	}
-}
 
-/**
- * Detects the type of upgrade constraint that a version range represents. Only works for Fluid internal version scheme
- * versions.
- *
- * @param range - The range to check.
- * @returns The constraint type.
- *
- * @remarks
- *
- * Throws an Error if the range is not valid.
- */
-export function detectConstraintType(range: string): "minor" | "patch" {
-	const minVer = semver.minVersion(range);
-	if (minVer === null) {
-		throw new Error(`Couldn't determine minVersion from ${range}.`);
-	}
-
-	const patch = bumpInternalVersion(minVer, "patch");
-	const minor = bumpInternalVersion(minVer, "minor");
-
-	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
-	return maxSatisfying === patch ? "patch" : "minor";
+	return isWorkspaceProtocol ? `${WORKSPACE_PROTOCOL_PREFIX}${newRange}` : newRange;
 }
 
 /**

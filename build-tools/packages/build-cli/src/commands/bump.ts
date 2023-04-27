@@ -48,7 +48,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}),
 		exact: Flags.string({
 			description:
-				"An exact string to use as the version. The string must be a valid semver string.",
+				"An exact string to use as the version. The string must be a valid semver version string.",
 			exclusive: ["bumpType", "scheme"],
 		}),
 		scheme: versionSchemeFlag({
@@ -58,9 +58,15 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}),
 		exactDepType: Flags.string({
 			description:
-				'Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
+				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies.',
 			options: ["^", "~", ""],
 			default: "^",
+		}),
+		workspaceProtocol: Flags.boolean({
+			char: "w",
+			description:
+				"If packages are using the workspace protocol, preserve it when bumping versions. This option defaults to false so that when publishing packages the workspace protocol is replaced with the correct version. You must pass this flag to preserve the workspace protocol when bumping.",
+			default: false,
 		}),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
@@ -102,6 +108,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		const context = await this.getContext();
 		const bumpType: VersionBumpType | undefined = flags.bumpType;
+		const workspaceProtocol: boolean = flags.workspaceProtocol;
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
@@ -188,6 +195,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
+		this.log(`Workspace protocol: ${workspaceProtocol ? chalk.green("yes") : "no"}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
 		this.log(`Exact dependency type: ${exactDepType === "" ? "exact" : exactDepType}`);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
@@ -210,10 +218,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			}
 		}
 
+		this.log(`Updating version...`);
 		await bumpReleaseGroup(
 			context,
 			bumpArg,
 			packageOrReleaseGroup,
+			workspaceProtocol,
 			scheme,
 			exactDepType,
 			this.logger,

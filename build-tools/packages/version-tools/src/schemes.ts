@@ -12,6 +12,7 @@ import {
 	isInternalVersionScheme,
 } from "./internalVersionScheme";
 import { bumpVirtualPatchVersion, isVirtualPatch } from "./virtualPatchScheme";
+import { parseWorkspaceProtocol } from "./workspace";
 
 /**
  * A type defining the version schemes that can be used for packages.
@@ -20,7 +21,7 @@ import { bumpVirtualPatchVersion, isVirtualPatch } from "./virtualPatchScheme";
  *
  * - "internal" is the 2.0.0-internal.1.0.0 scheme.
  *
- * - "internalPrerelease" is the 2.0.0-internal.1.0.0.[CI build #] scheme.
+ * - "internalPrerelease" is the 2.0.0-dev.1.0.0.[CI build #] scheme.
  *
  * - "virtualPatch" is the 0.36.1002 scheme.
  */
@@ -44,25 +45,47 @@ export function isVersionScheme(scheme: string): scheme is VersionScheme {
  * @returns The version scheme that the string is in.
  */
 export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme {
-	// First check if the string is a valid internal version
-	if (isInternalVersionScheme(rangeOrVersion)) {
+	const [, rangeOrVersionToCheck] =
+		typeof rangeOrVersion === "string"
+			? parseWorkspaceProtocol(rangeOrVersion)
+			: [false, rangeOrVersion];
+
+	// Check if the value is a valid internal or version
+	if (
+		isInternalVersionScheme(rangeOrVersionToCheck) ||
+		(typeof rangeOrVersionToCheck === "string" &&
+			// isInternalVersionRange does not identify strings starting with tilde or caret as valid internal ranges. This is
+			// correct. However, for the version scheme detection we want to allow tilde and caret strings even though they
+			// need to be translated to >= < ranges before they can be used with semver. To allow this we call
+			// isInternalVersionScheme instead of isInternalVersionRange. We strip the leading range operator if needed before
+			// calling.
+			isInternalVersionScheme(
+				["^", "~"].includes(rangeOrVersionToCheck[0])
+					? rangeOrVersionToCheck.slice(1)
+					: rangeOrVersionToCheck,
+			))
+	) {
 		return "internal";
 	}
 
-	if (isInternalVersionScheme(rangeOrVersion, true, true)) {
+	// Check if the value is a valid internal prerelease version
+	if (isInternalVersionScheme(rangeOrVersionToCheck, true, true)) {
 		return "internalPrerelease";
 	}
 
-	if (semver.valid(rangeOrVersion) !== null) {
-		// Must be a version string
-		if (isVirtualPatch(rangeOrVersion)) {
+	if (semver.valid(rangeOrVersionToCheck) !== null) {
+		// Must be a version string, not a range
+		if (isVirtualPatch(rangeOrVersionToCheck)) {
 			return "virtualPatch";
 		}
 
 		return "semver";
-	} else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
+	} else if (
+		typeof rangeOrVersionToCheck === "string" &&
+		semver.validRange(rangeOrVersionToCheck) !== null
+	) {
 		// Must be a range string
-		if (isInternalVersionRange(rangeOrVersion)) {
+		if (isInternalVersionRange(rangeOrVersionToCheck)) {
 			return "internal";
 		}
 
@@ -71,18 +94,16 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 			throw new Error(`Couldn't parse a usable version from '${rangeOrVersion}'.`);
 		}
 
-		const operator = rangeOrVersion.slice(0, 1);
+		const operator = rangeOrVersionToCheck.slice(0, 1);
 		if (operator === "^" || operator === "~") {
-			if (isVirtualPatch(coercedVersion)) {
-				return "virtualPatch";
-			}
+			return isVirtualPatch(coercedVersion) ? "virtualPatch" : "semver";
 		} else {
-			if (isVirtualPatch(rangeOrVersion)) {
+			if (isVirtualPatch(rangeOrVersionToCheck)) {
 				return "virtualPatch";
 			}
 		}
 	}
-	return "semver";
+	throw new Error(`Couldn't detect version scheme for '${rangeOrVersion}'.`);
 }
 
 function fatal(error: string): never {
