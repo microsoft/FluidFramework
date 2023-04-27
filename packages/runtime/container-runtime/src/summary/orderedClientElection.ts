@@ -415,13 +415,15 @@ export class OrderedClientElection
 			this._electedParent = client;
 			change = true;
 		}
-		if (change && isSummarizerClient) {
-			this.logger.sendTelemetryEvent({
-				eventName: "SummarizerClientElected",
-				electedClientId: this._electedClient?.clientId,
-				electedParentId: this._electedParent?.clientId,
-				electionSequenceNumber: sequenceNumber,
-			});
+		if (change) {
+			if (isSummarizerClient) {
+				this.logger.sendTelemetryEvent({
+					eventName: "SummarizerClientElected",
+					electedClientId: this._electedClient?.clientId,
+					electedParentId: this._electedParent?.clientId,
+					electionSequenceNumber: sequenceNumber,
+				});
+			}
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
 	}
