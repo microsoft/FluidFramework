@@ -3,8 +3,23 @@
 
 Check commands are used to verify repo state, apply policy, etc.
 
+* [`flub check changeset`](#flub-check-changeset)
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
+
+## `flub check changeset`
+
+```
+USAGE
+  $ flub check changeset -b <value> [-v] [--json]
+
+FLAGS
+  -b, --branch=<value>  (required) The branch to compare against.
+  -v, --verbose         Verbose logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+```
 
 ## `flub check layers`
 

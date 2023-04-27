@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
-// flase positive?
+
+// false positive?
 // eslint-disable-next-line node/no-missing-import
 import type { SetRequired } from "type-fest";
 
@@ -79,5 +80,25 @@ export class Repository {
 				return r.name;
 			}
 		}
+	}
+
+	public async getMergBase(branch: string, remote: string): Promise<string> {
+		const base = await this.gitClient
+			.fetch() // make sure we have the latest remote refs
+			.raw("merge-base", `refs/remotes/${remote}/${branch}`, `HEAD`);
+		return base;
+	}
+
+	public async getChangedFilesSinceRef(ref: string, remote: string): Promise<string[]> {
+		const divergedAt = await this.getMergBase(ref, remote);
+		// Now we can find which files we added
+		const added = await this.gitClient
+			.fetch() // make sure we have the latest remote refs
+			.diff(["--name-only", "--diff-filter=d", divergedAt]);
+
+		const files = added
+			.split("\n")
+			.filter((value) => value !== null && value !== undefined && value !== "");
+		return files;
 	}
 }
