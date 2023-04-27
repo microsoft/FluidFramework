@@ -66,7 +66,7 @@ class FluidStore<T> implements Writable<T> {
 	 * Subscribes to the store, runs the provided callback function
 	 * whenever the store value changes.
 	 * @param {(value: T) => void} subscriber - A callback function that runs whenever the store value changes.
-	 * @returns {() => void} - Returns an unsubscribe function.
+	 * @returns {() => void} - Returns a subscribe function.
 	 */
 	subscribe(subscriber: (value: T) => void): () => void {
 		return this.internalStore.subscribe(subscriber);
