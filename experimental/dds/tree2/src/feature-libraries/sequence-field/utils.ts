@@ -678,7 +678,7 @@ export class DetachedNodeTracker {
 				iter.push(splitMarks[i]);
 			}
 			const cloned = cloneMark(mark);
-			if (isReattach(cloned)) {
+			if (isReattach(cloned) && cloned.detachEvent !== undefined) {
 				let remainder: Reattach<T> = cloned;
 				for (let i = 1; i < cloned.count; ++i) {
 					const [head, tail] = splitMark(

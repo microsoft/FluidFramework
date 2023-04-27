@@ -261,29 +261,35 @@ class RebaseQueue<T> {
 			};
 		} else if (newMark === undefined) {
 			const length = getInputLength(baseMark);
+			if (isAttach(baseMark)) {
+				this.reattachOffset += getOutputLength(baseMark);
+			}
 			return {
 				baseMark: this.baseMarks.tryDequeue(),
 				newMark: length > 0 ? length : undefined,
 			};
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			const cmp = compareCellPositions(this.baseIntention, baseMark, newMark);
+			const cmp = compareCellPositions(this.baseIntention, baseMark, newMark, this.reattachOffset);
 			if (cmp < 0) {
+				this.reattachOffset += Math.min(getOutputLength(baseMark), -cmp);
 				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
 			} else if (cmp > 0) {
 				return { newMark: this.newMarks.dequeueUpTo(cmp) };
 			} else {
 				const length = Math.min(getMarkLength(baseMark), getMarkLength(newMark));
+				if (markFillsCells(baseMark)) {
+					this.reattachOffset += length;
+				}					
 				return this.dequeueLength(length);
 			}
 		} else if (areInputCellsEmpty(newMark)) {
 			return this.dequeueNew();
 		}
-
-		// TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
-		this.reattachOffset = 0;
-		if (areInputCellsEmpty(baseMark)) {
+		else if (areInputCellsEmpty(baseMark)) {
+			this.reattachOffset += getOutputLength(baseMark);
 			return this.dequeueBase();
 		} else {
+			this.reattachOffset = 0;
 			const length = Math.min(getInputLength(newMark), getInputLength(baseMark));
 			return this.dequeueLength(length);
 		}
@@ -587,6 +593,7 @@ function compareCellPositions(
 	baseRevision: RevisionTag | undefined,
 	baseMark: EmptyInputCellMark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
+	detachOffset: number,
 ): number {
 	const baseId = getCellInputId(baseMark, baseRevision);
 	assert(baseId !== undefined, "baseMark should have cell ID");
@@ -606,6 +613,10 @@ function compareCellPositions(
 
 	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseId.revision);
 	if (offsetInNew !== undefined) {
+		if (isAttach(baseMark)) {
+			const offset = offsetInNew - detachOffset;
+			return offset === 0 ? Infinity : -offset;
+		}		
 		return offsetInNew > baseId.index ? baseId.index - offsetInNew : Infinity;
 	}
 
