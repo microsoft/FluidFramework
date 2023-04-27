@@ -8,6 +8,7 @@ import {
 	TrackingGroup,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaType,
+	toRemovalInfo,
 } from "@fluidframework/merge-tree";
 import { MatrixItem, SharedMatrix } from "./matrix";
 import { Handle, isHandleValid } from "./handletable";
@@ -136,8 +137,10 @@ export class MatrixUndoProvider<T> {
 		rows.undo = new VectorUndoProvider(
 			consumer,
 			/* undoInsert: */ (segment: PermutationSegment) => {
-				const start = this.rows.getPosition(segment);
-				this.matrix.removeRows(start, segment.cachedLength);
+				if (toRemovalInfo(segment) === undefined) {
+					const start = this.rows.getPosition(segment);
+					this.matrix.removeRows(start, segment.cachedLength);
+				}
 			},
 			/* undoRemove: */ (segment: PermutationSegment) => {
 				this.matrix._undoRemoveRows(segment);
@@ -146,8 +149,10 @@ export class MatrixUndoProvider<T> {
 		cols.undo = new VectorUndoProvider(
 			consumer,
 			/* undoInsert: */ (segment: PermutationSegment) => {
-				const start = this.cols.getPosition(segment);
-				this.matrix.removeCols(start, segment.cachedLength);
+				if (toRemovalInfo(segment) === undefined) {
+					const start = this.cols.getPosition(segment);
+					this.matrix.removeCols(start, segment.cachedLength);
+				}
 			},
 			/* undoRemove: */ (segment: PermutationSegment) => {
 				this.matrix._undoRemoveCols(segment);
@@ -164,11 +169,12 @@ export class MatrixUndoProvider<T> {
 		if (this.consumer !== undefined) {
 			this.consumer.pushToCurrentOperation({
 				revert: () => {
-					this.matrix.setCell(
-						this.rows.handleToPosition(rowHandle),
-						this.cols.handleToPosition(colHandle),
-						oldValue,
-					);
+					const row = this.rows.handleToPosition(rowHandle);
+					const col = this.cols.handleToPosition(colHandle);
+					// if the row/column no longer exists, we cannot set the cell
+					if (row < this.matrix.rowCount && col < this.matrix.colCount) {
+						this.matrix.setCell(row, col, oldValue);
+					}
 				},
 				discard: () => {},
 			});
