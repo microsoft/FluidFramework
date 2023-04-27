@@ -646,7 +646,7 @@ describe("SharedTree", () => {
 			remove(tree2, 1, 1);
 			await provider.ensureSynchronized();
 
-			// Validate insertion and deletion
+			// Validate deletion
 			const testValuesAfterDeletion = getTestValues(tree1);
 			assert.equal(testValuesAfterDeletion.length, 1);
 			assert.equal(testValuesAfterDeletion[0], value);
