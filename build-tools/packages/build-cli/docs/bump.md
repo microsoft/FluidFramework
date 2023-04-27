@@ -70,13 +70,12 @@ Update the dependency version of a specified package or release group. That is, 
 USAGE
   $ flub bump deps PACKAGE_OR_RELEASE_GROUP [-v] [--prerelease -t
     latest|newest|greatest|minor|patch|@next|@canary] [--onlyBumpPrerelease] [-g
-    client|server|azure|build-tools|gitrest|historian | -p <value>] [-x | --install | --commit |  |  | ] [-b <value>]
+    client|server|azure|build-tools|gitrest|historian | -p <value>] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
 
 FLAGS
-  -b, --branchName=<value>     Takes in the branch name as main or next
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
   -p, --package=<value>        Only bump dependencies of this package.
