@@ -17,8 +17,6 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
  * Fluid debug session associated with a Fluid Client via its
  * {@link @fluidframework/container-definitions#IContainer} and
  * {@link @fluidframework/container-definitions#IAudience}.
- *
- * @internal
  */
 export interface IContainerDevtools extends IDisposable {
 	/**

@@ -18,14 +18,14 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
-// @public
+// @internal
 export interface AudienceChangeLogEntry extends LogEntry {
     changeKind: "added" | "removed";
     client: IClient;
     clientId: string;
 }
 
-// @public
+// @internal
 export interface AudienceClientMetadata {
     client: IClient;
     clientId: string;
@@ -65,17 +65,17 @@ export namespace ConnectContainer {
     export type MessageData = HasContainerId;
 }
 
-// @public
+// @internal
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
 }
 
-// @public
+// @internal
 export enum ContainerDevtoolsFeature {
     ContainerData = "container-data"
 }
 
-// @public
+// @internal
 export type ContainerDevtoolsFeatureFlags = {
     [Feature in ContainerDevtoolsFeature]?: boolean;
 };
@@ -131,7 +131,7 @@ export namespace ContainerStateChange {
     }
 }
 
-// @public
+// @internal
 export enum ContainerStateChangeKind {
     Attached = "attached",
     Closed = "closed",
@@ -152,7 +152,7 @@ export namespace ContainerStateHistory {
     }
 }
 
-// @public
+// @internal
 export interface ContainerStateMetadata extends ContainerMetadata {
     // (undocumented)
     attachState: AttachState;
@@ -176,12 +176,12 @@ export namespace DataVisualization {
     }
 }
 
-// @public
+// @internal
 export enum DevtoolsFeature {
     Telemetry = "telemetry"
 }
 
-// @public
+// @internal
 export type DevtoolsFeatureFlags = {
     [Feature in DevtoolsFeature]?: boolean;
 };
@@ -340,7 +340,7 @@ export function handleIncomingMessage(message: Partial<ISourcedDevtoolsMessage>,
 // @internal
 export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDevtoolsMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
-// @public
+// @internal
 export interface HasContainerId {
     containerId: string;
 }
@@ -388,13 +388,13 @@ export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessa
     source: string;
 }
 
-// @public
+// @internal
 export interface ITimestampedTelemetryEvent {
     logContent: ITelemetryBaseEvent;
     timestamp: number;
 }
 
-// @public
+// @internal
 export interface LogEntry {
     timestamp: number;
 }
@@ -431,7 +431,7 @@ export namespace RootDataVisualizations {
 // @public
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
-// @public
+// @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
 }
