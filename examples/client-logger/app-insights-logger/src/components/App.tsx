@@ -75,9 +75,6 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * Initializes the Fluid Container and displays app view once it is ready.
  */
 export function App(): React.ReactElement {
-	// Load the collaborative SharedString object
-	// const { privateContainer, sharedContainer } = useContainerInfo();
-
 	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo | undefined>();
 
 	const getSharedFluidData = async (): Promise<ContainerInfo> => {
