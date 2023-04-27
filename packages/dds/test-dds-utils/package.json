@@ -50,7 +50,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.0.7 <2.0.0-internal.5.0.0",
+		"@fluidframework/shared-object-base": ">=2.0.0-internal.4.0.7 <2.0.0-internal.4.1.0",
 		"mocha": "^10.2.0"
 	},
 	"devDependencies": {
