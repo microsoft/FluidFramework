@@ -28,7 +28,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**
 	 * Routes Fluid telemetry events to the trackEvent App Insights API
 	 */
-	send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent): void {
 		this.baseLoggingClient.trackEvent({
 			name: event.eventName,
 			properties: event,

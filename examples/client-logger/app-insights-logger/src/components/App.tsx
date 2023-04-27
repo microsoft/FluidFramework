@@ -78,25 +78,23 @@ export function App(): React.ReactElement {
 	// Load the collaborative SharedString object
 	// const { privateContainer, sharedContainer } = useContainerInfo();
 
-	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
-		ContainerInfo | undefined
-	>();
+	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo | undefined>();
+
+	const getSharedFluidData = async (): Promise<ContainerInfo> => {
+		const containerId = getContainerIdFromLocation(window.location);
+		return containerId.length === 0
+			? createFluidContainer(containerSchema, populateRootMap)
+			: loadExistingFluidContainer(containerId, containerSchema);
+	};
 
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
-		async function getSharedFluidData(): Promise<ContainerInfo> {
-			const containerId = getContainerIdFromLocation(window.location);
-			return containerId.length === 0
-				? createFluidContainer(containerSchema, populateRootMap)
-				: loadExistingFluidContainer(containerId, containerSchema);
-		}
-
 		getSharedFluidData().then(
 			(data) => {
 				if (getContainerIdFromLocation(window.location) !== data.containerId) {
 					window.location.hash = data.containerId;
 				}
-				setSharedContainerInfo(data);
+				setContainerInfo(data);
 			},
 			(error) => {
 				console.error(error);
@@ -106,12 +104,12 @@ export function App(): React.ReactElement {
 
 	return (
 		<>
-			{sharedContainerInfo === undefined ? (
+			{containerInfo === undefined ? (
 				<div style={{ padding: "10px" }}>
 					<h1>Loading Shared container...</h1>
 				</div>
 			) : (
-				<AppView containerInfo={sharedContainerInfo} />
+				<AppView containerInfo={containerInfo} />
 			)}
 		</>
 	);
@@ -241,7 +239,7 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 			style={{ display: "flex", flexDirection: "row", gap: "10px" }}
 		>
 			<button
-				onClick={() => counter.increment(-1)}
+				onClick={(): void => counter.increment(-1)}
 				disabled={counterValue === 0}
 				aria-describedby={"decrement-counter-button"}
 			>
@@ -251,7 +249,7 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 			<div>{counterValue}</div>
 
 			<button
-				onClick={() => counter.increment(1)}
+				onClick={(): void => counter.increment(1)}
 				aria-describedby={"increment-counter-button"}
 			>
 				Increment

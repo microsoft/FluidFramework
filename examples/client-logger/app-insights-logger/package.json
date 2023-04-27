@@ -30,7 +30,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
-		"start:test-app": "start-server-and-test start:tinylicious 7070 start:test-app:client",
+		"start": "start-server-and-test start:tinylicious 7070 start:test-app:client",
 		"start:test-app:client": "webpack serve --config webpack.config.js",
 		"start:tinylicious": "tinylicious",
 		"test": "npm run test:jest",
@@ -56,7 +56,6 @@
 		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/webpack-fluid-loader": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.15.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
@@ -77,6 +76,7 @@
 		"eslint-plugin-jest": "~27.1.5",
 		"eslint-plugin-react": "~7.28.0",
 		"eslint-plugin-react-hooks": "~4.6.0",
+		"html-webpack-plugin": "^5.5.0",
 		"jest": "^26.6.3",
 		"jest-junit": "^10.0.0",
 		"prettier": "~2.6.2",

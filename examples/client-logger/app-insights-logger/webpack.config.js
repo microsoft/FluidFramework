@@ -5,10 +5,9 @@
 
 const path = require("path");
 
-const webpack = require("webpack");
 const { merge } = require("webpack-merge");
 
-const fluidRoute = require("@fluid-tools/webpack-fluid-loader");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const testAppSrcPath = path.join(__dirname, "src", "app");
 
@@ -29,13 +28,6 @@ module.exports = (env) => {
 						test: /\.tsx?$/,
 						loader: require.resolve("ts-loader"),
 					},
-					{
-						test: /\.css$/,
-						use: [
-							require.resolve("css-loader"), // translates CSS into CommonJS
-							require.resolve("style-loader"), // creates style nodes from JS strings
-						],
-					},
 				],
 			},
 			output: {
@@ -45,11 +37,7 @@ module.exports = (env) => {
 				devtoolNamespace: "fluid-tools/client-debugger-view",
 				libraryTarget: "umd",
 			},
-			plugins: [
-				new webpack.ProvidePlugin({
-					process: require.resolve("process/browser"),
-				}),
-			],
+			plugins: [new HtmlWebpackPlugin({ template: path.join(testAppSrcPath, "index.html") })],
 			// This impacts which files are watched by the dev server (and likely by webpack if watch is true).
 			// This should be configurable under devServer.static.watch
 			// (see https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md) but that does not seem to work.
@@ -59,6 +47,5 @@ module.exports = (env) => {
 			},
 		},
 		isProduction ? require("./webpack.prod") : require("./webpack.dev"),
-		fluidRoute.devServerConfig(__dirname, env),
 	);
 };
