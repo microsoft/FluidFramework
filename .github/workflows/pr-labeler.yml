@@ -45,7 +45,7 @@ jobs:
         name: Changeset status
         continue-on-error: true
         run: |
-          changeset status --since=${{ env.GITHUB_REF_NAME }}
+          changeset status --since=${{ github.base_ref }}
 
       # If a changeset is present, label it changeset-present
       - uses: actions-ecosystem/action-add-labels@bd52874380e3909a1ac983768df6976535ece7f8 # ratchet:actions-ecosystem/action-add-labels@v1.1.0

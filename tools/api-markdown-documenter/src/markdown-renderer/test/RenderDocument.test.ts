@@ -13,6 +13,7 @@ import {
 	SpanNode,
 } from "../../documentation-domain";
 import { renderDocument } from "../Render";
+import { getRenderConfigurationWithDefaults } from "../configuration";
 
 describe("Document rendering tests", () => {
 	it("Renders a simple document", () => {
@@ -55,6 +56,6 @@ describe("Document rendering tests", () => {
 			"This is test inside of a paragraph. It is also inside of a hierarchical section node. _That's real neat-o._",
 			"",
 		].join("\n");
-		expect(renderDocument(document)).to.equal(expected);
+		expect(renderDocument(document, getRenderConfigurationWithDefaults({}))).to.equal(expected);
 	});
 });

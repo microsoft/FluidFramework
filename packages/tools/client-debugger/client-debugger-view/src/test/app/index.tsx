@@ -6,7 +6,7 @@ import { Resizable } from "re-resizable";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { RootView } from "../../RootView";
+import { DevtoolsPanel } from "../../DevtoolsPanel";
 import { WindowMessageRelay } from "../../WindowMessageRelay";
 import { App } from "./App";
 
@@ -40,10 +40,10 @@ function DevToolsView(): React.ReactElement {
 				zIndex: "2",
 				backgroundColor: "lightgray", // TODO: remove
 			}}
-			defaultSize={{ width: 400, height: "100%" }}
+			defaultSize={{ width: 500, height: "100%" }}
 			className={"debugger-panel"}
 		>
-			<RootView messageRelay={new WindowMessageRelay("fluid-client-debugger-inline")} />
+			<DevtoolsPanel messageRelay={new WindowMessageRelay("fluid-client-debugger-inline")} />
 		</Resizable>
 	);
 }

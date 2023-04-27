@@ -59,6 +59,7 @@ export enum MessageType {
 
 	/**
 	 * Message to indicate the need of a remote agent for a document.
+	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
 	 */
 	RemoteHelp = "remoteHelp",
 
@@ -219,12 +220,6 @@ export interface ISequencedDocumentMessage {
 	 * The sequenced identifier.
 	 */
 	sequenceNumber: number;
-
-	/**
-	 * The term identifier.
-	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
-	 */
-	term: number | undefined;
 
 	/**
 	 * The minimum sequence number for all connected clients.

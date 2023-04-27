@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import {
 	Generator,
 	createWeightedGenerator,
@@ -18,7 +18,7 @@ import {
 	BaseFuzzTestState,
 } from '@fluid-internal/stochastic-test-utils';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
-import { assert, assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
+import { assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor';
 import {
 	createSessionId,
@@ -297,7 +297,8 @@ export class IdCompressorTestNetwork {
 		numIds: number,
 		overrides: { [index: number]: string } = {}
 	): OpSpaceCompressedId[] | IdCreationRange {
-		assert(numIds > 0, 'Must allocate a non-zero number of IDs');
+		// Must allocate a non-zero number of IDs
+		assert(numIds > 0);
 		const compressor = this.compressors.get(client);
 		let nextIdIndex = 0;
 		const opSpaceIds: OpSpaceCompressedId[] = [];
@@ -465,10 +466,8 @@ export class IdCompressorTestNetwork {
 				const sessionSpaceIdA = idDataA.id;
 				const idIndex = getOrCreate(idIndicesAggregator, idDataA.originatingClient, () => 0);
 				originatingClient ??= idDataA.originatingClient;
-				assert(
-					idDataA.originatingClient === originatingClient,
-					'Test infra gave wrong originating client to TestIdData'
-				);
+				//  Test infra gave wrong originating client to TestIdData
+				assert(idDataA.originatingClient === originatingClient);
 				const attributionA = compressorA.attributeId(idDataA.id);
 				if (attributionA !== attributionIds.get(idDataA.originatingClient)) {
 					// Unification

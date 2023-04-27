@@ -81,7 +81,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				this.pendingMetric = Lumberjack.newLumberMetric(
 					LumberEventName.ScriptoriumProcessBatch,
 					{
-						timestampQueuedMessage: message.timestamp ? new Date(message.timestamp).toISOString() : null,
+						timestampQueuedMessage: message.timestamp
+							? new Date(message.timestamp).toISOString()
+							: null,
 						timestampReadyToProcess: new Date().toISOString(),
 						[QueuedMessageProperties.partition]: this.pendingOffset?.partition,
 						[QueuedMessageProperties.offsetStart]: this.pendingOffset?.offset,
@@ -144,9 +146,10 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 		// Process all the batches + checkpoint
 		for (const [, messages] of this.current) {
-			if (this.maxDbBatchSize > 0 && messages.length > this.maxDbBatchSize) { // cap the max batch size sent to mongo db
+			if (this.maxDbBatchSize > 0 && messages.length > this.maxDbBatchSize) {
+				// cap the max batch size sent to mongo db
 				let startIndex = 0;
-				while(startIndex < messages.length) {
+				while (startIndex < messages.length) {
 					const endIndex = startIndex + this.maxDbBatchSize;
 					const messagesBatch = messages.slice(startIndex, endIndex);
 					startIndex = endIndex;
@@ -220,11 +223,17 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		}
 	}
 
-	private async processMongoCore(messages: ISequencedOperationMessage[], scriptoriumMetricId: string | undefined): Promise<void> {
+	private async processMongoCore(
+		messages: ISequencedOperationMessage[],
+		scriptoriumMetricId: string | undefined,
+	): Promise<void> {
 		return this.insertOp(messages, scriptoriumMetricId);
 	}
 
-	private async insertOp(messages: ISequencedOperationMessage[], scriptoriumMetricId: string | undefined) {
+	private async insertOp(
+		messages: ISequencedOperationMessage[],
+		scriptoriumMetricId: string | undefined,
+	) {
 		const dbOps = messages.map((message) => ({
 			...message,
 			mongoTimestamp: new Date(message.operation.timestamp),

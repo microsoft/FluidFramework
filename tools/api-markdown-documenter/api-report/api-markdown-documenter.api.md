@@ -8,6 +8,7 @@ import { ApiCallSignature } from '@microsoft/api-extractor-model';
 import { ApiClass } from '@microsoft/api-extractor-model';
 import { ApiConstructor } from '@microsoft/api-extractor-model';
 import { ApiConstructSignature } from '@microsoft/api-extractor-model';
+import { ApiEntryPoint } from '@microsoft/api-extractor-model';
 import { ApiEnum } from '@microsoft/api-extractor-model';
 import { ApiEnumMember } from '@microsoft/api-extractor-model';
 import { ApiFunction } from '@microsoft/api-extractor-model';
@@ -69,6 +70,7 @@ export interface ApiItemTransformationOptions {
     transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
     transformApiClass?: TransformApiItemWithChildren<ApiClass>;
     transformApiConstructor?: TransformApiItemWithoutChildren<ApiConstructSignature | ApiConstructor>;
+    transformApiEntryPoint?: TransformApiItemWithChildren<ApiEntryPoint>;
     transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
     transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
     transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
@@ -77,7 +79,6 @@ export interface ApiItemTransformationOptions {
     transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
     transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
     transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
-    transformApiPackage?: TransformApiItemWithChildren<ApiPackage>;
     transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
     transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
     transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
@@ -98,7 +99,7 @@ export enum ApiModifier {
 }
 
 // @public
-export type ApiModuleLike = ApiPackage | ApiNamespace;
+export type ApiModuleLike = ApiEntryPoint | ApiNamespace;
 
 export { ApiPackage }
 
@@ -415,13 +416,16 @@ export class PlainTextNode implements DocumentationLiteralNode<string>, SingleLi
 }
 
 // @public
-export function renderApiModelAsMarkdown(transformConfig: ApiItemTransformationConfiguration, renderConfig: MarkdownRenderConfiguration, outputDirectoryPath: string, customRenderers?: MarkdownRenderers): Promise<void>;
+export function renderApiModelAsMarkdown(transformConfig: ApiItemTransformationConfiguration, renderConfig: MarkdownRenderConfiguration, outputDirectoryPath: string): Promise<void>;
 
 // @public
-export function renderDocumentAsMarkdown(document: DocumentNode, context?: Partial<MarkdownRenderContext>): string;
+export function renderDocumentAsMarkdown(document: DocumentNode, config: MarkdownRenderConfiguration): string;
 
 // @public
 export type RenderDocumentationNodeAsMarkdown<TDocumentationNode extends DocumentationNode = DocumentationNode> = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
+
+// @public
+export function renderDocumentsAsMarkdown(documents: DocumentNode[], config: MarkdownRenderConfiguration, outputDirectoryPath: string): Promise<void>;
 
 // @public
 export function renderNodeAsMarkdown(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;

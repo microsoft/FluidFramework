@@ -43,7 +43,7 @@ export interface ContainerInfo {
 }
 
 function initializeTinyliciousClient(logger?: ITelemetryBaseLogger): TinyliciousClient {
-	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
+	console.log(`Initializing Tinylicious client...`);
 	return new TinyliciousClient({
 		logger,
 	});
@@ -97,6 +97,7 @@ export async function createFluidContainer(
 		console.error(`Encountered error attaching Fluid container: "${error}".`);
 		throw error;
 	}
+
 	console.log("Fluid container attached!");
 
 	return {

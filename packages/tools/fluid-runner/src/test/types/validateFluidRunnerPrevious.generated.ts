@@ -88,6 +88,30 @@ use_old_InterfaceDeclaration_IFluidFileConverter(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITelemetryOptions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITelemetryOptions():
+    TypeOnly<old.ITelemetryOptions>;
+declare function use_current_InterfaceDeclaration_ITelemetryOptions(
+    use: TypeOnly<current.ITelemetryOptions>);
+use_current_InterfaceDeclaration_ITelemetryOptions(
+    get_old_InterfaceDeclaration_ITelemetryOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITelemetryOptions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITelemetryOptions():
+    TypeOnly<current.ITelemetryOptions>;
+declare function use_old_InterfaceDeclaration_ITelemetryOptions(
+    use: TypeOnly<old.ITelemetryOptions>);
+use_old_InterfaceDeclaration_ITelemetryOptions(
+    get_current_InterfaceDeclaration_ITelemetryOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "EnumDeclaration_OutputFormat": {"forwardCompat": false}
 */
 declare function get_old_EnumDeclaration_OutputFormat():
@@ -276,3 +300,27 @@ declare function use_old_FunctionDeclaration_parseBundleAndExportFile(
     use: TypeOnly<typeof old.parseBundleAndExportFile>);
 use_old_FunctionDeclaration_parseBundleAndExportFile(
     get_current_FunctionDeclaration_parseBundleAndExportFile());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validateAndParseTelemetryOptions": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_validateAndParseTelemetryOptions():
+    TypeOnly<typeof old.validateAndParseTelemetryOptions>;
+declare function use_current_FunctionDeclaration_validateAndParseTelemetryOptions(
+    use: TypeOnly<typeof current.validateAndParseTelemetryOptions>);
+use_current_FunctionDeclaration_validateAndParseTelemetryOptions(
+    get_old_FunctionDeclaration_validateAndParseTelemetryOptions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_validateAndParseTelemetryOptions": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_validateAndParseTelemetryOptions():
+    TypeOnly<typeof current.validateAndParseTelemetryOptions>;
+declare function use_old_FunctionDeclaration_validateAndParseTelemetryOptions(
+    use: TypeOnly<typeof old.validateAndParseTelemetryOptions>);
+use_old_FunctionDeclaration_validateAndParseTelemetryOptions(
+    get_current_FunctionDeclaration_validateAndParseTelemetryOptions());

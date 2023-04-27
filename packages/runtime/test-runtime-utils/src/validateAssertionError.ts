@@ -22,9 +22,13 @@ import { shortCodeMap } from "./assertionShortCodesMap";
  * @returns `true` if the message in the error object that was passed in matches the expected
  * message. Otherwise it throws an error.
  */
-export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean {
+export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean {
 	const mappedMsg = (shortCodeMap[error.message] as string) ?? error.message;
-	if (mappedMsg !== expectedErrorMsg) {
+	if (
+		typeof expectedErrorMsg === "string"
+			? mappedMsg !== expectedErrorMsg
+			: !expectedErrorMsg.test(mappedMsg)
+	) {
 		// This throws an Error instead of an AssertionError because AssertionError would require a dependency on the
 		// node assert library, which we don't want to do for this library because it's used in the browser.
 		throw new Error(`Unexpected assertion thrown: ${error.message} ('${mappedMsg}')`);

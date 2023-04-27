@@ -158,9 +158,7 @@ export function generateGCConfigs(
 
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	const gcVersionInEffect =
-		mc.config.getBoolean(gcVersionUpgradeToV3Key) === false
-			? stableGCVersion
-			: currentGCVersion;
+		mc.config.getBoolean(gcVersionUpgradeToV3Key) === true ? currentGCVersion : stableGCVersion;
 
 	return {
 		gcEnabled,
