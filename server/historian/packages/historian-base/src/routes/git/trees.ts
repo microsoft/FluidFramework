@@ -41,14 +41,14 @@ export function create(
 		authorization: string,
 		params: git.ICreateTreeParams,
 	): Promise<git.ITree> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createTree(params);
 	}
 
@@ -59,14 +59,14 @@ export function create(
 		recursive: boolean,
 		useCache: boolean,
 	): Promise<git.ITree> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getTree(sha, recursive, useCache);
 	}
 

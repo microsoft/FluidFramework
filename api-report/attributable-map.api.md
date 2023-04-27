@@ -62,18 +62,6 @@ export interface ILocalValue {
     readonly value: any;
 }
 
-// @public
-export interface IMapAttributionOptions {
-    // (undocumented)
-    track?: boolean;
-}
-
-// @public
-export interface IMapOptions {
-    // (undocumented)
-    attribution?: IMapAttributionOptions;
-}
-
 // @public @deprecated
 export interface ISerializableValue {
     attribution?: AttributionKey | number;

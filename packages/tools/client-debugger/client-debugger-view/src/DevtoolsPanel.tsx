@@ -9,9 +9,9 @@ import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 /**
- * Necessary props to render {@link RootView}.
+ * {@link DevtoolsPanel} input props.
  */
-export interface RootViewProps {
+export interface DevtoolsPanelProps {
 	/**
 	 * An instance of {@link @fluid-tools/client-debugger#IMessageRelay} that can handle message passing between the
 	 * debugger's "brain" and its UI, in whatever context the latter is being rendered (e.g. in the same page as the
@@ -21,9 +21,13 @@ export interface RootViewProps {
 }
 
 /**
- * Top-level component for the Fluid debugger.
+ * Top-level view for the Fluid Devtools.
+ *
+ * @remarks
+ *
+ * Initializes the message relay context required by internal components.
  */
-export function RootView(props: RootViewProps): React.ReactElement {
+export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
 	return (
 		<MessageRelayContext.Provider value={props.messageRelay}>
 			<DevtoolsView />
