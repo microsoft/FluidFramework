@@ -16,8 +16,7 @@
  * @packageDocumentation
  */
 
-export { MessageRelayContext } from "./MessageRelayContext";
-export { RootView as DevtoolsPanel, RootViewProps as DevtoolsPanelProps } from "./RootView";
+export { DevtoolsPanel, DevtoolsPanelProps } from "./DevtoolsPanel";
 
 // Convenience re-exports
 export { IMessageRelay } from "@fluid-tools/client-debugger";

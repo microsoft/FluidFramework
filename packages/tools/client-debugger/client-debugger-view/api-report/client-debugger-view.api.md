@@ -4,9 +4,7 @@
 
 ```ts
 
-import { IDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
-import { ISourcedDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
 
 // @public
@@ -18,8 +16,5 @@ export interface DevtoolsPanelProps {
 }
 
 export { IMessageRelay }
-
-// @public
-export const MessageRelayContext: React_2.Context<IMessageRelay<IDevtoolsMessage<unknown>, ISourcedDevtoolsMessage<unknown>> | undefined>;
 
 ```
