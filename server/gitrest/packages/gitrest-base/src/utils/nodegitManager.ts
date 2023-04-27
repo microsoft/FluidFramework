@@ -31,9 +31,14 @@ export class NodegitRepositoryManager extends RepositoryManagerBase {
 		private readonly externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean = false,
-        apiMetricsSamplingPeriod?: number,
+		apiMetricsSamplingPeriod?: number,
 	) {
-		super(directory, lumberjackBaseProperties, enableRepositoryManagerMetrics, apiMetricsSamplingPeriod);
+		super(
+			directory,
+			lumberjackBaseProperties,
+			enableRepositoryManagerMetrics,
+			apiMetricsSamplingPeriod,
+		);
 	}
 
 	protected async getCommitCore(sha: string): Promise<resources.ICommit> {
@@ -385,7 +390,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 		externalStorageManager: IExternalStorageManager,
 		repoPerDocEnabled: boolean,
 		enableRepositoryManagerMetrics: boolean = false,
-        apiMetricsSamplingPeriod?: number,
+		apiMetricsSamplingPeriod?: number,
 	) {
 		super(
 			storageDirectoryConfig,
@@ -394,7 +399,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 			repoPerDocEnabled,
 			enableRepositoryManagerMetrics,
 			true /* enforceSynchronous */,
-            apiMetricsSamplingPeriod,
+			apiMetricsSamplingPeriod,
 		);
 	}
 
@@ -419,7 +424,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 		externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
-        apiMetricsSamplingPeriod?: number,
+		apiMetricsSamplingPeriod?: number,
 	): IRepositoryManager {
 		return new NodegitRepositoryManager(
 			repoOwner,
@@ -429,7 +434,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 			externalStorageManager,
 			lumberjackBaseProperties,
 			enableRepositoryManagerMetrics,
-            apiMetricsSamplingPeriod,
+			apiMetricsSamplingPeriod,
 		);
 	}
 }

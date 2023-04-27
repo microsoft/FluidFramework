@@ -1,4 +1,4 @@
 {
 	"tags": ["popup"],
-	"imports": []
+	"imports": ["utilities"]
 }

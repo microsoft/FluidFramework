@@ -22,6 +22,7 @@ import {
 	tagChange,
 	makeAnonChange,
 	ChangeFamilyEditor,
+	FieldUpPath,
 } from "../../core";
 import {
 	addToNestedSet,
@@ -1158,20 +1159,18 @@ export class ModularEditBuilder
 
 	/**
 	 * Adds a change to the edit builder
-	 * @param path - path to the parent node of the field being edited
 	 * @param field - the field which is being edited
 	 * @param fieldKind - the kind of the field
 	 * @param change - the change to the field
 	 * @param maxId - the highest `ChangesetLocalId` used in this change
 	 */
 	public submitChange(
-		path: UpPath | undefined,
-		field: FieldKey,
+		field: FieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
 		maxId: ChangesetLocalId = brand(-1),
 	): void {
-		const changeMap = this.buildChangeMap(path, field, fieldKind, change);
+		const changeMap = this.buildChangeMap(field, fieldKind, change);
 		this.applyChange(makeModularChangeset(changeMap, maxId));
 	}
 
@@ -1179,7 +1178,7 @@ export class ModularEditBuilder
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				makeModularChangeset(
-					this.buildChangeMap(change.path, change.field, change.fieldKind, change.change),
+					this.buildChangeMap(change.field, change.fieldKind, change.change),
 				),
 			),
 		);
@@ -1195,14 +1194,13 @@ export class ModularEditBuilder
 	}
 
 	private buildChangeMap(
-		path: UpPath | undefined,
-		field: FieldKey,
+		field: FieldUpPath,
 		fieldKind: FieldKindIdentifier,
 		change: FieldChangeset,
 	): FieldChangeMap {
-		let fieldChangeMap: FieldChangeMap = new Map([[field, { fieldKind, change }]]);
+		let fieldChangeMap: FieldChangeMap = new Map([[field.field, { fieldKind, change }]]);
 
-		let remainingPath = path;
+		let remainingPath = field.parent;
 		while (remainingPath !== undefined) {
 			const nodeChange: NodeChangeset = { fieldChanges: fieldChangeMap };
 			const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
@@ -1229,8 +1227,7 @@ export class ModularEditBuilder
 			nodeChange,
 		);
 		this.submitChange(
-			path.parent,
-			path.parentField,
+			{ parent: path.parent, field: path.parentField },
 			genericFieldKind.identifier,
 			brand(fieldChange),
 		);
@@ -1245,8 +1242,7 @@ export class ModularEditBuilder
 			nodeChange,
 		);
 		this.submitChange(
-			path.parent,
-			path.parentField,
+			{ parent: path.parent, field: path.parentField },
 			genericFieldKind.identifier,
 			brand(fieldChange),
 		);
@@ -1261,8 +1257,7 @@ export class ModularEditBuilder
 			nodeChange,
 		);
 		this.submitChange(
-			path.parent,
-			path.parentField,
+			{ parent: path.parent, field: path.parentField },
 			genericFieldKind.identifier,
 			brand(fieldChange),
 		);
@@ -1273,8 +1268,7 @@ export class ModularEditBuilder
  * @alpha
  */
 export interface EditDescription {
-	path: UpPath | undefined;
-	field: FieldKey;
+	field: FieldUpPath;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }

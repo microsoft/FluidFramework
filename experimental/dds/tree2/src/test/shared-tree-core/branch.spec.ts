@@ -9,7 +9,6 @@ import { SharedTreeBranch } from "../../shared-tree-core";
 import {
 	AnchorSet,
 	GraphCommit,
-	Rebaser,
 	RevisionTag,
 	UndoRedoManager,
 	assertIsRevisionTag,
@@ -74,7 +73,7 @@ describe("Branches", () => {
 		const tag1 = change(parent);
 		const tag2 = change(parent);
 		// Rebase the child onto the parent
-		child.rebaseOnto(parent.getHead());
+		child.rebaseOnto(parent.getHead(), parent.undoRedoManager);
 		assertBased(child, parent);
 		// Ensure that the changes are now present on the child
 		assertHistory(child, tag1, tag2);
@@ -88,7 +87,7 @@ describe("Branches", () => {
 		const tag1 = change(child);
 		const tag2 = change(child);
 		// Rebase the parent onto the child
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assertBased(parent, child);
 		// Ensure that the changes are now present on the parent
 		assertHistory(parent, tag1, tag2);
@@ -151,7 +150,7 @@ describe("Branches", () => {
 		assertHistory(parent, tagParent, tagChild, tagParent2);
 		// Apply a change to the child, then rebase the child onto the parent. The child should now be based on the parent's latest commit.
 		const tagChild2 = change(child);
-		child.rebaseOnto(parent.getHead());
+		child.rebaseOnto(parent.getHead(), parent.undoRedoManager);
 		assertBased(child, parent);
 		assertHistory(child, tagParent, tagChild, tagParent2, tagChild2);
 	});
@@ -178,7 +177,7 @@ describe("Branches", () => {
 		change(child);
 		assert.equal(changeEventCount, 1);
 		// Rebase the parent onto the child and ensure another change event is emitted
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assert.equal(changeEventCount, 2);
 	});
 
@@ -191,7 +190,7 @@ describe("Branches", () => {
 		change(parent);
 		assert.equal(changeEventCount, 1);
 		// Rebase the parent onto the child and ensure no change is emitted since the child has no new commits
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assert.equal(changeEventCount, 1);
 	});
 
@@ -281,10 +280,10 @@ describe("Branches", () => {
 		let rebaseCount = 0;
 		fork.on("rebase", () => (rebaseCount += 1));
 		change(branch);
-		fork.rebaseOnto(branch.getHead());
+		fork.rebaseOnto(branch.getHead(), branch.undoRedoManager);
 		assert.equal(rebaseCount, 1);
 		change(branch);
-		fork.rebaseOnto(branch.getHead());
+		fork.rebaseOnto(branch.getHead(), branch.undoRedoManager);
 		assert.equal(rebaseCount, 2);
 	});
 
@@ -293,10 +292,10 @@ describe("Branches", () => {
 		const fork = branch.fork();
 		let rebased = false;
 		fork.on("rebase", () => (rebased = true));
-		fork.rebaseOnto(branch.getHead());
+		fork.rebaseOnto(branch.getHead(), branch.undoRedoManager);
 		assert.equal(rebased, false);
 		change(fork);
-		fork.rebaseOnto(branch.getHead());
+		fork.rebaseOnto(branch.getHead(), branch.undoRedoManager);
 		assert.equal(rebased, false);
 	});
 
@@ -326,7 +325,7 @@ describe("Branches", () => {
 
 		// These methods are not valid to call after disposal
 		assertDisposed(() => branch.fork());
-		assertDisposed(() => branch.rebaseOnto(branch.getHead()));
+		assertDisposed(() => branch.rebaseOnto(branch.getHead(), branch.undoRedoManager));
 		assertDisposed(() => branch.merge(branch.fork()));
 		assertDisposed(() => branch.editor.apply(branch.changeFamily.rebaser.compose([])));
 		assertDisposed(() => branch.startTransaction());
@@ -407,12 +406,13 @@ describe("Branches", () => {
 			sessionId: "testSession",
 		};
 
-		const branch = new SharedTreeBranch(
+		const branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> = new SharedTreeBranch(
 			initCommit,
 			"testSession",
-			new Rebaser(changeFamily.rebaser),
 			changeFamily,
-			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily),
+			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily, () =>
+				branch.getHead(),
+			),
 			new AnchorSet(),
 		);
 
@@ -431,7 +431,7 @@ describe("Branches", () => {
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
 		const cursor = singleTextCursor({ type: brand("TestValue"), value: changeValue });
-		branch.editor.valueField(undefined, rootFieldKeySymbol).set(cursor);
+		branch.editor.valueField({ parent: undefined, field: rootFieldKeySymbol }).set(cursor);
 		return branch.getHead().revision;
 	}
 

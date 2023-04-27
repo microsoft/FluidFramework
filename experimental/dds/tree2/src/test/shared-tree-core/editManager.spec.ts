@@ -17,7 +17,6 @@ import {
 	ChangeFamilyEditor,
 	makeAnonChange,
 	UndoRedoManager,
-	Rebaser,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -29,7 +28,7 @@ import {
 	testChangeFamilyFactory,
 	asDelta,
 } from "../testChange";
-import { MockRepairDataStoreProvider, assertDeltaEqual } from "../utils";
+import { MockRepairDataStoreProvider, assertDeltaEqual, createMockUndoRedoManager } from "../utils";
 import { Commit, EditManager, SeqNumber, SharedTreeBranch } from "../../shared-tree-core";
 import {
 	DefaultChangeFamily,
@@ -49,9 +48,12 @@ function editManagerFactory(options: {
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
+	const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
 	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
 		options.sessionId ?? localSessionId,
+		undoRedoManager,
+		undoRedoManager.clone(),
 		anchors,
 	);
 	return { manager, anchors, family };
@@ -334,11 +336,12 @@ describe("EditManager", () => {
 			const manager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 				defaultChangeFamily,
 				"",
+				createMockUndoRedoManager(),
+				createMockUndoRedoManager(),
 			);
 			const branch = new SharedTreeBranch(
 				manager.getLocalBranchHead(),
 				"",
-				new Rebaser(defaultChangeFamily.rebaser),
 				defaultChangeFamily,
 				new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily),
 			);
@@ -676,11 +679,13 @@ function runUnitTestScenario(
 							"Invalid test scenario: acknowledged commit does not mach oldest local change",
 						);
 					}
-					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
-					assert.deepEqual(
-						manager.addSequencedChange(commit, commit.seqNumber, commit.refNumber),
-						emptyDelta,
+					const delta = manager.addSequencedChange(
+						commit,
+						commit.seqNumber,
+						commit.refNumber,
 					);
+					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
+					assert.deepEqual(delta, emptyDelta);
 					localRef = seq;
 					recordSequencedEdit(commit);
 					break;
@@ -726,10 +731,12 @@ function runUnitTestScenario(
 						seq,
 						...localIntentions,
 					];
-					assert.deepEqual(
-						manager.addSequencedChange(commit, commit.seqNumber, commit.refNumber),
-						asDelta(expected),
+					const delta = manager.addSequencedChange(
+						commit,
+						commit.seqNumber,
+						commit.refNumber,
 					);
+					assert.deepEqual(delta, asDelta(expected));
 					if (step.expectedDelta !== undefined) {
 						// Verify that the test case was annotated with the right expectations.
 						assert.deepEqual(step.expectedDelta, expected);
