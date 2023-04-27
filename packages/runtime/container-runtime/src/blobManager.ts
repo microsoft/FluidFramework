@@ -133,7 +133,7 @@ interface PendingBlob {
 	status: PendingBlobStatus;
 	storageId?: string;
 	handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
-	uploadP?: Promise<ICreateBlobResponse>;
+	uploadP?: Promise<void | ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
 }
@@ -439,7 +439,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return pendingEntry.handleP.promise;
 	}
 
-	private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<ICreateBlobResponse> {
+	private async uploadBlob(
+		localId: string,
+		blob: ArrayBufferLike,
+	): Promise<void | ICreateBlobResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "createBlob" },
@@ -470,6 +473,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
+		// if this is a rehydrated blob we may see the successful BlobAttach op and delete the
+		// entry before reupload finishes
+		if (!entry) {
+			this.mc.logger.sendTelemetryEvent({ eventName: "BlobACKBeforeUploadResolve" });
+			return response;
+		}
 		assert(
 			entry?.status === PendingBlobStatus.OnlinePendingUpload ||
 				entry?.status === PendingBlobStatus.OfflinePendingUpload,
@@ -520,7 +529,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private async onUploadReject(localId: string, error) {
 		const entry = this.pendingBlobs.get(localId);
-		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
+		// if this is a rehydrated blob we may see the successful BlobAttach op and delete the
+		// entry before reupload finishes
+		if (!entry) {
+			this.mc.logger.sendErrorEvent({ eventName: "BlobACKBeforeUploadReject" });
+			return;
+		}
+		assert(
+			entry?.status === PendingBlobStatus.OnlinePendingUpload ||
+				entry?.status === PendingBlobStatus.OfflinePendingUpload,
+			0x387 /* Must have pending blob entry for blob which failed to upload */,
+		);
 		if (!this.runtime.connected) {
 			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.transitionToOffline(localId);
