@@ -36,6 +36,7 @@ import {
 	tagChange,
 	TaggedChange,
 	UndoRedoManager,
+	UndoRedoManagerCommitType,
 } from "../core";
 import { SharedTreeBranch } from ".";
 
@@ -510,7 +511,7 @@ export class EditManager<
 	): void {
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
 		if (local) {
-			this.trunkUndoRedoManager.trackCommit(this.trunk);
+			this.trunkUndoRedoManager.trackCommit(this.trunk, UndoRedoManagerCommitType.Undoable);
 		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
 			this.changeFamily.intoDelta(commit.change),
