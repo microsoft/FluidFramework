@@ -61,9 +61,9 @@ function useContainerInfo(
 	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
 		ContainerInfo | undefined
 	>();
-	const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
-		ContainerInfo | undefined
-	>();
+	// const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
+	// 	ContainerInfo | undefined
+	// >();
 
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
@@ -94,14 +94,14 @@ function useContainerInfo(
 			});
 		}, console.error);
 
-		getPrivateContainerData().then((containerInfo) => {
-			setPrivateContainerInfo(containerInfo);
-			devtools.registerContainerDevtools({
-				container: containerInfo.container,
-				containerKey: privateContainerKey,
-				containerData: containerInfo.appData.getRootObject(),
-			});
-		}, console.error);
+		// getPrivateContainerData().then((containerInfo) => {
+		// 	setPrivateContainerInfo(containerInfo);
+		// 	devtools.registerContainerDevtools({
+		// 		container: containerInfo.container,
+		// 		containerKey: privateContainerKey,
+		// 		containerData: containerInfo.appData.getRootObject(),
+		// 	});
+		// }, console.error);
 
 		return (): void => {
 			devtools?.dispose();
@@ -110,7 +110,7 @@ function useContainerInfo(
 
 	return {
 		sharedContainer: sharedContainerInfo,
-		privateContainer: privateContainerInfo,
+		privateContainer: undefined,
 	};
 }
 
