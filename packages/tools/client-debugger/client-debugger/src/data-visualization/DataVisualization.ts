@@ -97,6 +97,8 @@ export interface DataVisualizerEvents extends IEvent {
 	 * Emitted whenever the associated {@link @fluidframework/shared-object-base#ISharedObject}'s data is updated.
 	 *
 	 * @param visualTree - The updated visual tree representing the shared object's state.
+	 *
+	 * @eventProperty
 	 */
 	(event: "update", listener: (visualTree: FluidObjectNode) => void);
 }
@@ -344,8 +346,9 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
 	private emitVisualUpdate(): void {
-		const visualTree = this.render();
-		this.emit("update", visualTree);
+		this.render().then((visualTree: FluidObjectNode) => {
+			this.emit("update", visualTree);
+		}, console.error);
 	}
 
 	/**
