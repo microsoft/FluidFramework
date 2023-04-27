@@ -60,34 +60,51 @@ export function handleResponse<T>(
 	);
 }
 
-export async function createGitService(
-	config: nconf.Provider,
-	tenantId: string,
-	authorization: string,
-	tenantService: ITenantService,
-	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
-	allowDisabledTenant = false,
-): Promise<RestGitService> {
+export class createGitServiceArgs {
+	config: nconf.Provider;
+	tenantId: string;
+	authorization: string;
+	tenantService: ITenantService;
+	cache?: ICache;
+	asyncLocalStorage?: AsyncLocalStorage<string>;
+	initialUpload?: boolean = false;
+	storageName?: string;
+	allowDisabledTenant?: boolean = false;
+}
+
+export async function createGitService(createArgs: createGitServiceArgs): Promise<RestGitService> {
+	const {
+		config,
+		tenantId,
+		authorization,
+		tenantService,
+		cache,
+		asyncLocalStorage,
+		initialUpload,
+		storageName,
+		allowDisabledTenant,
+	} = createArgs;
 	const token = parseToken(tenantId, authorization);
+	const decoded = decode(token) as ITokenClaims;
+	const documentId = decoded.documentId;
+	if (containsPathTraversal(documentId)) {
+		// Prevent attempted directory traversal.
+		throw new NetworkError(400, `Invalid document id: ${documentId}`);
+	}
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
 	const customData: ITenantCustomDataExternal = details.customData;
 	const writeToExternalStorage = !!customData?.externalStorageData;
-	const storageName = customData?.storageName;
-	const decoded = decode(token) as ITokenClaims;
 	const storageUrl = config.get("storageUrl") as string | undefined;
-	if (containsPathTraversal(decoded.documentId)) {
-		// Prevent attempted directory traversal.
-		throw new NetworkError(400, `Invalid document id: ${decoded.documentId}`);
-	}
+	const calculatedStorageName =
+		initialUpload && storageName ? storageName : customData?.storageName;
 	const service = new RestGitService(
 		details.storage,
 		writeToExternalStorage,
 		tenantId,
-		decoded.documentId,
+		documentId,
 		cache,
 		asyncLocalStorage,
-		storageName,
+		calculatedStorageName,
 		storageUrl,
 	);
 	return service;

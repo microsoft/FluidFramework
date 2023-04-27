@@ -11,12 +11,12 @@ import {
 	FieldKindIdentifier,
 	AnchorSet,
 	Delta,
-	FieldKey,
 	UpPath,
 	Value,
 	ITreeCursor,
 	RevisionTag,
 	ChangeFamilyEditor,
+	FieldUpPath,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -74,45 +74,43 @@ export const defaultChangeFamily = new DefaultChangeFamily();
  * @alpha
  */
 export interface IDefaultEditBuilder {
+	// TODO: document
 	setValue(path: UpPath, value: Value): void;
 
 	/**
-	 * @param parent - path to the parent node of the value field being edited
 	 * @param field - the value field which is being edited under the parent node
 	 * @returns An object with methods to edit the given field of the given parent.
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder;
+	valueField(field: FieldUpPath): ValueFieldEditBuilder;
 
 	/**
-	 * @param parent - path to the parent node of the optional field being edited
 	 * @param field - the optional field which is being edited under the parent node
 	 * @returns An object with methods to edit the given field of the given parent.
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
+	optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
 
 	/**
-	 * @param parent - path to the parent node of the sequence field being edited
 	 * @param field - the sequence field which is being edited under the parent node
 	 * @returns An object with methods to edit the given field of the given parent.
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder;
+	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
 
+	// TODO: document
 	move(
-		sourcePath: UpPath | undefined,
-		sourceField: FieldKey,
+		sourceField: FieldUpPath,
 		sourceIndex: number,
 		count: number,
-		destPath: UpPath | undefined,
-		destField: FieldKey,
+		destinationField: FieldUpPath,
 		destIndex: number,
 	): void;
 
+	// TODO: document
 	addValueConstraint(path: UpPath, value: Value): void;
 }
 
@@ -152,35 +150,33 @@ export class DefaultEditBuilder
 		this.modularBuilder.addValueConstraint(path, value);
 	}
 
-	public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {
+	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set(newContent),
 				);
-				this.modularBuilder.submitChange(parent, field, valueFieldKind.identifier, change);
+				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
 		};
 	}
 
-	public optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder {
+	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
 				const change: FieldChangeset = brand(
 					optional.changeHandler.editor.set(newContent, wasEmpty),
 				);
-				this.modularBuilder.submitChange(parent, field, optional.identifier, change);
+				this.modularBuilder.submitChange(field, optional.identifier, change);
 			},
 		};
 	}
 
 	public move(
-		sourcePath: UpPath | undefined,
-		sourceField: FieldKey,
+		sourceField: FieldUpPath,
 		sourceIndex: number,
 		count: number,
-		destPath: UpPath | undefined,
-		destField: FieldKey,
+		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
 		const changes = sequence.changeHandler.editor.move(
@@ -192,14 +188,12 @@ export class DefaultEditBuilder
 		this.modularBuilder.submitChanges(
 			[
 				{
-					path: sourcePath,
 					field: sourceField,
 					fieldKind: sequence.identifier,
 					change: brand(changes[0]),
 				},
 				{
-					path: destPath,
-					field: destField,
+					field: destinationField,
 					fieldKind: sequence.identifier,
 					change: brand(changes[1]),
 				},
@@ -208,7 +202,7 @@ export class DefaultEditBuilder
 		);
 	}
 
-	public sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder {
+	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
 		return {
 			insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
 				const change: FieldChangeset = brand(
@@ -220,13 +214,13 @@ export class DefaultEditBuilder
 						),
 					),
 				);
-				this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
+				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			delete: (index: number, count: number): void => {
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.delete(index, count),
 				);
-				this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
+				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
 				const moves = sequence.changeHandler.editor.move(
@@ -239,13 +233,11 @@ export class DefaultEditBuilder
 				this.modularBuilder.submitChanges(
 					[
 						{
-							path: parent,
 							field,
 							fieldKind: sequence.identifier,
 							change: brand(moves[0]),
 						},
 						{
-							path: parent,
 							field,
 							fieldKind: sequence.identifier,
 							change: brand(moves[1]),
@@ -272,7 +264,7 @@ export class DefaultEditBuilder
 						isIntention,
 					),
 				);
-				this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
+				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 		};
 	}

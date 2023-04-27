@@ -674,7 +674,11 @@ describe("ModularChangeFamily", () => {
 			parentIndex: 0,
 		};
 
-		editor.submitChange(path, fieldB, valueField.identifier, brand(valueChange1a));
+		editor.submitChange(
+			{ parent: path, field: fieldB },
+			valueField.identifier,
+			brand(valueChange1a),
+		);
 		const changes = editor.getChanges();
 		const nodeChange: NodeChangeset = {
 			fieldChanges: new Map([
