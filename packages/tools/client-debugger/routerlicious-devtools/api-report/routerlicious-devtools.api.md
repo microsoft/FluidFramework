@@ -22,6 +22,8 @@ export interface ContainerDevtoolsProps {
     dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
+export { DevtoolsLogger }
+
 // @public
 export interface DevtoolsProps {
     dataVisualizers?: Record<string, VisualizeSharedObject>;

@@ -161,3 +161,6 @@ function mapContainerProps(
 		dataVisualizers,
 	};
 }
+
+// Convenience re-exports
+export { DevtoolsLogger } from "@fluid-tools/client-debugger";
