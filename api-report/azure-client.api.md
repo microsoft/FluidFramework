@@ -6,6 +6,7 @@
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { ICompressionStorageConfig } from '@fluidframework/driver-utils';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
@@ -48,6 +49,8 @@ export interface AzureClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
+    // (undocumented)
+    readonly summaryCompression?: boolean | ICompressionStorageConfig;
 }
 
 // @public
