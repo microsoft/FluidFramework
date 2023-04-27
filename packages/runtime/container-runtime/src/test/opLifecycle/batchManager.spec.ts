@@ -18,7 +18,7 @@ describe("BatchManager", () => {
 	const smallMessage = (): BatchMessage =>
 		({
 			contents: generateStringOfSize(smallMessageSize),
-			deserializedContent: { type: ContainerMessageType.FluidDataStoreOp },
+			type: ContainerMessageType.FluidDataStoreOp,
 		} as any as BatchMessage);
 
 	it("BatchManager's soft limit: a bunch of small messages", () => {
@@ -194,7 +194,7 @@ describe("BatchManager", () => {
 		for (let i = 0; i < 9; i++) {
 			batchManager.push({
 				contents: undefined,
-				deserializedContent: { type: ContainerMessageType.FluidDataStoreOp },
+				type: ContainerMessageType.FluidDataStoreOp,
 			} as any as BatchMessage); // empty op
 		}
 
