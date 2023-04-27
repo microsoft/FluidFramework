@@ -18,7 +18,7 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
  * {@link @fluidframework/container-definitions#IContainer} and
  * {@link @fluidframework/container-definitions#IAudience}.
  *
- * @public
+ * @internal
  */
 export interface IContainerDevtools extends IDisposable {
 	/**
