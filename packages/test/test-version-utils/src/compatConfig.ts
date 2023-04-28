@@ -33,8 +33,8 @@ interface CompatConfig {
 
 // N and N - 1
 const defaultVersions = [0, -1];
-// Set to true to test back-compat loader and loader-driver scenarios for older versions
-const fullBackCompat = false;
+// Set to false to skip testing compat between the runtime and older loaders and drivers.
+const runtimeWithOlderLoaderDriverCompat = true;
 // we are currently supporting 1.3.4 long-term
 const LTSVersions = ["^1.3.4"];
 
@@ -136,13 +136,13 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 	return [
 		{
-			name: `compat FULL ${compatVersion} - older loader`,
+			name: `compat back ${compatVersion} - older loader`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat FULL ${compatVersion} - older loader + older driver`,
+			name: `compat back ${compatVersion} - older loader + older driver`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -166,7 +166,8 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	assert(semverInternal !== undefined, "Unexpected pkg version");
 	const semverVal = new semver.SemVer(semverInternal);
 	const num = semverVal.major;
-	for (let i = 1; i < num; i++) {
+	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
+	for (let i = 2; i < num; i++) {
 		_configList.push(...genBackCompatConfig(0 - i));
 	}
 	return _configList;
@@ -190,7 +191,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		defaultVersions.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
-		if (fullBackCompat) {
+		if (runtimeWithOlderLoaderDriverCompat) {
 			_configList.push(...genFullBackCompatConfig());
 		}
 		LTSVersions.forEach((value) => {
