@@ -750,7 +750,8 @@ export class Container
 		// pieces we care about in the cloned object are primitive values, and it lets us avoid importing a full
 		// deep-clone library, so we keep the bundle size down. This code doesn't run a ton of times and if it's slower
 		// than an actual deep clone (improbable), the gain in network transfer time from a smaller bundle almost certainly
-		// outweighs that.
+		// outweighs that. The dep is still there but the cloneDeep module of lodash gets tree-shaken so we still get the
+		// bundle size improvement.
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = JSON.parse(JSON.stringify(this.loader.services.options));
 

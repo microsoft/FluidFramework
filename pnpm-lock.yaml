@@ -8543,6 +8543,7 @@ importers:
       double-ended-queue: ^2.1.0-0
       eslint: ~8.6.0
       events: ^3.1.0
+      lodash: ^4.17.21
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -8568,6 +8569,7 @@ importers:
       abort-controller: 3.0.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
+      lodash: 4.17.21
       url: 0.11.0
       uuid: 8.3.2
     devDependencies:
