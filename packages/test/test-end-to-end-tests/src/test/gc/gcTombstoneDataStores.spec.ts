@@ -858,7 +858,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		);
 
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-		itExpects.only(
+		itExpects(
 			"Can un-tombstone datastores by storing a handle",
 			[
 				// When confirming it's tombstoned
