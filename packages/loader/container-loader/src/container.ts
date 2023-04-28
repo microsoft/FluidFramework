@@ -5,8 +5,6 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
 
 import { v4 as uuid } from "uuid";
 import {
@@ -748,7 +746,11 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		this.options = cloneDeep(this.loader.services.options);
+		// Warning: this is only a shallow clone.  Mutation of any individual loader option will mutate it for
+		// all clients that were loaded from the same loader (including summarizer clients).
+		this.options = {
+			...this.loader.services.options,
+		};
 
 		this._deltaManager = this.createDeltaManager();
 
@@ -1777,7 +1779,10 @@ export class Container
 	private get client(): IClient {
 		const client: IClient =
 			this.options?.client !== undefined
-				? (this.options.client as IClient)
+				? // this.options.client is shared by ALL containers spawned by the same Loader (including the summarizer)
+				  // We're doing a cheap clone here to ensure it doesn't get tainted by the merge() that happens below, since
+				  // the override should only apply to the individual container it is given to.
+				  (JSON.parse(JSON.stringify(this.options.client)) as IClient)
 				: {
 						details: {
 							capabilities: { interactive: true },
