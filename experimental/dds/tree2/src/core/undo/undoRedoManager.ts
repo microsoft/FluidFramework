@@ -10,7 +10,7 @@ import { ReadonlyRepairDataStore } from "../repair";
 import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
 /**
- * Manages the undo and redo commit trees and repair data associated with undoable and redoable commits.
+ * Manages the undoable and redoable commit trees and repair data associated with undoable and redoable commits.
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
@@ -58,10 +58,6 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairData,
 		};
 
-		if (undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo) {
-		} else if (undoRedoManagerCommitType === UndoRedoManagerCommitType.Redo) {
-		}
-
 		switch (undoRedoManagerCommitType) {
 			// Both undo commits and redoable commits result in a new head redoable commit
 			// being pushed to the redoable commit stack but only undo commits need to pop from the
@@ -78,7 +74,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 				this.headRedoableCommit = this.headRedoableCommit?.parent;
 			case UndoRedoManagerCommitType.Undoable:
 			default:
-				this.headRedoableCommit = undoableOrRedoable;
+				this.headUndoableCommit = undoableOrRedoable;
 				break;
 		}
 	}
