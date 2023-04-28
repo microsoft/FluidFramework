@@ -190,9 +190,9 @@ abstract class BaseDataObject extends DataObject {
  * Data object that should be the leaf in the data object hierarchy. It does not create any data objects but simply
  * sends ops at a regular interval by incrementing a counter.
  */
-export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject {
+export class LeafDataObject extends BaseDataObject implements IGCActivityObject {
 	public static get type(): string {
-		return "DataObjectLeaf";
+		return "LeafDataObject";
 	}
 
 	private running: boolean = false;
@@ -273,17 +273,17 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 	}
 }
 
-export const dataObjectFactoryLeaf = new DataObjectFactory(
-	DataObjectLeaf.type,
-	DataObjectLeaf,
+export const leafDataObjectFactory = new DataObjectFactory(
+	LeafDataObject.type,
+	LeafDataObject,
 	[SharedCounter.getFactory()],
 	{},
 );
 
 /**
  * Data object that can create other data objects or attachment blobs and run activity on them. It does not however
- * interact with the data objects created by other clients (i.e., it's not collab). This emulates user scenarios
- * where each user is working on their own part of a document.
+ * interact with the data objects created by other clients (i.e., it has a single collaborator). This emulates user
+ * scenarios where each user is working on their own part of a document.
  * This data object does the following:
  * - It sends ops at a regular interval. The interval is defined by the config passed to the run method.
  * - After every few ops, it does a random activity. Example of activities it can perform:
@@ -291,9 +291,9 @@ export const dataObjectFactoryLeaf = new DataObjectFactory(
  *   - Ask a child data object to stop running and unreferenced it.
  *   - Upload an attachment blob, reference it and start running activity on it.
  */
-export class DataObjectNonCollab extends BaseDataObject implements IGCActivityObject {
+export class SingleCollabDataObject extends BaseDataObject implements IGCActivityObject {
 	public static get type(): string {
-		return "DataObjectNonCollab";
+		return "SingleCollabDataObject";
 	}
 
 	protected get nodeId(): string {
@@ -449,7 +449,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				continue;
 			}
 
-			const dataObjectHandle = dataObjectDetails[1] as IFluidHandle<DataObjectLeaf>;
+			const dataObjectHandle = dataObjectDetails[1] as IFluidHandle<LeafDataObject>;
 			const dataObject = await dataObjectHandle.get();
 			this.referencedDataObjects.push({
 				id: dataObjectId,
@@ -615,7 +615,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	private async runDataObjectActivity(activityType: ReferenceActivityType): Promise<boolean> {
 		switch (activityType) {
 			case ReferenceActivityType.CreateAndReference: {
-				const dataObject = await dataObjectFactoryLeaf.createChildInstance(this.context);
+				const dataObject = await leafDataObjectFactory.createChildInstance(this.context);
 				const dataObjectId = `${this.nodeId}/ds-${dataObject.id}`;
 				this.dataObjectMap.set(dataObjectId, dataObject.handle);
 				this.referencedDataObjects.push({
@@ -749,22 +749,22 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 }
 
-export const dataObjectFactoryNonCollab = new DataObjectFactory(
-	DataObjectNonCollab.type,
-	DataObjectNonCollab,
+export const singleCollabDataObjectFactory = new DataObjectFactory(
+	SingleCollabDataObject.type,
+	SingleCollabDataObject,
 	[SharedCounter.getFactory(), SharedMap.getFactory()],
 	{},
-	[[DataObjectLeaf.type, Promise.resolve(dataObjectFactoryLeaf)]],
+	[[LeafDataObject.type, Promise.resolve(leafDataObjectFactory)]],
 );
 
 /**
- * Data object that does every thing DataObjectNotCollab does. In addition, it interacts with the objects created by
- * other clients (i.e., it's collab). This emulates user scenarios where multiple users are working on common parts
- * of a document.
+ * Data object that does every thing SingleCollabDataObject does. In addition, it interacts with the objects created by
+ * other clients (i.e., it has multiple collaborators). This emulates user scenarios where multiple users are working on
+ * the same part of a document.
  */
-export class DataObjectCollab extends DataObjectNonCollab implements IGCActivityObject {
+export class MultiCollabDataObject extends SingleCollabDataObject implements IGCActivityObject {
 	public static get type(): string {
-		return "DataObjectCollab";
+		return "MultiCollabDataObject";
 	}
 
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
@@ -833,52 +833,54 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 	}
 }
 
-export const dataObjectFactoryCollab = new DataObjectFactory(
-	DataObjectCollab.type,
-	DataObjectCollab,
+export const multiCollabDataObjectFactory = new DataObjectFactory(
+	MultiCollabDataObject.type,
+	MultiCollabDataObject,
 	[SharedCounter.getFactory(), SharedMap.getFactory()],
 	{},
-	[[DataObjectLeaf.type, Promise.resolve(dataObjectFactoryLeaf)]],
+	[[LeafDataObject.type, Promise.resolve(leafDataObjectFactory)]],
 );
 
 /**
- * Root data object that creates a collab and a non-collab data object and runs them.
+ * Root data object that creates a single collab and a multi collab data object and runs them.
  */
 export class RootDataObject extends DataObject implements IGCActivityObject {
 	public static get type(): string {
 		return "RootDataObject";
 	}
 
-	private readonly dataObjectNonCollabKey = "nonCollabDataObject";
-	private readonly dataObjectCollabKey = "collabDataObject";
+	private readonly singleCollabDataObjectKey = "singleCollabDataObject";
+	private readonly multiCollabDataObjectKey = "multiCollabDataObject";
 
-	private nonCollabDataObject: IGCActivityObject | undefined;
-	private collabDataObject: IGCActivityObject | undefined;
+	private singleCollabDataObject: IGCActivityObject | undefined;
+	private multiCollabDataObject: IGCActivityObject | undefined;
 
 	protected async initializingFirstTime(): Promise<void> {
 		await super.initializingFirstTime();
 
-		const nonCollabDataObject = await dataObjectFactoryNonCollab.createChildInstance(
+		const nonCollabDataObject = await singleCollabDataObjectFactory.createChildInstance(
 			this.context,
 		);
-		this.root.set<IFluidHandle>(this.dataObjectNonCollabKey, nonCollabDataObject.handle);
+		this.root.set<IFluidHandle>(this.singleCollabDataObjectKey, nonCollabDataObject.handle);
 
-		const collabDataObject = await dataObjectFactoryCollab.createChildInstance(this.context);
-		this.root.set<IFluidHandle>(this.dataObjectCollabKey, collabDataObject.handle);
+		const collabDataObject = await multiCollabDataObjectFactory.createChildInstance(
+			this.context,
+		);
+		this.root.set<IFluidHandle>(this.multiCollabDataObjectKey, collabDataObject.handle);
 	}
 
 	public async run(config: IRunConfig): Promise<boolean> {
 		const nonCollabDataObjectHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
-			this.dataObjectNonCollabKey,
+			this.singleCollabDataObjectKey,
 		);
-		assert(nonCollabDataObjectHandle !== undefined, "Non collab data object not present");
-		this.nonCollabDataObject = await nonCollabDataObjectHandle.get();
+		assert(nonCollabDataObjectHandle !== undefined, "Single collab data object not present");
+		this.singleCollabDataObject = await nonCollabDataObjectHandle.get();
 
 		const collabDataObjectHandle = this.root.get<IFluidHandle<IGCActivityObject>>(
-			this.dataObjectCollabKey,
+			this.multiCollabDataObjectKey,
 		);
-		assert(collabDataObjectHandle !== undefined, "Collab data object not present");
-		this.collabDataObject = await collabDataObjectHandle.get();
+		assert(collabDataObjectHandle !== undefined, "Multi collab data object not present");
+		this.multiCollabDataObject = await collabDataObjectHandle.get();
 
 		/**
 		 * Adjust the op rate and total send count for each data object.
@@ -900,15 +902,15 @@ export class RootDataObject extends DataObject implements IGCActivityObject {
 		// Add a  random jitter of +- 50% of randomDelayMs to stagger the start of child in each client.
 		const approxDelayMs = 1000;
 		await delay(approxDelayMs * config.random.real(1, 1.5));
-		const child1RunP = this.nonCollabDataObject.run(
+		const child1RunP = this.singleCollabDataObject.run(
 			childConfig,
-			`client${config.runId + 1}NonCollab`,
+			`client${config.runId + 1}SingleCollab`,
 		);
 
 		await delay(approxDelayMs * config.random.real(1, 1.5));
-		const child2RunP = this.collabDataObject.run(
+		const child2RunP = this.multiCollabDataObject.run(
 			childConfig,
-			`client${config.runId + 1}Collab`,
+			`client${config.runId + 1}MultiCollab`,
 		);
 
 		return Promise.all([child1RunP, child2RunP]).then(([child1Result, child2Result]) => {
@@ -917,8 +919,8 @@ export class RootDataObject extends DataObject implements IGCActivityObject {
 	}
 
 	public stop() {
-		this.nonCollabDataObject?.stop();
-		this.collabDataObject?.stop();
+		this.singleCollabDataObject?.stop();
+		this.multiCollabDataObject?.stop();
 	}
 }
 
@@ -928,8 +930,8 @@ export const rootDataObjectFactory = new DataObjectFactory(
 	[SharedCounter.getFactory()],
 	{},
 	[
-		[DataObjectNonCollab.type, Promise.resolve(dataObjectFactoryNonCollab)],
-		[DataObjectCollab.type, Promise.resolve(dataObjectFactoryCollab)],
+		[SingleCollabDataObject.type, Promise.resolve(singleCollabDataObjectFactory)],
+		[MultiCollabDataObject.type, Promise.resolve(multiCollabDataObjectFactory)],
 	],
 );
 
