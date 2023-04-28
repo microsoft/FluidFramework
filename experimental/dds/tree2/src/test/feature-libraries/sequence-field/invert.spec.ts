@@ -51,9 +51,11 @@ describe("SequenceField - Invert", () => {
 
 	it("modified insert => delete", () => {
 		const insert = Change.insert(0, 1);
-		const modify = Change.modify(0, TestChange.mint([], 42));
+		const nodeChange = TestChange.mint([], 42);
+		const modify = Change.modify(0, nodeChange);
 		const input = composeAnonChanges([insert, modify]);
-		const expected = Change.delete(0, 1);
+		const inverseModify = Change.modify(0, TestChange.invert(nodeChange));
+		const expected = composeAnonChanges([inverseModify, Change.delete(0, 1)]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});

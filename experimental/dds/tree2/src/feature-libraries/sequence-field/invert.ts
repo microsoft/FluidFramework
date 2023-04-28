@@ -16,6 +16,7 @@ import {
 	isObjMark,
 	isReattachConflicted,
 	isSkipMark,
+	withNodeChange,
 } from "./utils";
 
 export type NodeChangeInverter<TNodeChange> = (
@@ -101,12 +102,11 @@ function invertMark<TNodeChange>(
 	} else {
 		switch (mark.type) {
 			case "Insert": {
-				return [
-					{
-						type: "Delete",
-						count: mark.content.length,
-					},
-				];
+				const inverse = withNodeChange(
+					{ type: "Delete", count: mark.content.length },
+					invertNodeChange(mark.changes, inputIndex, invertChild),
+				);
+				return [inverse];
 			}
 			case "Delete": {
 				assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
@@ -255,4 +255,8 @@ function invertModifyOrSkip<TNodeChange>(
 	}
 
 	return length;
+}
+
+function invertNodeChange<TNodeChange>(change: TNodeChange | undefined, index: number, inverter: NodeChangeInverter<TNodeChange>): TNodeChange | undefined {
+	return change === undefined ? undefined : inverter(change, index);
 }

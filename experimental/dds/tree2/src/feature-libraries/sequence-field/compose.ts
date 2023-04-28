@@ -24,7 +24,7 @@ import {
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
-import { getMoveEffect, getOrAddEffect, isMoveMark, MoveEffectTable } from "./moveEffectTable";
+import { getMoveEffect, getOrAddEffect, isMoveMark, MoveEffectTable, MoveMark } from "./moveEffectTable";
 import {
 	getInputLength,
 	getOutputLength,
@@ -183,6 +183,38 @@ function composeMarks<TNodeChange>(
 		return withNodeChange(baseMark, nodeChange);
 	} else if (areInputCellsEmpty(baseMark)) {
 		const moveInId = getMarkMoveId(baseMark);
+		const moveOutId = getMarkMoveId(newMark);
+
+		if (moveInId !== undefined && moveOutId !== undefined) {
+			assert(isMoveMark(baseMark) && isMoveMark(newMark), "Only move marks have move IDs");
+			const srcEffect = getOrAddEffect(
+				moveEffects,
+				CrossFieldTarget.Source,
+				baseMark.revision,
+				baseMark.id,
+				true,
+			);
+
+			const dstEffect = getOrAddEffect(
+				moveEffects,
+				CrossFieldTarget.Destination,
+				newMark.revision ?? newRev,
+				newMark.id,
+				true,
+			);
+
+			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
+			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
+			if (areInverseMoves(baseMark, baseIntention, newMark, newIntention)) {
+				srcEffect.shouldRemove = true;
+				dstEffect.shouldRemove = true;
+			} else {
+				srcEffect.mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
+			}
+
+			return 0;
+		}
+
 		if (moveInId !== undefined) {
 			assert(isMoveMark(baseMark), "Only move marks have move IDs");
 			getOrAddEffect(
@@ -194,8 +226,7 @@ function composeMarks<TNodeChange>(
 			).mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
 			return 0;
 		}
-
-		const moveOutId = getMarkMoveId(newMark);
+		
 		if (moveOutId !== undefined) {
 			assert(isMoveMark(newMark), "Only move marks have move IDs");
 
@@ -430,15 +461,15 @@ export class ComposeQueue<T> {
 			let baseCellId: DetachEvent;
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), "Only detach marks can empty cells");
-				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
-				if (baseRevision === undefined) {
+				const baseIntention = getIntention(baseMark.revision ?? this.baseMarks.revision, this.revisionMetadata);
+				if (baseIntention === undefined) {
 					// This case should only happen when squashing a transaction.
 					assert(isNewAttach(newMark), "Unhandled case");
 					return this.dequeueNew();
 				}
 				baseCellId = {
-					revision: baseRevision,
-					index: this.baseIndex.getIndex(baseRevision),
+					revision: baseIntention,
+					index: this.baseIndex.getIndex(baseIntention),
 				};
 			} else {
 				assert(
@@ -540,6 +571,15 @@ export class ComposeQueue<T> {
 interface ComposeMarks<T> {
 	baseMark?: Mark<T>;
 	newMark?: Mark<T>;
+}
+
+function areInverseMoves(baseMark: MoveMark<unknown>, baseIntention: RevisionTag | undefined, newMark: MoveMark<unknown>, newIntention: RevisionTag | undefined): boolean {
+	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === (newMark.revision ?? newIntention)) {
+		return true;
+	}
+
+	// TODO: Handle `newMark.type === "ReturnFrom"`
+	return false;
 }
 
 function getIntention(
