@@ -23,11 +23,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import {
-	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
-	INormalizedWholeSummary,
-	IWholeFlatSummary,
-} from "@fluidframework/server-services-client";
+import { IWholeFlatSummary } from "@fluidframework/server-services-client";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
 import { IRouterliciousDriverPolicies } from "./policies";
@@ -40,6 +36,8 @@ import { GitManager } from "./gitManager";
 import { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
 import { ISummaryUploadManager } from "./storageContracts";
 import { IR11sResponse } from "./restWrapper";
+import { INormalizedWholeSummary } from "./contracts";
+import { convertWholeFlatSummaryToSnapshotTreeAndBlobs } from "./r11sSnapshotParser";
 
 const latestSnapshotId: string = "latest";
 
@@ -100,8 +98,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 					);
 
 					const networkSnapshotP = !this.driverPolicies?.enableDiscovery
-						? this.fetchSnapshotTree(latestSnapshotId, false)
-						: this.fetchSnapshotTree(latestSnapshotId, true);
+						? this.fetchSnapshotTree(latestSnapshotId, false, "getVersions")
+						: this.fetchSnapshotTree(latestSnapshotId, true, "getVersions");
 
 					const promiseRaceWinner = await promiseRaceWithWinner([
 						cachedSnapshotP.catch(() => undefined),
@@ -181,7 +179,8 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		if (normalizedWholeSnapshot !== undefined) {
 			return normalizedWholeSnapshot.snapshotTree;
 		}
-		return (await this.fetchSnapshotTree(requestVersion.id)).snapshotTree;
+		return (await this.fetchSnapshotTree(requestVersion.id, undefined, "getSnapshotTree"))
+			.snapshotTree;
 	}
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -284,12 +283,14 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	private async fetchSnapshotTree(
 		versionId: string,
 		disableCache?: boolean,
+		scenarioName?: string,
 	): Promise<INormalizedWholeSummary> {
 		const normalizedWholeSummary = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
 				eventName: "getWholeFlatSummary",
 				treeId: versionId,
+				scenarioName,
 			},
 			async (event) => {
 				const manager = await this.getStorageManager(disableCache);
@@ -323,16 +324,13 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		normalizedWholeSummary: INormalizedWholeSummary,
 		versionId: string | null,
 	): Promise<string> {
-		const wholeFlatSummaryId = normalizedWholeSummary.snapshotTree.id;
-		assert(wholeFlatSummaryId !== undefined, 0x275 /* "Root tree should contain the id" */);
+		const snapshotId = normalizedWholeSummary.id;
+		assert(snapshotId !== undefined, 0x275 /* "Root tree should contain the id" */);
 		const cachePs: Promise<any>[] = [
-			this.snapshotTreeCache.put(
-				this.getCacheKey(wholeFlatSummaryId),
-				normalizedWholeSummary,
-			),
+			this.snapshotTreeCache.put(this.getCacheKey(snapshotId), normalizedWholeSummary),
 			this.initBlobCache(normalizedWholeSummary.blobs),
 		];
-		if (wholeFlatSummaryId !== versionId && versionId !== null) {
+		if (snapshotId !== versionId && versionId !== null) {
 			// versionId could be "latest". When summarizer checks cache for "latest", we want it to be available.
 			// TODO: For in-memory cache, <latest,snapshotTree> will be a shared pointer with <snapshotId,snapshotTree>,
 			// However, for something like Redis, this will cache the same value twice. Alternatively, could we simply
@@ -344,7 +342,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 
 		await Promise.all(cachePs);
 
-		return wholeFlatSummaryId;
+		return snapshotId;
 	}
 
 	private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {

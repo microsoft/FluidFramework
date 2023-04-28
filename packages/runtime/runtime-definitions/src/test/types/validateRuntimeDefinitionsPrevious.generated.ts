@@ -376,6 +376,30 @@ use_old_InterfaceDeclaration_IEnvelope(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IExperimentalIncrementalSummaryContext": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IExperimentalIncrementalSummaryContext():
+    TypeOnly<old.IExperimentalIncrementalSummaryContext>;
+declare function use_current_InterfaceDeclaration_IExperimentalIncrementalSummaryContext(
+    use: TypeOnly<current.IExperimentalIncrementalSummaryContext>);
+use_current_InterfaceDeclaration_IExperimentalIncrementalSummaryContext(
+    get_old_InterfaceDeclaration_IExperimentalIncrementalSummaryContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IExperimentalIncrementalSummaryContext": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IExperimentalIncrementalSummaryContext():
+    TypeOnly<current.IExperimentalIncrementalSummaryContext>;
+declare function use_old_InterfaceDeclaration_IExperimentalIncrementalSummaryContext(
+    use: TypeOnly<old.IExperimentalIncrementalSummaryContext>);
+use_old_InterfaceDeclaration_IExperimentalIncrementalSummaryContext(
+    get_current_InterfaceDeclaration_IExperimentalIncrementalSummaryContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IFluidDataStoreChannel": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():

@@ -46,7 +46,7 @@ import {
 	oneDayMs,
 	GCVersion,
 	disableSweepLogKey,
-	currentGCVersion,
+	stableGCVersion,
 	IGarbageCollectionSnapshotData,
 } from "../../gc";
 import {
@@ -147,7 +147,7 @@ describe("Garbage Collection Tests", () => {
 			metadata = {
 				...metadata,
 				...gcMetadata,
-				gcFeature: gcMetadata.gcFeature ?? currentGCVersion,
+				gcFeature: gcMetadata.gcFeature ?? stableGCVersion,
 				summaryFormatVersion: 1,
 				message: undefined,
 			};
@@ -787,7 +787,7 @@ describe("Garbage Collection Tests", () => {
 				const gcMetadata: IGCMetadata = {
 					gcFeature,
 				};
-				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(currentGCVersion);
+				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(gcFeature);
 				return createGarbageCollector(
 					{ baseSnapshot: snapshotTree },
 					gcBlobsMap,
@@ -796,7 +796,7 @@ describe("Garbage Collection Tests", () => {
 			}
 
 			it("reads all GC data from base snapshot when GC version does not change", async () => {
-				const garbageCollector = createGCOverride(currentGCVersion);
+				const garbageCollector = createGCOverride(stableGCVersion);
 
 				// GC state, tombstone state and deleted nodes should all be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
@@ -833,7 +833,7 @@ describe("Garbage Collection Tests", () => {
 			});
 
 			it("discards GC state and tombstone state in base snapshot when GC version changes", async () => {
-				const garbageCollector = createGCOverride(currentGCVersion + 1);
+				const garbageCollector = createGCOverride(stableGCVersion + 1);
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
@@ -870,11 +870,11 @@ describe("Garbage Collection Tests", () => {
 			});
 
 			it("reads all GC data from when refreshing from snapshot with same GC version", async () => {
-				const garbageCollector = createGCOverride(currentGCVersion);
+				const garbageCollector = createGCOverride(stableGCVersion);
 				await garbageCollector.initializeBaseState();
 
 				// Get a snapshot with the current GC version and refresh latest summary state from it.
-				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(currentGCVersion);
+				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(stableGCVersion);
 				const refreshSummaryResult: RefreshSummaryResult = {
 					latestSummaryUpdated: true,
 					wasSummaryTracked: false, // Indicates that state has to be updated from the snapshot in the result.
@@ -910,11 +910,11 @@ describe("Garbage Collection Tests", () => {
 			});
 
 			it("discards all GC data from when refreshing from snapshot with different GC version", async () => {
-				const garbageCollector = createGCOverride(currentGCVersion);
+				const garbageCollector = createGCOverride(stableGCVersion);
 				await garbageCollector.initializeBaseState();
 
 				// Get a snapshot with different GC version from current and refresh latest summary state from it.
-				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(currentGCVersion + 1);
+				const { snapshotTree, gcBlobsMap } = getSnapshotWithGCVersion(stableGCVersion + 1);
 				const refreshSummaryResult: RefreshSummaryResult = {
 					latestSummaryUpdated: true,
 					wasSummaryTracked: false, // Indicates that state has to be updated from the snapshot in the result.

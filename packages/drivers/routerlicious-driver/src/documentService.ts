@@ -8,7 +8,6 @@ import * as api from "@fluidframework/driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework/driver-utils";
 import { IClient } from "@fluidframework/protocol-definitions";
-import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
 import io from "socket.io-client";
 import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -25,6 +24,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { GitManager } from "./gitManager";
 import { Historian } from "./historian";
 import { RestWrapper } from "./restWrapperBase";
+import { INormalizedWholeSummary } from "./contracts";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
