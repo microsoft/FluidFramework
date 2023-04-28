@@ -1,6 +1,6 @@
 {
 	"name": "fluid-framework",
-	"version": "2.0.0-internal.4.1.0",
+	"version": "2.0.0-internal.4.2.0",
 	"description": "The main entry point into Fluid Framework public packages",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -16,13 +16,12 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
+		"build:commonjs": "npm run typetests:gen && npm run tsc",
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
 		"clean": "rimraf _api-extractor-temp dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
@@ -37,12 +36,12 @@
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
-		"@fluidframework/container-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
-		"@fluidframework/container-loader": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
-		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
-		"@fluidframework/fluid-static": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
-		"@fluidframework/map": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0",
-		"@fluidframework/sequence": ">=2.0.0-internal.4.1.0 <2.0.0-internal.4.2.0"
+		"@fluidframework/container-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/container-loader": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/fluid-static": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/map": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/sequence": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.15.0",

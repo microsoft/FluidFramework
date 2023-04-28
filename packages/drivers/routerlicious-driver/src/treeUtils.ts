@@ -10,7 +10,7 @@ import {
 	ISummaryTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
+import { INormalizedWholeSummary } from "./contracts";
 
 /**
  * Summary tree assembler props

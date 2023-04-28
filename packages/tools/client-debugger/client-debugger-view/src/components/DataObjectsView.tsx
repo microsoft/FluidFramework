@@ -82,7 +82,14 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	return (
 		<>
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
-				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
+				return (
+					<TreeDataView
+						key={key}
+						containerId={containerId}
+						label={key}
+						node={fluidObject}
+					/>
+				);
 			})}
 		</>
 	);

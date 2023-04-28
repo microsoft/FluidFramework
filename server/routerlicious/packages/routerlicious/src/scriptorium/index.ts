@@ -99,5 +99,8 @@ export async function create(
 		},
 	);
 
-	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, { enableTelemetry, maxDbBatchSize });
+	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, {
+		enableTelemetry,
+		maxDbBatchSize,
+	});
 }

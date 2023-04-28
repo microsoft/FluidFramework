@@ -13,32 +13,30 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import {
+	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
+	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
 	ChangeEvents,
+	EditManager,
 	SharedTreeCore,
 	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { AnchorSet, rootFieldKeySymbol } from "../../core";
-import {
-	defaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
-	singleTextCursor,
-} from "../../feature-libraries";
+import { ChangeFamily, ChangeFamilyEditor, rootFieldKeySymbol } from "../../core";
+import { DefaultChangeset, DefaultEditBuilder, singleTextCursor } from "../../feature-libraries";
 import { brand } from "../../util";
 import { ISubscribable } from "../../events";
-import { MockRepairDataStoreProvider } from "../utils";
+import { TestSharedTreeCore } from "./utils";
 
 describe("SharedTreeCore", () => {
 	describe("emits", () => {
 		/** Implementation of SharedTreeCore which exposes change events */
-		class ChangeEventSharedTree extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
+		class ChangeEventSharedTree extends TestSharedTreeCore {
 			public constructor() {
 				const runtime = new MockFluidDataStoreRuntime();
 				const attributes: IChannelAttributes = {
@@ -46,16 +44,7 @@ describe("SharedTreeCore", () => {
 					snapshotFormatVersion: "0.0.0",
 					packageVersion: "0.0.0",
 				};
-				super(
-					[],
-					defaultChangeFamily,
-					new AnchorSet(),
-					new MockRepairDataStoreProvider(),
-					"ChangeEventSharedTree",
-					runtime,
-					attributes,
-					"",
-				);
+				super();
 			}
 
 			public get events(): ISubscribable<ChangeEvents<DefaultChangeset>> {
@@ -64,7 +53,7 @@ describe("SharedTreeCore", () => {
 		}
 
 		function countTreeEvent(event: keyof ChangeEvents<DefaultChangeset>): {
-			tree: ReturnType<typeof createTree>;
+			tree: ChangeEventSharedTree;
 			counter: { count: number };
 		} {
 			const counter = {
@@ -237,29 +226,84 @@ describe("SharedTreeCore", () => {
 		});
 	});
 
+	it("evicts trunk commits behind the minimum sequence number", () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const tree = new TestSharedTreeCore(runtime);
+		const factory = new MockContainerRuntimeFactory();
+		tree.connect({
+			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		changeTree(tree);
+		factory.processAllMessages(); // Minimum sequence number === 0
+		assert.equal(getTrunkLength(tree), 1);
+		changeTree(tree);
+		changeTree(tree);
+		// No commits are evicted yet because there are none behind the minimum sequence number
+		factory.processAllMessages(); // Minimum sequence number === 1
+		assert.equal(getTrunkLength(tree), 3);
+		changeTree(tree);
+		changeTree(tree);
+		changeTree(tree);
+		// Two commits are behind the minimum sequence number and are evicted
+		factory.processAllMessages(); // Minimum sequence number === 3
+		assert.equal(getTrunkLength(tree), 6 - 2);
+	});
+
+	it("evicts trunk commits only when no branches have them in their ancestry", () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const tree = new TestSharedTreeCore(runtime);
+		const factory = new MockContainerRuntimeFactory();
+		tree.connect({
+			deltaConnection: factory.createContainerRuntime(runtime).createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		// The following scenario tests that branches are tracked across rebases and untracked after disposal
+		//
+		//                                 trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
+		changeTree(tree);
+		factory.processAllMessages(); //          [1]
+		assert.equal(getTrunkLength(tree), 1);
+		const branch1 = tree.createBranch();
+		const branch2 = tree.createBranch();
+		const branch3 = branch2.fork();
+		changeTree(tree);
+		factory.processAllMessages(); //          [1 (b1, b2, b3), 2]
+		changeTree(tree);
+		factory.processAllMessages(); //          [1 (b1, b2, b3), 2, 3]
+		assert.equal(getTrunkLength(tree), 3);
+		branch1.dispose(); //                     [1 (b2, b3), 2, 3]
+		assert.equal(getTrunkLength(tree), 3);
+		branch2.dispose(); //                     [1 (b3), 2, 3]
+		assert.equal(getTrunkLength(tree), 3);
+		branch3.dispose(); //                     [x, 2, 3]
+		assert.equal(getTrunkLength(tree), 2);
+		const branch4 = tree.createBranch(); //   [x, 2, 3 (b4)]
+		changeTree(tree);
+		changeTree(tree);
+		factory.processAllMessages(); //          [x, x, 3 (b4), 4, 5]
+		assert.equal(getTrunkLength(tree), 3);
+		const branch5 = tree.createBranch(); //   [x, x, 3 (b4), 4, 5 (b5)]
+		branch4.rebaseOnto(branch5.getHead(), branch5.undoRedoManager); // [x, x, 3, 4, 5 (b4, b5)]
+		branch4.dispose(); //                     [x, x, 3, 4, 5 (b5)]
+		assert.equal(getTrunkLength(tree), 3);
+		changeTree(tree);
+		factory.processAllMessages(); //          [x, x, x, 4, 5 (b5)]
+		assert.equal(getTrunkLength(tree), 2);
+		branch5.dispose(); //                     [x, x, x, 4, 5]
+		assert.equal(getTrunkLength(tree), 2);
+	});
+
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {
 		return summaryObject.type === SummaryType.Tree;
 	}
 
 	function createTree<TIndexes extends readonly Summarizable[]>(
 		indexes: TIndexes,
-	): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
-		const runtime = new MockFluidDataStoreRuntime();
-		const attributes: IChannelAttributes = {
-			type: "TestSharedTree",
-			snapshotFormatVersion: "0.0.0",
-			packageVersion: "0.0.0",
-		};
-		return new SharedTreeCore(
-			indexes,
-			defaultChangeFamily,
-			new AnchorSet(),
-			new MockRepairDataStoreProvider(),
-			"TestSharedTree",
-			runtime,
-			attributes,
-			"",
-		);
+	): TestSharedTreeCore {
+		return new TestSharedTreeCore(undefined, undefined, indexes);
 	}
 
 	interface MockSummarizableEvents extends IEvent {
@@ -330,6 +374,20 @@ describe("SharedTreeCore", () => {
 function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));
+}
+
+/** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */
+function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
+	tree: SharedTreeCore<TEditor, TChange>,
+): number {
+	const { editManager } = tree as unknown as {
+		editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
+	};
+	assert(
+		editManager !== undefined,
+		"EditManager in SharedTreeCore has been moved/deleted. Please update glass box tests.",
+	);
+	return editManager.getTrunk().length;
 }

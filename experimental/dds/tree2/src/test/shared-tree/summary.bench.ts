@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import { strict as assert } from "assert";
 import { IsoBuffer, unreachableCase } from "@fluidframework/common-utils";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
@@ -18,7 +18,7 @@ import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { ISharedTree, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import { brand } from "../../util";
-import { SummarizeType, TestTreeProvider, TestTreeProviderLite } from "../utils";
+import { TestTreeProviderLite } from "../utils";
 import {
 	rootFieldKey,
 	rootFieldKeySymbol,
@@ -41,9 +41,9 @@ describe("Summary benchmarks", () => {
 	// TODO: report these sizes as benchmark output which can be tracked over time.
 	describe("size of", () => {
 		it("an empty tree.", async () => {
-			const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+			const provider = new TestTreeProviderLite();
 			const tree = provider.trees[0];
-			const { summary } = tree.getAttachSummary();
+			const { summary } = tree.getAttachSummary(true);
 			const summaryString = JSON.stringify(summary);
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize < 1000);
@@ -139,7 +139,7 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
 	// Apply an edit to the tree which inserts a node with a value
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 		field.insert(index, writeCursor);
 	});
 }
@@ -148,7 +148,7 @@ function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath
 	// Apply an edit to the tree which inserts a node with a value.
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField(path, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField({ parent: path, field: rootFieldKeySymbol });
 		field.insert(0, writeCursor);
 	});
 }
@@ -235,7 +235,7 @@ function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void 
 	// Apply an edit to the tree which inserts a node with a value
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 		field.insert(0, writeCursor);
 	});
 }

@@ -32,28 +32,32 @@ import { brand, fail } from "../util";
 
 const version = "1.0.0" as const;
 
-const FieldSchemaFormat = Type.Object(
-	{
-		kind: FieldKindIdentifierSchema,
-		types: Type.Optional(Type.Array(TreeSchemaIdentifierSchema)),
-	},
-	// TODO: Investigate behavioral change here due to typebox update.
-	// { additionalProperties: false },
+const FieldSchemaFormatBase = Type.Object({
+	kind: FieldKindIdentifierSchema,
+	types: Type.Optional(Type.Array(TreeSchemaIdentifierSchema)),
+});
+
+const FieldSchemaFormat = Type.Intersect([FieldSchemaFormatBase], { additionalProperties: false });
+
+const NamedLocalFieldSchemaFormat = Type.Intersect(
+	[
+		FieldSchemaFormatBase,
+		Type.Object({
+			name: LocalFieldKeySchema,
+		}),
+	],
+	{ additionalProperties: false },
 );
 
-const NamedLocalFieldSchemaFormat = Type.Intersect([
-	FieldSchemaFormat,
-	Type.Object({
-		name: LocalFieldKeySchema,
-	}),
-]);
-
-const NamedGlobalFieldSchemaFormat = Type.Intersect([
-	FieldSchemaFormat,
-	Type.Object({
-		name: GlobalFieldKeySchema,
-	}),
-]);
+const NamedGlobalFieldSchemaFormat = Type.Intersect(
+	[
+		FieldSchemaFormatBase,
+		Type.Object({
+			name: GlobalFieldKeySchema,
+		}),
+	],
+	{ additionalProperties: false },
+);
 
 const TreeSchemaFormat = Type.Object(
 	{

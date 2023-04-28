@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch } from "../../shared-tree-core";
 import {
 	AnchorSet,
 	GraphCommit,
-	Rebaser,
 	RevisionTag,
 	UndoRedoManager,
 	assertIsRevisionTag,
@@ -24,6 +24,8 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { MockRepairDataStoreProvider } from "../utils";
+
+type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
 describe("Branches", () => {
 	/** The tag used for the "origin commit" (the commit that all other commits share as a common ancestor) */
@@ -71,7 +73,7 @@ describe("Branches", () => {
 		const tag1 = change(parent);
 		const tag2 = change(parent);
 		// Rebase the child onto the parent
-		child.rebaseOnto(parent.getHead());
+		child.rebaseOnto(parent.getHead(), parent.undoRedoManager);
 		assertBased(child, parent);
 		// Ensure that the changes are now present on the child
 		assertHistory(child, tag1, tag2);
@@ -85,7 +87,7 @@ describe("Branches", () => {
 		const tag1 = change(child);
 		const tag2 = change(child);
 		// Rebase the parent onto the child
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assertBased(parent, child);
 		// Ensure that the changes are now present on the parent
 		assertHistory(parent, tag1, tag2);
@@ -148,7 +150,7 @@ describe("Branches", () => {
 		assertHistory(parent, tagParent, tagChild, tagParent2);
 		// Apply a change to the child, then rebase the child onto the parent. The child should now be based on the parent's latest commit.
 		const tagChild2 = change(child);
-		child.rebaseOnto(parent.getHead());
+		child.rebaseOnto(parent.getHead(), parent.undoRedoManager);
 		assertBased(child, parent);
 		assertHistory(child, tagParent, tagChild, tagParent2, tagChild2);
 	});
@@ -175,7 +177,7 @@ describe("Branches", () => {
 		change(child);
 		assert.equal(changeEventCount, 1);
 		// Rebase the parent onto the child and ensure another change event is emitted
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assert.equal(changeEventCount, 2);
 	});
 
@@ -188,7 +190,7 @@ describe("Branches", () => {
 		change(parent);
 		assert.equal(changeEventCount, 1);
 		// Rebase the parent onto the child and ensure no change is emitted since the child has no new commits
-		parent.rebaseOnto(child.getHead());
+		parent.rebaseOnto(child.getHead(), child.undoRedoManager);
 		assert.equal(changeEventCount, 1);
 	});
 
@@ -263,6 +265,76 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 0);
 	});
 
+	it("emit a fork event after forking", () => {
+		let fork: DefaultBranch | undefined;
+		const branch = create();
+		branch.on("fork", (f) => (fork = f));
+		// The fork event should return the new branch, just as the fork method does
+		assert.equal(branch.fork(), fork);
+		assert.equal(branch.fork(), fork);
+	});
+
+	it("emit a rebase event after rebasing", () => {
+		const branch = create();
+		const fork = branch.fork();
+		let rebaseCount = 0;
+		fork.on("rebase", () => (rebaseCount += 1));
+		change(branch);
+		fork.rebaseOnto(branch.getHead(), branch.undoRedoManager);
+		assert.equal(rebaseCount, 1);
+		change(branch);
+		fork.rebaseOnto(branch.getHead(), branch.undoRedoManager);
+		assert.equal(rebaseCount, 2);
+	});
+
+	it("do not emit a rebase event after a no-op rebase", () => {
+		const branch = create();
+		const fork = branch.fork();
+		let rebased = false;
+		fork.on("rebase", () => (rebased = true));
+		fork.rebaseOnto(branch.getHead(), branch.undoRedoManager);
+		assert.equal(rebased, false);
+		change(fork);
+		fork.rebaseOnto(branch.getHead(), branch.undoRedoManager);
+		assert.equal(rebased, false);
+	});
+
+	it("emit a dispose event after disposing", () => {
+		const branch = create();
+		let disposed = false;
+		branch.on("dispose", () => (disposed = true));
+		branch.dispose();
+		assert.equal(disposed, true);
+	});
+
+	it("can be read after disposal", () => {
+		const branch = create();
+		branch.dispose();
+		// These methods are valid to call after disposal
+		branch.getHead();
+		branch.isTransacting();
+	});
+
+	it("cannot be mutated after disposal", () => {
+		const branch = create();
+		branch.dispose();
+
+		function assertDisposed(fn: () => void): void {
+			assert.throws(fn, (e) => validateAssertionError(e, "Branch is disposed"));
+		}
+
+		// These methods are not valid to call after disposal
+		assertDisposed(() => branch.fork());
+		assertDisposed(() => branch.rebaseOnto(branch.getHead(), branch.undoRedoManager));
+		assertDisposed(() => branch.merge(branch.fork()));
+		assertDisposed(() => branch.editor.apply(branch.changeFamily.rebaser.compose([])));
+		assertDisposed(() => branch.startTransaction());
+		assertDisposed(() => branch.commitTransaction());
+		assertDisposed(() => branch.abortTransaction());
+		assertDisposed(() => branch.abortTransaction());
+		assertDisposed(() => branch.dispose());
+	});
+
 	it("correctly report whether they are in the middle of a transaction", () => {
 		// Create a branch and test `isTransacting()` during two transactions, one nested within the other
 		const branch = create();
@@ -326,9 +398,7 @@ describe("Branches", () => {
 	});
 
 	/** Creates a new root branch */
-	function create(
-		onChange?: (change: DefaultChangeset) => void,
-	): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+	function create(onChange?: (change: DefaultChangeset) => void): DefaultBranch {
 		const changeFamily = new DefaultChangeFamily();
 		const initCommit: GraphCommit<DefaultChangeset> = {
 			change: changeFamily.rebaser.compose([]),
@@ -336,12 +406,13 @@ describe("Branches", () => {
 			sessionId: "testSession",
 		};
 
-		const branch = new SharedTreeBranch(
+		const branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> = new SharedTreeBranch(
 			initCommit,
 			"testSession",
-			new Rebaser(changeFamily.rebaser),
 			changeFamily,
-			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily),
+			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily, () =>
+				branch.getHead(),
+			),
 			new AnchorSet(),
 		);
 
@@ -358,17 +429,14 @@ describe("Branches", () => {
 	});
 
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
-	function change(branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>): RevisionTag {
+	function change(branch: DefaultBranch): RevisionTag {
 		const cursor = singleTextCursor({ type: brand("TestValue"), value: changeValue });
-		branch.editor.valueField(undefined, rootFieldKeySymbol).set(cursor);
+		branch.editor.valueField({ parent: undefined, field: rootFieldKeySymbol }).set(cursor);
 		return branch.getHead().revision;
 	}
 
 	/** Assert that the given branch is comprised of commits with exactly the given tags, in order from oldest to newest */
-	function assertHistory(
-		branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		...tags: RevisionTag[]
-	): void {
+	function assertHistory(branch: DefaultBranch, ...tags: RevisionTag[]): void {
 		const commits: GraphCommit<DefaultChangeset>[] = [];
 		const ancestor = findAncestor(
 			[branch.getHead(), commits],
@@ -383,10 +451,7 @@ describe("Branches", () => {
 	}
 
 	/** Assert that `branch` branches off of `on` from `on`'s head */
-	function assertBased(
-		branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		on: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-	): void {
+	function assertBased(branch: DefaultBranch, on: DefaultBranch): void {
 		const ancestor = findCommonAncestor(branch.getHead(), on.getHead());
 		assert.equal(ancestor, on.getHead());
 	}

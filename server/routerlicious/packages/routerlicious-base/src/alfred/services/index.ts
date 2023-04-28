@@ -4,3 +4,4 @@
  */
 
 export { DeltaService } from "./deltaService";
+export { StorageNameAllocator } from "./storageNameAllocator";
