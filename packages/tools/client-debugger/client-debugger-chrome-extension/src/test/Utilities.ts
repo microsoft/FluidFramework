@@ -86,10 +86,5 @@ export function stubGlobals(): Globals {
 
 	return {
 		browser: stubbedBrowser,
-		document: undefined,
-		eval: undefined,
-		fetch: (): void => {},
-		location: undefined,
-		window: undefined,
 	};
 }

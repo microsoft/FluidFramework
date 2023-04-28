@@ -11,6 +11,7 @@ import {
 	EmptyKey,
 	FieldKey,
 	getDescendant,
+	IEditableForest,
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	IRepairDataStoreProvider,
@@ -190,12 +191,18 @@ export class ForestRepairDataStoreProvider implements IRepairDataStoreProvider {
 	private frozenForest: IForestSubscription | undefined;
 
 	public constructor(
-		private readonly forest: IForestSubscription,
+		private readonly forest: IEditableForest,
 		private readonly storedSchema: InMemoryStoredSchemaRepository,
 	) {}
 
 	public freeze(): void {
 		this.frozenForest = this.forest.clone(this.storedSchema.clone(), new AnchorSet());
+	}
+
+	public applyDelta(change: Delta.Root): void {
+		if (this.frozenForest === undefined) {
+			this.forest.applyDelta(change);
+		}
 	}
 
 	public createRepairData(): ForestRepairDataStore {
@@ -207,7 +214,7 @@ export class ForestRepairDataStoreProvider implements IRepairDataStoreProvider {
 		return repairDataStore;
 	}
 
-	public clone(forest?: IForestSubscription): ForestRepairDataStoreProvider {
+	public clone(forest?: IEditableForest): ForestRepairDataStoreProvider {
 		const storedSchema = this.storedSchema.clone();
 		return new ForestRepairDataStoreProvider(
 			forest ?? this.forest.clone(storedSchema, new AnchorSet()),

@@ -27,14 +27,13 @@ export namespace ContainerDevtoolsFeatures {
 	 */
 	export interface MessageData extends HasContainerId {
 		/**
-		 * Describes the set of features supported by the {@link ContainerDevtools} instance associated with the
-		 * specified {@link HasContainerId.containerId}.
+		 * {@inheritDoc ContainerDevtoolsFeatureFlags}
 		 */
 		features: ContainerDevtoolsFeatureFlags;
 	}
 
 	/**
-	 * Outbound message containing the set of features supported by the {@link ContainerDevtools} instance associated
+	 * Outbound message containing the set of features supported by the Container-level Devtools instance associated
 	 * with the specified {@link HasContainerId.containerId}.
 	 *
 	 * @public
