@@ -60,8 +60,6 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
 		listener: (
 			sequenceNumber: number,
 			key: string,
-			// TODO: use `unknown` instead.
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			value: unknown,
 			approvalSequenceNumber: number,
 		) => void,
