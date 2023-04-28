@@ -858,7 +858,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		);
 
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
-		itExpects(
+		itExpects.only(
 			"Can un-tombstone datastores by storing a handle",
 			[
 				// When confirming it's tombstoned
@@ -870,6 +870,13 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
 					category: "generic",
+					clientType: "interactive",
+				},
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived",
+					category: "generic",
+					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
