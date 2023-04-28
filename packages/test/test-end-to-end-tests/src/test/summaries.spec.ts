@@ -510,7 +510,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 			...testContainerConfig,
 			loaderProps: {
 				...testContainerConfig.loaderProps,
-				options: { summarizeProtocolTree: true },
+				options: { },
 			},
 		};
 	});

@@ -108,6 +108,7 @@ export class RelativeLoader implements ILoader {
 }
 
 export interface ILoaderOptions extends ILoaderOptions1 {
+	// @deprecated - this option is no longer used
 	summarizeProtocolTree?: boolean;
 }
 

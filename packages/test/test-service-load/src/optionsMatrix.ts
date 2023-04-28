@@ -24,7 +24,6 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	cache: booleanCases,
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
-	summarizeProtocolTree: [undefined],
 };
 
 export function applyOverrides<T>(

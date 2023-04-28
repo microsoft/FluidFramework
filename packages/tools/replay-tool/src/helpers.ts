@@ -175,14 +175,14 @@ export async function loadContainer(
 	// but the default version was changed to 2. Once the default is 3, this will be removed.
 	settings["Fluid.GarbageCollection.GCVersionUpgradeToV3"] = true;
 
-	// Load the Fluid document while forcing summarizeProtocolTree option
+	// Load the Fluid document
 	const loader = new Loader({
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
 		options: loaderOptions
-			? { ...loaderOptions, summarizeProtocolTree: true }
-			: { summarizeProtocolTree: true },
+			? { ...loaderOptions }
+			: { },
 		logger,
 		configProvider,
 	});

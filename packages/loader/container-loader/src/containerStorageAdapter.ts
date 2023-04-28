@@ -46,6 +46,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	 * Whether the adapter will enforce sending combined summary trees.
 	 */
 	public get summarizeProtocolTree() {
+		assert(this._summarizeProtocolTree !== undefined, "connectToService() should be called first");
 		return this._summarizeProtocolTree === true;
 	}
 
@@ -56,7 +57,6 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	 * @param logger - Telemetry logger
 	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
 	 * upload, and fix it up with a protocol tree if needed
-	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
 	 */
 	public constructor(
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
@@ -66,10 +66,8 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		 */
 		private readonly blobContents: { [id: string]: ArrayBufferLike | string } = {},
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-		forceEnableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
-		this._summarizeProtocolTree = forceEnableSummarizeProtocolTree;
 	}
 
 	disposed: boolean = false;
@@ -89,8 +87,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 			this.logger,
 		));
 
-		this._summarizeProtocolTree =
-			this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree;
+		this._summarizeProtocolTree = service.policies?.summarizeProtocolTree;
 		if (this.summarizeProtocolTree) {
 			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
 			this._storageService = new ProtocolTreeStorageService(
