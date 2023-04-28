@@ -4,12 +4,7 @@
  */
 
 import assert from "assert";
-import {
-	IContainer,
-	IContainerExperimental,
-	IHostLoader,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
+import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { ISharedDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
@@ -33,7 +28,11 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { ConnectionState, IPendingContainerState } from "@fluidframework/container-loader";
+import {
+	ConnectionState,
+	IContainerExperimental,
+	IPendingContainerState,
+} from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";

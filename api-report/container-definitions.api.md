@@ -228,11 +228,6 @@ export interface IContainerEvents extends IEvent {
     (event: "saved", listener: (dirty: boolean) => void): any;
 }
 
-// @internal
-export interface IContainerExperimental extends IContainer {
-    getPendingLocalState(): string;
-}
-
 // @public (undocumented)
 export interface IContainerLoadMode {
     // (undocumented)
