@@ -8,5 +8,11 @@ export const Constants = Object.freeze({
 	createDocThrottleIdPrefix: "createDoc",
 	getDeltasThrottleIdPrefix: "getDeltas",
 	getSessionThrottleIdPrefix: "getSession",
+	socketConnectionsThrottleIdPrefix: "socketConnections",
+	submitOpsThrottleIdPrefix: "submitOps",
+	submitSignalThrottleIdPrefix: "submitSignal",
 	generalRestCallThrottleIdPrefix: "generalRestCall",
+	throttleGeneralTenant: "generalTenant",
+	throttleGeneralCluster: "generalCluster",
+	throttleTenantGroup1: "tenantGroup1",
 });

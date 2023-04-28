@@ -32,8 +32,8 @@ import { Constants, getSession } from "../../../utils";
 export function create(
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
-	tenantThrottlers: Map<string, IThrottler>,
-	clusterThrottlers: Map<string, IThrottler>,
+	tenantThrottlersMap: Map<string, string>,
+	throttlersMap: Map<string, Map<string, IThrottler>>,
 	singleUseTokenCache: ICache,
 	config: Provider,
 	tenantManager: ITenantManager,
@@ -57,16 +57,9 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
-
-	const createDocTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
-		throttleIdSuffix: Constants.createDocThrottleIdPrefix,
-	};
-	const getSessionTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
-		throttleIdSuffix: Constants.getSessionThrottleIdPrefix,
-	};
+	const generalTenantThrottler = throttlersMap
+		.get(Constants.throttleGeneralTenant)
+		.get(Constants.generalRestCallThrottleIdPrefix);
 
 	// Throttling logic for per-cluster rate-limiting at the HTTP route level
 	const createDocClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -76,6 +69,27 @@ export function create(
 	const getSessionClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: Constants.getSessionThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+	};
+
+	// Todo: delete it and use the function in throttlerMiddleware.ts
+	const tenantThrottle = (throttleApi: string) => {
+		return (req, rest, next) => {
+			const tenantId = getParam(req.params, "tenantId") || appTenants[0].id;
+			const tenantGroup: string | undefined = tenantId
+				? tenantThrottlersMap?.get(tenantId) ?? undefined
+				: undefined;
+			const throttleOptions: Partial<IThrottleMiddlewareOptions> = {
+				throttleIdPrefix: tenantGroup ? `${tenantId}_${tenantGroup}` : tenantId,
+				throttleIdSuffix: throttleApi,
+			};
+			const throttler = tenantGroup
+				? throttlersMap.get(tenantGroup)?.get(throttleApi)
+				: throttlersMap.get("generalTenant")?.get(throttleApi);
+			if (throttler) {
+				return throttle(throttler, winston, throttleOptions)(req, rest, next);
+			}
+			next();
+		};
 	};
 
 	router.get(
@@ -114,15 +128,13 @@ export function create(
 			singleUseTokenCache,
 		}),
 		throttle(
-			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
+			throttlersMap
+				.get(Constants.throttleGeneralCluster)
+				.get(Constants.createDocThrottleIdPrefix),
 			winston,
 			createDocClusterThrottleOptions,
 		),
-		throttle(
-			tenantThrottlers.get(Constants.createDocThrottleIdPrefix),
-			winston,
-			createDocTenantThrottleOptions,
-		),
+		tenantThrottle(Constants.createDocThrottleIdPrefix),
 		async (request, response, next) => {
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
@@ -204,15 +216,13 @@ export function create(
 		"/:tenantId/session/:id",
 		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(
-			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
+			throttlersMap
+				.get(Constants.throttleGeneralCluster)
+				.get(Constants.getSessionThrottleIdPrefix),
 			winston,
 			getSessionClusterThrottleOptions,
 		),
-		throttle(
-			tenantThrottlers.get(Constants.getSessionThrottleIdPrefix),
-			winston,
-			getSessionTenantThrottleOptions,
-		),
+		tenantThrottle(Constants.getSessionThrottleIdPrefix),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");

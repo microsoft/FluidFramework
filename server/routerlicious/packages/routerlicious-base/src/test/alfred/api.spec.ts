@@ -122,11 +122,18 @@ describe("Routerlicious", () => {
 				const limitCreateDoc = 5;
 				const limitGetDeltas = 5;
 				const limitGetSession = 5;
+				const limitSocketConnection = 5;
+				const limitSubmitOps = 5;
+				const limitSubmitSignal = 5;
 				beforeEach(() => {
+					const throttlerMap = new Map<string, Map<string, TestThrottler>>();
+
 					const restTenantThrottler = new TestThrottler(limitTenant);
 					const restTenantGetDeltasThrottler = new TestThrottler(limitTenant);
 					const restTenantCreateDocThrottler = new TestThrottler(limitTenant);
 					const restTenantGetSessionThrottler = new TestThrottler(limitTenant);
+					const restTenantSocketConnectionsThrottler = new TestThrottler(limitTenant);
+					const restSubmitOpsConnectionsThrottler = new TestThrottler(limitTenant);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
 					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -144,10 +151,22 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
+					restTenantThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restTenantSocketConnectionsThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsConnectionsThrottler,
+					);
 
 					const restCreateDocThrottler = new TestThrottler(limitCreateDoc);
 					const restGetDeltasThrottler = new TestThrottler(limitGetDeltas);
 					const restGetSessionThrottler = new TestThrottler(limitGetSession);
+					const restSocketConnectionsThrottler = new TestThrottler(limitSocketConnection);
+					const restSubmitOpsThrottler = new TestThrottler(limitSubmitOps);
+					const restSubmitSignalThrottler = new TestThrottler(limitSubmitSignal);
+
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
@@ -161,11 +180,58 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottler,
 					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitSignalThrottleIdPrefix,
+						restSubmitSignalThrottler,
+					);
+
+					const restCreateDocThrottlerGroup1 = new TestThrottler(limitTenant);
+					const restGetDeltasThrottlerGroup1 = new TestThrottler(limitTenant);
+					const restGetSessionThrottlerGroup1 = new TestThrottler(limitTenant);
+					const restSocketConnectionsThrottlerGroup1 = new TestThrottler(limitTenant);
+					const restSubmitOpsThrottlerGroup1 = new TestThrottler(limitTenant);
+
+					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
+					restClusterThrottlersGroup1.set(
+						Constants.createDocThrottleIdPrefix,
+						restCreateDocThrottlerGroup1,
+					);
+					restClusterThrottlersGroup1.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restGetDeltasThrottlerGroup1,
+					);
+					restClusterThrottlersGroup1.set(
+						Constants.getSessionThrottleIdPrefix,
+						restGetSessionThrottlerGroup1,
+					);
+					restClusterThrottlersGroup1.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottlerGroup1,
+					);
+					restClusterThrottlersGroup1.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottlerGroup1,
+					);
+
+					throttlerMap.set(Constants.throttleGeneralTenant, restTenantThrottlers);
+					throttlerMap.set(Constants.throttleGeneralCluster, restClusterThrottlers);
+					throttlerMap.set(Constants.throttleTenantGroup1, restClusterThrottlersGroup1);
+
+					const tenantThrottlersMap = new Map<string, string>();
+
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						restTenantThrottlers,
-						restClusterThrottlers,
+						tenantThrottlersMap,
+						throttlerMap,
 						defaultSingleUseTokenCache,
 						defaultStorage,
 						defaultAppTenants,
@@ -319,10 +385,16 @@ describe("Routerlicious", () => {
 			describe("authorization", () => {
 				const maxThrottlerLimit = 10;
 				beforeEach(() => {
+					const throttlerMap = new Map<string, Map<string, TestThrottler>>();
+
 					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantSocketConnectionsThrottler = new TestThrottler(
+						maxThrottlerLimit,
+					);
+					const restSubmitOpsConnectionsThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
 					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -340,29 +412,89 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
+					restTenantThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restTenantSocketConnectionsThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsConnectionsThrottler,
+					);
 
-					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSocketConnectionsThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSubmitOpsThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSubmitSignalThrottler = new TestThrottler(maxThrottlerLimit);
+
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restClusterCreateDocThrottler,
+						restCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restClusterGetDeltasThrottler,
+						restGetDeltasThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
-						restClusterGetSessionThrottler,
+						restGetSessionThrottler,
 					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitSignalThrottleIdPrefix,
+						restSubmitSignalThrottler,
+					);
+
+					const restCreateDocThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restGetDeltasThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restGetSessionThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restSocketConnectionsThrottlerGroup1 = new TestThrottler(
+						maxThrottlerLimit,
+					);
+					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+
+					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
+					restClusterThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restCreateDocThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restGetDeltasThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restGetSessionThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottlerGroup1,
+					);
+
+					throttlerMap.set(Constants.throttleGeneralTenant, restTenantThrottlers);
+					throttlerMap.set(Constants.throttleGeneralCluster, restClusterThrottlers);
+					throttlerMap.set(Constants.throttleTenantGroup1, restClusterThrottlersGroup1);
+
+					const tenantThrottlersMap = new Map<string, string>();
 
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						restTenantThrottlers,
-						restClusterThrottlers,
+						tenantThrottlersMap,
+						throttlerMap,
 						defaultSingleUseTokenCache,
 						defaultStorage,
 						defaultAppTenants,
@@ -433,10 +565,16 @@ describe("Routerlicious", () => {
 
 				const maxThrottlerLimit = 1000000;
 				beforeEach(() => {
+					const throttlerMap = new Map<string, Map<string, TestThrottler>>();
+
 					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantSocketConnectionsThrottler = new TestThrottler(
+						maxThrottlerLimit,
+					);
+					const restSubmitOpsConnectionsThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
 					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -454,29 +592,89 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
+					restTenantThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restTenantSocketConnectionsThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsConnectionsThrottler,
+					);
 
-					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSocketConnectionsThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSubmitOpsThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSubmitSignalThrottler = new TestThrottler(maxThrottlerLimit);
+
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restClusterCreateDocThrottler,
+						restCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restClusterGetDeltasThrottler,
+						restGetDeltasThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
-						restClusterGetSessionThrottler,
+						restGetSessionThrottler,
 					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitSignalThrottleIdPrefix,
+						restSubmitSignalThrottler,
+					);
+
+					const restCreateDocThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restGetDeltasThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restGetSessionThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restSocketConnectionsThrottlerGroup1 = new TestThrottler(
+						maxThrottlerLimit,
+					);
+					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+
+					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
+					restClusterThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restCreateDocThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restGetDeltasThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restGetSessionThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottlerGroup1,
+					);
+
+					throttlerMap.set(Constants.throttleGeneralTenant, restTenantThrottlers);
+					throttlerMap.set(Constants.throttleGeneralCluster, restClusterThrottlers);
+					throttlerMap.set(Constants.throttleTenantGroup1, restClusterThrottlersGroup1);
+
+					const tenantThrottlersMap = new Map<string, string>();
 
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						restTenantThrottlers,
-						restClusterThrottlers,
+						tenantThrottlersMap,
+						throttlerMap,
 						defaultSingleUseTokenCache,
 						defaultStorage,
 						defaultAppTenants,
@@ -547,10 +745,14 @@ describe("Routerlicious", () => {
 			describe("single-use JWTs", () => {
 				const limit = 1000000;
 				beforeEach(() => {
+					const throttlerMap = new Map<string, Map<string, TestThrottler>>();
+
 					const restTenantThrottler = new TestThrottler(limit);
 					const restTenantGetDeltasThrottler = new TestThrottler(limit);
 					const restTenantCreateDocThrottler = new TestThrottler(limit);
 					const restTenantGetSessionThrottler = new TestThrottler(limit);
+					const restTenantSocketConnectionsThrottler = new TestThrottler(limit);
+					const restSubmitOpsConnectionsThrottler = new TestThrottler(limit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
 					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -568,28 +770,87 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
+					restTenantThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restTenantSocketConnectionsThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsConnectionsThrottler,
+					);
 
-					const restClusterCreateDocThrottler = new TestThrottler(limit);
-					const restClusterGetDeltasThrottler = new TestThrottler(limit);
-					const restClusterGetSessionThrottler = new TestThrottler(limit);
+					const restCreateDocThrottler = new TestThrottler(limit);
+					const restGetDeltasThrottler = new TestThrottler(limit);
+					const restGetSessionThrottler = new TestThrottler(limit);
+					const restSocketConnectionsThrottler = new TestThrottler(limit);
+					const restSubmitOpsThrottler = new TestThrottler(limit);
+					const restSubmitSignalThrottler = new TestThrottler(limit);
+
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restClusterCreateDocThrottler,
+						restCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restClusterGetDeltasThrottler,
+						restGetDeltasThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
-						restClusterGetSessionThrottler,
+						restGetSessionThrottler,
 					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitSignalThrottleIdPrefix,
+						restSubmitSignalThrottler,
+					);
+
+					const restCreateDocThrottlerGroup1 = new TestThrottler(limit);
+					const restGetDeltasThrottlerGroup1 = new TestThrottler(limit);
+					const restGetSessionThrottlerGroup1 = new TestThrottler(limit);
+					const restSocketConnectionsThrottlerGroup1 = new TestThrottler(limit);
+					const restSubmitOpsThrottlerGroup1 = new TestThrottler(limit);
+
+					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
+					restClusterThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restCreateDocThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restGetDeltasThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restGetSessionThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottlerGroup1,
+					);
+
+					throttlerMap.set(Constants.throttleGeneralTenant, restTenantThrottlers);
+					throttlerMap.set(Constants.throttleGeneralCluster, restClusterThrottlers);
+					throttlerMap.set(Constants.throttleTenantGroup1, restClusterThrottlersGroup1);
+
+					const tenantThrottlersMap = new Map<string, string>();
+
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						restTenantThrottlers,
-						restClusterThrottlers,
+						tenantThrottlersMap,
+						throttlerMap,
 						new TestCache(),
 						defaultStorage,
 						defaultAppTenants,
@@ -625,10 +886,16 @@ describe("Routerlicious", () => {
 
 				beforeEach(() => {
 					const maxThrottlerLimit = 1000000;
+					const throttlerMap = new Map<string, Map<string, TestThrottler>>();
+
 					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantSocketConnectionsThrottler = new TestThrottler(
+						maxThrottlerLimit,
+					);
+					const restSubmitOpsConnectionsThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
 					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -646,31 +913,91 @@ describe("Routerlicious", () => {
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
+					restTenantThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restTenantSocketConnectionsThrottler,
+					);
+					restTenantThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsConnectionsThrottler,
+					);
 
-					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSocketConnectionsThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSubmitOpsThrottler = new TestThrottler(maxThrottlerLimit);
+					const restSubmitSignalThrottler = new TestThrottler(maxThrottlerLimit);
+
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restClusterCreateDocThrottler,
+						restCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restClusterGetDeltasThrottler,
+						restGetDeltasThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
-						restClusterGetSessionThrottler,
+						restGetSessionThrottler,
 					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottler,
+					);
+					restClusterThrottlers.set(
+						Constants.submitSignalThrottleIdPrefix,
+						restSubmitSignalThrottler,
+					);
+
+					const restCreateDocThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restGetDeltasThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restGetSessionThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+					const restSocketConnectionsThrottlerGroup1 = new TestThrottler(
+						maxThrottlerLimit,
+					);
+					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
+
+					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
+					restClusterThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restCreateDocThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restGetDeltasThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restGetSessionThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						restSocketConnectionsThrottlerGroup1,
+					);
+					restClusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						restSubmitOpsThrottlerGroup1,
+					);
+
+					throttlerMap.set(Constants.throttleGeneralTenant, restTenantThrottlers);
+					throttlerMap.set(Constants.throttleGeneralCluster, restClusterThrottlers);
+					throttlerMap.set(Constants.throttleTenantGroup1, restClusterThrottlersGroup1);
+
+					const tenantThrottlersMap = new Map<string, string>();
 
 					spyGetSession = Sinon.spy(SessionHelper, "getSession");
 
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						restTenantThrottlers,
-						restClusterThrottlers,
+						tenantThrottlersMap,
+						throttlerMap,
 						defaultSingleUseTokenCache,
 						defaultStorage,
 						defaultAppTenants,

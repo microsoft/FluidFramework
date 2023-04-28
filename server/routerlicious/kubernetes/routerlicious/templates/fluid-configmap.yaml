@@ -69,22 +69,33 @@ data:
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
-                "restCallsPerTenant": {
-                    "generalRestCall": {{ toJson .Values.alfred.throttling.restCallsPerTenant.generalRestCall }},
-                    "createDoc": {{ toJson .Values.alfred.throttling.restCallsPerTenant.createDoc }},
-                    "getDeltas": {{ toJson .Values.alfred.throttling.restCallsPerTenant.getDeltas }},
-                    "getSession": {{ toJson .Values.alfred.throttling.restCallsPerTenant.getSession }}}
+                "tenantGroup1" : {
+                    "createDoc": {{ toJson .Values.alfred.throttling.tenantGroup1.createDoc }},
+                    "getDeltas": {{ toJson .Values.alfred.throttling.tenantGroup1.getDeltas }},
+                    "getSession": {{ toJson .Values.alfred.throttling.tenantGroup1.getSession }},
+                    "socketConnections": {{ toJson .Values.alfred.throttling.tenantGroup1.socketConnections }},
+                    "submitOps": {{ toJson .Values.alfred.throttling.tenantGroup1.submitOps }}
                 },
-                "restCallsPerCluster": {
-                    "createDoc": {{ toJson .Values.alfred.throttling.restCallsPerCluster.createDoc }},
-                    "getDeltas": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getDeltas }},
-                    "getSession": {{ toJson .Values.alfred.throttling.restCallsPerCluster.getSession }}}
+                "generalTenant" : {
+                    "generalRestCall": {{ toJson .Values.alfred.throttling.generalTenant.generalRestCall }},
+                    "createDoc": {{ toJson .Values.alfred.throttling.generalTenant.createDoc }},
+                    "getDeltas": {{ toJson .Values.alfred.throttling.generalTenant.getDeltas }},
+                    "getSession": {{ toJson .Values.alfred.throttling.generalTenant.getSession }},
+                    "socketConnections": {{ toJson .Values.alfred.throttling.generalTenant.socketConnections }},
+                    "submitOps": {{ toJson .Values.alfred.throttling.generalTenant.submitOps }}
                 },
-                "socketConnectionsPerTenant": {{ toJson .Values.alfred.throttling.socketConnectionsPerTenant }},
-                "socketConnectionsPerCluster": {{ toJson .Values.alfred.throttling.socketConnectionsPerCluster }},
-                "submitOps": {{ toJson .Values.alfred.throttling.submitOps }},
-                "submitSignal": {{ toJson .Values.alfred.throttling.submitSignal }}}
+                "generalCluster" : {
+                    "createDoc": {{ toJson .Values.alfred.throttling.generalCluster.createDoc }},
+                    "getDeltas": {{ toJson .Values.alfred.throttling.generalCluster.getDeltas }},
+                    "getSession": {{ toJson .Values.alfred.throttling.generalCluster.getSession }},
+                    "socketConnections": {{ toJson .Values.alfred.throttling.generalCluster.socketConnections }},
+                    "submitOps": {{ toJson .Values.alfred.throttling.generalCluster.submitOps }},
+                    "submitSignal": {{ toJson .Values.alfred.throttling.generalCluster.submitSignal }}
+                }
             },
+            "throttlingGroup" : {
+                "tenantGroup1": {{ toJson .Values.alfred.throttlingGroup.tenantGroup1 }}
+            }
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",

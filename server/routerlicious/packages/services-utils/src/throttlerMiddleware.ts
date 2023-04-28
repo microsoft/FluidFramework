@@ -11,6 +11,7 @@ import {
 	Lumberjack,
 	ThrottlingTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
+import { getParam } from "./auth";
 
 export interface IThrottleMiddlewareOptions {
 	/**
@@ -54,6 +55,34 @@ const getThrottleId = (req: Request, throttleOptions: IThrottleMiddlewareOptions
 
 function noopMiddleware(req: Request, res: Response, next: NextFunction) {
 	next();
+}
+
+/**
+ * Express middleware for API tenant throttling.
+ */
+export function tenantThrottle(
+	throttleApi: string,
+	tenantThrottlersMap: Map<string, string>,
+	throttlersMap: Map<string, Map<string, IThrottler>>,
+	appTenantId: string,
+): RequestHandler {
+	return (req, rest, next) => {
+		const tenantId = getParam(req.params, "tenantId") ?? appTenantId;
+		const tenantGroup: string | undefined = tenantId
+			? tenantThrottlersMap?.get(tenantId) ?? undefined
+			: undefined;
+		const throttleOptions: Partial<IThrottleMiddlewareOptions> = {
+			throttleIdPrefix: tenantGroup ? `${tenantId}_${tenantGroup}` : tenantId,
+			throttleIdSuffix: throttleApi,
+		};
+		const throttler = tenantGroup
+			? throttlersMap.get(tenantGroup)?.get(throttleApi)
+			: throttlersMap.get("generalTenant")?.get(throttleApi);
+		if (throttler) {
+			return throttle(throttler, undefined, throttleOptions)(req, rest, next);
+		}
+		next();
+	};
 }
 
 /**

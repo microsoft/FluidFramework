@@ -223,10 +223,8 @@ export function configureWebSocketServices(
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
 	cache?: core.ICache,
-	connectThrottlerPerTenant?: core.IThrottler,
-	connectThrottlerPerCluster?: core.IThrottler,
-	submitOpThrottler?: core.IThrottler,
-	submitSignalThrottler?: core.IThrottler,
+	tenantThrottlersMap?: Map<string, string>,
+	throttlersMap?: Map<string, Map<string, core.IThrottler>>,
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
@@ -269,7 +267,7 @@ export function configureWebSocketServices(
 		async function connectDocument(message: IConnect): Promise<IConnectedClient> {
 			const startTime = Date.now();
 			const throttleErrorPerCluster = checkThrottleAndUsage(
-				connectThrottlerPerCluster,
+				throttlersMap?.get("generalCluster")?.get("socketConnections"),
 				getSocketConnectThrottleId("connectDoc"),
 				message.tenantId,
 				logger,
@@ -277,9 +275,17 @@ export function configureWebSocketServices(
 			if (throttleErrorPerCluster) {
 				return Promise.reject(throttleErrorPerCluster);
 			}
+
+			const tenantGroup: string | undefined = message.tenantId
+				? tenantThrottlersMap?.get(message.tenantId) ?? undefined
+				: undefined;
 			const throttleErrorPerTenant = checkThrottleAndUsage(
-				connectThrottlerPerTenant,
-				getSocketConnectThrottleId(message.tenantId),
+				tenantGroup
+					? throttlersMap?.get(tenantGroup)?.get("socketConnections")
+					: throttlersMap?.get("generalTenant")?.get("socketConnections"),
+				tenantGroup
+					? `${getSocketConnectThrottleId(message.tenantId)}_${tenantGroup}`
+					: getSocketConnectThrottleId(message.tenantId),
 				message.tenantId,
 				logger,
 			);
@@ -680,21 +686,51 @@ export function configureWebSocketServices(
 						// counts for unprocessed messages.
 						messageCount += Array.isArray(messageBatch) ? messageBatch.length : 1;
 					}
-					const throttleError = checkThrottleAndUsage(
-						submitOpThrottler,
-						getSubmitOpThrottleId(clientId, connection.tenantId),
+					const throttleErrorPerCluster = checkThrottleAndUsage(
+						throttlersMap?.get("generalCluster")?.get("submitOps"),
+						"submitOps",
 						connection.tenantId,
 						logger,
 						undefined,
 						undefined,
 						messageCount /* incrementWeight */,
 					);
-					if (throttleError) {
+					if (throttleErrorPerCluster) {
 						const nackMessage = createNackMessage(
-							throttleError.code,
+							throttleErrorPerCluster.code,
 							NackErrorType.ThrottlingError,
-							throttleError.message,
-							throttleError.retryAfter,
+							throttleErrorPerCluster.message,
+							throttleErrorPerCluster.retryAfter,
+						);
+						socket.emit("nack", "", [nackMessage]);
+						return;
+					}
+
+					const tenantGroup: string | undefined = connection.tenantId
+						? tenantThrottlersMap?.get(connection.tenantId) ?? undefined
+						: undefined;
+					const throttleErrorPerTenant = checkThrottleAndUsage(
+						tenantGroup
+							? throttlersMap?.get(tenantGroup)?.get("submitOps")
+							: throttlersMap?.get("generalTenant")?.get("submitOps"),
+						tenantGroup
+							? `${getSubmitOpThrottleId(
+									clientId,
+									connection.tenantId,
+							  )}_${tenantGroup}`
+							: getSubmitOpThrottleId(clientId, connection.tenantId),
+						connection.tenantId,
+						logger,
+						undefined,
+						undefined,
+						messageCount /* incrementWeight */,
+					);
+					if (throttleErrorPerTenant) {
+						const nackMessage = createNackMessage(
+							throttleErrorPerTenant.code,
+							NackErrorType.ThrottlingError,
+							throttleErrorPerTenant.message,
+							throttleErrorPerTenant.retryAfter,
 						);
 						socket.emit("nack", "", [nackMessage]);
 						return;
@@ -801,7 +837,7 @@ export function configureWebSocketServices(
 						clientId,
 					};
 					const throttleError = checkThrottleAndUsage(
-						submitSignalThrottler,
+						throttlersMap?.get("generalCluster")?.get("submitSignal"),
 						getSubmitSignalThrottleId(clientId, room.tenantId),
 						room.tenantId,
 						logger,

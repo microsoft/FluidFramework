@@ -27,8 +27,8 @@ export function create(
 	tenantManager: ITenantManager,
 	deltaService: IDeltaService,
 	appTenants: IAlfredTenant[],
-	tenantThrottlers: Map<string, IThrottler>,
-	clusterThrottlers: Map<string, IThrottler>,
+	tenantThrottlersMap: Map<string, string>,
+	throttlersMap: Map<string, Map<string, IThrottler>>,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
@@ -39,17 +39,17 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
-
-	const getDeltasTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
-		throttleIdSuffix: Constants.getDeltasThrottleIdPrefix,
-	};
+	const generalTenantThrottler = throttlersMap
+		.get(Constants.throttleGeneralTenant)
+		.get(Constants.generalRestCallThrottleIdPrefix);
 
 	const getDeltasClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: Constants.getDeltasThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+	const getDeltasClusterThrottler = throttlersMap
+		.get(Constants.throttleGeneralCluster)
+		.get(Constants.getDeltasThrottleIdPrefix);
 
 	function stringToSequenceNumber(value: any): number {
 		if (typeof value !== "string") {
@@ -58,6 +58,27 @@ export function create(
 		const parsedValue = parseInt(value, 10);
 		return isNaN(parsedValue) ? undefined : parsedValue;
 	}
+
+	// Todo: delete it and use the function in throttlerMiddleware.ts
+	const tenantThrottle = (throttleApi: string) => {
+		return (req, rest, next) => {
+			const tenantId = getParam(req.params, "tenantId") || appTenants[0].id;
+			const tenantGroup: string | undefined = tenantId
+				? tenantThrottlersMap?.get(tenantId) ?? undefined
+				: undefined;
+			const throttleOptions: Partial<IThrottleMiddlewareOptions> = {
+				throttleIdPrefix: tenantGroup ? `${tenantId}_${tenantGroup}` : tenantId,
+				throttleIdSuffix: throttleApi,
+			};
+			const throttler = tenantGroup
+				? throttlersMap.get(tenantGroup)?.get(throttleApi)
+				: throttlersMap.get(Constants.throttleGeneralTenant)?.get(throttleApi);
+			if (throttler) {
+				return throttle(throttler, winston, throttleOptions)(req, rest, next);
+			}
+			next();
+		};
+	};
 
 	/**
 	 * New api that fetches ops from summary and storage.
@@ -114,16 +135,8 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		throttle(
-			clusterThrottlers.get(Constants.getDeltasThrottleIdPrefix),
-			winston,
-			getDeltasClusterThrottleOptions,
-		),
-		throttle(
-			tenantThrottlers.get(Constants.getDeltasThrottleIdPrefix),
-			winston,
-			getDeltasTenantThrottleOptions,
-		),
+		throttle(getDeltasClusterThrottler, winston, getDeltasClusterThrottleOptions),
+		tenantThrottle(Constants.getDeltasThrottleIdPrefix),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);

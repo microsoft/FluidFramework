@@ -59,21 +59,32 @@
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
 		"throttling": {
-			"restCallsPerTenant": {
+			"tenantGroup1": {
+				"createDoc": "disabled",
+				"getDeltas": "disabled",
+				"getSession": "disabled",
+				"socketConnections": "disabled",
+				"submitOps": "disabled"
+			},
+			"generalTenant": {
 				"generalRestCall": "disabled",
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
-				"getSession": "disabled"
+				"getSession": "disabled",
+				"socketConnections": "disabled",
+				"submitOps": "disabled"
 			},
-			"restCallsPerCluster": {
+			"generalCluster": {
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
-				"getSession": "disabled"
-			},
-			"socketConnectionsPerTenant": "disabled",
-			"socketConnectionsPerCluster": "disabled",
-			"submitOps": "disabled",
-			"submitSignal": "disabled"
+				"getSession": "disabled",
+				"socketConnections": "disabled",
+				"submitOps": "disabled",
+				"submitSignal": "disabled"
+			}
+		},
+		"throttlingGroup": {
+			"tenantGroup1": []
 		},
 		"topic": "rawdeltas",
 		"bucket": "snapshots",

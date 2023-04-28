@@ -39,7 +39,7 @@ export function create(
 	producer: core.IProducer,
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
-	tenantThrottlers: Map<string, core.IThrottler>,
+	throttlersMap: Map<string, Map<string, core.IThrottler>>,
 	tokenManager?: core.ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
@@ -48,7 +48,9 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+	const generalTenantThrottler = throttlersMap
+		.get("generalTenant")
+		.get(Constants.generalRestCallThrottleIdPrefix);
 
 	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[]) {
 		const tenantId = getParam(request.params, "tenantId");

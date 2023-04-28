@@ -124,11 +124,39 @@ describe("Routerlicious", () => {
 					const pubsub = new PubSub();
 					webSocketServer = new LocalWebSocketServer(pubsub);
 
+					const throttlersMap = new Map<string, Map<string, TestThrottler | Throttler>>();
+					const tenantThrottlers = new Map<string, TestThrottler>();
+					const tenantGroup1Throttlers = new Map<string, TestThrottler>();
+					const clusterThrottlers = new Map<string, TestThrottler | Throttler>();
 					const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
 					const testConnectionThrottlerPerCluster = new TestThrottler(
 						throttleLimitConnectDoc,
 					);
-					const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
+					const testGroup1ConnectionThrottler = new TestThrottler(throttleLimitTenant);
+
+					const testSubmitOpThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
+					const testSubmitOpThrottlerPerCluster = new TestThrottler(throttleLimitTenant);
+					const testGroup1SubmitOpThrottler = new TestThrottler(throttleLimitTenant);
+
+					const testSubmitSignalThrottlerPerCluster = new TestThrottler(
+						throttleLimitTenant,
+					);
+
+					tenantThrottlers.set("socketConnections", testConnectionThrottlerPerTenant);
+					clusterThrottlers.set("socketConnections", testConnectionThrottlerPerCluster);
+					tenantGroup1Throttlers.set("socketConnections", testGroup1ConnectionThrottler);
+
+					tenantThrottlers.set("submitOps", testSubmitOpThrottlerPerTenant);
+					clusterThrottlers.set("submitOps", testSubmitOpThrottlerPerCluster);
+					tenantGroup1Throttlers.set("submitOps", testGroup1SubmitOpThrottler);
+
+					clusterThrottlers.set("submitSignal", testSubmitSignalThrottlerPerCluster);
+
+					throttlersMap.set("generalTenant", tenantThrottlers);
+					throttlersMap.set("generalCluster", clusterThrottlers);
+					throttlersMap.set("tenantGroup1", tenantGroup1Throttlers);
+
+					const tenantThrottlersMap = new Map<string, string>();
 
 					configureWebSocketServices(
 						webSocketServer,
@@ -145,9 +173,8 @@ describe("Routerlicious", () => {
 						false,
 						false,
 						undefined,
-						testConnectionThrottlerPerTenant,
-						testConnectionThrottlerPerCluster,
-						testSubmitOpThrottler,
+						tenantThrottlersMap,
+						throttlersMap,
 						undefined,
 						undefined,
 					);
@@ -583,17 +610,43 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					const pubsub = new PubSub();
 					webSocketServer = new LocalWebSocketServer(pubsub);
 
+					const throttlersMap = new Map<string, Map<string, TestThrottler | Throttler>>();
+					const tenantThrottlers = new Map<string, TestThrottler>();
+					const tenantGroup1Throttlers = new Map<string, TestThrottler>();
+					const clusterThrottlers = new Map<string, TestThrottler | Throttler>();
 					const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
 					const testConnectionThrottlerPerCluster = new TestThrottler(
 						throttleLimitConnectDoc,
 					);
-					const testSubmitOpThrottler = new TestThrottler(throttleLimitTenant);
-					const throttlerHelper = new ThrottlerHelper(testThrottleAndUsageStorageManager);
+					const testGroup1ConnectionThrottler = new TestThrottler(
+						throttleLimitConnectDoc,
+					);
 
-					const testSubmitSignalThrottler = new Throttler(
+					const testSubmitOpThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
+					const testSubmitOpThrottlerPerCluster = new TestThrottler(throttleLimitTenant);
+					const testGroup1SubmitOpThrottler = new TestThrottler(throttleLimitConnectDoc);
+
+					const throttlerHelper = new ThrottlerHelper(testThrottleAndUsageStorageManager);
+					const testSubmitSignalThrottlerPerCluster = new Throttler(
 						throttlerHelper,
 						minThrottleCheckInterval,
 					);
+
+					tenantThrottlers.set("socketConnections", testConnectionThrottlerPerTenant);
+					clusterThrottlers.set("socketConnections", testConnectionThrottlerPerCluster);
+					tenantGroup1Throttlers.set("socketConnections", testGroup1ConnectionThrottler);
+
+					tenantThrottlers.set("submitOps", testSubmitOpThrottlerPerTenant);
+					clusterThrottlers.set("submitOps", testSubmitOpThrottlerPerCluster);
+					tenantGroup1Throttlers.set("submitOps", testGroup1SubmitOpThrottler);
+
+					clusterThrottlers.set("submitSignal", testSubmitSignalThrottlerPerCluster);
+
+					throttlersMap.set("generalTenant", tenantThrottlers);
+					throttlersMap.set("generalCluster", clusterThrottlers);
+					throttlersMap.set("tenantGroup1", tenantGroup1Throttlers);
+
+					const tenantThrottlersMap = new Map<string, string>();
 
 					configureWebSocketServices(
 						webSocketServer,
@@ -610,10 +663,8 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						true,
 						true,
 						undefined,
-						testConnectionThrottlerPerTenant,
-						testConnectionThrottlerPerCluster,
-						testSubmitOpThrottler,
-						testSubmitSignalThrottler,
+						tenantThrottlersMap,
+						throttlersMap,
 						testThrottleAndUsageStorageManager,
 					);
 				});
