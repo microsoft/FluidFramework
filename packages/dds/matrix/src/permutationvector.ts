@@ -222,12 +222,11 @@ export class PermutationVector extends Client {
 		//
 		//       If we find that we frequently need a reverse handle -> position lookup, we could maintain
 		//       one using the Tiny-Calc adjust tree.
-		let containingSegment: PermutationSegment | undefined;
+		let containingSegment!: PermutationSegment;
 		let containingOffset: number;
 
 		this.walkAllSegments((segment) => {
-			const asPerm = segment as PermutationSegment;
-			const { start, cachedLength } = asPerm;
+			const { start, cachedLength } = segment as PermutationSegment;
 
 			// If the segment is unallocated, skip it.
 			if (!isHandleValid(start)) {
@@ -237,7 +236,7 @@ export class PermutationVector extends Client {
 			const end = start + cachedLength;
 
 			if (start <= handle && handle < end) {
-				containingSegment = asPerm;
+				containingSegment = segment as PermutationSegment;
 				containingOffset = handle - start;
 				return false;
 			}
@@ -254,7 +253,7 @@ export class PermutationVector extends Client {
 		// has not yet been recycled.
 
 		assert(
-			containingSegment !== undefined && isHandleValid(containingSegment.start),
+			isHandleValid(containingSegment.start),
 			0x029 /* "Invalid handle at start of containing segment!" */,
 		);
 

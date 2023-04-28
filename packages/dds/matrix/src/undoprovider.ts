@@ -13,6 +13,7 @@ import {
 	MergeTreeRevertibleDriver,
 	discardMergeTreeDeltaRevertible,
 	TrackingGroup,
+	ITrackingGroup,
 } from "@fluidframework/merge-tree";
 import { MatrixItem, SharedMatrix } from "./matrix";
 import { Handle, isHandleValid } from "./handletable";
@@ -59,7 +60,7 @@ export class VectorUndoProvider {
 				case MergeTreeDeltaType.REMOVE:
 				case MergeTreeDeltaType.INSERT:
 					if (this.currentOp !== deltaArgs.operation) {
-						this.pushRevertible(revertibles);
+						this.pushRevertible(revertibles, removeTrackingGroup);
 					}
 					break;
 
@@ -71,15 +72,15 @@ export class VectorUndoProvider {
 			// another revertible until `IRevertable.revert()` finishes the current op and clears this
 			// field.
 			if (this.currentGroup !== undefined) {
-				this.currentOp = deltaArgs.operation;
-				this.currentRemoveTrackingGroup = removeTrackingGroup;
+				this.currentOp ??= deltaArgs.operation;
+				this.currentRemoveTrackingGroup ??= removeTrackingGroup;
 			}
 		}
 	}
 
 	private pushRevertible(
 		revertibles: MergeTreeDeltaRevertible[],
-		removedTrackingGroup?: TrackingGroup,
+		removedTrackingGroup: ITrackingGroup | undefined,
 	) {
 		const reverter = {
 			revert: () => {
@@ -91,10 +92,13 @@ export class VectorUndoProvider {
 				this.currentGroup = [];
 
 				try {
-					removedTrackingGroup?.tracked.forEach((t) => {
-						t.trackingCollection.unlink(removedTrackingGroup);
-						(t as PermutationSegment).reset();
-					});
+					if (removedTrackingGroup !== undefined) {
+						while (removedTrackingGroup.size > 0) {
+							const tracked = removedTrackingGroup.tracked[0];
+							removedTrackingGroup.unlink(tracked);
+							(tracked as PermutationSegment).reset();
+						}
+					}
 					revertMergeTreeDeltaRevertibles(this.driver, revertibles);
 				} finally {
 					this.currentOp = undefined;
@@ -103,9 +107,11 @@ export class VectorUndoProvider {
 				}
 			},
 			discard: () => {
-				removedTrackingGroup?.tracked.forEach((t) =>
-					t.trackingCollection.unlink(removedTrackingGroup),
-				);
+				if (removedTrackingGroup !== undefined) {
+					while (removedTrackingGroup.size > 0) {
+						removedTrackingGroup.unlink(removedTrackingGroup.tracked[0]);
+					}
+				}
 				discardMergeTreeDeltaRevertible(revertibles);
 			},
 		};
@@ -159,12 +165,7 @@ export class MatrixUndoProvider<T> {
 					const row = this.rows.handleToPosition(rowHandle);
 					const col = this.cols.handleToPosition(colHandle);
 					// if the row/column no longer exists, we cannot set the cell
-					if (
-						row !== undefined &&
-						row < this.matrix.rowCount &&
-						col !== undefined &&
-						col < this.matrix.colCount
-					) {
+					if (row < this.matrix.rowCount && col < this.matrix.colCount) {
 						this.matrix.setCell(row, col, oldValue);
 					}
 				},
