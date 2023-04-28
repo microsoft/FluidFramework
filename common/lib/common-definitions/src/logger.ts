@@ -20,7 +20,7 @@ export type TelemetryEventPropertyType = string | number | boolean | undefined;
 /**
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
- * party scenarios. For example, tags are used to mark PII that should not be stored in logs.
+ * party scenarios. For example, tags are used to mark data that should not be stored in logs for privacy reasons.
  */
 export interface ITaggedTelemetryPropertyType {
 	value: TelemetryEventPropertyType;
