@@ -1877,10 +1877,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.checkpointInfo.lastCheckpointTime = Date.now();
 		this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
 
-		const checkpointParams = this.generateCheckpoint(reason);
-
 		Promise.all([this.lastSendP, this.lastNoClientP]).then(
 			() => {
+				const checkpointParams = this.generateCheckpoint(reason);
 				if (reason === CheckpointReason.ClearCache) {
 					checkpointParams.clear = true;
 				}
