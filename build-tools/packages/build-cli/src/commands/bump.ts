@@ -115,7 +115,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
 		if (args.package_or_release_group === undefined) {
-			this.error("ERROR: No dependency provided.");
+			this.error("No dependency provided.");
 		}
 
 		if (bumpType === undefined && flags.exact === undefined) {
@@ -129,6 +129,10 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
 
+		if (exactDepType === "*" && workspaceProtocol === false) {
+			this.error(`Can't use "*" without --workspaceProtocol.`);
+		}
+
 		if (bumpType === undefined && exactVersion === null) {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
@@ -138,10 +142,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			exactDepType !== "^" &&
 			exactDepType !== "~" &&
 			exactDepType !== "*"
-			// &&
-			// exactDepType !== "workspace:*" &&
-			// exactDepType !== "workspace:^" &&
-			// exactDepType !== "workspace:~"
 		) {
 			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
 			// that the exactDepType will be one of the enum values.

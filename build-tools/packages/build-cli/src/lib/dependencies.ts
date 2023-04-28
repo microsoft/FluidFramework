@@ -1,4 +1,8 @@
-import { detectVersionScheme, getVersionRange } from "@fluid-tools/version-tools";
+import {
+	WORKSPACE_PROTOCOL_PREFIX,
+	detectVersionScheme,
+	getVersionRange,
+} from "@fluid-tools/version-tools";
 import {
 	Context,
 	Logger,
@@ -15,7 +19,7 @@ import semver from "semver";
 
 export interface DependencyWithRange {
 	pkg: Package;
-	rangeOrBumpType: semver.Range | "workspace:*" | "workspace:^" | "workspace:~";
+	rangeOrBumpType: string | "workspace:*" | "workspace:^" | "workspace:~";
 }
 
 /**
@@ -124,7 +128,7 @@ export async function setReleaseGroupVersion(
 
 	// The package versions have been updated, so now we update the dependency ranges for packages within the release
 	// group. We need to account for Fluid internal versions and the requested interdependencyRange.
-	let newRange: "workspace:*" | "workspace:~" | "workspace:^" | semver.Range;
+	let newRange: "workspace:*" | "workspace:~" | "workspace:^" | string;
 
 	if (
 		// Workspace ranges should be used as-is.
@@ -137,10 +141,10 @@ export async function setReleaseGroupVersion(
 	else if (["internal", "internalPrerelease"].includes(scheme)) {
 		newRange =
 			interdependencyRange === ""
-				? new semver.Range(translatedVersion.version)
-				: new semver.Range(getVersionRange(translatedVersion, interdependencyRange));
+				? translatedVersion.version
+				: getVersionRange(translatedVersion, interdependencyRange);
 	} else {
-		newRange = new semver.Range(`${interdependencyRange}${translatedVersion.version}`);
+		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 
 	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
@@ -198,16 +202,16 @@ export async function setPackageDependencies(
 					? pkg.packageJson.devDependencies
 					: pkg.packageJson.dependencies;
 
-				newRangeString =
-					typeof dep.rangeOrBumpType === "string"
-						? dep.rangeOrBumpType
-						: dep.rangeOrBumpType.range;
-
+				newRangeString = dep.rangeOrBumpType;
 				dependencies[name] = newRangeString;
 				changed = true;
 				changedVersions?.add(dep.pkg, newRangeString);
 			}
 		}
+	}
+
+	if (changed) {
+		await pkg.savePackageJson();
 	}
 
 	return changed;
