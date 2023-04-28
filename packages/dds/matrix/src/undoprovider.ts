@@ -25,6 +25,7 @@ export class VectorUndoProvider {
 	// redo stacks.
 	private currentGroup?: MergeTreeDeltaRevertible[];
 	private currentOp?: MergeTreeDeltaType;
+	private currentRemoveTrackingGroup?: TrackingGroup;
 
 	constructor(
 		private readonly manager: IUndoConsumer,
@@ -45,17 +46,17 @@ export class VectorUndoProvider {
 				this.currentOp === undefined || this.currentOp === deltaArgs.operation,
 				0x02a /* "On vector undo, unexpected 'currentOp' type/state!" */,
 			);
+			let removeTrackingGroup: TrackingGroup | undefined;
+			if (deltaArgs.operation === MergeTreeDeltaType.REMOVE) {
+				const trackingGroup = (removeTrackingGroup =
+					this.currentRemoveTrackingGroup ?? new TrackingGroup());
+				deltaArgs.deltaSegments.forEach((d) =>
+					d.segment.trackingCollection.link(trackingGroup),
+				);
+			}
 
 			switch (deltaArgs.operation) {
 				case MergeTreeDeltaType.REMOVE:
-					if (this.currentOp !== deltaArgs.operation) {
-						const trackingGroup = new TrackingGroup();
-						deltaArgs.deltaSegments.forEach((d) =>
-							d.segment.trackingCollection.link(trackingGroup),
-						);
-						this.pushRevertible(revertibles, trackingGroup);
-					}
-					break;
 				case MergeTreeDeltaType.INSERT:
 					if (this.currentOp !== deltaArgs.operation) {
 						this.pushRevertible(revertibles);
@@ -71,6 +72,7 @@ export class VectorUndoProvider {
 			// field.
 			if (this.currentGroup !== undefined) {
 				this.currentOp = deltaArgs.operation;
+				this.currentRemoveTrackingGroup = removeTrackingGroup;
 			}
 		}
 	}
@@ -91,20 +93,20 @@ export class VectorUndoProvider {
 				try {
 					removedTrackingGroup?.tracked.forEach((t) => {
 						t.trackingCollection.unlink(removedTrackingGroup);
-						assert(t.isLeaf(), "foo");
 						(t as PermutationSegment).reset();
 					});
 					revertMergeTreeDeltaRevertibles(this.driver, revertibles);
 				} finally {
 					this.currentOp = undefined;
 					this.currentGroup = undefined;
+					this.currentRemoveTrackingGroup = undefined;
 				}
 			},
 			discard: () => {
-				discardMergeTreeDeltaRevertible(revertibles);
 				removedTrackingGroup?.tracked.forEach((t) =>
 					t.trackingCollection.unlink(removedTrackingGroup),
 				);
+				discardMergeTreeDeltaRevertible(revertibles);
 			},
 		};
 
