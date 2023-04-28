@@ -1222,15 +1222,9 @@ export class ContainerRuntime
 			() => this.storage,
 			(localId: string, blobId?: string) => {
 				if (!this.disposed) {
-					// eslint-disable-next-line @typescript-eslint/no-floating-promises
-					Promise.resolve().then(() => {
-						// Blob attaches need to be in their own batch (grouped batching would hide metadata)
-						this.flush();
-						this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
-							localId,
-							blobId,
-						});
-						this.flush();
+					this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
+						localId,
+						blobId,
 					});
 				}
 			},
@@ -1288,6 +1282,10 @@ export class ContainerRuntime
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
+			getCurrentSequenceNumbers: () => ({
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				clientSequenceNumber: this._processedClientSequenceNumber,
+			}),
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1866,6 +1864,8 @@ export class ContainerRuntime
 		}
 	}
 
+	private _processedClientSequenceNumber: number | undefined;
+
 	private processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -1875,6 +1875,8 @@ export class ContainerRuntime
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
 		this.scheduleManager.beforeOpProcessing(message);
+
+		this._processedClientSequenceNumber = message.clientSequenceNumber;
 
 		try {
 			let localOpMetadata: unknown;
@@ -3116,6 +3118,25 @@ export class ContainerRuntime
 			);
 
 			/**
+			 * back-compat - Older loaders and drivers (pre 2.0.0-internal.1.4) don't have fetchSource as a param in the
+			 * getVersions API. So, they will not fetch the latest snapshot from network in the previous fetch call. For
+			 * these scenarios, fetch the snapshot corresponding to the ack handle to have the same behavior before the
+			 * change that started fetching latest snapshot always.
+			 */
+			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
+				fetchResult = await this.fetchSnapshotFromStorage(
+					summaryLogger,
+					{
+						eventName: "RefreshLatestSummaryAckFetchBackCompat",
+						ackHandle,
+						targetSequenceNumber: summaryRefSeq,
+					},
+					readAndParseBlob,
+					ackHandle,
+				);
+			}
+
+			/**
 			 * If the fetched snapshot is older than the one for which the ack was received, close the container.
 			 * This should never happen because an ack should be sent after the latest summary is updated in the server.
 			 * However, there are couple of scenarios where it's possible:
@@ -3126,32 +3147,18 @@ export class ContainerRuntime
 			 * state.
 			 */
 			if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-				/* before failing, let's try to retrieve the latest snapshot for that specific ackHandle */
-				fetchResult = await this.fetchSnapshotFromStorage(
-					summaryLogger,
+				const error = DataProcessingError.create(
+					"Fetched snapshot is older than the received ack",
+					"RefreshLatestSummaryAck",
+					undefined /* sequencedMessage */,
 					{
-						eventName: "RefreshLatestSummaryAckFetch",
 						ackHandle,
-						targetSequenceNumber: summaryRefSeq,
+						summaryRefSeq,
+						fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
 					},
-					readAndParseBlob,
-					ackHandle,
 				);
-
-				if (fetchResult.latestSnapshotRefSeq < summaryRefSeq) {
-					const error = DataProcessingError.create(
-						"Fetched snapshot is older than the received ack",
-						"RefreshLatestSummaryAck",
-						undefined /* sequencedMessage */,
-						{
-							ackHandle,
-							summaryRefSeq,
-							fetchedSnapshotRefSeq: fetchResult.latestSnapshotRefSeq,
-						},
-					);
-					this.closeFn(error);
-					throw error;
-				}
+				this.closeFn(error);
+				throw error;
 			}
 
 			// In case we had to retrieve the latest snapshot and it is different than summaryRefSeq,

@@ -6,7 +6,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { RootView } from "@fluid-tools/client-debugger-view";
+import { DevtoolsPanel } from "@fluid-tools/client-debugger-view";
 
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
@@ -19,9 +19,13 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 export async function initializeDevtoolsView(target: HTMLElement): Promise<void> {
 	const connection = await BackgroundConnection.Initialize();
 
-	ReactDOM.render(React.createElement(RootView, { messageRelay: connection }), target, () => {
-		console.log(
-			formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"),
-		);
-	});
+	ReactDOM.render(
+		React.createElement(DevtoolsPanel, { messageRelay: connection }),
+		target,
+		() => {
+			console.log(
+				formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"),
+			);
+		},
+	);
 }
