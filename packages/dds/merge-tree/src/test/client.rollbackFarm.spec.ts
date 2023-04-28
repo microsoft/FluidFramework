@@ -72,7 +72,6 @@ describe("MergeTree.Client", () => {
 				}
 
 				logger.validate();
-				logger.dispose();
 			}
 		}).timeout(30 * 10000);
 	});
