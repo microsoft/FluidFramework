@@ -74,7 +74,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		// eslint-disable-next-line no-warning-comments
 		// TODO: can be removed once server team owns server releases
 		if (flags.releaseGroup === MonoRepoKind.Server && flags.bumpType === "minor") {
-			this.error(`ERROR: Server release are always a ${chalk.bold("MAJOR")} release`);
+			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
 		}
 
 		// oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args

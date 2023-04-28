@@ -6,12 +6,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
 
-import {
-	FluidRepo,
-	GitRepo,
-	MonoRepoKind,
-	getResolvedFluidRoot,
-} from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepoKind } from "@fluidframework/build-tools";
 
 import { packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
@@ -120,13 +115,11 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			this.error("ERROR: No dependency provided.");
 		}
 
-		const resolvedRoot = await getResolvedFluidRoot();
-		const gitRepo = new GitRepo(resolvedRoot);
-		const branchName = await gitRepo.getCurrentBranchName();
+		const branchName = await context.gitRepo.getCurrentBranchName();
 
 		// can be removed once server team owns their releases
 		if (args.package_or_release_group === MonoRepoKind.Server && flags.updateType === "minor") {
-			this.error(`ERROR: Server release are always a ${chalk.bold("MAJOR")} release`);
+			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
 		}
 
 		if (args.package_or_release_group === MonoRepoKind.Server && flags.prerelease === true) {
