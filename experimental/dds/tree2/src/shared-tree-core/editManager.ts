@@ -177,9 +177,11 @@ export class EditManager<
 		// Whenever the branch forks, register the new fork
 		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offRebase = branch.on("rebase", () => {
-			untrackBranch(branch, trunkBase.sequenceNumber);
-			trunkBase.sequenceNumber = trackBranch(branch);
+		const offRebase = branch.on("change", ({ type }) => {
+			if (type === "rebase") {
+				untrackBranch(branch, trunkBase.sequenceNumber);
+				trunkBase.sequenceNumber = trackBranch(branch);
+			}
 		});
 		// When the branch is disposed, update our branch set and trim the trunk
 		const offDispose = branch.on("dispose", () => {
