@@ -447,6 +447,8 @@ export class MongoDb implements core.IDb {
 	}
 }
 
+export type ConnectionNotAvailableMode = "ruleBehavior" | "stop"; // Ideally we should have 'delayRetry' options, but that requires more refactor on our retry engine so hold for this mode;
+
 interface IMongoDBConfig {
 	operationsDbEndpoint: string;
 	bufferMaxEntries: number | undefined;
@@ -457,6 +459,7 @@ interface IMongoDBConfig {
 	facadeLevelRetry?: boolean;
 	facadeLevelTelemetry?: boolean;
 	facadeLevelRetryRuleOverride?: any;
+	connectionNotAvailableMode?: ConnectionNotAvailableMode;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -467,6 +470,7 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly connectionPoolMaxSize?: number;
 	private readonly retryEnabled: boolean = false;
 	private readonly telemetryEnabled: boolean = false;
+	private readonly connectionNotAvailableMode: ConnectionNotAvailableMode = "ruleBehavior";
 	private readonly retryRuleOverride: Map<string, boolean>;
 	constructor(config: IMongoDBConfig) {
 		const {
@@ -476,6 +480,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			globalDbEndpoint,
 			connectionPoolMinSize,
 			connectionPoolMaxSize,
+			connectionNotAvailableMode,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
@@ -485,6 +490,7 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.bufferMaxEntries = bufferMaxEntries;
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
+		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
 		this.retryEnabled = config.facadeLevelRetry || false;
 		this.telemetryEnabled = config.facadeLevelTelemetry || false;
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
@@ -522,7 +528,10 @@ export class MongoDbFactory implements core.IDbFactory {
 			options,
 		);
 
-		const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(this.retryRuleOverride);
+		const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(
+			this.retryRuleOverride,
+			this.connectionNotAvailableMode,
+		);
 
 		return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer);
 	}

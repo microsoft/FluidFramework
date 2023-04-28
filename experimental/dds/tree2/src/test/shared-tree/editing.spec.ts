@@ -239,7 +239,10 @@ describe("Editing", () => {
 			const seqDelABC = sequencer.sequence(delABC);
 
 			const revABC = tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				const field = editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
 				field.revive(0, 3, seqDelABC.revision, fakeRepair, 1);
 			});
 
@@ -265,7 +268,10 @@ describe("Editing", () => {
 			const seqDelABC = sequencer.sequence(delABC);
 
 			const revABC = tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+				const field = editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
 				field.revive(0, 3, seqDelABC.revision, fakeRepair, 1, true);
 			});
 
@@ -282,7 +288,10 @@ describe("Editing", () => {
 			const tree1 = TestTree.fromJson(["a", "b"]);
 
 			const change = tree1.runTransaction((forest, editor) => {
-				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
+				const rootField = editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
 				rootField.move(0, 1, 1);
 			});
 
@@ -303,9 +312,12 @@ describe("Editing", () => {
 					parentField: rootFieldKeySymbol,
 					parentIndex: 0,
 				};
-				const fooField = editor.sequenceField(node1, brand("foo"));
+				const fooField = editor.sequenceField({ parent: node1, field: brand("foo") });
 				fooField.move(0, 1, 1);
-				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
+				const rootField = editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
 				rootField.move(0, 1, 1);
 			});
 
@@ -330,12 +342,18 @@ describe("Editing", () => {
 
 			// Cause a rebase of tree2's edits
 			const e1 = tree1.runTransaction((forest, editor) => {
-				const field = editor.optionalField(undefined, rootFieldKeySymbol);
+				const field = editor.optionalField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
 				field.set(singleJsonCursor("41"), true);
 			});
 
 			const e2 = tree2.runTransaction((forest, editor) => {
-				const field = editor.optionalField(undefined, rootFieldKeySymbol);
+				const field = editor.optionalField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
 				field.set(singleJsonCursor("42"), true);
 			});
 
@@ -365,7 +383,7 @@ describe("Editing", () => {
  */
 function insert(tree: TestTree, index: number, ...values: string[]): TestTreeEdit {
 	return tree.runTransaction((forest, editor) => {
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 		const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
 		field.insert(index, nodes);
 	});
@@ -373,7 +391,7 @@ function insert(tree: TestTree, index: number, ...values: string[]): TestTreeEdi
 
 function remove(tree: TestTree, index: number, count: number): TestTreeEdit {
 	return tree.runTransaction((forest, editor) => {
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 		field.delete(index, count);
 	});
 }

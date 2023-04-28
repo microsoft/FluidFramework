@@ -5,14 +5,7 @@
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
-import {
-	AnchorSet,
-	GraphCommit,
-	ITreeCursorSynchronous,
-	RepairDataStore,
-	RevisionTag,
-	UndoRedoManagerCommitType,
-} from "../../core";
+import { AnchorSet, GraphCommit, ITreeCursorSynchronous, RepairDataStore } from "../../core";
 import {
 	defaultChangeFamily,
 	DefaultChangeset,
@@ -45,20 +38,6 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			runtime,
 			TestSharedTreeCore.attributes,
 			id,
-		);
-	}
-
-	public override applyChange(
-		change: DefaultChangeset,
-		revision?: RevisionTag,
-		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
-		skipUndoRedoManagerTracking?: boolean,
-	): GraphCommit<DefaultChangeset> {
-		return super.applyChange(
-			change,
-			revision,
-			undoRedoManagerCommitType,
-			skipUndoRedoManagerTracking,
 		);
 	}
 

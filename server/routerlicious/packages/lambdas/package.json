@@ -119,8 +119,14 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"RemovedClassDeclaration_ForemanLambda": {"forwardCompat": false, "backCompat": false},
-			"RemovedClassDeclaration_ForemanLambdaFactory": {"forwardCompat": false, "backCompat": false}
+			"RemovedClassDeclaration_ForemanLambda": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_ForemanLambdaFactory": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
 		}
 	}
 }
