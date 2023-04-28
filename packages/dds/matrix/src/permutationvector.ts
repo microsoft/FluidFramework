@@ -223,7 +223,6 @@ export class PermutationVector extends Client {
 		//
 		//       If we find that we frequently need a reverse handle -> position lookup, we could maintain
 		//       one using the Tiny-Calc adjust tree.
-		const removedSegments: PermutationSegment[] = [];
 		let containingSegment: PermutationSegment | undefined;
 		let containingOffset: number;
 
@@ -239,26 +238,14 @@ export class PermutationVector extends Client {
 			const end = start + cachedLength;
 
 			if (start <= handle && handle < end) {
-				if (toRemovalInfo(asPerm) !== undefined) {
-					if (containingSegment === undefined) {
-						containingSegment = asPerm;
-						containingOffset = handle - start;
-					} else {
-						removedSegments.push(asPerm);
-					}
-				} else {
-					if (containingSegment !== undefined) {
-						removedSegments.unshift(containingSegment);
-					}
-					containingSegment = asPerm;
-					containingOffset = handle - start;
-				}
+				containingSegment = asPerm;
+				containingOffset = handle - start;
+				return false;
 			}
 
 			return true;
 		});
 
-		removedSegments.forEach((s) => s.reset());
 		// We are guaranteed to find the handle in the PermutationVector, even if the corresponding
 		// row/col has been removed, because handles are not recycled until the containing segment
 		// is unlinked from the MergeTree.

@@ -12,10 +12,11 @@ import {
 	revertMergeTreeDeltaRevertibles,
 	MergeTreeRevertibleDriver,
 	discardMergeTreeDeltaRevertible,
+	TrackingGroup,
 } from "@fluidframework/merge-tree";
 import { MatrixItem, SharedMatrix } from "./matrix";
 import { Handle, isHandleValid } from "./handletable";
-import { PermutationVector } from "./permutationvector";
+import { PermutationSegment, PermutationVector } from "./permutationvector";
 import { IUndoConsumer } from "./types";
 
 export class VectorUndoProvider {
@@ -47,6 +48,14 @@ export class VectorUndoProvider {
 
 			switch (deltaArgs.operation) {
 				case MergeTreeDeltaType.REMOVE:
+					if (this.currentOp !== deltaArgs.operation) {
+						const trackingGroup = new TrackingGroup();
+						deltaArgs.deltaSegments.forEach((d) =>
+							d.segment.trackingCollection.link(trackingGroup),
+						);
+						this.pushRevertible(revertibles, trackingGroup);
+					}
+					break;
 				case MergeTreeDeltaType.INSERT:
 					if (this.currentOp !== deltaArgs.operation) {
 						this.pushRevertible(revertibles);
@@ -66,7 +75,10 @@ export class VectorUndoProvider {
 		}
 	}
 
-	private pushRevertible(revertibles: MergeTreeDeltaRevertible[]) {
+	private pushRevertible(
+		revertibles: MergeTreeDeltaRevertible[],
+		removedTrackingGroup?: TrackingGroup,
+	) {
 		const reverter = {
 			revert: () => {
 				assert(
@@ -77,6 +89,11 @@ export class VectorUndoProvider {
 				this.currentGroup = [];
 
 				try {
+					removedTrackingGroup?.tracked.forEach((t) => {
+						t.trackingCollection.unlink(removedTrackingGroup);
+						assert(t.isLeaf(), "foo");
+						(t as PermutationSegment).reset();
+					});
 					revertMergeTreeDeltaRevertibles(this.driver, revertibles);
 				} finally {
 					this.currentOp = undefined;
@@ -85,6 +102,9 @@ export class VectorUndoProvider {
 			},
 			discard: () => {
 				discardMergeTreeDeltaRevertible(revertibles);
+				removedTrackingGroup?.tracked.forEach((t) =>
+					t.trackingCollection.unlink(removedTrackingGroup),
+				);
 			},
 		};
 
