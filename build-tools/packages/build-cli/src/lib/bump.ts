@@ -233,7 +233,7 @@ export async function bumpReleaseGroup(
 
 	assert(
 		interdependencyType !== undefined,
-		"exactDependencyType must be defined when bumping a release group",
+		"interdependencyType must be defined when bumping a release group",
 	);
 
 	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
@@ -262,9 +262,12 @@ export async function bumpReleaseGroup(
 	context.repo.reload();
 
 	// The package versions have been bumped, so now we update the dependency ranges for packages within the release
-	// group. We need to account for Fluid internal versions and the requested exactDependencyType.
+	// group. We need to account for Fluid internal versions and the requested interdependencyType.
 	let range: string;
 	if (scheme === "internal" || scheme === "internalPrerelease") {
+    // If the interdependencyType is the empty string, it means we should use an exact dependency on the version, so we
+    // set the range to the version. Otherwise, since this is a Fluid internal version, we need to calculate an
+    // appropriate range string based on the interdependencyType.
 		range =
 			interdependencyType === ""
 				? translatedVersion.version
