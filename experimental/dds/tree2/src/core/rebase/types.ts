@@ -12,8 +12,6 @@ import { brandedStringType } from "../../util";
  */
 export type SessionId = string;
 
-export const RevisionTag = brandedStringType<StableId>();
-
 /**
  * A unique identifier for a commit. Commits that have been rebased, but are semantically
  * the same, will share the same revision tag.
@@ -21,6 +19,7 @@ export const RevisionTag = brandedStringType<StableId>();
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
 export type RevisionTag = StableId;
+export const RevisionTagSchema = brandedStringType<StableId>();
 
 /**
  * @returns a `RevisionTag` from the given string, or fails if the string is not a valid `RevisionTag`

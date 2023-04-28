@@ -4,13 +4,13 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { JsonCompatibleReadOnly } from "../../util";
+import { JsonCompatibleReadOnlySchema } from "../../util";
 
 export const EncodedGenericChange = Type.Object({
 	index: Type.Number({ minimum: 0 }),
 	// Note: same composition pattern issue here as in default field kind encoding
 	// TODO: this format needs more documentation (ideally in the form of more specific types).
-	nodeChange: JsonCompatibleReadOnly,
+	nodeChange: JsonCompatibleReadOnlySchema,
 });
 export type EncodedGenericChange = Static<typeof EncodedGenericChange>;
 

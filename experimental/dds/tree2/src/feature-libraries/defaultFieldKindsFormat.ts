@@ -4,29 +4,29 @@
  */
 
 import { Static, Type } from "@sinclair/typebox";
-import { EncodedJsonableTree, RevisionTag } from "../core";
+import { EncodedJsonableTree, RevisionTagSchema } from "../core";
 // TODO: Resolve uses of JsonCompatibleReadonly, consider making this take in the child type at the schema level. (TSchema)
-import { JsonCompatibleReadOnly } from "../util";
+import { JsonCompatibleReadOnlySchema } from "../util";
 
 export const EncodedNodeUpdate = Type.Union([
 	Type.Object({
 		set: EncodedJsonableTree,
-		changes: Type.Optional(JsonCompatibleReadOnly),
+		changes: Type.Optional(JsonCompatibleReadOnlySchema),
 	}),
 	Type.Object({
 		/**
 		 * The node being restored.
 		 */
 		revert: EncodedJsonableTree,
-		revision: Type.Optional(RevisionTag),
-		changes: Type.Optional(JsonCompatibleReadOnly),
+		revision: Type.Optional(RevisionTagSchema),
+		changes: Type.Optional(JsonCompatibleReadOnlySchema),
 	}),
 ]);
 export type EncodedNodeUpdate = Static<typeof EncodedNodeUpdate>;
 
 export const EncodedValueChangeset = Type.Object({
 	value: Type.Optional(EncodedNodeUpdate),
-	changes: Type.Optional(JsonCompatibleReadOnly),
+	changes: Type.Optional(JsonCompatibleReadOnlySchema),
 });
 
 export type EncodedValueChangeset = Static<typeof EncodedValueChangeset>;
@@ -46,7 +46,7 @@ export type EncodedOptionalFieldChange = Static<typeof EncodedOptionalFieldChang
 
 export const EncodedOptionalChangeset = Type.Object({
 	fieldChange: Type.Optional(EncodedOptionalFieldChange),
-	childChange: Type.Optional(JsonCompatibleReadOnly),
+	childChange: Type.Optional(JsonCompatibleReadOnlySchema),
 });
 
 export type EncodedOptionalChangeset = Static<typeof EncodedOptionalChangeset>;

@@ -58,7 +58,7 @@ export interface CrossFieldManager<T = unknown> {
  * @alpha
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
-export const ChangesetLocalId = brandedNumberType<ChangesetLocalId>();
+export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>();
 
 export interface IdAllocationState {
 	maxId: ChangesetLocalId;

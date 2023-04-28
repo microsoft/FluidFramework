@@ -17,16 +17,25 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
 	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	isGlobalFieldKey,
 	keyFromSymbol,
 	LocalFieldKey,
-	RevisionTag,
+	LocalFieldKeySchema,
+	RevisionTagSchema,
 	symbolFromKey,
 } from "../../core";
-import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
+import {
+	brand,
+	fail,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlySchema,
+	Mutable,
+} from "../../util";
 import { ICodecFamily, IJsonCodec, IMultiFormatCodec, makeCodecFamily } from "../../codec";
-import { ChangesetLocalId } from "./crossFieldQueries";
+import { ChangesetLocalIdSchema } from "./crossFieldQueries";
 import {
 	FieldChangeMap,
 	FieldChangeset,
@@ -44,10 +53,10 @@ const ValueChange = Type.Any();
 const ValueConstraint = Type.Any();
 
 const EncodedFieldChange = Type.Object({
-	fieldKey: Type.Union([LocalFieldKey, GlobalFieldKey]),
+	fieldKey: Type.Union([LocalFieldKeySchema, GlobalFieldKeySchema]),
 	keyIsGlobal: Type.Boolean(),
-	fieldKind: FieldKindIdentifier,
-	change: JsonCompatibleReadOnly,
+	fieldKind: FieldKindIdentifierSchema,
+	change: JsonCompatibleReadOnlySchema,
 });
 
 interface EncodedFieldChange extends Static<typeof EncodedFieldChange> {
@@ -76,8 +85,8 @@ const EncodedNodeChangeset = Type.Object({
 });
 
 const EncodedRevisionInfo = Type.Object({
-	revision: Type.Readonly(RevisionTag),
-	rollbackOf: Type.ReadonlyOptional(RevisionTag),
+	revision: Type.Readonly(RevisionTagSchema),
+	rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
 });
 
 /**
@@ -86,7 +95,7 @@ const EncodedRevisionInfo = Type.Object({
 type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 
 const EncodedModularChangeset = Type.Object({
-	maxId: Type.Optional(ChangesetLocalId),
+	maxId: Type.Optional(ChangesetLocalIdSchema),
 	changes: EncodedFieldChangeMap,
 	revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
 });

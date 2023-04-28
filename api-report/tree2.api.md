@@ -11,9 +11,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
-import { TAny } from '@sinclair/typebox';
 import { TAnySchema } from '@sinclair/typebox';
-import { TUnsafe } from '@sinclair/typebox';
 
 // @alpha
 export enum AllowedUpdateType {
@@ -180,9 +178,6 @@ export interface ChangeRebaser<TChangeset> {
 
 // @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
-
-// @public (undocumented)
-export const ChangesetLocalId: TUnsafe<ChangesetLocalId>;
 
 // @alpha
 export type ChildCollection = FieldKey | RootField;
@@ -509,9 +504,6 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>, TMul
 // @alpha
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
-// @public (undocumented)
-export const FieldKindIdentifier: TUnsafe<FieldKindIdentifier>;
-
 // @alpha (undocumented)
 export const FieldKinds: {
     readonly value: FieldKind<FieldEditor<any>, Multiplicity.Value>;
@@ -634,9 +626,6 @@ export function getPrimaryField(schema: TreeSchema): {
 
 // @alpha
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
-
-// @public (undocumented)
-export const GlobalFieldKey: TUnsafe<GlobalFieldKey>;
 
 // @alpha
 export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
@@ -941,9 +930,6 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
     readonly [P in string]?: JsonCompatibleReadOnly;
 };
 
-// @internal
-export const JsonCompatibleReadOnly: TAny;
-
 // @alpha (undocumented)
 export const jsonNull: TypedSchema.LabeledTreeSchema<TypedSchema.TreeInfoFromBuilder<{}, "Json.Null">>;
 
@@ -987,9 +973,6 @@ type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
 
 // @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
-
-// @public (undocumented)
-export const LocalFieldKey: TUnsafe<LocalFieldKey>;
 
 // @alpha
 export interface MakeNominal {
@@ -1319,11 +1302,6 @@ export interface RevisionMetadataSource {
     readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @public, but its signature references "StableId" which is marked as @internal
-//
-// @public (undocumented)
-export const RevisionTag: TUnsafe<StableId>;
-
 // Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @alpha, but its signature references "StableId" which is marked as @internal
 //
 // @alpha
@@ -1533,9 +1511,6 @@ export interface TreeSchemaBuilder {
 
 // @alpha
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
-
-// @public (undocumented)
-export const TreeSchemaIdentifier: TUnsafe<TreeSchemaIdentifier>;
 
 // @alpha
 interface TreeSchemaTypeInfo {

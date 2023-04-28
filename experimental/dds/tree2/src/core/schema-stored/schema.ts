@@ -31,14 +31,14 @@ export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
  * @alpha
  */
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
-export const TreeSchemaIdentifier = brandedStringType<TreeSchemaIdentifier>();
+export const TreeSchemaIdentifierSchema = brandedStringType<TreeSchemaIdentifier>();
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeSchema.
  * @alpha
  */
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
-export const LocalFieldKey = brandedStringType<LocalFieldKey>();
+export const LocalFieldKeySchema = brandedStringType<LocalFieldKey>();
 
 /**
  * Identifier for a FieldKind.
@@ -48,7 +48,7 @@ export const LocalFieldKey = brandedStringType<LocalFieldKey>();
  * @alpha
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
-export const FieldKindIdentifier = brandedStringType<FieldKindIdentifier>();
+export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
 
 /**
  * SchemaIdentifier for a "global field",
@@ -57,7 +57,7 @@ export const FieldKindIdentifier = brandedStringType<FieldKindIdentifier>();
  * @alpha
  */
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
-export const GlobalFieldKey = brandedStringType<GlobalFieldKey>();
+export const GlobalFieldKeySchema = brandedStringType<GlobalFieldKey>();
 
 /**
  * Example for how we might want to handle values.

@@ -13,6 +13,7 @@ export {
 } from "./comparison";
 export {
 	ChangesetLocalId,
+	ChangesetLocalIdSchema,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,

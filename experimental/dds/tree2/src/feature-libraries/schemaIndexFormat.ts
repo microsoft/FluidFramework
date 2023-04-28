@@ -15,14 +15,17 @@ import { Static, Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
-	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	FieldSchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	LocalFieldKey,
+	LocalFieldKeySchema,
 	Named,
 	SchemaData,
 	TreeSchema,
 	TreeSchemaIdentifier,
+	TreeSchemaIdentifierSchema,
 	ValueSchema,
 } from "../core";
 import { brand, fail } from "../util";
@@ -31,8 +34,8 @@ const version = "1.0.0" as const;
 
 const FieldSchemaFormat = Type.Object(
 	{
-		kind: FieldKindIdentifier,
-		types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
+		kind: FieldKindIdentifierSchema,
+		types: Type.Optional(Type.Array(TreeSchemaIdentifierSchema)),
 	},
 	// TODO: Investigate behavioral change here due to typebox update.
 	// { additionalProperties: false },
@@ -41,22 +44,22 @@ const FieldSchemaFormat = Type.Object(
 const NamedLocalFieldSchemaFormat = Type.Intersect([
 	FieldSchemaFormat,
 	Type.Object({
-		name: LocalFieldKey,
+		name: LocalFieldKeySchema,
 	}),
 ]);
 
 const NamedGlobalFieldSchemaFormat = Type.Intersect([
 	FieldSchemaFormat,
 	Type.Object({
-		name: GlobalFieldKey,
+		name: GlobalFieldKeySchema,
 	}),
 ]);
 
 const TreeSchemaFormat = Type.Object(
 	{
-		name: TreeSchemaIdentifier,
+		name: TreeSchemaIdentifierSchema,
 		localFields: Type.Array(NamedLocalFieldSchemaFormat),
-		globalFields: Type.Array(GlobalFieldKey),
+		globalFields: Type.Array(GlobalFieldKeySchema),
 		extraLocalFields: FieldSchemaFormat,
 		extraGlobalFields: Type.Boolean(),
 		// TODO: don't use external type here.

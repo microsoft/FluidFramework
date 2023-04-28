@@ -4,8 +4,13 @@
  */
 
 import { TSchema, Type } from "@sinclair/typebox";
-import { ITreeCursorSynchronous, EncodedJsonableTree, RevisionTag } from "../../core";
-import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
+import {
+	ITreeCursorSynchronous,
+	EncodedJsonableTree,
+	RevisionTag,
+	RevisionTagSchema,
+} from "../../core";
+import { ChangesetLocalId, ChangesetLocalIdSchema, NodeChangeset } from "../modular-schema";
 
 /**
  * The contents of a node to be created
@@ -26,7 +31,7 @@ export const Skip = Type.Number();
  * The uniqueness of IDs is leveraged to uniquely identify the matching move-out for a move-in/return and vice-versa.
  */
 export type MoveId = ChangesetLocalId;
-export const MoveId = ChangesetLocalId;
+export const MoveId = ChangesetLocalIdSchema;
 
 export interface HasMoveId {
 	/**
@@ -42,7 +47,7 @@ export interface Conflicted {
 	 */
 	conflictsWith: RevisionTag;
 }
-export const Conflicted = Type.Object({ conflictsWith: RevisionTag });
+export const Conflicted = Type.Object({ conflictsWith: RevisionTagSchema });
 
 export type CanConflict = Partial<Conflicted>;
 export const CanConflict = Type.Partial(Conflicted);
@@ -67,7 +72,7 @@ export enum Effects {
 export interface PriorOp {
 	change: RevisionTag;
 }
-export const PriorOp = Type.Object({ change: RevisionTag });
+export const PriorOp = Type.Object({ change: RevisionTagSchema });
 
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.
@@ -84,7 +89,7 @@ export interface LineageEvent {
 	readonly offset: number;
 }
 export const LineageEvent = Type.Object({
-	revision: Type.Readonly(RevisionTag),
+	revision: Type.Readonly(RevisionTagSchema),
 	offset: Type.Readonly(Type.Number()),
 });
 
@@ -161,10 +166,10 @@ export interface HasReattachFields extends HasPlaceFields {
 export const HasReattachFields = Type.Intersect([
 	HasPlaceFields,
 	Type.Object({
-		detachedBy: Type.Optional(RevisionTag),
+		detachedBy: Type.Optional(RevisionTagSchema),
 		detachIndex: Type.Number(),
 		isIntention: OptionalTrue,
-		lastDetachedBy: Type.Optional(RevisionTag),
+		lastDetachedBy: Type.Optional(RevisionTagSchema),
 	}),
 ]);
 
@@ -193,7 +198,7 @@ export interface HasRevisionTag {
 	 */
 	revision?: RevisionTag;
 }
-export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTag) });
+export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
 export interface Insert<TNodeChange = NodeChangeType>
 	extends HasTiebreakPolicy,
@@ -216,7 +221,7 @@ export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 		Type.Object({
 			type: Type.Literal("Insert"),
 			content: Type.Array(ProtoNode),
-			id: ChangesetLocalId,
+			id: ChangesetLocalIdSchema,
 		}),
 	]);
 
@@ -380,7 +385,7 @@ export const ReturnFrom = <Schema extends TSchema>(tNodeChange: Schema) =>
 		Type.Object({
 			type: Type.Literal("ReturnFrom"),
 			count: NodeCount,
-			detachedBy: Type.Optional(RevisionTag),
+			detachedBy: Type.Optional(RevisionTagSchema),
 			detachIndex: Type.Optional(Type.Number()),
 			isDstConflicted: OptionalTrue,
 		}),
