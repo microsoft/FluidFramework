@@ -1028,7 +1028,7 @@ export class ContainerRuntime
 	private readonly telemetryDocumentId: string;
 
 	/**
-	 * If true, the runtime has access to an {@link IdCompressor}
+	 * If true, the runtime has access to an IdCompressor
 	 */
 	private readonly idCompressorEnabled: boolean;
 
