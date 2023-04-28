@@ -4,7 +4,6 @@
  */
 /* eslint-disable jsdoc/check-indentation */
 
-import { v4 as uuid } from "uuid";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -303,8 +302,19 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	protected _nodeId: string | undefined;
 	protected running: boolean = false;
 
-	/** Unique id that is used to generate unique blob content. */
-	private readonly uniqueBlobContentId: string = uuid();
+	/** Prefix used for content for blobs uploaded. This is unique per data store per client. */
+	private get blobContentPrefix(): string {
+		assert(this._blobContentPrefix !== undefined, "blobContentPrefix accessed before run");
+		return this._blobContentPrefix;
+	}
+	private _blobContentPrefix: string | undefined;
+
+	/**
+	 * The number of blobs uploaded in a session. This is used along with blobContentPrefix to generate unique blob
+	 * content per session. If a client reloads, this will be reset and the blobs uploaded would have duplicate content
+	 * from previous session resulting in blob de-duplication.
+	 */
+	private blobCount = 1;
 
 	/**
 	 * The config with which to run data objects and blobs.
@@ -500,6 +510,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 		this._nodeId = id;
 		this._logger = config.logger;
 		this.running = true;
+		this._blobContentPrefix = `${this.id}-client${config.runId}`;
 		/**
 		 * Adjust the totalSendCount and opRatePerMin such that this data object and its child data objects collectively
 		 * send totalSendCount number of ops at opRatePerMin. There can be maximum of maxRunningLeafDataObjects
@@ -682,7 +693,7 @@ export class SingleCollabDataObject extends BaseDataObject implements IGCActivit
 	private async runBlobActivity(activityType: ReferenceActivityType): Promise<boolean> {
 		switch (activityType) {
 			case ReferenceActivityType.CreateAndReference: {
-				const blobContents = `Content - ${this.uniqueBlobContentId}-${uuid()}`;
+				const blobContents = `Content: ${this.blobContentPrefix}-${this.blobCount++}`;
 				const blobHandle = await this.context.uploadBlob(
 					stringToBuffer(blobContents, "utf-8"),
 				);
