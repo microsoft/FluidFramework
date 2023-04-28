@@ -13,7 +13,7 @@ Bumps the version of a release group or package to the next minor, major, or pat
 ```
 USAGE
   $ flub bump PACKAGE_OR_RELEASE_GROUP [-v] [-t major|minor|patch | --exact <value>] [--scheme
-    semver|internal|virtualPatch | ] [--exactDepType ^|~|] [-w] [-x | --install | --commit |  |  | ]
+    semver|internal|virtualPatch | ] [--exactDepType *|^|~|] [-w] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -22,15 +22,15 @@ FLAGS
   -t, --bumpType=<option>  Bump the release group or package to the next version according to this bump type.
                            <options: major|minor|patch>
   -v, --verbose            Verbose logging.
-  -w, --workspaceProtocol  If packages are using the workspace protocol, preserve it when bumping versions. This option
-                           defaults to false so that when publishing packages the workspace protocol is replaced with
-                           the correct version. You must pass this flag to preserve the workspace protocol when bumping.
+  -w, --workspaceProtocol  Sets interdependencies between packages in the release group to use the workspace protocol.
+                           The exactDepType argument is used to set the workspace range constraint.
   -x, --skipChecks         Skip all checks.
   --[no-]commit            Commit changes to a new branch.
   --exact=<value>          An exact string to use as the version. The string must be a valid semver version string.
   --exactDepType=<option>  [default: ^] Controls the type of dependency that is used between packages within the release
-                           group. Use "" (the empty string) to indicate exact dependencies.
-                           <options: ^|~|>
+                           group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid
+                           when using the --workspaceProtocol flag.
+                           <options: *|^|~|>
   --[no-]install           Update lockfiles by running 'npm install' automatically.
   --scheme=<option>        Override the version scheme used by the release group or package.
                            <options: semver|internal|virtualPatch>

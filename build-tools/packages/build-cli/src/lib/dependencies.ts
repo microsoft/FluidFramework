@@ -133,8 +133,8 @@ export async function setReleaseGroupVersion(
 		interdependencyRange === "workspace:^"
 	) {
 		newRange = interdependencyRange;
-  } // Fluid internal versions that use ~ or ^ need to be translated to >= < ranges.
-	  else if (["internal", "internalPrerelease"].includes(scheme)) {
+	} // Fluid internal versions that use ~ or ^ need to be translated to >= < ranges.
+	else if (["internal", "internalPrerelease"].includes(scheme)) {
 		newRange =
 			interdependencyRange === ""
 				? new semver.Range(translatedVersion.version)

@@ -24,7 +24,6 @@ import {
 	getVersionRange,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
-	parseWorkspaceProtocol,
 } from "@fluid-tools/version-tools";
 
 /**
@@ -164,9 +163,8 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
-	interdependencyRange?: string,
 	// eslint-disable-next-line default-param-last
-  //"~" | "^" | "" | "workspace:*" | "workspace:~" | "workspace:^" = "^",
+	exactDependencyType: "~" | "^" | "" = "^",
 	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)
@@ -258,27 +256,20 @@ export async function bumpReleaseGroup(
 
 	// The package versions have been bumped, so now we update the dependency ranges for packages within the release
 	// group. We need to account for Fluid internal versions and the requested exactDependencyType.
-	let newRange: string;
-
-	if (
-		interdependencyRange === "workspace:*" ||
-		interdependencyRange === "workspace:~" ||
-		interdependencyRange === "workspace:^"
-	) {
-		newRange = interdependencyRange;
-	} else if (scheme === "internal" || scheme === "internalPrerelease") {
-		newRange =
-    interdependencyRange === ""
+	let range: string;
+	if (scheme === "internal" || scheme === "internalPrerelease") {
+		range =
+			exactDependencyType === ""
 				? translatedVersion.version
-				: getVersionRange(translatedVersion, interdependencyRange);
+				: getVersionRange(translatedVersion, exactDependencyType);
 	} else {
-		newRange = `${interdependencyRange}${translatedVersion.version}`;
+		range = `${exactDependencyType}${translatedVersion.version}`;
 	}
 
 	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
 	const packageNewVersionMap = new Map<string, PackageWithRangeSpec>();
 	for (const pkg of packagesToCheckAndUpdate) {
-		packageNewVersionMap.set(pkg.name, { pkg, rangeOrBumpType: newRange });
+		packageNewVersionMap.set(pkg.name, { pkg, rangeOrBumpType: range });
 	}
 
 	for (const pkg of packagesToCheckAndUpdate) {

@@ -26,7 +26,7 @@ import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../f
 import {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
-  setReleaseGroupVersion
+	setReleaseGroupVersion,
 } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
@@ -60,9 +60,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		exactDepType: Flags.string({
 			description:
 				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid when using the --workspaceProtocol flag.',
-        // options: ["^", "~", "", "workspace:*", "workspace:^", "workspace:~"],
-        options: ["^", "~", "", "*"],
-        default: "^",
+			// options: ["^", "~", "", "workspace:*", "workspace:^", "workspace:~"],
+			options: ["*", "^", "~", ""],
+			default: "^",
 		}),
 		workspaceProtocol: Flags.boolean({
 			char: "w",
@@ -137,8 +137,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			exactDepType !== "" &&
 			exactDepType !== "^" &&
 			exactDepType !== "~" &&
-      exactDepType !== "*"
-      // &&
+			exactDepType !== "*"
+			// &&
 			// exactDepType !== "workspace:*" &&
 			// exactDepType !== "workspace:^" &&
 			// exactDepType !== "workspace:~"
@@ -201,46 +201,46 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		// Update the scheme based on the new version, unless it was passed in explicitly
 		scheme = flags.scheme ?? detectVersionScheme(newVersion);
-    let interdependencyRange:  "~" | "^" | "" | "workspace:*" | "workspace:~" | "workspace:^";
-    if(workspaceProtocol) {
-      switch(exactDepType) {
-        case "*": {
-          interdependencyRange = "workspace:*";
-          break;
-        }
+		let interdependencyRange: "~" | "^" | "" | "workspace:*" | "workspace:~" | "workspace:^";
+		if (workspaceProtocol) {
+			switch (exactDepType) {
+				case "*": {
+					interdependencyRange = "workspace:*";
+					break;
+				}
 
-        case "^": {
-          interdependencyRange = "workspace:^";
-          break;
-        }
+				case "^": {
+					interdependencyRange = "workspace:^";
+					break;
+				}
 
-        case "~": {
-          interdependencyRange = "workspace:~";
-          break;
-        }
+				case "~": {
+					interdependencyRange = "workspace:~";
+					break;
+				}
 
-        default: {
-          this.error(`Can't use --workspaceProtocol with exactDepType: ""`)
-        }
-      }
-    } else {
-      switch(exactDepType) {
-        case "*": {
-          this.error(`Can't use "*" without --workspaceProtocol.`)
-        }
+				default: {
+					this.error(`Can't use --workspaceProtocol with exactDepType: ""`);
+				}
+			}
+		} else {
+			switch (exactDepType) {
+				case "*": {
+					this.error(`Can't use "*" without --workspaceProtocol.`);
+				}
 
-        case "^":
-        case "~":
-          case "": {
-          interdependencyRange = exactDepType;
-          break;
-        }
+				case "^":
+				case "~":
+				case "": {
+					interdependencyRange = exactDepType;
+					break;
+				}
 
-        default: {
-          this.error(`Unexpected exactDepType: ${exactDepType}`);
-        }
-      }
-    }
+				default: {
+					this.error(`Unexpected exactDepType: ${exactDepType}`);
+				}
+			}
+		}
 
 		this.logHr();
 		this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
@@ -249,7 +249,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Workspace protocol: ${workspaceProtocol ? chalk.green("yes") : "no"}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
 		this.log(`Exact dependency type: ${exactDepType === "" ? "exact" : exactDepType}`);
-    this.log(`Interdependency range: ${interdependencyRange}`);
+		this.log(`Interdependency range: ${interdependencyRange}`);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
