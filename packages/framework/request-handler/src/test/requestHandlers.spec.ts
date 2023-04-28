@@ -93,7 +93,7 @@ describe("RequestParser", () => {
             const requestParser = RequestParser.create({ url: "/objectId/route", headers: { wait: true } });
             const response = await rootDataStoreRequestHandler(requestParser, runtime);
             assert.equal(response?.status, 200);
-            assert.equal(response.value.route, "/route");
+            assert.equal(response?.value.route, "/route");
         });
 
         it("Data store request with non-existing sub route", async () => {
