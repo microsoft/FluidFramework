@@ -68,8 +68,8 @@ class NoConnectionAvailableRule extends BaseMongoExceptionRetryRule {
 		if (this.connectionNotAvailableMode === "stop") {
 			// This logic is to automate the process of handling a pod with death note on it, so
 			// kubernetes would automatically handle the restart process.
-			Lumberjack.warning(`${this.ruleName} will restart the process`);
-			process.exit(1);
+			Lumberjack.warning(`${this.ruleName} will terminate the process`);
+			process.kill(process.pid, "SIGTERM");
 		}
 
 		return super.shouldRetry();
