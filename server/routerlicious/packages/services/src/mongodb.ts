@@ -11,6 +11,7 @@ import {
 	FindOneOptions,
 	MongoClient,
 	MongoClientOptions,
+	Logger,
 } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
@@ -532,7 +533,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			this.retryRuleOverride,
 			this.connectionNotAvailableMode,
 		);
-
+		Logger.setLevel("debug");
 		return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer);
 	}
 }
