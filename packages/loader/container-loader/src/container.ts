@@ -748,7 +748,7 @@ export class Container
 
 		// Warning: this is only a shallow clone.  Mutation of any individual loader option will mutate it for
 		// all clients that were loaded from the same loader (including summarizer clients).
-		this.options = this.options = {
+		this.options = {
 			...this.loader.services.options,
 		};
 
