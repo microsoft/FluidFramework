@@ -15,6 +15,7 @@ import {
 	VersionBumpType,
 	VersionChangeType,
 	VersionScheme,
+	WORKSPACE_PROTOCOL_PREFIX,
 	bumpVersionScheme,
 	detectVersionScheme,
 } from "@fluid-tools/version-tools";
@@ -58,14 +59,15 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}),
 		exactDepType: Flags.string({
 			description:
-				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies.',
-			options: ["^", "~", ""],
-			default: "^",
+				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid when using the --workspaceProtocol flag.',
+        // options: ["^", "~", "", "workspace:*", "workspace:^", "workspace:~"],
+        options: ["^", "~", "", "*"],
+        default: "^",
 		}),
 		workspaceProtocol: Flags.boolean({
 			char: "w",
 			description:
-				"If packages are using the workspace protocol, preserve it when bumping versions. This option defaults to false so that when publishing packages the workspace protocol is replaced with the correct version. You must pass this flag to preserve the workspace protocol when bumping.",
+				"Sets interdependencies between packages in the release group to use the workspace protocol. The exactDepType argument is used to set the workspace range constraint.",
 			default: false,
 		}),
 		commit: checkFlags.commit,
@@ -131,7 +133,16 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
-		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
+		if (
+			exactDepType !== "" &&
+			exactDepType !== "^" &&
+			exactDepType !== "~" &&
+      exactDepType !== "*"
+      // &&
+			// exactDepType !== "workspace:*" &&
+			// exactDepType !== "workspace:^" &&
+			// exactDepType !== "workspace:~"
+		) {
 			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
 			// that the exactDepType will be one of the enum values.
 			this.error(`Invalid exactDepType: ${exactDepType}`);
@@ -190,6 +201,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		// Update the scheme based on the new version, unless it was passed in explicitly
 		scheme = flags.scheme ?? detectVersionScheme(newVersion);
+    let interdependencyRange:  "~" | "^" | "" | "workspace:*" | "workspace:~" | "workspace:^";
+    if(workspaceProtocol && exactDepType === "") {
+      interdependencyRange = `${WORKSPACE_PROTOCOL_PREFIX}${newVersion}`
+    } else {
+      interdependencyRange = workspaceProtocol ? `${WORKSPACE_PROTOCOL_PREFIX}${exactDepType}` : newVersion;
+    }
 
 		this.logHr();
 		this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
@@ -198,6 +215,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Workspace protocol: ${workspaceProtocol ? chalk.green("yes") : "no"}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
 		this.log(`Exact dependency type: ${exactDepType === "" ? "exact" : exactDepType}`);
+    this.log(`Interdependency range: ${interdependencyRange}`);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
@@ -223,9 +241,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			context,
 			bumpArg,
 			packageOrReleaseGroup,
-			workspaceProtocol,
 			scheme,
-			exactDepType,
+			interdependencyRange,
 			this.logger,
 		);
 

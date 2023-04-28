@@ -24,6 +24,7 @@ import {
 	getVersionRange,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
+	parseWorkspaceProtocol,
 } from "@fluid-tools/version-tools";
 
 /**
@@ -163,8 +164,9 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
+	interdependencyRange?: string,
 	// eslint-disable-next-line default-param-last
-	exactDependencyType: "~" | "^" | "" = "^",
+  //"~" | "^" | "" | "workspace:*" | "workspace:~" | "workspace:^" = "^",
 	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)
@@ -256,20 +258,27 @@ export async function bumpReleaseGroup(
 
 	// The package versions have been bumped, so now we update the dependency ranges for packages within the release
 	// group. We need to account for Fluid internal versions and the requested exactDependencyType.
-	let range: string;
-	if (scheme === "internal" || scheme === "internalPrerelease") {
-		range =
-			exactDependencyType === ""
+	let newRange: string;
+
+	if (
+		interdependencyRange === "workspace:*" ||
+		interdependencyRange === "workspace:~" ||
+		interdependencyRange === "workspace:^"
+	) {
+		newRange = interdependencyRange;
+	} else if (scheme === "internal" || scheme === "internalPrerelease") {
+		newRange =
+    interdependencyRange === ""
 				? translatedVersion.version
-				: getVersionRange(translatedVersion, exactDependencyType);
+				: getVersionRange(translatedVersion, interdependencyRange);
 	} else {
-		range = `${exactDependencyType}${translatedVersion.version}`;
+		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 
 	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
 	const packageNewVersionMap = new Map<string, PackageWithRangeSpec>();
 	for (const pkg of packagesToCheckAndUpdate) {
-		packageNewVersionMap.set(pkg.name, { pkg, rangeOrBumpType: range });
+		packageNewVersionMap.set(pkg.name, { pkg, rangeOrBumpType: newRange });
 	}
 
 	for (const pkg of packagesToCheckAndUpdate) {
@@ -281,5 +290,68 @@ export async function bumpReleaseGroup(
 			/* onlyBumpPrerelease */ false,
 			/* updateWithinSameReleaseGroup */ true,
 		);
+	}
+}
+
+/**
+ * Bump the dependencies of a package according to the provided map of packages to bump types.
+ *
+ * @param pkg - The package whose dependencies should be bumped.
+ * @param bumpPackageMap - A Map of package names to a {@link PackageWithRangeSpec} which contains the package and a
+ * string that is either a range string or a bump type. If it is a range string, the dependency will be set to that
+ * value. If it is a bump type, the dependency range will be bumped according to that type.
+ * @param onlyBumpPrerelease - If true, only dependencies on pre-release packages will be bumped.
+ * @param updateWithinSameReleaseGroup - If true, will update dependency ranges of deps within the same release group.
+ * Generally this should be false, but in some cases you may need to set a precise dependency range string within the
+ * same release group.
+ * @param changedVersions - If provided, the changed packages will be put into this {@link VersionBag}.
+ * @returns True if the packages dependencies were changed; false otherwise.
+ *
+ * @remarks
+ *
+ * By default, dependencies on packages within the same release group -- that is, intra-release-group dependencies --
+ * will not be changed (`updateWithinSameReleaseGroup === false`). This is typically the behavior you want. However,
+ * there are some cases where you need to forcefully change the dependency range of packages across the whole repo. For
+ * example, when bumping packages using the Fluid internal version scheme, we need to adjust the dependency ranges that
+ * lerna creates automatically, because the Fluid internal version scheme requires us to use \>= \< dependency ranges
+ * instead of ^.
+ *
+ * @internal
+ */
+// eslint-disable-next-line max-params
+export async function setPackageDependencies(
+	pkg: Package,
+	packageVersionMap: Map<string, PackageWithRangeSpec>,
+	prerelease: boolean,
+	onlyBumpPrerelease: boolean,
+	// eslint-disable-next-line default-param-last
+	updateWithinSameReleaseGroup = false,
+	changedVersions?: VersionBag,
+) {
+	let newRangeString: string;
+	for (const { name, dev } of pkg.combinedDependencies) {
+		const dep = packageVersionMap.get(name);
+		if (dep !== undefined) {
+			const isSameReleaseGroup = MonoRepo.isSame(dep?.pkg.monoRepo, pkg.monoRepo);
+			if (!isSameReleaseGroup || (updateWithinSameReleaseGroup && isSameReleaseGroup)) {
+				const dependencies = dev
+					? pkg.packageJson.devDependencies
+					: pkg.packageJson.dependencies;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const verString = dependencies[name]!;
+				const depIsPrerelease = (semver.minVersion(verString)?.prerelease?.length ?? 0) > 0;
+				newRangeString = dep.rangeOrBumpType;
+
+				// If we're only bumping prereleases, check if the dep is a pre-release. Otherwise bump all packages
+				// whose range doesn't match the current value.
+				if (
+					(onlyBumpPrerelease && depIsPrerelease) ||
+					dependencies[name] !== newRangeString
+				) {
+					dependencies[name] = newRangeString;
+					changedVersions?.add(dep.pkg, newRangeString);
+				}
+			}
+		}
 	}
 }
