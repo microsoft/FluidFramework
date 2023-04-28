@@ -49,6 +49,16 @@ export class VectorUndoProvider {
 			);
 			let removeTrackingGroup: TrackingGroup | undefined;
 			if (deltaArgs.operation === MergeTreeDeltaType.REMOVE) {
+				// for removed segment we need a tracking group.
+				// this is for a few reason:
+				// 1. the handle for the row/column on the removed segment is still allocated,
+				//		and needs to be for unacked ops before the remove
+				//		so of this we can't reset the handle yet.
+				// 2. handles are freed on unlink(zamboni), but that also clears the row/column data.
+				//		which we don't want to happen, so we can re-insert when the row/col comes back.
+				//		the tracking group prevents unlink.
+				// 3. when we re-insert we need to find the old segment and clear their handles
+				//		so the new segment takes them over. there is not efficient look-up for this
 				const trackingGroup = (removeTrackingGroup =
 					this.currentRemoveTrackingGroup ?? new TrackingGroup());
 				deltaArgs.deltaSegments.forEach((d) =>
