@@ -1109,7 +1109,7 @@ describe("Runtime", () => {
 						eventName: "ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({}),
+						featureGates: JSON.stringify({ idCompressorEnabled: false }),
 					},
 				]);
 			});

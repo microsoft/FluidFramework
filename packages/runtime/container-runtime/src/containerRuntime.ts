@@ -1028,6 +1028,11 @@ export class ContainerRuntime
 	private readonly telemetryDocumentId: string;
 
 	/**
+	 * If true, the runtime has access to an {@link IdCompressor}
+	 */
+	private readonly idCompressorEnabled: boolean;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1061,6 +1066,8 @@ export class ContainerRuntime
 		this.innerDeltaManager = context.deltaManager;
 		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
+		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
+
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
 		// get the values from the metadata blob.
@@ -1072,12 +1079,20 @@ export class ContainerRuntime
 			// summaryNumber was renamed from summaryCount. For older docs that haven't been opened for a long time,
 			// the count is reset to 0.
 			loadSummaryNumber = metadata?.summaryNumber ?? 0;
+
+			// Enabling the IdCompressor is a one-way operation and we only want to
+			// allow new containers to turn it on
+			this.idCompressorEnabled = metadata?.idCompressorEnabled ?? false;
 		} else {
 			this.createContainerMetadata = {
 				createContainerRuntimeVersion: pkgVersion,
 				createContainerTimestamp: Date.now(),
 			};
 			loadSummaryNumber = 0;
+
+			this.idCompressorEnabled =
+				this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
+				this.runtimeOptions.enableRuntimeIdCompressor;
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
@@ -1089,8 +1104,6 @@ export class ContainerRuntime
 			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
 			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName] /* current */,
 		);
-
-		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -1145,14 +1158,7 @@ export class ContainerRuntime
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
-		// Enabling the compressor is a one-way operation. Once it's enabled for a document
-		// it is persisted in the container's metadata.
-		const compressorEnabled =
-			metadata?.idCompressorEnabled ??
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
-			this.runtimeOptions.enableRuntimeIdCompressor;
-
-		if (compressorEnabled) {
+		if (this.idCompressorEnabled) {
 			this.idCompressor =
 				serializedIdCompressor !== undefined
 					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
@@ -1489,8 +1495,7 @@ export class ContainerRuntime
 				disableChunking,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
-				idCompressorEnabled: compressorEnabled ? true : undefined,
-				abnormalAckRecoveryMethod: this.summaryStateUpdateMethod,
+				idCompressorEnabled: this.idCompressorEnabled,
 				summaryStateUpdateMethod: this.summaryStateUpdateMethod,
 				closeSummarizerDelayOverride,
 			}),
@@ -1672,7 +1677,7 @@ export class ContainerRuntime
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
 			telemetryDocumentId: this.telemetryDocumentId,
-			idCompressorEnabled: this.idCompressor !== undefined ? true : undefined,
+			idCompressorEnabled: this.idCompressorEnabled ? true : undefined,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -1685,7 +1690,8 @@ export class ContainerRuntime
 	) {
 		this.addMetadataToSummary(summaryTree);
 
-		if (this.idCompressor !== undefined) {
+		if (this.idCompressorEnabled) {
+			assert(this.idCompressor !== undefined, "IdCompressor should be defined if enabled");
 			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
@@ -1811,11 +1817,10 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 				return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
 			case ContainerMessageType.IdAllocation:
-				if (this.idCompressor === undefined) {
-					throw new Error(
-						"Received an IdAllocation op without having the compressor enabled",
-					);
-				}
+				assert(
+					this.idCompressor !== undefined,
+					"IdCompressor should be defined if enabled",
+				);
 				return this.applyStashedIdAllocationOp(
 					op as unknown as IdCreationRangeWithStashedState,
 				);
@@ -1984,11 +1989,10 @@ export class ContainerRuntime
 					this.blobManager.processBlobAttachOp(message, local);
 					break;
 				case ContainerMessageType.IdAllocation:
-					if (this.idCompressor === undefined) {
-						throw new Error(
-							"Received an IdAllocation op without having the compressor enabled",
-						);
-					}
+					assert(
+						this.idCompressor !== undefined,
+						"IdCompressor should be defined if enabled",
+					);
 					this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
 					break;
 				case ContainerMessageType.ChunkedOp:
@@ -2942,31 +2946,37 @@ export class ContainerRuntime
 		return this.blobManager.createBlob(blob);
 	}
 
-	private generateAndSubmitIdAllocationOp() {
-		let idAllocationBatchMessage: BatchMessage | undefined;
-		let idRange: IdCreationRange | undefined;
-		if (this.idCompressor !== undefined) {
-			idRange = this.idCompressor.takeNextCreationRange();
-			// Don't include the idRange if there weren't any Ids allocated
-			idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
-		}
+	private maybeSubmitIdAllocationOp(type: ContainerMessageType) {
+		if (type !== ContainerMessageType.IdAllocation) {
+			let idAllocationBatchMessage: BatchMessage | undefined;
+			let idRange: IdCreationRange | undefined;
+			if (this.idCompressorEnabled) {
+				assert(
+					this.idCompressor !== undefined,
+					"IdCompressor should be defined if enabled",
+				);
+				idRange = this.idCompressor.takeNextCreationRange();
+				// Don't include the idRange if there weren't any Ids allocated
+				idRange = idRange?.ids?.first !== undefined ? idRange : undefined;
+			}
 
-		if (idRange !== undefined) {
-			const idAllocationMessage: ContainerRuntimeMessage = {
-				type: ContainerMessageType.IdAllocation,
-				contents: idRange,
-			};
-			idAllocationBatchMessage = {
-				contents: JSON.stringify(idAllocationMessage),
-				deserializedContent: idAllocationMessage,
-				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
-				metadata: undefined,
-				localOpMetadata: this.idCompressor?.serialize(true),
-			};
-		}
+			if (idRange !== undefined) {
+				const idAllocationMessage: ContainerRuntimeMessage = {
+					type: ContainerMessageType.IdAllocation,
+					contents: idRange,
+				};
+				idAllocationBatchMessage = {
+					contents: JSON.stringify(idAllocationMessage),
+					deserializedContent: idAllocationMessage,
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					metadata: undefined,
+					localOpMetadata: this.idCompressor?.serialize(true),
+				};
+			}
 
-		if (idAllocationBatchMessage !== undefined) {
-			this.outbox.submit(idAllocationBatchMessage);
+			if (idAllocationBatchMessage !== undefined) {
+				this.outbox.submit(idAllocationBatchMessage);
+			}
 		}
 	}
 
@@ -3009,9 +3019,7 @@ export class ContainerRuntime
 			// the last op was submitted. Don't submit another if it's an IdAllocation
 			// op as that means we're in resubmission flow and we don't want to send
 			// IdRanges out of order.
-			if (type !== ContainerMessageType.IdAllocation) {
-				this.generateAndSubmitIdAllocationOp();
-			}
+			this.maybeSubmitIdAllocationOp(type);
 
 			// If this is attach message for new data store, and we are in a batch, send this op out of order
 			// Is it safe:

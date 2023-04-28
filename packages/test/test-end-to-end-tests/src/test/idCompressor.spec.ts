@@ -139,6 +139,40 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		assert(getIdCompressor(map) === undefined);
 	});
 
+	it("can't enable compressor on an existing container", async () => {
+		provider.reset();
+		const config: ITestContainerConfig = {
+			registry: [
+				["mapId", SharedMap.getFactory()],
+				["cellId", SharedCell.getFactory()],
+			],
+			fluidDataObjectType: DataObjectFactoryType.Test,
+		};
+		const container = await provider.makeTestContainer(config);
+		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const map = await dataObject.getSharedObject<SharedMap>("mapId");
+		assert(getIdCompressor(map) === undefined);
+
+		const enabledConfig: ITestContainerConfig = {
+			registry: [
+				["mapId", SharedMap.getFactory()],
+				["cellId", SharedCell.getFactory()],
+			],
+			fluidDataObjectType: DataObjectFactoryType.Test,
+			runtimeOptions: {
+				enableRuntimeIdCompressor: true,
+			},
+		};
+
+		const enabledContainer = await provider.loadTestContainer(enabledConfig);
+		const enabledDataObject = await requestFluidObject<ITestFluidObject>(
+			enabledContainer,
+			"default",
+		);
+		const enabledMap = await dataObject.getSharedObject<SharedMap>("mapId");
+		assert(getIdCompressor(enabledMap) === undefined);
+	});
+
 	it("can normalize session space IDs to op space", async () => {
 		// None of these clusters will be ack'd yet and as such they will all
 		// generate local Ids. State of compressors afterwards should be:
