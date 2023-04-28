@@ -5,8 +5,6 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
 
 import { v4 as uuid } from "uuid";
 import {
@@ -748,7 +746,13 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		this.options = cloneDeep(this.loader.services.options);
+		// NOTE: stringify + parse is usually bad practice. Here we deliberately chose to use it because we know the
+		// pieces we care about in the cloned object are primitive values, and it lets us avoid importing a full
+		// deep-clone library, so we keep the bundle size down. This code doesn't run a ton of times and if it's slower
+		// than an actual deep clone (improbable), the gain in network transfer time from a smaller bundle almost certainly
+		// outweighs that.
+		// Tracking alternative ways to handle this in AB#4129.
+		this.options = JSON.parse(JSON.stringify(this.loader.services.options));
 
 		this._deltaManager = this.createDeltaManager();
 
