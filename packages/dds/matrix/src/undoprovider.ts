@@ -58,7 +58,7 @@ export class VectorUndoProvider {
 				//		which we don't want to happen, so we can re-insert when the row/col comes back.
 				//		the tracking group prevents unlink.
 				// 3. when we re-insert we need to find the old segment and clear their handles
-				//		so the new segment takes them over. there is not efficient look-up for this
+				//		so the new segment takes them over. there is no efficient look-up for this
 				const trackingGroup = (removeTrackingGroup =
 					this.currentRemoveTrackingGroup ?? new TrackingGroup());
 				deltaArgs.deltaSegments.forEach((d) =>
@@ -106,6 +106,12 @@ export class VectorUndoProvider {
 						while (removedTrackingGroup.size > 0) {
 							const tracked = removedTrackingGroup.tracked[0];
 							removedTrackingGroup.unlink(tracked);
+							// if there are groups tracked, this in a revert of a remove
+							// this means we are about the re-insert the row/column
+							// with the same handle. We reuse the handle so its cells
+							// get re-inserted too.
+							// since a new segment will have the handle, we need to
+							// remove it from the  removed segment which tracked
 							(tracked as PermutationSegment).reset();
 						}
 					}
