@@ -24,9 +24,9 @@ import { packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
 import {
-	bumpReleaseGroup,
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
+  setReleaseGroupVersion
 } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
@@ -185,8 +185,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const newVersion =
 			exactVersion === null
 				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  bumpVersionScheme(repoVersion, bumpType!, scheme).version
-				: exactVersion.version;
+				  bumpVersionScheme(repoVersion, bumpType!, scheme)
+				: exactVersion;
 
 		let bumpArg: VersionChangeType;
 		if (bumpType === undefined) {
@@ -202,10 +202,44 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		// Update the scheme based on the new version, unless it was passed in explicitly
 		scheme = flags.scheme ?? detectVersionScheme(newVersion);
     let interdependencyRange:  "~" | "^" | "" | "workspace:*" | "workspace:~" | "workspace:^";
-    if(workspaceProtocol && exactDepType === "") {
-      interdependencyRange = `${WORKSPACE_PROTOCOL_PREFIX}${newVersion}`
+    if(workspaceProtocol) {
+      switch(exactDepType) {
+        case "*": {
+          interdependencyRange = "workspace:*";
+          break;
+        }
+
+        case "^": {
+          interdependencyRange = "workspace:^";
+          break;
+        }
+
+        case "~": {
+          interdependencyRange = "workspace:~";
+          break;
+        }
+
+        default: {
+          this.error(`Can't use --workspaceProtocol with exactDepType: ""`)
+        }
+      }
     } else {
-      interdependencyRange = workspaceProtocol ? `${WORKSPACE_PROTOCOL_PREFIX}${exactDepType}` : newVersion;
+      switch(exactDepType) {
+        case "*": {
+          this.error(`Can't use "*" without --workspaceProtocol.`)
+        }
+
+        case "^":
+        case "~":
+          case "": {
+          interdependencyRange = exactDepType;
+          break;
+        }
+
+        default: {
+          this.error(`Unexpected exactDepType: ${exactDepType}`);
+        }
+      }
     }
 
 		this.logHr();
@@ -237,11 +271,10 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}
 
 		this.log(`Updating version...`);
-		await bumpReleaseGroup(
+		await setReleaseGroupVersion(
 			context,
-			bumpArg,
 			packageOrReleaseGroup,
-			scheme,
+			newVersion,
 			interdependencyRange,
 			this.logger,
 		);

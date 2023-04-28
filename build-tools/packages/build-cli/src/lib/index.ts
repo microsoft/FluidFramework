@@ -21,6 +21,7 @@ export {
 	isDependencyUpdateType,
 	PackageWithRangeSpec,
 } from "./bump";
+export { setReleaseGroupVersion } from "./dependencies";
 export { Repository } from "./git";
 export {
 	filterVersionsOlderThan,
