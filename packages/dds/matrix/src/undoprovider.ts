@@ -47,9 +47,12 @@ export class VectorUndoProvider {
 
 			switch (deltaArgs.operation) {
 				case MergeTreeDeltaType.REMOVE:
-					deltaArgs.deltaSegments.forEach((d) =>
-						(d.segment as PermutationSegment).reset(),
-					);
+					// reset the segment handles since they are already preserved
+					// on the undo-redo stack, and we don't want them recycled
+					// so when the vector comes back, its cells do as well
+					deltaArgs.deltaSegments.forEach((d) => {
+						(d.segment as PermutationSegment).reset();
+					});
 				case MergeTreeDeltaType.INSERT:
 					if (this.currentOp !== deltaArgs.operation) {
 						this.pushRevertible(revertibles);
@@ -140,7 +143,12 @@ export class MatrixUndoProvider<T> {
 					const row = this.rows.handleToPosition(rowHandle);
 					const col = this.cols.handleToPosition(colHandle);
 					// if the row/column no longer exists, we cannot set the cell
-					if (row < this.matrix.rowCount && col < this.matrix.colCount) {
+					if (
+						row !== undefined &&
+						row < this.matrix.rowCount &&
+						col !== undefined &&
+						col < this.matrix.colCount
+					) {
 						this.matrix.setCell(row, col, oldValue);
 					}
 				},

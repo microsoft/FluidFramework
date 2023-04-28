@@ -137,20 +137,55 @@ function appendLocalRemoveToRevertibles(
 	}
 	const last = revertibles[revertibles.length - 1];
 
-	const mergeTreeWithRevert = findMergeTreeWithRevert(deltaArgs.deltaSegments[0].segment);
-
-	deltaArgs.deltaSegments.forEach((t) => {
-		const props: RemoveSegmentRefProperties = {
-			segSpec: t.segment.toJSONObject(),
+	const makeTrackedRemovedRef = (initialSeg: ISegment, trackingGroup: ITrackingGroup) => {
+		const mergeTreeWithRevert = findMergeTreeWithRevert(initialSeg);
+		const initialRefProps: RemoveSegmentRefProperties = {
+			segSpec: initialSeg.toJSONObject(),
 			referenceSpace: "mergeTreeDeltaRevertible",
 		};
-		const ref = mergeTreeWithRevert.createLocalReferencePosition(
-			t.segment,
+		const initialRef = mergeTreeWithRevert.createLocalReferencePosition(
+			initialSeg,
 			0,
 			ReferenceType.SlideOnRemove,
-			props,
+			initialRefProps,
 		);
-		ref.callbacks = mergeTreeWithRevert.__mergeTreeRevertible.refCallbacks;
+		initialRef.callbacks = mergeTreeWithRevert.__mergeTreeRevertible.refCallbacks;
+
+		const split = initialSeg.splitAt.bind(initialSeg);
+		initialSeg.splitAt = (pos) => {
+			const splitSeg = split(pos);
+			if (
+				initialSeg.parent !== undefined &&
+				initialSeg.localRefs?.has(initialRef) &&
+				trackingGroup.size > 0
+			) {
+				if (splitSeg) {
+					const splitRef = makeTrackedRemovedRef(splitSeg, trackingGroup);
+					const moveRefs: LocalReferencePosition[] = [splitRef];
+					initialSeg.localRefs.walkReferences((lref) => {
+						const rProps = initialRef.properties as
+							| RemoveSegmentRefProperties
+							| undefined;
+						if (rProps?.referenceSpace === "mergeTreeDeltaRevertible") {
+							moveRefs.push(lref);
+						}
+					}, initialRef);
+					splitSeg.localRefs?.addBeforeTombstones(moveRefs);
+
+					initialRef.trackingCollection.trackingGroups.forEach((tg) => tg.link(splitRef));
+					initialRefProps.segSpec = initialSeg.toJSONObject();
+				}
+			} else {
+				initialSeg.splitAt = split;
+			}
+			return splitSeg;
+		};
+
+		return initialRef;
+	};
+
+	deltaArgs.deltaSegments.forEach((t) => {
+		const ref = makeTrackedRemovedRef(t.segment, last.trackingGroup);
 		t.segment.trackingCollection.trackingGroups.forEach((tg) => {
 			tg.link(ref);
 			tg.unlink(t.segment);

@@ -471,6 +471,57 @@ describe("MergeTree.Revertibles", () => {
 		logger.validate({ baseText: "1234" });
 	});
 
+	it.only("Split removed range", () => {
+		const clients = createClientsAtInitialState(
+			{ initialState: "0123456789", options: { mergeTreeUseNewLengthCalculations: true } },
+			"A",
+			"B",
+			"C",
+		);
+
+		const logger = new TestClientLogger(clients.all);
+		let seq = 0;
+		const ops: ISequencedDocumentMessage[] = [];
+
+		const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
+		const deltaCallback = (op, delta) => {
+			if (op.sequencedMessage === undefined) {
+				appendToMergeTreeDeltaRevertibles(delta, clientB_Revertibles);
+			}
+		};
+		const clientBDriver = createRevertDriver(clients.B);
+		clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+		clients.B.on("delta", deltaCallback);
+
+		ops.push(clients.C.makeOpMessage(clients.C.insertTextLocal(5, "Z"), ++seq));
+		ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 10), ++seq));
+
+		ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+		logger.validate({ baseText: "Z" });
+
+		for (let i = 0; i < 5; i++) {
+			// undo
+			try {
+				revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+				ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+			} catch (e) {
+				throw logger.addLogsToError(e);
+			}
+
+			logger.validate({ baseText: "01234Z56789" });
+
+			// redo
+			try {
+				revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+				ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+			} catch (e) {
+				throw logger.addLogsToError(e);
+			}
+
+			logger.validate({ baseText: "Z" });
+		}
+	});
+
 	describe("Revertibles work as expected when a pair of markers and text is involved", () => {
 		generatePairwiseOptions({
 			revertMarkerInsert: [true, undefined],
