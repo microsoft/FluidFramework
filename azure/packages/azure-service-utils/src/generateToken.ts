@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import type { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
+
+import type { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 
 /**
  * IMPORTANT: This function is duplicated in ./packages/runtime/test-runtime-utils/src/generateToken.ts. There is no
@@ -74,6 +74,7 @@ export function generateToken(
         iat: now,
         exp: now + lifetime,
         ver,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         jti: uuid(),
     };
 
@@ -95,7 +96,9 @@ export function generateToken(
  */
 export function generateUser(): IUser {
     const randomUser = {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         id: uuid(),
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         name: uuid(),
     };
 

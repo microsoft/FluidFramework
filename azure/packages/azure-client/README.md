@@ -53,10 +53,10 @@ const clientProps = {
     connection: {
         type: "remote",
         tenantId: "YOUR-TENANT-ID-HERE",
-        tokenProvider: new AzureFunctionTokenProvider(
-            "AZURE-FUNCTION-URL"+"/api/GetAzureToken",
-            { userId: "test-user",userName: "Test User" }
-        ),
+        tokenProvider: new AzureFunctionTokenProvider("AZURE-FUNCTION-URL" + "/api/GetAzureToken", {
+            userId: "test-user",
+            userName: "Test User",
+        }),
         endpoint: "ENTER-SERVICE-DISCOVERY-URL-HERE",
     },
 };
@@ -80,8 +80,10 @@ const schema = {
     initialObjects: {
         /* ... */
     },
-    dynamicObjectTypes: [ /*...*/ ],
-}
+    dynamicObjectTypes: [
+        /*...*/
+    ],
+};
 const azureClient = new AzureClient(props);
 const { container, services } = await azureClient.createContainer(schema);
 
@@ -116,8 +118,8 @@ const schema = {
     initialObjects: {
         map1: SharedMap,
         text1: SharedString,
-    }
-}
+    },
+};
 
 // Fetch back the container that had been created earlier with the same ID and schema
 const { container, services } = await azureClient.getContainer("_unique-id_", schema);
@@ -142,8 +144,8 @@ const schema = {
     initialObjects: {
         map1: SharedMap,
     },
-    dynamicObjectTypes: [ SharedString ],
-}
+    dynamicObjectTypes: [SharedString],
+};
 
 const { container, services } = await azureClient.getContainer("_unique-id_", schema);
 const map1 = container.initialObjects.map1;

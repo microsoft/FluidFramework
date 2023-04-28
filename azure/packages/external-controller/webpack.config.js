@@ -9,7 +9,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-    const isProduction = env && env.production;
+    const isProduction = env?.production;
 
     return merge(
         {
@@ -23,7 +23,7 @@ module.exports = (env) => {
                 rules: [
                     {
                         test: /\.tsx?$/,
-                        loader: require.resolve("ts-loader"),
+                        loader: "ts-loader",
                     },
                 ],
             },

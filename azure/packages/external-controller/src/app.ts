@@ -2,15 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
+
 import {
-    AzureFunctionTokenProvider,
     AzureClient,
-    AzureRemoteConnectionConfig,
-    AzureLocalConnectionConfig,
     AzureContainerServices,
+    AzureFunctionTokenProvider,
+    AzureLocalConnectionConfig,
+    AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { generateTestUser, InsecureTokenProvider } from "@fluidframework/test-client-utils";
-import { IValueChanged, IFluidContainer, SharedMap } from "fluid-framework";
+import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
 import { makeAppView } from "./view";
 

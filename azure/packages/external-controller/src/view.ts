@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+
 import { ICustomUserDetails } from "./app";
 import { IDiceRollerController } from "./controller";
 

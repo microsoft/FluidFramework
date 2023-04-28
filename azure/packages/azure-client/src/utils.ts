@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import {
-    AzureRemoteConnectionConfig,
-    AzureLocalConnectionConfig,
     AzureConnectionConfig,
+    AzureLocalConnectionConfig,
+    AzureRemoteConnectionConfig,
 } from "./interfaces";
 
 /**
