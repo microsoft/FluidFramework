@@ -425,7 +425,6 @@ export class SharedMatrix<T = any>
 		// so if cells exist, they can be found, and re-inserted
 		if (isHandleValid(original.start)) {
 			inserted.start = original.start;
-			vector.handleToPosition(inserted.start);
 		}
 
 		// Invalidate the handleCache in case it was populated during the 'rowsChanged'
