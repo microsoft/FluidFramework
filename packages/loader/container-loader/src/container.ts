@@ -307,7 +307,7 @@ const summarizerClientType = "summarizer";
  */
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer
+	implements IContainer, IContainerExperimental
 {
 	public static version = "^0.1.0";
 
@@ -2226,4 +2226,20 @@ export class Container
 			this.context.setConnectionState(state && !readonly, this.clientId);
 		}
 	}
+}
+
+/**
+ * IContainer interface that includes experimental features still under development.
+ * @internal
+ */
+export interface IContainerExperimental extends IContainer {
+	/**
+	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
+	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
+	 * container emits a "connected" event.
+	 * @returns serialized blob that can be passed to Loader.resolve()
+	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
+	 */
+	getPendingLocalState(): string;
 }

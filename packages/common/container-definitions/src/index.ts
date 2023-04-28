@@ -40,7 +40,6 @@ export {
 	ICodeAllowList,
 	ICodeDetailsLoader,
 	IContainer,
-	IContainerExperimental,
 	IContainerEvents,
 	IContainerLoadMode,
 	IFluidCodeResolver,
