@@ -45,13 +45,13 @@ import { AudienceClientMetadata } from "./AudienceMetadata";
 import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
 
 /**
- * Properties for configuring a {@link IContainerDevtools}.
+ * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
  *
  * @public
  */
 export interface ContainerDevtoolsProps {
 	/**
-	 * The Container with which the {@link ContainerDevtools} instance will be associated.
+	 * The Container to register with the Devtools.
 	 */
 	container: IContainer;
 
@@ -153,7 +153,6 @@ export interface ContainerDevtoolsProps {
  * TODO: Document others as they are added.
  *
  * @sealed
- * @internal
  */
 export class ContainerDevtools implements IContainerDevtools {
 	/**

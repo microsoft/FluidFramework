@@ -19,7 +19,7 @@ export namespace GetDevtoolsFeatures {
 	export const MessageType = "GET_DEVTOOLS_FEATURES";
 
 	/**
-	 * Inbound message requesting the set of features supported by the {@link FluidDevtools} instance.
+	 * Inbound message requesting the set of features supported by the {@link IFluidDevtools} instance.
 	 * Will result in the {@link DevtoolsFeatures.Message} message being posted.
 	 *
 	 * @public

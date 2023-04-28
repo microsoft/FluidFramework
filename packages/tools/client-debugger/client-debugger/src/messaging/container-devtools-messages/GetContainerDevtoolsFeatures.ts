@@ -27,7 +27,7 @@ export namespace GetContainerDevtoolsFeatures {
 	export type MessageData = HasContainerId;
 
 	/**
-	 * Inbound message requesting the set of features supported by the {@link ContainerDevtools} instance
+	 * Inbound message requesting the set of features supported by the Container-level Devtools instance
 	 * corresponding to the provided {@link HasContainerId.containerId}.
 	 *
 	 * Will result in the {@link ContainerDevtoolsFeatures.Message} message being posted.

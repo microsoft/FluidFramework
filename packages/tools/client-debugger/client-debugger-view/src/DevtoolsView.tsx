@@ -355,6 +355,7 @@ function Menu(props: MenuProps): React.ReactElement {
 
 	menuSections.push(
 		<ContainersMenuSection
+			key="containers-menu-section"
 			containers={containers}
 			currentContainerSelection={
 				currentSelection?.type === "containerMenuSelection"
