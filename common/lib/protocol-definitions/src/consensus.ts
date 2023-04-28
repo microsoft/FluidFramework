@@ -22,8 +22,6 @@ export interface IProposal {
 	/**
 	 * The value of the proposal.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: unknown;
 }
 

@@ -109,7 +109,7 @@ export interface IConnect {
     mode: ConnectionMode;
     nonce?: string;
     relayUserAgent?: string;
-    supportedFeatures?: Record<string, any>;
+    supportedFeatures?: Record<string, unknown>;
     tenantId: string;
     token: string | null;
     versions: string[];
@@ -130,7 +130,7 @@ export interface IConnected {
     nonce?: string;
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
-    supportedFeatures?: Record<string, any>;
+    supportedFeatures?: Record<string, unknown>;
     supportedVersions: string[];
     timestamp?: number;
     version: string;
