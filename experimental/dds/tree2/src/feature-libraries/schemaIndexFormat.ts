@@ -48,27 +48,32 @@ const TreeSchemaIdentifier = brandedString<TreeSchemaIdentifier>();
 const LocalFieldKey = brandedString<LocalFieldKey>();
 const GlobalFieldKey = brandedString<GlobalFieldKey>();
 
-const FieldSchemaFormat = Type.Object(
-	{
-		kind: FieldKindIdentifier,
-		types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
-	},
+const FieldSchemaFormatBase = Type.Object({
+	kind: FieldKindIdentifier,
+	types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
+});
+
+const FieldSchemaFormat = Type.Intersect([FieldSchemaFormatBase], { additionalProperties: false });
+
+const NamedLocalFieldSchemaFormat = Type.Intersect(
+	[
+		FieldSchemaFormatBase,
+		Type.Object({
+			name: LocalFieldKey,
+		}),
+	],
 	{ additionalProperties: false },
 );
 
-const NamedLocalFieldSchemaFormat = Type.Intersect([
-	FieldSchemaFormat,
-	Type.Object({
-		name: LocalFieldKey,
-	}),
-]);
-
-const NamedGlobalFieldSchemaFormat = Type.Intersect([
-	FieldSchemaFormat,
-	Type.Object({
-		name: GlobalFieldKey,
-	}),
-]);
+const NamedGlobalFieldSchemaFormat = Type.Intersect(
+	[
+		FieldSchemaFormatBase,
+		Type.Object({
+			name: GlobalFieldKey,
+		}),
+	],
+	{ additionalProperties: false },
+);
 
 const TreeSchemaFormat = Type.Object(
 	{

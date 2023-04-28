@@ -5389,7 +5389,7 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
-      '@sinclair/typebox': ^0.25.21
+      '@sinclair/typebox': ^0.28.8
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
@@ -5427,7 +5427,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
-      '@sinclair/typebox': 0.25.21
+      '@sinclair/typebox': 0.28.8
       '@ungap/structured-clone': 0.3.4
       sorted-btree: 1.8.1
       uuid: 8.3.2
@@ -20685,8 +20685,8 @@ packages:
   /@sideway/pinpoint/2.0.0:
     resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
 
-  /@sinclair/typebox/0.25.21:
-    resolution: {integrity: sha512-gFukHN4t8K4+wVC+ECqeqwzBDeFeTzBXroBTqE6vcWrQGbEUpHO7LYdG0f4xnvYq4VOEwITSlHlp0JBAIFMS/g==}
+  /@sinclair/typebox/0.28.8:
+    resolution: {integrity: sha512-OerNjE43mIb2RDy/RJfjS+OHfJHq3caePlVe/GXkLwLzcYevA2JPzHWSFMkpGgfoFKWdQdckKRiMVMsz40yHgw==}
     dev: false
 
   /@sindresorhus/is/0.14.0:
@@ -22143,7 +22143,7 @@ packages:
     resolution: {integrity: sha512-P6iIPyYQ+qH8CvGauAqanhVnjrnRe0IZFSYCeGkSRW9q3u8bdVn2NPI+lasFyVsEQn1J/IFmp5Aax41+dAP9wg==}
     engines: {node: '>=12'}
     dependencies:
-      '@babel/code-frame': 7.21.4
+      '@babel/code-frame': 7.18.6
       '@babel/runtime': 7.21.0
       '@types/aria-query': 5.0.1
       aria-query: 5.1.3
@@ -30457,7 +30457,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       at-least-node: 1.0.0
-      graceful-fs: 4.2.11
+      graceful-fs: 4.2.10
       jsonfile: 6.1.0
       universalify: 2.0.0
     dev: true
