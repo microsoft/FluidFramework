@@ -173,6 +173,29 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		assert(getIdCompressor(enabledMap) === undefined);
 	});
 
+	it("can't disable compressor if previously enabled on existing container", async () => {
+		// Create a container without the runtime option to enable the compressor.
+		// The first container should set a metadata property that automatically should
+		// enable it for any other container runtimes that are created.
+		const runtimeFactoryWithoutCompressorEnabled =
+			new ContainerRuntimeFactoryWithDefaultDataStore(
+				factory,
+				[[factory.type, Promise.resolve(factory)]],
+				undefined,
+				undefined,
+				undefined,
+			);
+
+		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
+		const container4MainDataStore = await requestFluidObject<TestDataObject>(container4, "/");
+		const sharedMapContainer4 = container4MainDataStore.map;
+
+		assert(
+			getIdCompressor(sharedMapContainer4) !== undefined,
+			"Compressor should exist if it has ever been enabled",
+		);
+	});
+
 	it("can normalize session space IDs to op space", async () => {
 		// None of these clusters will be ack'd yet and as such they will all
 		// generate local Ids. State of compressors afterwards should be:
@@ -485,29 +508,6 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		);
 
 		assert.strictEqual(sharedMapContainer1.get(sharedMapDecompressedId), "value");
-	});
-
-	it("Ignores runtime option if container is created and IdCompressor has been previously enabled", async () => {
-		// Create a container without the runtime option to enable the compressor.
-		// The first container should set a metadata property that automatically should
-		// enable it for any other container runtimes that are created.
-		const runtimeFactoryWithoutCompressorEnabled =
-			new ContainerRuntimeFactoryWithDefaultDataStore(
-				factory,
-				[[factory.type, Promise.resolve(factory)]],
-				undefined,
-				undefined,
-				undefined,
-			);
-
-		const container4 = await provider.loadContainer(runtimeFactoryWithoutCompressorEnabled);
-		const container4MainDataStore = await requestFluidObject<TestDataObject>(container4, "/");
-		const sharedMapContainer4 = container4MainDataStore.map;
-
-		assert(
-			getIdCompressor(sharedMapContainer4) !== undefined,
-			"Compressor should exist if it has ever been enabled",
-		);
 	});
 
 	it("Ids generated when disconnected are correctly resubmitted", async () => {
