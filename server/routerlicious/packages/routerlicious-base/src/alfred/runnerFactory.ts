@@ -359,35 +359,35 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		// Tenant Group 1 Rest API Throttlers
 		const restApiCreateDocThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:generalCluster:createDoc"),
+			config.get("alfred:throttling:tenantGroup1:createDoc"),
 		);
 		const restCreateDocThrottlerGroup1 = configureThrottler(
 			restApiCreateDocThrottleConfigGroup1,
 		);
 		const restApiGetDeltasThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:generalCluster:getDeltas"),
+			config.get("alfred:throttling:tenantGroup1:getDeltas"),
 		);
 		const restGetDeltasThrottlerGroup1 = configureThrottler(
 			restApiGetDeltasThrottleConfigGroup1,
 		);
 		const restApiGetSessionThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:generalCluster:getSession"),
+			config.get("alfred:throttling:tenantGroup1:getSession"),
 		);
 		const restGetSessionThrottlerGroup1 = configureThrottler(
 			restApiGetSessionThrottleConfigGroup1,
 		);
 		const socketConnectionThrottleConfigPerClusterGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:generalCluster:socketConnections"),
+			config.get("alfred:throttling:tenantGroup1:socketConnections"),
 		);
 		const socketConnectClusterThrottlerGroup1 = configureThrottler(
 			socketConnectionThrottleConfigPerClusterGroup1,
 		);
 		const submitOpThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:generalCluster:submitOps"),
+			config.get("alfred:throttling:tenantGroup1:submitOps"),
 		);
 		const socketSubmitOpThrottlerGroup1 = configureThrottler(submitOpThrottleConfigGroup1);
 		const submitSignalThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:generalCluster:submitSignals"),
+			config.get("alfred:throttling:tenantGroup1:submitSignals"),
 		);
 		const socketSubmitSignalThrottlerGroup1 = configureThrottler(
 			submitSignalThrottleConfigGroup1,
