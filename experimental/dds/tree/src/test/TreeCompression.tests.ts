@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import { v4 as uuidv4 } from 'uuid';
-import { assert } from '../Common';
 import { walkTree } from '../EditUtilities';
 import { createSessionId, IdCompressor, isFinalId, isLocalId } from '../id-compressor';
 import {

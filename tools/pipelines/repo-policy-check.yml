@@ -30,24 +30,9 @@ steps:
   inputs:
     version: 16.x
 
-- task: Cache@2
-  displayName: Cache pnpm store
-  inputs:
-    # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
-    # in the cache key
-    key: 'pnpm-store | "$(Agent.OS)" | pnpm-lock.yaml'
-    path: ${{ variables.pnpmStorePath }}
-    restoreKeys: |
-      pnpm-store | "$(Agent.OS)"
-
-- task: Bash@3
-  displayName: Install and configure pnpm
-  inputs:
-    targetType: 'inline'
-    script: |
-      corepack enable
-      pnpm -v
-      pnpm config set store-dir $(pnpmStorePath)
+- template: templates/include-install-pnpm.yml
+  parameters:
+    buildDirectory: .
 
 - task: Bash@3
   displayName: Install root dependencies

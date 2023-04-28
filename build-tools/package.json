@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.0.1",
+	"version": "0.15.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,6 +78,7 @@
 		"@commitlint/cli": "^17.1.2",
 		"@commitlint/config-conventional": "^17.1.0",
 		"@commitlint/cz-commitlint": "^17.1.2",
+		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/test-tools": "^0.2.3074",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",

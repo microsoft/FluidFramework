@@ -67,8 +67,30 @@ the endpoint URL would point to the Tinylicious instance on the default values o
 
 To launch the local Tinylicious service instance, run `npm run start:tinylicious` from your terminal window.
 
-When running the live Azure Fluid Relay Instance, we would require the tenant ID and service discovery endpoint URL. We make use of
-`AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
+When using a live Azure Fluid Relay instance, we need to provide the tenant ID, tenant secret and service discovery endpoint URL for our Azure Fluid Relay instance.
+
+We can use the `InsecureTokenProvider` or a custom token provider similar to `AzureFunctionTokenProvider` to authorize requests to the live Azure Fluid Relay Instance.
+
+**Note for Fluid developers:** You can use [this tool](../../../tools/getkeys) to retrieve test tenant details. After running getkeys, the env variable `fluid__test__driver__frs` will contain the tenant details.
+
+We can run the `AzureClient` with the `InsecureTokenProvider` with code like this:
+
+```typescript
+const connectionConfig: AzureConnectionConfig = useAzure
+	? {
+			type: "remote",
+			tenantId: "YOUR-TENANT-ID-HERE",
+			tokenProvider: new InsecureTokenProvider("YOUR-SECRET-HERE", user),
+			endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
+	  }
+	: {
+			type: "local",
+			tokenProvider: new InsecureTokenProvider("fooBar", user),
+			endpoint: "http://localhost:7070",
+	  };
+```
+
+We use the `AzureFunctionTokenProvider` which takes in the Azure function URL and an object identifying the current user, thereby
 making an axios `GET` request call to the Azure Function. This axios call takes in the tenant ID, documentId and
 userID/userName as optional parameters. The Azure Function is responsible for mapping the tenantId to tenant key secret
 to generate and sign the token such that the service will accept it.
@@ -94,17 +116,6 @@ const connectionConfig: AzureConnectionConfig = useAzure
 In this way, we can toggle between remote and local mode using the same config format. We make use of
 `AzureFunctionTokenProvider` for running against live Azure Fluid Relay instance since it is more secured, without exposing the tenant
 secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
-
-We can also run the `AzureClient` with the `InsecureTokenProvider` as follows:
-
-```typescript
-const connectionConfig: AzureConnectionConfig = {
-	type: "remote",
-	tenantId: "YOUR-TENANT-ID-HERE",
-	tokenProvider: new InsecureTokenProvider("YOUR-SECRET-HERE", user),
-	endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
-};
-```
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
@@ -140,10 +151,12 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 ## Help
 
-Not finding what you're looking for in this README?
-Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+Not finding what you're looking for in this README? Check out our [GitHub
+Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
 
-Still not finding what you're looking for? Please [file an issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+Still not finding what you're looking for? Please [file an
+issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
 Thank you!
 
 <!-- prettier-ignore-end -->
@@ -158,7 +171,10 @@ Thank you!
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
+Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->

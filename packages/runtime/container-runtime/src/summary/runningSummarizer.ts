@@ -46,6 +46,8 @@ import {
 const maxSummarizeAckWaitTime = 10 * 60 * 1000; // 10 minutes
 
 const defaultNumberSummarizationAttempts = 2; // only up to 2 attempts
+const numberOfAttemptsOnRestartAsRecovery = 1; // Only summarize once
+
 /**
  * An instance of RunningSummarizer manages the heuristics for summarizing.
  * Until disposed, the instance of RunningSummarizer can assume that it is
@@ -61,12 +63,10 @@ export class RunningSummarizer implements IDisposable {
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
-		raiseSummarizingError: (errorMessage: string) => void,
 		summaryCollection: SummaryCollection,
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		runtime: ISummarizerRuntime,
-		listenToDeltaManagerOps: boolean,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -75,12 +75,10 @@ export class RunningSummarizer implements IDisposable {
 			submitSummaryCallback,
 			refreshLatestSummaryAckCallback,
 			heuristicData,
-			raiseSummarizingError,
 			summaryCollection,
 			cancellationToken,
 			stopSummarizerCallback,
 			runtime,
-			listenToDeltaManagerOps,
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
@@ -135,6 +133,7 @@ export class RunningSummarizer implements IDisposable {
 	private heuristicRunner?: ISummarizeHeuristicRunner;
 	private readonly generator: SummaryGenerator;
 	private readonly mc: MonitoringContext;
+	private readonly shouldAbortOnSummaryFailure: boolean;
 
 	private enqueuedSummary:
 		| {
@@ -162,12 +161,10 @@ export class RunningSummarizer implements IDisposable {
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly heuristicData: ISummarizeHeuristicData,
-		private readonly raiseSummarizingError: (errorMessage: string) => void,
 		private readonly summaryCollection: SummaryCollection,
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		private readonly runtime: ISummarizerRuntime,
-		listenToDeltaManagerOps: boolean,
 	) {
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
@@ -179,6 +176,10 @@ export class RunningSummarizer implements IDisposable {
 				all: telemetryProps,
 			}),
 		);
+
+		this.shouldAbortOnSummaryFailure =
+			this.mc.config.getString("Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod") ===
+			"restart";
 
 		if (configuration.state !== "disableHeuristics") {
 			assert(
@@ -204,13 +205,12 @@ export class RunningSummarizer implements IDisposable {
 		const maxAckWaitTime = Math.min(this.configuration.maxAckWaitTime, maxSummarizeAckWaitTime);
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
-			// pre-0.58 error message: summaryAckWaitTimeout
-			this.raiseSummarizingError("Pending summary ack not received in time");
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
 			this.mc.logger.sendErrorEvent({
 				eventName: "SummaryAckWaitTimeout",
+				message: "Pending summary ack not received in time",
 				maxAckWaitTime,
 				referenceSequenceNumber: this.heuristicData.lastAttempt.refSequenceNumber,
 				summarySequenceNumber: this.heuristicData.lastAttempt.summarySequenceNumber,
@@ -233,7 +233,6 @@ export class RunningSummarizer implements IDisposable {
 			this.pendingAckTimer,
 			this.heuristicData,
 			this.submitSummaryCallback,
-			this.raiseSummarizingError,
 			() => {
 				this.totalSuccessfulAttempts++;
 			},
@@ -241,23 +240,25 @@ export class RunningSummarizer implements IDisposable {
 			this.mc.logger,
 		);
 
+		// Listen to deltaManager for non-runtime ops
 		this.deltaManagerListener = (op) => {
-			this.handleOp(op, isRuntimeMessage(op));
+			if (!isRuntimeMessage(op)) {
+				this.handleOp(op, false);
+			}
 		};
 
+		// Listen to runtime for runtime ops
 		this.runtimeListener = (op, runtimeMessage) => {
-			this.handleOp(op, runtimeMessage);
+			if (runtimeMessage) {
+				this.handleOp(op, true);
+			}
 		};
 
-		// Purpose of this argument is for back-compat
-		// It can be set to false once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
-		// Expectation when this is false is that the consumer of this class will call "handleOp" explicitly
+		// Purpose of listening to deltaManager is for back-compat
+		// Can remove and only listen to runtime once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
 		// Tracked by AB#3883
-		if (listenToDeltaManagerOps) {
-			this.runtime.deltaManager.on("op", this.deltaManagerListener);
-		} else {
-			this.runtime.on?.("op", this.runtimeListener);
-		}
+		this.runtime.deltaManager.on("op", this.deltaManagerListener);
+		this.runtime.on?.("op", this.runtimeListener);
 	}
 
 	private async handleSummaryAck(): Promise<number> {
@@ -267,67 +268,54 @@ export class RunningSummarizer implements IDisposable {
 		if (lastAck !== undefined) {
 			refSequenceNumber = lastAck.summaryOp.referenceSequenceNumber;
 			const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
-			try {
-				const summaryOpHandle = lastAck.summaryOp.contents.handle;
-				const summaryAckHandle = lastAck.summaryAck.contents.handle;
-				while (this.summarizingLock !== undefined) {
-					summaryLogger.sendTelemetryEvent({
-						eventName: "RefreshAttemptWithSummarizerRunning",
-						referenceSequenceNumber: refSequenceNumber,
+			const summaryOpHandle = lastAck.summaryOp.contents.handle;
+			const summaryAckHandle = lastAck.summaryAck.contents.handle;
+			while (this.summarizingLock !== undefined) {
+				summaryLogger.sendTelemetryEvent({
+					eventName: "RefreshAttemptWithSummarizerRunning",
+					referenceSequenceNumber: refSequenceNumber,
+					proposalHandle: summaryOpHandle,
+					ackHandle: summaryAckHandle,
+				});
+				await this.summarizingLock;
+			}
+
+			// Make sure we block any summarizer from being executed/enqueued while
+			// executing the refreshLatestSummaryAck.
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
+			await this.lockedSummaryAction(
+				() => {},
+				async () =>
+					this.refreshLatestSummaryAckCallback({
 						proposalHandle: summaryOpHandle,
 						ackHandle: summaryAckHandle,
-					});
-					await this.summarizingLock;
-				}
+						summaryRefSeq: refSequenceNumber,
+						summaryLogger,
+					}).catch(async (error) => {
+						// If the error is 404, so maybe the fetched version no longer exists on server. We just
+						// ignore this error in that case, as that means we will have another summaryAck for the
+						// latest version with which we will refresh the state. However in case of single commit
+						// summary, we might me missing a summary ack, so in that case we are still fine as the
+						// code in `submitSummary` function in container runtime, will refresh the latest state
+						// by calling `refreshLatestSummaryAckFromServer` and we will be fine.
+						const isIgnoredError =
+							isFluidError(error) &&
+							error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError;
 
-				// Make sure we block any summarizer from being executed/enqueued while
-				// executing the refreshLatestSummaryAck.
-				// https://dev.azure.com/fluidframework/internal/_workitems/edit/779
-				await this.lockedSummaryAction(
-					() => {},
-					async () =>
-						this.refreshLatestSummaryAckCallback({
-							proposalHandle: summaryOpHandle,
-							ackHandle: summaryAckHandle,
-							summaryRefSeq: refSequenceNumber,
-							summaryLogger,
-						}).catch(async (error) => {
-							// If the error is 404, so maybe the fetched version no longer exists on server. We just
-							// ignore this error in that case, as that means we will have another summaryAck for the
-							// latest version with which we will refresh the state. However in case of single commit
-							// summary, we might me missing a summary ack, so in that case we are still fine as the
-							// code in `submitSummary` function in container runtime, will refresh the latest state
-							// by calling `refreshLatestSummaryAckFromServer` and we will be fine.
-							if (
-								isFluidError(error) &&
-								error.errorType === DriverErrorType.fileNotFoundOrAccessDeniedError
-							) {
-								summaryLogger.sendTelemetryEvent(
-									{
-										eventName: "HandleSummaryAckErrorIgnored",
-										referenceSequenceNumber: refSequenceNumber,
-										proposalHandle: summaryOpHandle,
-										ackHandle: summaryAckHandle,
-									},
-									error,
-								);
-							} else {
-								throw error;
-							}
-						}),
-					() => {},
-				);
-			} catch (error) {
-				summaryLogger.sendErrorEvent(
-					{
-						eventName: "HandleLastSummaryAckError",
-						referenceSequenceNumber: refSequenceNumber,
-						handle: lastAck?.summaryOp?.contents?.handle,
-						ackHandle: lastAck?.summaryAck?.contents?.handle,
-					},
-					error,
-				);
-			}
+						summaryLogger.sendTelemetryEvent(
+							{
+								eventName: isIgnoredError
+									? "HandleSummaryAckErrorIgnored"
+									: "HandleLastSummaryAckError",
+								referenceSequenceNumber: refSequenceNumber,
+								proposalHandle: summaryOpHandle,
+								ackHandle: summaryAckHandle,
+							},
+							error,
+						);
+					}),
+				() => {},
+			);
 			refSequenceNumber++;
 		}
 		return refSequenceNumber;
@@ -613,9 +601,10 @@ export class RunningSummarizer implements IDisposable {
 				let summaryAttempts = 0;
 				let summaryAttemptsPerPhase = 0;
 				// Reducing the default number of attempts to defaultNumberofSummarizationAttempts.
-				let totalAttempts =
-					this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
-					defaultNumberSummarizationAttempts;
+				let totalAttempts = this.shouldAbortOnSummaryFailure
+					? numberOfAttemptsOnRestartAsRecovery
+					: this.mc.config.getNumber("Fluid.Summarizer.Attempts") ??
+					  defaultNumberSummarizationAttempts;
 
 				if (totalAttempts > attempts.length) {
 					this.mc.logger.sendTelemetryEvent({
@@ -664,6 +653,7 @@ export class RunningSummarizer implements IDisposable {
 					if (result.success) {
 						return;
 					}
+
 					// Check for retryDelay that can come from summaryNack or upload summary flow.
 					// Retry the same step only once per retryAfter response.
 					overrideDelaySeconds = result.retryAfterSeconds;
@@ -686,6 +676,20 @@ export class RunningSummarizer implements IDisposable {
 					}
 				}
 
+				if (this.shouldAbortOnSummaryFailure) {
+					this.mc.logger.sendTelemetryEvent(
+						{
+							eventName: "ClosingSummarizerOnSummaryStale",
+							reason,
+							message: lastResult?.message,
+						},
+						lastResult?.error,
+					);
+
+					this.stopSummarizerCallback("latestSummaryStateStale");
+					this.runtime.closeFn();
+					return;
+				}
 				// If all attempts failed, log error (with last attempt info) and close the summarizer container
 				this.mc.logger.sendErrorEvent(
 					{

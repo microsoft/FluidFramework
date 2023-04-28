@@ -59,16 +59,6 @@ services:
             - NODE_ENV=development
             - IS_FLUID_SERVER=true
         restart: always
-    foreman:
-        build:
-            context: .
-            target: runner
-        command: node packages/routerlicious/dist/kafka-service/index.js foreman /usr/src/server/packages/routerlicious/dist/foreman/index.js
-        environment:
-            - DEBUG=fluid:*
-            - NODE_ENV=development
-            - IS_FLUID_SERVER=true
-        restart: always
     riddler:
         build:
             context: .

@@ -371,6 +371,7 @@ declare function get_current_InterfaceDeclaration_IConnected():
 declare function use_old_InterfaceDeclaration_IConnected(
     use: TypeOnly<old.IConnected>);
 use_old_InterfaceDeclaration_IConnected(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnected());
 
 /*
@@ -419,6 +420,7 @@ declare function get_current_InterfaceDeclaration_IDocumentAttributes():
 declare function use_old_InterfaceDeclaration_IDocumentAttributes(
     use: TypeOnly<old.IDocumentAttributes>);
 use_old_InterfaceDeclaration_IDocumentAttributes(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentAttributes());
 
 /*
@@ -827,6 +829,7 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentAugmentedMes
 declare function use_old_InterfaceDeclaration_ISequencedDocumentAugmentedMessage(
     use: TypeOnly<old.ISequencedDocumentAugmentedMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentAugmentedMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentAugmentedMessage());
 
 /*
@@ -851,6 +854,7 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentMessage():
 declare function use_old_InterfaceDeclaration_ISequencedDocumentMessage(
     use: TypeOnly<old.ISequencedDocumentMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentMessage());
 
 /*
@@ -875,6 +879,7 @@ declare function get_current_InterfaceDeclaration_ISequencedDocumentSystemMessag
 declare function use_old_InterfaceDeclaration_ISequencedDocumentSystemMessage(
     use: TypeOnly<old.ISequencedDocumentSystemMessage>);
 use_old_InterfaceDeclaration_ISequencedDocumentSystemMessage(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISequencedDocumentSystemMessage());
 
 /*
