@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "node:assert";
 import path from "node:path";
 import execa from "execa";
 import { writeFile, readJson } from "fs-extra";
@@ -17,6 +18,7 @@ import {
 	updatePackageJsonFile,
 } from "@fluidframework/build-tools";
 import {
+	InterdependencyRange,
 	VersionChangeType,
 	VersionScheme,
 	bumpRange,
@@ -152,7 +154,7 @@ export async function bumpPackageDependencies(
  * @param bumpType - The bump type. Can be a SemVer object to set an exact version.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
- * @param exactDependencyType - The type of dependency to use on packages within the release group.
+ * @param interdependencyType - The type of dependency to use on packages within the release group.
  * @param log - A logger to use.
  *
  * @internal
@@ -163,8 +165,7 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
-	// eslint-disable-next-line default-param-last
-	exactDependencyType: "~" | "^" | "" = "^",
+	interdependencyType?: InterdependencyRange,
 	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)
@@ -230,8 +231,14 @@ export async function bumpReleaseGroup(
 		return;
 	}
 
+	assert(
+		interdependencyType !== undefined,
+		"interdependencyType must be defined when bumping a release group",
+	);
+
 	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
-	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
+	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of
+	// truth".
 	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
 	const [lernaJson, prettierConfig] = await Promise.all([
 		readJson(lernaPath),
@@ -255,15 +262,20 @@ export async function bumpReleaseGroup(
 	context.repo.reload();
 
 	// The package versions have been bumped, so now we update the dependency ranges for packages within the release
-	// group. We need to account for Fluid internal versions and the requested exactDependencyType.
+	// group. We need to account for Fluid internal versions and the requested interdependencyType.
 	let range: string;
 	if (scheme === "internal" || scheme === "internalPrerelease") {
+		// If the interdependencyType is the empty string, it means we should use an exact dependency on the version, so we
+		// set the range to the version. Otherwise, since this is a Fluid internal version, we need to calculate an
+		// appropriate range string based on the interdependencyType.
 		range =
-			exactDependencyType === ""
-				? translatedVersion.version
-				: getVersionRange(translatedVersion, exactDependencyType);
+			interdependencyType === "^"
+				? getVersionRange(translatedVersion, interdependencyType)
+				: interdependencyType === "~"
+				? getVersionRange(translatedVersion, interdependencyType)
+				: translatedVersion.version;
 	} else {
-		range = `${exactDependencyType}${translatedVersion.version}`;
+		range = `${interdependencyType}${translatedVersion.version}`;
 	}
 
 	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;

@@ -4,13 +4,17 @@
  */
 
 export {
+	isInterdependencyRange,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
+	InterdependencyRange,
+	InterdependencyRangeOperators,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionBumpTypeExtended,
 	VersionChangeType,
 	VersionChangeTypeExtended,
+	WorkspaceInterdependencyRanges,
 } from "./bumpTypes";
 export {
 	changePreReleaseIdentifier,

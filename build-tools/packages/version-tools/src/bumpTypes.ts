@@ -10,6 +10,34 @@ import type { SemVer } from "semver";
 export type ReleaseVersion = string;
 
 /**
+ * An array of the valid interdependency range operators. The interdependency range determines how dependencies between
+ * packages within the same release group are specified.
+ */
+export const InterdependencyRangeOperators = ["^", "~", /* "*", */ ""] as const;
+
+export const WorkspaceInterdependencyRanges = [
+	"workspace:*",
+	"workspace:^",
+	"workspace:~",
+] as const;
+/**
+ * A type representing the different types of interdependency ranges that can be specified for release groups. The
+ * interdependency range determines how dependencies between packages within the same release group are specified.
+ */
+type InterdependencyRangeOperator = typeof InterdependencyRangeOperators[number];
+
+type WorkspaceInterdependencyRange = typeof WorkspaceInterdependencyRanges[number];
+
+export type InterdependencyRange = WorkspaceInterdependencyRange | InterdependencyRangeOperator;
+
+/**
+ * A typeguard to check if a variable is a {@link InterdependencyRange}.
+ */
+export function isInterdependencyRange(r: any): r is InterdependencyRange {
+	return InterdependencyRangeOperators.includes(r) || WorkspaceInterdependencyRanges.includes(r);
+}
+
+/**
  * A type defining the three basic version bump types:
  *
  * - major

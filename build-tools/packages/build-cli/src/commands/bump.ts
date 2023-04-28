@@ -9,15 +9,18 @@ import inquirer from "inquirer";
 import * as semver from "semver";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
-
 import {
+	InterdependencyRange,
+	InterdependencyRangeOperators,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionChangeType,
 	VersionScheme,
-	WORKSPACE_PROTOCOL_PREFIX,
+	WorkspaceInterdependencyRanges,
 	bumpVersionScheme,
 	detectVersionScheme,
+	isInterdependencyRange,
+	parseWorkspaceProtocol,
 } from "@fluid-tools/version-tools";
 
 import { packageOrReleaseGroupArg } from "../args";
@@ -59,17 +62,26 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}),
 		exactDepType: Flags.string({
 			description:
-				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid when using the --workspaceProtocol flag.',
-			// options: ["^", "~", "", "workspace:*", "workspace:^", "workspace:~"],
-			options: ["*", "^", "~", ""],
-			default: "^",
+				'[DEPRECATED - Use interdependencyRange instead.] Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
+			options: [...InterdependencyRangeOperators],
+			deprecated: {
+				to: "interdependencyRange",
+				message: "The exactDepType flag is deprecated. Use interdependencyRange instead.",
+				version: "0.16.0",
+			},
 		}),
-		workspaceProtocol: Flags.boolean({
-			char: "w",
+		interdependencyRange: Flags.string({
+      char: "d",
 			description:
-				"Sets interdependencies between packages in the release group to use the workspace protocol. The exactDepType argument is used to set the workspace range constraint.",
-			default: false,
+				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid when using the --workspaceProtocol flag.',
+			options: [...InterdependencyRangeOperators, ...WorkspaceInterdependencyRanges],
 		}),
+		// workspaceProtocol: Flags.boolean({
+		// 	char: "w",
+		// 	description:
+		// 		"Sets interdependencies between packages in the release group to use the workspace protocol. The interdependencyType argument is used to set the workspace range constraint.",
+		// 	default: false,
+		// }),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
 		skipChecks: skipCheckFlag,
@@ -93,9 +105,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		},
 		{
 			description:
-				"You can control how interdependencies between packages in a release group are expressed using the --exactDepType flag.",
+				"You can control how interdependencies between packages in a release group are expressed using the --interdependencyType flag.",
 			command:
-				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --exactDepType "~"',
+				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --interdependencyType "~"',
 		},
 	];
 
@@ -108,47 +120,56 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const args = this.args;
 		const flags = this.flags;
 
-		const context = await this.getContext();
-		const bumpType: VersionBumpType | undefined = flags.bumpType;
-		const workspaceProtocol: boolean = flags.workspaceProtocol;
-		const shouldInstall: boolean = flags.install && !flags.skipChecks;
-		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
-
 		if (args.package_or_release_group === undefined) {
 			this.error("No dependency provided.");
 		}
+
+		// if(!isInterdependencyRange(flags.interdependencyRange)) {
+		//   this.error(`Invalid interdependencyRange: ${flags.interdependencyRange}`);
+		// }
+		// const interdependencyRange: InterdependencyRange = flags.interdependencyRange === undefined ? "^": flags.interdependencyRange;
+
+		const context = await this.getContext();
+		const bumpType: VersionBumpType | undefined = flags.bumpType;
+		const [workspaceProtocol] = parseWorkspaceProtocol(flags.interdependencyRange ?? "");
+		const shouldInstall: boolean = flags.install && !flags.skipChecks;
+		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
 		if (bumpType === undefined && flags.exact === undefined) {
 			this.error(`One of the following must be provided: --bumpType, --exact`);
 		}
 
+		// if (flags.interdependencyType === "*" && workspaceProtocol === false) {
+		// 	this.error(`Can't use "*" without --workspaceProtocol.`);
+		// }
+
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
-		const exactDepType = flags.exactDepType ?? "^";
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
-
-		if (exactDepType === "*" && workspaceProtocol === false) {
-			this.error(`Can't use "*" without --workspaceProtocol.`);
-		}
 
 		if (bumpType === undefined && exactVersion === null) {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
-		if (
-			exactDepType !== "" &&
-			exactDepType !== "^" &&
-			exactDepType !== "~" &&
-			exactDepType !== "*"
-		) {
-			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
-			// that the exactDepType will be one of the enum values.
-			this.error(`Invalid exactDepType: ${exactDepType}`);
-		}
-
+		let interdependencyRange: InterdependencyRange | undefined = isInterdependencyRange(
+			flags.interdependencyRange,
+		)
+			? flags.interdependencyRange
+			: undefined;
 		if (isReleaseGroup(args.package_or_release_group)) {
+			// if (
+			// 	interdependencyType !== undefined &&
+			// 	interdependencyType !== "" &&
+			// 	interdependencyType !== "*" &&
+			// 	interdependencyType !== "^" &&
+			// 	interdependencyType !== "~"
+			// ) {
+			// 	// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
+			// 	// that the interdependencyType will be one of the enum values.
+			// 	this.error(`Invalid interdependencyType: ${interdependencyType}`);
+			// }
 			const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
 			assert(
 				releaseRepo !== undefined,
@@ -157,6 +178,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
+			interdependencyRange = isInterdependencyRange(flags.interdependencyRange)
+				? flags.interdependencyRange
+				: releaseRepo.interdependencyRange;
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
@@ -201,46 +225,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		// Update the scheme based on the new version, unless it was passed in explicitly
 		scheme = flags.scheme ?? detectVersionScheme(newVersion);
-		let interdependencyRange: "~" | "^" | "" | "workspace:*" | "workspace:~" | "workspace:^";
-		if (workspaceProtocol) {
-			switch (exactDepType) {
-				case "*": {
-					interdependencyRange = "workspace:*";
-					break;
-				}
-
-				case "^": {
-					interdependencyRange = "workspace:^";
-					break;
-				}
-
-				case "~": {
-					interdependencyRange = "workspace:~";
-					break;
-				}
-
-				default: {
-					this.error(`Can't use --workspaceProtocol with exactDepType: ""`);
-				}
-			}
-		} else {
-			switch (exactDepType) {
-				case "*": {
-					this.error(`Can't use "*" without --workspaceProtocol.`);
-				}
-
-				case "^":
-				case "~":
-				case "": {
-					interdependencyRange = exactDepType;
-					break;
-				}
-
-				default: {
-					this.error(`Unexpected exactDepType: ${exactDepType}`);
-				}
-			}
-		}
 
 		this.logHr();
 		this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
@@ -248,8 +232,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Workspace protocol: ${workspaceProtocol ? chalk.green("yes") : "no"}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
-		this.log(`Exact dependency type: ${exactDepType === "" ? "exact" : exactDepType}`);
-		this.log(`Interdependency range: ${interdependencyRange}`);
+		this.log(
+			`Interdependency range: ${
+				interdependencyRange === "" ? "exact" : interdependencyRange
+			}`,
+		);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
@@ -319,3 +306,51 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}
 	}
 }
+
+// function generateInterdependencyRangeString(
+// 	interdependencyType: InterdependencyRange,
+// 	workspaceProtocol: boolean,
+// ): InterdependencyRange {
+// 	let interdependencyRange: InterdependencyRange;
+// 	if (workspaceProtocol) {
+// 		switch (interdependencyType) {
+// 			case "*": {
+// 				interdependencyRange = "workspace:*";
+// 				break;
+// 			}
+
+// 			case "^": {
+// 				interdependencyRange = "workspace:^";
+// 				break;
+// 			}
+
+// 			case "~": {
+// 				interdependencyRange = "workspace:~";
+// 				break;
+// 			}
+
+// 			default: {
+// 				throw new Error(`Can't use --workspaceProtocol with interdependencyType: ""`);
+// 			}
+// 		}
+// 	} else {
+// 		switch (interdependencyType) {
+// 			case "*": {
+// 				throw new Error(`Can't use "*" without --workspaceProtocol.`);
+// 			}
+
+// 			case "^":
+// 			case "~":
+// 			case "": {
+// 				interdependencyRange = interdependencyType;
+// 				break;
+// 			}
+
+// 			default: {
+// 				throw new Error(`Unexpected interdependencyType: ${interdependencyType}`);
+// 			}
+// 		}
+// 	}
+
+// 	return interdependencyRange;
+// }

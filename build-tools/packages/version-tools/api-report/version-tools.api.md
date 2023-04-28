@@ -38,6 +38,12 @@ export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | 
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
+export type InterdependencyRange = typeof InterdependencyRangeTypes[number];
+
+// @public
+export const InterdependencyRangeTypes: readonly ["^", "~", ""];
+
+// @public
 export function isInternalVersionScheme(version: semver.SemVer | string | undefined, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): boolean;
 
 // @public

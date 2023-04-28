@@ -1,5 +1,5 @@
 import {
-	WORKSPACE_PROTOCOL_PREFIX,
+	InterdependencyRange,
 	detectVersionScheme,
 	getVersionRange,
 } from "@fluid-tools/version-tools";
@@ -27,6 +27,7 @@ export interface DependencyWithRange {
  *
  * @param context - The {@link Context}.
  * @param releaseGroupOrPackage - A release group repo or package to bump.
+ * @param version - The version to set.
  * @param interdependencyRange - The type of dependency to use on packages within the release group.
  * @param log - A logger to use.
  *
@@ -37,7 +38,7 @@ export async function setReleaseGroupVersion(
 	releaseGroupOrPackage: MonoRepo | Package,
 	version: semver.SemVer,
 	// eslint-disable-next-line default-param-last
-	interdependencyRange: "~" | "^" | "" | "workspace:*" | "workspace:~" | "workspace:^" = "^",
+	interdependencyRange: Exclude<InterdependencyRange, "*"> = "^",
 	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = version;
