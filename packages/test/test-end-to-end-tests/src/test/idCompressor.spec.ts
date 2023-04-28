@@ -169,7 +169,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 			enabledContainer,
 			"default",
 		);
-		const enabledMap = await dataObject.getSharedObject<SharedMap>("mapId");
+		const enabledMap = await enabledDataObject.getSharedObject<SharedMap>("mapId");
 		assert(getIdCompressor(enabledMap) === undefined);
 	});
 
