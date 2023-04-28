@@ -12,6 +12,7 @@ import {
 	ITreeCursor,
 	UpPath,
 	PathVisitor,
+	NamedTreeSchema,
 } from "../../core";
 import {
 	PrimitiveValue,
@@ -142,7 +143,8 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	readonly [typeSymbol]: TreeSchema;
+	// TODO: update implementation to ensure a NamedTreeSchema is returned, and view schema is used in typed views.
+	readonly [typeSymbol]: NamedTreeSchema;
 
 	/**
 	 * Value stored on this node.

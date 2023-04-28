@@ -130,8 +130,8 @@ export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
  *
  * @alpha
  */
-export interface FieldKindSpecifier {
-	identifier: FieldKindIdentifier;
+export interface FieldKindSpecifier<T = FieldKindIdentifier> {
+	identifier: T;
 }
 
 /**

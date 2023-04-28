@@ -257,6 +257,8 @@ export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(
 			[schema in T[number] as schema["typeInfo"]["name"]]: schema;
 		},
 		allTypes: allTypes as NamesFromSchema<T>,
+		adapters: {},
+		builder: { name: "none" },
 	} as const;
 	return schemaData;
 }

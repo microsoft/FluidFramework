@@ -38,7 +38,7 @@ import {
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
 
-type BrandedFieldKind<
+export type BrandedFieldKind<
 	TName extends string,
 	TMultiplicity extends Multiplicity,
 	TEditor extends FieldEditor<any>,
@@ -779,66 +779,72 @@ function deltaForDelete(
 /**
  * 0 or 1 items.
  */
-export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = new FieldKind(
-	brand("Optional"),
-	Multiplicity.Optional,
-	{
-		rebaser: optionalChangeRebaser,
-		codecsFactory: optionalFieldCodecFamilyFactory,
-		editor: optionalFieldEditor,
+export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, OptionalFieldEditor> =
+	brandedFieldKind(
+		"Optional",
+		Multiplicity.Optional,
+		{
+			rebaser: optionalChangeRebaser,
+			codecsFactory: optionalFieldCodecFamilyFactory,
+			editor: optionalFieldEditor,
 
-		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
-			if (change.fieldChange === undefined) {
-				if (change.deletedBy === undefined && change.childChange !== undefined) {
-					return [deltaFromChild(change.childChange)];
+			intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
+				if (change.fieldChange === undefined) {
+					if (change.deletedBy === undefined && change.childChange !== undefined) {
+						return [deltaFromChild(change.childChange)];
+					}
+					return [];
 				}
-				return [];
-			}
 
-			const deleteDelta = deltaForDelete(
-				!change.fieldChange.wasEmpty,
-				change.deletedBy === undefined ? change.childChange : undefined,
-				deltaFromChild,
-			);
+				const deleteDelta = deltaForDelete(
+					!change.fieldChange.wasEmpty,
+					change.deletedBy === undefined ? change.childChange : undefined,
+					deltaFromChild,
+				);
 
-			const update = change.fieldChange?.newContent;
-			let content: ITreeCursorSynchronous | undefined;
-			if (update === undefined) {
-				content = undefined;
-			} else if ("set" in update) {
-				content = singleTextCursor(update.set);
-			} else {
-				content = update.revert;
-			}
+				const update = change.fieldChange?.newContent;
+				let content: ITreeCursorSynchronous | undefined;
+				if (update === undefined) {
+					content = undefined;
+				} else if ("set" in update) {
+					content = singleTextCursor(update.set);
+				} else {
+					content = update.revert;
+				}
 
-			const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
+				const insertDelta = deltaFromInsertAndChange(
+					content,
+					update?.changes,
+					deltaFromChild,
+				);
 
-			return [...deleteDelta, ...insertDelta];
+				return [...deleteDelta, ...insertDelta];
+			},
+
+			isEmpty: (change: OptionalChangeset) =>
+				change.childChange === undefined && change.fieldChange === undefined,
 		},
-
-		isEmpty: (change: OptionalChangeset) =>
-			change.childChange === undefined && change.fieldChange === undefined,
-	},
-	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === optional.identifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set([value.identifier]),
-);
+		(types, other) =>
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === optional.identifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		new Set([value.identifier]),
+	);
 
 /**
  * 0 or more items.
  */
-export const sequence: FieldKind<SequenceFieldEditor, Multiplicity.Sequence> = new FieldKind(
-	brand("Sequence"),
-	Multiplicity.Sequence,
-	sequenceFieldChangeHandler,
-	(types, other) =>
-		other.kind.identifier === sequence.identifier &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	// TODO: add normalizer/importers for handling ops from other kinds.
-	new Set([]),
-);
+export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, SequenceFieldEditor> =
+	brandedFieldKind(
+		"Sequence",
+		Multiplicity.Sequence,
+		sequenceFieldChangeHandler,
+		(types, other) =>
+			other.kind.identifier === sequence.identifier &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		// TODO: add normalizer/importers for handling ops from other kinds.
+		new Set([]),
+	);
 
 /**
  * Exactly 0 items.

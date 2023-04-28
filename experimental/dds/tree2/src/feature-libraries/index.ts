@@ -143,15 +143,16 @@ import * as FieldKindsOriginal from "./defaultFieldKinds";
 export { SchemaAware };
 
 // Export subset of FieldKinds in an API-Extractor compatible way:
-import { FieldEditor, FieldKind, Multiplicity } from "./modular-schema";
+import { FieldEditor, Multiplicity } from "./modular-schema";
+import { BrandedFieldKind } from "./defaultFieldKinds";
 
 /**
  * @alpha
  */
 export const FieldKinds: {
-	readonly value: FieldKind<FieldEditor<any>, Multiplicity.Value>;
-	readonly optional: FieldKind<FieldEditor<any>, Multiplicity.Optional>;
-	readonly sequence: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
+	readonly value: BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>>;
+	readonly optional: BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>>;
+	readonly sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>>;
 } = FieldKindsOriginal;
 
 export {

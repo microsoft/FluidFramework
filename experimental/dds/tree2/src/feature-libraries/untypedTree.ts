@@ -8,9 +8,9 @@ import {
 	FieldKey,
 	FieldSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
 	ForestEvents,
 	SchemaDataAndPolicy,
+	NamedTreeSchema,
 } from "../core";
 import { ISubscribable } from "../events";
 import { requireAssignableTo } from "../util";
@@ -79,7 +79,7 @@ export interface UntypedTreeCore extends Iterable<UntypedField> {
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	readonly [typeSymbol]: TreeSchema;
+	readonly [typeSymbol]: NamedTreeSchema;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.
