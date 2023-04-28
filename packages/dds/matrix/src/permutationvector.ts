@@ -19,6 +19,7 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeMaintenanceCallbackArgs,
 	MergeTreeMaintenanceType,
+	toRemovalInfo,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
@@ -222,11 +223,13 @@ export class PermutationVector extends Client {
 		//
 		//       If we find that we frequently need a reverse handle -> position lookup, we could maintain
 		//       one using the Tiny-Calc adjust tree.
-		let containingSegment!: PermutationSegment;
+		const removedSegments: PermutationSegment[] = [];
+		let containingSegment: PermutationSegment | undefined;
 		let containingOffset: number;
 
 		this.walkAllSegments((segment) => {
-			const { start, cachedLength } = segment as PermutationSegment;
+			const asPerm = segment as PermutationSegment;
+			const { start, cachedLength } = asPerm;
 
 			// If the segment is unallocated, skip it.
 			if (!isHandleValid(start)) {
@@ -236,14 +239,26 @@ export class PermutationVector extends Client {
 			const end = start + cachedLength;
 
 			if (start <= handle && handle < end) {
-				containingSegment = segment as PermutationSegment;
-				containingOffset = handle - start;
-				return false;
+				if (toRemovalInfo(asPerm) !== undefined) {
+					if (containingSegment === undefined) {
+						containingSegment = asPerm;
+						containingOffset = handle - start;
+					} else {
+						removedSegments.push(asPerm);
+					}
+				} else {
+					if (containingSegment !== undefined) {
+						removedSegments.unshift(containingSegment);
+					}
+					containingSegment = asPerm;
+					containingOffset = handle - start;
+				}
 			}
 
 			return true;
 		});
 
+		removedSegments.forEach((s) => s.reset());
 		// We are guaranteed to find the handle in the PermutationVector, even if the corresponding
 		// row/col has been removed, because handles are not recycled until the containing segment
 		// is unlinked from the MergeTree.
@@ -253,7 +268,7 @@ export class PermutationVector extends Client {
 		// has not yet been recycled.
 
 		assert(
-			isHandleValid(containingSegment.start),
+			containingSegment !== undefined && isHandleValid(containingSegment.start),
 			0x029 /* "Invalid handle at start of containing segment!" */,
 		);
 
