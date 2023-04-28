@@ -166,7 +166,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			localSessionId,
 			undoRedoManager,
 			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
-			new AnchorSet(), // This class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.
+			anchors,
 		);
 		this.summarizables = [
 			new EditManagerSummarizer(runtime, this.editManager),
