@@ -463,23 +463,23 @@ describe("Routerlicious", () => {
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
 
 					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
@@ -643,23 +643,23 @@ describe("Routerlicious", () => {
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
 
 					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
@@ -819,23 +819,23 @@ describe("Routerlicious", () => {
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(limit);
 
 					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
@@ -964,23 +964,23 @@ describe("Routerlicious", () => {
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
 
 					const restClusterThrottlersGroup1 = new Map<string, TestThrottler>();
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					restClusterThrottlers.set(
+					restClusterThrottlersGroup1.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
