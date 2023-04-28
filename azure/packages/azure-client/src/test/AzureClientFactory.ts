@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { generateUser } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
+
 import { AzureClient, ScopeType } from "..";
 import { AzureLocalConnectionConfig, AzureRemoteConnectionConfig } from "../interfaces";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
@@ -29,7 +29,7 @@ export function createAzureClient(scopes?: ScopeType[]): AzureClient {
               type: "remote",
           }
         : {
-              tokenProvider: new InsecureTokenProvider("fooBar", generateUser(), scopes),
+              tokenProvider: new InsecureTokenProvider("fooBar", generateUser()),
               endpoint: "http://localhost:7070",
               type: "local",
           };
