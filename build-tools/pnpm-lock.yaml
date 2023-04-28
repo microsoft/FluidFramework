@@ -119,7 +119,7 @@ importers:
       semver-utils: ^1.1.4
       simple-git: ^3.16.1
       sort-json: ^2.0.1
-      sort-package-json: 1.54.0
+      sort-package-json: 1.57.0
       strip-ansi: ^6.0.0
       table: ^6.8.0
       ts-node: ^10.2.1
@@ -156,7 +156,7 @@ importers:
       semver-utils: 1.1.4
       simple-git: 3.16.1
       sort-json: 2.0.1
-      sort-package-json: 1.54.0
+      sort-package-json: 1.57.0
       strip-ansi: 6.0.1
       table: 6.8.0
       type-fest: 2.19.0
@@ -252,7 +252,7 @@ importers:
       rimraf: ^2.6.2
       semver: ^7.3.7
       shelljs: ^0.8.4
-      sort-package-json: 1.54.0
+      sort-package-json: 1.57.0
       ts-morph: ^17.0.1
       type-fest: ^2.19.0
       typescript: ~4.5.5
@@ -284,7 +284,7 @@ importers:
       rimraf: 2.7.1
       semver: 7.3.7
       shelljs: 0.8.5
-      sort-package-json: 1.54.0
+      sort-package-json: 1.57.0
       ts-morph: 17.0.1
       type-fest: 2.19.0
       yaml: 2.1.2
@@ -10651,8 +10651,8 @@ packages:
     resolution: {integrity: sha512-855pvK+VkU7PaKYPc+Jjnmt4EzejQHyhhF33q31qG8x7maDzkeFhAAThdCYay11CISO+qAMwjOBP+fPZe0IPyg==}
     dev: false
 
-  /sort-package-json/1.54.0:
-    resolution: {integrity: sha512-MA0nRiSfZ4/CNM/9rz70Hwq4PpvtBc3v532tzQSmoaLSdeBB3cCd488xmNruLL0fb/ZdbKlcaDDudwnrObbjBw==}
+  /sort-package-json/1.57.0:
+    resolution: {integrity: sha512-FYsjYn2dHTRb41wqnv+uEqCUvBpK3jZcTp9rbz2qDTmel7Pmdtf+i2rLaaPMRZeSVM60V3Se31GyWFpmKs4Q5Q==}
     hasBin: true
     dependencies:
       detect-indent: 6.1.0
