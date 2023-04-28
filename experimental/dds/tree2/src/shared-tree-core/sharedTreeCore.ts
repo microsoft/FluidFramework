@@ -367,6 +367,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const undoChange = this.editManager.localBranchUndoRedoManager.undo();
 		if (undoChange !== undefined) {
 			this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, undoChange);
 		}
 	}
 
