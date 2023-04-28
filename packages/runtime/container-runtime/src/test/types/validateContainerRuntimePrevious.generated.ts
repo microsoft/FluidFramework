@@ -95,6 +95,7 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -863,6 +864,7 @@ declare function get_old_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_current_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<current.ISummarizerRuntime>);
 use_current_InterfaceDeclaration_ISummarizerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -1403,6 +1405,7 @@ declare function get_current_TypeAliasDeclaration_SummarizerStopReason():
 declare function use_old_TypeAliasDeclaration_SummarizerStopReason(
     use: TypeOnly<old.SummarizerStopReason>);
 use_old_TypeAliasDeclaration_SummarizerStopReason(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SummarizerStopReason());
 
 /*

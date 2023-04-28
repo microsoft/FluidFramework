@@ -735,7 +735,7 @@ describe("SharedString", () => {
 		it("insert", () => {
 			const revertibles: MergeTreeDeltaRevertible[] = [];
 			sharedString.on("sequenceDelta", (event) =>
-				appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles),
+				appendToMergeTreeDeltaRevertibles(event.deltaArgs, revertibles),
 			);
 			for (let i = 0; i < 10; i++) {
 				sharedString.insertText(sharedString.getLength(), i.toString());
@@ -755,7 +755,7 @@ describe("SharedString", () => {
 			sharedString.insertText(sharedString.getLength(), "hello world");
 			const revertibles: MergeTreeDeltaRevertible[] = [];
 			sharedString.on("sequenceDelta", (event) =>
-				appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles),
+				appendToMergeTreeDeltaRevertibles(event.deltaArgs, revertibles),
 			);
 			while (sharedString.getLength() > 0) {
 				const middle = Math.floor(sharedString.getLength() / 2);
@@ -780,7 +780,7 @@ describe("SharedString", () => {
 
 			const revertibles: MergeTreeDeltaRevertible[] = [];
 			sharedString.on("sequenceDelta", (event) =>
-				appendToMergeTreeDeltaRevertibles(sharedString, event.deltaArgs, revertibles),
+				appendToMergeTreeDeltaRevertibles(event.deltaArgs, revertibles),
 			);
 
 			for (let i = 0; i < sharedString.getLength(); i++) {
