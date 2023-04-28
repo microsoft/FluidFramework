@@ -15,7 +15,7 @@ The goal of these tests is to validate that garbage collection (GC) works correc
 
 ## Architecture
 
-The following picture shows how the clients / containers are set up. The dashed line indicate collaboration happening between data stores.
+The following picture shows how the clients / containers are set up. The dashed line indicate collaboration happening between clients.
 ![Architecture](./gcStressTestArchitecture.png)
 
 There are n clients that are running in parallel. Each client starts by loading a root data store and running it and it has the following objects:
