@@ -1092,7 +1092,8 @@ export class ContainerRuntime
 
 			this.idCompressorEnabled =
 				this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
-				this.runtimeOptions.enableRuntimeIdCompressor;
+				this.runtimeOptions.enableRuntimeIdCompressor ??
+				false;
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
