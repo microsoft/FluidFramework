@@ -90,7 +90,7 @@ function setTestValue(tree: ISharedTree, value: TreeValue, index: number): void 
 	// Apply an edit to the tree which inserts a node with a value
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 		field.insert(index, writeCursor);
 	});
 }
@@ -99,7 +99,7 @@ function setTestValueOnPath(tree: ISharedTree, value: TreeValue, path: PlacePath
 	// Apply an edit to the tree which inserts a node with a value.
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField(path, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField({ parent: path, field: rootFieldKeySymbol });
 		field.insert(0, writeCursor);
 	});
 }
@@ -188,7 +188,7 @@ function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void 
 	// Apply an edit to the tree which inserts a node with a value
 	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 		field.insert(0, writeCursor);
 	});
 }

@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { DeltaService } from "./deltaService";
-export { StorageNameAllocator } from "./storageNameAllocator";
+export interface IStorageNameAllocator {
+	assign(tenantId: string, documentId: string): Promise<string>;
+}

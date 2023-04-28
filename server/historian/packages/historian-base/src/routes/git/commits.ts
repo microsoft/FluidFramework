@@ -41,14 +41,14 @@ export function create(
 		authorization: string,
 		params: ICreateCommitParams,
 	): Promise<ICommit> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createCommit(params);
 	}
 
@@ -58,14 +58,14 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<ICommit> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getCommit(sha, useCache);
 	}
 
