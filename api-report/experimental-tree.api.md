@@ -856,7 +856,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
     // (undocumented)
     getRuntime(): IFluidDataStoreRuntime;
     getWriteFormat(): WriteFormat;
-    get idCompressor(): undefined;
     // @internal
     internalizeChange(change: Change): ChangeInternal;
     // (undocumented)
