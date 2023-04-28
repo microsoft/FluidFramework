@@ -753,7 +753,10 @@ export class Container
 		// outweighs that. The dep is still there but the cloneDeep module of lodash gets tree-shaken so we still get the
 		// bundle size improvement.
 		// Tracking alternative ways to handle this in AB#4129.
-		this.options = JSON.parse(JSON.stringify(this.loader.services.options));
+		this.options =
+			this.loader.services.options === undefined
+				? undefined
+				: JSON.parse(JSON.stringify(this.loader.services.options));
 
 		this._deltaManager = this.createDeltaManager();
 
