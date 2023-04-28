@@ -137,12 +137,21 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			const mc = loggerToMonitoringContext(context.taggedLogger);
 
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
+			let options = context.options;
 			if (shouldTrackAttribution) {
-				(context.options.attribution ??= {}).track = true;
+				const attributionOptions = {
+					...(context.options.attribution ?? {}),
+					track: true,
+				};
+
+				options = {
+					...context.options,
+					attribution: attributionOptions,
+				};
 			}
 
 			const runtime = (await Base.load(
-				context,
+				shouldTrackAttribution ? { ...context, options } : context,
 				registryEntries,
 				requestHandler,
 				runtimeOptions,
