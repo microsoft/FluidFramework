@@ -63,7 +63,7 @@ export interface PackageWithRangeSpec {
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param bumpType - The bump type. Can be a SemVer object to set an exact version.
  * @param scheme - The version scheme to use.
- * @param interdependencyType - The type of dependency to use on packages within the release group.
+ * @param interdependencyRange - The type of dependency to use on packages within the release group.
  * @param log - A logger to use.
  *
  * @internal

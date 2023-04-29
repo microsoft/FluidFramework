@@ -63,9 +63,9 @@ EXAMPLES
     $ flub bump server -t major --no-commit --no-install
 
   You can control how interdependencies between packages in a release group are expressed using the
-  --interdependencyType flag.
+  --interdependencyRange flag.
 
-    $ flub bump client --exact 2.0.0-internal.4.1.0 --interdependencyType "~"
+    $ flub bump client --exact 2.0.0-internal.4.1.0 --interdependencyRange "~"
 ```
 
 _See code: [src/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bump.ts)_

@@ -242,7 +242,7 @@ export class FluidRepo {
 			}
 			if (typeof item === "string") {
 				log?.warning(
-					`No defaultInterdependencyType setting found for '${item}'. Defaulting to "^".`,
+					`No defaultinterdependencyRange setting found for '${item}'. Defaulting to "^".`,
 				);
 				return {
 					directory: path.join(resolvedRoot, item),
@@ -269,7 +269,7 @@ export class FluidRepo {
 					item as IFluidRepoPackage;
 				if (defaultInterdependencyRange === undefined) {
 					log?.warning(
-						`No defaultInterdependencyType specified for ${group} release group. Defaulting to "^".`,
+						`No defaultinterdependencyRange specified for ${group} release group. Defaulting to "^".`,
 					);
 				}
 				const monorepo = new MonoRepo(

@@ -98,9 +98,9 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		},
 		{
 			description:
-				"You can control how interdependencies between packages in a release group are expressed using the --interdependencyType flag.",
+				"You can control how interdependencies between packages in a release group are expressed using the --interdependencyRange flag.",
 			command:
-				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --interdependencyType "~"',
+				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --interdependencyRange "~"',
 		},
 	];
 
