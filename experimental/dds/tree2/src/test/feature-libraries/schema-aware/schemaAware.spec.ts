@@ -14,7 +14,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { GlobalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema } from "../../../core";
+import { GlobalFieldKey, TreeStoredSchema, TreeSchemaIdentifier, ValueSchema } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -23,7 +23,7 @@ import {
 	typeNameSymbol,
 	TypedSchema,
 	ContextuallyTypedNodeDataObject,
-	FieldViewSchema,
+	FieldSchema,
 	UntypedTreeCore,
 } from "../../../feature-libraries";
 import {
@@ -75,12 +75,12 @@ const schemaData = typedSchemaData([], numberSchema, ballSchema, boxSchema);
 
 const schemaData2 = {
 	policy: defaultSchemaPolicy,
-	globalFieldSchema: new Map() as ReadonlyMap<GlobalFieldKey, FieldViewSchema>,
-	treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>([
+	globalFieldSchema: new Map() as ReadonlyMap<GlobalFieldKey, FieldSchema>,
+	treeSchema: new Map<TreeSchemaIdentifier, TreeStoredSchema>([
 		[numberSchema.name, numberSchema],
 		[ballSchema.name, ballSchema],
 		[boxSchema.name, boxSchema],
-	]) as ReadonlyMap<TreeSchemaIdentifier, TreeSchema>,
+	]) as ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>,
 	treeSchemaObject: {
 		number: numberSchema,
 		ball: ballSchema,

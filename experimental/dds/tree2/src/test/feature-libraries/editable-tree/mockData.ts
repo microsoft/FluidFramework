@@ -21,7 +21,7 @@ import {
 	cursorsFromContextualData,
 	defaultSchemaPolicy,
 	getEditableTreeContext,
-	FieldViewSchema,
+	FieldSchema,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -285,11 +285,11 @@ export function getPerson(): Person {
 /**
  * Create schema supporting all type defined in this file, with the specified root field.
  */
-export function buildTestSchema(rootField: FieldViewSchema = rootPersonSchema): SchemaData {
+export function buildTestSchema(rootField: FieldSchema = rootPersonSchema): SchemaData {
 	return SchemaAware.typedSchemaData(
 		[
 			...(fullSchemaData.globalFieldSchema.entries() as Iterable<
-				[GlobalFieldKey, FieldViewSchema]
+				[GlobalFieldKey, FieldSchema]
 			>),
 			[rootFieldKey, rootField],
 		],
@@ -320,7 +320,7 @@ export function setupForest(
 
 export function buildTestTree(
 	data: ContextuallyTypedNodeData | undefined,
-	rootField: FieldViewSchema = rootPersonSchema,
+	rootField: FieldSchema = rootPersonSchema,
 ): EditableTreeContext {
 	const schema: SchemaData = buildTestSchema(rootField);
 	const forest = setupForest(schema, data);

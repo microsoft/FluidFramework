@@ -8,7 +8,7 @@ import {
 	TreeSchemaIdentifier,
 	SchemaPolicy,
 	SchemaData,
-	FieldSchema,
+	FieldStoredSchema,
 } from "../schema-stored";
 
 /**
@@ -59,7 +59,7 @@ export interface TreeAdapter {
 export interface FieldAdapter {
 	readonly field: GlobalFieldKey;
 
-	convert(stored: FieldSchema): FieldSchema;
+	convert(stored: FieldStoredSchema): FieldStoredSchema;
 	// TODO: include actual adapter functionality (to provide the missing values), not just what types it converts
 }
 

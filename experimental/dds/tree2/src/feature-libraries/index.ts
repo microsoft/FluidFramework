@@ -113,8 +113,11 @@ export {
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
 	ViewSchemaCollection,
-	FieldViewSchema,
-	TreeViewSchema,
+	IFieldSchema,
+	ITreeSchema,
+	SchemaBuilder,
+	TreeSchema,
+	AllowedTypes,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

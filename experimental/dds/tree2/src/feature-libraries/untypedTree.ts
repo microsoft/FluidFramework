@@ -6,7 +6,7 @@
 import {
 	Value,
 	FieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
 	ForestEvents,
 	SchemaDataAndPolicy,
@@ -136,9 +136,9 @@ export type UnwrappedUntypedField = UnwrappedUntypedTree | undefined | UntypedFi
  */
 export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
 	/**
-	 * The `FieldSchema` of this field.
+	 * The `FieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldSchema;
+	readonly fieldSchema: FieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.

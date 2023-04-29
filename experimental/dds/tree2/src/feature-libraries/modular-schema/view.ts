@@ -5,9 +5,9 @@
 
 import { fail, requireAssignableTo } from "../../util";
 import {
-	FieldSchema,
+	FieldStoredSchema,
 	LocalFieldKey,
-	TreeSchema,
+	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	SchemaData,
 	GlobalFieldKey,
@@ -19,7 +19,8 @@ import {
 	SchemaDataAndPolicy,
 	SchemaPolicy,
 	Named,
-	ValueSchema,
+	NamedTreeSchema,
+	TreeTypeSet,
 } from "../../core";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
 import { allowsRepoSuperset, isNeverTree } from "./comparison";
@@ -115,8 +116,8 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 			}
 		}
 		const adapted = {
-			globalFieldSchema: new Map<GlobalFieldKey, FieldSchema>(),
-			treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>(),
+			globalFieldSchema: new Map<GlobalFieldKey, FieldStoredSchema>(),
+			treeSchema: new Map<TreeSchemaIdentifier, TreeStoredSchema>(),
 		};
 		for (const [key, schema] of stored.globalFieldSchema) {
 			const adaptedField = this.adaptField(schema, this.adapters.fieldAdapters?.get(key));
@@ -134,11 +135,14 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 	/**
 	 * Adapt original such that it allows member types which can be adapted to its specified types.
 	 */
-	private adaptField(original: FieldSchema, adapter: FieldAdapter | undefined): FieldSchema {
-		if (original.types) {
+	private adaptField(
+		original: FieldStoredSchema,
+		adapter: FieldAdapter | undefined,
+	): FieldStoredSchema {
+		if (original.types !== undefined) {
 			const types: Set<TreeSchemaIdentifier> = new Set(original.types);
 			for (const treeAdapter of this.adapters?.tree ?? []) {
-				if (original.types.has(treeAdapter.input)) {
+				if (types.has(treeAdapter.input)) {
 					types.delete(treeAdapter.input);
 					types.add(treeAdapter.output);
 				}
@@ -151,8 +155,8 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 		return adapter?.convert?.(original) ?? original;
 	}
 
-	private adaptTree(original: TreeSchema): TreeSchema {
-		const localFields: Map<LocalFieldKey, FieldSchema> = new Map();
+	private adaptTree(original: TreeStoredSchema): TreeStoredSchema {
+		const localFields: Map<LocalFieldKey, FieldStoredSchema> = new Map();
 		for (const [key, schema] of original.localFields) {
 			// TODO: support missing field adapters for local fields.
 			localFields.set(key, this.adaptField(schema, undefined));
@@ -161,89 +165,14 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 	}
 }
 
-// TODO: Separate this from TreeSchema, adding more data.
+// TODO: Separate this from TreeStoredSchema, adding more data.
 /**
  * @alpha
  */
-export interface TreeViewSchema extends TreeSchema, Sourced {
-	/**
-	 * Schema for fields with keys scoped to this TreeSchema.
-	 *
-	 * This refers to the FieldSchema directly
-	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldSchema map).
-	 * This allows os short friendly field keys which can ergonomically used as field names in code.
-	 * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
-	 */
-	readonly localFields: ReadonlyMap<LocalFieldKey, FieldViewSchema>;
-
-	/**
-	 * Schema for fields with keys scoped to the whole document.
-	 *
-	 * Having a centralized map indexed by FieldSchemaIdentifier
-	 * can be used for fields which have the same meaning in multiple places,
-	 * and simplifies document root handling (since the root can just have a special `FieldSchemaIdentifier`).
-	 *
-	 * TODO: maybe reference these directly (lambda wrapped) and not by key.
-	 */
+export interface ITreeSchema extends NamedTreeSchema, Sourced {
+	readonly localFields: ReadonlyMap<LocalFieldKey, IFieldSchema>;
 	readonly globalFields: ReadonlySet<GlobalFieldKey>;
-
-	/**
-	 * Constraint for local fields not mentioned in `localFields`.
-	 *
-	 * Allows using using the local fields as a map, with the keys being
-	 * LocalFieldKeys and the values being constrained by this FieldSchema.
-	 *
-	 * To forbid this map like usage, use {@link emptyField} here.
-	 *
-	 * Usually `FieldKind.Value` should NOT be used here
-	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
-	 * (that would require infinite children).
-	 * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
-	 * and can be useful in special cases (like a default stored schema when none is specified).
-	 */
-	readonly extraLocalFields: FieldViewSchema;
-
-	/**
-	 * If true,
-	 * GlobalFieldKeys other than the ones listed above in globalFields may be used to store data on this tree node.
-	 * Such fields must still be in schema with their global FieldSchema.
-	 *
-	 * This allows for the "augmentations" pattern where
-	 * users can attach information they understand to any tree without risk of name collisions.
-	 * This is not the only way to do "augmentations":
-	 * another approach is for the applications that wish to add them to include
-	 * the augmentation in their view schema on the nodes they with to augment,
-	 * and update the stored schema to permit them as needed.
-	 *
-	 * This schema system could work with extraGlobalFields unconditionally on
-	 * (justified as allowing augmentations everywhere though requiring stored schema changes),
-	 * or unconditionally off (requiring augmentations to sometimes update stored schema).
-	 * Simplifying this system to not have extraGlobalFields and default it to on or off is a design decision which
-	 * doesn't impact the rest of this system,
-	 * and thus is being put off for now.
-	 *
-	 * Unlike with extraLocalFields, only non-empty global fields have to be in schema here,
-	 * so the existence of a global value field does not immediately make all TreeSchema permitting extra global fields
-	 * out of schema if they are missing said field.
-	 *
-	 * TODO: this approach is inconsistent and should likely be redesigned
-	 * so global and local extra fields work more similarly.
-	 */
-	readonly extraGlobalFields: boolean;
-
-	/**
-	 * There are several approaches for how to store actual data in the tree
-	 * (special node types, special field contents, data on nodes etc.)
-	 * as well as several options about how the data should be modeled at this level
-	 * (byte sequence? javascript type? json?),
-	 * as well as options for how much of this would be exposed in the schema language
-	 * (ex: would all nodes with values be special built-ins, or could any schema add them?)
-	 *
-	 * A simple easy to do in javascript approach is taken here:
-	 * this is not intended to be a suggestion of what approach to take, or what to expose in the schema language.
-	 * This is simply one approach that can work for modeling them in the internal schema representation.
-	 */
-	readonly value: ValueSchema;
+	readonly extraLocalFields: IFieldSchema;
 }
 
 /**
@@ -253,9 +182,14 @@ export interface TreeViewSchema extends TreeSchema, Sourced {
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @alpha
  */
-// TODO: maybe reference nodes directly (lambda wrapped) instead of by identifier.
-export interface FieldViewSchema<Kind extends FieldKind = FieldKind> extends FieldSchema, Sourced {
-	readonly kind: Kind;
+export interface IFieldSchema {
+	readonly kind: FieldKind;
+	/**
+	 * Types allowed in this field.
+	 *
+	 * TODO: Put behind a function so it can be lazy and support cycles.
+	 */
+	readonly types: TreeTypeSet;
 }
 
 /**
@@ -263,8 +197,8 @@ export interface FieldViewSchema<Kind extends FieldKind = FieldKind> extends Fie
  * @alpha
  */
 export interface ViewSchemaCollection {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, IFieldSchema>;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
 	readonly policy: SchemaPolicy;
 	readonly adapters: Adapters;
 }
@@ -272,7 +206,9 @@ export interface ViewSchemaCollection {
 {
 	// ViewSchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
 	// but want to be compatible with it, so check that here:
-	type _test = requireAssignableTo<ViewSchemaCollection, SchemaDataAndPolicy>;
+	type _test0 = requireAssignableTo<IFieldSchema, FieldStoredSchema>;
+	type _test1 = requireAssignableTo<ViewSchemaCollection, SchemaData>;
+	type _test2 = requireAssignableTo<ViewSchemaCollection, SchemaDataAndPolicy>;
 }
 
 /**

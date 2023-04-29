@@ -6,9 +6,8 @@
 import {
 	Value,
 	FieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
 	ITreeCursor,
 	UpPath,
 	PathVisitor,
@@ -292,9 +291,9 @@ export interface EditableField
 	// TODO: replace the numeric indexed access with getters and setters if possible.
 	extends MarkedArrayLike<UnwrappedEditableTree> {
 	/**
-	 * The `FieldSchema` of this field.
+	 * The `FieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldSchema;
+	readonly fieldSchema: FieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.

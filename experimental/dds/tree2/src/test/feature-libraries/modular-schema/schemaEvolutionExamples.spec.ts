@@ -6,9 +6,9 @@
 import { strict as assert } from "assert";
 
 import {
-	FieldTypeView,
+	FieldSchema,
 	FullSchemaPolicy,
-	TreeViewSchema,
+	ITreeSchema,
 	ViewSchemaCollection,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
@@ -21,9 +21,9 @@ import {
 import {
 	treeSchema,
 	fieldSchema,
-	FieldSchema,
+	FieldStoredSchema,
 	GlobalFieldKey,
-	TreeSchema,
+	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	ValueSchema,
 	SchemaData,
@@ -55,7 +55,7 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository<FullSchemaPoli
 	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
 	 * @returns true iff update was performed.
 	 */
-	public tryUpdateFieldSchema(identifier: GlobalFieldKey, schema: FieldSchema): boolean {
+	public tryUpdateFieldSchema(identifier: GlobalFieldKey, schema: FieldStoredSchema): boolean {
 		if (
 			allowsFieldSuperset(
 				this.policy,
@@ -75,7 +75,10 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository<FullSchemaPoli
 	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
 	 * @returns true iff update was performed.
 	 */
-	public tryUpdateTreeSchema(identifier: TreeSchemaIdentifier, schema: TreeSchema): boolean {
+	public tryUpdateTreeSchema(
+		identifier: TreeSchemaIdentifier,
+		schema: TreeStoredSchema,
+	): boolean {
 		const original = lookupTreeSchema(this, identifier);
 		if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
 			this.data.treeSchema.set(identifier, schema);
@@ -129,11 +132,11 @@ describe("Schema Evolution Examples", () => {
 		extraLocalFields: emptyField,
 	});
 
-	const root: FieldTypeView = TypedSchema.field(FieldKinds.value, canvasIdentifier);
+	const root: FieldSchema = TypedSchema.field(FieldKinds.value, canvasIdentifier);
 
 	const tolerantRoot = TypedSchema.field(FieldKinds.optional, canvasIdentifier);
 
-	const treeViewSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema> = new Map([
+	const treeViewSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema> = new Map([
 		[canvasIdentifier, canvas],
 		[numberIdentifier, number],
 		[pointIdentifier, point],
@@ -315,9 +318,9 @@ describe("Schema Evolution Examples", () => {
 	function makeTolerantRootAdapter(view: SchemaData): FieldAdapter {
 		return {
 			field: rootFieldKey,
-			convert: (field): FieldSchema => {
+			convert: (field): FieldStoredSchema => {
 				const allowed = allowsFieldSuperset(defaultSchemaPolicy, view, field, tolerantRoot);
-				const out: FieldSchema = allowed ? root : field;
+				const out: FieldStoredSchema = allowed ? root : field;
 				return out;
 			},
 		};

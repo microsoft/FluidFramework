@@ -9,23 +9,24 @@ import {
 	FieldAdapter,
 	GlobalFieldKey,
 	rootFieldKey,
+	symbolFromKey,
 	TreeAdapter,
 	TreeSchemaIdentifier,
 } from "../../../core";
-import { FieldViewSchema, Sourced, TreeViewSchema, ViewSchemaCollection } from "../view";
-import { requireAssignableTo } from "../../../util";
-import { optional, sequence } from "../../defaultFieldKinds";
+import { Sourced, ViewSchemaCollection } from "../view";
+import { brand, requireAssignableTo } from "../../../util";
+import { optional, sequence, value } from "../../defaultFieldKinds";
 import type { FieldKinds } from "../..";
 import { InternalTypes } from "../../schema-aware";
 import { buildViewSchemaCollection } from "./buildViewSchemaCollection";
 import {
 	AllowedTypes,
 	LazyTreeSchema,
-	TypedTreeSchema,
+	TreeSchema,
 	TypedTreeSchemaSpecification,
 	GlobalFieldSchema,
-	FieldSchemaWithKind,
-	TypedFieldSchema,
+	FieldSchema,
+	Kinds,
 } from "./typedTreeSchema";
 
 // TODO: tests and examples for this file
@@ -37,8 +38,8 @@ import {
 export class SchemaBuilder {
 	private readonly libraries: Set<SchemaLibrary>;
 	private finalized: boolean = false;
-	private readonly globalFieldSchema: Map<GlobalFieldKey, FieldViewSchema> = new Map();
-	private readonly treeSchema: Map<TreeSchemaIdentifier, TreeViewSchema> = new Map();
+	private readonly globalFieldSchema: Map<GlobalFieldKey, FieldSchema> = new Map();
+	private readonly treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	private readonly adapters: Adapters = {};
 	public constructor(public readonly name: string, ...libraries: SchemaLibraries[]) {
 		this.libraries = new Set();
@@ -56,7 +57,7 @@ export class SchemaBuilder {
 	/**
 	 * Define (and add to this library) a schema for an object.
 	 */
-	public object<T extends TypedTreeSchemaSpecification>(t: T): TypedTreeSchema<T> {
+	public object<T extends TypedTreeSchemaSpecification>(name: string, t: T): TreeSchema<T> {
 		// TODO
 		throw new Error("not implemented");
 	}
@@ -66,19 +67,26 @@ export class SchemaBuilder {
 	 * Such objects will be implicitly unwrapped to the value in some APIs.
 	 */
 	public primitive<T extends InternalTypes.PrimitiveValueSchema>(
+		name: string,
 		t: T,
-	): TypedTreeSchema<{ value: T }> {
+	): TreeSchema<{ value: T }> {
 		// TODO: add "primitive" metadata to schema, and set it here.
-		return this.object({ value: t });
+		return this.object(name, { value: t });
 	}
 
 	/**
 	 * Define (and add to this library) a schema for a global field.
 	 * Global fields can be included in the schema for multiple objects.
 	 */
-	public globalField<T>(t: T): GlobalFieldSchema<T> {
-		// TODO
-		throw new Error("not implemented");
+	public globalField<Kind extends Kinds, Types extends AllowedTypes>(
+		name: string,
+		t: FieldSchema<Kind, Types>,
+	): GlobalFieldSchema<Kind, Types> {
+		return {
+			builder: this,
+			name: symbolFromKey(brand(name)),
+			schema: t,
+		};
 	}
 
 	/**
@@ -93,8 +101,17 @@ export class SchemaBuilder {
 	 */
 	public static optional<T extends AllowedTypes>(
 		allowedTypes: T,
-	): FieldSchemaWithKind<typeof FieldKinds.optional, T> {
-		return { kind: optional, types: allowedTypes };
+	): FieldSchema<typeof FieldKinds.optional, T> {
+		return new FieldSchema(this, optional, allowedTypes);
+	}
+
+	/**
+	 * TODO: maybe remove use-cases for this
+	 */
+	public static valueField<T extends AllowedTypes>(
+		allowedTypes: T,
+	): FieldSchema<typeof FieldKinds.value, T> {
+		return new FieldSchema(this, value, allowedTypes);
 	}
 
 	/**
@@ -110,8 +127,8 @@ export class SchemaBuilder {
 	 */
 	public static sequence<T extends AllowedTypes>(
 		t: T,
-	): FieldSchemaWithKind<typeof FieldKinds.sequence, T> {
-		return { kind: sequence, types: t };
+	): FieldSchema<typeof FieldKinds.sequence, T> {
+		return new FieldSchema(this, sequence, t);
 	}
 
 	/**
@@ -140,6 +157,10 @@ export class SchemaBuilder {
 	 */
 	public intoLibrary(): SchemaLibraries {
 		this.finalize();
+
+		// Check for errors:
+		buildViewSchemaCollection([...this.libraries]);
+
 		return this.libraries;
 	}
 
@@ -149,11 +170,11 @@ export class SchemaBuilder {
 	 *
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public intoDocumentSchema<T extends TypedFieldSchema>(root: T): TypedViewSchemaCollection<T> {
+	public intoDocumentSchema<T extends FieldSchema>(root: T): TypedViewSchemaCollection<T> {
 		this.finalize();
 		const rootLibrary: SchemaLibrary = {
 			name: "Root Field",
-			globalFieldSchema: new Map<GlobalFieldKey, FieldViewSchema>([[rootFieldKey, root]]),
+			globalFieldSchema: new Map<GlobalFieldKey, FieldSchema>([[rootFieldKey, root]]),
 			treeSchema: new Map(),
 			adapters: {},
 		};
@@ -167,13 +188,12 @@ export type SchemaLibraries = ReadonlySet<SchemaLibrary>;
 
 export interface SchemaLibrary {
 	readonly name: string;
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 	readonly adapters: Adapters;
 }
 
-export interface TypedViewSchemaCollection<T extends TypedFieldSchema>
-	extends ViewSchemaCollection {
+export interface TypedViewSchemaCollection<T extends FieldSchema> extends ViewSchemaCollection {
 	/**
 	 * Root field.
 	 * Also in globalFieldSchema under the key {@link rootFieldKey}.

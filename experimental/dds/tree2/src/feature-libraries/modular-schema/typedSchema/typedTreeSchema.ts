@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { UntypedTreeCore } from "../../untypedTree";
-import { FieldViewSchema, TreeViewSchema } from "../view";
+import { IFieldSchema, ITreeSchema } from "../view";
 import { contextSymbol, typeSymbol } from "../../editable-tree";
 import {
 	GlobalFieldKey,
@@ -18,7 +18,7 @@ import {
 } from "../../../core";
 import { FieldKinds } from "../..";
 import { forbidden, value } from "../../defaultFieldKinds";
-import { brand } from "../../../util";
+import { MakeNominal, brand } from "../../../util";
 import { FlexList, FlexListToLazyArray, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
 
@@ -31,21 +31,19 @@ interface LocalFields {
 type NormalizeLocalFieldsInner<T extends LocalFields> = ObjectToMap<
 	{ [Property in keyof T]: NormalizeField<T[Property]> },
 	LocalFieldKey,
-	FieldViewSchema
+	FieldSchema
 >;
 
 type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFieldsInner<
 	WithDefault<T, Record<string, never>>
 >;
 
-export class TypedTreeSchema<T extends TypedTreeSchemaSpecification = any>
-	implements TreeViewSchema
-{
+export class TreeSchema<T extends TypedTreeSchemaSpecification = any> implements ITreeSchema {
 	// Allows reading localFields through the normal map, but without losing type information.
 	public readonly localFields: NormalizeLocalFields<T["local"]>;
 
 	public readonly globalFields!: ReadonlySet<GlobalFieldKey>;
-	public readonly extraLocalFields: FieldViewSchema;
+	public readonly extraLocalFields: FieldSchema;
 	public readonly extraGlobalFields: boolean;
 	public readonly value: ValueSchema;
 
@@ -80,14 +78,10 @@ export class TypedTreeSchema<T extends TypedTreeSchemaSpecification = any>
 }
 
 /**
- * Convert FieldSchemaSpecification | undefined into FieldViewSchema
+ * Convert FieldSchemaSpecification | undefined into FieldSchema
  */
-type NormalizeField<T extends FieldSchemaSpecification | undefined> = FieldViewSchema<
-	T extends undefined
-		? typeof forbidden
-		: T extends FieldSchemaWithKind<infer Kind>
-		? Kind
-		: typeof value
+type NormalizeField<T extends FieldSchemaSpecification | undefined> = FieldSchema<
+	T extends undefined ? typeof forbidden : T extends FieldSchema<infer Kind> ? Kind : typeof value
 >;
 
 function normalizeLocalFields<T extends LocalFields | undefined>(
@@ -97,7 +91,7 @@ function normalizeLocalFields<T extends LocalFields | undefined>(
 	if (fields === undefined) {
 		return new Map();
 	}
-	const out: Record<string, FieldViewSchema> = {};
+	const out: Record<string, FieldSchema> = {};
 	// eslint-disable-next-line no-restricted-syntax
 	for (const key in fields) {
 		if (Object.prototype.hasOwnProperty.call(fields, key)) {
@@ -113,28 +107,13 @@ function normalizeField<T extends FieldSchemaSpecification | undefined>(
 	builder: Named<string>,
 	t: T,
 ): NormalizeField<T> {
-	if (t === undefined) {
-		const result: FieldViewSchema<typeof forbidden> = {
-			kind: forbidden,
-			types: new Set(),
-			builder,
-		};
-		return result as NormalizeField<T>;
-	} else if (t instanceof FieldSchemaWithKind) {
-		const result: FieldViewSchema = {
-			kind: t.kind,
-			types: allowedTypesToTypeSet(t.types),
-			builder,
-		};
-		return result as NormalizeField<T>;
-	} else {
-		const result: FieldViewSchema<typeof value> = {
-			kind: value,
-			types: allowedTypesToTypeSet(t),
-			builder,
-		};
-		return result as NormalizeField<T>;
+	if (t instanceof FieldSchema) {
+		return t as NormalizeField<T>;
 	}
+	if (t === undefined) {
+		return new FieldSchema(builder, forbidden, []) as unknown as NormalizeField<T>;
+	}
+	return new FieldSchema(builder, value, t) as NormalizeField<T>;
 }
 
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
@@ -157,22 +136,22 @@ export type Any = typeof Any;
  * Tree type, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
  */
-export type LazyTreeSchema = TypedTreeSchema | (() => TypedTreeSchema);
+export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
-export type NormalizedAllowedTypes = Any | readonly TypedTreeSchema[];
-export type NormalizedLazyAllowedTypes = Any | (() => TypedTreeSchema)[];
+export type NormalizedAllowedTypes = Any | readonly TreeSchema[];
+export type NormalizedLazyAllowedTypes = Any | (() => TreeSchema)[];
 
 /**
  * Types for use in fields.
  */
-export type AllowedTypes = Any | FlexList<TypedTreeSchema>;
+export type AllowedTypes = Any | FlexList<TreeSchema>;
 
 /**
  * Convert AllowedTypes into NormalizedLazyAllowedTypes
  */
 type NormalizeAllowedTypes<T extends AllowedTypes> = T extends Any
 	? Any
-	: FlexListToLazyArray<TypedTreeSchema, T>;
+	: FlexListToLazyArray<TreeSchema, T>;
 
 export function normalizeAllowedTypes<T extends AllowedTypes>(t: T): NormalizeAllowedTypes<T> {
 	if (t === Any) {
@@ -181,10 +160,10 @@ export function normalizeAllowedTypes<T extends AllowedTypes>(t: T): NormalizeAl
 	return normalizeFlexList(t) as NormalizeAllowedTypes<T>;
 }
 
-type FieldSchemaSpecification = AllowedTypes | FieldSchemaWithKind;
+type FieldSchemaSpecification = AllowedTypes | FieldSchema;
 
 /**
- * Object for capturing information about a TreeSchema for use at both compile time and runtime.
+ * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
  * @alpha
  */
 export interface TypedTreeSchemaSpecification {
@@ -195,20 +174,34 @@ export interface TypedTreeSchemaSpecification {
 	readonly value?: ValueSchema;
 }
 
-export type GlobalFieldSchema<T = unknown> = TypedFieldSchema<T> & Named<GlobalFieldKeySymbol>;
-
-type Kinds = typeof FieldKinds[keyof typeof FieldKinds];
+export type Kinds = typeof FieldKinds[keyof typeof FieldKinds] | typeof forbidden;
 
 /**
+ * All policy for a specific field,
+ * including functionality that does not have to be kept consistent across versions or deterministic.
+ *
+ * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @sealed @alpha
  */
-export class FieldSchemaWithKind<
-	Kind extends Kinds = Kinds,
-	Types extends AllowedTypes = AllowedTypes,
-> {
-	public constructor(public readonly kind: Kind, public readonly types: Types) {}
+export class FieldSchema<Kind extends Kinds = Kinds, Types extends AllowedTypes = AllowedTypes>
+	implements IFieldSchema
+{
+	protected typeCheck!: MakeNominal;
+	public constructor(
+		public readonly builder: Named<string>,
+		public readonly kind: Kind,
+		public readonly allowedTypes: Types,
+	) {}
+
+	public get types(): TreeTypeSet {
+		return allowedTypesToTypeSet(this.allowedTypes);
+	}
 }
 
-export interface TypedFieldSchema<T = unknown> extends FieldViewSchema {
-	readonly info: T;
+export interface GlobalFieldSchema<
+	Kind extends Kinds = Kinds,
+	Types extends AllowedTypes = AllowedTypes,
+> extends Named<GlobalFieldKeySymbol> {
+	readonly builder: Named<string>;
+	readonly schema: FieldSchema<Kind, Types>;
 }

@@ -13,7 +13,7 @@ import {
 	TaggedChange,
 	ITreeCursorSynchronous,
 	tagChange,
-	FieldSchema,
+	FieldStoredSchema,
 	RevisionTag,
 	TreeTypeSet,
 } from "../core";
@@ -54,7 +54,7 @@ function brandedFieldKind<
 	identifier: TName,
 	multiplicity: TMultiplicity,
 	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldSchema) => boolean,
+	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
 	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 ): BrandedFieldKind<TName, TMultiplicity, TEditor> {
 	return new FieldKind<TEditor, TMultiplicity>(

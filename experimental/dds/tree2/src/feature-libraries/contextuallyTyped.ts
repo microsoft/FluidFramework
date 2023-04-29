@@ -11,9 +11,9 @@ import {
 	isGlobalFieldKey,
 	keyFromSymbol,
 	Value,
-	TreeSchema,
+	TreeStoredSchema,
 	ValueSchema,
-	FieldSchema,
+	FieldStoredSchema,
 	LocalFieldKey,
 	SchemaDataAndPolicy,
 	lookupGlobalFieldSchema,
@@ -100,8 +100,8 @@ export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
  * @alpha
  */
 export function getPrimaryField(
-	schema: TreeSchema,
-): { key: LocalFieldKey; schema: FieldSchema } | undefined {
+	schema: TreeStoredSchema,
+): { key: LocalFieldKey; schema: FieldStoredSchema } | undefined {
 	// TODO: have a better mechanism for this. See note on EmptyKey.
 	const field = schema.localFields.get(EmptyKey);
 	if (field === undefined) {
@@ -114,8 +114,8 @@ export function getPrimaryField(
 export function getFieldSchema(
 	field: FieldKey,
 	schemaData: SchemaDataAndPolicy,
-	schema?: TreeSchema,
-): FieldSchema {
+	schema?: TreeStoredSchema,
+): FieldStoredSchema {
 	if (isGlobalFieldKey(field)) {
 		return lookupGlobalFieldSchema(schemaData, keyFromSymbol(field));
 	}
@@ -126,7 +126,7 @@ export function getFieldSchema(
 	return schema.localFields.get(field) ?? schema.extraLocalFields;
 }
 
-export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
+export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
 	// TODO:
 	// This module currently is assuming use of defaultFieldKinds.
 	// The field kinds should instead come from a view schema registry thats provided somewhere.
@@ -346,7 +346,7 @@ export function cursorFromContextualData(
  */
 export function cursorsFromContextualData(
 	schemaData: SchemaDataAndPolicy,
-	field: FieldSchema,
+	field: FieldStoredSchema,
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous[] {
 	const mapTrees = applyFieldTypesFromContext(schemaData, field, data);
@@ -440,7 +440,7 @@ function fieldKeysFromData(data: ContextuallyTypedNodeDataObject): FieldKey[] {
  */
 export function applyFieldTypesFromContext(
 	schemaData: SchemaDataAndPolicy,
-	field: FieldSchema,
+	field: FieldStoredSchema,
 	data: ContextuallyTypedFieldData,
 ): MapTree[] {
 	const multiplicity = getFieldKind(field).multiplicity;

@@ -5,12 +5,12 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { GlobalFieldKey, TreeSchemaIdentifier } from "../../../core";
-import { FieldViewSchema, TreeViewSchema, ViewSchemaCollection } from "../view";
+import { ViewSchemaCollection } from "../view";
 import { fail } from "../../../util";
 import { defaultSchemaPolicy } from "../../defaultSchema";
-import { forbidden, counter, value } from "../../defaultFieldKinds";
-import { emptyField } from "./typedSchema";
+import { forbidden, value } from "../../defaultFieldKinds";
 import { SchemaLibrary, SourcedAdapters } from "./schemaBuilder";
+import { FieldSchema, TreeSchema } from "./typedTreeSchema";
 
 // TODO: tests for this file
 
@@ -24,8 +24,8 @@ import { SchemaLibrary, SourcedAdapters } from "./schemaBuilder";
 export function buildViewSchemaCollection(
 	libraries: readonly SchemaLibrary[],
 ): ViewSchemaCollection {
-	const globalFieldSchema: Map<GlobalFieldKey, FieldViewSchema> = new Map();
-	const treeSchema: Map<TreeSchemaIdentifier, TreeViewSchema> = new Map();
+	const globalFieldSchema: Map<GlobalFieldKey, FieldSchema> = new Map();
+	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [], fieldAdapters: new Map() };
 
 	const errors: string[] = [];
@@ -86,13 +86,18 @@ export function buildViewSchemaCollection(
 	return result;
 }
 
+export interface ViewSchemaCollection2 extends ViewSchemaCollection {
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+}
+
 /**
  * Returns an array of descriptions of errors in the collection.
  *
  * As much as possible tries to detect anything that might be a mistake made by the schema author.
  * This will error on some valid but probably never intended to be used patterns (like never nodes).
  */
-export function validateViewSchemaCollection(collection: ViewSchemaCollection): string[] {
+export function validateViewSchemaCollection(collection: ViewSchemaCollection2): string[] {
 	const errors: string[] = [];
 
 	if (collection.treeSchema.size === 0) {
@@ -143,8 +148,8 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection): 
 }
 
 export function validateField(
-	collection: ViewSchemaCollection,
-	field: FieldViewSchema,
+	collection: ViewSchemaCollection2,
+	field: FieldSchema,
 	describeField: () => string,
 	errors: string[],
 ): void {
@@ -188,11 +193,17 @@ export function validateField(
 				field.builder.name
 			}" explicitly uses "forbidden" kind, which is not recommended.`,
 		);
-	} else if (kind === counter) {
-		errors.push(
-			`"${describeField()}" from library "${
-				field.builder.name
-			}" explicitly uses "counter" kind, which is finished.`,
-		);
-	}
+	} // else if (kind !== counter) {
+	// 	errors.push(
+	// 		`"${describeField()}" from library "${
+	// 			field.builder.name
+	// 		}" explicitly uses "counter" kind, which is finished.`,
+	// 	);
+	// }
 }
+
+/**
+ * Schema for a field which must always be empty.
+ * @alpha
+ */
+export const emptyField = new FieldSchema({ name: "Static Empty Field" }, forbidden, []);

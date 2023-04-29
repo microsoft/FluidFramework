@@ -16,7 +16,7 @@ import {
 } from "../../../feature-libraries";
 import {
 	LocalFieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	InMemoryStoredSchemaRepository,
 	SchemaData,
 	EmptyKey,
@@ -50,7 +50,7 @@ describe("editable-tree utilities", () => {
 	it("field utils", () => {
 		const schema =
 			arraySchema.localFields.get(EmptyKey) ?? fail("Expected primary array field");
-		const expectedPrimary: { key: LocalFieldKey; schema: FieldSchema } = {
+		const expectedPrimary: { key: LocalFieldKey; schema: FieldStoredSchema } = {
 			key: EmptyKey,
 			schema,
 		};

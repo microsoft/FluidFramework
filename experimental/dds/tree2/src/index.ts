@@ -58,9 +58,9 @@ export {
 	TreeSchemaBuilder,
 	NamedTreeSchema,
 	Named,
-	FieldSchema,
+	FieldStoredSchema,
 	ValueSchema,
-	TreeSchema,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	TreeTypeSet,
@@ -137,7 +137,7 @@ export {
 	jsonNumber,
 	jsonObject,
 	jsonString,
-	jsonSchemaData,
+	jsonSchema,
 } from "./domains";
 
 export {
@@ -222,8 +222,8 @@ export {
 	FieldKinds,
 	ViewSchemaCollection,
 	ContextuallyTypedFieldData,
-	TreeViewSchema,
-	FieldViewSchema,
+	ITreeSchema,
+	IFieldSchema,
 	cursorFromContextualData,
 	UntypedField,
 	UntypedTree,

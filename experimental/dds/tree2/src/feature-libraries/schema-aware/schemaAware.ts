@@ -4,36 +4,38 @@
  */
 
 import { GlobalFieldKey, SchemaDataAndPolicy, TreeSchemaIdentifier, ValueSchema } from "../../core";
-import { MarkedArrayLike, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import {
+	ContextuallyTypedNodeData,
+	MarkedArrayLike,
+	typeNameSymbol,
+	valueSymbol,
+} from "../contextuallyTyped";
 import {
 	FullSchemaPolicy,
 	Multiplicity,
 	TypedSchema,
-	FieldViewSchema,
+	FieldSchema,
 	ViewSchemaCollection,
+	TreeSchema,
+	AllowedTypes,
+	Any,
 } from "../modular-schema";
-import { defaultSchemaPolicy } from "../defaultSchema";
-import { UntypedField, UntypedTreeCore } from "../untypedTree";
-import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
+import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { UntypedSequenceField } from "./partlyTyped";
+import { NamesFromSchema, PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 
 /**
  * Schema aware API for a specific Schema.
  *
  * `Mode` specifies what API to provide.
- * `TMap` provides access to all the schema and is used to look up child schema.
  * `TSchema` specifies which type of node to generate the API for.
  * @alpha
  */
-export type TypedTree<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	TSchema extends TypedSchema.LabeledTreeSchema,
-> = CollectOptions<
+export type TypedTree<Mode extends ApiMode, TSchema extends TreeSchema> = CollectOptions<
 	Mode,
-	TypedFields<TMap, Mode, TSchema["typeInfo"]["local"]>,
-	TSchema["typeInfo"]["value"],
-	TSchema["typeInfo"]["name"]
+	TypedFields<Mode, TSchema["info"]["local"]>,
+	TSchema["info"]["value"],
+	TSchema["info"]["name"]
 >;
 
 /**
@@ -138,13 +140,9 @@ export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
  * Extend this to support global fields.
  * @alpha
  */
-export type TypedFields<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	TFields extends { [key: string]: TypedSchema.FieldSchemaTypeInfo },
-> = [
+export type TypedFields<Mode extends ApiMode, TFields extends { [key: string]: FieldSchema }> = [
 	{
-		[key in keyof TFields]: TypedField<TMap, Mode, TFields[key]>;
+		[key in keyof TFields]: TypedField<Mode, TFields[key]>;
 	},
 ][TypedSchema._dummy];
 
@@ -152,14 +150,10 @@ export type TypedFields<
  * `FieldSchemaTypeInfo` to `TypedTree`
  * @alpha
  */
-export type TypedField<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	TField extends TypedSchema.FieldSchemaTypeInfo,
-> = [
+export type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
-		TypeSetToTypedTrees<TMap, Mode, TField["types"]>,
+		TypeSetToTypedTrees<Mode, TField["allowedTypes"]>,
 		Mode
 	>,
 ][TypedSchema._dummy];
@@ -194,13 +188,24 @@ export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArr
  * Takes in `types?: unknown | TypedSchema.NameSet` and returns a TypedTree union.
  * @alpha
  */
-export type TypeSetToTypedTrees<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	T extends unknown | TypedSchema.NameSet,
-> = [
-	TypedNode<T extends TypedSchema.NameSet<infer Names> ? Names : TMap["allTypes"], Mode, TMap>,
+export type TypeSetToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
+	T extends Any
+		? UntypedApi<Mode>
+		: TypedNode<
+				TypedSchema.ArrayToUnion<
+					TypedSchema.FlexListToNonLazyArray<TreeSchema, TypedSchema.FlexList<TreeSchema>>
+				>,
+				Mode
+		  >,
 ][TypedSchema._dummy];
+
+// TODO: make these more accurate
+type UntypedApi<Mode extends ApiMode> = {
+	[ApiMode.Editable]: UntypedTree;
+	[ApiMode.Flexible]: ContextuallyTypedNodeData;
+	[ApiMode.Simple]: unknown;
+	[ApiMode.Wrapped]: UntypedTree;
+}[Mode];
 
 /**
  * Interface which strongly typed schema collections extend.
@@ -225,42 +230,19 @@ export interface TypedSchemaData extends ViewSchemaCollection {
  *
  * @alpha
  */
-export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(
-	globalFieldSchema: [GlobalFieldKey, FieldViewSchema][],
+export function typedSchemaData<T extends TreeSchema[]>(
+	globalFieldSchema: [GlobalFieldKey, FieldSchema][],
 	...t: T
 ): SchemaDataAndPolicy<FullSchemaPolicy> &
 	ViewSchemaCollection & {
 		treeSchemaObject: {
-			[schema in T[number] as schema["typeInfo"]["name"]]: schema;
+			[schema in T[number] as schema["info"]["name"]]: schema;
 		};
 
 		allTypes: NamesFromSchema<T>;
 	} {
-	const treeSchemaObject = {};
-	const allTypes = [];
-	for (const schema of t) {
-		Object.defineProperty(treeSchemaObject, schema.name, {
-			enumerable: true,
-			configurable: true,
-			writable: false,
-			value: schema,
-		});
-		allTypes.push(schema.name);
-	}
-	const schemaData = {
-		policy: defaultSchemaPolicy,
-		globalFieldSchema: new Map(globalFieldSchema),
-		treeSchema: new Map<TreeSchemaIdentifier, TypedSchema.LabeledTreeSchema>(
-			t.map((schema) => [schema.name, schema]),
-		),
-		treeSchemaObject: treeSchemaObject as {
-			[schema in T[number] as schema["typeInfo"]["name"]]: schema;
-		},
-		allTypes: allTypes as NamesFromSchema<T>,
-		adapters: {},
-		builder: { name: "none" },
-	} as const;
-	return schemaData;
+	// TODO: delete this
+	throw new Error();
 }
 
 /**
@@ -272,24 +254,15 @@ export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(
  * That mens it will show up in IntelliSense and errors.
  * @alpha
  */
-export type TypedNode<
-	TNames extends readonly string[],
-	Mode extends ApiMode,
-	TMap extends TypedSchemaData,
-> = ValuesOf<{
-	[Property in keyof TypedSchema.ListToKeys<TNames, 0>]: TMap["treeSchemaObject"] extends {
-		[key in Property]: any;
-	}
-		? TypedTree<TMap, Mode, TMap["treeSchemaObject"][Property]>
-		: never;
-}>;
+export type TypedNode<TSchema extends TreeSchema, TMode extends ApiMode> = TypedTree<
+	TMode,
+	TSchema
+>;
 
 /**
  * Generate a schema aware API for a single tree schema.
  * @alpha
  */
-export type NodeDataFor<
-	TMap extends TypedSchemaData,
-	Mode extends ApiMode,
-	TSchema extends TypedSchema.LabeledTreeSchema,
-> = TypedSchema.FlattenKeys<TypedNode<readonly [TSchema["typeInfo"]["name"]], Mode, TMap>>;
+export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedSchema.FlattenKeys<
+	TypedNode<TSchema, Mode>
+>;

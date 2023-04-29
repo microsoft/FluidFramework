@@ -33,7 +33,7 @@ export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 
 /**
- * Key (aka Name or Label) for a field which is scoped to a specific TreeSchema.
+ * Key (aka Name or Label) for a field which is scoped to a specific TreeStoredSchema.
  * @alpha
  */
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
@@ -50,7 +50,7 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 /**
  * SchemaIdentifier for a "global field",
  * meaning a field which has the same meaning for all usages within the document
- * (not scoped to a specific TreeSchema like LocalFieldKey).
+ * (not scoped to a specific TreeStoredSchema like LocalFieldKey).
  * @alpha
  */
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
@@ -99,7 +99,7 @@ export enum ValueSchema {
  *
  * Note that even when unconstrained, children must still be in-schema for their own type.
  *
- * In the future, this could be extended to allow inlining a TreeSchema here
+ * In the future, this could be extended to allow inlining a TreeStoredSchema here
  * (or some similar structural schema system).
  * For structural types which could go here, there are a few interesting options:
  *
@@ -107,7 +107,7 @@ export enum ValueSchema {
  * and use this as a replacement for values on the tree nodes.
  *
  * - Allow expression structural constraints for child trees, for example requiring specific traits
- * (ex: via TreeSchema), instead of by type.
+ * (ex: via TreeStoredSchema), instead of by type.
  *
  * There are two ways this could work:
  *
@@ -137,7 +137,7 @@ export interface FieldKindSpecifier<T = FieldKindIdentifier> {
 /**
  * @alpha
  */
-export interface FieldSchema {
+export interface FieldStoredSchema {
 	readonly kind: FieldKindSpecifier;
 	/**
 	 * The set of allowed child types.
@@ -149,16 +149,16 @@ export interface FieldSchema {
 /**
  * @alpha
  */
-export interface TreeSchema {
+export interface TreeStoredSchema {
 	/**
-	 * Schema for fields with keys scoped to this TreeSchema.
+	 * Schema for fields with keys scoped to this TreeStoredSchema.
 	 *
-	 * This refers to the FieldSchema directly
-	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldSchema map).
+	 * This refers to the FieldStoredSchema directly
+	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldStoredSchema map).
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
 	 * It also interoperates well with extraLocalFields being used as a map with arbitrary data as keys.
 	 */
-	readonly localFields: ReadonlyMap<LocalFieldKey, FieldSchema>;
+	readonly localFields: ReadonlyMap<LocalFieldKey, FieldStoredSchema>;
 
 	/**
 	 * Schema for fields with keys scoped to the whole document.
@@ -173,7 +173,7 @@ export interface TreeSchema {
 	 * Constraint for local fields not mentioned in `localFields`.
 	 *
 	 * Allows using using the local fields as a map, with the keys being
-	 * LocalFieldKeys and the values being constrained by this FieldSchema.
+	 * LocalFieldKeys and the values being constrained by this FieldStoredSchema.
 	 *
 	 * To forbid this map like usage, use {@link emptyField} here.
 	 *
@@ -183,12 +183,12 @@ export interface TreeSchema {
 	 * This pattern, which produces a schema which can never be met, is used by {@link neverTree},
 	 * and can be useful in special cases (like a default stored schema when none is specified).
 	 */
-	readonly extraLocalFields: FieldSchema;
+	readonly extraLocalFields: FieldStoredSchema;
 
 	/**
 	 * If true,
 	 * GlobalFieldKeys other than the ones listed above in globalFields may be used to store data on this tree node.
-	 * Such fields must still be in schema with their global FieldSchema.
+	 * Such fields must still be in schema with their global FieldStoredSchema.
 	 *
 	 * This allows for the "augmentations" pattern where
 	 * users can attach information they understand to any tree without risk of name collisions.
@@ -205,7 +205,7 @@ export interface TreeSchema {
 	 * and thus is being put off for now.
 	 *
 	 * Unlike with extraLocalFields, only non-empty global fields have to be in schema here,
-	 * so the existence of a global value field does not immediately make all TreeSchema permitting extra global fields
+	 * so the existence of a global value field does not immediately make all TreeStoredSchema permitting extra global fields
 	 * out of schema if they are missing said field.
 	 *
 	 * TODO: this approach is inconsistent and should likely be redesigned
@@ -238,8 +238,8 @@ export interface Named<TName> {
 /**
  * @alpha
  */
-export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
-export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
+export type NamedTreeSchema = TreeStoredSchema & Named<TreeSchemaIdentifier>;
+export type NamedFieldSchema = Named<GlobalFieldKey> & FieldStoredSchema;
 
 /**
  * View of schema data that can be stored in a document.
@@ -249,8 +249,8 @@ export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
  * @alpha
  */
 export interface SchemaData {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldStoredSchema>;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
 }
 
 /**
@@ -263,12 +263,12 @@ export interface SchemaPolicy {
 	 * Schema used when there is no schema explicitly specified for an identifier.
 	 * Typically a "never" schema which forbids any nodes with that type.
 	 */
-	readonly defaultTreeSchema: TreeSchema;
+	readonly defaultTreeSchema: TreeStoredSchema;
 
 	/**
 	 * Schema used when there is no schema explicitly specified for an identifier.
 	 * Typically an "empty" schema which forbids any field with that type from having children.
 	 * TODO: maybe this must be an empty field? Anything else might break things.
 	 */
-	readonly defaultGlobalFieldSchema: FieldSchema;
+	readonly defaultGlobalFieldSchema: FieldStoredSchema;
 }
