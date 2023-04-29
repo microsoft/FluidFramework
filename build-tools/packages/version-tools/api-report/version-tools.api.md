@@ -37,11 +37,17 @@ export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | 
 // @public
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
-// @public
-export type InterdependencyRange = typeof InterdependencyRangeTypes[number];
+// Warning: (ae-forgotten-export) The symbol "WorkspaceInterdependencyRange" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "InterdependencyRangeOperator" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type InterdependencyRange = WorkspaceInterdependencyRange | InterdependencyRangeOperator;
 
 // @public
-export const InterdependencyRangeTypes: readonly ["^", "~", ""];
+export const InterdependencyRangeOperators: readonly ["^", "~", ""];
+
+// @public
+export function isInterdependencyRange(r: any): r is InterdependencyRange;
 
 // @public
 export function isInternalVersionScheme(version: semver.SemVer | string | undefined, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): boolean;
@@ -90,6 +96,9 @@ export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virt
 
 // @public
 export const WORKSPACE_PROTOCOL_PREFIX: string;
+
+// @public (undocumented)
+export const WorkspaceInterdependencyRanges: readonly ["workspace:*", "workspace:^", "workspace:~"];
 
 // (No @packageDocumentation comment for this package)
 

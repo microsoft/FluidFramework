@@ -13,7 +13,7 @@ export type ReleaseVersion = string;
  * An array of the valid interdependency range operators. The interdependency range determines how dependencies between
  * packages within the same release group are specified.
  */
-export const InterdependencyRangeOperators = ["^", "~", /* "*", */ ""] as const;
+export const InterdependencyRangeOperators = ["^", "~", ""] as const;
 
 export const WorkspaceInterdependencyRanges = [
 	"workspace:*",
@@ -24,9 +24,9 @@ export const WorkspaceInterdependencyRanges = [
  * A type representing the different types of interdependency ranges that can be specified for release groups. The
  * interdependency range determines how dependencies between packages within the same release group are specified.
  */
-type InterdependencyRangeOperator = typeof InterdependencyRangeOperators[number];
+export type InterdependencyRangeOperator = typeof InterdependencyRangeOperators[number];
 
-type WorkspaceInterdependencyRange = typeof WorkspaceInterdependencyRanges[number];
+export type WorkspaceInterdependencyRange = typeof WorkspaceInterdependencyRanges[number];
 
 export type InterdependencyRange = WorkspaceInterdependencyRange | InterdependencyRangeOperator;
 

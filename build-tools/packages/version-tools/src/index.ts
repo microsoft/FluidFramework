@@ -8,12 +8,14 @@ export {
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	InterdependencyRange,
+	InterdependencyRangeOperator,
 	InterdependencyRangeOperators,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionBumpTypeExtended,
 	VersionChangeType,
 	VersionChangeTypeExtended,
+	WorkspaceInterdependencyRange,
 	WorkspaceInterdependencyRanges,
 } from "./bumpTypes";
 export {

@@ -71,7 +71,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			},
 		}),
 		interdependencyRange: Flags.string({
-      char: "d",
+			char: "d",
 			description:
 				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid when using the --workspaceProtocol flag.',
 			options: [...InterdependencyRangeOperators, ...WorkspaceInterdependencyRanges],
