@@ -12,7 +12,6 @@ import {
 	isInternalVersionScheme,
 } from "./internalVersionScheme";
 import { bumpVirtualPatchVersion, isVirtualPatch } from "./virtualPatchScheme";
-import { parseWorkspaceProtocol } from "./workspace";
 
 /**
  * A type defining the version schemes that can be used for packages.
@@ -45,47 +44,25 @@ export function isVersionScheme(scheme: string): scheme is VersionScheme {
  * @returns The version scheme that the string is in.
  */
 export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme {
-	const [, rangeOrVersionToCheck] =
-		typeof rangeOrVersion === "string"
-			? parseWorkspaceProtocol(rangeOrVersion)
-			: [false, rangeOrVersion];
-
-	// Check if the value is a valid internal or version
-	if (
-		isInternalVersionScheme(rangeOrVersionToCheck) ||
-		(typeof rangeOrVersionToCheck === "string" &&
-			// isInternalVersionRange does not identify strings starting with tilde or caret as valid internal ranges. This is
-			// correct. However, for the version scheme detection we want to allow tilde and caret strings even though they
-			// need to be translated to >= < ranges before they can be used with semver. To allow this we call
-			// isInternalVersionScheme instead of isInternalVersionRange. We strip the leading range operator if needed before
-			// calling.
-			isInternalVersionScheme(
-				["^", "~"].includes(rangeOrVersionToCheck[0])
-					? rangeOrVersionToCheck.slice(1)
-					: rangeOrVersionToCheck,
-			))
-	) {
+	// First check if the string is a valid internal version
+	if (isInternalVersionScheme(rangeOrVersion)) {
 		return "internal";
 	}
 
-	// Check if the value is a valid internal prerelease version
-	if (isInternalVersionScheme(rangeOrVersionToCheck, true, true)) {
+	if (isInternalVersionScheme(rangeOrVersion, true, true)) {
 		return "internalPrerelease";
 	}
 
-	if (semver.valid(rangeOrVersionToCheck) !== null) {
-		// Must be a version string, not a range
-		if (isVirtualPatch(rangeOrVersionToCheck)) {
+	if (semver.valid(rangeOrVersion) !== null) {
+		// Must be a version string
+		if (isVirtualPatch(rangeOrVersion)) {
 			return "virtualPatch";
 		}
 
 		return "semver";
-	} else if (
-		typeof rangeOrVersionToCheck === "string" &&
-		semver.validRange(rangeOrVersionToCheck) !== null
-	) {
+	} else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
 		// Must be a range string
-		if (isInternalVersionRange(rangeOrVersionToCheck)) {
+		if (isInternalVersionRange(rangeOrVersion)) {
 			return "internal";
 		}
 
@@ -94,16 +71,18 @@ export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): Ver
 			throw new Error(`Couldn't parse a usable version from '${rangeOrVersion}'.`);
 		}
 
-		const operator = rangeOrVersionToCheck.slice(0, 1);
+		const operator = rangeOrVersion.slice(0, 1);
 		if (operator === "^" || operator === "~") {
-			return isVirtualPatch(coercedVersion) ? "virtualPatch" : "semver";
+			if (isVirtualPatch(coercedVersion)) {
+				return "virtualPatch";
+			}
 		} else {
-			if (isVirtualPatch(rangeOrVersionToCheck)) {
+			if (isVirtualPatch(rangeOrVersion)) {
 				return "virtualPatch";
 			}
 		}
 	}
-	throw new Error(`Couldn't detect version scheme for '${rangeOrVersion}'.`);
+	return "semver";
 }
 
 function fatal(error: string): never {

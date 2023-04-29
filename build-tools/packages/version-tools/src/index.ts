@@ -35,4 +35,3 @@ export {
 } from "./schemes";
 export { bumpRange, detectBumpType, isPrereleaseVersion, getPreviousVersions } from "./semver";
 export { fromVirtualPatchScheme, toVirtualPatchScheme } from "./virtualPatchScheme";
-export { parseWorkspaceProtocol, WORKSPACE_PROTOCOL_PREFIX } from "./workspace";
