@@ -75,12 +75,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid when using the --workspaceProtocol flag.',
 			options: [...RangeOperators, ...WorkspaceRanges],
 		}),
-		// workspaceProtocol: Flags.boolean({
-		// 	char: "w",
-		// 	description:
-		// 		"Sets interdependencies between packages in the release group to use the workspace protocol. The interdependencyType argument is used to set the workspace range constraint.",
-		// 	default: false,
-		// }),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
 		skipChecks: skipCheckFlag,
@@ -123,10 +117,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error("No dependency provided.");
 		}
 
-		// if(!isInterdependencyRange(flags.interdependencyRange)) {
-		//   this.error(`Invalid interdependencyRange: ${flags.interdependencyRange}`);
-		// }
-		// const interdependencyRange: InterdependencyRange = flags.interdependencyRange === undefined ? "^": flags.interdependencyRange;
+		let interdependencyRange: InterdependencyRange | undefined = isInterdependencyRange(
+			flags.interdependencyRange,
+		)
+			? flags.interdependencyRange
+			: undefined;
 
 		const context = await this.getContext();
 		const bumpType: VersionBumpType | undefined = flags.bumpType;
@@ -138,10 +133,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`One of the following must be provided: --bumpType, --exact`);
 		}
 
-		// if (flags.interdependencyType === "*" && workspaceProtocol === false) {
-		// 	this.error(`Can't use "*" without --workspaceProtocol.`);
-		// }
-
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
@@ -152,11 +143,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
-		let interdependencyRange: InterdependencyRange | undefined = isInterdependencyRange(
-			flags.interdependencyRange,
-		)
-			? flags.interdependencyRange
-			: undefined;
 		if (isReleaseGroup(args.package_or_release_group)) {
 			const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
 			assert(
@@ -166,9 +152,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
-			interdependencyRange = isInterdependencyRange(flags.interdependencyRange)
-				? flags.interdependencyRange
-				: releaseRepo.interdependencyRange;
+			// Update the interdependency range to the configured default if the one provided isn't valid
+			interdependencyRange = interdependencyRange ?? releaseRepo.interdependencyRange;
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
