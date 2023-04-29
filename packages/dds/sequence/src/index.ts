@@ -34,6 +34,13 @@ export {
 	SerializedIntervalDelta,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
+export {
+	appendToMergeTreeDeltaRevertibles,
+	IntervalEventType,
+	IntervalRevertible,
+	revertSharedStringRevertibles,
+	SharedStringRevertible,
+} from "./revertibles";
 export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
 export {
 	ISequenceDeltaRange,

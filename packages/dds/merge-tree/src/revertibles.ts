@@ -49,7 +49,7 @@ interface RemoveSegmentRefProperties {
 	 */
 	segSpec: IJSONSegment;
 	/**
-	 * a tag  so the reference can be identified as being created for revert
+	 * a tag so the reference can be identified as being created for revert
 	 */
 	referenceSpace: "mergeTreeDeltaRevertible";
 }
@@ -281,11 +281,28 @@ function revertLocalInsert(
 	}
 }
 
+/**
+ * Revertibles are new and require the option
+ * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
+ * in order to function correctly.
+ * @alpha
+ */
+export function revertMergeTreeDeltaRemoveRevertible(
+	driver: MergeTreeRevertibleDriver,
+	revertible: MergeTreeDeltaRevertible,
+) {
+	assert(revertible.operation === MergeTreeDeltaType.REMOVE, "revertible must be remove");
+	const mergeTreeWithRevert = findMergeTreeWithRevert(revertible.trackingGroup.tracked[0]);
+	return revertLocalRemove(driver, mergeTreeWithRevert, revertible, true);
+}
+
 function revertLocalRemove(
 	driver: MergeTreeRevertibleDriver,
 	mergeTreeWithRevert: MergeTreeWithRevert,
 	revertible: TypedRevertible<typeof MergeTreeDeltaType.REMOVE>,
+	returnNewSegments: boolean = false,
 ) {
+	const newSegments: ISegment[] | undefined = returnNewSegments ? [] : undefined;
 	while (revertible.trackingGroup.size > 0) {
 		const tracked = revertible.trackingGroup.tracked[0];
 
@@ -319,6 +336,9 @@ function revertLocalRemove(
 			mergeTreeWithRevert.collabWindow.clientId,
 		).segment;
 		assert(insertSegment !== undefined, 0x3f5 /* insert segment must exist at position */);
+		if (newSegments) {
+			newSegments.push(insertSegment);
+		}
 
 		const localSlideFilter = (lref: LocalReferencePosition) =>
 			(lref.properties as Partial<RemoveSegmentRefProperties>)?.referenceSpace ===
@@ -383,6 +403,7 @@ function revertLocalRemove(
 		});
 		tracked.getSegment()?.localRefs?.removeLocalRef(tracked);
 	}
+	return newSegments;
 }
 
 function revertLocalAnnotate(

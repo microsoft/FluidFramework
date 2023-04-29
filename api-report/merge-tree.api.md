@@ -1168,6 +1168,9 @@ export const reservedRangeLabelsKey = "referenceRangeLabels";
 export const reservedTileLabelsKey = "referenceTileLabels";
 
 // @alpha
+export function revertMergeTreeDeltaRemoveRevertible(driver: MergeTreeRevertibleDriver, revertible: MergeTreeDeltaRevertible): ISegment[] | undefined;
+
+// @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @public (undocumented)

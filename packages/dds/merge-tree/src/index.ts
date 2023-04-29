@@ -163,5 +163,6 @@ export {
 	discardMergeTreeDeltaRevertible,
 	MergeTreeDeltaRevertible,
 	MergeTreeRevertibleDriver,
+	revertMergeTreeDeltaRemoveRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles";
