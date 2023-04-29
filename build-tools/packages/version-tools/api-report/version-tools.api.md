@@ -4,7 +4,6 @@
 
 ```ts
 
-import type { SemVer } from 'semver';
 import * as semver from 'semver';
 
 // @public
@@ -37,14 +36,8 @@ export function getPreviousVersions(version: ReleaseVersion): [ReleaseVersion | 
 // @public
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
-// @public (undocumented)
-export type InterdependencyRange = WorkspaceInterdependencyRange | InterdependencyRangeOperator;
-
 // @public
-export type InterdependencyRangeOperator = typeof InterdependencyRangeOperators[number];
-
-// @public
-export const InterdependencyRangeOperators: readonly ["^", "~", ""];
+export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperatorWithVersion | semver.SemVer;
 
 // @public
 export function isInterdependencyRange(r: any): r is InterdependencyRange;
@@ -56,6 +49,9 @@ export function isInternalVersionScheme(version: semver.SemVer | string | undefi
 export function isPrereleaseVersion(version: string | semver.SemVer | undefined): boolean;
 
 // @public
+export function isRangeOperator(r: any): r is RangeOperator;
+
+// @public
 export function isVersionBumpType(type: VersionChangeType | string | undefined): type is VersionBumpType;
 
 // @public
@@ -63,6 +59,18 @@ export function isVersionBumpTypeExtended(type: VersionChangeType | string): typ
 
 // @public
 export function isVersionScheme(scheme: string): scheme is VersionScheme;
+
+// @public
+export function isWorkspaceRange(r: any): r is WorkspaceRange;
+
+// @public
+export type RangeOperator = typeof RangeOperators[number];
+
+// @public
+export const RangeOperators: readonly ["^", "~", ""];
+
+// @public
+export type RangeOperatorWithVersion = `${Exclude<RangeOperator, "">}${string}`;
 
 // @public
 export type ReleaseVersion = string;
@@ -83,19 +91,19 @@ export type VersionBumpType = "major" | "minor" | "patch";
 export type VersionBumpTypeExtended = VersionBumpType | "current";
 
 // @public
-export type VersionChangeType = VersionBumpType | SemVer;
+export type VersionChangeType = VersionBumpType | semver.SemVer;
 
 // @public
-export type VersionChangeTypeExtended = VersionBumpTypeExtended | SemVer;
+export type VersionChangeTypeExtended = VersionBumpTypeExtended | semver.SemVer;
 
 // @public
 export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virtualPatch";
 
-// @public (undocumented)
-export type WorkspaceInterdependencyRange = typeof WorkspaceInterdependencyRanges[number];
+// @public
+export type WorkspaceRange = typeof WorkspaceRanges[number];
 
-// @public (undocumented)
-export const WorkspaceInterdependencyRanges: readonly ["workspace:*", "workspace:^", "workspace:~"];
+// @public
+export const WorkspaceRanges: readonly ["workspace:*", "workspace:^", "workspace:~"];
 
 // (No @packageDocumentation comment for this package)
 

@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import semver from "semver";
+import * as semver from "semver";
 
 /**
  * A type alias for strings that represent package versions.

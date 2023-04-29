@@ -12,6 +12,7 @@ export {
 	InterdependencyRange,
 	RangeOperator,
 	RangeOperators,
+	RangeOperatorWithVersion,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionBumpTypeExtended,
