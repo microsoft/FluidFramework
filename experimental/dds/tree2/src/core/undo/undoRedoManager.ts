@@ -49,7 +49,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
 
 		const parent =
-			undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo
+			undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo ||
+			undoRedoManagerCommitType === UndoRedoManagerCommitType.Redoable
 				? this.headRedoableCommit
 				: this.headUndoableCommit;
 		const undoableOrRedoable = {
