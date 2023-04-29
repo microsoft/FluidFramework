@@ -35,12 +35,15 @@
 /packages/runtime/                                                        @microsoft/fluid-cr-runtime
 /packages/test/                                                           @microsoft/fluid-cr-test
 /packages/tools/                                                          @microsoft/fluid-cr-tools
+/packages/tools/client-debugger/                                          @microsoft/team-rohan
 /packages/utils/                                                          @microsoft/fluid-cr-infra
 /packages/utils/odsp-doclib-utils/                                        @microsoft/fluid-cr-odsp
 /packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
 /server/                                                                  @microsoft/fluid-cr-server
-/tools/                                                                   @microsoft/fluid-cr-infra
-/tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-framework
+/tools/                                                                   @microsoft/fluid-cr-tools
+/tools/markdown-magic/                                                    @microsoft/fluid-cr-tools @microsoft/fluid-cr-infra
+/tools/pipelines/                                                         @microsoft/fluid-cr-tools @microsoft/fluid-cr-infra
+/tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-infra @microsoft/fluid-cr-framework
 
 # PUBLIC API REPORTS
 # All packages are assumed to have public APIs unless defined otherwise in the sections below.
