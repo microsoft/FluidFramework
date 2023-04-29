@@ -42,7 +42,7 @@
 /server/                                                                  @microsoft/fluid-cr-server
 /tools/                                                                   @microsoft/fluid-cr-tools
 /tools/markdown-magic/                                                    @microsoft/fluid-cr-tools @microsoft/fluid-cr-infra
-/tools/pipelines/                                                         @microsoft/fluid-cr-tools @microsoft/fluid-cr-infra
+/tools/pipelines/                                                         @microsoft/fluid-cr-infra
 /tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-infra @microsoft/fluid-cr-framework
 
 # PUBLIC API REPORTS
