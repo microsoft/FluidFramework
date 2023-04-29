@@ -47,16 +47,6 @@ export function isDependencyUpdateType(str: string | undefined): str is Dependen
 }
 
 /**
- * A mapping of {@link Package} to a version range string or a bump type. This interface is used for convenience.
- *
- * @internal
- */
-export interface PackageWithRangeSpec {
-	pkg: Package;
-	rangeOrBumpType: string;
-}
-
-/**
  * Bumps a release group or standalone package by the bumpType.
  *
  * @param context - The {@link Context}.

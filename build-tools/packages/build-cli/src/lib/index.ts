@@ -14,12 +14,7 @@ export {
 	generateReleaseBranchName,
 } from "./branches";
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
-export {
-	bumpReleaseGroup,
-	DependencyUpdateType,
-	isDependencyUpdateType,
-	PackageWithRangeSpec,
-} from "./bump";
+export { bumpReleaseGroup, DependencyUpdateType, isDependencyUpdateType } from "./bump";
 export { Repository } from "./git";
 export {
 	filterVersionsOlderThan,
