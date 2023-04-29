@@ -20,7 +20,6 @@ import {
 	bumpVersionScheme,
 	detectVersionScheme,
 	isInterdependencyRange,
-	parseWorkspaceProtocol,
 } from "@fluid-tools/version-tools";
 
 import { packageOrReleaseGroupArg } from "../args";
@@ -131,7 +130,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		const context = await this.getContext();
 		const bumpType: VersionBumpType | undefined = flags.bumpType;
-		const [workspaceProtocol] = parseWorkspaceProtocol(flags.interdependencyRange ?? "");
+		const workspaceProtocol = flags.interdependencyRange?.startsWith("workspace:");
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
@@ -230,7 +229,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
-		this.log(`Workspace protocol: ${workspaceProtocol ? chalk.green("yes") : "no"}`);
+		this.log(`Workspace protocol: ${workspaceProtocol === true ? chalk.green("yes") : "no"}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
 		this.log(
 			`Interdependency range: ${
