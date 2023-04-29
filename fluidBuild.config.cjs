@@ -20,10 +20,7 @@ module.exports = {
 			directory: "build-tools",
 			defaultInterdependencyRange: "workspace:*",
 		},
-		"server": {
-			directory: "server/routerlicious",
-			defaultInterdependencyRange: "~",
-		},
+		"server": "server/routerlicious",
 		"gitrest": "server/gitrest",
 		"historian": "server/historian",
 
