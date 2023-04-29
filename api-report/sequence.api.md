@@ -35,7 +35,6 @@ import { LocalReferencePosition } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree';
-import { MergeTreeDeltaRevertible } from '@fluidframework/merge-tree';
 import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
 import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree';
 import { PropertiesManager } from '@fluidframework/merge-tree';
@@ -48,9 +47,6 @@ import { SharedObject } from '@fluidframework/shared-object-base';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-// @public (undocumented)
-export function appendToMergeTreeDeltaRevertibles(string: SharedString, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: SharedStringRevertible[]): void;
 
 // @public
 export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
@@ -199,15 +195,6 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 // @public @deprecated (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
-// @public (undocumented)
-export const IntervalEventType: {
-    readonly CHANGE: 0;
-    readonly ADD: 1;
-    readonly DELETE: 2;
-    readonly PROPERTYCHANGED: 3;
-    readonly SEQUENCEREMOVE: 4;
-};
-
 // @public
 export interface IntervalLocator {
     interval: SequenceInterval;
@@ -216,39 +203,6 @@ export interface IntervalLocator {
 
 // @public
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
-
-// @public (undocumented)
-export type IntervalRevertible = {
-    event: typeof IntervalEventType.CHANGE;
-    interval: SequenceInterval;
-    start: LocalReferencePosition;
-    end: LocalReferencePosition;
-} | {
-    event: typeof IntervalEventType.ADD;
-    interval: SequenceInterval;
-} | {
-    event: typeof IntervalEventType.DELETE;
-    interval: SequenceInterval;
-    start: LocalReferencePosition;
-    end: LocalReferencePosition;
-} | {
-    event: typeof IntervalEventType.PROPERTYCHANGED;
-    interval: SequenceInterval;
-    propertyDeltas: PropertySet;
-} | {
-    event: typeof IntervalEventType.SEQUENCEREMOVE;
-    intervals: {
-        intervalId: string;
-        label: string;
-        startSegmentIndex?: number;
-        start?: LocalReferencePosition;
-        startSlide?: LocalReferencePosition;
-        endSegmentIndex?: number;
-        end?: LocalReferencePosition;
-        endSlide?: LocalReferencePosition;
-    }[];
-    mergeTreeRevertible: MergeTreeDeltaRevertible;
-};
 
 // @public (undocumented)
 export enum IntervalType {
@@ -327,9 +281,6 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
-
-// @public (undocumented)
-export function revertSharedStringRevertibles(string: SharedString, revertibles: SharedStringRevertible[]): void;
 
 // @public
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
@@ -566,9 +517,6 @@ export class SharedStringFactory implements IChannelFactory {
     // (undocumented)
     get type(): string;
 }
-
-// @public (undocumented)
-export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
 // @public (undocumented)
 export type SharedStringSegment = TextSegment | Marker;
