@@ -22,12 +22,11 @@
 		"/oclif.manifest.json"
 	],
 	"scripts": {
-		"build": "npm run build:genver && npm run clean:manifest && concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:manifest npm:build:diagrams",
+		"build": "npm run clean:manifest && concurrently npm:build:compile npm:lint && concurrently npm:build:docs npm:build:manifest npm:build:diagrams",
 		"build:compile": "npm run tsc && npm run build:copy && npm run build:readme",
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" lib",
 		"build:diagrams": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:docs": "api-extractor run --local",
-		"build:genver": "gen-version",
 		"build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:manifest": "cross-env NODE_OPTIONS='--experimental-abortcontroller' oclif manifest",
 		"build:readme": "node \"./bin/dev\" generate readme --multi",
