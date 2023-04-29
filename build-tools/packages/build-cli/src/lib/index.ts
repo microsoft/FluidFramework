@@ -15,7 +15,6 @@ export {
 } from "./branches";
 export { getDisplayDate, getDisplayDateRelative } from "./dates";
 export {
-	bumpPackageDependencies,
 	bumpReleaseGroup,
 	DependencyUpdateType,
 	isDependencyUpdateType,
