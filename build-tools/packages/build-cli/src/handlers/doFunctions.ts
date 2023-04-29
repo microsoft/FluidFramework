@@ -15,7 +15,7 @@ import {
 	difference,
 	getPreReleaseDependencies,
 	npmCheckUpdates,
-	setReleaseGroupVersion,
+	setVersion,
 } from "../lib";
 import { CommandLogger } from "../logging";
 import { MachineState } from "../machines";
@@ -166,7 +166,7 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 		)} bump)!`,
 	);
 
-	await setReleaseGroupVersion(
+	await setVersion(
 		context,
 		rgRepo,
 		newVersion,

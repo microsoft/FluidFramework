@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import type { SemVer } from "semver";
+import semver from "semver";
 
 /**
  * A type alias for strings that represent package versions.
@@ -10,31 +10,90 @@ import type { SemVer } from "semver";
 export type ReleaseVersion = string;
 
 /**
- * An array of the valid interdependency range operators. The interdependency range determines how dependencies between
- * packages within the same release group are specified.
+ * An array of the semver range operators we use. The empty string (`""`) is used to indicate exact dependencies.
+ *
+ * @remarks
+ * We intentionally only include the operators we use, not everything considered valid in the semver spec.
  */
-export const InterdependencyRangeOperators = ["^", "~", ""] as const;
+export const RangeOperators = ["^", "~", ""] as const;
 
-export const WorkspaceInterdependencyRanges = [
-	"workspace:*",
-	"workspace:^",
-	"workspace:~",
-] as const;
 /**
- * A type representing the different types of interdependency ranges that can be specified for release groups. The
- * interdependency range determines how dependencies between packages within the same release group are specified.
+ * A type representing the semver range operators we use.
+ *
+ * @remarks
+ * We intentionally only include the operators we use, not everything considered valid in the semver spec.
  */
-export type InterdependencyRangeOperator = typeof InterdependencyRangeOperators[number];
+export type RangeOperator = typeof RangeOperators[number];
 
-export type WorkspaceInterdependencyRange = typeof WorkspaceInterdependencyRanges[number];
+/**
+ * A typeguard to check if a variable is a {@link RangeOperator}.
+ */
+export function isRangeOperator(r: any): r is RangeOperator {
+	return RangeOperators.includes(r);
+}
 
-export type InterdependencyRange = WorkspaceInterdependencyRange | InterdependencyRangeOperator;
+/**
+ * A type representing a version string prefixed with a {@link RangeOperator}.
+ */
+export type RangeOperatorWithVersion = `${Exclude<RangeOperator, "">}${string}`;
+
+/**
+ * An array of the workspace range strings we use.
+ *
+ * @remarks
+ * We intentionally only include the ranges we use, not everything considered valid by workspace-protocol-aware tools
+ * like yarn and pnpm.
+ */
+export const WorkspaceRanges = ["workspace:*", "workspace:^", "workspace:~"] as const;
+
+/**
+ * A type representing the workspace range strings we use.
+ *
+ * @remarks
+ * We intentionally only include the ranges we use, not everything considered valid by workspace-protocol-aware tools
+ * like yarn and pnpm.
+ */
+export type WorkspaceRange = typeof WorkspaceRanges[number];
+
+/**
+ * A typeguard to check if a variable is a {@link WorkspaceRange}.
+ */
+export function isWorkspaceRange(r: any): r is WorkspaceRange {
+	return WorkspaceRanges.includes(r);
+}
+
+/**
+ * A type represeting the strings we consider valid for interdependencies - dependencies between packages within the
+ * same release group.
+ */
+export type InterdependencyRange =
+	| WorkspaceRange
+	| RangeOperator
+	| RangeOperatorWithVersion
+	| semver.SemVer;
 
 /**
  * A typeguard to check if a variable is a {@link InterdependencyRange}.
+ *
+ * @remarks
+ * As implemented, this function might better be inverted and named "isNOTInterdependencyRange". It does a better job of
+ * excluding non-conforming strings than it does at finding valid ones. This appears to be sufficient for our needs,
+ * which is good because I don't know how to fix it.
  */
 export function isInterdependencyRange(r: any): r is InterdependencyRange {
-	return InterdependencyRangeOperators.includes(r) || WorkspaceInterdependencyRanges.includes(r);
+	if (RangeOperators.includes(r) || WorkspaceRanges.includes(r)) {
+		return true;
+	}
+
+	if (semver.validRange(r) === null) {
+		return false;
+	}
+
+	if (typeof r === "string") {
+		return RangeOperators.includes(r[0] as any);
+	}
+
+	return false;
 }
 
 /**
@@ -57,12 +116,12 @@ export type VersionBumpTypeExtended = VersionBumpType | "current";
 /**
  * A union type representing either a {@link VersionBumpType} or a specified version.
  */
-export type VersionChangeType = VersionBumpType | SemVer;
+export type VersionChangeType = VersionBumpType | semver.SemVer;
 
 /**
  * A union type representing either a {@link VersionBumpTypeExtended} or a specified version.
  */
-export type VersionChangeTypeExtended = VersionBumpTypeExtended | SemVer;
+export type VersionChangeTypeExtended = VersionBumpTypeExtended | semver.SemVer;
 
 /**
  * A typeguard to check if a version is a {@link VersionBumpType}.

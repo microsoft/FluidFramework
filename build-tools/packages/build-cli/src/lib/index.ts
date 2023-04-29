@@ -21,7 +21,6 @@ export {
 	isDependencyUpdateType,
 	PackageWithRangeSpec,
 } from "./bump";
-export { setReleaseGroupVersion } from "./dependencies";
 export { Repository } from "./git";
 export {
 	filterVersionsOlderThan,
@@ -32,6 +31,7 @@ export {
 	npmCheckUpdates,
 	PackageVersionMap,
 	PreReleaseDependencies,
+	setVersion,
 	sortVersions,
 } from "./package";
 export { difference } from "./sets";

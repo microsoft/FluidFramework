@@ -5,18 +5,20 @@
 
 export {
 	isInterdependencyRange,
+	isRangeOperator,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
+	isWorkspaceRange,
 	InterdependencyRange,
-	InterdependencyRangeOperator,
-	InterdependencyRangeOperators,
+	RangeOperator,
+	RangeOperators,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionBumpTypeExtended,
 	VersionChangeType,
 	VersionChangeTypeExtended,
-	WorkspaceInterdependencyRange,
-	WorkspaceInterdependencyRanges,
+	WorkspaceRange,
+	WorkspaceRanges,
 } from "./bumpTypes";
 export {
 	changePreReleaseIdentifier,

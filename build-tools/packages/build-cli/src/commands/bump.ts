@@ -11,12 +11,12 @@ import * as semver from "semver";
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
 import {
 	InterdependencyRange,
-	InterdependencyRangeOperators,
+	RangeOperators,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionChangeType,
 	VersionScheme,
-	WorkspaceInterdependencyRanges,
+	WorkspaceRanges,
 	bumpVersionScheme,
 	detectVersionScheme,
 	isInterdependencyRange,
@@ -28,7 +28,7 @@ import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../f
 import {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
-	setReleaseGroupVersion,
+	setVersion,
 } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
@@ -62,7 +62,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		exactDepType: Flags.string({
 			description:
 				'[DEPRECATED - Use interdependencyRange instead.] Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
-			options: [...InterdependencyRangeOperators],
+			options: [...RangeOperators],
 			deprecated: {
 				to: "interdependencyRange",
 				message: "The exactDepType flag is deprecated. Use interdependencyRange instead.",
@@ -73,7 +73,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			char: "d",
 			description:
 				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid when using the --workspaceProtocol flag.',
-			options: [...InterdependencyRangeOperators, ...WorkspaceInterdependencyRanges],
+			options: [...RangeOperators, ...WorkspaceRanges],
 		}),
 		// workspaceProtocol: Flags.boolean({
 		// 	char: "w",
@@ -158,17 +158,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			? flags.interdependencyRange
 			: undefined;
 		if (isReleaseGroup(args.package_or_release_group)) {
-			// if (
-			// 	interdependencyType !== undefined &&
-			// 	interdependencyType !== "" &&
-			// 	interdependencyType !== "*" &&
-			// 	interdependencyType !== "^" &&
-			// 	interdependencyType !== "~"
-			// ) {
-			// 	// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
-			// 	// that the interdependencyType will be one of the enum values.
-			// 	this.error(`Invalid interdependencyType: ${interdependencyType}`);
-			// }
 			const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
 			assert(
 				releaseRepo !== undefined,
@@ -257,7 +246,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}
 
 		this.log(`Updating version...`);
-		await setReleaseGroupVersion(
+		await setVersion(
 			context,
 			packageOrReleaseGroup,
 			newVersion,
@@ -305,51 +294,3 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}
 	}
 }
-
-// function generateInterdependencyRangeString(
-// 	interdependencyType: InterdependencyRange,
-// 	workspaceProtocol: boolean,
-// ): InterdependencyRange {
-// 	let interdependencyRange: InterdependencyRange;
-// 	if (workspaceProtocol) {
-// 		switch (interdependencyType) {
-// 			case "*": {
-// 				interdependencyRange = "workspace:*";
-// 				break;
-// 			}
-
-// 			case "^": {
-// 				interdependencyRange = "workspace:^";
-// 				break;
-// 			}
-
-// 			case "~": {
-// 				interdependencyRange = "workspace:~";
-// 				break;
-// 			}
-
-// 			default: {
-// 				throw new Error(`Can't use --workspaceProtocol with interdependencyType: ""`);
-// 			}
-// 		}
-// 	} else {
-// 		switch (interdependencyType) {
-// 			case "*": {
-// 				throw new Error(`Can't use "*" without --workspaceProtocol.`);
-// 			}
-
-// 			case "^":
-// 			case "~":
-// 			case "": {
-// 				interdependencyRange = interdependencyType;
-// 				break;
-// 			}
-
-// 			default: {
-// 				throw new Error(`Unexpected interdependencyType: ${interdependencyType}`);
-// 			}
-// 		}
-// 	}
-
-// 	return interdependencyRange;
-// }
