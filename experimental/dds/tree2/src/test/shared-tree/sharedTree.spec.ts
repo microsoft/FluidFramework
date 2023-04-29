@@ -632,7 +632,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Undo", () => {
+	describe("Undo and redo", () => {
 		it("does nothing if there are no commits in the undo stack", async () => {
 			const value = "42";
 			const provider = await TestTreeProvider.create(2);
@@ -656,6 +656,10 @@ describe("SharedTree", () => {
 			tree1.undo();
 			await provider.ensureSynchronized();
 
+			// Redo
+			tree1.redo();
+			await provider.ensureSynchronized();
+
 			assert.equal(getTestValue(tree1), undefined);
 			assert.equal(getTestValue(tree2), undefined);
 		});
@@ -673,13 +677,9 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			// Validate insertion
-			const readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			assert.ok(readCursor.firstNode());
-			assert.equal(readCursor.value, value);
-			assert.ok(readCursor.nextNode());
-			assert.equal(readCursor.value, value2);
-			readCursor.free();
+			const valuesAfterInsertion = getTestValues(tree1);
+			assert.equal(valuesAfterInsertion[0], "42");
+			assert.equal(valuesAfterInsertion[1], "43");
 
 			// Undo
 			tree1.undo();
@@ -687,13 +687,19 @@ describe("SharedTree", () => {
 			tree1.undo();
 			await provider.ensureSynchronized();
 
-			const validationCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, validationCursor);
-			assert.ok(validationCursor.firstNode());
-			assert.equal(validationCursor.value, value2);
-			assert.equal(validationCursor.nextNode(), false);
-			validationCursor.free();
-			assert.equal(getTestValue(tree2), value2);
+			// Validate undo
+			const valuesAfterUndo = getTestValues(tree1);
+			assert.equal(valuesAfterUndo[0], "43");
+			assert.equal(valuesAfterUndo.length, 1);
+
+			// Call redo
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			// Validate undo
+			const valuesAfterRedo = getTestValues(tree1);
+			assert.equal(valuesAfterRedo[0], "42");
+			assert.equal(valuesAfterRedo[1], "43");
 		});
 
 		it("the insert of a node in a sequence field", async () => {
@@ -714,6 +720,13 @@ describe("SharedTree", () => {
 
 			assert.equal(getTestValue(tree1), undefined);
 			assert.equal(getTestValue(tree2), undefined);
+
+			// Redo node insertion
+			tree1.redo();
+			await provider.ensureSynchronized();
+
+			assert.equal(getTestValue(tree1), value);
+			assert.equal(getTestValue(tree2), value);
 		});
 
 		function stringToJsonableTree(values: string[]): JsonableTree[] {
@@ -761,6 +774,22 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 			validateTree(tree1, expectedState);
 			validateTree(tree2, expectedState);
+
+			// Insert additional node at the beginning to require rebasing
+			insert(tree1, 0, "0");
+			validateTree(tree1, stringToJsonableTree(["0", "A", "B", "C", "D"]));
+
+			const expectedAfterRedo = stringToJsonableTree(["0", "A", "x", "B", "C", "y", "D"]);
+			// Redo node insertion on both trees
+			tree1.redo();
+			validateTree(tree1, stringToJsonableTree(["0", "A", "x", "B", "C", "D"]));
+
+			tree2.undo();
+			validateTree(tree2, stringToJsonableTree(["0", "A", "B", "C", "y", "D"]));
+
+			await provider.ensureSynchronized();
+			validateTree(tree1, expectedAfterRedo);
+			validateTree(tree2, expectedAfterRedo);
 		});
 
 		it("updates rebased undoable commits in the correct order", async () => {
@@ -806,6 +835,36 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 			validateTree(tree1, expectedState);
 			validateTree(tree2, expectedState);
+
+			// Insert additional node at the beginning to require rebasing
+			insert(tree1, 0, "0");
+			validateTree(tree1, stringToJsonableTree(["0", "A", "B", "C", "D"]));
+			await provider.ensureSynchronized();
+
+			const expectedAfterRedo = stringToJsonableTree([
+				"0",
+				"A",
+				"x",
+				"B",
+				"C",
+				"y",
+				"D",
+				"z",
+			]);
+
+			// Redo node insertion on both trees
+			tree1.redo();
+			validateTree(tree1, stringToJsonableTree(["0", "A", "x", "B", "C", "D"]));
+
+			// First redo should be the insertion of z
+			tree2.redo();
+			validateTree(tree2, stringToJsonableTree(["0", "A", "B", "C", "D", "z"]));
+			tree2.redo();
+			validateTree(tree2, stringToJsonableTree(["0", "A", "B", "C", "y", "D", "z"]));
+
+			await provider.ensureSynchronized();
+			validateTree(tree1, expectedAfterRedo);
+			validateTree(tree2, expectedAfterRedo);
 		});
 	});
 
