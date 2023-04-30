@@ -35,7 +35,7 @@ import {
 	isDeleteMark,
 	areOutputCellsEmpty,
 	areInputCellsEmpty,
-	getCellInputId,
+	getCellId,
 	compareLineages,
 	isNewAttach,
 	isExistingCellMark,
@@ -109,8 +109,7 @@ function composeMarkLists<TNodeChange>(
 		(a, b) => composeChildChanges(a, b, newRev, composeChild),
 	);
 	while (!queue.isEmpty()) {
-		const popped = queue.pop();
-		const { baseMark, newMark } = popped;
+		const { baseMark, newMark } = queue.pop();
 		if (newMark === undefined) {
 			assert(
 				baseMark !== undefined,
@@ -164,8 +163,9 @@ function composeMarks<TNodeChange>(
 		composeChild,
 	);
 
-	// TODO: Handle move effects
-	if (!markHasCellEffect(baseMark)) {
+	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
+		return createModifyMark(getMarkLength(newMark), nodeChange, getCellId(baseMark, undefined));
+	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
 		const moveInId = getMarkMoveId(baseMark);
@@ -461,15 +461,16 @@ export class ComposeQueue<T> {
 			let baseCellId: DetachEvent;
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), "Only detach marks can empty cells");
-				const baseIntention = getIntention(baseMark.revision ?? this.baseMarks.revision, this.revisionMetadata);
-				if (baseIntention === undefined) {
+				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
+				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
+				if (baseRevision === undefined || baseIntention === undefined) {
 					// This case should only happen when squashing a transaction.
 					assert(isNewAttach(newMark), "Unhandled case");
 					return this.dequeueNew();
 				}
 				baseCellId = {
 					revision: baseIntention,
-					index: this.baseIndex.getIndex(baseIntention),
+					index: this.baseIndex.getIndex(baseRevision),
 				};
 			} else {
 				assert(
@@ -478,7 +479,7 @@ export class ComposeQueue<T> {
 				);
 				baseCellId = baseMark.detachEvent;
 			}
-			const cmp = compareCellPositions(baseCellId, baseMark, newMark, this.newRevision);
+			const cmp = compareCellPositions(baseCellId, baseMark, newMark, this.newRevision, this.cancelledInserts);
 			if (cmp < 0) {
 				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
 			} else if (cmp > 0) {
@@ -595,9 +596,22 @@ function compareCellPositions(
 	baseMark: ExistingCellMark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
 	newRevision: RevisionTag | undefined,
+	cancelledInserts: Set<RevisionTag>,
 ): number {
-	const newId = getCellInputId(newMark, newRevision);
+	const newId = getCellId(newMark, newRevision);
 	if (baseCellId.revision === newId?.revision) {
+		if (isNewAttach(newMark)) {
+			// There is some change foo that is being cancelled out as part of a rebase sandwich.
+			// The marks that make up this change (and its inverse) may be broken up differently between the base
+			// changeset and the new changeset because either changeset may have been composed with other changes
+			// whose marks may now be interleaved with the marks that represent foo/its inverse.
+			// This means that the base and new marks may not be of the same length.			
+			// We do however know that the all of the marks for foo will appear in the base changeset and all of the
+			// marks for the inverse of foo will appear in the new changeset, so we can be confident that whenever
+			// we encounter such pairs of marks, they do line up such that they describe changes to the same first
+			// cell. This means we can safely treat them as inverses of one another.
+			return 0;
+		}
 		return baseCellId.index - newId.index;
 	}
 
@@ -618,6 +632,12 @@ function compareCellPositions(
 	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
 	if (cmp !== 0) {
 		return Math.sign(cmp) * Infinity;
+	}
+
+	if (newRevision !== undefined && newMark.type === "Insert" && cancelledInserts.has(newRevision)) {
+		// We know the new insert is getting cancelled out so we need to delay returning it.
+		// The base mark that cancels the insert must appear later in the base marks.
+		return -Infinity;
 	}
 
 	if (isNewAttach(newMark)) {

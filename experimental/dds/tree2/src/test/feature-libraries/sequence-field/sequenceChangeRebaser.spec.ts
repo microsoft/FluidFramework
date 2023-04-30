@@ -190,6 +190,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 								change2,
 								continuingAllocator([change2]),
 							);
+							// const r3 = rebaseTagged(r2, change2);
 							const r3 = rebaseTagged(r2, change2Updated);
 							tracker.apply(change2Updated);
 							normalizeMoveIds(r3.change);

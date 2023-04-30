@@ -104,16 +104,18 @@ export function isActiveReattach<TNodeChange>(
 	return isReattach(mark) && !isConflictedReattach(mark);
 }
 
+// TODO: Name is misleading
 export function isConflictedReattach<TNodeChange>(
 	mark: Mark<TNodeChange>,
 ): mark is Reattach<TNodeChange> {
 	return isReattach(mark) && isReattachConflicted(mark);
 }
 
+// TODO: Name is misleading
 export function isReattachConflicted(mark: Reattach<unknown>): boolean {
 	return (
 		mark.detachEvent === undefined ||
-		(mark.inverseOf !== undefined && !areEqualDetachEvents(mark.inverseOf, mark.detachEvent))
+		(mark.inverseOf !== undefined && mark.inverseOf !== mark.detachEvent.revision)
 	);
 }
 
@@ -125,10 +127,13 @@ export function areEqualDetachEvents(a: DetachEvent, b: DetachEvent): boolean {
 	return a.index === b.index && a.revision === b.revision;
 }
 
-export function getCellInputId(
-	mark: EmptyInputCellMark<unknown>,
+export function getCellId(
+	mark: Mark<unknown>,
 	revision: RevisionTag | undefined,
 ): DetachEvent | undefined {
+	if (isSkipMark(mark)) {
+		return undefined;
+	}
 	if (isNewAttach(mark)) {
 		const rev = mark.revision ?? revision;
 		if (rev !== undefined) {
@@ -139,22 +144,6 @@ export function getCellInputId(
 	}
 
 	return mark.detachEvent;
-}
-
-export function getCellOutputId(
-	mark: ExistingCellMark<unknown>,
-	revision: RevisionTag | undefined,
-	inputIndex: number,
-): DetachEvent {
-	if (mark.detachEvent !== undefined) {
-		return mark.detachEvent;
-	}
-
-	assert(isDetachMark(mark), "Output cell must be empty");
-	return {
-		revision: mark.revision ?? revision ?? fail("Must have revision for mark"),
-		index: inputIndex,
-	};
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
@@ -479,9 +468,7 @@ export function tryExtendMark<T>(
 		case "Revive": {
 			const lhsReattach = lhs as Reattach;
 			if (
-				lhsReattach.inverseOf?.revision === rhs.inverseOf?.revision &&
-				(lhsReattach.inverseOf === undefined ||
-					lhsReattach.inverseOf.index + lhsReattach.count === rhs.inverseOf?.index)
+				lhsReattach.inverseOf === rhs.inverseOf
 			) {
 				(lhsReattach as Revive).content.push(...rhs.content);
 				lhsReattach.count += rhs.count;
@@ -985,10 +972,6 @@ export function splitMark<T, TMark extends Mark<T>>(
 					(mark2 as ReturnTo).detachEvent = splitDetachEvent(markObj.detachEvent, length);
 				}
 
-				if (markObj.inverseOf !== undefined) {
-					(mark2 as ReturnTo).inverseOf = splitDetachEvent(markObj.inverseOf, length);
-				}
-
 				return [mark1, mark2];
 			}
 			return [mark1, mark2];
@@ -1003,10 +986,6 @@ export function splitMark<T, TMark extends Mark<T>>(
 
 			if (markObj.detachEvent !== undefined) {
 				(mark2 as Revive).detachEvent = splitDetachEvent(markObj.detachEvent, length);
-			}
-
-			if (markObj.inverseOf !== undefined) {
-				(mark2 as Revive).inverseOf = splitDetachEvent(markObj.inverseOf, length);
 			}
 
 			return [mark1, mark2];

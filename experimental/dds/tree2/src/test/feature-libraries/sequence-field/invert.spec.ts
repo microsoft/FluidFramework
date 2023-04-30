@@ -87,7 +87,7 @@ describe("SequenceField - Invert", () => {
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
 				detachEvent: { revision: tag2, index: 0 },
-				inverseOf: { revision: tag1, index: 0 },
+				inverseOf: tag1,
 				changes: childChange2,
 			},
 			{
@@ -192,7 +192,7 @@ describe("SequenceField - Invert", () => {
 					count: 1,
 					id: brand(0),
 					detachEvent: { revision: tag2, index: 0 },
-					inverseOf: { revision: tag1, index: 0 },
+					inverseOf: tag1,
 				},
 				{
 					type: "Modify",

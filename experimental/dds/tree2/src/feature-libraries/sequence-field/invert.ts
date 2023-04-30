@@ -116,6 +116,7 @@ function invertMark<TNodeChange>(
 						detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
 						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
+						inverseOf: mark.revision ?? revision,
 					},
 				];
 			}

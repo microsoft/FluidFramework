@@ -73,7 +73,7 @@ export const sequenceFieldEditor = {
 		detachedBy: RevisionTag,
 		reviver: NodeReviver,
 		detachIndex?: number,
-		isIntention?: true,
+		isIntention: boolean = false,
 	): Changeset<never> => {
 		// Revives are typically created to undo a delete from the prior revision.
 		// When that's the case, we know the content used to be at the index at which it is being revived.
@@ -85,8 +85,8 @@ export const sequenceFieldEditor = {
 			count,
 			detachEvent,
 		};
-		if (isIntention) {
-			mark.inverseOf = detachEvent;
+		if (!isIntention) {
+			mark.inverseOf = detachedBy;
 		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},

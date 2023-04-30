@@ -138,7 +138,7 @@ export interface MoveOut<TNodeChange = NodeChangeType>
 }
 
 export interface HasReattachFields extends HasPlaceFields {
-	inverseOf?: DetachEvent;
+	inverseOf?: RevisionTag;
 }
 
 export interface DetachEvent {

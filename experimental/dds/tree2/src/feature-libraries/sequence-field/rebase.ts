@@ -27,7 +27,7 @@ import {
 	markEmptiesCells,
 	markFillsCells,
 	isExistingCellMark,
-	getCellInputId,
+	getCellId,
 	getOffsetAtRevision,
 	compareLineages,
 	getNodeChange,
@@ -595,9 +595,9 @@ function compareCellPositions(
 	newMark: EmptyInputCellMark<unknown>,
 	detachOffset: number,
 ): number {
-	const baseId = getCellInputId(baseMark, baseRevision);
+	const baseId = getCellId(baseMark, baseRevision);
 	assert(baseId !== undefined, "baseMark should have cell ID");
-	const newId = getCellInputId(newMark, undefined);
+	const newId = getCellId(newMark, undefined);
 	if (baseId.revision === newId?.revision) {
 		return baseId.index - newId.index;
 	}

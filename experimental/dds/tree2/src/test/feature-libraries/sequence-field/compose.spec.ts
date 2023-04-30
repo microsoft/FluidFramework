@@ -149,12 +149,14 @@ describe("SequenceField - Compose", () => {
 				count: 1,
 				detachEvent: { revision: tag1, index: 0 },
 				changes: { valueChange: { value: 2 } },
+				inverseOf: tag1,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 2),
 				count: 2,
 				detachEvent: { revision: tag1, index: 1 },
+				inverseOf: tag1,
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(modify)]);
@@ -428,12 +430,14 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
 				detachEvent: { revision: tag1, index: 0 },
+				inverseOf: tag1,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 2, 1),
 				count: 1,
 				detachEvent: { revision: tag1, index: 2 },
+				inverseOf: tag1,
 			},
 			{ type: "Delete", count: 1 },
 		];
@@ -495,6 +499,7 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag1, 0, 5),
 				count: 5,
 				detachEvent: { revision: tag1, index: 0 },
+				inverseOf: tag1,
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(insert)]);
@@ -542,6 +547,7 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag1, 0, 2),
 				count: 2,
 				detachEvent: { revision: tag1, index: 0 },
+				inverseOf: tag1,
 			},
 			{
 				type: "Modify",
@@ -563,6 +569,7 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
 				detachEvent: { revision: tag2, index: 0 },
+				inverseOf: tag2,
 				lineage: [{ revision: tag1, offset: 0 }],
 			},
 			{ type: "Delete", count: 2, revision: tag1 },
@@ -583,6 +590,7 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
 				detachEvent: { revision: tag2, index: 0 },
+				inverseOf: tag2,
 				lineage: [{ revision: tag1, offset: 1 }],
 			},
 			{ type: "Delete", count: 1, revision: tag1 },
@@ -603,7 +611,8 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag2, 0, 2),
 				count: 2,
 				detachEvent: { revision: tag2, index: 0 },
-				lineage: [{ revision: tag1, offset: 2 }],
+				inverseOf: tag2,
+				lineage: [{ revision: tag1, offset: 2 }],				
 			},
 		];
 		const actual = shallowCompose([deletion, revive]);
@@ -653,12 +662,14 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
 				detachEvent: { revision: tag2, index: 0 },
+				inverseOf: tag2,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 2),
 				count: 2,
 				detachEvent: { revision: tag1, index: 1 },
+				inverseOf: tag1,
 				lineage: [{ revision: tag2, offset: 1 }],
 			},
 		];
@@ -676,12 +687,14 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
 				detachEvent: { revision: tag2, index: 0 },
+				inverseOf: tag2,
 			},
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 1, 1),
 				count: 1,
 				detachEvent: { revision: tag1, index: 1 },
+				inverseOf: tag1,
 				lineage: [{ revision: tag2, offset: 1 }],
 			},
 			{
@@ -689,6 +702,7 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag2, 1, 1),
 				count: 1,
 				detachEvent: { revision: tag2, index: 1 },
+				inverseOf: tag2,
 			},
 		];
 		const actual = shallowCompose([
@@ -708,6 +722,7 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag1, 0, 2),
 				count: 2,
 				detachEvent: { revision: tag1, index: 0 },
+				inverseOf: tag1,
 				lineage: [{ revision: tag2, offset: 0 }],
 			},
 			{
@@ -715,6 +730,7 @@ describe("SequenceField - Compose", () => {
 				content: fakeRepair(tag2, 0, 1),
 				count: 1,
 				detachEvent: { revision: tag2, index: 0 },
+				inverseOf: tag2,
 			},
 		];
 		const actual = shallowCompose([makeAnonChange(reviveA), makeAnonChange(reviveB)]);
