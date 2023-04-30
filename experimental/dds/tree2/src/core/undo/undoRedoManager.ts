@@ -220,9 +220,9 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		// Create a complete clone of the base undo redo manager for tracking the rebased path
 		const undoRedoManager = baseUndoRedoManager.clone();
 
-		for (const { commit, isUndoable } of markedCommits) {
-			if (isUndoable) {
-				undoRedoManager.trackCommit(commit, UndoRedoManagerCommitType.Undoable);
+		for (const { commit, undoRedoManagerCommitType } of markedCommits) {
+			if (undoRedoManagerCommitType !== undefined) {
+				undoRedoManager.trackCommit(commit, undoRedoManagerCommitType);
 			}
 			undoRedoManager.repairDataStoreProvider.applyDelta(
 				this.changeFamily.intoDelta(commit.change),
@@ -265,11 +265,13 @@ export enum UndoRedoManagerCommitType {
 export function markCommits<TChange>(
 	path: GraphCommit<TChange>[],
 	headUndoableCommit?: UndoableCommit<TChange>,
-): { commit: GraphCommit<TChange>; isUndoable?: true }[] {
+	headRedoableCommit?: UndoableCommit<TChange>,
+): { commit: GraphCommit<TChange>; undoRedoManagerCommitType?: UndoRedoManagerCommitType }[] {
 	let currentUndoable: UndoableCommit<TChange> | undefined = headUndoableCommit;
+	let currentRedoable: RedoableCommit<TChange> | undefined = headRedoableCommit;
 
-	if (currentUndoable === undefined) {
-		// If there are no undoable commits, none are marked
+	if (currentUndoable === undefined && currentRedoable === undefined) {
+		// If there are no undoable or redoable commits, none are marked
 		return path.map((commit) => ({ commit }));
 	}
 
@@ -277,10 +279,16 @@ export function markCommits<TChange>(
 	return path
 		.reverse()
 		.map((commit) => {
-			const markedCommit: { commit: GraphCommit<TChange>; isUndoable?: true } = { commit };
+			const markedCommit: {
+				commit: GraphCommit<TChange>;
+				undoRedoManagerCommitType?: UndoRedoManagerCommitType;
+			} = { commit };
 			if (commit.revision === currentUndoable?.commit.revision) {
-				markedCommit.isUndoable = true;
+				markedCommit.undoRedoManagerCommitType = UndoRedoManagerCommitType.Undoable;
 				currentUndoable = currentUndoable?.parent;
+			} else if (commit.revision === currentRedoable?.commit.revision) {
+				markedCommit.undoRedoManagerCommitType = UndoRedoManagerCommitType.Redoable;
+				currentRedoable = currentRedoable?.parent;
 			}
 			return markedCommit;
 		})
