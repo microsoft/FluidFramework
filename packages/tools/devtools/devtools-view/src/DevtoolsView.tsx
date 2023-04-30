@@ -149,7 +149,8 @@ export function DevtoolsView(): React.ReactElement {
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
-
+	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
+	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
@@ -160,6 +161,7 @@ export function DevtoolsView(): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
+				clearTimeout(queryTimer); // Clear the timeout when cleaning up
 				return true;
 			},
 		};
@@ -178,15 +180,35 @@ export function DevtoolsView(): React.ReactElement {
 		// Query for supported feature set
 		messageRelay.postMessage(getSupportedFeaturesMessage);
 
+		// Add a timeout for the query
+		const queryTimer = setTimeout(() => {
+			if (!supportedFeatures) {
+				setQueryTimedOut(true);
+			}
+		}, queryTimeoutInMilliseconds);
+
 		return (): void => {
 			messageRelay.off("message", messageHandler);
+			clearTimeout(queryTimer);
 		};
-	}, [messageRelay, setSupportedFeatures]);
+	}, [messageRelay, setSupportedFeatures, setQueryTimedOut]);
+
+	function retryQuery(): void {
+		setQueryTimedOut(false);
+		messageRelay.postMessage(getSupportedFeaturesMessage);
+	}
 
 	return (
 		<FluentProvider theme={getFluentUIThemeToUse()} style={{ height: "100%" }}>
 			{supportedFeatures === undefined ? (
-				<Waiting />
+				queryTimedOut ? (
+					<>
+						<div>Devtools not found. Timeout exceeded.</div>
+						<button onClick={retryQuery}>Search again</button>
+					</>
+				) : (
+					<Waiting />
+				)
 			) : (
 				<_DevtoolsView supportedFeatures={supportedFeatures} />
 			)}
