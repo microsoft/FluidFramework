@@ -4,7 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
-
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { GraphCommit, RevisionTag, findCommonAncestor, rebaseBranch } from "../../core/rebase";
@@ -36,12 +36,60 @@ describe("rebaseBranch", () => {
 		assert(changes.length === 0, "Fewer commits than changes");
 	}
 
-	function assertOutputContext(change: TestChange, ...expected: number[]): void {
+	function assertOutputContext(change?: TestChange, ...expected: number[]): void {
 		const outputContext =
-			(change as NonEmptyTestChange).outputContext ?? fail("Expected output context");
+			(change as NonEmptyTestChange | undefined)?.outputContext ??
+			fail("Expected output context");
 
 		assert.deepEqual(outputContext, expected);
 	}
+
+	it("fails if branches are disjoin", () => {
+		// 1 ─ 2
+		// 3 ─ 4
+		const n1 = node([], 1);
+		const n2 = node([1], 2, n1);
+		const n3 = node([], 3);
+		const n4 = node([3], 4, n3);
+
+		assert.throws(
+			() => rebaseBranch(new TestChangeRebaser(), n4, n2),
+			(e) => validateAssertionError(e, "base is not in target branch"),
+		);
+	});
+
+	it("does nothing if already rebased past target", () => {
+		// 1 ─ 2
+		//     └─ 3 ─ 4
+		const n1 = node([], 1);
+		const n2 = node([1], 2, n1);
+		const n3 = node([1, 2], 3, n2);
+		const n4 = node([1, 2, 3], 4, n3);
+
+		// (1)─ 2
+		//      └─ 4 ─ 5
+		const [n4_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n4, n1);
+		assert.equal(n4_1, n4);
+		assert.equal(change, undefined);
+		assert.deepEqual(commits.deletedSourceCommits, []);
+		assert.deepEqual(commits.newSourceCommits, []);
+	});
+
+	it("does nothing if already rebased at target", () => {
+		// 1
+		// └─ 2 ─ 3
+		const n1 = node([], 1);
+		const n2 = node([1], 2, n1);
+		const n3 = node([1, 2], 3, n2);
+
+		// (1)
+		//  └─ 2 ─ 3
+		const [n3_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n3, n1);
+		assert.equal(n3_1, n3);
+		assert.equal(change, undefined);
+		assert.deepEqual(commits.deletedSourceCommits, []);
+		assert.deepEqual(commits.newSourceCommits, []);
+	});
 
 	it("can rebase a branch onto the head of another branch", () => {
 		// 1 ─ 2 ─ 3
@@ -90,7 +138,7 @@ describe("rebaseBranch", () => {
 		assert.equal(commits.newBase, n2);
 	});
 
-	it("skips commits with the same revision tag", () => {
+	it("skips and advances over commits with the same revision tag", () => {
 		// 1 ─ 2 ─ 3 - 4
 		// └─ 2'─ 3'- 5
 		const n1 = node([], 1);
@@ -114,6 +162,25 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.newSourceCommits, [n2, n3, ...newPath]);
 		assert.equal(commits.newBase, n3);
+	});
+
+	it("emits no change for equivalent branches", () => {
+		// 1 ─ 2 ─ 3- 4
+		// └─ 2' ─ 3'
+		const n1 = node([], 1);
+		const n2 = node([1], 2, n1);
+		const n3 = node([1, 2], 3, n2);
+		const n4 = node([1, 2, 3], 4, n3);
+		const n2_1 = node([1], 2, n1);
+		const n3_1 = node([1, 2], 3, n2_1);
+
+		// 1 ─ 2 ─(3)- 4
+		//         └─
+		const [n3_2, change, commits] = rebaseBranch(new TestChangeRebaser(), n3_1, n3, n4);
+		assert.equal(n3_2, n3);
+		assert.equal(change, undefined);
+		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
+		assert.deepEqual(commits.newSourceCommits, [n2, n3]);
 	});
 });
 

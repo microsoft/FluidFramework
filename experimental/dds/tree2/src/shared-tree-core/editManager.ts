@@ -426,7 +426,12 @@ export class EditManager<
 			});
 		}
 
-		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
+		const delta = this.rebaseLocalBranchOverTrunk();
+		if (delta === undefined) {
+			return emptyDelta;
+		}
+
+		return this.changeFamily.intoDelta(delta);
 	}
 
 	public addLocalChange(
@@ -529,7 +534,7 @@ export class EditManager<
 		});
 	}
 
-	private rebaseLocalBranchOverTrunk(): TChangeset {
+	private rebaseLocalBranchOverTrunk(): TChangeset | undefined {
 		const [newLocalChanges, netChange] = rebaseBranch(
 			this.changeFamily.rebaser,
 			this.localBranch,
@@ -543,7 +548,7 @@ export class EditManager<
 
 		this.localBranch = newLocalChanges;
 
-		if (this.anchors !== undefined) {
+		if (this.anchors !== undefined && netChange !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
 		}
 

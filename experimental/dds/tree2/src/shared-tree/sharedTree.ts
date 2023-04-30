@@ -461,10 +461,12 @@ export class SharedTreeFork implements ISharedTreeFork {
 		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
 		branch.on("change", ({ change }) => {
-			const delta = this.changeFamily.intoDelta(change);
-			this.forest.applyDelta(delta);
-			this.identifiedNodes.scanIdentifiers(this.context);
-			this.events.emit("afterBatch");
+			if (change !== undefined) {
+				const delta = this.changeFamily.intoDelta(change);
+				this.forest.applyDelta(delta);
+				this.identifiedNodes.scanIdentifiers(this.context);
+				this.events.emit("afterBatch");
+			}
 		});
 	}
 
