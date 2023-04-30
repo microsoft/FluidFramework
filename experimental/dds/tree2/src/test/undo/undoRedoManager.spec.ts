@@ -28,7 +28,7 @@ describe("UndoRedoManager", () => {
 			};
 			const childCommit = createTestGraphCommit([0], 1, localSessionId);
 			const manager = undoRedoManagerFactory(parent);
-			manager.trackCommit(childCommit);
+			manager.trackCommit(childCommit, UndoRedoManagerCommitType.Undoable);
 
 			const headUndoableCommit = manager.headUndoable;
 			assert.equal(headUndoableCommit?.commit, childCommit);

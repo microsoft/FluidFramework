@@ -43,14 +43,14 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 */
 	public trackCommit(
 		commit: GraphCommit<TChange>,
-		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
+		type: UndoRedoManagerCommitType,
 	): void {
 		const repairData = this.repairDataStoreProvider.createRepairData();
 		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
 
 		const parent =
-			undoRedoManagerCommitType === UndoRedoManagerCommitType.Undo ||
-			undoRedoManagerCommitType === UndoRedoManagerCommitType.Redoable
+			type === UndoRedoManagerCommitType.Undo ||
+			type === UndoRedoManagerCommitType.Redoable
 				? this.headRedoableCommit
 				: this.headUndoableCommit;
 		const undoableOrRedoable = {
@@ -59,7 +59,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairData,
 		};
 
-		switch (undoRedoManagerCommitType) {
+		switch (type) {
 			// Both undo commits and redoable commits result in a new head redoable commit
 			// being pushed to the redoable commit stack but only undo commits need to pop from the
 			// undoable commit stack.

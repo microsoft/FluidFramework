@@ -6,7 +6,6 @@
 
 import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
-import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
@@ -69,21 +68,6 @@ export namespace ConnectContainer {
 // @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
-}
-
-// @internal @sealed
-export class ContainerDevtools implements IContainerDevtools {
-    constructor(props: ContainerDevtoolsProps);
-    get audience(): IAudience;
-    readonly container: IContainer;
-    readonly containerData?: Record<string, IFluidLoadable>;
-    readonly containerId: string;
-    readonly containerNickname?: string;
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    getAudienceHistory(): readonly AudienceChangeLogEntry[];
-    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
 }
 
 // @public
@@ -234,20 +218,6 @@ export namespace DisconnectContainer {
     export type MessageData = HasContainerId;
 }
 
-// @internal
-export class FluidDevtools implements IFluidDevtools {
-    constructor(props?: FluidDevtoolsProps);
-    closeContainerDevtools(containerId: string): void;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get disposed(): boolean;
-    getAllContainerDevtools(): readonly IContainerDevtools[];
-    getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    readonly logger: DevtoolsLogger | undefined;
-    registerContainerDevtools(props: ContainerDevtoolsProps): void;
-}
-
 // @public
 export interface FluidDevtoolsProps {
     dataVisualizers?: Record<string, VisualizeSharedObject>;
@@ -381,18 +351,6 @@ export interface HasFluidObjectId {
 }
 
 // @public
-export interface IContainerDevtools extends IDisposable {
-    readonly audience: IAudience;
-    readonly container: IContainer;
-    readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
-    readonly containerId: string;
-    readonly containerNickname?: string;
-    dispose(): void;
-    getAudienceHistory(): readonly AudienceChangeLogEntry[];
-    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
-}
-
-// @public
 export interface IDevtoolsMessage<TData = unknown> {
     data: TData;
     type: string;
@@ -401,9 +359,6 @@ export interface IDevtoolsMessage<TData = unknown> {
 // @public
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerId: string): void;
-    getAllContainerDevtools(): readonly IContainerDevtools[];
-    getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    readonly logger: DevtoolsLogger | undefined;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 

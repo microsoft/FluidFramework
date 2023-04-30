@@ -666,20 +666,34 @@ describe("SharedTree", () => {
 
 		it("does not undo edits made remotely", async () => {
 			const value = "42";
-			const value2 = "43";
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 
-			// Insert node
-			setTestValue(tree1, value);
-			// Make a remote edit
-			setTestValue(tree2, value2);
+			const initialState: JsonableTree = {
+				type: brand("TestValue"),
+				value: "A",
+			};
+			initializeTestTree(tree2, initialState);
 			await provider.ensureSynchronized();
 
-			// Validate insertion
-			const valuesAfterInsertion = getTestValues(tree1);
-			assert.equal(valuesAfterInsertion[0], "42");
-			assert.equal(valuesAfterInsertion[1], "43");
+			assert.equal(getTestValue(tree1), "A");
+
+			// Insert node
+			insert(tree1, 0, value);
+			await provider.ensureSynchronized();
+
+			const testValuesAfterInsertion = getTestValues(tree1);
+			assert.equal(testValuesAfterInsertion[0], "A");
+			assert.equal(testValuesAfterInsertion[1], value);
+
+			// Make a remote edit
+			remove(tree2, 1, 1);
+			await provider.ensureSynchronized();
+
+			// Validate deletion
+			const testValuesAfterDeletion = getTestValues(tree1);
+			assert.equal(testValuesAfterDeletion.length, 1);
+			assert.equal(testValuesAfterDeletion[0], value);
 
 			// Undo
 			tree1.undo();
@@ -688,18 +702,17 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			// Validate undo
-			const valuesAfterUndo = getTestValues(tree1);
-			assert.equal(valuesAfterUndo[0], "43");
-			assert.equal(valuesAfterUndo.length, 1);
+			assert.equal(getTestValues(tree1).length, 0);
+			assert.equal(getTestValues(tree2).length, 0);
 
 			// Call redo
 			tree1.undo();
 			await provider.ensureSynchronized();
 
-			// Validate undo
-			const valuesAfterRedo = getTestValues(tree1);
-			assert.equal(valuesAfterRedo[0], "42");
-			assert.equal(valuesAfterRedo[1], "43");
+			// Validate redo
+			const testValuesAfterRedo = getTestValues(tree1);
+			assert.equal(testValuesAfterRedo.length, 1);
+			assert.equal(testValuesAfterRedo[0], value);
 		});
 
 		it("the insert of a node in a sequence field", async () => {
@@ -1574,6 +1587,38 @@ describe("SharedTree", () => {
 			parent.merge(child);
 			cursor = parent.forest.allocateCursor();
 			parent.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
+		itView("update anchors after merging a branch into a divergent parent", (parent) => {
+			setTestValue(parent, "A");
+			let cursor = parent.forest.allocateCursor();
+			moveToDetachedField(parent.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			const child = parent.fork();
+			setTestValue(parent, "P");
+			setTestValue(child, "B");
+			parent.merge(child);
+			cursor = parent.forest.allocateCursor();
+			parent.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
+		itView("update anchors after undoing", (view) => {
+			setTestValue(view, "A");
+			let cursor = view.forest.allocateCursor();
+			moveToDetachedField(view.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			setTestValue(view, "B");
+			view.undo();
+			cursor = view.forest.allocateCursor();
+			view.forest.tryMoveCursorToNode(anchor, cursor);
 			assert.equal(cursor.value, "A");
 			cursor.clear();
 		});

@@ -44,8 +44,8 @@ export const useAfterDisposeErrorText =
 	"The devtools instance has been disposed. Further operations are invalid.";
 
 /**
- * Error text thrown when a user attempts to register a {@link ContainerDevtools} instance for an ID that is already
- * registered with the {@link FluidDevtools}.
+ * Error text thrown when a user attempts to register a {@link IContainerDevtools} instance for an ID that is already
+ * registered with the {@link IFluidDevtools}.
  *
  * @privateRemarks Exported for test purposes only.
  */
@@ -57,7 +57,7 @@ export function getContainerAlreadyRegisteredErrorText(containerId: string): str
 }
 
 /**
- * Properties for configuring a {@link FluidDevtools}.
+ * Properties for configuring a {@link IFluidDevtools}.
  *
  * @public
  */
@@ -67,7 +67,7 @@ export interface FluidDevtoolsProps {
 	 *
 	 * @remarks
 	 *
-	 * Note: {@link FluidDevtools} does not register this logger with the Fluid runtime; that must be done separately.
+	 * Note: {@link IFluidDevtools} does not register this logger with the Fluid runtime; that must be done separately.
 	 *
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
@@ -119,12 +119,10 @@ export interface FluidDevtoolsProps {
  * (via {@link GetContainerList.Message}).
  *
  * TODO: Document others as they are added.
- *
- * @internal
  */
 export class FluidDevtools implements IFluidDevtools {
 	/**
-	 * {@inheritDoc IFluidDevtools.logger}
+	 * (optional) telemetry logger associated with the Fluid runtime.
 	 */
 	public readonly logger: DevtoolsLogger | undefined;
 
@@ -280,7 +278,8 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * {@inheritDoc IFluidDevtools.getContainerDevtools}
+	 * Gets the registed Container Devtools associated with the provided Container ID, if one exists.
+	 * Otherwise returns `undefined`.
 	 */
 	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {
 		if (this.disposed) {
@@ -291,16 +290,7 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Gets the set of features supported by this instance.
-	 */
-	private getSupportedFeatures(): DevtoolsFeatureFlags {
-		return {
-			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
-		};
-	}
-
-	/**
-	 * {@inheritDoc IFluidDevtools.getAllContainerDevtools}
+	 * Gets all Container-level devtools instances.
 	 */
 	public getAllContainerDevtools(): readonly IContainerDevtools[] {
 		if (this.disposed) {
@@ -335,6 +325,15 @@ export class FluidDevtools implements IFluidDevtools {
 		this.postContainerList();
 
 		this._disposed = true;
+	}
+
+	/**
+	 * Gets the set of features supported by this instance.
+	 */
+	private getSupportedFeatures(): DevtoolsFeatureFlags {
+		return {
+			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+		};
 	}
 }
 
