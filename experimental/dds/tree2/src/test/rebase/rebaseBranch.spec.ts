@@ -44,16 +44,20 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(outputContext, expected);
 	}
 
-	it("fails if branches are disjoin", () => {
+	it("fails if branches are disjoint", () => {
 		// 1 ─ 2
-		// 3 ─ 4
+		// 3
 		const n1 = node([], 1);
 		const n2 = node([1], 2, n1);
 		const n3 = node([], 3);
-		const n4 = node([3], 4, n3);
 
 		assert.throws(
-			() => rebaseBranch(new TestChangeRebaser(), n4, n2),
+			() => rebaseBranch(new TestChangeRebaser(), n3, n2),
+			(e) => validateAssertionError(e, "branches must be related"),
+		);
+
+		assert.throws(
+			() => rebaseBranch(new TestChangeRebaser(), n2, n3, n1),
 			(e) => validateAssertionError(e, "base is not in target branch"),
 		);
 	});

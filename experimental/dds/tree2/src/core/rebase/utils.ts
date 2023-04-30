@@ -114,7 +114,7 @@ export function rebaseBranch<TChange>(
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
 	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
-	assert(ancestor !== undefined, 0x574 /* branch A and branch B must be related */);
+	assert(ancestor !== undefined, "branches must be related");
 
 	// Find where `base` is in the target branch
 	const baseIndex = targetPath.findIndex((r) => r === targetCommit);
