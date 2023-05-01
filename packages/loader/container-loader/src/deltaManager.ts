@@ -80,6 +80,10 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 	}
 }
 
+type IMessageWithBatchMetadata = IDocumentMessage & {
+	metadata?: Partial<{ batch: boolean }>;
+};
+
 /**
  * Manages the flow of both inbound and outbound messages. This class ensures that shared objects receive delta
  * messages in order regardless of possible network conditions or timings causing out of order delivery.
@@ -159,7 +163,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private readonly deltaStorageDelayId = uuid();
 	private readonly deltaStreamDelayId = uuid();
 
-	private messageBuffer: IDocumentMessage[] = [];
+	private messageBuffer: IMessageWithBatchMetadata[] = [];
 
 	private _checkpointSequenceNumber: number | undefined;
 
@@ -231,7 +235,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	) {
 		// Back-compat ADO:3455
 		const backCompatRefSeqNum = referenceSequenceNumber ?? this.lastProcessedSequenceNumber;
-		const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
+		const messagePartial: Omit<IMessageWithBatchMetadata, "clientSequenceNumber"> = {
 			contents,
 			metadata,
 			referenceSequenceNumber: backCompatRefSeqNum,
@@ -253,7 +257,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.opsSize += contents.length;
 		}
 
-		this.messageBuffer.push(message);
+		this.messageBuffer.push(message as IMessageWithBatchMetadata);
 
 		if (message.type === MessageType.NoOp) {
 			this.noOpCount++;
