@@ -396,7 +396,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], ["a", "c"]);
 		});
 
-		it.only("optional field node exists constraint", () => {
+		it("optional field node exists constraint", () => {
 			const sequencer = new Sequencer();
 			const tree1 = TestTree.fromJson(["a"]);
 

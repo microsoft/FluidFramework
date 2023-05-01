@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { ReadonlyRepairDataStore } from "../repair";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
 import { GraphCommit, mintRevisionTag } from "./types";
 
@@ -78,12 +79,14 @@ export function rebaseBranch<TChange>(
 	sourceHead: GraphCommit<TChange>,
 	newBase: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
+	repairData?: ReadonlyRepairDataStore,
 ): [newSourceHead: GraphCommit<TChange>, sourceChange: TChange];
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	newBase: GraphCommit<TChange>,
 	targetHead = newBase,
+	repairData?: ReadonlyRepairDataStore,
 ): [newSourceHead: GraphCommit<TChange>, sourceChange: TChange] {
 	// Get both source and target as path arrays
 	const sourcePath: GraphCommit<TChange>[] = [];
@@ -142,7 +145,11 @@ export function rebaseBranch<TChange>(
 			targetRebasePath.push({ ...c, change });
 		}
 		inverses.unshift(
-			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
+			tagRollbackInverse(
+				changeRebaser.invert(c, true, repairData),
+				mintRevisionTag(),
+				c.revision,
+			),
 		);
 	}
 

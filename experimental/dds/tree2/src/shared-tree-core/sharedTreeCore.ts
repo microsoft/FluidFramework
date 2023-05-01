@@ -311,6 +311,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit,
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
+			this.localBranchUndoRedoManager.headUndoableCommit?.repairData,
 		);
 		const sequencedChange = this.editManager.getLastSequencedChange();
 		this.changeEvents.emit("newSequencedChange", sequencedChange);

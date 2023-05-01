@@ -24,7 +24,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly getHead?: () => GraphCommit<TChange>,
-		private headUndoableCommit?: UndoableCommit<TChange>,
+		public headUndoableCommit?: UndoableCommit<TChange>,
 	) {}
 
 	public get headUndoable(): UndoableCommit<TChange> | undefined {

@@ -373,6 +373,7 @@ export class EditManager<
 		newCommit: Commit<TChangeset>,
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
+		repairData?: ReadonlyRepairDataStore,
 	): Delta.Root {
 		if (newCommit.sessionId === this.localSessionId) {
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
@@ -424,7 +425,7 @@ export class EditManager<
 			});
 		}
 
-		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
+		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk(repairData));
 	}
 
 	public addLocalChange(
@@ -527,11 +528,13 @@ export class EditManager<
 		});
 	}
 
-	private rebaseLocalBranchOverTrunk(): TChangeset {
+	private rebaseLocalBranchOverTrunk(repairData?: ReadonlyRepairDataStore): TChangeset {
 		const [newLocalChanges, netChange] = rebaseBranch(
 			this.changeFamily.rebaser,
 			this.localBranch,
 			this.trunk,
+			this.trunk,
+			repairData,
 		);
 
 		this.localBranchUndoRedoManager.updateAfterRebase(
