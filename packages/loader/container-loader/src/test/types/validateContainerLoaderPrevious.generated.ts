@@ -71,7 +71,6 @@ declare function get_old_InterfaceDeclaration_IContainerConfig():
 declare function use_current_InterfaceDeclaration_IContainerConfig(
     use: TypeOnly<current.IContainerConfig>);
 use_current_InterfaceDeclaration_IContainerConfig(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerConfig());
 
 /*
@@ -84,7 +83,6 @@ declare function get_current_InterfaceDeclaration_IContainerConfig():
 declare function use_old_InterfaceDeclaration_IContainerConfig(
     use: TypeOnly<old.IContainerConfig>);
 use_old_InterfaceDeclaration_IContainerConfig(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerConfig());
 
 /*
@@ -241,7 +239,6 @@ declare function get_old_InterfaceDeclaration_IPendingContainerState():
 declare function use_current_InterfaceDeclaration_IPendingContainerState(
     use: TypeOnly<current.IPendingContainerState>);
 use_current_InterfaceDeclaration_IPendingContainerState(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IPendingContainerState());
 
 /*
@@ -254,7 +251,6 @@ declare function get_current_InterfaceDeclaration_IPendingContainerState():
 declare function use_old_InterfaceDeclaration_IPendingContainerState(
     use: TypeOnly<old.IPendingContainerState>);
 use_old_InterfaceDeclaration_IPendingContainerState(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IPendingContainerState());
 
 /*
@@ -280,6 +276,30 @@ declare function use_old_InterfaceDeclaration_IProtocolHandler(
     use: TypeOnly<old.IProtocolHandler>);
 use_old_InterfaceDeclaration_IProtocolHandler(
     get_current_InterfaceDeclaration_IProtocolHandler());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializableBlobContents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISerializableBlobContents():
+    TypeOnly<old.ISerializableBlobContents>;
+declare function use_current_InterfaceDeclaration_ISerializableBlobContents(
+    use: TypeOnly<current.ISerializableBlobContents>);
+use_current_InterfaceDeclaration_ISerializableBlobContents(
+    get_old_InterfaceDeclaration_ISerializableBlobContents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializableBlobContents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISerializableBlobContents():
+    TypeOnly<current.ISerializableBlobContents>;
+declare function use_old_InterfaceDeclaration_ISerializableBlobContents(
+    use: TypeOnly<old.ISerializableBlobContents>);
+use_old_InterfaceDeclaration_ISerializableBlobContents(
+    get_current_InterfaceDeclaration_ISerializableBlobContents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -328,6 +348,30 @@ declare function use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
     use: TypeOnly<old.ProtocolHandlerBuilder>);
 use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
     get_current_TypeAliasDeclaration_ProtocolHandlerBuilder());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_requestResolvedObjectFromContainer": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_requestResolvedObjectFromContainer():
+    TypeOnly<typeof old.requestResolvedObjectFromContainer>;
+declare function use_current_FunctionDeclaration_requestResolvedObjectFromContainer(
+    use: TypeOnly<typeof current.requestResolvedObjectFromContainer>);
+use_current_FunctionDeclaration_requestResolvedObjectFromContainer(
+    get_old_FunctionDeclaration_requestResolvedObjectFromContainer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_requestResolvedObjectFromContainer": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_requestResolvedObjectFromContainer():
+    TypeOnly<typeof current.requestResolvedObjectFromContainer>;
+declare function use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
+    use: TypeOnly<typeof old.requestResolvedObjectFromContainer>);
+use_old_FunctionDeclaration_requestResolvedObjectFromContainer(
+    get_current_FunctionDeclaration_requestResolvedObjectFromContainer());
 
 /*
 * Validate forward compat by using old type in place of current type

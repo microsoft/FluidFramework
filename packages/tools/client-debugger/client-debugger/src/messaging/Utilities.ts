@@ -106,7 +106,7 @@ export function handleIncomingMessage(
 ): void {
 	// TODO: remove loggingOptions once things settle.
 
-	if (message === undefined || !isDebuggerMessage(message)) {
+	if (message === undefined || !isDevtoolsMessage(message)) {
 		return;
 	}
 
@@ -130,7 +130,7 @@ export function handleIncomingMessage(
  *
  * @internal
  */
-export function isDebuggerMessage(
+export function isDevtoolsMessage(
 	value: Partial<ISourcedDevtoolsMessage>,
 ): value is ISourcedDevtoolsMessage {
 	return typeof value.source === "string" && value.type !== undefined;

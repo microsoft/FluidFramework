@@ -24,6 +24,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
 import { GitManager } from "./gitManager";
 import { Historian } from "./historian";
 import { RestWrapper } from "./restWrapperBase";
+import { INormalizedWholeSummary } from "./contracts";
 
 /**
  * Amount of time between discoveries within which we don't need to rediscover on re-connect.
@@ -63,7 +64,8 @@ export class DocumentService implements api.IDocumentService {
 		private readonly documentStorageServicePolicies: api.IDocumentStorageServicePolicies,
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
-		private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
+		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary>,
+		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
 	) {}
 
@@ -125,7 +127,8 @@ export class DocumentService implements api.IDocumentService {
 			this.documentStorageServicePolicies,
 			this.driverPolicies,
 			this.blobCache,
-			this.snapshotTreeCache,
+			this.wholeSnapshotTreeCache,
+			this.shreddedSummaryTreeCache,
 			noCacheStorageManager,
 			getStorageManager,
 		);
@@ -184,7 +187,7 @@ export class DocumentService implements api.IDocumentService {
 	 */
 	public async connectToDeltaStream(client: IClient): Promise<api.IDocumentDeltaConnection> {
 		const connect = async (refreshToken?: boolean) => {
-			let ordererToken = this.ordererRestWrapper.getToken();
+			let ordererToken = await this.ordererRestWrapper.getToken();
 			if (this.shouldUpdateDiscoveredSessionInfo()) {
 				await this.refreshDiscovery();
 			}

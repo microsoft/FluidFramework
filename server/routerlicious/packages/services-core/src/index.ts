@@ -41,6 +41,7 @@ export {
 	IDocumentStorage,
 	IScribe,
 } from "./document";
+export { IDocumentManager } from "./documentManager";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
 export {
 	IHttpServer,
@@ -55,7 +56,6 @@ export {
 	IContext,
 	IContextErrorData,
 	ILogger,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
@@ -102,7 +102,6 @@ export { IMessageBatch, IPublisher, ITopic } from "./publisher";
 export {
 	IConsumer,
 	IPartition,
-	IPartitionWithEpoch,
 	IPendingBoxcar,
 	IPendingMessage,
 	IProducer,
@@ -116,6 +115,8 @@ export {
 	shouldRetryNetworkError,
 } from "./runWithRetry";
 export { ISecretManager } from "./secretManager";
+export { IStorageNameAllocator } from "./storageNameAllocator";
+export { IStorageNameRetriever } from "./storageNameRetriever";
 export {
 	IAgent,
 	IAgentUploader,
@@ -126,6 +127,7 @@ export {
 export {
 	ITenant,
 	ITenantConfig,
+	ITenantConfigManager,
 	ITenantCustomData,
 	ITenantKeys,
 	ITenantManager,
@@ -149,5 +151,5 @@ export {
 	ITokenRevocationManager,
 	ITokenRevocationResponse,
 	TokenRevocationError,
-	createCompositeTokenId
+	createCompositeTokenId,
 } from "./tokenRevocationManager";

@@ -42,14 +42,14 @@ export function create(
 		sha: string,
 		count: number,
 	): Promise<git.ICommitDetails[]> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getCommits(sha, count);
 	}
 

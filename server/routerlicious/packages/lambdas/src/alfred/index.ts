@@ -266,27 +266,29 @@ export function configureWebSocketServices(
 			}, mSecUntilExpiration);
 		}
 
-        async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-            const startTime = Date.now();
-            const throttleErrorPerCluster = checkThrottleAndUsage(
-                connectThrottlerPerCluster,
-                getSocketConnectThrottleId("connectDoc"),
-                message.tenantId,
-                logger);
-            if (throttleErrorPerCluster) {
-                return Promise.reject(throttleErrorPerCluster);
-            }
-            const throttleErrorPerTenant = checkThrottleAndUsage(
-                connectThrottlerPerTenant,
-                getSocketConnectThrottleId(message.tenantId),
-                message.tenantId,
-                logger);
-            if (throttleErrorPerTenant) {
-                return Promise.reject(throttleErrorPerTenant);
-            }
-            if (!message.token) {
-                throw new NetworkError(403, "Must provide an authorization token");
-            }
+		async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+			const startTime = Date.now();
+			const throttleErrorPerCluster = checkThrottleAndUsage(
+				connectThrottlerPerCluster,
+				getSocketConnectThrottleId("connectDoc"),
+				message.tenantId,
+				logger,
+			);
+			if (throttleErrorPerCluster) {
+				return Promise.reject(throttleErrorPerCluster);
+			}
+			const throttleErrorPerTenant = checkThrottleAndUsage(
+				connectThrottlerPerTenant,
+				getSocketConnectThrottleId(message.tenantId),
+				message.tenantId,
+				logger,
+			);
+			if (throttleErrorPerTenant) {
+				return Promise.reject(throttleErrorPerTenant);
+			}
+			if (!message.token) {
+				throw new NetworkError(403, "Must provide an authorization token");
+			}
 
 			// Validate token signature and claims
 			const token = message.token;
@@ -511,19 +513,27 @@ export function configureWebSocketServices(
 					socket.disconnect(true);
 				});
 
-                let clientJoinMessageServerMetadata: any;
-                if (core.DefaultServiceConfiguration.enableTraces &&
-                    sampleMessages(numberOfMessagesPerTrace)) {
-                        clientJoinMessageServerMetadata = {
-                            connectDocumentStartTime: startTime
-                        };
-                    }
-                connection.connect(clientJoinMessageServerMetadata)
-                    .catch(async (err) => {
-                        const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
-                        connectDocumentOrdererConnectionMetric.error("Failed to establish orderer connection", err);
-                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-                    });
+				let clientJoinMessageServerMetadata: any;
+				if (
+					core.DefaultServiceConfiguration.enableTraces &&
+					sampleMessages(numberOfMessagesPerTrace)
+				) {
+					clientJoinMessageServerMetadata = {
+						connectDocumentStartTime: startTime,
+					};
+				}
+				connection.connect(clientJoinMessageServerMetadata).catch(async (err) => {
+					const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(
+						err,
+						undefined,
+						2,
+					)}`;
+					connectDocumentOrdererConnectionMetric.error(
+						"Failed to establish orderer connection",
+						err,
+					);
+					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+				});
 
 				connectionsMap.set(clientId, connection);
 				if (connectionsMap.size > 1) {

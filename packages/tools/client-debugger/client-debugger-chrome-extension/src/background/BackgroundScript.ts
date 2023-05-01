@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDevtoolsMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
+import {
+	ISourcedDevtoolsMessage,
+	devtoolsMessageSource,
+	isDevtoolsMessage,
+} from "@fluid-tools/client-debugger";
 
 import {
 	DevToolsInitAcknowledgement,
@@ -14,10 +18,14 @@ import {
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging";
+// eslint-disable-next-line import/no-internal-modules
+import { browser } from "../utilities/Globals";
 import {
 	backgroundScriptMessageLoggingOptions,
 	formatBackgroundScriptMessageForLogging,
 } from "./Logging";
+
+type Port = chrome.runtime.Port;
 
 /**
  * This script runs as the extension's Background Worker.
@@ -37,16 +45,16 @@ import {
 console.log(formatBackgroundScriptMessageForLogging("Initializing Background Worker."));
 
 // Only establish messaging when activated by the Devtools Script.
-chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void => {
+browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 	// Note: this is captured by the devtoolsMessageListener lambda below.
-	let tabConnection: chrome.runtime.Port | undefined;
+	let tabConnection: Port | undefined;
 
 	/**
 	 * Listen for init messages from the Devtools Script, and instantiate tab (Content Script)
 	 * connections as needed.
 	 */
 	const devtoolsMessageListener = (message: Partial<ISourcedDevtoolsMessage>): void => {
-		if (!isDebuggerMessage(message)) {
+		if (!isDevtoolsMessage(message)) {
 			// Since this handler is attached strictly to our Devtools Script port,
 			// we should *only* see our own messages.
 			console.error(
@@ -69,10 +77,10 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 
 			const { tabId } = (message as DevToolsInitMessage).data;
 
-			console.log(formatBackgroundScriptMessageForLogging(`Connecting to tab: ${tabId}.`));
+			console.log(formatBackgroundScriptMessageForLogging(`Connecting to tab: ${tabId}...`));
 
 			// Wait until the tab is loaded.
-			chrome.tabs.get(tabId).then(
+			browser.tabs.get(tabId).then(
 				(tab) => {
 					if (tab.id !== tabId) {
 						throw new Error(
@@ -80,7 +88,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 						);
 					}
 
-					tabConnection = chrome.tabs.connect(tabId, { name: "Content Script" });
+					tabConnection = browser.tabs.connect(tabId, { name: "Content Script" });
 
 					console.log(
 						formatBackgroundScriptMessageForLogging(`Connected to tab: ${tabId}.`),
@@ -90,10 +98,14 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 
 					tabConnection.onMessage.addListener(
 						(tabMessage: Partial<ISourcedDevtoolsMessage>): void => {
-							if (isDebuggerMessage(tabMessage)) {
+							// Only forward messages coming from the devtools library on the page.
+							if (
+								isDevtoolsMessage(tabMessage) &&
+								tabMessage.source === devtoolsMessageSource
+							) {
 								relayMessageToPort(
 									tabMessage,
-									"CONTENT_SCRIPT",
+									"Content Script",
 									devtoolsPort,
 									backgroundScriptMessageLoggingOptions,
 								);
@@ -114,7 +126,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 
 					console.log(
 						formatBackgroundScriptMessageForLogging(
-							"Informing DevTools script that tab connection is ready.",
+							"Informing Devtools script that tab connection is ready.",
 						),
 					);
 
@@ -157,12 +169,15 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 					message,
 				);
 			} else {
-				relayMessageToPort(
-					message,
-					"Background Script",
-					tabConnection,
-					backgroundScriptMessageLoggingOptions,
-				);
+				if (message.source === extensionMessageSource) {
+					// Only relay known messages from the extension
+					relayMessageToPort(
+						message,
+						"Devtools Script",
+						tabConnection,
+						backgroundScriptMessageLoggingOptions,
+					);
+				}
 			}
 		}
 	};

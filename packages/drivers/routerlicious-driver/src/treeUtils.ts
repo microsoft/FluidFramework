@@ -10,7 +10,7 @@ import {
 	ISummaryTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { INormalizedWholeSummary } from "@fluidframework/server-services-client";
+import { INormalizedWholeSummary } from "./contracts";
 
 /**
  * Summary tree assembler props
@@ -118,8 +118,14 @@ export function evalBlobsAndTrees(snapshot: INormalizedWholeSummary) {
 }
 
 export function validateBlobsAndTrees(snapshot: ISnapshotTree) {
-	assert(snapshot.trees !== undefined, "Returned r11s snapshot is malformed. No trees!");
-	assert(snapshot.blobs !== undefined, "Returned r11s snapshot is malformed. No blobs!");
+	assert(
+		snapshot.trees !== undefined,
+		0x5d0 /* Returned r11s snapshot is malformed. No trees! */,
+	);
+	assert(
+		snapshot.blobs !== undefined,
+		0x5d1 /* Returned r11s snapshot is malformed. No blobs! */,
+	);
 }
 
 function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {

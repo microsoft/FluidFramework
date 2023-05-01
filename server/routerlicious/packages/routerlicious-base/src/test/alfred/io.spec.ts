@@ -107,6 +107,7 @@ describe("Routerlicious", () => {
 						testTenantManager,
 						false,
 						await databaseManager.getDeltaCollection(undefined, undefined),
+						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
 						producer,
@@ -566,6 +567,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						testTenantManager,
 						false,
 						await databaseManager.getDeltaCollection(undefined, undefined),
+						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
 						producer,
@@ -793,6 +795,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				testTenantManager,
 				false,
 				await databaseManager.getDeltaCollection(undefined, undefined),
+				undefined,
 			);
 		});
 
@@ -810,7 +813,6 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				testId,
 				summaryTree,
 				10,
-				1,
 				defaultHash,
 				url,
 				url,

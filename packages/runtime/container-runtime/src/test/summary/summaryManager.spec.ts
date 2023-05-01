@@ -77,7 +77,8 @@ describe("Summary Manager", () => {
 		minimumSequenceNumber: 5,
 		referenceSequenceNumber: 5,
 		sequenceNumber: 6,
-		term: 0,
+		// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+		term: 1,
 		timestamp: 6,
 		type: MessageType.Summarize,
 		contents: {

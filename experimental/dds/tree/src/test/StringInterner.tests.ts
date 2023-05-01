@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from 'assert';
 import { expect } from 'chai';
+import { validateAssertionError } from '@fluidframework/test-runtime-utils';
 import { MutableStringInterner } from '../StringInterner';
 
 describe('MutableStringInterner', () => {
@@ -47,7 +49,10 @@ describe('MutableStringInterner', () => {
 	it("throws an error when trying to retrieve a string that hasn't been encountered", () => {
 		const interner = new MutableStringInterner();
 
-		expect(() => interner.getString(0)).to.throw('No string associated with 0.');
+		assert.throws(
+			() => interner.getString(0),
+			(e) => validateAssertionError(e, 'No string associated with 0.')
+		);
 	});
 
 	it('can return a serializable representation of its state', () => {

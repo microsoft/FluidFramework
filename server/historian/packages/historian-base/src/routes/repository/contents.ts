@@ -41,14 +41,14 @@ export function create(
 		path: string,
 		ref: string,
 	): Promise<any> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getContent(path, ref);
 	}
 

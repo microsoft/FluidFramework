@@ -25,6 +25,7 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluid-internal/test-version-utils";
+import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils";
 
 /**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
@@ -313,11 +314,21 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				// Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.
 				await waitForInactiveTimeout();
 
-				// Load a non-summarizer container from the above summary that uses the mock logger.
+				// Load a non-summarizer container from the above summary that uses the mock logger. This container has to
+				// be in "write" mode for GC to initialize unreferenced nodes from summary.
 				const container2 = await provider.loadTestContainer(
-					{ ...testContainerConfig, loaderProps: { logger: mockLogger } },
+					{
+						...testContainerConfig,
+						loaderProps: { logger: mockLogger },
+					},
 					{ [LoaderHeader.version]: summaryVersion1 },
 				);
+				const defaultDataStoreContainer2 = await requestFluidObject<ITestDataObject>(
+					container2,
+					"/",
+				);
+				defaultDataStoreContainer2._root.set("mode", "write");
+				await waitForContainerWriteModeConnectionWrite(container2);
 
 				// Load the inactive data store. This should result in a loaded event from the non-summarizer container.
 				await container2.request({ url });
