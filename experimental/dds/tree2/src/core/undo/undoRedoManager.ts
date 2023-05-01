@@ -19,6 +19,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
 	 * @param getHead - Function for retrieving the head commit of the branch associated with this undo redo manager.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
+	 * @param headRedoableCommit - Optional commit to set as the initial redoable commit.
 	 */
 	public constructor(
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
