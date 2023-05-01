@@ -4,6 +4,9 @@
 
 # ORDER MATTERS! The last matching pattern has the most precedence.
 
+# When updating this file, you should also consider updating the GitHub label config in actions-labeler.yml so that
+# any area changes are labeled correctly.
+
 # Files in the root
 /*.*                                                                      @microsoft/fluid-cr-core
 
