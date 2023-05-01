@@ -136,5 +136,6 @@ const getReleaseNotesTitle = (
 	releaseType: VersionBumpType,
 ): string => {
 	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
+  // e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
 	return `${name} v${version} (${releaseType})`;
 };
