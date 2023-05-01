@@ -162,12 +162,24 @@ export function rebaseBranch<TChange>(
 	// Figure out how much of the trunk to start rebasing over.
 	const targetRebasePath = targetPath.slice(0, newBaseIndex + 1);
 	const newSourceCommits: GraphCommit<TChange>[] = [...targetRebasePath];
+	/** The commit on the target branch that the new source branch branches off of */
 	const newBase = targetPath[newBaseIndex];
-	// Early out if the source branch's commits and the commits it is being rebased over are equivalent,
-	// i.e. they have exactly the same revision tags in the same order.
-	if (sourceSet.size === 0 && sourcePath.length === targetRebasePath.length) {
+
+	// If all commits that are about to be rebased over on the target branch are already on the source branch
+	// and in the same order, then no rebasing needs to occur. Those commits can simply be removed from the
+	// source branch, and the remaining commits on the source branch are reparented off of the new base commit
+	if (isPrefix(targetRebasePath, sourcePath, (a, b) => a.revision === b.revision)) {
+		for (let i = newBaseIndex + 1; i < sourcePath.length; i++) {
+			const { change, revision, sessionId } = sourcePath[i];
+			newSourceCommits.push({
+				change,
+				revision,
+				sessionId,
+				parent: newSourceCommits[i - 1] ?? newBase,
+			});
+		}
 		return [
-			newBase,
+			newSourceCommits[newSourceCommits.length - 1],
 			undefined,
 			{
 				newBase,
@@ -391,4 +403,19 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		pathB.length = 0;
 	}
 	return undefined;
+}
+
+/** True iff all elements in `prefix` are the first elements in `of` */
+function isPrefix<T>(prefix: T[], of: T[], isEqual: (a: T, b: T) => boolean = Object.is): boolean {
+	if (prefix.length > of.length) {
+		return false;
+	}
+
+	for (let i = 0; i < prefix.length; i++) {
+		if (!isEqual(prefix[i], of[i])) {
+			return false;
+		}
+	}
+
+	return true;
 }
