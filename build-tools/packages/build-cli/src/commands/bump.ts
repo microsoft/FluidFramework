@@ -106,7 +106,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		const rgOrPackageName = args.package_or_release_group;
 		if (rgOrPackageName === undefined) {
-			this.error("ERROR: No dependency provided.");
+			this.error("No dependency provided.");
 		}
 
 		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
