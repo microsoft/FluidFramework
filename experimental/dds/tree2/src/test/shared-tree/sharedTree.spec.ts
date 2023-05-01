@@ -1524,6 +1524,23 @@ describe("SharedTree", () => {
 			cursor.clear();
 		});
 
+		itView("update anchors after merging a branch into a divergent parent", (parent) => {
+			setTestValue(parent, "A");
+			let cursor = parent.forest.allocateCursor();
+			moveToDetachedField(parent.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			const child = parent.fork();
+			setTestValue(parent, "P");
+			setTestValue(child, "B");
+			parent.merge(child);
+			cursor = parent.forest.allocateCursor();
+			parent.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
 		itView("can be mutated after merging", (parent) => {
 			const child = parent.fork();
 			setTestValue(child, "A");

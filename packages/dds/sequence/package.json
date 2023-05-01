@@ -117,19 +117,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_Interval": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SequenceInterval": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ISerializableInterval": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IntervalLocator": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
