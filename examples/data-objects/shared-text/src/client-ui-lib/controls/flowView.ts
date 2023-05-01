@@ -3429,19 +3429,21 @@ export class FlowView extends ui.Component {
 	}
 
 	private remotePresenceFromEdit(
-		clientId: string,
+		clientId: string | null,
 		refseq: number,
 		oldpos: number,
 		posAdjust = 0,
 	) {
-		const remotePosInfo: IRemotePresenceInfo = {
-			origMark: -1,
-			origPos: oldpos + posAdjust,
-			refseq,
-			type: "selection",
-		};
+		if (clientId !== null) {
+			const remotePosInfo: IRemotePresenceInfo = {
+				origMark: -1,
+				origPos: oldpos + posAdjust,
+				refseq,
+				type: "selection",
+			};
 
-		this.remotePresenceToLocal(clientId, remotePosInfo);
+			this.remotePresenceToLocal(clientId, remotePosInfo);
+		}
 	}
 
 	private remotePresenceToLocal(

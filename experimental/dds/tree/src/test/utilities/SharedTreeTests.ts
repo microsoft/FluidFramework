@@ -403,9 +403,11 @@ export function runSharedTreeOperationsTests(
 					containerRuntimeFactory.processAllMessages();
 					const originalPushMessage = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
 					containerRuntimeFactory.pushMessage = (msg) => {
-						// Drop the version property to replicate ops created before the version property existed
-						msg.contents.version = undefined;
-						originalPushMessage(msg);
+						const newMsg = msg as typeof msg & { contents?: { version?: undefined } };
+						if (newMsg.contents) {
+							newMsg.contents.version = undefined;
+						}
+						originalPushMessage(newMsg);
 					};
 
 					// Ensure that an edit can be passed and processed between two trees as normal
