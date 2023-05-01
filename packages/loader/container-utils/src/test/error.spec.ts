@@ -51,7 +51,7 @@ describe("Errors", () => {
 		it("Should skip coercion for LoggingError with errorType", () => {
 			const originalError = new LoggingError("Inherited error message", {
 				errorType: "Some error type",
-				otherProperty: "Considered PII-free property",
+				otherProperty: "some safe-to-log property",
 			});
 			const coercedError = DataProcessingError.wrapIfUnrecognized(
 				originalError,
@@ -99,7 +99,7 @@ describe("Errors", () => {
 		});
 		it("Should coerce LoggingError missing errorType", () => {
 			const originalError = new LoggingError("Inherited error message", {
-				otherProperty: "Considered PII-free property",
+				otherProperty: "some safe-to-log property",
 			});
 			const coercedError = DataProcessingError.wrapIfUnrecognized(
 				originalError,
@@ -115,15 +115,14 @@ describe("Errors", () => {
 			assert(coercedError.getTelemetryProperties().untrustedOrigin === undefined);
 			assert(coercedError.message === "Inherited error message");
 			assert(
-				coercedError.getTelemetryProperties().otherProperty ===
-					"Considered PII-free property",
+				coercedError.getTelemetryProperties().otherProperty === "some safe-to-log property",
 				"telemetryProps should be copied when wrapping",
 			);
 		});
 
 		it("Should coerce Normalized LoggingError with errorType", () => {
 			const originalError = new LoggingError("Inherited error message", {
-				otherProperty: "Considered PII-free property",
+				otherProperty: "some safe-to-log property",
 			});
 			const normalizedLoggingError = normalizeError(originalError);
 			const coercedError = DataProcessingError.wrapIfUnrecognized(
@@ -139,8 +138,7 @@ describe("Errors", () => {
 			assert(coercedError.getTelemetryProperties().untrustedOrigin === undefined);
 			assert(coercedError.message === "Inherited error message");
 			assert(
-				coercedError.getTelemetryProperties().otherProperty ===
-					"Considered PII-free property",
+				coercedError.getTelemetryProperties().otherProperty === "some safe-to-log property",
 				"telemetryProps should be copied when wrapping",
 			);
 		});

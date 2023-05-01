@@ -178,9 +178,11 @@ export class EditManager<
 		// Whenever the branch forks, register the new fork
 		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offRebase = branch.on("rebase", () => {
-			untrackBranch(branch, trunkBase.sequenceNumber);
-			trunkBase.sequenceNumber = trackBranch(branch);
+		const offRebase = branch.on("change", ({ type }) => {
+			if (type === "rebase") {
+				untrackBranch(branch, trunkBase.sequenceNumber);
+				trunkBase.sequenceNumber = trackBranch(branch);
+			}
 		});
 		// When the branch is disposed, update our branch set and trim the trunk
 		const offDispose = branch.on("dispose", () => {
@@ -427,7 +429,12 @@ export class EditManager<
 			});
 		}
 
-		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk(repairData));
+		const delta = this.rebaseLocalBranchOverTrunk(repairData);
+		if (delta === undefined) {
+			return emptyDelta;
+		}
+
+		return this.changeFamily.intoDelta(delta);
 	}
 
 	public addLocalChange(
@@ -532,7 +539,7 @@ export class EditManager<
 
 	private rebaseLocalBranchOverTrunk(
 		repairData?: Map<RevisionTag, ReadonlyRepairDataStore>,
-	): TChangeset {
+	): TChangeset | undefined {
 		const [newLocalChanges, netChange] = rebaseBranch(
 			this.changeFamily.rebaser,
 			this.localBranch,
@@ -548,7 +555,7 @@ export class EditManager<
 
 		this.localBranch = newLocalChanges;
 
-		if (this.anchors !== undefined) {
+		if (this.anchors !== undefined && netChange !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
 		}
 

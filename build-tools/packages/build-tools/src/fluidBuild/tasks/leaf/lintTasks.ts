@@ -13,9 +13,7 @@ abstract class LintBaseTask extends TscDependentTask {
 	protected addDependentTasks(dependentTasks: LeafTask[]) {
 		for (const child of this.node.dependentPackages) {
 			// TODO: Need to look at the output from tsconfig
-			if (this.addChildTask(dependentTasks, child, "tsc")) {
-				this.logVerboseDependency(child, "tsc");
-			}
+			this.addChildCompileAndCopyScripts(dependentTasks, child, "tsc");
 		}
 		super.addDependentTasks(dependentTasks);
 	}

@@ -94,11 +94,12 @@
 		"npm-check-updates": "^16.0.0",
 		"oclif": "^3.7.0",
 		"prettier": "~2.6.2",
+		"read-pkg-up": "^7.0.1",
 		"semver": "^7.3.7",
 		"semver-utils": "^1.1.4",
 		"simple-git": "^3.16.1",
 		"sort-json": "^2.0.1",
-		"sort-package-json": "1.54.0",
+		"sort-package-json": "1.57.0",
 		"strip-ansi": "^6.0.0",
 		"table": "^6.8.0",
 		"type-fest": "^2.19.0"
@@ -178,6 +179,15 @@
 			"release": {
 				"description": "Release commands are used to manage the Fluid release process."
 			}
+		}
+	},
+	"pnpm": {
+		"updateConfig": {
+			"ignoreDependencies": [
+				"read-pkg-up",
+				"type-fest",
+				"typescript"
+			]
 		}
 	}
 }
