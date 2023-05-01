@@ -248,9 +248,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
 	});
 }
 
-const getCodeProposal =
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	(quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
+const getCodeProposal = (quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
  * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
@@ -736,7 +734,7 @@ export class Container
 				// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
 				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
 				dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
-				dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+				dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId ?? "server",
 				dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 				connectionStateDuration: () =>
 					performance.now() - this.connectionTransitionTimes[this.connectionState],
