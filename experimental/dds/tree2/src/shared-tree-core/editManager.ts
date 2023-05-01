@@ -415,6 +415,7 @@ export class EditManager<
 				newCommit.change,
 				rebasedBranch,
 				this.trunk,
+				repairData,
 			);
 
 			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));

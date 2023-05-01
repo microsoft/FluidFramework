@@ -144,6 +144,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
 		repairDataStoreProvider: IRepairDataStoreProvider,
+		private readonly repairData: RepairDataStore,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -229,12 +230,17 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private submitCommit(
 		commit: Commit<TChange>,
 		undoRedoType: UndoRedoManagerCommitType | undefined,
+		delta: Delta.Root,
 	): void {
 		// Edits should not be submitted until all transactions finish
 		assert(!this.isTransacting(), "Unexpected edit submitted during transaction");
 		// Nested transactions are tracked as part of the outermost transaction
 		if (undoRedoType !== undefined) {
 			this.editManager.localBranchUndoRedoManager.trackCommit(commit, undoRedoType);
+			const repairStore =
+				this.editManager.localBranchUndoRedoManager.repairDataStoreProvider.createRepairData();
+			repairStore.capture(delta, commit.revision);
+			// this.repairData.capture(delta, commit.revision);
 		}
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -271,7 +277,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// submitCommit should not be called for stashed ops so this is kept separate from
 		// addLocalChange
 		if (!this.isTransacting()) {
-			this.submitCommit(commit, undoRedoType);
+			this.submitCommit(commit, undoRedoType, delta);
 		}
 
 		this.emitLocalChange(change, delta);
@@ -311,7 +317,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit,
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
-			this.localBranchUndoRedoManager.headUndoableCommit?.repairData,
+			this.repairData,
 		);
 		const sequencedChange = this.editManager.getLastSequencedChange();
 		this.changeEvents.emit("newSequencedChange", sequencedChange);
@@ -335,7 +341,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editor.exitTransaction();
 		const squashCommit = this.editManager.squashLocalChanges(startRevision);
 		if (!this.isTransacting()) {
-			this.submitCommit(squashCommit, UndoRedoManagerCommitType.Undoable);
+			this.submitCommit(
+				squashCommit,
+				UndoRedoManagerCommitType.Undoable,
+				this.changeFamily.intoDelta(squashCommit.change),
+			);
 		}
 		return TransactionResult.Commit;
 	}
@@ -464,7 +474,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const { revision } = parseCommit(content, this.changeCodec);
 		const [commit] = this.editManager.findLocalCommit(revision);
 		// Skip tracking commits as undoable during resubmit.
-		this.submitCommit(commit, undefined);
+		this.submitCommit(commit, undefined, this.changeFamily.intoDelta(commit.change));
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
@@ -475,6 +485,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit,
 			UndoRedoManagerCommitType.Undoable,
 		);
+		this.repairData.capture(delta, revision);
 		this.emitLocalChange(change, delta);
 		return;
 	}

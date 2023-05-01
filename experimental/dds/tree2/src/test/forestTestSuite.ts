@@ -23,6 +23,7 @@ import {
 	UpPath,
 	clonePath,
 	ITreeCursor,
+	mintRevisionTag,
 } from "../core";
 import {
 	cursorToJsonObject,
@@ -41,6 +42,7 @@ import {
 	singleTextCursor,
 	defaultSchemaPolicy,
 	isNeverField,
+	ForestRepairDataStore,
 } from "../feature-libraries";
 import { MockDependent } from "./utils";
 import { testGeneralPurposeTreeCursor } from "./cursorTestSuite";

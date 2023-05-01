@@ -170,6 +170,7 @@ export function rebaseChange<TChange>(
 	change: TChange,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
+	repairData?: ReadonlyRepairDataStore,
 ): TChange {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -180,7 +181,10 @@ export function rebaseChange<TChange>(
 
 	const changeRebasedToRef = sourcePath.reduceRight(
 		(newChange, branchCommit) =>
-			changeRebaser.rebase(newChange, inverseFromCommit(changeRebaser, branchCommit)),
+			changeRebaser.rebase(
+				newChange,
+				inverseFromCommit(changeRebaser, branchCommit, repairData),
+			),
 		change,
 	);
 
@@ -198,9 +202,10 @@ function rebaseChangeOverChanges<TChange>(
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
+	repairData?: ReadonlyRepairDataStore,
 ): TaggedChange<TChange> {
 	return tagRollbackInverse(
-		changeRebaser.invert(commit, true),
+		changeRebaser.invert(commit, true, repairData),
 		mintRevisionTag(),
 		commit.revision,
 	);

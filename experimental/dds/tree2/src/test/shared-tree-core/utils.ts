@@ -13,7 +13,7 @@ import {
 	ModularChangeset,
 } from "../../feature-libraries";
 import { TransactionResult } from "../../util";
-import { MockRepairDataStoreProvider } from "../utils";
+import { MockRepairDataStore, MockRepairDataStoreProvider } from "../utils";
 
 /** A `SharedTreeCore` with protected methods exposed but no additional behavior */
 export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
@@ -34,6 +34,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			defaultChangeFamily,
 			anchors,
 			new MockRepairDataStoreProvider(),
+			new MockRepairDataStore(),
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

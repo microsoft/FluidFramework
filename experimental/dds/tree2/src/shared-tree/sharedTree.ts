@@ -51,6 +51,7 @@ import {
 	ForestRepairDataStoreProvider,
 	repairDataStoreFromForest,
 	ModularChangeset,
+	ForestRepairDataStore,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
@@ -304,6 +305,7 @@ export class SharedTree
 			defaultChangeFamily,
 			anchors,
 			new ForestRepairDataStoreProvider(forest, schema),
+			new ForestRepairDataStore(() => this.forest),
 			id,
 			runtime,
 			attributes,
