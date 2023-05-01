@@ -15,6 +15,8 @@ import {
 	IChunkedOp,
 	ContainerMessageType,
 	unpackRuntimeMessage,
+	ISummaryNackMessage,
+	ISummaryAckMessage,
 } from "@fluidframework/container-runtime";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 
@@ -425,7 +427,8 @@ class SummaryAnalyzer implements IMessageAnalyzer {
 			this.lastSummaryOp = message.sequenceNumber;
 		}
 		if (message.type === MessageType.SummaryAck || message.type === MessageType.SummaryNack) {
-			const contents: ISummaryProposal = message.contents.summaryProposal;
+			const summaryMessage = message as ISummaryAckMessage | ISummaryNackMessage;
+			const contents: ISummaryProposal = summaryMessage.contents?.summaryProposal;
 			const distance = message.sequenceNumber - contents.summarySequenceNumber;
 			if (distance > this.maxResponse) {
 				this.maxResponse = distance;
@@ -550,6 +553,10 @@ function processOp(
 			}
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
+				assert(
+					runtimeMessage.clientId !== null,
+					"chunked ops should always be from a client",
+				);
 				if (!chunkMap.has(runtimeMessage.clientId)) {
 					chunkMap.set(runtimeMessage.clientId, {
 						chunks: new Array<string>(chunk.totalChunks),
@@ -749,7 +756,7 @@ function calcChannelStats(
 function processQuorumMessages(
 	message: ISequencedDocumentMessage,
 	skipMessage: boolean,
-	sessionsInProgress: Map<string, ActiveSession>,
+	sessionsInProgress: Map<string | null, ActiveSession>,
 	sessions: Map<string, [number, number]>,
 	users: Map<string, [number, number]>,
 ) {

@@ -28,14 +28,16 @@ function getLastEditDetailsFromMessage(
 	message: ISequencedDocumentMessage,
 	quorum: IQuorumClients,
 ): ILastEditDetails | undefined {
-	const sequencedClient = quorum.getMember(message.clientId);
-	const user = sequencedClient?.client.user;
-	if (user !== undefined) {
-		const lastEditDetails: ILastEditDetails = {
-			user,
-			timestamp: message.timestamp,
-		};
-		return lastEditDetails;
+	if (message.clientId !== null) {
+		const sequencedClient = quorum.getMember(message.clientId);
+		const user = sequencedClient?.client.user;
+		if (user !== undefined) {
+			const lastEditDetails: ILastEditDetails = {
+				user,
+				timestamp: message.timestamp,
+			};
+			return lastEditDetails;
+		}
 	}
 	return undefined;
 }

@@ -18,7 +18,7 @@ import {
 } from "@fluidframework/shared-object-base";
 
 interface ISequencedOpInfo<TOp> {
-	client: string;
+	client: string | null;
 	seq: number;
 	op: TOp;
 }
@@ -106,7 +106,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 			this.sequencedOps.shift();
 		}
 
-		let remoteOp = message.contents;
+		let remoteOp = message.contents as TOp;
 		const messageSeq = message.sequenceNumber;
 		const remoteRefSeq = message.referenceSequenceNumber;
 		const remoteClient = message.clientId;

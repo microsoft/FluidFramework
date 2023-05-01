@@ -306,7 +306,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const commit = parseCommit(message.contents, this.changeCodec);
+		const commit = parseCommit(message.contents as JsonCompatibleReadOnly, this.changeCodec);
 
 		const delta = this.editManager.addSequencedChange(
 			commit,

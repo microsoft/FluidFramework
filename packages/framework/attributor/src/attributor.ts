@@ -88,8 +88,8 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 	) {
 		super(initialEntries);
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
-			const client = audience.getMember(message.clientId);
-			if (message.type === "op") {
+			if (message.clientId !== null && message.type === "op") {
+				const client = audience.getMember(message.clientId);
 				// TODO: This case may be legitimate, and if so we need to figure out how to handle it.
 				assert(
 					client !== undefined,

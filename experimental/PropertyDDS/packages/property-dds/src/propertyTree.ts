@@ -691,7 +691,7 @@ export class SharedPropertyTree extends SharedObject {
 				for (let i = 0; i < missingDeltas.length; i++) {
 					if (missingDeltas[i].sequenceNumber < commitMetadata.sequenceNumber) {
 						const remoteChange: IPropertyTreeMessage = JSON.parse(
-							missingDeltas[i].contents,
+							missingDeltas[i].contents as string,
 						).contents.contents.content.contents;
 						const { changeSet } = (
 							await axios.get(
