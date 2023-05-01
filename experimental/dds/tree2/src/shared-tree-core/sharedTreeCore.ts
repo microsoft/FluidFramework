@@ -382,7 +382,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		const redoChange = this.editManager.localBranchUndoRedoManager.redo();
 		if (redoChange !== undefined) {
-			this.applyChange(redoChange, undefined, UndoRedoManagerCommitType.Redo);
+			this.applyChange(redoChange, mintRevisionTag(), UndoRedoManagerCommitType.Redo);
 		}
 	}
 
@@ -427,14 +427,17 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localBranchHead = this.editManager.getLocalBranchHead();
 		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
 		if (ancestor === localBranchHead) {
-			const markedCommits = markCommits(commits, branch.undoRedoManager.headUndoable);
+			const markedCommits = markCommits(
+				commits,
+				branch.undoRedoManager.headUndoable,
+				branch.undoRedoManager.headRedoable,
+			);
 			for (const {
 				commit: { change, revision },
-				isUndoable,
+				undoRedoManagerCommitType,
 			} of markedCommits) {
 				// Only track commits that are undoable.
-				const commitType = isUndoable ? UndoRedoManagerCommitType.Undoable : undefined;
-				this.applyChange(change, revision, commitType);
+				this.applyChange(change, revision, undoRedoManagerCommitType);
 			}
 		} else {
 			const [newHead] = rebaseBranch(
@@ -445,9 +448,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const changes: GraphCommit<TChange>[] = [];
 			findAncestor([newHead, changes], (c) => c === localBranchHead);
 
-			this.editManager.localBranchUndoRedoManager.updateAfterRebase(
+			this.editManager.localBranchUndoRedoManager.updateAfterMerge(
 				newHead,
-				this.editManager.localBranchUndoRedoManager,
+				branch.undoRedoManager,
 			);
 
 			// Apply the changes without tracking them in the undo redo manager because

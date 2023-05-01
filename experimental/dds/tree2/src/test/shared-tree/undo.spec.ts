@@ -32,40 +32,32 @@ function makeTree(...json: string[]): ISharedTree {
 
 const testCases: {
 	name: string;
-	edit: (fork: ISharedTreeView, parent: ISharedTreeView) => void;
+	edit: (undoRedoBranch: ISharedTreeView, otherBranch: ISharedTreeView) => void;
 	initialState: string[];
 	editedState: string[];
 	parentUndoState?: string[];
 	forkUndoState?: string[];
 }[] = [
 	{
-		name: "the insert of a node on the main branch",
-		edit: (fork, parent) => {
-			insert(parent, 0, "A");
-		},
-		initialState: [],
-		editedState: ["A"],
-	},
-	{
-		name: "the insert of a node on a fork",
-		edit: (view) => {
-			insert(view, 1, "x");
+		name: "the insert of a node",
+		edit: (undoRedoBranch) => {
+			insert(undoRedoBranch, 1, "x");
 		},
 		initialState: ["A"],
 		editedState: ["A", "x"],
 	},
 	{
 		name: "the delete of a node",
-		edit: (view) => {
-			remove(view, 0, 2);
+		edit: (undoRedoBranch) => {
+			remove(undoRedoBranch, 0, 2);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["C", "D"],
 	},
 	{
 		name: "the move of a node",
-		edit: (view) => {
-			const field = view.editor.sequenceField({
+		edit: (undoRedoBranch) => {
+			const field = undoRedoBranch.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKeySymbol,
 			});
@@ -76,9 +68,9 @@ const testCases: {
 	},
 	{
 		name: "a move that has been rebased",
-		edit: (fork, parent) => {
-			insert(fork, 1, "x");
-			const field = fork.editor.sequenceField({
+		edit: (undoRedoBranch, otherBranch) => {
+			insert(otherBranch, 1, "x");
+			const field = undoRedoBranch.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKeySymbol,
 			});
@@ -91,8 +83,8 @@ const testCases: {
 	},
 	{
 		name: "an insert from a fork on its parent",
-		edit: (view) => {
-			insert(view, 1, "x");
+		edit: (undoRedoBranch, otherBranch) => {
+			insert(undoRedoBranch, 1, "x");
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "B", "C", "D"],
@@ -114,44 +106,38 @@ describe("Undo and redo", () => {
 			// Perform the edits where the last edit is the one to undo
 			edit(fork, view);
 
-			view.merge(fork);
 			fork.rebaseOnto(view);
-			expectJsonTree(view, editedState);
+			expectJsonTree(fork, editedState);
 
 			fork.undo();
 
-			view.merge(fork);
 			fork.rebaseOnto(view);
-			expectJsonTree(view, initialState);
+			expectJsonTree(fork, forkUndoState ?? initialState);
 
 			fork.redo();
 
-			view.merge(fork);
 			fork.rebaseOnto(view);
-			expectJsonTree(view, editedState);
+			expectJsonTree(fork, editedState);
 		});
 
 		itView(`${name} from the parent branch`, initialState, (view) => {
 			const fork = view.fork();
 
 			// Perform the edits where the last edit is the one to undo
-			edit(fork, view);
+			edit(view, fork);
 
 			view.merge(fork);
-			fork.rebaseOnto(view);
 			expectJsonTree(view, editedState);
 
 			view.undo();
 
 			view.merge(fork);
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, initialState);
+			expectJsonTree(view, parentUndoState ?? initialState);
 
 			view.redo();
 
 			view.merge(fork);
-			fork.rebaseOnto(view);
-			expectJsonTree(fork, editedState);
+			expectJsonTree(view, editedState);
 		});
 	}
 

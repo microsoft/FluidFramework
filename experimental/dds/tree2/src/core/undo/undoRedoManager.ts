@@ -41,16 +41,12 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Should be called for all commits on the relevant branch, including undo and redo commits.
 	 * If no commit type is passed in, it is assumed to an undoable commit.
 	 */
-	public trackCommit(
-		commit: GraphCommit<TChange>,
-		type: UndoRedoManagerCommitType,
-	): void {
+	public trackCommit(commit: GraphCommit<TChange>, type: UndoRedoManagerCommitType): void {
 		const repairData = this.repairDataStoreProvider.createRepairData();
 		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
 
 		const parent =
-			type === UndoRedoManagerCommitType.Undo ||
-			type === UndoRedoManagerCommitType.Redoable
+			type === UndoRedoManagerCommitType.Undo || type === UndoRedoManagerCommitType.Redoable
 				? this.headRedoableCommit
 				: this.headUndoableCommit;
 		const undoableOrRedoable = {
@@ -200,10 +196,14 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 		originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
-		if (originalUndoRedoManager.headUndoable === undefined) {
+		if (
+			originalUndoRedoManager.headUndoable === undefined &&
+			originalUndoRedoManager.headRedoable === undefined
+		) {
 			// The branch that was rebased had no undoable edits so the new undo redo manager
 			// should be a copy of the undo redo manager from the base branch.
 			this.headUndoableCommit = baseUndoRedoManager.headUndoable;
+			this.headRedoableCommit = baseUndoRedoManager.headRedoable;
 			return;
 		}
 
@@ -213,10 +213,15 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		if (rebasedPath.length === 0) {
 			this.headUndoableCommit = baseUndoRedoManager.headUndoable;
+			this.headRedoableCommit = baseUndoRedoManager.headRedoable;
 			return;
 		}
 
-		const markedCommits = markCommits(rebasedPath, originalUndoRedoManager.headUndoable);
+		const markedCommits = markCommits(
+			rebasedPath,
+			originalUndoRedoManager.headUndoable,
+			originalUndoRedoManager.headRedoable,
+		);
 		// Create a complete clone of the base undo redo manager for tracking the rebased path
 		const undoRedoManager = baseUndoRedoManager.clone();
 
@@ -230,6 +235,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		}
 
 		this.headUndoableCommit = undoRedoManager.headUndoable;
+		this.headRedoableCommit = undoRedoManager.headRedoable;
 	}
 }
 
@@ -261,6 +267,7 @@ export enum UndoRedoManagerCommitType {
  * Marks the commits in the provided path as undoable or redoable.
  * @param path - the path of commits that may or may not be undoable or redoable.
  * @param headUndoableCommit - the head undoable commit of the undo commit tree that may contain the commits in the path.
+ * @param headRedoableCommit - the head redoable commit of the redo commit tree that may contain the commits in the path.
  */
 export function markCommits<TChange>(
 	path: GraphCommit<TChange>[],

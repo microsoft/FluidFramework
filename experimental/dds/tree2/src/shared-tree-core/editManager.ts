@@ -511,7 +511,17 @@ export class EditManager<
 	): void {
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
 		if (local) {
-			this.trunkUndoRedoManager.trackCommit(this.trunk, UndoRedoManagerCommitType.Undoable);
+			// Check whether this commit is undoable or redoable
+			let type = UndoRedoManagerCommitType.Undoable;
+			let currentRedoable = this.localBranchUndoRedoManager.headRedoable?.commit;
+			while (currentRedoable !== undefined) {
+				if (currentRedoable.revision === commit.revision) {
+					type = UndoRedoManagerCommitType.Redoable;
+					break;
+				}
+				currentRedoable = currentRedoable.parent;
+			}
+			this.trunkUndoRedoManager.trackCommit(this.trunk, type);
 		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
 			this.changeFamily.intoDelta(commit.change),
