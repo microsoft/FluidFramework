@@ -137,7 +137,7 @@ When container is disposed, the following is true (in no particular order):
     -   "write" means client has read/write connection, can change container contents, and participates in Quorum
     -   "read" indicates client as read connection. Such clients can't modify container and do not participate in quorum. That said, "read" does not indicate client permissions, i.e. client might have read-only permissions to a file, or maybe connected temporarily as read-only, to reduce COGS on server and not "modify" container (any read-write connection generates join & leave messages that modify container and change "last edited by" property)
 
-Please note that if this client losses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to container. For more details, please see [Connectivity events](#Connectivity-events) section
+Please note that if this client loses connection to ordering server, then audience information is not reset at that moment. It will become stale while client is disconnected, and will refresh the moment client connects back to container. For more details, please see [Connectivity events](#Connectivity-events) section
 
 ## ClientID and client identification
 

@@ -206,7 +206,7 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	 * @param getStorageToken - function that can provide the storage token for a given site. This is
 	 * is also referred to as the "Vroom" token in SPO.
 	 * @param getWebsocketToken - function that can provide a token for accessing the web socket. This is also
-	 * to as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
+	 * known as the "Push" token in SPO. If undefined then websocket token is expected to be returned with joinSession
 	 * response payload.
 	 * @param persistedCache - PersistedCache provided by host for use in this session.
 	 * @param hostPolicy - Policy for storage provided by host.
