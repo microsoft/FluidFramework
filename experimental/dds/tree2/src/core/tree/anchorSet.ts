@@ -464,23 +464,23 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	 * Couple nodes to a parent.
 	 * @param dst - where the siblings are coupled to.
 	 * @param count - number of siblings that are coupled in the original tree.
-	 * @param attachInfo - this object contains the nodes to attach and the parent index of the first node that is attached in the original tree.
+	 * @param coupleInfo - this object contains the nodes to couple and the parent index of the first node that is coupled in the original tree.
 	 *
 	 * TODO: tests
 	 */
 	private coupleNodes(
 		dst: UpPath,
 		count: number,
-		attachInfo: { startParentIndex: number; nodes: PathNode[] },
+		coupleInfo: { startParentIndex: number; nodes: PathNode[] },
 	): void {
-		assert(attachInfo.nodes.length > 0, 0x409 /* Nodes must be non-empty */);
+		assert(coupleInfo.nodes.length > 0, "coupleInfo must have nodes to couple");
 
 		// The destination needs to be created if it does not exist yet.
 		const dstPath = this.trackInner(dst.parent ?? this.root);
 
 		// Update nodes for new parent.
-		for (const node of attachInfo.nodes) {
-			node.parentIndex += dst.parentIndex - attachInfo.startParentIndex;
+		for (const node of coupleInfo.nodes) {
+			node.parentIndex += dst.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = dstPath;
 			node.parentField = dst.parentField;
 		}
@@ -488,13 +488,13 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 		// Update new parent to add children
 		const field = dstPath.children.get(dst.parentField);
 		if (field === undefined) {
-			dstPath.children.set(dst.parentField, attachInfo.nodes);
+			dstPath.children.set(dst.parentField, coupleInfo.nodes);
 		} else {
 			// Update existing field contents
 			const numberBeforeCouple = this.increaseParentIndexes(field, dst.parentIndex, count);
 
 			// TODO: this will fail for very large numbers of anchors due to argument limits.
-			field.splice(numberBeforeCouple, 0, ...attachInfo.nodes);
+			field.splice(numberBeforeCouple, 0, ...coupleInfo.nodes);
 		}
 
 		dstPath.removeRef();
@@ -550,7 +550,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 		const nodes = this.decoupleNodes(srcStart, count);
 		if (nodes.length > 0) {
 			this.coupleNodes(dst, count, {
-				startParentIndex: dst.parentIndex - srcStart.parentIndex,
+				startParentIndex: srcStart.parentIndex,
 				nodes,
 			});
 		} else {
@@ -566,7 +566,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	}
 
 	private offsetChildren(path: UpPath, count: number) {
-		const nodePath = this.find(path ?? this.root);
+		const nodePath = this.find(path.parent ?? this.root);
 		const field = nodePath?.children.get(path.parentField);
 		if (field !== undefined) {
 			this.increaseParentIndexes(field, path.parentIndex, count);
