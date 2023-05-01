@@ -61,7 +61,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			exclusive: ["package"],
 		}),
 		package: packageSelectorFlag({
-			description: "Only bump dependencies of this package.",
+			description:
+				"Only bump dependencies of this package. You can use scoped or unscoped package names. For example, both @fluid-tools/markdown-magic and markdown-magic are valid.",
 			exclusive: ["releaseGroup"],
 		}),
 		commit: checkFlags.commit,
