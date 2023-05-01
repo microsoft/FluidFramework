@@ -336,7 +336,7 @@ export class OrderedClientElection
 	}
 
 	constructor(
-		logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLogger,
 		private readonly orderedClientCollection: IOrderedClientCollection,
 		/** Serialized state from summary or current sequence number at time of load if new. */
 		initialState: ISerializedElection | number,
@@ -416,6 +416,14 @@ export class OrderedClientElection
 			change = true;
 		}
 		if (change) {
+			if (isSummarizerClient) {
+				this.logger.sendTelemetryEvent({
+					eventName: "SummarizerClientElected",
+					electedClientId: this._electedClient?.clientId,
+					electedParentId: this._electedParent?.clientId,
+					electionSequenceNumber: sequenceNumber,
+				});
+			}
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
 	}
@@ -423,6 +431,14 @@ export class OrderedClientElection
 	private tryElectingParent(client: ILinkedClient | undefined, sequenceNumber: number): void {
 		if (this._electedParent !== client) {
 			this._electedParent = client;
+			if (client?.client.details.type === summarizerClientType) {
+				this.logger.sendTelemetryEvent({
+					eventName: "SummarizerParentElected",
+					electedClientId: this._electedClient?.clientId,
+					electedParentId: this._electedParent?.clientId,
+					electionSequenceNumber: sequenceNumber,
+				});
+			}
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
 	}

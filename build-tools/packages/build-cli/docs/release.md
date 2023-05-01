@@ -4,6 +4,7 @@
 Release commands are used to manage the Fluid release process.
 
 * [`flub release`](#flub-release)
+* [`flub release fromTag TAG`](#flub-release-fromtag-tag)
 * [`flub release history`](#flub-release-history)
 * [`flub release report`](#flub-release-report)
 
@@ -46,6 +47,38 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/release.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release.ts)_
+
+## `flub release fromTag TAG`
+
+Determines release information based on a git tag argument.
+
+```
+USAGE
+  $ flub release fromTag TAG [-v] [--json]
+
+ARGUMENTS
+  TAG  A git tag that represents a release. May begin with 'refs/tags/'.
+
+FLAGS
+  -v, --verbose  Verbose logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Determines release information based on a git tag argument.
+
+  This command is used in CI to determine release information when a new release tag is pushed.
+
+EXAMPLES
+  Get release information based on a git tag.
+
+    $ flub release fromTag build-tools_v0.13.0
+
+  You can include the refs/tags/ part of a tag ref.
+
+    $ flub release fromTag refs/tags/2.0.0-internal.2.0.2
+```
 
 ## `flub release history`
 
