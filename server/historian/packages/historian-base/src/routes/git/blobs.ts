@@ -141,6 +141,11 @@ export function create(
 					if (useCache) {
 						response.setHeader("Cache-Control", "public, max-age=31536000");
 					}
+					response.setHeader(
+						"Access-Control-Expose-Headers",
+						"Content-Encoding, Content-Length, Content-Type",
+					);
+					response.setHeader("Timing-Allow-Origin", "*");
 					response
 						.status(200)
 						.write(Buffer.from(blob.content, "base64"), () => response.end());

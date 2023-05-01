@@ -39,8 +39,13 @@ export function handleResponse<T>(
 			} else if (allowClientCache === false) {
 				response.setHeader("Cache-Control", "no-store, max-age=0");
 			}
-
+			response.setHeader(
+				"Access-Control-Expose-Headers",
+				"Content-Encoding, Content-Length, Content-Type",
+			);
+			response.setHeader("Timing-Allow-Origin", "*");
 			onSuccess(result);
+			// The json call below will set the content-length.
 			response.status(successStatus).json(result);
 		},
 		(error) => {
