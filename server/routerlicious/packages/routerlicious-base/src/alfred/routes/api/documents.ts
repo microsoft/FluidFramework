@@ -76,7 +76,7 @@ export function create(
 		return (req, rest, next) => {
 			const tenantId = getParam(req.params, "tenantId") || appTenants[0].id;
 			const tenantGroup: string | undefined = tenantId
-				? tenantThrottlersMap?.get(tenantId) ?? undefined
+				? (tenantThrottlersMap?.get(tenantId) ?? undefined)
 				: undefined;
 			const throttleOptions: Partial<IThrottleMiddlewareOptions> = {
 				throttleIdPrefix: tenantGroup ? `${tenantId}_${tenantGroup}` : tenantId,
