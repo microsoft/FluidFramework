@@ -342,7 +342,6 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     readonly fieldSchema: FieldSchema;
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
-    moveNodes(sourceIndex: number, count: number, destFieldPath: FieldUpPath, destIndex: number): void;
     readonly parent?: EditableTree;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
@@ -395,9 +394,11 @@ export interface EditDescription {
     // (undocumented)
     change: FieldChangeset;
     // (undocumented)
-    field: FieldUpPath;
+    field: FieldKey;
     // (undocumented)
     fieldKind: FieldKindIdentifier;
+    // (undocumented)
+    path: UpPath | undefined;
 }
 
 // @alpha
@@ -670,15 +671,15 @@ export interface IDefaultEditBuilder {
     // (undocumented)
     addValueConstraint(path: UpPath, value: Value): void;
     // (undocumented)
-    move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destIndex: number): void;
+    move(sourcePath: UpPath | undefined, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath | undefined, destField: FieldKey, destIndex: number): void;
     // (undocumented)
-    optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
+    optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
     // (undocumented)
-    sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
+    sequenceField(parent: UpPath | undefined, field: FieldKey): SequenceFieldEditBuilder;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     // (undocumented)
-    valueField(field: FieldUpPath): ValueFieldEditBuilder;
+    valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder;
 }
 
 // @alpha
@@ -1051,7 +1052,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     generateId(count?: number): ChangesetLocalId;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
-    submitChange(field: FieldUpPath, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
+    submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
     // (undocumented)
     submitChanges(changes: EditDescription[], maxId?: ChangesetLocalId): void;
 }
