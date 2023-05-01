@@ -206,7 +206,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 
 		assert(
 			keyIsValidIndex(destinationIndex, this.length + 1),
-			0x456 /* Index must be less than or equal to length. */,
+			"Index must be less than or equal to length.",
 		);
 
 		const destinationFieldProxy =
