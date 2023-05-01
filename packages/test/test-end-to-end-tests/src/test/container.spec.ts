@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { v4 as uuid } from "uuid";
 import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
@@ -12,7 +11,6 @@ import {
 	ContainerErrorType,
 	IFluidCodeDetails,
 	IContainer,
-	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
 	ConnectionState,
@@ -50,7 +48,6 @@ import {
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IClient } from "@fluidframework/protocol-definitions";
 
 const id = "fluid-test://localhost/containerTest";
 const testRequest: IRequest = { url: id };
