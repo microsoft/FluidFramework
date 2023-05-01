@@ -1636,7 +1636,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.needProcessSubDirectoryOperation(msg, op, local, localOpMetadata)) {
 			return;
 		}
-		this.createSubDirectoryCore(op.subdirName, local, msg.sequenceNumber, msg.clientId);
+		this.createSubDirectoryCore(
+			op.subdirName,
+			local,
+			msg.sequenceNumber,
+			msg.clientId ?? "server",
+		);
 	}
 
 	/**
@@ -2125,7 +2130,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// container was detached or in case this directory is already live(known to other clients)
 		// and the op was created after the directory was created then apply this op.
 		return (
-			this.clientIds.has(msg.clientId) ||
+			this.clientIds.has(msg.clientId ?? "server") ||
 			this.clientIds.has("detached") ||
 			(this.sequenceNumber !== -1 && this.sequenceNumber <= msg.referenceSequenceNumber)
 		);
@@ -2148,6 +2153,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		localOpMetadata: unknown,
 	): boolean {
 		const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
+		const clientId = msg.clientId ?? "server";
 		if (pendingSubDirectoryMessageId !== undefined) {
 			if (local) {
 				assert(
@@ -2197,10 +2203,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// The client created the dir at or after the dirs seq, so list its client id as a creator.
 				if (
 					dir !== undefined &&
-					!dir.clientIds.has(msg.clientId) &&
+					!dir.clientIds.has(clientId) &&
 					dir.sequenceNumber <= msg.sequenceNumber
 				) {
-					dir.clientIds.add(msg.clientId);
+					dir.clientIds.add(clientId);
 				}
 			}
 			return false;

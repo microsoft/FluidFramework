@@ -596,14 +596,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param sequencedMessage - The sequencedMessage to get the client sequence args for
 	 */
 	private getClientSequenceArgsForMessage(
-		sequencedMessage: ISequencedDocumentMessage | undefined,
-	): IMergeTreeClientSequenceArgs;
-	private getClientSequenceArgsForMessage(
-		sequencedMessage:
-			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
-			| undefined,
-	): Pick<IMergeTreeClientSequenceArgs, "referenceSequenceNumber" | "clientId">;
-	private getClientSequenceArgsForMessage(
 		sequencedMessage:
 			| ISequencedDocumentMessage
 			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
@@ -670,11 +662,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		clone._mergeTree.root = newRoot;
 		return clone;
 	}
-	getOrAddShortClientId(longClientId: string) {
-		if (!this.clientNameToIds.get(longClientId)) {
-			this.addLongClientId(longClientId);
+	getOrAddShortClientId(longClientId: string | null) {
+		const cid = longClientId ?? "server";
+		if (!this.clientNameToIds.get(cid)) {
+			this.addLongClientId(cid);
 		}
-		return this.getShortClientId(longClientId);
+		return this.getShortClientId(cid);
 	}
 	getShortClientId(longClientId: string) {
 		return this.clientNameToIds.get(longClientId)!.data;
