@@ -2,14 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	Dropdown,
-	IDropdownOption,
-	IDropdownStyles,
-	IStackTokens,
-	Stack,
-	StackItem,
-} from "@fluentui/react";
+import { IStackTokens, Stack, StackItem } from "@fluentui/react";
 import {
 	tokens,
 	Combobox,
@@ -21,7 +14,7 @@ import {
 	DataGridHeader,
 	DataGridHeaderCell,
 	DataGridCell,
-	Dropdown as DropDown,
+	Dropdown,
 	DropdownProps,
 	Option,
 	TableColumnDefinition,
@@ -73,9 +66,13 @@ export function TelemetryView(): React.ReactElement {
 	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
 	>();
+	/**
+	 * Used to store query for the searchable dropdown. The query is used to perform
+	 * partial match searches and will display all events if query is an empty string.
+	 */
 	const [customSearch, setCustomSearch] = React.useState("");
 	const [eventNameOptions, setEventNameOptions] = useState<string[]>([]);
-	const [matchingOptions, setMatchingOptions] = React.useState([...eventNameOptions]);
+	const [matchingOptions, setMatchingOptions] = React.useState<string[]>([]);
 
 	React.useEffect(() => {
 		// Create list of all event names
@@ -86,17 +83,9 @@ export function TelemetryView(): React.ReactElement {
 				),
 			),
 		]);
-		// Initialy matching options are all options
+		// Initially matching options are all options
 		setMatchingOptions(eventNameOptions.sort());
-		const filteredEvents = telemetryEvents?.filter((event) => {
-			return (
-				(selectedCategory === "" ||
-					selectedCategory === "All" ||
-					event.logContent.category === selectedCategory) &&
-				(customSearch === "" ||
-					event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch)
-			);
-		});
+		const filteredEvents = getFilteredEvents();
 		setFilteredTelemetryEvents(filteredEvents);
 	}, [telemetryEvents, selectedCategory, customSearch]);
 
@@ -136,6 +125,28 @@ export function TelemetryView(): React.ReactElement {
 	}, [messageRelay, setTelemetryEvents]);
 
 	/**
+	 * Filters all telemetry events based on category and event name
+	 * @returns filtered list of events
+	 */
+	function getFilteredEvents(): ITimestampedTelemetryEvent[] | undefined {
+		let filteredEvents = telemetryEvents;
+		// Filter by category
+		if (selectedCategory !== "" && selectedCategory !== "All") {
+			filteredEvents = filteredEvents?.filter((event) => {
+				return event.logContent.category === selectedCategory;
+			});
+		}
+		// Filter by event name
+		if (customSearch !== "") {
+			filteredEvents = filteredEvents?.filter((event) => {
+				return event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch;
+			});
+		}
+
+		return filteredEvents ?? undefined;
+	}
+
+	/**
 	 * Interface for each item in the telemetry table.
 	 */
 	interface Item {
@@ -162,7 +173,7 @@ export function TelemetryView(): React.ReactElement {
 				return (
 					<div>
 						<h2 style={{ marginBottom: 0 }}>Category</h2>
-						<DropDown
+						<Dropdown
 							placeholder="Filter Category"
 							size="small"
 							onOptionSelect={handleCategoryChange}
@@ -173,7 +184,7 @@ export function TelemetryView(): React.ReactElement {
 									{option.text}
 								</Option>
 							))}
-						</DropDown>
+						</Dropdown>
 					</div>
 				);
 			},
@@ -200,7 +211,7 @@ export function TelemetryView(): React.ReactElement {
 							freeform
 							size="small"
 							placeholder="Select an event"
-							onChange={onChange}
+							onChange={onEventNameChange}
 							onOptionSelect={handleEventNameSelect}
 						>
 							{customSearch ? (
@@ -236,11 +247,7 @@ export function TelemetryView(): React.ReactElement {
 		createTableColumn<Item>({
 			columnId: "information",
 			renderHeaderCell: () => {
-				return (
-					<div>
-						<h2>Information</h2>
-					</div>
-				);
+				return <h2>Information</h2>;
 			},
 			renderCell: (message) => {
 				// eslint-disable-next-line react-hooks/rules-of-hooks
@@ -291,7 +298,7 @@ export function TelemetryView(): React.ReactElement {
 	/**
 	 * Event handler that updates table to display events matching text in event name filter.
 	 */
-	const onChange: ComboboxProps["onChange"] = (event) => {
+	const onEventNameChange: ComboboxProps["onChange"] = (event) => {
 		const value = event.target.value.trim();
 		const matches = eventNameOptions.filter((option) =>
 			option.toLowerCase().includes(value.toLowerCase()),
@@ -398,19 +405,20 @@ interface _ListLengthSelectionProps {
  */
 function _ListLengthSelection(props: _ListLengthSelectionProps): React.ReactElement {
 	const { currentLimit, onChangeSelection } = props;
-	const dropdownStyles: Partial<IDropdownStyles> = {
-		dropdown: { width: "300px", zIndex: "1" },
-	};
-
+	// const [eventsDisplayed, setEventsDisplayed] = useState(50);
 	const stackTokens: IStackTokens = { childrenGap: 20 };
 
 	// Options formatted for the Fluent Dropdown component
-	const dropdownOptions: IDropdownOption[] = [
+	const dropdownOptions: { key: number; text: string }[] = [
 		{ key: 50, text: "50" },
 		{ key: 100, text: "100" },
 		{ key: 500, text: "500" },
 		{ key: 1000, text: "1000" },
 	];
+
+	const handleMaxEventChange: DropdownProps["onOptionSelect"] = (event, data) => {
+		onChangeSelection(Number(data.optionText));
+	};
 
 	return (
 		<Stack tokens={stackTokens}>
@@ -418,12 +426,20 @@ function _ListLengthSelection(props: _ListLengthSelectionProps): React.ReactElem
 				<h3>Max number of telemetry events to display: </h3>
 				<Dropdown
 					placeholder="Select an option"
-					selectedKey={currentLimit}
-					options={dropdownOptions}
-					styles={dropdownStyles}
+					size="small"
+					style={{ minWidth: "300px", zIndex: "1" }}
+					defaultValue={currentLimit.toString()}
 					// change the number of logs displayed on the page
-					onChange={(event, option): void => onChangeSelection(option?.key as number)}
-				/>
+					onOptionSelect={handleMaxEventChange}
+				>
+					{dropdownOptions.map((option) => {
+						return (
+							<Option style={{ minWidth: "120px" }} key={option.key}>
+								{option.text}
+							</Option>
+						);
+					})}
+				</Dropdown>
 			</div>
 		</Stack>
 	);
