@@ -8,7 +8,7 @@ import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 
-import { argToReleaseGroupOrPackage, packageOrReleaseGroupArg } from "../../args";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
 import {
 	checkFlags,
@@ -111,12 +111,11 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const shouldCommit = flags.commit && !flags.skipChecks;
 
 		const rgOrPackageName = args.package_or_release_group;
-		const rgOrPackage = argToReleaseGroupOrPackage(rgOrPackageName, context);
-
 		if (rgOrPackageName === undefined) {
 			this.error("ERROR: No dependency provided.");
 		}
 
+		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
 		if (rgOrPackage === undefined) {
 			this.error(`Package not found: ${rgOrPackageName}`);
 		}
