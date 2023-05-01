@@ -48,7 +48,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 
 	async run(): Promise<{
 		packageOrReleaseGroup: ReleaseGroup | ReleasePackage;
-		releaseNotesTitle: string;
+		title: string;
 		tag: string;
 		date?: Date;
 		releaseType: VersionBumpType;
@@ -94,7 +94,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		// When the --json flag is passed, the command will return the raw data as JSON.
 		return sortJson({
 			packageOrReleaseGroup: this.releaseGroupOrPackage,
-			releaseNotesTitle: getReleaseNotesTitle(releaseGroup, version, releaseType),
+			title: getReleaseTitle(releaseGroup, version, releaseType),
 			tag,
 			date: release.latestReleasedVersion.date,
 			releaseType,
@@ -130,12 +130,12 @@ const parseTag = (input: string): [ReleaseGroup, semver.SemVer, string] => {
 	return [rg, version, tag];
 };
 
-const getReleaseNotesTitle = (
+const getReleaseTitle = (
 	releaseGroup: ReleaseGroup,
 	version: semver.SemVer,
 	releaseType: VersionBumpType,
 ): string => {
 	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
-  // e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
+	// e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
 	return `${name} v${version} (${releaseType})`;
 };
