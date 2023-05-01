@@ -9,14 +9,14 @@ import findUp from "find-up";
 
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
-import { Logger } from "./logging";
+import { Logger, defaultLogger } from "./logging";
 import { realpathAsync } from "./utils";
 import { readJson } from "fs-extra";
 
-async function isFluidRootLerna(dir: string, log?: Logger) {
+async function isFluidRootLerna(dir: string, log: Logger = defaultLogger) {
 	const filename = path.join(dir, "lerna.json");
 	if (!existsSync(filename)) {
-		log?.verbose(`InferRoot: lerna.json not found`);
+		log.verbose(`InferRoot: lerna.json not found`);
 		return false;
 	}
 	const rootPackageManifest = getFluidBuildConfig(dir);
@@ -24,7 +24,7 @@ async function isFluidRootLerna(dir: string, log?: Logger) {
 		rootPackageManifest.repoPackages.server !== undefined &&
 		!existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))
 	) {
-		log?.verbose(
+		log.verbose(
 			`InferRoot: ${dir}/${
 				rootPackageManifest.repoPackages.server as string
 			}/lerna.json not found`,
@@ -35,10 +35,10 @@ async function isFluidRootLerna(dir: string, log?: Logger) {
 	return true;
 }
 
-async function isFluidRootPackage(dir: string, log?: Logger) {
+async function isFluidRootPackage(dir: string, log: Logger = defaultLogger) {
 	const filename = path.join(dir, "package.json");
 	if (!existsSync(filename)) {
-		log?.verbose(`InferRoot: package.json not found`);
+		log.verbose(`InferRoot: package.json not found`);
 		return false;
 	}
 
@@ -46,7 +46,7 @@ async function isFluidRootPackage(dir: string, log?: Logger) {
 	if (parsed.name === "root" && parsed.private === true) {
 		return true;
 	}
-	log?.verbose(`InferRoot: package.json not matched`);
+	log.verbose(`InferRoot: package.json not matched`);
 	return false;
 }
 
@@ -54,7 +54,7 @@ async function isFluidRoot(dir: string) {
 	return (await isFluidRootLerna(dir)) && (await isFluidRootPackage(dir));
 }
 
-async function inferRoot(log?: Logger) {
+async function inferRoot(log: Logger = defaultLogger) {
 	const fluidConfig = findUp.sync("fluidBuild.config.cjs", { cwd: process.cwd(), type: "file" });
 	if (fluidConfig === undefined) {
 		return undefined;
@@ -67,21 +67,21 @@ async function inferRoot(log?: Logger) {
 	return undefined;
 }
 
-export async function getResolvedFluidRoot(log?: Logger) {
+export async function getResolvedFluidRoot(log: Logger = defaultLogger) {
 	let checkFluidRoot = true;
 	let root = commonOptions.root;
 	if (root) {
-		log?.verbose(`Using argument root @ ${root}`);
+		log.verbose(`Using argument root @ ${root}`);
 	} else {
 		root = await inferRoot();
 		if (root) {
 			checkFluidRoot = false;
-			log?.verbose(`Using inferred root @ ${root}`);
+			log.verbose(`Using inferred root @ ${root}`);
 		} else if (commonOptions.defaultRoot) {
 			root = commonOptions.defaultRoot;
-			log?.verbose(`Using default root @ ${root}`);
+			log.verbose(`Using default root @ ${root}`);
 		} else {
-			log?.errorLog(
+			log.errorLog(
 				`Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`,
 			);
 			process.exit(-101);
@@ -89,13 +89,13 @@ export async function getResolvedFluidRoot(log?: Logger) {
 	}
 
 	if (checkFluidRoot && !isFluidRoot(root)) {
-		log?.errorLog(`'${root}' is not a root of Fluid repo.`);
+		log.errorLog(`'${root}' is not a root of Fluid repo.`);
 		process.exit(-100);
 	}
 
 	const resolvedRoot = path.resolve(root);
 	if (!existsSync(resolvedRoot)) {
-		log?.errorLog(`Repo root '${resolvedRoot}' does not exist.`);
+		log.errorLog(`Repo root '${resolvedRoot}' does not exist.`);
 		process.exit(-102);
 	}
 
