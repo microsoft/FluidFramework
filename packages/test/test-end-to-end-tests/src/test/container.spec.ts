@@ -669,7 +669,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		assert.strictEqual(deltaManagerClosed, 1, "DeltaManager should send closed event");
 		assert.strictEqual(runtimeDispose, 1, "ContainerRuntime should send dispose event");
 	});
-
+});
 
 describeNoCompat("Driver", (getTestObjectProvider) => {
 	it("Driver Storage Policy Values", async () => {
