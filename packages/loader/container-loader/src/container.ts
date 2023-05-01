@@ -746,17 +746,12 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		// NOTE: stringify + parse is usually bad practice. Here we deliberately chose to use it because we know the
-		// pieces we care about in the cloned object are primitive values, and it lets us avoid importing a full
-		// deep-clone library, so we keep the bundle size down. This code doesn't run a ton of times and if it's slower
-		// than an actual deep clone (improbable), the gain in network transfer time from a smaller bundle almost certainly
-		// outweighs that. The dep is still there but the cloneDeep module of lodash gets tree-shaken so we still get the
-		// bundle size improvement.
+		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
+		// all clients that were loaded from the same loader (including summarizer clients).
 		// Tracking alternative ways to handle this in AB#4129.
-		this.options =
-			this.loader.services.options === undefined
-				? undefined
-				: JSON.parse(JSON.stringify(this.loader.services.options));
+		this.options = {
+			...this.loader.services.options,
+		};
 
 		this._deltaManager = this.createDeltaManager();
 
