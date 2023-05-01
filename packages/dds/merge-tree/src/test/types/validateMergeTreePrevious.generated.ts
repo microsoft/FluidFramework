@@ -240,7 +240,6 @@ declare function get_old_InterfaceDeclaration_IAttributionCollection():
 declare function use_current_InterfaceDeclaration_IAttributionCollection(
     use: TypeOnly<current.IAttributionCollection<any>>);
 use_current_InterfaceDeclaration_IAttributionCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IAttributionCollection());
 
 /*

@@ -307,6 +307,47 @@ describe("SharedString interval collections", () => {
 				assert.strictEqual(sharedString.getText(), "abcf", "different text");
 				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
 			});
+
+			it("has right stickiness by default", () => {
+				// [abcX)
+				// [abcf)
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abcXdef");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(0, 3, IntervalType.SlideOnRemove, undefined);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+
+				containerRuntimeFactory.processAllMessages();
+
+				sharedString.removeRange(3, 6);
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "abcf", "different text");
+				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
+			});
+
+			it("has none stickiness during insert", () => {
+				// [ab]c
+				const collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "abc");
+				containerRuntimeFactory.processAllMessages();
+				const interval1 = collection.add(
+					0,
+					1,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.None,
+				);
+				const intervalId = interval1.getIntervalId();
+				assert(intervalId);
+				sharedString.insertText(2, "def");
+				containerRuntimeFactory.processAllMessages();
+
+				assert.strictEqual(sharedString.getText(), "abdefc", "different text");
+
+				assertIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+			});
 		});
 
 		describe("remain consistent on double-delete", () => {
