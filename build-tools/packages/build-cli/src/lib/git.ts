@@ -7,7 +7,7 @@ import path from "node:path";
 import readPkgUp from "read-pkg-up";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 
-// false positive?
+// type-fest seems to trigger this lint rule, which seems to be a false positive.
 // eslint-disable-next-line node/no-missing-import
 import type { SetRequired } from "type-fest";
 
