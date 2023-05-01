@@ -94,11 +94,12 @@
 		"npm-check-updates": "^16.0.0",
 		"oclif": "^3.7.0",
 		"prettier": "~2.6.2",
+		"read-pkg-up": "^7.0.1",
 		"semver": "^7.3.7",
 		"semver-utils": "^1.1.4",
 		"simple-git": "^3.16.1",
 		"sort-json": "^2.0.1",
-		"sort-package-json": "1.54.0",
+		"sort-package-json": "1.57.0",
 		"strip-ansi": "^6.0.0",
 		"table": "^6.8.0",
 		"type-fest": "^2.19.0"
@@ -180,5 +181,14 @@
 			}
 		}
 	},
-	"packageManager": "pnpm@7.32.2+sha512.3dfa2c1386fc91e58756b3becf877e9dc20840af72a5301d453ae4da2a19db00cdd08f4bfa66a9cc9565755aac65dcbbbda93232dc5f927376727e708c449bbe"
+	"packageManager": "pnpm@7.32.2+sha512.3dfa2c1386fc91e58756b3becf877e9dc20840af72a5301d453ae4da2a19db00cdd08f4bfa66a9cc9565755aac65dcbbbda93232dc5f927376727e708c449bbe",
+	"pnpm": {
+		"updateConfig": {
+			"ignoreDependencies": [
+				"read-pkg-up",
+				"type-fest",
+				"typescript"
+			]
+		}
+	}
 }
