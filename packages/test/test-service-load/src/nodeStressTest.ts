@@ -285,26 +285,30 @@ function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
 			name: `Runner_${index}`,
 			time: durationMs / 1000,
 		};
+		if (returnCode === GcFailureExitCode) {
+			// Failure
+			return {
+				testcase: [
+					{ _attr },
+					{
+						failure: `GC failure - check pipeline logs to find the error.`,
+					},
+				],
+			};
+		}
 		if (returnCode === 0) {
 			// Success
 			return { testcase: [{ _attr }] };
 		}
-		const failureReason =
-			returnCode === GcFailureExitCode
-				? "GC failure - check pipeline logs to find the error."
-				: `Failure code ${returnCode}`;
 		return {
-			testcase: [
-				{ _attr },
-				// Failure
-				{ failure: `Test Runner failed! ${failureReason}` },
-			],
+			// Success but with non-zero exit code.
+			testcase: [{ _attr }, { exitCode: returnCode }],
 		};
 	});
 	const suiteAttributes = {
 		name: "GC Stress Test",
 		tests: results.length,
-		failures: 0,
+		failures: results.filter(({ returnCode }) => returnCode === GcFailureExitCode).length,
 		errors: results.filter(({ returnCode }) => returnCode !== 0).length,
 		time: durationSec,
 		// timestamp: e.g. Wed, 16 Nov 2022 18:15:06 GMT
