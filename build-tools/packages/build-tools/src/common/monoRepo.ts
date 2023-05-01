@@ -117,7 +117,7 @@ export class MonoRepo {
 
 		if (this.packageManager !== packageManager.type) {
 			throw new Error(
-				`ERROR: package manager mismatch between ${packageManager.type} and ${this.packageManager}`,
+				`Package manager mismatch between ${packageManager.type} and ${this.packageManager}`,
 			);
 		}
 
