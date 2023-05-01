@@ -731,7 +731,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// for example, it's not clear if serverMetadata or timestamp property is a property of message or server state.
 	// We only extract the most obvious fields that are sufficient (with high probability) to detect sequence number
 	// reuse.
-	// Also payload goes to telemetry, so no PII, including content!!
+	// Also payload goes to telemetry, so no content or anything else that shouldn't be logged for privacy reasons
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
 	private comparableMessagePayload(m: ISequencedDocumentMessage) {
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
