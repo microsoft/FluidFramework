@@ -129,6 +129,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 */
 	private readonly changeCodec: IMultiFormatCodec<TChange>;
 
+	private readonly repairData: Map<RevisionTag, RepairDataStore>;
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -144,7 +146,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
 		repairDataStoreProvider: IRepairDataStoreProvider,
-		private readonly repairData: RepairDataStore,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -184,6 +185,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				this.applyChange(change, mintRevisionTag(), UndoRedoManagerCommitType.Undoable),
 			anchors,
 		);
+
+		this.repairData = new Map();
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -236,11 +239,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		assert(!this.isTransacting(), "Unexpected edit submitted during transaction");
 		// Nested transactions are tracked as part of the outermost transaction
 		if (undoRedoType !== undefined) {
-			this.editManager.localBranchUndoRedoManager.trackCommit(commit, undoRedoType);
-			const repairStore =
-				this.editManager.localBranchUndoRedoManager.repairDataStoreProvider.createRepairData();
-			repairStore.capture(delta, commit.revision);
-			// this.repairData.capture(delta, commit.revision);
+			const repairData = this.editManager.localBranchUndoRedoManager.trackCommit(
+				commit,
+				undoRedoType,
+			);
+			this.repairData.set(commit.revision, repairData);
 		}
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
@@ -481,11 +484,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		assert(!this.isTransacting(), "Unexpected transaction is open while applying stashed ops");
 		const { revision, change } = parseCommit(content, this.changeCodec);
 		const [commit, delta] = this.addLocalChange(change, revision);
-		this.editManager.localBranchUndoRedoManager.trackCommit(
+		const repairData = this.editManager.localBranchUndoRedoManager.trackCommit(
 			commit,
 			UndoRedoManagerCommitType.Undoable,
 		);
-		this.repairData.capture(delta, revision);
+		this.repairData.set(revision, repairData);
 		this.emitLocalChange(change, delta);
 		return;
 	}

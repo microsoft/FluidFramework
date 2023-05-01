@@ -34,7 +34,6 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 			defaultChangeFamily,
 			anchors,
 			new MockRepairDataStoreProvider(),
-			new MockRepairDataStore(),
 			id,
 			runtime,
 			TestSharedTreeCore.attributes,

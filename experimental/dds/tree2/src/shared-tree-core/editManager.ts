@@ -30,6 +30,7 @@ import {
 	ReadonlyRepairDataStore,
 	rebaseBranch,
 	rebaseChange,
+	RepairDataStore,
 	RevisionTag,
 	SessionId,
 	SimpleDependee,
@@ -373,7 +374,7 @@ export class EditManager<
 		newCommit: Commit<TChangeset>,
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
-		repairData?: ReadonlyRepairDataStore,
+		repairData?: Map<RevisionTag, RepairDataStore>,
 	): Delta.Root {
 		if (newCommit.sessionId === this.localSessionId) {
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
@@ -529,7 +530,9 @@ export class EditManager<
 		});
 	}
 
-	private rebaseLocalBranchOverTrunk(repairData?: ReadonlyRepairDataStore): TChangeset {
+	private rebaseLocalBranchOverTrunk(
+		repairData?: Map<RevisionTag, ReadonlyRepairDataStore>,
+	): TChangeset {
 		const [newLocalChanges, netChange] = rebaseBranch(
 			this.changeFamily.rebaser,
 			this.localBranch,

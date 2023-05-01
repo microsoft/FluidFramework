@@ -305,7 +305,6 @@ export class SharedTree
 			defaultChangeFamily,
 			anchors,
 			new ForestRepairDataStoreProvider(forest, schema),
-			new ForestRepairDataStore(() => this.forest),
 			id,
 			runtime,
 			attributes,
