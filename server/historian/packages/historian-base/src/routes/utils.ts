@@ -45,7 +45,7 @@ export function handleResponse<T>(
 			);
 			response.setHeader("Timing-Allow-Origin", "*");
 			onSuccess(result);
-			// The json call below will set the content-length.
+			// Express' json call below will set the content-length.
 			response.status(successStatus).json(result);
 		},
 		(error) => {
