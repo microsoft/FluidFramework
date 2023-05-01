@@ -1253,10 +1253,8 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 
 // @public (undocumented)
 export enum SlidingPreference {
-    // (undocumented)
-    Left = 0,
-    // (undocumented)
-    Right = 1
+    Backward = 1,
+    Forward = 0
 }
 
 // @internal (undocumented)

@@ -851,7 +851,7 @@ export class MergeTree {
 	 */
 	public _getSlideToSegment(
 		segment: ISegment | undefined,
-		slidingPreference: SlidingPreference = SlidingPreference.Right,
+		slidingPreference: SlidingPreference = SlidingPreference.Forward,
 		cache?: Map<ISegment, { seg?: ISegment }>,
 	): ISegment | undefined {
 		if (!segment || !isRemovedAndAcked(segment)) {
@@ -876,7 +876,7 @@ export class MergeTree {
 		};
 
 		// Slide to the next farthest valid segment in the tree.
-		if (slidingPreference === SlidingPreference.Left) {
+		if (slidingPreference === SlidingPreference.Backward) {
 			backwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
 			forwardExcursion(segment, goFurtherToFindSlideToSegment);
@@ -886,7 +886,7 @@ export class MergeTree {
 		}
 
 		// If no such segment is found, slide to the last valid segment.
-		if (slidingPreference === SlidingPreference.Left) {
+		if (slidingPreference === SlidingPreference.Backward) {
 			forwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
 			backwardExcursion(segment, goFurtherToFindSlideToSegment);
@@ -971,10 +971,12 @@ export class MergeTree {
 				continue;
 			}
 
-			if (segment.localRefs.any((ref) => ref.slidingPreference !== SlidingPreference.Left)) {
+			if (
+				segment.localRefs.any((ref) => ref.slidingPreference !== SlidingPreference.Backward)
+			) {
 				const slideToSegment = this._getSlideToSegment(
 					segment,
-					SlidingPreference.Right,
+					SlidingPreference.Forward,
 					segmentCache,
 				);
 				const slideIsForward =
@@ -988,7 +990,7 @@ export class MergeTree {
 						currentRightSlideDestination,
 						currentRightSlideIsForward,
 						currentRightSlideGroup,
-						(ref) => ref.slidingPreference !== SlidingPreference.Left,
+						(ref) => ref.slidingPreference !== SlidingPreference.Backward,
 					);
 					currentRightSlideGroup = [segment.localRefs];
 					currentRightSlideDestination = slideToSegment;
@@ -997,10 +999,12 @@ export class MergeTree {
 					currentRightSlideGroup.push(segment.localRefs);
 				}
 			}
-			if (segment.localRefs.any((ref) => ref.slidingPreference === SlidingPreference.Left)) {
+			if (
+				segment.localRefs.any((ref) => ref.slidingPreference === SlidingPreference.Backward)
+			) {
 				const slideToSegment = this._getSlideToSegment(
 					segment,
-					SlidingPreference.Left,
+					SlidingPreference.Backward,
 					segmentCache,
 				);
 				const slideIsForward =
@@ -1014,7 +1018,7 @@ export class MergeTree {
 						currentLeftSlideDestination,
 						currentLeftSlideIsForward,
 						currentLeftSlideGroup,
-						(ref) => ref.slidingPreference === SlidingPreference.Left,
+						(ref) => ref.slidingPreference === SlidingPreference.Backward,
 					);
 					currentLeftSlideGroup = [segment.localRefs];
 					currentLeftSlideDestination = slideToSegment;
@@ -1028,13 +1032,13 @@ export class MergeTree {
 			currentRightSlideDestination,
 			currentRightSlideIsForward,
 			currentRightSlideGroup,
-			(ref) => ref.slidingPreference !== SlidingPreference.Left,
+			(ref) => ref.slidingPreference !== SlidingPreference.Backward,
 		);
 		slideGroup(
 			currentLeftSlideDestination,
 			currentLeftSlideIsForward,
 			currentLeftSlideGroup,
-			(ref) => ref.slidingPreference === SlidingPreference.Left,
+			(ref) => ref.slidingPreference === SlidingPreference.Backward,
 		);
 	}
 

@@ -175,7 +175,7 @@ describe("SharedString interval collections", () => {
 					3,
 					IntervalType.SlideOnRemove,
 					undefined,
-					IntervalStickiness.Left,
+					IntervalStickiness.Start,
 				);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
@@ -196,7 +196,7 @@ describe("SharedString interval collections", () => {
 					3,
 					IntervalType.SlideOnRemove,
 					undefined,
-					IntervalStickiness.Left,
+					IntervalStickiness.Start,
 				);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
@@ -222,7 +222,7 @@ describe("SharedString interval collections", () => {
 					6,
 					IntervalType.SlideOnRemove,
 					undefined,
-					IntervalStickiness.Left,
+					IntervalStickiness.Start,
 				);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
@@ -249,7 +249,7 @@ describe("SharedString interval collections", () => {
 					2,
 					IntervalType.SlideOnRemove,
 					undefined,
-					IntervalStickiness.Left,
+					IntervalStickiness.Start,
 				);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
@@ -271,7 +271,7 @@ describe("SharedString interval collections", () => {
 					2,
 					IntervalType.SlideOnRemove,
 					undefined,
-					IntervalStickiness.Right,
+					IntervalStickiness.End,
 				);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);
@@ -294,7 +294,7 @@ describe("SharedString interval collections", () => {
 					3,
 					IntervalType.SlideOnRemove,
 					undefined,
-					IntervalStickiness.Right,
+					IntervalStickiness.End,
 				);
 				const intervalId = interval1.getIntervalId();
 				assert(intervalId);

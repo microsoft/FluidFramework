@@ -18,8 +18,15 @@ import {
 } from "./referencePositions";
 
 export enum SlidingPreference {
-	Left = 0,
-	Right = 1,
+	/**
+	 * Prefer sliding towards the start of the string
+	 */
+	Forward = 0,
+
+	/**
+	 * Prefer sliding towards the end of the string
+	 */
+	Backward = 1,
 }
 
 /**
@@ -74,7 +81,7 @@ class LocalReference implements LocalReferencePosition {
 	constructor(
 		public refType = ReferenceType.Simple,
 		properties?: PropertySet,
-		public readonly slidingPreference: SlidingPreference = SlidingPreference.Right,
+		public readonly slidingPreference: SlidingPreference = SlidingPreference.Forward,
 	) {
 		_validateReferenceType(refType);
 		this.properties = properties;
