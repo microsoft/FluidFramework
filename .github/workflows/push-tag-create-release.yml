@@ -41,7 +41,7 @@ jobs:
           name: release-metadata
           path: release-metadata.json
           retention-days: 3
-      - name: Load release metadata env variable
+      - name: Load release metadata into env variable
         run: |
           echo "RELEASE_JSON=$(cat release-metadata.json)" >> $GITHUB_ENV
       - name: Set releaseType output variable
@@ -63,6 +63,17 @@ jobs:
           path: reports
           retention-days: 7
 
+      # The release title will eventually be calculated outside the workflow as part of the RELEASE_JSON variable.
+      - name: Set release title (client)
+        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
+        run: |
+          echo "RELEASE_TITLE=Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{
+          fromJson(env.RELEASE_JSON).releaseType }})" >> $GITHUB_ENV
+      - name: Set release title
+        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'client'
+        run: |
+          echo "RELEASE_TITLE=${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})" >> $GITHUB_ENV
+
       # Generate changelog
       - name: Generate changelog
         # This changelog is only for client patch releases
@@ -78,22 +89,16 @@ jobs:
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
           --output auto-changelog.md \
           --template changelog.hbs
-
-      # This should be calculated outside the workflow eventually. Maybe in flub release fromTag.
-      - name: Set release title (client)
-        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
+      - name: Generate changelog
+        # This changelog is a basically empty one used for everything except client.
+        if: fromJson(env.RELEASE_JSON).releaseType != 'patch' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'client'
         run: |
-          echo "RELEASE_TITLE=Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{
-          fromJson(env.RELEASE_JSON).releaseType }})" >> $GITHUB_ENV
-      - name: Set release title
-        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'client'
-        run: |
-          echo "RELEASE_TITLE=${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})" >> $GITHUB_ENV
+          echo "This is a **${{ fromJson(env.RELEASE_JSON).releaseType }}** release." > auto-changelog.md
 
+      # Only creates GH releases for client releases.
       - name: Create GH release
-        # Only enabled for client
         if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
-        uses: ncipollo/release-action@main
+        uses: ncipollo/release-action@eb05307dcee34deaad054e98128088a30d7980dc # ratchet:ncipollo/release-action@main
         with:
           # Allow updates to existing releases.
           allowUpdates: true
@@ -106,14 +111,15 @@ jobs:
           draft: true
           omitDraftDuringUpdate: true # don't change the draft state when updating
 
-          # Created in "Set release title" step
+          # Created in the "Set release title" step
           name: ${{ env.RELEASE_TITLE }}
           omitNameDuringUpdate: false # always overwrite the name
 
-          # Created in "Generate changelog" step
+          # Created in the "Generate changelog" step
           bodyFile: auto-changelog.md
           omitBodyDuringUpdate: true # Don't overwrite the body
 
+          # Created in the "Create release reports (manifests)" step
           artifacts: "reports/*.*"
           artifactErrorsFailBuild: true
           tag: ${{ fromJson(env.RELEASE_JSON).tag }}
