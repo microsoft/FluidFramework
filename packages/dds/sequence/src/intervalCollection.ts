@@ -202,24 +202,24 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 
 export enum IntervalStickiness {
 	/**
+	 * Interval does not expand to include adjacent segments
+	 */
+	None = 0b00,
+
+	/**
 	 * Interval expands to include segments inserted adjacent to the start
 	 */
-	Start = 0,
+	Start = 0b01,
 
 	/**
 	 * Interval expands to include segments inserted adjacent to the end
 	 */
-	End = 1,
+	End = 0b10,
 
 	/**
 	 * Interval expands to include all segments inserted adjacent to it
 	 */
-	Full = 2,
-
-	/**
-	 * Interval does not expand to include adjacent segments
-	 */
-	None = 3,
+	Full = Start | End,
 }
 
 /**
@@ -656,7 +656,7 @@ export class SequenceInterval implements ISerializableInterval {
 		end: number,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		stickiness?: IntervalStickiness,
+		stickiness: IntervalStickiness = IntervalStickiness.End,
 	) {
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
@@ -676,7 +676,7 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
-				stickiness === IntervalStickiness.Start || stickiness === IntervalStickiness.Full
+				stickiness & IntervalStickiness.Start
 					? SlidingPreference.Backward
 					: SlidingPreference.Forward,
 			);
@@ -694,7 +694,7 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
-				stickiness === IntervalStickiness.Start
+				!(stickiness & IntervalStickiness.End)
 					? SlidingPreference.Backward
 					: SlidingPreference.Forward,
 			);
@@ -809,7 +809,7 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
-	stickiness?: IntervalStickiness,
+	stickiness: IntervalStickiness = IntervalStickiness.End,
 ): SequenceInterval {
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;
@@ -840,7 +840,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		undefined,
-		stickiness === IntervalStickiness.Start || stickiness === IntervalStickiness.Full
+		stickiness & IntervalStickiness.Start
 			? SlidingPreference.Backward
 			: SlidingPreference.Forward,
 	);
@@ -851,7 +851,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		undefined,
-		stickiness === IntervalStickiness.Start
+		!(stickiness & IntervalStickiness.End)
 			? SlidingPreference.Backward
 			: SlidingPreference.Forward,
 	);
@@ -2239,8 +2239,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 					newStart,
 					interval.start.refType,
 					op,
-					interval.stickiness === IntervalStickiness.Start ||
-						interval.stickiness === IntervalStickiness.Full
+					interval.stickiness !== undefined &&
+						interval.stickiness & IntervalStickiness.Start
 						? SlidingPreference.Backward
 						: SlidingPreference.Forward,
 				);
@@ -2260,7 +2260,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 					newEnd,
 					interval.end.refType,
 					op,
-					interval.stickiness === IntervalStickiness.Start
+					interval.stickiness !== undefined &&
+						!(interval.stickiness & IntervalStickiness.End)
 						? SlidingPreference.Backward
 						: SlidingPreference.Forward,
 				);
