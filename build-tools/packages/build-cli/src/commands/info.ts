@@ -7,7 +7,6 @@ import { Flags } from "@oclif/core";
 import sortPackageJson from "sort-package-json";
 import { table } from "table";
 
-
 import { BaseCommand } from "../base";
 import { releaseGroupFlag } from "../flags";
 import { PackageVersionList } from "../lib";
