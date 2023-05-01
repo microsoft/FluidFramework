@@ -12860,10 +12860,19 @@ importers:
       lz4js:
         specifier: ^0.2.0
         version: 0.2.0
+      sorted-btree:
+        specifier: ^1.8.0
+        version: 1.8.1
       uuid:
         specifier: ^8.3.1
         version: 8.3.2
     devDependencies:
+      '@fluid-internal/stochastic-test-utils':
+        specifier: '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
+        version: link:../../test/stochastic-test-utils
+      '@fluid-tools/benchmark':
+        specifier: ^0.46.0
+        version: 0.46.133527
       '@fluid-tools/build-cli':
         specifier: ^0.15.0
         version: 0.15.0
@@ -19921,6 +19930,15 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
+    dev: true
+
+  /@fluid-tools/benchmark@0.46.133527:
+    resolution: {integrity: sha512-1cR7ZOiDhWAH2cUzqs2iBuGOjK5gGOyKVo3eQ8dAly6FJUccjkv/uP9y3TpVWoaCVCDJu/YLRe3bpS4UYncWTQ==}
+    dependencies:
+      benchmark: 2.1.4
+      chai: 4.3.7
+      easy-table: 1.2.0
+      mocha: 10.2.0
     dev: true
 
   /@fluid-tools/benchmark@0.47.0:
