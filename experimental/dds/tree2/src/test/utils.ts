@@ -33,6 +33,9 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
+	defaultChangeFamily,
+	DefaultChangeset,
+	DefaultEditBuilder,
 	FieldKinds,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
@@ -63,6 +66,7 @@ import {
 	ITreeCursorSynchronous,
 	FieldKey,
 	IRepairDataStoreProvider,
+	UndoRedoManager,
 } from "../core";
 import { brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
@@ -577,6 +581,10 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 		// Noop
 	}
 
+	public applyDelta(change: Delta.Root): void {
+		// Noop
+	}
+
 	public createRepairData(): MockRepairDataStore {
 		return new MockRepairDataStore();
 	}
@@ -584,6 +592,10 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 	public clone(): IRepairDataStoreProvider {
 		return new MockRepairDataStoreProvider();
 	}
+}
+
+export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
+	return new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily);
 }
 
 /**

@@ -43,7 +43,7 @@ export interface ContainerInfo {
 }
 
 function initializeTinyliciousClient(logger?: ITelemetryBaseLogger): TinyliciousClient {
-	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
+	console.log(`Initializing Tinylicious client...`);
 	return new TinyliciousClient({
 		logger,
 	});

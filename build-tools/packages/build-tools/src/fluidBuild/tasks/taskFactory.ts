@@ -13,6 +13,7 @@ import {
 	CopyfilesTask,
 	EchoTask,
 	GenVerTask,
+	GoodFence,
 	LesscTask,
 	TypeValidationTask,
 } from "./leaf/miscTasks";
@@ -54,6 +55,7 @@ const executableToLeafTask: {
 	"echo": EchoTask,
 	"prettier": PrettierTask,
 	"gen-version": GenVerTask,
+	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
