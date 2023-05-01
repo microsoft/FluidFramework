@@ -95,9 +95,9 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     toString(): string;
     // @internal (undocumented)
-    _undoRemoveCols(pos: number, spec: IJSONSegment): void;
+    _undoRemoveCols(colStart: number, spec: IJSONSegment): void;
     // @internal (undocumented)
-    _undoRemoveRows(pos: number, spec: IJSONSegment): void;
+    _undoRemoveRows(rowStart: number, spec: IJSONSegment): void;
 }
 
 // @public (undocumented)
