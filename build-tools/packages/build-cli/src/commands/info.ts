@@ -55,7 +55,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 			tableData.push([
 				pkg.monoRepo?.kind ?? "n/a",
 				pkg.name,
-				pkg.packageJson.private ? "-private-" : "",
+				pkg.packageJson.private === true ? "-private-" : "",
 				version,
 			]);
 			jsonData[pkg.name] = version;
