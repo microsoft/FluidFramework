@@ -164,6 +164,9 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	}
 
 	assert(semverInternal !== undefined, "Unexpected pkg version");
+	// This is to make pipeline runs work
+	semverInternal = semverInternal.split(".").slice(0, 3).join(".");
+
 	const semverVal = new semver.SemVer(semverInternal);
 	const num = semverVal.major;
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
