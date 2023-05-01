@@ -4,30 +4,30 @@
  */
 
 /**
- * Describes features supported by {@link FluidDevtools}.
+ * Describes features supported by {@link IFluidDevtools}.
  *
  * @public
  */
 export enum DevtoolsFeature {
 	/**
-	 * Indicates that the {@link FluidDevtools} instance is capable of providing Fluid telemetry events.
+	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid telemetry events.
 	 */
 	Telemetry = "telemetry",
 }
 
 /**
- * Describes the set of {@link DevtoolsFeature | features} supported by a {@link FluidDevtools} instance.
+ * Describes the set of {@link DevtoolsFeature | features} supported by a {@link IFluidDevtools} instance.
  *
  * @remarks
  *
  * This has two primary purposes:
  *
  * 1. It can be used to signal to consumers of the Devtools what kinds of functionality are supported (at runtime)
- * by a {@link FluidDevtools} instance.
+ * by a {@link IFluidDevtools} instance.
  *
  * 2. It can be used to make backwards compatible changes easier to make.
  * By adding a flag to this object for new features, consumers can easily verify whether or not that feature
- * is supported by the {@link FluidDevtools} instance before attempting to use it.
+ * is supported by the {@link IFluidDevtools} instance before attempting to use it.
  *
  * @public
  */
@@ -39,7 +39,7 @@ export type DevtoolsFeatureFlags = {
 };
 
 /**
- * Describes features supported by {@link ContainerDevtools}.
+ * Describes features supported by the Devtools for a specific Container instance.
  *
  * @public
  */
@@ -52,19 +52,18 @@ export enum ContainerDevtoolsFeature {
 }
 
 /**
- * Describes the set of {@link ContainerDevtoolsFeature | container-related features} supported by a
- * {@link ContainerDevtools} instance.
+ * Describes the set of {@link ContainerDevtoolsFeature | container-related features} supported by the Devtools.
  *
  * @remarks
  *
  * This has two primary purposes:
  *
  * 1. It can be used to signal to consumers of the Devtools what kinds of functionality are supported (at runtime)
- * by a {@link ContainerDevtools} instance.
+ * by the Devtools for a specific Container instance.
  *
  * 2. It can be used to make backwards compatible changes easier to make.
  * By adding a flag to this object for new features, consumers can easily verify whether or not that feature
- * is supported by the corresponding {@link ContainerDevtools} instance before attempting to use it.
+ * is supported by the Devtools for a specific Container instance.
  *
  * @public
  */
