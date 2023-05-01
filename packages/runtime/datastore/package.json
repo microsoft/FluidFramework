@@ -108,6 +108,10 @@
 	},
 	"packageManager": "pnpm@7.32.2+sha512.3dfa2c1386fc91e58756b3becf877e9dc20840af72a5301d453ae4da2a19db00cdd08f4bfa66a9cc9565755aac65dcbbbda93232dc5f927376727e708c449bbe",
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_FluidDataStoreRuntime": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

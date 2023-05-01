@@ -66,6 +66,7 @@
 		"debug": "^4.1.1",
 		"detect-indent": "^6.1.0",
 		"execa": "^5.1.1",
+		"find-up": "^5.0.0",
 		"fs-extra": "^9.0.1",
 		"glob": "^7.1.3",
 		"ignore": "^5.1.8",
@@ -114,5 +115,14 @@
 	"engines": {
 		"node": ">=14.13.0"
 	},
-	"packageManager": "pnpm@7.32.2+sha512.3dfa2c1386fc91e58756b3becf877e9dc20840af72a5301d453ae4da2a19db00cdd08f4bfa66a9cc9565755aac65dcbbbda93232dc5f927376727e708c449bbe"
+	"packageManager": "pnpm@7.32.2+sha512.3dfa2c1386fc91e58756b3becf877e9dc20840af72a5301d453ae4da2a19db00cdd08f4bfa66a9cc9565755aac65dcbbbda93232dc5f927376727e708c449bbe",
+	"pnpm": {
+		"updateConfig": {
+			"ignoreDependencies": [
+				"find-up",
+				"type-fest",
+				"typescript"
+			]
+		}
+	}
 }
