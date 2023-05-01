@@ -2,9 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { MonoRepoKind } from "@fluidframework/build-tools";
 import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
+import { sortPackageJson as sortJson } from "sort-package-json";
 
 import { sortVersions } from "../../lib";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
@@ -46,6 +48,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 
 	async run(): Promise<{
 		packageOrReleaseGroup: ReleaseGroup | ReleasePackage;
+		releaseNotesTitle: string;
 		tag: string;
 		date?: Date;
 		releaseType: VersionBumpType;
@@ -89,8 +92,9 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		this.log(`${this.releaseGroupOrPackage} v${version.version} (${releaseType})`);
 
 		// When the --json flag is passed, the command will return the raw data as JSON.
-		return {
+		return sortJson({
 			packageOrReleaseGroup: this.releaseGroupOrPackage,
+			releaseNotesTitle: getReleaseNotesTitle(releaseGroup, version, releaseType),
 			tag,
 			date: release.latestReleasedVersion.date,
 			releaseType,
@@ -100,7 +104,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 				prevVersionDetails === undefined
 					? undefined
 					: `${this.releaseGroupOrPackage}_v${previousVersion}`,
-		};
+		});
 	}
 }
 
@@ -124,4 +128,13 @@ const parseTag = (input: string): [ReleaseGroup, semver.SemVer, string] => {
 	}
 
 	return [rg, version, tag];
+};
+
+const getReleaseNotesTitle = (
+	releaseGroup: ReleaseGroup,
+	version: semver.SemVer,
+	releaseType: VersionBumpType,
+): string => {
+	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
+	return `${name} v${version} (${releaseType})`;
 };
