@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { MonoRepoKind, isMonoRepoKind } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
+import sortPackageJson from "sort-package-json";
 import { table } from "table";
 
-import { MonoRepoKind, isMonoRepoKind } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../base";
 import { releaseGroupFlag } from "../flags";
@@ -68,6 +69,6 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 
 		this.log(`\n${output}`);
 		this.log(`Total package count: ${packages.length}`);
-		return jsonData;
+		return sortPackageJson(jsonData);
 	}
 }
