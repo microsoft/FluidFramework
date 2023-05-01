@@ -34,7 +34,7 @@ export interface ContainerMetadata {
 /**
  * Metadata describing a {@link @fluidframework/container-definitions#IContainer}'s core state.
  *
- * @public
+ * @internal
  */
 export interface ContainerStateMetadata extends ContainerMetadata {
 	/**

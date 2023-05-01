@@ -8,7 +8,7 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as semver from "semver";
 
-import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepo, MonoRepoKind, Package } from "@fluidframework/build-tools";
 
 import {
 	ReleaseVersion,
@@ -112,6 +112,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
 		if (rgOrPackage === undefined) {
 			this.error(`Package not found: ${rgOrPackageName}`);
+		}
+
+		// eslint-disable-next-line no-warning-comments
+		// TODO: can be removed once server team owns server releases
+		if (args.package_or_release_group === MonoRepoKind.Server && flags.bumpType === "minor") {
+			this.error(`ERROR: Server release are always a ${chalk.bold("MAJOR")} release`);
 		}
 
 		if (bumpType === undefined && flags.exact === undefined) {
