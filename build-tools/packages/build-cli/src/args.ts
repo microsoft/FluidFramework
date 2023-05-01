@@ -18,7 +18,7 @@ export const packageOrReleaseGroupArg = Args.string({
  * Takes a packageOrReleaseGroupArg and searches the context for it. Release groups are checked first, then independent
  * packages by scoped name, then by unscoped name.
  */
-export const argToReleaseGroupOrPackage = (
+export const findPackageOrReleaseGroup = (
 	name: string,
 	context: Context,
 ): Package | MonoRepo | undefined => {

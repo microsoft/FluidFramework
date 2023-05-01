@@ -19,7 +19,7 @@ import {
 	detectVersionScheme,
 } from "@fluid-tools/version-tools";
 
-import { argToReleaseGroupOrPackage, packageOrReleaseGroupArg } from "../args";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
 import {
@@ -27,7 +27,6 @@ import {
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
 } from "../lib";
-import { isReleaseGroup } from "../releaseGroups";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static summary =
@@ -106,12 +105,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
 		const rgOrPackageName = args.package_or_release_group;
-		const rgOrPackage = argToReleaseGroupOrPackage(rgOrPackageName, context);
-
 		if (rgOrPackageName === undefined) {
 			this.error("ERROR: No dependency provided.");
 		}
 
+		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
 		if (rgOrPackage === undefined) {
 			this.error(`Package not found: ${rgOrPackageName}`);
 		}
