@@ -28,7 +28,6 @@ import {
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
-	ContainerRuntimeMessage,
 	ICompressionRuntimeOptions,
 } from "../../containerRuntime";
 
@@ -116,21 +115,19 @@ describe("Outbox", () => {
 
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		onSubmitMessage: (
-			type: ContainerMessageType,
+			content: string,
 			referenceSequenceNumber: number,
-			content: any,
 			_localOpMetadata: unknown,
 			opMetadata: Record<string, unknown> | undefined,
 		): void => {
-			state.pendingOpContents.push({ type, content, referenceSequenceNumber, opMetadata });
+			state.pendingOpContents.push({ content, referenceSequenceNumber, opMetadata });
 		},
 	});
 
 	const createMessage = (type: ContainerMessageType, contents: string): BatchMessage => {
-		const deserializedContent: ContainerRuntimeMessage = { type, contents };
 		return {
-			contents: JSON.stringify(deserializedContent),
-			deserializedContent,
+			contents: JSON.stringify({ type, contents }),
+			type,
 			metadata: { test: true },
 			localOpMetadata: {},
 			referenceSequenceNumber: Number.POSITIVE_INFINITY,
@@ -263,8 +260,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -292,8 +288,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			messages.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -324,8 +319,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -379,8 +373,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -432,8 +425,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -456,9 +448,7 @@ describe("Outbox", () => {
 			createMessage(ContainerMessageType.Attach, "7"),
 		];
 
-		const attachMessages = messages.filter(
-			(x) => x.deserializedContent.type === ContainerMessageType.Attach,
-		);
+		const attachMessages = messages.filter((x) => x.type === ContainerMessageType.Attach);
 		assert.ok(attachMessages.length > 0 && attachMessages[0].contents !== undefined);
 		const outbox = getOutbox({
 			context: getMockContext() as IContainerContext,
@@ -469,7 +459,7 @@ describe("Outbox", () => {
 		});
 
 		for (const message of messages) {
-			if (message.deserializedContent.type === ContainerMessageType.Attach) {
+			if (message.type === ContainerMessageType.Attach) {
 				outbox.submitAttach(message);
 			} else {
 				outbox.submit(message);
@@ -497,8 +487,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			attachMessages.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -581,8 +570,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -686,8 +674,7 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents,
 			rawMessagesInFlushOrder.map((message) => ({
-				type: message.deserializedContent.type,
-				content: message.deserializedContent.contents,
+				content: message.contents,
 				referenceSequenceNumber: message.referenceSequenceNumber,
 				opMetadata: message.metadata,
 			})),
@@ -734,7 +721,7 @@ describe("Outbox", () => {
 			const outbox = getOutbox({ context: getMockContext() as IContainerContext });
 			for (const op of ops) {
 				currentSeqNumbers.referenceSequenceNumber = op.referenceSequenceNumber;
-				if (op.deserializedContent.type === ContainerMessageType.Attach) {
+				if (op.type === ContainerMessageType.Attach) {
 					outbox.submitAttach(op);
 				} else {
 					outbox.submit(op);
@@ -786,7 +773,7 @@ describe("Outbox", () => {
 		];
 
 		for (const message of messages) {
-			if (message.deserializedContent.type === ContainerMessageType.Attach) {
+			if (message.type === ContainerMessageType.Attach) {
 				outbox.submitAttach(message);
 			} else {
 				outbox.submit(message);
