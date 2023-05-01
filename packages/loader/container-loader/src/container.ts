@@ -250,7 +250,7 @@ export async function waitContainerToCatchUp(container: IContainer) {
 
 const getCodeProposal =
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	(quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");```
+	(quorum: IQuorumProposals) => quorum.get("code") ?? quorum.get("code2");
 
 /**
  * Helper function to report to telemetry cases where operation takes longer than expected (200ms)
