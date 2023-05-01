@@ -12,6 +12,7 @@ interface IGroupedMessage {
 	contents?: unknown;
 	metadata?: Record<string, unknown>;
 	compression?: string;
+	numEmptyToCreate?: number;
 }
 
 export class OpGroupingManager {
@@ -19,7 +20,7 @@ export class OpGroupingManager {
 
 	constructor(private readonly groupedBatchingEnabled: boolean) {}
 
-	public groupBatch(batch: IBatch): IBatch {
+	public groupBatch(batch: IBatch, canSimplifyEmptyMessages: boolean = false): IBatch {
 		if (batch.content.length < 2 || !this.groupedBatchingEnabled) {
 			return batch;
 		}
@@ -35,15 +36,30 @@ export class OpGroupingManager {
 			}
 		}
 
-		// Need deserializedContent for back-compat
 		const deserializedContent = {
 			type: OpGroupingManager.groupedBatchOp,
-			contents: batch.content.map<IGroupedMessage>((message) => ({
+			contents: [] as IGroupedMessage[],
+		};
+
+		if (canSimplifyEmptyMessages) {
+			const firstMessage = batch.content[0];
+			deserializedContent.contents.push({
+				contents:
+					firstMessage.contents === undefined
+						? undefined
+						: JSON.parse(firstMessage.contents),
+				metadata: firstMessage.metadata,
+				compression: firstMessage.compression,
+				// Indicate how many empty message to create upon un-grouping
+				numEmptyToCreate: batch.content.length - 1,
+			});
+		} else {
+			deserializedContent.contents = batch.content.map<IGroupedMessage>((message) => ({
 				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
 				metadata: message.metadata,
 				compression: message.compression,
-			})),
-		};
+			}));
+		}
 
 		const groupedBatch: IBatch = {
 			...batch,
@@ -52,6 +68,7 @@ export class OpGroupingManager {
 					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+					// Need deserializedContent for back-compat
 					deserializedContent: deserializedContent as ContainerRuntimeMessage,
 					contents: JSON.stringify(deserializedContent),
 				},
@@ -67,12 +84,37 @@ export class OpGroupingManager {
 
 		const messages = op.contents.contents as IGroupedMessage[];
 		let fakeCsn = 1;
-		return messages.map((subMessage) => ({
+		const result: ISequencedDocumentMessage[] = messages.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,
 			contents: subMessage.contents,
 			metadata: subMessage.metadata,
 			compression: subMessage.compression,
 		}));
+
+		if (messages.length === 1 && messages[0].numEmptyToCreate !== undefined) {
+			for (let i = 0; i < messages[0].numEmptyToCreate; i++) {
+				result.push({
+					...op,
+					clientSequenceNumber: fakeCsn++,
+					contents: undefined,
+					metadata: undefined,
+					compression: undefined,
+				});
+			}
+		}
+
+		if (result.length > 1) {
+			result[0].metadata = {
+				...result[0].metadata,
+				batch: true,
+			};
+			result[result.length - 1].metadata = {
+				...result[result.length - 1].metadata,
+				batch: false,
+			};
+		}
+
+		return result;
 	}
 }

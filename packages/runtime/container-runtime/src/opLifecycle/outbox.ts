@@ -221,6 +221,7 @@ export class Outbox {
 
 		const compressedBatch = this.params.groupingManager.groupBatch(
 			this.params.compressor.compressBatch(batch),
+			true /* canSimplifyEmptyMessages */,
 		);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
