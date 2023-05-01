@@ -7,6 +7,7 @@ import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
+import { assert, spy } from "sinon";
 import { SharedMap } from "@fluidframework/map";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
@@ -17,6 +18,8 @@ import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	VisualNodeKind,
+	VisualizerNode,
+	visualizeSharedCounter,
 } from "../data-visualization";
 
 describe("DataVisualizerGraph unit tests", () => {
@@ -199,5 +202,29 @@ describe("DataVisualizerGraph unit tests", () => {
 			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 		expect(childCellTree).to.deep.equal(expectedChildCellTree);
+	});
+
+	it("Updates called when an edit is made", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const sharedCounter = new SharedCounter(
+			"test-counter",
+			runtime,
+			SharedCounter.getFactory().attributes,
+		);
+
+		const visualizer = new VisualizerNode(
+			sharedCounter,
+			visualizeSharedCounter,
+			async () => "test",
+		);
+
+		const trackEventSpy = spy(visualizer, "emitVisualUpdate" as keyof VisualizerNode);
+
+		sharedCounter.increment(1);
+
+		// delay to wait for promise.
+		await new Promise((resolve) => setTimeout(resolve, 2000));
+
+		assert.calledOnce(trackEventSpy);
 	});
 });
