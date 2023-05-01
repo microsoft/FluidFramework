@@ -80,6 +80,12 @@ export function createSummarizerFromFactory(provider: ITestObjectProvider, conta
 }>;
 
 // @public
+export function createSummarizerWithTestConfig(provider: ITestObjectProvider, container: IContainer, config: ITestContainerConfig, summaryVersion?: string, logger?: ITelemetryBaseLogger): Promise<{
+    container: IContainer;
+    summarizer: ISummarizer;
+}>;
+
+// @public
 export const createTestContainerRuntimeFactory: (containerRuntimeCtor: typeof ContainerRuntime) => {
     new (type: string, dataStoreFactory: IFluidDataStoreFactory, runtimeOptions?: IContainerRuntimeOptions, requestHandlers?: RuntimeRequestHandler[]): {
         type: string;

@@ -9,27 +9,27 @@ import { IDevtoolsMessage } from "../Messages";
 /**
  * Encapsulates types and logic related to {@link DisconnectContainer.Message}.
  *
- * @public
+ * @internal
  */
 export namespace DisconnectContainer {
 	/**
 	 * {@link DisconnectContainer.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "DISCONNECT_CONTAINER";
 
 	/**
 	 * Message data format used by {@link DisconnectContainer.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export type MessageData = HasContainerId;
 
 	/**
 	 * Inbound message requesting that the Container associated with the specified ID be disconnected (if currently connected).
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -41,7 +41,7 @@ export namespace DisconnectContainer {
 	/**
 	 * Creates a {@link DisconnectContainer.Message} from the provided {@link DisconnectContainer.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {
