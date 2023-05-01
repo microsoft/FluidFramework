@@ -10,7 +10,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { GraphCommit, RevisionTag, findCommonAncestor, rebaseBranch } from "../../core/rebase";
 import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange";
 
-function node(
+function newCommit(
 	inputContext: readonly number[],
 	intention: number | number[],
 	parent?: GraphCommit<TestChange>,
@@ -44,12 +44,20 @@ describe("rebaseBranch", () => {
 		assert.deepEqual(outputContext, expected);
 	}
 
+	// These tests use diagrams to show the commit graph used in each scenario:
+	//
+	// 1 ─ 2 ─ 3
+	// └─ 4 ─ 5
+	//
+	// Commit "3" has a parent "2", which has a parent "1". Commit "5" has a parent "4" which has a parent "1".
+	// Commit "1" is the common ancestor of the branch with head commit "3" and the branch with head commit "5".
+
 	it("fails if branches are disjoint", () => {
 		// 1 ─ 2
 		// 3
-		const n1 = node([], 1);
-		const n2 = node([1], 2, n1);
-		const n3 = node([], 3);
+		const n1 = newCommit([], 1);
+		const n2 = newCommit([1], 2, n1);
+		const n3 = newCommit([], 3);
 
 		assert.throws(
 			() => rebaseBranch(new TestChangeRebaser(), n3, n2),
@@ -65,10 +73,10 @@ describe("rebaseBranch", () => {
 	it("does nothing if already rebased past target", () => {
 		// 1 ─ 2
 		//     └─ 3 ─ 4
-		const n1 = node([], 1);
-		const n2 = node([1], 2, n1);
-		const n3 = node([1, 2], 3, n2);
-		const n4 = node([1, 2, 3], 4, n3);
+		const n1 = newCommit([], 1);
+		const n2 = newCommit([1], 2, n1);
+		const n3 = newCommit([1, 2], 3, n2);
+		const n4 = newCommit([1, 2, 3], 4, n3);
 
 		// (1)─ 2
 		//      └─ 4 ─ 5
@@ -82,9 +90,9 @@ describe("rebaseBranch", () => {
 	it("does nothing if already rebased at target", () => {
 		// 1
 		// └─ 2 ─ 3
-		const n1 = node([], 1);
-		const n2 = node([1], 2, n1);
-		const n3 = node([1, 2], 3, n2);
+		const n1 = newCommit([], 1);
+		const n2 = newCommit([1], 2, n1);
+		const n3 = newCommit([1, 2], 3, n2);
 
 		// (1)
 		//  └─ 2 ─ 3
@@ -98,11 +106,11 @@ describe("rebaseBranch", () => {
 	it("can rebase a branch onto the head of another branch", () => {
 		// 1 ─ 2 ─ 3
 		// └─ 4 ─ 5
-		const n1 = node([], 1);
-		const n2 = node([1], 2, n1);
-		const n3 = node([1, 2], 3, n2);
-		const n4 = node([1], 4, n1);
-		const n5 = node([1, 4], 5, n4);
+		const n1 = newCommit([], 1);
+		const n2 = newCommit([1], 2, n1);
+		const n3 = newCommit([1, 2], 3, n2);
+		const n4 = newCommit([1], 4, n1);
+		const n5 = newCommit([1, 4], 5, n4);
 
 		// 1 ─ 2 ─(3)
 		//         └─ 4' ─ 5'
@@ -121,11 +129,11 @@ describe("rebaseBranch", () => {
 	it("can rebase a branch onto the middle of another branch", () => {
 		// 1 ─ 2 ─ 3
 		// └─ 4 ─ 5
-		const n1 = node([], 1);
-		const n2 = node([1], 2, n1);
-		const n3 = node([1, 2], 3, n2);
-		const n4 = node([1], 4, n1);
-		const n5 = node([1, 4], 5, n4);
+		const n1 = newCommit([], 1);
+		const n2 = newCommit([1], 2, n1);
+		const n3 = newCommit([1, 2], 3, n2);
+		const n4 = newCommit([1], 4, n1);
+		const n5 = newCommit([1, 4], 5, n4);
 
 		// 1 ─(2)─ 3
 		//     └─ 4' ─ 5'
@@ -145,13 +153,13 @@ describe("rebaseBranch", () => {
 	it("skips and advances over commits with the same revision tag", () => {
 		// 1 ─ 2 ─ 3 - 4
 		// └─ 2'─ 3'- 5
-		const n1 = node([], 1);
-		const n2 = node([1], 2, n1);
-		const n3 = node([1, 2], 3, n2);
-		const n4 = node([1, 2, 3], 4, n3);
-		const n2_1 = node([1], 2, n1);
-		const n3_1 = node([1, 2], 3, n2_1);
-		const n5 = node([1, 2, 3], 5, n3_1);
+		const n1 = newCommit([], 1);
+		const n2 = newCommit([1], 2, n1);
+		const n3 = newCommit([1, 2], 3, n2);
+		const n4 = newCommit([1, 2, 3], 4, n3);
+		const n2_1 = newCommit([1], 2, n1);
+		const n3_1 = newCommit([1, 2], 3, n2_1);
+		const n5 = newCommit([1, 2, 3], 5, n3_1);
 
 		// 1 ─(2)─ 3 - 4
 		//         └─ 5'
@@ -171,12 +179,12 @@ describe("rebaseBranch", () => {
 	it("emits no change for equivalent branches", () => {
 		// 1 ─ 2 ─ 3- 4
 		// └─ 2' ─ 3'
-		const n1 = node([], 1);
-		const n2 = node([1], 2, n1);
-		const n3 = node([1, 2], 3, n2);
-		const n4 = node([1, 2, 3], 4, n3);
-		const n2_1 = node([1], 2, n1);
-		const n3_1 = node([1, 2], 3, n2_1);
+		const n1 = newCommit([], 1);
+		const n2 = newCommit([1], 2, n1);
+		const n3 = newCommit([1, 2], 3, n2);
+		const n4 = newCommit([1, 2, 3], 4, n3);
+		const n2_1 = newCommit([1], 2, n1);
+		const n3_1 = newCommit([1, 2], 3, n2_1);
 
 		// 1 ─ 2 ─(3)- 4
 		//         └─

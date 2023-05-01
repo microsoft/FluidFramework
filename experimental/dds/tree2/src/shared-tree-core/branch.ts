@@ -29,14 +29,14 @@ import { TransactionStack } from "./transactionStack";
  * this change format describes each in terms of the "removed commits" (all commits which were present
  * on the branch before the operation but are no longer present after) and the "new commits" (all
  * commits which are present on the branch after the operation that were not present before). Each of
- * the following event types also provides a `change` which contains the net change to the branch,
+ * the following event types also provides a `change` which contains the net change to the branch
  * (or is undefined if there was no net change):
  * * Append - when one or more commits are appended to the head of the branch, for example via
  * a change applied by the branch's editor, or as a result of merging another branch into this one
  * * Rollback - when one or more commits are removed from the head of the branch. This occurs
  * when a transaction is aborted, and all commits in that transaction are removed.
- * * Rebase - when this branch is rebased over another branch. In this case, one or more commits
- * may be removed from the head of the branch and one or more commits may be added.
+ * * Rebase - when this branch is rebased over another branch. In this case, commits on the source
+ * branch are removed and replaced with new, rebased versions
  */
 export type SharedTreeBranchChange<TChange> =
 	| { type: "append"; change: TChange | undefined; newCommits: GraphCommit<TChange>[] }

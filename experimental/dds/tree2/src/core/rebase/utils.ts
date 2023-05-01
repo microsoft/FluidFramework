@@ -8,6 +8,26 @@ import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser
 import { GraphCommit, mintRevisionTag } from "./types";
 
 /**
+ * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
+ */
+export interface RebasedCommits<TChange> {
+	/**
+	 * The new common ancestor of the two branches, i.e. the commit where the rebased source branch now branches from the target branch.
+	 * This is not always the same as the target commit of a rebase operation; sometimes the rebase will rebase past the target commit
+	 * (see remarks in {@link rebaseBranch}).
+	 */
+	newBase: GraphCommit<TChange>;
+	/**
+	 * All commits that belonged to the source branch before the rebase, but no longer do after the rebase
+	 */
+	deletedSourceCommits: GraphCommit<TChange>[];
+	/**
+	 * All commits which were not part of the source branch before the rebase, but are after the rebase
+	 */
+	newSourceCommits: GraphCommit<TChange>[];
+}
+
+/**
  * Rebases a source branch onto another commit in a target branch.
  *
  * A "branch" is defined as a "head" commit and all ancestors of that commit, i.e. one linked list in a graph of commits.
@@ -41,10 +61,7 @@ export function rebaseBranch<TChange>(
 ): [
 	newSourceHead: GraphCommit<TChange>,
 	sourceChange: TChange | undefined,
-	commits: {
-		deletedSourceCommits: GraphCommit<TChange>[];
-		newSourceCommits: GraphCommit<TChange>[];
-	},
+	commits: Omit<RebasedCommits<TChange>, "newBase">,
 ];
 
 /**
@@ -90,11 +107,7 @@ export function rebaseBranch<TChange>(
 ): [
 	newSourceHead: GraphCommit<TChange>,
 	sourceChange: TChange | undefined,
-	commits: {
-		newBase: GraphCommit<TChange>;
-		deletedSourceCommits: GraphCommit<TChange>[];
-		newSourceCommits: GraphCommit<TChange>[];
-	},
+	commits: RebasedCommits<TChange>,
 ];
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
@@ -104,11 +117,7 @@ export function rebaseBranch<TChange>(
 ): [
 	newSourceHead: GraphCommit<TChange>,
 	sourceChange: TChange | undefined,
-	commits: {
-		newBase: GraphCommit<TChange>;
-		deletedSourceCommits: GraphCommit<TChange>[];
-		newSourceCommits: GraphCommit<TChange>[];
-	},
+	commits: RebasedCommits<TChange>,
 ] {
 	// Get both source and target as path arrays
 	const sourcePath: GraphCommit<TChange>[] = [];
