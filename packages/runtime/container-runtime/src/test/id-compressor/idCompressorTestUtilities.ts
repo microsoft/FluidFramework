@@ -19,6 +19,18 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
+	FinalCompressedId,
+	SessionId,
+	StableId,
+	SessionSpaceCompressedId,
+	OpSpaceCompressedId,
+} from "@fluidframework/runtime-definitions";
+import type {
+	IdCreationRange,
+	SerializedIdCompressorWithOngoingSession,
+	SerializedIdCompressorWithNoSession,
+} from "@fluidframework/runtime-definitions";
+import {
 	IdCompressor,
 	isLocalId,
 	createSessionId,
@@ -26,20 +38,10 @@ import {
 	NumericUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
-	FinalCompressedId,
-	SessionId,
-	StableId,
-	SessionSpaceCompressedId,
-	OpSpaceCompressedId,
 	getIds,
 	assertIsStableId,
 	getOrCreate,
 	fail,
-} from "../../id-compressor";
-import type {
-	IdCreationRange,
-	SerializedIdCompressorWithOngoingSession,
-	SerializedIdCompressorWithNoSession,
 } from "../../id-compressor";
 
 /**
@@ -85,7 +87,7 @@ export function createCompressor(
 	clusterCapacity = 5,
 	logger?: ITelemetryLogger,
 ): IdCompressor {
-	const compressor = new IdCompressor(sessionIds.get(client), 1024, logger);
+	const compressor = new IdCompressor(sessionIds.get(client), logger);
 	compressor.clusterCapacity = clusterCapacity;
 	return compressor;
 }
