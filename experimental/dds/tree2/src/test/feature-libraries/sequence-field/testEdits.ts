@@ -177,6 +177,12 @@ function createModifyChangeset<TNodeChange>(
 	return SF.sequenceFieldEditor.buildChildChange(index, change);
 }
 
+function createMutedModifyChangeset<TNodeChange>(index: number, change: TNodeChange, detachEvent: DetachEvent): SF.Changeset<TNodeChange> {
+	const changeset = createModifyChangeset(index, change);
+	(changeset[changeset.length - 1] as SF.Modify).detachEvent = detachEvent;
+	return changeset;
+}
+
 export const ChangeMaker = {
 	insert: createInsertChangeset,
 	delete: createDeleteChangeset,
@@ -187,4 +193,5 @@ export const ChangeMaker = {
 	move: createMoveChangeset,
 	return: createReturnChangeset,
 	modify: createModifyChangeset,
+	mutedModify: createMutedModifyChangeset,
 };

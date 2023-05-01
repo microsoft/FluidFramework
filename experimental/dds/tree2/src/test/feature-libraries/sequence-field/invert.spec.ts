@@ -97,8 +97,8 @@ describe("SequenceField - Invert", () => {
 		];
 		const expected = composeAnonChanges([
 			Change.modify(0, inverseChildChange1),
-			Change.modify(1, inverseChildChange2),
-			Change.modify(2, inverseChildChange3),
+			Change.mutedModify(1, inverseChildChange2, { revision: tag2, index: 0 }),
+			Change.modify(1, inverseChildChange3),
 		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -121,23 +121,6 @@ describe("SequenceField - Invert", () => {
 	it("intentional active revive => delete", () => {
 		const input = Change.intentionalRevive(0, 2, tag1, 0);
 		const expected = Change.delete(0, 2);
-		const actual = invert(input);
-		assert.deepEqual(actual, expected);
-	});
-
-	it("intentional conflicted revive => skip", () => {
-		const input = composeAnonChanges([
-			Change.modify(0, childChange1),
-			Change.intentionalRevive(0, 2, tag2, 0, undefined, undefined, {
-				revision: tag1,
-				index: 0,
-			}),
-			Change.modify(0, childChange2),
-		]);
-		const expected = composeAnonChanges([
-			Change.modify(0, inverseChildChange2),
-			Change.modify(2, inverseChildChange1),
-		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -176,7 +159,41 @@ describe("SequenceField - Invert", () => {
 	});
 
 	describe("Muted changes", () => {
-		it("move", () => {});
+		it("delete", () => {
+			const detachEvent = { revision: tag1, index: 0 };
+			const input: TestChangeset = [{
+				type: "Delete",
+				count: 1,
+				changes: childChange1,
+				detachEvent,
+			}];
+
+			const actual = invert(input);
+			const expected = Change.mutedModify(0, inverseChildChange1, detachEvent);
+			assert.deepEqual(actual, expected);			
+		})
+
+		it("move out", () => {
+			const detachEvent = { revision: tag1, index: 0 };
+			const input: TestChangeset = [{
+				type: "MoveOut",
+				count: 1,
+				id: brand(0),				
+				changes: childChange1,
+				detachEvent,
+			},
+			{
+				type: "MoveIn",
+				count: 1,
+				id: brand(0),
+				isSrcConflicted: true,
+			},
+		];
+
+			const actual = invert(input);
+			const expected = Change.mutedModify(0, inverseChildChange1, detachEvent);
+			assert.deepEqual(actual, expected);
+		});
 
 		it("return-from + conflicted return-to => skip + skip", () => {
 			const input: TestChangeset = [
@@ -202,7 +219,7 @@ describe("SequenceField - Invert", () => {
 			const actual = invert(input);
 			const expected = composeAnonChanges([
 				Change.modify(0, inverseChildChange1),
-				Change.modify(2, inverseChildChange2),
+				Change.modify(1, inverseChildChange2),
 			]);
 			assert.deepEqual(actual, expected);
 		});
@@ -214,7 +231,6 @@ describe("SequenceField - Invert", () => {
 					count: 1,
 					id: brand(0),
 					detachEvent: { revision: tag2, index: 0 },
-					isDstConflicted: true,
 				},
 				{
 					type: "Modify",
@@ -235,7 +251,7 @@ describe("SequenceField - Invert", () => {
 			const actual = invert(input);
 			const expected = composeAnonChanges([
 				Change.modify(0, inverseChildChange1),
-				Change.modify(2, inverseChildChange2),
+				Change.modify(1, inverseChildChange2),
 			]);
 			assert.deepEqual(actual, expected);
 		});

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
-import { Changeset, Mark, MarkList, ReturnFrom } from "./format";
+import { Changeset, DetachEvent, Mark, MarkList, Modify, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
@@ -110,15 +110,18 @@ function invertMark<TNodeChange>(
 			}
 			case "Delete": {
 				assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
-				return [
-					{
-						type: "Revive",
-						detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
-						content: reviver(revision, inputIndex, mark.count),
-						count: mark.count,
-						inverseOf: mark.revision ?? revision,
-					},
-				];
+				if (mark.detachEvent === undefined) {
+					return [
+						{
+							type: "Revive",
+							detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
+							content: reviver(revision, inputIndex, mark.count),
+							count: mark.count,
+							inverseOf: mark.revision ?? revision,
+						},
+					];
+				}
+				return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild, mark.detachEvent)];
 			}
 			case "Revive": {
 				if (!isReattachConflicted(mark)) {
@@ -129,12 +132,7 @@ function invertMark<TNodeChange>(
 						},
 					];
 				}
-				if (mark.detachEvent === undefined) {
-					// The nodes were already revived, so the revive mark did not affect them.
-					return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
-				}
-				// The nodes were not revived and could not be revived.
-				return [];
+				return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild, mark.detachEvent)];
 			}
 			case "Modify": {
 				return [
@@ -147,12 +145,7 @@ function invertMark<TNodeChange>(
 			case "MoveOut":
 			case "ReturnFrom": {
 				if (areInputCellsEmpty(mark)) {
-					assert(
-						mark.changes === undefined,
-						0x4e1 /* Nested changes should have been moved to the destination of the move/return that detached them */,
-					);
-					// The nodes were already detached so the mark had no effect
-					return [];
+					return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild, mark.detachEvent)];
 				}
 				if (mark.type === "ReturnFrom" && mark.isDstConflicted) {
 					// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
@@ -249,13 +242,18 @@ function invertModifyOrSkip<TNodeChange>(
 	changes: TNodeChange | undefined,
 	index: number,
 	inverter: NodeChangeInverter<TNodeChange>,
+	detachEvent?: DetachEvent,
 ): Mark<TNodeChange> {
 	if (changes !== undefined) {
 		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
-		return { type: "Modify", changes: inverter(changes, index) };
+		const modify: Modify<TNodeChange> = { type: "Modify", changes: inverter(changes, index) };
+		if (detachEvent !== undefined) {
+			modify.detachEvent = detachEvent;
+		}
+		return modify;
 	}
 
-	return length;
+	return detachEvent === undefined ? length : 0;
 }
 
 function invertNodeChange<TNodeChange>(change: TNodeChange | undefined, index: number, inverter: NodeChangeInverter<TNodeChange>): TNodeChange | undefined {
