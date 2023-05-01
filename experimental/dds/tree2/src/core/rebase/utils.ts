@@ -165,9 +165,10 @@ export function rebaseBranch<TChange>(
 	/** The commit on the target branch that the new source branch branches off of */
 	const newBase = targetPath[newBaseIndex];
 
-	// If all commits that are about to be rebased over on the target branch are already on the source branch
-	// and in the same order, then no rebasing needs to occur. Those commits can simply be removed from the
-	// source branch, and the remaining commits on the source branch are reparented off of the new base commit
+	// If all commits that are about to be rebased over on the target branch already comprise the start of the source branch,
+	// are in the same order, and have no other commits interleaving them, then no rebasing needs to occur. Those commits can
+	// simply be removed from the source branch, and the remaining commits on the source branch are reparented off of the new
+	// base commit
 	if (isPrefix(targetRebasePath, sourcePath, (a, b) => a.revision === b.revision)) {
 		for (let i = newBaseIndex + 1; i < sourcePath.length; i++) {
 			const { change, revision, sessionId } = sourcePath[i];
