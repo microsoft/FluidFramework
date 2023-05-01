@@ -88,7 +88,7 @@ jobs:
           --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
           --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
           --output auto-changelog.md \
-          --template changelog.hbs
+          --template .changeset/templates/patch-changelog.hbs
       - name: Generate changelog
         # This changelog is a basically empty one used for everything except client.
         if: fromJson(env.RELEASE_JSON).releaseType != 'patch' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'client'
