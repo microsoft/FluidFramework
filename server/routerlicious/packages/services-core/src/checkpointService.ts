@@ -11,6 +11,8 @@ import {
 import { ICheckpointRepository, IDocumentRepository } from "./database";
 import { IDeliState, IDocument, IScribe } from "./document";
 
+type DocumentLambda = "deli" | "scribe";
+
 export class CheckpointService implements ICheckpointService {
 	constructor(
 		private readonly checkpointRepository: ICheckpointRepository,
@@ -18,11 +20,10 @@ export class CheckpointService implements ICheckpointService {
 		private readonly isLocalCheckpointEnabled: boolean,
 	) {}
 	localCheckpointEnabled: boolean = this.isLocalCheckpointEnabled;
-
 	async writeCheckpoint(
 		documentId: string,
 		tenantId: string,
-		service: string,
+		service: DocumentLambda,
 		checkpoint: IScribe | IDeliState,
 		isLocal: boolean = false,
 	) {
@@ -86,7 +87,7 @@ export class CheckpointService implements ICheckpointService {
 	async clearCheckpoint(
 		documentId: string,
 		tenantId: string,
-		service: string,
+		service: DocumentLambda,
 		isLocal: boolean = false,
 	) {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
@@ -113,7 +114,7 @@ export class CheckpointService implements ICheckpointService {
 	async restoreFromCheckpoint(
 		documentId: string,
 		tenantId: string,
-		service: string,
+		service: DocumentLambda,
 		document: IDocument,
 	) {
 		let checkpoint;
@@ -217,13 +218,13 @@ export interface ICheckpointService {
 	clearCheckpoint(
 		documentId: string,
 		tenantId: string,
-		service: string,
+		service: DocumentLambda,
 		isLocal: boolean,
 	): Promise<void>;
 	restoreFromCheckpoint(
 		documentId: string,
 		tenantId: string,
-		service: string,
+		service: DocumentLambda,
 		document: IDocument,
 	): Promise<IScribe | IDeliState>;
 	getLatestCheckpoint(
