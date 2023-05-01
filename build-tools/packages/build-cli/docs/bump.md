@@ -21,8 +21,9 @@ ARGUMENTS
 
 FLAGS
   -d, --interdependencyRange=<option>  Controls the type of dependency that is used between packages within the release
-                                       group. Use "" (the empty string) to indicate exact dependencies. The "*" option
-                                       is only valid when using the --workspaceProtocol flag.
+                                       group. Use "" (the empty string) to indicate exact dependencies. Use the
+                                       workspace:-prefixed values to set interdependencies using the workspace protocol.
+                                       The interdependency range will be set to the workspace string specified.
                                        <options: ^|~||workspace:*|workspace:^|workspace:~>
   -t, --bumpType=<option>              Bump the release group or package to the next version according to this bump
                                        type.
@@ -66,6 +67,11 @@ EXAMPLES
   --interdependencyRange flag.
 
     $ flub bump client --exact 2.0.0-internal.4.1.0 --interdependencyRange "~"
+
+  You can set interdependencies using the workspace protocol as well. The interdependency range will be set to the
+  workspace string specified.
+
+    $ flub bump client --exact 2.0.0-internal.4.1.0 --interdependencyRange "workspace:~"
 ```
 
 _See code: [src/commands/bump.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bump.ts)_

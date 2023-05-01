@@ -72,7 +72,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		interdependencyRange: Flags.string({
 			char: "d",
 			description:
-				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. The "*" option is only valid when using the --workspaceProtocol flag.',
+				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the workspace:-prefixed values to set interdependencies using the workspace protocol. The interdependency range will be set to the workspace string specified.',
 			options: [...RangeOperators, ...WorkspaceRanges],
 		}),
 		commit: checkFlags.commit,
@@ -101,6 +101,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				"You can control how interdependencies between packages in a release group are expressed using the --interdependencyRange flag.",
 			command:
 				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --interdependencyRange "~"',
+		},
+		{
+			description:
+				"You can set interdependencies using the workspace protocol as well. The interdependency range will be set to the workspace string specified.",
+			command:
+				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --interdependencyRange "workspace:~"',
 		},
 	];
 
