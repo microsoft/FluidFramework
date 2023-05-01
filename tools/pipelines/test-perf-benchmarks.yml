@@ -45,8 +45,10 @@ parameters:
   - endpointName: 'local'
   - endpointName: 'odsp'
     lockVariableGroupName: 'e2e-odsp-lock'
+    timeoutInMinutes: 360
   - endpointName: 'frs'
     lockVariableGroupName: 'e2e-frs-lock'
+    timeoutInMinutes: 360
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -69,6 +71,7 @@ variables:
     readonly: true
   - group: prague-key-vault
 
+lockBehavior: sequential
 stages:
   # Performance unit tests - runtime
   - stage: perf_unit_tests_runtime
@@ -414,6 +417,7 @@ stages:
         parameters:
           poolBuild: ${{ parameters.poolBuild }}
           testWorkspace: ${{ variables.testWorkspace }}
+          timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 60) }}
           customSteps:
 
           # Download test package

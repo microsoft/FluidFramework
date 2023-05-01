@@ -9,6 +9,7 @@ import inquirer from "inquirer";
 import * as semver from "semver";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
+
 import {
 	InterdependencyRange,
 	RangeOperators,
@@ -134,6 +135,10 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const workspaceProtocol = flags.interdependencyRange?.startsWith("workspace:");
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
+
+		if (args.package_or_release_group === undefined) {
+			this.error("ERROR: No dependency provided.");
+		}
 
 		if (bumpType === undefined && flags.exact === undefined) {
 			this.error(`One of the following must be provided: --bumpType, --exact`);
