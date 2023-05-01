@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
+import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	ContextuallyTypedNodeData,
@@ -291,71 +291,100 @@ describe("SharedTree benchmarks", () => {
 		}
 	});
 	describe("Edit with editor", () => {
+		const setCount = 100;
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTreeView;
-			let path: UpPath;
 			benchmark({
 				type: benchmarkType,
-				title: `Update value at leaf of ${numberOfNodes} deep tree`,
-				before: () => {
-					const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
-					tree = untypedTree.schematize({
-						allowedSchemaModifications: AllowedUpdateType.None,
-						initialTree: makeJsDeepTree(numberOfNodes, 1),
-						schema: deepSchema,
-					});
-					path = deepPath(numberOfNodes + 1);
+				title: `Update value at leaf of ${numberOfNodes} deep tree ${setCount} times`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+
+						// Setup
+						const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
+						const tree = untypedTree.schematize({
+							allowedSchemaModifications: AllowedUpdateType.None,
+							initialTree: makeJsDeepTree(numberOfNodes, 1),
+							schema: deepSchema,
+						});
+						const path = deepPath(numberOfNodes + 1);
+
+						// Measure
+						const before = state.timer.now();
+						for (let value = 1; value <= setCount; value++) {
+							tree.editor.setValue(path, value);
+						}
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+
+						// Cleanup + validation
+						const expected = jsonableTreeFromCursor(
+							cursorFromContextualData(
+								tree.storedSchema,
+								TypedSchema.nameSet(linkedListSchema),
+								makeJsDeepTree(numberOfNodes, setCount),
+							),
+						);
+						const actual = toJsonableTree(tree);
+						assert.deepEqual(actual, [expected]);
+
+						// Collect data
+					} while (state.recordBatch(duration));
 				},
-				benchmarkFn: () => {
-					tree.editor.setValue(path, -1);
-				},
-				after: () => {
-					const expected = jsonableTreeFromCursor(
-						cursorFromContextualData(
-							tree.storedSchema,
-							TypedSchema.nameSet(linkedListSchema),
-							makeJsDeepTree(numberOfNodes, -1),
-						),
-					);
-					const actual = toJsonableTree(tree);
-					assert.deepEqual(actual, [expected]);
-				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTreeView;
-			let path: UpPath;
 			benchmark({
 				type: benchmarkType,
-				title: `Update value at leaf of ${numberOfNodes} wide tree`,
-				before: () => {
-					const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
-					const numbers = [];
-					for (let index = 0; index < numberOfNodes; index++) {
-						numbers.push(index);
-					}
-					tree = untypedTree.schematize({
-						allowedSchemaModifications: AllowedUpdateType.None,
-						initialTree: { foo: numbers },
-						schema: wideSchema,
-					});
+				title: `Update value at leaf of ${numberOfNodes} wide tree ${setCount} times`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
 
-					path = wideLeafPath(numberOfNodes - 1);
+						// Setup
+						const untypedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
+						const numbers = [];
+						for (let index = 0; index < numberOfNodes; index++) {
+							numbers.push(index);
+						}
+						const tree = untypedTree.schematize({
+							allowedSchemaModifications: AllowedUpdateType.None,
+							initialTree: { foo: numbers },
+							schema: wideSchema,
+						});
+
+						const path = wideLeafPath(numberOfNodes - 1);
+
+						// Measure
+						const before = state.timer.now();
+						for (let value = 1; value <= setCount; value++) {
+							tree.editor.setValue(path, setCount);
+						}
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+
+						// Cleanup + validation
+						const expected = jsonableTreeFromCursor(
+							cursorFromContextualData(
+								tree.storedSchema,
+								TypedSchema.nameSet(wideRootSchema),
+								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
+							),
+						);
+						const actual = toJsonableTree(tree);
+						assert.deepEqual(actual, [expected]);
+
+						// Collect data
+					} while (state.recordBatch(duration));
 				},
-				benchmarkFn: () => {
-					tree.editor.setValue(path, -1);
-				},
-				after: () => {
-					const expected = jsonableTreeFromCursor(
-						cursorFromContextualData(
-							tree.storedSchema,
-							TypedSchema.nameSet(wideRootSchema),
-							makeJsWideTreeWithEndValue(numberOfNodes, -1),
-						),
-					);
-					const actual = toJsonableTree(tree);
-					assert.deepEqual(actual, [expected]);
-				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
 			});
 		}
 	});
@@ -398,6 +427,7 @@ function readWideCursorTree(tree: ISharedTreeView): { nodesCount: number; sum: n
 		sum += readCursor.value as number;
 		nodesCount += 1;
 	}
+	readCursor.free();
 	return { nodesCount, sum };
 }
 
@@ -413,6 +443,7 @@ function readDeepCursorTree(tree: ISharedTreeView): { depth: number; value: numb
 		value = readCursor.value as number;
 	}
 	value = readCursor.value as number;
+	readCursor.free();
 	return { depth, value };
 }
 
