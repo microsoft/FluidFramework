@@ -33,8 +33,6 @@ interface CompatConfig {
 
 // N and N - 1
 const defaultVersions = [0, -1];
-// Set to false to skip testing compat between the runtime and older loaders and drivers.
-const runtimeWithOlderLoaderDriverCompat = true;
 // we are currently supporting 1.3.4 long-term
 const LTSVersions = ["^1.3.4"];
 
@@ -136,13 +134,13 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 	return [
 		{
-			name: `compat back ${compatVersion} - older loader`,
+			name: `compat back N${compatVersion} - older loader`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat back ${compatVersion} - older loader + older driver`,
+			name: `compat back N${compatVersion} - older loader + older driver`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -194,7 +192,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		defaultVersions.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
-		if (runtimeWithOlderLoaderDriverCompat) {
+		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
 		}
 		LTSVersions.forEach((value) => {
