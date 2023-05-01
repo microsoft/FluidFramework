@@ -13,23 +13,8 @@ export {
 	IdCompressor,
 	isFinalId,
 	isLocalId,
-	legacySharedTreeInitialTreeId,
 } from "./idCompressor";
 export { getIds } from "./idRange";
-export {
-	IdCreationRange,
-	SerializedCluster,
-	SerializedClusterOverrides,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithNoSession,
-	SerializedIdCompressorWithOngoingSession,
-	SerializedLocalOverrides,
-	SerializedLocalState,
-	SerializedSessionData,
-	SerializedSessionIdNormalizer,
-	UnackedLocalId,
-	VersionedSerializedIdCompressor,
-} from "./persisted-types";
 export {
 	NumericUuid,
 	numericUuidEquals,
@@ -40,16 +25,6 @@ export {
 	incrementUuid,
 	ensureSessionUuid,
 } from "./numericUuid";
-export {
-	StableId,
-	CompressedId,
-	FinalCompressedId,
-	LocalCompressedId,
-	OpSpaceCompressedId,
-	SessionId,
-	SessionSpaceCompressedId,
-	UuidString,
-} from "./identifiers";
 export {
 	generateStableId,
 	assertIsStableId,
