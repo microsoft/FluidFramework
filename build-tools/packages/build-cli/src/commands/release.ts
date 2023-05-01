@@ -18,6 +18,8 @@ import { PromptWriter } from "../instructionalPromptWriter";
 import { FluidReleaseMachine } from "../machines";
 import { getRunPolicyCheckDefault } from "../repoConfig";
 import { StateMachineCommand } from "../stateMachineCommand";
+import { MonoRepoKind } from "@fluidframework/build-tools";
+import chalk from "chalk";
 
 /**
  * Releases a package or release group. This command is mostly scaffolding and setting up the state machine, handlers,
@@ -68,6 +70,12 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const releaseGroup = flags.releaseGroup ?? flags.package!;
 		const releaseVersion = context.getVersion(releaseGroup);
+
+		// eslint-disable-next-line no-warning-comments
+		// TODO: can be removed once server team owns server releases
+		if (flags.releaseGroup === MonoRepoKind.Server && flags.bumpType === "minor") {
+			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
+		}
 
 		// oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args
 		// passed into the command. If neither are passed, then the default is determined by the branch config.
