@@ -4,7 +4,12 @@
  */
 import * as path from "path";
 
-import { InterdependencyRange, ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
+import {
+	DEFAULT_INTERDEPENDENCY_RANGE,
+	InterdependencyRange,
+	ReleaseVersion,
+	VersionBumpType,
+} from "@fluid-tools/version-tools";
 
 import { getFluidBuildConfig } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
@@ -242,12 +247,12 @@ export class FluidRepo {
 			}
 			if (typeof item === "string") {
 				log?.warning(
-					`No defaultinterdependencyRange setting found for '${item}'. Defaulting to "^".`,
+					`No defaultinterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
 				);
 				return {
 					directory: path.join(resolvedRoot, item),
 					ignoredDirs: undefined,
-					defaultInterdependencyRange: "^",
+					defaultInterdependencyRange: DEFAULT_INTERDEPENDENCY_RANGE,
 				};
 			}
 			const directory = path.join(resolvedRoot, item.directory);
@@ -269,13 +274,13 @@ export class FluidRepo {
 					item as IFluidRepoPackage;
 				if (defaultInterdependencyRange === undefined) {
 					log?.warning(
-						`No defaultinterdependencyRange specified for ${group} release group. Defaulting to "^".`,
+						`No defaultinterdependencyRange specified for ${group} release group. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
 					);
 				}
 				const monorepo = new MonoRepo(
 					group,
 					directory,
-					defaultInterdependencyRange ?? "^",
+					defaultInterdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE,
 					ignoredDirs,
 					log,
 				);

@@ -5,6 +5,7 @@
 
 import { Context, MonoRepo, Logger, Package, VersionBag } from "@fluidframework/build-tools";
 import {
+	DEFAULT_INTERDEPENDENCY_RANGE,
 	InterdependencyRange,
 	VersionChangeType,
 	VersionScheme,
@@ -65,7 +66,7 @@ export async function bumpReleaseGroup(
 	bumpType: VersionChangeType,
 	scheme?: VersionScheme,
 	// eslint-disable-next-line default-param-last
-	interdependencyRange: InterdependencyRange = "^",
+	interdependencyRange: InterdependencyRange = DEFAULT_INTERDEPENDENCY_RANGE,
 	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)

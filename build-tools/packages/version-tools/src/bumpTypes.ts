@@ -5,6 +5,11 @@
 import * as semver from "semver";
 
 /**
+ * The default interdependency range we use when one is not provided.
+ */
+export const DEFAULT_INTERDEPENDENCY_RANGE: InterdependencyRange = "^";
+
+/**
  * A type alias for strings that represent package versions.
  */
 export type ReleaseVersion = string;
