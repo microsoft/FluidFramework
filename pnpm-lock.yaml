@@ -10458,7 +10458,6 @@ importers:
       '@types/chai': ^4.0.0
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
-      '@types/sinon': ^7.0.13
       chai: ^4.2.0
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
@@ -10474,7 +10473,6 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      sinon: ^7.4.2
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/cell': link:../../../dds/cell
@@ -10502,7 +10500,6 @@ importers:
       '@types/chai': 4.3.4
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
-      '@types/sinon': 7.5.2
       chai: 4.3.7
       concurrently: 7.6.0
       copyfiles: 2.4.1
@@ -10518,7 +10515,6 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.0
-      sinon: 7.5.0
       typescript: 4.5.5
 
   packages/tools/client-debugger/client-debugger-chrome-extension:
@@ -42085,7 +42081,7 @@ packages:
       schema-utils: 3.1.1
       serialize-javascript: 6.0.0
       terser: 5.15.1
-      webpack: 5.76.2
+      webpack: 5.76.2_webpack-cli@4.10.0
 
   /terser/4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -44197,6 +44193,7 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
+    dev: true
 
   /webpack/5.76.2_webpack-cli@4.10.0:
     resolution: {integrity: sha512-Th05ggRm23rVzEOlX8y67NkYCHa9nTNcwHPBhdg+lKG+mtiW7XgggjAeeLnADAe7mLjJ6LUNfgHAuRRh+Z6J7w==}
