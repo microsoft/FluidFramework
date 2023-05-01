@@ -10,7 +10,6 @@ import {
 	GlobalFieldKey,
 	JsonableTree,
 	LocalFieldKey,
-	moveToDetachedField,
 	rootFieldKey,
 	SchemaData,
 	symbolFromKey,
@@ -488,17 +487,8 @@ describe("editable-tree: editing", () => {
 				assert.deepEqual(field_0, field_1);
 
 				const firstNodeBeforeMove = field_0[0];
-				const tree = trees[0];
-
-				const cursor = tree.forest.allocateCursor();
-				moveToDetachedField(tree.forest, cursor);
-				cursor.firstNode();
-				cursor.firstField();
-				const destPath = cursor.getFieldPath();
-				cursor.free();
-
 				// move using `moveNodes()`
-				field_0.moveNodes(0, 1, destPath, 1);
+				field_0.moveNodes(0, 1, 1);
 				const secondNodeAfterMove = field_0[1];
 				assert.equal(firstNodeBeforeMove, secondNodeAfterMove);
 

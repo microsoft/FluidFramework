@@ -11,7 +11,6 @@ import {
 	TreeSchema,
 	ITreeCursor,
 	UpPath,
-	FieldUpPath,
 	PathVisitor,
 } from "../../core";
 import {
@@ -330,13 +329,13 @@ export interface EditableField
 	insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
 
 	/**
-	 * Moves nodes from a source to destination.
+	 * Moves nodes from this field to destination.
 	 */
 	moveNodes(
 		sourceIndex: number,
 		count: number,
-		destFieldPath: FieldUpPath,
 		destIndex: number,
+		destinationField?: EditableField,
 	): void;
 
 	/**

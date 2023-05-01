@@ -30,6 +30,7 @@ import {
 	arrayLikeMarkerSymbol,
 	cursorFromContextualData,
 } from "../contextuallyTyped";
+import { sequence } from "../defaultFieldKinds";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -188,19 +189,38 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public moveNodes(
 		sourceIndex: number,
 		count: number,
-		destFieldPath: FieldUpPath,
-		destIndex: number,
+		destinationIndex: number,
+		destinationField?: EditableField,
 	): void {
-		const fieldPath = this.cursor.getFieldPath();
+		const sourceFieldPath = this.cursor.getFieldPath();
+		const destinationFieldKindIdentifier =
+			destinationField !== undefined
+				? destinationField.fieldSchema.kind.identifier
+				: this.fieldSchema.kind.identifier;
+
+		assert(
+			this.fieldSchema.kind.identifier === sequence.identifier &&
+				destinationFieldKindIdentifier === sequence.identifier,
+			"Both source and destination fields must be sequence fields.",
+		);
+
+		assert(
+			keyIsValidIndex(destinationIndex, this.length + 1),
+			0x456 /* Index must be less than or equal to length. */,
+		);
+
+		const destinationFieldProxy =
+			destinationField !== undefined
+				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
+				: this;
+		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
 
 		this.context.moveNodes(
-			fieldPath.parent,
-			fieldPath.field,
+			sourceFieldPath,
 			sourceIndex,
 			count,
-			destFieldPath.parent,
-			destFieldPath.field,
-			destIndex,
+			destinationFieldPath,
+			destinationIndex,
 		);
 		return;
 	}
