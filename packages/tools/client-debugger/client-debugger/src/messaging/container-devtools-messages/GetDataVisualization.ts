@@ -9,20 +9,20 @@ import { IDevtoolsMessage } from "../Messages";
 /**
  * Encapsulates types and logic related to {@link GetDataVisualization.Message}.
  *
- * @public
+ * @internal
  */
 export namespace GetDataVisualization {
 	/**
 	 * {@link GetDataVisualization.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "GET_DATA_VISUALIZATION";
 
 	/**
 	 * Message data format used by {@link GetDataVisualization.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export type MessageData = HasContainerId & HasFluidObjectId;
 
@@ -31,7 +31,7 @@ export namespace GetDataVisualization {
 	 *
 	 * Will result in the {@link DataVisualization.Message} message being posted.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -43,7 +43,7 @@ export namespace GetDataVisualization {
 	/**
 	 * Creates a {@link GetDataVisualization.Message} from the provided {@link GetDataVisualization.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

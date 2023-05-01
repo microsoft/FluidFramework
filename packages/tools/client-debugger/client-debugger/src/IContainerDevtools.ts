@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
 import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
@@ -14,27 +14,13 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 // - Pass diffs instead of all data in change events (probably requires defining separate full-dump messages from delta messages)
 
 /**
- * Events emitted by {@link IContainerDevtools}.
- *
- * @public
- */
-export interface ContainerDevtoolsEvents extends IEvent {
-	/**
-	 * Emitted when the {@link IContainerDevtools} itself has been disposed.
-	 *
-	 * @see {@link IContainerDevtools.dispose}
-	 */
-	(event: "disposed", listener: () => void);
-}
-
-/**
  * Fluid debug session associated with a Fluid Client via its
  * {@link @fluidframework/container-definitions#IContainer} and
  * {@link @fluidframework/container-definitions#IAudience}.
  *
- * @public
+ * @internal
  */
-export interface IContainerDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
+export interface IContainerDevtools extends IDisposable {
 	/**
 	 * The ID of {@link IContainerDevtools.container}.
 	 */

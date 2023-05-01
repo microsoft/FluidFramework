@@ -113,7 +113,7 @@ export abstract class ReleaseReportBaseCommand<T extends typeof Command> extends
 	 * @param mode - The {@link ReleaseSelectionMode} to use to determine the release to report on.
 	 * @param releaseGroup - If provided, the release data collected will be limited to only the pakages in this release
 	 * group and its direct Fluid dependencies.
-   * @param includeDependencies - If true, the release data will include the Fluid dependencies of the release group.
+	 * @param includeDependencies - If true, the release data will include the Fluid dependencies of the release group.
 	 */
 	protected async collectReleaseData(
 		context: Context,
@@ -640,7 +640,7 @@ interface PackageReleaseData {
 export interface RawReleaseData {
 	repoVersion: VersionDetails;
 	latestReleasedVersion: VersionDetails;
-  latestReleaseType?: VersionBumpType;
+	latestReleaseType?: VersionBumpType;
 	previousReleasedVersion?: VersionDetails;
 	versions: readonly VersionDetails[];
 }

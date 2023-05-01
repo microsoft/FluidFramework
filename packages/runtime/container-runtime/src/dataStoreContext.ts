@@ -48,6 +48,8 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
+	IIdCompressor,
+	IIdCompressorCore,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -191,6 +193,10 @@ export abstract class FluidDataStoreContext
 
 	public get baseSnapshot(): ISnapshotTree | undefined {
 		return this._baseSnapshot;
+	}
+
+	public get idCompressor(): (IIdCompressorCore & IIdCompressor) | undefined {
+		return this._containerRuntime.idCompressor;
 	}
 
 	private _disposed = false;

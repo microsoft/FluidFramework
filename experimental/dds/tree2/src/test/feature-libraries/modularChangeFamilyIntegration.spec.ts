@@ -31,9 +31,15 @@ const fieldC: FieldKey = brand("FieldC");
 describe("rebase", () => {
 	it("delete over cross-field move", () => {
 		const editor = new DefaultEditBuilder(family, () => {}, new AnchorSet());
-		editor.move(undefined, fieldA, 1, 2, undefined, fieldB, 2);
-		editor.sequenceField(undefined, fieldA).delete(1, 1);
-		editor.sequenceField(undefined, fieldB).delete(2, 1);
+		editor.move(
+			{ parent: undefined, field: fieldA },
+			1,
+			2,
+			{ parent: undefined, field: fieldB },
+			2,
+		);
+		editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+		editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
 		const [move, remove, expected] = editor.getChanges();
 		const rebased = family.rebase(remove, makeAnonChange(move));
 		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
@@ -43,9 +49,21 @@ describe("rebase", () => {
 
 	it("cross-field move over delete", () => {
 		const editor = new DefaultEditBuilder(family, () => {}, new AnchorSet());
-		editor.sequenceField(undefined, fieldA).delete(1, 1);
-		editor.move(undefined, fieldA, 1, 2, undefined, fieldB, 2);
-		editor.move(undefined, fieldA, 1, 1, undefined, fieldB, 2);
+		editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
+		editor.move(
+			{ parent: undefined, field: fieldA },
+			1,
+			2,
+			{ parent: undefined, field: fieldB },
+			2,
+		);
+		editor.move(
+			{ parent: undefined, field: fieldA },
+			1,
+			1,
+			{ parent: undefined, field: fieldB },
+			2,
+		);
 		const [remove, move, expected] = editor.getChanges();
 		const rebased = family.rebase(move, makeAnonChange(remove));
 		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
@@ -56,9 +74,27 @@ describe("rebase", () => {
 	// See bug 4071
 	it.skip("cross-field move composition", () => {
 		const editor = new DefaultEditBuilder(family, () => {}, new AnchorSet());
-		editor.move(undefined, fieldA, 0, 1, undefined, fieldB, 0);
-		editor.move(undefined, fieldB, 0, 1, undefined, fieldC, 0);
-		editor.move(undefined, fieldA, 0, 1, undefined, fieldC, 0);
+		editor.move(
+			{ parent: undefined, field: fieldA },
+			0,
+			1,
+			{ parent: undefined, field: fieldB },
+			0,
+		);
+		editor.move(
+			{ parent: undefined, field: fieldB },
+			0,
+			1,
+			{ parent: undefined, field: fieldC },
+			0,
+		);
+		editor.move(
+			{ parent: undefined, field: fieldA },
+			0,
+			1,
+			{ parent: undefined, field: fieldC },
+			0,
+		);
 		const [move1, move2, expected] = editor.getChanges();
 		const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 		const actualDelta = normalizeDelta(family.intoDelta(composed));

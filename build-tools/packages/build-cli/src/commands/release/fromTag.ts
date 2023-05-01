@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
 import { Args } from "@oclif/core";
 import semver from "semver";
 
 import { sortVersions } from "../../lib";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../../releaseGroups";
 import { ReleaseReportBaseCommand, ReleaseSelectionMode } from "./report";
-import { ReleaseVersion, VersionBumpType, detectBumpType } from "@fluid-tools/version-tools";
 
 /**
  * The `release fromTag` command is used to get release information from a git tag.
  *
+ * This command is used in CI to determine release information when a new release tag is pushed.
  */
 export default class FromTagCommand extends ReleaseReportBaseCommand<typeof FromTagCommand> {
 	static summary = "Determines release information based on a git tag argument.";
@@ -34,14 +35,12 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 
 	static examples = [
 		{
-			description: "You can use the --versions (-r) flag multiple times.",
-			command: "<%= config.bin %> <%= command.id %> refs/tags/build-tools_v0.13.0",
+			description: "Get release information based on a git tag.",
+			command: "<%= config.bin %> <%= command.id %> build-tools_v0.13.0",
 		},
 		{
-			description:
-				"You can omit the repeated --versions (-r) flag and pass a space-delimited list instead.",
-			command:
-				"<%= config.bin %> <%= command.id %> -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000",
+			description: "You can include the refs/tags/ part of a tag ref.",
+			command: "<%= config.bin %> <%= command.id %> refs/tags/2.0.0-internal.2.0.2",
 		},
 	];
 
@@ -68,32 +67,28 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		);
 
 		const release = this.releaseData[this.releaseGroupOrPackage];
-		this.verbose(JSON.stringify(release, undefined, 2));
-
 		const versions = sortVersions([...release.versions], "version");
 		const taggedReleaseIndex = versions.findIndex((v) => v.version === version.version);
 		if (taggedReleaseIndex === -1) {
 			this.error(`Release matching version '${version.version}' not found`);
 		}
+
 		const prevVersionDetails = versions[taggedReleaseIndex + 1];
-		this.warning(
-			`Previous index: ${taggedReleaseIndex + 1} version: ${prevVersionDetails?.version}`,
-		);
 		if (prevVersionDetails === undefined) {
 			this.error(`No previous release found`);
 		}
 
-		const releaseType = detectBumpType(prevVersionDetails?.version, version);
+		const previousVersion = prevVersionDetails?.version;
+		const releaseType = detectBumpType(previousVersion, version);
 		if (releaseType === undefined) {
 			this.error(
-				`Unable to determine release type for ${prevVersionDetails?.version} -> ${version.version}`,
+				`Unable to determine release type for ${previousVersion} -> ${version.version}`,
 			);
 		}
 
 		this.log(`${this.releaseGroupOrPackage} v${version.version} (${releaseType})`);
 
 		// When the --json flag is passed, the command will return the raw data as JSON.
-		const previousVersion = prevVersionDetails?.version;
 		return {
 			packageOrReleaseGroup: this.releaseGroupOrPackage,
 			tag,

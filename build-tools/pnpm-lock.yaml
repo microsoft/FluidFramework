@@ -116,12 +116,13 @@ importers:
       nyc: ^15.1.0
       oclif: ^3.7.0
       prettier: ~2.6.2
+      read-pkg-up: ^7.0.1
       rimraf: ^4.4.0
       semver: ^7.3.7
       semver-utils: ^1.1.4
       simple-git: ^3.16.1
       sort-json: ^2.0.1
-      sort-package-json: 1.54.0
+      sort-package-json: 1.57.0
       strip-ansi: ^6.0.0
       table: ^6.8.0
       ts-node: ^10.2.1
@@ -154,11 +155,12 @@ importers:
       npm-check-updates: 16.3.8
       oclif: 3.7.0
       prettier: 2.6.2
+      read-pkg-up: 7.0.1
       semver: 7.3.7
       semver-utils: 1.1.4
       simple-git: 3.16.1
       sort-json: 2.0.1
-      sort-package-json: 1.54.0
+      sort-package-json: 1.57.0
       strip-ansi: 6.0.1
       table: 6.8.0
       type-fest: 2.19.0
@@ -239,6 +241,7 @@ importers:
       eslint-plugin-unicorn: ~40.0.0
       eslint-plugin-unused-imports: ~2.0.0
       execa: ^5.1.1
+      find-up: ^5.0.0
       fs-extra: ^9.0.1
       glob: ^7.1.3
       ignore: ^5.1.8
@@ -254,7 +257,7 @@ importers:
       rimraf: ^2.6.2
       semver: ^7.3.7
       shelljs: ^0.8.4
-      sort-package-json: 1.54.0
+      sort-package-json: 1.57.0
       ts-morph: ^17.0.1
       type-fest: ^2.19.0
       typescript: ~4.5.5
@@ -273,6 +276,7 @@ importers:
       debug: 4.3.4
       detect-indent: 6.1.0
       execa: 5.1.1
+      find-up: 5.0.0
       fs-extra: 9.1.0
       glob: 7.2.3
       ignore: 5.2.0
@@ -286,7 +290,7 @@ importers:
       rimraf: 2.7.1
       semver: 7.3.7
       shelljs: 0.8.5
-      sort-package-json: 1.54.0
+      sort-package-json: 1.57.0
       ts-morph: 17.0.1
       type-fest: 2.19.0
       yaml: 2.1.2
@@ -10671,8 +10675,8 @@ packages:
     resolution: {integrity: sha512-855pvK+VkU7PaKYPc+Jjnmt4EzejQHyhhF33q31qG8x7maDzkeFhAAThdCYay11CISO+qAMwjOBP+fPZe0IPyg==}
     dev: false
 
-  /sort-package-json/1.54.0:
-    resolution: {integrity: sha512-MA0nRiSfZ4/CNM/9rz70Hwq4PpvtBc3v532tzQSmoaLSdeBB3cCd488xmNruLL0fb/ZdbKlcaDDudwnrObbjBw==}
+  /sort-package-json/1.57.0:
+    resolution: {integrity: sha512-FYsjYn2dHTRb41wqnv+uEqCUvBpK3jZcTp9rbz2qDTmel7Pmdtf+i2rLaaPMRZeSVM60V3Se31GyWFpmKs4Q5Q==}
     hasBin: true
     dependencies:
       detect-indent: 6.1.0

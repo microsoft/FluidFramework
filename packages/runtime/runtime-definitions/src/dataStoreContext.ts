@@ -42,6 +42,7 @@ import {
 	ITelemetryContext,
 	SummarizeInternalFn,
 } from "./summary";
+import { IIdCompressor } from "./id-compressor";
 
 /**
  * Runtime flush mode handling
@@ -377,6 +378,7 @@ export interface IFluidDataStoreContext
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly logger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
+	readonly idCompressor?: IIdCompressor;
 	/**
 	 * Indicates the attachment state of the data store to a host service.
 	 */
