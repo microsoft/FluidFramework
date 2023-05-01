@@ -9,27 +9,28 @@ import { MockLogger } from "@fluidframework/telemetry-utils";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { take } from "@fluid-internal/stochastic-test-utils";
 import {
+	IdCreationRange,
+	UnackedLocalId,
+	FinalCompressedId,
+	LocalCompressedId,
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+	StableId,
+} from "@fluidframework/runtime-definitions";
+import {
 	IdCompressor,
 	isFinalId,
 	isLocalId,
 	hasOngoingSession,
-	legacySharedTreeInitialTreeId,
-	LocalCompressedId,
-	FinalCompressedId,
-	SessionSpaceCompressedId,
-	OpSpaceCompressedId,
-	SessionId,
 	createSessionId,
-	incrementUuid,
 	numericUuidFromStableId,
 	stableIdFromNumericUuid,
 	getIds,
 	assertIsStableId,
 	isStableId,
-	StableId,
+	fail,
 } from "../../id-compressor";
-import type { IdCreationRange, UnackedLocalId } from "../../id-compressor";
-import { fail } from "../../util";
 import {
 	createCompressor,
 	performFuzzActions,
@@ -65,20 +66,8 @@ describe("IdCompressor", () => {
 
 	it("reports the proper session ID", () => {
 		const sessionId = createSessionId();
-		const compressor = new IdCompressor(sessionId, 0);
+		const compressor = new IdCompressor(sessionId);
 		assert(compressor.localSessionId, sessionId);
-	});
-
-	it("accepts different numbers of reserved IDs", () => {
-		for (const reservedIdCount of [0, 1, 5]) {
-			const compressor = new IdCompressor(createSessionId(), reservedIdCount);
-			if (reservedIdCount > 0) {
-				assert.equal(
-					compressor.decompress(compressor.getReservedId(0)),
-					legacySharedTreeInitialTreeId,
-				);
-			}
-		}
 	});
 
 	describe("ID Generation", () => {
@@ -113,10 +102,6 @@ describe("IdCompressor", () => {
 			const compressor = createCompressor(Client.Client1);
 			assert.throws(
 				() => compressor.decompress(-1 as LocalCompressedId),
-				(e) => validateAssertionError(e, errorMessage),
-			);
-			assert.throws(
-				() => compressor.decompress(compressor.reservedIdCount as FinalCompressedId),
 				(e) => validateAssertionError(e, errorMessage),
 			);
 		});
@@ -163,29 +148,11 @@ describe("IdCompressor", () => {
 			);
 		});
 
-		it("unifies overrides with sequential local IDs that sort before the reserved session UUID", () => {
-			// This is a regression test for an issue where passing a sequential UUID that sorted before the reserved UUID
-			// as an override created duplicate overrides in the compressor.
-			const newSession = `0${legacySharedTreeInitialTreeId.slice(1)}` as SessionId;
-			const compressor = new IdCompressor(newSession, 1 /* just needs to be > 0 */);
-
-			// Client1 compresses a uuid
-			compressor.generateCompressedId();
-			const localId2 = compressor.generateCompressedId();
-			const stableId2 = assertIsStableId(compressor.decompress(localId2));
-			const localId3 = compressor.generateCompressedId(stableId2);
-			assert.equal(
-				localId3,
-				localId2,
-				"only one local ID should be allocated for the same sequential uuid",
-			);
-		});
-
 		it("unifies overrides with sequential local IDs that sort after an existing override", () => {
 			// This is a regression test for an issue where passing a sequential UUID that sorted after an existing override
 			// as an override created duplicate overrides in the compressor.
 			const newSession = `b${v4().slice(1)}` as SessionId;
-			const compressor = new IdCompressor(newSession, 0);
+			const compressor = new IdCompressor(newSession);
 
 			// Client1 compresses a uuid with some override that will sort before the session uuid
 			compressor.generateCompressedId(`a${v4().slice(1)}`);
@@ -204,8 +171,8 @@ describe("IdCompressor", () => {
 			// as an override created duplicate overrides in the compressor.
 			const newSession1 = `c${v4().slice(1)}` as SessionId;
 			const newSession2 = `b${v4().slice(1)}` as SessionId;
-			const compressor1 = new IdCompressor(newSession1, 0);
-			const compressor2 = new IdCompressor(newSession2, 0);
+			const compressor1 = new IdCompressor(newSession1);
+			const compressor2 = new IdCompressor(newSession2);
 			compressor1.clusterCapacity = 5;
 			compressor2.clusterCapacity = 5;
 
@@ -251,59 +218,6 @@ describe("IdCompressor", () => {
 				id,
 				"only one local ID should be allocated for the same sequential uuid",
 			);
-		});
-	});
-
-	describe("can enumerate all locally created IDs", () => {
-		const idCount = 10;
-		it("created without finalization", () => {
-			const compressor = createCompressor(Client.Client1, idCount);
-			const ids: SessionSpaceCompressedId[] = [];
-			for (let i = 0; i < idCount; i++) {
-				ids.push(compressor.generateCompressedId());
-			}
-			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
-			assert.deepEqual(returnedIds, ids);
-		});
-
-		it("created with finalization", () => {
-			const compressor = createCompressor(Client.Client1, idCount);
-			const ids: SessionSpaceCompressedId[] = [];
-			for (let i = 0; i < idCount; i++) {
-				if (i === Math.floor(idCount / 2)) {
-					compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-				}
-				ids.push(compressor.generateCompressedId());
-			}
-			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
-			assert.deepEqual(returnedIds, ids);
-		});
-
-		it("created with expanded finalization", () => {
-			const compressor = createCompressor(Client.Client1, idCount);
-			const ids: SessionSpaceCompressedId[] = [];
-			for (let i = 0; i < idCount * 4; i++) {
-				if (i !== 0 && i % Math.floor(idCount / 3) === 0) {
-					compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-				}
-				ids.push(compressor.generateCompressedId());
-			}
-			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
-			assert.deepEqual(returnedIds, ids);
-		});
-
-		it("created with overrides", () => {
-			const capacity = 100;
-			const compressor = createCompressor(Client.Client1, capacity);
-			const ids: SessionSpaceCompressedId[] = [];
-			for (let i = 0; i < capacity; i++) {
-				if (i === 1) {
-					compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-				}
-				ids.push(compressor.generateCompressedId(i % 3 === 0 ? undefined : `override${i}`));
-			}
-			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
-			assert.deepEqual(returnedIds, ids);
 		});
 	});
 
@@ -575,35 +489,6 @@ describe("IdCompressor", () => {
 			assert(isStableId(uuid));
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			assert.equal(compressor.decompress(id), uuid);
-		});
-
-		it("can decompress reserved IDs", () => {
-			// This is a glass box test in that it increments UUIDs
-			const compressor = createCompressor(Client.Client1);
-			assert.equal(
-				compressor.decompress(compressor.getReservedId(0)),
-				legacySharedTreeInitialTreeId,
-			);
-			const reservedSessionUuid = numericUuidFromStableId(
-				assertIsStableId(compressor.decompress(compressor.getReservedId(1))),
-			);
-			for (let i = 1; i < compressor.reservedIdCount; i++) {
-				const reservedId = compressor.getReservedId(i);
-				const stable = compressor.decompress(reservedId);
-				assert(stable, stableIdFromNumericUuid(incrementUuid(reservedSessionUuid, i - 1)));
-				const finalIdForReserved = compressor.recompress(stable);
-				assert(!isLocalId(finalIdForReserved));
-				assert.equal(finalIdForReserved, reservedId);
-			}
-			const outOfBoundsError = "Reserved Id index out of bounds";
-			assert.throws(
-				() => compressor.getReservedId(-1),
-				(e) => validateAssertionError(e, outOfBoundsError),
-			);
-			assert.throws(
-				() => compressor.getReservedId(compressor.reservedIdCount),
-				(e) => validateAssertionError(e, outOfBoundsError),
-			);
 		});
 
 		it("can decompress a final ID", () => {
@@ -972,7 +857,7 @@ describe("IdCompressor", () => {
 			mockLogger.assertMatchAny([
 				{
 					eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
-					size: 137,
+					size: 114,
 					clusterCount: 1,
 					sessionCount: 1,
 				},
@@ -1167,7 +1052,7 @@ describe("IdCompressor", () => {
 		it("generates unique eager finals when there are still outstanding locals after a cluster is expanded", () => {
 			// const compressor = createCompressor(Client.Client1, 4 /* must be 4 for the test to make sense */);
 
-			const compressor = new IdCompressor(sessionIds.get(Client.Client1), 0);
+			const compressor = new IdCompressor(sessionIds.get(Client.Client1));
 			compressor.clusterCapacity = 4;
 
 			// Make locals to fill half the future cluster
@@ -1634,7 +1519,7 @@ describe("IdCompressor", () => {
 			// Glass box test, as it knows the order of final IDs
 			assert.equal(
 				compressor.normalizeToSessionSpace(opSpaceIds[0], compressor2.localSessionId),
-				compressor.reservedIdCount + compressor.clusterCapacity,
+				compressor.clusterCapacity,
 			);
 		});
 
@@ -1651,9 +1536,7 @@ describe("IdCompressor", () => {
 			// Glass box test, as it knows the order of final IDs
 			assert.equal(
 				compressor.normalizeToSessionSpace(opSpaceIds[0], compressor2.localSessionId),
-				compressor.reservedIdCount +
-					initialClusterCapacity * 2 +
-					compressor.clusterCapacity,
+				initialClusterCapacity * 2 + compressor.clusterCapacity,
 			);
 		});
 

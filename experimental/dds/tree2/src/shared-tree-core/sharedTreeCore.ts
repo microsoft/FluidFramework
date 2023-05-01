@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { isStableId } from "@fluidframework/container-runtime";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -41,7 +42,6 @@ import {
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { isStableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
