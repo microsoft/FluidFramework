@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
-import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -24,6 +24,7 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
@@ -40,14 +41,14 @@ export function create(
 		authorization: string,
 		params: git.ICreateTreeParams,
 	): Promise<git.ITree> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createTree(params);
 	}
 
@@ -58,14 +59,14 @@ export function create(
 		recursive: boolean,
 		useCache: boolean,
 	): Promise<git.ITree> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getTree(sha, recursive, useCache);
 	}
 
@@ -73,6 +74,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/trees",
 		utils.validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const treeP = createTree(
 				request.params.tenantId,
@@ -87,6 +89,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/trees/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const treeP = getTree(

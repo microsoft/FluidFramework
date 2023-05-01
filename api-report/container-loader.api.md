@@ -23,6 +23,7 @@ import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
+import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
@@ -44,7 +45,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export interface IContainerConfig {
     // (undocumented)
     canReconnect?: boolean;
@@ -54,7 +55,7 @@ export interface IContainerConfig {
     serializedContainerState?: IPendingContainerState;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface IContainerLoadOptions {
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
@@ -106,7 +107,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @internal
+// @internal @deprecated
 export interface IPendingContainerState {
     baseSnapshot: ISnapshotTree;
     // (undocumented)
@@ -129,7 +130,7 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
     processSignal(message: ISignalMessage): any;
 }
 
-// @internal
+// @internal @deprecated
 export interface ISerializableBlobContents {
     // (undocumented)
     [id: string]: string;
@@ -154,6 +155,9 @@ export class Loader implements IHostLoader {
 
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
+
+// @public
+export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;

@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -23,6 +23,7 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
@@ -40,14 +41,14 @@ export function create(
 		path: string,
 		ref: string,
 	): Promise<any> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getContent(path, ref);
 	}
 
@@ -55,6 +56,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/contents/*",
 		utils.validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const contentP = getContent(
 				request.params.tenantId,

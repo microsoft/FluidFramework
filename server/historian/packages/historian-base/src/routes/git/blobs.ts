@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
-import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -24,6 +24,7 @@ export function create(
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
@@ -40,14 +41,14 @@ export function create(
 		authorization: string,
 		body: git.ICreateBlobParams,
 	): Promise<git.ICreateBlobResponse> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createBlob(body);
 	}
 
@@ -57,14 +58,14 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<git.IBlob> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getBlob(sha, useCache);
 	}
 
@@ -86,6 +87,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/blobs",
 		utils.validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const blobP = createBlob(
 				request.params.tenantId,
@@ -103,6 +105,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/blobs/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const blobP = getBlob(
@@ -122,6 +125,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 

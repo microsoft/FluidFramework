@@ -8,7 +8,7 @@
  *
  * @remarks The following distributed data structures are defined in this library:
  *
- * - {@link SharedMap}
+ * - {@link AttributableMap}
  *
  * @packageDocumentation
  */
@@ -21,4 +21,4 @@ export {
 	IValueChanged,
 } from "./interfaces";
 export { LocalValueMaker, ILocalValue } from "./localValues";
-export { MapFactory, SharedMap } from "./map";
+export { MapFactory, AttributableMap } from "./map";

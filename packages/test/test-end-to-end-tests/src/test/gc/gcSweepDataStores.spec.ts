@@ -173,7 +173,12 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
 			"Send ops fails for swept datastores in summarizing container loaded before sweep timeout",
-			[{ eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed" }],
+			[
+				{
+					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
+					clientType: "noninteractive/summarizer",
+				},
+			],
 			async () => {
 				const { summarizerDataObject, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
@@ -197,7 +202,12 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 
 		itExpects(
 			"Send signals fails for swept datastores in summarizing container loaded before sweep timeout",
-			[{ eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed" }],
+			[
+				{
+					eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed",
+					clientType: "noninteractive/summarizer",
+				},
+			],
 			async () => {
 				const { summarizerDataObject, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
@@ -239,6 +249,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			[
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					clientType: "interactive",
 				},
 				// Summarizer client's request
 				{
@@ -302,20 +313,20 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			"Receiving ops for swept datastores fails in client after sweep timeout and summarizing container",
 			[
 				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
-				},
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
+					clientType: "interactive",
 				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					clientType: "noninteractive/summarizer",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -358,20 +369,20 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			"Receiving signals for swept datastores fails in client after sweep timeout and summarizing container",
 			[
 				{
-					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:SweepReadyObject_Loaded",
+					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
+					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
-				},
-				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Deleted_DataStore_Requested",
-				},
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
+					clientType: "interactive",
 				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
+					clientType: "noninteractive/summarizer",
+				},
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					clientType: "interactive",
 				},
 			],
 			async () => {

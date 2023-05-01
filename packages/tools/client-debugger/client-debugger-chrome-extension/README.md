@@ -11,7 +11,7 @@ We are not yet publishing any artifacts to the Chrome/Edge extension stores.
 To use this extension in your browser:
 
 1. Build this package and its dependencies.
-   Your extension file should be generated under the build output directory (`dist`) in this package.
+   Your extension files should be generated under the build output directory (`dist/bundle`) in this package.
 2. Load the unpacked extension in the browser by following [these instructions](https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked).
    For [WSL](https://learn.microsoft.com/en-us/windows/wsl/about) users, your Linux files should be at a \\wsl$ path.
    In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$.
@@ -34,7 +34,10 @@ For a helpful how-to guide for making a Devtools Extension, see [here](https://l
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
+Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->

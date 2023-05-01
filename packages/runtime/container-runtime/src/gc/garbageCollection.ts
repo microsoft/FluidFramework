@@ -43,7 +43,6 @@ import {
 	cloneGCData,
 	concatGarbageCollectionData,
 	getGCDataFromSnapshot,
-	getSnapshotDataFromOldSnapshotFormat,
 	sendGCUnexpectedUsageEvent,
 } from "./gcHelpers";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
@@ -202,12 +201,9 @@ export class GarbageCollector implements IGarbageCollector {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
 					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
 					if (gcSnapshotTree === undefined) {
-						// back-compat - Older documents will have the GC blobs in each data store's snapshot tree.
-						return getSnapshotDataFromOldSnapshotFormat(
-							baseSnapshot,
-							createParams.metadata,
-							readAndParseBlob,
-						);
+						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
+						// incremental gc summary will not work with older gc data as well
+						return undefined;
 					}
 
 					const snapshotData = await getGCDataFromSnapshot(
@@ -469,6 +465,13 @@ export class GarbageCollector implements IGarbageCollector {
 		const fullGC =
 			options.fullGC ??
 			(this.configs.runFullGC === true || this.summaryStateTracker.doesSummaryStateNeedReset);
+
+		// Add the options that are used to run GC to the telemetry context.
+		telemetryContext?.setMultiple("fluid_GC", "Options", {
+			fullGC,
+			runSweep: options.runSweep,
+		});
+
 		const logger = options.logger
 			? ChildLogger.create(options.logger, undefined, {
 					all: { completedGCRuns: () => this.completedRuns },
@@ -492,12 +495,6 @@ export class GarbageCollector implements IGarbageCollector {
 			});
 			return undefined;
 		}
-
-		// Add the options that are used to run GC to the telemetry context.
-		telemetryContext?.setMultiple("fluid_GC", "Options", {
-			fullGC,
-			runSweep: options.runSweep,
-		});
 
 		return PerformanceEvent.timedExecAsync(
 			logger,

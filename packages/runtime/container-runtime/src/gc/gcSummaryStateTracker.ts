@@ -19,6 +19,8 @@ import { getGCDataFromSnapshot, generateSortedGCState, getGCVersion } from "./gc
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { IGarbageCollectorConfigs } from ".";
 
+export const gcStateBlobKey = `${gcBlobPrefix}_root`;
+
 /**
  * The GC data that is tracked for a summary.
  */
@@ -162,7 +164,8 @@ export class GCSummaryStateTracker {
 			// If nothing changed since last summary, send a summary handle for the entire GC data.
 			if (
 				this.latestSummaryData.serializedGCState === serializedGCState &&
-				this.latestSummaryData.serializedTombstones === serializedTombstones
+				this.latestSummaryData.serializedTombstones === serializedTombstones &&
+				this.latestSummaryData.serializedDeletedNodes === serializedDeletedNodes
 			) {
 				const stats = mergeStats();
 				stats.handleNodeCount++;
@@ -209,7 +212,6 @@ export class GCSummaryStateTracker {
 		serializedDeletedNodes: string | undefined,
 		trackState: boolean,
 	): ISummaryTreeWithStats {
-		const gcStateBlobKey = `${gcBlobPrefix}_root`;
 		const builder = new SummaryTreeBuilder();
 
 		// If the GC state hasn't changed, write a summary handle, else write a summary blob for it.

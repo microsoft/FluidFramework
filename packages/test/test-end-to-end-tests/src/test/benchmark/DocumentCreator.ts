@@ -5,7 +5,7 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { DocumentType, BenchmarkType } from "@fluid-internal/test-version-utils";
+import { DocumentType, BenchmarkType, isMemoryTest } from "@fluid-internal/test-version-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
@@ -16,6 +16,7 @@ import {
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { DocumentMap } from "./DocumentMap";
+import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
 
 export interface IDocumentCreatorProps {
 	testName: string;
@@ -64,18 +65,22 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 		case "MediumDocumentMap":
 		case "LargeDocumentMap":
 			return new DocumentMap(documentProps);
+		case "MediumDocumentMultipleDataStores":
+		case "LargeDocumentMultipleDataStores":
+			return new DocumentMultipleDds(documentProps);
 		default:
 			throw new Error("Invalid document type");
 	}
 }
 
 export interface IBenchmarkParameters {
+	readonly minSampleCount?: number;
 	readonly run: () => Promise<void>;
 	readonly beforeIteration?: () => void;
 	readonly afterIteration?: () => void;
 	readonly before?: () => void;
 	readonly after?: () => void;
-	readonly onCycle?: () => void;
+	readonly beforeEachBatch?: () => void;
 }
 /**
  * In order to share the files between memory and benchmark tests, we need to create a test object that can be passed and used
@@ -85,24 +90,29 @@ export interface IBenchmarkParameters {
  * @param params - The {@link IBenchmarkParameters} parameters for the test.
  */
 export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj: T) {
-	const t: IMemoryTestObject = {
-		title,
-		...obj,
-		run: obj.run.bind(obj),
-		beforeIteration: obj.beforeIteration?.bind(obj),
-		afterIteration: obj.afterIteration?.bind(obj),
-		before: obj.before?.bind(obj),
-		after: obj.after?.bind(obj),
-	};
-	benchmarkMemory(t);
-
-	const t1: BenchmarkArguments = {
-		title,
-		...obj,
-		benchmarkFnAsync: obj.run.bind(obj),
-		before: obj.before?.bind(obj),
-		after: obj.after?.bind(obj),
-		onCycle: obj.onCycle?.bind(obj),
-	};
-	benchmark(t1);
+	if (isMemoryTest()) {
+		const t: IMemoryTestObject = {
+			title,
+			...obj,
+			run: obj.run.bind(obj),
+			beforeIteration: obj.beforeIteration?.bind(obj),
+			afterIteration: obj.afterIteration?.bind(obj),
+			before: obj.before?.bind(obj),
+			after: obj.after?.bind(obj),
+		};
+		benchmarkMemory(t);
+	} else {
+		const t1: BenchmarkArguments = {
+			title,
+			...obj,
+			benchmarkFnAsync: obj.run.bind(obj),
+			before: obj.before?.bind(obj),
+			after: obj.after?.bind(obj),
+			beforeEachBatch: obj.beforeEachBatch?.bind(obj),
+		};
+		if (obj.minSampleCount !== undefined) {
+			t1.minBatchCount = obj.minSampleCount;
+		}
+		benchmark(t1);
+	}
 }

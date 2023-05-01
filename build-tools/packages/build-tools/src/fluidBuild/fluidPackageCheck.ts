@@ -124,18 +124,6 @@ export class FluidPackageCheck {
 					fixed = true;
 				}
 			}
-
-			if (!hasConfig) {
-				// Make sure --unhandled-rejections=strict switch used
-				const unhandledRejectionsSwitch = "--unhandled-rejections=strict";
-				if (!testScript.includes(unhandledRejectionsSwitch)) {
-					this.logWarn(pkg, `missing --unhandled-rejection switch in test script`, fix);
-					if (fix) {
-						pkg.packageJson.scripts[testScriptName] += ` ${unhandledRejectionsSwitch}`;
-						fixed = true;
-					}
-				}
-			}
 		}
 
 		return fixed;
@@ -255,7 +243,7 @@ export class FluidPackageCheck {
 			if (this.ensureTestDevDependency(pkg, fix, "nyc")) {
 				fixed = true;
 			}
-			if (pkg.packageJson.nyc) {
+			if (pkg.packageJson.nyc !== undefined && pkg.packageJson.nyc !== null) {
 				if (pkg.packageJson.nyc["exclude-after-remap"] !== false) {
 					this.logWarn(pkg, `nyc.exclude-after-remap need to be false`, fix);
 					if (fix) {
@@ -954,8 +942,8 @@ export class FluidPackageCheck {
 			}
 			for (const depPackage of Object.keys(scriptDep)) {
 				if (
-					!pkg.packageJson.dependencies[depPackage] &&
-					!pkg.packageJson.devDependencies[depPackage]
+					!pkg.packageJson.dependencies?.[depPackage] &&
+					!pkg.packageJson.devDependencies?.[depPackage]
 				) {
 					this.logWarn(
 						pkg,

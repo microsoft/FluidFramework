@@ -81,6 +81,24 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     get version(): string;
 }
 
+// @public
+export function getW3CData(url: string, initiatorType: string): {
+    dnsLookupTime: number | undefined;
+    w3cStartTime: number | undefined;
+    redirectTime: number | undefined;
+    tcpHandshakeTime: number | undefined;
+    secureConnectionTime: number | undefined;
+    responseNetworkTime: number | undefined;
+    fetchStartToResponseEndTime: number | undefined;
+    reqStartToResponseEndTime: number | undefined;
+};
+
+// @public (undocumented)
+export function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{
+    index: number;
+    value: T;
+}>;
+
 // (No @packageDocumentation comment for this package)
 
 ```

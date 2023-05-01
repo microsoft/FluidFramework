@@ -15,9 +15,15 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
-import { BatchManager, estimateSocketSize } from "./batchManager";
+import {
+	BatchManager,
+	BatchSequenceNumbers,
+	estimateSocketSize,
+	sequenceNumbersMatch,
+} from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
+import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
 
 export interface IOutboxConfig {
@@ -35,6 +41,21 @@ export interface IOutboxParameters {
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
 	readonly logger: ITelemetryLogger;
+	readonly groupingManager: OpGroupingManager;
+	readonly getCurrentSequenceNumbers: () => BatchSequenceNumbers;
+}
+
+function getLongStack(action: () => Error): Error {
+	// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+	try {
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		(Error as any).stackTraceLimit = 50;
+		const result = action();
+		(Error as any).stackTraceLimit = originalStackTraceLimit;
+		return result;
+	} catch (error) {
+		return action();
+	}
 }
 
 export class Outbox {
@@ -74,39 +95,39 @@ export class Outbox {
 	 * what was already in the batch managers, this means that batching has been interrupted so
 	 * we will flush the accumulated messages to account for that and create a new batch with the new
 	 * message as the first message.
-	 *
-	 * @param message - the incoming message
 	 */
-	private maybeFlushPartialBatch(message: BatchMessage) {
-		const mainBatchReference = this.mainBatch.referenceSequenceNumber;
-		const attachFlowBatchReference = this.attachFlowBatch.referenceSequenceNumber;
+	private maybeFlushPartialBatch() {
+		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
+		const attachFlowBatchSeqNums = this.attachFlowBatch.sequenceNumbers;
 		assert(
 			this.params.config.disablePartialFlush ||
-				mainBatchReference === undefined ||
-				attachFlowBatchReference === undefined ||
-				mainBatchReference === attachFlowBatchReference,
+				sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
+		const currentSequenceNumbers = this.params.getCurrentSequenceNumbers();
+
 		if (
-			(mainBatchReference === undefined ||
-				mainBatchReference === message.referenceSequenceNumber) &&
-			(attachFlowBatchReference === undefined ||
-				attachFlowBatchReference === message.referenceSequenceNumber)
+			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
+			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
 		}
 
 		if (++this.mismatchedOpsReported <= this.maxMismatchedOpsToReport) {
-			this.mc.logger.sendErrorEvent(
+			this.mc.logger.sendTelemetryEvent(
 				{
+					category: this.params.config.disablePartialFlush ? "error" : "generic",
 					eventName: "ReferenceSequenceNumberMismatch",
-					mainReferenceSequenceNumber: mainBatchReference,
-					attachReferenceSequenceNumber: attachFlowBatchReference,
-					messageReferenceSequenceNumber: message.referenceSequenceNumber,
+					mainReferenceSequenceNumber: mainBatchSeqNums.referenceSequenceNumber,
+					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
+					attachReferenceSequenceNumber: attachFlowBatchSeqNums.referenceSequenceNumber,
+					attachClientSequenceNumber: attachFlowBatchSeqNums.clientSequenceNumber,
+					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
+					currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
 				},
-				new UsageError("Submission of an out of order message"),
+				getLongStack(() => new UsageError("Submission of an out of order message")),
 			);
 		}
 
@@ -116,9 +137,14 @@ export class Outbox {
 	}
 
 	public submit(message: BatchMessage) {
-		this.maybeFlushPartialBatch(message);
+		this.maybeFlushPartialBatch();
 
-		if (!this.mainBatch.push(message)) {
+		if (
+			!this.mainBatch.push(
+				message,
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+			)
+		) {
 			throw new GenericError("BatchTooLarge", /* error */ undefined, {
 				opSize: message.contents?.length ?? 0,
 				batchSize: this.mainBatch.contentSizeInBytes,
@@ -129,14 +155,24 @@ export class Outbox {
 	}
 
 	public submitAttach(message: BatchMessage) {
-		this.maybeFlushPartialBatch(message);
+		this.maybeFlushPartialBatch();
 
-		if (!this.attachFlowBatch.push(message)) {
+		if (
+			!this.attachFlowBatch.push(
+				message,
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+			)
+		) {
 			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
 			// when queue is not empty.
 			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
 			this.flushInternal(this.attachFlowBatch.popBatch());
-			if (!this.attachFlowBatch.push(message)) {
+			if (
+				!this.attachFlowBatch.push(
+					message,
+					this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+				)
+			) {
 				throw new GenericError("BatchTooLarge", /* error */ undefined, {
 					opSize: message.contents?.length ?? 0,
 					batchSize: this.attachFlowBatch.contentSizeInBytes,
@@ -180,15 +216,17 @@ export class Outbox {
 			this.params.containerContext.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return batch;
+			return this.params.groupingManager.groupBatch(batch);
 		}
 
-		const compressedBatch = this.params.compressor.compressBatch(batch);
+		const compressedBatch = this.params.groupingManager.groupBatch(
+			this.params.compressor.compressBatch(batch),
+		);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
 				? compressedBatch
-				: this.params.splitter.splitCompressedBatch(compressedBatch);
+				: this.params.splitter.splitFirstBatchMessage(compressedBatch);
 		}
 
 		if (compressedBatch.contentSizeInBytes >= this.params.config.maxBatchSizeInBytes) {

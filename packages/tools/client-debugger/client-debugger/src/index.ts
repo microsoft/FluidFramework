@@ -43,11 +43,41 @@
  * @packageDocumentation
  */
 
-export { MemberChangeKind } from "./AudienceMetadata";
+export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
+export { FluidObjectId, HasContainerId, HasFluidObjectId } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
+export { ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
-
-export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
+export {
+	FluidHandleNode,
+	FluidObjectNode,
+	FluidObjectNodeBase,
+	FluidObjectTreeNode,
+	FluidObjectValueNode,
+	FluidUnknownObjectNode,
+	Primitive,
+	RootHandleNode,
+	TreeNodeBase,
+	ValueNodeBase,
+	VisualChildNode,
+	VisualNode,
+	VisualNodeBase,
+	VisualNodeKind,
+	VisualTreeNode,
+	VisualValueNode,
+	VisualizeChildData,
+	VisualizeSharedObject,
+	UnknownObjectNode,
+} from "./data-visualization";
+export {
+	ContainerDevtoolsFeature,
+	ContainerDevtoolsFeatureFlags,
+	DevtoolsFeature,
+	DevtoolsFeatureFlags,
+} from "./Features";
+export { IFluidDevtools } from "./IFluidDevtools";
+export { DevtoolsLogger } from "./DevtoolsLogger";
+export { FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -55,55 +85,37 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
-	AudienceClientMetaData,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessage,
-	GetAudienceMessage,
-	debuggerMessageSource,
-	HasContainerId,
-	ConnectContainerMessage,
-	ConnectContainerMessageData,
-	DisconnectContainerMessage,
-	DisconnectContainerMessageData,
-	CloseContainerMessage,
-	CloseContainerMessageData,
-	ContainerDataMessage,
-	ContainerDataMessageData,
-	ContainerStateChangeMessage,
-	ContainerStateChangeMessageData,
-	ContainerStateHistoryMessage,
-	ContainerStateHistoryMessageData,
-	ISourcedDebuggerMessage,
-	IDebuggerMessage,
+	AudienceSummary,
+	CloseContainer,
+	ConnectContainer,
+	ContainerDevtoolsFeatures,
+	ContainerList,
+	ContainerStateChange,
+	ContainerStateHistory,
+	DataVisualization,
+	DevtoolsFeatures,
+	devtoolsMessageSource,
+	DisconnectContainer,
+	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
+	GetContainerList,
+	GetContainerState,
+	GetDataVisualization,
+	GetDevtoolsFeatures,
+	GetRootDataVisualizations,
+	GetTelemetryHistory,
+	IDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
-	GetContainerDataMessage,
-	GetContainerListMessage,
-	GetContainerStateMessage,
-	GetContainerStateMessageData,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
-	ITimestampedTelemetryEvent,
-	TelemetryEventMessage,
-	TelemetryEventMessageData,
-	TelemetryHistoryMessage,
-	GetTelemetryHistoryMessage,
+	ISourcedDevtoolsMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	RootDataVisualizations,
+	TelemetryEvent,
+	TelemetryHistory,
 } from "./messaging";
-export {
-	DebuggerRegistry,
-	DebuggerRegistryEvents,
-	clearDebuggerRegistry,
-	closeFluidClientDebugger,
-	FluidClientDebuggerProps,
-	getDebuggerRegistry,
-	getFluidClientDebugger,
-	getFluidClientDebuggers,
-	initializeFluidClientDebugger,
-} from "./Registry";
-export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
+export { ITimestampedTelemetryEvent } from "./TelemetryMetadata";

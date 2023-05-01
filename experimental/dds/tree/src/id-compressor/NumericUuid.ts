@@ -5,9 +5,9 @@
 
 /* eslint-disable no-bitwise */
 
-import { assert, fail } from '../Common';
 import { SessionId, StableId } from '../Identifiers';
 import { generateStableId } from '../UuidUtilities';
+import { assertWithMessage, fail } from '../Common';
 
 /**
  * A UUID (128 bit identifier) optimized for use as a 128 bit unsigned integer with fast addition and toString operations.
@@ -173,7 +173,7 @@ export function incrementUuid(uuid: NumericUuid, amount: number): NumericUuid {
 			// The variant chunk itself also overflowed. We'll need to carry the overflow further, into the upper string region of the UUID.
 			const upperString = ChunkMath.Upper.parse(stringEntry);
 			const upperNumber = Number.parseInt(upperString, 16);
-			assert(upperNumber <= maxUpperNumber);
+			assertWithMessage(upperNumber <= maxUpperNumber);
 			const newUpperNumber = upperNumber + 1;
 			if (newUpperNumber > maxUpperNumber) {
 				fail('Exceeded maximum numeric UUID');
@@ -316,7 +316,7 @@ namespace ChunkMath {
 		// 2. The numerically important bits (i.e. not the variant identifier bits vv which are constant) are extracted into a single number
 		const variantChunk = Variant.parse(stringEntry);
 		const variantNumber = getNumericValue(variantChunk);
-		assert(variantNumber <= maxVariantNumber);
+		assertWithMessage(variantNumber <= maxVariantNumber);
 		// 3. Add one to the variant number to produce our new variant number.
 		const newVariantNumber = variantNumber + 1;
 		// 4. The variant identifier bits are added back into the number, which is then turned back into a hex string
