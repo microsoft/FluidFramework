@@ -148,9 +148,6 @@
 			"ClassDeclaration_BaseSegment": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IAttributionCollection": {
-				"forwardCompat": false
-			},
 			"InterfaceDeclaration_IHierBlock": {
 				"forwardCompat": false
 			},
