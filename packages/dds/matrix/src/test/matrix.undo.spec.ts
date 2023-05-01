@@ -485,14 +485,14 @@ describe("Matrix", () => {
 			before(() => {
 				expect = async (expected?: readonly (readonly any[])[]) => {
 					containerRuntimeFactory.processAllMessages();
+
 					const actual1 = extract(matrix1);
 					const actual2 = extract(matrix2);
 
+					assert.deepEqual(actual1, actual2);
+
 					if (expected !== undefined) {
-						assert.deepEqual(actual1, expected, "matrix1 doesn't match expected");
-						assert.deepEqual(actual2, expected, "matrix2 doesn't match expected");
-					} else {
-						assert.deepEqual(actual1, actual2, "matrix1 does not match matrix2");
+						assert.deepEqual(actual1, expected);
 					}
 
 					for (const consumer of [consumer1, consumer2]) {
@@ -543,13 +543,9 @@ describe("Matrix", () => {
 				matrix2.openUndo(undo2);
 			});
 
-			afterEach(async function () {
-				if (this.currentTest?.err === undefined) {
-					// Paranoid check that the matrices are have converged on the same state.
-					await expect(undefined as any);
-				} else {
-					console.log(this.currentTest?.err);
-				}
+			afterEach(async () => {
+				// Paranoid check that the matrices are have converged on the same state.
+				await expect(undefined as any);
 
 				matrix1.closeMatrix(consumer1);
 				matrix2.closeMatrix(consumer2);
