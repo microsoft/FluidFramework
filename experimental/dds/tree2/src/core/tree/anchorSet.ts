@@ -412,8 +412,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	/**
 	 * Decouple nodes from their parent. This method doesn't place the nodes anywhere,
 	 * so if the intention is:
-	 * 1) to remove the nodes call {@link removeChildren}.
-	 * 2) to move the nodes call {@link moveChildren}.
+	 * 1) to remove the nodes call `removeChildren`.
+	 * 2) to move the nodes call `moveChildren`.
 	 * @param startPath - The path to the first node that is being decoupled.
 	 * @param count - number of siblings that are decoupled from the original tree.
 	 *
@@ -504,10 +504,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	 * Updates the parent indexes within `field` to account for `count` children being inserted at `fromParentIndex`. Note that
 	 * `fromParentIndex` is the logical position within the field, not the index with the sparse PathNode array.
 	 *
-	 *  @param field - the field to update.
-	 *  @param fromParentIndex - the logical index within the field to start updating from.
-	 *  @param count - the number to increase parent indexes.
-	 *  @returns the number of items in the field that are not increased.
+	 * @param field - the field to update.
+	 * @param fromParentIndex - the logical index within the field to start updating from.
+	 * @param count - the number to increase parent indexes.
+	 * @returns the number of items in the field that are not increased.
 	 *
 	 * TODO: tests
 	 */
