@@ -65,9 +65,7 @@ export async function create(
 		operationsDb.collection(checkpointsCollectionName),
 		undefined /* checkpoint type */,
 	);
-	const deliLocalCheckpointEnabled = config.get("deli:localCheckpointEnabled");
-	const scribeLocalCheckpointEnabled = config.get("deli:localCheckpointEnabled");
-	const isLocalCheckpointEnabled = deliLocalCheckpointEnabled || scribeLocalCheckpointEnabled;
+	const isLocalCheckpointEnabled = config.get("checkpoints: localCheckpointEnabled");
 
 	const checkpointService = new CheckpointService(
 		checkpointRepository,

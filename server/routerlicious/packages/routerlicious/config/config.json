@@ -51,6 +51,9 @@
 		"enableWholeSummaryUpload": false,
 		"storageUrl": "http://gitrest:3000"
 	},
+	"checkpoints": {
+		"localCheckpointEnabled": true
+	},
 	"alfred": {
 		"kafkaClientId": "alfred",
 		"maxMessageSize": "16KB",
@@ -209,8 +212,7 @@
 			"idleTime": 10000,
 			"maxTime": 60000,
 			"maxMessages": 500
-		},
-		"localCheckpointEnabled": true
+		}
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -220,8 +222,7 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"getDeltasViaAlfred": true,
-		"localCheckpointEnabled": true
+		"getDeltasViaAlfred": true
 	},
 	"system": {
 		"httpServer": {

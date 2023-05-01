@@ -38,7 +38,7 @@ export async function deliCreate(
 	const documentsCollectionName = config.get("mongo:collectionNames:documents");
 	const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 
-	const localCheckpointEnabled = config.get("deli:localCheckpointEnabled");
+	const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled");
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -143,12 +143,16 @@ export async function deliCreate(
 		enforceDiscoveryFlow,
 	};
 
-    const checkpointService = new core.CheckpointService(checkpointRepository, documentRepository, localCheckpointEnabled);
+	const checkpointService = new core.CheckpointService(
+		checkpointRepository,
+		documentRepository,
+		localCheckpointEnabled,
+	);
 
 	return new DeliLambdaFactory(
 		operationsDbManager,
 		documentRepository,
-        checkpointService,
+		checkpointService,
 		tenantManager,
 		undefined,
 		combinedProducer,
