@@ -907,14 +907,46 @@ export class MergeTree {
 	 * @param segments - An array of (not necessarily contiguous) segments with increasing ordinals.
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
+		function anyLocalRef(
+			collection: LocalReferenceCollection,
+			predicate: (pos: LocalReferencePosition) => boolean,
+		): boolean {
+			for (const pos of collection) {
+				if (predicate(pos)) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		function filterLocalRefs(
+			collection: LocalReferenceCollection,
+			predicate: (pos: LocalReferencePosition) => boolean,
+		): LocalReferencePosition[] {
+			const refs: LocalReferencePosition[] = [];
+
+			for (const pos of collection) {
+				if (predicate(pos)) {
+					refs.push(pos);
+				}
+			}
+
+			return refs;
+		}
+
 		// References are slid in groups to preserve their order.
 		let currentRightSlideDestination: ISegment | undefined;
 		let currentRightSlideIsForward: boolean | undefined;
 		let currentRightSlideGroup: LocalReferenceCollection[] = [];
+		const rightPred = (ref: LocalReferencePosition) =>
+			ref.slidingPreference !== SlidingPreference.Backward;
 
 		let currentLeftSlideDestination: ISegment | undefined;
 		let currentLeftSlideIsForward: boolean | undefined;
 		let currentLeftSlideGroup: LocalReferenceCollection[] = [];
+		const leftPred = (ref: LocalReferencePosition) =>
+			ref.slidingPreference === SlidingPreference.Backward;
 
 		const slideGroup = (
 			currentSlideDestination: ISegment | undefined,
@@ -931,11 +963,11 @@ export class MergeTree {
 					new LocalReferenceCollection(currentSlideDestination));
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(
-						...currentSlideGroup.map((collection) => collection.filter(pred)),
+						...currentSlideGroup.map((collection) => filterLocalRefs(collection, pred)),
 					);
 				} else {
 					localRefs.addAfterTombstones(
-						...currentSlideGroup.map((collection) => collection.filter(pred)),
+						...currentSlideGroup.map((collection) => filterLocalRefs(collection, pred)),
 					);
 				}
 			} else {
@@ -961,6 +993,44 @@ export class MergeTree {
 			}
 		};
 
+		const trySlideSegment = (
+			segment: ISegment,
+			currentSlideDestination: ISegment | undefined,
+			currentSlideIsForward: boolean | undefined,
+			currentSlideGroup: LocalReferenceCollection[],
+			pred: (ref: LocalReferencePosition) => boolean,
+			slidingPreference: SlidingPreference,
+			reassign: (
+				localRefs: LocalReferenceCollection,
+				slideToSegment: ISegment | undefined,
+				slideIsForward: boolean,
+			) => void,
+		) => {
+			// avoid sliding logic if this segment doesn't have any references
+			// with the given sliding preference
+			if (!segment.localRefs || !anyLocalRef(segment.localRefs, pred)) {
+				return;
+			}
+
+			const slideToSegment = this._getSlideToSegment(
+				segment,
+				slidingPreference,
+				segmentCache,
+			);
+			const slideIsForward =
+				slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
+
+			if (
+				slideToSegment !== currentSlideDestination ||
+				slideIsForward !== currentSlideIsForward
+			) {
+				slideGroup(currentSlideDestination, currentSlideIsForward, currentSlideGroup, pred);
+				reassign(segment.localRefs, slideToSegment, slideIsForward);
+			} else {
+				currentRightSlideGroup.push(segment.localRefs);
+			}
+		};
+
 		const segmentCache = new Map<ISegment, { seg?: ISegment }>();
 		for (const segment of segments) {
 			assert(
@@ -971,74 +1041,46 @@ export class MergeTree {
 				continue;
 			}
 
-			if (
-				segment.localRefs.any((ref) => ref.slidingPreference !== SlidingPreference.Backward)
-			) {
-				const slideToSegment = this._getSlideToSegment(
-					segment,
-					SlidingPreference.Forward,
-					segmentCache,
-				);
-				const slideIsForward =
-					slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
-
-				if (
-					slideToSegment !== currentRightSlideDestination ||
-					slideIsForward !== currentRightSlideIsForward
-				) {
-					slideGroup(
-						currentRightSlideDestination,
-						currentRightSlideIsForward,
-						currentRightSlideGroup,
-						(ref) => ref.slidingPreference !== SlidingPreference.Backward,
-					);
-					currentRightSlideGroup = [segment.localRefs];
+			trySlideSegment(
+				segment,
+				currentRightSlideDestination,
+				currentRightSlideIsForward,
+				currentRightSlideGroup,
+				rightPred,
+				SlidingPreference.Forward,
+				(localRefs, slideToSegment, slideIsForward) => {
+					currentRightSlideGroup = [localRefs];
 					currentRightSlideDestination = slideToSegment;
 					currentRightSlideIsForward = slideIsForward;
-				} else {
-					currentRightSlideGroup.push(segment.localRefs);
-				}
-			}
-			if (
-				segment.localRefs.any((ref) => ref.slidingPreference === SlidingPreference.Backward)
-			) {
-				const slideToSegment = this._getSlideToSegment(
-					segment,
-					SlidingPreference.Backward,
-					segmentCache,
-				);
-				const slideIsForward =
-					slideToSegment === undefined ? false : slideToSegment.ordinal > segment.ordinal;
+				},
+			);
 
-				if (
-					slideToSegment !== currentLeftSlideDestination ||
-					slideIsForward !== currentLeftSlideIsForward
-				) {
-					slideGroup(
-						currentLeftSlideDestination,
-						currentLeftSlideIsForward,
-						currentLeftSlideGroup,
-						(ref) => ref.slidingPreference === SlidingPreference.Backward,
-					);
-					currentLeftSlideGroup = [segment.localRefs];
+			trySlideSegment(
+				segment,
+				currentLeftSlideDestination,
+				currentLeftSlideIsForward,
+				currentLeftSlideGroup,
+				leftPred,
+				SlidingPreference.Backward,
+				(localRefs, slideToSegment, slideIsForward) => {
+					currentLeftSlideGroup = [localRefs];
 					currentLeftSlideDestination = slideToSegment;
 					currentLeftSlideIsForward = slideIsForward;
-				} else {
-					currentLeftSlideGroup.push(segment.localRefs);
-				}
-			}
+				},
+			);
 		}
+
 		slideGroup(
 			currentRightSlideDestination,
 			currentRightSlideIsForward,
 			currentRightSlideGroup,
-			(ref) => ref.slidingPreference !== SlidingPreference.Backward,
+			rightPred,
 		);
 		slideGroup(
 			currentLeftSlideDestination,
 			currentLeftSlideIsForward,
 			currentLeftSlideGroup,
-			(ref) => ref.slidingPreference === SlidingPreference.Backward,
+			leftPred,
 		);
 	}
 

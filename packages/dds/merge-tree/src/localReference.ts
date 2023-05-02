@@ -236,28 +236,6 @@ export class LocalReferenceCollection {
 		return iterator;
 	}
 
-	public any(predicate: (pos: LocalReferencePosition) => boolean): boolean {
-		for (const pos of this) {
-			if (predicate(pos)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	public filter(predicate: (pos: LocalReferencePosition) => boolean): LocalReferencePosition[] {
-		const refs: LocalReferencePosition[] = [];
-
-		for (const pos of this) {
-			if (predicate(pos)) {
-				refs.push(pos);
-			}
-		}
-
-		return refs;
-	}
-
 	/**
 	 * @remarks This method should only be called by mergeTree.
 	 * @internal
