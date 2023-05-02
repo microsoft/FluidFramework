@@ -245,6 +245,11 @@ export class FluidDevtools implements IFluidDevtools {
 
 	/**
 	 * Creates and returns the FluidDevtools singleton.
+	 *
+	 * @remarks
+	 *
+	 * If the singleton has already been initialized, a warning will be logged and the existing instance will
+	 * be returned.
 	 */
 	public static initialize(props?: FluidDevtoolsProps): FluidDevtools {
 		if (FluidDevtools.I !== undefined) {
