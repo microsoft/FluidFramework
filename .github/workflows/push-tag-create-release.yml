@@ -15,15 +15,7 @@ jobs:
           fetch-depth: "0" # all history
           persist-credentials: false
 
-      # pnpm dependencies cannot be cached until pnpm is installed, which is done by corepack. So we set up node, enable
-      # corepack, then set up node again with the cache.
-      # WORKAROUND: https://github.com/actions/setup-node/issues/531#issuecomment-1416814256
-      # - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
-      #   with:
-      #     node-version-file: .nvmrc
       - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
-      # - name: Enable corepack
-      #   run: corepack enable
       - name: Extract cached dependencies
         uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
         with:
