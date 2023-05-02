@@ -1,13 +1,13 @@
 {
-	"name": "@fluid-tools/client-debugger-chrome-extension",
+	"name": "@fluid-tools/devtools-browser-extension",
 	"version": "2.0.0-internal.4.2.0",
 	"private": true,
-	"description": "A Chrome extension visual debugger for the Fluid Client.",
+	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/tools/client-debugger/client-debugger-chrome-extension"
+		"directory": "packages/tools/client-debugger/devtools-browser-extension"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

@@ -1,4 +1,4 @@
-# @fluid-tools/client-debugger-chrome-extension
+# @fluid-tools/devtools-browser-extension
 
 ## 2.0.0-internal.4.1.0
 
