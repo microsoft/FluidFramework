@@ -1,43 +1,50 @@
 {
-    "eslint.workingDirectories": [
-        {
-            "mode": "auto"
-        }
-    ],
-    "typescript.tsdk": "node_modules/typescript/lib",
+	"eslint.workingDirectories": [
+		{
+			"mode": "auto"
+		}
+	],
+	"typescript.tsdk": "node_modules/typescript/lib",
 
-    // Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
-    // (See https://github.com/Microsoft/vscode/issues/34387)
-    "typescript.tsc.autoDetect": "off",
-    "npm.autoDetect": "off",
+	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
+	// (See https://github.com/Microsoft/vscode/issues/34387)
+	"typescript.tsc.autoDetect": "off",
+	"npm.autoDetect": "off",
 
-    "files.associations": {
-        "tools/pipelines/*.yml": "azure-pipelines",
-        // good-fences' fence files support comments, so detect them as "jsonc" instead of "json":
-        "fence.json": "jsonc",
-        ".git-blame-ignore-revs": "ignore"
-    },
-    "[azure-pipelines].customSchemaFile": "",
-    "deno.enable": false,
-    "deno.lint": false,
-    "deno.unstable": false,
+	"files.associations": {
+		"tools/pipelines/*.yml": "azure-pipelines",
+		// good-fences' fence files support comments, so detect them as "jsonc" instead of "json":
+		"fence.json": "jsonc",
+		".git-blame-ignore-revs": "ignore"
+	},
+	"[azure-pipelines].customSchemaFile": "",
+	"deno.enable": false,
+	"deno.lint": false,
+	"deno.unstable": false,
 
-    // Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
-    "cSpell.words": [
-        "endregion",
-        "injective",
-        "losslessly",
-        "mitigations",
-        "multinomial",
-        "nonfinite",
-        "pseudorandomly",
-        "Tinylicious",
-        "tombstoned",
-        "TSDoc",
-        "unaugmented"
-    ],
+	// Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
+	"cSpell.words": [
+		"endregion",
+		"handlecache",
+		"handletable",
+		"injective",
+		"losslessly",
+		"mitigations",
+		"mocharc",
+		"multinomial",
+		"nonfinite",
+		"pseudorandomly",
+		"snapshotlegacy",
+		"testconsumer",
+		"Tinylicious",
+		"tombstoned",
+		"TSDoc",
+		"unacked",
+		"unaugmented",
+		"undoprovider"
+	],
 
-    // Enable prettier as default formatter, and disable rules that disagree with it
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.insertSpaces": false
+	// Enable prettier as default formatter, and disable rules that disagree with it
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.insertSpaces": false
 }
