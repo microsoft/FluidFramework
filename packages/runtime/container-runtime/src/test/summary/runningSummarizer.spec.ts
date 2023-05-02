@@ -669,61 +669,6 @@ describe("Runtime", () => {
 					assert.strictEqual(stopCall, 1);
 				});
 
-				it("Should not retry on failure when stopping instead of restarting", async () => {
-					settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
-					await startRunningSummarizer();
-					await emitNextOp();
-
-					// too early, should not run yet
-					await emitNextOp(summaryConfig.maxOps - 1);
-					assertRunCounts(0, 0, 0);
-
-					// now should run a normal run
-					await emitNextOp(1);
-					assertRunCounts(1, 0, 0);
-					const retryProps1 = {
-						summarizeCount: 1,
-						summaryAttemptsPerPhase: 1,
-						summaryAttempts: 1,
-						summaryAttemptPhase: 1,
-					};
-					assert(
-						mockLogger.matchEvents([
-							{ eventName: "Running:Summarize_generate", ...retryProps1 },
-							{ eventName: "Running:Summarize_Op", ...retryProps1 },
-						]),
-						"unexpected log sequence",
-					);
-
-					// should not run, because our summary hasn't been acked/nacked yet
-					await emitNextOp(summaryConfig.maxOps + 1);
-					assertRunCounts(1, 0, 0);
-
-					// should run with refresh after first nack
-					await emitNack();
-					assertRunCounts(2, 0, 0, "retry1 should be refreshLatestAck");
-					const retryProps2 = {
-						summarizeCount: 1,
-						summarizerSuccessfulAttempts: 0,
-					};
-					assert(
-						mockLogger.matchEvents([
-							{
-								eventName: "Running:Summarize_cancel",
-								...retryProps1,
-								reason: getFailMessage("summaryNack"),
-							},
-							{
-								eventName: "Running:ClosingSummarizerOnSummaryStale",
-								...retryProps2,
-							},
-						]),
-						"unexpected log sequence",
-					);
-					assert.strictEqual(stopCall, 1);
-					assert(mockRuntime.disposed, "runtime should be disposed!");
-				});
-
 				it("Should retry after delay on failures with retryAfter", async () => {
 					await emitNextOp();
 

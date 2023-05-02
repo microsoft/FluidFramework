@@ -4,36 +4,17 @@
 
 ```ts
 
-import { IClient } from '@fluidframework/protocol-definitions';
-import { IDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
-import { ISourcedDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
 
 // @public
-export interface AudienceMember {
-    clients: Map<string, IClient>;
-    userId: string;
-}
+export function DevtoolsPanel(props: DevtoolsPanelProps): React_2.ReactElement;
 
 // @public
-export interface AudienceMemberViewProps {
-    audienceMember: AudienceMember;
-    myClientConnection: IClient | undefined;
-    myClientId: string | undefined;
+export interface DevtoolsPanelProps {
+    messageRelay: IMessageRelay;
 }
 
 export { IMessageRelay }
-
-// @public
-export const MessageRelayContext: React_2.Context<IMessageRelay<IDevtoolsMessage<unknown>, ISourcedDevtoolsMessage<unknown>> | undefined>;
-
-// @public
-export function RootView(props: RootViewProps): React_2.ReactElement;
-
-// @public
-export interface RootViewProps {
-    messageRelay: IMessageRelay;
-}
 
 ```

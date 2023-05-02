@@ -1,5 +1,0 @@
-{
-	"tags": ["feature-libraries"],
-	"exports": ["index"],
-	"imports": ["events", "util", "core", "shared-tree-core"]
-}

@@ -13,11 +13,8 @@ import {
 	INode,
 	IOrderer,
 	IOrdererConnection,
-	ITaskMessageSender,
-	ITenantManager,
 	IWebSocketServer,
 	ILogger,
-	TokenGenerator,
 	DefaultServiceConfiguration,
 	IDocumentRepository,
 	ICheckpointRepository,
@@ -78,11 +75,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		scribeCheckpointService: CheckpointService,
 		timeoutLength: number,
 		webSocketServerFactory: () => IWebSocketServer,
-		taskMessageSender: ITaskMessageSender,
-		tenantManager: ITenantManager,
-		permission: any,
 		maxMessageSize: number,
-		tokenGenerator: TokenGenerator,
 		logger: ILogger,
 	) {
 		// Look up any existing information for the node or create a new one
@@ -99,11 +92,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			deliCheckpointService,
 			scribeCheckpointService,
 			timeoutLength,
-			taskMessageSender,
-			tenantManager,
-			permission,
 			maxMessageSize,
-			tokenGenerator,
 			logger,
 		);
 	}
@@ -176,11 +165,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		private readonly deliCheckpointService: CheckpointService,
 		private readonly scribeCheckpointService: CheckpointService,
 		private readonly timeoutLength: number,
-		private readonly taskMessageSender: ITaskMessageSender,
-		private readonly tenantManager: ITenantManager,
-		private readonly permission: any,
 		private readonly maxMessageSize: number,
-		private readonly tokenGenerator: TokenGenerator,
 		private readonly logger: ILogger,
 	) {
 		super();
@@ -274,10 +259,6 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			this.databaseManager,
 			tenantId,
 			documentId,
-			this.taskMessageSender,
-			this.tenantManager,
-			this.permission,
-			this.tokenGenerator,
 			this.logger,
 			this.documentRepository,
 			this.deliCheckpointRepository,

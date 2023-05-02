@@ -7,7 +7,7 @@
  * Base interface used in message data for events targeting a particular debugger instance via
  * its Container ID.
  *
- * @public
+ * @internal
  */
 export interface HasContainerId {
 	/**

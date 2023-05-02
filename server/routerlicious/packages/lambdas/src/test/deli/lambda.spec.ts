@@ -160,7 +160,7 @@ describe("Routerlicious", () => {
 					DefaultServiceConfiguration,
 				);
 				lambda = await factory.create(
-					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
+					{ documentId: testId, tenantId: testTenantId },
 					testContext,
 				);
 
@@ -185,7 +185,7 @@ describe("Routerlicious", () => {
 					},
 				);
 				lambdaWithSignals = await factoryWithSignals.create(
-					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
+					{ documentId: testId, tenantId: testTenantId },
 					testContext,
 				);
 
@@ -207,7 +207,7 @@ describe("Routerlicious", () => {
 					},
 				);
 				lambdaWithBatching = await factoryWithBatching.create(
-					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
+					{ documentId: testId, tenantId: testTenantId },
 					testContext,
 				);
 			});

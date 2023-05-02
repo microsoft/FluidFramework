@@ -41,26 +41,26 @@ export function create(
 		authorization: string,
 		params: git.ICreateTagParams,
 	): Promise<git.ITag> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createTag(params);
 	}
 
 	async function getTag(tenantId: string, authorization: string, tag: string): Promise<git.ITag> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getTag(tag);
 	}
 

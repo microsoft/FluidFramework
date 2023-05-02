@@ -33,6 +33,8 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/runtime-definitions';
+import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -325,6 +327,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     readonly id: string;
     // (undocumented)
+    idCompressor: IIdCompressorCore & IIdCompressor;
+    // (undocumented)
     IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     // (undocumented)
     IFluidHandleContext: IFluidHandleContext;
@@ -591,7 +595,7 @@ export class MockStorage implements IChannelStorageService {
 }
 
 // @public
-export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean;
+export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean;
 
 // (No @packageDocumentation comment for this package)
 

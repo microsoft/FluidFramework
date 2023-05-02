@@ -77,7 +77,6 @@ export async function create(
 	if (createCosmosDBIndexes) {
 		await opCollection.createIndex({ tenantId: 1 }, false);
 		await opCollection.createIndex({ documentId: 1 }, false);
-		await opCollection.createIndex({ "operation.term": 1 }, false);
 		await opCollection.createIndex({ "operation.timestamp": 1 }, false);
 		await opCollection.createIndex({ scheduledDeletionTime: 1 }, false);
 		await opCollection.createIndex({ "operation.sequenceNumber": 1 }, false);
@@ -85,7 +84,6 @@ export async function create(
 		await opCollection.createIndex(
 			{
 				"documentId": 1,
-				"operation.term": 1,
 				"operation.sequenceNumber": 1,
 				"tenantId": 1,
 			},

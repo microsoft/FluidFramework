@@ -6,11 +6,8 @@
 import {
 	IDatabaseManager,
 	IDocumentStorage,
-	ITaskMessageSender,
-	ITenantManager,
 	IWebSocketServer,
 	ILogger,
-	TokenGenerator,
 	IDocumentRepository,
 	ICheckpointRepository,
     CheckpointService,
@@ -32,11 +29,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
         private readonly scribeCheckpointService: CheckpointService,
 		private readonly timeoutLength: number,
 		private readonly webSocketServerFactory: () => IWebSocketServer,
-		private readonly taskMessageSender: ITaskMessageSender,
-		private readonly tenantManager: ITenantManager,
-		private readonly permission: any,
 		private readonly maxMessageSize: number,
-		private readonly tokenGenerator: TokenGenerator,
 		private readonly logger: ILogger,
 	) {}
 
@@ -53,11 +46,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
             this.scribeCheckpointService,
 			this.timeoutLength,
 			this.webSocketServerFactory,
-			this.taskMessageSender,
-			this.tenantManager,
-			this.permission,
 			this.maxMessageSize,
-			this.tokenGenerator,
 			this.logger,
 		);
 
