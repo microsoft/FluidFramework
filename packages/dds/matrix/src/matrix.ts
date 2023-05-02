@@ -29,7 +29,7 @@ import {
 	IJSONSegment,
 } from "@fluidframework/merge-tree";
 import { MatrixOp } from "./ops";
-import { PermutationSegment, PermutationVector } from "./permutationvector";
+import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle, isHandleValid } from "./handletable";
@@ -369,7 +369,7 @@ export class SharedMatrix<T = any>
 	}
 
 	/** @internal */ public _undoRemoveRows(rowStart: number, spec: IJSONSegment) {
-		const { op, inserted } = this.reinsertVector(this.rows, rowStart, spec);
+		const { op, inserted } = reinsertSegmentIntoVector(this.rows, rowStart, spec);
 		this.submitRowMessage(op);
 
 		// Generate setCell ops for each populated cell in the reinserted rows.
@@ -392,7 +392,7 @@ export class SharedMatrix<T = any>
 	}
 
 	/** @internal */ public _undoRemoveCols(colStart: number, spec: IJSONSegment) {
-		const { op, inserted } = this.reinsertVector(this.cols, colStart, spec);
+		const { op, inserted } = reinsertSegmentIntoVector(this.cols, colStart, spec);
 		this.submitColMessage(op);
 
 		// Generate setCell ops for each populated cell in the reinserted cols.
@@ -412,29 +412,6 @@ export class SharedMatrix<T = any>
 		for (const consumer of this.consumers.values()) {
 			consumer.cellsChanged(/* rowStart: */ 0, colStart, this.rowCount, colCount, this);
 		}
-	}
-
-	private reinsertVector(vector: PermutationVector, pos: number, spec: IJSONSegment) {
-		const original = PermutationSegment.fromJSONObject(spec);
-
-		// (Re)insert the removed number of rows at the original position.
-		const op = vector.insertSegmentLocal(pos, original);
-		const inserted = vector.getContainingSegment(pos).segment as PermutationSegment;
-
-		// we reuse the original handle here
-		// so if cells exist, they can be found, and re-inserted
-		if (isHandleValid(original.start)) {
-			inserted.start = original.start;
-		}
-
-		// Invalidate the handleCache in case it was populated during the 'rowsChanged'
-		// callback, which occurs before the handle span is populated.
-		vector.handleCache.itemsChanged(
-			pos,
-			/* removedCount: */ 0,
-			/* insertedCount: */ inserted.cachedLength,
-		);
-		return { op, inserted };
 	}
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {

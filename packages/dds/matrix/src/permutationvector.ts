@@ -19,6 +19,7 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeMaintenanceCallbackArgs,
 	MergeTreeMaintenanceType,
+	IJSONSegment,
 } from "@fluidframework/merge-tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
@@ -411,4 +412,31 @@ export class PermutationVector extends Client {
 
 		return s.join("");
 	}
+}
+
+export function reinsertSegmentIntoVector(
+	vector: PermutationVector,
+	pos: number,
+	spec: IJSONSegment,
+) {
+	const original = PermutationSegment.fromJSONObject(spec);
+
+	// (Re)insert the removed number of rows at the original position.
+	const op = vector.insertSegmentLocal(pos, original);
+	const inserted = vector.getContainingSegment(pos).segment as PermutationSegment;
+
+	// we reuse the original handle here
+	// so if cells exist, they can be found, and re-inserted
+	if (isHandleValid(original.start)) {
+		inserted.start = original.start;
+	}
+
+	// Invalidate the handleCache in case it was populated during the 'rowsChanged'
+	// callback, which occurs before the handle span is populated.
+	vector.handleCache.itemsChanged(
+		pos,
+		/* removedCount: */ 0,
+		/* insertedCount: */ inserted.cachedLength,
+	);
+	return { op, inserted };
 }
