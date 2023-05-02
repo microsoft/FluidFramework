@@ -39,6 +39,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - name: Install tools
         run: |
+          # We only need to install the root dependencies
           pnpm install -w --frozen-lockfile
 
       # Check whether a changeset was added. This step will have the outcome 'failure' if there is no changeset.
