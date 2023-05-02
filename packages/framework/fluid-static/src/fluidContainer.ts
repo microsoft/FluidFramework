@@ -2,428 +2,323 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import { UsageError } from "@fluidframework/container-utils";
-
-import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
-import { IContainerDevtools } from "./IContainerDevtools";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
-	ContainerList,
-	DevtoolsFeatures,
-	GetContainerList,
-	GetDevtoolsFeatures,
-	handleIncomingWindowMessage,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
-	MessageLoggingOptions,
-	postMessagesToWindow,
-} from "./messaging";
-import { IFluidDevtools } from "./IFluidDevtools";
-import { ContainerMetadata } from "./ContainerMetadata";
-import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
-import { DevtoolsLogger } from "./DevtoolsLogger";
-import { VisualizeSharedObject } from "./data-visualization";
+	AttachState,
+	IContainer,
+	ICriticalContainerError,
+	ConnectionState,
+} from "@fluidframework/container-definitions";
+import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from "./types";
 
 /**
- * Message logging options used by the root devtools.
+ * Events emitted from {@link IFluidContainer}.
  */
-const devtoolsMessageLoggingOptions: MessageLoggingOptions = {
-	context: "Fluid Devtools",
-};
+export interface IFluidContainerEvents extends IEvent {
+	/**
+	 * Emitted when the {@link IFluidContainer} completes connecting to the Fluid service.
+	 *
+	 * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
+	 *
+	 * @see
+	 *
+	 * - {@link IFluidContainer.connectionState}
+	 *
+	 * - {@link IFluidContainer.connect}
+	 */
+	(event: "connected", listener: () => void): void;
 
-/**
- * Error text thrown when {@link FluidDevtools} operations are used after it has been disposed.
- *
- * @privateRemarks Exported for test purposes only.
- */
-export const useAfterDisposeErrorText =
-	"The devtools instance has been disposed. Further operations are invalid.";
+	/**
+	 * Emitted when the {@link IFluidContainer} becomes disconnected from the Fluid service.
+	 *
+	 * @remarks Reflects connection state changes against the (delta) service acknowledging ops/edits.
+	 *
+	 * @see
+	 *
+	 * - {@link IFluidContainer.connectionState}
+	 *
+	 * - {@link IFluidContainer.disconnect}
+	 */
+	(event: "disconnected", listener: () => void): void;
 
-/**
- * Error text thrown when a user attempts to register a {@link IContainerDevtools} instance for an ID that is already
- * registered with the {@link IFluidDevtools}.
- *
- * @privateRemarks Exported for test purposes only.
- */
-export function getContainerAlreadyRegisteredErrorText(containerId: string): string {
-	return (
-		`A ContainerDevtools instance has already been registered for container ID "${containerId}".` +
-		"Existing instance must be closed before a replacement may be registered."
-	);
+	/**
+	 * Emitted when all local changes/edits have been acknowledged by the service.
+	 *
+	 * @remarks "dirty" event will be emitted when the next local change has been made.
+	 *
+	 * @see {@link IFluidContainer.isDirty}
+	 */
+	(event: "saved", listener: () => void): void;
+
+	/**
+	 * Emitted when the first local change has been made, following a "saved" event.
+	 *
+	 * @remarks "saved" event will be emitted once all local changes have been acknowledged by the service.
+	 *
+	 * @see {@link IFluidContainer.isDirty}
+	 */
+	(event: "dirty", listener: () => void): void;
+
+	/**
+	 * Emitted when the {@link IFluidContainer} is closed, which permanently disables it.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `error`: If the container was closed due to error (as opposed to an explicit call to
+	 * {@link IFluidContainer.dispose}), this will contain details about the error that caused it.
+	 */
+	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
 }
 
 /**
- * Properties for configuring the Devtools.
+ * Provides an entrypoint into the client side of collaborative Fluid data.
+ * Provides access to the data as well as status on the collaboration session.
  *
- * @public
+ * @remarks Note: external implementations of this interface are not supported.
  */
-export interface FluidDevtoolsProps {
+export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 	/**
-	 * (optional) telemetry logger associated with the Fluid runtime.
+	 * Provides the current connected state of the container
+	 */
+	readonly connectionState: ConnectionState;
+
+	/**
+	 * A container is considered **dirty** if it has local changes that have not yet been acknowledged by the service.
 	 *
 	 * @remarks
 	 *
-	 * Note: {@link IFluidDevtools} does not register this logger with the Fluid runtime; that must be done separately.
+	 * You should always check the `isDirty` flag before closing the container or navigating away from the page.
+	 * Closing the container while `isDirty === true` may result in the loss of operations that have not yet been
+	 * acknowledged by the service.
 	 *
-	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
-	 * external listeners.
+	 * A container is considered dirty in the following cases:
+	 *
+	 * 1. The container has been created in the detached state, and either it has not been attached yet or it is
+	 * in the process of being attached (container is in `attaching` state). If container is closed prior to being
+	 * attached, host may never know if the file was created or not.
+	 *
+	 * 2. The container was attached, but it has local changes that have not yet been saved to service endpoint.
+	 * This occurs as part of normal op flow where pending operation (changes) are awaiting acknowledgement from the
+	 * service. In some cases this can be due to lack of network connection. If the network connection is down,
+	 * it needs to be restored for the pending changes to be acknowledged.
 	 */
-	logger?: DevtoolsLogger;
+	readonly isDirty: boolean;
 
 	/**
-	 * (optional) List of Containers to initialize the devtools with.
-	 *
-	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainerDevtools}.
+	 * Whether or not the container is disposed, which permanently disables it.
 	 */
-	initialContainers?: ContainerDevtoolsProps[];
+	readonly disposed: boolean;
 
 	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s associated with individual Containers.
+	 * The collection of data objects and Distributed Data Stores (DDSes) that were specified by the schema.
+	 *
+	 * @remarks These data objects and DDSes exist for the lifetime of the container.
+	 */
+	readonly initialObjects: LoadableObjectRecord;
+
+	/**
+	 * The current attachment state of the container.
 	 *
 	 * @remarks
 	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
+	 * Once a container has been attached, it remains attached.
+	 * When loading an existing container, it will already be attached.
 	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
+	readonly attachState: AttachState;
+
+	/**
+	 * A newly created container starts detached from the collaborative service.
+	 * Calling `attach()` uploads the new container to the service and connects to the collaborative service.
+	 *
+	 * @remarks
+	 *
+	 * This should only be called when the container is in the
+	 * {@link @fluidframework/container-definitions#AttachState.Detatched} state.
+	 *
+	 * This can be determined by observing {@link IFluidContainer.attachState}.
+	 *
+	 * @returns A promise which resolves when the attach is complete, with the string identifier of the container.
+	 */
+	attach(): Promise<string>;
+
+	/**
+	 * Attempts to connect the container to the delta stream and process operations.
+	 *
+	 * @throws Will throw an error if connection is unsuccessful.
+	 *
+	 * @remarks
+	 *
+	 * This should only be called when the container is in the
+	 * {@link @fluidframework/container-definitions#ConnectionState.Disconnected} state.
+	 *
+	 * This can be determined by observing {@link IFluidContainer.connectionState}.
+	 */
+	connect(): void;
+
+	/**
+	 * Disconnects the container from the delta stream and stops processing operations.
+	 *
+	 * @remarks
+	 *
+	 * This should only be called when the container is in the
+	 * {@link @fluidframework/container-definitions#ConnectionState.Connected} state.
+	 *
+	 * This can be determined by observing {@link IFluidContainer.connectionState}.
+	 */
+	disconnect(): void;
+
+	/**
+	 * Create a new data object or Distributed Data Store (DDS) of the specified type.
+	 *
+	 * @remarks
+	 *
+	 * In order to share the data object or DDS with other
+	 * collaborators and retrieve it later, store its handle in a collection like a SharedDirectory from your
+	 * initialObjects.
+	 *
+	 * @param objectClass - The class of the `DataObject` or `SharedObject` to create.
+	 *
+	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
+	 */
+	create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T>;
+
+	/**
+	 * Dispose of the container instance, permanently disabling it.
+	 */
+	dispose(): void;
 }
 
 /**
- * {@link IFluidDevtools} implementation.
+ * Base {@link IFluidContainer} implementation.
  *
  * @remarks
  *
- * This class listens for incoming messages from the window (globalThis), and posts messages to it upon relevant
- * state changes and when requested.
- *
- * **Messages it listens for:**
- *
- * - {@link GetDevtoolsFeatures.Message}: When received, {@link DevtoolsFeatures.Message} will be posted in response.
- *
- * - {@link GetContainerList.Message}: When received, {@link ContainerList.Message} will be posted in response.
- *
- * TODO: Document others as they are added.
- *
- * **Messages it posts:**
- *
- * - {@link DevtoolsFeatures.Message}: Posted only when requested via {@link GetDevtoolsFeatures.Message}.
- *
- * - {@link ContainerList.Message}: Posted whenever the list of registered Containers changes, or when requested
- * (via {@link GetContainerList.Message}).
- *
- * TODO: Document others as they are added.
- *
- * @sealed
+ * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
+ * will need to utilize or provide a service-specific implementation of this type that implements that method.
  */
-export class FluidDevtools implements IFluidDevtools {
-	/**
-	 * (optional) Telemetry logger associated with the Fluid runtime.
-	 */
-	public readonly logger: DevtoolsLogger | undefined;
+export class FluidContainer
+	extends TypedEventEmitter<IFluidContainerEvents>
+	implements IFluidContainer
+{
+	private readonly connectedHandler = () => this.emit("connected");
+	private readonly disconnectedHandler = () => this.emit("disconnected");
+	private readonly disposedHandler = (error?: ICriticalContainerError) =>
+		this.emit("disposed", error);
+	private readonly savedHandler = () => this.emit("saved");
+	private readonly dirtyHandler = () => this.emit("dirty");
+
+	public constructor(
+		private readonly container: IContainer,
+		private readonly rootDataObject: IRootDataObject,
+	) {
+		super();
+		container.on("connected", this.connectedHandler);
+		container.on("closed", this.disposedHandler);
+		container.on("disconnected", this.disconnectedHandler);
+		container.on("saved", this.savedHandler);
+		container.on("dirty", this.dirtyHandler);
+	}
 
 	/**
-	 * Stores Container-level devtools instances registered with this object.
-	 * Maps from Container IDs to the corresponding devtools instance.
+	 * {@inheritDoc IFluidContainer.isDirty}
 	 */
-	private readonly containers: Map<string, ContainerDevtools>;
+	public get isDirty(): boolean {
+		return this.container.isDirty;
+	}
 
 	/**
-	 * Global data visualizers to apply to all {@link IContainerDevtools} instances registered with this object.
+	 * {@inheritDoc IFluidContainer.attachState}
+	 */
+	public get attachState(): AttachState {
+		return this.container.attachState;
+	}
+
+	/**
+	 * {@inheritDoc IFluidContainer.disposed}
+	 */
+	public get disposed() {
+		return this.container.closed;
+	}
+
+	/**
+	 * {@inheritDoc IFluidContainer.connectionState}
+	 */
+	public get connectionState(): ConnectionState {
+		return this.container.connectionState;
+	}
+
+	/**
+	 * {@inheritDoc IFluidContainer.initialObjects}
+	 */
+	public get initialObjects() {
+		return this.rootDataObject.initialObjects;
+	}
+
+	/**
+	 * Incomplete base implementation of {@link IFluidContainer.attach}.
 	 *
-	 * @remarks If the user specifies data visualizers alongside a specific Container, those will take precedence over these.
+	 * @remarks
+	 *
+	 * Note: this implementation will unconditionally throw.
+	 * Consumers who rely on this will need to utilize or provide a service specific implementation of this base type
+	 * that provides an implementation of this method.
+	 *
+	 * The reason is because externally we are presenting a separation between the service and the `FluidContainer`,
+	 * but internally this separation is not there.
 	 */
-	private readonly dataVisualizers?: Record<string, VisualizeSharedObject>;
+	public async attach(): Promise<string> {
+		if (this.container.attachState !== AttachState.Detached) {
+			throw new Error("Cannot attach container. Container is not in detached state.");
+		}
+		throw new Error("Cannot attach container. Attach method not provided.");
+	}
 
 	/**
-	 * Private {@link FluidDevtools.disposed} tracking.
+	 * {@inheritDoc IFluidContainer.connect}
 	 */
-	private _disposed: boolean;
-
-	// #region Event handlers
+	public async connect(): Promise<void> {
+		this.container.connect?.();
+	}
 
 	/**
-	 * Handlers for inbound messages specific to FluidDevTools.
+	 * {@inheritDoc IFluidContainer.connect}
 	 */
-	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetDevtoolsFeatures.MessageType]: () => {
-			this.postSupportedFeatures();
-			return true;
-		},
-		[GetContainerList.MessageType]: () => {
-			this.postContainerList();
-			return true;
-		},
+	public async disconnect(): Promise<void> {
+		this.container.disconnect?.();
+	}
+
+	/**
+	 * {@inheritDoc IFluidContainer.create}
+	 */
+	public async create<T extends IFluidLoadable>(objectClass: LoadableObjectClass<T>): Promise<T> {
+		return this.rootDataObject.create(objectClass);
+	}
+
+	/**
+	 * {@inheritDoc IFluidContainer.dispose}
+	 */
+	public dispose() {
+		this.container.close();
+		this.container.off("connected", this.connectedHandler);
+		this.container.off("closed", this.disposedHandler);
+		this.container.off("disconnected", this.disconnectedHandler);
+		this.container.off("saved", this.savedHandler);
+		this.container.off("dirty", this.dirtyHandler);
+	}
+
+	/**
+	 * FOR INTERNAL USE ONLY. NOT FOR EXTERNAL USE.
+	 * We make no stability guarantees here whatsoever.
+	 *
+	 * Gets the underlying {@link @fluidframework/container-definitions#IContainer}.
+	 *
+	 * @remarks Used to power debug tooling.
+	 *
+	 * @internal
+	 */
+	public readonly INTERNAL_CONTAINER_DO_NOT_USE?: () => IContainer = () => {
+		return this.container;
 	};
-
-	/**
-	 * Event handler for messages coming from the window (globalThis).
-	 */
-	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
-	): void => {
-		handleIncomingWindowMessage(
-			event,
-			this.inboundMessageHandlers,
-			devtoolsMessageLoggingOptions,
-		);
-	};
-
-	/**
-	 * Event handler for the window (globalThis) `beforeUnload` event.
-	 * Disposes of the Devtools instance (which also clears the global singleton).
-	 */
-	private readonly windowBeforeUnloadHandler = (): void => {
-		this.dispose();
-	};
-
-	/**
-	 * Posts {@link DevtoolsFeatures.Message} to the window (globalThis) with the set of features supported by
-	 * this instance.
-	 */
-	private readonly postSupportedFeatures = (): void => {
-		const supportedFeatures = this.getSupportedFeatures();
-		postMessagesToWindow(
-			devtoolsMessageLoggingOptions,
-			DevtoolsFeatures.createMessage({
-				features: supportedFeatures,
-			}),
-		);
-	};
-
-	/**
-	 * Posts a {@link ContainerList.Message} to the window (globalThis).
-	 */
-	private readonly postContainerList = (): void => {
-		const containers: ContainerMetadata[] = this.getAllContainerDevtools().map(
-			(containerDevtools) => ({
-				id: containerDevtools.containerId,
-				nickname: containerDevtools.containerNickname,
-			}),
-		);
-
-		postMessagesToWindow(
-			devtoolsMessageLoggingOptions,
-			ContainerList.createMessage({
-				containers,
-			}),
-		);
-	};
-
-	// #endregion
-
-	/**
-	 * Singleton instance.
-	 */
-	private static I: FluidDevtools | undefined;
-
-	private constructor(props?: FluidDevtoolsProps) {
-		// Populate initial Container-level devtools
-		this.containers = new Map<string, ContainerDevtools>();
-		if (props?.initialContainers !== undefined) {
-			for (const containerConfig of props.initialContainers) {
-				this.containers.set(
-					containerConfig.containerId,
-					new ContainerDevtools(containerConfig),
-				);
-			}
-		}
-
-		this.logger = props?.logger;
-		this.dataVisualizers = props?.dataVisualizers;
-
-		// Register listener for inbound messages from the Window (globalThis)
-		globalThis.addEventListener?.("message", this.windowMessageHandler);
-
-		// Register the devtools instance to be disposed on Window unload
-		globalThis.addEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
-
-		this._disposed = false;
-	}
-
-	/**
-	 * Creates and returns the FluidDevtools singleton.
-	 */
-	public static initialize(props?: FluidDevtoolsProps): FluidDevtools {
-		if (FluidDevtools.I !== undefined) {
-			console.warn(
-				"Devtools have already been initialized. " +
-					"Existing Devtools must be closed (see closeDevtools) before new ones may be initialized. " +
-					"Returning existing Devtools instance.",
-			);
-		} else {
-			FluidDevtools.I = new FluidDevtools(props);
-		}
-
-		return FluidDevtools.I;
-	}
-
-	/**
-	 * Gets the Devtools singleton if it has been initialized, otherwise throws.
-	 */
-	public static getOrThrow(): FluidDevtools {
-		if (FluidDevtools.I === undefined) {
-			throw new UsageError("Devtools have not yet been initialized.");
-		}
-		return FluidDevtools.I;
-	}
-
-	/**
-	 * Gets the Devtools singleton if it has been initialized, otherwise returns `undefined`.
-	 */
-	public static tryGet(): FluidDevtools | undefined {
-		return FluidDevtools.I;
-	}
-
-	/**
-	 * {@inheritDoc IFluidDevtools.registerContainerDevtools}
-	 */
-	public registerContainerDevtools(props: ContainerDevtoolsProps): void {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		const { containerId, dataVisualizers: containerVisualizers } = props;
-
-		if (this.containers.has(containerId)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerId));
-		}
-
-		const dataVisualizers = mergeDataVisualizers(this.dataVisualizers, containerVisualizers);
-
-		const containerDevtools = new ContainerDevtools({
-			...props,
-			dataVisualizers,
-		});
-		this.containers.set(containerId, containerDevtools);
-
-		// Post message for container list change
-		this.postContainerList();
-	}
-
-	/**
-	 * {@inheritDoc IFluidDevtools.closeContainerDevtools}
-	 */
-	public closeContainerDevtools(containerId: string): void {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		const containerDevtools = this.containers.get(containerId);
-		if (containerDevtools === undefined) {
-			console.warn(
-				`No ContainerDevtools associated with container ID "${containerId}" was found.`,
-			);
-		} else {
-			containerDevtools.dispose();
-			this.containers.delete(containerId);
-
-			// Post message for container list change
-			this.postContainerList();
-		}
-	}
-
-	/**
-	 * Gets the registered Container Devtools associated with the provided Container ID, if one exists.
-	 * Otherwise returns `undefined`.
-	 */
-	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		return this.containers.get(containerId);
-	}
-
-	/**
-	 * Gets all Container-level devtools instances.
-	 */
-	public getAllContainerDevtools(): readonly IContainerDevtools[] {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		return [...this.containers.values()];
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
-	 */
-	public get disposed(): boolean {
-		return this._disposed;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
-	 */
-	public dispose(): void {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		// Dispose of container-level devtools
-		for (const [, containerDevtools] of this.containers) {
-			containerDevtools.dispose();
-		}
-		this.containers.clear();
-
-		// Notify listeners that the list of Containers changed.
-		this.postContainerList();
-
-		// Clear the singleton so a new one may be initialized.
-		FluidDevtools.I = undefined;
-
-		// Clean up event listeners
-		globalThis.removeEventListener?.("message", this.windowMessageHandler);
-		globalThis.removeEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
-
-		this._disposed = true;
-	}
-
-	/**
-	 * Gets the set of features supported by this instance.
-	 */
-	private getSupportedFeatures(): DevtoolsFeatureFlags {
-		return {
-			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
-		};
-	}
-}
-
-/**
- * Merges an optional set of global visualizers with an optional set of Container-local visualizers, such that
- * Container-level visualizers take precedence when present.
- */
-function mergeDataVisualizers(
-	globalVisualizers?: Record<string, VisualizeSharedObject>,
-	containerVisualizers?: Record<string, VisualizeSharedObject>,
-): Record<string, VisualizeSharedObject> | undefined {
-	if (globalVisualizers === undefined) {
-		return containerVisualizers;
-	}
-	if (containerVisualizers === undefined) {
-		return globalVisualizers;
-	}
-	return {
-		...globalVisualizers,
-		...containerVisualizers,
-	};
-}
-
-/**
- * Initializes the Devtools singleton and returns a handle to it.
- *
- * @remarks
- *
- * The instance is tracked as a static singleton.
- *
- * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
- * on the returned handle.
- *
- * @public
- */
-export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
-	return FluidDevtools.initialize(props);
 }
