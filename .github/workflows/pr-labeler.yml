@@ -46,6 +46,8 @@ jobs:
         name: Changeset status
         continue-on-error: true
         run: |
+          # Add the remote for debugging
+          git remote add upstream https://github.com/microsoft/FluidFramework
           pnpm exec flub check changeset --branch=${{ github.base_ref }}
 
       # If a changeset is present and it's labeled changeset-required, label it changeset-present
