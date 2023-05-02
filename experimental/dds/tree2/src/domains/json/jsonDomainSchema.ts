@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaBuilder, TreeSchema, AllowedTypes } from "../../feature-libraries";
+import { SchemaBuilder, TreeSchema } from "../../feature-libraries";
 import { ValueSchema, EmptyKey } from "../../core";
 
 const builder = new SchemaBuilder("Json Domain");
@@ -31,22 +31,15 @@ export const jsonBoolean = builder.primitive("Json.Boolean", ValueSchema.Boolean
 const jsonPrimitives = [jsonNumber, jsonString, jsonNull, jsonBoolean] as const;
 
 /**
- * Types allowed as roots of Json content.
- * Since the Json domain is recursive, this set is declared,
- * then used in the schema, then populated below.
- */
-const jsonTypes = [() => jsonObject, () => jsonArray, ...jsonPrimitives] as const;
-
-/**
  * @alpha
  */
 export const jsonObject = builder.object("Json.Object", {
-	extraLocalFields: SchemaBuilder.optional([
+	extraLocalFields: SchemaBuilder.optional(
 		// TODO: make recursive strong typing work.
 		(): TreeSchema => jsonObject,
 		() => jsonArray,
 		...jsonPrimitives,
-	] as const),
+	),
 });
 
 /**
@@ -54,12 +47,12 @@ export const jsonObject = builder.object("Json.Object", {
  */
 export const jsonArray = builder.object("Json.Array", {
 	local: {
-		[EmptyKey]: SchemaBuilder.sequence([
+		[EmptyKey]: SchemaBuilder.sequence(
 			// TODO: make recursive strong typing work.
 			(): TreeSchema => jsonObject,
 			(): TreeSchema => jsonArray,
 			...jsonPrimitives,
-		] as const),
+		),
 	},
 });
 
@@ -69,6 +62,7 @@ export const jsonArray = builder.object("Json.Array", {
 export const jsonSchema = builder.intoLibrary();
 
 /**
+ * Types allowed as roots of Json content.
  * @alpha
  */
-export const jsonRoot: AllowedTypes = jsonTypes;
+export const jsonRoot = [jsonObject, jsonArray, ...jsonPrimitives] as const;

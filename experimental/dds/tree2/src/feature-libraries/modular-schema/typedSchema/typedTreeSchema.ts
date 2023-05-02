@@ -15,11 +15,12 @@ import {
 	TreeSchemaIdentifier,
 	TreeTypeSet,
 	ValueSchema,
+	symbolFromKey,
 } from "../../../core";
 import { FieldKinds } from "../..";
 import { forbidden, value } from "../../defaultFieldKinds";
-import { MakeNominal, brand } from "../../../util";
-import { FlexList, FlexListToLazyArray, normalizeFlexList } from "./flexList";
+import { MakeNominal } from "../../../util";
+import { FlexList, FlexListToLazyArray, LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
 
 // TODO: tests for this file
@@ -38,7 +39,9 @@ type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFie
 	WithDefault<T, Record<string, never>>
 >;
 
-export class TreeSchema<T extends TypedTreeSchemaSpecification = any> implements ITreeSchema {
+export class TreeSchema<Name extends string = string, T extends TypedTreeSchemaSpecification = any>
+	implements ITreeSchema
+{
 	// Allows reading localFields through the normal map, but without losing type information.
 	public readonly localFields: NormalizeLocalFields<T["local"]>;
 
@@ -47,16 +50,16 @@ export class TreeSchema<T extends TypedTreeSchemaSpecification = any> implements
 	public readonly extraGlobalFields: boolean;
 	public readonly value: ValueSchema;
 
-	public readonly name: TreeSchemaIdentifier;
+	public readonly name: Name & TreeSchemaIdentifier;
 
 	public constructor(
 		public readonly builder: Named<string>,
-		name: string,
+		name: Name,
 		public readonly info: T,
 	) {
-		this.name = brand(name);
+		this.name = name as Name & TreeSchemaIdentifier;
 		this.localFields = normalizeLocalFields<T["local"]>(builder, info.local);
-		this.extraLocalFields = normalizeField(builder, info.extraLocalFields);
+		this.extraLocalFields = normalizeField(info.extraLocalFields);
 		this.extraGlobalFields = info.extraGlobalFields ?? false;
 		this.value = info.value ?? ValueSchema.Nothing;
 	}
@@ -96,24 +99,21 @@ function normalizeLocalFields<T extends LocalFields | undefined>(
 	for (const key in fields) {
 		if (Object.prototype.hasOwnProperty.call(fields, key)) {
 			const element = fields[key];
-			out[key] = normalizeField(builder, element);
+			out[key] = normalizeField(element);
 		}
 	}
 	const map = objectToMap(out);
 	return map as NormalizeLocalFields<T>;
 }
 
-function normalizeField<T extends FieldSchemaSpecification | undefined>(
-	builder: Named<string>,
-	t: T,
-): NormalizeField<T> {
+function normalizeField<T extends FieldSchemaSpecification | undefined>(t: T): NormalizeField<T> {
 	if (t instanceof FieldSchema) {
 		return t as NormalizeField<T>;
 	}
 	if (t === undefined) {
-		return new FieldSchema(builder, forbidden, []) as unknown as NormalizeField<T>;
+		return new FieldSchema(forbidden, []) as unknown as NormalizeField<T>;
 	}
-	return new FieldSchema(builder, value, t) as NormalizeField<T>;
+	return new FieldSchema(value, t) as NormalizeField<T>;
 }
 
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
@@ -143,8 +143,14 @@ export type NormalizedLazyAllowedTypes = Any | (() => TreeSchema)[];
 
 /**
  * Types for use in fields.
+ * TODO: maybe replace this with AllowedTypesParameter to lower concept/code count.
  */
 export type AllowedTypes = Any | FlexList<TreeSchema>;
+
+/**
+ * Types for use in fields, for use as a variadic parameter.
+ */
+export type AllowedTypesParameter = [Any] | readonly LazyItem<TreeSchema>[];
 
 /**
  * Convert AllowedTypes into NormalizedLazyAllowedTypes
@@ -158,6 +164,24 @@ export function normalizeAllowedTypes<T extends AllowedTypes>(t: T): NormalizeAl
 		return Any as NormalizeAllowedTypes<T>;
 	}
 	return normalizeFlexList(t) as NormalizeAllowedTypes<T>;
+}
+
+/**
+ * Convert AllowedTypes into NormalizedLazyAllowedTypes
+ */
+export type NormalizeAllowedTypesParameter<T extends AllowedTypesParameter> = T extends [Any]
+	? Any
+	: FlexListToLazyArray<TreeSchema, T>;
+
+export function normalizeAllowedTypesParameter<T extends AllowedTypesParameter>(
+	t: T,
+): NormalizeAllowedTypesParameter<T> {
+	if (t.length === 1 && t[0] === Any) {
+		return Any as NormalizeAllowedTypesParameter<T>;
+	}
+	// Note that this does not actually require full FlexList handling, since the input is always an array.
+	// If removing the other uses of FlexList, simplify this to not require it.
+	return normalizeFlexList(t) as NormalizeAllowedTypesParameter<T>;
 }
 
 type FieldSchemaSpecification = AllowedTypes | FieldSchema;
@@ -186,22 +210,41 @@ export type Kinds = typeof FieldKinds[keyof typeof FieldKinds] | typeof forbidde
 export class FieldSchema<Kind extends Kinds = Kinds, Types extends AllowedTypes = AllowedTypes>
 	implements IFieldSchema
 {
-	protected typeCheck!: MakeNominal;
-	public constructor(
-		public readonly builder: Named<string>,
-		public readonly kind: Kind,
-		public readonly allowedTypes: Types,
-	) {}
+	protected _typeCheck?: MakeNominal;
+	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
 
 	public get types(): TreeTypeSet {
 		return allowedTypesToTypeSet(this.allowedTypes);
 	}
 }
 
-export interface GlobalFieldSchema<
+/**
+ * All policy for a specific field,
+ * including functionality that does not have to be kept consistent across versions or deterministic.
+ *
+ * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
+ * @sealed @alpha
+ */
+export class GlobalFieldSchema<
 	Kind extends Kinds = Kinds,
 	Types extends AllowedTypes = AllowedTypes,
-> extends Named<GlobalFieldKeySymbol> {
-	readonly builder: Named<string>;
-	readonly schema: FieldSchema<Kind, Types>;
+> implements IFieldSchema
+{
+	public readonly symbol: GlobalFieldKeySymbol;
+	protected _typeCheck?: MakeNominal;
+	public constructor(
+		public readonly builder: Named<string>,
+		public readonly key: GlobalFieldKey,
+		public readonly schema: FieldSchema<Kind, Types>,
+	) {
+		this.symbol = symbolFromKey(key);
+	}
+
+	public get kind(): Kind {
+		return this.schema.kind;
+	}
+
+	public get types(): TreeTypeSet {
+		return this.schema.types;
+	}
 }

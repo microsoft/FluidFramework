@@ -10,7 +10,7 @@ import { fail } from "../../../util";
 import { defaultSchemaPolicy } from "../../defaultSchema";
 import { forbidden, value } from "../../defaultFieldKinds";
 import { SchemaLibrary, SourcedAdapters } from "./schemaBuilder";
-import { FieldSchema, TreeSchema } from "./typedTreeSchema";
+import { FieldSchema, GlobalFieldSchema, TreeSchema } from "./typedTreeSchema";
 
 // TODO: tests for this file
 
@@ -24,7 +24,7 @@ import { FieldSchema, TreeSchema } from "./typedTreeSchema";
 export function buildViewSchemaCollection(
 	libraries: readonly SchemaLibrary[],
 ): ViewSchemaCollection {
-	const globalFieldSchema: Map<GlobalFieldKey, FieldSchema> = new Map();
+	const globalFieldSchema: Map<GlobalFieldKey, GlobalFieldSchema> = new Map();
 	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [], fieldAdapters: new Map() };
 
@@ -87,7 +87,7 @@ export function buildViewSchemaCollection(
 }
 
 export interface ViewSchemaCollection2 extends ViewSchemaCollection {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, GlobalFieldSchema>;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
@@ -110,7 +110,8 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 
 	// Validate that all schema referenced are included, and none are "never".
 	for (const [key, field] of collection.globalFieldSchema) {
-		validateField(collection, field, () => `Global field schema "${key}"`, errors);
+		assert(key === field.key, "field key should match map key");
+		validateGlobalField(collection, field, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
 		for (const [key, field] of tree.localFields) {
@@ -147,6 +148,16 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 	return errors;
 }
 
+export function validateGlobalField(
+	collection: ViewSchemaCollection2,
+	field: GlobalFieldSchema,
+	errors: string[],
+): void {
+	const describeField = () =>
+		`Global field schema "${field.key}" from library "${field.builder.name}"`;
+	validateField(collection, field.schema, describeField, errors);
+}
+
 export function validateField(
 	collection: ViewSchemaCollection2,
 	field: FieldSchema,
@@ -157,18 +168,12 @@ export function validateField(
 	if (types !== undefined) {
 		for (const type of types) {
 			if (!collection.treeSchema.has(type)) {
-				errors.push(
-					`"${describeField()}" from library "${
-						field.builder.name
-					}" references type "${type}" which is not defined`,
-				);
+				errors.push(`${describeField()} references type "${type}" which is not defined`);
 			}
 		}
 		if (types.values.length === 0) {
 			errors.push(
-				`"${describeField()}" from library "${
-					field.builder.name
-				}" requires children to have a type from a set of zero types. This means the field must always be empty.`,
+				`${describeField()} requires children to have a type from a set of zero types. This means the field must always be empty.`,
 			);
 		}
 	}
@@ -176,28 +181,20 @@ export function validateField(
 	const kind = field.kind;
 	const kindFromPolicy = defaultSchemaPolicy.fieldKinds.get(kind.identifier);
 	if (kindFromPolicy === undefined) {
-		errors.push(
-			`"${describeField()}" from library "${field.builder.name}" has unknown field kind "${
-				kind.identifier
-			}".`,
-		);
+		errors.push(`"${describeField()}" has unknown field kind "${kind.identifier}".`);
 	} else if (kindFromPolicy !== kind) {
 		errors.push(
-			`"${describeField()}" from library "${field.builder.name}" has field kind "${
+			`${describeField()} has field kind "${
 				kind.identifier
 			}" which isn't a reference to the default kind with that identifier.`,
 		);
 	} else if (kind === forbidden) {
 		errors.push(
-			`"${describeField()}" from library "${
-				field.builder.name
-			}" explicitly uses "forbidden" kind, which is not recommended.`,
+			`${describeField()} explicitly uses "forbidden" kind, which is not recommended.`,
 		);
 	} // else if (kind !== counter) {
 	// 	errors.push(
-	// 		`"${describeField()}" from library "${
-	// 			field.builder.name
-	// 		}" explicitly uses "counter" kind, which is finished.`,
+	// 		`${describeField()} explicitly uses "counter" kind, which is finished.`,
 	// 	);
 	// }
 }
@@ -206,4 +203,4 @@ export function validateField(
  * Schema for a field which must always be empty.
  * @alpha
  */
-export const emptyField = new FieldSchema({ name: "Static Empty Field" }, forbidden, []);
+export const emptyField = new FieldSchema(forbidden, []);

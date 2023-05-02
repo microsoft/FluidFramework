@@ -17,7 +17,6 @@ import {
 	Compatibility,
 	FieldAdapter,
 	SchemaDataAndPolicy,
-	SchemaPolicy,
 	Named,
 	NamedTreeSchema,
 	TreeTypeSet,
@@ -199,7 +198,7 @@ export interface IFieldSchema {
 export interface ViewSchemaCollection {
 	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, IFieldSchema>;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
-	readonly policy: SchemaPolicy;
+	readonly policy: FullSchemaPolicy;
 	readonly adapters: Adapters;
 }
 
@@ -208,7 +207,7 @@ export interface ViewSchemaCollection {
 	// but want to be compatible with it, so check that here:
 	type _test0 = requireAssignableTo<IFieldSchema, FieldStoredSchema>;
 	type _test1 = requireAssignableTo<ViewSchemaCollection, SchemaData>;
-	type _test2 = requireAssignableTo<ViewSchemaCollection, SchemaDataAndPolicy>;
+	type _test2 = requireAssignableTo<ViewSchemaCollection, SchemaDataAndPolicy<FullSchemaPolicy>>;
 }
 
 /**

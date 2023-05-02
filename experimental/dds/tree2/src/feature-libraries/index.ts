@@ -118,6 +118,10 @@ export {
 	SchemaBuilder,
 	TreeSchema,
 	AllowedTypes,
+	FieldSchema,
+	TypedViewSchemaCollection,
+	Any,
+	GlobalFieldSchema,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
@@ -149,13 +153,27 @@ export { SchemaAware };
 import { FieldEditor, Multiplicity } from "./modular-schema";
 import { BrandedFieldKind } from "./defaultFieldKinds";
 
+// Create named Aliases for nicer intellisense.
+
+// TODO: FInd a way to make docs like this work in vscode.
+// TODO: ensure thy work in generated docs.
+// TODO: add these comments to the rest of the cases in this file.
+/**
+ * {@inheritDoc FieldKindsOriginal.value}
+ */
+export interface Value extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {}
+export interface Optional
+	extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {}
+export interface Sequence
+	extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {}
+
 /**
  * @alpha
  */
 export const FieldKinds: {
-	readonly value: BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>>;
-	readonly optional: BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>>;
-	readonly sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>>;
+	readonly value: Value;
+	readonly optional: Optional;
+	readonly sequence: Sequence;
 } = FieldKindsOriginal;
 
 export {

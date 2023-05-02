@@ -21,7 +21,8 @@ import {
 	cursorsFromContextualData,
 	FieldKinds,
 	allowsRepoSuperset,
-	ViewSchemaCollection,
+	TypedViewSchemaCollection,
+	GlobalFieldSchema,
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISharedTreeView } from "./sharedTree";
@@ -162,11 +163,11 @@ export function schematizeView(
  *
  * @alpha
  */
-export interface SchematizeConfiguration<TMap extends ViewSchemaCollection = ViewSchemaCollection> {
+export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = GlobalFieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: TMap;
+	readonly schema: TypedViewSchemaCollection<TRoot>;
 	/**
 	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
 	 */

@@ -35,6 +35,7 @@ import {
 	SchemaAware,
 	TypedSchema,
 	FieldKind,
+	SchemaBuilder,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -53,6 +54,7 @@ import {
 	phonesSchema,
 	personJsonableTree,
 } from "./mockData";
+import { Kinds } from "../../../feature-libraries/modular-schema/typedSchema/typedTreeSchema";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
 const globalFieldSymbol = symbolFromKey(globalFieldKey);
@@ -60,10 +62,11 @@ const globalFieldSymbol = symbolFromKey(globalFieldKey);
 const localFieldKey: LocalFieldKey = brand("foo");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
-function getTestSchema(fieldKind: FieldKind): SchemaData {
-	const rootNodeSchema = TypedSchema.tree("Test", {
+function getTestSchema<Kind extends Kinds>(fieldKind: Kind): SchemaData {
+	const builder = new SchemaBuilder("getTestSchema");
+	const rootNodeSchema = builder.object("Test", {
 		local: {
-			[localFieldKey]: TypedSchema.field(fieldKind, stringSchema),
+			[localFieldKey]: SchemaBuilder.field(fieldKind, stringSchema),
 		},
 		globalFields: [globalFieldKey],
 		value: ValueSchema.Serializable,

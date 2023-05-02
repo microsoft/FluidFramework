@@ -71,4 +71,5 @@ export {
 	FieldSchema,
 	GlobalFieldSchema,
 	Any,
+	TypedViewSchemaCollection,
 } from "./typedSchema";

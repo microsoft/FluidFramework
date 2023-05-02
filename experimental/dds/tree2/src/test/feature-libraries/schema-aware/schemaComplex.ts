@@ -14,49 +14,46 @@ import {
 	typeNameSymbol,
 	valueSymbol,
 } from "../../../";
+import { SchemaBuilder, TreeSchema } from "../../../feature-libraries";
 
 // Aliases for conciseness
 const { value, sequence } = FieldKinds;
-const { tree, field } = TypedSchema;
+const builder = new SchemaBuilder("Complex Schema Example");
 
 // Schema
-export const stringTaskSchema = tree("StringTask", { value: ValueSchema.String });
+export const stringTaskSchema = builder.primitive("StringTask", ValueSchema.String);
 // Polymorphic recursive schema:
-export const listTaskSchema = tree("ListTask", {
-	local: { items: field(sequence, stringTaskSchema, "ListTask") },
+export const listTaskSchema = builder.object("ListTask", {
+	local: {
+		items: SchemaBuilder.sequence(
+			// TODO: proper recursive schema
+			SchemaBuilder.union(stringTaskSchema, (): TreeSchema => listTaskSchema),
+		),
+	},
 });
 
-export const rootFieldSchema = field(value, stringTaskSchema, listTaskSchema);
-
-export const appSchemaData = SchemaAware.typedSchemaData(
-	[[rootFieldKey, rootFieldSchema]],
-	stringTaskSchema,
-	listTaskSchema,
+export const rootFieldSchema = SchemaBuilder.valueField(
+	SchemaBuilder.union(stringTaskSchema, listTaskSchema),
 );
+
+export const appSchemaData = builder.intoDocumentSchema(rootFieldSchema);
 
 // Schema aware types
 export type StringTask = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
 	SchemaAware.ApiMode.Editable,
 	typeof stringTaskSchema
 >;
 
-export type ListTask = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
-	SchemaAware.ApiMode.Editable,
-	typeof listTaskSchema
->;
+export type ListTask = SchemaAware.NodeDataFor<SchemaAware.ApiMode.Editable, typeof listTaskSchema>;
 
 type FlexibleListTask = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
 	SchemaAware.ApiMode.Flexible,
 	typeof listTaskSchema
 >;
 
 type FlexibleTask = SchemaAware.TypedNode<
-	["StringTask", "ListTask"],
-	SchemaAware.ApiMode.Flexible,
-	typeof appSchemaData
+	typeof listTaskSchema | typeof stringTaskSchema,
+	SchemaAware.ApiMode.Flexible
 >;
 
 // Example Use

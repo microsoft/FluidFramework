@@ -34,7 +34,7 @@ export {
 	ArrayToUnion,
 } from "./typeUtils";
 
-export { SchemaBuilder } from "./schemaBuilder";
+export { SchemaBuilder, TypedViewSchemaCollection } from "./schemaBuilder";
 
 export { TreeSchema, AllowedTypes, FieldSchema, GlobalFieldSchema, Any } from "./typedTreeSchema";
 

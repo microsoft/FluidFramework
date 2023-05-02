@@ -238,7 +238,7 @@ export interface Named<TName> {
 /**
  * @alpha
  */
-export type NamedTreeSchema = TreeStoredSchema & Named<TreeSchemaIdentifier>;
+export type NamedTreeSchema = Named<TreeSchemaIdentifier> & TreeStoredSchema;
 export type NamedFieldSchema = Named<GlobalFieldKey> & FieldStoredSchema;
 
 /**
