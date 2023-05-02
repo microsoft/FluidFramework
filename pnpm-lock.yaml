@@ -8827,6 +8827,8 @@ importers:
 
   packages/runtime/container-runtime:
     specifiers:
+      '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
+      '@fluid-tools/benchmark': ^0.46.0
       '@fluid-tools/build-cli': ^0.15.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.15.0
@@ -8870,6 +8872,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sinon: ^7.4.2
+      sorted-btree: ^1.8.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -8891,8 +8894,11 @@ importers:
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lz4js: 0.2.0
+      sorted-btree: 1.8.1
       uuid: 8.3.2
     devDependencies:
+      '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-tools/benchmark': 0.46.133527
       '@fluid-tools/build-cli': 0.15.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0
@@ -14830,6 +14836,15 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
+    dev: true
+
+  /@fluid-tools/benchmark/0.46.133527:
+    resolution: {integrity: sha512-1cR7ZOiDhWAH2cUzqs2iBuGOjK5gGOyKVo3eQ8dAly6FJUccjkv/uP9y3TpVWoaCVCDJu/YLRe3bpS4UYncWTQ==}
+    dependencies:
+      benchmark: 2.1.4
+      chai: 4.3.7
+      easy-table: 1.2.0
+      mocha: 10.2.0
     dev: true
 
   /@fluid-tools/benchmark/0.47.0:
@@ -25113,6 +25128,7 @@ packages:
 
   /base64-js/1.3.0:
     resolution: {integrity: sha512-ccav/yGvoa80BQDljCxsmmQ3Xvx60/UpBIij5QN21W3wBi/hhIC9OoO+KLpu9IJTS9j4DRVJ3aDDF9cMSoa2lw==}
+    dev: false
 
   /base64-js/1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -25537,7 +25553,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -25545,7 +25561,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
