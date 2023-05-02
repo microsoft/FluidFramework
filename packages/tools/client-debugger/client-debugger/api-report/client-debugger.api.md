@@ -113,7 +113,7 @@ export namespace ContainerList {
     }
 }
 
-// @public
+// @internal
 export interface ContainerMetadata {
     id: string;
     nickname?: string;
