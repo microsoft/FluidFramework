@@ -8,7 +8,6 @@
 import { IsoBuffer, Uint8ArrayToString, assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
-	ICreateBlobResponse,
 	ISnapshotTree,
 	ISummaryBlob,
 	ISummaryTree,
@@ -29,48 +28,53 @@ export interface ICompressionStorageConfig {
 }
 
 /**
- * This class extends the SummaryStorageAdapter so that it can apply various kinds of compressions
+ * This class extends the DocumentStorageServiceProxy so that it can apply various kinds of compressions
  * to the blob payload.
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
-	private readonly _algorithm: SummaryCompressionAlgorithm;
-	private readonly _minSizeToCompress: number;
 	private readonly _compressedBlobIds: Map<string, number> = new Map();
-	private readonly compressed_prefix: string = "compressed_";
-	private readonly lz4_prefix: string = "LZ4_";
+	private static readonly compressed_prefix: string = "compressed_";
+	private static readonly defaultIsUseB64OnCompressed = true;
 
 	constructor(
 		service: IDocumentStorageService,
 		private readonly _config: ICompressionStorageConfig,
-		private readonly _isUseB64OnCompressed = true,
+		private readonly _isUseB64OnCompressed = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
 	) {
 		super(service);
-		this._algorithm = this._config.algorithm;
-		this._minSizeToCompress = this._config.minSizeToCompress;
 	}
 
 	private hasCompression(name: string): boolean {
 		const trimmed = name.trim();
-		return trimmed.startsWith(this.compressed_prefix);
+		return trimmed.startsWith(DocumentStorageServiceCompressionAdapter.compressed_prefix);
 	}
 
 	/**
-	 * This method checks whether the given name has compression. If it has no compression
-	 * it throws an error. Otherwise it checks, whether it contains lz4 algorithm, in that case
-	 * returns true, otherwise false
+	 * This method converts the algorithm string from the blob name
+	 * into the number. It also asserts that the algorithm string represents the number.
 	 * @param name - The name of the blob
 	 */
 	private extractAlgorithm(name: string): number {
 		const algorithmStr = this.extractAlgorithmString(name);
-		return algorithmStr === this.lz4_prefix
-			? SummaryCompressionAlgorithm.LZ4
-			: SummaryCompressionAlgorithm.None;
+		assert(algorithmStr !== undefined, "Algorithm string is undefined");
+		assert(!isNaN(parseInt(algorithmStr, 10)), "Algorithm string is not a number");
+		return parseInt(algorithmStr, 10);
 	}
 
+	/** This method extracts the algorithm number identifier from the name of the blob.
+	 * It asserts that the blob has compression. If it has a compression, it
+	 * uses regexp to obtain the algorithm string. Algorithm string is
+	 * located as follows "compressed_\<algorithm string\>_\<blob name\>"
+	 * @param name - The name of the blob
+	 */
 	private extractAlgorithmString(name: string): string | undefined {
 		assert(this.hasCompression(name), "Blob has no compression");
-		const trimmedName = name.trim().substring(this.compressed_prefix.length);
-		return trimmedName.startsWith(this.lz4_prefix) ? this.lz4_prefix : undefined;
+		const trimmed = name.trim();
+		const regex = new RegExp(
+			`^${DocumentStorageServiceCompressionAdapter.compressed_prefix}(.+?)_`,
+		);
+		const match = regex.exec(trimmed);
+		return match !== null ? match[1] : undefined;
 	}
 
 	/**
@@ -82,17 +86,15 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		if (!this.hasCompression(name)) {
 			return name;
 		}
-		let decoded = name.trim().substring(this.compressed_prefix.length);
+		let decoded = name
+			.trim()
+			.substring(DocumentStorageServiceCompressionAdapter.compressed_prefix.length);
 
 		const algorithmStr = this.extractAlgorithmString(name);
 		if (algorithmStr !== undefined) {
-			decoded = decoded.substring(algorithmStr.length);
+			decoded = decoded.substring(algorithmStr.length+1);
 		}
 		return decoded;
-	}
-
-	public override async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
-		return super.createBlob(this.encodeBlob(file));
 	}
 
 	private async decodeSnapshotBlobNames(snapshot: ISnapshotTree): Promise<void> {
@@ -121,7 +123,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		if (algorithm === undefined) {
 			return super.readBlob(id);
 		}
-		return this.decodeBlob(await super.readBlob(id), algorithm);
+		return DocumentStorageServiceCompressionAdapter.decodeBlob(
+			await super.readBlob(id),
+			algorithm,
+		);
 	}
 
 	public override async getSnapshotTree(
@@ -140,39 +145,59 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
+		const prep = DocumentStorageServiceCompressionAdapter.compressSummary(
+			summary,
+			this._config,
+			this._isUseB64OnCompressed,
+			context,
+		);
+		return super.uploadSummaryWithContext(prep.prepSummary, prep.prepContext);
+	}
+
+	public static compressSummary(
+		summary: ISummaryTree,
+		config: ICompressionStorageConfig,
+		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
+		context: ISummaryContext,
+	) {
 		const prep = {
-			prepSummary: this.recursivelyReplace(
+			prepSummary: DocumentStorageServiceCompressionAdapter.recursivelyReplace(
 				summary,
-				this.blobReplacer,
+				DocumentStorageServiceCompressionAdapter.blobReplacer,
+				config,
+				isUseB64OnCompressed,
 				context,
 			) as ISummaryTree,
 			prepContext: context,
 		};
 		console.log(`Miso Summary Upload: ${JSON.stringify(prep.prepSummary).length}`);
-		return super.uploadSummaryWithContext(prep.prepSummary, prep.prepContext);
+		return prep;
 	}
-	public get algorithm(): SummaryCompressionAlgorithm | undefined {
-		return this._algorithm;
-	}
-	private readonly blobReplacer = (
-		_input: SummaryObject,
-		_context?: ISummaryContext,
+
+	private static readonly blobReplacer = (
+		input: SummaryObject,
+		config: ICompressionStorageConfig,
+		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
+		context?: ISummaryContext,
 	): SummaryObject => {
-		if (_input.type === SummaryType.Blob) {
-			const summaryBlob: ISummaryBlob = _input;
+		if (input.type === SummaryType.Blob) {
+			const summaryBlob: ISummaryBlob = input;
 			const decompressed: Uint8Array =
 				typeof summaryBlob.content === "string"
 					? new TextEncoder().encode(summaryBlob.content)
 					: summaryBlob.content;
 			if (
-				this._minSizeToCompress !== undefined &&
-				decompressed.length < this._minSizeToCompress
+				config.minSizeToCompress !== undefined &&
+				decompressed.length < config.minSizeToCompress
 			) {
-				return _input;
+				return input;
 			}
-			const compressed: ArrayBufferLike = this.encodeBlob(decompressed);
+			const compressed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
+				decompressed,
+				config.algorithm,
+			);
 			let newSummaryBlob;
-			if (this._isUseB64OnCompressed) {
+			if (isUseB64OnCompressed) {
 				// TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummarPyBlob
 				// fails on assertion at 2 different generations of the hash which do not lead to
 				// the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
@@ -183,8 +208,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 					content: compressedEncoded,
 				};
 			} else {
-				// This line will replace the 3 lines above when the bug is fixed.
-				// const newSummaryBlob: ISummaryBlob = { type: SummaryType.Blob, content: IsoBuffer.from(compressed)};
 				newSummaryBlob = {
 					type: SummaryType.Blob,
 					content: IsoBuffer.from(compressed),
@@ -192,93 +215,84 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			}
 			return newSummaryBlob;
 		} else {
-			return _input;
+			return input;
 		}
 	};
 
-	private encodeBlob(file: ArrayBufferLike): ArrayBufferLike {
+	private static encodeBlob(file: ArrayBufferLike, algorithm: number): ArrayBufferLike {
 		let compressed: ArrayBufferLike;
-		if (this._algorithm === undefined || this._algorithm === SummaryCompressionAlgorithm.None) {
+		if (algorithm === undefined || algorithm === SummaryCompressionAlgorithm.None) {
 			return file;
 		} else {
-			if (this._algorithm === SummaryCompressionAlgorithm.LZ4) {
+			if (algorithm === SummaryCompressionAlgorithm.LZ4) {
 				compressed = compress(file) as ArrayBufferLike;
 			} else {
-				throw new Error(`Unknown Algorithm ${this._algorithm}`);
+				throw new Error(`Unknown Algorithm ${algorithm}`);
 			}
 		}
 		return compressed;
 	}
 
-	private decodeBlob(file: ArrayBufferLike, algorithm: number): ArrayBufferLike {
+	private static decodeBlob(file: ArrayBufferLike, algorithm: number): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
 		let compressedEncoded = file;
 		if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			try{
+			try {
 				decompressed = decompress(compressedEncoded) as ArrayBufferLike;
-			}
-			catch(e){
-				const compressedString = new TextDecoder().decode(
-					file
-				);
+			} catch (e) {
+				const compressedString = new TextDecoder().decode(file);
 				compressedEncoded = IsoBuffer.from(compressedString, "base64");
 				decompressed = decompress(compressedEncoded) as ArrayBufferLike;
 			}
-			
 		} else {
-			throw new Error(`Unknown Algorithm ${this._algorithm}`);
+			throw new Error(`Unknown Algorithm ${algorithm}`);
 		}
 		return decompressed;
 	}
 
-	private buildPrefix(algorithm: number): string {
+	private static buildPrefix(algorithm: number): string {
 		return algorithm === SummaryCompressionAlgorithm.LZ4
-			? this.compressed_prefix + this.lz4_prefix
+			? `${this.compressed_prefix + algorithm.toString()}_`
 			: "";
 	}
 
-	private recursivelyReplace(
+	private static recursivelyReplace(
 		input: SummaryObject,
-		replacer: (input: SummaryObject, context?: ISummaryContext) => SummaryObject,
+		replacer: (
+			input: SummaryObject,
+			config: ICompressionStorageConfig,
+			isUseB64OnCompressed: boolean,
+			context?: ISummaryContext,
+		) => SummaryObject,
+		config: ICompressionStorageConfig,
+		isUseB64OnCompressed: boolean,
 		context?: ISummaryContext,
 	): SummaryObject {
-		// Note: Caller is responsible for ensuring that `input` is defined / non-null.
-		//       (Required for Object.keys() below.)
-
-		// Execute the `replace` on the current input.  Note that Caller is responsible for ensuring that `input`
-		// is a non-null object.
-		const maybeReplaced = replacer(input, context);
-
-		// If the replacer made a substitution there is no need to decscend further. IFluidHandles are always
-		// leaves in the object graph.
+		assert(typeof input === "object", "input must be a non-null object");
+		const maybeReplaced = replacer(input, config, isUseB64OnCompressed, context);
 		if (maybeReplaced !== input) {
 			return maybeReplaced;
 		}
-
-		// Otherwise descend into the object graph looking for IFluidHandle instances.
 		let clone: object | undefined;
 		for (const key of Object.keys(input)) {
 			const value = input[key];
 
 			if (Boolean(value) && typeof value === "object") {
-				// Note: `input` must not contain circular references (as object must
-				//       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
-				//       lead to a later error when attempting to stringify().
-				const replaced = this.recursivelyReplace(value as SummaryObject, replacer, context);
-
-				// If the `replaced` object is different than the original `value` then the subgraph contained one
-				// or more handles.  If this happens, we need to return a clone of the `input` object where the
-				// current property is replaced by the `replaced` value.
+				const replaced = this.recursivelyReplace(
+					value as SummaryObject,
+					replacer,
+					config,
+					isUseB64OnCompressed,
+					context,
+				);
 				if (replaced !== value) {
-					// Lazily create a shallow clone of the `input` object if we haven't done so already.
 					clone = clone ?? (Array.isArray(input) ? [...input] : { ...input });
 					let newKey = key;
 					if (replaced.type === SummaryType.Blob) {
 						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 						delete clone[key];
-						newKey = this.buildPrefix(this._algorithm) + key;
+						newKey = this.buildPrefix(config.algorithm) + key;
 					}
-					// Overwrite the current property `key` in the clone with the `replaced` value.
 					clone[newKey] = replaced;
 				}
 			}
