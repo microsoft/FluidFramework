@@ -40,6 +40,13 @@ export const useAfterDisposeErrorText =
 	"The devtools instance has been disposed. Further operations are invalid.";
 
 /**
+ * Error text thrown when {@link FluidDevtools.getOrThrow} is called before the Devtools have been initialized.
+ *
+ * @privateRemarks Exported for test purposes only.
+ */
+export const accessBeforeInitializeErrorText = "Devtools have not yet been initialized.";
+
+/**
  * Error text thrown when a user attempts to register a {@link IContainerDevtools} instance for an ID that is already
  * registered with the {@link IFluidDevtools}.
  *
@@ -270,7 +277,7 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	public static getOrThrow(): FluidDevtools {
 		if (FluidDevtools.I === undefined) {
-			throw new UsageError("Devtools have not yet been initialized.");
+			throw new UsageError(accessBeforeInitializeErrorText);
 		}
 		return FluidDevtools.I;
 	}
