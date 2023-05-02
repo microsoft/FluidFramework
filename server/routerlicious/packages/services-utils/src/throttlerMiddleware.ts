@@ -64,7 +64,7 @@ export function tenantThrottle(
 	throttleApi: string,
 	tenantThrottlersMap: Map<string, string>,
 	throttlersMap: Map<string, Map<string, IThrottler>>,
-	appTenantId: string,
+	appTenantId?: string,
 ): RequestHandler {
 	return (req, rest, next) => {
 		const tenantId = getParam(req.params, "tenantId") ?? appTenantId;
