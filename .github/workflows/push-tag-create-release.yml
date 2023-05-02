@@ -14,12 +14,13 @@ jobs:
         with:
           fetch-depth: "0" # all history
           persist-credentials: false
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
-        with:
-          node-version-file: .nvmrc
+
       # pnpm dependencies cannot be cached until pnpm is installed, which is done by corepack. So we set up node, enable
       # corepack, then set up node again with the cache.
       # WORKAROUND: https://github.com/actions/setup-node/issues/531#issuecomment-1416814256
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
       - name: Enable corepack
         run: corepack enable
       - name: Extract cached dependencies
@@ -32,14 +33,14 @@ jobs:
       - name: Install Fluid build tools
         continue-on-error: true
         run: |
-          # pnpm add --global @fluid-tools/build-cli@^0.16.0-0
+          pnpm add --global @fluid-tools/build-cli@^0.16.0-0
 
-          cd build-tools
-          pnpm install --frozen-lockfile
-          pnpm run build:compile
+          # cd build-tools
+          # pnpm install --frozen-lockfile
+          # pnpm run build:compile
 
-          cd packages/build-cli/bin
-          echo "$(pwd)" >> $GITHUB_PATH
+          # cd packages/build-cli/bin
+          # echo "$(pwd)" >> $GITHUB_PATH
 
       - name: Check build-tools installation
         run: |
