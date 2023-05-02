@@ -52,13 +52,13 @@ export class VectorUndoProvider {
 				// for removed segment we need a tracking group.
 				// this is for a few reason:
 				// 1. the handle for the row/column on the removed segment is still allocated,
-				//		and needs to be for unacked ops before the remove
-				//		so of this we can't reset the handle yet.
+				//		and needs to be in order to process unacked ops sent before the remove.
 				// 2. handles are freed on unlink(zamboni), but that also clears the row/column data.
-				//		which we don't want to happen, so we can re-insert when the row/col comes back.
+				//		which we don't want to happen, so we can re-insert the cells when the row/col comes back.
 				//		the tracking group prevents unlink.
 				// 3. when we re-insert we need to find the old segment and clear their handles
-				//		so the new segment takes them over. there is no efficient look-up for this
+				//		so the new segment takes them over. there is no efficient look-up for this.
+				//		the tracking group provides one.
 				const trackingGroup = (removeTrackingGroup =
 					this.currentRemoveTrackingGroup ?? new TrackingGroup());
 				deltaArgs.deltaSegments.forEach((d) =>
@@ -106,12 +106,12 @@ export class VectorUndoProvider {
 						while (removedTrackingGroup.size > 0) {
 							const tracked = removedTrackingGroup.tracked[0];
 							removedTrackingGroup.unlink(tracked);
-							// if there are groups tracked, this in a revert of a remove
-							// this means we are about the re-insert the row/column
-							// with the same handle. We reuse the handle so its cells
+							// if there are groups tracked, this in a revert of a remove.
+							// this means we are about to re-insert the row/column
+							// with the same handle. We reuse the handle so the row/columns cells
 							// get re-inserted too.
 							// since a new segment will have the handle, we need to
-							// remove it from the  removed segment which tracked
+							// remove it from the  removed segment which was tracked
 							(tracked as PermutationSegment).reset();
 						}
 					}
