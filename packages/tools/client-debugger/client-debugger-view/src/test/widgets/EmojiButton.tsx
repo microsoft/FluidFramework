@@ -16,7 +16,7 @@ export interface EmojiButtonProps {
 }
 
 /**
- * Simple button that displays either a smily or frouny emoji.
+ * Simple button that displays either a smiley or frowny emoji.
  * Pressing the button toggles between the two.
  *
  * State is shared via the provided `SharedCell`.
@@ -25,13 +25,13 @@ export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
 	const { emojiCell } = props;
 
 	// undefined => No expression
-	// false => frouny
-	// true => smily
-	const [isSmily, setIsSmily] = React.useState<boolean | undefined>(emojiCell.get());
+	// false => frowny
+	// true => smiley
+	const [isSmiley, setIsSmiley] = React.useState<boolean | undefined>(emojiCell.get());
 
 	React.useEffect(() => {
 		function updateState(): void {
-			setIsSmily(emojiCell.get());
+			setIsSmiley(emojiCell.get());
 		}
 
 		emojiCell.on("valueChanged", updateState);
@@ -41,14 +41,14 @@ export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
 			emojiCell.off("valueChanged", updateState);
 			emojiCell.on("delete", updateState);
 		};
-	}, [emojiCell, isSmily, setIsSmily]);
+	}, [emojiCell, isSmiley, setIsSmiley]);
 
 	const buttonTooltipId = useId("decrement-counter-button");
 
-	const emoji = isSmily === undefined ? "😐" : isSmily ? "🙂" : "☹️";
+	const emoji = isSmiley === undefined ? "😐" : isSmiley ? "🙂" : "☹️";
 
 	function onClick(): void {
-		emojiCell.set(isSmily === undefined ? true : !isSmily);
+		emojiCell.set(isSmiley === undefined ? true : !isSmiley);
 	}
 
 	return (
