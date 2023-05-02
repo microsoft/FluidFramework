@@ -60,6 +60,10 @@ export function OpLatencyView(): React.ReactElement {
 					return true;
 				}
 
+				if (eventContents.clientType === "noninteractive/summarizer") {
+					return true;
+				}
+
 				console.log(`OP LATENCY: ${JSON.stringify(eventContents)}`);
 
 				setDurationOutboundBatchingDataPoints((currentPoints) => [
@@ -203,24 +207,22 @@ export function OpLatencyView(): React.ReactElement {
 		],
 	};
 
-	const width = 300;
 	const height = 600;
-	const rootStyle = { width: `${width}px`, height: `${height}px`, backgroundColor: "#FFFFFF" };
+	const rootStyle = { width: `100%`, height: `${height}px`, backgroundColor: "#FFFFFF" };
+
+	const chartContainer = React.useRef(null);
 
 	return data !== undefined ? (
 		<>
 			<h3>Op Latency</h3>
-			<div style={rootStyle}>
+			<div style={rootStyle} ref={chartContainer}>
 				<LineChart
 					culture={window.navigator.language}
 					data={data}
-					legendsOverflowText={"Overflow Items"}
-					yMinValue={200}
-					yMaxValue={301}
-					height={height}
-					width={width}
+					parentRef={chartContainer.current}
 					// margins={margins}
 					xAxisTickCount={10}
+					// theme={getFluentUIThemeToUse()} // The theming for FluentUI react-charting is not the same as for FluentUI-components
 					// allowMultipleShapesForPoints={this.state.allowMultipleShapes}
 				/>
 			</div>
