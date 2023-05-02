@@ -110,7 +110,9 @@ describe("FluidDevtools unit tests", () => {
 	});
 
 	it("getOrThrow", () => {
-		expect(() => FluidDevtools.getOrThrow()).to.throw();
+		expect(() => FluidDevtools.getOrThrow()).to.throw(
+			"Devtools have not yet been initialized.",
+		);
 
 		const devtools = initializeDevtools({});
 
@@ -118,6 +120,8 @@ describe("FluidDevtools unit tests", () => {
 
 		devtools.dispose();
 
-		expect(() => FluidDevtools.getOrThrow()).to.throw();
+		expect(() => FluidDevtools.getOrThrow()).to.throw(
+			"Devtools have not yet been initialized.",
+		);
 	});
 });
