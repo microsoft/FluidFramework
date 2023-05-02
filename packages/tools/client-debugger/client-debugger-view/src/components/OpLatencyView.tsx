@@ -27,11 +27,13 @@ import React, { useRef } from "react";
 import {
 	select,
 	// scaleBand,
-	// scaleLinear,
-	// max as d3Max,
+	scaleLinear as d3ScaleLinear,
+	// scaleTime as d3ScaleTime,
+	max as d3Max,
 	// extent as d3Extent,
-	// axisBottom as d3AxisBottom,
-	// axisLeft as d3AxisLeft,
+	axisBottom as d3AxisBottom,
+	axisLeft as d3AxisLeft,
+	line as d3Line,
 	// ticks as d3Ticks,
 } from "d3";
 // import { IChartProps, ILineChartDataPoint } from "@fluentui/react-charting";
@@ -228,30 +230,43 @@ export function OpLatencyView(): React.ReactElement {
 	// 	voronoi // if true, show Voronoi overlay
 	// })
 
-	const data = [1, 2, 3];
+	const data: [number, number][] = [
+		[1, 1],
+		[2, 3],
+		[3, 2],
+	];
 	const containerRef = useRef(null);
 
 	React.useEffect(() => {
-		if (containerRef.current !== undefined) {
+		if (containerRef.current !== undefined && containerRef.current !== null) {
+			const margin = { top: 10, right: 30, bottom: 30, left: 60 };
+			const width = 460;
+			const height = 400 - margin.top - margin.bottom;
+
 			const svg = select(containerRef.current);
 
-			// Bind D3 data
-			const update = svg.append("g").selectAll("text").data(data);
+			// Add X axis --> it is a date format
+			const x = d3ScaleLinear().domain([0, data.length]).range([0, width]);
+			svg.append("g").attr("transform", `translate(0,${height})`).call(d3AxisBottom(x));
 
-			// Enter new D3 elements
-			update
-				.enter()
-				.append("text")
-				.attr("x", (d, i) => i * 25)
-				.attr("y", 40)
-				.style("font-size", 24)
-				.text((d: number) => d);
+			// Add Y axis
+			const y = d3ScaleLinear()
+				.domain([0, d3Max(data, (d) => +d[1]) ?? 0])
+				.range([height, 0]);
+			svg.append("g").call(d3AxisLeft(y));
 
-			// Update existing D3 elements
-			update.attr("x", (d, i) => i * 40).text((d: number) => d);
-
-			// Remove old D3 elements
-			update.exit().remove();
+			// Add the line
+			svg.append("path")
+				.datum(data)
+				.attr("fill", "none")
+				.attr("stroke", "steelblue")
+				.attr("stroke-width", 1.5)
+				.attr(
+					"d",
+					d3Line()
+						.x((d) => x(d[0]))
+						.y((d) => y(d[1])),
+				);
 		}
 	}, [containerRef, data]);
 
