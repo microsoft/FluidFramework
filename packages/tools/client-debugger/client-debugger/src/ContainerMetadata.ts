@@ -9,7 +9,7 @@ import { ConnectionState } from "@fluidframework/container-loader";
 /**
  * Metadata describing a {@link @fluidframework/container-definitions#IContainer} registered with a debugger.
  *
- * @public
+ * @internal
  */
 export interface ContainerMetadata {
 	/**
