@@ -1,15 +1,15 @@
 # @fluid-internal/readme-command
 
-flub is a build and release tool for the Fluid Framework GitHub repositories. flub is intended to replace the existing
-fluid build-tools, primarily by reusing existing build-tools functionality and wrapping it in a more consistent,
-maintainable CLI using [oclif](https://oclif.io).
+This package implements a single command: a subclass of the oclif readme command class with some minor tweaks. This
+package holds only this command because we don't need to distribute the readme command; we only use it locally to
+generate the package readmes within the build-tools release group.
 
 <!-- prettier-ignore-start -->
 <!-- toc -->
 * [@fluid-internal/readme-command](#fluid-internalreadme-command)
 * [Usage](#usage)
 <!-- tocstop -->
-            <!-- prettier-ignore-stop -->
+<!-- prettier-ignore-stop -->
 
 # Usage
 
@@ -32,7 +32,6 @@ USAGE
 <!-- prettier-ignore-start -->
 <!-- commands -->
 * [`fluid-readme generate readme`](#fluid-readme-generate-readme)
-* [`fluid-readme help [COMMANDS]`](#fluid-readme-help-commands)
 
 ## `fluid-readme generate readme`
 
@@ -61,26 +60,6 @@ DESCRIPTION
 
   Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
 ```
-
-## `fluid-readme help [COMMANDS]`
-
-Display help for fluid-readme.
-
-```
-USAGE
-  $ fluid-readme help [COMMANDS] [-n]
-
-ARGUMENTS
-  COMMANDS  Command to show help for.
-
-FLAGS
-  -n, --nested-commands  Include all nested commands in the output.
-
-DESCRIPTION
-  Display help for fluid-readme.
-```
-
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.6/src/commands/help.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
 

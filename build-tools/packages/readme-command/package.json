@@ -25,7 +25,6 @@
 	"scripts": {
 		"build": "npm run clean:manifest && concurrently npm:build:compile npm:lint && concurrently npm:build:manifest npm:build:diagrams",
 		"build:compile": "npm run tsc && npm run build:readme",
-		"build:genver": "gen-version",
 		"build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:manifest": "cross-env NODE_OPTIONS='--experimental-abortcontroller' oclif manifest",
 		"build:readme": "node \"./bin/dev\" generate readme",
@@ -95,9 +94,7 @@
 		"additionalVersionFlags": [
 			"-V"
 		],
-		"plugins": [
-			"@oclif/plugin-help"
-		],
+		"plugins": [],
 		"repositoryPrefix": "<%- repo %>/blob/main/build-tools/packages/readme-command/<%- commandPath %>",
 		"topicSeparator": " "
 	},
