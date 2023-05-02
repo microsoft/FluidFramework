@@ -43,7 +43,7 @@ export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
 		};
 	}, [emojiCell, isSmiley, setIsSmiley]);
 
-	const buttonTooltipId = useId("decrement-counter-button");
+	const buttonTooltipId = useId("emoji-button");
 
 	const emoji = isSmiley === undefined ? "😐" : isSmiley ? "🙂" : "☹️";
 
