@@ -229,6 +229,25 @@ export function create(
 		},
 	);
 
+    /**
+     * Delete a document
+     */
+    router.post(
+        "/:tenantId/document/:id/delete",
+        validateRequestParams("tenantId", "id"),
+		verifyStorageToken(tenantManager, config, tokenManager),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+        async (request, response, next) => {
+            const documentId = getParam(request.params, "id");
+            const tenantId = getParam(request.params, "tenantId");
+            const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+            Lumberjack.info(
+                `Received document delete request.`,
+                lumberjackProperties);
+            // TODO: add implementation here.
+            response.status(501).json("Document delete is not supported yet");
+        });
+
 	/**
 	 * Revoke an access token
 	 */
