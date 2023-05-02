@@ -770,8 +770,6 @@ export class LocalReferenceCollection {
     // @internal (undocumented)
     addLocalRef(lref: LocalReferencePosition, offset: number): void;
     // (undocumented)
-    any(predicate: (pos: LocalReferencePosition) => boolean): boolean;
-    // (undocumented)
     static append(seg1: ISegment, seg2: ISegment): void;
     // @internal
     append(other: LocalReferenceCollection): void;
@@ -781,8 +779,6 @@ export class LocalReferenceCollection {
     createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // @internal (undocumented)
     get empty(): boolean;
-    // (undocumented)
-    filter(predicate: (pos: LocalReferencePosition) => boolean): LocalReferencePosition[];
     // @internal
     has(lref: ReferencePosition): boolean;
     // @internal (undocumented)
