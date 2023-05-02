@@ -105,7 +105,7 @@ async function initializeNewContainer(
 }
 
 async function start(): Promise<void> {
-	const logger = DevtoolsLogger.create("test-namespace");
+	const logger = DevtoolsLogger.create();
 
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 	// and hook to the Telemetry system
