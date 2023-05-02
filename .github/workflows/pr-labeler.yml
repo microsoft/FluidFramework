@@ -24,7 +24,8 @@ jobs:
   changeset_label:
     name: Changeset check
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
+    # We want to run this workflow even for PRs that don't require changesets.
+    # if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
     steps:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
