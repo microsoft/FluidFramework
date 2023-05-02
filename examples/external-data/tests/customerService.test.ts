@@ -52,7 +52,7 @@ describe("mock-customer-service", () => {
 		});
 		customerService = await initializeCustomerService({
 			port: customerServicePort,
-			externalDataServiceWebhookRegistrationUrl: `http://localhost:${externalDataServicePort}/register-for-webhook`,
+			externalDataServiceUrl: `http://localhost:${externalDataServicePort}`,
 			fluidServiceUrl: `http://localhost:${localServicePort}/broadcast-signal`,
 		});
 	});

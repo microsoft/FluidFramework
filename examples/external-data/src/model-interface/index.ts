@@ -169,6 +169,12 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// TODO: For the signal we might prefer routing it in as an unknown message payload, delegating interpretation
 	// Alternate: inject an EventEmitter that raises the events from external.
 	// readonly handleExternalMessage: (message) => void;
+
+	/**
+	 * Kick off deresgistering from customer service (and thereby deregistering for webhooks on external service).
+	 * Triggered on dispose event on runtime (we use container dispose to signal the end of the session).
+	 */
+	readonly deregisterWithCustomerService: (conatinerUrl: IFluidResolvedUrl) => Promise<void>;
 }
 
 /**
@@ -220,6 +226,13 @@ export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	 * @param newLeader - the clientID of the new leader
 	 */
 	readonly setLeader: (newLeader: string) => void;
+
+	/**
+	 * Sends the call to the customer service to deregister all webhooks
+	 * originating from this container. Triggered on container becoming detached
+	 * on dispose event.
+	 */
+	readonly deregisterWithCustomerService: (containerUrlData: IFluidResolvedUrl) => void;
 }
 
 export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData";

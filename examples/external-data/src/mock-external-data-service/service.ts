@@ -147,6 +147,66 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	});
 
 	/**
+	 * Register's the sender's URL to receive notifications when the external task-list data changes.
+	 *
+	 * Expected input data format:
+	 *
+	 * ```json
+	 * {
+	 *  url: string // The target URL to receive change notification
+	 * }
+	 * ```
+	 *
+	 * Notifications sent to subscribers will contain the updated task-list data in the form of:
+	 *
+	 * ```json
+	 * {
+	 *  taskList: {
+	 *      [id: string]: {
+	 *          name: string,
+	 *          priority: number
+	 *      }
+	 *  }
+	 * }
+	 * ```
+	 */
+	expressApp.post("/deregister-for-webhook", (request, result) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const subscriberUrl = request.body?.url as string;
+		if (subscriberUrl === undefined) {
+			const errorMessage = 'No subscription URL provided. Expected under "url" property.';
+			console.log(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+		} else if (isWebUri(subscriberUrl) === undefined) {
+			const errorMessage = "Provided subscription URL is invalid.";
+			console.log(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+		} else {
+			// TODO: use a query string parser here instead of this hacky lookup of '=externalTaskListId'
+			// Tried using node:querystring and node:url but that is not allowed by
+			// the rules and haven't found another one that works in a simple search so far.
+			// This method is incredibly brittle and will break if we add any other qs param
+			const externalTaskListId = subscriberUrl.slice(
+				subscriberUrl.indexOf("externalTaskListId=") + "externalTaskListId=".length,
+			);
+			console.log(`externalTaskListId: ${externalTaskListId}`);
+			console.log(`subscriberUrl: ${subscriberUrl}`);
+			let webhook = webhookCollection.get(externalTaskListId);
+			if (webhook === undefined) {
+				webhook = new MockWebhook();
+				webhookCollection.set(externalTaskListId, webhook);
+			}
+			webhook.removeSubscriber(subscriberUrl);
+			console.log(
+				formatLogMessage(
+					`Deregistered for webhook notifications at URL: "${subscriberUrl}".`,
+				),
+			);
+			result.send();
+		}
+	});
+
+	/**
 	 * Fetches the task list from the external data store.
 	 *
 	 * Returned data format:

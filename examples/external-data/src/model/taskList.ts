@@ -427,6 +427,40 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 			throw new Error(message);
 		}
 	}
+
+	/**
+	 * Deregister container session data with the customer service.
+	 * @returns A promise that resolves when the deregistration call returns successfully.
+	 *
+	 * @remarks This allows the Customer Service to remove the mapping of the container details
+	 * with the webhook notification from the External Service and allows the Customer Service
+	 * to deregister the webhook from the External Service.
+	 */
+	public async deregisterWithCustomerService(containerUrlData: IFluidResolvedUrl): Promise<void> {
+		if (this.externalTaskListId === undefined) {
+			throw new Error("externalTaskListId is undefined");
+		}
+		try {
+			console.log(
+				`TASK-LIST: Registering client ${containerUrlData.url} with customer service...`,
+			);
+			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					containerUrl: containerUrlData.url,
+					externalTaskListId: this.externalTaskListId,
+				}),
+			});
+		} catch (error) {
+			const message = `Customer service registration failed:\n${error}`;
+			throw new Error(message);
+		}
+	}
+
 	/**
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for changes to the task list.
@@ -563,6 +597,14 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 		this.root.set(this.leaderKey, newLeader);
 	};
 
+	/**
+	 * {@inheritDoc IBaseDocument.deregisterWebhooks}
+	 */
+	public readonly deregisterWithCustomerService = (containerUrlData: IFluidResolvedUrl): void => {
+		for (const [_, taskList] of this.taskListCollection) {
+			taskList.deregisterWithCustomerService(containerUrlData).catch(console.error);
+		}
+	};
 	protected async hasInitialized(): Promise<void> {
 		for (const [id, taskListHandle] of this.root) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call

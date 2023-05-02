@@ -8,6 +8,7 @@ import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import type { IAppModel, IBaseDocument } from "../model-interface";
 import { AppModel } from "./appModel";
 import { BaseDocumentInstantiationFactory } from "./taskList";
@@ -20,7 +21,7 @@ const taskListCollectionId = "base-document";
  * fetching the new data. This is an enum as there may be more signals that need to be created.
  */
 const SignalType = {
-	ExternalDataChanged: "ExternalDataChange",
+	ExternalDataChanged: "ExternalDataChanged",
 };
 
 /**
@@ -47,10 +48,14 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
 	 */
 	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
-		runtime.on("signal", (message) => {
-			// TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
-			// Interpretation of the message contents should probably live on the TaskList to encapsulate
-			// knowledge of the task-specific data.
+		runtime.on("connected", (clientId) => {
+			console.log("I'm connected! My client Id is");
+			console.log(clientId);
+			console.log(runtime.getAudience().getMembers());
+		});
+
+		runtime.on("disconnected", () => {
+			console.log("I'm disconnected!");
 		});
 	}
 
@@ -61,6 +66,7 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		runtime: IContainerRuntime,
 		container: IContainer,
 	): Promise<AppModel> {
+		// Set up signal handling
 		const taskListCollection = await requestFluidObject<IBaseDocument>(
 			await runtime.getRootDataStore(taskListCollectionId),
 			"",
@@ -78,6 +84,20 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 					);
 				}
 				taskList.importExternalData().catch(console.error);
+			}
+		});
+
+		runtime.on("attached", () => {
+			console.log("I'm attached!");
+			console.log(runtime.getAudience().getMembers());
+		});
+
+		runtime.on("dispose", () => {
+			console.log("I'm disposed!");
+			console.log(runtime.getAudience().getMembers());
+			const containerUrl = container?.resolvedUrl as IFluidResolvedUrl;
+			if (containerUrl !== undefined) {
+				taskListCollection.deregisterWithCustomerService(containerUrl);
 			}
 		});
 		return new AppModel(taskListCollection, container, runtime);
