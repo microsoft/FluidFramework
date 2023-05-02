@@ -46,7 +46,7 @@
 export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
 export { FluidObjectId, HasContainerId, HasFluidObjectId } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
-export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
+export { ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
@@ -69,10 +69,15 @@ export {
 	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
-export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
-export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
-export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
-export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
+export {
+	ContainerDevtoolsFeature,
+	ContainerDevtoolsFeatureFlags,
+	DevtoolsFeature,
+	DevtoolsFeatureFlags,
+} from "./Features";
+export { IFluidDevtools } from "./IFluidDevtools";
+export { DevtoolsLogger } from "./DevtoolsLogger";
+export { FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -83,26 +88,30 @@ export {
 	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
+	ContainerDevtoolsFeatures,
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
+	DevtoolsFeatures,
 	devtoolsMessageSource,
 	DisconnectContainer,
 	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
 	GetContainerList,
 	GetContainerState,
 	GetDataVisualization,
+	GetDevtoolsFeatures,
 	GetRootDataVisualizations,
 	GetTelemetryHistory,
-	IDebuggerMessage,
+	IDevtoolsMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
-	isDebuggerMessage,
+	isDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	RootDataVisualizations,

@@ -4,36 +4,36 @@
  */
 
 import { HasContainerId } from "../../CommonInterfaces";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link ConnectContainer.Message}.
  *
- * @public
+ * @internal
  */
 export namespace ConnectContainer {
 	/**
-	 * {@link ConnectContainer.Message} {@link IDebuggerMessage."type"}.
+	 * {@link ConnectContainer.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "CONNECT_CONTAINER";
 
 	/**
 	 * Message data format used by {@link ConnectContainer.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export type MessageData = HasContainerId;
 
 	/**
 	 * Inbound message requesting that the Container associated with the specified ID be connected (if currently disconnected).
 	 *
-	 * @public
+	 * @internal
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
@@ -41,7 +41,7 @@ export namespace ConnectContainer {
 	/**
 	 * Creates a {@link ConnectContainer.Message} from the provided {@link ConnectContainer.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

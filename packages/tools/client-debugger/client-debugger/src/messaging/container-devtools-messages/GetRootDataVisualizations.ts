@@ -4,25 +4,25 @@
  */
 
 import { HasContainerId } from "../../CommonInterfaces";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetRootDataVisualizations.Message}.
  *
- * @public
+ * @internal
  */
 export namespace GetRootDataVisualizations {
 	/**
-	 * {@link GetRootDataVisualizations.Message} {@link IDebuggerMessage."type"}.
+	 * {@link GetRootDataVisualizations.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "GET_ROOT_DATA_VISUALIZATIONS";
 
 	/**
 	 * Message data format used by {@link GetRootDataVisualizations.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export type MessageData = HasContainerId;
 
@@ -32,11 +32,11 @@ export namespace GetRootDataVisualizations {
 	 *
 	 * Will result in the {@link RootDataVisualizations.Message} message being posted.
 	 *
-	 * @public
+	 * @internal
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
@@ -44,7 +44,7 @@ export namespace GetRootDataVisualizations {
 	/**
 	 * Creates a {@link GetRootDataVisualizations.Message} from the provided {@link GetRootDataVisualizations.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

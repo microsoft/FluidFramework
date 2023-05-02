@@ -4,25 +4,25 @@
  */
 
 import { HasContainerId } from "../../CommonInterfaces";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetContainerState.Message}.
  *
- * @public
+ * @internal
  */
 export namespace GetContainerState {
 	/**
-	 * {@link GetContainerState.Message} {@link IDebuggerMessage."type"}.
+	 * {@link GetContainerState.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "GET_CONTAINER_STATE";
 
 	/**
 	 * Message data format used by {@link GetContainerState.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export type MessageData = HasContainerId;
 
@@ -31,11 +31,11 @@ export namespace GetContainerState {
 	 *
 	 * Will result in the {@link ContainerStateChange.Message} message being posted.
 	 *
-	 * @public
+	 * @internal
 	 */
-	export interface Message extends IDebuggerMessage<HasContainerId> {
+	export interface Message extends IDevtoolsMessage<HasContainerId> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
@@ -43,7 +43,7 @@ export namespace GetContainerState {
 	/**
 	 * Creates a {@link GetContainerState.Message} from the provided {@link GetContainerState.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

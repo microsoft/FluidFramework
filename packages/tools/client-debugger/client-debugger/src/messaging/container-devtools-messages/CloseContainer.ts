@@ -4,36 +4,36 @@
  */
 
 import { HasContainerId } from "../../CommonInterfaces";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link CloseContainer.Message}.
  *
- * @public
+ * @internal
  */
 export namespace CloseContainer {
 	/**
-	 * {@link CloseContainer.Message} {@link IDebuggerMessage."type"}.
+	 * {@link CloseContainer.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "CLOSE_CONTAINER";
 
 	/**
 	 * Message data format used by {@link CloseContainer.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export type MessageData = HasContainerId;
 
 	/**
 	 * Inbound message requesting that the Container associated with the specified ID be closed.
 	 *
-	 * @public
+	 * @internal
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
@@ -41,7 +41,7 @@ export namespace CloseContainer {
 	/**
 	 * Creates a {@link CloseContainer.Message} from the provided {@link CloseContainer.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

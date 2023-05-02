@@ -33,6 +33,7 @@ import {
 	generateConfigurations,
 	generateLoaderOptions,
 	generateRuntimeOptions,
+	getOptionOverride,
 } from "./optionsMatrix";
 import { GcFailureExitCode } from "./testConfigFile";
 
@@ -203,23 +204,11 @@ async function runnerProcess(
 	// Assigning no-op value due to linter.
 	let metricsCleanup: () => void = () => {};
 
-	// Added temporarily to disable attachment blob testing for ODSP.
-	// runConfig.testConfig.driverType = driver;
-	const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
-	const loaderOptions = generateLoaderOptions(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader,
-	);
+	const optionsOverride = getOptionOverride(runConfig.testConfig, driver, endpoint);
+	const loaderOptions = generateLoaderOptions(seed, optionsOverride?.loader);
+	const containerOptions = generateRuntimeOptions(seed, optionsOverride?.container);
+	const configurations = generateConfigurations(seed, optionsOverride?.configurations);
 
-	const containerOptions = generateRuntimeOptions(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container,
-	);
-
-	const configurations = generateConfigurations(
-		seed,
-		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations,
-	);
 	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
 
 	// Cycle between creating new factory vs. reusing factory.

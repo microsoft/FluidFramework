@@ -14,8 +14,6 @@ import {
 	createHandleNode,
 	FluidObjectNode,
 	VisualNodeKind,
-	VisualValueNode,
-	VisualTreeNode,
 	VisualChildNode,
 	Primitive,
 	RootHandleNode,
@@ -99,6 +97,8 @@ export interface DataVisualizerEvents extends IEvent {
 	 * Emitted whenever the associated {@link @fluidframework/shared-object-base#ISharedObject}'s data is updated.
 	 *
 	 * @param visualTree - The updated visual tree representing the shared object's state.
+	 *
+	 * @eventProperty
 	 */
 	(event: "update", listener: (visualTree: FluidObjectNode) => void);
 }
@@ -291,15 +291,27 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * Will broadcast an updated visual tree representation of the DDS's data via the
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
-	private readonly onOpHandler = (): boolean => {
-		this.emitVisualUpdate();
-		return true;
+	private readonly onOpHandler = async (): Promise<boolean> => {
+		try {
+			await this.emitVisualUpdate();
+			return true;
+		} catch (error) {
+			console.error(error);
+			return false;
+		}
 	};
 
 	/**
 	 * Private {@link VisualizerNode.disposed} tracking.
 	 */
 	private _disposed: boolean;
+
+	/**
+	 * Handles the returned promise for {@link onOpHandler}.
+	 */
+	private readonly syncOpHandler = (): void => {
+		this.onOpHandler().catch((error) => console.error(error));
+	};
 
 	public constructor(
 		/**
@@ -328,7 +340,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	) {
 		super();
 
-		this.sharedObject.on("op", this.onOpHandler);
+		this.sharedObject.on("op", this.syncOpHandler);
 
 		this._disposed = false;
 	}
@@ -345,9 +357,13 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * {@link VisualizerNode.sharedObject}'s current state as an
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
-	private emitVisualUpdate(): void {
-		const visualTree = this.render();
-		this.emit("update", visualTree);
+	private async emitVisualUpdate(): Promise<void> {
+		try {
+			const visualTree: FluidObjectNode = await this.render();
+			this.emit("update", visualTree);
+		} catch (error) {
+			console.log(error);
+		}
 	}
 
 	/**
@@ -371,44 +387,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * {@inheritDoc VisualizeChildData}
 	 */
 	private async renderChildData(data: unknown): Promise<VisualChildNode> {
-		if (typeof data !== "object" && typeof data !== "function") {
-			// Render primitives and falsy types via their string representation
-			const result: VisualValueNode = {
-				value: data as Primitive,
-				typeMetadata: typeof data,
-				nodeKind: VisualNodeKind.ValueNode,
-			};
-			return result;
-		} else if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
-			// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
-			const handle = data as IFluidHandle;
-			const fluidObjectId = await this.registerHandle(handle);
-
-			// If no ID was found, then the data is not a SharedObject.
-			// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
-			return fluidObjectId === undefined
-				? unknownObjectNode
-				: createHandleNode(fluidObjectId);
-		} else {
-			// Assume any other data must be a record of some kind (since DDS contents must be serializable)
-			// and simply recurse over its keys.
-			const childEntries = Object.entries(data as Record<string | number | symbol, unknown>);
-
-			const children: Record<string, VisualChildNode> = {};
-			await Promise.all(
-				childEntries.map(async ([key, value]) => {
-					const childNode = await this.renderChildData(value);
-					children[key] = childNode;
-				}),
-			);
-
-			const result: VisualTreeNode = {
-				children,
-				nodeKind: VisualNodeKind.TreeNode,
-				typeMetadata: "object",
-			};
-			return result;
-		}
+		return visualizeChildData(data, this.registerHandle);
 	}
 
 	/**
@@ -416,8 +395,68 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 */
 	public dispose(): void {
 		if (!this._disposed) {
-			this.sharedObject.off("op", this.onOpHandler);
+			this.sharedObject.off("op", this.syncOpHandler);
 			this._disposed = true;
 		}
 	}
+}
+
+/**
+ * See {@link VisualizeChildData}.
+ *
+ * @param data - The child data to (recursively) render.
+ * @param resolveHandle - Function which accepts an {@link @fluidframework/core-interfaces#IFluidHandle} and
+ * returns its resolved object ID.
+ *
+ * @privateRemarks Exported from this module for testing purposes. This is not intended to be exported by the package.
+ */
+export async function visualizeChildData(
+	data: unknown,
+	resolveHandle: (handle: IFluidHandle) => Promise<FluidObjectId | undefined>,
+): Promise<VisualChildNode> {
+	// Special case for `null` because `typeof null === "object"`.
+	if (data === null) {
+		return {
+			value: data,
+			typeMetadata: "null",
+			nodeKind: VisualNodeKind.ValueNode,
+		};
+	}
+
+	if (typeof data !== "object" && typeof data !== "function") {
+		// Render primitives and falsy types via their string representation
+		return {
+			value: data as Primitive,
+			typeMetadata: typeof data,
+			nodeKind: VisualNodeKind.ValueNode,
+		};
+	}
+
+	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
+		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
+		const handle = data as IFluidHandle;
+		const fluidObjectId = await resolveHandle(handle);
+
+		// If no ID was found, then the data is not a SharedObject.
+		// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
+		return fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);
+	}
+
+	// Assume any other data must be a record of some kind (since DDS contents must be serializable)
+	// and simply recurse over its keys.
+	const childEntries = Object.entries(data as Record<string | number | symbol, unknown>);
+
+	const children: Record<string, VisualChildNode> = {};
+	await Promise.all(
+		childEntries.map(async ([key, value]) => {
+			const childNode = await visualizeChildData(value, resolveHandle);
+			children[key] = childNode;
+		}),
+	);
+
+	return {
+		children,
+		nodeKind: VisualNodeKind.TreeNode,
+		typeMetadata: "object",
+	};
 }

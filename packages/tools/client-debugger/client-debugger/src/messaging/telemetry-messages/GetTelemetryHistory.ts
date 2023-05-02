@@ -3,29 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link GetTelemetryHistory.Message}.
  *
- * @public
+ * @internal
  */
 export namespace GetTelemetryHistory {
 	/**
-	 * {@link GetTelemetryHistory.Message} {@link IDebuggerMessage."type"}.
+	 * {@link GetTelemetryHistory.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "GET_TELEMETRY_HISTORY";
 
 	/**
 	 * Inbound message requesting a complete history of telemetry events.
 	 *
-	 * @public
+	 * @internal
 	 */
-	export interface Message extends IDebuggerMessage<undefined> {
+	export interface Message extends IDevtoolsMessage<undefined> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
@@ -33,7 +33,7 @@ export namespace GetTelemetryHistory {
 	/**
 	 * Creates a {@link GetTelemetryHistory.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(): Message {
 		return {

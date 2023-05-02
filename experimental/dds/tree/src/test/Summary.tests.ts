@@ -4,10 +4,10 @@
  */
 import * as fs from 'fs';
 import { join } from 'path';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import { v5 } from 'uuid';
 import { Change, StablePlace, StableRange } from '../ChangeTypes';
-import { assert, fail, RecursiveMutable } from '../Common';
+import { fail, RecursiveMutable } from '../Common';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities';
 import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
 import { initialTree } from '../InitialTree';

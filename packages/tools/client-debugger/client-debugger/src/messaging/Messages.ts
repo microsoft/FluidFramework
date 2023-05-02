@@ -6,18 +6,18 @@
 /**
  * Structure of a message used for communication from/to the Fluid Client Debugger.
  *
- * @public
+ * @internal
  */
-export interface IDebuggerMessage<TData = unknown> {
+export interface IDevtoolsMessage<TData = unknown> {
 	/**
 	 * The type of message being sent.
-	 * Informs the action that needs to be taken, and the form that the {@link IDebuggerMessage.data} will take.
+	 * Informs the action that needs to be taken, and the form that the {@link IDevtoolsMessage.data} will take.
 	 */
 	type: string;
 
 	/**
 	 * Message payload.
-	 * The type of data is informed by the {@link IDebuggerMessage."type"}.
+	 * The type of data is informed by the {@link IDevtoolsMessage."type"}.
 	 */
 	data: TData;
 }
@@ -25,9 +25,9 @@ export interface IDebuggerMessage<TData = unknown> {
 /**
  * Message structure expected for window event listeners used by the Fluid Client Debugger.
  *
- * @public
+ * @internal
  */
-export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessage<TData> {
+export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
 	/**
 	 * Identifies the source of the message.
 	 * Can be used to filter the messages being listened to / accepted.

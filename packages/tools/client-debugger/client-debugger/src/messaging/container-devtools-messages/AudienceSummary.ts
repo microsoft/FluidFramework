@@ -6,25 +6,25 @@
 import { HasContainerId } from "../../CommonInterfaces";
 import { AudienceChangeLogEntry } from "../../Logs";
 import { AudienceClientMetadata } from "../../AudienceMetadata";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link AudienceSummary.Message}.
  *
- * @public
+ * @internal
  */
 export namespace AudienceSummary {
 	/**
-	 * {@link AudienceSummary.Message} {@link IDebuggerMessage."type"}.
+	 * {@link AudienceSummary.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "AUDIENCE_SUMMARY";
 
 	/**
 	 * Message data format used by {@link AudienceSummary.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface MessageData extends HasContainerId {
 		/**
@@ -46,11 +46,11 @@ export namespace AudienceSummary {
 	/**
 	 * Outbound message containing a summary of the Container's Audience info.
 	 *
-	 * @public
+	 * @internal
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
@@ -58,7 +58,7 @@ export namespace AudienceSummary {
 	/**
 	 * Creates a {@link AudienceSummary.Message} from the provided {@link AudienceSummary.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

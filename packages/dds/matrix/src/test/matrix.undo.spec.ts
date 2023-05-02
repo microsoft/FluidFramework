@@ -18,9 +18,9 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 describe("Matrix", () => {
 	describe("undo/redo", () => {
 		let dataStoreRuntime: MockFluidDataStoreRuntime;
-		let matrix1: SharedMatrix<number>;
+		let matrix1: SharedMatrix<number | string>;
 		// Test IMatrixConsumer that builds a copy of `matrix` via observed events.
-		let consumer1: TestConsumer<undefined | null | number>;
+		let consumer1: TestConsumer<undefined | null | number | string>;
 		let undo1: UndoRedoStackManager;
 		let expect: <T>(expected: readonly (readonly MatrixItem<T>[])[]) => Promise<void>;
 
@@ -653,6 +653,120 @@ describe("Matrix", () => {
 				// await expect([
 				//     [0, 1, 2],
 				// ]);
+			});
+
+			it("undo of cell in remotely removed last column", async () => {
+				matrix1.insertRows(/* start: */ 0, /* count: */ 1);
+				matrix1.insertCols(/* start: */ 0, /* count: */ 2);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, ["c0", "c1"]);
+				undo1.closeCurrentOperation();
+				await expect([["c0", "c1"]]);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 1, /* colCount: */ 1, ["c1-update"]);
+				undo1.closeCurrentOperation();
+				await expect([["c0", "c1-update"]]);
+
+				matrix2.removeCols(1, 1);
+				await expect([["c0"]]);
+
+				undo1.undoOperation();
+				await expect([["c0"]]);
+			});
+
+			it("undo of cell in remotely removed first column", async () => {
+				matrix1.insertRows(/* start: */ 0, /* count: */ 1);
+				matrix1.insertCols(/* start: */ 0, /* count: */ 2);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 2, ["c0", "c1"]);
+				undo1.closeCurrentOperation();
+				await expect([["c0", "c1"]]);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["c0-update"]);
+				undo1.closeCurrentOperation();
+				await expect([["c0-update", "c1"]]);
+
+				matrix2.removeCols(0, 1);
+				await expect([["c1"]]);
+
+				undo1.undoOperation();
+				// this is wrong, why is the value in current row changed.
+				// AB#4195
+				await expect([["c0"]]);
+			});
+
+			it("undo of cell in remotely removed last row", async () => {
+				matrix1.insertRows(/* start: */ 0, /* count: */ 2);
+				matrix1.insertCols(/* start: */ 0, /* count: */ 1);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["r0", "r1"]);
+				undo1.closeCurrentOperation();
+				await expect([["r0"], ["r1"]]);
+
+				matrix1.setCells(/* row: */ 1, /* col: */ 0, /* colCount: */ 1, ["r1-update"]);
+				undo1.closeCurrentOperation();
+				await expect([["r0"], ["r1-update"]]);
+
+				matrix2.removeRows(1, 1);
+				await expect([["r0"]]);
+
+				undo1.undoOperation();
+				await expect([["r0"]]);
+			});
+
+			it("undo of cell in remotely removed first row", async () => {
+				matrix1.insertRows(/* start: */ 0, /* count: */ 2);
+				matrix1.insertCols(/* start: */ 0, /* count: */ 1);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["r0", "r1"]);
+				undo1.closeCurrentOperation();
+				await expect([["r0"], ["r1"]]);
+
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["r0-update"]);
+				undo1.closeCurrentOperation();
+				await expect([["r0-update"], ["r1"]]);
+
+				matrix2.removeRows(0, 1);
+				await expect([["r1"]]);
+
+				undo1.undoOperation();
+				// this is wrong, why is the value in current row changed.
+				// AB#4195
+				await expect([["r0"]]);
+			});
+
+			it("undo of inserted and remotely removed column", async () => {
+				matrix1.insertRows(/* start: */ 0, /* count: */ 1);
+				matrix1.insertCols(/* start: */ 0, /* count: */ 1);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["c0"]);
+				undo1.closeCurrentOperation();
+				await expect([["c0"]]);
+
+				matrix1.insertCols(1, 1);
+				matrix1.setCell(0, 1, "c1");
+				undo1.closeCurrentOperation();
+				await expect([["c0", "c1"]]);
+
+				matrix2.removeCols(1, 1);
+				await expect([["c0"]]);
+
+				undo1.undoOperation();
+				await expect([["c0"]]);
+			});
+
+			it("undo of inserted and remotely removed row", async () => {
+				matrix1.insertRows(/* start: */ 0, /* count: */ 1);
+				matrix1.insertCols(/* start: */ 0, /* count: */ 1);
+				matrix1.setCells(/* row: */ 0, /* col: */ 0, /* colCount: */ 1, ["r0"]);
+				undo1.closeCurrentOperation();
+				await expect([["r0"]]);
+
+				matrix1.insertRows(1, 1);
+				matrix1.setCell(1, 0, "r1");
+				undo1.closeCurrentOperation();
+				await expect([["r0"], ["r1"]]);
+
+				matrix2.removeRows(1, 1);
+				await expect([["r0"]]);
+
+				undo1.undoOperation();
+				await expect([["r0"]]);
 			});
 		});
 	});

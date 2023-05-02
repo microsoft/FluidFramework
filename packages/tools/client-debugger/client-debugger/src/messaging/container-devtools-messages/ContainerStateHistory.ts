@@ -5,25 +5,25 @@
 
 import { HasContainerId } from "../../CommonInterfaces";
 import { ConnectionStateChangeLogEntry } from "../../Logs";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link ContainerStateHistory.Message}.
  *
- * @public
+ * @internal
  */
 export namespace ContainerStateHistory {
 	/**
-	 * {@link ContainerStateHistory.Message} {@link IDebuggerMessage."type"}.
+	 * {@link ContainerStateHistory.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "CONTAINER_STATE_HISTORY";
 
 	/**
 	 * Message data format used by {@link ContainerStateHistory.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface MessageData extends HasContainerId {
 		/**
@@ -35,11 +35,11 @@ export namespace ContainerStateHistory {
 	/**
 	 * Outbound message containing the associated Container's state history.
 	 *
-	 * @public
+	 * @internal
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
@@ -47,7 +47,7 @@ export namespace ContainerStateHistory {
 	/**
 	 * Creates a {@link ContainerStateHistory.Message} from the provided {@link ContainerStateHistory.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

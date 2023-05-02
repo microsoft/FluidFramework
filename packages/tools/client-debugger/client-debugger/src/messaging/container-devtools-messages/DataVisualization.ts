@@ -5,25 +5,25 @@
 
 import { HasContainerId, HasFluidObjectId } from "../../CommonInterfaces";
 import { FluidObjectNode } from "../../data-visualization";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link DataVisualization.Message}.
  *
- * @public
+ * @internal
  */
 export namespace DataVisualization {
 	/**
-	 * {@link DataVisualization.Message} {@link IDebuggerMessage."type"}.
+	 * {@link DataVisualization.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "DATA_VISUALIZATION";
 
 	/**
 	 * Message data format used by {@link DataVisualization.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface MessageData extends HasContainerId, HasFluidObjectId {
 		/**
@@ -38,11 +38,11 @@ export namespace DataVisualization {
 	/**
 	 * Outbound message containing a visual description of the DDS associated with {@link HasFluidObjectId.fluidObjectId}.
 	 *
-	 * @public
+	 * @internal
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}
@@ -50,7 +50,7 @@ export namespace DataVisualization {
 	/**
 	 * Creates a {@link DataVisualization.Message} from the provided {@link DataVisualization.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {
