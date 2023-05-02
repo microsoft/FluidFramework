@@ -23,7 +23,7 @@ import {
 	isInterdependencyRange,
 } from "@fluid-tools/version-tools";
 
-import { packageOrReleaseGroupArg } from "../args";
+import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
 import {
@@ -31,7 +31,6 @@ import {
 	generateBumpVersionCommitMessage,
 	setVersion,
 } from "../lib";
-import { isReleaseGroup } from "../releaseGroups";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static summary =
@@ -136,8 +135,14 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
-		if (args.package_or_release_group === undefined) {
-			this.error("ERROR: No dependency provided.");
+		const rgOrPackageName = args.package_or_release_group;
+		if (rgOrPackageName === undefined) {
+			this.error("No dependency provided.");
+		}
+
+		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
+		if (rgOrPackage === undefined) {
+			this.error(`Package not found: ${rgOrPackageName}`);
 		}
 
 		if (bumpType === undefined && flags.exact === undefined) {
@@ -154,12 +159,15 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
-		if (isReleaseGroup(args.package_or_release_group)) {
-			const releaseRepo = context.repo.releaseGroups.get(args.package_or_release_group);
-			assert(
-				releaseRepo !== undefined,
-				`Release repo not found for ${args.package_or_release_group}`,
-			);
+		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
+			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
+			// that the exactDepType will be one of the enum values.
+			this.error(`Invalid exactDepType: ${exactDepType}`);
+		}
+
+		if (rgOrPackage instanceof MonoRepo) {
+			const releaseRepo = rgOrPackage;
+			assert(releaseRepo !== undefined, `Release repo not found for ${rgOrPackageName}`);
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
@@ -168,10 +176,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
-			const releasePackage = context.fullPackageMap.get(args.package_or_release_group);
-			if (releasePackage === undefined) {
-				this.error(`Package not in context: ${releasePackage}`);
-			}
+			const releasePackage = rgOrPackage;
 
 			if (releasePackage.monoRepo !== undefined) {
 				const rg = releasePackage.monoRepo.kind;
@@ -211,7 +216,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		scheme = flags.scheme ?? detectVersionScheme(newVersion);
 
 		this.logHr();
-		this.log(`Release group: ${chalk.blueBright(args.package_or_release_group)}`);
+		this.log(`Release group: ${chalk.blueBright(rgOrPackageName)}`);
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Workspace protocol: ${workspaceProtocol === true ? chalk.green("yes") : "no"}`);
@@ -260,14 +265,14 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		if (shouldCommit) {
 			const commitMessage = generateBumpVersionCommitMessage(
-				args.package_or_release_group,
+				rgOrPackageName,
 				bumpArg,
 				repoVersion,
 				scheme,
 			);
 
 			const bumpBranch = generateBumpVersionBranchName(
-				args.package_or_release_group,
+				rgOrPackageName,
 				bumpArg,
 				repoVersion,
 				scheme,
