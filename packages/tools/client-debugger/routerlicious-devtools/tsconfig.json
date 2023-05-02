@@ -4,7 +4,6 @@
 		"rootDir": "src",
 		"outDir": "dist",
 		"composite": true,
-		"target": "es6",
 		"types": ["chai", "mocha"],
 	},
 	"include": ["src/**/*"],
