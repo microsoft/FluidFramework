@@ -168,7 +168,11 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 			const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
 
 			const wrongAlias = `${alias}/${alias}`;
-			await assert.rejects(ds1.trySetAlias(wrongAlias), () => true, "Slashes should not be");
+			await assert.rejects(
+				ds1.trySetAlias(wrongAlias),
+				() => true,
+				"Slashes should not be supported",
+			);
 			await assert.rejects(
 				getRootDataStore(dataObject1, wrongAlias, /* wait */ false),
 				() => true,
