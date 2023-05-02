@@ -88,6 +88,9 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 	) {
 		super(initialEntries);
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
+			// We only want to perform attribution for messages that were sent by clients (not the server(null)).
+			// We also only want to attribute for messages that are likely to modify data,
+			// and messages with type "op" are a reasonable approximation of that.
 			if (message.clientId !== null && message.type === "op") {
 				const client = audience.getMember(message.clientId);
 				// TODO: This case may be legitimate, and if so we need to figure out how to handle it.

@@ -756,7 +756,7 @@ function calcChannelStats(
 function processQuorumMessages(
 	message: ISequencedDocumentMessage,
 	skipMessage: boolean,
-	sessionsInProgress: Map<string | null, ActiveSession>,
+	sessionsInProgress: Map<string, ActiveSession>,
 	sessions: Map<string, [number, number]>,
 	users: Map<string, [number, number]>,
 ) {
@@ -783,8 +783,7 @@ function processQuorumMessages(
 			incr(users, sessionInfo.email, sessionInfo.opCount);
 			session = undefined; // Do not record it second time
 		}
-	} else {
-		// message.clientId can be null
+	} else if (message.clientId !== null) {
 		session = sessionsInProgress.get(message.clientId);
 		if (session === undefined) {
 			session = sessionsInProgress.get(noClientName);
