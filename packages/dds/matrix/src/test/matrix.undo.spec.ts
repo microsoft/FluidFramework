@@ -574,12 +574,15 @@ describe("Matrix", () => {
 					[2, 3],
 				]);
 
+				// now undo both inserts
 				undo2.undoOperation();
 				await expect([[0, 1]]);
 
 				undo1.undoOperation();
 				await expect([]);
 
+				// redo re-inserts in opposite order to their original
+				// client 2, then client 1
 				undo2.redoOperation();
 				await expect([[2, 3]]);
 
@@ -589,14 +592,23 @@ describe("Matrix", () => {
 					[0, 1],
 				]);
 
+				// now undo both inserts again
 				undo1.undoOperation();
 				await expect([[2, 3]]);
 
-				undo1.undoOperation();
-				await expect([[]]);
+				undo2.undoOperation();
+				await expect([]);
 
+				// redo again in the opposite order to switch row order
+				// client 1, then client 2
 				undo1.redoOperation();
-				await expect([[2, 3]]);
+				await expect([[0, 1]]);
+
+				undo2.redoOperation();
+				await expect([
+					[0, 1],
+					[2, 3],
+				]);
 			});
 
 			it("undo/redo races split column span", async () => {
