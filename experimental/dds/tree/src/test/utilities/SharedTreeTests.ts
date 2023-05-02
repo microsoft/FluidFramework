@@ -403,8 +403,8 @@ export function runSharedTreeOperationsTests(
 					containerRuntimeFactory.processAllMessages();
 					const originalPushMessage = containerRuntimeFactory.pushMessage.bind(containerRuntimeFactory);
 					containerRuntimeFactory.pushMessage = (msg) => {
-						const newMsg = msg as typeof msg & { contents?: { version?: undefined } };
-						if (newMsg.contents) {
+						const newMsg = msg as { contents?: { version?: undefined } };
+						if (newMsg.contents?.version !== undefined) {
 							newMsg.contents.version = undefined;
 						}
 						originalPushMessage(newMsg);
