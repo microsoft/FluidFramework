@@ -125,15 +125,15 @@ export function rebaseBranch<TChange>(
 	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
 	assert(ancestor !== undefined, "branches must be related");
 
-	// Find where `base` is in the target branch
+	// Find where `targetCommit` is in the target branch
 	const baseIndex = targetPath.findIndex((r) => r === targetCommit);
 	if (baseIndex === -1) {
-		// If the base is not in the target path, then it is either disjoint from `target` or it is behind/at
+		// If the targetCommit is not in the target path, then it is either disjoint from `target` or it is behind/at
 		// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
 		// TODO: Ideally, this would be an "assertExpensive"
 		assert(
 			findCommonAncestor(targetCommit, targetHead) !== undefined,
-			0x575 /* base is not in target branch */,
+			"target commit is not in target branch",
 		);
 		return [
 			sourceHead,
@@ -145,7 +145,7 @@ export function rebaseBranch<TChange>(
 	// Iterate through the target path and look for commits that are also present on the source branch (i.e. they
 	// have matching tags). Each commit found in the target branch can be skipped when processing the source branch
 	// because it has already been rebased onto the target. In the case that one or more of these commits are present
-	// directly after `base`, then the base can be advanced further without having to do any work.
+	// directly after `targetCommit`, then the new base can be advanced further without having to do any work.
 	const sourceSet = new Set(sourcePath.map((r) => r.revision));
 	let newBaseIndex = baseIndex;
 
@@ -162,13 +162,13 @@ export function rebaseBranch<TChange>(
 	// Figure out how much of the trunk to start rebasing over.
 	const targetRebasePath = targetPath.slice(0, newBaseIndex + 1);
 	const newSourceCommits: GraphCommit<TChange>[] = [...targetRebasePath];
-	/** The commit on the target branch that the new source branch branches off of */
+	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
 	const newBase = targetPath[newBaseIndex];
 
 	// If all commits that are about to be rebased over on the target branch already comprise the start of the source branch,
 	// are in the same order, and have no other commits interleaving them, then no rebasing needs to occur. Those commits can
 	// simply be removed from the source branch, and the remaining commits on the source branch are reparented off of the new
-	// base commit
+	// base commit.
 	if (isPrefix(targetRebasePath, sourcePath, (a, b) => a.revision === b.revision)) {
 		for (let i = newBaseIndex + 1; i < sourcePath.length; i++) {
 			const { change, revision, sessionId } = sourcePath[i];

@@ -67,7 +67,7 @@ describe("rebaseBranch", () => {
 
 		assert.throws(
 			() => rebaseBranch(new TestChangeRebaser(), n2, n3, n1),
-			(e) => validateAssertionError(e, "base is not in target branch"),
+			(e) => validateAssertionError(e, "target commit is not in target branch"),
 		);
 	});
 
