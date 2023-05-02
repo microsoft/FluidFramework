@@ -39,7 +39,7 @@ export function EmojiButton(props: EmojiButtonProps): React.ReactElement {
 
 		return (): void => {
 			emojiCell.off("valueChanged", updateState);
-			emojiCell.on("delete", updateState);
+			emojiCell.off("delete", updateState);
 		};
 	}, [emojiCell, isSmiley, setIsSmiley]);
 
