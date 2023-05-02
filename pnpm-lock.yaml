@@ -10709,7 +10709,6 @@ importers:
       '@fluentui/react-tabs': 9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-tools/client-debugger': link:../client-debugger
-      '@fluidframework/cell': link:../../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
@@ -10731,6 +10730,7 @@ importers:
       '@fluid-example/collaborative-textarea': link:../../../../examples/apps/collaborative-textarea
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.15.0_webpack-cli@4.10.0
+      '@fluidframework/cell': link:../../../dds/cell
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
