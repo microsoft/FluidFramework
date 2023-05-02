@@ -179,6 +179,7 @@ import {
 } from "./opLifecycle";
 import { createSessionId, IdCompressor } from "./id-compressor";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
+import { asMessageWithMetadata } from "./opProperties";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -2004,7 +2005,7 @@ export class ContainerRuntime
 								local,
 								type: message.type,
 								contentType: typeof message.contents,
-								batch: message.metadata?.batch,
+								batch: asMessageWithMetadata(message)?.metadata?.batch,
 								compression: message.compression,
 							},
 						);

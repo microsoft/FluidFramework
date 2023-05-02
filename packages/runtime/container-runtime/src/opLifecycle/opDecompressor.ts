@@ -9,10 +9,10 @@ import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-ut
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { CompressionAlgorithms } from "../containerRuntime";
-import { IMessageWithMetadata, isMessageWithValidMetadata } from "../opProperties";
+import { IRuntimeMessageWithMetadata, isMessageWithValidMetadata } from "../opProperties";
 import { IMessageProcessingResult } from "./definitions";
 
-type ICompressedSequencedMessage = IMessageWithMetadata & {
+type ICompressedSequencedMessage = IRuntimeMessageWithMetadata & {
 	contents: { packedContents: string };
 };
 
@@ -170,9 +170,9 @@ export class OpDecompressor {
 
 // We should not be mutating the input message nor its metadata
 const newMessage = (
-	originalMessage: IMessageWithMetadata,
+	originalMessage: IRuntimeMessageWithMetadata,
 	contents: any,
-): IMessageWithMetadata => ({
+): IRuntimeMessageWithMetadata => ({
 	...originalMessage,
 	contents,
 	compression: undefined,

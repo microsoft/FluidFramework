@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
-import { asMessageWithMetadata, IMessageWithMetadata } from "./opProperties";
+import { asMessageWithMetadata, IRuntimeMessageWithMetadata } from "./opProperties";
 
 /**
  * This class has the following responsibilities:
@@ -124,7 +124,7 @@ class ScheduleManagerCore {
 			// Set the batch flag to false on the last message to indicate the end of the send batch
 			const lastMessage = messages[
 				messages.length - 1
-			] as IMessageWithMetadata<IDocumentMessage>;
+			] as IRuntimeMessageWithMetadata<IDocumentMessage>;
 			lastMessage.metadata = { ...lastMessage.metadata, batch: false };
 		});
 
@@ -277,7 +277,7 @@ class ScheduleManagerCore {
 		// If this is not the start of the batch, error out if the message was sent by a client other than the one that
 		// started the current batch (it should not be possible for ops from other clients to get interleaved with a batch).
 		if (
-			this.currentBatchClientId !== undefined &&
+			typeof this.currentBatchClientId === undefined &&
 			this.currentBatchClientId !== message.clientId
 		) {
 			throw new DataCorruptionError("OpBatchIncomplete", {

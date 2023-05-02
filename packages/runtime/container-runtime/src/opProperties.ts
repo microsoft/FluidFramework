@@ -22,7 +22,7 @@ export const opSize = (op: ISequencedDocumentMessage): number => {
 const opHasData = (op: ISequencedDocumentMessage): op is ISequencedDocumentSystemMessage =>
 	(op as ISequencedDocumentSystemMessage).data !== undefined;
 
-export type IMessageWithMetadata<
+export type IRuntimeMessageWithMetadata<
 	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
 > = T & {
 	metadata?: {
@@ -34,7 +34,7 @@ export type IMessageWithMetadata<
 };
 export function isMessageWithValidMetadata<T extends ISequencedDocumentMessage | IDocumentMessage>(
 	message: T | undefined,
-): message is IMessageWithMetadata<T> {
+): message is IRuntimeMessageWithMetadata<T> {
 	if (typeof message?.metadata === "object" && message.metadata !== null) {
 		return true;
 	}
@@ -43,17 +43,17 @@ export function isMessageWithValidMetadata<T extends ISequencedDocumentMessage |
 
 export function asMessageWithMetadata<T extends ISequencedDocumentMessage | IDocumentMessage>(
 	message: T | undefined,
-): IMessageWithMetadata<T> | undefined {
+): IRuntimeMessageWithMetadata<T> | undefined {
 	return isMessageWithValidMetadata(message) ? message : undefined;
 }
 
 export function assertMessageWithValidMetadata<
 	T extends ISequencedDocumentMessage | IDocumentMessage,
->(message: T | undefined): asserts message is IMessageWithMetadata<T> {
+>(message: T | undefined): asserts message is IRuntimeMessageWithMetadata<T> {
 	assert(isMessageWithValidMetadata(message), "message does not have valid metadata");
 }
 
-export type IMessageWithContents<
+export type IRuntimeMessageWithContents<
 	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
 > = T & {
 	contents?: { type?: string; address?: string; contents?: unknown };
@@ -61,7 +61,7 @@ export type IMessageWithContents<
 
 export function isMessageWithValidContents<
 	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
->(message: T | undefined): message is IMessageWithContents<T> {
+>(message: T | undefined): message is IRuntimeMessageWithContents<T> {
 	if (typeof message?.contents === "object" && message.contents !== null) {
 		return true;
 	}
@@ -70,6 +70,6 @@ export function isMessageWithValidContents<
 
 export function assertMessageWithValidContents<
 	T extends ISequencedDocumentMessage | IDocumentMessage,
->(message: T | undefined): asserts message is IMessageWithContents<T> {
+>(message: T | undefined): asserts message is IRuntimeMessageWithContents<T> {
 	assert(isMessageWithValidContents(message), "message does not have valid metadata");
 }
