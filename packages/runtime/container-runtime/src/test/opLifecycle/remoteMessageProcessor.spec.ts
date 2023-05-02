@@ -13,12 +13,12 @@ import {
 	RemoteMessageProcessor,
 } from "../../opLifecycle";
 import { ContainerMessageType } from "../..";
-import { IMessageWithMetadata, assertMessageWithValidMetadata } from "../../opProperties";
+import { IRuntimeMessageWithMetadata, assertMessageWithValidMetadata } from "../../opProperties";
 
 describe("RemoteMessageProcessor", () => {
-	const stamp = (message: ISequencedDocumentMessage, value: string): IMessageWithMetadata => {
+	const stamp = (message: ISequencedDocumentMessage, value: string) => {
 		assertMessageWithValidMetadata(message);
-		const newMessage: IMessageWithMetadata & {
+		const newMessage: IRuntimeMessageWithMetadata & {
 			metadata?: { history?: string[] };
 		} = {
 			...message,
