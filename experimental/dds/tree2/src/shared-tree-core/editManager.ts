@@ -469,7 +469,16 @@ export class EditManager<
 	): void {
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
 		if (local) {
-			this.trunkUndoRedoManager.trackCommit(this.trunk, UndoRedoManagerCommitType.Undoable);
+			const localUndoableCommit = findAncestor(
+				this.localBranch.undoRedoManager.headUndoable,
+				(c) => c.commit.revision === commit.revision,
+			);
+			this.trunkUndoRedoManager.trackCommit(
+				this.trunk,
+				localUndoableCommit !== undefined
+					? UndoRedoManagerCommitType.Undoable
+					: UndoRedoManagerCommitType.Undo,
+			);
 		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
 			this.changeFamily.intoDelta(commit.change),

@@ -291,9 +291,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// The net change to this branch is provided by the `rebaseBranch` API
 			const [newHead, change, { deletedSourceCommits, newSourceCommits }] = rebaseResult;
 
-			if (change !== undefined) {
-				this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
-			}
+			this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
 
 			this.head = newHead;
 			this.emitAndRebaseAnchors({
