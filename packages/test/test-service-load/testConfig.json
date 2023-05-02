@@ -52,11 +52,11 @@
 			"totalSendCount": 16000,
 			"faultInjectionMs": {
 				"min": 0,
-				"max": 900000
+				"max": 600000
 			},
 			"optionOverrides": {
-				"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
 				"tinylicious": {
+					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 21 mins. Sweep Timeout: 22 mins.",
 					"configurations": {
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
 						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true]
@@ -67,15 +67,16 @@
 							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
-							"inactiveTimeoutMs": [1200000],
+							"inactiveTimeoutMs": [1260000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
 					}
 				},
 				"odsp": {
+					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 24 mins. Sweep Timeout: 25 mins.",
 					"configurations": {
-						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [450000],
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
+						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1500000],
 						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true]
 					},
 					"container": {
@@ -84,7 +85,7 @@
 							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
-							"inactiveTimeoutMs": [1200000],
+							"inactiveTimeoutMs": [1440000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
 					}
@@ -98,11 +99,11 @@
 			"totalSendCount": 16000,
 			"faultInjectionMs": {
 				"min": 0,
-				"max": 900000
+				"max": 600000
 			},
 			"optionOverrides": {
-				"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
 				"tinylicious": {
+					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 21 mins. Sweep Timeout: 22 mins.",
 					"configurations": {
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000]
 					},
@@ -112,23 +113,24 @@
 							"sweepAllowed": [true],
 							"disableGC": [false],
 							"runFullGC": [false],
-							"inactiveTimeoutMs": [1200000],
+							"inactiveTimeoutMs": [1260000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
 					}
 				},
 				"odsp": {
+					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 24 mins. Sweep Timeout: 25 mins.",
 					"configurations": {
-						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [450000],
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000]
+						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1500000]
 					},
 					"container": {
 						"gcOptions": {
 							"gcAllowed": [true],
-							"sweepAllowed": [true],
+							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
-							"inactiveTimeoutMs": [1200000],
+							"inactiveTimeoutMs": [1440000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
 					}
