@@ -353,12 +353,21 @@ function rebaseMark<TNodeChange>(
 		);
 
 		if (isMoveMark(rebasedMark)) {
-			getOrAddEffect(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				rebasedMark.revision,
-				rebasedMark.id,
-			).pairedMarkStatus = PairedMarkUpdate.Deactivated;
+			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
+				getOrAddEffect(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					rebasedMark.revision,
+					rebasedMark.id,
+				).pairedMarkStatus = PairedMarkUpdate.Deactivated;
+			} else if (rebasedMark.type === "ReturnTo") {
+				getOrAddEffect(
+					moveEffects,
+					CrossFieldTarget.Source,
+					rebasedMark.revision,
+					rebasedMark.id,
+				).pairedMarkStatus = PairedMarkUpdate.Reactivated;
+			}
 		}
 		rebasedMark = makeDetachedMark(rebasedMark, baseMarkIntention, baseInputOffset);
 	} else if (markFillsCells(baseMark)) {
@@ -367,12 +376,21 @@ function rebaseMark<TNodeChange>(
 			"Only an ExistingCellMark can target an empty cell",
 		);
 		if (isMoveMark(rebasedMark)) {
-			getOrAddEffect(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				rebasedMark.revision,
-				rebasedMark.id,
-			).pairedMarkStatus = PairedMarkUpdate.Reactivated;
+			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
+				getOrAddEffect(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					rebasedMark.revision,
+					rebasedMark.id,
+				).pairedMarkStatus = PairedMarkUpdate.Reactivated;
+			} else if (rebasedMark.type === "ReturnTo") {
+				getOrAddEffect(
+					moveEffects,
+					CrossFieldTarget.Source,
+					rebasedMark.revision,
+					rebasedMark.id,
+				).pairedMarkStatus = PairedMarkUpdate.Deactivated;
+			}
 		}
 		rebasedMark = withoutDetachEvent(rebasedMark);
 	}

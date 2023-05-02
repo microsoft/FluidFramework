@@ -479,7 +479,7 @@ export class ComposeQueue<T> {
 				);
 				baseCellId = baseMark.detachEvent;
 			}
-			const cmp = compareCellPositions(baseCellId, baseMark, newMark, this.newRevision, this.cancelledInserts);
+			const cmp = compareCellPositions(baseCellId, baseMark, newMark, this.newRevision, this.cancelledInserts, this.baseGap);
 			if (cmp < 0) {
 				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
 			} else if (cmp > 0) {
@@ -597,6 +597,7 @@ function compareCellPositions(
 	newMark: EmptyInputCellMark<unknown>,
 	newRevision: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
+	gapTracker: GapTracker,
 ): number {
 	const newId = getCellId(newMark, newRevision);
 	if (baseCellId.revision === newId?.revision) {
@@ -615,18 +616,18 @@ function compareCellPositions(
 		return baseCellId.index - newId.index;
 	}
 
-	// TODO: Function should take in `reattachOffset` and use it to compute offsets.
 	// TODO: Reconcile indexes and offsets.
-	if (newId !== undefined) {
-		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
-		if (offsetInBase !== undefined) {
-			return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
-		}
-	}
+	// if (newId !== undefined) {
+	// 	const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
+	// 	if (offsetInBase !== undefined) {
+	// 		return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
+	// 	}
+	// }
 
 	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseCellId.revision);
 	if (offsetInNew !== undefined) {
-		return offsetInNew > baseCellId.index ? baseCellId.index - offsetInNew : Infinity;
+		const baseOffset = gapTracker.getOffset(baseCellId.revision);
+		return offsetInNew <= baseOffset ? Infinity : baseOffset - offsetInNew;
 	}
 
 	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
