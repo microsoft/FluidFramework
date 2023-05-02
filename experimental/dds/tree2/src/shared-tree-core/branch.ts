@@ -19,6 +19,7 @@ import {
 	TaggedChange,
 	UndoRedoManagerCommitType,
 	rebaseBranch,
+	RevisionTag,
 } from "../core";
 import { EventEmitter } from "../events";
 import { TransactionResult } from "../util";
@@ -96,21 +97,34 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
-		private readonly sessionId: string,
+		public readonly sessionId: string,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		public undoRedoManager: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor(
-			(change) => this.applyChange(change, UndoRedoManagerCommitType.Undoable),
+			(change) =>
+				this.applyChange(change, mintRevisionTag(), UndoRedoManagerCommitType.Undoable),
 			new AnchorSet(), // This branch class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.
 		);
 	}
 
-	private applyChange(change: TChange, undoRedoType: UndoRedoManagerCommitType): void {
+	/**
+	 * Sets the head of this branch. Emits no change events.
+	 */
+	public setHead(head: GraphCommit<TChange>): void {
 		this.assertNotDisposed();
-		const revision = mintRevisionTag();
+		assert(!this.isTransacting(), "Cannot set head during a transaction");
+		this.head = head;
+	}
+
+	public applyChange(
+		change: TChange,
+		revision: RevisionTag,
+		undoRedoType: UndoRedoManagerCommitType | undefined,
+	): void {
+		this.assertNotDisposed();
 		this.head = mintCommit(this.head, {
 			revision,
 			sessionId: this.sessionId,
@@ -121,7 +135,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.transactions.repairStore?.capture(delta, this.head.revision);
 
 		// If this is not part of a transaction, add it to the undo commit tree
-		if (!this.isTransacting()) {
+		if (undoRedoType !== undefined && !this.isTransacting()) {
 			this.undoRedoManager.trackCommit(this.head, undoRedoType);
 		}
 
@@ -230,7 +244,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const undoChange = this.undoRedoManager.undo();
 		if (undoChange !== undefined) {
-			this.applyChange(undoChange, UndoRedoManagerCommitType.Undo);
+			this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
 		}
 	}
 
@@ -277,7 +291,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// The net change to this branch is provided by the `rebaseBranch` API
 			const [newHead, change, { deletedSourceCommits, newSourceCommits }] = rebaseResult;
 
-			this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
+			if (change !== undefined) {
+				this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
+			}
 
 			this.head = newHead;
 			this.emitAndRebaseAnchors({

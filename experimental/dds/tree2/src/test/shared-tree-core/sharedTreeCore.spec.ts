@@ -383,7 +383,7 @@ function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): number {
 	const { editManager } = tree as unknown as {
-		editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
+		editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	};
 	assert(
 		editManager !== undefined,

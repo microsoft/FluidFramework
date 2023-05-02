@@ -28,7 +28,6 @@ import {
 	AnchorSet,
 	Delta,
 	RevisionTag,
-	mintRevisionTag,
 	findAncestor,
 	GraphCommit,
 	RepairDataStore,
@@ -42,7 +41,6 @@ import {
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
 import { isStableId } from "../id-compressor";
-import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
 import { Commit, EditManager, SeqNumber, minimumPossibleSequenceNumber } from "./editManager";
@@ -96,7 +94,7 @@ export interface ChangeEvents<TChangeset> {
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject<
 	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
 > {
-	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
+	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly Summarizable[];
 
 	/**
@@ -112,11 +110,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	protected readonly changeEvents = createEmitter<ChangeEvents<TChange>>();
 
 	/**
+	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
+	 */
+	private get localBranch(): SharedTreeBranch<TEditor, TChange> {
+		return this.editManager.localBranch;
+	}
+
+	/**
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
 	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
-	public readonly editor: TEditor;
-	private readonly transactions = new TransactionStack();
+	public get editor(): TEditor {
+		return this.localBranch.editor;
+	}
 
 	/**
 	 * Used to encode and decode changes.
@@ -142,7 +148,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	public constructor(
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly anchors: AnchorSet,
+		anchors: AnchorSet,
 		repairDataStoreProvider: IRepairDataStoreProvider,
 		// Base class arguments
 		id: string,
@@ -157,9 +163,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
+		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = uuid();
 		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily, () =>
-			this.editManager.getLocalBranchHead(),
+			this.localBranch.getHead(),
 		);
 		this.editManager = new EditManager(
 			changeFamily,
@@ -168,6 +175,22 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
 			anchors,
 		);
+		this.editManager.on("newTrunkHead", (head) => {
+			this.changeEvents.emit("newSequencedChange", head.change);
+		});
+		this.localBranch.on("change", ({ change, type }) => {
+			if (type === "append") {
+				assert(change !== undefined, "Expected change to be defined"); // TODO: make this part of type signature to avoid assert here?
+				this.changeEvents.emit("newLocalChange", change);
+				if (!this.isTransacting()) {
+					this.submitCommit(this.localBranch.getHead());
+				}
+			}
+
+			if (change !== undefined) {
+				this.changeEvents.emit("newLocalState", this.changeFamily.intoDelta(change));
+			}
+		});
 		this.summarizables = [
 			new EditManagerSummarizer(runtime, this.editManager),
 			...summarizables,
@@ -178,11 +201,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		this.changeCodec = changeFamily.codecs.resolve(formatVersion);
-		this.editor = this.changeFamily.buildEditor(
-			(change) =>
-				this.applyChange(change, mintRevisionTag(), UndoRedoManagerCommitType.Undoable),
-			new AnchorSet(), // This class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.,
-		);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -224,19 +242,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	/**
 	 * Submits an op to the Fluid runtime containing the given commit
 	 * @param commit - the commit to submit
-	 * @param undoRedoType - if provided, `commit` will be tracked for undo/redo
 	 */
-	private submitCommit(
-		commit: Commit<TChange>,
-		undoRedoType: UndoRedoManagerCommitType | undefined,
-	): void {
+	private submitCommit(commit: Commit<TChange>): void {
 		// Edits should not be submitted until all transactions finish
 		assert(!this.isTransacting(), "Unexpected edit submitted during transaction");
-		// Nested transactions are tracked as part of the outermost transaction
-		if (undoRedoType !== undefined) {
-			this.editManager.localBranchUndoRedoManager.trackCommit(commit, undoRedoType);
-		}
-
 		// Edits submitted before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
 		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
@@ -253,54 +262,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.submitLocalMessage(message);
 	}
 
-	/**
-	 * Update the state of the tree (including all indexes) according to the given change by creating a new commit and
-	 * appending it the root local branch. If there is not currently a transaction open, the change will be submitted to Fluid.
-	 * @param change - The change to apply.
-	 * @param revision - The revision to associate with the change.
-	 * @param undoRedoType - if provided, the new commit will be tracked for undo/redo
-	 * @returns the new commit that was appended to the root local branch
-	 */
-	private applyChange(
-		change: TChange,
-		revision: RevisionTag,
-		undoRedoType: UndoRedoManagerCommitType | undefined,
-	): GraphCommit<TChange> {
-		const [commit, delta] = this.addLocalChange(change, revision);
-
-		// submitCommit should not be called for stashed ops so this is kept separate from
-		// addLocalChange
-		if (!this.isTransacting()) {
-			this.submitCommit(commit, undoRedoType);
-		}
-
-		this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-		this.emitLocalChange(change, delta);
-		return commit;
-	}
-
-	/**
-	 * Creates a new commit with the given change and appends it the root local branch.
-	 * @param change - The change to apply
-	 * @param revision - The revision to associate with the change.
-	 * @returns the commit and the delta resulting from applying `change`
-	 */
-	private addLocalChange(change: TChange, revision: RevisionTag): [Commit<TChange>, Delta.Root] {
-		const commit: Commit<TChange> = {
-			change,
-			revision,
-			sessionId: this.editManager.localSessionId,
-		};
-		const delta = this.editManager.addLocalChange(revision, change, false);
-		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
-		return [commit, delta];
-	}
-
-	private emitLocalChange(change: TChange, delta: Delta.Root) {
-		this.changeEvents.emit("newLocalChange", change);
-		this.changeEvents.emit("newLocalState", delta);
-	}
-
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -308,52 +269,37 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	) {
 		const commit = parseCommit(message.contents, this.changeCodec);
 
-		const delta = this.editManager.addSequencedChange(
+		this.editManager.addSequencedChange(
 			commit,
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
-		const sequencedChange = this.editManager.getLastSequencedChange();
-		this.changeEvents.emit("newSequencedChange", sequencedChange);
-		this.changeEvents.emit("newLocalState", delta);
+
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
 	protected startTransaction(repairStore?: RepairDataStore): void {
-		if (!this.isTransacting()) {
-			// If this is the start of a transaction stack, freeze the undo redo manager's
-			// repair data store provider so that repair data can be captured based on the
-			// state of the branch at the start of the transaction.
-			this.editManager.localBranchUndoRedoManager.repairDataStoreProvider.freeze();
-		}
-		this.transactions.push(this.editManager.getLocalBranchHead().revision, repairStore);
-		this.editor.enterTransaction();
+		this.localBranch.startTransaction(repairStore);
 	}
 
 	protected commitTransaction(): TransactionResult.Commit {
-		const { startRevision } = this.transactions.pop();
-		this.editor.exitTransaction();
-		const squashCommit = this.editManager.squashLocalChanges(startRevision);
+		this.localBranch.commitTransaction();
 		if (!this.isTransacting()) {
-			this.submitCommit(squashCommit, UndoRedoManagerCommitType.Undoable);
+			this.submitCommit(this.localBranch.getHead());
 		}
 		return TransactionResult.Commit;
 	}
 
 	protected abortTransaction(): TransactionResult.Abort {
-		const { startRevision, repairStore } = this.transactions.pop();
-		this.editor.exitTransaction();
-		const delta = this.editManager.rollbackLocalChanges(startRevision, repairStore);
-		this.changeEvents.emit("newLocalState", delta);
-		return TransactionResult.Abort;
+		return this.localBranch.abortTransaction();
 	}
 
 	protected isTransacting(): boolean {
-		return this.transactions.size !== 0;
+		return this.localBranch.isTransacting();
 	}
 
 	protected get localBranchUndoRedoManager(): UndoRedoManager<TChange, TEditor> {
-		return this.editManager.localBranchUndoRedoManager;
+		return this.localBranch.undoRedoManager;
 	}
 
 	/**
@@ -361,14 +307,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	public undo(): void {
-		// TODO: allow this once it becomes possible to compose the changesets created by edits made
-		// within transactions and edits that represent completed transactions.
-		assert(!this.isTransacting(), 0x66b /* Undo is not yet supported during transactions */);
-
-		const undoChange = this.editManager.localBranchUndoRedoManager.undo();
-		if (undoChange !== undefined) {
-			this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
-		}
+		this.localBranch.undo();
 	}
 
 	/**
@@ -383,18 +322,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		repairDataStoreProvider: IRepairDataStoreProvider,
 		anchors?: AnchorSet,
 	): SharedTreeBranch<TEditor, TChange> {
-		const branch: SharedTreeBranch<TEditor, TChange> = new SharedTreeBranch(
-			this.editManager.getLocalBranchHead(),
-			this.editManager.localSessionId,
-			this.changeFamily,
-			this.editManager.localBranchUndoRedoManager.clone(
-				() => branch.getHead(),
-				repairDataStoreProvider,
-			),
-			anchors,
-		);
-		this.editManager.registerBranch(branch);
-		return branch;
+		return this.localBranch.fork(repairDataStoreProvider, anchors);
 	}
 
 	/**
@@ -409,7 +337,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		const commits: GraphCommit<TChange>[] = [];
-		const localBranchHead = this.editManager.getLocalBranchHead();
+		const localBranchHead = this.localBranch.getHead();
 		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
 		if (ancestor === localBranchHead) {
 			const markedCommits = markCommits(commits, branch.undoRedoManager.headUndoable);
@@ -419,7 +347,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			} of markedCommits) {
 				// Only track commits that are undoable.
 				const commitType = isUndoable ? UndoRedoManagerCommitType.Undoable : undefined;
-				this.applyChange(change, revision, commitType);
+				this.localBranch.applyChange(change, revision, commitType);
 			}
 		} else {
 			const [newHead] = rebaseBranch(
@@ -430,15 +358,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			const changes: GraphCommit<TChange>[] = [];
 			findAncestor([newHead, changes], (c) => c === localBranchHead);
 
-			this.editManager.localBranchUndoRedoManager.updateAfterRebase(
+			this.localBranchUndoRedoManager.updateAfterRebase(
 				newHead,
-				this.editManager.localBranchUndoRedoManager,
+				this.localBranchUndoRedoManager,
 			);
 
 			// Apply the changes without tracking them in the undo redo manager because
 			// `updateAfterRebase` takes care of tracking any applicable commits in the rebased branch.
 			changes.forEach(({ change, revision }) => {
-				this.applyChange(change, revision, undefined);
+				this.localBranch.applyChange(change, revision, undefined);
 			});
 		}
 	}
@@ -447,7 +375,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @returns the head commit of the root local branch
 	 */
 	protected getLocalBranchHead(): GraphCommit<TChange> {
-		return this.editManager.getLocalBranchHead();
+		return this.localBranch.getHead();
 	}
 
 	protected onDisconnect() {}
@@ -461,19 +389,18 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	protected override reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown) {
 		const { revision } = parseCommit(content, this.changeCodec);
 		const [commit] = this.editManager.findLocalCommit(revision);
-		// Skip tracking commits as undoable during resubmit.
-		this.submitCommit(commit, undefined);
+		this.submitCommit(commit);
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
 		assert(!this.isTransacting(), "Unexpected transaction is open while applying stashed ops");
 		const { revision, change } = parseCommit(content, this.changeCodec);
-		const [commit, delta] = this.addLocalChange(change, revision);
-		this.editManager.localBranchUndoRedoManager.trackCommit(
-			commit,
-			UndoRedoManagerCommitType.Undoable,
-		);
-		this.emitLocalChange(change, delta);
+		this.changeEvents.emit("newLocalChange", change);
+		// TODO: This is to avoid submitting the op in this case. Figure out a better way lol
+		const x = this.isTransacting.bind(this);
+		this.isTransacting = () => true;
+		this.localBranch.applyChange(change, revision, UndoRedoManagerCommitType.Undoable);
+		this.isTransacting = x;
 		return;
 	}
 
