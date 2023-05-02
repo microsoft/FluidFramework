@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+
 import { UsageError } from "@fluidframework/container-utils";
 
 import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
@@ -18,7 +18,7 @@ import {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+import { IFluidDevtools } from "./IFluidDevtools";
 import { ContainerMetadata } from "./ContainerMetadata";
 import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
@@ -44,8 +44,8 @@ export const useAfterDisposeErrorText =
 	"The devtools instance has been disposed. Further operations are invalid.";
 
 /**
- * Error text thrown when a user attempts to register a {@link ContainerDevtools} instance for an ID that is already
- * registered with the {@link FluidDevtools}.
+ * Error text thrown when a user attempts to register a {@link IContainerDevtools} instance for an ID that is already
+ * registered with the {@link IFluidDevtools}.
  *
  * @privateRemarks Exported for test purposes only.
  */
@@ -57,7 +57,7 @@ export function getContainerAlreadyRegisteredErrorText(containerId: string): str
 }
 
 /**
- * Properties for configuring a {@link FluidDevtools}.
+ * Properties for configuring a {@link IFluidDevtools}.
  *
  * @public
  */
@@ -67,7 +67,7 @@ export interface FluidDevtoolsProps {
 	 *
 	 * @remarks
 	 *
-	 * Note: {@link FluidDevtools} does not register this logger with the Fluid runtime; that must be done separately.
+	 * Note: {@link IFluidDevtools} does not register this logger with the Fluid runtime; that must be done separately.
 	 *
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
@@ -119,15 +119,10 @@ export interface FluidDevtoolsProps {
  * (via {@link GetContainerList.Message}).
  *
  * TODO: Document others as they are added.
- *
- * @internal
  */
-export class FluidDevtools
-	extends TypedEventEmitter<FluidDevtoolsEvents>
-	implements IFluidDevtools
-{
+export class FluidDevtools implements IFluidDevtools {
 	/**
-	 * {@inheritDoc IFluidDevtools.logger}
+	 * (optional) telemetry logger associated with the Fluid runtime.
 	 */
 	public readonly logger: DevtoolsLogger | undefined;
 
@@ -214,8 +209,6 @@ export class FluidDevtools
 	// #endregion
 
 	public constructor(props?: FluidDevtoolsProps) {
-		super();
-
 		// Populate initial Container-level devtools
 		this.containers = new Map<string, ContainerDevtools>();
 		if (props?.initialContainers !== undefined) {
@@ -232,10 +225,6 @@ export class FluidDevtools
 
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
-
-		// Initiate message posting of container list updates.
-		this.on("containerDevtoolsRegistered", this.postContainerList);
-		this.on("containerDevtoolsClosed", this.postContainerList);
 
 		this._disposed = false;
 	}
@@ -261,7 +250,9 @@ export class FluidDevtools
 			dataVisualizers,
 		});
 		this.containers.set(containerId, containerDevtools);
-		this.emit("containerDevtoolsRegistered", containerId);
+
+		// Post message for container list change
+		this.postContainerList();
 	}
 
 	/**
@@ -280,12 +271,15 @@ export class FluidDevtools
 		} else {
 			containerDevtools.dispose();
 			this.containers.delete(containerId);
-			this.emit("containerDevtoolsClosed", containerId);
+
+			// Post message for container list change
+			this.postContainerList();
 		}
 	}
 
 	/**
-	 * {@inheritDoc IFluidDevtools.getContainerDevtools}
+	 * Gets the registed Container Devtools associated with the provided Container ID, if one exists.
+	 * Otherwise returns `undefined`.
 	 */
 	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {
 		if (this.disposed) {
@@ -296,16 +290,7 @@ export class FluidDevtools
 	}
 
 	/**
-	 * Gets the set of features supported by this instance.
-	 */
-	private getSupportedFeatures(): DevtoolsFeatureFlags {
-		return {
-			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
-		};
-	}
-
-	/**
-	 * {@inheritDoc IFluidDevtools.getAllContainerDevtools}
+	 * Gets all Container-level devtools instances.
 	 */
 	public getAllContainerDevtools(): readonly IContainerDevtools[] {
 		if (this.disposed) {
@@ -331,14 +316,24 @@ export class FluidDevtools
 		}
 
 		// Dispose of container-level devtools
-		for (const [containerId, containerDevtools] of this.containers) {
+		for (const [, containerDevtools] of this.containers) {
 			containerDevtools.dispose();
-			this.emit("containerDevtoolsClosed", containerId);
 		}
 		this.containers.clear();
-		this.postContainerList(); // Notify listeners that the list of Containers changed.
+
+		// Notify listeners that the list of Containers changed.
+		this.postContainerList();
 
 		this._disposed = true;
+	}
+
+	/**
+	 * Gets the set of features supported by this instance.
+	 */
+	private getSupportedFeatures(): DevtoolsFeatureFlags {
+		return {
+			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+		};
 	}
 }
 

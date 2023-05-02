@@ -20,6 +20,7 @@ import {
 	SessionId,
 	RevisionTag,
 	makeAnonChange,
+	UndoRedoManager,
 } from "../../core";
 import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
 import {
@@ -29,6 +30,7 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
+	ForestRepairDataStoreProvider,
 } from "../../feature-libraries";
 import { brand, JsonCompatible } from "../../util";
 import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
@@ -100,9 +102,19 @@ export class TestTree {
 		this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
 		this.sessionId = options.sessionId ?? uuid();
 		this.forest = forest;
+		const undoRedoManager = new UndoRedoManager(
+			new ForestRepairDataStoreProvider(
+				this.forest,
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy),
+			),
+			defaultChangeFamily,
+			() => this.editManager.getLocalBranchHead(),
+		);
 		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 			defaultChangeFamily,
 			this.sessionId,
+			undoRedoManager,
+			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
 			forest.anchors,
 		);
 	}

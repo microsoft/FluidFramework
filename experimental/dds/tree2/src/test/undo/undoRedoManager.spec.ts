@@ -28,7 +28,7 @@ describe("UndoRedoManager", () => {
 			};
 			const childCommit = createTestGraphCommit([0], 1, localSessionId);
 			const manager = undoRedoManagerFactory(parent);
-			manager.trackCommit(childCommit);
+			manager.trackCommit(childCommit, UndoRedoManagerCommitType.Undoable);
 
 			const headUndoCommit = manager.headUndoable;
 			assert.equal(headUndoCommit?.commit, childCommit);
@@ -56,7 +56,7 @@ describe("UndoRedoManager", () => {
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
 			const undoableCommit = createTestGraphCommit([0], 1, localSessionId);
-			manager.trackCommit(undoableCommit);
+			manager.trackCommit(undoableCommit, UndoRedoManagerCommitType.Undoable);
 			manager.undo();
 			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2, localSessionId);
 			manager.trackCommit(fakeInvertedCommit, UndoRedoManagerCommitType.Undo);
@@ -79,6 +79,7 @@ function undoRedoManagerFactory(
 	return new UndoRedoManager(
 		new MockRepairDataStoreProvider(),
 		testChangeFamilyFactory(rebaser),
+		undefined,
 		headUndoCommit,
 	);
 }

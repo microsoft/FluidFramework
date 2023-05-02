@@ -14,7 +14,7 @@ import {
 	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
-import { ContainerHistoryLog } from "../ContainerHistoryLog";
+import { ContainerHistoryLog } from "./ContainerHistoryLog";
 import { Waiting } from "./Waiting";
 
 /**

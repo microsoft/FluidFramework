@@ -19,19 +19,7 @@ import {
 } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
-
-const ensureContainerConnectedWriteMode = async (container: IContainer) => {
-	const resolveIfActive = (res: () => void) => {
-		if (container.deltaManager.active) {
-			res();
-		}
-	};
-	if (!container.deltaManager.active) {
-		await new Promise<void>((resolve) =>
-			container.on("connected", () => resolveIfActive(resolve)),
-		);
-	}
-};
+import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils";
 
 /**
  * Validates that we generate correct garbage collection stats, such as total number of nodes, number of unreferenced
@@ -120,7 +108,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 		const blob1Contents = "Blob contents 1";
 		const blob2Contents = "Blob contents 2";
 		// Blob stats will be different if we upload while not connected
-		await ensureContainerConnectedWriteMode(container);
+		await waitForContainerWriteModeConnectionWrite(container);
 		const blob1Handle = await mainDataStore._context.uploadBlob(
 			stringToBuffer(blob1Contents, "utf-8"),
 		);
@@ -173,7 +161,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 		const blob1Contents = "Blob contents 1";
 		const blob2Contents = "Blob contents 2";
 		// Blob stats will be different if we upload while not connected
-		await ensureContainerConnectedWriteMode(container);
+		await waitForContainerWriteModeConnectionWrite(container);
 		const blob1Handle = await mainDataStore._context.uploadBlob(
 			stringToBuffer(blob1Contents, "utf-8"),
 		);
@@ -273,7 +261,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 		const blob1Contents = "Blob contents 1";
 		const blob2Contents = "Blob contents 2";
 		// Blob stats will be different if we upload while not connected
-		await ensureContainerConnectedWriteMode(container);
+		await waitForContainerWriteModeConnectionWrite(container);
 		const blob1Handle = await mainDataStore._context.uploadBlob(
 			stringToBuffer(blob1Contents, "utf-8"),
 		);

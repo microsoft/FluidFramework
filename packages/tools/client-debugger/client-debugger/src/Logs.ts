@@ -8,7 +8,7 @@ import { ContainerStateChangeKind } from "./Container";
 /**
  * Base interface for data logs, associating data with a timestamp at which the data was recorded by the debugger.
  *
- * @public
+ * @internal
  */
 export interface LogEntry {
 	/**
@@ -22,7 +22,7 @@ export interface LogEntry {
  *
  * @typeParam TState - The type of state being tracked.
  *
- * @public
+ * @internal
  */
 export interface StateChangeLogEntry<TState> extends LogEntry {
 	/**
@@ -34,7 +34,7 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 /**
  * Represents a {@link @fluidframework/container-loader#ConnectionState} change.
  *
- * @public
+ * @internal
  */
 export interface ConnectionStateChangeLogEntry
 	extends StateChangeLogEntry<ContainerStateChangeKind> {
@@ -55,7 +55,7 @@ export interface ConnectionStateChangeLogEntry
  * TODOs:
  * - Annotate when the client is me, even though "me" can change. This is useful context when viewing the history.
  *
- * @public
+ * @internal
  */
 export interface AudienceChangeLogEntry extends LogEntry {
 	/**

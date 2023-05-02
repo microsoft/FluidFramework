@@ -8,7 +8,7 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
-// @public (undocumented)
+// @public
 export type ConnectionMode = "write" | "read";
 
 // @public (undocumented)
@@ -53,24 +53,19 @@ export interface IBranchOrigin {
     sequenceNumber: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ICapabilities {
-    // (undocumented)
     interactive: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface IClient {
-    // (undocumented)
     details: IClientDetails;
-    // (undocumented)
     mode: ConnectionMode;
     // (undocumented)
     permission: string[];
-    // (undocumented)
     scopes: string[];
     timestamp?: number;
-    // (undocumented)
     user: IUser;
 }
 
@@ -84,22 +79,19 @@ export interface IClientConfiguration {
     noopTimeFrequency?: number;
 }
 
-// @public (undocumented)
+// @public
 export interface IClientDetails {
-    // (undocumented)
     capabilities: ICapabilities;
     // (undocumented)
     device?: string;
-    environment?: string;
     // (undocumented)
+    environment?: string;
     type?: string;
 }
 
 // @public
 export interface IClientJoin {
-    // (undocumented)
     clientId: string;
-    // (undocumented)
     detail: IClient;
 }
 
@@ -117,7 +109,7 @@ export interface IConnect {
     mode: ConnectionMode;
     nonce?: string;
     relayUserAgent?: string;
-    supportedFeatures?: Record<string, any>;
+    supportedFeatures?: Record<string, unknown>;
     tenantId: string;
     token: string | null;
     versions: string[];
@@ -138,7 +130,7 @@ export interface IConnected {
     nonce?: string;
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
-    supportedFeatures?: Record<string, any>;
+    supportedFeatures?: Record<string, unknown>;
     supportedVersions: string[];
     timestamp?: number;
     version: string;
@@ -160,10 +152,10 @@ export interface IDocumentAttributes {
 export interface IDocumentMessage {
     clientSequenceNumber: number;
     compression?: string;
-    contents: any;
-    metadata?: any;
+    contents: unknown;
+    metadata?: unknown;
     referenceSequenceNumber: number;
-    serverMetadata?: any;
+    serverMetadata?: unknown;
     traces?: ITrace[];
     type: string;
 }
@@ -206,7 +198,7 @@ export interface IProcessMessageResult {
 // @public
 export interface IProposal {
     key: string;
-    value: any;
+    value: unknown;
 }
 
 // @public (undocumented)
@@ -261,11 +253,11 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 // @public
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
     // (undocumented)
-    get(key: string): any;
+    get(key: string): unknown;
     // (undocumented)
     has(key: string): boolean;
     // (undocumented)
-    propose(key: string, value: any): Promise<void>;
+    propose(key: string, value: unknown): Promise<void>;
 }
 
 // @public
@@ -273,14 +265,12 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addProposal", listener: (proposal: ISequencedProposal) => void): any;
     // (undocumented)
-    (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): any;
+    (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => void): any;
 }
 
-// @public (undocumented)
+// @public
 export interface ISequencedClient {
-    // (undocumented)
     client: IClient;
-    // (undocumented)
     sequenceNumber: number;
 }
 
@@ -292,20 +282,20 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 // @public
 export interface ISequencedDocumentMessage {
-    clientId: string;
+    clientId: string | null;
     clientSequenceNumber: number;
     compression?: string;
-    contents: any;
+    contents: unknown;
     // (undocumented)
     data?: string;
     // @alpha
     expHash1?: string;
-    metadata?: any;
+    metadata?: unknown;
     minimumSequenceNumber: number;
     origin?: IBranchOrigin;
     referenceSequenceNumber: number;
     sequenceNumber: number;
-    serverMetadata?: any;
+    serverMetadata?: unknown;
     timestamp: number;
     traces?: ITrace[];
     type: string;
@@ -329,10 +319,8 @@ export interface IServerError {
 
 // @public (undocumented)
 export interface ISignalClient {
-    // (undocumented)
     client: IClient;
     clientConnectionNumber?: number;
-    // (undocumented)
     clientId: string;
     referenceSequenceNumber?: number;
 }
@@ -340,10 +328,9 @@ export interface ISignalClient {
 // @public (undocumented)
 export interface ISignalMessage {
     clientConnectionNumber?: number;
-    // (undocumented)
     clientId: string | null;
     // (undocumented)
-    content: any;
+    content: unknown;
     referenceSequenceNumber?: number;
 }
 

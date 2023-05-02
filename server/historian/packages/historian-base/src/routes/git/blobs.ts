@@ -41,14 +41,14 @@ export function create(
 		authorization: string,
 		body: git.ICreateBlobParams,
 	): Promise<git.ICreateBlobResponse> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createBlob(body);
 	}
 
@@ -58,14 +58,14 @@ export function create(
 		sha: string,
 		useCache: boolean,
 	): Promise<git.IBlob> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getBlob(sha, useCache);
 	}
 
