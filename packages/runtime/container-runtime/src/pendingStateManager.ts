@@ -345,7 +345,10 @@ export class PendingStateManager implements IDisposable {
 							message,
 							{
 								runtimeVersion: pkgVersion,
-								batchClientId: this.pendingBatchBeginMessage.clientId ?? undefined,
+								batchClientId:
+									this.pendingBatchBeginMessage.clientId === null
+										? "null"
+										: this.pendingBatchBeginMessage.clientId,
 								clientId: this.stateHandler.clientId(),
 								hasBatchStart: batchBeginMetadata === true,
 								hasBatchEnd: batchEndMetadata === false,

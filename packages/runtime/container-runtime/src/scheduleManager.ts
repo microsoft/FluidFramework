@@ -122,10 +122,11 @@ class ScheduleManagerCore {
 			}
 
 			// Set the batch flag to false on the last message to indicate the end of the send batch
-			const lastMessage = messages[
-				messages.length - 1
-			] as IRuntimeMessageWithMetadata<IDocumentMessage>;
-			lastMessage.metadata = { ...lastMessage.metadata, batch: false };
+			const lastMessage = messages[messages.length - 1];
+			lastMessage.metadata = {
+				...asMessageWithMetadata(lastMessage)?.metadata,
+				batch: false,
+			};
 		});
 
 		// Listen for updates and peek at the inbound
