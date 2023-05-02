@@ -6,7 +6,7 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import stripAnsi from "strip-ansi";
 
-import { FluidRepo } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepoKind } from "@fluidframework/build-tools";
 
 import { packageOrReleaseGroupArg } from "../../args";
 import { BaseCommand } from "../../base";
@@ -85,7 +85,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		{
 			description:
 				"Bump dependencies on packages in the server release group to the greatest released version in the client release group. Include pre-release versions.",
-			command: "<%= config.bin %> <%= command.id %> server -g client -t greatest -p",
+			command:
+				"<%= config.bin %> <%= command.id %> server -g client -t greatest --prerelease",
 		},
 		{
 			description:
@@ -112,6 +113,26 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		if (args.package_or_release_group === undefined) {
 			this.error("ERROR: No dependency provided.");
+		}
+
+		const branchName = await context.gitRepo.getCurrentBranchName();
+
+		// can be removed once server team owns their releases
+		if (args.package_or_release_group === MonoRepoKind.Server && flags.updateType === "minor") {
+			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
+		}
+
+		if (args.package_or_release_group === MonoRepoKind.Server && flags.prerelease === true) {
+			this.info(
+				`${chalk.red.bold(
+					"Client packages on main branch should NOT be consuming prereleases from server. Server prereleases should be consumed in next branch only",
+				)}`,
+			);
+			if (branchName !== "next") {
+				this.error(
+					`Server prereleases should be consumed in ${chalk.bold("next")} branch only`,
+				);
+			}
 		}
 
 		/**

@@ -94,6 +94,7 @@ export {
 	rootHasIsolatedChannels,
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
+	idCompressorBlobName,
 } from "./summaryFormat";
 export { getFailMessage, SummarizeReason } from "./summaryGenerator";
 export {
