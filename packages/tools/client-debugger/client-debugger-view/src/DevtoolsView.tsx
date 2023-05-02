@@ -26,6 +26,7 @@ import {
 	MenuSection,
 	LandingView,
 	Waiting,
+	OpLatencyView,
 } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
@@ -74,12 +75,23 @@ interface TelemetryMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Op Latency view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface OpLatencyMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "opLatencyMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerId' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
+type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | OpLatencyMenuSelection;
 
 // #region Styles definitions
 
@@ -283,6 +295,9 @@ function View(props: ViewProps): React.ReactElement {
 		case "telemetryMenuSelection":
 			view = <TelemetryView />;
 			break;
+		case "opLatencyMenuSelection":
+			view = <OpLatencyView />;
+			break;
 		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations
 			const container = containers?.find((x) => x.id === menuSelection.containerId);
@@ -351,6 +366,10 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "telemetryMenuSelection" });
 	}
 
+	function onOpLatencyClicked(): void {
+		setSelection({ type: "opLatencyMenuSelection" });
+	}
+
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
@@ -374,6 +393,11 @@ function Menu(props: MenuProps): React.ReactElement {
 					isActive={currentSelection?.type === "telemetryMenuSelection"}
 					text="See Telemetry"
 					onClick={onTelemetryClicked}
+				/>
+				<MenuItem
+					isActive={currentSelection?.type === "opLatencyMenuSelection"}
+					text="Op Latency"
+					onClick={onOpLatencyClicked}
 				/>
 			</MenuSection>,
 		);

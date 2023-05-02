@@ -17,6 +17,7 @@ export * from "./FluidTreeView";
 export * from "./FluidValueView";
 export * from "./LandingView";
 export * from "./Menu";
+export * from "./OpLatencyView";
 export * from "./TelemetryView";
 export * from "./TreeView";
 export * from "./UnknownDataView";
