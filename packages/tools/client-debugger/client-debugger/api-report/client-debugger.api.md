@@ -345,7 +345,7 @@ export interface HasContainerId {
     containerId: string;
 }
 
-// @public
+// @internal
 export interface HasFluidObjectId {
     fluidObjectId: FluidObjectId;
 }
