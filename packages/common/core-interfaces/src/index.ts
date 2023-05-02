@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export type { IDisposable } from "./disposable";
+
 export {
 	IFluidLoadable,
 	IProvideFluidLoadable,
@@ -38,5 +40,19 @@ export {
 	IFluidCodeDetailsComparer,
 	IProvideFluidCodeDetailsComparer,
 } from "./fluidPackage";
+
+export type {
+	ILoggingError,
+	ITaggedTelemetryPropertyType,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	ITelemetryErrorEvent,
+	ITelemetryGenericEvent,
+	ITelemetryLogger,
+	ITelemetryPerformanceEvent,
+	ITelemetryProperties,
+	TelemetryEventCategory,
+	TelemetryEventPropertyType,
+} from "./logger";
 
 export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
