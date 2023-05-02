@@ -34,7 +34,7 @@ jobs:
       - name: Install Fluid build tools
         continue-on-error: true
         run: |
-          pnpm add --global @fluid-tools/build-cli@^0.16.0-0
+          pnpm add --global @fluid-tools/build-cli@^0.15.0
 
           # cd build-tools
           # pnpm install --frozen-lockfile
