@@ -154,6 +154,7 @@ export {
 	IWebSocketTracker,
 	ITokenRevocationManager,
 	ITokenRevocationResponse,
+	IRevokeTokenOptions,
 	TokenRevocationError,
 	createCompositeTokenId,
 } from "./tokenRevocationManager";

@@ -11,6 +11,7 @@ import {
 	ICache,
 	IDocumentRepository,
 	ITokenRevocationManager,
+	IRevokeTokenOptions,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -294,10 +295,6 @@ export function create(
 			defaultTokenValidationOptions,
 		),
 		async (request, response, next) => {
-			// TODO: remove debug code
-			const correlationId = getCorrelationIdWithHttpFallback(request, response);
-			console.log(`yunho: correlation id=${correlationId}`);
-
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
@@ -313,7 +310,16 @@ export function create(
 				);
 			}
 			if (tokenRevocationManager) {
-				const resultP = tokenRevocationManager.revokeToken(tenantId, documentId, tokenId);
+				const correlationId = getCorrelationIdWithHttpFallback(request, response);
+				const options: IRevokeTokenOptions = {
+					httpCorrelationId: correlationId,
+				};
+				const resultP = tokenRevocationManager.revokeToken(
+					tenantId,
+					documentId,
+					tokenId,
+					options,
+				);
 				return handleResponse(resultP, response);
 			} else {
 				return handleResponse(
