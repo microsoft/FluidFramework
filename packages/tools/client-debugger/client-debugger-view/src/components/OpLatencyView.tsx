@@ -23,9 +23,8 @@
 // 	createTableColumn,
 // } from "@fluentui/react-components";
 // import { Info24Regular, Info24Filled } from "@fluentui/react-icons";
-import { tokens } from "@fluentui/react-components";
 import React from "react";
-import { MultiStackedBarChart, IChartProps, IChartDataPoint } from "@fluentui/react-charting";
+import { IChartProps, ILineChartDataPoint, LineChart } from "@fluentui/react-charting";
 
 import {
 	handleIncomingMessage,
@@ -33,6 +32,7 @@ import {
 	ISourcedDevtoolsMessage,
 	TelemetryEvent,
 } from "@fluid-tools/client-debugger";
+import { DefaultPalette } from "@fluentui/react";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 
@@ -41,7 +41,13 @@ import { Waiting } from "./Waiting";
  */
 export function OpLatencyView(): React.ReactElement {
 	const messageRelay = useMessageRelay();
-	const [perfDataPoints, setperfDataPoints] = React.useState<IChartDataPoint[][] | undefined>();
+	const [durationOutboundBatchingDataPoints, setDurationOutboundBatchingDataPoints] =
+		React.useState<ILineChartDataPoint[] | undefined>();
+	const [durationNetworkDataPoints, setDurationNetworkDataPoints] = React.useState<
+		ILineChartDataPoint[] | undefined
+	>();
+	const [durationInboundToProcessingDataPoints, setDurationInboundToProcessingDataPoints] =
+		React.useState<ILineChartDataPoint[] | undefined>();
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages.
@@ -49,30 +55,37 @@ export function OpLatencyView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			[TelemetryEvent.MessageType]: (untypedMessage) => {
 				const message = untypedMessage as TelemetryEvent.Message;
-				if (!message.data.event.logContent.eventName.endsWith("OpRoundtripTime")) {
+				const eventContents = message.data.event.logContent;
+				if (!eventContents.eventName.endsWith("OpRoundtripTime")) {
 					return true;
 				}
 
-				setperfDataPoints((currentDataPoints) => [
-					...(currentDataPoints ?? []),
-					[
-						{
-							legend: "durationOutboundBatching",
-							data: message.data.event.logContent.durationOutboundBatching,
-							color: tokens.colorBrandForeground1,
-						},
-						{
-							legend: "durationNetwork",
-							data: message.data.event.logContent.durationNetwork,
-							color: tokens.colorBrandForeground2,
-						},
-						{
-							legend: "durationInboundToProcessing",
-							data: message.data.event.logContent.durationInboundToProcessing,
-							color: tokens.colorBrandForegroundInverted,
-						},
-					] as IChartDataPoint[],
+				console.log(`OP LATENCY: ${JSON.stringify(eventContents)}`);
+
+				setDurationOutboundBatchingDataPoints((currentPoints) => [
+					...(currentPoints ?? []),
+					{
+						x: message.data.event.timestamp,
+						y: Number(eventContents.durationOutboundBatching),
+					},
 				]);
+
+				setDurationNetworkDataPoints((currentPoints) => [
+					...(currentPoints ?? []),
+					{
+						x: message.data.event.timestamp,
+						y: Number(eventContents.durationNetwork),
+					},
+				]);
+
+				setDurationInboundToProcessingDataPoints((currentPoints) => [
+					...(currentPoints ?? []),
+					{
+						x: message.data.event.timestamp,
+						y: Number(eventContents.durationInboundToProcessing),
+					},
+				]);
+
 				return true;
 			},
 			// [TelemetryHistory.MessageType]: (untypedMessage) => {
@@ -95,7 +108,12 @@ export function OpLatencyView(): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay, setperfDataPoints]);
+	}, [
+		messageRelay,
+		setDurationOutboundBatchingDataPoints,
+		setDurationNetworkDataPoints,
+		setDurationInboundToProcessingDataPoints,
+	]);
 
 	/**
 	 * Interface for op latency statistics.
@@ -161,21 +179,51 @@ export function OpLatencyView(): React.ReactElement {
 	// 	},
 	// ];
 
-	const data: IChartProps[] | undefined = perfDataPoints?.map((x, index) => ({
-		chartTitle: `Op ${index}`,
-		// chartTitleAccessibilityData: { ariaLabel: "Perf measurements for Op 1" },
-		chartData: x,
-	}));
+	const data: IChartProps = {
+		chartTitle: "Line Chart",
+		lineChartData: [
+			{
+				legend: "durationOutboundBatching",
+				data: durationOutboundBatchingDataPoints ?? [],
+				color: DefaultPalette.blue,
+			},
+			{
+				legend: "durationNetwork",
+				data: durationNetworkDataPoints ?? [],
+				color: DefaultPalette.green,
+				lineOptions: {
+					lineBorderWidth: "4",
+				},
+			},
+			{
+				legend: "durationInboundToProcessing",
+				data: durationInboundToProcessingDataPoints ?? [],
+				color: DefaultPalette.yellow,
+			},
+		],
+	};
+
+	const width = 300;
+	const height = 600;
+	const rootStyle = { width: `${width}px`, height: `${height}px`, backgroundColor: "#FFFFFF" };
 
 	return data !== undefined ? (
 		<>
 			<h3>Op Latency</h3>
-			<MultiStackedBarChart
+			<div style={rootStyle}>
+			<LineChart
+				culture={window.navigator.language}
 				data={data}
-				width={600}
-				focusZonePropsForLegendsInHoverCard={{ "aria-label": "legends Container" }}
-				legendsOverflowText={"OverFlow Items"}
+				legendsOverflowText={"Overflow Items"}
+				yMinValue={200}
+				yMaxValue={301}
+				height={height}
+				width={width}
+				// margins={margins}
+				xAxisTickCount={10}
+				// allowMultipleShapesForPoints={this.state.allowMultipleShapes}
 			/>
+			</div>
 		</>
 	) : (
 		<Waiting label={"Waiting for Op Latency data"} />
