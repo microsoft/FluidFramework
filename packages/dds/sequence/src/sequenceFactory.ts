@@ -12,6 +12,14 @@ import {
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { pkgVersion } from "./packageVersion";
 import { SharedString, SharedStringSegment } from "./sharedString";
+import { SequenceOptions } from "./sequence";
+
+export interface ISharedStringAttributes extends IChannelAttributes {
+	attribution?: {
+		track: boolean;
+		policy: string;
+	};
+}
 
 export class SharedStringFactory implements IChannelFactory {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
@@ -23,6 +31,8 @@ export class SharedStringFactory implements IChannelFactory {
 		snapshotFormatVersion: "0.1",
 		packageVersion: pkgVersion,
 	};
+
+	public constructor(public readonly options?: SequenceOptions) {}
 
 	public static segmentFromSpec(spec: any): SharedStringSegment {
 		const maybeText = TextSegment.fromJSONObject(spec);
@@ -42,7 +52,20 @@ export class SharedStringFactory implements IChannelFactory {
 		return SharedStringFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): ISharedStringAttributes {
+		if (this.options !== undefined) {
+			const { policyFactory, track } = this.options.attribution;
+			if (track !== undefined && policyFactory !== undefined) {
+				return {
+					...SharedStringFactory.Attributes,
+					attribution: {
+						track,
+						// TODO: change this to something more stable than just the function name.
+						policy: policyFactory?.name,
+					},
+				};
+			}
+		}
 		return SharedStringFactory.Attributes;
 	}
 
@@ -55,13 +78,13 @@ export class SharedStringFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedString> {
-		const sharedString = new SharedString(runtime, id, attributes);
+		const sharedString = new SharedString(runtime, id, attributes, this.options);
 		await sharedString.load(services);
 		return sharedString;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		const sharedString = new SharedString(document, id, this.attributes);
+		const sharedString = new SharedString(document, id, this.attributes, this.options);
 		sharedString.initializeLocal();
 		return sharedString;
 	}

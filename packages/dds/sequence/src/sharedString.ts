@@ -19,7 +19,7 @@ import {
 	TextSegment,
 } from "@fluidframework/merge-tree";
 import { IFluidDataStoreRuntime, IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { SharedSegmentSequence } from "./sequence";
+import { SharedSegmentSequence, SequenceOptions } from "./sequence";
 import { SharedStringFactory } from "./sequenceFactory";
 
 /**
@@ -82,8 +82,15 @@ export class SharedString
 	 * Get a factory for SharedString to register with the data store.
 	 * @returns a factory that creates and load SharedString
 	 */
-	public static getFactory() {
-		return new SharedStringFactory();
+	public static getFactory(options: SequenceOptions): SharedStringFactory;
+
+	/**
+	 * Get a factory for SharedString to register with the data store using the default options.
+	 * @returns a factory that creates and load SharedString
+	 */
+	public static getFactory(): SharedStringFactory;
+	public static getFactory(options?: SequenceOptions): SharedStringFactory {
+		return new SharedStringFactory(options);
 	}
 
 	public get ISharedString(): ISharedString {
@@ -96,8 +103,9 @@ export class SharedString
 		document: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
+		options?: SequenceOptions,
 	) {
-		super(document, id, attributes, SharedStringFactory.segmentFromSpec as any);
+		super(document, id, attributes, SharedStringFactory.segmentFromSpec as any, options);
 		this.mergeTreeTextHelper = this.client.createTextHelper();
 	}
 

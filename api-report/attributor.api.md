@@ -28,9 +28,6 @@ export class Attributor implements IAttributor {
 export function createRuntimeAttributor(): IRuntimeAttributor;
 
 // @alpha
-export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
-
-// @alpha
 export interface IAttributor {
     // (undocumented)
     entries(): IterableIterator<[number, AttributionInfo]>;
@@ -40,16 +37,24 @@ export interface IAttributor {
 }
 
 // @alpha (undocumented)
-export interface IProvideRuntimeAttributor {
+export const IAttributorConfig: keyof IProvideAttributorConfig;
+
+// @alpha (undocumented)
+export interface IAttributorConfig extends IProvideAttributorConfig {
     // (undocumented)
-    readonly IRuntimeAttributor: IRuntimeAttributor;
+    enableOnNewFile: boolean;
+    // (undocumented)
+    runtimeAttributor: IRuntimeAttributor;
 }
 
 // @alpha (undocumented)
-export const IRuntimeAttributor: keyof IProvideRuntimeAttributor;
+export interface IProvideAttributorConfig {
+    // (undocumented)
+    readonly IAttributorConfig: IAttributorConfig;
+}
 
 // @alpha @sealed
-export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
+export interface IRuntimeAttributor {
     // (undocumented)
     get(key: AttributionKey): AttributionInfo;
     // (undocumented)

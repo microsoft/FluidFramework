@@ -5,8 +5,8 @@
 export { Attributor, OpStreamAttributor, IAttributor } from "./attributor";
 export {
 	createRuntimeAttributor,
-	enableOnNewFileKey,
-	IProvideRuntimeAttributor,
+	IProvideAttributorConfig,
+	IAttributorConfig,
 	IRuntimeAttributor,
 	mixinAttributor,
 } from "./mixinAttributor";

@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IAudience } from "@fluidframework/container-definitions";
-import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { SharedString } from "@fluidframework/sequence";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";
 import { IAttributor, OpStreamAttributor } from "../../attributor";
 import {
@@ -243,19 +243,14 @@ function createSharedString(
 	const initialState: FuzzTestState = {
 		clients: clientIds.map((clientId, index) => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
-			dataStoreRuntime.options = {
+			const { deltaManager } = dataStoreRuntime;
+			const factory = SharedString.getFactory({
 				attribution: {
 					track: makeSerializer !== undefined,
 					policyFactory: createInsertOnlyAttributionPolicy,
 				},
-			};
-			const { deltaManager } = dataStoreRuntime;
-			const sharedString = new SharedString(
-				dataStoreRuntime,
-				String.fromCharCode(index + 65),
-				SharedStringFactory.Attributes,
-			);
-
+			});
+			const sharedString = factory.create(dataStoreRuntime, String.fromCharCode(index + 65));
 			if (index === 0 && makeSerializer !== undefined) {
 				attributor = new OpStreamAttributor(deltaManager, audience);
 				serializer = makeSerializer(dataStoreRuntime);
@@ -277,7 +272,6 @@ function createSharedString(
 				objectStorage: new MockStorage(),
 			};
 
-			sharedString.initializeLocal();
 			sharedString.connect(services);
 			return { containerRuntime, sharedString };
 		}),

@@ -22,11 +22,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import {
-	ChildLogger,
-	PerformanceEvent,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
+import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { Attributor, IAttributor, OpStreamAttributor } from "./attributor";
 import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
@@ -37,22 +33,22 @@ const opBlobName = "op";
 
 /**
  * @alpha
- * Feature Gate Key -
- * Whether or not a container runtime instantiated using `mixinAttributor`'s load should generate an attributor on
- * new files. See package README for more notes on integration.
  */
-export const enableOnNewFileKey = "Fluid.Attribution.EnableOnNewFile";
+export const IAttributorConfig: keyof IProvideAttributorConfig = "IAttributorConfig";
 
 /**
  * @alpha
  */
-export const IRuntimeAttributor: keyof IProvideRuntimeAttributor = "IRuntimeAttributor";
+export interface IProvideAttributorConfig {
+	readonly IAttributorConfig: IAttributorConfig;
+}
 
 /**
  * @alpha
  */
-export interface IProvideRuntimeAttributor {
-	readonly IRuntimeAttributor: IRuntimeAttributor;
+export interface IAttributorConfig extends IProvideAttributorConfig {
+	runtimeAttributor: IRuntimeAttributor;
+	enableOnNewFile: boolean;
 }
 
 /**
@@ -62,7 +58,7 @@ export interface IProvideRuntimeAttributor {
  * @sealed
  * @alpha
  */
-export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
+export interface IRuntimeAttributor {
 	/**
 	 * @throws - If no AttributionInfo exists for this key.
 	 */
@@ -102,25 +98,53 @@ export function createRuntimeAttributor(): IRuntimeAttributor {
  */
 export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime) =>
 	class ContainerRuntimeWithAttributor extends Base {
+		/**
+		 * @deprecated - See parent class comment.
+		 */
 		public static async load(
 			context: IContainerContext,
 			registryEntries: NamedFluidDataStoreRegistryEntries,
-			requestHandler?:
-				| ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>)
-				| undefined,
-			runtimeOptions: IContainerRuntimeOptions | undefined = {},
-			containerScope: FluidObject | undefined = context.scope,
-			existing?: boolean | undefined,
-			ctor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
+			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
+			runtimeOptions: IContainerRuntimeOptions = {},
+			containerScope: FluidObject = context.scope,
+			existing?: boolean,
+			containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntimeWithAttributor,
 		): Promise<ContainerRuntime> {
-			const runtimeAttributor = (
-				containerScope as FluidObject<IProvideRuntimeAttributor> | undefined
-			)?.IRuntimeAttributor;
-			if (!runtimeAttributor) {
+			let existingFlag = true;
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+			if (!existing) {
+				existingFlag = false;
+			}
+			return this.loadRuntime({
+				context,
+				registryEntries,
+				existing: existingFlag,
+				requestHandler,
+				runtimeOptions,
+				containerScope,
+				containerRuntimeCtor,
+			});
+		}
+
+		public static async loadRuntime(params: {
+			context: IContainerContext;
+			registryEntries: NamedFluidDataStoreRegistryEntries;
+			existing: boolean;
+			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+			runtimeOptions?: IContainerRuntimeOptions;
+			containerScope?: FluidObject;
+			containerRuntimeCtor?: typeof ContainerRuntime;
+			initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		}): Promise<ContainerRuntime> {
+			const { containerScope, context } = params;
+			const config = (containerScope as FluidObject<IProvideAttributorConfig> | undefined)
+				?.IAttributorConfig;
+			if (!config) {
 				throw new UsageError(
-					"ContainerRuntimeWithAttributor must be passed a scope implementing IProvideRuntimeAttributor",
+					"ContainerRuntimeWithAttributor must be passed a scope implementing IProvideAttributorConfig",
 				);
 			}
+			const { runtimeAttributor, enableOnNewFile } = config;
 
 			const pendingRuntimeState = context.pendingLocalState as {
 				baseSnapshot?: ISnapshotTree;
@@ -134,31 +158,11 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				0x508 /* Audience must exist when instantiating attribution-providing runtime */,
 			);
 
-			const mc = loggerToMonitoringContext(context.taggedLogger);
-
-			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
-			let options = context.options;
-			if (shouldTrackAttribution) {
-				const attributionOptions = {
-					...(context.options.attribution ?? {}),
-					track: true,
-				};
-
-				options = {
-					...context.options,
-					attribution: attributionOptions,
-				};
-			}
-
-			const runtime = (await Base.load(
-				shouldTrackAttribution ? { ...context, options } : context,
-				registryEntries,
-				requestHandler,
-				runtimeOptions,
-				containerScope,
-				existing,
-				ctor,
-			)) as ContainerRuntimeWithAttributor;
+			const baseParams =
+				params.containerRuntimeCtor !== undefined
+					? params
+					: { ...params, containerRuntimeCtor: ContainerRuntimeWithAttributor };
+			const runtime = (await Base.loadRuntime(baseParams)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
 			const logger = ChildLogger.create(runtime.logger, "Attributor");
@@ -173,15 +177,15 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 					eventName: "initialize",
 				},
 				async (event) => {
-					void runtime.runtimeAttributor?.initialize(
+					await runtime.runtimeAttributor?.initialize(
 						deltaManager,
 						audience,
 						baseSnapshot,
 						async (id) => runtime.storage.readBlob(id),
-						shouldTrackAttribution,
+						enableOnNewFile,
 					);
 					event.end({
-						attributionEnabledInConfig: shouldTrackAttribution,
+						attributionEnabledInConfig: enableOnNewFile,
 						attributionEnabledInDoc: runtime.runtimeAttributor
 							? runtime.runtimeAttributor.isEnabled
 							: false,
@@ -209,10 +213,6 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 	} as unknown as typeof ContainerRuntime;
 
 class RuntimeAttributor implements IRuntimeAttributor {
-	public get IRuntimeAttributor(): IRuntimeAttributor {
-		return this;
-	}
-
 	public get(key: AttributionKey): AttributionInfo {
 		assert(
 			this.opAttributor !== undefined,

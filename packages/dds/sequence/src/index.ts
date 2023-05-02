@@ -34,14 +34,14 @@ export {
 	SerializedIntervalDelta,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
-export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
+export { ISharedSegmentSequenceEvents, SharedSegmentSequence, SequenceOptions } from "./sequence";
 export {
 	ISequenceDeltaRange,
 	SequenceDeltaEvent,
 	SequenceEvent,
 	SequenceMaintenanceEvent,
 } from "./sequenceDeltaEvent";
-export { SharedStringFactory } from "./sequenceFactory";
+export { SharedStringFactory, ISharedStringAttributes } from "./sequenceFactory";
 export {
 	getTextAndMarkers,
 	ISharedString,

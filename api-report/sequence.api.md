@@ -17,6 +17,7 @@ import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
+import { IMergeTreeAttributionOptions } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree';
@@ -277,6 +278,15 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
 
+// @public (undocumented)
+export interface ISharedStringAttributes extends IChannelAttributes {
+    // (undocumented)
+    attribution?: {
+        track: boolean;
+        policy: string;
+    };
+}
+
 // @internal
 export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
@@ -346,6 +356,12 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
 }
 
+// @public (undocumented)
+export interface SequenceOptions {
+    // (undocumented)
+    attribution: IMergeTreeAttributionOptions;
+}
+
 // @internal
 export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" | "properties"> & Partial<Pick<ISerializedInterval, "start" | "end" | "properties">>;
 
@@ -391,7 +407,7 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 
 // @public (undocumented)
 export abstract class SharedSegmentSequence<T extends ISegment> extends SharedObject<ISharedSegmentSequenceEvents> implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver {
-    constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
+    constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment, options?: SequenceOptions);
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
@@ -473,7 +489,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 
 // @public
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
-    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, options?: SequenceOptions);
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
@@ -481,6 +497,7 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
         tile: ReferencePosition;
         pos: number;
     } | undefined;
+    static getFactory(options: SequenceOptions): SharedStringFactory;
     static getFactory(): SharedStringFactory;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;
@@ -502,14 +519,17 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
 
 // @public (undocumented)
 export class SharedStringFactory implements IChannelFactory {
+    constructor(options?: SequenceOptions | undefined);
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
     // (undocumented)
-    get attributes(): IChannelAttributes;
+    get attributes(): ISharedStringAttributes;
     // (undocumented)
     create(document: IFluidDataStoreRuntime, id: string): SharedString;
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<SharedString>;
+    // (undocumented)
+    readonly options?: SequenceOptions | undefined;
     // (undocumented)
     static segmentFromSpec(spec: any): SharedStringSegment;
     // (undocumented)

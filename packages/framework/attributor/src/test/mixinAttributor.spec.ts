@@ -25,8 +25,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	createRuntimeAttributor,
-	enableOnNewFileKey,
-	IProvideRuntimeAttributor,
+	IAttributorConfig,
+	IProvideAttributorConfig,
+	IRuntimeAttributor,
 	mixinAttributor,
 } from "../mixinAttributor";
 import { Attributor } from "../attributor";
@@ -37,6 +38,16 @@ import { makeMockAudience } from "./utils";
 type Mutable<T> = {
 	-readonly [P in keyof T]: T[P];
 };
+
+class Config implements IAttributorConfig {
+	public get IAttributorConfig() {
+		return this;
+	}
+	constructor(
+		public readonly runtimeAttributor: IRuntimeAttributor,
+		public readonly enableOnNewFile: boolean,
+	) {}
+}
 
 describe("mixinAttributor", () => {
 	const clientId = "mock client id";
@@ -59,9 +70,9 @@ describe("mixinAttributor", () => {
 		};
 	};
 
-	const getScope = (): FluidObject<IProvideRuntimeAttributor> => ({
-		IRuntimeAttributor: createRuntimeAttributor(),
-	});
+	const getScope = (enableOnNewFile: boolean): FluidObject<IProvideAttributorConfig> => {
+		return new Config(createRuntimeAttributor(), enableOnNewFile);
+	};
 
 	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
 	let injectedSettings: Record<string, ConfigTypes> = {};
@@ -78,27 +89,22 @@ describe("mixinAttributor", () => {
 		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
 	});
 
-	const setEnableOnNew = (val: boolean) => {
-		injectedSettings[enableOnNewFileKey] = val;
-	};
-
 	const AttributingContainerRuntime = mixinAttributor();
 
 	it("Attributes ops", async () => {
-		setEnableOnNew(true);
 		const context = getMockContext() as IContainerContext;
 		const containerRuntime = await AttributingContainerRuntime.load(
 			context,
 			[],
 			undefined, // requestHandler
 			{}, // runtimeOptions
-			getScope(),
+			getScope(true),
 		);
 
-		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
+		const maybeProvidesAttributor: FluidObject<IProvideAttributorConfig> =
 			containerRuntime.scope;
-		assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
-		const runtimeAttribution = maybeProvidesAttributor.IRuntimeAttributor;
+		assert(maybeProvidesAttributor.IAttributorConfig !== undefined);
+		const { runtimeAttributor } = maybeProvidesAttributor.IAttributorConfig;
 
 		const op: Partial<ISequencedDocumentMessage> = {
 			type: "op",
@@ -109,21 +115,20 @@ describe("mixinAttributor", () => {
 
 		(context.deltaManager as MockDeltaManager).emit("op", op);
 
-		assert.deepEqual(runtimeAttribution.get({ type: "op", seq: op.sequenceNumber! }), {
+		assert.deepEqual(runtimeAttributor.get({ type: "op", seq: op.sequenceNumber! }), {
 			timestamp: op.timestamp,
 			user: context.audience?.getMember(op.clientId!)?.user,
 		});
 	});
 
 	it("includes attribution association data in the summary tree", async () => {
-		setEnableOnNew(true);
 		const context = getMockContext() as IContainerContext;
 		const containerRuntime = await AttributingContainerRuntime.load(
 			context,
 			[],
 			undefined, // requestHandler
 			{}, // runtimeOptions
-			getScope(),
+			getScope(true),
 		);
 
 		const op: Partial<ISequencedDocumentMessage> = {
@@ -203,70 +208,65 @@ describe("mixinAttributor", () => {
 			[],
 			undefined, // requestHandler
 			{}, // runtimeOptions
-			getScope(),
+			getScope(true),
 		);
 
-		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
+		const maybeProvidesAttributor: FluidObject<IProvideAttributorConfig> =
 			containerRuntime.scope;
-		assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
-		const runtimeAttribution = maybeProvidesAttributor.IRuntimeAttributor;
+		assert(maybeProvidesAttributor.IAttributorConfig !== undefined);
+		const { runtimeAttributor } = maybeProvidesAttributor.IAttributorConfig;
 
-		assert.deepEqual(runtimeAttribution.get({ type: "op", seq: op.sequenceNumber! }), {
+		assert.deepEqual(runtimeAttributor.get({ type: "op", seq: op.sequenceNumber! }), {
 			timestamp: op.timestamp,
 			user: context.audience?.getMember(op.clientId!)?.user,
 		});
 	});
 
 	describe("Doesn't summarize attributor", () => {
-		const testCases: { getContext: () => IContainerContext; testName: string }[] = [
+		const testCases: {
+			getContext: () => { context: IContainerContext; enableOnNew: boolean };
+			testName: string;
+		}[] = [
 			{
 				testName: "for existing documents that had no attributor",
 				getContext: () => {
-					setEnableOnNew(true);
 					const context = getMockContext() as Mutable<IContainerContext>;
 					const snapshot: ISnapshotTree = {
 						blobs: {},
 						trees: {},
 					};
 					context.baseSnapshot = snapshot;
-					return context;
+					return { context, enableOnNew: true };
 				},
 			},
 			{
-				testName: `for new documents with ${enableOnNewFileKey} unset`,
+				testName: `for new documents with enableOnNew set to false`,
 				getContext: () => {
-					return getMockContext() as IContainerContext;
-				},
-			},
-			{
-				testName: `for new documents with ${enableOnNewFileKey} set to false`,
-				getContext: () => {
-					setEnableOnNew(false);
 					const context = getMockContext() as Mutable<IContainerContext>;
 					const snapshot: ISnapshotTree = {
 						blobs: {},
 						trees: {},
 					};
 					context.baseSnapshot = snapshot;
-					return context;
+					return { context, enableOnNew: false };
 				},
 			},
 		];
 
 		for (const { getContext, testName } of testCases) {
 			it(testName, async () => {
-				const context = getContext();
+				const { context, enableOnNew } = getContext();
 				const containerRuntime = await AttributingContainerRuntime.load(
 					context,
 					[],
 					undefined, // requestHandler
 					{}, // runtimeOptions
-					getScope(),
+					getScope(enableOnNew),
 				);
 
-				const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> =
+				const maybeProvidesAttributor: FluidObject<IProvideAttributorConfig> =
 					containerRuntime.scope;
-				assert(maybeProvidesAttributor.IRuntimeAttributor !== undefined);
+				assert(maybeProvidesAttributor.IAttributorConfig !== undefined);
 
 				const { summary } = await containerRuntime.summarize({
 					fullTree: true,

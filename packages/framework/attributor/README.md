@@ -31,7 +31,7 @@ Despite this, the APIs are generally ready for early adoption--feel free to play
 ## Quickstart
 
 To turn on op-stream based attribution in your container, use `mixinAttributor` to create a `ContainerRuntime` class which supports querying for attribution information.
-When you instantiate your container runtime, pass a scope which implements `IProvideRuntimeAttributor`.
+When you instantiate your container runtime, pass a scope which implements `IProvideAttributorConfig`.
 
 ```typescript
 import { ContainerRuntime } from "@fluidframework/container-runtime";
@@ -45,10 +45,16 @@ class ContainerRuntimeFactory implements IRuntimeFactory {
 		context: IContainerContext,
 		existing?: boolean,
 	): Promise<IRuntime> {
-		const attributor = createRuntimeAttributor();
+		const runtimeAttributor = createRuntimeAttributor();
 		// ...make this attributor accessible to your application however you deem fit; e.g. by registering it on a DependencyContainer.
 		// To inject loading and storing of attribution data on your runtime, provide a scope implementing IProvideRuntimeAttributor:
-		const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
+		const scope: FluidObject<IProvideRuntimeAttributor> = {
+			IAttributorConfig: {
+				runtimeAttributor,
+				// Container authors which don't have any backwards-compatibility concerns can set this to true immediately.
+				enableOnNewFile: false,
+			},
+		};
 		const runtime = await ContainerRuntimeWithAttribution.load(
 			context,
 			dataStoreRegistry,
@@ -63,7 +69,8 @@ class ContainerRuntimeFactory implements IRuntimeFactory {
 ```
 
 This will cause your container runtime to load attribution data available on existing containers.
-To additionally start storing attribution data on new documents, enable the config flag `"Fluid.Attribution.EnableOnNewFile"`.
+To additionally start storing attribution data on new documents,
+change `enableOnNewFile` to `true`.
 Be sure to also [enable any necessary options at the DDS level](#dds-support).
 For a more comprehensive list of backwards-compatability concerns which shed more light on these flags, see [integration](#integration).
 
@@ -121,8 +128,8 @@ Additionally, if a document that contains attribution is loaded using a containe
 any attribution information stored in that document may be lost.
 
 The current design of the mixin's behavior is therefore motivated by the ability to roll out the feature in Fluid's collaborative environment.
-The behavior of `"Fluid.Attribution.WriteOnNewFile"` supports the standard strategy of rolling out code that reads a new format and waiting for it to saturate before beginning to write that new format.
-"reading the new format" corresponds to using a container runtime initialized with `mixinAttributor`, and "writing the new format" to enabling `"Fluid.Attribution.WriteOnNewFile"` in configuration.
+The behavior of `enableOnNewFile` supports the standard strategy of rolling out code that reads a new format and waiting for it to saturate before beginning to write that new format.
+"reading the new format" corresponds to using a container runtime initialized with `mixinAttributor` and setting `enableOnNewFile: false` in the config, and "writing the new format" to `enableOnNewFile: true`.
 During the "waiting to saturate" period, developers are free to experiment with turning the feature flag on locally and testing various compatability scenarios.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->

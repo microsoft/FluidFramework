@@ -18,6 +18,7 @@ import {
 	createRemoveRangeOp,
 	ICombiningOp,
 	IJSONSegment,
+	IMergeTreeAttributionOptions,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
 	IMergeTreeGroupMsg,
@@ -109,6 +110,10 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	);
 }
 
+export interface SequenceOptions {
+	attribution: IMergeTreeAttributionOptions;
+}
+
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
@@ -189,6 +194,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		public id: string,
 		attributes: IChannelAttributes,
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
+		options?: SequenceOptions,
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
@@ -196,10 +202,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.logger.sendErrorEvent({ eventName: "SequenceLoadFailed" }, error);
 		});
 
+		let clientOptions = dataStoreRuntime.options;
+		if (options?.attribution) {
+			clientOptions = {
+				...clientOptions,
+				attribution: options.attribution,
+			};
+		}
 		this.client = new Client(
 			segmentFromSpec,
 			ChildLogger.create(this.logger, "SharedSegmentSequence.MergeTreeClient"),
-			dataStoreRuntime.options,
+			clientOptions,
 		);
 
 		this.client.on("delta", (opArgs, deltaArgs) => {
