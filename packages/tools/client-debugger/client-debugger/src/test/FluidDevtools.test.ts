@@ -7,7 +7,9 @@ import { expect } from "chai";
 
 import {
 	FluidDevtools,
+	accessBeforeInitializeErrorText,
 	getContainerAlreadyRegisteredErrorText,
+	initializeDevtools,
 	useAfterDisposeErrorText,
 } from "../FluidDevtools";
 import { ContainerDevtoolsProps } from "../ContainerDevtools";
@@ -37,15 +39,14 @@ describe("FluidDevtools unit tests", () => {
 		expect(devtools.getAllContainerDevtools().length).to.equal(1);
 
 		const containerDevtools = devtools.getContainerDevtools(containerId);
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(containerDevtools).to.not.be.undefined;
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions, @typescript-eslint/no-non-null-assertion
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		expect(containerDevtools!.disposed).to.be.false;
 
 		devtools.closeContainerDevtools(containerId);
 
 		expect(devtools.getAllContainerDevtools().length).to.equal(0);
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions, @typescript-eslint/no-non-null-assertion
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		expect(containerDevtools!.disposed).to.be.true;
 
 		devtools.dispose();
@@ -56,7 +57,6 @@ describe("FluidDevtools unit tests", () => {
 
 		devtools.dispose();
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(devtools.disposed).to.be.true;
 
 		const container = createMockContainer();
@@ -96,5 +96,29 @@ describe("FluidDevtools unit tests", () => {
 		expect(() => devtools.registerContainerDevtools(container2Props)).to.throw(
 			getContainerAlreadyRegisteredErrorText(containerId),
 		);
+	});
+
+	it("tryGet", () => {
+		expect(FluidDevtools.tryGet()).to.be.undefined;
+
+		const devtools = initializeDevtools({});
+
+		expect(FluidDevtools.tryGet()).to.not.be.undefined;
+
+		devtools.dispose();
+
+		expect(FluidDevtools.tryGet()).to.be.undefined;
+	});
+
+	it("getOrThrow", () => {
+		expect(() => FluidDevtools.getOrThrow()).to.throw(accessBeforeInitializeErrorText);
+
+		const devtools = initializeDevtools({});
+
+		expect(() => FluidDevtools.getOrThrow()).to.not.throw();
+
+		devtools.dispose();
+
+		expect(() => FluidDevtools.getOrThrow()).to.throw(accessBeforeInitializeErrorText);
 	});
 });

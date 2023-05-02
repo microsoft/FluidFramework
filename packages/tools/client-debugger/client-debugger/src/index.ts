@@ -4,42 +4,15 @@
  */
 
 /**
- * TODO
+ * Contains an API for initializing developer tooling alongside the Fluid Framework.
  *
- * @remarks
+ * This tooling is built for use alongside our Chromium browser extension.
+ * It listens for incoming messages from the corresponding extension, and posts direct responses as well as automatic
+ * updates for Fluid state changes.
  *
- * TODO: Update this
+ * Individual {@link IFluidContainer | Fluid Containers} can be registered to generate Container-level stats.
  *
- * The general usage pattern for this library is to first initialize a debugger for a given Fluid Client
- * ({@link @fluidframework/container-definitions#IContainer} and {@link @fluidframework/container-definitions#IAudience})
- * by calling {@link initializeDevtools} during application setup / any time after your container has been
- * attached.
- *
- * The Devtools instance will automatically dispose of itself as a part of the Window's unload operation
- * (when the page is closed, refreshed, etc.).
- * That said, if you wish to manually close the Devtools at some earlier stage in your application lifecycle, you may call {@link closeDevtools} to do so.
- *
- * @example Initialization
- *
- * TODO: Update this
- *
- * ```typescript
- * initializeDevtools({
- *  containerId,
- *  container,
- *  containerData: {
- *      rootMap: sharedMap
- *  },
- * });
- * ```
- *
- * @example Disposal
- *
- * TODO: Update this
- *
- * ```typescript
- * closeDevtools(containerId);
- * ```
+ * See the package README for more details.
  *
  * @packageDocumentation
  */
