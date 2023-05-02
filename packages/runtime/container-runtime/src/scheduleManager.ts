@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
-import { asMessageWithMetadata, IRuntimeMessageWithMetadata } from "./opProperties";
+import { asMessageWithMetadata } from "./opProperties";
 
 /**
  * This class has the following responsibilities:
