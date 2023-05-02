@@ -15,6 +15,8 @@ jobs:
           fetch-depth: "0" # all history
           persist-credentials: false
       - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+      - name: Enable corepack
+        run: corepack enable
       - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
         with:
           node-version-file: .nvmrc
@@ -23,12 +25,11 @@ jobs:
 
       - name: Install Fluid build tools
         run: |
-          corepack enable
-          # pnpm add --global @fluid-tools/build-cli@^0.16.0-0
+          pnpm add --global @fluid-tools/build-cli@^0.16.0-0
 
-          cd build-tools
-          pnpm install --frozen-lockfile
-          pnpm run build:compile
+          # cd build-tools
+          # pnpm install --frozen-lockfile
+          # pnpm run build:compile
 
           # Info for debugging
           which flub
