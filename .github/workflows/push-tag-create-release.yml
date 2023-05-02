@@ -25,11 +25,11 @@ jobs:
 
       - name: Install Fluid build tools
         run: |
-          pnpm add --global @fluid-tools/build-cli@^0.16.0-0
+          # pnpm add --global @fluid-tools/build-cli@^0.16.0-0
 
-          # cd build-tools
-          # pnpm install --frozen-lockfile
-          # pnpm run build:compile
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
 
           # Info for debugging
           which flub
