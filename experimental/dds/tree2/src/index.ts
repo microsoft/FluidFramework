@@ -252,5 +252,3 @@ export type {
 	IJsonCodec,
 	IMultiFormatCodec,
 } from "./codec";
-
-export { StableId, UuidString } from "./id-compressor";

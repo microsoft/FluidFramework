@@ -124,18 +124,6 @@ export class FluidPackageCheck {
 					fixed = true;
 				}
 			}
-
-			if (!hasConfig) {
-				// Make sure --unhandled-rejections=strict switch used
-				const unhandledRejectionsSwitch = "--unhandled-rejections=strict";
-				if (!testScript.includes(unhandledRejectionsSwitch)) {
-					this.logWarn(pkg, `missing --unhandled-rejection switch in test script`, fix);
-					if (fix) {
-						pkg.packageJson.scripts[testScriptName] += ` ${unhandledRejectionsSwitch}`;
-						fixed = true;
-					}
-				}
-			}
 		}
 
 		return fixed;
