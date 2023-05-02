@@ -9,10 +9,10 @@ import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-ut
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { CompressionAlgorithms } from "../containerRuntime";
-import { IRuntimeMessageWithMetadata, isMessageWithValidMetadata } from "../opProperties";
+import { asMessageWithMetadata, IRuntimeMessageWithMetadata } from "../opProperties";
 import { IMessageProcessingResult } from "./definitions";
 
-type ICompressedSequencedMessage = IRuntimeMessageWithMetadata & {
+type ICompressedSequencedMessage = ISequencedDocumentMessage & {
 	contents: { packedContents: string };
 };
 
@@ -40,7 +40,9 @@ export class OpDecompressor {
 			0x511 /* Only lz4 compression is supported */,
 		);
 
-		if (this.isCompressed(message) && message.metadata?.batch === true) {
+		const metadata = asMessageWithMetadata(message)?.metadata;
+
+		if (metadata?.batch === true && this.isCompressed(message)) {
 			// Beginning of a compressed batch
 			assert(this.activeBatch === false, 0x4b8 /* shouldn't have multiple active batches */);
 			if (message.compression) {
@@ -65,55 +67,53 @@ export class OpDecompressor {
 			};
 		}
 
-		if (isMessageWithValidMetadata(message)) {
-			if (
-				this.rootMessageContents !== undefined &&
-				message.metadata?.batch === undefined &&
-				this.activeBatch
-			) {
-				assert(message.contents === undefined, 0x512 /* Expecting empty message */);
+		if (
+			this.rootMessageContents !== undefined &&
+			metadata?.batch === undefined &&
+			this.activeBatch
+		) {
+			assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
-				// Continuation of compressed batch
-				return {
-					message: newMessage(message, this.rootMessageContents[this.processedCount++]),
-					state: "Accepted",
-				};
-			}
+			// Continuation of compressed batch
+			return {
+				message: newMessage(message, this.rootMessageContents[this.processedCount++]),
+				state: "Accepted",
+			};
+		}
 
-			if (this.rootMessageContents !== undefined && message.metadata?.batch === false) {
-				// End of compressed batch
-				const returnMessage = newMessage(
-					message,
-					this.rootMessageContents[this.processedCount++],
-				);
+		if (this.rootMessageContents !== undefined && metadata?.batch === false) {
+			// End of compressed batch
+			const returnMessage = newMessage(
+				message,
+				this.rootMessageContents[this.processedCount++],
+			);
 
-				this.activeBatch = false;
-				this.rootMessageContents = undefined;
-				this.processedCount = 0;
+			this.activeBatch = false;
+			this.rootMessageContents = undefined;
+			this.processedCount = 0;
 
-				return {
-					message: returnMessage,
-					state: "Processed",
-				};
-			}
+			return {
+				message: returnMessage,
+				state: "Processed",
+			};
+		}
 
-			if (message.metadata?.batch === undefined && this.isCompressed(message)) {
-				// Single compressed message
-				assert(
-					this.activeBatch === false,
-					0x4ba /* shouldn't receive compressed message in middle of a batch */,
-				);
+		if (metadata?.batch === undefined && this.isCompressed(message)) {
+			// Single compressed message
+			assert(
+				this.activeBatch === false,
+				0x4ba /* shouldn't receive compressed message in middle of a batch */,
+			);
 
-				const contents = IsoBuffer.from(message.contents.packedContents, "base64");
-				const decompressedMessage = decompress(contents);
-				const intoString = new TextDecoder().decode(decompressedMessage);
-				const asObj = JSON.parse(intoString);
+			const contents = IsoBuffer.from(message.contents.packedContents, "base64");
+			const decompressedMessage = decompress(contents);
+			const intoString = new TextDecoder().decode(decompressedMessage);
+			const asObj = JSON.parse(intoString);
 
-				return {
-					message: newMessage(message, asObj[0]),
-					state: "Processed",
-				};
-			}
+			return {
+				message: newMessage(message, asObj[0]),
+				state: "Processed",
+			};
 		}
 
 		return {
@@ -150,13 +150,12 @@ export class OpDecompressor {
 				typeof maybeContents?.packedContents === "string" &&
 				maybeContents.packedContents.length > 0 &&
 				IsoBuffer.from(maybeContents.packedContents, "base64").toString("base64") ===
-					maybeContents.packedContents &&
-				isMessageWithValidMetadata(message)
+					maybeContents.packedContents
 			) {
 				this.logger.sendTelemetryEvent({
 					eventName: "LegacyCompression",
 					type: message.type,
-					batch: message.metadata?.batch,
+					batch: asMessageWithMetadata(message)?.metadata?.batch,
 				});
 				return true;
 			}
@@ -170,11 +169,11 @@ export class OpDecompressor {
 
 // We should not be mutating the input message nor its metadata
 const newMessage = (
-	originalMessage: IRuntimeMessageWithMetadata,
+	originalMessage: ISequencedDocumentMessage,
 	contents: any,
 ): IRuntimeMessageWithMetadata => ({
 	...originalMessage,
 	contents,
 	compression: undefined,
-	metadata: { ...originalMessage.metadata },
+	metadata: { ...asMessageWithMetadata(originalMessage)?.metadata },
 });
