@@ -1,0 +1,55 @@
+name: "pr-labeler-changeset"
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+
+jobs:
+  # This job must be triggered by pull_request, NOT pull_request_target so that it executes in a safe context.
+  changeset_label:
+    name: Changeset check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }} # Check out the head commit, not the merge commit
+
+      # install and configure node, pnpm and the changeset tools
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install tools
+        run: |
+          # We only need to install the root dependencies
+          pnpm install -w --frozen-lockfile
+
+      # Add the remote for debugging
+      - run: git remote add upstream https://github.com/microsoft/FluidFramework
+      - run: git fetch upstream
+      - run: git log -1
+      # Check whether a changeset was added. This step will have the outcome 'failure' if there is no changeset.
+      - id: changeset-status
+        name: Changeset status
+        continue-on-error: true
+        run: |
+          pnpm exec flub check changeset --branch=${{ github.base_ref }}
+
+      # If a changeset is present and it's labeled changeset-required, label it changeset-present
+      - uses: actions-ecosystem/action-add-labels@bd52874380e3909a1ac983768df6976535ece7f8 # ratchet:actions-ecosystem/action-add-labels@v1.1.0
+        name: Add changeset-present
+        if: steps.changeset-status.outcome == 'success' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        with:
+          labels: changeset-present
+          github_token: ${{ github.token }}
+
+      # If a changeset is missing and it's labeled changeset-required, remove the changeset-present label
+      - uses: actions-ecosystem/action-remove-labels@2ce5d41b4b6aa8503e285553f75ed56e0a40bae0 # ratchet:actions-ecosystem/action-remove-labels@v1.3.0
+        name: Remove changeset-present
+        if: steps.changeset-status.outcome == 'failure' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        with:
+          labels: changeset-present
+          github_token: ${{ github.token }}
