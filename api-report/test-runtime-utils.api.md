@@ -126,7 +126,7 @@ export class MockContainerRuntimeFactory {
     getMinSeq(): number;
     protected messages: ISequencedDocumentMessage[];
     // (undocumented)
-    minSeq: Map<string, number>;
+    minSeq: Map<string | null, number>;
     // (undocumented)
     get outstandingMessageCount(): number;
     processAllMessages(): void;

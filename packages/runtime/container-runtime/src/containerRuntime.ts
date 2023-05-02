@@ -179,6 +179,7 @@ import {
 } from "./opLifecycle";
 import { createSessionId, IdCompressor } from "./id-compressor";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
+import { isMessageWithValidMetadata } from "./opProperties";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -1969,6 +1970,26 @@ export class ContainerRuntime
 				this.updateDocumentDirtyState(false);
 			}
 
+			const handleUnknownMessage = (): never => {
+				const error = DataProcessingError.create(
+					// Former assert 0x3ce
+					"Runtime message of unknown type",
+					"OpProcessing",
+					message,
+					{
+						local,
+						type: message.type,
+						contentType: typeof message.contents,
+						batch: isMessageWithValidMetadata(message)
+							? message.metadata?.batch
+							: undefined,
+						compression: message.compression,
+					},
+				);
+				this.closeFn(error);
+				throw error;
+			};
+
 			const type = message.type as ContainerMessageType;
 			switch (type) {
 				case ContainerMessageType.Attach:
@@ -1981,7 +2002,11 @@ export class ContainerRuntime
 					this.dataStores.processFluidDataStoreOp(message, local, localOpMetadata);
 					break;
 				case ContainerMessageType.BlobAttach:
-					this.blobManager.processBlobAttachOp(message, local);
+					if (isMessageWithValidMetadata(message)) {
+						this.blobManager.processBlobAttachOp(message, local);
+					} else {
+						handleUnknownMessage();
+					}
 					break;
 				case ContainerMessageType.IdAllocation:
 					assert(
@@ -1995,21 +2020,7 @@ export class ContainerRuntime
 					break;
 				default:
 					if (runtimeMessage) {
-						const error = DataProcessingError.create(
-							// Former assert 0x3ce
-							"Runtime message of unknown type",
-							"OpProcessing",
-							message,
-							{
-								local,
-								type: message.type,
-								contentType: typeof message.contents,
-								batch: message.metadata?.batch,
-								compression: message.compression,
-							},
-						);
-						this.closeFn(error);
-						throw error;
+						handleUnknownMessage();
 					}
 			}
 

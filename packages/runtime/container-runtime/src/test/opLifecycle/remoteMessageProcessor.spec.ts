@@ -13,16 +13,18 @@ import {
 	RemoteMessageProcessor,
 } from "../../opLifecycle";
 import { ContainerMessageType } from "../..";
+import { IMessageWithMetadata, assertMessageWithValidMetadata } from "../../opProperties";
 
 describe("RemoteMessageProcessor", () => {
-	const stamp = (
-		message: ISequencedDocumentMessage,
-		value: string,
-	): ISequencedDocumentMessage => {
-		const newMessage = { ...message };
-		newMessage.metadata = message.metadata === undefined ? {} : message.metadata;
-		newMessage.metadata.history =
-			message.metadata.history === undefined ? [] : message.metadata.history;
+	const stamp = (message: ISequencedDocumentMessage, value: string): IMessageWithMetadata => {
+		assertMessageWithValidMetadata(message);
+		const newMessage: IMessageWithMetadata & {
+			metadata?: { history?: string[] };
+		} = {
+			...message,
+		};
+		newMessage.metadata ??= { history: [] };
+		newMessage.metadata.history ??= [];
 		newMessage.metadata.history.push(value);
 		return newMessage;
 	};
@@ -98,8 +100,8 @@ describe("RemoteMessageProcessor", () => {
 
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
-
-		assert.deepStrictEqual(result.metadata.history, ["decompress", "reconstruct"]);
+		assertMessageWithValidMetadata(result);
+		assert.deepStrictEqual(result?.metadata?.history, ["decompress", "reconstruct"]);
 		assert.deepStrictEqual(result.contents, message.contents.contents);
 	});
 
@@ -145,7 +147,8 @@ describe("RemoteMessageProcessor", () => {
 		assert.strictEqual(processResult.length, 1, "only expected a single processed message");
 		const result = processResult[0];
 
-		assert.deepStrictEqual(result.metadata.history, [
+		assertMessageWithValidMetadata(result);
+		assert.deepStrictEqual(result?.metadata?.history, [
 			"decompress",
 			"reconstruct",
 			"decompress",

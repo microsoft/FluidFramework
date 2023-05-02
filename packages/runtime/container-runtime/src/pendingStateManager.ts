@@ -11,6 +11,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
+import { assertMessageWithValidMetadata, isMessageWithValidMetadata } from "./opProperties";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -294,7 +295,7 @@ export class PendingStateManager implements IDisposable {
 	 */
 	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
-		if (message.metadata?.batch) {
+		if (isMessageWithValidMetadata(message) && message.metadata?.batch) {
 			// We should not already be processing a batch and there should be no pending batch begin message.
 			assert(
 				!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
@@ -318,9 +319,10 @@ export class PendingStateManager implements IDisposable {
 
 		// There should be a pending batch begin message.
 		assert(
-			this.pendingBatchBeginMessage !== undefined,
+			isMessageWithValidMetadata(this.pendingBatchBeginMessage),
 			0x16d /* "There is no pending batch begin message" */,
 		);
+		assertMessageWithValidMetadata(message);
 
 		const batchEndMetadata = message.metadata?.batch;
 		if (this.pendingMessages.isEmpty() || batchEndMetadata === false) {
@@ -343,7 +345,7 @@ export class PendingStateManager implements IDisposable {
 							message,
 							{
 								runtimeVersion: pkgVersion,
-								batchClientId: this.pendingBatchBeginMessage.clientId,
+								batchClientId: this.pendingBatchBeginMessage.clientId ?? undefined,
 								clientId: this.stateHandler.clientId(),
 								hasBatchStart: batchBeginMetadata === true,
 								hasBatchEnd: batchEndMetadata === false,

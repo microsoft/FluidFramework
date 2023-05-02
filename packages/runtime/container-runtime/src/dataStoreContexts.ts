@@ -30,19 +30,21 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 	private readonly disposeOnce = new Lazy<void>(() => {
 		// close/stop all store contexts
 		for (const [fluidDataStoreId, contextD] of this.deferredContexts) {
-			contextD.promise
-				.then((context) => {
-					context.dispose();
-				})
-				.catch((contextError) => {
-					this._logger.sendErrorEvent(
-						{
-							eventName: "FluidDataStoreContextDisposeError",
-							fluidDataStoreId,
-						},
-						contextError,
-					);
-				});
+			if (contextD.isCompleted) {
+				contextD.promise
+					.then((context) => {
+						context.dispose();
+					})
+					.catch((contextError) => {
+						this._logger.sendErrorEvent(
+							{
+								eventName: "FluidDataStoreContextDisposeError",
+								fluidDataStoreId,
+							},
+							contextError,
+						);
+					});
+			}
 		}
 	});
 

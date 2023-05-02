@@ -54,6 +54,12 @@ export class OpSplitter {
 		}
 
 		const clientId = message.clientId;
+		if (clientId === null) {
+			return {
+				message,
+				state: "Skipped",
+			};
+		}
 		const chunkedContent = message.contents as IChunkedOp;
 		this.addChunk(clientId, chunkedContent, message);
 

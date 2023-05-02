@@ -20,6 +20,7 @@ import {
  */
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 	type: MessageType.Summarize;
+	clientId: string;
 	contents: ISummaryContent;
 }
 
@@ -28,6 +29,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
  */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryAck;
+	clientId: null;
 	contents: ISummaryAck;
 }
 
@@ -36,6 +38,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
  */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryNack;
+	clientId: null;
 	contents: ISummaryNack;
 }
 

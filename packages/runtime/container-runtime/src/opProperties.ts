@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
+	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
@@ -19,3 +21,55 @@ export const opSize = (op: ISequencedDocumentMessage): number => {
 
 const opHasData = (op: ISequencedDocumentMessage): op is ISequencedDocumentSystemMessage =>
 	(op as ISequencedDocumentSystemMessage).data !== undefined;
+
+export type IMessageWithMetadata<
+	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
+> = T & {
+	metadata?: {
+		batch?: boolean;
+		blobId?: string;
+		localId?: string;
+		compressed?: undefined;
+	};
+};
+export function isMessageWithValidMetadata<T extends ISequencedDocumentMessage | IDocumentMessage>(
+	message: T | undefined,
+): message is IMessageWithMetadata<T> {
+	if (typeof message?.metadata === "object" && message.metadata !== null) {
+		return true;
+	}
+	return false;
+}
+
+export function asMessageWithMetadata<T extends ISequencedDocumentMessage | IDocumentMessage>(
+	message: T | undefined,
+): IMessageWithMetadata<T> | undefined {
+	return isMessageWithValidMetadata(message) ? message : undefined;
+}
+
+export function assertMessageWithValidMetadata<
+	T extends ISequencedDocumentMessage | IDocumentMessage,
+>(message: T | undefined): asserts message is IMessageWithMetadata<T> {
+	assert(isMessageWithValidMetadata(message), "message does not have valid metadata");
+}
+
+export type IMessageWithContents<
+	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
+> = T & {
+	contents?: { type?: string; address?: string; contents?: unknown };
+};
+
+export function isMessageWithValidContents<
+	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
+>(message: T | undefined): message is IMessageWithContents<T> {
+	if (typeof message?.contents === "object" && message.contents !== null) {
+		return true;
+	}
+	return false;
+}
+
+export function assertMessageWithValidContents<
+	T extends ISequencedDocumentMessage | IDocumentMessage,
+>(message: T | undefined): asserts message is IMessageWithContents<T> {
+	assert(isMessageWithValidContents(message), "message does not have valid metadata");
+}
