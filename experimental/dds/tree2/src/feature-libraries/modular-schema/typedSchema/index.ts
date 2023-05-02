@@ -36,6 +36,13 @@ export {
 
 export { SchemaBuilder, TypedViewSchemaCollection } from "./schemaBuilder";
 
-export { TreeSchema, AllowedTypes, FieldSchema, GlobalFieldSchema, Any } from "./typedTreeSchema";
+export {
+	TreeSchema,
+	AllowedTypes,
+	FieldSchema,
+	GlobalFieldSchema,
+	Any,
+	TypedTreeSchemaSpecification,
+} from "./typedTreeSchema";
 
 export { FlexList, FlexListToNonLazyArray } from "./flexList";

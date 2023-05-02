@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { GlobalFieldKey, SchemaDataAndPolicy, TreeSchemaIdentifier, ValueSchema } from "../../core";
+import { TreeSchemaIdentifier, ValueSchema } from "../../core";
 import {
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
@@ -22,7 +22,7 @@ import {
 } from "../modular-schema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { UntypedSequenceField } from "./partlyTyped";
-import { NamesFromSchema, PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
+import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 
 /**
  * Schema aware API for a specific Schema.
@@ -33,9 +33,9 @@ import { NamesFromSchema, PrimitiveValueSchema, TypedValue } from "./schemaAware
  */
 export type TypedTree<Mode extends ApiMode, TSchema extends TreeSchema> = CollectOptions<
 	Mode,
-	TypedFields<Mode, TSchema["info"]["local"]>,
-	TSchema["info"]["value"],
-	TSchema["info"]["name"]
+	TypedFields<Mode, TSchema["localFieldsObject"]>,
+	TSchema["value"],
+	TSchema["name"]
 >;
 
 /**
@@ -140,10 +140,15 @@ export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
  * Extend this to support global fields.
  * @alpha
  */
-export type TypedFields<Mode extends ApiMode, TFields extends { [key: string]: FieldSchema }> = [
-	{
-		[key in keyof TFields]: TypedField<Mode, TFields[key]>;
-	},
+export type TypedFields<
+	Mode extends ApiMode,
+	TFields extends undefined | { [key: string]: FieldSchema },
+> = [
+	TFields extends { [key: string]: FieldSchema }
+		? {
+				[key in keyof TFields]: TypedField<Mode, TFields[key]>;
+		  }
+		: Record<string, never>,
 ][TypedSchema._dummy];
 
 /**
@@ -216,33 +221,6 @@ export interface TypedSchemaData extends ViewSchemaCollection {
 	// TODO: can we use a more specific type here?
 	readonly treeSchemaObject: Record<string, any>; // LabeledTreeSchema
 	readonly allTypes: readonly string[];
-}
-
-/**
- * Collects schema into a `TypedSchemaData` without losing type information.
- *
- * TODO:
- * 1. Extend this to support global fields.
- * 2. Extend this to better support use in libraries
- * which only have partial knowledge of what schema exist.
- * Currently unbounded polymorphism is not correct in that case.
- *
- *
- * @alpha
- */
-export function typedSchemaData<T extends TreeSchema[]>(
-	globalFieldSchema: [GlobalFieldKey, FieldSchema][],
-	...t: T
-): SchemaDataAndPolicy<FullSchemaPolicy> &
-	ViewSchemaCollection & {
-		treeSchemaObject: {
-			[schema in T[number] as schema["info"]["name"]]: schema;
-		};
-
-		allTypes: NamesFromSchema<T>;
-	} {
-	// TODO: delete this
-	throw new Error();
 }
 
 /**

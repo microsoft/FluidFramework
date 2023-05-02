@@ -16,6 +16,6 @@ export {
 	TypedField,
 } from "./schemaAware";
 
-export { NamesFromSchema, ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";
+export { ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";
 
 export { UntypedSequenceField } from "./partlyTyped";

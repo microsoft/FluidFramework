@@ -67,6 +67,16 @@ export class SchemaBuilder {
 	}
 
 	/**
+	 * Same as `object` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a sideeffect of a workaround for a TypeScript limitation.
+	 *
+	 * See note on fieldRecursive for details.
+	 */
+	public objectRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, T> {
+		return new TreeSchema(this, name, t);
+	}
+
+	/**
 	 * Define (and add to this library) a schema for an object that just wraps a primitive value.
 	 * Such objects will be implicitly unwrapped to the value in some APIs.
 	 */
@@ -132,13 +142,28 @@ export class SchemaBuilder {
 	}
 
 	/**
-	 * Define a schema a field.
+	 * Define a schema for a field.
 	 */
 	public static field<Kind extends Kinds, T extends AllowedTypesParameter>(
 		kind: Kind,
 		...allowedTypes: T
 	): FieldSchema<Kind, NormalizeAllowedTypesParameter<T>> {
 		return new FieldSchema(kind, normalizeAllowedTypesParameter(allowedTypes));
+	}
+
+	/**
+	 * Define a schema for a field.
+	 * Same as `field` but takes in `AllowedTypes`, is less type safe and supports recursive types.
+	 * This API is less safe and less ergonomic to work around a limitation of TypeScript.
+	 *
+	 * T must extends `AllowedTypes`: This can not be enforced via TypeScript since "extends" clauses cause recursive types to error with:
+	 * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
+	 */
+	public static fieldRecursive<Kind extends Kinds, T>(
+		kind: Kind,
+		allowedTypes: T,
+	): FieldSchema<Kind, T> {
+		return new FieldSchema(kind, allowedTypes);
 	}
 
 	/**

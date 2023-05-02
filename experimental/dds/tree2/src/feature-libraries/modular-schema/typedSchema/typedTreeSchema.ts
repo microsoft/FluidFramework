@@ -21,7 +21,7 @@ import { FieldKinds } from "../..";
 import { forbidden, value } from "../../defaultFieldKinds";
 import { MakeNominal } from "../../../util";
 import { FlexList, FlexListToLazyArray, LazyItem, normalizeFlexList } from "./flexList";
-import { ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
+import { Assume, ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
 
 // TODO: tests for this file
 
@@ -29,21 +29,32 @@ interface LocalFields {
 	readonly [key: string]: FieldSchemaSpecification | undefined;
 }
 
-type NormalizeLocalFieldsInner<T extends LocalFields> = ObjectToMap<
-	{ [Property in keyof T]: NormalizeField<T[Property]> },
-	LocalFieldKey,
-	FieldSchema
->;
+type NormalizeLocalFieldsInner<T extends LocalFields> = {
+	[Property in keyof T]: NormalizeField<T[Property]>;
+};
 
 type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFieldsInner<
 	WithDefault<T, Record<string, never>>
 >;
 
-export class TreeSchema<Name extends string = string, T extends TypedTreeSchemaSpecification = any>
+/**
+ * T must extend TypedTreeSchemaSpecification.
+ * This can not be enforced using TypeScript since doing so breaks recursive type support.
+ * See note on SchemaBuilder.fieldRecursive.
+ */
+export class TreeSchema<Name extends string = string, T = TypedTreeSchemaSpecification>
 	implements ITreeSchema
 {
 	// Allows reading localFields through the normal map, but without losing type information.
-	public readonly localFields: NormalizeLocalFields<T["local"]>;
+	public readonly localFields: ObjectToMap<
+		NormalizeLocalFields<Assume<T, TypedTreeSchemaSpecification>["local"]>,
+		LocalFieldKey,
+		FieldSchema
+	>;
+
+	public readonly localFieldsObject: NormalizeLocalFields<
+		Assume<T, TypedTreeSchemaSpecification>["local"]
+	>;
 
 	public readonly globalFields!: ReadonlySet<GlobalFieldKey>;
 	public readonly extraLocalFields: FieldSchema;
@@ -52,16 +63,18 @@ export class TreeSchema<Name extends string = string, T extends TypedTreeSchemaS
 
 	public readonly name: Name & TreeSchemaIdentifier;
 
-	public constructor(
-		public readonly builder: Named<string>,
-		name: Name,
-		public readonly info: T,
-	) {
+	public readonly info: Assume<T, TypedTreeSchemaSpecification>;
+
+	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
+		this.info = info as Assume<T, TypedTreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
-		this.localFields = normalizeLocalFields<T["local"]>(builder, info.local);
-		this.extraLocalFields = normalizeField(info.extraLocalFields);
-		this.extraGlobalFields = info.extraGlobalFields ?? false;
-		this.value = info.value ?? ValueSchema.Nothing;
+		this.localFieldsObject = normalizeLocalFields<
+			Assume<T, TypedTreeSchemaSpecification>["local"]
+		>(builder, this.info.local);
+		this.localFields = objectToMap(this.localFieldsObject);
+		this.extraLocalFields = normalizeField(this.info.extraLocalFields);
+		this.extraGlobalFields = this.info.extraGlobalFields ?? false;
+		this.value = this.info.value ?? ValueSchema.Nothing;
 	}
 
 	public downCast(tree: UntypedTreeCore): tree is TypedTree<T> {
@@ -92,7 +105,7 @@ function normalizeLocalFields<T extends LocalFields | undefined>(
 	fields: T,
 ): NormalizeLocalFields<T> {
 	if (fields === undefined) {
-		return new Map();
+		return {} as unknown as NormalizeLocalFields<T>;
 	}
 	const out: Record<string, FieldSchema> = {};
 	// eslint-disable-next-line no-restricted-syntax
@@ -102,8 +115,7 @@ function normalizeLocalFields<T extends LocalFields | undefined>(
 			out[key] = normalizeField(element);
 		}
 	}
-	const map = objectToMap(out);
-	return map as NormalizeLocalFields<T>;
+	return out as NormalizeLocalFields<T>;
 }
 
 function normalizeField<T extends FieldSchemaSpecification | undefined>(t: T): NormalizeField<T> {
@@ -113,7 +125,7 @@ function normalizeField<T extends FieldSchemaSpecification | undefined>(t: T): N
 	if (t === undefined) {
 		return new FieldSchema(forbidden, []) as unknown as NormalizeField<T>;
 	}
-	return new FieldSchema(value, t) as NormalizeField<T>;
+	return new FieldSchema(value, t) as unknown as NormalizeField<T>;
 }
 
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
@@ -169,7 +181,7 @@ export function normalizeAllowedTypes<T extends AllowedTypes>(t: T): NormalizeAl
 /**
  * Convert AllowedTypes into NormalizedLazyAllowedTypes
  */
-export type NormalizeAllowedTypesParameter<T extends AllowedTypesParameter> = T extends [Any]
+export type NormalizeAllowedTypesParameter<T> = T extends [Any]
 	? Any
 	: FlexListToLazyArray<TreeSchema, T>;
 
@@ -184,7 +196,7 @@ export function normalizeAllowedTypesParameter<T extends AllowedTypesParameter>(
 	return normalizeFlexList(t) as NormalizeAllowedTypesParameter<T>;
 }
 
-type FieldSchemaSpecification = AllowedTypes | FieldSchema;
+export type FieldSchemaSpecification = AllowedTypes | FieldSchema;
 
 /**
  * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
@@ -207,14 +219,12 @@ export type Kinds = typeof FieldKinds[keyof typeof FieldKinds] | typeof forbidde
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @sealed @alpha
  */
-export class FieldSchema<Kind extends Kinds = Kinds, Types extends AllowedTypes = AllowedTypes>
-	implements IFieldSchema
-{
+export class FieldSchema<Kind extends Kinds = Kinds, Types = AllowedTypes> implements IFieldSchema {
 	protected _typeCheck?: MakeNominal;
 	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
 
 	public get types(): TreeTypeSet {
-		return allowedTypesToTypeSet(this.allowedTypes);
+		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
 	}
 }
 
