@@ -56,6 +56,7 @@ import {
 import { OrdererManager } from "../../alfred";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
+import { Constants } from "../../utils";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -142,19 +143,40 @@ describe("Routerlicious", () => {
 						throttleLimitTenant,
 					);
 
-					tenantThrottlers.set("socketConnections", testConnectionThrottlerPerTenant);
-					clusterThrottlers.set("socketConnections", testConnectionThrottlerPerCluster);
-					tenantGroup1Throttlers.set("socketConnections", testGroup1ConnectionThrottler);
+					tenantThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						testConnectionThrottlerPerTenant,
+					);
+					clusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						testConnectionThrottlerPerCluster,
+					);
+					tenantGroup1Throttlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						testGroup1ConnectionThrottler,
+					);
 
-					tenantThrottlers.set("submitOps", testSubmitOpThrottlerPerTenant);
-					clusterThrottlers.set("submitOps", testSubmitOpThrottlerPerCluster);
-					tenantGroup1Throttlers.set("submitOps", testGroup1SubmitOpThrottler);
+					tenantThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						testSubmitOpThrottlerPerTenant,
+					);
+					clusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						testSubmitOpThrottlerPerCluster,
+					);
+					tenantGroup1Throttlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						testGroup1SubmitOpThrottler,
+					);
 
-					clusterThrottlers.set("submitSignal", testSubmitSignalThrottlerPerCluster);
+					clusterThrottlers.set(
+						Constants.submitSignalThrottleIdPrefix,
+						testSubmitSignalThrottlerPerCluster,
+					);
 
-					throttlersMap.set("generalTenant", tenantThrottlers);
-					throttlersMap.set("generalCluster", clusterThrottlers);
-					throttlersMap.set("tenantGroup1", tenantGroup1Throttlers);
+					throttlersMap.set(Constants.throttleGeneralTenant, tenantThrottlers);
+					throttlersMap.set(Constants.throttleGeneralCluster, clusterThrottlers);
+					throttlersMap.set(Constants.throttleTenantGroup1, tenantGroup1Throttlers);
 
 					const tenantThrottlersMap = new Map<string, string>();
 
@@ -632,19 +654,40 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						minThrottleCheckInterval,
 					);
 
-					tenantThrottlers.set("socketConnections", testConnectionThrottlerPerTenant);
-					clusterThrottlers.set("socketConnections", testConnectionThrottlerPerCluster);
-					tenantGroup1Throttlers.set("socketConnections", testGroup1ConnectionThrottler);
+					tenantThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						testConnectionThrottlerPerTenant,
+					);
+					clusterThrottlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						testConnectionThrottlerPerCluster,
+					);
+					tenantGroup1Throttlers.set(
+						Constants.socketConnectionsThrottleIdPrefix,
+						testGroup1ConnectionThrottler,
+					);
 
-					tenantThrottlers.set("submitOps", testSubmitOpThrottlerPerTenant);
-					clusterThrottlers.set("submitOps", testSubmitOpThrottlerPerCluster);
-					tenantGroup1Throttlers.set("submitOps", testGroup1SubmitOpThrottler);
+					tenantThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						testSubmitOpThrottlerPerTenant,
+					);
+					clusterThrottlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						testSubmitOpThrottlerPerCluster,
+					);
+					tenantGroup1Throttlers.set(
+						Constants.submitOpsThrottleIdPrefix,
+						testGroup1SubmitOpThrottler,
+					);
 
-					clusterThrottlers.set("submitSignal", testSubmitSignalThrottlerPerCluster);
+					clusterThrottlers.set(
+						Constants.submitSignalThrottleIdPrefix,
+						testSubmitSignalThrottlerPerCluster,
+					);
 
-					throttlersMap.set("generalTenant", tenantThrottlers);
-					throttlersMap.set("generalCluster", clusterThrottlers);
-					throttlersMap.set("tenantGroup1", tenantGroup1Throttlers);
+					throttlersMap.set(Constants.throttleGeneralTenant, tenantThrottlers);
+					throttlersMap.set(Constants.throttleGeneralCluster, clusterThrottlers);
+					throttlersMap.set(Constants.throttleTenantGroup1, tenantGroup1Throttlers);
 
 					const tenantThrottlersMap = new Map<string, string>();
 
@@ -789,10 +832,18 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						const signalCount = 10;
 						const message = "testSignalMessage";
 						for (; i < signalCount; i++) {
-							socket.send("submitSignal", connectMessage.clientId, [message]);
+							socket.send(
+								Constants.submitSignalThrottleIdPrefix,
+								connectMessage.clientId,
+								[message],
+							);
 						}
 						Sinon.clock.tick(minThrottleCheckInterval + 1);
-						socket.send("submitSignal", connectMessage.clientId, [message]);
+						socket.send(
+							Constants.submitSignalThrottleIdPrefix,
+							connectMessage.clientId,
+							[message],
+						);
 						// wait for throttler to be checked
 						await Sinon.clock.nextAsync();
 

@@ -69,13 +69,7 @@ data:
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
-                "tenantGroup1" : {
-                    "createDoc": {{ toJson .Values.alfred.throttling.tenantGroup1.createDoc }},
-                    "getDeltas": {{ toJson .Values.alfred.throttling.tenantGroup1.getDeltas }},
-                    "getSession": {{ toJson .Values.alfred.throttling.tenantGroup1.getSession }},
-                    "socketConnections": {{ toJson .Values.alfred.throttling.tenantGroup1.socketConnections }},
-                    "submitOps": {{ toJson .Values.alfred.throttling.tenantGroup1.submitOps }}
-                },
+                "tenantGroup1" : {{ toJson .Values.alfred.throttling.tenantGroup1 }},
                 "generalTenant" : {
                     "generalRestCall": {{ toJson .Values.alfred.throttling.generalTenant.generalRestCall }},
                     "createDoc": {{ toJson .Values.alfred.throttling.generalTenant.createDoc }},
