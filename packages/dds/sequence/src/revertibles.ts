@@ -1,3 +1,4 @@
+/* eslint-disable no-bitwise */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -5,7 +6,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalReferencePosition, PropertySet, ReferenceType } from "@fluidframework/merge-tree";
-import { SequenceInterval } from "./intervalCollection";
+import { IntervalType, SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
 
 const IntervalEventType = {
@@ -64,14 +65,12 @@ export function appendLocalDeleteToRevertibles(
 	const startRef = string.createLocalReferencePosition(
 		startSeg,
 		interval.start.getOffset(),
-		// eslint-disable-next-line no-bitwise
 		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
 		startSeg.properties,
 	);
 	const endRef = string.createLocalReferencePosition(
 		endSeg,
 		interval.end.getOffset(),
-		// eslint-disable-next-line no-bitwise
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 		endSeg.properties,
 	);
@@ -96,14 +95,12 @@ export function appendLocalChangeToRevertibles(
 	const prevStartRef = string.createLocalReferencePosition(
 		startSeg,
 		previousInterval.start.getOffset(),
-		// eslint-disable-next-line no-bitwise
 		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
 		startSeg.properties,
 	);
 	const prevEndRef = string.createLocalReferencePosition(
 		endSeg,
 		previousInterval.end.getOffset(),
-		// eslint-disable-next-line no-bitwise
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 		endSeg.properties,
 	);
@@ -148,7 +145,8 @@ function revertLocalDelete(
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const type = revertible.interval.intervalType;
+	const intType = revertible.interval.intervalType & ~IntervalType.Simple;
+	const type = intType | IntervalType.SlideOnRemove;
 	const props = revertible.interval.properties;
 	string.getIntervalCollection(label).add(start, end, type, props);
 

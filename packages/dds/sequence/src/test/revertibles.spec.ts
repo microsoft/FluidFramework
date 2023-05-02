@@ -55,7 +55,7 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		collection.add(0, 5, IntervalType.Simple);
+		collection.add(0, 5, IntervalType.SlideOnRemove);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, []);
@@ -67,7 +67,7 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		collection.removeIntervalById(id);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -80,7 +80,7 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		collection.change(id, 1, 6);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -93,7 +93,9 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		const id = collection
+			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
+			.getIntervalId()!;
 		collection.changeProperties(id, { foo: "two" });
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -107,8 +109,8 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		collection.add(0, 5, IntervalType.Simple);
-		collection.add(5, 7, IntervalType.Simple);
+		collection.add(0, 5, IntervalType.SlideOnRemove);
+		collection.add(5, 7, IntervalType.SlideOnRemove);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, []);
@@ -120,9 +122,9 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id2 = collection.add(5, 7, IntervalType.Simple).getIntervalId()!;
+		const id2 = collection.add(5, 7, IntervalType.SlideOnRemove).getIntervalId()!;
 		collection.removeIntervalById(id);
 		collection.removeIntervalById(id2);
 
@@ -147,7 +149,7 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		collection.change(id, 3, 8);
 		collection.removeIntervalById(id);
 
@@ -161,7 +163,7 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		collection.change(id, 3, 8);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -225,7 +227,7 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 		});
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		collection.removeIntervalById(id);
 		containerRuntimeFactory.processAllMessages();
 
@@ -245,7 +247,7 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 		});
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		collection.removeIntervalById(id);
 		containerRuntimeFactory.processAllMessages();
 
@@ -265,7 +267,7 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 		});
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 7, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 7, IntervalType.SlideOnRemove).getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection.removeIntervalById(id);
@@ -282,11 +284,10 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval change interacting with reverting an interval remove", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.change(id, 3, 8);
-		containerRuntimeFactory.processAllMessages();
 
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
@@ -302,11 +303,10 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval change interacting with reverting an interval remove with ack before revert", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.change(id, 3, 8);
-		containerRuntimeFactory.processAllMessages();
 
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
@@ -317,13 +317,13 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
 		containerRuntimeFactory.processAllMessages();
 
-		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
-		assertIntervals(sharedString2, collection2, [{ start: 3, end: 8 }]);
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
 	});
 	it("acked remote interval change interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.change(id, 3, 8);
@@ -343,7 +343,7 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval remove interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
@@ -363,7 +363,9 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval remove interacting with reverting an interval property change", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		const id = collection
+			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
+			.getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
@@ -385,7 +387,7 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval remove interacting with reverting an interval remove", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple).getIntervalId()!;
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("deleteInterval", (interval, local, op) => {
@@ -405,16 +407,18 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval property change interacting with reverting an interval remove", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		const id = collection
+			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
+			.getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
 		});
 		collection.removeIntervalById(id);
-		containerRuntimeFactory.processAllMessages();
 
 		collection2.changeProperties(id, { foo: "two" });
+		containerRuntimeFactory.processAllMessages();
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
 		containerRuntimeFactory.processAllMessages();
@@ -427,13 +431,15 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval property change interacting with reverting an interval add", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		const id = collection
+			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
+			.getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("addInterval", (interval, local, op) => {
 			appendLocalAddToRevertibles(interval, revertibles);
 		});
-		collection.add(2, 7, IntervalType.Simple);
+		collection.add(2, 7, IntervalType.SlideOnRemove);
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.changeProperties(id, { foo: "two" });
@@ -450,7 +456,9 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval property change interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		const id = collection
+			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
+			.getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
@@ -473,7 +481,9 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 	it("remote interval property change interacting with reverting an interval property change", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.Simple, { foo: "one" }).getIntervalId()!;
+		const id = collection
+			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
+			.getIntervalId()!;
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
