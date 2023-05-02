@@ -36,6 +36,9 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm run build:compile
 
+          cd packages/build-cli/bin
+          echo "$(pwd)" >> $GITHUB_PATH
+
           # Info for debugging
           which flub
           flub --help
