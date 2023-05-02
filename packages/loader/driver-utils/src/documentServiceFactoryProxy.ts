@@ -12,8 +12,8 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 /**
- * This abstract class implements IDocumentServicefactory interface. It uses delegation pattern.
- * It delegates all calls to IDocumentService implementation passed to constructor.
+ * This abstract class implements IDocumentServiceFactory interface. It uses delegation pattern.
+ * It delegates all calls to IDocumentServiceFactory implementation passed to constructor.
  */
 
 export abstract class DocumentServiceFactoryProxy implements IDocumentServiceFactory {

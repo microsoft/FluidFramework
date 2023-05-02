@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { IsoBuffer, Uint8ArrayToString, assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
@@ -50,14 +50,15 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	}
 
 	private hasCompression(name: string): boolean {
-		return name.trim().startsWith(this.compressed_prefix);
+		const trimmed = name.trim();
+		return trimmed.startsWith(this.compressed_prefix);
 	}
 
 	/**
 	 * This method checks whether the given name has compression. If it has no compression
 	 * it throws an error. Otherwise it checks, whether it contains lz4 algorithm, in that case
 	 * returns true, otherwise false
-	 * @param name - The path of the blob
+	 * @param name - The name of the blob
 	 */
 	private extractAlgorithm(name: string): number {
 		const algorithmStr = this.extractAlgorithmString(name);
@@ -67,10 +68,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	}
 
 	private extractAlgorithmString(name: string): string | undefined {
-		if (!this.hasCompression(name)) {
-			throw new Error("Blob has no compression");
-		}
-		const trimmedName = name.trim().substring(0, this.compressed_prefix.length);
+		assert(this.hasCompression(name), "Blob has no compression");
+		const trimmedName = name.trim().substring(this.compressed_prefix.length);
 		return trimmedName.startsWith(this.lz4_prefix) ? this.lz4_prefix : undefined;
 	}
 
@@ -96,7 +95,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		return super.createBlob(this.encodeBlob(file));
 	}
 
-	public async decodeSnapshotBlobNames(snapshot: ISnapshotTree): Promise<void> {
+	private async decodeSnapshotBlobNames(snapshot: ISnapshotTree): Promise<void> {
 		for (const key of Object.keys(snapshot.trees)) {
 			const obj = snapshot.trees[key];
 			await this.decodeSnapshotBlobNames(obj);
@@ -142,7 +141,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		context: ISummaryContext,
 	): Promise<string> {
 		const prep = {
-			prepSummary: recursivelyReplace(summary, this.blobReplacer, context) as ISummaryTree,
+			prepSummary: this.recursivelyReplace(
+				summary,
+				this.blobReplacer,
+				context,
+			) as ISummaryTree,
 			prepContext: context,
 		};
 		console.log(`Miso Summary Upload: ${JSON.stringify(prep.prepSummary).length}`);
@@ -209,55 +212,77 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 
 	private decodeBlob(file: ArrayBufferLike, algorithm: number): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
+		let compressedEncoded = file;
 		if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			decompressed = decompress(file) as ArrayBufferLike;
+			try{
+				decompressed = decompress(compressedEncoded) as ArrayBufferLike;
+			}
+			catch(e){
+				const compressedString = new TextDecoder().decode(
+					file
+				);
+				compressedEncoded = IsoBuffer.from(compressedString, "base64");
+				decompressed = decompress(compressedEncoded) as ArrayBufferLike;
+			}
+			
 		} else {
 			throw new Error(`Unknown Algorithm ${this._algorithm}`);
 		}
 		return decompressed;
 	}
-}
 
-export function recursivelyReplace(
-	input: SummaryObject,
-	replacer: (input: SummaryObject, context?: ISummaryContext) => SummaryObject,
-	context?: ISummaryContext,
-): SummaryObject {
-	// Note: Caller is responsible for ensuring that `input` is defined / non-null.
-	//       (Required for Object.keys() below.)
-
-	// Execute the `replace` on the current input.  Note that Caller is responsible for ensuring that `input`
-	// is a non-null object.
-	const maybeReplaced = replacer(input, context);
-
-	// If the replacer made a substitution there is no need to decscend further. IFluidHandles are always
-	// leaves in the object graph.
-	if (maybeReplaced !== input) {
-		return maybeReplaced;
+	private buildPrefix(algorithm: number): string {
+		return algorithm === SummaryCompressionAlgorithm.LZ4
+			? this.compressed_prefix + this.lz4_prefix
+			: "";
 	}
 
-	// Otherwise descend into the object graph looking for IFluidHandle instances.
-	let clone: object | undefined;
-	for (const key of Object.keys(input)) {
-		const value = input[key];
+	private recursivelyReplace(
+		input: SummaryObject,
+		replacer: (input: SummaryObject, context?: ISummaryContext) => SummaryObject,
+		context?: ISummaryContext,
+	): SummaryObject {
+		// Note: Caller is responsible for ensuring that `input` is defined / non-null.
+		//       (Required for Object.keys() below.)
 
-		if (Boolean(value) && typeof value === "object") {
-			// Note: `input` must not contain circular references (as object must
-			//       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
-			//       lead to a later error when attempting to stringify().
-			const replaced = recursivelyReplace(value as SummaryObject, replacer, context);
+		// Execute the `replace` on the current input.  Note that Caller is responsible for ensuring that `input`
+		// is a non-null object.
+		const maybeReplaced = replacer(input, context);
 
-			// If the `replaced` object is different than the original `value` then the subgraph contained one
-			// or more handles.  If this happens, we need to return a clone of the `input` object where the
-			// current property is replaced by the `replaced` value.
-			if (replaced !== value) {
-				// Lazily create a shallow clone of the `input` object if we haven't done so already.
-				clone = clone ?? (Array.isArray(input) ? [...input] : { ...input });
+		// If the replacer made a substitution there is no need to decscend further. IFluidHandles are always
+		// leaves in the object graph.
+		if (maybeReplaced !== input) {
+			return maybeReplaced;
+		}
 
-				// Overwrite the current property `key` in the clone with the `replaced` value.
-				clone[key] = replaced;
+		// Otherwise descend into the object graph looking for IFluidHandle instances.
+		let clone: object | undefined;
+		for (const key of Object.keys(input)) {
+			const value = input[key];
+
+			if (Boolean(value) && typeof value === "object") {
+				// Note: `input` must not contain circular references (as object must
+				//       be JSON serializable.)  Therefore, guarding against infinite recursion here would only
+				//       lead to a later error when attempting to stringify().
+				const replaced = this.recursivelyReplace(value as SummaryObject, replacer, context);
+
+				// If the `replaced` object is different than the original `value` then the subgraph contained one
+				// or more handles.  If this happens, we need to return a clone of the `input` object where the
+				// current property is replaced by the `replaced` value.
+				if (replaced !== value) {
+					// Lazily create a shallow clone of the `input` object if we haven't done so already.
+					clone = clone ?? (Array.isArray(input) ? [...input] : { ...input });
+					let newKey = key;
+					if (replaced.type === SummaryType.Blob) {
+						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+						delete clone[key];
+						newKey = this.buildPrefix(this._algorithm) + key;
+					}
+					// Overwrite the current property `key` in the clone with the `replaced` value.
+					clone[newKey] = replaced;
+				}
 			}
 		}
+		return (clone ?? input) as SummaryObject;
 	}
-	return (clone ?? input) as SummaryObject;
 }
