@@ -92,7 +92,6 @@ class OpPerfTelemetry {
 			"this.deltaManager.deltaManager.connectionManager: ",
 			JSON.stringify((this.deltaManager as unknown as any).deltaManager?.connectionManager),
 		);
-		debugger;
 		this.logger = ChildLogger.create(logger, "OpPerf");
 
 		this.deltaManager.on("pong", (latency) => this.recordPingTime(latency));
