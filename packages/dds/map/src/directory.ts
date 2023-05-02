@@ -1640,7 +1640,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			op.subdirName,
 			local,
 			msg.sequenceNumber,
-			msg.clientId ?? "server",
+			msg.clientId as string,
 		);
 	}
 
@@ -2130,7 +2130,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// container was detached or in case this directory is already live(known to other clients)
 		// and the op was created after the directory was created then apply this op.
 		return (
-			this.clientIds.has(msg.clientId ?? "server") ||
+			this.clientIds.has(msg.clientId as string) ||
 			this.clientIds.has("detached") ||
 			(this.sequenceNumber !== -1 && this.sequenceNumber <= msg.referenceSequenceNumber)
 		);
@@ -2153,7 +2153,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		localOpMetadata: unknown,
 	): boolean {
 		const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
-		const clientId = msg.clientId ?? "server";
+		const clientId = msg.clientId as string;
 		if (pendingSubDirectoryMessageId !== undefined) {
 			if (local) {
 				assert(
