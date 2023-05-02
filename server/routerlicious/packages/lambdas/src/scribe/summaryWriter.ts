@@ -93,7 +93,7 @@ export class SummaryWriter implements ISummaryWriter {
 	): Promise<ISummaryWriteResponse> {
 		const clientSummaryMetric = Lumberjack.newLumberMetric(LumberEventName.ClientSummary);
 		this.setSummaryProperties(clientSummaryMetric, op);
-		const content = JSON.parse(op.contents as string) as ISummaryContent;
+		const content = JSON.parse(op.contents) as ISummaryContent;
 		try {
 			// The summary must reference the existing summary to be valid. This guards against accidental sends of
 			// two summaries at the same time. In this case the first one wins.

@@ -44,7 +44,6 @@ import {
 	logCommonSessionEndMetrics,
 	CheckpointReason,
 	ICheckpoint,
-	hasValidServerMetadata,
 } from "../utils";
 import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
@@ -185,8 +184,7 @@ export class ScribeLambda implements IPartitionLambda {
 				// skip summarize messages that deli already acked
 				if (
 					value.operation.type === MessageType.Summarize &&
-					(!hasValidServerMetadata(value.operation) ||
-						!value.operation.serverMetadata?.deliAcked)
+					!value.operation.serverMetadata?.deliAcked
 				) {
 					// ensure the client is requesting a summary for a state that scribe can achieve
 					// the clients summary state (ref seq num) must be at least as high as scribes (protocolHandler.sequenceNumber)

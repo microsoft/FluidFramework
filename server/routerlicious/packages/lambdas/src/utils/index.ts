@@ -13,4 +13,3 @@ export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelp
 export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";
 export { CheckpointReason, ICheckpoint } from "./checkpointHelper";
 export { ConnectionCountLogger } from "./connectionCountLogger";
-export { IMessageWithServerMetadata, hasValidServerMetadata } from "./messageHelper";
