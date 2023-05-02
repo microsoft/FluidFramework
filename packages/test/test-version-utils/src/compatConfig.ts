@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as semver from "semver";
 import { Lazy, assert } from "@fluidframework/common-utils";
 import { ensurePackageInstalled } from "./testApi";
 import { pkgVersion } from "./packageVersion";
@@ -152,24 +151,30 @@ const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 const genFullBackCompatConfig = (): CompatConfig[] => {
 	const _configList: CompatConfig[] = [];
 	// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
+	// Extract the major version of the package published, in this case it's the x in 2.0.0-internal.x.y.z.
+	// This first if statement turns the internal version to x.y.z
 	let semverInternal: string | undefined;
 	if (pkgVersion.startsWith("2.0.0-internal.")) {
 		semverInternal = pkgVersion.split("internal.")[1];
-	}
-
-	if (pkgVersion.startsWith("2.0.0-dev.")) {
+	} else if (pkgVersion.startsWith("2.0.0-dev.")) {
 		semverInternal = pkgVersion.split("dev.")[1];
+	} else {
+		// This will need to be updated once we move beyond 2.0.0-internal.x.y.z
+		throw new Error(
+			"Unexpected back compat scenario! Expecting package versiosn to just be 2.0.0-internal.x.y.z",
+		);
 	}
 
 	assert(semverInternal !== undefined, "Unexpected pkg version");
-	// This is to make pipeline runs work
-	semverInternal = semverInternal.split(".").slice(0, 3).join(".");
-
-	const semverVal = new semver.SemVer(semverInternal);
-	const num = semverVal.major;
+	// Get the major version from x.y.z. Note: sometimes it's x.y.z.a as we append build version to the package version
+	const major = semverInternal.split(".")[0];
+	const greatestMajor = parseInt(major, 10);
 	// This makes the assumption N and N-1 scenarios are already fully tested thus skipping 0 and -1.
-	for (let i = 2; i < num; i++) {
-		_configList.push(...genBackCompatConfig(0 - i));
+	// This loop goes as far back as 2.0.0.internal.1.y.z.
+	// The idea is to generate all the versions from -2 -> - (major - 1) the current major version (i.e 2.0.0-internal.9.y.z would be -8)
+	// This means as the number of majors increase the number of versions we support - this may be updated in the future.
+	for (let i = 2; i < greatestMajor; i++) {
+		_configList.push(...genBackCompatConfig(-i));
 	}
 	return _configList;
 };
