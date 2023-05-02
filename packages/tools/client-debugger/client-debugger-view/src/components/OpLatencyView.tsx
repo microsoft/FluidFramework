@@ -23,8 +23,18 @@
 // 	createTableColumn,
 // } from "@fluentui/react-components";
 // import { Info24Regular, Info24Filled } from "@fluentui/react-icons";
-import React from "react";
-import { IChartProps, ILineChartDataPoint, LineChart } from "@fluentui/react-charting";
+import React, { useRef } from "react";
+import {
+	select,
+	// scaleBand,
+	// scaleLinear,
+	// max as d3Max,
+	// extent as d3Extent,
+	// axisBottom as d3AxisBottom,
+	// axisLeft as d3AxisLeft,
+	// ticks as d3Ticks,
+} from "d3";
+// import { IChartProps, ILineChartDataPoint } from "@fluentui/react-charting";
 
 import {
 	handleIncomingMessage,
@@ -32,7 +42,7 @@ import {
 	ISourcedDevtoolsMessage,
 	TelemetryEvent,
 } from "@fluid-tools/client-debugger";
-import { DefaultPalette } from "@fluentui/react";
+// import { DefaultPalette } from "@fluentui/react";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 
@@ -41,13 +51,13 @@ import { Waiting } from "./Waiting";
  */
 export function OpLatencyView(): React.ReactElement {
 	const messageRelay = useMessageRelay();
-	const [durationOutboundBatchingDataPoints, setDurationOutboundBatchingDataPoints] =
-		React.useState<ILineChartDataPoint[] | undefined>();
-	const [durationNetworkDataPoints, setDurationNetworkDataPoints] = React.useState<
-		ILineChartDataPoint[] | undefined
-	>();
-	const [durationInboundToProcessingDataPoints, setDurationInboundToProcessingDataPoints] =
-		React.useState<ILineChartDataPoint[] | undefined>();
+	// const [durationOutboundBatchingDataPoints, setDurationOutboundBatchingDataPoints] =
+	// 	React.useState<ILineChartDataPoint[] | undefined>();
+	// const [durationNetworkDataPoints, setDurationNetworkDataPoints] = React.useState<
+	// 	ILineChartDataPoint[] | undefined
+	// >();
+	// const [durationInboundToProcessingDataPoints, setDurationInboundToProcessingDataPoints] =
+	// 	React.useState<ILineChartDataPoint[] | undefined>();
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages.
@@ -62,29 +72,29 @@ export function OpLatencyView(): React.ReactElement {
 
 				console.log(`OP LATENCY: ${JSON.stringify(eventContents)}`);
 
-				setDurationOutboundBatchingDataPoints((currentPoints) => [
-					...(currentPoints ?? []),
-					{
-						x: message.data.event.timestamp,
-						y: Number(eventContents.durationOutboundBatching),
-					},
-				]);
+				// setDurationOutboundBatchingDataPoints((currentPoints) => [
+				// 	...(currentPoints ?? []),
+				// 	{
+				// 		x: message.data.event.timestamp,
+				// 		y: Number(eventContents.durationOutboundBatching),
+				// 	},
+				// ]);
 
-				setDurationNetworkDataPoints((currentPoints) => [
-					...(currentPoints ?? []),
-					{
-						x: message.data.event.timestamp,
-						y: Number(eventContents.durationNetwork),
-					},
-				]);
+				// setDurationNetworkDataPoints((currentPoints) => [
+				// 	...(currentPoints ?? []),
+				// 	{
+				// 		x: message.data.event.timestamp,
+				// 		y: Number(eventContents.durationNetwork),
+				// 	},
+				// ]);
 
-				setDurationInboundToProcessingDataPoints((currentPoints) => [
-					...(currentPoints ?? []),
-					{
-						x: message.data.event.timestamp,
-						y: Number(eventContents.durationInboundToProcessing),
-					},
-				]);
+				// setDurationInboundToProcessingDataPoints((currentPoints) => [
+				// 	...(currentPoints ?? []),
+				// 	{
+				// 		x: message.data.event.timestamp,
+				// 		y: Number(eventContents.durationInboundToProcessing),
+				// 	},
+				// ]);
 
 				return true;
 			},
@@ -110,9 +120,9 @@ export function OpLatencyView(): React.ReactElement {
 		};
 	}, [
 		messageRelay,
-		setDurationOutboundBatchingDataPoints,
-		setDurationNetworkDataPoints,
-		setDurationInboundToProcessingDataPoints,
+		// setDurationOutboundBatchingDataPoints,
+		// setDurationNetworkDataPoints,
+		// setDurationInboundToProcessingDataPoints,
 	]);
 
 	/**
@@ -179,51 +189,83 @@ export function OpLatencyView(): React.ReactElement {
 	// 	},
 	// ];
 
-	const data: IChartProps = {
-		chartTitle: "Line Chart",
-		lineChartData: [
-			{
-				legend: "durationOutboundBatching",
-				data: durationOutboundBatchingDataPoints ?? [],
-				color: DefaultPalette.blue,
-			},
-			{
-				legend: "durationNetwork",
-				data: durationNetworkDataPoints ?? [],
-				color: DefaultPalette.green,
-				lineOptions: {
-					lineBorderWidth: "4",
-				},
-			},
-			{
-				legend: "durationInboundToProcessing",
-				data: durationInboundToProcessingDataPoints ?? [],
-				color: DefaultPalette.yellow,
-			},
-		],
-	};
+	// const data: IChartProps = {
+	// 	chartTitle: "Line Chart",
+	// 	lineChartData: [
+	// 		{
+	// 			legend: "durationOutboundBatching",
+	// 			data: durationOutboundBatchingDataPoints ?? [],
+	// 			color: DefaultPalette.blue,
+	// 		},
+	// 		{
+	// 			legend: "durationNetwork",
+	// 			data: durationNetworkDataPoints ?? [],
+	// 			color: DefaultPalette.green,
+	// 			lineOptions: {
+	// 				lineBorderWidth: "4",
+	// 			},
+	// 		},
+	// 		{
+	// 			legend: "durationInboundToProcessing",
+	// 			data: durationInboundToProcessingDataPoints ?? [],
+	// 			color: DefaultPalette.yellow,
+	// 		},
+	// 	],
+	// };
 
-	const width = 300;
-	const height = 600;
-	const rootStyle = { width: `${width}px`, height: `${height}px`, backgroundColor: "#FFFFFF" };
+	// const width = 300;
+	// const height = 600;
+	// const rootStyle = { width: `${width}px`, height: `${height}px`, backgroundColor: "#FFFFFF" };
+
+	// // const chart = d3.LineChart(unemployment, {
+	// 	x: d => d.date,
+	// 	y: d => d.unemployment,
+	// 	z: d => d.division,
+	// 	yLabel: "↑ Unemployment (%)",
+	// 	width,
+	// 	height: 500,
+	// 	color: "steelblue",
+	// 	voronoi // if true, show Voronoi overlay
+	// })
+
+	const data = [1, 2, 3];
+	const containerRef = useRef(null);
+
+	React.useEffect(() => {
+		if (containerRef.current !== undefined) {
+			const svg = select(containerRef.current);
+
+			// Bind D3 data
+			const update = svg.append("g").selectAll("text").data(data);
+
+			// Enter new D3 elements
+			update
+				.enter()
+				.append("text")
+				.attr("x", (d, i) => i * 25)
+				.attr("y", 40)
+				.style("font-size", 24)
+				.text((d: number) => d);
+
+			// Update existing D3 elements
+			update.attr("x", (d, i) => i * 40).text((d: number) => d);
+
+			// Remove old D3 elements
+			update.exit().remove();
+		}
+	}, [containerRef, data]);
 
 	return data !== undefined ? (
 		<>
 			<h3>Op Latency</h3>
-			<div style={rootStyle}>
-			<LineChart
-				culture={window.navigator.language}
-				data={data}
-				legendsOverflowText={"Overflow Items"}
-				yMinValue={200}
-				yMaxValue={301}
-				height={height}
-				width={width}
-				// margins={margins}
-				xAxisTickCount={10}
-				// allowMultipleShapesForPoints={this.state.allowMultipleShapes}
-			/>
-			</div>
+			<svg
+				id="chartContent"
+				ref={containerRef}
+				style={{
+					height: 500,
+					width: "100%",
+				}}
+			></svg>
 		</>
 	) : (
 		<Waiting label={"Waiting for Op Latency data"} />
