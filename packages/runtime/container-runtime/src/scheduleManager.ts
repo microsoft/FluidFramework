@@ -277,7 +277,7 @@ class ScheduleManagerCore {
 		// If this is not the start of the batch, error out if the message was sent by a client other than the one that
 		// started the current batch (it should not be possible for ops from other clients to get interleaved with a batch).
 		if (
-			typeof this.currentBatchClientId === undefined &&
+			typeof this.currentBatchClientId === "string" &&
 			this.currentBatchClientId !== message.clientId
 		) {
 			throw new DataCorruptionError("OpBatchIncomplete", {

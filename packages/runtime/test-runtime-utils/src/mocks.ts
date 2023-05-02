@@ -205,7 +205,7 @@ export class MockContainerRuntime {
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;
-	public minSeq = new Map<string | null, number>();
+	public minSeq = new Map<string, number>();
 	public readonly quorum = new MockQuorumClients();
 	/**
 	 * The MockContainerRuntimes we produce will push messages into this queue as they are submitted.
@@ -260,7 +260,9 @@ export class MockContainerRuntimeFactory {
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
 		msg = JSON.parse(JSON.stringify(msg)) as ISequencedDocumentMessage;
 
-		this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+		if (msg.clientId !== null) {
+			this.minSeq.set(msg.clientId, msg.referenceSequenceNumber);
+		}
 		msg.sequenceNumber = ++this.sequenceNumber;
 		msg.minimumSequenceNumber = this.getMinSeq();
 		for (const runtime of this.runtimes) {
