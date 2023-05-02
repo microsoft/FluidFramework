@@ -137,7 +137,7 @@ stages:
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
+        timeoutInMinutes: 240
         testCommand: start:frs:canary
         env:
           fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
