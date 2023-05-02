@@ -59,7 +59,7 @@ export class AlfredRunner implements IRunner {
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
 		private readonly socketTracker?: IWebSocketTracker,
-		private readonly tokenManager?: ITokenRevocationManager,
+		private readonly tokenRevocationManager?: ITokenRevocationManager,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -79,7 +79,7 @@ export class AlfredRunner implements IRunner {
 			this.producer,
 			this.documentRepository,
 			this.documentDeleteService,
-			this.tokenManager,
+			this.tokenRevocationManager,
 		);
 		alfred.set("port", this.port);
 
@@ -121,6 +121,7 @@ export class AlfredRunner implements IRunner {
 			this.throttleAndUsageStorageManager,
 			this.verifyMaxMessageSize,
 			this.socketTracker,
+			this.tokenRevocationManager,
 		);
 
 		// Listen on provided port, on all network interfaces.
@@ -129,8 +130,8 @@ export class AlfredRunner implements IRunner {
 		httpServer.on("listening", () => this.onListening());
 
 		// Start token manager
-		if (this.tokenManager) {
-			this.tokenManager.start().catch((error) => {
+		if (this.tokenRevocationManager) {
+			this.tokenRevocationManager.start().catch((error) => {
 				this.runningDeferred.reject(error);
 			});
 		}

@@ -42,7 +42,7 @@ export function create(
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
-	tokenManager?: ITokenRevocationManager,
+	tokenRevocationManager?: ITokenRevocationManager,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -100,7 +100,7 @@ export function create(
 		appTenants,
 		documentRepository,
 		documentDeleteService,
-		tokenManager,
+		tokenRevocationManager,
 	);
 
 	app.use(routes.api);

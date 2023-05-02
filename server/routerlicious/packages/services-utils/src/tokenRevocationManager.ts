@@ -81,15 +81,15 @@ export class WebSocketTracker implements IWebSocketTracker {
 
 export class DummyTokenRevocationManager implements ITokenRevocationManager {
 	public async start() {
-		Lumberjack.info(`DummyTokenManager started`);
+		Lumberjack.info(`DummyTokenRevocationManager started`);
 	}
 
 	public async initialize(): Promise<void> {
-		Lumberjack.info(`DummyTokenManager initialize called`);
+		Lumberjack.info(`DummyTokenRevocationManager initialize called`);
 	}
 
 	public async close(): Promise<void> {
-		Lumberjack.info(`DummyTokenManager closed`);
+		Lumberjack.info(`DummyTokenRevocationManager closed`);
 	}
 
 	// Revoke the access of a token given its jwtId
@@ -98,7 +98,7 @@ export class DummyTokenRevocationManager implements ITokenRevocationManager {
 		documentId: string,
 		jwtId: string,
 	): Promise<ITokenRevocationResponse> {
-		Lumberjack.info(`DummyTokenManager revokeToken called`);
+		Lumberjack.info(`DummyTokenRevocationManager revokeToken called`);
 		throw new NetworkError(501, "Token revocation is not supported for now", false, true);
 	}
 
@@ -108,7 +108,7 @@ export class DummyTokenRevocationManager implements ITokenRevocationManager {
 		documentId: string,
 		jwtId: string,
 	): Promise<boolean> {
-		Lumberjack.info(`DummyTokenManager isTokenRevoked called`);
+		Lumberjack.info(`DummyTokenRevocationManager isTokenRevoked called`);
 		return false;
 	}
 }

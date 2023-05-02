@@ -43,7 +43,7 @@ export function create(
 	storage: core.IDocumentStorage,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
-	tokenManager?: core.ITokenRevocationManager,
+	tokenRevocationManager?: core.ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
@@ -94,7 +94,7 @@ export function create(
 				isTokenExpiryEnabled,
 				enableJwtTokenCache,
 				jwtTokenCache,
-				tokenManager,
+				tokenRevocationManager,
 			);
 			handleResponse(
 				validP.then(() => undefined),
@@ -213,7 +213,7 @@ const verifyRequest = async (
 	isTokenExpiryEnabled: boolean,
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
-	tokenManager?: core.ITokenRevocationManager,
+	tokenRevocationManager?: core.ITokenRevocationManager,
 ) =>
 	Promise.all([
 		verifyTokenWrapper(
@@ -223,7 +223,7 @@ const verifyRequest = async (
 			isTokenExpiryEnabled,
 			tokenCacheEnabled,
 			tokenCache,
-			tokenManager,
+			tokenRevocationManager,
 		),
 		checkDocumentExistence(request, storage),
 	]);
@@ -235,7 +235,7 @@ async function verifyTokenWrapper(
 	isTokenExpiryEnabled: boolean,
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
-	tokenManager?: core.ITokenRevocationManager,
+	tokenRevocationManager?: core.ITokenRevocationManager,
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
@@ -254,8 +254,12 @@ async function verifyTokenWrapper(
 		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 	}
 
-	if (tokenManager && claims.jti) {
-		const tokenRevoked = await tokenManager.isTokenRevoked(tenantId, documentId, claims.jti);
+	if (tokenRevocationManager && claims.jti) {
+		const tokenRevoked = await tokenRevocationManager.isTokenRevoked(
+			tenantId,
+			documentId,
+			claims.jti,
+		);
 		if (tokenRevoked) {
 			return Promise.reject(new Error("Permission denied. Token is revoked."));
 		}

@@ -111,7 +111,7 @@ export class AlfredResources implements core.IResources {
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
 		public socketTracker?: core.IWebSocketTracker,
-		public tokenManager?: core.ITokenRevocationManager,
+		public tokenRevocationManager?: core.ITokenRevocationManager,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -127,8 +127,10 @@ export class AlfredResources implements core.IResources {
 	public async dispose(): Promise<void> {
 		const producerClosedP = this.producer.close();
 		const mongoClosedP = this.mongoManager.close();
-		const tokenManagerP = this.tokenManager ? this.tokenManager.close() : Promise.resolve();
-		await Promise.all([producerClosedP, mongoClosedP, tokenManagerP]);
+		const tokenRevocationManagerP = this.tokenRevocationManager
+			? this.tokenRevocationManager.close()
+			: Promise.resolve();
+		await Promise.all([producerClosedP, mongoClosedP, tokenRevocationManagerP]);
 	}
 }
 
@@ -498,11 +500,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Set up token revocation if enabled
 		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
 		let socketTracker: core.IWebSocketTracker | undefined;
-		let tokenManager: core.ITokenRevocationManager | undefined;
+		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
 			socketTracker = new utils.WebSocketTracker();
-			tokenManager = new utils.DummyTokenRevocationManager();
-			await tokenManager.initialize();
+			tokenRevocationManager = new utils.DummyTokenRevocationManager();
+			await tokenRevocationManager.initialize();
 		}
 
 		return new AlfredResources(
@@ -533,7 +535,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			verifyMaxMessageSize,
 			redisCache,
 			socketTracker,
-			tokenManager,
+			tokenRevocationManager,
 		);
 	}
 }
@@ -565,7 +567,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
 			resources.socketTracker,
-			resources.tokenManager,
+			resources.tokenRevocationManager,
 		);
 	}
 }

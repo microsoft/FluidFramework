@@ -36,7 +36,7 @@ export function create(
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
-	tokenManager?: ITokenRevocationManager,
+	tokenRevocationManager?: ITokenRevocationManager,
 ) {
 	return {
 		api: api.create(
@@ -51,7 +51,7 @@ export function create(
 			appTenants,
 			documentRepository,
 			documentDeleteService,
-			tokenManager,
+			tokenRevocationManager,
 		),
 	};
 }

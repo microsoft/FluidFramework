@@ -81,6 +81,10 @@ export class TokenRevocationError extends NetworkError {
 	}
 }
 
+export interface IRevokeTokenOptions {
+	httpCorrelationId: string;
+}
+
 /**
  * Interface of Json Web Token(JWT) manager
  * It is mainly used to manage token revocation
@@ -100,6 +104,7 @@ export interface ITokenRevocationManager {
 		tenantId: string,
 		documentId: string,
 		jwtId: string,
+		options?: IRevokeTokenOptions,
 	): Promise<ITokenRevocationResponse>;
 
 	// Check if a given token id is revoked

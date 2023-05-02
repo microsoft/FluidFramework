@@ -229,7 +229,7 @@ export async function verifyToken(
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
 	config: Provider,
-	tokenManager: ITokenRevocationManager | undefined,
+	tokenRevocationManager: ITokenRevocationManager | undefined,
 	options: IVerifyTokenOptions = {
 		requireDocumentId: true,
 		ensureSingleUseToken: false,
@@ -303,8 +303,8 @@ export function verifyStorageToken(
 			if (isTokenExpiryEnabled) {
 				tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 			}
-			if (tokenManager && claims.jti) {
-				const tokenRevoked = await tokenManager.isTokenRevoked(
+			if (tokenRevocationManager && claims.jti) {
+				const tokenRevoked = await tokenRevocationManager.isTokenRevoked(
 					tenantId,
 					documentId,
 					claims.jti,

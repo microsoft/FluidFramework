@@ -32,7 +32,7 @@ export function create(
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	jwtTokenCache?: ICache,
-	tokenManager?: ITokenRevocationManager,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
@@ -84,7 +84,7 @@ export function create(
 		["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, tokenRevocationManager, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);
@@ -110,7 +110,7 @@ export function create(
 		"/raw/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, tokenRevocationManager, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
 
@@ -141,7 +141,12 @@ export function create(
 			winston,
 			getDeltasTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			tokenRevocationManager,
+			defaultTokenValidationOptions,
+		),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
 			const to = stringToSequenceNumber(request.query.to);

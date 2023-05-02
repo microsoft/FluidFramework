@@ -20,6 +20,7 @@ import {
 	getParam,
 	validateTokenScopeClaims,
 	getBooleanFromConfig,
+	getCorrelationIdWithHttpFallback,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -47,7 +48,7 @@ export function create(
 	tenantManager: ITenantManager,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
-	tokenManager?: ITokenRevocationManager,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -105,7 +106,7 @@ export function create(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, tokenRevocationManager, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
 				getParam(request.params, "tenantId") || appTenants[0].id,
@@ -141,7 +142,7 @@ export function create(
 			winston,
 			createDocTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenManager, {
+		verifyStorageToken(tenantManager, config, tokenRevocationManager, {
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
@@ -237,7 +238,7 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, tokenRevocationManager, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -261,7 +262,12 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			tokenRevocationManager,
+			defaultTokenValidationOptions,
+		),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -281,8 +287,17 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			tokenRevocationManager,
+			defaultTokenValidationOptions,
+		),
 		async (request, response, next) => {
+			// TODO: remove debug code
+			const correlationId = getCorrelationIdWithHttpFallback(request, response);
+			console.log(`yunho: correlation id=${correlationId}`);
+
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
@@ -297,8 +312,8 @@ export function create(
 					response,
 				);
 			}
-			if (tokenManager) {
-				const resultP = tokenManager.revokeToken(tenantId, documentId, tokenId);
+			if (tokenRevocationManager) {
+				const resultP = tokenRevocationManager.revokeToken(tenantId, documentId, tokenId);
 				return handleResponse(resultP, response);
 			} else {
 				return handleResponse(

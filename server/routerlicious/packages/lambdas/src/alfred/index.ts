@@ -230,6 +230,7 @@ export function configureWebSocketServices(
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
+	tokenRevocationManager?: core.ITokenRevocationManager,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -340,6 +341,22 @@ export function configureWebSocketServices(
 			}
 
 			try {
+				// Check if token is revoked
+				if (tokenRevocationManager && claims.jti) {
+					const isTokenRevoked: boolean = await tokenRevocationManager.isTokenRevoked(
+						claims.tenantId,
+						claims.documentId,
+						claims.jti,
+					);
+					if (isTokenRevoked) {
+						throw new NetworkError(
+							403,
+							"Permission denied. Token has been revoked",
+							false /* canRetry */,
+							true /* isFatal */,
+						);
+					}
+				}
 				await tenantManager.verifyToken(claims.tenantId, token);
 			} catch (error) {
 				if (isNetworkError(error)) {

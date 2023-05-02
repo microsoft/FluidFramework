@@ -34,7 +34,7 @@ export function create(
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
-	tokenManager?: ITokenRevocationManager,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -45,7 +45,7 @@ export function create(
 		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
-		tokenManager,
+		tokenRevocationManager,
 	);
 	const documentsRoute = documents.create(
 		storage,
@@ -57,7 +57,7 @@ export function create(
 		tenantManager,
 		documentRepository,
 		documentDeleteService,
-		tokenManager,
+		tokenRevocationManager,
 	);
 	const apiRoute = api.create(
 		config,
@@ -66,7 +66,7 @@ export function create(
 		storage,
 		tenantThrottlers,
 		singleUseTokenCache,
-		tokenManager,
+		tokenRevocationManager,
 	);
 
 	router.use(cors());
