@@ -215,7 +215,7 @@ export interface FluidHandleNode extends VisualNodeBase {
 /**
  * A node in a visual metadata tree.
  *
- * @internal
+ * @public
  */
 export type VisualNode =
 	| VisualTreeNode

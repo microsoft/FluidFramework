@@ -484,7 +484,7 @@ export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 // @public
 export type VisualizeSharedObject = (sharedObject: ISharedObject, visualizeChildData: VisualizeChildData) => Promise<FluidObjectNode>;
 
-// @internal
+// @public
 export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode | UnknownObjectNode;
 
 // @public
