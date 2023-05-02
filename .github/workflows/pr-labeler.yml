@@ -41,13 +41,15 @@ jobs:
           # We only need to install the root dependencies
           pnpm install -w --frozen-lockfile
 
+      # Add the remote for debugging
+      - run: git remote add upstream https://github.com/microsoft/FluidFramework
+      - run: git fetch upstream
       # Check whether a changeset was added. This step will have the outcome 'failure' if there is no changeset.
       - id: changeset-status
         name: Changeset status
         continue-on-error: true
         run: |
-          # Add the remote for debugging
-          git remote add upstream https://github.com/microsoft/FluidFramework
+
           # pnpm exec flub check changeset --branch=${{ github.base_ref }}
           pnpm exec flub check changeset --branch=main
 
