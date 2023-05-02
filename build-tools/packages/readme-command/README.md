@@ -6,17 +6,15 @@ maintainable CLI using [oclif](https://oclif.io).
 
 <!-- prettier-ignore-start -->
 <!-- toc -->
-
--   [@fluid-internal/readme-command](#fluid-internalreadme-command)
--   [Usage](#usage)
-    <!-- tocstop -->
+* [@fluid-internal/readme-command](#fluid-internalreadme-command)
+* [Usage](#usage)
+<!-- tocstop -->
             <!-- prettier-ignore-stop -->
 
 # Usage
 
 <!-- prettier-ignore-start -->
 <!-- usage -->
-
 ```sh-session
 $ npm install -g @fluid-internal/readme-command
 $ fluid-readme COMMAND
@@ -28,15 +26,13 @@ USAGE
   $ fluid-readme COMMAND
 ...
 ```
-
 <!-- usagestop -->
 <!-- prettier-ignore-stop -->
 
 <!-- prettier-ignore-start -->
 <!-- commands -->
-
--   [`fluid-readme generate readme`](#fluid-readme-generate-readme)
--   [`fluid-readme help [COMMANDS]`](#fluid-readme-help-commands)
+* [`fluid-readme generate readme`](#fluid-readme-generate-readme)
+* [`fluid-readme help [COMMANDS]`](#fluid-readme-help-commands)
 
 ## `fluid-readme generate readme`
 
@@ -85,7 +81,6 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.6/src/commands/help.ts)_
-
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
 
