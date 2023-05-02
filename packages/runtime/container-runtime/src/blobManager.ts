@@ -6,7 +6,11 @@
 import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { ICreateBlobResponse, ISnapshotTree } from "@fluidframework/protocol-definitions";
+import {
+	ICreateBlobResponse,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
+} from "@fluidframework/protocol-definitions";
 import {
 	createResponseError,
 	generateHandleContextPath,
@@ -41,7 +45,6 @@ import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime
 import { sendGCUnexpectedUsageEvent, sweepAttachmentBlobsKey, throwOnTombstoneLoadKey } from "./gc";
 import { Throttler, formExponentialFn, IThrottler } from "./throttler";
 import { summarizerClientType } from "./summary";
-import { IMessageWithMetadata } from "./opProperties";
 
 /**
  * This class represents blob (long string)
@@ -589,7 +592,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return this.sendBlobAttachOp(localId, blobId);
 	}
 
-	public processBlobAttachOp(message: IMessageWithMetadata, local: boolean) {
+	public processBlobAttachOp(message: ISequencedDocumentMessage, local: boolean) {
 		const localId = message.metadata?.localId;
 		const blobId = message.metadata?.blobId;
 		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);

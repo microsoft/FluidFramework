@@ -5,7 +5,6 @@
 
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
-import { isMessageWithValidContents } from "../opProperties";
 import { OpDecompressor } from "./opDecompressor";
 import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
@@ -112,11 +111,7 @@ export function unpackRuntimeMessage(message: ISequencedDocumentMessage): boolea
 	}
 
 	// legacy op format?
-	if (
-		isMessageWithValidContents(message) &&
-		message.contents?.address !== undefined &&
-		message.contents?.type === undefined
-	) {
+	if (message.contents.address !== undefined && message.contents.type === undefined) {
 		message.type = ContainerMessageType.FluidDataStoreOp;
 	} else {
 		// new format

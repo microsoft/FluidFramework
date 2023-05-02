@@ -205,7 +205,7 @@ export class MockContainerRuntime {
  */
 export class MockContainerRuntimeFactory {
 	public sequenceNumber = 0;
-	public minSeq = new Map<string | null, number>();
+	public minSeq = new Map<string, number>();
 	public readonly quorum = new MockQuorumClients();
 	/**
 	 * The MockContainerRuntimes we produce will push messages into this queue as they are submitted.

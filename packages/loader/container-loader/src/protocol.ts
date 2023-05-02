@@ -75,13 +75,11 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		message: ISequencedDocumentMessage,
 		local: boolean,
 	): IProcessMessageResult {
+		const client: ILocalSequencedClient | undefined = this.quorum.getMember(message.clientId);
+
 		// Check and report if we're getting messages from a clientId that we previously
 		// flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
 		if (message.clientId != null) {
-			const client: ILocalSequencedClient | undefined = this.quorum.getMember(
-				message.clientId,
-			);
-
 			if (client === undefined && message.type !== MessageType.ClientJoin) {
 				// pre-0.58 error message: messageClientIdMissingFromQuorum
 				throw new Error("Remote message's clientId is missing from the quorum");

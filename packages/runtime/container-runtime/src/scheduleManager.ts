@@ -16,7 +16,12 @@ import {
 } from "@fluidframework/container-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
-import { asMessageWithMetadata, IMessageWithMetadata } from "./opProperties";
+
+type IRuntimeMessageMetadata =
+	| undefined
+	| {
+			batch?: boolean;
+	  };
 
 /**
  * This class has the following responsibilities:
@@ -56,8 +61,8 @@ export class ScheduleManager {
 			this.emitter.emit("batchBegin", message);
 			this.deltaScheduler.batchBegin(message);
 
-			const batch = asMessageWithMetadata(message)?.metadata?.batch;
-			this.batchClientId = batch ? message.clientId ?? undefined : undefined;
+			const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
+			this.batchClientId = batch ? message.clientId : undefined;
 		}
 	}
 
@@ -75,7 +80,7 @@ export class ScheduleManager {
 			return;
 		}
 
-		const batch = asMessageWithMetadata(message)?.metadata?.batch;
+		const batch = (message?.metadata as IRuntimeMessageMetadata)?.batch;
 		// If no batchClientId has been set then we're in an individual batch. Else, if we get
 		// batch end metadata, this is end of the current batch.
 		if (this.batchClientId === undefined || batch === false) {
@@ -110,7 +115,7 @@ class ScheduleManagerCore {
 			}
 
 			// First message will have the batch flag set to true if doing a batched send
-			const firstMessageMetadata = asMessageWithMetadata(messages[0])?.metadata;
+			const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
 			if (!firstMessageMetadata?.batch) {
 				return;
 			}
@@ -122,9 +127,7 @@ class ScheduleManagerCore {
 			}
 
 			// Set the batch flag to false on the last message to indicate the end of the send batch
-			const lastMessage = messages[
-				messages.length - 1
-			] as IMessageWithMetadata<IDocumentMessage>;
+			const lastMessage = messages[messages.length - 1];
 			lastMessage.metadata = { ...lastMessage.metadata, batch: false };
 		});
 
@@ -234,9 +237,10 @@ class ScheduleManagerCore {
 			0x299 /* "non-synchronized state" */,
 		);
 
+		const metadata = message.metadata as IRuntimeMessageMetadata;
 		// batchMetadata will be true for the message that starts a batch, false for the one that ends it, and
 		// undefined for all other messages.
-		const batchMetadata = asMessageWithMetadata(message)?.metadata?.batch;
+		const batchMetadata = metadata?.batch;
 
 		// Protocol messages are never part of a runtime batch of messages
 		if (!isRuntimeMessage(message)) {
@@ -306,7 +310,7 @@ class ScheduleManagerCore {
 				0x29f /* "we should be processing ops when there is no active batch" */,
 			);
 			this.pauseSequenceNumber = message.sequenceNumber;
-			this.currentBatchClientId = message.clientId ?? undefined;
+			this.currentBatchClientId = message.clientId;
 			// Start of the batch
 			// Only pause processing if queue has no other ops!
 			// If there are any other ops in the queue, processing will be stopped when they are processed!
