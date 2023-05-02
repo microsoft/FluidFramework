@@ -20,7 +20,8 @@ USAGE
 FLAGS
   -g, --releaseGroup=<option>  Name of the release group
                                <options: client|server|azure|build-tools|gitrest|historian>
-  -p, --package=<value>        Name of package.
+  -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
+                               @fluid-tools/markdown-magic and markdown-magic are valid.
   -t, --bumpType=<option>      Version bump type.
                                <options: major|minor|patch>
   -v, --verbose                Verbose logging.
@@ -94,7 +95,8 @@ FLAGS
                                <options: client|server|azure|build-tools|gitrest|historian>
   -l, --limit=<value>          Limits the number of displayed releases for each release group. Results are sorted by
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.
-  -p, --package=<value>        Name of package.
+  -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
+                               @fluid-tools/markdown-magic and markdown-magic are valid.
   -v, --verbose                Verbose logging.
 
 GLOBAL FLAGS
