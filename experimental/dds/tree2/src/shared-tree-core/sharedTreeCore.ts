@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { isStableId } from "@fluidframework/container-runtime";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -41,7 +42,6 @@ import {
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { isStableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -181,7 +181,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editor = this.changeFamily.buildEditor(
 			(change) =>
 				this.applyChange(change, mintRevisionTag(), UndoRedoManagerCommitType.Undoable),
-			anchors,
+			new AnchorSet(), // This class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.,
 		);
 	}
 
@@ -274,6 +274,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.submitCommit(commit, undoRedoType);
 		}
 
+		this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		this.emitLocalChange(change, delta);
 		return commit;
 	}
@@ -419,7 +420,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				// Only track commits that are undoable.
 				const commitType = isUndoable ? UndoRedoManagerCommitType.Undoable : undefined;
 				this.applyChange(change, revision, commitType);
-				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 			}
 		} else {
 			const [newHead] = rebaseBranch(
@@ -439,7 +439,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			// `updateAfterRebase` takes care of tracking any applicable commits in the rebased branch.
 			changes.forEach(({ change, revision }) => {
 				this.applyChange(change, revision, undefined);
-				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 			});
 		}
 	}
