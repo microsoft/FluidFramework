@@ -428,7 +428,7 @@ class SummaryAnalyzer implements IMessageAnalyzer {
 		}
 		if (message.type === MessageType.SummaryAck || message.type === MessageType.SummaryNack) {
 			const summaryMessage = message as ISummaryAckMessage | ISummaryNackMessage;
-			const contents: ISummaryProposal = summaryMessage.contents?.summaryProposal;
+			const contents: ISummaryProposal = summaryMessage.contents.summaryProposal;
 			const distance = message.sequenceNumber - contents.summarySequenceNumber;
 			if (distance > this.maxResponse) {
 				this.maxResponse = distance;
