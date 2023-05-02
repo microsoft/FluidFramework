@@ -85,9 +85,11 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		return createSummarizer(
 			provider,
 			container,
+			{
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			},
 			summaryVersion,
-			gcOptions,
-			mockConfigProvider(settings),
 		);
 	};
 	const summarize = async (summarizer: ISummarizer) => {

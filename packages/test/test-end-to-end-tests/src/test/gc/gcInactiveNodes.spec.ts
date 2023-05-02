@@ -293,9 +293,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				const { summarizer: summarizer1 } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined,
 					{
-						inactiveTimeoutMs,
+						runtimeOptions: {
+							gcOptions: { inactiveTimeoutMs },
+						},
 					},
 				);
 
@@ -372,9 +373,12 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				const { summarizer: summarizer1 } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined,
 					{
-						inactiveTimeoutMs,
+						runtimeOptions: {
+							gcOptions: {
+								inactiveTimeoutMs,
+							},
+						},
 					},
 				);
 
@@ -393,8 +397,14 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 				const { summarizer: summarizer2 } = await createSummarizer(
 					provider,
 					mainContainer,
+					{
+						runtimeOptions: {
+							gcOptions: {
+								inactiveTimeoutMs,
+							},
+						},
+					},
 					summaryVersion1,
-					{ inactiveTimeoutMs },
 				);
 
 				// Wait for inactive timeout. This will ensure that the unreferenced data store is inactive.

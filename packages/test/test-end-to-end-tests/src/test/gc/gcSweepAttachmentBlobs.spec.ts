@@ -86,9 +86,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		const { summarizer, container: summarizerContainer } = await createSummarizer(
 			provider,
 			container,
-			undefined /* summaryVersion */,
-			gcOptions,
-			mockConfigProvider(settings),
+			{
+				runtimeOptions: { gcOptions },
+				loaderProps: { configProvider: mockConfigProvider(settings) },
+			},
 		);
 
 		return { dataStore, summarizer, summarizerContainer };
@@ -389,9 +390,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
+					{
+						runtimeOptions: { gcOptions },
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
 				);
 
 				// Remove the blob's handle to unreference it.
@@ -494,9 +496,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
+					{
+						runtimeOptions: { gcOptions },
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
 				);
 
 				// Summarize so that the above attachment blob is marked unreferenced.
@@ -592,9 +595,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const { summarizer, container: summarizerContainer } = await createSummarizer(
 					provider,
 					mainContainer,
-					undefined /* summaryVersion */,
-					gcOptions,
-					mockConfigProvider(settings),
+					{
+						runtimeOptions: { gcOptions },
+						loaderProps: { configProvider: mockConfigProvider(settings) },
+					},
 				);
 
 				// Add the blob handles to reference them.
@@ -686,9 +690,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 			const { summarizer, container: summarizerContainer } = await createSummarizer(
 				provider,
 				container,
-				undefined /* summaryVersion */,
-				gcOptions,
-				mockConfigProvider(settings),
+				{
+					runtimeOptions: { gcOptions },
+					loaderProps: { configProvider: mockConfigProvider(settings) },
+				},
 			);
 			await provider.ensureSynchronized();
 			await summarizeNow(summarizer);

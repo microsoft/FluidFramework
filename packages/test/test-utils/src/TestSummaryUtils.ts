@@ -6,11 +6,7 @@
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { assert } from "@fluidframework/common-utils";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import {
-	IGCRuntimeOptions,
-	ISummarizer,
-	ISummaryRuntimeOptions,
-} from "@fluidframework/container-runtime";
+import { ISummarizer, ISummaryRuntimeOptions } from "@fluidframework/container-runtime";
 import { FluidObject, IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import {
@@ -19,7 +15,6 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider";
 import { mockConfigProvider } from "./TestConfigs";
@@ -111,48 +106,25 @@ export async function createSummarizerFromFactory(
 /**
  * Creates a summarizer client from the given container and returns the summarizer client's IContainer and ISummarizer.
  * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
+ *
+ * Can pass in a test config provider to enable/disable features.
  */
 export async function createSummarizer(
 	provider: ITestObjectProvider,
 	container: IContainer,
-	summaryVersion?: string,
-	gcOptions?: IGCRuntimeOptions,
-	configProvider: IConfigProviderBase = mockConfigProvider(),
-	logger?: ITelemetryBaseLogger,
-): Promise<{ container: IContainer; summarizer: ISummarizer }> {
-	const testContainerConfig: ITestContainerConfig = {
-		runtimeOptions: {
-			summaryOptions: defaultSummaryOptions,
-			gcOptions,
-		},
-		loaderProps: { configProvider, logger },
-	};
-	const loader = provider.makeTestLoader(testContainerConfig);
-	return createSummarizerCore(container, loader, summaryVersion);
-}
-
-/**
- * Creates a summarizer client from the given container and returns the summarizer client's IContainer and ISummarizer.
- * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
- *
- * Can pass in a test config provider to enable/disable features.
- */
-export async function createSummarizerWithTestConfig(
-	provider: ITestObjectProvider,
-	container: IContainer,
-	config: ITestContainerConfig,
+	config?: ITestContainerConfig,
 	summaryVersion?: string,
 	logger?: ITelemetryBaseLogger,
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const testContainerConfig: ITestContainerConfig = {
 		...config,
 		runtimeOptions: {
-			...config.runtimeOptions,
+			...config?.runtimeOptions,
 			summaryOptions: defaultSummaryOptions,
 		},
 		loaderProps: {
-			...config.loaderProps,
-			configProvider: config.loaderProps?.configProvider ?? mockConfigProvider(),
+			...config?.loaderProps,
+			configProvider: config?.loaderProps?.configProvider ?? mockConfigProvider(),
 			logger,
 		},
 	};
