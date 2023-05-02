@@ -48,7 +48,8 @@ jobs:
         run: |
           # Add the remote for debugging
           git remote add upstream https://github.com/microsoft/FluidFramework
-          pnpm exec flub check changeset --branch=${{ github.base_ref }}
+          # pnpm exec flub check changeset --branch=${{ github.base_ref }}
+          pnpm exec flub check changeset --branch=main
 
       # If a changeset is present and it's labeled changeset-required, label it changeset-present
       - uses: actions-ecosystem/action-add-labels@bd52874380e3909a1ac983768df6976535ece7f8 # ratchet:actions-ecosystem/action-add-labels@v1.1.0
