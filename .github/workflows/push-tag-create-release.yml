@@ -34,14 +34,15 @@ jobs:
       - name: Install Fluid build tools
         continue-on-error: true
         run: |
-          pnpm add --global @fluid-tools/build-cli@^0.15.0
+          # pnpm add --global @fluid-tools/build-cli@^0.16.0-0
 
-          # cd build-tools
-          # pnpm install --frozen-lockfile
-          # pnpm run build:compile
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
 
-          # cd packages/build-cli/bin
-          # echo "$(pwd)" >> $GITHUB_PATH
+          # add the bin dir of build-cli to the path
+          cd packages/build-cli/bin
+          echo "$(pwd)" >> $GITHUB_PATH
 
       - name: Check build-tools installation
         run: |
