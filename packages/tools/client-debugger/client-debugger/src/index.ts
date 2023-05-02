@@ -77,7 +77,7 @@ export {
 } from "./Features";
 export { IFluidDevtools } from "./IFluidDevtools";
 export { DevtoolsLogger } from "./DevtoolsLogger";
-export { FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
+export { FluidDevtoolsProps, initializeDevtools } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
