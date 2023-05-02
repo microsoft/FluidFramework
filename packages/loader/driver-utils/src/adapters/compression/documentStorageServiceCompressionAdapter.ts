@@ -92,7 +92,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 
 		const algorithmStr = this.extractAlgorithmString(name);
 		if (algorithmStr !== undefined) {
-			decoded = decoded.substring(algorithmStr.length+1);
+			decoded = decoded.substring(algorithmStr.length + 1);
 		}
 		return decoded;
 	}
