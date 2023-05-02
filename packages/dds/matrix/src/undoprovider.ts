@@ -37,7 +37,7 @@ export class VectorUndoProvider {
 		if (deltaArgs.deltaSegments.length > 0) {
 			// If we are in the process of reverting, the `IRevertible.revert()` will provide the tracking
 			// group so that we can preserve the original segment ranges as a single op/group as we move
-			// ops between the undo <-> redo stacks.f
+			// ops between the undo <-> redo stacks.
 			const revertibles: MergeTreeDeltaRevertible[] = this.currentGroup ?? [];
 			appendToMergeTreeDeltaRevertibles(deltaArgs, revertibles);
 
