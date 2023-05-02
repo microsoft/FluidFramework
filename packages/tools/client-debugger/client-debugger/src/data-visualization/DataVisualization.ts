@@ -97,6 +97,8 @@ export interface DataVisualizerEvents extends IEvent {
 	 * Emitted whenever the associated {@link @fluidframework/shared-object-base#ISharedObject}'s data is updated.
 	 *
 	 * @param visualTree - The updated visual tree representing the shared object's state.
+	 *
+	 * @eventProperty
 	 */
 	(event: "update", listener: (visualTree: FluidObjectNode) => void);
 }
@@ -289,15 +291,27 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * Will broadcast an updated visual tree representation of the DDS's data via the
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
-	private readonly onOpHandler = (): boolean => {
-		this.emitVisualUpdate();
-		return true;
+	private readonly onOpHandler = async (): Promise<boolean> => {
+		try {
+			await this.emitVisualUpdate();
+			return true;
+		} catch (error) {
+			console.error(error);
+			return false;
+		}
 	};
 
 	/**
 	 * Private {@link VisualizerNode.disposed} tracking.
 	 */
 	private _disposed: boolean;
+
+	/**
+	 * Handles the returned promise for {@link onOpHandler}.
+	 */
+	private readonly syncOpHandler = (): void => {
+		this.onOpHandler().catch((error) => console.error(error));
+	};
 
 	public constructor(
 		/**
@@ -326,7 +340,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	) {
 		super();
 
-		this.sharedObject.on("op", this.onOpHandler);
+		this.sharedObject.on("op", this.syncOpHandler);
 
 		this._disposed = false;
 	}
@@ -343,9 +357,13 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * {@link VisualizerNode.sharedObject}'s current state as an
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
-	private emitVisualUpdate(): void {
-		const visualTree = this.render();
-		this.emit("update", visualTree);
+	private async emitVisualUpdate(): Promise<void> {
+		try {
+			const visualTree: FluidObjectNode = await this.render();
+			this.emit("update", visualTree);
+		} catch (error) {
+			console.log(error);
+		}
 	}
 
 	/**
@@ -377,7 +395,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 */
 	public dispose(): void {
 		if (!this._disposed) {
-			this.sharedObject.off("op", this.onOpHandler);
+			this.sharedObject.off("op", this.syncOpHandler);
 			this._disposed = true;
 		}
 	}
