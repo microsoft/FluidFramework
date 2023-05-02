@@ -47,8 +47,8 @@ export interface DevtoolsProps {
 	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
 	 * default visualization implementations.
 	 *
-	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom
-	 * one will be used.
+	 * Any visualizer configurations specified here will take precedence over system defaults.
+	 * They can also be overridden on a per-Container basis when registering individual Containers.
 	 */
 	dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
@@ -93,8 +93,8 @@ export interface ContainerDevtoolsProps {
 	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
 	 * default visualization implementations.
 	 *
-	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom
-	 * one will be used.
+	 * Any visualizer configurations specified here will take precedence over system defaults, as well as any
+	 * provided when initializing the Devtools.
 	 */
 	dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
