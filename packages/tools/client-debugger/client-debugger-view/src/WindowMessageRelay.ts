@@ -15,12 +15,12 @@ import {
 
 /**
  * Message relay used by a debugger view rendered in the same page as the application to communicate with the
- * {@link @fluid-tools/client-debuger#DebuggerRegistry}.
+ * {@link @fluid-tools/client-debuger#IFluidDevtools}.
  *
  * @remarks
  *
  * While a debugger view rendered in the same page as the application could technically communicate with the
- * {@link @fluid-tools/client-debuger#DebuggerRegistry} directly, we put this abstraction in the middle to match the
+ * {@link @fluid-tools/client-debuger#IFluidDevtools} directly, we put this abstraction in the middle to match the
  * way that a debugger view rendered outside the context of the application (e.g. the browser's DevTools panel) has
  * to communicate with the debugger registry.
  * This ensures that we don't "abuse" the power of local interaction to do things that might not be possible (or need
@@ -34,6 +34,7 @@ export class WindowMessageRelay
 		/**
 		 * All messages sent through the returned instance's {@link WindowMessageRelay.postMessage}
 		 * method will get this value written to their 'source' property.
+		 *
 		 * @see {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage}
 		 */
 		private readonly messageSource: string,
@@ -59,7 +60,8 @@ export class WindowMessageRelay
 
 	/**
 	 * Handler for incoming messages from the window object.
-	 * Messages are forwarded on to subscribers for valid {@link ISourcedDevtoolsMessage}s from the expected source.
+	 * Messages are forwarded on to subscribers for valid {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage}s
+	 * from the expected source.
 	 */
 	private readonly onWindowMessage = (
 		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,

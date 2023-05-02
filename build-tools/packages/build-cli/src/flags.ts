@@ -49,7 +49,8 @@ export const releaseGroupFlag = Flags.custom({
  */
 export const packageSelectorFlag = Flags.custom({
 	char: "p",
-	description: "Name of package.",
+	description:
+		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/markdown-magic and markdown-magic are valid.",
 	multiple: false,
 });
 
