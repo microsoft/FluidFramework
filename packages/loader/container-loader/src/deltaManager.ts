@@ -159,7 +159,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private readonly deltaStorageDelayId = uuid();
 	private readonly deltaStreamDelayId = uuid();
 
-	private messageBuffer: (IDocumentMessage & { metadata?: { batch?: boolean } })[] = [];
+	private messageBuffer: IDocumentMessage[] = [];
 
 	private _checkpointSequenceNumber: number | undefined;
 
@@ -253,7 +253,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.opsSize += contents.length;
 		}
 
-		this.messageBuffer.push(message as any);
+		this.messageBuffer.push(message);
 
 		if (message.type === MessageType.NoOp) {
 			this.noOpCount++;

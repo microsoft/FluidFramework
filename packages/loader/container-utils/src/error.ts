@@ -178,7 +178,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 }
 
 export const extractSafePropertiesFromMessage = (message: ISequencedDocumentMessage) => ({
-	messageClientId: message.clientId ?? "",
+	messageClientId: message.clientId,
 	messageSequenceNumber: message.sequenceNumber,
 	messageClientSequenceNumber: message.clientSequenceNumber,
 	messageReferenceSequenceNumber: message.referenceSequenceNumber,
