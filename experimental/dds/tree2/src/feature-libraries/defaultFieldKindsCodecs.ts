@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Type } from "@sinclair/typebox";
+import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
+import { JsonCompatibleReadOnly } from "../util";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import type { NodeUpdate, OptionalChangeset, ValueChangeset } from "./defaultFieldKindsTypes";
 import type { NodeChangeset } from "./modular-schema";
@@ -29,11 +30,11 @@ export const makeOptionalFieldCodecFamily = (
 
 function makeValueFieldCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
-): IJsonCodec<ValueChangeset, EncodedValueChangeset> {
+): IJsonCodec<ValueChangeset, EncodedValueChangeset<TAnySchema>> {
 	const nodeUpdateCodec = makeNodeUpdateCodec(childCodec);
 	return {
 		encode: (change: ValueChangeset) => {
-			const encoded: EncodedValueChangeset = {};
+			const encoded: EncodedValueChangeset<TAnySchema> = {};
 			if (change.value !== undefined) {
 				encoded.value = nodeUpdateCodec.encode(change.value);
 			}
@@ -45,7 +46,7 @@ function makeValueFieldCodec(
 			return encoded;
 		},
 
-		decode: (encoded: EncodedValueChangeset) => {
+		decode: (encoded: EncodedValueChangeset<TAnySchema>) => {
 			const decoded: ValueChangeset = {};
 			if (encoded.value !== undefined) {
 				decoded.value = nodeUpdateCodec.decode(encoded.value);
@@ -58,17 +59,17 @@ function makeValueFieldCodec(
 			return decoded;
 		},
 
-		encodedSchema: EncodedValueChangeset,
+		encodedSchema: EncodedValueChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
 
 function makeOptionalFieldCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
-): IJsonCodec<OptionalChangeset, EncodedOptionalChangeset> {
+): IJsonCodec<OptionalChangeset, EncodedOptionalChangeset<TAnySchema>> {
 	const nodeUpdateCodec = makeNodeUpdateCodec(childCodec);
 	return {
 		encode: (change: OptionalChangeset) => {
-			const encoded: EncodedOptionalChangeset = {};
+			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
 			if (change.fieldChange !== undefined) {
 				encoded.fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
 				if (change.fieldChange.newContent !== undefined) {
@@ -85,7 +86,7 @@ function makeOptionalFieldCodec(
 			return encoded;
 		},
 
-		decode: (encoded: EncodedOptionalChangeset) => {
+		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
 			const decoded: OptionalChangeset = {};
 			if (encoded.fieldChange !== undefined) {
 				decoded.fieldChange = {
@@ -106,16 +107,16 @@ function makeOptionalFieldCodec(
 			return decoded;
 		},
 
-		encodedSchema: EncodedOptionalChangeset,
+		encodedSchema: EncodedOptionalChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
 
 function makeNodeUpdateCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
-): IJsonCodec<NodeUpdate, EncodedNodeUpdate> {
+): IJsonCodec<NodeUpdate, EncodedNodeUpdate<TAnySchema>> {
 	return {
 		encode: (update: NodeUpdate) => {
-			const encoded: EncodedNodeUpdate =
+			const encoded: EncodedNodeUpdate<TAnySchema> =
 				"revert" in update
 					? {
 							revert: jsonableTreeFromCursor(update.revert),
@@ -129,9 +130,9 @@ function makeNodeUpdateCodec(
 				encoded.changes = childCodec.encode(update.changes);
 			}
 
-			return encoded;
+			return encoded as JsonCompatibleReadOnly & EncodedNodeUpdate<TAnySchema>;
 		},
-		decode: (encoded: EncodedNodeUpdate) => {
+		decode: (encoded: EncodedNodeUpdate<TAnySchema>) => {
 			const decoded: NodeUpdate =
 				"revert" in encoded
 					? {
@@ -146,6 +147,6 @@ function makeNodeUpdateCodec(
 
 			return decoded;
 		},
-		encodedSchema: EncodedNodeUpdate,
+		encodedSchema: EncodedNodeUpdate(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
