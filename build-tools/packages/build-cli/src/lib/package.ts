@@ -599,6 +599,8 @@ export async function setVersion(
 		} else {
 			newRange = `${interdependencyRange}${translatedVersion.version}`;
 		}
+	} else {
+		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 
 	if (!isInterdependencyRange(newRange)) {
