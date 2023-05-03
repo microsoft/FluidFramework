@@ -141,10 +141,12 @@ export function create(
 					if (useCache) {
 						response.setHeader("Cache-Control", "public, max-age=31536000");
 					}
+					// Make sure the browser will expose specific headers for performance analysis.
 					response.setHeader(
 						"Access-Control-Expose-Headers",
 						"Content-Encoding, Content-Length, Content-Type",
 					);
+					// In order to report W3C timings, Time-Allow-Origin needs to be set.
 					response.setHeader("Timing-Allow-Origin", "*");
 					response
 						.status(200)
