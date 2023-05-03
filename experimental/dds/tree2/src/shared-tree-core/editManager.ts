@@ -147,14 +147,17 @@ export class EditManager<
 	public registerBranch(branch: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): void {
 		const trackBranch = (b: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): SeqNumber => {
 			const trunkCommit = findCommonAncestor(this.trunk, b.getHead());
-			assert(isTrunkCommit(trunkCommit), "Expected commit to be on the trunk branch");
+			assert(
+				isTrunkCommit(trunkCommit),
+				0x66f /* Expected commit to be on the trunk branch */,
+			);
 			const branches = getOrCreate(
 				this.trunkBranches,
 				trunkCommit.sequenceNumber,
 				() => new Set(),
 			);
 
-			assert(!branches.has(b), "Branch was registered more than once");
+			assert(!branches.has(b), 0x670 /* Branch was registered more than once */);
 			branches.add(b);
 			return trunkCommit.sequenceNumber;
 		};
@@ -166,7 +169,7 @@ export class EditManager<
 			const branches =
 				this.trunkBranches.get(sequenceNumber) ?? fail("Expected branch to be tracked");
 
-			assert(branches.delete(b), "Expected branch to be tracked");
+			assert(branches.delete(b), 0x671 /* Expected branch to be tracked */);
 			if (branches.size === 0) {
 				this.trunkBranches.delete(sequenceNumber);
 			}
@@ -177,9 +180,11 @@ export class EditManager<
 		// Whenever the branch forks, register the new fork
 		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offRebase = branch.on("rebase", () => {
-			untrackBranch(branch, trunkBase.sequenceNumber);
-			trunkBase.sequenceNumber = trackBranch(branch);
+		const offRebase = branch.on("change", ({ type }) => {
+			if (type === "rebase") {
+				untrackBranch(branch, trunkBase.sequenceNumber);
+				trunkBase.sequenceNumber = trackBranch(branch);
+			}
 		});
 		// When the branch is disposed, update our branch set and trim the trunk
 		const offDispose = branch.on("dispose", () => {
@@ -258,7 +263,7 @@ export class EditManager<
 			// If no trunk commit is found, it means that all trunk commits are below the search key, so evict them all
 			assert(
 				this.trunkBranches.isEmpty,
-				"Expected no registered branches when clearing trunk",
+				0x672 /* Expected no registered branches when clearing trunk */,
 			);
 			this.trunk = this.trunkBase;
 			this.sequenceMap.clear();
@@ -424,7 +429,12 @@ export class EditManager<
 			});
 		}
 
-		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
+		const delta = this.rebaseLocalBranchOverTrunk();
+		if (delta === undefined) {
+			return emptyDelta;
+		}
+
+		return this.changeFamily.intoDelta(delta);
 	}
 
 	public addLocalChange(
@@ -527,7 +537,7 @@ export class EditManager<
 		});
 	}
 
-	private rebaseLocalBranchOverTrunk(): TChangeset {
+	private rebaseLocalBranchOverTrunk(): TChangeset | undefined {
 		const [newLocalChanges, netChange] = rebaseBranch(
 			this.changeFamily.rebaser,
 			this.localBranch,
@@ -541,7 +551,7 @@ export class EditManager<
 
 		this.localBranch = newLocalChanges;
 
-		if (this.anchors !== undefined) {
+		if (this.anchors !== undefined && netChange !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
 		}
 
