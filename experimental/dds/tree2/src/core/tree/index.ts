@@ -24,6 +24,7 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	forEachNode,
+	forEachNodeIn,
 	forEachField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,

@@ -19,6 +19,7 @@ import {
 	FieldAnchor,
 	ITreeCursor,
 	inCursorNode,
+	forEachNodeIn,
 } from "../../core";
 import { Multiplicity } from "../modular-schema";
 import {
@@ -47,13 +48,34 @@ import {
 import { makeTree } from "./editableTree";
 import { ProxyTarget } from "./ProxyTarget";
 
+/* eslint-disable no-param-reassign */
+/* eslint-disable no-bitwise */
+
+/**
+ * Coerces the given 'index' to an Int32.  This includes the following behaviors:
+ *
+ * - +/-Infinity is preserved
+ * - \{ undefined, null, false, NaN \} map to 0
+ * - \{ true \} maps to 1
+ * - Strings containing numeric digits are parsed (e.g. "-0.1e2" -\> -10)
+ * - Non-parsable strings are coerced to 0
+ *
+ * If the resulting integer is negative, counts backwards from the end of the array (by adding length).
+ */
+const normalizeIndex = (index: number | undefined, length: number) =>
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	index === Infinity || index === -Infinity || (index! |= 0) >= 0 ? index! : index! + length;
+
+/* eslint-enable no-bitwise */
+/* eslint-enable no-param-reassign */
+
 export function makeField(
 	context: ProxyContext,
 	fieldSchema: FieldSchema,
 	cursor: ITreeSubscriptionCursor,
 ): EditableField {
-	const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
-	return adaptWithProxy(targetSequence, fieldProxyHandler);
+	const target = new FieldProxyTarget(context, fieldSchema, cursor);
+	return adaptWithProxy(target, fieldProxyHandler);
 }
 
 function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target is FieldProxyTarget {
@@ -136,6 +158,37 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return this.cursor.getFieldLength();
 	}
 
+	/* eslint-disable no-param-reassign */
+
+	public slice(start?: number, end?: number) {
+		const length = this.length;
+
+		start = normalizeIndex(start, length);
+		if (start < 0) start = 0;
+
+		if (end === undefined) {
+			end = length;
+		} else {
+			end = normalizeIndex(end, length);
+			if (end < 0) end = 0;
+		}
+
+		const result: unknown[] = [];
+
+		this.forEach(
+			(child) => {
+				result.push(child);
+				return true;
+			},
+			start,
+			end,
+		);
+
+		return result;
+	}
+
+	/* eslint-enable no-param-reassign */
+
 	/**
 	 * Returns a node (unwrapped by default, see {@link UnwrappedEditableTree}) by its index.
 	 */
@@ -152,6 +205,23 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			0x454 /* A child node must exist at index to get it without unwrapping. */,
 		);
 		return inCursorNode(this.cursor, index, (cursor) => makeTree(this.context, cursor));
+	}
+
+	/**
+	 * Invoke given 'callbackFn' for each unwrapped node in the given index range.
+	 * The callback must return true to continue the enumeration.
+	 */
+	public forEach(
+		callbackFn: (child: UnwrappedEditableTree) => boolean,
+		start?: number,
+		end?: number,
+	) {
+		forEachNodeIn(
+			this.cursor,
+			(cursor) => callbackFn(unwrappedTree(this.context, cursor)),
+			start,
+			end,
+		);
 	}
 
 	/**

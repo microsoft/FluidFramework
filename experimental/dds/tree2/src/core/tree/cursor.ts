@@ -364,6 +364,36 @@ export function forEachNode<TCursor extends ITreeCursor = ITreeCursor>(
 }
 
 /**
+ * Moves cursor to each child of the current field.  The optional arguments `start` and `end`
+ * can be used to restrict the range of children visited.
+ *
+ * `callbackFn` is invoked after moving the cursor to each child.  The callback must return
+ * `true` to continue the enumeration, or `false` to early exit.
+ *
+ * The `callbackFn` may move move the provided cursor, but must restore the cursor to the current
+ * child node in the enumeration before returning.
+ */
+export function forEachNodeIn<TCursor extends ITreeCursor = ITreeCursor>(
+	cursor: TCursor,
+	callbackFn: (cursor: TCursor) => boolean,
+	start = 0,
+	end = cursor.getFieldLength(),
+): void {
+	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
+
+	// The placement of `remaining > 0` in the expressions below avoids unnecessary
+	// attempts to move the cursor when 0 items remain in the enumeration.
+	for (
+		let remaining = end - start,
+			shouldContinue = remaining > 0 && cursor.firstNode() && cursor.seekNodes(start);
+		shouldContinue;
+		shouldContinue = shouldContinue && --remaining > 0 && cursor.nextNode()
+	) {
+		shouldContinue = callbackFn(cursor) !== false;
+	}
+}
+
+/**
  * Casts a cursor to an {@link ITreeCursorSynchronous}.
  *
  * TODO: #1404: Handle this properly for partial data loading support.
@@ -392,7 +422,7 @@ export function inCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
 
 /**
  * Runs `f` inside of node `index` on `cursor`.
- * @param cursor - Cursor whoso node to enter and exit. Must be in `fields` mode.
+ * @param cursor - Cursor whose node to enter and exit. Must be in `fields` mode.
  * @param index - Node to enter.
  * @param f - Callback to run when in node.
  * @returns return value of `f`

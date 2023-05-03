@@ -72,6 +72,7 @@ export {
 	isLocalKey,
 	compareFieldUpPaths,
 	forEachNode,
+	forEachNodeIn,
 	forEachField,
 	PathRootPrefix,
 	isSkipMark,
