@@ -1,7 +1,7 @@
-name: "pr-check-changesets"
+name: "pr-check-changeset"
 
 on:
-  pull_request:
+  pull_request_target:
     types: [labeled, unlabeled, opened, synchronize, reopened]
 
 jobs:
@@ -33,25 +33,19 @@ jobs:
       # Check whether a changeset was added. This step will have the outcome 'failure' if there is no changeset.
       - id: changeset-status
         name: Changeset status
-        continue-on-error: true
         run: |
-          pnpm exec flub check changeset --branch=${{ github.base_ref }}
+          set +e # don't exit on failure
+          flub check changeset --branch=${{ github.base_ref }}
 
-      - name: Required but missing
-        if: steps.changeset-status.outcome == 'failure' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
-        with:
-          header: changeset
-          path: ./.github/workflows/data/changeset-missing.md
+          # outputs a zero if a changeset is present, 1 otherwise
+          echo "exitcode=$?" > ./changeset-status
 
-      - name: Required and present
-        if: steps.changeset-status.outcome == 'success' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+      - name: Upload changeset status
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
         with:
-          header: changeset
-          recreate: true
-          message: |
-            This PR requires a changeset and it has one! Good job!
+          name: changeset-status
+          path: ./changeset-status
+          retention-days: 3
 
   # Any PR without the changeset-required label will be ignored.
   changeset-not-required:
@@ -63,3 +57,16 @@ jobs:
         with:
           header: changeset
           delete: true
+
+      - id: changeset-status
+        name: Changeset disabled
+        run: |
+          # Always output 0 to signal that changesets aren't needed
+          echo "exitcode=0" > ./changeset-status
+
+      - name: Upload changeset status
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        with:
+          name: changeset-status
+          path: ./changeset-status
+          retention-days: 3

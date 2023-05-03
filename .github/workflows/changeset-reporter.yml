@@ -1,0 +1,53 @@
+name: changeset-reporter
+on:
+  workflow_run:
+    workflows: [ "pr-check-changeset" ]
+    types:
+      - completed
+
+jobs:
+  load_report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download results
+        uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v2.24.3
+        with:
+          workflow: pr-check-changeset.yml
+          # workflow_conclusion: completed
+          run_id: ${{ github.event.workflow_run.id }}
+          name: changeset-status
+
+      - name: Load status
+        id: status
+        run: echo "changeset-status=$(cat changeset-status)" >> $GITHUB_OUTPUT
+
+      - name: Post report in comment
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: linkreport
+          recreate: true
+          number: ${{ steps.load_pr.outputs.pr }}
+          path: ./results/linkcheck
+
+      - name: Required but missing
+        if: steps.status.outputs.changeset-status != '0' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          path: ./.github/workflows/data/changeset-missing.md
+
+      - name: Required and present
+        if: steps.status.outputs.changeset-status == '0' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          recreate: true
+          message: |
+            This PR requires a changeset and it has one! Good job!
+
+      - name: Changeset not required
+        if: steps.status.outputs.changeset-status == '0' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          delete: true
