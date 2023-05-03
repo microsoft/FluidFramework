@@ -353,6 +353,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	private assertNotDisposed(): void {
-		assert(!this.disposed, "Branch is disposed");
+		assert(!this.disposed, 0x66e /* Branch is disposed */);
 	}
 }
