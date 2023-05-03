@@ -200,8 +200,7 @@ export namespace DevtoolsFeatures {
 
 // @public @sealed
 export class DevtoolsLogger extends TelemetryLogger {
-    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): DevtoolsLogger;
-    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): DevtoolsLogger;
     send(event: ITelemetryBaseEvent): void;
 }
 

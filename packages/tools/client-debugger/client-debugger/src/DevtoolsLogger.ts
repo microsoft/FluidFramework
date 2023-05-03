@@ -6,7 +6,6 @@
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	TelemetryLogger,
-	MultiSinkLogger,
 	ChildLogger,
 	ITelemetryLoggerPropertyBags,
 } from "@fluidframework/telemetry-utils";
@@ -44,6 +43,12 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * @public
  */
 export class DevtoolsLogger extends TelemetryLogger {
+	/**
+	 * Base telemetry logger provided by the consumer.
+	 * All messages sent to the Devtools logger will be forwarded to this.
+	 */
+	private readonly baseLogger: ITelemetryBaseLogger | undefined;
+
 	/**
 	 * Accumulated data for Telemetry logs.
 	 */
@@ -91,40 +96,31 @@ export class DevtoolsLogger extends TelemetryLogger {
 	// #endregion
 
 	/**
-	 * Create an instance of this logger
-	 * @param namespace - Telemetry event name prefix to add to all events
-	 * @param properties - Base properties to add to all events
+	 * Creates a new DevtoolsLogger, which will post telemetry events to the Window, and will forward them to the
+	 * provided baseLogger (if one is provided).
+	 *
+	 * @param baseLogger - (optional) Base logger to which all telemetry events will be forwarded (in addition to
+	 * posting them to the Window).
+	 * @param namespace - Telemetry event name prefix to add to all events.
+	 * @param properties - Base properties to add to all events.
 	 */
 	public static create(
+		baseLogger?: ITelemetryBaseLogger,
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
 	): DevtoolsLogger {
-		return new DevtoolsLogger(namespace, properties);
-	}
-
-	/**
-	 * Mix in this logger with another.
-	 * The returned logger will output events to the newly created DevTools extension logger *and* the base logger.
-	 * @param namespace - Telemetry event name prefix to add to all events
-	 * @param baseLogger - Base logger to output events (in addition to DevTools extension logger being created). Can be undefined.
-	 * @param properties - Base properties to add to all events
-	 */
-	public static mixinLogger(
-		namespace?: string,
-		baseLogger?: ITelemetryBaseLogger,
-		properties?: ITelemetryLoggerPropertyBags,
-	): TelemetryLogger {
 		if (!baseLogger) {
-			return DevtoolsLogger.create(namespace, properties);
+			return new DevtoolsLogger(namespace, properties);
 		}
 
-		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
-		multiSinkLogger.addLogger(
-			DevtoolsLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
-		);
-		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
+		// TODO: what is this for?
+		const devtoolsLoggerProperties = properties ?? this.tryGetBaseLoggerProps(baseLogger);
 
-		return multiSinkLogger;
+		return new DevtoolsLogger(
+			namespace,
+			devtoolsLoggerProperties,
+			ChildLogger.create(baseLogger, namespace),
+		);
 	}
 
 	private static tryGetBaseLoggerProps(
@@ -137,8 +133,15 @@ export class DevtoolsLogger extends TelemetryLogger {
 		return undefined;
 	}
 
-	private constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags) {
+	private constructor(
+		namespace?: string,
+		properties?: ITelemetryLoggerPropertyBags,
+		baseLogger?: ITelemetryBaseLogger,
+	) {
 		super(namespace, properties);
+
+		this.baseLogger = baseLogger;
+
 		this._telemetryLog = [];
 
 		// Register listener for inbound messages from the window (globalThis)
@@ -151,7 +154,10 @@ export class DevtoolsLogger extends TelemetryLogger {
 	 * @param event - The telemetry event to send.
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		// TODO: ability to disable the logger so this becomes a no-op
+		// Forward event to base logger
+		this.baseLogger?.send(event);
+
+		// TODO: ability to disable the logger so the rest of this becomes a no-op
 
 		const newEvent: ITimestampedTelemetryEvent = {
 			logContent: this.prepareEvent(event),
