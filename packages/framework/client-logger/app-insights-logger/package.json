@@ -42,7 +42,7 @@
 		"@microsoft/applicationinsights-web": "^2.8.11"
 	},
 	"devDependencies": {
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/sinon": "^7.0.13",
