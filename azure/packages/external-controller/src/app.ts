@@ -12,6 +12,7 @@ import {
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+import { DebugLogger } from "@fluidframework/telemetry-utils";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
@@ -105,7 +106,7 @@ async function initializeNewContainer(
 }
 
 async function start(): Promise<void> {
-	const logger = DevtoolsLogger.create();
+	const logger = DevtoolsLogger.create(DebugLogger.create("test-namespace"));
 
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 	// and hook to the Telemetry system
