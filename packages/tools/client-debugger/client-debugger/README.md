@@ -1,6 +1,6 @@
 # @fluid-tools/client-debugger
 
-This library contains a library of developer tools for use alongside the Fluid Framework.
+This library contains developer tools for use alongside the Fluid Framework.
 It is used to power our associated browser extensions.
 
 TODO: link to extensions once they are published.
