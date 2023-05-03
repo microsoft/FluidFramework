@@ -119,6 +119,15 @@ describe("UndoRedoManager", () => {
 			assert.deepEqual(undoChange, invertedTestChange);
 		});
 
+		it("should return undefined if there is no head undoble commit", () => {
+			const manager = undoRedoManagerFactory();
+			const undoChange = manager.undo();
+
+			assert.equal(undoChange, undefined);
+		});
+	});
+
+	describe("redo", () => {
 		it("should create an invert of the head redoable commit", () => {
 			const commit = createTestGraphCommit([], 0, localSessionId);
 			const initialCommit = {
@@ -129,13 +138,6 @@ describe("UndoRedoManager", () => {
 			const redoChange = manager.redo();
 			const invertedTestChange = TestChange.invert(commit.change);
 			assert.deepEqual(redoChange, invertedTestChange);
-		});
-
-		it("should return undefined if there is no head undoble commit", () => {
-			const manager = undoRedoManagerFactory();
-			const undoChange = manager.undo();
-
-			assert.equal(undoChange, undefined);
 		});
 
 		it("should return undefined if there is no head redoble commit", () => {
