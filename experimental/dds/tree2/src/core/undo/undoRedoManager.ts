@@ -82,7 +82,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 				const ancestor = findCommonAncestor([commit], [head, pathAfterUndoable]);
 				assert(
 					ancestor === commit,
-					"The head commit should be based off the undoable commit.",
+					0x677 /* The head commit should be based off the undoable commit. */,
 				);
 				change = pathAfterUndoable.reduce(
 					(a, b) => this.changeFamily.rebaser.rebase(a, b),
@@ -160,7 +160,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		const rebasedPath: GraphCommit<TChange>[] = [];
 		const ancestor = findCommonAncestor([baseHead], [rebasedHead, rebasedPath]);
-		assert(ancestor === baseHead, "The rebased head should be based off of the base branch.");
+		assert(ancestor === baseHead, 0x678 /* The rebased head should be based off of the base branch. */);
 
 		if (rebasedPath.length === 0) {
 			this.headUndoableCommit = baseUndoRedoManager.headUndoable;

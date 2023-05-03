@@ -1686,7 +1686,7 @@ export class ContainerRuntime
 		this.addMetadataToSummary(summaryTree);
 
 		if (this.idCompressorEnabled) {
-			assert(this.idCompressor !== undefined, "IdCompressor should be defined if enabled");
+			assert(this.idCompressor !== undefined, 0x67a /* IdCompressor should be defined if enabled */);
 			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}
@@ -1814,7 +1814,7 @@ export class ContainerRuntime
 			case ContainerMessageType.IdAllocation:
 				assert(
 					this.idCompressor !== undefined,
-					"IdCompressor should be defined if enabled",
+					0x67b /* IdCompressor should be defined if enabled */,
 				);
 				return this.applyStashedIdAllocationOp(
 					op as unknown as IdCreationRangeWithStashedState,
@@ -1986,7 +1986,7 @@ export class ContainerRuntime
 				case ContainerMessageType.IdAllocation:
 					assert(
 						this.idCompressor !== undefined,
-						"IdCompressor should be defined if enabled",
+						0x67c /* IdCompressor should be defined if enabled */,
 					);
 					this.idCompressor.finalizeCreationRange(message.contents as IdCreationRange);
 					break;
@@ -2948,7 +2948,7 @@ export class ContainerRuntime
 			if (this.idCompressorEnabled) {
 				assert(
 					this.idCompressor !== undefined,
-					"IdCompressor should be defined if enabled",
+					0x67d /* IdCompressor should be defined if enabled */,
 				);
 				idRange = this.idCompressor.takeNextCreationRange();
 				// Don't include the idRange if there weren't any Ids allocated
