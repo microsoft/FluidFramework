@@ -269,7 +269,12 @@ class RebaseQueue<T> {
 				newMark: length > 0 ? length : undefined,
 			};
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
-			const cmp = compareCellPositions(this.baseIntention, baseMark, newMark, this.reattachOffset);
+			const cmp = compareCellPositions(
+				this.baseIntention,
+				baseMark,
+				newMark,
+				this.reattachOffset,
+			);
 			if (cmp < 0) {
 				this.reattachOffset += Math.min(getOutputLength(baseMark), -cmp);
 				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
@@ -279,13 +284,12 @@ class RebaseQueue<T> {
 				const length = Math.min(getMarkLength(baseMark), getMarkLength(newMark));
 				if (markFillsCells(baseMark)) {
 					this.reattachOffset += length;
-				}					
+				}
 				return this.dequeueLength(length);
 			}
 		} else if (areInputCellsEmpty(newMark)) {
 			return this.dequeueNew();
-		}
-		else if (areInputCellsEmpty(baseMark)) {
+		} else if (areInputCellsEmpty(baseMark)) {
 			this.reattachOffset += getOutputLength(baseMark);
 			return this.dequeueBase();
 		} else {
@@ -329,7 +333,7 @@ function rebaseMark<TNodeChange>(
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	moveEffects: MoveEffectTable<TNodeChange>,
 ): Mark<TNodeChange> {
-	let rebasedMark = rebaseNodeChange(currMark, baseMark, rebaseChild);
+	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
 	const baseMarkIntention = getMarkIntention(baseMark, baseIntention);
 	if (markEmptiesCells(baseMark)) {
 		const moveId = getMarkMoveId(baseMark);
@@ -634,7 +638,7 @@ function compareCellPositions(
 		if (isAttach(baseMark)) {
 			const offset = offsetInNew - detachOffset;
 			return offset === 0 ? Infinity : -offset;
-		}		
+		}
 		return offsetInNew > baseId.index ? baseId.index - offsetInNew : Infinity;
 	}
 

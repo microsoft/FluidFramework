@@ -24,7 +24,13 @@ import {
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
-import { getMoveEffect, getOrAddEffect, isMoveMark, MoveEffectTable, MoveMark } from "./moveEffectTable";
+import {
+	getMoveEffect,
+	getOrAddEffect,
+	isMoveMark,
+	MoveEffectTable,
+	MoveMark,
+} from "./moveEffectTable";
 import {
 	getInputLength,
 	getOutputLength,
@@ -226,7 +232,7 @@ function composeMarks<TNodeChange>(
 			).mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
 			return 0;
 		}
-		
+
 		if (moveOutId !== undefined) {
 			assert(isMoveMark(newMark), "Only move marks have move IDs");
 
@@ -479,7 +485,14 @@ export class ComposeQueue<T> {
 				);
 				baseCellId = baseMark.detachEvent;
 			}
-			const cmp = compareCellPositions(baseCellId, baseMark, newMark, this.newRevision, this.cancelledInserts, this.baseGap);
+			const cmp = compareCellPositions(
+				baseCellId,
+				baseMark,
+				newMark,
+				this.newRevision,
+				this.cancelledInserts,
+				this.baseGap,
+			);
 			if (cmp < 0) {
 				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
 			} else if (cmp > 0) {
@@ -574,8 +587,16 @@ interface ComposeMarks<T> {
 	newMark?: Mark<T>;
 }
 
-function areInverseMoves(baseMark: MoveMark<unknown>, baseIntention: RevisionTag | undefined, newMark: MoveMark<unknown>, newIntention: RevisionTag | undefined): boolean {
-	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === (newMark.revision ?? newIntention)) {
+function areInverseMoves(
+	baseMark: MoveMark<unknown>,
+	baseIntention: RevisionTag | undefined,
+	newMark: MoveMark<unknown>,
+	newIntention: RevisionTag | undefined,
+): boolean {
+	if (
+		baseMark.type === "ReturnTo" &&
+		baseMark.detachEvent?.revision === (newMark.revision ?? newIntention)
+	) {
 		return true;
 	}
 
@@ -606,7 +627,7 @@ function compareCellPositions(
 			// The marks that make up this change (and its inverse) may be broken up differently between the base
 			// changeset and the new changeset because either changeset may have been composed with other changes
 			// whose marks may now be interleaved with the marks that represent foo/its inverse.
-			// This means that the base and new marks may not be of the same length.			
+			// This means that the base and new marks may not be of the same length.
 			// We do however know that the all of the marks for foo will appear in the base changeset and all of the
 			// marks for the inverse of foo will appear in the new changeset, so we can be confident that whenever
 			// we encounter such pairs of marks, they do line up such that they describe changes to the same first
@@ -635,7 +656,11 @@ function compareCellPositions(
 		return Math.sign(cmp) * Infinity;
 	}
 
-	if (newRevision !== undefined && newMark.type === "Insert" && cancelledInserts.has(newRevision)) {
+	if (
+		newRevision !== undefined &&
+		newMark.type === "Insert" &&
+		cancelledInserts.has(newRevision)
+	) {
 		// We know the new insert is getting cancelled out so we need to delay returning it.
 		// The base mark that cancels the insert must appear later in the base marks.
 		return -Infinity;

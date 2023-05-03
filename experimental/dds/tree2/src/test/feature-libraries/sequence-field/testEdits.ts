@@ -142,7 +142,7 @@ function createIntentionalReviveChangeset(
 	if (lastDetach !== undefined) {
 		mark.detachEvent = lastDetach;
 	}
-		
+
 	if (lineage !== undefined) {
 		mark.lineage = lineage;
 	}
@@ -177,7 +177,11 @@ function createModifyChangeset<TNodeChange>(
 	return SF.sequenceFieldEditor.buildChildChange(index, change);
 }
 
-function createMutedModifyChangeset<TNodeChange>(index: number, change: TNodeChange, detachEvent: DetachEvent): SF.Changeset<TNodeChange> {
+function createMutedModifyChangeset<TNodeChange>(
+	index: number,
+	change: TNodeChange,
+	detachEvent: DetachEvent,
+): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);
 	(changeset[changeset.length - 1] as SF.Modify).detachEvent = detachEvent;
 	return changeset;

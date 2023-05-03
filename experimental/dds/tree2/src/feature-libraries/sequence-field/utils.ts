@@ -466,12 +466,10 @@ export function tryExtendMark<T>(
 			break;
 		}
 		case "Revive": {
-			const lhsReattach = lhs as Reattach;
-			if (
-				lhsReattach.inverseOf === rhs.inverseOf
-			) {
-				(lhsReattach as Revive).content.push(...rhs.content);
-				lhsReattach.count += rhs.count;
+			const lhsRevive = lhs as Revive;
+			if (lhsRevive.inverseOf === rhs.inverseOf) {
+				lhsRevive.content.push(...rhs.content);
+				lhsRevive.count += rhs.count;
 				return true;
 			}
 			break;

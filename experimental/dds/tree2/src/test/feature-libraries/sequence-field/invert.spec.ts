@@ -161,34 +161,37 @@ describe("SequenceField - Invert", () => {
 	describe("Muted changes", () => {
 		it("delete", () => {
 			const detachEvent = { revision: tag1, index: 0 };
-			const input: TestChangeset = [{
-				type: "Delete",
-				count: 1,
-				changes: childChange1,
-				detachEvent,
-			}];
+			const input: TestChangeset = [
+				{
+					type: "Delete",
+					count: 1,
+					changes: childChange1,
+					detachEvent,
+				},
+			];
 
 			const actual = invert(input);
 			const expected = Change.mutedModify(0, inverseChildChange1, detachEvent);
-			assert.deepEqual(actual, expected);			
-		})
+			assert.deepEqual(actual, expected);
+		});
 
 		it("move out", () => {
 			const detachEvent = { revision: tag1, index: 0 };
-			const input: TestChangeset = [{
-				type: "MoveOut",
-				count: 1,
-				id: brand(0),				
-				changes: childChange1,
-				detachEvent,
-			},
-			{
-				type: "MoveIn",
-				count: 1,
-				id: brand(0),
-				isSrcConflicted: true,
-			},
-		];
+			const input: TestChangeset = [
+				{
+					type: "MoveOut",
+					count: 1,
+					id: brand(0),
+					changes: childChange1,
+					detachEvent,
+				},
+				{
+					type: "MoveIn",
+					count: 1,
+					id: brand(0),
+					isSrcConflicted: true,
+				},
+			];
 
 			const actual = invert(input);
 			const expected = Change.mutedModify(0, inverseChildChange1, detachEvent);

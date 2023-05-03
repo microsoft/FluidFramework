@@ -612,7 +612,7 @@ describe("SequenceField - Compose", () => {
 				count: 2,
 				detachEvent: { revision: tag2, index: 0 },
 				inverseOf: tag2,
-				lineage: [{ revision: tag1, offset: 2 }],				
+				lineage: [{ revision: tag1, offset: 2 }],
 			},
 		];
 		const actual = shallowCompose([deletion, revive]);

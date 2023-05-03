@@ -121,7 +121,15 @@ function invertMark<TNodeChange>(
 						},
 					];
 				}
-				return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild, mark.detachEvent)];
+				return [
+					invertModifyOrSkip(
+						mark.count,
+						mark.changes,
+						inputIndex,
+						invertChild,
+						mark.detachEvent,
+					),
+				];
 			}
 			case "Revive": {
 				if (!isReattachConflicted(mark)) {
@@ -132,7 +140,15 @@ function invertMark<TNodeChange>(
 						},
 					];
 				}
-				return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild, mark.detachEvent)];
+				return [
+					invertModifyOrSkip(
+						mark.count,
+						mark.changes,
+						inputIndex,
+						invertChild,
+						mark.detachEvent,
+					),
+				];
 			}
 			case "Modify": {
 				return [
@@ -145,7 +161,15 @@ function invertMark<TNodeChange>(
 			case "MoveOut":
 			case "ReturnFrom": {
 				if (areInputCellsEmpty(mark)) {
-					return [invertModifyOrSkip(mark.count, mark.changes, inputIndex, invertChild, mark.detachEvent)];
+					return [
+						invertModifyOrSkip(
+							mark.count,
+							mark.changes,
+							inputIndex,
+							invertChild,
+							mark.detachEvent,
+						),
+					];
 				}
 				if (mark.type === "ReturnFrom" && mark.isDstConflicted) {
 					// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
@@ -256,6 +280,10 @@ function invertModifyOrSkip<TNodeChange>(
 	return detachEvent === undefined ? length : 0;
 }
 
-function invertNodeChange<TNodeChange>(change: TNodeChange | undefined, index: number, inverter: NodeChangeInverter<TNodeChange>): TNodeChange | undefined {
+function invertNodeChange<TNodeChange>(
+	change: TNodeChange | undefined,
+	index: number,
+	inverter: NodeChangeInverter<TNodeChange>,
+): TNodeChange | undefined {
 	return change === undefined ? undefined : inverter(change, index);
 }

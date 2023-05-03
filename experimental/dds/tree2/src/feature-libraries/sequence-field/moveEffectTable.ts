@@ -312,7 +312,10 @@ function applyMoveEffectsToSource<T>(
 		};
 		if (newMark.detachEvent !== undefined) {
 			assert(effect.count !== undefined, "Should specify a count when splitting a mark");
-			newMark.detachEvent = { ...newMark.detachEvent, index: newMark.detachEvent.index + effect.count };
+			newMark.detachEvent = {
+				...newMark.detachEvent,
+				index: newMark.detachEvent.index + effect.count,
+			};
 		}
 		result.push(
 			...applyMoveEffectsToSource(newMark, revision, effects, consumeEffect, composeChildren),
