@@ -131,7 +131,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		const context = await this.getContext();
 		const bumpType: VersionBumpType | undefined = flags.bumpType;
-		const workspaceProtocol = flags.interdependencyRange?.startsWith("workspace:");
+		const workspaceProtocol = interdependencyRange?.startsWith("workspace:");
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
