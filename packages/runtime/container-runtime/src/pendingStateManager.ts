@@ -11,7 +11,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import Deque from "double-ended-queue";
 import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
-import { assertMessageWithValidMetadata, isMessageWithValidMetadata } from "./opProperties";
+import { asMessageWithMetadata, isMessageWithValidMetadata } from "./opProperties";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -322,9 +322,8 @@ export class PendingStateManager implements IDisposable {
 			isMessageWithValidMetadata(this.pendingBatchBeginMessage),
 			0x16d /* "There is no pending batch begin message" */,
 		);
-		assertMessageWithValidMetadata(message);
 
-		const batchEndMetadata = message.metadata?.batch;
+		const batchEndMetadata = asMessageWithMetadata(message)?.metadata?.batch;
 		if (this.pendingMessages.isEmpty() || batchEndMetadata === false) {
 			// Get the batch begin metadata from the first message in the batch.
 			const batchBeginMetadata = this.pendingBatchBeginMessage.metadata?.batch;

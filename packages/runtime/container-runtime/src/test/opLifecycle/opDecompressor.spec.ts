@@ -12,8 +12,8 @@ import { ContainerRuntimeMessage, ContainerMessageType } from "../..";
 import { OpDecompressor } from "../../opLifecycle";
 import {
 	asMessageWithMetadata,
-	assertMessageWithValidContents,
-	assertMessageWithValidMetadata,
+	isMessageWithValidContents,
+	isMessageWithValidMetadata,
 } from "../../opProperties";
 
 function generateCompressedBatchMessage(length: number): ISequencedDocumentMessage {
@@ -87,9 +87,9 @@ describe("OpDecompressor", () => {
 	it("Processes single compressed op", () => {
 		const result = decompressor.processMessage(generateCompressedBatchMessage(1));
 		assert.equal(result.state, "Processed");
-		assertMessageWithValidContents(result.message);
+		assert(isMessageWithValidContents(result.message));
 		assert.strictEqual(result.message.contents?.contents, "value0");
-		assertMessageWithValidMetadata(result.message);
+		assert(isMessageWithValidMetadata(result.message));
 		assert.strictEqual(result.message.metadata?.compressed, undefined);
 		assert.strictEqual(result.message.compression, undefined);
 	});
@@ -101,9 +101,9 @@ describe("OpDecompressor", () => {
 			compression: undefined,
 		});
 		assert.equal(result.state, "Processed");
-		assertMessageWithValidContents(result.message);
+		assert(isMessageWithValidContents(result.message));
 		assert.strictEqual(result.message.contents?.contents, "value0");
-		assertMessageWithValidMetadata(result.message);
+		assert(isMessageWithValidMetadata(result.message));
 		assert.strictEqual(result.message.metadata?.compressed, undefined);
 		assert.strictEqual(result.message.compression, undefined);
 
@@ -129,27 +129,27 @@ describe("OpDecompressor", () => {
 		const firstMessageResult = decompressor.processMessage(rootMessage);
 
 		assert.equal(firstMessageResult.state, "Accepted");
-		assertMessageWithValidContents(firstMessageResult.message);
+		assert(isMessageWithValidContents(firstMessageResult.message));
 		assert.strictEqual(firstMessageResult.message.contents?.contents, "value0");
-		assertMessageWithValidMetadata(firstMessageResult.message);
+		assert(isMessageWithValidMetadata(firstMessageResult.message));
 		assert.strictEqual(firstMessageResult.message.metadata?.compressed, undefined);
 		assert.strictEqual(firstMessageResult.message.compression, undefined);
 
 		for (let i = 1; i < 4; i++) {
 			const result = decompressor.processMessage(emptyMessage);
 			assert.equal(result.state, "Accepted");
-			assertMessageWithValidContents(result.message);
+			assert(isMessageWithValidContents(result.message));
 			assert.strictEqual(result.message.contents?.contents, `value${i}`);
-			assertMessageWithValidMetadata(result.message);
+			assert(isMessageWithValidMetadata(result.message));
 			assert.strictEqual(result.message.metadata?.compressed, undefined);
 			assert.strictEqual(result.message.compression, undefined);
 		}
 
 		const lastMessageResult = decompressor.processMessage(endBatchEmptyMessage);
 		assert.equal(lastMessageResult.state, "Processed");
-		assertMessageWithValidContents(lastMessageResult.message);
+		assert(isMessageWithValidContents(lastMessageResult.message));
 		assert.strictEqual(lastMessageResult.message.contents?.contents, "value4");
-		assertMessageWithValidMetadata(lastMessageResult.message);
+		assert(isMessageWithValidMetadata(lastMessageResult.message));
 		assert.strictEqual(lastMessageResult.message.metadata?.compressed, undefined);
 		assert.strictEqual(lastMessageResult.message.compression, undefined);
 	});
@@ -159,7 +159,7 @@ describe("OpDecompressor", () => {
 		const firstMessageResult = decompressor.processMessage(rootMessage);
 
 		assert.equal(firstMessageResult.state, "Accepted");
-		assertMessageWithValidContents(firstMessageResult.message);
+		assert(isMessageWithValidContents(firstMessageResult.message));
 		assert.strictEqual(firstMessageResult.message.contents?.contents, "value0");
 
 		assert.throws(() => decompressor.processMessage({ ...emptyMessage, contents: {} }));
@@ -170,35 +170,35 @@ describe("OpDecompressor", () => {
 		const firstMessageResult = decompressor.processMessage(rootMessage);
 
 		assert.equal(firstMessageResult.state, "Accepted");
-		assertMessageWithValidContents(firstMessageResult.message);
+		assert(isMessageWithValidContents(firstMessageResult.message));
 		assert.strictEqual(firstMessageResult.message.contents?.contents, "value0");
 
 		for (let i = 1; i < 4; i++) {
 			const result = decompressor.processMessage(emptyMessage);
 			assert.equal(result.state, "Accepted");
-			assertMessageWithValidContents(result.message);
+			assert(isMessageWithValidContents(result.message));
 			assert.strictEqual(result.message.contents?.contents, `value${i}`);
 		}
 
 		const lastMessageResult = decompressor.processMessage(endBatchEmptyMessage);
 		assert.equal(lastMessageResult.state, "Processed");
-		assertMessageWithValidContents(lastMessageResult.message);
+		assert(isMessageWithValidContents(lastMessageResult.message));
 		assert.strictEqual(lastMessageResult.message.contents?.contents, "value4");
 
 		const nextRootMessage = generateCompressedBatchMessage(3);
 		const nextFirstMessageResult = decompressor.processMessage(nextRootMessage);
 		assert.equal(nextFirstMessageResult.state, "Accepted");
-		assertMessageWithValidContents(nextFirstMessageResult.message);
+		assert(isMessageWithValidContents(nextFirstMessageResult.message));
 		assert.strictEqual(nextFirstMessageResult.message.contents?.contents, "value0");
 
 		const middleMessageResult = decompressor.processMessage(emptyMessage);
 		assert.equal(middleMessageResult.state, "Accepted");
-		assertMessageWithValidContents(middleMessageResult.message);
+		assert(isMessageWithValidContents(middleMessageResult.message));
 		assert.strictEqual(middleMessageResult.message.contents?.contents, "value1");
 
 		const endBatchEmptyMessageResult = decompressor.processMessage(endBatchEmptyMessage);
 		assert.equal(endBatchEmptyMessageResult.state, "Processed");
-		assertMessageWithValidContents(endBatchEmptyMessageResult.message);
+		assert(isMessageWithValidContents(endBatchEmptyMessageResult.message));
 		assert.strictEqual(endBatchEmptyMessageResult.message.contents?.contents, "value2");
 	});
 

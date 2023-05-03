@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
@@ -47,12 +46,6 @@ export function asMessageWithMetadata<T extends ISequencedDocumentMessage | IDoc
 	return isMessageWithValidMetadata(message) ? message : undefined;
 }
 
-export function assertMessageWithValidMetadata<
-	T extends ISequencedDocumentMessage | IDocumentMessage,
->(message: T | undefined): asserts message is IRuntimeMessageWithMetadata<T> {
-	assert(isMessageWithValidMetadata(message), "message does not have valid metadata");
-}
-
 export type IRuntimeMessageWithContents<
 	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
 > = T & {
@@ -72,10 +65,4 @@ export function isMessageWithValidContents<
 		return true;
 	}
 	return false;
-}
-
-export function assertMessageWithValidContents<
-	T extends ISequencedDocumentMessage | IDocumentMessage,
->(message: T | undefined): asserts message is IRuntimeMessageWithContents<T> {
-	assert(isMessageWithValidContents(message), "message does not have valid contents");
 }

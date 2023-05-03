@@ -131,7 +131,8 @@ describe("Ops on Reconnect", () => {
 					const envelope = message.contents as IEnvelope;
 					const address = envelope.contents.content.address;
 					const content = envelope.contents.content.contents;
-					const batch = message.metadata?.batch;
+					const metadata = message.metadata as any;
+					const batch = metadata?.batch;
 					let value1: string | number;
 					let value2: string;
 					// Add special handling for SharedString. SharedMap and SharedDirectory content structure is same.
