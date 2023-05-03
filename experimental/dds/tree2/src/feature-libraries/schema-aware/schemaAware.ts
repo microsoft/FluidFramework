@@ -17,8 +17,8 @@ import {
 	TreeSchema,
 	AllowedTypes,
 	FlexList,
+	Assume,
 } from "../modular-schema";
-import { Assume } from "../modular-schema/typedSchema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { UntypedSequenceField } from "./partlyTyped";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
@@ -184,7 +184,7 @@ export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArr
 export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
 	T extends FlexList<TreeSchema>
 		? TypedSchema.ArrayToUnion<
-				TypeArrayToTypedTrees<Mode, TypedSchema.FlexListToNonLazyArray<TreeSchema, T>>
+				TypeArrayToTypedTreeArray<Mode, TypedSchema.FlexListToNonLazyArray<TreeSchema, T>>
 		  >
 		: UntypedApi<Mode>,
 ][TypedSchema._dummy];
@@ -193,11 +193,11 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
  * Takes in `TreeSchema[]` and returns a TypedTree union.
  * @alpha
  */
-export type TypeArrayToTypedTrees<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
+export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
 				TypedNode<Assume<Head, TreeSchema>, Mode>,
-				...TypeArrayToTypedTrees<Mode, Assume<Tail, readonly TreeSchema[]>>,
+				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>,
 		  ]
 		: [],
 ][TypedSchema._dummy];

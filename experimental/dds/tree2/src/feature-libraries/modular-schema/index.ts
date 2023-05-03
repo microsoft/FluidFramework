@@ -74,4 +74,5 @@ export {
 	TypedViewSchemaCollection,
 	TypedTreeSchemaSpecification,
 	FlexList,
+	Assume,
 } from "./typedSchema";

@@ -10,6 +10,8 @@ import {
 	TypedNode,
 	EditableField,
 	TypedField,
+	TypeArrayToTypedTreeArray,
+	TypedFields,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
@@ -30,7 +32,7 @@ import {
 	FlattenKeys,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/typedSchema/typeUtils";
-import { FlexList } from "../../../feature-libraries/modular-schema";
+import { FlexList, TypedSchema } from "../../../feature-libraries/modular-schema";
 import { FlexListToNonLazyArray } from "../../../feature-libraries/modular-schema/typedSchema";
 
 // Aliases for conciseness
@@ -263,10 +265,41 @@ type SimpleBall = {
 		type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
 		type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeSchema>>;
 		type NormalizedChildSchemaTypes = FlexListToNonLazyArray<TreeSchema, ChildSchemaTypes>;
+		type ChildTypeArray = TypeArrayToTypedTreeArray<
+			ApiMode.Flexible,
+			TypedSchema.FlexListToNonLazyArray<TreeSchema, ChildSchemaTypes>
+		>;
+		{
+			type _check5 = requireAssignableTo<FlexBox, ChildTypeArray[1]>;
+			type _check6 = requireAssignableTo<FlexBall, ChildTypeArray[0]>;
+			type _check7 = requireAssignableTo<ChildTypeArray[1], FlexBox>;
+			{
+				// Should be the same as FlexBox
+				type BoxChildType = ChildTypeArray[1];
+				type BoxChildType2 = TypeArrayToTypedTreeArray<
+					ApiMode.Flexible,
+					[typeof boxSchema]
+				>[0];
+				type BoxChildType3 = TypedNode<typeof boxSchema, ApiMode.Flexible>;
+
+				type BoxChildTypeFields = TypedFields<
+					ApiMode.Flexible,
+					typeof boxSchema.localFieldsObject
+				>;
+
+				type BoxChildTypeField = TypedField<
+					ApiMode.Flexible,
+					typeof boxSchema.localFieldsObject.children
+				>;
+			}
+			type _check8 = requireAssignableTo<ChildTypeArray[0], FlexBall>;
+		}
 		type ChildTypes = AllowedTypesToTypedTrees<ApiMode.Flexible, ChildSchemaTypes>;
-		type _check5 = requireAssignableTo<FlexBox, ChildTypes>;
-		type _check6 = requireAssignableTo<FlexBall, ChildTypes>;
-		type _check7 = requireAssignableTo<ChildTypes, FlexBall | FlexBox>;
+		{
+			type _check5 = requireAssignableTo<FlexBox, ChildTypes>;
+			type _check6 = requireAssignableTo<FlexBall, ChildTypes>;
+			type _check7 = requireAssignableTo<ChildTypes, FlexBall | FlexBox>;
+		}
 		type Field = TypedField<ApiMode.Flexible, ChildSchema>;
 	}
 

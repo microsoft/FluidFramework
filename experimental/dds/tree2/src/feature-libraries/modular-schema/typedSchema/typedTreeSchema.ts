@@ -20,7 +20,7 @@ import {
 import { FieldKinds } from "../..";
 import { forbidden, value } from "../../defaultFieldKinds";
 import { MakeNominal } from "../../../util";
-import { FlexList, FlexListToLazyArray, LazyItem, normalizeFlexList } from "./flexList";
+import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { Assume, ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
 
 // TODO: tests for this file
@@ -141,17 +141,6 @@ function normalizeField<T extends FieldSchemaSpecification | undefined>(t: T): N
 	return new FieldSchema(value, t) as unknown as NormalizeField<T>;
 }
 
-// TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
-function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
-	const normalized = normalizeAllowedTypes(t);
-	if (Array.isArray(normalized)) {
-		// TODO: don't remove laziness here.
-		return new Set(normalized.map((lazy) => lazy().name));
-	}
-	assert(normalized === Any, "invalid AllowedTypes");
-	return undefined;
-}
-
 type TypedTree<_T> = UntypedTreeCore & { todo: "add stuff" };
 
 export const Any = "Any" as const;
@@ -168,46 +157,13 @@ export type NormalizedLazyAllowedTypes = Any | (() => TreeSchema)[];
 
 /**
  * Types for use in fields.
- * TODO: maybe replace this with AllowedTypesParameter to lower concept/code count.
+ *
+ * "Any" is boxed in an array to allow use as variadic parameter.
  */
-export type AllowedTypes = Any | FlexList<TreeSchema>;
+export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
-/**
- * Types for use in fields, for use as a variadic parameter.
- */
-export type AllowedTypesParameter = [Any] | readonly LazyItem<TreeSchema>[];
-
-/**
- * Convert AllowedTypes into NormalizedLazyAllowedTypes
- */
-type NormalizeAllowedTypes<T extends AllowedTypes> = T extends FlexList<TreeSchema>
-	? FlexListToLazyArray<TreeSchema, T>
-	: Any;
-
-export function normalizeAllowedTypes<T extends AllowedTypes>(t: T): NormalizeAllowedTypes<T> {
-	if (t === Any) {
-		return Any as NormalizeAllowedTypes<T>;
-	}
-	return normalizeFlexList(t) as NormalizeAllowedTypes<T>;
-}
-
-/**
- * Convert AllowedTypes into NormalizedLazyAllowedTypes
- */
-export type NormalizeAllowedTypesParameter<T> = T extends FlexList<TreeSchema>
-	? FlexListToLazyArray<TreeSchema, T>
-	: // [Any] case
-	  Any;
-
-export function normalizeAllowedTypesParameter<T extends AllowedTypesParameter>(
-	t: T,
-): NormalizeAllowedTypesParameter<T> {
-	if (t.length === 1 && t[0] === Any) {
-		return Any as NormalizeAllowedTypesParameter<T>;
-	}
-	// Note that this does not actually require full FlexList handling, since the input is always an array.
-	// If removing the other uses of FlexList, simplify this to not require it.
-	return normalizeFlexList(t as FlexList<TreeSchema>) as NormalizeAllowedTypesParameter<T>;
+export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
+	return t.length === 1 && t[0] === Any;
 }
 
 export type FieldSchemaSpecification = AllowedTypes | FieldSchema;
@@ -240,6 +196,16 @@ export class FieldSchema<Kind extends Kinds = Kinds, Types = AllowedTypes> imple
 	public get types(): TreeTypeSet {
 		return allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes);
 	}
+}
+
+// TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
+function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
+	if (allowedTypesIsAny(t)) {
+		return undefined;
+	}
+	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
+	const names = list.map((f) => f().name);
+	return new Set(names);
 }
 
 /**

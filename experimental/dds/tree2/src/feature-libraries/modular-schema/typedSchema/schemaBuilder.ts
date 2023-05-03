@@ -26,9 +26,6 @@ import {
 	GlobalFieldSchema,
 	FieldSchema,
 	Kinds,
-	AllowedTypesParameter,
-	NormalizeAllowedTypesParameter,
-	normalizeAllowedTypesParameter,
 } from "./typedTreeSchema";
 
 // TODO: tests and examples for this file
@@ -109,18 +106,18 @@ export class SchemaBuilder {
 	 * Better centralize the documentation about what kinds of merge semantics are available for field kinds.
 	 * Maybe link editor?
 	 */
-	public static optional<T extends AllowedTypesParameter>(
+	public static optional<T extends AllowedTypes>(
 		...allowedTypes: T
-	): FieldSchema<typeof FieldKinds.optional, NormalizeAllowedTypesParameter<T>> {
+	): FieldSchema<typeof FieldKinds.optional, T> {
 		return SchemaBuilder.field(optional, ...allowedTypes);
 	}
 
 	/**
 	 * TODO: maybe remove use-cases for this
 	 */
-	public static valueField<T extends AllowedTypesParameter>(
+	public static valueField<T extends AllowedTypes>(
 		...allowedTypes: T
-	): FieldSchema<typeof FieldKinds.value, NormalizeAllowedTypesParameter<T>> {
+	): FieldSchema<typeof FieldKinds.value, T> {
 		return SchemaBuilder.field(value, ...allowedTypes);
 	}
 
@@ -135,20 +132,20 @@ export class SchemaBuilder {
 	 * Add anchor API that can actually hold onto locations in a sequence.
 	 * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
 	 */
-	public static sequence<T extends AllowedTypesParameter>(
+	public static sequence<T extends AllowedTypes>(
 		...t: T
-	): FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypesParameter<T>> {
+	): FieldSchema<typeof FieldKinds.sequence, T> {
 		return SchemaBuilder.field(sequence, ...t);
 	}
 
 	/**
 	 * Define a schema for a field.
 	 */
-	public static field<Kind extends Kinds, T extends AllowedTypesParameter>(
+	public static field<Kind extends Kinds, T extends AllowedTypes>(
 		kind: Kind,
 		...allowedTypes: T
-	): FieldSchema<Kind, NormalizeAllowedTypesParameter<T>> {
-		return new FieldSchema(kind, normalizeAllowedTypesParameter(allowedTypes));
+	): FieldSchema<Kind, T> {
+		return new FieldSchema(kind, allowedTypes);
 	}
 
 	/**
@@ -158,6 +155,8 @@ export class SchemaBuilder {
 	 *
 	 * T must extends `AllowedTypes`: This can not be enforced via TypeScript since "extends" clauses cause recursive types to error with:
 	 * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
+	 *
+	 * TODO: can this be made variadic
 	 */
 	public static fieldRecursive<Kind extends Kinds, T>(
 		kind: Kind,
