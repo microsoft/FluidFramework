@@ -231,7 +231,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		undoRedoType: UndoRedoManagerCommitType | undefined,
 	): void {
 		// Edits should not be submitted until all transactions finish
-		assert(!this.isTransacting(), "Unexpected edit submitted during transaction");
+		assert(!this.isTransacting(), 0x673 /* Unexpected edit submitted during transaction */);
 		// Nested transactions are tracked as part of the outermost transaction
 		if (undoRedoType !== undefined) {
 			this.editManager.localBranchUndoRedoManager.trackCommit(commit, undoRedoType);
@@ -466,7 +466,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		assert(!this.isTransacting(), "Unexpected transaction is open while applying stashed ops");
+		assert(
+			!this.isTransacting(),
+			0x674 /* Unexpected transaction is open while applying stashed ops */,
+		);
 		const { revision, change } = parseCommit(content, this.changeCodec);
 		const [commit, delta] = this.addLocalChange(change, revision);
 		this.editManager.localBranchUndoRedoManager.trackCommit(

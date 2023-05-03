@@ -599,25 +599,25 @@ export async function setVersion(
 		} else {
 			newRange = `${interdependencyRange}${translatedVersion.version}`;
 		}
+	}
 
-		if (!isInterdependencyRange(newRange)) {
-			throw new Error(`New range is invalid: ${newRange}`);
-		}
+	if (!isInterdependencyRange(newRange)) {
+		throw new Error(`New range is invalid: ${newRange}`);
+	}
 
-		const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
-		const dependencyVersionMap = new Map<string, DependencyWithRange>();
-		for (const pkg of packagesToCheckAndUpdate) {
-			dependencyVersionMap.set(pkg.name, { pkg, range: newRange });
-		}
+	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
+	const dependencyVersionMap = new Map<string, DependencyWithRange>();
+	for (const pkg of packagesToCheckAndUpdate) {
+		dependencyVersionMap.set(pkg.name, { pkg, range: newRange });
+	}
 
-		for (const pkg of packagesToCheckAndUpdate) {
-			// eslint-disable-next-line no-await-in-loop
-			await setPackageDependencies(
-				pkg,
-				dependencyVersionMap,
-				/* updateWithinSameReleaseGroup */ true,
-			);
-		}
+	for (const pkg of packagesToCheckAndUpdate) {
+		// eslint-disable-next-line no-await-in-loop
+		await setPackageDependencies(
+			pkg,
+			dependencyVersionMap,
+			/* updateWithinSameReleaseGroup */ true,
+		);
 	}
 }
 
