@@ -123,6 +123,11 @@ export class TestTree {
 			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
 			forest.anchors,
 		);
+		this.editManager.localBranch.on("change", ({ change: c }) => {
+			if (c !== undefined) {
+				this.forest.applyDelta(defaultChangeFamily.intoDelta(c));
+			}
+		});
 	}
 
 	public jsonRoots(): JsonCompatible[] {
@@ -153,16 +158,9 @@ export class TestTree {
 	public runTransaction(
 		transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => void,
 	): TestTreeEdit {
-		const offChange = this.editManager.localBranch.on("change", ({ change: c }) => {
-			if (c !== undefined) {
-				this.forest.applyDelta(defaultChangeFamily.intoDelta(c));
-			}
-		});
 		this.editManager.localBranch.startTransaction();
 		transaction(this.forest, this.editManager.localBranch.editor);
 		this.editManager.localBranch.commitTransaction();
-		offChange();
-
 		const { change, revision } = this.editManager.localBranch.getHead();
 		const resultingEdit: TestTreeEdit = {
 			sessionId: this.sessionId,
@@ -184,13 +182,7 @@ export class TestTree {
 			return;
 		}
 		for (const edit of edits) {
-			const offChange = this.editManager.localBranch.on("change", ({ change: c }) => {
-				if (c !== undefined) {
-					this.forest.applyDelta(defaultChangeFamily.intoDelta(c));
-				}
-			});
 			this.editManager.addSequencedChange(edit, edit.seqNumber, edit.refNumber);
-			offChange(); // TODO: can we register these events somewhere more central?
 			this._remoteEditsApplied += 1;
 			this.refNumber = edit.seqNumber;
 		}

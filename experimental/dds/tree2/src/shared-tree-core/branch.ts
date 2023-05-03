@@ -40,7 +40,7 @@ import { TransactionStack } from "./transactionStack";
  * branch are removed and replaced with new, rebased versions
  */
 export type SharedTreeBranchChange<TChange> =
-	| { type: "append"; change: TChange | undefined; newCommits: GraphCommit<TChange>[] }
+	| { type: "append"; change: TChange; newCommits: GraphCommit<TChange>[] }
 	| {
 			type: "rollback";
 			change: TChange | undefined;
@@ -207,7 +207,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			}
 			this.emitAndRebaseAnchors({
 				type: "rollback",
-				change: this.changeFamily.rebaser.compose(inverses),
+				change:
+					inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined,
 				removedCommits: commits,
 			});
 		}

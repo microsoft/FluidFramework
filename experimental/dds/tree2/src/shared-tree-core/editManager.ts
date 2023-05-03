@@ -57,7 +57,11 @@ export const minimumPossibleSequenceNumber: SeqNumber = brand(Number.MIN_SAFE_IN
 const nullRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
 
 export interface EditManagerEvents<TChangeset> {
-	newTrunkHead(commit: GraphCommit<TChangeset>): void;
+	/**
+	 * Fired every time that a new commit is added to the trunk
+	 * @param newHead - the new head of the trunk
+	 */
+	newTrunkHead(newHead: GraphCommit<TChangeset>): void;
 }
 
 /**
