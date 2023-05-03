@@ -211,8 +211,12 @@ export type JsonCompatibleReadOnly =
 	| { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
- * @remarks - TODO: Assess if this is actually necessary in schemas, and if so evaluate perf/correctness of
- * alternatives here.
+ * @remarks - TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
+ * of alternatives.
+ *
+ * True "arbitrary serializable data" is probably fine, but some persisted types declarations might be better
+ * expressed using composition of schemas for runtime validation, even if we don't think making the types
+ * generic is worth the maintenance cost.
  */
 export const JsonCompatibleReadOnlySchema = Type.Any();
 

@@ -24,10 +24,6 @@ import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
 import { VisualizeSharedObject } from "./data-visualization";
 
-// TODOs:
-// - Devtools disposal
-// - Clear devtools on `window.beforeunload`, to ensure we do not hold onto stale resources.
-
 /**
  * Message logging options used by the root devtools.
  */
@@ -44,6 +40,13 @@ export const useAfterDisposeErrorText =
 	"The devtools instance has been disposed. Further operations are invalid.";
 
 /**
+ * Error text thrown when {@link FluidDevtools.getOrThrow} is called before the Devtools have been initialized.
+ *
+ * @privateRemarks Exported for test purposes only.
+ */
+export const accessBeforeInitializeErrorText = "Devtools have not yet been initialized.";
+
+/**
  * Error text thrown when a user attempts to register a {@link IContainerDevtools} instance for an ID that is already
  * registered with the {@link IFluidDevtools}.
  *
@@ -57,7 +60,7 @@ export function getContainerAlreadyRegisteredErrorText(containerId: string): str
 }
 
 /**
- * Properties for configuring a {@link IFluidDevtools}.
+ * Properties for configuring the Devtools.
  *
  * @public
  */
@@ -119,10 +122,12 @@ export interface FluidDevtoolsProps {
  * (via {@link GetContainerList.Message}).
  *
  * TODO: Document others as they are added.
+ *
+ * @sealed
  */
 export class FluidDevtools implements IFluidDevtools {
 	/**
-	 * (optional) telemetry logger associated with the Fluid runtime.
+	 * (optional) Telemetry logger associated with the Fluid runtime.
 	 */
 	public readonly logger: DevtoolsLogger | undefined;
 
@@ -174,6 +179,14 @@ export class FluidDevtools implements IFluidDevtools {
 	};
 
 	/**
+	 * Event handler for the window (globalThis) `beforeUnload` event.
+	 * Disposes of the Devtools instance (which also clears the global singleton).
+	 */
+	private readonly windowBeforeUnloadHandler = (): void => {
+		this.dispose();
+	};
+
+	/**
 	 * Posts {@link DevtoolsFeatures.Message} to the window (globalThis) with the set of features supported by
 	 * this instance.
 	 */
@@ -208,7 +221,12 @@ export class FluidDevtools implements IFluidDevtools {
 
 	// #endregion
 
-	public constructor(props?: FluidDevtoolsProps) {
+	/**
+	 * Singleton instance.
+	 */
+	private static I: FluidDevtools | undefined;
+
+	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
 		this.containers = new Map<string, ContainerDevtools>();
 		if (props?.initialContainers !== undefined) {
@@ -223,10 +241,52 @@ export class FluidDevtools implements IFluidDevtools {
 		this.logger = props?.logger;
 		this.dataVisualizers = props?.dataVisualizers;
 
-		// Register listener for inbound messages from the window (globalThis)
+		// Register listener for inbound messages from the Window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
+		// Register the devtools instance to be disposed on Window unload
+		globalThis.addEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
+
 		this._disposed = false;
+	}
+
+	/**
+	 * Creates and returns the FluidDevtools singleton.
+	 *
+	 * @remarks
+	 *
+	 * If the singleton has already been initialized, a warning will be logged and the existing instance will
+	 * be returned.
+	 */
+	public static initialize(props?: FluidDevtoolsProps): FluidDevtools {
+		if (FluidDevtools.I !== undefined) {
+			console.warn(
+				"Devtools have already been initialized. " +
+					"Existing Devtools must be closed (see closeDevtools) before new ones may be initialized. " +
+					"Returning existing Devtools instance.",
+			);
+		} else {
+			FluidDevtools.I = new FluidDevtools(props);
+		}
+
+		return FluidDevtools.I;
+	}
+
+	/**
+	 * Gets the Devtools singleton if it has been initialized, otherwise throws.
+	 */
+	public static getOrThrow(): FluidDevtools {
+		if (FluidDevtools.I === undefined) {
+			throw new UsageError(accessBeforeInitializeErrorText);
+		}
+		return FluidDevtools.I;
+	}
+
+	/**
+	 * Gets the Devtools singleton if it has been initialized, otherwise returns `undefined`.
+	 */
+	public static tryGet(): FluidDevtools | undefined {
+		return FluidDevtools.I;
 	}
 
 	/**
@@ -324,6 +384,13 @@ export class FluidDevtools implements IFluidDevtools {
 		// Notify listeners that the list of Containers changed.
 		this.postContainerList();
 
+		// Clear the singleton so a new one may be initialized.
+		FluidDevtools.I = undefined;
+
+		// Clean up event listeners
+		globalThis.removeEventListener?.("message", this.windowMessageHandler);
+		globalThis.removeEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
+
 		this._disposed = true;
 	}
 
@@ -335,19 +402,6 @@ export class FluidDevtools implements IFluidDevtools {
 			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
 		};
 	}
-}
-
-/**
- * Initializes a {@link IFluidDevtools}.
- *
- * @remarks The consumer takes ownership of this object, and is responsible for disposing of it when appropriate.
- *
- * @privateRemarks This is exposed as a static function to avoid exporting {@link FluidDevtools} publicly.
- *
- * @public
- */
-export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
-	return new FluidDevtools(props);
 }
 
 /**
@@ -368,4 +422,20 @@ function mergeDataVisualizers(
 		...globalVisualizers,
 		...containerVisualizers,
 	};
+}
+
+/**
+ * Initializes the Devtools singleton and returns a handle to it.
+ *
+ * @remarks
+ *
+ * The instance is tracked as a static singleton.
+ *
+ * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
+ * on the returned handle.
+ *
+ * @public
+ */
+export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
+	return FluidDevtools.initialize(props);
 }
