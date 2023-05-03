@@ -7,7 +7,6 @@ import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
 	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
 	mergeAppAndProtocolTree,
 } from "@fluidframework/protocol-base";
 import {
@@ -44,6 +43,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import safeStringify from "json-stringify-safe";
 import { ISummaryWriteResponse, ISummaryWriter } from "./interfaces";
+import { getQuorumTreeEntries } from "./scribeHelper";
 
 /**
  * Git specific implementation of ISummaryWriter
