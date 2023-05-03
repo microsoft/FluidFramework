@@ -6,7 +6,7 @@
 /**
  * Kind of container state change.
  *
- * @public
+ * @internal
  */
 export enum ContainerStateChangeKind {
 	/**

@@ -5,8 +5,6 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
 
 import { v4 as uuid } from "uuid";
 import {
@@ -748,7 +746,12 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		this.options = cloneDeep(this.loader.services.options);
+		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
+		// all clients that were loaded from the same loader (including summarizer clients).
+		// Tracking alternative ways to handle this in AB#4129.
+		this.options = {
+			...this.loader.services.options,
+		};
 
 		this._deltaManager = this.createDeltaManager();
 
