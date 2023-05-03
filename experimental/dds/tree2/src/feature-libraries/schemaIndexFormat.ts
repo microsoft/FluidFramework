@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Static, TUnsafe, Type } from "@sinclair/typebox";
+import { Static, Type } from "@sinclair/typebox";
 // TODO:
 // It is unclear if we would want to use the TypeBox compiler
 // (which generates code at runtime for maximum validation perf).
@@ -15,42 +15,26 @@ import { Static, TUnsafe, Type } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
-	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	FieldSchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	LocalFieldKey,
+	LocalFieldKeySchema,
 	Named,
 	SchemaData,
 	TreeSchema,
 	TreeSchemaIdentifier,
+	TreeSchemaIdentifierSchema,
 	ValueSchema,
 } from "../core";
 import { brand, fail } from "../util";
 
 const version = "1.0.0" as const;
 
-/**
- * Create a TypeBox string schema for a branded string type.
- * This only validates that the value is a string,
- * and not that it came from the correct branded type (that information is lost when serialized).
- */
-function brandedString<T extends string>(): TUnsafe<T> {
-	// This could use:
-	// return TypeSystem.CreateType<T>(name, (options, value) => typeof value === "string")();
-	// Since there isn't any useful custom validation to do and
-	// TUnsafe is documented as unsupported in `typebox/compiler`,
-	// opt for the compile time behavior like the above, but the runtime behavior of the built in string type.
-	return Type.String() as unknown as TUnsafe<T>;
-}
-
-const FieldKindIdentifier = brandedString<FieldKindIdentifier>();
-const TreeSchemaIdentifier = brandedString<TreeSchemaIdentifier>();
-const LocalFieldKey = brandedString<LocalFieldKey>();
-const GlobalFieldKey = brandedString<GlobalFieldKey>();
-
 const FieldSchemaFormatBase = Type.Object({
-	kind: FieldKindIdentifier,
-	types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
+	kind: FieldKindIdentifierSchema,
+	types: Type.Optional(Type.Array(TreeSchemaIdentifierSchema)),
 });
 
 const FieldSchemaFormat = Type.Intersect([FieldSchemaFormatBase], { additionalProperties: false });
@@ -59,7 +43,7 @@ const NamedLocalFieldSchemaFormat = Type.Intersect(
 	[
 		FieldSchemaFormatBase,
 		Type.Object({
-			name: LocalFieldKey,
+			name: LocalFieldKeySchema,
 		}),
 	],
 	{ additionalProperties: false },
@@ -69,7 +53,7 @@ const NamedGlobalFieldSchemaFormat = Type.Intersect(
 	[
 		FieldSchemaFormatBase,
 		Type.Object({
-			name: GlobalFieldKey,
+			name: GlobalFieldKeySchema,
 		}),
 	],
 	{ additionalProperties: false },
@@ -77,9 +61,9 @@ const NamedGlobalFieldSchemaFormat = Type.Intersect(
 
 const TreeSchemaFormat = Type.Object(
 	{
-		name: TreeSchemaIdentifier,
+		name: TreeSchemaIdentifierSchema,
 		localFields: Type.Array(NamedLocalFieldSchemaFormat),
-		globalFields: Type.Array(GlobalFieldKey),
+		globalFields: Type.Array(GlobalFieldKeySchema),
 		extraLocalFields: FieldSchemaFormat,
 		extraGlobalFields: Type.Boolean(),
 		// TODO: don't use external type here.
