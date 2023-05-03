@@ -34,6 +34,9 @@ tools/pipelines/
 **/api-report/*
 **/*.api.md
 
+# Templates
+.changeset/templates/
+
 # Test json
 build-tools/packages/build-tools/src/test/data/
 experimental/dds/tree/src/test/documents/
