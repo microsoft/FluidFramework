@@ -25,7 +25,7 @@ export enum MemberChangeKind {
 /**
  * Metadata of clients within the Audience.
  *
- * @public
+ * @internal
  */
 export interface AudienceClientMetadata {
 	/**

@@ -15,6 +15,7 @@ import React from "react";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
+import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
@@ -30,7 +31,7 @@ import {
 	createFluidContainer,
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
-import { CounterWidget } from "../widgets";
+import { CounterWidget, EmojiButton } from "../widgets";
 import { initializeFluentUiIcons } from "../../InitializeIcons";
 
 // Ensure FluentUI icons are initialized.
@@ -47,13 +48,18 @@ const sharedTextKey = "shared-text";
 const sharedCounterKey = "shared-counter";
 
 /**
+ * Key in the app's `rootMap` under which the SharedCell object is stored.
+ */
+const emojiCellKey = "emoji-cell";
+
+/**
  * Schema used by the app.
  */
 const containerSchema: ContainerSchema = {
 	initialObjects: {
 		rootMap: SharedMap,
 	},
-	dynamicObjectTypes: [SharedCounter, SharedMap, SharedString],
+	dynamicObjectTypes: [SharedCell, SharedCounter, SharedMap, SharedString],
 };
 
 /**
@@ -72,6 +78,10 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}
 
+	// Set up SharedCell for background color randomizer
+	const emojiCell = await container.create(SharedCell);
+	rootMap.set(emojiCellKey, emojiCell.handle);
+
 	// Set up SharedText for text form
 	const sharedText = await container.create(SharedString);
 	sharedText.insertText(0, "Enter text here.");
@@ -80,6 +90,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	// Set up SharedCounter for counter widget
 	const sharedCounter = await container.create(SharedCounter);
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
+
 	// Also set a couple of primitives for testing the debug view
 	rootMap.set("numeric-value", 42);
 	rootMap.set("string-value", "Hello world!");
@@ -117,7 +128,10 @@ function registerContainerWithDevtools(
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(devtools: IFluidDevtools): {
+function useContainerInfo(
+	devtools: IFluidDevtools,
+	logger: DevtoolsLogger,
+): {
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;
 } {
@@ -129,61 +143,51 @@ function useContainerInfo(devtools: IFluidDevtools): {
 	>();
 
 	// Get the Fluid Data data on app startup and store in the state
-	React.useEffect(
-		() => {
-			async function getSharedFluidData(): Promise<ContainerInfo> {
-				const containerNickname = "Shared Container";
+	React.useEffect(() => {
+		async function getSharedFluidData(): Promise<ContainerInfo> {
+			const containerNickname = "Shared Container";
 
-				const containerId = getContainerIdFromLocation(window.location);
-				return containerId.length === 0
-					? createFluidContainer(
-							containerSchema,
-							devtools.logger,
-							populateRootMap,
-							containerNickname,
-					  )
-					: loadExistingFluidContainer(
-							containerId,
-							containerSchema,
-							devtools.logger,
-							containerNickname,
-					  );
+			const containerId = getContainerIdFromLocation(window.location);
+			return containerId.length === 0
+				? createFluidContainer(containerSchema, logger, populateRootMap, containerNickname)
+				: loadExistingFluidContainer(
+						containerId,
+						containerSchema,
+						logger,
+						containerNickname,
+				  );
+		}
+
+		getSharedFluidData().then((containerInfo) => {
+			if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
+				window.location.hash = containerInfo.containerId;
 			}
 
-			getSharedFluidData().then((containerInfo) => {
-				if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
-					window.location.hash = containerInfo.containerId;
-				}
+			setSharedContainerInfo(containerInfo);
+			registerContainerWithDevtools(devtools, containerInfo);
+		}, console.error);
 
-				setSharedContainerInfo(containerInfo);
-				registerContainerWithDevtools(devtools, containerInfo);
-			}, console.error);
+		async function getPrivateContainerData(): Promise<ContainerInfo> {
+			// Always create a new container for the private view.
+			// This isn't shared with other collaborators.
 
-			async function getPrivateContainerData(): Promise<ContainerInfo> {
-				// Always create a new container for the private view.
-				// This isn't shared with other collaborators.
+			return createFluidContainer(
+				containerSchema,
+				logger,
+				populateRootMap,
+				"Private Container",
+			);
+		}
 
-				return createFluidContainer(
-					containerSchema,
-					devtools.logger,
-					populateRootMap,
-					"Private Container",
-				);
-			}
+		getPrivateContainerData().then((containerInfo) => {
+			setPrivateContainerInfo(containerInfo);
+			registerContainerWithDevtools(devtools, containerInfo);
+		}, console.error);
 
-			getPrivateContainerData().then((containerInfo) => {
-				setPrivateContainerInfo(containerInfo);
-				registerContainerWithDevtools(devtools, containerInfo);
-			}, console.error);
-
-			return (): void => {
-				devtools?.dispose();
-			};
-		},
-		// This app never changes the containers after initialization, so we just want to run this effect once.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[],
-	);
+		return (): void => {
+			devtools?.dispose();
+		};
+	}, [devtools, logger]);
 
 	return { sharedContainer: sharedContainerInfo, privateContainer: privateContainerInfo };
 }
@@ -243,7 +247,7 @@ export function App(): React.ReactElement {
 	}, [devtools]);
 
 	// Load the collaborative SharedString object
-	const { privateContainer, sharedContainer } = useContainerInfo(devtools);
+	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger);
 
 	const view = (
 		<Stack horizontal>
@@ -307,6 +311,11 @@ function AppView(props: AppViewProps): React.ReactElement {
 		throw new Error(`"${sharedCounterKey}" entry not found in rootMap.`);
 	}
 
+	const emojiCellHandle = rootMap.get(emojiCellKey) as IFluidHandle<SharedCell<boolean>>;
+	if (emojiCellHandle === undefined) {
+		throw new Error(`"${emojiCellKey}" entry not found in rootMap.`);
+	}
+
 	return (
 		<Stack horizontal className={rootStackStyles}>
 			<StackItem className={appViewPaneStackStyles}>
@@ -322,6 +331,9 @@ function AppView(props: AppViewProps): React.ReactElement {
 					{containerId}
 				</h4>
 				<Stack>
+					<StackItem>
+						<EmojiButtonView emojiCellHandle={emojiCellHandle} />
+					</StackItem>
 					<StackItem>
 						<CounterView sharedCounterHandle={sharedCounterHandle} />
 					</StackItem>
@@ -374,4 +386,23 @@ function CounterView(props: CounterViewProps): React.ReactElement {
 	}, [sharedCounterHandle, setSharedCounter]);
 
 	return sharedCounter === undefined ? <Spinner /> : <CounterWidget counter={sharedCounter} />;
+}
+
+interface EmojiButtonViewProps {
+	emojiCellHandle: IFluidHandle<SharedCell<boolean>>;
+}
+
+function EmojiButtonView(props: EmojiButtonViewProps): React.ReactElement {
+	const { emojiCellHandle } = props;
+
+	const [emojiCell, setEmojiCell] = React.useState<SharedCell<boolean> | undefined>();
+
+	React.useEffect(() => {
+		emojiCellHandle.get().then(setEmojiCell, (error) => {
+			console.error(`Error encountered loading SharedCell: "${error}".`);
+			throw error;
+		});
+	}, [emojiCellHandle, setEmojiCell]);
+
+	return emojiCell === undefined ? <Spinner /> : <EmojiButton emojiCell={emojiCell} />;
 }
