@@ -62,6 +62,12 @@ export const storageUrlTooltipText =
 	"Endpoint where the Fluid service provides the latest snapshot of the Fluid Container's contents.";
 
 /**
+ * Temporary text for labels that are undefined until a container is attached.
+ */
+export const waitingForContainerToAttachText =
+	"Container is not attached, or this endpoint doesn't apply to the service being used.";
+
+/**
  * Description of the Client's "Mode" property in the audience view.
  */
 export const clientModeTooltipText = (

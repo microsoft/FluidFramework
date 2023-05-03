@@ -54,6 +54,7 @@ import {
 	ordererUrlTooltipText,
 	storageUrlTooltipText,
 	userIdTooltipText,
+	waitingForContainerToAttachText,
 } from "./TooltipTexts";
 
 // Ensure FluentUI icons are initialized for use below.
@@ -328,7 +329,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						infoTooltipContent={deltaStorageUrlTooltipText}
 						value={
 							resolvedUrl?.endpoints?.deltaStorageUrl ??
-							"Container is not attached, or this endpoint doesn't apply to the service being used."
+							waitingForContainerToAttachText
 						}
 						columnProps={columnSizing_unstable}
 					/>
@@ -337,7 +338,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						infoTooltipContent={ordererUrlTooltipText}
 						value={
 							resolvedUrl?.endpoints?.ordererUrl ??
-							"Container is not attached, or this endpoint doesn't apply to the service being used."
+							waitingForContainerToAttachText
 						}
 						columnProps={columnSizing_unstable}
 					/>
@@ -346,7 +347,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						infoTooltipContent={storageUrlTooltipText}
 						value={
 							resolvedUrl?.endpoints?.storageUrl ??
-							"Container is not attached, or this endpoint doesn't apply to the service being used."
+							waitingForContainerToAttachText
 						}
 						columnProps={columnSizing_unstable}
 					/>
