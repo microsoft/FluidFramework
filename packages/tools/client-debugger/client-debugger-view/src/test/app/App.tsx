@@ -15,22 +15,19 @@ import React from "react";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
+import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import {
-	DevtoolsLogger,
-	IFluidDevtools,
-	initializeFluidDevtools,
-} from "@fluid-tools/client-debugger";
+import { DevtoolsLogger, IFluidDevtools, initializeDevtools } from "@fluid-tools/client-debugger";
 
 import {
 	ContainerInfo,
 	createFluidContainer,
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
-import { CounterWidget } from "../widgets";
+import { CounterWidget, EmojiButton } from "../widgets";
 import { initializeFluentUiIcons } from "../../InitializeIcons";
 
 // Ensure FluentUI icons are initialized.
@@ -47,13 +44,18 @@ const sharedTextKey = "shared-text";
 const sharedCounterKey = "shared-counter";
 
 /**
+ * Key in the app's `rootMap` under which the SharedCell object is stored.
+ */
+const emojiCellKey = "emoji-cell";
+
+/**
  * Schema used by the app.
  */
 const containerSchema: ContainerSchema = {
 	initialObjects: {
 		rootMap: SharedMap,
 	},
-	dynamicObjectTypes: [SharedCounter, SharedMap, SharedString],
+	dynamicObjectTypes: [SharedCell, SharedCounter, SharedMap, SharedString],
 };
 
 /**
@@ -72,6 +74,10 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 		throw new Error('"rootMap" not found in initialObjects tree.');
 	}
 
+	// Set up SharedCell for background color randomizer
+	const emojiCell = await container.create(SharedCell);
+	rootMap.set(emojiCellKey, emojiCell.handle);
+
 	// Set up SharedText for text form
 	const sharedText = await container.create(SharedString);
 	sharedText.insertText(0, "Enter text here.");
@@ -80,6 +86,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	// Set up SharedCounter for counter widget
 	const sharedCounter = await container.create(SharedCounter);
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
+
 	// Also set a couple of primitives for testing the debug view
 	rootMap.set("numeric-value", 42);
 	rootMap.set("string-value", "Hello world!");
@@ -228,7 +235,7 @@ export function App(): React.ReactElement {
 	const logger = React.useMemo(() => DevtoolsLogger.create(), []);
 
 	// Initialize devtools
-	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);
+	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
 
 	React.useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.
@@ -300,6 +307,11 @@ function AppView(props: AppViewProps): React.ReactElement {
 		throw new Error(`"${sharedCounterKey}" entry not found in rootMap.`);
 	}
 
+	const emojiCellHandle = rootMap.get(emojiCellKey) as IFluidHandle<SharedCell<boolean>>;
+	if (emojiCellHandle === undefined) {
+		throw new Error(`"${emojiCellKey}" entry not found in rootMap.`);
+	}
+
 	return (
 		<Stack horizontal className={rootStackStyles}>
 			<StackItem className={appViewPaneStackStyles}>
@@ -315,6 +327,9 @@ function AppView(props: AppViewProps): React.ReactElement {
 					{containerId}
 				</h4>
 				<Stack>
+					<StackItem>
+						<EmojiButtonView emojiCellHandle={emojiCellHandle} />
+					</StackItem>
 					<StackItem>
 						<CounterView sharedCounterHandle={sharedCounterHandle} />
 					</StackItem>
@@ -367,4 +382,23 @@ function CounterView(props: CounterViewProps): React.ReactElement {
 	}, [sharedCounterHandle, setSharedCounter]);
 
 	return sharedCounter === undefined ? <Spinner /> : <CounterWidget counter={sharedCounter} />;
+}
+
+interface EmojiButtonViewProps {
+	emojiCellHandle: IFluidHandle<SharedCell<boolean>>;
+}
+
+function EmojiButtonView(props: EmojiButtonViewProps): React.ReactElement {
+	const { emojiCellHandle } = props;
+
+	const [emojiCell, setEmojiCell] = React.useState<SharedCell<boolean> | undefined>();
+
+	React.useEffect(() => {
+		emojiCellHandle.get().then(setEmojiCell, (error) => {
+			console.error(`Error encountered loading SharedCell: "${error}".`);
+			throw error;
+		});
+	}, [emojiCellHandle, setEmojiCell]);
+
+	return emojiCell === undefined ? <Spinner /> : <EmojiButton emojiCell={emojiCell} />;
 }

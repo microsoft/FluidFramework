@@ -5,7 +5,6 @@
 import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
 import { Config } from "@oclif/core";
 
-import { BaseCommand } from "../base";
 import {
 	bumpTypeFlag,
 	checkFlags,

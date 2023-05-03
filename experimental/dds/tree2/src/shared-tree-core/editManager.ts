@@ -181,14 +181,17 @@ export class EditManager<
 	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
 		const trackBranch = (b: SharedTreeBranch<TEditor, TChangeset>): SeqNumber => {
 			const trunkCommit = findCommonAncestor(this.trunk, b.getHead());
-			assert(isTrunkCommit(trunkCommit), "Expected commit to be on the trunk branch");
+			assert(
+				isTrunkCommit(trunkCommit),
+				0x66f /* Expected commit to be on the trunk branch */,
+			);
 			const branches = getOrCreate(
 				this.trunkBranches,
 				trunkCommit.sequenceNumber,
 				() => new Set(),
 			);
 
-			assert(!branches.has(b), "Branch was registered more than once");
+			assert(!branches.has(b), 0x670 /* Branch was registered more than once */);
 			branches.add(b);
 			return trunkCommit.sequenceNumber;
 		};
@@ -200,7 +203,7 @@ export class EditManager<
 			const branches =
 				this.trunkBranches.get(sequenceNumber) ?? fail("Expected branch to be tracked");
 
-			assert(branches.delete(b), "Expected branch to be tracked");
+			assert(branches.delete(b), 0x671 /* Expected branch to be tracked */);
 			if (branches.size === 0) {
 				this.trunkBranches.delete(sequenceNumber);
 			}
@@ -294,7 +297,7 @@ export class EditManager<
 			// If no trunk commit is found, it means that all trunk commits are below the search key, so evict them all
 			assert(
 				this.trunkBranches.isEmpty,
-				"Expected no registered branches when clearing trunk",
+				0x672 /* Expected no registered branches when clearing trunk */,
 			);
 			this.trunk = this.trunkBase;
 			this.sequenceMap.clear();

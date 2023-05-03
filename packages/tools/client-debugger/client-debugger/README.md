@@ -1,6 +1,9 @@
 # @fluid-tools/client-debugger
 
-The Fluid Client Debugger library contains a simple API for initializing debug sessions for recording and propogating information about a given Fluid [Container][] and its [Audience][].
+This library contains developer tools for use alongside the Fluid Framework.
+It is used to power our associated browser extensions.
+
+TODO: link to extensions once they are published.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
@@ -21,21 +24,28 @@ npm i @fluid-tools/client-debugger -D
 
 ## Usage
 
-Initialization and cleanup of debugger sessions can fit cleanly into your application's Fluid setup and teardown process easily.
+The Devtools' API surface is designed to fit nicely into most application flows.
 
 ### Initialization
 
-To initialize a debugger session for your container, see [initializeFluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger#initializefluidclientdebugger-function).
+To initialize a debugger session for your container, call `initializeDevtools`.
+This function accepts a `DevtoolsLogger` for recording and communicating telemetry data, a list of initial Fluid `Containers` to associate with the session, and (optionally) customized data visualization configurations for visualizing `Container` data.
+
+TODO: link to API docs once API shape has settled.
 
 ### Clean-up
 
-To clean up a debugger session during your application's tear-down, or when closing an individual [Container][], see [closeFluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger#closefluidclientdebugger-function)
+The Devtools object is managed as a global singleton.
+That singleton is automatically cleaned up prior to the Window's "unload" event.
+So typical application flows likely won't need to worry about cleanup.
+That said, if you wish to have tighter control over when the Devtools are torn down, you can simply call the `dispose` method on the handle returned by [initialization](#initialization).
 
 ## Related Tooling
 
-For a visualizer library that takes advantage of this library, see [@fluid-tools/client-debugger-view][].
+This library is designed to work alongside our Chromium browser extension.
 
--   Additionally, see the Chromium browser extension library built upon the visualizer: [@fluid-tools/client-debugger-chrome-extension][].
+TODO: link to code on github once package names have been finalized.
+TODO: link to the various browsers' webstore pages for our extension once it has been publiched.
 
 ## Working in the package
 
@@ -51,18 +61,6 @@ Next, to build the code, run `npm run build` from the root of the mono-repo, or 
 
 To run the tests, first ensure you have followed the [build](#build) steps above.
 Next, run `npm run test` from a terminal within this directory.
-
-## Library TODOs
-
-The following are TODO items to enhance the functionality of this library.
-
--   Accept a "nickname" for the container when registering.
-    -   This will allow consumers to differentiate their debugger / container instances in a meaningful way, such that finding them is easier in visual tooling, etc.
-
-### Ideas
-
--   Accept renderer hook options?
-    -   This seems like a violation of
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
 
@@ -95,10 +93,3 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- Links -->
-
-[@fluid-tools/client-debugger-chrome-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-chrome-extension
-[@fluid-tools/client-debugger-view]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-view
-[audience]: https://fluidframework.com/docs/build/audience
-[container]: https://fluidframework.com/docs/build/containers

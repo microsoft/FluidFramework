@@ -353,7 +353,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): undefined {
-		assert(!this.isTransacting(), "Unexpected transaction is open while applying stashed ops");
+		assert(
+			!this.isTransacting(),
+			0x674 /* Unexpected transaction is open while applying stashed ops */,
+		);
 		const { revision, change } = parseCommit(content, this.changeCodec);
 		this.changeEvents.emit("newLocalChange", change);
 		this.applyingStashedCommit = true;
