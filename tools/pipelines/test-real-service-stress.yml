@@ -68,7 +68,6 @@ stages:
   # stress tests tinylicious
   - stage:
     displayName: Stress tests - tinylicious
-    dependsOn: []
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
