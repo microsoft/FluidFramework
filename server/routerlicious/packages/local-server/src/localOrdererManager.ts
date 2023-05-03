@@ -15,6 +15,7 @@ import {
 	IOrderer,
 	IOrdererManager,
 	IServiceConfiguration,
+	MongoCheckpointRepository,
 	MongoDocumentRepository,
 } from "@fluidframework/server-services-core";
 
@@ -80,14 +81,28 @@ export class LocalOrdererManager implements IOrdererManager {
 			new MongoDocumentRepository(await this.databaseManager.getDocumentCollection());
 		const deliCheckpointRepository =
 			this.checkpointRepository ??
-			new MongoCheckpointRepository(await this.databaseManager.getCheckpointCollection(), "deli");
+			new MongoCheckpointRepository(
+				await this.databaseManager.getCheckpointCollection(),
+				"deli",
+			);
 
-        const scribeCheckpointRepository =
-            this.checkpointRepository ??
-            new MongoCheckpointRepository(await this.databaseManager.getCheckpointCollection(), "scribe");
+		const scribeCheckpointRepository =
+			this.checkpointRepository ??
+			new MongoCheckpointRepository(
+				await this.databaseManager.getCheckpointCollection(),
+				"scribe",
+			);
 
-		const deliCheckpointService = new CheckpointService(deliCheckpointRepository, documentRepository, false);
-		const scribeCheckpointService = new CheckpointService(scribeCheckpointRepository, documentRepository, false);
+		const deliCheckpointService = new CheckpointService(
+			deliCheckpointRepository,
+			documentRepository,
+			false,
+		);
+		const scribeCheckpointService = new CheckpointService(
+			scribeCheckpointRepository,
+			documentRepository,
+			false,
+		);
 
 		const orderer = await LocalOrderer.load(
 			this.storage,

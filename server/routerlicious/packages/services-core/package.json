@@ -69,6 +69,12 @@
 			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IDatabaseManager": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MongoDatabaseManager": {
+				"forwardCompat": false
 			}
 		}
 	}
