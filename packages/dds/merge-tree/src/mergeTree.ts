@@ -875,7 +875,6 @@ export class MergeTree {
 			return true;
 		};
 
-		// Slide to the next farthest valid segment in the tree.
 		if (slidingPreference === SlidingPreference.Backward) {
 			backwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
@@ -885,12 +884,12 @@ export class MergeTree {
 			return result.seg;
 		}
 
-		// If no such segment is found, slide to the last valid segment.
 		if (slidingPreference === SlidingPreference.Backward) {
 			forwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
 			backwardExcursion(segment, goFurtherToFindSlideToSegment);
 		}
+
 		return result.seg;
 	}
 

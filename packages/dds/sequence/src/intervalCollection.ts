@@ -151,6 +151,30 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 	];
 }
 
+function startReferenceSlidingPreference(stickiness?: IntervalStickiness): SlidingPreference {
+	// default to forward if stickiness is not specified
+	if (!stickiness) {
+		return SlidingPreference.Forward;
+	}
+
+	// if any start stickiness, prefer sliding backwards
+	return stickiness & IntervalStickiness.Start
+		? SlidingPreference.Backward
+		: SlidingPreference.Forward;
+}
+
+function endReferenceSlidingPreference(stickiness?: IntervalStickiness): SlidingPreference {
+	// default to forward if stickiness is not specified
+	if (!stickiness) {
+		return SlidingPreference.Forward;
+	}
+
+	// if any end stickiness, prefer sliding forwards
+	return stickiness & IntervalStickiness.End
+		? SlidingPreference.Forward
+		: SlidingPreference.Backward;
+}
+
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
@@ -199,6 +223,10 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	): TInterval;
 }
 
+/**
+ * Determine how an interval should expand when segments are inserted adjacent
+ * to the range it spans
+ */
 export enum IntervalStickiness {
 	/**
 	 * Interval does not expand to include adjacent segments
@@ -212,6 +240,8 @@ export enum IntervalStickiness {
 
 	/**
 	 * Interval expands to include segments inserted adjacent to the end
+	 *
+	 * This is the default stickiness
 	 */
 	End = 0b10,
 
@@ -675,9 +705,7 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
-				stickiness & IntervalStickiness.Start
-					? SlidingPreference.Backward
-					: SlidingPreference.Forward,
+				startReferenceSlidingPreference(stickiness),
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -693,9 +721,7 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
-				!(stickiness & IntervalStickiness.End)
-					? SlidingPreference.Backward
-					: SlidingPreference.Forward,
+				endReferenceSlidingPreference(stickiness),
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -839,9 +865,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		undefined,
-		stickiness & IntervalStickiness.Start
-			? SlidingPreference.Backward
-			: SlidingPreference.Forward,
+		startReferenceSlidingPreference(stickiness),
 	);
 	const endLref = createPositionReference(
 		client,
@@ -850,9 +874,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		undefined,
-		!(stickiness & IntervalStickiness.End)
-			? SlidingPreference.Backward
-			: SlidingPreference.Forward,
+		endReferenceSlidingPreference(stickiness),
 	);
 	const rangeProp = {
 		[reservedRangeLabelsKey]: [label],
@@ -2288,10 +2310,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 					newStart,
 					interval.start.refType,
 					op,
-					interval.stickiness !== undefined &&
-						interval.stickiness & IntervalStickiness.Start
-						? SlidingPreference.Backward
-						: SlidingPreference.Forward,
+					startReferenceSlidingPreference(interval.stickiness),
 				);
 				if (props) {
 					interval.start.addProperties(props);
@@ -2309,10 +2328,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 					newEnd,
 					interval.end.refType,
 					op,
-					interval.stickiness !== undefined &&
-						!(interval.stickiness & IntervalStickiness.End)
-						? SlidingPreference.Backward
-						: SlidingPreference.Forward,
+					endReferenceSlidingPreference(interval.stickiness),
 				);
 				if (props) {
 					interval.end.addProperties(props);

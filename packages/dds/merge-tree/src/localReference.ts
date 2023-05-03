@@ -17,16 +17,20 @@ import {
 	refTypeIncludesFlag,
 } from "./referencePositions";
 
+/**
+ * Dictates the preferential direction for a {@link ReferencePosition} to slide
+ * in a merge-tree
+ */
 export enum SlidingPreference {
 	/**
-	 * Prefer sliding towards the start of the string
+	 * Prefer sliding towards the start of the tree
 	 */
-	Forward = 0,
+	Backward = 0,
 
 	/**
-	 * Prefer sliding towards the end of the string
+	 * Prefer sliding towards the end of the tree
 	 */
-	Backward = 1,
+	Forward = 1,
 }
 
 /**

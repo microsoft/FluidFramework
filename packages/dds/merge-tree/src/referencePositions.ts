@@ -75,7 +75,7 @@ export interface ReferencePosition {
 	properties?: PropertySet;
 
 	/**
-	 * Defaults to right
+	 * Defaults to backward
 	 */
 	slidingPreference?: SlidingPreference;
 
