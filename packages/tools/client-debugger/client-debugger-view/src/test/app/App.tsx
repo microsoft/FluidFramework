@@ -236,9 +236,9 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Fluid Debugger logger
-	const logger = React.useMemo(() => DevtoolsLogger.create(), []);
+	const logger = React.useMemo(() => new DevtoolsLogger(), []);
 
-	// Initialize devtools
+	// Initialize Devtools
 	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);
 
 	React.useEffect(() => {

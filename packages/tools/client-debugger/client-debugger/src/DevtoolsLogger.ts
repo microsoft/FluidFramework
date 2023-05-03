@@ -4,12 +4,8 @@
  */
 
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import {
-	TelemetryLogger,
-	MultiSinkLogger,
-	ChildLogger,
-	ITelemetryLoggerPropertyBags,
-} from "@fluidframework/telemetry-utils";
+import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+
 import {
 	GetTelemetryHistory,
 	handleIncomingWindowMessage,
@@ -24,6 +20,12 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
 
 /**
  * Logger implementation that posts all telemetry events to the window (globalThis object).
+ * This logger is intended to integrate with the Fluid DevTools browser extension.
+ *
+ * @remarks
+ *
+ * This logger optionally wraps a provided base logger, and forwards all events to that logger (in addition to posting
+ * data to the window).
  *
  * **Messages it listens for:**
  *
@@ -38,12 +40,16 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  *
  * TODO: Document others as they are added.
  *
- * @remarks This logger is intended to integrate with the Fluid DevTools browser extension.
- *
  * @sealed
  * @public
  */
 export class DevtoolsLogger extends TelemetryLogger {
+	/**
+	 * Base telemetry logger provided by the consumer.
+	 * All messages sent to the Devtools logger will be forwarded to this.
+	 */
+	private readonly baseLogger: ITelemetryBaseLogger | undefined;
+
 	/**
 	 * Accumulated data for Telemetry logs.
 	 */
@@ -90,55 +96,11 @@ export class DevtoolsLogger extends TelemetryLogger {
 
 	// #endregion
 
-	/**
-	 * Create an instance of this logger
-	 * @param namespace - Telemetry event name prefix to add to all events
-	 * @param properties - Base properties to add to all events
-	 */
-	public static create(
-		namespace?: string,
-		properties?: ITelemetryLoggerPropertyBags,
-	): DevtoolsLogger {
-		return new DevtoolsLogger(namespace, properties);
-	}
+	public constructor(baseLogger?: ITelemetryBaseLogger) {
+		super();
 
-	/**
-	 * Mix in this logger with another.
-	 * The returned logger will output events to the newly created DevTools extension logger *and* the base logger.
-	 * @param namespace - Telemetry event name prefix to add to all events
-	 * @param baseLogger - Base logger to output events (in addition to DevTools extension logger being created). Can be undefined.
-	 * @param properties - Base properties to add to all events
-	 */
-	public static mixinLogger(
-		namespace?: string,
-		baseLogger?: ITelemetryBaseLogger,
-		properties?: ITelemetryLoggerPropertyBags,
-	): TelemetryLogger {
-		if (!baseLogger) {
-			return DevtoolsLogger.create(namespace, properties);
-		}
+		this.baseLogger = baseLogger;
 
-		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
-		multiSinkLogger.addLogger(
-			DevtoolsLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
-		);
-		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
-
-		return multiSinkLogger;
-	}
-
-	private static tryGetBaseLoggerProps(
-		baseLogger?: ITelemetryBaseLogger,
-	): ITelemetryLoggerPropertyBags | undefined {
-		if (baseLogger instanceof TelemetryLogger) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			return (baseLogger as any as { properties: ITelemetryLoggerPropertyBags }).properties;
-		}
-		return undefined;
-	}
-
-	private constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags) {
-		super(namespace, properties);
 		this._telemetryLog = [];
 
 		// Register listener for inbound messages from the window (globalThis)
@@ -151,22 +113,29 @@ export class DevtoolsLogger extends TelemetryLogger {
 	 * @param event - The telemetry event to send.
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		// TODO: ability to disable the logger so this becomes a no-op
+		// Forward event to base logger
+		this.baseLogger?.send(event);
 
-		const newEvent: ITimestampedTelemetryEvent = {
-			logContent: this.prepareEvent(event),
-			timestamp: Date.now(),
-		};
+		// TODO: ability to disable the logger so the rest of this becomes a no-op
+		try {
+			const newEvent: ITimestampedTelemetryEvent = {
+				logContent: this.prepareEvent(event),
+				timestamp: Date.now(),
+			};
 
-		// insert log into the beginning of the array to show the latest log first
-		this._telemetryLog.unshift(newEvent);
+			// insert log into the beginning of the array to show the latest log first
+			this._telemetryLog.unshift(newEvent);
 
-		// set log option to be undefined to avoid sending the log message to window console; these were too noisy
-		postMessagesToWindow(
-			undefined,
-			TelemetryEvent.createMessage({
-				event: newEvent,
-			}),
-		);
+			// set log option to be undefined to avoid sending the log message to window console; these were too noisy
+			postMessagesToWindow(
+				undefined,
+				TelemetryEvent.createMessage({
+					event: newEvent,
+				}),
+			);
+		} catch (error) {
+			// Eat the error to ensure that Devtools logic doesn't crash the consuming application.
+			console.error(error);
+		}
 	}
 }
