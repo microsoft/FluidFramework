@@ -21,14 +21,6 @@ jobs:
         id: status
         run: echo "changeset-status=$(cat changeset-status)" >> $GITHUB_OUTPUT
 
-      - name: Post report in comment
-        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
-        with:
-          header: linkreport
-          recreate: true
-          number: ${{ steps.load_pr.outputs.pr }}
-          path: ./results/linkcheck
-
       - name: Required but missing
         if: steps.status.outputs.changeset-status != '0' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
@@ -46,7 +38,7 @@ jobs:
             This PR requires a changeset and it has one! Good job!
 
       - name: Changeset not required
-        if: steps.status.outputs.changeset-status == '0' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        if: steps.status.outputs.changeset-status == '0' && !contains(github.event.pull_request.labels.*.name, 'changeset-required')
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset

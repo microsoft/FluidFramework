@@ -41,9 +41,7 @@ jobs:
         run: |
           set +e # don't exit on failure
           flub check changeset --branch=${{ github.base_ref }}
-
-          # outputs a zero if a changeset is present, 1 otherwise
-          echo "exitcode=$?" > ./changeset-status
+          echo "$?" > ./changeset-status
 
       - name: Upload changeset status
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
@@ -58,16 +56,11 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-required') }}
     steps:
-      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
-        with:
-          header: changeset
-          delete: true
-
       - id: changeset-status
         name: Changeset disabled
         run: |
           # Always output 0 to signal that changesets aren't needed
-          echo "exitcode=0" > ./changeset-status
+          echo "0" > ./changeset-status
 
       - name: Upload changeset status
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
