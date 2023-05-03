@@ -13,6 +13,9 @@
  * Individual {@link @fluidframework/container-definitions#IContainer | Fluid Containers} can be registered to generate
  * Container-level stats.
  *
+ * Visualization of telemetry logs can be enabled by creating a {@link DevtoolsLogger} and providing it to Devtools
+ * initialization.
+ *
  * See the package README for more details.
  *
  * @packageDocumentation
