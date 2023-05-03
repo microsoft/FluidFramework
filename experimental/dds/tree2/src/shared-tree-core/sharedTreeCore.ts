@@ -29,15 +29,12 @@ import {
 	AnchorSet,
 	Delta,
 	RevisionTag,
-	findAncestor,
 	GraphCommit,
 	RepairDataStore,
 	ChangeFamilyEditor,
 	UndoRedoManager,
 	IRepairDataStoreProvider,
 	UndoRedoManagerCommitType,
-	markCommits,
-	rebaseBranch,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -331,44 +328,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param branch - the branch to merge
 	 */
 	protected mergeBranch(branch: SharedTreeBranch<TEditor, TChange>): void {
-		assert(
-			!branch.isTransacting(),
-			0x5cb /* Branch may not be merged while transaction is in progress */,
-		);
-
-		const commits: GraphCommit<TChange>[] = [];
-		const localBranchHead = this.editManager.localBranch.getHead();
-		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
-		if (ancestor === localBranchHead) {
-			const markedCommits = markCommits(commits, branch.undoRedoManager.headUndoable);
-			for (const {
-				commit: { change, revision },
-				isUndoable,
-			} of markedCommits) {
-				// Only track commits that are undoable.
-				const commitType = isUndoable ? UndoRedoManagerCommitType.Undoable : undefined;
-				this.editManager.localBranch.applyChange(change, revision, commitType);
-			}
-		} else {
-			const [newHead] = rebaseBranch(
-				this.changeFamily.rebaser,
-				branch.getHead(),
-				this.getLocalBranchHead(),
-			);
-			const changes: GraphCommit<TChange>[] = [];
-			findAncestor([newHead, changes], (c) => c === localBranchHead);
-
-			this.editManager.localBranchUndoRedoManager.updateAfterMerge(
-				newHead,
-				branch.undoRedoManager,
-			);
-
-			// Apply the changes without tracking them in the undo redo manager because
-			// `updateAfterRebase` takes care of tracking any applicable commits in the rebased branch.
-			changes.forEach(({ change, revision }) => {
-				this.editManager.localBranch.applyChange(change, revision, undefined);
-			});
-		}
+		this.editManager.localBranch.merge(branch);
 	}
 
 	/**

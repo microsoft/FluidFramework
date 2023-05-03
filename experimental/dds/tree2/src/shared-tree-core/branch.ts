@@ -319,17 +319,17 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const rebaseResult = this.rebaseBranch(branch.head, this.head);
 		if (rebaseResult !== undefined) {
 			// Compute the net change to this branch
-			const [newHead, _, commits] = rebaseResult;
+			const [newHead] = rebaseResult;
 
 			this.undoRedoManager.updateAfterMerge(newHead, branch.undoRedoManager);
 
-			const changes: GraphCommit<TChange>[] = [];
-			findAncestor([newHead, changes], (c) => c === this.head);
+			const newCommits: GraphCommit<TChange>[] = [];
+			findAncestor([newHead, newCommits], (c) => c === this.head);
 			this.head = newHead;
 			this.emitAndRebaseAnchors({
 				type: "append",
-				change: this.changeFamily.rebaser.compose(changes),
-				newCommits: commits.newSourceCommits,
+				change: this.changeFamily.rebaser.compose(newCommits),
+				newCommits,
 			});
 		}
 	}
