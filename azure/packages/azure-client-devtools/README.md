@@ -1,4 +1,4 @@
-# @fluid-experimental/routerlicious-devtools
+# @fluid-experimental/devtools
 
 This library provides an entry-point for the Fluid Devtools suite tailored for use with the Routerlicious Client APIs.
 

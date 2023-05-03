@@ -1,9 +1,8 @@
-# @fluid-experimental/routerlicious-devtools
+# @fluid-experimental/devtools
 
-This library provides an entry-point for the Fluid Devtools suite tailored for use with the Routerlicious Client APIs.
+This library provides a developer tools suite for use alongside the Fluid Framework.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
-
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Usage
@@ -30,10 +29,3 @@ Next, run `npm run test` from a terminal within this directory.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 <!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- Links -->
-
-[@fluid-tools/client-debugger-chrome-extension]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-chrome-extension
-[@fluid-tools/client-debugger-view]: https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-view
-[audience]: https://fluidframework.com/docs/build/audience
-[container]: https://fluidframework.com/docs/build/containers

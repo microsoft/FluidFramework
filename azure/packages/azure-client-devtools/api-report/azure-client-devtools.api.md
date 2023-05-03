@@ -4,11 +4,11 @@
 
 ```ts
 
-import { ContainerDevtoolsProps } from '@fluid-experimental/routerlicious-devtools';
-import { DevtoolsLogger } from '@fluid-experimental/routerlicious-devtools';
-import { DevtoolsProps } from '@fluid-experimental/routerlicious-devtools';
-import { IDevtools } from '@fluid-experimental/routerlicious-devtools';
-import { initializeDevtools } from '@fluid-experimental/routerlicious-devtools';
+import { ContainerDevtoolsProps } from '@fluid-experimental/devtools';
+import { DevtoolsLogger } from '@fluid-experimental/devtools';
+import { DevtoolsProps } from '@fluid-experimental/devtools';
+import { IDevtools } from '@fluid-experimental/devtools';
+import { initializeDevtools } from '@fluid-experimental/devtools';
 
 export { ContainerDevtoolsProps }
 
