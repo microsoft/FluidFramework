@@ -10,7 +10,8 @@
  * It listens for incoming messages from the corresponding extension, and posts direct responses as well as automatic
  * updates for Fluid state changes.
  *
- * Individual {@link IFluidContainer | Fluid Containers} can be registered to generate Container-level stats.
+ * Individual {@link @fluidframework/container-definitions#IContainer | Fluid Containers} can be registered to generate
+ * Container-level stats.
  *
  * See the package README for more details.
  *
