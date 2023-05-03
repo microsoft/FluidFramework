@@ -232,6 +232,7 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
+	SchemaBuilder,
 } from "./feature-libraries";
 
 export {

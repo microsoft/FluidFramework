@@ -43,6 +43,7 @@ export {
 	GlobalFieldSchema,
 	Any,
 	TreeSchemaSpecification,
+	allowedTypesToTypeSet,
 } from "./typedTreeSchema";
 
 export { FlexList, FlexListToNonLazyArray } from "./flexList";

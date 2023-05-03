@@ -28,9 +28,18 @@ import {
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./defaultFieldKinds";
-import { FieldKind, Multiplicity } from "./modular-schema";
+import {
+	AllowedTypes,
+	FieldKind,
+	FieldSchema,
+	Multiplicity,
+	TreeSchema,
+	allowedTypesToTypeSet,
+} from "./modular-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
 import { isPrimitive } from "./editable-tree";
+import { ApiMode, NodeDataFor } from "./schema-aware";
+import { AllowedTypesToTypedTrees, TypedField } from "./schema-aware/schemaAware";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -339,6 +348,38 @@ export function cursorFromContextualData(
 }
 
 /**
+ * Strongly typed {@link cursorFromContextualData} for a TreeSchema
+ * @alpha
+ */
+export function cursorForTypedTreeData<T extends TreeSchema>(
+	schemaData: SchemaDataAndPolicy,
+	schema: T,
+	data: NodeDataFor<ApiMode.Simple, T>,
+): ITreeCursorSynchronous {
+	return cursorFromContextualData(
+		schemaData,
+		new Set([schema.name]),
+		data as ContextuallyTypedNodeData,
+	);
+}
+
+/**
+ * Strongly typed {@link cursorFromContextualData} for AllowedTypes.
+ * @alpha
+ */
+export function cursorForTypedData<T extends AllowedTypes>(
+	schemaData: SchemaDataAndPolicy,
+	schema: T,
+	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
+): ITreeCursorSynchronous {
+	return cursorFromContextualData(
+		schemaData,
+		allowedTypesToTypeSet(schema),
+		data as unknown as ContextuallyTypedNodeData,
+	);
+}
+
+/**
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
@@ -346,11 +387,23 @@ export function cursorFromContextualData(
  */
 export function cursorsFromContextualData(
 	schemaData: SchemaDataAndPolicy,
-	field: FieldStoredSchema,
+	field: FieldSchema,
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous[] {
 	const mapTrees = applyFieldTypesFromContext(schemaData, field, data);
 	return mapTrees.map(singleMapTreeCursor);
+}
+
+/**
+ * Strongly typed {@link cursorsFromContextualData} for a FieldSchema
+ * @alpha
+ */
+export function cursorsForTypedFieldData<T extends FieldSchema>(
+	schemaData: SchemaDataAndPolicy,
+	schema: T,
+	data: TypedField<ApiMode.Simple, T>,
+): ITreeCursorSynchronous {
+	return cursorFromContextualData(schemaData, schema.types, data as ContextuallyTypedNodeData);
 }
 
 /**

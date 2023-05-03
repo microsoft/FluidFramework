@@ -17,14 +17,14 @@ import {
 import {
 	ViewSchema,
 	defaultSchemaPolicy,
-	ContextuallyTypedFieldData,
-	cursorsFromContextualData,
 	FieldKinds,
 	allowsRepoSuperset,
 	TypedViewSchemaCollection,
 	GlobalFieldSchema,
 } from "../feature-libraries";
 import { fail } from "../util";
+import { ApiMode, TypedField } from "../feature-libraries/schema-aware";
+import { cursorsForTypedFieldData } from "../feature-libraries/contextuallyTyped";
 import { ISharedTreeView } from "./sharedTree";
 
 /**
@@ -76,9 +76,9 @@ export function schematizeView(
 			// Update to intermediate schema
 			tree.storedSchema.update(incrementalSchemaUpdate);
 			// Insert initial tree
-			const newContent = cursorsFromContextualData(
+			const newContent = cursorsForTypedFieldData(
 				config.schema,
-				lookupGlobalFieldSchema(config.schema, rootFieldKey),
+				config.schema.root.schema,
 				config.initialTree,
 			);
 			tree.editor
@@ -176,5 +176,5 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree: ContextuallyTypedFieldData;
+	readonly initialTree: TypedField<ApiMode.Simple, TRoot["schema"]>;
 }

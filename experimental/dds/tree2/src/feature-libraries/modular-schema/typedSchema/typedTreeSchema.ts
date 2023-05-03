@@ -192,7 +192,7 @@ export class FieldSchema<Kind extends Kinds = Kinds, Types = AllowedTypes> imple
 }
 
 // TODO: maybe remove the need for this here? Just use AllowedTypes in view schema?
-function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
+export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
 	if (allowedTypesIsAny(t)) {
 		return undefined;
 	}

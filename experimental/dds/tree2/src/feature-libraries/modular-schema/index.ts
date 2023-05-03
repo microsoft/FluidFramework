@@ -75,4 +75,5 @@ export {
 	TreeSchemaSpecification,
 	FlexList,
 	Assume,
+	allowedTypesToTypeSet,
 } from "./typedSchema";
