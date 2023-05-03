@@ -4,7 +4,7 @@
  */
 
 /**
- * @deprecated Moved to `@fluidframework/server-lambdas#scribe/scribeHelper.ts`
+ * @deprecated Moved to `@fluidframework/server-services-client#scribe/scribeHelper.ts`
  */
 
 import { ICreateTreeEntry, ITree } from "@fluidframework/gitresources";
