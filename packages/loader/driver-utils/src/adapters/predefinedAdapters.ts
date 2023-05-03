@@ -12,6 +12,19 @@ import {
 
 export function applyStorageCompression(
 	documentServiceFactory: IDocumentServiceFactory,
+	config?: ICompressionStorageConfig | boolean,
+): IDocumentServiceFactory {
+	if (config === undefined || config === false) {
+		return documentServiceFactory;
+	} else if (config === true) {
+		return applyStorageCompressionInternal(documentServiceFactory);
+	} else {
+		return applyStorageCompressionInternal(documentServiceFactory, config);
+	}
+}
+
+function applyStorageCompressionInternal(
+	documentServiceFactory: IDocumentServiceFactory,
 	config: ICompressionStorageConfig = {
 		algorithm: SummaryCompressionAlgorithm.LZ4,
 		minSizeToCompress: 500,

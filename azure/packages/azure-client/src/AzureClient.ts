@@ -70,22 +70,11 @@ export class AzureClient {
 				enableWholeSummaryUpload: isRemoteConnection,
 				enableDiscovery: isRemoteConnection,
 			});
-		let wrappedDocumentServiceFactory: IDocumentServiceFactory = origDocumentServiceFactory;
-		if (props.summaryCompression !== undefined) {
-			if (typeof props.summaryCompression === "boolean") {
-				if (props.summaryCompression) {
-					wrappedDocumentServiceFactory = applyStorageCompression(
-						origDocumentServiceFactory,
-					);
-				}
-			} else {
-				wrappedDocumentServiceFactory = applyStorageCompression(
-					origDocumentServiceFactory,
-					props.summaryCompression,
-				);
-			}
-		}
-		this.documentServiceFactory = wrappedDocumentServiceFactory;
+
+		this.documentServiceFactory = applyStorageCompression(
+			origDocumentServiceFactory,
+			props.summaryCompression,
+		);
 		this.configProvider = props.configProvider;
 	}
 

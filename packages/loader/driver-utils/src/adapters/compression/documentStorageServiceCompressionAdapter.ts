@@ -29,7 +29,11 @@ export interface ICompressionStorageConfig {
 
 /**
  * This class extends the DocumentStorageServiceProxy so that it can apply various kinds of compressions
- * to the blob payload.
+ * to the blob payload of the summary. The compression is applied only on uploading the summary, at the
+ * creating of single blob (as an attachment), it is not applied.
+ * The commpression of the blob is marked by adding the prefix "compressed_\<algorithm ID\>_" to the blob name.
+ * The blob name is the key of the blob in the summary tree. That is the reason why we cannot use this technique
+ * in the createBlob method as there is no such key which would identify the blob.
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
 	private readonly _compressedBlobIds: Map<string, number> = new Map();
@@ -44,6 +48,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		super(service);
 	}
 
+	/**
+	 * This method returns true if the blob is compressed.
+	 * @param name - The name of the blob
+	 * @returns - True if the blob is compressed.
+	 */
 	private hasCompression(name: string): boolean {
 		const trimmed = name.trim();
 		return trimmed.startsWith(DocumentStorageServiceCompressionAdapter.compressed_prefix);
@@ -97,6 +106,13 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		return decoded;
 	}
 
+	/**
+	 * This method traverses the snapshot tree obtained from the storage.
+	 * If it finds a blob with compression, it will
+	 * decode the blob name and replace it in the snapshot tree. The input
+	 * parameter underlying data (blob names) are modified by this method.
+	 * @param snapshot - The snapshot tree
+	 */
 	private async decodeSnapshotBlobNames(snapshot: ISnapshotTree): Promise<void> {
 		for (const key of Object.keys(snapshot.trees)) {
 			const obj = snapshot.trees[key];
@@ -118,67 +134,19 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		}
 	}
 
-	public override async readBlob(id: string): Promise<ArrayBufferLike> {
-		const algorithm = this._compressedBlobIds.get(id);
-		if (algorithm === undefined) {
-			return super.readBlob(id);
-		}
-		return DocumentStorageServiceCompressionAdapter.decodeBlob(
-			await super.readBlob(id),
-			algorithm,
-		);
-	}
-
-	public override async getSnapshotTree(
-		version?: IVersion | undefined,
-		scenarioName?: string | undefined,
-		// eslint-disable-next-line @rushstack/no-new-null
-	): Promise<ISnapshotTree | null> {
-		const snapshotTree = await super.getSnapshotTree(version, scenarioName);
-		if (snapshotTree !== null) {
-			await this.decodeSnapshotBlobNames(snapshotTree);
-		}
-		return snapshotTree;
-	}
-
-	public async uploadSummaryWithContext(
-		summary: ISummaryTree,
-		context: ISummaryContext,
-	): Promise<string> {
-		const prep = DocumentStorageServiceCompressionAdapter.compressSummary(
-			summary,
-			this._config,
-			this._isUseB64OnCompressed,
-			context,
-		);
-		return super.uploadSummaryWithContext(prep.prepSummary, prep.prepContext);
-	}
-
-	public static compressSummary(
-		summary: ISummaryTree,
-		config: ICompressionStorageConfig,
-		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
-		context: ISummaryContext,
-	) {
-		const prep = {
-			prepSummary: DocumentStorageServiceCompressionAdapter.recursivelyReplace(
-				summary,
-				DocumentStorageServiceCompressionAdapter.blobReplacer,
-				config,
-				isUseB64OnCompressed,
-				context,
-			) as ISummaryTree,
-			prepContext: context,
-		};
-		console.log(`Miso Summary Upload: ${JSON.stringify(prep.prepSummary).length}`);
-		return prep;
-	}
-
+	/**
+	 * This method compresses the given SummaryObject in case it is SummaryBlob type.
+	 * The compression is done only if the size of the blob is greater than the minSizeToCompress.
+	 *
+	 * @param input - The SummaryObject to be compressed
+	 * @param config - The configuration of the compression
+	 * @param isUseB64OnCompressed - If true, the compressed blob will be encoded to base64 string
+	 * @returns - The compressed SummaryObject
+	 */
 	private static readonly blobReplacer = (
 		input: SummaryObject,
 		config: ICompressionStorageConfig,
 		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
-		context?: ISummaryContext,
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
@@ -219,6 +187,12 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		}
 	};
 
+	/**
+	 * This method compresses the given blob file using the given algorithm.
+	 * @param file - The blob file to be compressed
+	 * @param algorithm - The algorithm to be used for compression
+	 * @returns - The compressed blob
+	 */
 	private static encodeBlob(file: ArrayBufferLike, algorithm: number): ArrayBufferLike {
 		let compressed: ArrayBufferLike;
 		if (algorithm === undefined || algorithm === SummaryCompressionAlgorithm.None) {
@@ -233,6 +207,13 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		return compressed;
 	}
 
+	/**
+	 * This method decompresses the given blob file using the given algorithm. It supports both
+	 * compressed blob in ArrayBufferLike and base64 string format.
+	 * @param file - The blob file to be decompressed
+	 * @param algorithm - The algorithm to be used for decompression
+	 * @returns - The decompressed blob
+	 */
 	private static decodeBlob(file: ArrayBufferLike, algorithm: number): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
 		let compressedEncoded = file;
@@ -250,26 +231,42 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		return decompressed;
 	}
 
+	/**
+	 * This method builds the preffiex for the compressed blob name.
+	 * @param algorithm - The algorithm to be used for compression
+	 * @returns - The prefix for the compressed blob name
+	 */
 	private static buildPrefix(algorithm: number): string {
 		return algorithm === SummaryCompressionAlgorithm.LZ4
 			? `${this.compressed_prefix + algorithm.toString()}_`
 			: "";
 	}
 
+	/**
+	 * This method traverses the given SummaryObject and replaces the SummaryBlob type with the compressed blob.
+	 * The blob is replaced only if the size of the blob is greater than the minSizeToCompress, which
+	 * is supplied via config.
+	 *
+	 * @param input - The SummaryObject to be traversed
+	 * @param replacer - The function to be used for replacing the SummaryBlob type
+	 * @param config - The configuration of the compression
+	 * @param isUseB64OnCompressed - If true, the compressed blob will be encoded to base64 string
+	 * @param context - The context of the summary
+	 * @returns - The SummaryObject with the replaced SummaryBlob type blobs.
+	 */
 	private static recursivelyReplace(
 		input: SummaryObject,
 		replacer: (
 			input: SummaryObject,
 			config: ICompressionStorageConfig,
 			isUseB64OnCompressed: boolean,
-			context?: ISummaryContext,
 		) => SummaryObject,
 		config: ICompressionStorageConfig,
 		isUseB64OnCompressed: boolean,
 		context?: ISummaryContext,
 	): SummaryObject {
 		assert(typeof input === "object", "input must be a non-null object");
-		const maybeReplaced = replacer(input, config, isUseB64OnCompressed, context);
+		const maybeReplaced = replacer(input, config, isUseB64OnCompressed);
 		if (maybeReplaced !== input) {
 			return maybeReplaced;
 		}
@@ -298,5 +295,87 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			}
 		}
 		return (clone ?? input) as SummaryObject;
+	}
+
+	/**
+	 * This method compresses the given summary using the given algorithm supplied via
+	 * config parameter. It supports both compressed blob in ArrayBufferLike and base64 string format.
+	 * @param summary - The summary to be compressed
+	 * @param config - The configuration of the compression
+	 * @param isUseB64OnCompressed - If true, the compressed blob will be encoded to base64 string
+	 * @returns - The compressed summary
+	 */
+	public static compressSummary(
+		summary: ISummaryTree,
+		config: ICompressionStorageConfig,
+		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
+	): ISummaryTree {
+		const prep = DocumentStorageServiceCompressionAdapter.recursivelyReplace(
+			summary,
+			DocumentStorageServiceCompressionAdapter.blobReplacer,
+			config,
+			isUseB64OnCompressed,
+		) as ISummaryTree;
+		console.log(`Miso Summary Upload: ${JSON.stringify(prep).length}`);
+		return prep;
+	}
+
+	/**
+	 * This method decompresses the blob received by calling the original readBlob method using
+	 * the given algorithm supplied via
+	 * config parameter. It supports both compressed blob in ArrayBufferLike and base64 string format.
+	 * If the blob is not compressed, it returns the blob as is.
+	 * @param id - The id of the blob to be read
+	 * @returns - The decompressed blob
+	 */
+	public override async readBlob(id: string): Promise<ArrayBufferLike> {
+		const algorithm = this._compressedBlobIds.get(id);
+		if (algorithm === undefined) {
+			return super.readBlob(id);
+		}
+		return DocumentStorageServiceCompressionAdapter.decodeBlob(
+			await super.readBlob(id),
+			algorithm,
+		);
+	}
+
+	/**
+	 * This method obtains the original snapshot tree from the base class
+	 * and decodes the compressed blob names. It stores the compressed blobs IDs and the
+	 * compression algorithm in a map for later use.
+	 * @param version - the version of the snapshot tree
+	 * @param scenarioName - the scenario name of the snapshot tree
+	 * @returns - The snapshot tree with the compressed blob names decoded
+	 */
+	public override async getSnapshotTree(
+		version?: IVersion | undefined,
+		scenarioName?: string | undefined,
+		// eslint-disable-next-line @rushstack/no-new-null
+	): Promise<ISnapshotTree | null> {
+		const snapshotTree = await super.getSnapshotTree(version, scenarioName);
+		if (snapshotTree !== null) {
+			await this.decodeSnapshotBlobNames(snapshotTree);
+		}
+		return snapshotTree;
+	}
+
+	/**
+	 * This method compressses the summary blobs (if applicable based on the config) and then
+	 * calls the original uploadSummaryWithContext method. The summary with compressed blobs and the
+	 * adjusted blob names are uploaded to the storage.
+	 * @param summary - The summary to be uploaded
+	 * @param context - The context of the summary
+	 * @returns - The ID of the uploaded summary
+	 */
+	public override async uploadSummaryWithContext(
+		summary: ISummaryTree,
+		context: ISummaryContext,
+	): Promise<string> {
+		const prep = DocumentStorageServiceCompressionAdapter.compressSummary(
+			summary,
+			this._config,
+			this._isUseB64OnCompressed,
+		);
+		return super.uploadSummaryWithContext(prep, context);
 	}
 }
