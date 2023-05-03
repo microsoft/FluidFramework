@@ -35,6 +35,4 @@ export interface IDevtools extends IDisposable {
 // @public
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
 
-// (No @packageDocumentation comment for this package)
-
 ```

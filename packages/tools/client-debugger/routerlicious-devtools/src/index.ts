@@ -2,15 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
-	IFluidDevtools as IDevtoolsBase,
-	initializeDevtools as initializeDevtoolsBase,
-	DevtoolsLogger,
-	VisualizeSharedObject,
-} from "@fluid-tools/client-debugger";
-import { IDisposable } from "@fluidframework/common-definitions";
-import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
  * Primary entry-point to the Fluid Devtools.
@@ -26,6 +17,16 @@ import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
  *
  * @packageDocumentation
  */
+
+import {
+	ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
+	IFluidDevtools as IDevtoolsBase,
+	initializeDevtools as initializeDevtoolsBase,
+	DevtoolsLogger,
+	VisualizeSharedObject,
+} from "@fluid-tools/client-debugger";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
  * Properties for configuring {@link IDevtools}.
