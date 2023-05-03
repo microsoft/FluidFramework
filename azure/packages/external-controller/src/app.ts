@@ -106,6 +106,7 @@ async function initializeNewContainer(
 }
 
 async function start(): Promise<void> {
+	// Create telemetry logger and wrap it in DevtoolsLogger to ensure events are visible in the browser Devtools view.
 	const logger = DevtoolsLogger.create(DebugLogger.create("test-namespace"));
 
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
