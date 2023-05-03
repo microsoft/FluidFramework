@@ -6,7 +6,7 @@ on:
 
 jobs:
   # This job must be triggered by pull_request, NOT pull_request_target so that it executes in a safe context.
-  changesets-check:
+  changesets-required:
     name: Changeset check
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
@@ -56,13 +56,8 @@ jobs:
           labels: changeset-present
           github_token: ${{ github.token }}
 
-  changesets-required:
-    name: Changesets required
-    runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
-    steps:
       - name: Required but missing
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-present') }}
+        if: steps.changeset-status.outcome == 'failure' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
@@ -71,7 +66,7 @@ jobs:
             This PR requires a changeset, but none is present. @tylerbutler, please review.
 
       - name: Required and present
-        if: contains(github.event.pull_request.labels.*.name, 'changeset-present')
+        if: steps.changeset-status.outcome == 'success' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
