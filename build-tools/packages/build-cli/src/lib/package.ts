@@ -536,20 +536,20 @@ export async function setVersion(
 		}
 	}
 
-	// for (const [cmd, args, opts] of cmds) {
-	// 	log?.verbose(`Running command: ${cmd} ${args} in ${opts?.cwd}`);
-	// 	try {
-	// 		// TODO: The shell option should not need to be true. AB#4067
-	// 		// eslint-disable-next-line no-await-in-loop
-	// 		const results = await execa(cmd, args, options);
-	// 		if (results.all !== undefined) {
-	// 			log?.verbose(results.all);
-	// 		}
-	// 	} catch (error: any) {
-	// 		log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
-	// 		throw error;
-	// 	}
-	// }
+	for (const [cmd, args, opts] of cmds) {
+		log?.verbose(`Running command: ${cmd} ${args} in ${opts?.cwd}`);
+		try {
+			// TODO: The shell option should not need to be true. AB#4067
+			// eslint-disable-next-line no-await-in-loop
+			const results = await execa(cmd, args, options);
+			if (results.all !== undefined) {
+				log?.verbose(results.all);
+			}
+		} catch (error: any) {
+			log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
+			throw error;
+		}
+	}
 
 	if (releaseGroupOrPackage instanceof Package) {
 		// Return early; packages only need to be bumped using npm. The rest of the logic is only for release groups.
