@@ -32,7 +32,6 @@ export {
 	ISerializedIntervalCollectionV2,
 	CompressedSerializedInterval,
 	SerializedIntervalDelta,
-	IntervalStickiness,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
 export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
