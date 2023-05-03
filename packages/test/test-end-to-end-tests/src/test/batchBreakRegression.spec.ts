@@ -407,7 +407,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 											| ISequencedDocumentSystemMessage
 										)[] = [...args[1]];
 										const batchEndIndex = newMessages.findIndex(
-											(m) => (m.metadata as any)?.batch === false,
+											(m) =>
+												(m.metadata as { batch?: boolean })?.batch ===
+												false,
 										);
 										if (batchEndIndex >= 0) {
 											args[1] = newMessages

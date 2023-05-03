@@ -131,7 +131,7 @@ describe("Ops on Reconnect", () => {
 					const envelope = message.contents as IEnvelope;
 					const address = envelope.contents.content.address;
 					const content = envelope.contents.content.contents;
-					const metadata = message.metadata as any;
+					const metadata = message.metadata as { batch?: boolean } | undefined;
 					const batch = metadata?.batch;
 					let value1: string | number;
 					let value2: string;

@@ -79,7 +79,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 			dataStore._context.containerRuntime.on("op", (op) => {
 				if (op.type === ContainerMessageType.BlobAttach) {
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					(op.metadata as any)?.blobId ? resolve() : reject(new Error("no op metadata"));
+					(op.metadata as { blobId: string })?.blobId
+						? resolve()
+						: reject(new Error("no op metadata"));
 				}
 			}),
 		);
@@ -205,7 +207,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 			dataStore._context.containerRuntime.on("op", (op) => {
 				if (op.type === ContainerMessageType.BlobAttach) {
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					(op.metadata as any)?.blobId ? resolve() : reject(new Error("no op metadata"));
+					(op.metadata as { blobId: string })?.blobId
+						? resolve()
+						: reject(new Error("no op metadata"));
 				}
 			}),
 		);
@@ -247,7 +251,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			container1.on("op", (op) => {
 				if (op.contents?.type === ContainerMessageType.BlobAttach) {
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-					(op.metadata as any)?.blobId ? resolve() : reject(new Error("no op metadata"));
+					(op.metadata as { blobId: string })?.blobId
+						? resolve()
+						: reject(new Error("no op metadata"));
 				}
 			}),
 		);

@@ -73,8 +73,8 @@ function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
 	const batchCount = batchMessages.length;
 	assert(batchCount !== 0, "No messages in the batch");
 
-	const batchBeginMetadata = (batchMessages[0].metadata as any)?.batch;
-	const batchEndMetadata = (batchMessages[batchCount - 1].metadata as any)?.batch;
+	const batchBeginMetadata = (batchMessages[0].metadata as { batch?: boolean })?.batch;
+	const batchEndMetadata = (batchMessages[batchCount - 1].metadata as { batch?: boolean })?.batch;
 	if (batchCount === 1) {
 		assert.equal(
 			batchBeginMetadata,
