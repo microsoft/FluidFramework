@@ -13,7 +13,16 @@ import { IDisposable } from "@fluidframework/common-definitions";
 import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 
 /**
- * TODO
+ * Primary entry-point to the Fluid Devtools.
+ *
+ * To initialize the Devtools alongside your application's {@link @fluidframework/fluid-static#IFluidContainer}, call
+ * {@link initializeDevtools}.
+ *
+ * The Devtools will automatically dispose of themselves upon Window unload, but if you would like to close them
+ * earlier, call {@link IDevtools.dispose}.
+ *
+ * To enable visualization of Telemetry data, you may create a {@link @fluid-tools/client-debugger#DevtoolsLogger} and
+ * provide it during Devtools initialization.
  *
  * @packageDocumentation
  */
