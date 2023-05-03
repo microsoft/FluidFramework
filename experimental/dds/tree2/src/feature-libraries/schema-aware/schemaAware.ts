@@ -18,6 +18,7 @@ import {
 	AllowedTypes,
 	FlexList,
 } from "../modular-schema";
+import { Assume } from "../modular-schema/typedSchema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { UntypedSequenceField } from "./partlyTyped";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
@@ -55,12 +56,15 @@ export const enum ApiMode {
 	 * TODO: fix ways this differs from editable tree:
 	 * - Does not do primary field inlining.
 	 * - Primitive node handling might not match.
+	 * - Unwrap child access, but not top level node
 	 */
 	Editable,
 	/**
 	 * Always use full node objects for everything.
 	 *
 	 * Fields are still shaped based on their multiplicity.
+	 *
+	 * TODO: test and fix
 	 */
 	Wrapped,
 	/**
@@ -142,7 +146,7 @@ export type TypedFields<
 export type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
-		TypeSetToTypedTrees<Mode, TField["allowedTypes"]>,
+		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
 		Mode
 	>,
 ][TypedSchema._dummy];
@@ -174,16 +178,28 @@ export type EditableField<TypedChild> = UntypedField & MarkedArrayLike<TypedChil
 export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<TypedChild>;
 
 /**
- * Takes in `types?: unknown | TypedSchema.NameSet` and returns a TypedTree union.
+ * Takes in `AllowedTypes` and returns a TypedTree union.
  * @alpha
  */
-export type TypeSetToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
+export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
 	T extends FlexList<TreeSchema>
-		? TypedNode<
-				TypedSchema.ArrayToUnion<TypedSchema.FlexListToNonLazyArray<TreeSchema, T>>,
-				Mode
+		? TypedSchema.ArrayToUnion<
+				TypeArrayToTypedTrees<Mode, TypedSchema.FlexListToNonLazyArray<TreeSchema, T>>
 		  >
 		: UntypedApi<Mode>,
+][TypedSchema._dummy];
+
+/**
+ * Takes in `TreeSchema[]` and returns a TypedTree union.
+ * @alpha
+ */
+export type TypeArrayToTypedTrees<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
+	T extends readonly [infer Head, ...infer Tail]
+		? [
+				TypedNode<Assume<Head, TreeSchema>, Mode>,
+				...TypeArrayToTypedTrees<Mode, Assume<Tail, readonly TreeSchema[]>>,
+		  ]
+		: [],
 ][TypedSchema._dummy];
 
 // TODO: make these more accurate

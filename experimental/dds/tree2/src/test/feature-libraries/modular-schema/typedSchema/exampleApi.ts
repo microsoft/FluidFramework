@@ -33,14 +33,14 @@ export type TypedFields<
 	TMap,
 	TFields extends { [key: string]: TypedSchema.FieldSchemaTypeInfo },
 > = {
-	readonly [key in keyof TFields]: TreeTypesToTypedTreeTypes<TMap, TFields[key]["types"]>;
+	readonly [key in keyof TFields]: AllowedTypesToTypedTrees<TMap, TFields[key]["types"]>;
 };
 
 /**
  * Takes in `types?: ReadonlySet<brandedTypeNameUnion>`
  * and returns a TypedTree union.
  */
-export type TreeTypesToTypedTreeTypes<TMap, T extends unknown | NameSet> = T extends NameSet<
+export type AllowedTypesToTypedTrees<TMap, T extends unknown | NameSet> = T extends NameSet<
 	infer Names
 >
 	? ValuesOf<{
@@ -119,11 +119,11 @@ function useBall(b: BallTree): NumberTree {
 	type BallXFieldTypes = BallXFieldInfo["types"];
 	type check_ = requireAssignableTo<BallXFieldTypes, NameSet<["number"]>>;
 
-	type Child = TreeTypesToTypedTreeTypes<SchemaMap, BallXFieldTypes>;
+	type Child = AllowedTypesToTypedTrees<SchemaMap, BallXFieldTypes>;
 
 	type check3_ = requireAssignableTo<Child, NumberTree>;
 	type check4_ = requireAssignableTo<NumberTree, Child>;
-	type Child2 = TreeTypesToTypedTreeTypes<SchemaMap, NameSet<["number"]>>;
+	type Child2 = AllowedTypesToTypedTrees<SchemaMap, NameSet<["number"]>>;
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;

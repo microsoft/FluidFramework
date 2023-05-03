@@ -6,7 +6,7 @@
 import {
 	ApiMode,
 	NodeDataFor,
-	TypeSetToTypedTrees,
+	AllowedTypesToTypedTrees,
 	TypedNode,
 	EditableField,
 	TypedField,
@@ -119,11 +119,11 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	type BallXFieldTypes = BallXFieldInfo["allowedTypes"];
 	type check_ = requireAssignableTo<BallXFieldTypes, typeof numberSchema>;
 
-	type Child = TypeSetToTypedTrees<ApiMode.Flexible, BallXFieldTypes>;
+	type Child = AllowedTypesToTypedTrees<ApiMode.Flexible, BallXFieldTypes>;
 
 	type check3_ = requireAssignableTo<Child, NumberTree>;
 	type check4_ = requireAssignableTo<NumberTree, Child>;
-	type Child2 = TypeSetToTypedTrees<ApiMode.Flexible, typeof numberSchema>;
+	type Child2 = AllowedTypesToTypedTrees<ApiMode.Flexible, typeof numberSchema>;
 
 	type check3x_ = requireAssignableTo<Child2, NumberTree>;
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;
@@ -132,7 +132,7 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 interface TypeBuilder<TSchema extends TreeSchema> {
 	a: NodeDataFor<ApiMode.Flexible, TSchema>;
 	b: NodeDataFor<ApiMode.Editable, TSchema>;
-	c: NodeDataFor<ApiMode.Wrapped, TSchema>;
+	c: NodeDataFor<ApiMode.Simple, TSchema>;
 }
 
 type FlexNumber =
@@ -142,13 +142,6 @@ type FlexNumber =
 			[valueSymbol]: number;
 	  };
 
-// This type type checks differently if its an interface, which breaks.
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type WrappedNumber = {
-	[typeNameSymbol]: "number" & TreeSchemaIdentifier;
-	[valueSymbol]: number;
-};
-
 // Test terminal cases:
 {
 	type F = TypeBuilder<typeof numberSchema>;
@@ -157,7 +150,7 @@ type WrappedNumber = {
 	type XC = F["c"];
 	type _check1 = requireTrue<areSafelyAssignable<XA, FlexNumber>>;
 	type _check2 = requireTrue<areSafelyAssignable<XB, number>>;
-	type _check3 = requireTrue<areSafelyAssignable<XC, WrappedNumber>>;
+	type _check3 = requireTrue<areSafelyAssignable<XC, number>>;
 }
 
 interface FlexBall {
@@ -176,12 +169,11 @@ interface EditableBall extends UntypedTreeCore {
 
 // This type type checks differently if its an interface, which breaks.
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type WrappedBall = {
-	[typeNameSymbol]: "ball" & TreeSchemaIdentifier;
-	[valueSymbol]: undefined;
-	x: WrappedNumber;
-	y: WrappedNumber;
-	size: WrappedNumber | undefined;
+type SimpleBall = {
+	[typeNameSymbol]?: ("ball" & TreeSchemaIdentifier) | undefined;
+	x: number;
+	y: number;
+	size?: number | undefined;
 };
 
 // Test non recursive cases:
@@ -192,7 +184,61 @@ type WrappedBall = {
 	type XC = F["c"];
 	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBall>>;
 	type _check2 = requireTrue<areSafelyAssignable<XB, EditableBall>>;
-	type _check3 = requireTrue<areSafelyAssignable<XC, WrappedBall>>;
+	type _check3 = requireTrue<areSafelyAssignable<XC, SimpleBall>>;
+}
+
+// Test polymorphic cases:
+{
+	const builder2 = new SchemaBuilder("Schema Aware polymorphic");
+	const bool = builder2.primitive("bool", ValueSchema.Boolean);
+	const str = builder2.primitive("str", ValueSchema.String);
+	const parentField = SchemaBuilder.valueField(str, bool);
+	const parent = builder2.object("parent", { local: { child: parentField } });
+
+	type FlexBool =
+		| boolean
+		| {
+				[typeNameSymbol]?: ("bool" & TreeSchemaIdentifier) | undefined;
+				[valueSymbol]: boolean;
+		  };
+
+	type FlexStr =
+		| string
+		| {
+				[typeNameSymbol]?: ("str" & TreeSchemaIdentifier) | undefined;
+				[valueSymbol]: string;
+		  };
+	interface FlexParent {
+		[typeNameSymbol]?: ("parent" & TreeSchemaIdentifier) | undefined;
+		child: FlexBool | FlexStr;
+	}
+
+	// Check child handling
+	{
+		type ChildSchema = typeof parentField;
+		type ChildSchemaTypes = ChildSchema extends FieldSchema<any, infer Types> ? Types : never;
+		type AllowedChildTypes = ChildSchema["allowedTypes"];
+		type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
+		type BoolChild = ChildSchemaTypes[1];
+		type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
+		type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeSchema>>;
+		type NormalizedChildSchemaTypes = FlexListToNonLazyArray<TreeSchema, ChildSchemaTypes>;
+		type ChildTypes = AllowedTypesToTypedTrees<ApiMode.Flexible, ChildSchemaTypes>;
+		type _check5 = requireAssignableTo<FlexBool, ChildTypes>;
+		type _check6 = requireAssignableTo<FlexStr, ChildTypes>;
+		type _check7 = requireAssignableTo<ChildTypes, FlexBool | FlexStr>;
+		type Field = TypedField<ApiMode.Flexible, ChildSchema>;
+	}
+
+	{
+		type F = TypeBuilder<typeof parent>;
+		type XA = F["a"];
+		type XB = F["b"];
+		type XC = F["c"];
+		type _check1 = requireTrue<areSafelyAssignable<XA, FlexParent>>;
+		// type _check2 = requireTrue<areSafelyAssignable<XB, EditableParent>>;
+		// type _check3 = requireTrue<areSafelyAssignable<XC, SimpleParent>>;
+	}
 }
 
 // Test recursive cases:
@@ -217,8 +263,11 @@ type WrappedBall = {
 		type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
 		type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeSchema>>;
 		type NormalizedChildSchemaTypes = FlexListToNonLazyArray<TreeSchema, ChildSchemaTypes>;
-		type ChildTypes = TypeSetToTypedTrees<ApiMode.Wrapped, ChildSchemaTypes>;
-		type Field = TypedField<ApiMode.Wrapped, ChildSchema>;
+		type ChildTypes = AllowedTypesToTypedTrees<ApiMode.Flexible, ChildSchemaTypes>;
+		type _check5 = requireAssignableTo<FlexBox, ChildTypes>;
+		type _check6 = requireAssignableTo<FlexBall, ChildTypes>;
+		type _check7 = requireAssignableTo<ChildTypes, FlexBall | FlexBox>;
+		type Field = TypedField<ApiMode.Flexible, ChildSchema>;
 	}
 
 	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBox>>;
