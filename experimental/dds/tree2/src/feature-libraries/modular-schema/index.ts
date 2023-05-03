@@ -72,7 +72,7 @@ export {
 	GlobalFieldSchema,
 	Any,
 	TypedViewSchemaCollection,
-	TypedTreeSchemaSpecification,
+	TreeSchemaSpecification,
 	FlexList,
 	Assume,
 } from "./typedSchema";

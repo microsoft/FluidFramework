@@ -22,6 +22,7 @@ import { forbidden, value } from "../../defaultFieldKinds";
 import { MakeNominal } from "../../../util";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { Assume, ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
+import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 
 // TODO: tests for this file
 
@@ -38,47 +39,50 @@ type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFie
 >;
 
 /**
- * T must extend TypedTreeSchemaSpecification.
+ * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
  */
-export class TreeSchema<Name extends string = string, T = TypedTreeSchemaSpecification>
-	implements ITreeSchema
+export class TreeSchema<
+	Name extends string = string,
+	T extends RecursiveTreeSchemaSpecification = TreeSchemaSpecification,
+> implements ITreeSchema
 {
 	// Allows reading localFields through the normal map, but without losing type information.
 	public readonly localFields: ObjectToMap<
-		NormalizeLocalFields<Assume<T, TypedTreeSchemaSpecification>["local"]>,
+		NormalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>,
 		LocalFieldKey,
 		FieldSchema
 	>;
 
 	public readonly localFieldsObject: NormalizeLocalFields<
-		Assume<T, TypedTreeSchemaSpecification>["local"]
+		Assume<T, TreeSchemaSpecification>["local"]
 	>;
 
 	public readonly globalFields!: ReadonlySet<GlobalFieldKey>;
 	public readonly extraLocalFields: FieldSchema;
 	public readonly extraGlobalFields: boolean;
 	public readonly value: WithDefault<
-		Assume<T, TypedTreeSchemaSpecification>["value"],
+		Assume<T, TreeSchemaSpecification>["value"],
 		ValueSchema.Nothing
 	>;
 
 	public readonly name: Name & TreeSchemaIdentifier;
 
-	public readonly info: Assume<T, TypedTreeSchemaSpecification>;
+	public readonly info: Assume<T, TreeSchemaSpecification>;
 
 	public constructor(public readonly builder: Named<string>, name: Name, info: T) {
-		this.info = info as Assume<T, TypedTreeSchemaSpecification>;
+		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
-		this.localFieldsObject = normalizeLocalFields<
-			Assume<T, TypedTreeSchemaSpecification>["local"]
-		>(builder, this.info.local);
+		this.localFieldsObject = normalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>(
+			builder,
+			this.info.local,
+		);
 		this.localFields = objectToMap(this.localFieldsObject);
 		this.extraLocalFields = normalizeField(this.info.extraLocalFields);
 		this.extraGlobalFields = this.info.extraGlobalFields ?? false;
 		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<
-			Assume<T, TypedTreeSchemaSpecification>["value"],
+			Assume<T, TreeSchemaSpecification>["value"],
 			ValueSchema.Nothing
 		>;
 	}
@@ -172,7 +176,7 @@ export type FieldSchemaSpecification = AllowedTypes | FieldSchema;
  * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
  * @alpha
  */
-export interface TypedTreeSchemaSpecification {
+export interface TreeSchemaSpecification {
 	readonly local?: { readonly [key: string]: FieldSchemaSpecification | undefined };
 	readonly global?: FlexList<GlobalFieldSchema>;
 	readonly extraLocalFields?: FieldSchemaSpecification;

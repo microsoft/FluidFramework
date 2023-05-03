@@ -40,7 +40,7 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  * @alpha
  */
 export const jsonObject = builder.objectRecursive("Json.Object", {
-	extraLocalFields: SchemaBuilder.fieldRecursive(FieldKinds.optional, jsonRoot),
+	extraLocalFields: SchemaBuilder.fieldRecursive(FieldKinds.optional, ...jsonRoot),
 });
 
 /**
@@ -48,7 +48,7 @@ export const jsonObject = builder.objectRecursive("Json.Object", {
  */
 export const jsonArray = builder.objectRecursive("Json.Array", {
 	local: {
-		[EmptyKey]: SchemaBuilder.fieldRecursive(FieldKinds.sequence, jsonRoot),
+		[EmptyKey]: SchemaBuilder.fieldRecursive(FieldKinds.sequence, ...jsonRoot),
 	},
 });
 

@@ -22,13 +22,35 @@ import {
 	AllowedTypes,
 	LazyTreeSchema,
 	TreeSchema,
-	TypedTreeSchemaSpecification,
+	TreeSchemaSpecification,
 	GlobalFieldSchema,
 	FieldSchema,
 	Kinds,
 } from "./typedTreeSchema";
+import { FlexList } from "./flexList";
 
 // TODO: tests and examples for this file
+
+/**
+ * Placeholder for to `TreeSchema` to use in constraints where `TreeSchema` is desired but using it causes
+ * recursive types to fail to compile due to TypeScript limitations.
+ *
+ * Using `TreeSchema` instead in some key "extends" clauses cause recursive types to error with:
+ * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
+ *
+ * TODO: how much more specific of a type can be provided without triggering the above error?
+ */
+export type RecursiveTreeSchema = unknown;
+
+/**
+ * Placeholder for to `TreeSchemaSpecification` to use in constraints where `TreeSchemaSpecification` is desired but using it causes
+ * recursive types to fail to compile due to TypeScript limitations.
+ *
+ * See `RecursiveTreeSchema`.
+ *
+ * TODO: how much more specific of a type can be provided without triggering the above error?
+ */
+export type RecursiveTreeSchemaSpecification = unknown;
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -56,7 +78,7 @@ export class SchemaBuilder {
 	/**
 	 * Define (and add to this library) a schema for an object.
 	 */
-	public object<Name extends string, T extends TypedTreeSchemaSpecification>(
+	public object<Name extends string, T extends TreeSchemaSpecification>(
 		name: Name,
 		t: T,
 	): TreeSchema<Name, T> {
@@ -65,11 +87,14 @@ export class SchemaBuilder {
 
 	/**
 	 * Same as `object` but with less type safety and works for recursive objects.
-	 * Reduced type safety is a sideeffect of a workaround for a TypeScript limitation.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
 	 *
-	 * See note on fieldRecursive for details.
+	 * See note on RecursiveTreeSchema for details.
 	 */
-	public objectRecursive<Name extends string, T>(name: Name, t: T): TreeSchema<Name, T> {
+	public objectRecursive<Name extends string, T extends RecursiveTreeSchemaSpecification>(
+		name: Name,
+		t: T,
+	): TreeSchema<Name, T> {
 		return new TreeSchema(this, name, t);
 	}
 
@@ -153,14 +178,14 @@ export class SchemaBuilder {
 	 * Same as `field` but takes in `AllowedTypes`, is less type safe and supports recursive types.
 	 * This API is less safe and less ergonomic to work around a limitation of TypeScript.
 	 *
-	 * T must extends `AllowedTypes`: This can not be enforced via TypeScript since "extends" clauses cause recursive types to error with:
+	 * T must extends `AllowedTypes`: This cannot be enforced via TypeScript since such an "extends" clauses cause recursive types to error with:
 	 * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
 	 *
-	 * TODO: can this be made variadic
+	 * TODO: how much more specific of a type can be provided without triggering the above error?
 	 */
-	public static fieldRecursive<Kind extends Kinds, T>(
+	public static fieldRecursive<Kind extends Kinds, T extends FlexList<RecursiveTreeSchema>>(
 		kind: Kind,
-		allowedTypes: T,
+		...allowedTypes: T
 	): FieldSchema<Kind, T> {
 		return new FieldSchema(kind, allowedTypes);
 	}
