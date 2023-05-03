@@ -59,6 +59,12 @@ export type IRuntimeMessageWithContents<
 	contents?: { type?: string; address?: string; contents?: unknown };
 };
 
+export function asMessageWithValidContents<
+	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
+>(message: T | undefined): IRuntimeMessageWithContents<T> | undefined {
+	return isMessageWithValidContents(message) ? message : undefined;
+}
+
 export function isMessageWithValidContents<
 	T extends ISequencedDocumentMessage | IDocumentMessage = ISequencedDocumentMessage,
 >(message: T | undefined): message is IRuntimeMessageWithContents<T> {
@@ -71,5 +77,5 @@ export function isMessageWithValidContents<
 export function assertMessageWithValidContents<
 	T extends ISequencedDocumentMessage | IDocumentMessage,
 >(message: T | undefined): asserts message is IRuntimeMessageWithContents<T> {
-	assert(isMessageWithValidContents(message), "message does not have valid metadata");
+	assert(isMessageWithValidContents(message), "message does not have valid contents");
 }

@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerMessageType, ContainerRuntimeMessage } from "..";
-import { assertMessageWithValidContents } from "../opProperties";
+import { asMessageWithValidContents } from "../opProperties";
 import { IBatch } from "./definitions";
 
 interface IGroupedMessage {
@@ -66,16 +66,18 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		assertMessageWithValidContents(op);
-
-		if (op.contents?.type !== OpGroupingManager.groupedBatchOp) {
+		const messageWithContents = asMessageWithValidContents(op);
+		if (
+			messageWithContents === undefined ||
+			op.contents?.type !== OpGroupingManager.groupedBatchOp
+		) {
 			return [op];
 		}
 
-		const messages = op.contents?.contents as IGroupedMessage[];
+		const messages = messageWithContents.contents?.contents as IGroupedMessage[];
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
-			...op,
+			...messageWithContents,
 			clientSequenceNumber: fakeCsn++,
 			contents: subMessage.contents,
 			metadata: subMessage.metadata,
