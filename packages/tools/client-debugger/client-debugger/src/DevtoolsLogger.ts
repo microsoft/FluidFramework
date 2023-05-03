@@ -112,21 +112,25 @@ export class DevtoolsLogger extends TelemetryLogger {
 		this.baseLogger?.send(event);
 
 		// TODO: ability to disable the logger so the rest of this becomes a no-op
+		try {
+			const newEvent: ITimestampedTelemetryEvent = {
+				logContent: this.prepareEvent(event),
+				timestamp: Date.now(),
+			};
 
-		const newEvent: ITimestampedTelemetryEvent = {
-			logContent: this.prepareEvent(event),
-			timestamp: Date.now(),
-		};
+			// insert log into the beginning of the array to show the latest log first
+			this._telemetryLog.unshift(newEvent);
 
-		// insert log into the beginning of the array to show the latest log first
-		this._telemetryLog.unshift(newEvent);
-
-		// set log option to be undefined to avoid sending the log message to window console; these were too noisy
-		postMessagesToWindow(
-			undefined,
-			TelemetryEvent.createMessage({
-				event: newEvent,
-			}),
-		);
+			// set log option to be undefined to avoid sending the log message to window console; these were too noisy
+			postMessagesToWindow(
+				undefined,
+				TelemetryEvent.createMessage({
+					event: newEvent,
+				}),
+			);
+		} catch (error) {
+			// Eat the error to ensure that Devtools logic doesn't crash the consuming application.
+			console.error(error);
+		}
 	}
 }
