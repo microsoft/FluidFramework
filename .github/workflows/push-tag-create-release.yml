@@ -1,5 +1,13 @@
 name: "push-tag-create-release"
 
+# When a release tag is pushed to the repo, this workflow is triggered. It first installs the Fluid build-tools, then
+# uses the flub release fromTag command to load some release metadata into an environment variable. Once loaded, it
+# checks out the tagged commit and runs flub release report to generate release reports. It also uses auto-changelog to
+# create a changelog for patch releases (only patches). All the artifacts are uploaded for debugging purposes.
+
+# Once the artifacts are created, the workflow creates a GitHub release and attaches the release reports to it. The
+# release is a draft so that the release engineer can verify the contents before publishing.
+
 on:
   push:
     tags:
