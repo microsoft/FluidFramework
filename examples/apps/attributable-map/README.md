@@ -4,7 +4,6 @@
 
 When the app loads it will update the URL. Copy that new URL into a second browser and note that if you click the button in one browser, the time value and attribution key in other browsers updates as well.
 
-
 ![timestamp-watcher](./images/timestampwatcher.gif)
 
 <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=TRUE) -->
@@ -26,7 +25,6 @@ You can run this example using the following steps:
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
-
 
 ## Data model
 
