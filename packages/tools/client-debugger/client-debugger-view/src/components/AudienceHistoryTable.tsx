@@ -13,6 +13,8 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
+import { TooltipHost } from "@fluentui/react";
+import { useId } from "@fluentui/react-hooks";
 import { Clock20Regular, DoorArrowLeft24Regular, Person24Regular } from "@fluentui/react-icons";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 
@@ -33,6 +35,8 @@ export interface AudienceHistoryTableProps {
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
 
+	const clientIdTooltipId = useId("client-id-tooltip");
+
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
 		{ columnKey: "event", label: "Event" },
@@ -47,7 +51,12 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
 							{column.columnKey === "event" && <DoorArrowLeft24Regular />}
-							{column.columnKey === "clientId" && <Person24Regular />}
+							<TooltipHost
+								content="Represents the connection between Fluid Runtime and the Fluid server."
+								id={clientIdTooltipId}
+							>
+								{column.columnKey === "clientId" && <Person24Regular />}
+							</TooltipHost>
 							{column.columnKey === "time" && <Clock20Regular />}
 							{column.label}
 						</TableHeaderCell>

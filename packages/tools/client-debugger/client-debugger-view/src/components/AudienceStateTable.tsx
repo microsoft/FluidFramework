@@ -13,6 +13,8 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
+import { useId } from "@fluentui/react-hooks";
+import { TooltipHost } from "@fluentui/react";
 import { EditRegular, Search20Regular, Person24Regular } from "@fluentui/react-icons";
 import { TransformedAudienceStateData } from "./AudienceView";
 
@@ -33,6 +35,9 @@ export interface AudienceStateTableProps {
 export function AudienceStateTable(props: AudienceStateTableProps): React.ReactElement {
 	const { audienceStateItems } = props;
 
+	const clientIdTooltipId = useId("client-id-tooltip");
+	const userIdTooltipId = useId("user-id-tooltip");
+
 	// Columns for rendering audience state
 	const audienceStateColumns = [
 		{ columnKey: "clientId", label: "Client ID" },
@@ -47,8 +52,18 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "clientId" && <Person24Regular />}
-							{column.columnKey === "userId" && <Person24Regular />}
+							<TooltipHost
+								content="Represents the connection between Fluid Runtime and the Fluid server."
+								id={clientIdTooltipId}
+							>
+								{column.columnKey === "clientId" && <Person24Regular />}
+							</TooltipHost>
+							<TooltipHost
+								content="Represents the application specific user identifier. Randomly generated unless specified by the application."
+								id={userIdTooltipId}
+							>
+								{column.columnKey === "userId" && <Person24Regular />}
+							</TooltipHost>
 							{column.columnKey === "mode" && <EditRegular />}
 							{column.columnKey === "scopes" && <Search20Regular />}
 							{column.label}
