@@ -92,6 +92,7 @@ USAGE
 <!-- prettier-ignore-start -->
 <!-- commands -->
 * [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
+* [`fluv generate readme`](#fluv-generate-readme)
 * [`fluv help [COMMANDS]`](#fluv-help-commands)
 * [`fluv version VERSION`](#fluv-version-version)
 * [`fluv version latest`](#fluv-version-latest)
@@ -124,6 +125,34 @@ EXAMPLES
 ```
 
 _See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.1.3/src/commands/autocomplete/index.ts)_
+
+## `fluv generate readme`
+
+Adds commands to README.md in current directory.
+
+```
+USAGE
+  $ fluv generate readme --dir <value> [--multi] [--aliases]
+
+FLAGS
+  --[no-]aliases  include aliases in the command list
+  --dir=<value>   (required) [default: docs] output directory for multi docs
+  --multi         create a different markdown page for each topic
+
+DESCRIPTION
+  Adds commands to README.md in current directory.
+
+  The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
+
+  # Usage
+  <!-- usage -->
+  # Commands
+  <!-- commands -->
+  # Table of contents
+  <!-- toc -->
+
+  Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
+```
 
 ## `fluv help [COMMANDS]`
 
