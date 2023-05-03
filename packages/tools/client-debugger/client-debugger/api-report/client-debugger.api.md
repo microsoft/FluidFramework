@@ -376,7 +376,7 @@ export interface InboundHandlers {
 }
 
 // @public
-export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
+export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
 export function isDevtoolsMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;

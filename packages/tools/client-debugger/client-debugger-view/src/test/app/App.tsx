@@ -20,11 +20,7 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import {
-	DevtoolsLogger,
-	IFluidDevtools,
-	initializeFluidDevtools,
-} from "@fluid-tools/client-debugger";
+import { DevtoolsLogger, IFluidDevtools, initializeDevtools } from "@fluid-tools/client-debugger";
 
 import {
 	ContainerInfo,
@@ -239,7 +235,7 @@ export function App(): React.ReactElement {
 	const logger = React.useMemo(() => new DevtoolsLogger(), []);
 
 	// Initialize Devtools
-	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);
+	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
 
 	React.useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.

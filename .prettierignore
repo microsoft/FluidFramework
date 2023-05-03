@@ -18,6 +18,7 @@ common/lib/**/lib
 common/build/eslint-config-fluid/printed-configs/
 build-tools/packages/*/docs/*.md
 build-tools/packages/build-cli/README.md
+build-tools/packages/readme-command/README.md
 build-tools/packages/version-tools/README.md
 **/src/**/test/types/*
 **/src/packageVersion.ts
@@ -33,6 +34,9 @@ tools/pipelines/
 **/_api-extractor-temp/*
 **/api-report/*
 **/*.api.md
+
+# Templates
+.changeset/templates/
 
 # Test json
 build-tools/packages/build-tools/src/test/data/
