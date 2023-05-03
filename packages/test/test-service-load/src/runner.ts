@@ -114,7 +114,7 @@ async function main() {
 		}
 	});
 
-	let testFailed: boolean = false;
+	// let testFailed: boolean = false;
 	const fileLogger = await FileLogger.loggerP;
 	// Check for InactiveObject or SweepReadyObject logs
 	fileLogger.observer.on("logEvent", (logEvent: ITelemetryBaseEvent) => {
@@ -124,7 +124,7 @@ async function main() {
 			logEvent.eventName.includes("GC_Tombstone") ||
 			logEvent.eventName.includes("GC_Deleted")
 		) {
-			testFailed = true;
+			// testFailed = true;
 			console.error(`xxxxxxxxx ${JSON.stringify(logEvent)}`);
 		}
 	});
@@ -150,9 +150,7 @@ async function main() {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
 		console.log(`xxxxxxxxx Runner failed. Error: ${JSON.stringify(e)}`);
 	} finally {
-		if (testFailed) {
-			result = GcFailureExitCode;
-		}
+		result = GcFailureExitCode;
 		await safeExit(result, url, runId);
 	}
 }
