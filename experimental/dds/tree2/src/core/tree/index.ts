@@ -40,6 +40,7 @@ export {
 export { getMapTreeField, MapTree } from "./mapTree";
 export {
 	clonePath,
+	topDownPath,
 	getDepth,
 	UpPath,
 	FieldUpPath,
