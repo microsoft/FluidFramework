@@ -159,12 +159,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
-		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
-			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
-			// that the exactDepType will be one of the enum values.
-			this.error(`Invalid exactDepType: ${exactDepType}`);
-		}
-
 		if (rgOrPackage instanceof MonoRepo) {
 			const releaseRepo = rgOrPackage;
 			assert(releaseRepo !== undefined, `Release repo not found for ${rgOrPackageName}`);
