@@ -123,15 +123,21 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error("No dependency provided.");
 		}
 
+		// Fall back to the deprecated --exactDepType flag value if the new one isn't provided
+		const interdepRangeFlag = flags.interdependencyRange ?? flags.exactDepType;
+
 		let interdependencyRange: InterdependencyRange | undefined = isInterdependencyRange(
-			flags.interdependencyRange,
+			interdepRangeFlag,
 		)
-			? flags.interdependencyRange
+			? interdepRangeFlag
 			: undefined;
 
 		const context = await this.getContext();
 		const bumpType: VersionBumpType | undefined = flags.bumpType;
-		const workspaceProtocol = interdependencyRange?.startsWith("workspace:");
+		const workspaceProtocol =
+			typeof interdependencyRange === "string"
+				? interdependencyRange?.startsWith("workspace:")
+				: false;
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
