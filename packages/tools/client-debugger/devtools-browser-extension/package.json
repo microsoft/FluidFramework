@@ -1,5 +1,5 @@
 {
-	"name": "@fluid-tools/devtools-browser-extension",
+	"name": "@fluid-internal/devtools-browser-extension",
 	"version": "2.0.0-internal.4.2.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
