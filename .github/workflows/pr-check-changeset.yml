@@ -5,9 +5,10 @@ on:
     types: [labeled, unlabeled, opened, synchronize, reopened]
 
 jobs:
+  # When a PR has the changeset-required label, check if it has a changeset.
   # This job must be triggered by pull_request, NOT pull_request_target so that it executes in a safe context.
   changeset-required:
-    name: Changeset check
+    name: Changeset required
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
     steps:
@@ -52,6 +53,7 @@ jobs:
           message: |
             This PR requires a changeset and it has one! Good job!
 
+  # Any PR without the changeset-required label will be ignored.
   changeset-not-required:
     name: Changeset not required
     runs-on: ubuntu-latest
@@ -61,4 +63,3 @@ jobs:
         with:
           header: changeset
           delete: true
-
