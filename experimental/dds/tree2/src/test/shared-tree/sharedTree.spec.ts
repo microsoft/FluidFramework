@@ -881,6 +881,58 @@ describe("SharedTree", () => {
 			validateTree(tree1, expectedAfterRedo);
 			validateTree(tree2, expectedAfterRedo);
 		});
+
+		// TODO: skipped because it fails on a rebasing bug but does verify that the second undo undoes the correct commit
+		it.skip("an insert after another undo has been sequenced", () => {
+			const value = "42";
+			const value2 = "43";
+			const value3 = "44";
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+
+			initializeTestTree(tree1, stringToJsonableTree(["A", "B", "C", "D"]));
+			provider.processMessages();
+
+			// Insert node
+			insert(tree1, 1, value);
+			insert(tree1, 2, value2);
+
+			validateTree(tree1, stringToJsonableTree(["A", value, value2, "B", "C", "D"]));
+
+			insert(tree2, 0, value3);
+			validateTree(tree2, stringToJsonableTree([value3, "A", "B", "C", "D"]));
+
+			// Undo insertion of value2
+			tree1.undo();
+
+			validateTree(tree1, stringToJsonableTree(["A", value, "B", "C", "D"]));
+
+			// Sequence after the undo to ensure that undo commits are tracked
+			// correctly in the trunk undo redo manager and after the and after the insert
+			// on tree2 to cause rebasing of the local branch on tree1
+			provider.processMessages();
+
+			validateTree(tree1, stringToJsonableTree([value3, "A", value, "B", "C", "D"]));
+			validateTree(tree2, stringToJsonableTree([value3, "A", value, "B", "C", "D"]));
+
+			// Undo insertion of value
+			tree1.undo();
+
+			validateTree(tree1, stringToJsonableTree([value3, "A", "B", "C", "D"]));
+
+			// Insert another value to cause rebasing
+			insert(tree2, 0, value3);
+			validateTree(tree2, stringToJsonableTree([value3, value3, "A", value, "B", "C", "D"]));
+
+			provider.processMessages();
+
+			// Redo node insertion
+			tree1.redo();
+			provider.processMessages();
+
+			validateTree(tree1, stringToJsonableTree([value3, value3, "A", "B", "C", "D"]));
+			validateTree(tree2, stringToJsonableTree([value3, value3, "A", "B", "C", "D"]));
+		});
 	});
 
 	describe("Events", () => {
