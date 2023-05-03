@@ -62,32 +62,6 @@ export function TelemetryView(): React.ReactElement {
 		ITimestampedTelemetryEvent[] | undefined
 	>();
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
-	const [selectedCategory, setSelectedCategory] = useState("");
-	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
-		ITimestampedTelemetryEvent[] | undefined
-	>();
-	/**
-	 * Used to store query for the searchable dropdown. The query is used to perform
-	 * partial match searches and will display all events if query is an empty string.
-	 */
-	const [customSearch, setCustomSearch] = React.useState("");
-	const [eventNameOptions, setEventNameOptions] = useState<string[]>([]);
-	const [matchingOptions, setMatchingOptions] = React.useState<string[]>([]);
-
-	React.useEffect(() => {
-		// Create list of all event names
-		setEventNameOptions([
-			...new Set(
-				telemetryEvents?.map((event) =>
-					event.logContent.eventName.slice("fluid:telemetry:".length),
-				),
-			),
-		]);
-		// Initially matching options are all options
-		setMatchingOptions(eventNameOptions.sort());
-		const filteredEvents = getFilteredEvents();
-		setFilteredTelemetryEvents(filteredEvents);
-	}, [telemetryEvents, selectedCategory, customSearch]);
 
 	React.useEffect(() => {
 		/**
@@ -123,6 +97,121 @@ export function TelemetryView(): React.ReactElement {
 			messageRelay.off("message", messageHandler);
 		};
 	}, [messageRelay, setTelemetryEvents]);
+
+	return (
+		<Stack>
+			<StackItem>
+				<_ListLengthSelection
+					currentLimit={maxEventsToDisplay}
+					onChangeSelection={(key): void => setMaxEventsToDisplay(key)}
+				/>
+			</StackItem>
+			<StackItem>
+				<FilteredTelemetryView telemetryEvents={telemetryEvents} />
+			</StackItem>
+		</Stack>
+	);
+}
+
+/**
+ * {@link _ListLengthSelectionProps} input props.
+ */
+interface _ListLengthSelectionProps {
+	/**
+	 * The current limit (max number of telemetry events to show).
+	 * @defaultValue {@link DEFAULT_PAGE_SIZE}
+	 */
+	currentLimit: number;
+
+	/**
+	 * Called when the selection changes.
+	 */
+	onChangeSelection(newLimit: number): void;
+}
+
+/**
+ * A dropdown menu for selecting how many logs to display on the page.
+ */
+function _ListLengthSelection(props: _ListLengthSelectionProps): React.ReactElement {
+	const { currentLimit, onChangeSelection } = props;
+	const stackTokens: IStackTokens = { childrenGap: 20 };
+
+	// Options formatted for the Fluent Dropdown component
+	const dropdownOptions: { key: number; text: string }[] = [
+		{ key: 50, text: "50" },
+		{ key: 100, text: "100" },
+		{ key: 500, text: "500" },
+		{ key: 1000, text: "1000" },
+	];
+
+	const handleMaxEventChange: DropdownProps["onOptionSelect"] = (event, data) => {
+		onChangeSelection(Number(data.optionText));
+	};
+
+	return (
+		<Stack tokens={stackTokens}>
+			<div style={{ marginLeft: "6px" }}>
+				<h3>Max number of telemetry events to display: </h3>
+				<Dropdown
+					placeholder="Select an option"
+					size="small"
+					style={{ minWidth: "300px", zIndex: "1" }}
+					defaultValue={currentLimit.toString()}
+					// change the number of logs displayed on the page
+					onOptionSelect={handleMaxEventChange}
+				>
+					{dropdownOptions.map((option) => {
+						return (
+							<Option style={{ minWidth: "120px" }} key={option.key}>
+								{option.text}
+							</Option>
+						);
+					})}
+				</Dropdown>
+			</div>
+		</Stack>
+	);
+}
+
+/**
+ * {@link _FilteredTelemetryViewProps} input props.
+ */
+interface _FilteredTelemetryViewProps {
+	/**
+	 * The current limit (max number of telemetry events to show).
+	 * @defaultValue {@link DEFAULT_PAGE_SIZE}
+	 */
+	telemetryEvents: ITimestampedTelemetryEvent[] | undefined;
+}
+
+function FilteredTelemetryView(props: _FilteredTelemetryViewProps): React.ReactElement {
+	const { telemetryEvents } = props;
+	const [eventNameOptions, setEventNameOptions] = useState<string[]>([]);
+	const [selectedCategory, setSelectedCategory] = useState("");
+	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
+		ITimestampedTelemetryEvent[] | undefined
+	>();
+	/**
+	 * Used to store query for the searchable dropdown. The query is used to perform
+	 * partial match searches and will display all events if query is an empty string.
+	 */
+	const [customSearch, setCustomSearch] = React.useState("");
+	const [matchingOptions, setMatchingOptions] = React.useState<string[]>([]);
+
+	React.useEffect(() => {
+		// Create list of all event names
+		setEventNameOptions([
+			...new Set(
+				telemetryEvents?.map((event) =>
+					event.logContent.eventName.slice("fluid:telemetry:".length),
+				),
+			),
+		]);
+		// Initially matching options are all options
+		setMatchingOptions(eventNameOptions.sort());
+		const filteredEvents = getFilteredEvents();
+		setFilteredTelemetryEvents(filteredEvents);
+	}, [telemetryEvents, selectedCategory, customSearch]);
 
 	/**
 	 * Filters all telemetry events based on category and event name
@@ -194,6 +283,7 @@ export function TelemetryView(): React.ReactElement {
 						style={{
 							color: mapEventCategoryToBackgroundColor(message.category),
 							fontWeight: 700,
+							marginLeft: "5px",
 						}}
 					>
 						{message.category}
@@ -326,121 +416,47 @@ export function TelemetryView(): React.ReactElement {
 		}
 	};
 
-	const log_view =
-		telemetryEvents !== undefined ? (
-			<>
-				<h3>Telemetry events (newest first):</h3>
-				<DataGrid
-					items={items}
-					columns={columns}
-					resizableColumns
-					columnSizingOptions={{
-						category: {
-							minWidth: 120,
-							idealWidth: 120,
-						},
-						eventName: {
-							minWidth: 375,
-							idealWidth: 375,
-						},
-						information: {
-							minWidth: 250,
-							idealWidth: 250,
-						},
-					}}
-				>
-					<DataGridHeader>
-						<DataGridRow style={{ whiteSpace: "normal" }}>
-							{({ renderHeaderCell }): JSX.Element => (
-								<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
+	return filteredTelemetryEvents !== undefined ? (
+		<>
+			<h3 style={{ marginLeft: "6px" }}>Telemetry events (newest first):</h3>
+			<DataGrid
+				items={items}
+				columns={columns}
+				resizableColumns
+				columnSizingOptions={{
+					category: {
+						minWidth: 120,
+						idealWidth: 120,
+					},
+					eventName: {
+						minWidth: 375,
+						idealWidth: 375,
+					},
+					information: {
+						minWidth: 250,
+						idealWidth: 250,
+					},
+				}}
+			>
+				<DataGridHeader>
+					<DataGridRow style={{ whiteSpace: "normal" }}>
+						{({ renderHeaderCell }): JSX.Element => (
+							<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
+						)}
+					</DataGridRow>
+				</DataGridHeader>
+				<DataGridBody<Item>>
+					{({ item, rowId }): JSX.Element => (
+						<DataGridRow<Item> key={rowId}>
+							{({ renderCell }): JSX.Element => (
+								<DataGridCell>{renderCell(item)}</DataGridCell>
 							)}
 						</DataGridRow>
-					</DataGridHeader>
-					<DataGridBody<Item>>
-						{({ item, rowId }): JSX.Element => (
-							<DataGridRow<Item> key={rowId}>
-								{({ renderCell }): JSX.Element => (
-									<DataGridCell>{renderCell(item)}</DataGridCell>
-								)}
-							</DataGridRow>
-						)}
-					</DataGridBody>
-				</DataGrid>
-			</>
-		) : (
-			<Waiting label={"Waiting for Telemetry events"} />
-		);
-
-	return (
-		<Stack>
-			<StackItem>
-				<_ListLengthSelection
-					currentLimit={maxEventsToDisplay}
-					onChangeSelection={(key): void => setMaxEventsToDisplay(key)}
-				/>
-			</StackItem>
-			<StackItem>{log_view}</StackItem>
-		</Stack>
-	);
-}
-
-/**
- * {@link _ListLengthSelectionProps} input props.
- */
-interface _ListLengthSelectionProps {
-	/**
-	 * The current limit (max number of telemetry events to show).
-	 * @defaultValue {@link DEFAULT_PAGE_SIZE}
-	 */
-	currentLimit: number;
-
-	/**
-	 * Called when the selection changes.
-	 */
-	onChangeSelection(newLimit: number): void;
-}
-
-/**
- * A dropdown menu for selecting how many logs to display on the page.
- */
-function _ListLengthSelection(props: _ListLengthSelectionProps): React.ReactElement {
-	const { currentLimit, onChangeSelection } = props;
-	// const [eventsDisplayed, setEventsDisplayed] = useState(50);
-	const stackTokens: IStackTokens = { childrenGap: 20 };
-
-	// Options formatted for the Fluent Dropdown component
-	const dropdownOptions: { key: number; text: string }[] = [
-		{ key: 50, text: "50" },
-		{ key: 100, text: "100" },
-		{ key: 500, text: "500" },
-		{ key: 1000, text: "1000" },
-	];
-
-	const handleMaxEventChange: DropdownProps["onOptionSelect"] = (event, data) => {
-		onChangeSelection(Number(data.optionText));
-	};
-
-	return (
-		<Stack tokens={stackTokens}>
-			<div className="list-size-options">
-				<h3>Max number of telemetry events to display: </h3>
-				<Dropdown
-					placeholder="Select an option"
-					size="small"
-					style={{ minWidth: "300px", zIndex: "1" }}
-					defaultValue={currentLimit.toString()}
-					// change the number of logs displayed on the page
-					onOptionSelect={handleMaxEventChange}
-				>
-					{dropdownOptions.map((option) => {
-						return (
-							<Option style={{ minWidth: "120px" }} key={option.key}>
-								{option.text}
-							</Option>
-						);
-					})}
-				</Dropdown>
-			</div>
-		</Stack>
+					)}
+				</DataGridBody>
+			</DataGrid>
+		</>
+	) : (
+		<Waiting label={"Waiting for Telemetry events"} />
 	);
 }
