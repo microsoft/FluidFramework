@@ -48,6 +48,7 @@
 		"@fluidframework/azure-client": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/routerlicious-driver": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"assert": "^2.0.0",
 		"axios": "^0.26.0",
 		"events": "^3.1.0",

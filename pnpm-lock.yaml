@@ -280,6 +280,7 @@ importers:
       '@fluidframework/local-driver': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-client-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-tools': ^0.2.3074
       '@types/expect-puppeteer': 2.2.1
@@ -318,6 +319,7 @@ importers:
       '@fluidframework/azure-client': link:../azure-client
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       assert: 2.0.0
       axios: 0.26.1
       events: 3.3.0
