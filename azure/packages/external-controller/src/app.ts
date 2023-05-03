@@ -4,15 +4,15 @@
  */
 import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
 
-import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/azure-client-devtools";
 import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
+import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/azure-client-devtools";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
+import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
 import { DiceRollerController, DiceRollerControllerProps } from "./controller";
