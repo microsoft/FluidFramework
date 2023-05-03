@@ -536,20 +536,20 @@ export async function setVersion(
 		}
 	}
 
-	for (const [cmd, args, opts] of cmds) {
-		log?.verbose(`Running command: ${cmd} ${args} in ${opts?.cwd}`);
-		try {
-			// TODO: The shell option should not need to be true. AB#4067
-			// eslint-disable-next-line no-await-in-loop
-			const results = await execa(cmd, args, options);
-			if (results.all !== undefined) {
-				log?.verbose(results.all);
-			}
-		} catch (error: any) {
-			log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
-			throw error;
-		}
-	}
+	// for (const [cmd, args, opts] of cmds) {
+	// 	log?.verbose(`Running command: ${cmd} ${args} in ${opts?.cwd}`);
+	// 	try {
+	// 		// TODO: The shell option should not need to be true. AB#4067
+	// 		// eslint-disable-next-line no-await-in-loop
+	// 		const results = await execa(cmd, args, options);
+	// 		if (results.all !== undefined) {
+	// 			log?.verbose(results.all);
+	// 		}
+	// 	} catch (error: any) {
+	// 		log?.errorLog(`Error running command: ${cmd} ${args}\n${error}`);
+	// 		throw error;
+	// 	}
+	// }
 
 	if (releaseGroupOrPackage instanceof Package) {
 		// Return early; packages only need to be bumped using npm. The rest of the logic is only for release groups.
@@ -599,25 +599,25 @@ export async function setVersion(
 		} else {
 			newRange = `${interdependencyRange}${translatedVersion.version}`;
 		}
+	}
 
-		if (!isInterdependencyRange(newRange)) {
-			throw new Error(`New range is invalid: ${newRange}`);
-		}
+	if (!isInterdependencyRange(newRange)) {
+		throw new Error(`New range is invalid: ${newRange}`);
+	}
 
-		const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
-		const dependencyVersionMap = new Map<string, DependencyWithRange>();
-		for (const pkg of packagesToCheckAndUpdate) {
-			dependencyVersionMap.set(pkg.name, { pkg, range: newRange });
-		}
+	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
+	const dependencyVersionMap = new Map<string, DependencyWithRange>();
+	for (const pkg of packagesToCheckAndUpdate) {
+		dependencyVersionMap.set(pkg.name, { pkg, range: newRange });
+	}
 
-		for (const pkg of packagesToCheckAndUpdate) {
-			// eslint-disable-next-line no-await-in-loop
-			await setPackageDependencies(
-				pkg,
-				dependencyVersionMap,
-				/* updateWithinSameReleaseGroup */ true,
-			);
-		}
+	for (const pkg of packagesToCheckAndUpdate) {
+		// eslint-disable-next-line no-await-in-loop
+		await setPackageDependencies(
+			pkg,
+			dependencyVersionMap,
+			/* updateWithinSameReleaseGroup */ true,
+		);
 	}
 }
 
