@@ -6,7 +6,7 @@ on:
 
 jobs:
   # This job must be triggered by pull_request, NOT pull_request_target so that it executes in a safe context.
-  changesets-required:
+  changeset-required:
     name: Changeset check
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
@@ -29,10 +29,6 @@ jobs:
           # We only need to install the root dependencies
           pnpm install -w --frozen-lockfile
 
-      # Add the remote for debugging
-      - run: git remote add upstream https://github.com/microsoft/FluidFramework
-      - run: git fetch upstream
-      - run: git log -1
       # Check whether a changeset was added. This step will have the outcome 'failure' if there is no changeset.
       - id: changeset-status
         name: Changeset status
@@ -56,8 +52,8 @@ jobs:
           message: |
             This PR requires a changeset and it has one! Good job!
 
-  changesets-not-required:
-    name: Changesets not required
+  changeset-not-required:
+    name: Changeset not required
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-required') }}
     steps:
