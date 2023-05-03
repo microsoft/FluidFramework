@@ -633,47 +633,47 @@ describe("SharedTree", () => {
 	});
 
 	describe("Undo and redo", () => {
-		it("does nothing if there are no commits in the undo stack", async () => {
+		it("does nothing if there are no commits in the undo stack", () => {
 			const value = "42";
-			const provider = await TestTreeProvider.create(2);
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			// Insert node
 			setTestValue(tree1, value);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate insertion
 			assert.equal(getTestValue(tree2), value);
 
 			// Undo node insertion
 			tree1.undo();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), undefined);
 			assert.equal(getTestValue(tree2), undefined);
 
 			// Undo again
 			tree1.undo();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Redo
 			tree1.redo();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), value);
 			assert.equal(getTestValue(tree2), value);
 
 			// Redo again
 			tree1.redo();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), value);
 			assert.equal(getTestValue(tree2), value);
 		});
 
-		it("does not undo edits made remotely", async () => {
+		it("does not undo edits made remotely", () => {
 			const value = "42";
-			const provider = await TestTreeProvider.create(2);
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			const initialState: JsonableTree = {
@@ -681,13 +681,13 @@ describe("SharedTree", () => {
 				value: "A",
 			};
 			initializeTestTree(tree2, initialState);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), "A");
 
 			// Insert node
 			insert(tree1, 0, value);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const testValuesAfterInsertion = getTestValues(tree1);
 			assert.equal(testValuesAfterInsertion[0], "A");
@@ -695,7 +695,7 @@ describe("SharedTree", () => {
 
 			// Make a remote edit
 			remove(tree2, 1, 1);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate deletion
 			const testValuesAfterDeletion = getTestValues(tree1);
@@ -706,7 +706,7 @@ describe("SharedTree", () => {
 			tree1.undo();
 			// Call undo to ensure it doesn't undo the change from tree2
 			tree1.undo();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate undo
 			assert.equal(getTestValues(tree1).length, 0);
@@ -714,7 +714,7 @@ describe("SharedTree", () => {
 
 			// Call redo
 			tree1.redo();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate redo
 			const testValuesAfterRedo = getTestValues(tree1);
@@ -722,28 +722,28 @@ describe("SharedTree", () => {
 			assert.equal(testValuesAfterRedo[0], value);
 		});
 
-		it("the insert of a node in a sequence field", async () => {
+		it("the insert of a node in a sequence field", () => {
 			const value = "42";
-			const provider = await TestTreeProvider.create(2);
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			// Insert node
 			setTestValue(tree1, value);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate insertion
 			assert.equal(getTestValue(tree2), value);
 
 			// Undo node insertion
 			tree1.undo();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), undefined);
 			assert.equal(getTestValue(tree2), undefined);
 
 			// Redo node insertion
 			tree1.redo();
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			assert.equal(getTestValue(tree1), value);
 			assert.equal(getTestValue(tree2), value);
@@ -758,13 +758,13 @@ describe("SharedTree", () => {
 			});
 		}
 
-		it("rebased edits", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("rebased edits", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
 			initializeTestTree(tree1, expectedState);
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Validate insertion
 			validateTree(tree2, expectedState);
@@ -777,7 +777,7 @@ describe("SharedTree", () => {
 			validateTree(tree2, stringToJsonableTree(["A", "B", "C", "y", "D"]));
 
 			// Syncing will cause both trees to rebase their local changes
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Undo node insertion on both trees
 			tree1.undo();
@@ -786,7 +786,7 @@ describe("SharedTree", () => {
 			tree2.undo();
 			validateTree(tree2, stringToJsonableTree(["A", "x", "B", "C", "D"]));
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateTree(tree1, expectedState);
 			validateTree(tree2, expectedState);
 
@@ -802,13 +802,13 @@ describe("SharedTree", () => {
 			tree2.redo();
 			validateTree(tree2, stringToJsonableTree(["A", "B", "C", "y", "D"]));
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateTree(tree1, expectedAfterRedo);
 			validateTree(tree2, expectedAfterRedo);
 		});
 
-		it("updates rebased undoable commits in the correct order", async () => {
-			const provider = await TestTreeProvider.create(2);
+		it("updates rebased undoable commits in the correct order", () => {
+			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
 			// Insert node
@@ -816,7 +816,7 @@ describe("SharedTree", () => {
 			setTestValue(tree1, "C");
 			setTestValue(tree1, "B");
 			setTestValue(tree1, "A");
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
 
@@ -835,7 +835,7 @@ describe("SharedTree", () => {
 			validateTree(tree2, stringToJsonableTree(["A", "B", "C", "y", "D", "z"]));
 
 			// Syncing will cause both trees to rebase their local changes
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			// Undo node insertion on both trees
 			tree1.undo();
@@ -847,14 +847,14 @@ describe("SharedTree", () => {
 			tree2.undo();
 			validateTree(tree2, stringToJsonableTree(["A", "x", "B", "C", "D"]));
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateTree(tree1, expectedState);
 			validateTree(tree2, expectedState);
 
 			// Insert additional node at the beginning to require rebasing
 			insert(tree1, 0, "0");
 			validateTree(tree1, stringToJsonableTree(["0", "A", "B", "C", "D"]));
-			await provider.ensureSynchronized();
+			provider.processMessages();
 
 			const expectedAfterRedo = stringToJsonableTree([
 				"0",
@@ -877,7 +877,7 @@ describe("SharedTree", () => {
 			tree2.redo();
 			validateTree(tree2, stringToJsonableTree(["0", "A", "B", "C", "y", "D", "z"]));
 
-			await provider.ensureSynchronized();
+			provider.processMessages();
 			validateTree(tree1, expectedAfterRedo);
 			validateTree(tree2, expectedAfterRedo);
 		});
