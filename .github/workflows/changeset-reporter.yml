@@ -1,4 +1,10 @@
 name: changeset-reporter
+
+# This workflow adds a comment to the PR depending on the results of the pr-check-changeset workflow.
+#
+# The workflows are separated for security reasons. This workflow requires write access to the repo, but the
+# pr-check-changeset workflow does not.
+
 on:
   workflow_run:
     workflows: [ "pr-check-changeset" ]

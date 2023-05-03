@@ -1,5 +1,12 @@
 name: "pr-check-changeset"
 
+# This workflow checks PRs for the presence of a new changeset file. When a PR is opened, it will be checked for a
+# changeset. The results of the check are uploaded as a pipeline artifact. After this workflow is completed it triggers
+# the changeset-reporter workflow, which adds a comment to the PR depending on the results of the check.
+#
+# The workflows are separated for security reasons. This workflow does not require write access to the repo, but the
+# changeset-reporter workflow does.
+
 on:
   pull_request:
     types: [labeled, unlabeled, opened, synchronize, reopened]
