@@ -50,6 +50,9 @@ import {
 	clientIdTooltipText,
 	containerResolvedUrlTooltipText,
 	containerStatusTooltipText,
+	deltaStorageUrlTooltipText,
+	ordererUrlTooltipText,
+	storageUrlTooltipText,
 	userIdTooltipText,
 } from "./TooltipTexts";
 
@@ -195,8 +198,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
 	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
 		containerProperty: {
-			idealWidth: 70,
-			minWidth: 70,
+			idealWidth: 130,
+			minWidth: 130,
 		},
 	});
 
@@ -284,6 +287,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		}
 	}
 
+	const resolvedUrl: IResolvedUrl | undefined = containerState.resolvedUrl as IResolvedUrl;
+
 	return (
 		<Stack>
 			<StackItem align="center">
@@ -315,6 +320,33 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						value={
 							(containerState.resolvedUrl as IResolvedUrl)?.url ??
 							"Container is not attached"
+						}
+						columnProps={columnSizing_unstable}
+					/>
+					<DataRow
+						label="Delta Storage URL"
+						infoTooltipContent={deltaStorageUrlTooltipText}
+						value={
+							resolvedUrl?.endpoints?.deltaStorageUrl ??
+							"Container is not attached, or this endpoint doesn't apply to the service being used."
+						}
+						columnProps={columnSizing_unstable}
+					/>
+					<DataRow
+						label="Delta Storage URL"
+						infoTooltipContent={ordererUrlTooltipText}
+						value={
+							resolvedUrl?.endpoints?.ordererUrl ??
+							"Container is not attached, or this endpoint doesn't apply to the service being used."
+						}
+						columnProps={columnSizing_unstable}
+					/>
+					<DataRow
+						label="Delta Storage URL"
+						infoTooltipContent={storageUrlTooltipText}
+						value={
+							resolvedUrl?.endpoints?.storageUrl ??
+							"Container is not attached, or this endpoint doesn't apply to the service being used."
 						}
 						columnProps={columnSizing_unstable}
 					/>
