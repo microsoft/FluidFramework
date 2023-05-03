@@ -147,7 +147,7 @@ function revertLocalDelete(
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const intType = revertible.interval.intervalType & ~IntervalType.Simple;
 	const type = intType | IntervalType.SlideOnRemove;
-	const props = revertible.interval.properties;
+	const { intervalId, ...props } = revertible.interval.properties;
 	string.getIntervalCollection(label).add(start, end, type, props);
 
 	string.removeLocalReferencePosition(revertible.start);

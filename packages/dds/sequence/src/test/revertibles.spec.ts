@@ -22,7 +22,7 @@ import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalC
 import { SharedStringFactory } from "../sequenceFactory";
 import { assertIntervals } from "./intervalUtils";
 
-describe.only("Sequence.Revertibles with Local Edits", () => {
+describe("Sequence.Revertibles with Local Edits", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 	let collection: IntervalCollection<SequenceInterval>;
@@ -154,7 +154,7 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 		collection.removeIntervalById(id);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
-		assertIntervals(sharedString, collection, []);
+		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
 	});
 	it("performs two local changes, then reverts the first", () => {
 		collection.on("addInterval", (interval, local, op) => {
@@ -170,7 +170,7 @@ describe.only("Sequence.Revertibles with Local Edits", () => {
 		assertIntervals(sharedString, collection, []);
 	});
 });
-describe.only("Sequence.Revertibles with Remote Edits", () => {
+describe("Sequence.Revertibles with Remote Edits", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 	let collection: IntervalCollection<SequenceInterval>;
@@ -297,8 +297,8 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
 		containerRuntimeFactory.processAllMessages();
 
-		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
-		assertIntervals(sharedString2, collection2, [{ start: 3, end: 8 }]);
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
 	});
 	it("remote interval change interacting with reverting an interval remove with ack before revert", () => {
 		sharedString.insertText(0, "hello world");
@@ -319,6 +319,26 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
+	});
+	it("remote interval change interacting with reverting an interval remove with ack before remove", () => {
+		sharedString.insertText(0, "hello world");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
+		containerRuntimeFactory.processAllMessages();
+
+		collection2.change(id, 3, 8);
+		containerRuntimeFactory.processAllMessages();
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		collection.removeIntervalById(id);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		containerRuntimeFactory.processAllMessages();
+
+		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
+		assertIntervals(sharedString2, collection2, [{ start: 3, end: 8 }]);
 	});
 	it("acked remote interval change interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
@@ -375,7 +395,6 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.removeIntervalById(id);
-
 		containerRuntimeFactory.processAllMessages();
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
@@ -425,8 +444,8 @@ describe.only("Sequence.Revertibles with Remote Edits", () => {
 
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
-		const int = collection.getIntervalById(id);
-		assert.equal(int?.properties.foo, "one");
+		const int = collection.findOverlappingIntervals(0, 5);
+		assert.equal(int[0].properties.foo, "one");
 	});
 	it("remote interval property change interacting with reverting an interval add", () => {
 		sharedString.insertText(0, "hello world");
