@@ -160,7 +160,10 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		const rebasedPath: GraphCommit<TChange>[] = [];
 		const ancestor = findCommonAncestor([baseHead], [rebasedHead, rebasedPath]);
-		assert(ancestor === baseHead, 0x678 /* The rebased head should be based off of the base branch. */);
+		assert(
+			ancestor === baseHead,
+			0x678 /* The rebased head should be based off of the base branch. */,
+		);
 
 		if (rebasedPath.length === 0) {
 			this.headUndoableCommit = baseUndoRedoManager.headUndoable;

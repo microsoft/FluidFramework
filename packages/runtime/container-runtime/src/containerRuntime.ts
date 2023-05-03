@@ -1686,7 +1686,10 @@ export class ContainerRuntime
 		this.addMetadataToSummary(summaryTree);
 
 		if (this.idCompressorEnabled) {
-			assert(this.idCompressor !== undefined, 0x67a /* IdCompressor should be defined if enabled */);
+			assert(
+				this.idCompressor !== undefined,
+				0x67a /* IdCompressor should be defined if enabled */,
+			);
 			const idCompressorState = JSON.stringify(this.idCompressor.serialize(false));
 			addBlobToSummary(summaryTree, idCompressorBlobName, idCompressorState);
 		}

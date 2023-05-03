@@ -147,7 +147,10 @@ export class EditManager<
 	public registerBranch(branch: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): void {
 		const trackBranch = (b: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): SeqNumber => {
 			const trunkCommit = findCommonAncestor(this.trunk, b.getHead());
-			assert(isTrunkCommit(trunkCommit), 0x66f /* Expected commit to be on the trunk branch */);
+			assert(
+				isTrunkCommit(trunkCommit),
+				0x66f /* Expected commit to be on the trunk branch */,
+			);
 			const branches = getOrCreate(
 				this.trunkBranches,
 				trunkCommit.sequenceNumber,
