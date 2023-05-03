@@ -79,21 +79,10 @@ jobs:
           path: reports
           retention-days: 7
 
-      # The release title will eventually be calculated outside the workflow as part of the RELEASE_JSON variable.
-      - name: Set release title (client)
-        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
-        run: |
-          echo "RELEASE_TITLE=Fluid Framework v${{ fromJson(env.RELEASE_JSON).version }} (${{
-          fromJson(env.RELEASE_JSON).releaseType }})" >> $GITHUB_ENV
-      - name: Set release title
-        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'client'
-        run: |
-          echo "RELEASE_TITLE=${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} v${{ fromJson(env.RELEASE_JSON).version }} (${{ fromJson(env.RELEASE_JSON).releaseType }})" >> $GITHUB_ENV
-
       # Generate changelog
       - name: Generate changelog
-        # This changelog is only for client patch releases
-        if: fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client'
+        # This changelog is only for client patch releases and build-tools releases
+        if: (fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools'
         run: |
           # We only need the root dependencies
           pnpm install -w --frozen-lockfile
@@ -127,8 +116,7 @@ jobs:
           draft: true
           omitDraftDuringUpdate: true # don't change the draft state when updating
 
-          # Created in the "Set release title" step
-          name: ${{ env.RELEASE_TITLE }}
+          name: ${{ fromJson(env.RELEASE_JSON).title }}
           omitNameDuringUpdate: false # always overwrite the name
 
           # Created in the "Generate changelog" step
