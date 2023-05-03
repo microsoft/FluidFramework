@@ -8,11 +8,7 @@ import fs from "fs";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
-import {
-	IDocumentServiceFactory,
-	IFluidResolvedUrl,
-	IResolvedUrl,
-} from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
 import { ConfigTypes, IConfigProviderBase, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
@@ -111,7 +107,7 @@ export async function loadContainer(
 	logger?: TelemetryLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
-	const resolved: IFluidResolvedUrl = {
+	const resolved: IResolvedUrl = {
 		endpoints: {
 			deltaStorageUrl: "example.com",
 			ordererUrl: "example.com",
