@@ -40,30 +40,16 @@ jobs:
         run: |
           pnpm exec flub check changeset --branch=${{ github.base_ref }}
 
-      # If a changeset is present and it's labeled changeset-required, label it changeset-present
-      - uses: actions-ecosystem/action-add-labels@bd52874380e3909a1ac983768df6976535ece7f8 # ratchet:actions-ecosystem/action-add-labels@v1.1.0
-        name: Add changeset-present
-        if: steps.changeset-status.outcome == 'success' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
-        with:
-          labels: changeset-present
-          github_token: ${{ github.token }}
-
-      # If a changeset is missing and it's labeled changeset-required, remove the changeset-present label
-      - uses: actions-ecosystem/action-remove-labels@2ce5d41b4b6aa8503e285553f75ed56e0a40bae0 # ratchet:actions-ecosystem/action-remove-labels@v1.3.0
-        name: Remove changeset-present
-        if: steps.changeset-status.outcome == 'failure' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
-        with:
-          labels: changeset-present
-          github_token: ${{ github.token }}
-
       - name: Required but missing
         if: steps.changeset-status.outcome == 'failure' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
-          recreate: true
           message: |
-            This PR requires a changeset, but none is present. @tylerbutler, please review.
+            This PR requires a changeset, but none is present. You should add one before you merge.
+            See the documentation
+            [in the wiki](https://github.com/microsoft/FluidFramework/wiki/Changesets#adding-a-changeset-to-a-pr)
+            for more information about changesets and how to create them.
 
       - name: Required and present
         if: steps.changeset-status.outcome == 'success' && contains(github.event.pull_request.labels.*.name, 'changeset-required')
