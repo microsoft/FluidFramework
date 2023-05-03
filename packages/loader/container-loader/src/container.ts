@@ -1942,6 +1942,7 @@ export class Container
 				this.lastVisible !== undefined ? performance.now() - this.lastVisible : undefined,
 			checkpointSequenceNumber,
 			quorumSize: this._protocolHandler?.quorum.getMembers().size,
+			audienceSize: this._protocolHandler?.audience.getMembers().size,
 			...this._deltaManager.connectionProps,
 		});
 
