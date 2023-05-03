@@ -13,7 +13,6 @@ jobs:
         uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v2.24.3
         with:
           workflow: pr-check-changeset.yml
-          # workflow_conclusion: completed
           run_id: ${{ github.event.workflow_run.id }}
           name: changeset-status
 
