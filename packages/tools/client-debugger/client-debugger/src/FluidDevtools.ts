@@ -278,7 +278,7 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Gets the registed Container Devtools associated with the provided Container ID, if one exists.
+	 * Gets the registered Container Devtools associated with the provided Container ID, if one exists.
 	 * Otherwise returns `undefined`.
 	 */
 	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {

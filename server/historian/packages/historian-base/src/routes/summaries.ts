@@ -73,7 +73,7 @@ export function create(
 		throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
-	const restClusterGetSummaryThrottler = restTenantThrottlers.get(
+	const restClusterGetSummaryThrottler = restClusterThrottlers.get(
 		Constants.getSummaryThrottleIdPrefix,
 	);
 

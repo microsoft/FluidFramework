@@ -11,6 +11,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
+import { StableId } from '@fluidframework/runtime-definitions';
 
 // @alpha
 export enum AllowedUpdateType {
@@ -1296,8 +1297,6 @@ export interface RevisionMetadataSource {
     readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @alpha, but its signature references "StableId" which is marked as @internal
-//
 // @alpha
 export type RevisionTag = StableId;
 
@@ -1412,11 +1411,6 @@ export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
 // @alpha
 type Skip = number;
-
-// @internal
-export type StableId = UuidString & {
-    readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a";
-};
 
 // @alpha
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
@@ -1744,11 +1738,6 @@ export interface UpPath<TParent = UpPathDefault> {
 
 // @alpha
 export type UpPathDefault = UpPath;
-
-// @alpha
-export type UuidString = string & {
-    readonly UuidString: "9d40d0ae-90d9-44b1-9482-9f55d59d5465";
-};
 
 // @alpha
 export type Value = undefined | TreeValue;
