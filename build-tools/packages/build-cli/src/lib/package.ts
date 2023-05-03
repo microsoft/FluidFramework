@@ -14,10 +14,10 @@ import {
 import {
 	InterdependencyRange,
 	ReleaseVersion,
-	WorkspaceRanges,
 	detectVersionScheme,
 	getVersionRange,
 	isInterdependencyRange,
+	isInternalVersionRange,
 	isPrereleaseVersion,
 	isRangeOperator,
 	isWorkspaceRange,
@@ -603,14 +603,18 @@ export async function setVersion(
 		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 
-	if (!isInterdependencyRange(newRange)) {
+	if (
+		newRange !== undefined &&
+		isInternalVersionRange(newRange, true) === false &&
+		!isInterdependencyRange(newRange)
+	) {
 		throw new Error(`New range is invalid: ${newRange}`);
 	}
 
 	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
 	const dependencyVersionMap = new Map<string, DependencyWithRange>();
 	for (const pkg of packagesToCheckAndUpdate) {
-		dependencyVersionMap.set(pkg.name, { pkg, range: newRange });
+		dependencyVersionMap.set(pkg.name, { pkg, range: newRange as InterdependencyRange });
 	}
 
 	for (const pkg of packagesToCheckAndUpdate) {

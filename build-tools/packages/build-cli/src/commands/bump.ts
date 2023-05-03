@@ -62,7 +62,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		exactDepType: Flags.string({
 			description:
 				'[DEPRECATED - Use interdependencyRange instead.] Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
-			options: [...RangeOperators],
+			options: [...RangeOperators, ...WorkspaceRanges],
 			deprecated: {
 				to: "interdependencyRange",
 				message: "The exactDepType flag is deprecated. Use interdependencyRange instead.",
