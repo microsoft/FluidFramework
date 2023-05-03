@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "build-tools/packages/build-cli"
+		"directory": "build-tools/packages/readme-command"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -15,7 +15,7 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"bin": {
-		"flub": "./bin/run"
+		"fluid-readme": "./bin/run"
 	},
 	"files": [
 		"/bin",

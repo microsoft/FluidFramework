@@ -55,7 +55,7 @@ importers:
 
   packages/build-cli:
     specifiers:
-      '@fluid-internal/readme-command': ~0.16.0
+      '@fluid-internal/readme-command': workspace:*
       '@fluid-tools/version-tools': workspace:*
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': workspace:*
@@ -453,7 +453,7 @@ importers:
 
   packages/version-tools:
     specifiers:
-      '@fluid-internal/readme-command': ~0.16.0
+      '@fluid-internal/readme-command': workspace:*
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.34.4
