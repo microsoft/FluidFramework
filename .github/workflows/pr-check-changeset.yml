@@ -1,12 +1,11 @@
 name: "pr-check-changeset"
 
 on:
-  pull_request_target:
+  pull_request:
     types: [labeled, unlabeled, opened, synchronize, reopened]
 
 jobs:
   # When a PR has the changeset-required label, check if it has a changeset.
-  # This job must be triggered by pull_request, NOT pull_request_target so that it executes in a safe context.
   changeset-required:
     name: Changeset required
     runs-on: ubuntu-latest
