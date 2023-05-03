@@ -55,6 +55,7 @@
 	"dependencies": {
 		"@fluid-tools/version-tools": "~0.16.0",
 		"@fluidframework/bundle-size-tools": "~0.16.0",
+		"@manypkg/get-packages": "^2.1.0",
 		"@octokit/core": "^4.0.5",
 		"@rushstack/node-core-library": "^3.51.1",
 		"async": "^3.2.2",
@@ -80,7 +81,7 @@
 		"rimraf": "^2.6.2",
 		"semver": "^7.3.7",
 		"shelljs": "^0.8.4",
-		"sort-package-json": "1.54.0",
+		"sort-package-json": "1.57.0",
 		"ts-morph": "^17.0.1",
 		"type-fest": "^2.19.0",
 		"yaml": "^2.1.2"
