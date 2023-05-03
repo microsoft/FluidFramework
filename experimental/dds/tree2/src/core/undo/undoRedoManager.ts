@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
 import { GraphCommit, findCommonAncestor, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
 /**
- * Manages the undoable and redoable commit trees and repair data associated with undoable and redoable commits.
+ * Manages a branch of the undoable/redoable commit trees and repair data associated with the undoable and redoable commits.
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
 	 * @param repairDataStoryFactory - Factory for creating {@link RepairDataStore}s to create and store repair
-	 * data for {@link UndoableCommit}s.
+	 * data for {@link ReversibleCommit}s.
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
 	 * @param getHead - Function for retrieving the head commit of the branch associated with this undo redo manager.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
@@ -25,22 +25,21 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly getHead?: () => GraphCommit<TChange>,
-		private headUndoableCommit?: UndoableCommit<TChange>,
-		private headRedoableCommit?: RedoableCommit<TChange>,
+		private headUndoableCommit?: ReversibleCommit<TChange>,
+		private headRedoableCommit?: ReversibleCommit<TChange>,
 	) {}
 
-	public get headUndoable(): UndoableCommit<TChange> | undefined {
+	public get headUndoable(): ReversibleCommit<TChange> | undefined {
 		return this.headUndoableCommit;
 	}
 
-	public get headRedoable(): UndoableCommit<TChange> | undefined {
+	public get headRedoable(): ReversibleCommit<TChange> | undefined {
 		return this.headRedoableCommit;
 	}
 
 	/**
 	 * Adds the provided commit to the undo or redo commit tree, depending on the type of commit it is.
 	 * Should be called for all commits on the relevant branch, including undo and redo commits.
-	 * If no commit type is passed in, it is assumed to an undoable commit.
 	 */
 	public trackCommit(commit: GraphCommit<TChange>, type: UndoRedoManagerCommitType): void {
 		const repairData = this.repairDataStoreProvider.createRepairData();
@@ -71,9 +70,10 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			case UndoRedoManagerCommitType.Redo:
 				this.headRedoableCommit = this.headRedoableCommit?.parent;
 			case UndoRedoManagerCommitType.Undoable:
-			default:
 				this.headUndoableCommit = undoableOrRedoable;
 				break;
+			default:
+				unreachableCase(type);
 		}
 	}
 
@@ -107,9 +107,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		return this.createInvertedChange(redoableCommit);
 	}
 
-	private createInvertedChange(
-		undoableOrRedoable: UndoableCommit<TChange> | RedoableCommit<TChange>,
-	): TChange {
+	private createInvertedChange(undoableOrRedoable: ReversibleCommit<TChange>): TChange {
 		const { commit, repairData } = undoableOrRedoable;
 
 		let change = this.changeFamily.rebaser.invert(
@@ -150,8 +148,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	public clone(
 		getHead?: () => GraphCommit<TChange>,
 		repairDataStoreProvider?: IRepairDataStoreProvider,
-		headUndoableCommit?: UndoableCommit<TChange>,
-		headRedoableCommit?: UndoableCommit<TChange>,
+		headUndoableCommit?: ReversibleCommit<TChange>,
+		headRedoableCommit?: ReversibleCommit<TChange>,
 	): UndoRedoManager<TChange, TEditor> {
 		return new UndoRedoManager(
 			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
@@ -201,7 +199,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			originalUndoRedoManager.headUndoable === undefined &&
 			originalUndoRedoManager.headRedoable === undefined
 		) {
-			// The branch that was rebased had no undoable edits so the new undo redo manager
+			// The branch that was rebased had no undoable or redoable edits so the new undo redo manager
 			// should be a copy of the undo redo manager from the base branch.
 			this.headUndoableCommit = baseUndoRedoManager.headUndoable;
 			this.headRedoableCommit = baseUndoRedoManager.headRedoable;
@@ -243,16 +241,14 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 /**
  * Represents a commit that can be undone.
  */
-export interface UndoableCommit<TChange> {
+export interface ReversibleCommit<TChange> {
 	/* The commit to undo */
 	readonly commit: GraphCommit<TChange>;
 	/* The repair data associated with the commit */
 	readonly repairData: ReadonlyRepairDataStore;
 	/* The next undoable commit. */
-	readonly parent?: UndoableCommit<TChange>;
+	readonly parent?: ReversibleCommit<TChange>;
 }
-
-interface RedoableCommit<TChange> extends UndoableCommit<TChange> {}
 
 /**
  * The type of a commit in the context of undo/redo manager.
@@ -272,11 +268,11 @@ export enum UndoRedoManagerCommitType {
  */
 export function markCommits<TChange>(
 	path: GraphCommit<TChange>[],
-	headUndoableCommit?: UndoableCommit<TChange>,
-	headRedoableCommit?: UndoableCommit<TChange>,
+	headUndoableCommit?: ReversibleCommit<TChange>,
+	headRedoableCommit?: ReversibleCommit<TChange>,
 ): { commit: GraphCommit<TChange>; undoRedoManagerCommitType?: UndoRedoManagerCommitType }[] {
-	let currentUndoable: UndoableCommit<TChange> | undefined = headUndoableCommit;
-	let currentRedoable: RedoableCommit<TChange> | undefined = headRedoableCommit;
+	let currentUndoable: ReversibleCommit<TChange> | undefined = headUndoableCommit;
+	let currentRedoable: ReversibleCommit<TChange> | undefined = headRedoableCommit;
 
 	if (currentUndoable === undefined && currentRedoable === undefined) {
 		// If there are no undoable or redoable commits, none are marked

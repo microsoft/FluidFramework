@@ -13,7 +13,7 @@ import {
 	mintRevisionTag,
 } from "../../core";
 // eslint-disable-next-line import/no-internal-modules
-import { UndoRedoManagerCommitType, UndoableCommit } from "../../core/undo/undoRedoManager";
+import { UndoRedoManagerCommitType, ReversibleCommit } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
 import { MockRepairDataStore, MockRepairDataStoreProvider } from "../utils";
 
@@ -148,8 +148,8 @@ describe("UndoRedoManager", () => {
 });
 
 function undoRedoManagerFactory(
-	headUndoableCommit?: UndoableCommit<TestChange>,
-	headRedoableCommit?: UndoableCommit<TestChange>,
+	headUndoableCommit?: ReversibleCommit<TestChange>,
+	headRedoableCommit?: ReversibleCommit<TestChange>,
 	rebaser?: ChangeRebaser<TestChange>,
 ): UndoRedoManager<TestChange, ChangeFamilyEditor> {
 	return new UndoRedoManager(
