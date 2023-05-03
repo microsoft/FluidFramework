@@ -101,22 +101,26 @@ export function TelemetryView(): React.ReactElement {
 	return (
 		<Stack>
 			<StackItem>
-				<_ListLengthSelection
+				<ListLengthSelection
 					currentLimit={maxEventsToDisplay}
 					onChangeSelection={(key): void => setMaxEventsToDisplay(key)}
 				/>
 			</StackItem>
 			<StackItem>
-				<FilteredTelemetryView telemetryEvents={telemetryEvents} />
+				{telemetryEvents !== undefined ? (
+					<FilteredTelemetryView telemetryEvents={telemetryEvents} />
+				) : (
+					<Waiting label={"Waiting for Telemetry events"} />
+				)}
 			</StackItem>
 		</Stack>
 	);
 }
 
 /**
- * {@link _ListLengthSelectionProps} input props.
+ * {@link ListLengthSelection} input props.
  */
-interface _ListLengthSelectionProps {
+interface ListLengthSelectionProps {
 	/**
 	 * The current limit (max number of telemetry events to show).
 	 * @defaultValue {@link DEFAULT_PAGE_SIZE}
@@ -132,7 +136,7 @@ interface _ListLengthSelectionProps {
 /**
  * A dropdown menu for selecting how many logs to display on the page.
  */
-function _ListLengthSelection(props: _ListLengthSelectionProps): React.ReactElement {
+function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElement {
 	const { currentLimit, onChangeSelection } = props;
 	const stackTokens: IStackTokens = { childrenGap: 20 };
 
@@ -174,9 +178,9 @@ function _ListLengthSelection(props: _ListLengthSelectionProps): React.ReactElem
 }
 
 /**
- * {@link _FilteredTelemetryViewProps} input props.
+ * {@link FilteredTelemetryView} input props.
  */
-interface _FilteredTelemetryViewProps {
+interface FilteredTelemetryViewProps {
 	/**
 	 * The current limit (max number of telemetry events to show).
 	 * @defaultValue {@link DEFAULT_PAGE_SIZE}
@@ -184,7 +188,7 @@ interface _FilteredTelemetryViewProps {
 	telemetryEvents: ITimestampedTelemetryEvent[] | undefined;
 }
 
-function FilteredTelemetryView(props: _FilteredTelemetryViewProps): React.ReactElement {
+function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
 	const { telemetryEvents } = props;
 	const [eventNameOptions, setEventNameOptions] = useState<string[]>([]);
 	const [selectedCategory, setSelectedCategory] = useState("");
@@ -416,7 +420,7 @@ function FilteredTelemetryView(props: _FilteredTelemetryViewProps): React.ReactE
 		}
 	};
 
-	return filteredTelemetryEvents !== undefined ? (
+	return (
 		<>
 			<h3 style={{ marginLeft: "6px" }}>Telemetry events (newest first):</h3>
 			<DataGrid
@@ -456,7 +460,5 @@ function FilteredTelemetryView(props: _FilteredTelemetryViewProps): React.ReactE
 				</DataGridBody>
 			</DataGrid>
 		</>
-	) : (
-		<Waiting label={"Waiting for Telemetry events"} />
 	);
 }
