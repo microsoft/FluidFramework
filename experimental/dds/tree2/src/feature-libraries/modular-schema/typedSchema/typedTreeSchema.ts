@@ -180,9 +180,9 @@ export type AllowedTypesParameter = [Any] | readonly LazyItem<TreeSchema>[];
 /**
  * Convert AllowedTypes into NormalizedLazyAllowedTypes
  */
-type NormalizeAllowedTypes<T extends AllowedTypes> = T extends Any
-	? Any
-	: FlexListToLazyArray<TreeSchema, T>;
+type NormalizeAllowedTypes<T extends AllowedTypes> = T extends FlexList<TreeSchema>
+	? FlexListToLazyArray<TreeSchema, T>
+	: Any;
 
 export function normalizeAllowedTypes<T extends AllowedTypes>(t: T): NormalizeAllowedTypes<T> {
 	if (t === Any) {
@@ -194,9 +194,10 @@ export function normalizeAllowedTypes<T extends AllowedTypes>(t: T): NormalizeAl
 /**
  * Convert AllowedTypes into NormalizedLazyAllowedTypes
  */
-export type NormalizeAllowedTypesParameter<T> = T extends [Any]
-	? Any
-	: FlexListToLazyArray<TreeSchema, T>;
+export type NormalizeAllowedTypesParameter<T> = T extends FlexList<TreeSchema>
+	? FlexListToLazyArray<TreeSchema, T>
+	: // [Any] case
+	  Any;
 
 export function normalizeAllowedTypesParameter<T extends AllowedTypesParameter>(
 	t: T,
@@ -206,7 +207,7 @@ export function normalizeAllowedTypesParameter<T extends AllowedTypesParameter>(
 	}
 	// Note that this does not actually require full FlexList handling, since the input is always an array.
 	// If removing the other uses of FlexList, simplify this to not require it.
-	return normalizeFlexList(t) as NormalizeAllowedTypesParameter<T>;
+	return normalizeFlexList(t as FlexList<TreeSchema>) as NormalizeAllowedTypesParameter<T>;
 }
 
 export type FieldSchemaSpecification = AllowedTypes | FieldSchema;

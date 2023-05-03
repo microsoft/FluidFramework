@@ -45,17 +45,23 @@ export type NormalizedLazyFlexList<Item> = (() => Item)[];
 /**
  * Normalize FlexList type to a non-lazy array.
  */
-export type FlexListToNonLazyArray<Item, List> = List extends LazyItem<Item>
-	? [ExtractItemType<Item, List>]
-	: ArrayToNonLazyArray<Item, Assume<List, readonly LazyItem<Item>[]>>;
+export type FlexListToNonLazyArray<
+	Item,
+	List extends FlexList<Item>,
+> = List extends readonly LazyItem<Item>[]
+	? ArrayToNonLazyArray<Item, List>
+	: [ExtractItemType<Item, Assume<List, LazyItem<Item>>>];
 
 /**
  * Normalize FlexList type to a lazy array.
  */
 
-export type FlexListToLazyArray<Item, List> = List extends LazyItem<Item>
-	? [NormalizeLazyItem<Item, List>]
-	: ArrayToLazyArray<Item, Assume<List, readonly LazyItem<Item>[]>>;
+export type FlexListToLazyArray<
+	Item,
+	List extends FlexList<Item>,
+> = List extends readonly LazyItem<Item>[]
+	? ArrayToLazyArray<Item, List>
+	: [NormalizeLazyItem<Item, Assume<List, LazyItem<Item>>>];
 
 type ExtractItemType<Item, List extends LazyItem<Item>> = List extends () => infer Result
 	? Result
@@ -67,7 +73,7 @@ type NormalizeLazyItem<Item, List extends LazyItem<Item>> = List extends () => u
 /**
  * Normalize FlexList type to a non-lazy array.
  */
-type ArrayToNonLazyArray<Item, List extends readonly LazyItem<Item>[]> = List extends [
+type ArrayToNonLazyArray<Item, List extends readonly LazyItem<Item>[]> = List extends readonly [
 	infer Head,
 	...infer Tail,
 ]
@@ -80,7 +86,7 @@ type ArrayToNonLazyArray<Item, List extends readonly LazyItem<Item>[]> = List ex
 /**
  * Normalize FlexList type to a lazy array.
  */
-type ArrayToLazyArray<Item, List extends readonly LazyItem<Item>[]> = List extends [
+type ArrayToLazyArray<Item, List extends readonly LazyItem<Item>[]> = List extends readonly [
 	infer Head,
 	...infer Tail,
 ]

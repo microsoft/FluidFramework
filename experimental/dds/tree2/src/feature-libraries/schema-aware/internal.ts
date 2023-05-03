@@ -9,7 +9,7 @@ export {
 	CollectOptions,
 	TypedFields,
 	ApplyMultiplicity,
-	ValueFieldTreeFromSchema,
+	ValuePropertyFromSchema as ValueFieldTreeFromSchema,
 	FlexibleObject,
 	EditableSequenceField,
 	TypedField,

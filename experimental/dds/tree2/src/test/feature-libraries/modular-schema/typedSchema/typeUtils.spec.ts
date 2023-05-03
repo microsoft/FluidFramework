@@ -4,8 +4,6 @@
  */
 
 import { TreeSchemaIdentifier } from "../../../../core";
-// eslint-disable-next-line import/no-internal-modules
-import { NameSet } from "../../../../feature-libraries/modular-schema/typedSchema/outputTypes";
 import {
 	AllowOptional,
 	AllowOptionalNotFlattened,
@@ -64,13 +62,6 @@ import {
 // Test AsNames
 {
 	type NameSet1 = AsNames<["testType", { name: "2" }]>;
-}
-
-// Test NameSet
-{
-	type check1_ = requireAssignableTo<NameSet<["X"]>, NameSet<["X"]>>;
-	// @ts-expect-error Different sets should not be equal
-	type check3_ = requireAssignableTo<NameSet<["Y"]>, NameSet<["X"]>>;
 }
 
 // Test RemoveOptionalFields

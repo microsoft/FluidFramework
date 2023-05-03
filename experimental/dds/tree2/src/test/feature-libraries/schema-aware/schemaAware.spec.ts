@@ -23,11 +23,15 @@ import {
 	UntypedTreeCore,
 	SchemaBuilder,
 	TreeSchema,
+	FieldSchema,
+	AllowedTypes,
 } from "../../../feature-libraries";
 import {
 	FlattenKeys,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/typedSchema/typeUtils";
+import { FlexList } from "../../../feature-libraries/modular-schema";
+import { FlexListToNonLazyArray } from "../../../feature-libraries/modular-schema/typedSchema";
 
 // Aliases for conciseness
 const { optional, value, sequence } = FieldKinds;
@@ -62,7 +66,6 @@ const ballSchema = builder.object("ball", {
 // Recursive case:
 const boxSchema = builder.objectRecursive("box", {
 	local: {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		children: SchemaBuilder.fieldRecursive(sequence, [ballSchema, () => boxSchema] as const),
 	},
 });
@@ -200,9 +203,24 @@ type WrappedBall = {
 	type XC = F["c"];
 
 	interface FlexBox {
-		[typeNameSymbol]?: "box";
+		[typeNameSymbol]?: typeof boxSchema.name;
 		children: (FlexBall | FlexBox)[];
 	}
+
+	// Check child handling
+	{
+		type ChildSchema = typeof boxSchema.localFieldsObject.children;
+		type ChildSchemaTypes = ChildSchema extends FieldSchema<any, infer Types> ? Types : never;
+		type AllowedChildTypes = ChildSchema["allowedTypes"];
+		type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
+		type BoxChild = ChildSchemaTypes[1];
+		type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
+		type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeSchema>>;
+		type NormalizedChildSchemaTypes = FlexListToNonLazyArray<TreeSchema, ChildSchemaTypes>;
+		type ChildTypes = TypeSetToTypedTrees<ApiMode.Wrapped, ChildSchemaTypes>;
+		type Field = TypedField<ApiMode.Wrapped, ChildSchema>;
+	}
+
 	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBox>>;
 	interface NormalizedBox extends UntypedTreeCore {
 		[typeNameSymbol]: typeof boxSchema.name;
@@ -219,9 +237,9 @@ type WrappedBall = {
 				child,
 				{
 					// TODO: this should be required to disambiguate but currently its not.
-					[typeNameSymbol]: "ball",
+					[typeNameSymbol]: ballSchema.name,
 					x: 1,
-					y: { [typeNameSymbol]: "number", [valueSymbol]: 2 },
+					y: { [typeNameSymbol]: numberSchema.name, [valueSymbol]: 2 },
 				},
 			],
 		};
@@ -229,19 +247,19 @@ type WrappedBall = {
 
 	{
 		const child: XC = {
-			[typeNameSymbol]: "box",
+			[typeNameSymbol]: boxSchema.name,
 			children: [],
 			[valueSymbol]: undefined,
 		};
 		const parent: XC = {
-			[typeNameSymbol]: "box",
+			[typeNameSymbol]: boxSchema.name,
 			children: [
 				child,
 				{
-					[typeNameSymbol]: "ball",
+					[typeNameSymbol]: ballSchema.name,
 					[valueSymbol]: undefined,
-					x: { [typeNameSymbol]: "number", [valueSymbol]: 1 },
-					y: { [typeNameSymbol]: "number", [valueSymbol]: 2 },
+					x: { [typeNameSymbol]: numberSchema.name, [valueSymbol]: 1 },
+					y: { [typeNameSymbol]: numberSchema.name, [valueSymbol]: 2 },
 					size: undefined,
 				},
 			],

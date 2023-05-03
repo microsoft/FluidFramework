@@ -11,11 +11,9 @@ import {
 	valueSymbol,
 } from "../contextuallyTyped";
 import {
-	FullSchemaPolicy,
 	Multiplicity,
 	TypedSchema,
 	FieldSchema,
-	ViewSchemaCollection,
 	TreeSchema,
 	AllowedTypes,
 	FlexList,
@@ -27,7 +25,7 @@ import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 /**
  * @alpha
  */
-export type ValueFieldTreeFromSchema<TSchema extends ValueSchema> =
+export type ValuePropertyFromSchema<TSchema extends ValueSchema> =
 	undefined extends TypedValue<TSchema>
 		? {
 				[valueSymbol]?: TypedValue<TSchema>;
@@ -94,7 +92,7 @@ export type CollectOptions<
 		: TypedSchema.AllowOptionalNotFlattened<
 				{
 					[typeNameSymbol]: TName & TreeSchemaIdentifier;
-				} & ValueFieldTreeFromSchema<TValueSchema> &
+				} & ValuePropertyFromSchema<TValueSchema> &
 					TTypedFields
 		  > &
 				UntypedTreeCore;
@@ -114,7 +112,7 @@ export type CollectOptions<
 export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
 	TypedSchema.FlattenKeys<
 		{ [typeNameSymbol]?: TName } & TypedSchema.AllowOptional<
-			ValueFieldTreeFromSchema<TValueSchema>
+			ValuePropertyFromSchema<TValueSchema>
 		>
 	>,
 ][TypedSchema._dummy];
@@ -195,17 +193,6 @@ type UntypedApi<Mode extends ApiMode> = {
 	[ApiMode.Simple]: unknown;
 	[ApiMode.Wrapped]: UntypedTree;
 }[Mode];
-
-/**
- * Interface which strongly typed schema collections extend.
- * @alpha
- */
-export interface TypedSchemaData extends ViewSchemaCollection {
-	readonly policy: FullSchemaPolicy;
-	// TODO: can we use a more specific type here?
-	readonly treeSchemaObject: Record<string, any>; // LabeledTreeSchema
-	readonly allTypes: readonly string[];
-}
 
 /**
  * Generate a schema aware API for a list of types.
