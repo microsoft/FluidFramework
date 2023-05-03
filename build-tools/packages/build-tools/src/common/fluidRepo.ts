@@ -246,7 +246,7 @@ export class FluidRepo {
 				return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
 			}
 			if (typeof item === "string") {
-				log?.warning(
+				log?.verbose(
 					`No defaultinterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
 				);
 				return {
