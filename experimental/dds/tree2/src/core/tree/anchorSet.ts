@@ -420,7 +420,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	 * TODO: tests
 	 */
 	private decoupleNodes(startPath: UpPath, count: number): PathNode[] {
-		assert(count > 0, 0x371 /* count must be positive */);
+		assert(count > 0, "count must be positive");
 
 		const srcParent = this.find(startPath.parent ?? this.root);
 		const srcChildren = srcParent?.children?.get(startPath.parentField);
