@@ -52,7 +52,7 @@
 			"totalSendCount": 16000,
 			"faultInjectionMs": {
 				"min": 0,
-				"max": 900000
+				"max": 600000
 			},
 			"optionOverrides": {
 				"tinylicious": {
@@ -73,10 +73,10 @@
 					}
 				},
 				"odsp": {
-					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 24 mins. Sweep Timeout: 25 mins.",
+					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 25 mins. Sweep Timeout: 26 mins.",
 					"configurations": {
 						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1500000],
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1560000],
 						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true]
 					},
 					"container": {
@@ -85,7 +85,7 @@
 							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
-							"inactiveTimeoutMs": [1440000],
+							"inactiveTimeoutMs": [1500000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
 					}
@@ -99,7 +99,7 @@
 			"totalSendCount": 16000,
 			"faultInjectionMs": {
 				"min": 0,
-				"max": 900000
+				"max": 600000
 			},
 			"optionOverrides": {
 				"tinylicious": {
@@ -119,10 +119,10 @@
 					}
 				},
 				"odsp": {
-					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 24 mins. Sweep Timeout: 25 mins.",
+					"comment": "SessionExpiry: 15 mins. SnapshotCacheExpiry: 5 mins. Inactive Timeout: 25 mins. Sweep Timeout: 26 mins.",
 					"configurations": {
 						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [300000],
-						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1500000]
+						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1560000]
 					},
 					"container": {
 						"gcOptions": {
@@ -130,7 +130,7 @@
 							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
-							"inactiveTimeoutMs": [1440000],
+							"inactiveTimeoutMs": [1500000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
 					}
