@@ -16,7 +16,7 @@ import { DevtoolsLogger } from "../DevtoolsLogger";
 describe("DevtoolsLogger unit tests", () => {
 	it("Forwards events to base logger", () => {
 		const baseLogger = new MockLogger();
-		const devtoolsLogger = DevtoolsLogger.create(baseLogger);
+		const devtoolsLogger = new DevtoolsLogger(baseLogger);
 
 		const event: ITelemetryBaseEvent = {
 			eventName: "test-event",

@@ -4,11 +4,7 @@
  */
 
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import {
-	TelemetryLogger,
-	ChildLogger,
-	ITelemetryLoggerPropertyBags,
-} from "@fluidframework/telemetry-utils";
+import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import {
 	GetTelemetryHistory,
 	handleIncomingWindowMessage,
@@ -95,50 +91,8 @@ export class DevtoolsLogger extends TelemetryLogger {
 
 	// #endregion
 
-	/**
-	 * Creates a new DevtoolsLogger, which will post telemetry events to the Window, and will forward them to the
-	 * provided baseLogger (if one is provided).
-	 *
-	 * @param baseLogger - (optional) Base logger to which all telemetry events will be forwarded (in addition to
-	 * posting them to the Window).
-	 * @param namespace - Telemetry event name prefix to add to all events.
-	 * @param properties - Base properties to add to all events.
-	 */
-	public static create(
-		baseLogger?: ITelemetryBaseLogger,
-		namespace?: string,
-		properties?: ITelemetryLoggerPropertyBags,
-	): DevtoolsLogger {
-		if (!baseLogger) {
-			return new DevtoolsLogger(namespace, properties);
-		}
-
-		// TODO: what is this for?
-		const devtoolsLoggerProperties = properties ?? this.tryGetBaseLoggerProps(baseLogger);
-
-		return new DevtoolsLogger(
-			namespace,
-			devtoolsLoggerProperties,
-			ChildLogger.create(baseLogger, namespace),
-		);
-	}
-
-	private static tryGetBaseLoggerProps(
-		baseLogger?: ITelemetryBaseLogger,
-	): ITelemetryLoggerPropertyBags | undefined {
-		if (baseLogger instanceof TelemetryLogger) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			return (baseLogger as any as { properties: ITelemetryLoggerPropertyBags }).properties;
-		}
-		return undefined;
-	}
-
-	private constructor(
-		namespace?: string,
-		properties?: ITelemetryLoggerPropertyBags,
-		baseLogger?: ITelemetryBaseLogger,
-	) {
-		super(namespace, properties);
+	public constructor(baseLogger?: ITelemetryBaseLogger) {
+		super();
 
 		this.baseLogger = baseLogger;
 
