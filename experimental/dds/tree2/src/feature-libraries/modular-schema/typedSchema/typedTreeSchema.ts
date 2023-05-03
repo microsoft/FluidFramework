@@ -59,7 +59,10 @@ export class TreeSchema<Name extends string = string, T = TypedTreeSchemaSpecifi
 	public readonly globalFields!: ReadonlySet<GlobalFieldKey>;
 	public readonly extraLocalFields: FieldSchema;
 	public readonly extraGlobalFields: boolean;
-	public readonly value: ValueSchema;
+	public readonly value: WithDefault<
+		Assume<T, TypedTreeSchemaSpecification>["value"],
+		ValueSchema.Nothing
+	>;
 
 	public readonly name: Name & TreeSchemaIdentifier;
 
@@ -74,7 +77,10 @@ export class TreeSchema<Name extends string = string, T = TypedTreeSchemaSpecifi
 		this.localFields = objectToMap(this.localFieldsObject);
 		this.extraLocalFields = normalizeField(this.info.extraLocalFields);
 		this.extraGlobalFields = this.info.extraGlobalFields ?? false;
-		this.value = this.info.value ?? ValueSchema.Nothing;
+		this.value = (this.info.value ?? ValueSchema.Nothing) as WithDefault<
+			Assume<T, TypedTreeSchemaSpecification>["value"],
+			ValueSchema.Nothing
+		>;
 	}
 
 	public downCast(tree: UntypedTreeCore): tree is TypedTree<T> {
@@ -97,7 +103,14 @@ export class TreeSchema<Name extends string = string, T = TypedTreeSchemaSpecifi
  * Convert FieldSchemaSpecification | undefined into FieldSchema
  */
 type NormalizeField<T extends FieldSchemaSpecification | undefined> = FieldSchema<
-	T extends undefined ? typeof forbidden : T extends FieldSchema<infer Kind> ? Kind : typeof value
+	// Kind
+	T extends undefined
+		? typeof forbidden
+		: T extends FieldSchema<infer Kind>
+		? Kind
+		: typeof value,
+	// Types
+	T extends undefined ? [] : T extends FieldSchema<infer _Kind, infer Types> ? Types : T
 >;
 
 function normalizeLocalFields<T extends LocalFields | undefined>(

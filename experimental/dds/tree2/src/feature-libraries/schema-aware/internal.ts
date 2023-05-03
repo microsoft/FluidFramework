@@ -6,7 +6,6 @@
 // Used by public types, but not part of the desired API surface
 export {
 	TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
-	TypedTree,
 	CollectOptions,
 	TypedFields,
 	ApplyMultiplicity,

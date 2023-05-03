@@ -18,25 +18,11 @@ import {
 	ViewSchemaCollection,
 	TreeSchema,
 	AllowedTypes,
-	Any,
+	FlexList,
 } from "../modular-schema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { UntypedSequenceField } from "./partlyTyped";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
-
-/**
- * Schema aware API for a specific Schema.
- *
- * `Mode` specifies what API to provide.
- * `TSchema` specifies which type of node to generate the API for.
- * @alpha
- */
-export type TypedTree<Mode extends ApiMode, TSchema extends TreeSchema> = CollectOptions<
-	Mode,
-	TypedFields<Mode, TSchema["localFieldsObject"]>,
-	TSchema["value"],
-	TSchema["name"]
->;
 
 /**
  * @alpha
@@ -194,14 +180,12 @@ export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArr
  * @alpha
  */
 export type TypeSetToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
-	T extends Any
-		? UntypedApi<Mode>
-		: TypedNode<
-				TypedSchema.ArrayToUnion<
-					TypedSchema.FlexListToNonLazyArray<TreeSchema, TypedSchema.FlexList<TreeSchema>>
-				>,
+	T extends FlexList<TreeSchema>
+		? TypedNode<
+				TypedSchema.ArrayToUnion<TypedSchema.FlexListToNonLazyArray<TreeSchema, T>>,
 				Mode
-		  >,
+		  >
+		: UntypedApi<Mode>,
 ][TypedSchema._dummy];
 
 // TODO: make these more accurate
@@ -232,9 +216,11 @@ export interface TypedSchemaData extends ViewSchemaCollection {
  * That mens it will show up in IntelliSense and errors.
  * @alpha
  */
-export type TypedNode<TSchema extends TreeSchema, TMode extends ApiMode> = TypedTree<
-	TMode,
-	TSchema
+export type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = CollectOptions<
+	Mode,
+	TypedFields<Mode, TSchema["localFieldsObject"]>,
+	TSchema["value"],
+	TSchema["name"]
 >;
 
 /**

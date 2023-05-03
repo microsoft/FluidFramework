@@ -73,4 +73,5 @@ export {
 	Any,
 	TypedViewSchemaCollection,
 	TypedTreeSchemaSpecification,
+	FlexList,
 } from "./typedSchema";
