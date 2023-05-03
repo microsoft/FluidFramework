@@ -84,6 +84,9 @@
 		"broken": {
 			"ClassDeclaration_Lumber": {
 				"backCompat": false
+			},
+			"EnumDeclaration_LumberEventName": {
+				"backCompat": false
 			}
 		}
 	}
