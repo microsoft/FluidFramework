@@ -52,11 +52,11 @@
 			"totalSendCount": 16000,
 			"faultInjectionMs": {
 				"min": 0,
-				"max": 600000
+				"max": 900000
 			},
 			"optionOverrides": {
 				"tinylicious": {
-					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 21 mins. Sweep Timeout: 22 mins.",
+					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
 					"configurations": {
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
 						"Fluid.GarbageCollection.ThrowOnTombstoneUsage": [true]
@@ -67,7 +67,7 @@
 							"sweepAllowed": [false],
 							"disableGC": [false],
 							"runFullGC": [false],
-							"inactiveTimeoutMs": [1260000],
+							"inactiveTimeoutMs": [1200000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
 					}
@@ -99,11 +99,11 @@
 			"totalSendCount": 16000,
 			"faultInjectionMs": {
 				"min": 0,
-				"max": 600000
+				"max": 900000
 			},
 			"optionOverrides": {
 				"tinylicious": {
-					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 21 mins. Sweep Timeout: 22 mins.",
+					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
 					"configurations": {
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000]
 					},
@@ -113,7 +113,7 @@
 							"sweepAllowed": [true],
 							"disableGC": [false],
 							"runFullGC": [false],
-							"inactiveTimeoutMs": [1260000],
+							"inactiveTimeoutMs": [1200000],
 							"sessionExpiryTimeoutMs": [900000]
 						}
 					}
