@@ -78,7 +78,8 @@ ARGUMENTS
 FLAGS
   -g, --releaseGroup=<option>  Only bump dependencies within this release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
-  -p, --package=<value>        Only bump dependencies of this package.
+  -p, --package=<value>        Only bump dependencies of this package. You can use scoped or unscoped package names. For
+                               example, both @fluid-tools/markdown-magic and markdown-magic are valid.
   -t, --updateType=<option>    [default: minor] Bump the current version of the dependency according to this bump type.
                                <options: latest|newest|greatest|minor|patch|@next|@canary>
   -v, --verbose                Verbose logging.
@@ -108,7 +109,7 @@ EXAMPLES
   Bump dependencies on packages in the server release group to the greatest released version in the client release
   group. Include pre-release versions.
 
-    $ flub bump deps server -g client -t greatest -p
+    $ flub bump deps server -g client -t greatest --prerelease
 
   Bump dependencies on server packages to the current version across the repo, replacing any pre-release ranges with
   release ranges.

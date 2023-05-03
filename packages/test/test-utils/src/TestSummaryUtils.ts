@@ -132,6 +132,35 @@ export async function createSummarizer(
 }
 
 /**
+ * Creates a summarizer client from the given container and returns the summarizer client's IContainer and ISummarizer.
+ * The ISummarizer can be used to generate on-demand summaries. The IContainer can be used to fetch data stores, etc.
+ *
+ * Can pass in a test config provider to enable/disable features.
+ */
+export async function createSummarizerWithTestConfig(
+	provider: ITestObjectProvider,
+	container: IContainer,
+	config: ITestContainerConfig,
+	summaryVersion?: string,
+	logger?: ITelemetryBaseLogger,
+): Promise<{ container: IContainer; summarizer: ISummarizer }> {
+	const testContainerConfig: ITestContainerConfig = {
+		...config,
+		runtimeOptions: {
+			...config.runtimeOptions,
+			summaryOptions: defaultSummaryOptions,
+		},
+		loaderProps: {
+			...config.loaderProps,
+			configProvider: config.loaderProps?.configProvider ?? mockConfigProvider(),
+			logger,
+		},
+	};
+	const loader = provider.makeTestLoader(testContainerConfig);
+	return createSummarizerCore(container, loader, summaryVersion);
+}
+
+/**
  * Summarizes on demand and returns the summary tree, the version number and the reference sequence number of the
  * submitted summary.
  */
