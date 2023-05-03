@@ -75,7 +75,7 @@ export const complexPhoneSchema = builder.object("Test:Phone-1.0.0", {
 
 export const phonesSchema = builder.object("Test:Phones-1.0.0", {
 	local: {
-		[EmptyKey]: SchemaBuilder.sequence(
+		[EmptyKey]: SchemaBuilder.fieldSequence(
 			SchemaBuilder.union(
 				stringSchema,
 				int32Schema,
@@ -89,7 +89,7 @@ export const phonesSchema = builder.object("Test:Phones-1.0.0", {
 
 export const globalFieldSchemaSequencePhones = builder.globalField(
 	"sequencePhones",
-	SchemaBuilder.sequence(stringSchema),
+	SchemaBuilder.fieldSequence(stringSchema),
 );
 
 export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol =
@@ -128,7 +128,7 @@ export const personSchema = builder.object("Test:Person-1.0.0", {
 
 export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
 	local: {
-		child: SchemaBuilder.optional(Any),
+		child: SchemaBuilder.fieldOptional(Any),
 	},
 	value: ValueSchema.Serializable,
 });

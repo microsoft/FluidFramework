@@ -131,7 +131,7 @@ export class SchemaBuilder {
 	 * Better centralize the documentation about what kinds of merge semantics are available for field kinds.
 	 * Maybe link editor?
 	 */
-	public static optional<T extends AllowedTypes>(
+	public static fieldOptional<T extends AllowedTypes>(
 		...allowedTypes: T
 	): FieldSchema<typeof FieldKinds.optional, T> {
 		return SchemaBuilder.field(optional, ...allowedTypes);
@@ -140,7 +140,7 @@ export class SchemaBuilder {
 	/**
 	 * TODO: maybe remove use-cases for this
 	 */
-	public static valueField<T extends AllowedTypes>(
+	public static fieldValue<T extends AllowedTypes>(
 		...allowedTypes: T
 	): FieldSchema<typeof FieldKinds.value, T> {
 		return SchemaBuilder.field(value, ...allowedTypes);
@@ -157,7 +157,7 @@ export class SchemaBuilder {
 	 * Add anchor API that can actually hold onto locations in a sequence.
 	 * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
 	 */
-	public static sequence<T extends AllowedTypes>(
+	public static fieldSequence<T extends AllowedTypes>(
 		...t: T
 	): FieldSchema<typeof FieldKinds.sequence, T> {
 		return SchemaBuilder.field(sequence, ...t);

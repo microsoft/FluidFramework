@@ -18,16 +18,17 @@ import {
 	symbolFromKey,
 } from "../../../core";
 import { FieldKinds } from "../..";
-import { forbidden, value } from "../../defaultFieldKinds";
+import { forbidden } from "../../defaultFieldKinds";
 import { MakeNominal } from "../../../util";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { Assume, ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
+import { emptyField } from "./buildViewSchemaCollection";
 
 // TODO: tests for this file
 
 interface LocalFields {
-	readonly [key: string]: FieldSchemaSpecification | undefined;
+	readonly [key: string]: FieldSchema;
 }
 
 type NormalizeLocalFieldsInner<T extends LocalFields> = {
@@ -75,7 +76,6 @@ export class TreeSchema<
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeSchemaIdentifier;
 		this.localFieldsObject = normalizeLocalFields<Assume<T, TreeSchemaSpecification>["local"]>(
-			builder,
 			this.info.local,
 		);
 		this.localFields = objectToMap(this.localFieldsObject);
@@ -106,19 +106,11 @@ export class TreeSchema<
 /**
  * Convert FieldSchemaSpecification | undefined into FieldSchema
  */
-type NormalizeField<T extends FieldSchemaSpecification | undefined> = FieldSchema<
-	// Kind
-	T extends undefined
-		? typeof forbidden
-		: T extends FieldSchema<infer Kind>
-		? Kind
-		: typeof value,
-	// Types
-	T extends undefined ? [] : T extends FieldSchema<infer _Kind, infer Types> ? Types : T
->;
+type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema
+	? T
+	: typeof emptyField;
 
 function normalizeLocalFields<T extends LocalFields | undefined>(
-	builder: Named<string>,
 	fields: T,
 ): NormalizeLocalFields<T> {
 	if (fields === undefined) {
@@ -135,14 +127,13 @@ function normalizeLocalFields<T extends LocalFields | undefined>(
 	return out as NormalizeLocalFields<T>;
 }
 
-function normalizeField<T extends FieldSchemaSpecification | undefined>(t: T): NormalizeField<T> {
-	if (t instanceof FieldSchema) {
-		return t as NormalizeField<T>;
-	}
+function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField<T> {
 	if (t === undefined) {
 		return new FieldSchema(forbidden, []) as unknown as NormalizeField<T>;
 	}
-	return new FieldSchema(value, t) as unknown as NormalizeField<T>;
+
+	assert(t instanceof FieldSchema, "invalid FieldSchema");
+	return t as NormalizeField<T>;
 }
 
 type TypedTree<_T> = UntypedTreeCore & { todo: "add stuff" };
@@ -170,16 +161,14 @@ export function allowedTypesIsAny(t: AllowedTypes): t is [Any] {
 	return t.length === 1 && t[0] === Any;
 }
 
-export type FieldSchemaSpecification = AllowedTypes | FieldSchema;
-
 /**
  * Object for capturing information about a TreeStoredSchema for use at both compile time and runtime.
  * @alpha
  */
 export interface TreeSchemaSpecification {
-	readonly local?: { readonly [key: string]: FieldSchemaSpecification | undefined };
+	readonly local?: { readonly [key: string]: FieldSchema };
 	readonly global?: FlexList<GlobalFieldSchema>;
-	readonly extraLocalFields?: FieldSchemaSpecification;
+	readonly extraLocalFields?: FieldSchema;
 	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
 }

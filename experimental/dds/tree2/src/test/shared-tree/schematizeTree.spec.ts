@@ -12,11 +12,11 @@ const factory = new SharedTreeFactory();
 const builder = new SchemaBuilder("Schematize Tree Tests");
 
 const root = builder.primitive("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.valueField(Any));
+const schema = builder.intoDocumentSchema(SchemaBuilder.fieldValue(Any));
 
 const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
 const rootGeneralized = builderGeneralized.object("root", { value: ValueSchema.Serializable });
-const schemaGeneralized = builder.intoDocumentSchema(SchemaBuilder.optional(Any));
+const schemaGeneralized = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 describe("schematizeView", () => {
 	it("initialize tree schema", () => {

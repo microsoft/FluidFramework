@@ -25,14 +25,14 @@ export const stringTaskSchema = builder.primitive("StringTask", ValueSchema.Stri
 // Polymorphic recursive schema:
 export const listTaskSchema = builder.object("ListTask", {
 	local: {
-		items: SchemaBuilder.sequence(
+		items: SchemaBuilder.fieldSequence(
 			// TODO: proper recursive schema
 			SchemaBuilder.union(stringTaskSchema, (): TreeSchema => listTaskSchema),
 		),
 	},
 });
 
-export const rootFieldSchema = SchemaBuilder.valueField(
+export const rootFieldSchema = SchemaBuilder.fieldValue(
 	SchemaBuilder.union(stringTaskSchema, listTaskSchema),
 );
 

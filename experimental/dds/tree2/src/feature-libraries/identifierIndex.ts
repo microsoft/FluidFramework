@@ -40,7 +40,7 @@ export const identifierSchema = builder.primitive("identifier", ValueSchema.Numb
  */
 export const identifierFieldSchema = builder.globalField(
 	"identifier",
-	SchemaBuilder.valueField(identifierSchema),
+	SchemaBuilder.fieldValue(identifierSchema),
 );
 
 /**

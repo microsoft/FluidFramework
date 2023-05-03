@@ -87,18 +87,16 @@ export type CollectOptions<
 > = {
 	[ApiMode.Flexible]: Record<string, never> extends TTypedFields
 		? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName>
-		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
+		: FlexibleObject<TValueSchema, TName> & TTypedFields;
 	[ApiMode.Editable]: [Record<string, never>, TValueSchema] extends [
 		TTypedFields,
 		PrimitiveValueSchema,
 	]
 		? TypedValue<TValueSchema>
-		: TypedSchema.AllowOptionalNotFlattened<
-				{
-					[typeNameSymbol]: TName & TreeSchemaIdentifier;
-				} & ValuePropertyFromSchema<TValueSchema> &
-					TTypedFields
-		  > &
+		: {
+				[typeNameSymbol]: TName & TreeSchemaIdentifier;
+		  } & ValuePropertyFromSchema<TValueSchema> &
+				TTypedFields &
 				UntypedTreeCore;
 	[ApiMode.Wrapped]: {
 		[typeNameSymbol]: TName;
@@ -106,7 +104,7 @@ export type CollectOptions<
 	} & TTypedFields;
 	[ApiMode.Simple]: Record<string, never> extends TTypedFields
 		? TypedValue<TValueSchema>
-		: FlexibleObject<TValueSchema, TName> & TypedSchema.AllowOptionalNotFlattened<TTypedFields>;
+		: FlexibleObject<TValueSchema, TName> & TTypedFields;
 }[Mode];
 
 /**
@@ -115,11 +113,26 @@ export type CollectOptions<
  */
 export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
 	TypedSchema.FlattenKeys<
-		{ [typeNameSymbol]?: TName } & TypedSchema.AllowOptional<
+		{ [typeNameSymbol]?: UnbrandedName<TName> } & TypedSchema.AllowOptional<
 			ValuePropertyFromSchema<TValueSchema>
 		>
 	>,
 ][TypedSchema._dummy];
+
+/**
+ * Remove type brand from name.
+ * @alpha
+ */
+export type UnbrandedName<TName> = [
+	TName extends infer S & TreeSchemaIdentifier ? S : string,
+][TypedSchema._dummy];
+
+export type IsInput<Mode extends ApiMode> = {
+	[ApiMode.Flexible]: true;
+	[ApiMode.Editable]: false;
+	[ApiMode.Wrapped]: false;
+	[ApiMode.Simple]: true;
+}[Mode];
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
@@ -184,7 +197,10 @@ export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArr
 export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
 	T extends FlexList<TreeSchema>
 		? TypedSchema.ArrayToUnion<
-				TypeArrayToTypedTreeArray<Mode, TypedSchema.FlexListToNonLazyArray<TreeSchema, T>>
+				TypeArrayToTypedTreeArray<
+					Mode,
+					Assume<TypedSchema.FlexListToNonLazyArray<T>, readonly TreeSchema[]>
+				>
 		  >
 		: UntypedApi<Mode>,
 ][TypedSchema._dummy];
@@ -206,7 +222,7 @@ export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly T
 type UntypedApi<Mode extends ApiMode> = {
 	[ApiMode.Editable]: UntypedTree;
 	[ApiMode.Flexible]: ContextuallyTypedNodeData;
-	[ApiMode.Simple]: unknown;
+	[ApiMode.Simple]: ContextuallyTypedNodeData;
 	[ApiMode.Wrapped]: UntypedTree;
 }[Mode];
 
@@ -230,6 +246,8 @@ export type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = Collec
  * Generate a schema aware API for a single tree schema.
  * @alpha
  */
-export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedSchema.FlattenKeys<
-	TypedNode<TSchema, Mode>
+// TODO: make TypedSchema.FlattenKeys work here for recursive types?
+export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<
+	TSchema,
+	Mode
 >;

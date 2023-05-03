@@ -152,6 +152,7 @@ export type OptionalFields<T> = [
  * See also `AllowOptional`.
  * @alpha
  */
+// export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
 export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
 
 /**

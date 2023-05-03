@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, SchemaBuilder } from "../../feature-libraries";
+import { AllowedTypes, FieldKinds, SchemaBuilder } from "../../feature-libraries";
 import { ValueSchema, EmptyKey } from "../../core";
+import { requireAssignableTo } from "../../util";
 
 const builder = new SchemaBuilder("Json Domain");
 
@@ -35,6 +36,11 @@ const jsonPrimitives = [jsonNumber, jsonString, jsonNull, jsonBoolean] as const;
  * @alpha
  */
 export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] as const;
+
+{
+	// Recursive objects don't get this type checking automatically, so confirm it
+	type _check = requireAssignableTo<typeof jsonRoot, AllowedTypes>;
+}
 
 /**
  * @alpha

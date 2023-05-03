@@ -54,7 +54,7 @@ function bench(
 	const schemaCollection = new SchemaBuilder(
 		"JsonCursor benchmark",
 		jsonSchema,
-	).intoDocumentSchema(SchemaBuilder.optional(jsonRoot));
+	).intoDocumentSchema(SchemaBuilder.fieldOptional(jsonRoot));
 	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schemaCollection);
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {

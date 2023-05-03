@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Assume } from "./typeUtils";
-
 // TODO: tests
 
 /**
@@ -13,57 +11,45 @@ import { Assume } from "./typeUtils";
  * @remarks
  * Does not work properly if T can be a function or array.
  */
-export type FlexList<Item> = readonly LazyItem<Item>[];
+export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
-export function normalizeFlexList<Item, List extends FlexList<Item>>(
-	t: List,
-): FlexListToLazyArray<Item, List> {
-	return t.map((value: LazyItem<Item>) => {
+export function normalizeFlexList<List extends FlexList>(t: List): FlexListToLazyArray<List> {
+	return t.map((value: LazyItem) => {
 		if (typeof value === "function") {
 			return value;
 		}
 		return () => value;
-	}) as FlexListToLazyArray<Item, List>;
+	}) as FlexListToLazyArray<List>;
 }
 
 /**
  * T, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
  */
-export type LazyItem<Item> = Item | (() => Item);
+export type LazyItem<Item = unknown> = Item | (() => Item);
 
 export type NormalizedFlexList<Item> = readonly Item[];
 export type NormalizedLazyFlexList<Item> = (() => Item)[];
 
-type ExtractItemType<Item, List extends LazyItem<Item>> = List extends () => infer Result
-	? Result
-	: List;
-type NormalizeLazyItem<Item, List extends LazyItem<Item>> = List extends () => unknown
-	? List
-	: () => List;
+type ExtractItemType<List extends LazyItem> = List extends () => infer Result ? Result : List;
+type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown ? List : () => List;
 
 /**
  * Normalize FlexList type to a non-lazy array.
  */
-export type FlexListToNonLazyArray<Item, List extends FlexList<Item>> = List extends readonly [
+export type FlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 	infer Head,
 	...infer Tail,
 ]
-	? [
-			ExtractItemType<Item, Assume<Head, LazyItem<Item>>>,
-			...FlexListToNonLazyArray<Item, Assume<Tail, FlexList<Item>>>,
-	  ]
+	? [ExtractItemType<Head>, ...FlexListToNonLazyArray<Tail>]
 	: [];
 
 /**
  * Normalize FlexList type to a lazy array.
  */
-export type FlexListToLazyArray<Item, List extends FlexList<Item>> = List extends readonly [
+export type FlexListToLazyArray<List extends FlexList> = List extends readonly [
 	infer Head,
 	...infer Tail,
 ]
-	? [
-			NormalizeLazyItem<Item, Assume<Head, LazyItem<Item>>>,
-			...FlexListToLazyArray<Item, Assume<Tail, FlexList<Item>>>,
-	  ]
+	? [NormalizeLazyItem<Head>, ...FlexListToLazyArray<Tail>]
 	: [];
