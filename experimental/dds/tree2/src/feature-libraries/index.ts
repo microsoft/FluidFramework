@@ -142,6 +142,7 @@ export {
 	identifierFieldSchema,
 	IdentifierIndex,
 	identifierSchema,
+	identifierFieldSchemaLibrary,
 } from "./identifierIndex";
 
 // Split into separate import and export for compatibility with API-Extractor.

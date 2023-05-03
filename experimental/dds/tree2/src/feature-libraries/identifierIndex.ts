@@ -43,6 +43,8 @@ export const identifierFieldSchema = builder.globalField(
 	SchemaBuilder.fieldValue(identifierSchema),
 );
 
+export const identifierFieldSchemaLibrary = builder.intoLibrary();
+
 /**
  * The identifier index allows nodes that have a special identifier field to be looked up via a query.
  */
