@@ -40,7 +40,7 @@ jobs:
         name: Changeset status
         run: |
           set +e # don't exit on failure
-          flub check changeset --branch=${{ github.base_ref }}
+          pnpm exec flub check changeset --branch=${{ github.base_ref }}
           echo "$?" > ./changeset-status
 
       - name: Upload changeset status
