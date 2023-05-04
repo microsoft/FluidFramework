@@ -117,6 +117,8 @@ importers:
       nyc: ^15.1.0
       oclif: ^3.7.0
       prettier: ~2.6.2
+      prompts: ^2.4.2
+      prompts-ncu: ^3.0.0
       read-pkg-up: ^7.0.1
       rimraf: ^4.4.0
       semver: ^7.3.7
@@ -158,6 +160,8 @@ importers:
       npm-check-updates: 16.3.8
       oclif: 3.7.0
       prettier: 2.6.2
+      prompts: 2.4.2
+      prompts-ncu: 3.0.0
       read-pkg-up: 7.0.1
       semver: 7.3.7
       semver-utils: 1.1.4
@@ -8001,6 +8005,11 @@ packages:
     resolution: {integrity: sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw==}
     engines: {node: '>=0.10.0'}
 
+  /kleur/3.0.3:
+    resolution: {integrity: sha512-eTIzlVOSUR+JxdDFepEYcBMtZ9Qqdef+rnzWdRZuMbOywu5tO2w2N7rqjoANZ5k9vywhL6Br1VRjUIgTQx4E8w==}
+    engines: {node: '>=6'}
+    dev: false
+
   /kleur/4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
@@ -9935,6 +9944,22 @@ packages:
     engines: {node: '>= 6'}
     dependencies:
       kleur: 4.1.5
+      sisteransi: 1.0.5
+    dev: false
+
+  /prompts-ncu/3.0.0:
+    resolution: {integrity: sha512-qyz9UxZ5MlPKWVhWrCmSZ1ahm2GVYdjLb8og2sg0IPth1KRuhcggHGuijz0e41dkx35p1t1q3GRISGH7QGALFA==}
+    engines: {node: '>= 14'}
+    dependencies:
+      kleur: 4.1.5
+      sisteransi: 1.0.5
+    dev: false
+
+  /prompts/2.4.2:
+    resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
+    engines: {node: '>= 6'}
+    dependencies:
+      kleur: 3.0.3
       sisteransi: 1.0.5
     dev: false
 

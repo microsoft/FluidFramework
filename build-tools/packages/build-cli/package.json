@@ -95,6 +95,8 @@
 		"npm-check-updates": "^16.0.0",
 		"oclif": "^3.7.0",
 		"prettier": "~2.6.2",
+    "prompts": "^2.4.2",
+    "prompts-ncu": "^3.0.0",
 		"read-pkg-up": "^7.0.1",
 		"semver": "^7.3.7",
 		"semver-utils": "^1.1.4",

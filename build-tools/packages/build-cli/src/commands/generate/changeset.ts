@@ -6,19 +6,31 @@ import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import humanId from "human-id";
 import inquirer from "inquirer";
-import * as cplus from "inquirer-checkbox-plus-prompt";
+import CheckboxPlusPrompt from "inquirer-checkbox-plus-prompt";
 import path from "node:path";
+import prompts from "prompts-ncu";
 
 import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
-import { Context, Package } from "@fluidframework/build-tools";
+import { MonoRepoKind, Package } from "@fluidframework/build-tools";
 import { VersionBumpType } from "@fluid-tools/version-tools";
-import { ReleaseGroup } from "../../releaseGroups";
 import { writeFile } from "node:fs/promises";
 
 const DEFAULT_BRANCH = "main";
+const HINT = `
+↑/↓: Change selection
+Space: Toggle selection
+a: Toggle all
+Enter: Done`;
 
-inquirer.registerPrompt("checkbox-plus", cplus);
+inquirer.registerPrompt("checkbox-plus", CheckboxPlusPrompt);
+
+interface Choice {
+	title: string;
+	selected?: boolean;
+	heading?: boolean;
+	value?: string;
+}
 
 export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
 	static summary = `Generates a new changeset file.`;
@@ -32,6 +44,9 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		}),
 		empty: Flags.boolean({
 			description: "Create an empty changeset file.",
+		}),
+		all: Flags.boolean({
+			description: `Include ALL packages, including examples.`,
 		}),
 		...BaseCommand.flags,
 	};
@@ -72,18 +87,130 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		}
 		this.verbose(`Remote is: ${remote}`);
 
-		const { packages: changedPackages, files: changedFiles } = await repo.getChangedSinceRef(
-			branch,
-			remote,
-			context,
-		);
+		const {
+			packages: changedPackages,
+			files: changedFiles,
+			releaseGroups: changedReleaseGroups,
+		} = await repo.getChangedSinceRef(branch, remote, context);
+
 		if (changedFiles.length === 0) {
 			this.error(`No changes when compared to ${branch}.`, { exit: 1 });
 		}
 
-		if (changedPackages.length > 0) {
+		if (changedPackages.length === 0) {
 			this.error(`No changed packages when compared to ${branch}.`, { exit: 1 });
+			// this.log(changedPackages.join(", "));
 		}
+
+		if (changedReleaseGroups.length > 1) {
+			this.warning(
+				`More than one release group changed when compared to ${branch}. Is this expected?`,
+			);
+			// this.log(changedPackages.join(", "));
+		}
+
+		for (const [rgName, rg] of context.repo.releaseGroups) {
+		}
+
+		const groups = new Map<string, Choice[]>();
+		const choices: Choice[] = [];
+
+		for (const rgName of changedReleaseGroups) {
+			const rg = context.repo.releaseGroups.get(rgName);
+			if (rg === undefined) {
+				this.error(`Release group ${rgName} not found in repo config`, { exit: 1 });
+			}
+
+			choices.push(
+				{ title: `${chalk.bold(rg.kind)}`, heading: true },
+				...rg.packages.sort().map((p) => {
+					const changed = changedPackages.some((cp) => cp.name === p.name);
+					return {
+						title: changed ? `${p.nameColored} *` : p.name,
+						value: p.name,
+						selected: changed,
+					};
+				}),
+			);
+		}
+
+		choices.push({ title: chalk.bold("Independent Packages"), heading: true });
+		for (const p of context.independentPackages) {
+			const changed = changedPackages.some((cp) => cp.name === p.name);
+			choices.push({
+				title: p.name,
+				value: p.name,
+				selected: changed,
+			});
+		}
+
+		for (const rg of context.repo.releaseGroups.values()) {
+			if (!changedReleaseGroups.includes(rg.kind)) {
+				choices.push(
+					{ title: `${chalk.bold(rg.kind)}`, heading: true },
+					...rg.packages.sort().map((p) => {
+						return {
+							title: p.name,
+							value: p.name,
+							selected: false,
+						};
+					}),
+				);
+			}
+		}
+
+		this.log(changedReleaseGroups.join(", "));
+		this.log(changedPackages.map((p) => p.name).join(", "));
+		this.log(changedFiles.join(", "));
+
+		// const _choices = groups.flatMap(({ heading, groupName, packages }) => {
+		// 	return [
+		// 		{ title: "\n" + heading, heading: true },
+		// 		// eslint-disable-next-line fp/no-mutating-methods
+		// 		...Object.keys(packages)
+		// 			.sort()
+		// 			.map((dep) => ({
+		// 				title: formattedLines[dep],
+		// 				value: dep,
+		// 				selected: ["patch", "minor"].includes(groupName),
+		// 			})),
+		// 	];
+		// });
+
+		const response = await prompts({
+			choices: [...choices, { title: " ", heading: true }],
+			hint: HINT,
+			instructions: HINT,
+			message: "Choose which packages to include in the changeset",
+			name: "value",
+			optionsPerPage: 10,
+			type: "autocompleteMultiselect",
+			onState: (state: any) => {
+				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+				if (state.aborted) {
+					process.nextTick(() => this.exit(1));
+				}
+			},
+		});
+
+		this.log(`RESPONSE: ${JSON.stringify(response)}`);
+
+		// const colors = ["red", "green", "blue", "yellow"];
+
+		// const answers = await inquirer
+		// 	.prompt([
+		// 		{
+		// 			type: "checkbox-plus",
+		// 			name: "colors",
+		// 			message: "Enter colors",
+		// 			pageSize: 10,
+		// 			highlight: true,
+		// 			default: ["yellow", "red"],
+		// 			source: async (answersSoFar: any, input: any) => {
+		// 				return colors.map((color) => color);
+		// 			},
+		// 		},
+		// ]);
 	}
 }
 
