@@ -15,7 +15,12 @@ import {
 } from "@fluentui/react-components";
 import { TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
-import { Clock20Regular, DoorArrowLeft24Regular, Person24Regular } from "@fluentui/react-icons";
+import {
+	Clock20Regular,
+	DoorArrowLeft24Regular,
+	Person24Regular,
+	Info16Regular,
+} from "@fluentui/react-icons";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 
 /**
@@ -35,6 +40,8 @@ export interface AudienceHistoryTableProps {
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
 
+	const TOOLTIP_FLUIDCLIENTGUID =
+		"ID assigned by the Fluid (sequencing) service to the current connection. Subject to change if the client disconnects or reconnects.";
 	const clientIdTooltipId = useId("client-id-tooltip");
 
 	// Columns for rendering audience history
@@ -50,15 +57,35 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "event" && <DoorArrowLeft24Regular />}
-							<TooltipHost
-								content="Represents the connection between Fluid Runtime and the Fluid server."
-								id={clientIdTooltipId}
-							>
-								{column.columnKey === "clientId" && <Person24Regular />}
-							</TooltipHost>
-							{column.columnKey === "time" && <Clock20Regular />}
-							{column.label}
+							{column.columnKey === "event" && (
+								<>
+									<DoorArrowLeft24Regular />
+									{column.label}
+								</>
+							)}
+
+							{column.columnKey === "clientId" && (
+								<TooltipHost
+									content={TOOLTIP_FLUIDCLIENTGUID}
+									id={clientIdTooltipId}
+								>
+									<Person24Regular />
+									{column.label}
+									<Info16Regular
+										style={{
+											position: "relative",
+											top: "3px",
+											marginLeft: "5px",
+										}}
+									/>
+								</TooltipHost>
+							)}
+							{column.columnKey === "time" && (
+								<>
+									<Clock20Regular />
+									{column.label}
+								</>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>
