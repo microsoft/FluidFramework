@@ -4,27 +4,16 @@
  */
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
-import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	ConsensusRegisterCollection,
-	IConsensusRegisterCollection,
-} from "@fluidframework/register-collection";
 
 import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 
 const pactMapKey = "pact-map";
-const crcKey = "crc";
-const taskManagerKey = "task-manager";
 const newVersionKey = "newVersion";
-const migrateTaskName = "migrate";
-const newContainerIdKey = "newContainerId";
 
 export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
-	private _crc: IConsensusRegisterCollection<string> | undefined;
-	private _taskManager: ITaskManager | undefined;
 
 	// Not all clients will have a _proposalP, this is only if the local client issued a proposal.
 	// Clients that only see a remote proposal come in will advance directly from "collaborating" to "stoppingCollaboration".
@@ -37,24 +26,11 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		return this._pactMap;
 	}
 
-	private get crc() {
-		if (this._crc === undefined) {
-			throw new Error("Couldn't retrieve the ConsensusRegisterCollection");
-		}
-		return this._crc;
-	}
-
-	private get taskManager() {
-		if (this._taskManager === undefined) {
-			throw new Error("Couldn't retrieve the TaskManager");
-		}
-		return this._taskManager;
-	}
-
 	public get migrationState() {
-		if (this.newContainerId !== undefined) {
-			return "migrated";
-		} else if (this.acceptedVersion !== undefined) {
+		// if (this.newContainerId !== undefined) {
+		// 	return "migrated";
+		// } else ...
+		if (this.acceptedVersion !== undefined) {
 			return "generatingV1Summary";
 		} else if (this.proposedVersion !== undefined) {
 			return "stoppingCollaboration";
@@ -65,20 +41,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		}
 	}
 
-	public get newContainerId() {
-		return this.crc.read(newContainerIdKey);
-	}
-
 	public async finalizeMigration(id: string) {
-		// Only permit a single container to be set as a migration destination.
-		if (this.crc.read(newContainerIdKey) !== undefined) {
-			throw new Error("New container was already established");
-		}
-
-		// Using a consensus data structure is important here, because other clients might race us to set the new
-		// value.  All clients must agree on the final value even in these race conditions so everyone ends up in the
-		// same final container.
-		await this.crc.write(newContainerIdKey, id);
+		// TODO this now probably looks like passing in the v2 summary
 	}
 
 	public get proposedVersion() {
@@ -113,44 +77,34 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		this.emit("proposingMigration");
 	};
 
-	public async volunteerForMigration(): Promise<boolean> {
-		return this.taskManager.volunteerForTask(migrateTaskName);
-	}
+	private readonly stopCollaboration = () => {
+		// TODO Also force the container to go silent and kill summarizers
+		this.emit("stoppingCollaboration");
+	};
 
-	public haveMigrationTask(): boolean {
-		return this.taskManager.assigned(migrateTaskName);
-	}
-
-	public completeMigrationTask(): void {
-		this.taskManager.complete(migrateTaskName);
-	}
+	private readonly ensureV1Summary = () => {};
 
 	protected async initializingFirstTime() {
 		const pactMap = PactMap.create(this.runtime);
-		const crc = ConsensusRegisterCollection.create(this.runtime);
-		const taskManager = TaskManager.create(this.runtime);
 		this.root.set(pactMapKey, pactMap.handle);
-		this.root.set(crcKey, crc.handle);
-		this.root.set(taskManagerKey, taskManager.handle);
 	}
 
 	protected async hasInitialized() {
+		// TODO: First figure out what state we're in probably?
+
 		const pactMapHandle = this.root.get<IFluidHandle<IPactMap<string>>>(pactMapKey);
 		this._pactMap = await pactMapHandle?.get();
 
-		const crcHandle = this.root.get<IFluidHandle<IConsensusRegisterCollection<string>>>(crcKey);
-		this._crc = await crcHandle?.get();
-
 		this.pactMap.on("pending", (key: string) => {
 			if (key === newVersionKey) {
-				// TODO Also force the container to go silent and kill summarizers
-				this.emit("stopping");
+				this.stopCollaboration();
 			}
 		});
 
 		this.pactMap.on("accepted", (key: string) => {
 			if (key === newVersionKey) {
 				// TODO Here also do the final v1 summarization
+				this.ensureV1Summary();
 				// After summarization completes need another state transition
 				this.emit("migrating");
 			}
@@ -190,15 +144,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 
 		// ???.on("v2SummaryAck", this.emit("readyForReload"))
 		// ???.on("v2SummaryAck", closeAndDispose)
-
-		this.crc.on("atomicChanged", (key: string) => {
-			if (key === newContainerIdKey) {
-				this.emit("migrated");
-			}
-		});
-
-		const taskManagerHandle = this.root.get<IFluidHandle<ITaskManager>>(taskManagerKey);
-		this._taskManager = await taskManagerHandle?.get();
 	}
 }
 
@@ -211,6 +156,6 @@ export const SameContainerMigrationToolInstantiationFactory =
 	new DataObjectFactory<SameContainerMigrationTool>(
 		"migration-tool",
 		SameContainerMigrationTool,
-		[ConsensusRegisterCollection.getFactory(), PactMap.getFactory(), TaskManager.getFactory()],
+		[PactMap.getFactory()],
 		{},
 	);

@@ -39,7 +39,7 @@ interface IMigrationStatusViewProps {
 const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 	props: IMigrationStatusViewProps,
 ) => {
-	const { model, getUrlForContainerId } = props;
+	const { model } = props;
 
 	const [migrationState, setMigrationState] = useState<SameContainerMigrationState>(
 		model.migrationTool.migrationState,
@@ -86,38 +86,6 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 			? "No accepted version for migration yet"
 			: `Accepted version to migrate to: ${model.migrationTool.acceptedVersion}`;
 
-	const migratedContainerStatus = (() => {
-		if (model.migrationTool.newContainerId === undefined) {
-			return "No migrated container yet";
-		}
-
-		const navToNewContainer = () => {
-			if (
-				model.migrationTool.newContainerId !== undefined &&
-				getUrlForContainerId !== undefined
-			) {
-				location.href = getUrlForContainerId(model.migrationTool.newContainerId);
-				location.reload();
-			}
-		};
-
-		// If we're able to get a direct link to the migrated container, do so.
-		// Otherwise just use the string representation of the container id.
-		const migratedReference =
-			getUrlForContainerId === undefined ? (
-				model.migrationTool.newContainerId
-			) : (
-				<a
-					href={getUrlForContainerId(model.migrationTool.newContainerId)}
-					onClick={navToNewContainer}
-				>
-					{model.migrationTool.newContainerId}
-				</a>
-			);
-
-		return <>Migrated to new container at {migratedReference}</>;
-	})();
-
 	return (
 		<div className="migration-status" style={{ margin: "10px 0" }}>
 			<div>Using model: {model.version}</div>
@@ -139,7 +107,6 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 			</div>
 			<div>{proposedVersionStatus}</div>
 			<div>{acceptedVersionStatus}</div>
-			<div>{migratedContainerStatus}</div>
 		</div>
 	);
 };

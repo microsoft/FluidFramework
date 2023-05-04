@@ -52,12 +52,6 @@ export class SameContainerMigrator
 	 */
 	private _preparedDetachedModel: IDetachedModel<ISameContainerMigratableModel> | undefined;
 
-	/**
-	 * After attaching the prepared model, but before we have written its ID into the current model, we'll store the ID
-	 * here to support retry scenarios.
-	 */
-	private _preparedModelId: string | undefined;
-
 	public constructor(
 		private readonly modelLoader: IModelLoader<ISameContainerMigratableModel>,
 		initialMigratable: ISameContainerMigratableModel,
@@ -183,39 +177,7 @@ export class SameContainerMigrator
 					"this._preparedDetachedModel should be defined",
 				);
 
-				// Volunteer to complete the migration.
-				let isAssigned: boolean;
-				try {
-					isAssigned = await this.currentModel.migrationTool.volunteerForMigration();
-				} catch (error) {
-					// volunteerForMigration() will throw an error on disconnection. In this case, we should exit and
-					// re-enter the state machine which will wait until we reconnect.
-					// Note: while we wait to reconnect it is possible that another client will have already completed
-					// the migration.
-					assert(!this.connected, "We should be disconnected");
-					return;
-				}
-
-				if (this.currentModel.migrationTool.newContainerId !== undefined) {
-					// If newContainerId is already set, then another client already completed the migration.
-					return;
-				}
-
-				assert(isAssigned, "We should be assigned the migration task");
-
-				if (this._preparedModelId === undefined) {
-					this._preparedModelId = await this._preparedDetachedModel.attach();
-				}
-
-				// Check to make sure we still have the task assignment.
-				if (!this.currentModel.migrationTool.haveMigrationTask()) {
-					// Exit early if we lost the task assignment, we are most likely disconnected.
-					return;
-				}
-
-				await migratable.migrationTool.finalizeMigration(this._preparedModelId);
-
-				this.currentModel.migrationTool.completeMigrationTask();
+				// TODO: This is substantially different now
 			};
 
 			// Prepare the detached model if we haven't already.
@@ -241,10 +203,10 @@ export class SameContainerMigrator
 				if (this.connected) {
 					// We assume if we are still connected after exiting the loop, then we should be in the "migrated"
 					// state. The following assert validates this assumption.
-					assert(
-						this.currentModel.migrationTool.newContainerId !== undefined,
-						"newContainerId should be defined",
-					);
+					// assert(
+					// 	this.currentModel.migrationTool.newContainerId !== undefined,
+					// 	"newContainerId should be defined",
+					// );
 				}
 				this._migrationP = undefined;
 				this.takeAppropriateActionForCurrentMigratable();
@@ -270,11 +232,6 @@ export class SameContainerMigrator
 			throw new Error("Expect an accepted version before migration starts");
 		}
 
-		const migratedId = migratable.migrationTool.newContainerId;
-		if (migratedId === undefined) {
-			throw new Error("Migration ended without a new container being created");
-		}
-
 		const doTheLoad = async () => {
 			// doTheLoad() should only be called once. It will resolve once we complete loading.
 
@@ -284,6 +241,8 @@ export class SameContainerMigrator
 				this._migratedLoadP = undefined;
 				return;
 			}
+			// TODO this should be a reload of the same container basically
+			const migratedId = "foobar";
 			const migrated = await this.modelLoader.loadExisting(migratedId);
 			// Note: I'm choosing not to close the old migratable here, and instead allow the lifecycle management
 			// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
@@ -296,7 +255,6 @@ export class SameContainerMigrator
 
 			// Reset retry values
 			this._preparedDetachedModel = undefined;
-			this._preparedModelId = undefined;
 
 			// Only once we've completely finished with the old migratable, start on the new one.
 			this.takeAppropriateActionForCurrentMigratable();

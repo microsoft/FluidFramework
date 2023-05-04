@@ -66,10 +66,6 @@ export interface ISameContainerMigrationTool
 	readonly migrationState: SameContainerMigrationState;
 
 	/**
-	 * The container id where the migrated content can be found, if the migration has fully completed.
-	 */
-	readonly newContainerId: string | undefined;
-	/**
 	 * Set the container id where the migrated content can be found, finalizing the migration.
 	 * @param id - the container id
 	 */
@@ -88,21 +84,4 @@ export interface ISameContainerMigrationTool
 	 * @param newVersion - the version string
 	 */
 	proposeVersion: (newVersion: string) => void;
-
-	/**
-	 * Volunteer to perform the migration.
-	 * @returns A promise which resolves true when the local client has been selected to perform the migration.
-	 * resolves false if the migration was already completed by another client.
-	 */
-	volunteerForMigration(): Promise<boolean>;
-
-	/**
-	 * Whether the local client is selected to perform the migration.
-	 */
-	haveMigrationTask(): boolean;
-
-	/**
-	 * Completes the migration task to indicate to other clients the migration is complete.
-	 */
-	completeMigrationTask(): void;
 }
