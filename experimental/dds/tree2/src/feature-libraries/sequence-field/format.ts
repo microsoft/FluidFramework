@@ -12,6 +12,10 @@ import {
 } from "../../core";
 import { ChangesetLocalId, ChangesetLocalIdSchema, NodeChangeset } from "../modular-schema";
 
+// TODO: Types in this file are largely re-used for in-memory representation.
+// See for example `Revive` whose type uses ITreeCursorSynchronous, but the schema
+// for the serialized type uses ProtoNode (which is the result of serializing that cursor).
+
 /**
  * The contents of a node to be created
  */
@@ -320,9 +324,7 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 		CanConflict,
 		Type.Object({
 			type: Type.Literal("Revive"),
-			// TODO: How is this OK?
-			// content: Type.Array(ITreeCursorSynchronous),
-			content: Type.Array(Type.Any()),
+			content: Type.Array(ProtoNode),
 			count: NodeCount,
 		}),
 	]);

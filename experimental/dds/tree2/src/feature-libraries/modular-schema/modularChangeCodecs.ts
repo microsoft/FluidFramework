@@ -42,15 +42,27 @@ import {
 	ModularChangeset,
 	NodeChangeset,
 	RevisionInfo,
-	ValueChange,
-	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 
-// TODO: Make corresponding encoded types for these, validating their schema.
-const ValueChange = Type.Any();
-const ValueConstraint = Type.Any();
+const EncodedValueChange = Type.Object(
+	{
+		revision: Type.Optional(RevisionTagSchema),
+		value: Type.Optional(JsonCompatibleReadOnlySchema),
+	},
+	{ additionalProperties: false },
+);
+type EncodedValueChange = Static<typeof EncodedValueChange>;
+
+const EncodedValueConstraint = Type.Object(
+	{
+		value: Type.Optional(JsonCompatibleReadOnlySchema),
+		violated: Type.Boolean(),
+	},
+	{ additionalProperties: false },
+);
+type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
 
 const EncodedFieldChange = Type.Object({
 	fieldKey: Type.Union([LocalFieldKeySchema, GlobalFieldKeySchema]),
@@ -83,9 +95,9 @@ const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
 type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
 const EncodedNodeChangeset = Type.Object({
-	valueChange: Type.Optional(ValueChange),
+	valueChange: Type.Optional(EncodedValueChange),
 	fieldChanges: Type.Optional(EncodedFieldChangeMap),
-	valueConstraint: Type.Optional(ValueConstraint),
+	valueConstraint: Type.Optional(EncodedValueConstraint),
 });
 
 const EncodedRevisionInfo = Type.Object({
@@ -109,7 +121,7 @@ type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
 ): IJsonCodec<ModularChangeset> {
-	const nodeChangesetCodec: IJsonCodec<NodeChangeset> = {
+	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
 		encode: encodeNodeChangesForJson,
 		decode: decodeNodeChangesetFromJson,
 		encodedSchema: EncodedNodeChangeset,
@@ -175,17 +187,17 @@ function makeV0Codec(
 		change: NodeChangeset,
 	): EncodedNodeChangeset & JsonCompatibleReadOnly {
 		const encodedChange: EncodedNodeChangeset & JsonCompatibleReadOnly = {};
-		if (change.valueChange !== undefined) {
-			encodedChange.valueChange = change.valueChange;
+		const { valueChange, fieldChanges, valueConstraint } = change;
+		if (valueChange !== undefined) {
+			encodedChange.valueChange = valueChange;
 		}
 
-		if (change.fieldChanges !== undefined) {
-			const encodedFieldChanges = encodeFieldChangesForJson(change.fieldChanges);
-			encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
+		if (fieldChanges !== undefined) {
+			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges);
 		}
 
-		if (change.valueConstraint !== undefined) {
-			encodedChange.valueConstraint = change.valueConstraint;
+		if (valueConstraint !== undefined) {
+			encodedChange.valueConstraint = valueConstraint;
 		}
 
 		return encodedChange;
@@ -213,19 +225,22 @@ function makeV0Codec(
 		return decodedFields;
 	}
 
-	function decodeNodeChangesetFromJson(change: JsonCompatibleReadOnly): NodeChangeset {
-		const encodedChange = change as EncodedNodeChangeset;
+	function decodeNodeChangesetFromJson(encodedChange: EncodedNodeChangeset): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
-		if (encodedChange.valueChange !== undefined) {
-			decodedChange.valueChange = encodedChange.valueChange;
+		const { valueChange, fieldChanges, valueConstraint } = encodedChange;
+		if (valueChange) {
+			decodedChange.valueChange = valueChange;
 		}
 
-		if (encodedChange.fieldChanges !== undefined) {
-			decodedChange.fieldChanges = decodeFieldChangesFromJson(encodedChange.fieldChanges);
+		if (fieldChanges !== undefined) {
+			decodedChange.fieldChanges = decodeFieldChangesFromJson(fieldChanges);
 		}
 
-		if (encodedChange.valueConstraint !== undefined) {
-			decodedChange.valueConstraint = encodedChange.valueConstraint;
+		if (valueConstraint !== undefined) {
+			decodedChange.valueConstraint = {
+				value: valueConstraint.value,
+				violated: valueConstraint.violated,
+			};
 		}
 
 		return decodedChange;
