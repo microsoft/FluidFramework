@@ -12,7 +12,7 @@ import {
 	TreeAdapter,
 	TreeSchemaIdentifier,
 } from "../../../core";
-import { Sourced, ViewSchemaCollection } from "../view";
+import { Sourced, SchemaCollection } from "../view";
 import { brand, requireAssignableTo } from "../../../util";
 import { optional, sequence, value, FieldKindTypes } from "../../defaultFieldKinds";
 import type { FieldKinds } from "../..";
@@ -61,17 +61,32 @@ export type RecursiveTreeSchemaSpecification = unknown;
  * @sealed @alpha
  */
 export class SchemaBuilder {
-	private readonly libraries: Set<SchemaLibrary>;
+	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
 	private readonly globalFieldSchema: Map<GlobalFieldKey, GlobalFieldSchema> = new Map();
 	private readonly treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	private readonly adapters: Adapters = {};
-	public constructor(public readonly name: string, ...libraries: ViewSchemaLibrary[]) {
+
+	/**
+	 * @param name - Name used to refer to this builder in error messages. Has no impact on the actual generated schema.
+	 * @param libraries - Libraries to include in this one. See `addLibraries` for details.
+	 */
+	public constructor(public readonly name: string, ...libraries: SchemaLibrary[]) {
 		this.libraries = new Set();
 		this.addLibraries(...libraries);
 	}
 
-	public addLibraries(...libraries: ViewSchemaLibrary[]) {
+	/**
+	 * Adds more libraries to this one.
+	 *
+	 * Unlike adding of individual schema, adding of libraries is idempotent.
+	 * If a single library is added multiple times (even indirectly via libraries it was added into),
+	 * only a single copy will be included, so they will not conflict.
+	 * This allows adding any library this one depends on without risk of conflicts for users of this library.
+	 * Contents withing the added libraries can still conflict however.
+	 * Such errors will be reported when finalizing this builder into a library of document schema.
+	 */
+	public addLibraries(...libraries: SchemaLibrary[]) {
 		for (const libs of libraries) {
 			for (const lib of libs.libraries) {
 				this.libraries.add(lib);
@@ -81,6 +96,8 @@ export class SchemaBuilder {
 
 	/**
 	 * Define (and add to this library) a schema for an object.
+	 *
+	 * The name must be unique among all object schema in the the document schema.
 	 */
 	public object<Name extends string, T extends TreeSchemaSpecification>(
 		name: Name,
@@ -108,6 +125,8 @@ export class SchemaBuilder {
 	/**
 	 * Define (and add to this library) a schema for an object that just wraps a primitive value.
 	 * Such objects will be implicitly unwrapped to the value in some APIs.
+	 *
+	 * This is just a shorthand for a common case of `object`. See {@link SchemaBuilder.object} for details.
 	 */
 	public primitive<Name extends string, T extends InternalTypes.PrimitiveValueSchema>(
 		name: Name,
@@ -120,19 +139,41 @@ export class SchemaBuilder {
 	/**
 	 * Define (and add to this library) a schema for a global field.
 	 * Global fields can be included in the schema for multiple objects.
+	 *
+	 * The key must be unique among all object global fields in the the document schema.
+	 *
+	 * See {@link SchemaBuilder.field} for how to build the `field` parameter.
 	 */
 	public globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(
-		name: string,
-		t: FieldSchema<Kind, Types>,
+		key: string,
+		field: FieldSchema<Kind, Types>,
 	): GlobalFieldSchema<Kind, Types> {
-		const schema = new GlobalFieldSchema(this, brand(name), t);
+		const schema = new GlobalFieldSchema(this, brand(key), field);
 		assert(!this.globalFieldSchema.has(schema.key), "Conflicting global field keys");
 		this.globalFieldSchema.set(schema.key, schema);
 		return schema;
 	}
 
 	/**
+	 * Define a schema for a field.
+	 *
+	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
+	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
+	 * @param allowedTypes - What types of children are allowed in this field.
+	 * @returns a field which can be used as a local field (see {@link SchemaBuilder.object}),
+	 * global fields (see {@link SchemaBuilder.globalField}) or the root field (see {@link SchemaBuilder.intoDocumentSchema}).
+	 */
+	public static field<Kind extends FieldKindTypes, T extends AllowedTypes>(
+		kind: Kind,
+		...allowedTypes: T
+	): FieldSchema<Kind, T> {
+		return new FieldSchema(kind, allowedTypes);
+	}
+
+	/**
 	 * Define a schema for an optional field.
+	 * Shorthand or passing `FieldKinds.optional` to {@link SchemaBuilder.field}.
+	 *
 	 * Optional fields can be empty (undefined) or contain a single value of the allowed types.
 	 *
 	 * Optional fields can be used with last write wins OR first write wins merge resolution.
@@ -148,7 +189,12 @@ export class SchemaBuilder {
 	}
 
 	/**
-	 * TODO: maybe remove use-cases for this
+	 * Define a schema for an value field.
+	 * Shorthand or passing `FieldKinds.value` to {@link SchemaBuilder.field}.
+	 *
+	 * Value fields hold a single child.
+	 *
+	 * TODO: consider adding even shorter syntax where AllowedTypes can be used as a FieldSchema.
 	 */
 	public static fieldValue<T extends AllowedTypes>(
 		...allowedTypes: T
@@ -175,23 +221,13 @@ export class SchemaBuilder {
 
 	/**
 	 * Define a schema for a field.
-	 */
-	public static field<Kind extends FieldKindTypes, T extends AllowedTypes>(
-		kind: Kind,
-		...allowedTypes: T
-	): FieldSchema<Kind, T> {
-		return new FieldSchema(kind, allowedTypes);
-	}
-
-	/**
-	 * Define a schema for a field.
-	 * Same as `field` but takes in `AllowedTypes`, is less type safe and supports recursive types.
-	 * This API is less safe and less ergonomic to work around a limitation of TypeScript.
+	 * Same as {@link SchemaBuilder.field} but is less type safe and supports recursive types.
+	 * This API is less safe to work around a limitation of TypeScript.
 	 *
 	 * T must extends `AllowedTypes`: This cannot be enforced via TypeScript since such an "extends" clauses cause recursive types to error with:
 	 * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
 	 *
-	 * TODO: how much more specific of a type can be provided without triggering the above error?
+	 * TODO: Try and find a way to provide a more specific type without triggering the above error.
 	 */
 	public static fieldRecursive<
 		Kind extends FieldKindTypes,
@@ -215,7 +251,7 @@ export class SchemaBuilder {
 	 * Produce SchemaLibraries which capture the content added to this builder, as well as any additional SchemaLibraries that were added to it.
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public intoLibrary(): ViewSchemaLibrary {
+	public intoLibrary(): SchemaLibrary {
 		this.finalize();
 
 		// Check for errors:
@@ -225,17 +261,17 @@ export class SchemaBuilder {
 	}
 
 	/**
-	 * Produce a TypedViewSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
+	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
 	 * Can be used with schematize to provide schema aware access to document content.
 	 *
 	 * May only be called once after adding content to builder is complete.
 	 */
 	public intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(
 		root: FieldSchema<Kind, Types>,
-	): TypedViewSchemaCollection<GlobalFieldSchema<Kind, Types>> {
+	): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>> {
 		this.finalize();
 		const rootField = new GlobalFieldSchema(this, rootFieldKey, root);
-		const rootLibrary: SchemaLibrary = {
+		const rootLibrary: SchemaLibraryData = {
 			name: this.name,
 			globalFieldSchema: new Map<GlobalFieldKey, GlobalFieldSchema>([
 				[rootField.key, rootField],
@@ -244,7 +280,7 @@ export class SchemaBuilder {
 			adapters: {},
 		};
 		const collection = buildViewSchemaCollection([rootLibrary, ...this.libraries]);
-		const typed: TypedViewSchemaCollection<GlobalFieldSchema<Kind, Types>> = {
+		const typed: TypedSchemaCollection<GlobalFieldSchema<Kind, Types>> = {
 			...collection,
 			root: rootField,
 		};
@@ -252,12 +288,13 @@ export class SchemaBuilder {
 	}
 }
 
-export type SchemaLibraries = ReadonlySet<SchemaLibrary>;
+export type SchemaLibraries = ReadonlySet<SchemaLibraryData>;
 
 /**
+ * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
  * @alpha
  */
-export interface SchemaLibrary {
+export interface SchemaLibraryData {
 	readonly name: string;
 	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, GlobalFieldSchema>;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
@@ -267,8 +304,7 @@ export interface SchemaLibrary {
 /**
  * @alpha
  */
-export interface TypedViewSchemaCollection<T extends GlobalFieldSchema>
-	extends ViewSchemaCollection {
+export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {
 	/**
 	 * Root field.
 	 * Also in globalFieldSchema under the key {@link rootFieldKey}.
@@ -277,14 +313,15 @@ export interface TypedViewSchemaCollection<T extends GlobalFieldSchema>
 }
 
 /**
+ * Schema information collected by a SchemaBuilder, including referenced libraries.
+ * Can be aggregated into other libraries by adding to their builders.
  * @alpha
  */
-export interface ViewSchemaLibrary extends ViewSchemaCollection {
+export interface SchemaLibrary extends SchemaCollection {
 	/**
-	 * Root field.
-	 * Also in globalFieldSchema under the key {@link rootFieldKey}.
+	 * Schema data aggregated from a collection of libraries by a SchemaBuilder.
 	 */
-	readonly libraries: ReadonlySet<SchemaLibrary>;
+	readonly libraries: ReadonlySet<SchemaLibraryData>;
 }
 
 /**

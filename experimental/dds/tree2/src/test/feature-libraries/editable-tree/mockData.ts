@@ -23,7 +23,7 @@ import {
 	SchemaBuilder,
 	Any,
 	GlobalFieldSchema,
-	TypedViewSchemaCollection,
+	TypedSchemaCollection,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -277,7 +277,7 @@ export function getReadonlyEditableTreeContext(forest: IEditableForest): Editabl
 }
 
 export function setupForest<T extends GlobalFieldSchema>(
-	schema: TypedViewSchemaCollection<T>,
+	schema: TypedSchemaCollection<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);

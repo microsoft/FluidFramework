@@ -19,7 +19,7 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	allowsRepoSuperset,
-	TypedViewSchemaCollection,
+	TypedSchemaCollection,
 	GlobalFieldSchema,
 	SchemaAware,
 	cursorsForTypedFieldData,
@@ -167,7 +167,7 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: TypedViewSchemaCollection<TRoot>;
+	readonly schema: TypedSchemaCollection<TRoot>;
 	/**
 	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
 	 */

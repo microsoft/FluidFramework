@@ -31,7 +31,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 	public constructor(
 		policy: FullSchemaPolicy,
 		adapters: Adapters,
-		public readonly schema: ViewSchemaCollection,
+		public readonly schema: SchemaCollection,
 	) {
 		super(policy, adapters);
 	}
@@ -203,7 +203,7 @@ export interface IFieldSchema {
  * Schema data that can be be used to view a document.
  * @alpha
  */
-export interface ViewSchemaCollection {
+export interface SchemaCollection {
 	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, IFieldSchema>;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
 	readonly policy: FullSchemaPolicy;
@@ -211,11 +211,11 @@ export interface ViewSchemaCollection {
 }
 
 {
-	// ViewSchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
+	// SchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
 	// but want to be compatible with it, so check that here:
 	type _test0 = requireAssignableTo<IFieldSchema, FieldStoredSchema>;
-	type _test1 = requireAssignableTo<ViewSchemaCollection, SchemaData>;
-	type _test2 = requireAssignableTo<ViewSchemaCollection, SchemaDataAndPolicy<FullSchemaPolicy>>;
+	type _test1 = requireAssignableTo<SchemaCollection, SchemaData>;
+	type _test2 = requireAssignableTo<SchemaCollection, SchemaDataAndPolicy<FullSchemaPolicy>>;
 }
 
 /**

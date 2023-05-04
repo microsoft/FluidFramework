@@ -5,9 +5,9 @@
 
 export {
 	SchemaBuilder,
-	TypedViewSchemaCollection,
-	ViewSchemaLibrary,
+	TypedSchemaCollection,
 	SchemaLibrary,
+	SchemaLibraryData,
 } from "./schemaBuilder";
 
 export {

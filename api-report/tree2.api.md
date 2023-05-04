@@ -1083,7 +1083,7 @@ value: ValueSchema.Boolean;
 }>;
 
 // @alpha (undocumented)
-export const jsonSchema: ViewSchemaLibrary;
+export const jsonSchema: SchemaLibrary;
 
 // @alpha (undocumented)
 export const jsonString: TreeSchema<"Json.String", {
@@ -1481,17 +1481,16 @@ export { SchemaAware }
 
 // @alpha @sealed
 export class SchemaBuilder {
-    constructor(name: string, ...libraries: ViewSchemaLibrary[]);
-    // (undocumented)
-    addLibraries(...libraries: ViewSchemaLibrary[]): void;
+    constructor(name: string, ...libraries: SchemaLibrary[]);
+    addLibraries(...libraries: SchemaLibrary[]): void;
     static field<Kind extends FieldKindTypes, T extends AllowedTypes>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldOptional<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.optional, T>;
     static fieldRecursive<Kind extends FieldKindTypes, T extends FlexList<RecursiveTreeSchema>>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T>;
     static fieldSequence<T extends AllowedTypes>(...t: T): FieldSchema<typeof FieldKinds.sequence, T>;
     static fieldValue<T extends AllowedTypes>(...allowedTypes: T): FieldSchema<typeof FieldKinds.value, T>;
-    globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(name: string, t: FieldSchema<Kind, Types>): GlobalFieldSchema<Kind, Types>;
-    intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedViewSchemaCollection<GlobalFieldSchema<Kind, Types>>;
-    intoLibrary(): ViewSchemaLibrary;
+    globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(key: string, field: FieldSchema<Kind, Types>): GlobalFieldSchema<Kind, Types>;
+    intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(root: FieldSchema<Kind, Types>): TypedSchemaCollection<GlobalFieldSchema<Kind, Types>>;
+    intoLibrary(): SchemaLibrary;
     // (undocumented)
     readonly name: string;
     object<Name extends string, T extends TreeSchemaSpecification>(name: Name, t: T): TreeSchema<Name, T>;
@@ -1499,6 +1498,18 @@ export class SchemaBuilder {
     primitive<Name extends string, T extends InternalTypes.PrimitiveValueSchema>(name: Name, t: T): TreeSchema<Name, {
         value: T;
     }>;
+}
+
+// @alpha
+export interface SchemaCollection {
+    // (undocumented)
+    readonly adapters: Adapters;
+    // (undocumented)
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, IFieldSchema>;
+    // (undocumented)
+    readonly policy: FullSchemaPolicy;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
 }
 
 // @alpha
@@ -1520,8 +1531,13 @@ export interface SchemaEvents {
     beforeSchemaChange(newSchema: SchemaData): void;
 }
 
-// @alpha (undocumented)
-export interface SchemaLibrary {
+// @alpha
+export interface SchemaLibrary extends SchemaCollection {
+    readonly libraries: ReadonlySet<SchemaLibraryData>;
+}
+
+// @alpha
+export interface SchemaLibraryData {
     // (undocumented)
     readonly adapters: Adapters;
     // (undocumented)
@@ -1542,7 +1558,7 @@ export interface SchemaPolicy {
 export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = GlobalFieldSchema> {
     readonly allowedSchemaModifications: AllowedUpdateType;
     readonly initialTree: SchemaAware.TypedField<SchemaAware.ApiMode.Simple, TRoot["schema"]>;
-    readonly schema: TypedViewSchemaCollection<TRoot>;
+    readonly schema: TypedSchemaCollection<TRoot>;
 }
 
 // @alpha (undocumented)
@@ -1757,6 +1773,11 @@ TFields extends {
 // @alpha
 type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = CollectOptions<Mode, TypedFields<Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>;
 
+// @alpha (undocumented)
+export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {
+    readonly root: T;
+}
+
 // @alpha
 type TypedValue<TValue extends ValueSchema> = {
     [ValueSchema.Nothing]: undefined;
@@ -1765,11 +1786,6 @@ type TypedValue<TValue extends ValueSchema> = {
     [ValueSchema.Boolean]: boolean;
     [ValueSchema.Serializable]: Value;
 }[TValue];
-
-// @alpha (undocumented)
-export interface TypedViewSchemaCollection<T extends GlobalFieldSchema> extends ViewSchemaCollection {
-    readonly root: T;
-}
 
 // @alpha
 export const typeNameSymbol: unique symbol;
@@ -1932,23 +1948,6 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
-}
-
-// @alpha
-export interface ViewSchemaCollection {
-    // (undocumented)
-    readonly adapters: Adapters;
-    // (undocumented)
-    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, IFieldSchema>;
-    // (undocumented)
-    readonly policy: FullSchemaPolicy;
-    // (undocumented)
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
-}
-
-// @alpha (undocumented)
-export interface ViewSchemaLibrary extends ViewSchemaCollection {
-    readonly libraries: ReadonlySet<SchemaLibrary>;
 }
 
 // @alpha

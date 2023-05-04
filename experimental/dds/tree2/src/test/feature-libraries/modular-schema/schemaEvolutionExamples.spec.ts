@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import {
 	FieldSchema,
 	FullSchemaPolicy,
-	ViewSchemaCollection,
+	SchemaCollection,
 	allowsFieldSuperset,
 	allowsTreeSuperset,
 	ViewSchema,
@@ -158,7 +158,7 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: ViewSchemaCollection = new SchemaBuilder(
+		const viewCollection: SchemaCollection = new SchemaBuilder(
 			"basic usage",
 			treeViewSchema,
 		).intoDocumentSchema(root);
@@ -293,7 +293,7 @@ describe("Schema Evolution Examples", () => {
 				local: { items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItem2) },
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: ViewSchemaCollection = builderWithCounter.intoDocumentSchema(
+			const viewCollection3: SchemaCollection = builderWithCounter.intoDocumentSchema(
 				SchemaBuilder.field(FieldKinds.optional, canvas2),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
@@ -339,7 +339,7 @@ describe("Schema Evolution Examples", () => {
 		// Build a schema repository.
 		// This will represent our view schema for a simple canvas application,
 		// same as the above example, but after some schema changes.
-		const viewCollection: ViewSchemaCollection = {
+		const viewCollection: SchemaCollection = {
 			globalFieldSchema: new Map([[rootFieldKey, root]]),
 			treeSchema: treeViewSchema.treeSchema,
 			policy: defaultSchemaPolicy,
@@ -451,7 +451,7 @@ describe("Schema Evolution Examples", () => {
 			local: { items: SchemaBuilder.field(FieldKinds.sequence, positionedCanvasItemNew) },
 		});
 
-		const viewCollection: ViewSchemaCollection = builder.intoDocumentSchema(
+		const viewCollection: SchemaCollection = builder.intoDocumentSchema(
 			SchemaBuilder.fieldValue(canvas2),
 		);
 

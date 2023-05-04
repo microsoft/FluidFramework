@@ -5,32 +5,32 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { GlobalFieldKey, TreeSchemaIdentifier } from "../../../core";
-import { ViewSchemaCollection } from "../view";
+import { SchemaCollection } from "../view";
 import { fail } from "../../../util";
 import { defaultSchemaPolicy } from "../../defaultSchema";
 import { FieldKinds, forbidden, value } from "../../defaultFieldKinds";
-import { SchemaLibrary, SourcedAdapters } from "./schemaBuilder";
+import { SchemaLibraryData, SourcedAdapters } from "./schemaBuilder";
 import { FieldSchema, GlobalFieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 
 // TODO: tests for this file
 
 /**
- * Build and validate a ViewSchemaCollection.
+ * Build and validate a SchemaCollection.
  *
  * As much as possible tries to detect anything that might be a mistake made by the schema author.
  * This will error on some valid but probably never intended to be used patterns
  * (like libraries with the same name, nodes which are impossible to create etc).
  */
 export function buildViewSchemaCollection(
-	libraries: readonly SchemaLibrary[],
-): ViewSchemaCollection {
+	libraries: readonly SchemaLibraryData[],
+): SchemaCollection {
 	const globalFieldSchema: Map<GlobalFieldKey, GlobalFieldSchema> = new Map();
 	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [], fieldAdapters: new Map() };
 
 	const errors: string[] = [];
-	const librarySet: Set<SchemaLibrary> = new Set();
+	const librarySet: Set<SchemaLibraryData> = new Set();
 	const libraryNames: Set<string> = new Set();
 
 	for (const library of libraries) {
@@ -87,7 +87,7 @@ export function buildViewSchemaCollection(
 	return result;
 }
 
-export interface ViewSchemaCollection2 extends ViewSchemaCollection {
+export interface ViewSchemaCollection2 extends SchemaCollection {
 	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, GlobalFieldSchema>;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
