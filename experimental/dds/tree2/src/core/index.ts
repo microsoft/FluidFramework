@@ -108,8 +108,11 @@ export {
 
 export {
 	LocalFieldKey,
+	LocalFieldKeySchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	TreeSchemaIdentifier,
+	TreeSchemaIdentifierSchema,
 	NamedTreeSchema,
 	Named,
 	FieldSchema,
@@ -117,6 +120,7 @@ export {
 	TreeSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
@@ -149,6 +153,7 @@ export {
 	GraphCommit,
 	isRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,

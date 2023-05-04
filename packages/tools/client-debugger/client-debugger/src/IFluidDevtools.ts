@@ -7,13 +7,17 @@ import { IDisposable } from "@fluidframework/common-definitions";
 import { ContainerDevtoolsProps } from "./ContainerDevtools";
 
 /**
- * Fluid Devtools. A single instance is used to generate and communicate stats associated with the general Fluid
+ * Fluid Devtools. A single, global instance is used to generate and communicate stats associated with the general Fluid
  * runtime (i.e., it is not associated with any single Framework entity).
  *
  * @remarks
  *
  * Supports registering {@link @fluidframework/container-definitions#IContainer}s for Container-level stats
  * (via {@link IFluidDevtools.registerContainerDevtools}).
+ *
+ * The lifetime of the associated singleton is bound by that of the Window (globalThis), and it will be automatically
+ * disposed of on Window unload.
+ * If you wish to dispose of it earlier, you may call its {@link @fluidframework/common-definitions#IDisposable.dispose} method.
  *
  * @public
  */

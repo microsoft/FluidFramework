@@ -11,6 +11,7 @@ import {
 	IWebServerFactory,
 	IRunner,
 	ITokenRevocationManager,
+	IStorageNameRetriever,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -27,6 +28,7 @@ export class HistorianRunner implements IRunner {
 		private readonly config: Provider,
 		private readonly port: string | number,
 		private readonly riddler: ITenantService,
+		private readonly storageNameRetriever: IStorageNameRetriever,
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly cache?: ICache,
@@ -41,6 +43,7 @@ export class HistorianRunner implements IRunner {
 		const historian = app.create(
 			this.config,
 			this.riddler,
+			this.storageNameRetriever,
 			this.restTenantThrottlers,
 			this.restClusterThrottlers,
 			this.cache,

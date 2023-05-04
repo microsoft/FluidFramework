@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { ReadonlyRepairDataStore } from "../repair";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
-import { GraphCommit, RevisionTag, mintRevisionTag } from "./types";
+import { GraphCommit, mintRevisionTag, mintCommit, RevisionTag } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -126,17 +126,17 @@ export function rebaseBranch<TChange>(
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
 	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
-	assert(ancestor !== undefined, "branches must be related");
+	assert(ancestor !== undefined, 0x675 /* branches must be related */);
 
-	// Find where `base` is in the target branch
-	const baseIndex = targetPath.findIndex((r) => r === targetCommit);
-	if (baseIndex === -1) {
-		// If the base is not in the target path, then it is either disjoint from `target` or it is behind/at
+	// Find where `targetCommit` is in the target branch
+	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
+	if (targetCommitIndex === -1) {
+		// If the targetCommit is not in the target path, then it is either disjoint from `target` or it is behind/at
 		// the commit where source and target diverge (ancestor), in which case there is nothing more to rebase
 		// TODO: Ideally, this would be an "assertExpensive"
 		assert(
 			findCommonAncestor(targetCommit, targetHead) !== undefined,
-			0x575 /* base is not in target branch */,
+			0x676 /* target commit is not in target branch */,
 		);
 		return [
 			sourceHead,
@@ -148,42 +148,61 @@ export function rebaseBranch<TChange>(
 	// Iterate through the target path and look for commits that are also present on the source branch (i.e. they
 	// have matching tags). Each commit found in the target branch can be skipped when processing the source branch
 	// because it has already been rebased onto the target. In the case that one or more of these commits are present
-	// directly after `base`, then the base can be advanced further without having to do any work.
+	// directly after `targetCommit`, then the new base can be advanced further without having to do any work.
 	const sourceSet = new Set(sourcePath.map((r) => r.revision));
-	let newBaseIndex = baseIndex;
+	let newBaseIndex = targetCommitIndex;
 
 	for (let i = 0; i < targetPath.length; i += 1) {
 		const { revision } = targetPath[i];
 		if (sourceSet.has(revision)) {
 			sourceSet.delete(revision);
 			newBaseIndex = Math.max(newBaseIndex, i);
-		} else if (i >= baseIndex) {
+		} else if (i >= targetCommitIndex) {
 			break;
 		}
 	}
 
+	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
+	const newBase = targetPath[newBaseIndex];
 	// Figure out how much of the trunk to start rebasing over.
 	const targetRebasePath = targetPath.slice(0, newBaseIndex + 1);
-	const newSourceCommits: GraphCommit<TChange>[] = [...targetRebasePath];
-	const newBase = targetPath[newBaseIndex];
-	// Early out if the source branch's commits and the commits it is being rebased over are equivalent,
-	// i.e. they have exactly the same revision tags in the same order.
-	if (sourceSet.size === 0 && sourcePath.length === targetRebasePath.length) {
+	const deletedSourceCommits = [...sourcePath];
+	const newSourceCommits = [...targetRebasePath];
+
+	// If the source and target rebase path begin with a range that has all the same revisions, remove it; it is
+	// equivalent on both branches and doesn't need to be rebased.
+	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
+	for (let i = 0; i < minLength; i++) {
+		if (sourcePath[0].revision === targetRebasePath[0].revision) {
+			sourcePath.shift();
+			targetRebasePath.shift();
+		}
+	}
+
+	// If all commits that are about to be rebased over on the target branch already comprise the start of the source branch,
+	// are in the same order, and have no other commits interleaving them, then no rebasing needs to occur. Those commits can
+	// simply be removed from the source branch, and the remaining commits on the source branch are reparented off of the new
+	// base commit.
+	if (targetRebasePath.length === 0) {
+		for (const c of sourcePath) {
+			newSourceCommits.push(
+				mintCommit(newSourceCommits[newSourceCommits.length - 1] ?? newBase, c),
+			);
+		}
 		return [
-			newBase,
+			newSourceCommits[newSourceCommits.length - 1],
 			undefined,
 			{
 				newBase,
-				deletedSourceCommits: sourcePath,
+				deletedSourceCommits,
 				newSourceCommits,
 			},
 		];
 	}
 
-	let newHead = newBase;
-
 	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
 	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
+	let newHead = newBase;
 	const inverses: TaggedChange<TChange>[] = [];
 	for (const c of sourcePath) {
 		if (sourceSet.has(c.revision)) {
@@ -214,7 +233,7 @@ export function rebaseBranch<TChange>(
 		changeRebaser.compose([...inverses, ...targetRebasePath]),
 		{
 			newBase,
-			deletedSourceCommits: sourcePath,
+			deletedSourceCommits,
 			newSourceCommits,
 		},
 	];
