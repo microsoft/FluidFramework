@@ -99,6 +99,9 @@
 		"broken": {
 			"ClassDeclaration_LocalOrderer": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ILocalOrdererSetup": {
+				"forwardCompat": false
 			}
 		}
 	}
