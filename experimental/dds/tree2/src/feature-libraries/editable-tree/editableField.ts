@@ -210,7 +210,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 				: this;
 
-		assertValidIndex(destinationIndex, { length: this.length });
+		assertValidIndex(destinationIndex, destinationFieldProxy, true);
 
 		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
 

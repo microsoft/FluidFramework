@@ -233,7 +233,7 @@ export function isJsonObject(
 
 export function assertValidIndex(
 	index: number,
-	array: { length: number },
+	array: { readonly length: number },
 	allowOnePastEnd: boolean = false,
 ) {
 	assert(Number.isInteger(index), 0x376 /* index must be an integer */);

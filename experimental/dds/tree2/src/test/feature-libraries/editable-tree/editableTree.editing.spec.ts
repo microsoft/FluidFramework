@@ -383,7 +383,7 @@ describe("editable-tree: editing", () => {
 		trees[0].context.free();
 	});
 
-	describe.only(`can move nodes`, () => {
+	describe(`can move nodes`, () => {
 		it("to the left within the same field", () => {
 			const [provider, trees] = createSharedTrees(
 				getTestSchema(FieldKinds.sequence),
