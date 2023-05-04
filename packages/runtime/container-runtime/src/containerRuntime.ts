@@ -763,8 +763,7 @@ export class ContainerRuntime
 			idCompressor =
 				serializedIdCompressor !== undefined
 					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: // TODO: Pass in logger
-					  new IdCompressor(createSessionId());
+					: new IdCompressor(createSessionId(), logger);
 		}
 
 		const runtime = new containerRuntimeCtor(
