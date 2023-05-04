@@ -44,7 +44,7 @@ jobs:
       - run: git log -1
         if: github.repository_owner != 'microsoft'
 
-      # Check whether a changeset was added. This step will have the outcome 'failure' if there is no changeset.
+      # Check whether a changeset was added. This step will have the outcome '1' if there is no changeset.
       - id: changeset-status
         name: Changeset status
         run: |
