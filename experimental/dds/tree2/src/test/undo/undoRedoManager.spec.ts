@@ -119,7 +119,7 @@ describe("UndoRedoManager", () => {
 			assert.deepEqual(undoChange, invertedTestChange);
 		});
 
-		it("should return undefined if there is no head undoble commit", () => {
+		it("should return undefined if there is no head undoable commit", () => {
 			const manager = undoRedoManagerFactory();
 			const undoChange = manager.undo();
 
