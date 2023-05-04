@@ -47,9 +47,9 @@ export type FlexListToNonLazyArray<List extends FlexList> = List extends readonl
 /**
  * Normalize FlexList type to a lazy array.
  */
-export type FlexListToLazyArray<List extends FlexList> = List extends readonly [
-	infer Head,
-	...infer Tail,
-]
+export type FlexListToLazyArray<List extends FlexList> = number extends List["length"]
+	? // Handle non compile time constant case
+	  NormalizedLazyFlexList<List extends FlexList<infer Item> ? Item : unknown>
+	: List extends readonly [infer Head, ...infer Tail]
 	? [NormalizeLazyItem<Head>, ...FlexListToLazyArray<Tail>]
 	: [];

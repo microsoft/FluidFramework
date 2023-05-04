@@ -60,7 +60,6 @@ export class TreeSchema<
 		Assume<T, TreeSchemaSpecification>["local"]
 	>;
 
-	public readonly globalFields!: ReadonlySet<GlobalFieldKey>;
 	public readonly extraLocalFields: FieldSchema;
 	public readonly extraGlobalFields: boolean;
 	public readonly value: WithDefault<
@@ -85,6 +84,17 @@ export class TreeSchema<
 			Assume<T, TreeSchemaSpecification>["value"],
 			ValueSchema.Nothing
 		>;
+	}
+
+	// TODO: determine if this needs to be lazy. If not, remove flex list and initialize in constructor.
+	// If this does need to be lazy, maybe cache result?
+	public get globalFields(): ReadonlySet<GlobalFieldKey> {
+		if (this.info.global === undefined) {
+			return new Set();
+		}
+		const normalized = normalizeFlexList(this.info.global);
+		const mapped = normalized.map((f) => f().key);
+		return new Set(mapped);
 	}
 
 	public downCast(tree: UntypedTreeCore): tree is TypedTree<T> {
@@ -129,7 +139,7 @@ function normalizeLocalFields<T extends LocalFields | undefined>(
 
 function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField<T> {
 	if (t === undefined) {
-		return new FieldSchema(forbidden, []) as unknown as NormalizeField<T>;
+		return emptyField as unknown as NormalizeField<T>;
 	}
 
 	assert(t instanceof FieldSchema, "invalid FieldSchema");

@@ -172,7 +172,7 @@ export function validateField(
 				errors.push(`${describeField()} references type "${type}" which is not defined`);
 			}
 		}
-		if (types.values.length === 0) {
+		if (types.size === 0) {
 			errors.push(
 				`${describeField()} requires children to have a type from a set of zero types. This means the field must always be empty.`,
 			);

@@ -235,7 +235,7 @@ export class SchemaBuilder {
 		this.finalize();
 		const rootField = new GlobalFieldSchema(this, rootFieldKey, root);
 		const rootLibrary: SchemaLibrary = {
-			name: "Root Field",
+			name: this.name,
 			globalFieldSchema: new Map<GlobalFieldKey, GlobalFieldSchema>([
 				[rootField.key, rootField],
 			]),
