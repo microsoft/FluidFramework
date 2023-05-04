@@ -404,16 +404,16 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	private createEmptyDetachedField(): FieldKey {
 		const detached: DetachedField = brand(String(this.nextRange++));
 		const key = detachedFieldAsKey(detached);
-		assert(!this.root.children.has(key), 0x370 /* new range must not already exist */);
+		assert(!this.root.children.has(key), "new range must not already exist");
 		this.root.children.set(key, []);
 		return key;
 	}
 
 	/**
-	 * Decouple nodes from their parent. This method doesn't place the nodes anywhere,
-	 * so if the intention is:
-	 * 1) to remove the nodes call `removeChildren`.
-	 * 2) to move the nodes call `moveChildren`.
+	 * Decouple nodes from their parent.
+	 * This removes the reference from the parent to the decoupled children, and updates the indexes of the remaining children accordingly.
+	 * This does NOT update the decoupled children: both their index and parent are left at their existing values.
+	 * To decouple and fixup the children, see `removeChildren` and `moveChildren`.
 	 * @param startPath - The path to the first node that is being decoupled.
 	 * @param count - number of siblings that are decoupled from the original tree.
 	 *
@@ -422,38 +422,38 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	private decoupleNodes(startPath: UpPath, count: number): PathNode[] {
 		assert(count > 0, "count must be positive");
 
-		const srcParent = this.find(startPath.parent ?? this.root);
-		const srcChildren = srcParent?.children?.get(startPath.parentField);
+		const sourceParent = this.find(startPath.parent ?? this.root);
+		const sourceChildren = sourceParent?.children?.get(startPath.parentField);
 		let nodes: PathNode[] = [];
 
-		if (srcChildren !== undefined) {
+		if (sourceChildren !== undefined) {
 			let numberBeforeDecouple = 0;
 			let numberToDecouple = 0;
 			let index = 0;
 			while (
-				index < srcChildren.length &&
-				srcChildren[index].parentIndex < startPath.parentIndex
+				index < sourceChildren.length &&
+				sourceChildren[index].parentIndex < startPath.parentIndex
 			) {
 				numberBeforeDecouple++;
 				index++;
 			}
 			while (
-				index < srcChildren.length &&
-				srcChildren[index].parentIndex < startPath.parentIndex + count
+				index < sourceChildren.length &&
+				sourceChildren[index].parentIndex < startPath.parentIndex + count
 			) {
 				numberToDecouple++;
 				index++;
 			}
-			while (index < srcChildren.length) {
-				// Fix indexes in src after moved items (subtract count).
-				srcChildren[index].parentIndex -= count;
+			while (index < sourceChildren.length) {
+				// Fix indexes in source after moved items (subtract count).
+				sourceChildren[index].parentIndex -= count;
 				index++;
 			}
 			// Sever the parent -> child connections
-			nodes = srcChildren.splice(numberBeforeDecouple, numberToDecouple);
-			if (srcChildren.length === 0) {
+			nodes = sourceChildren.splice(numberBeforeDecouple, numberToDecouple);
+			if (sourceChildren.length === 0) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				srcParent!.afterEmptyField(startPath.parentField);
+				sourceParent!.afterEmptyField(startPath.parentField);
 			}
 		}
 
@@ -462,42 +462,42 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 
 	/**
 	 * Couple nodes to a parent.
-	 * @param dst - where the siblings are coupled to.
+	 * @param destination - where the siblings are coupled to.
 	 * @param count - number of siblings that are coupled in the original tree.
 	 * @param coupleInfo - this object contains the nodes to couple and the parent index of the first node that is coupled in the original tree.
 	 *
 	 * TODO: tests
 	 */
 	private coupleNodes(
-		dst: UpPath,
+		destination: UpPath,
 		count: number,
 		coupleInfo: { startParentIndex: number; nodes: PathNode[] },
 	): void {
 		assert(coupleInfo.nodes.length > 0, "coupleInfo must have nodes to couple");
 
 		// The destination needs to be created if it does not exist yet.
-		const dstPath = this.trackInner(dst.parent ?? this.root);
+		const destinationPath = this.trackInner(destination.parent ?? this.root);
 
 		// Update nodes for new parent.
 		for (const node of coupleInfo.nodes) {
-			node.parentIndex += dst.parentIndex - coupleInfo.startParentIndex;
-			node.parentPath = dstPath;
-			node.parentField = dst.parentField;
+			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
+			node.parentPath = destinationPath;
+			node.parentField = destination.parentField;
 		}
 
 		// Update new parent to add children
-		const field = dstPath.children.get(dst.parentField);
+		const field = destinationPath.children.get(destination.parentField);
 		if (field === undefined) {
-			dstPath.children.set(dst.parentField, coupleInfo.nodes);
+			destinationPath.children.set(destination.parentField, coupleInfo.nodes);
 		} else {
 			// Update existing field contents
-			const numberBeforeCouple = this.increaseParentIndexes(field, dst.parentIndex, count);
+			const numberBeforeCouple = this.increaseParentIndexes(field, destination.parentIndex, count);
 
 			// TODO: this will fail for very large numbers of anchors due to argument limits.
 			field.splice(numberBeforeCouple, 0, ...coupleInfo.nodes);
 		}
 
-		dstPath.removeRef();
+		destinationPath.removeRef();
 	}
 
 	/**
@@ -531,8 +531,8 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 
 	/**
 	 * Updates paths for a range move (including re-parenting path items and updating indexes).
-	 * @param srcStart - where the siblings are removed from.
-	 * @param dst - where the siblings are moved to.
+	 * @param sourceStart - where the siblings are removed from.
+	 * @param destination - where the siblings are moved to.
 	 * @param count - number of siblings to move.
 	 *
 	 * TODO:
@@ -546,17 +546,17 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	 *
 	 * TODO: tests
 	 */
-	private moveChildren(srcStart: UpPath, dst: UpPath, count: number): void {
-		const nodes = this.decoupleNodes(srcStart, count);
+	private moveChildren(sourceStart: UpPath, destination: UpPath, count: number): void {
+		const nodes = this.decoupleNodes(sourceStart, count);
 		if (nodes.length > 0) {
-			this.coupleNodes(dst, count, {
-				startParentIndex: srcStart.parentIndex,
+			this.coupleNodes(destination, count, {
+				startParentIndex: sourceStart.parentIndex,
 				nodes,
 			});
 		} else {
 			// If there are no nodes to move, we still need to update the parent indexes of the nodes
 			// affected in the move in.
-			this.offsetChildren(dst, count);
+			this.offsetChildren(destination, count);
 		}
 	}
 
@@ -565,11 +565,17 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 		this.deepDelete(nodes);
 	}
 
-	private offsetChildren(path: UpPath, count: number) {
-		const nodePath = this.find(path.parent ?? this.root);
-		const field = nodePath?.children.get(path.parentField);
+	/**
+	 * Updates the parent indexes of all the nodes located at right side of the given path by the given offset.
+	 * @param firstSiblingToOffset - the path to offset children of.
+	 * @param offset - the offset to apply to the children.
+	 *
+	 */
+	private offsetChildren(firstSiblingToOffset: UpPath, offset: number) {
+		const nodePath = this.find(firstSiblingToOffset.parent ?? this.root);
+		const field = nodePath?.children.get(firstSiblingToOffset.parentField);
 		if (field !== undefined) {
-			this.increaseParentIndexes(field, path.parentIndex, count);
+			this.increaseParentIndexes(field, firstSiblingToOffset.parentIndex, offset);
 		}
 	}
 
@@ -669,10 +675,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				);
 
 				const fieldKey = this.createEmptyDetachedField();
-				const src = { parent, parentField, parentIndex: start };
-				const dst = { parent: this.root, parentField: fieldKey, parentIndex: 0 };
-				this.moveChildren(src, dst, count);
-				moveTable.set(id, dst);
+				const source = { parent, parentField, parentIndex: start };
+				const destination = { parent: this.root, parentField: fieldKey, parentIndex: 0 };
+				this.moveChildren(source, destination, count);
+				moveTable.set(id, destination);
 			},
 			onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
 				assert(parentField !== undefined, 0x3aa /* Must be in a field to move in */);
@@ -680,10 +686,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 					(p) => p.events.emit("childrenChanging", p),
 					() => this.events.emit("childrenChanging", this),
 				);
-				const srcPath =
+				const sourcePath =
 					moveTable.get(id) ?? fail("Must visit a move in after its move out");
 				moveTable.delete(id);
-				this.moveChildren(srcPath, { parent, parentField, parentIndex: start }, count);
+				this.moveChildren(sourcePath, { parent, parentField, parentIndex: start }, count);
 			},
 			onSetValue: (value: Value): void => {
 				maybeWithNode((p) => {
