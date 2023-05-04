@@ -36,7 +36,6 @@ import {
 	tagChange,
 	TaggedChange,
 	UndoRedoManager,
-	UndoRedoManagerCommitType,
 } from "../core";
 import { SharedTreeBranch } from ".";
 
@@ -86,12 +85,6 @@ export class EditManager<
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
 	 */
 	private localBranch: GraphCommit<TChangeset>;
-
-	/**
-	 * A map of local commit revisions to their undo redo manager commit types. This is stored so that
-	 * the trunk undo redo manager can properly track commits when they become sequenced.
-	 */
-	private readonly localCommitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>();
 
 	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence number of a commit on
@@ -447,10 +440,8 @@ export class EditManager<
 		revision: RevisionTag,
 		change: TChangeset,
 		rebaseAnchors = true,
-		undoRedoType = UndoRedoManagerCommitType.Undoable,
 	): Delta.Root {
 		this.pushToLocalBranch(revision, change);
-		this.localCommitTypes.set(revision, undoRedoType);
 
 		if (rebaseAnchors && this.anchors !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
@@ -468,10 +459,10 @@ export class EditManager<
 		const [squashStart, commits] = this.findLocalCommit(startRevision);
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
-		const anonymousCommits = commits.map(({ change, revision }) => {
-			this.localCommitTypes.delete(revision);
-			return { change, revision: undefined };
-		});
+		const anonymousCommits = commits.map(({ change, revision }) => ({
+			change,
+			revision: undefined,
+		}));
 
 		{
 			const change = this.changeFamily.rebaser.compose(anonymousCommits);
@@ -481,8 +472,6 @@ export class EditManager<
 				sessionId: this.localSessionId,
 				change,
 			});
-			// A completed transaction is always undoable.
-			this.localCommitTypes.set(revision, UndoRedoManagerCommitType.Undoable);
 			return this.localBranch;
 		}
 	}
@@ -536,9 +525,9 @@ export class EditManager<
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
 		if (local) {
 			const type =
-				this.localCommitTypes.get(this.trunk.revision) ??
+				this.localBranchUndoRedoManager.commitTypes.get(this.trunk.revision) ??
 				fail("Local commit types must be tracked until they are sequenced.");
-			this.localCommitTypes.delete(this.trunk.revision);
+			this.localBranchUndoRedoManager.commitTypes.delete(this.trunk.revision);
 			this.trunkUndoRedoManager.trackCommit(this.trunk, type);
 		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(

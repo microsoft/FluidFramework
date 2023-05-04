@@ -37,7 +37,6 @@ import {
 	UndoRedoManager,
 	IRepairDataStoreProvider,
 	UndoRedoManagerCommitType,
-	markCommits,
 	rebaseBranch,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
@@ -266,7 +265,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		revision: RevisionTag,
 		undoRedoType: UndoRedoManagerCommitType | undefined,
 	): GraphCommit<TChange> {
-		const [commit, delta] = this.addLocalChange(change, revision, undoRedoType);
+		const [commit, delta] = this.addLocalChange(change, revision);
 
 		// submitCommit should not be called for stashed ops so this is kept separate from
 		// addLocalChange
@@ -285,17 +284,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param revision - The revision to associate with the change.
 	 * @returns the commit and the delta resulting from applying `change`
 	 */
-	private addLocalChange(
-		change: TChange,
-		revision: RevisionTag,
-		undoRedoType: UndoRedoManagerCommitType | undefined,
-	): [Commit<TChange>, Delta.Root] {
+	private addLocalChange(change: TChange, revision: RevisionTag): [Commit<TChange>, Delta.Root] {
 		const commit: Commit<TChange> = {
 			change,
 			revision,
 			sessionId: this.editManager.localSessionId,
 		};
-		const delta = this.editManager.addLocalChange(revision, change, false, undoRedoType);
+		const delta = this.editManager.addLocalChange(revision, change, false);
 		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
 		return [commit, delta];
 	}
@@ -431,17 +426,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localBranchHead = this.editManager.getLocalBranchHead();
 		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
 		if (ancestor === localBranchHead) {
-			const markedCommits = markCommits(
-				commits,
-				branch.undoRedoManager.headUndoable,
-				branch.undoRedoManager.headRedoable,
-			);
-			for (const {
-				commit: { change, revision },
-				undoRedoManagerCommitType,
-			} of markedCommits) {
+			for (const { change, revision } of commits) {
+				const type = branch.undoRedoManager.commitTypes.get(revision);
 				// Only track commits that are undoable.
-				this.applyChange(change, revision, undoRedoManagerCommitType);
+				if (type !== undefined) {
+					this.applyChange(change, revision, type);
+				}
 			}
 		} else {
 			const [newHead] = rebaseBranch(
@@ -493,11 +483,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
 		const { revision, change } = parseCommit(content, this.changeCodec);
-		const [commit, delta] = this.addLocalChange(
-			change,
-			revision,
-			UndoRedoManagerCommitType.Undoable,
-		);
+		const [commit, delta] = this.addLocalChange(change, revision);
 		this.editManager.localBranchUndoRedoManager.trackCommit(
 			commit,
 			UndoRedoManagerCommitType.Undoable,

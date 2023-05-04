@@ -717,14 +717,4 @@ describe("SequenceField - Rebase", () => {
 		normalizeMoveIds(actual);
 		assert.deepEqual(actual, ret2);
 	});
-
-	// TODO
-	it.skip("delete ↷ insert + delete", () => {
-		const addC = tagChange(Change.insert(0, 1), tag1);
-		const delB = tagChange(Change.delete(2, 1), tag2);
-		const delA = tagChange(Change.delete(1, 1), tag3);
-		const delA2 = rebaseTagged(delA, addC);
-		const delA3 = rebaseTagged(delA2, delB);
-		assert.deepEqual(delA3, delA);
-	});
 });

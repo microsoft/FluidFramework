@@ -180,9 +180,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
 
-export {
-	IRepairDataStoreProvider,
-	UndoRedoManager,
-	UndoRedoManagerCommitType,
-	markCommits,
-} from "./undo";
+export { IRepairDataStoreProvider, UndoRedoManager, UndoRedoManagerCommitType } from "./undo";
