@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrationTool } from "@fluid-example/example-utils";
+import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import {
-	MigrationToolInstantiationFactory,
+	SameContainerMigrationToolInstantiationFactory,
 	ModelContainerRuntimeFactory,
 } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
@@ -28,7 +28,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		super(
 			new Map([
 				InventoryListInstantiationFactory.registryEntry,
-				MigrationToolInstantiationFactory.registryEntry,
+				SameContainerMigrationToolInstantiationFactory.registryEntry,
 			]), // registryEntries
 			testMode
 				? {
@@ -46,7 +46,9 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
 		const inventoryList = await runtime.createDataStore(InventoryListInstantiationFactory.type);
 		await inventoryList.trySetAlias(inventoryListId);
-		const migrationTool = await runtime.createDataStore(MigrationToolInstantiationFactory.type);
+		const migrationTool = await runtime.createDataStore(
+			SameContainerMigrationToolInstantiationFactory.type,
+		);
 		await migrationTool.trySetAlias(migrationToolId);
 	}
 
@@ -69,7 +71,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			await runtime.getRootDataStore(inventoryListId),
 			"",
 		);
-		const migrationTool = await requestFluidObject<IMigrationTool>(
+		const migrationTool = await requestFluidObject<ISameContainerMigrationTool>(
 			await runtime.getRootDataStore(migrationToolId),
 			"",
 		);
