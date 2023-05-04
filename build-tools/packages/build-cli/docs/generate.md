@@ -58,24 +58,17 @@ DESCRIPTION
 
 ## `flub generate changeset`
 
-Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.
+Generates a new changeset file.
 
 ```
 USAGE
-  $ flub generate changeset -b <value> [-v]
+  $ flub generate changeset [-v] [-b <value>] [--empty]
 
 FLAGS
-  -b, --branch=<value>  (required) The branch to compare against.
+  -b, --branch=<value>  [default: main] The branch to compare against. This is used to populate the list of changed
+                        packages.
   -v, --verbose         Verbose logging.
-
-EXAMPLES
-  Check if a changeset was added when compared to the 'main' branch.
-
-    $ flub generate changeset -b main
-
-  Check if a changeset was added when compared to the 'next' branch.
-
-    $ flub generate changeset -b next
+  --empty               Create an empty changeset file.
 ```
 
 ## `flub generate packageJson`

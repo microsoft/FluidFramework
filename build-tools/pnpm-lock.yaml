@@ -104,6 +104,7 @@ importers:
       globby: ^11
       human-id: ^4.0.0
       inquirer: ^8.0.0
+      inquirer-checkbox-plus-prompt: ^1.4.2
       inquirer-table-prompt: ^0.2.1
       jssm: ^5.79.18
       jssm-viz-cli: ^5.83.0
@@ -149,6 +150,7 @@ importers:
       fs-extra: 9.1.0
       human-id: 4.0.0
       inquirer: 8.2.4
+      inquirer-checkbox-plus-prompt: 1.4.2_inquirer@8.2.4
       inquirer-table-prompt: 0.2.1
       jssm: 5.85.11
       jssm-viz-cli: 5.85.11
@@ -7290,6 +7292,19 @@ packages:
       validate-npm-package-license: 3.0.4
       validate-npm-package-name: 4.0.0
     dev: true
+
+  /inquirer-checkbox-plus-prompt/1.4.2_inquirer@8.2.4:
+    resolution: {integrity: sha512-W8/NL9x5A81Oq9ZfbYW5c1LuwtAhc/oB/u9YZZejna0pqrajj27XhnUHygJV0Vn5TvcDy1VJcD2Ld9kTk40dvg==}
+    peerDependencies:
+      inquirer: < 9.x
+    dependencies:
+      chalk: 4.1.2
+      cli-cursor: 3.1.0
+      figures: 3.2.0
+      inquirer: 8.2.4
+      lodash: 4.17.21
+      rxjs: 6.6.7
+    dev: false
 
   /inquirer-table-prompt/0.2.1:
     resolution: {integrity: sha512-0nc7X2L/8Ek4V//v+uYMatWZRzM7UvWkpExdAf+v+/+WQPeLyiWyVoOEc7GjHVW96TG0Fv3IoqHZGpcN/2eHsQ==}
