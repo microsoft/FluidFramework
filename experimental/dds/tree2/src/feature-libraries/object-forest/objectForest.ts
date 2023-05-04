@@ -37,6 +37,7 @@ import { brand, fail } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { createEmitter } from "../../events";
+import { assertValidIndex } from "../../util/utils";
 
 function makeRoot(): MapTree {
 	return {
@@ -274,16 +275,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		}
 
 		return;
-	}
-}
-
-function assertValidIndex(index: number, array: unknown[], allowOnePastEnd: boolean = false) {
-	assert(Number.isInteger(index), 0x376 /* index must be an integer */);
-	assert(index >= 0, 0x377 /* index must be non-negative */);
-	if (allowOnePastEnd) {
-		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
-	} else {
-		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
 }
 

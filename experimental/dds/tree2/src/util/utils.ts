@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import structuredClone from "@ungap/structured-clone";
 
 /**
@@ -217,4 +218,18 @@ export function isJsonObject(
 	value: JsonCompatibleReadOnly,
 ): value is { readonly [P in string]?: JsonCompatibleReadOnly } {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function assertValidIndex(
+	index: number,
+	array: { length: number },
+	allowOnePastEnd: boolean = false,
+) {
+	assert(Number.isInteger(index), 0x376 /* index must be an integer */);
+	assert(index >= 0, 0x377 /* index must be non-negative */);
+	if (allowOnePastEnd) {
+		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
+	} else {
+		assert(index < array.length, 0x379 /* index must be less than length */);
+	}
 }

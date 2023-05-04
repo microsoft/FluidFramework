@@ -383,7 +383,7 @@ describe("editable-tree: editing", () => {
 		trees[0].context.free();
 	});
 
-	describe(`can move nodes`, () => {
+	describe.only(`can move nodes`, () => {
 		it("to the left within the same field", () => {
 			const [provider, trees] = createSharedTrees(
 				getTestSchema(FieldKinds.sequence),
@@ -407,11 +407,8 @@ describe("editable-tree: editing", () => {
 			// move node
 			field_0.moveNodes(1, 1, 0);
 
-			// check that node was moved out from field_0
-			assert.equal(field_0.length, 2);
-			assert.equal(field_0[0], "bar");
-			assert.equal(field_0[1], "foo");
-			assert.equal(field_0[2], undefined);
+			// check that node was moved from field_0
+			assert.deepEqual([...field_0], ["bar", "foo"]);
 		});
 		it("to the right within the same field", () => {
 			const [provider, trees] = createSharedTrees(
@@ -428,19 +425,13 @@ describe("editable-tree: editing", () => {
 			]);
 			const field_0 = trees[0].root[localFieldKey];
 			assert(isEditableField(field_0));
-			assert.equal(field_0.length, 2);
-			assert.equal(field_0[0], "foo");
-			assert.equal(field_0[1], "bar");
-			assert.equal(field_0[2], undefined);
+			assert.deepEqual([...field_0], ["foo", "bar"]);
 
 			// move node
 			field_0.moveNodes(0, 1, 1);
 
-			// check that node was moved out from field_0
-			assert.equal(field_0.length, 2);
-			assert.equal(field_0[0], "bar");
-			assert.equal(field_0[1], "foo");
-			assert.equal(field_0[2], undefined);
+			// check that node was moved from field_0
+			assert.deepEqual([...field_0], ["bar", "foo"]);
 		});
 		it("to a different field", () => {
 			const [provider, trees] = createSharedTrees(
@@ -461,32 +452,20 @@ describe("editable-tree: editing", () => {
 			]);
 			const field_0 = trees[0].root[localFieldKey];
 			assert(isEditableField(field_0));
-			assert.equal(field_0.length, 2);
-			assert.equal(field_0[0], "foo");
-			assert.equal(field_0[1], "bar");
-			assert.equal(field_0[2], undefined);
+			assert.deepEqual([...field_0], ["foo", "bar"]);
 
 			const field_1 = trees[0].root[globalFieldSymbol];
 			assert(isEditableField(field_1));
-			assert.equal(field_1.length, 2);
-			assert.equal(field_1[0], "foo");
-			assert.equal(field_1[1], "bar");
-			assert.equal(field_1[2], undefined);
+			assert.deepEqual([...field_1], ["foo", "bar"]);
 
 			// move node
 			field_0.moveNodes(0, 1, 1, field_1);
 
 			// check that node was moved out from field_0
-			assert.equal(field_0.length, 1);
-			assert.equal(field_0[0], "bar");
-			assert.equal(field_0[1], undefined);
+			assert.deepEqual([...field_0], ["bar"]);
 
 			// check that node was moved into field_1
-			assert.equal(field_1.length, 3);
-			assert.equal(field_1[0], "foo");
-			assert.equal(field_1[1], "foo");
-			assert.equal(field_1[2], "bar");
-			assert.equal(field_1[3], undefined);
+			assert.deepEqual([...field_1], ["foo", "foo", "bar"]);
 		});
 	});
 

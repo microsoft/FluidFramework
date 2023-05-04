@@ -31,6 +31,7 @@ import {
 	cursorFromContextualData,
 } from "../contextuallyTyped";
 import { sequence } from "../defaultFieldKinds";
+import { assertValidIndex } from "../../util/utils";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -209,11 +210,8 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 				: this;
 
-		assert(
-			destinationFieldProxy === undefined ||
-				keyIsValidIndex(destinationIndex, this.length + 1),
-			"Index must be less than or equal to length.",
-		);
+		assertValidIndex(destinationIndex, { length: this.length });
+
 		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
 
 		this.context.moveNodes(
