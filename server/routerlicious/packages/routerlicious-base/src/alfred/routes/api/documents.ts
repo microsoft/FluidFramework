@@ -95,8 +95,8 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
+        throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
 				getParam(request.params, "tenantId") || appTenants[0].id,
@@ -122,12 +122,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		verifyStorageToken(tenantManager, config, tokenManager, {
-			requireDocumentId: false,
-			ensureSingleUseToken: true,
-			singleUseTokenCache,
-		}),
-		throttle(
+        throttle(
 			throttlersMap
 				.get(Constants.throttleGeneralCluster)
 				.get(Constants.createDocThrottleIdPrefix),
@@ -135,6 +130,11 @@ export function create(
 			createDocClusterThrottleOptions,
 		),
 		tenantThrottle(Constants.createDocThrottleIdPrefix),
+		verifyStorageToken(tenantManager, config, tokenManager, {
+			requireDocumentId: false,
+			ensureSingleUseToken: true,
+			singleUseTokenCache,
+		}),
 		async (request, response, next) => {
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
@@ -214,8 +214,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		verifyStorageToken(tenantManager, config, tokenManager),
-		throttle(
+        throttle(
 			throttlersMap
 				.get(Constants.throttleGeneralCluster)
 				.get(Constants.getSessionThrottleIdPrefix),
@@ -223,6 +222,7 @@ export function create(
 			getSessionClusterThrottleOptions,
 		),
 		tenantThrottle(Constants.getSessionThrottleIdPrefix),
+		verifyStorageToken(tenantManager, config, tokenManager),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -246,8 +246,8 @@ export function create(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
 		validateTokenRevocationClaims(),
+        throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
