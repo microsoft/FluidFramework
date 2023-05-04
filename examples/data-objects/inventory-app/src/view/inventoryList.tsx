@@ -22,9 +22,10 @@ export const MainView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
 				count={part.quantity}
 				onDecrement={() => part.quantity--}
 				onIncrement={() => part.quantity++}
-			></Counter>);
+			></Counter>,
+		);
 	}
-	
+
 	return (
 		<div>
 			<h1>Inventory:</h1>
