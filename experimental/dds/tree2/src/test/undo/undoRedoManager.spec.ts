@@ -158,9 +158,9 @@ function undoRedoManagerFactory(
 		new MockRepairDataStoreProvider(),
 		testChangeFamilyFactory(rebaser),
 		undefined,
-		undefined,
 		headUndoableCommit,
 		headRedoableCommit,
+		undefined,
 	);
 }
 

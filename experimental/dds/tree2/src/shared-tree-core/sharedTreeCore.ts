@@ -427,7 +427,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
 		if (ancestor === localBranchHead) {
 			for (const { change, revision } of commits) {
-				const type = branch.undoRedoManager.commitTypes.get(revision);
+				const type = branch.undoRedoManager.getCommitType(revision);
 				// Only track commits that are undoable.
 				if (type !== undefined) {
 					this.applyChange(change, revision, type);

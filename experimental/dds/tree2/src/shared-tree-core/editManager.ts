@@ -525,9 +525,9 @@ export class EditManager<
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
 		if (local) {
 			const type =
-				this.localBranchUndoRedoManager.commitTypes.get(this.trunk.revision) ??
+				this.localBranchUndoRedoManager.getCommitType(this.trunk.revision) ??
 				fail("Local commit types must be tracked until they are sequenced.");
-			this.localBranchUndoRedoManager.commitTypes.delete(this.trunk.revision);
+			this.localBranchUndoRedoManager.untrackCommitType(this.trunk.revision);
 			this.trunkUndoRedoManager.trackCommit(this.trunk, type);
 		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(

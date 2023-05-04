@@ -17,18 +17,19 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * @param repairDataStoryFactory - Factory for creating {@link RepairDataStore}s to create and store repair
 	 * data for {@link ReversibleCommit}s.
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
-	 * @param commitTypes - A map from revision to commit types for commits tracked by this undo redo manager.
 	 * @param getHead - Function for retrieving the head commit of the branch associated with this undo redo manager.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
 	 * @param headRedoableCommit - Optional commit to set as the initial redoable commit.
+	 * @param commitTypes - Optional map from revision to commit types for commits tracked by this undo redo manager.
+	 * If one is not provided, it will be created. This map is shared between this undo redo manager and all of its clones.
 	 */
 	public constructor(
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly getHead?: () => GraphCommit<TChange>,
-		public readonly commitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>(),
 		private headUndoableCommit?: ReversibleCommit<TChange>,
 		private headRedoableCommit?: ReversibleCommit<TChange>,
+		private readonly commitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>(),
 	) {}
 
 	public get headUndoable(): ReversibleCommit<TChange> | undefined {
@@ -78,6 +79,20 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			default:
 				unreachableCase(type);
 		}
+	}
+
+	/**
+	 * Returns the {@link UndoRedoManagerCommitType} associated with the provided revision.
+	 */
+	public getCommitType(revision: RevisionTag): UndoRedoManagerCommitType | undefined {
+		return this.commitTypes.get(revision);
+	}
+
+	/**
+	 * Removes the {@link UndoRedoManagerCommitType} associated with the provided revision.
+	 */
+	public untrackCommitType(revision: RevisionTag): void {
+		this.commitTypes.delete(revision);
 	}
 
 	/**
@@ -158,9 +173,9 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
 			this.changeFamily,
 			getHead ?? this.getHead,
-			this.commitTypes,
 			headUndoableCommit ?? this.headUndoableCommit,
 			headRedoableCommit ?? this.headRedoableCommit,
+			this.commitTypes,
 		);
 	}
 
