@@ -1,13 +1,13 @@
 {
 	"name": "@fluid-internal/readme-command",
-	"version": "0.16.0",
+	"version": "0.17.0",
 	"private": true,
 	"description": "CLI to generate readmes for Fluid build-tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "build-tools/packages/build-cli"
+		"directory": "build-tools/packages/readme-command"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -15,7 +15,7 @@
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
 	"bin": {
-		"flub": "./bin/run"
+		"fluid-readme": "./bin/run"
 	},
 	"files": [
 		"/bin",
