@@ -33,7 +33,7 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 	): Promise<IDocumentService> {
 		if (createNewSummary !== undefined) {
 			DocumentStorageServiceCompressionAdapter.compressSummary(
-				createNewSummary,
+				createNewSummary.tree[".app"] as ISummaryTree,
 				this._config,
 			);
 		}

@@ -39,7 +39,7 @@ import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
-// @public (undocumented)
+// @public
 export function applyStorageCompression(documentServiceFactory: IDocumentServiceFactory, config?: ICompressionStorageConfig | boolean): IDocumentServiceFactory;
 
 // @public (undocumented)
