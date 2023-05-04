@@ -20,7 +20,6 @@ import { InternalTypes } from "../../schema-aware";
 import { buildViewSchemaCollection } from "./buildViewSchemaCollection";
 import {
 	AllowedTypes,
-	LazyTreeSchema,
 	TreeSchema,
 	TreeSchemaSpecification,
 	GlobalFieldSchema,
@@ -86,7 +85,10 @@ export class SchemaBuilder {
 		name: Name,
 		t: T,
 	): TreeSchema<Name, T> {
-		return new TreeSchema(this, name, t);
+		const schema = new TreeSchema(this, name, t);
+		assert(!this.treeSchema.has(schema.name), "Conflicting TreeSchema names");
+		this.treeSchema.set(schema.name, schema as TreeSchema);
+		return schema;
 	}
 
 	/**
@@ -99,9 +101,7 @@ export class SchemaBuilder {
 		name: Name,
 		t: T,
 	): TreeSchema<Name, T> {
-		const schema = new TreeSchema(this, name, t);
-		this.treeSchema.set(schema.name, schema as TreeSchema);
-		return schema;
+		return this.object(name, t as TreeSchemaSpecification) as TreeSchema<Name, T>;
 	}
 
 	/**
@@ -124,7 +124,10 @@ export class SchemaBuilder {
 		name: string,
 		t: FieldSchema<Kind, Types>,
 	): GlobalFieldSchema<Kind, Types> {
-		return new GlobalFieldSchema(this, brand(name), t);
+		const schema = new GlobalFieldSchema(this, brand(name), t);
+		assert(!this.globalFieldSchema.has(schema.key), "Conflicting global field keys");
+		this.globalFieldSchema.set(schema.key, schema);
+		return schema;
 	}
 
 	/**
@@ -194,15 +197,6 @@ export class SchemaBuilder {
 		...allowedTypes: T
 	): FieldSchema<Kind, T> {
 		return new FieldSchema(kind, allowedTypes);
-	}
-
-	/**
-	 * Constructs AllowedTypes for use in a field from a collection of types.
-	 * This helper is the same as manually constructing the array of types,
-	 * but avoids the need to put "as const" after it to avoid losing type information.
-	 */
-	public static union<T extends LazyTreeSchema[]>(...types: T): T {
-		return types;
 	}
 
 	private finalize(): void {
