@@ -754,7 +754,6 @@ export class ContainerRuntime
 			}
 		}
 
-		// TODO: Can we get config here so we don't have two flag checks?
 		const idCompressorEnabled =
 			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
