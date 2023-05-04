@@ -77,7 +77,7 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
-        testCommand: start:t9s:gc:ci:tombstone
+        testCommand: start:t9s:gc
         splitTestVariants: 
           - name: Tombstone Mode
         env:
