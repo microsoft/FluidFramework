@@ -453,8 +453,8 @@ export function getFluidDependencies(
 				continue;
 			}
 
-      // If the dependency is a workspace dependency, then we need to use the current version of the package as the dep
-      // range. Otherwise pick the minimum version the range represents.
+			// If the dependency is a workspace dependency, then we need to use the current version of the package as the dep
+			// range. Otherwise pick the minimum version the range represents.
 			const newVersion = dep.version.startsWith("workspace:")
 				? semver.parse(pkg.version)
 				: semver.minVersion(dep.version);
