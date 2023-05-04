@@ -399,10 +399,7 @@ describe("editable-tree: editing", () => {
 			]);
 			const field_0 = trees[0].root[localFieldKey];
 			assert(isEditableField(field_0));
-			assert.equal(field_0.length, 2);
-			assert.equal(field_0[0], "foo");
-			assert.equal(field_0[1], "bar");
-			assert.equal(field_0[2], undefined);
+			assert.deepEqual([...field_0], ["foo", "bar"]);
 
 			// move node
 			field_0.moveNodes(1, 1, 0);
