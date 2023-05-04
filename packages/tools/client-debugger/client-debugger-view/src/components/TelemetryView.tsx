@@ -123,7 +123,6 @@ export function TelemetryView(): React.ReactElement {
 interface ListLengthSelectionProps {
 	/**
 	 * The current limit (max number of telemetry events to show).
-	 * @defaultValue {@link DEFAULT_PAGE_SIZE}
 	 */
 	currentLimit: number;
 
@@ -182,15 +181,14 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
  */
 interface FilteredTelemetryViewProps {
 	/**
-	 * The current limit (max number of telemetry events to show).
-	 * @defaultValue {@link DEFAULT_PAGE_SIZE}
+	 * A list of all telemetry events received.
+	 *
 	 */
-	telemetryEvents: ITimestampedTelemetryEvent[] | undefined;
+	telemetryEvents: ITimestampedTelemetryEvent[];
 }
 
 function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
 	const { telemetryEvents } = props;
-	const [eventNameOptions, setEventNameOptions] = useState<string[]>([]);
 	const [selectedCategory, setSelectedCategory] = useState("");
 	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
@@ -200,9 +198,42 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	 * partial match searches and will display all events if query is an empty string.
 	 */
 	const [customSearch, setCustomSearch] = React.useState("");
+	/**
+	 * State holding a list of ALL unique event names.
+	 * An empty list means no telemetry events have come in.
+	 */
+	const [eventNameOptions, setEventNameOptions] = useState<string[]>([]);
+	/**
+	 * State holding the event names matching the currently applied filter.
+	 * Updated by the `onEventNameChange` handler
+	 */
 	const [matchingOptions, setMatchingOptions] = React.useState<string[]>([]);
 
 	React.useEffect(() => {
+		/**
+		 * Filters all telemetry events based on category and event name
+		 * @returns filtered list of events
+		 */
+		function getFilteredEvents(): ITimestampedTelemetryEvent[] | undefined {
+			let filteredEvents = telemetryEvents;
+			// Filter by category
+			if (selectedCategory !== "" && selectedCategory !== "All") {
+				filteredEvents = filteredEvents?.filter((event) => {
+					return event.logContent.category === selectedCategory;
+				});
+			}
+			// Filter by event name
+			if (customSearch !== "") {
+				filteredEvents = filteredEvents?.filter((event) => {
+					return (
+						event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch
+					);
+				});
+			}
+
+			return filteredEvents ?? undefined;
+		}
+
 		// Create list of all event names
 		setEventNameOptions([
 			...new Set(
@@ -213,31 +244,64 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		]);
 		// Initially matching options are all options
 		setMatchingOptions(eventNameOptions.sort());
-		const filteredEvents = getFilteredEvents();
-		setFilteredTelemetryEvents(filteredEvents);
+		const filtered = getFilteredEvents();
+		setFilteredTelemetryEvents(filtered);
 	}, [telemetryEvents, selectedCategory, customSearch]);
 
 	/**
-	 * Filters all telemetry events based on category and event name
-	 * @returns filtered list of events
+	 * Gets list of valid categories for displayed telemetry events.
+	 * @returns list of option
 	 */
-	function getFilteredEvents(): ITimestampedTelemetryEvent[] | undefined {
-		let filteredEvents = telemetryEvents;
-		// Filter by category
-		if (selectedCategory !== "" && selectedCategory !== "All") {
-			filteredEvents = filteredEvents?.filter((event) => {
-				return event.logContent.category === selectedCategory;
-			});
-		}
-		// Filter by event name
-		if (customSearch !== "") {
-			filteredEvents = filteredEvents?.filter((event) => {
-				return event.logContent.eventName.slice("fluid:telemetry:".length) === customSearch;
-			});
-		}
-
-		return filteredEvents ?? undefined;
+	function getCategories(): { key: string; text: string }[] {
+		const categories = [
+			...new Set(filteredTelemetryEvents?.map((event) => event.logContent.category)),
+		];
+		const dropdownOptions = categories.map((category) => {
+			return {
+				key: category,
+				text: category,
+			};
+		});
+		dropdownOptions.push({ key: "All", text: "All" });
+		return dropdownOptions.sort();
 	}
+
+	const handleCategoryChange: DropdownProps["onOptionSelect"] = (event, data) => {
+		const category = data.optionText !== undefined ? data.optionText : "";
+		setSelectedCategory(category);
+	};
+
+	/**
+	 * Event handler that updates table to display events matching text in event name filter.
+	 */
+	const onEventNameChange: ComboboxProps["onChange"] = (event) => {
+		const value = event.target.value.trim();
+		const matches = eventNameOptions.filter((option) =>
+			option.toLowerCase().includes(value.toLowerCase()),
+		);
+		setMatchingOptions(matches);
+		if (value.length > 0 && matches.length === 0) {
+			setCustomSearch(value);
+		} else {
+			setCustomSearch("");
+		}
+	};
+
+	/**
+	 * Handler for when user selects an option in event name filter.
+	 */
+	const handleEventNameSelect: ComboboxProps["onOptionSelect"] = (event, data) => {
+		let matchingOption = false;
+		if (data.optionText !== undefined) {
+			matchingOption = eventNameOptions.includes(data.optionText);
+		}
+		if (matchingOption) {
+			const search = data.optionText !== undefined ? data.optionText : "";
+			setCustomSearch(search);
+		} else {
+			setCustomSearch("");
+		}
+	};
 
 	/**
 	 * Interface for each item in the telemetry table.
@@ -365,60 +429,6 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			},
 		}),
 	];
-
-	/**
-	 * Gets list of valid categories for displayed telemetry events.
-	 * @returns list of option
-	 */
-	function getCategories(): { key: string; text: string }[] {
-		const categories = [
-			...new Set(filteredTelemetryEvents?.map((event) => event.logContent.category)),
-		];
-		const dropdownOptions = categories.map((category) => {
-			return {
-				key: category,
-				text: category,
-			};
-		});
-		dropdownOptions.push({ key: "All", text: "All" });
-		return dropdownOptions.sort();
-	}
-
-	const handleCategoryChange: DropdownProps["onOptionSelect"] = (event, data) => {
-		const category = data.optionText !== undefined ? data.optionText : "";
-		setSelectedCategory(category);
-	};
-
-	/**
-	 * Event handler that updates table to display events matching text in event name filter.
-	 */
-	const onEventNameChange: ComboboxProps["onChange"] = (event) => {
-		const value = event.target.value.trim();
-		const matches = eventNameOptions.filter((option) =>
-			option.toLowerCase().includes(value.toLowerCase()),
-		);
-		setMatchingOptions(matches);
-		if (value.length > 0 && matches.length === 0) {
-			setCustomSearch(value);
-		} else {
-			setCustomSearch("");
-		}
-	};
-	/**
-	 * Handler for when user selects an option in event name filter.
-	 */
-	const handleEventNameSelect: ComboboxProps["onOptionSelect"] = (event, data) => {
-		let matchingOption = false;
-		if (data.optionText !== undefined) {
-			matchingOption = eventNameOptions.includes(data.optionText);
-		}
-		if (matchingOption) {
-			const search = data.optionText !== undefined ? data.optionText : "";
-			setCustomSearch(search);
-		} else {
-			setCustomSearch("");
-		}
-	};
 
 	return (
 		<>
