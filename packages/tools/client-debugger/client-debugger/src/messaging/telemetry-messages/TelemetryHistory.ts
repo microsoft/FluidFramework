@@ -9,20 +9,20 @@ import { IDevtoolsMessage } from "../Messages";
 /**
  * Encapsulates types and logic related to {@link TelemetryHistory.Message}.
  *
- * @public
+ * @internal
  */
 export namespace TelemetryHistory {
 	/**
 	 * {@link TelemetryHistory.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "TELEMETRY_HISTORY";
 
 	/**
 	 * Message data format used by {@link TelemetryHistory.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface MessageData {
 		/**
@@ -34,7 +34,7 @@ export namespace TelemetryHistory {
 	/**
 	 * Outbound message including the entire history of telemetry events.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -46,7 +46,7 @@ export namespace TelemetryHistory {
 	/**
 	 * Creates a {@link TelemetryHistory.Message} from the provided {@link TelemetryHistory.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {

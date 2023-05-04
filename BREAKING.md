@@ -20,6 +20,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ## 2.0.0-internal.4.1.0 Breaking changes
 
 -   [Ability to enable grouped batching](#Ability-to-enable-grouped-batching)
+-   [Testing support for LTS is moved from 0.45 to 1.3.4](#Testing-support-for-LTS-is-moved-from-0.45-to-1.3.4)
 
 ### Ability to enable grouped batching
 
@@ -37,6 +38,10 @@ and verifying that the following expectation changes won't have any effects:
 -   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
 -   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
 
+### Testing support for LTS is moved from 0.45.0 to 1.3.4
+
+Internal end-to-end full-compatibility testing for the loader-runtime boundary has been bumped from the oldest loader LTS version in 0.45.0 to the new oldest loader LTS version 1.3.4. For customers using azure packages, the loader-runtime are bundled together.
+
 ## 2.0.0-internal.4.1.0 Upcoming changes
 
 -   [@fluidframework/garbage-collector deprecated](#@fluidframework/garbage-collector-deprecated)
@@ -45,6 +50,7 @@ and verifying that the following expectation changes won't have any effects:
 -   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
 -   [Container-loader deprecations](#Container-loader-deprecations)
 -   [Op compression is enabled by default](#op-compression-is-enabled-by-default)
+-   [IntervalConflictResolver deprecation](#intervalconflictresolver-deprecation)
 
 ### @fluidframework/garbage-collector deprecated
 
@@ -97,6 +103,12 @@ The following types in the @fluidframework/container-loader package are not used
 If the size of a batch is larger than 614kb, the ops will be compressed. After upgrading to this version, if batches exceed the size threshold, the runtime will produce a new type of op with the compression properties. To open a document which contains this type of op, the client's runtime version needs to be at least `client_v2.0.0-internal.2.3.0`. Older clients will close with assert `0x3ce` ("Runtime message of unknown type") and will not be able to open the documents until they upgrade. To minimize the risk, it is recommended to audit existing session and ensure that at least 99.9% of them are using a runtime version equal or greater than `client_v2.0.0-internal.2.3.0`, before upgrading to `2.0.0-internal.4.1.0`.
 
 More information about op compression can be found [here](./packages/runtime/container-runtime/src/opLifecycle/README.md).
+
+### IntervalConflictResolver deprecation
+
+In SharedString, interval conflict resolvers have been unused since [this change](https://github.com/microsoft/FluidFramework/pull/6407), which added support for multiple intervals at the same position.
+As such, any existing usages can be removed.
+Related APIs have been deprecated and will be removed in an upcoming release.
 
 # 2.0.0-internal.4.0.0
 

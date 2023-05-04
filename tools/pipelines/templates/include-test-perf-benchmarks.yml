@@ -17,10 +17,15 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
+- name: timeoutInMinutes
+  type: number
+  default: 60
+
 jobs:
   - job: runTests
     displayName: Run tests
     pool: ${{ parameters.poolBuild }}
+    timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
     variables:
     - name: isTestBranch
       value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}

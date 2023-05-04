@@ -76,6 +76,7 @@ describe("connectionManager", () => {
 	function createConnectionManager(): ConnectionManager {
 		return new ConnectionManager(
 			() => mockDocumentService,
+			() => false,
 			client as IClient,
 			true /* reconnectAllowed */,
 			mockLogger,

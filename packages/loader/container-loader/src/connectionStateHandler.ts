@@ -403,11 +403,11 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 			// being replayed, so start the timer in case our previous client is still in quorum
 			assert(
 				!this.waitingForLeaveOp,
-				"Unexpected join op with current clientId while waiting",
+				0x5d2 /* Unexpected join op with current clientId while waiting */,
 			);
 			assert(
 				this.connectionState !== ConnectionState.Connected,
-				"Unexpected join op with current clientId while connected",
+				0x5d3 /* Unexpected join op with current clientId while connected */,
 			);
 			this.prevClientLeftTimer.restart();
 		}

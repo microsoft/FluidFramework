@@ -16,14 +16,9 @@ import {
 } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IContainer } from "@fluidframework/container-definitions";
-import {
-	createAndAttachContainer,
-	createLoader,
-	createSummarizerFromFactory,
-	summarizeNow,
-} from "@fluidframework/test-utils";
+import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
@@ -190,17 +185,22 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	 * @returns the main container.
 	 */
 	public async loadDocument(): Promise<IContainer> {
-		const loader = createLoader(
-			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
-			this.props.provider.documentServiceFactory,
-			this.props.provider.urlResolver,
-			this.props.logger,
+		const requestUrl = await this.props.provider.driver.createContainerUrl(
+			this.props.provider.documentId,
+			this._mainContainer?.resolvedUrl,
 		);
-		return createAndAttachContainer(
-			this.props.provider.defaultCodeDetails,
-			loader,
-			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
-		);
+		const request: IRequest = {
+			headers: {
+				[LoaderHeader.cache]: false,
+			},
+			url: requestUrl,
+		};
+
+		const loader = this.props.provider.createLoader([
+			[this.props.provider.defaultCodeDetails, this.runtimeFactory],
+		]);
+		const container2 = await loader.resolve(request);
+		return container2;
 	}
 
 	private async waitForSummary(summarizer: ISummarizer): Promise<string> {

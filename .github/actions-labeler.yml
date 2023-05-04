@@ -4,6 +4,9 @@
 "area: build":
   - ".github/*"
   - ".github/workflows/**"
+  - "build-tools/**"
+  - "common/build/**"
+  - "tools/markdown-magic/**"
   - "tools/pipelines/**"
 
 "area: contributor experience":
@@ -15,6 +18,7 @@
 
 "area: dds: tree":
   - experimental/dds/tree/**
+  - experimental/dds/tree2/**
   - packages/dds/tree/**
 
 "area: dds: propertydds":
@@ -62,7 +66,7 @@
   - packages/test/**
 
 "area: tools":
-  - any: ["common/build/**", "tools/**", "tools/pipelines/**"]
+  - any: ["common/build/**", "tools/**", "!tools/markdown-magic/**"]
 
 "area: website":
   - any: ["docs/**", "!docs/content/**"]
@@ -73,6 +77,7 @@
 dependencies:
   - lerna-package-lock.json
   - package-lock.json
+  - pnpm-lock.yaml
 
 documentation:
   - docs/content/**
