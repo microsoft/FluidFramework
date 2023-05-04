@@ -5,7 +5,10 @@
 
 import React, { useEffect, useState } from "react";
 
-import type { IMigratableModel, MigrationState } from "@fluid-example/example-utils";
+import type {
+	ISameContainerMigratableModel,
+	SameContainerMigrationState,
+} from "@fluid-example/example-utils";
 import type { IInventoryListAppModel } from "../modelInterfaces";
 
 export interface IDebugViewProps {
@@ -29,7 +32,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 };
 
 interface IMigrationStatusViewProps {
-	readonly model: IMigratableModel;
+	readonly model: ISameContainerMigratableModel;
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
@@ -38,7 +41,7 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 ) => {
 	const { model, getUrlForContainerId } = props;
 
-	const [migrationState, setMigrationState] = useState<MigrationState>(
+	const [migrationState, setMigrationState] = useState<SameContainerMigrationState>(
 		model.migrationTool.migrationState,
 	);
 

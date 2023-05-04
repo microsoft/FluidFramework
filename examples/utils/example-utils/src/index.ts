@@ -13,6 +13,8 @@ export type {
 	IMigrationToolEvents,
 	IMigrator,
 	IMigratorEvents,
+	ISameContainerMigratableModel,
+	ISameContainerMigratableModelEvents,
 	ISameContainerMigrationTool,
 	ISameContainerMigrationToolEvents,
 	ISameContainerMigrator,

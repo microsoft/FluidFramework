@@ -12,6 +12,10 @@ export {
 export { IMigrationTool, IMigrationToolEvents, MigrationState } from "./migrationTool";
 export { DataTransformationCallback, IMigrator, IMigratorEvents } from "./migrator";
 export {
+	ISameContainerMigratableModel,
+	ISameContainerMigratableModelEvents,
+} from "./sameContainerMigratableModel";
+export {
 	ISameContainerMigrationTool,
 	ISameContainerMigrationToolEvents,
 	SameContainerMigrationState,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IMigrationTool } from "@fluid-example/example-utils";
+import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -33,7 +33,7 @@ export class InventoryListAppModel
 
 	public constructor(
 		public readonly inventoryList: IInventoryList,
-		public readonly migrationTool: IMigrationTool,
+		public readonly migrationTool: ISameContainerMigrationTool,
 		private readonly container: IContainer,
 	) {
 		super();
