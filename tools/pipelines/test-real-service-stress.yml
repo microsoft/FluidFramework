@@ -81,20 +81,6 @@ stages:
           - name: Tombstone Mode
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-    # This job creates a work item, and only runs if the previous job failed
-    - job: ErrorHandler
-    dependsOn: Work
-    condition: failed()
-    steps: 
-    - bash: |
-        az boards work-item create \
-          --title "Build $(build.buildNumber) failed" \
-          --type bug \
-          --org $(System.TeamFoundationCollectionUri) \
-          --project $(System.TeamProject)
-      env: 
-        AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
-      displayName: 'Create work item on failure'
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
