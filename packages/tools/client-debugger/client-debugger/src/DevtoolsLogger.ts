@@ -116,7 +116,6 @@ export class DevtoolsLogger extends TelemetryLogger {
 		// Forward event to base logger
 		this.baseLogger?.send(event);
 
-		// TODO: ability to disable the logger so the rest of this becomes a no-op
 		try {
 			const newEvent: ITimestampedTelemetryEvent = {
 				logContent: this.prepareEvent(event),
