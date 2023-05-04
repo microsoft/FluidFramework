@@ -14,6 +14,7 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
+	tenantThrottle,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -58,27 +59,6 @@ export function create(
 		const parsedValue = parseInt(value, 10);
 		return isNaN(parsedValue) ? undefined : parsedValue;
 	}
-
-	// Todo: delete it and use the function in throttlerMiddleware.ts
-	const tenantThrottle = (throttleApi: string) => {
-		return (req, rest, next) => {
-			const tenantId = getParam(req.params, "tenantId") || appTenants[0].id;
-			const tenantGroup: string | undefined = tenantId
-				? tenantThrottlersMap?.get(tenantId)
-				: undefined;
-			const throttleOptions: Partial<IThrottleMiddlewareOptions> = {
-				throttleIdPrefix: tenantGroup ? `${tenantId}_${tenantGroup}` : tenantId,
-				throttleIdSuffix: throttleApi,
-			};
-			const throttler = tenantGroup
-				? throttlersMap.get(tenantGroup)?.get(throttleApi)
-				: throttlersMap.get(Constants.throttleGeneralTenant)?.get(throttleApi);
-			if (throttler) {
-				return throttle(throttler, winston, throttleOptions)(req, rest, next);
-			}
-			next();
-		};
-	};
 
 	/**
 	 * New api that fetches ops from summary and storage.
@@ -136,7 +116,12 @@ export function create(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(getDeltasClusterThrottler, winston, getDeltasClusterThrottleOptions),
-		tenantThrottle(Constants.getDeltasThrottleIdPrefix),
+		tenantThrottle(
+			Constants.getDeltasThrottleIdPrefix,
+			tenantThrottlersMap,
+			throttlersMap,
+			appTenants[0].id,
+		),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);

@@ -19,6 +19,7 @@ import {
 	IThrottleMiddlewareOptions,
 	getParam,
 	validateTokenRevocationClaims,
+	tenantThrottle,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -71,27 +72,6 @@ export function create(
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 
-	// Todo: delete it and use the function in throttlerMiddleware.ts
-	const tenantThrottle = (throttleApi: string) => {
-		return (req, rest, next) => {
-			const tenantId = getParam(req.params, "tenantId") || appTenants[0].id;
-			const tenantGroup: string | undefined = tenantId
-				? tenantThrottlersMap?.get(tenantId)
-				: undefined;
-			const throttleOptions: Partial<IThrottleMiddlewareOptions> = {
-				throttleIdPrefix: tenantGroup ? `${tenantId}_${tenantGroup}` : tenantId,
-				throttleIdSuffix: throttleApi,
-			};
-			const throttler = tenantGroup
-				? throttlersMap.get(tenantGroup)?.get(throttleApi)
-				: throttlersMap.get("generalTenant")?.get(throttleApi);
-			if (throttler) {
-				return throttle(throttler, winston, throttleOptions)(req, rest, next);
-			}
-			next();
-		};
-	};
-
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
@@ -129,7 +109,12 @@ export function create(
 			winston,
 			createDocClusterThrottleOptions,
 		),
-		tenantThrottle(Constants.createDocThrottleIdPrefix),
+		tenantThrottle(
+			Constants.createDocThrottleIdPrefix,
+			tenantThrottlersMap,
+			throttlersMap,
+			appTenants[0].id,
+		),
 		verifyStorageToken(tenantManager, config, tokenManager, {
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
@@ -221,7 +206,12 @@ export function create(
 			winston,
 			getSessionClusterThrottleOptions,
 		),
-		tenantThrottle(Constants.getSessionThrottleIdPrefix),
+		tenantThrottle(
+			Constants.getSessionThrottleIdPrefix,
+			tenantThrottlersMap,
+			throttlersMap,
+			appTenants[0].id,
+		),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
