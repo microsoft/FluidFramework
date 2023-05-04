@@ -595,8 +595,14 @@ export class DocumentDeltaConnection
 			// Socket can be disconnected while waiting for Fluid protocol messages
 			// (connect_document_error / connect_document_success), as well as before DeltaManager
 			// had a chance to register its handlers.
-			this.addTrackedListener("disconnect", (reason) => {
+			this.addTrackedListener("disconnect", (reason, details) => {
 				const err = this.createErrorObject("disconnect", reason);
+				this.logger.sendTelemetryEvent({
+					eventName: "SocketDisconnect",
+					type: details?.context?.type,
+					// https://www.rfc-editor.org/rfc/rfc6455#section-7.4
+					statusCode: details?.context?.code,
+				}, err);
 				failAndCloseSocket(err);
 			});
 
