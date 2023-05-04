@@ -1,12 +1,17 @@
-# @fluid-tools/client-debugger-chrome-extension
+# @fluid-internal/devtools-browser-extension
 
 This package contains a browser (Chrome) developer tools extension for use with [@fluid-tools/client-debugger][].
-It offers a visual experience similar to that offered by [@fluidframework/client-debugger-view][], but run from within the Devtools pane of compatible [Chromium](https://www.chromium.org/Home/)-based browsers (e.g. [Chrome](https://www.google.com/chrome/) and [Edge](https://www.microsoft.com/en-us/edge/)).
+It offers visual insights into the workings of the Fluid Framework in your application.
+
+It is currently compatible with [Chromium](https://www.chromium.org/Home/)-based browsers (e.g. [Chrome](https://www.google.com/chrome/) and [Edge](https://www.microsoft.com/en-us/edge/)).
+
+## Artifacts
+
+This package does not generate any library artifacts, so it is marked as `private` in its `package.json`.
+
+We are not yet publishing any artifacts to the Chrome/Edge extension stores, but that is planned for the near future.
 
 ## Usage
-
-For now, this package is `private`.
-We are not yet publishing any artifacts to the Chrome/Edge extension stores.
 
 To use this extension in your browser:
 
@@ -16,7 +21,7 @@ To use this extension in your browser:
    For [WSL](https://learn.microsoft.com/en-us/windows/wsl/about) users, your Linux files should be at a \\wsl$ path.
    In File Explorer or any other Windows application that can browse files, navigate to the path: \\wsl$.
 
-## Devtools Extension
+## Devtools Extensions
 
 This package runs as a [Devtools Extension](https://developer.chrome.com/docs/extensions/mv3/devtools/) in Chromium-based browsers that support them.
 
