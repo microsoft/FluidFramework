@@ -4,7 +4,8 @@
  */
 import { strict as assert } from "assert";
 import { AsyncReducer } from "@fluid-internal/stochastic-test-utils";
-import { waitForContainerConnection } from "@fluidframework/test-utils";
+import { ITestContainerConfig, waitForContainerConnection } from "@fluidframework/test-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
 import { toJsonableTree } from "../../utils";
@@ -61,7 +62,17 @@ export const fuzzReducer: {
 		assert(state.containersInfo !== undefined);
 		state.testTreeProvider?.opProcessingController.resumeProcessing();
 		assert(state.testTreeProvider !== undefined);
-		const loader = state.testTreeProvider.makeTestLoader();
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+		const testContainerConfig: ITestContainerConfig = {
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.Container.enableOfflineLoad": true,
+				}),
+			},
+		};
+		const loader = state.testTreeProvider.makeTestLoader(testContainerConfig);
 		const url = state.containersInfo[index].url;
 		const pendingOps = state.containersInfo[index].pendingOps;
 		const loadedContainer = await loader.resolve({ url }, pendingOps);
