@@ -233,6 +233,9 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 	SchemaBuilder,
+	FieldKindTypes,
+	AllowedTypes,
+	TreeSchema,
 } from "./feature-libraries";
 
 export {

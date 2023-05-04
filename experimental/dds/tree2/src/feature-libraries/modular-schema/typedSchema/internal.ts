@@ -5,6 +5,12 @@
 
 // Used by public types, but not part of the desired API surface
 export {
+	ViewSchemaLibrary,
+	RecursiveTreeSchemaSpecification,
+	RecursiveTreeSchema,
+} from "./schemaBuilder";
+
+export {
 	ObjectToMap,
 	AsNames,
 	Assume,
@@ -24,4 +30,11 @@ export {
 
 export { TreeSchemaSpecification } from "./typedTreeSchema";
 
-export { FlexList, FlexListToNonLazyArray, ConstantFlexListToNonLazyArray } from "./flexList";
+export {
+	FlexList,
+	FlexListToNonLazyArray,
+	ConstantFlexListToNonLazyArray,
+	LazyItem,
+	NormalizedFlexList,
+	ExtractItemType,
+} from "./flexList";

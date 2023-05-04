@@ -38,6 +38,7 @@ import { FlexList } from "./flexList";
  * "'theSchema' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer."
  *
  * TODO: how much more specific of a type can be provided without triggering the above error?
+ * @alpha
  */
 export type RecursiveTreeSchema = unknown;
 
@@ -48,6 +49,7 @@ export type RecursiveTreeSchema = unknown;
  * See `RecursiveTreeSchema`.
  *
  * TODO: how much more specific of a type can be provided without triggering the above error?
+ * @alpha
  */
 export type RecursiveTreeSchemaSpecification = unknown;
 

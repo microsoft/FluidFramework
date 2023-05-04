@@ -13,6 +13,9 @@ export {
 	FlexibleObject,
 	EditableSequenceField,
 	TypedField,
+	UnbrandedName,
+	TypeArrayToTypedTreeArray,
+	UntypedApi,
 } from "./schemaAware";
 
 export { ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";

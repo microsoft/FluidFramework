@@ -10,6 +10,7 @@
  * Can be values, functions that return the value (to allow cyclic references to work), or arrays.
  * @remarks
  * Does not work properly if T can be a function or array.
+ * @alpha
  */
 export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
@@ -36,17 +37,28 @@ export function normalizeFlexListEager<List extends FlexList>(
 /**
  * T, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
+ * @alpha
  */
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
+/**
+ * @alpha
+ */
 export type NormalizedFlexList<Item> = readonly Item[];
+
 export type NormalizedLazyFlexList<Item> = (() => Item)[];
 
-type ExtractItemType<List extends LazyItem> = List extends () => infer Result ? Result : List;
+/**
+ * @alpha
+ */
+export type ExtractItemType<List extends LazyItem> = List extends () => infer Result
+	? Result
+	: List;
 type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown ? List : () => List;
 
 /**
  * Normalize FlexList type to a non-lazy array.
+ * @alpha
  */
 export type FlexListToNonLazyArray<List extends FlexList> = number extends List["length"]
 	? // Handle non compile time constant case
@@ -55,6 +67,7 @@ export type FlexListToNonLazyArray<List extends FlexList> = number extends List[
 
 /**
  * Normalize FlexList type to a non-lazy array.
+ * @alpha
  */
 export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 	infer Head,

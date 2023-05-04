@@ -55,6 +55,7 @@ export function objectToMap<ObjectMap, MapKey extends number | string, MapValue>
  * Convert a Array type into the type of ReadonlySet.
  *
  * Same as `keyof ListToKeys<T, unknown>` but work for values that are not valid keys.
+ * @alpha
  */
 export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[]
 	? TValue

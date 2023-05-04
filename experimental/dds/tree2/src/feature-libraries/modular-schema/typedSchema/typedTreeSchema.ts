@@ -4,9 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { UntypedTreeCore } from "../../untypedTree";
 import { IFieldSchema, ITreeSchema } from "../view";
-import { contextSymbol, typeSymbol } from "../../editable-tree";
 import {
 	GlobalFieldKey,
 	GlobalFieldKeySymbol,
@@ -17,7 +15,8 @@ import {
 	ValueSchema,
 	symbolFromKey,
 } from "../../../core";
-import { FieldKinds } from "../..";
+// TODO: consider refactors to avoid this cyclic dep
+import type { FieldKinds } from "../..";
 import { forbidden } from "../../defaultFieldKinds";
 import { MakeNominal } from "../../../util";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
@@ -96,21 +95,6 @@ export class TreeSchema<
 		const mapped = normalized.map((f) => f().key);
 		return new Set(mapped);
 	}
-
-	public downCast(tree: UntypedTreeCore): tree is TypedTree<T> {
-		const contextSchema = tree[contextSymbol].schema;
-		const lookedUp = contextSchema.treeSchema.get(this.name);
-		// TODO: for this to pass, schematized view must have the view schema, not just stored schema.
-		assert(lookedUp === this, "cannot downcase to a schema the tree is not using");
-
-		// TODO: make this actually work
-		const matches = tree[typeSymbol] === this;
-		assert(
-			matches === (tree[typeSymbol].name === this.name),
-			"schema object identity comparison should match identifier comparison",
-		);
-		return matches;
-	}
 }
 
 /**
@@ -145,8 +129,6 @@ function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField
 	assert(t instanceof FieldSchema, "invalid FieldSchema");
 	return t as NormalizeField<T>;
 }
-
-type TypedTree<_T> = UntypedTreeCore & { todo: "add stuff" };
 
 export const Any = "Any" as const;
 export type Any = typeof Any;
@@ -183,6 +165,9 @@ export interface TreeSchemaSpecification {
 	readonly value?: ValueSchema;
 }
 
+/**
+ * @alpha
+ */
 export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds] | typeof forbidden;
 
 /**

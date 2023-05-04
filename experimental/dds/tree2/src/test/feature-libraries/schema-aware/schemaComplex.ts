@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable unused-imports/no-unused-imports */
+
 /* eslint-disable no-inner-declarations */
 
 import { FieldKinds, ValueSchema, SchemaAware } from "../../../";

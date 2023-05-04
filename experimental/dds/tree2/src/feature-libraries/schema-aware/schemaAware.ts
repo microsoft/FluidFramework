@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { TreeSchemaIdentifier, ValueSchema } from "../../core";
 import {
 	ContextuallyTypedNodeData,
@@ -18,6 +19,7 @@ import {
 	AllowedTypes,
 } from "../modular-schema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
+import { contextSymbol, typeSymbol } from "../editable-tree";
 import { UntypedSequenceField } from "./partlyTyped";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 
@@ -223,7 +225,11 @@ export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly T
 ][InternalTypedSchemaTypes._dummy];
 
 // TODO: make these more accurate
-type UntypedApi<Mode extends ApiMode> = {
+/**
+ * API if type is unknown or Any.
+ * @alpha
+ */
+export type UntypedApi<Mode extends ApiMode> = {
 	[ApiMode.Editable]: UntypedTree;
 	[ApiMode.Flexible]: ContextuallyTypedNodeData;
 	[ApiMode.Simple]: ContextuallyTypedNodeData;
@@ -255,3 +261,32 @@ export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = Type
 	TSchema,
 	Mode
 >;
+
+/**
+ * Check if an `UntypedTreeCore` has a specific schema, and if it does, cast it to use `ApiMode.Editable` with that schema.
+ * Provided schema must be included in the schema for the tree being viewed (getting this wrong will error).
+ * @alpha
+ */
+export function downCast<TSchema extends TreeSchema>(
+	schema: TSchema,
+	tree: UntypedTreeCore | NodeDataFor<ApiMode.Editable, TSchema>,
+): tree is NodeDataFor<ApiMode.Editable, TSchema> {
+	if (typeof tree !== "object" || tree === null) {
+		// TODO: make Editable mode always produce an object for the root, so this is safe.
+		// Also remove `| NodeDataFor<ApiMode.Editable, TSchema>,` from input (should compile if thats done).
+		return false;
+	}
+	const treeTyped = tree as UntypedTreeCore;
+	const contextSchema = treeTyped[contextSymbol].schema;
+	const lookedUp = contextSchema.treeSchema.get(schema.name);
+	// TODO: for this to pass, schematized view must have the view schema, not just stored schema.
+	assert(lookedUp === schema, "cannot downcase to a schema the tree is not using");
+
+	// TODO: make this actually work
+	const matches = treeTyped[typeSymbol] === schema;
+	assert(
+		matches === (treeTyped[typeSymbol].name === schema.name),
+		"schema object identity comparison should match identifier comparison",
+	);
+	return matches;
+}
