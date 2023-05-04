@@ -33,11 +33,10 @@ import {
 	ForestEvents,
 	PathRootPrefix,
 } from "../../core";
-import { brand, fail } from "../../util";
+import { brand, fail, assertValidIndex } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
 import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { createEmitter } from "../../events";
-import { assertValidIndex } from "../../util/utils";
 
 function makeRoot(): MapTree {
 	return {
@@ -120,7 +119,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 			const [parent, key] = cursor.getParent();
 			const destinationField = getMapTreeField(parent, key, true);
-			assertValidIndex(index, destinationField, true);
+			assertValidIndex(index, { length: destinationField.length }, true);
 			// TODO: this will fail for very large moves due to argument limits.
 			destinationField.splice(index, 0, ...children);
 
@@ -139,8 +138,8 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				const sourceField = getMapTreeField(parent, key, false);
 				const startIndex = index;
 				const endIndex = index + count;
-				assertValidIndex(startIndex, sourceField, true);
-				assertValidIndex(endIndex, sourceField, true);
+				assertValidIndex(startIndex, { length: sourceField.length }, true);
+				assertValidIndex(endIndex, { length: sourceField.length }, true);
 				assert(
 					startIndex <= endIndex,
 					0x371 /* detached range's end must be after its start */,

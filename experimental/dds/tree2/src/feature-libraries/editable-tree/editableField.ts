@@ -31,7 +31,7 @@ import {
 	cursorFromContextualData,
 } from "../contextuallyTyped";
 import { sequence } from "../defaultFieldKinds";
-import { assertValidIndex } from "../../util/utils";
+import { assertValidIndex } from "../../util";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
