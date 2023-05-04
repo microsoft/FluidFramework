@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.15.0",
+	"version": "0.17.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,16 +11,15 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
-		"build:ci": "npm run build:genver && lerna run build:compile --stream",
+		"build": "npm run build:compile && npm run lint && npm run build:docs",
+		"build:ci": "lerna run build:compile --stream",
 		"build:compile": "lerna run build:compile --stream",
 		"build:docs": "lerna run build:docs --stream --parallel",
 		"build:fast": "fluid-build --root .. --buildTools",
-		"build:genver": "lerna run build:genver --stream --parallel",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
-		"ci:build": "npm run build:genver && lerna run build:compile --stream",
+		"ci:build": "lerna run build:compile --stream",
 		"ci:build:docs": "lerna run ci:build:docs --stream --parallel",
 		"ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
 		"ci:test:coverage": "npm run test:coverage ; t1=$? ; npm run test:copyresults ; exit $t1",

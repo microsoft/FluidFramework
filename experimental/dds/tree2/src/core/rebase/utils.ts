@@ -123,7 +123,7 @@ export function rebaseBranch<TChange>(
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
 	const ancestor = findCommonAncestor([sourceHead, sourcePath], [targetHead, targetPath]);
-	assert(ancestor !== undefined, "branches must be related");
+	assert(ancestor !== undefined, 0x675 /* branches must be related */);
 
 	// Find where `targetCommit` is in the target branch
 	const targetCommitIndex = targetPath.findIndex((r) => r === targetCommit);
@@ -133,7 +133,7 @@ export function rebaseBranch<TChange>(
 		// TODO: Ideally, this would be an "assertExpensive"
 		assert(
 			findCommonAncestor(targetCommit, targetHead) !== undefined,
-			"target commit is not in target branch",
+			0x676 /* target commit is not in target branch */,
 		);
 		return [
 			sourceHead,

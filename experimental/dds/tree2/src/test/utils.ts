@@ -256,10 +256,7 @@ export class TestTreeProvider {
 		const container =
 			this.trees.length === 0
 				? await this.provider.makeTestContainer(testContainerConfig)
-				: await this.provider.loadTestContainer({
-						// TODO: remove this once SharedTree has full reconnect logic implemented (AB#4023)
-						simulateReadConnectionUsingDelay: false,
-				  });
+				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
 		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");

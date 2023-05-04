@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { InterdependencyRange } from "@fluid-tools/version-tools";
 import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
 import * as path from "path";
@@ -87,6 +88,7 @@ export class MonoRepo {
 	constructor(
 		public readonly kind: MonoRepoKind,
 		public readonly repoPath: string,
+		public readonly interdependencyRange: InterdependencyRange,
 		ignoredDirs?: string[],
 		private readonly logger: Logger = defaultLogger,
 	) {

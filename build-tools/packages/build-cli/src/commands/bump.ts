@@ -8,24 +8,28 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import * as semver from "semver";
 
-import { FluidRepo, MonoRepo, MonoRepoKind, Package } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
 
 import {
+	InterdependencyRange,
+	RangeOperators,
 	ReleaseVersion,
 	VersionBumpType,
 	VersionChangeType,
 	VersionScheme,
+	WorkspaceRanges,
 	bumpVersionScheme,
 	detectVersionScheme,
+	isInterdependencyRange,
 } from "@fluid-tools/version-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args";
 import { BaseCommand } from "../base";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags";
 import {
-	bumpReleaseGroup,
 	generateBumpVersionBranchName,
 	generateBumpVersionCommitMessage,
+	setVersion,
 } from "../lib";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
@@ -47,7 +51,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}),
 		exact: Flags.string({
 			description:
-				"An exact string to use as the version. The string must be a valid semver string.",
+				"An exact string to use as the version. The string must be a valid semver version string.",
 			exclusive: ["bumpType", "scheme"],
 		}),
 		scheme: versionSchemeFlag({
@@ -57,9 +61,19 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}),
 		exactDepType: Flags.string({
 			description:
-				'Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
-			options: ["^", "~", ""],
-			default: "^",
+				'[DEPRECATED - Use interdependencyRange instead.] Controls the type of dependency that is used between packages within the release group. Use "" to indicate exact dependencies.',
+			options: [...RangeOperators, ...WorkspaceRanges],
+			deprecated: {
+				to: "interdependencyRange",
+				message: "The exactDepType flag is deprecated. Use interdependencyRange instead.",
+				version: "0.16.0",
+			},
+		}),
+		interdependencyRange: Flags.string({
+			char: "d",
+			description:
+				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the workspace:-prefixed values to set interdependencies using the workspace protocol. The interdependency range will be set to the workspace string specified.',
+			options: [...RangeOperators, ...WorkspaceRanges],
 		}),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
@@ -84,9 +98,15 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		},
 		{
 			description:
-				"You can control how interdependencies between packages in a release group are expressed using the --exactDepType flag.",
+				"You can control how interdependencies between packages in a release group are expressed using the --interdependencyRange flag.",
 			command:
-				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --exactDepType "~"',
+				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --interdependencyRange "~"',
+		},
+		{
+			description:
+				"You can set interdependencies using the workspace protocol as well. The interdependency range will be set to the workspace string specified.",
+			command:
+				'<%= config.bin %> <%= command.id %> client --exact 2.0.0-internal.4.1.0 --interdependencyRange "workspace:~"',
 		},
 	];
 
@@ -99,8 +119,25 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const args = this.args;
 		const flags = this.flags;
 
+		if (args.package_or_release_group === undefined) {
+			this.error("No dependency provided.");
+		}
+
+		// Fall back to the deprecated --exactDepType flag value if the new one isn't provided
+		const interdepRangeFlag = flags.interdependencyRange ?? flags.exactDepType;
+
+		let interdependencyRange: InterdependencyRange | undefined = isInterdependencyRange(
+			interdepRangeFlag,
+		)
+			? interdepRangeFlag
+			: undefined;
+
 		const context = await this.getContext();
 		const bumpType: VersionBumpType | undefined = flags.bumpType;
+		const workspaceProtocol =
+			typeof interdependencyRange === "string"
+				? interdependencyRange?.startsWith("workspace:")
+				: false;
 		const shouldInstall: boolean = flags.install && !flags.skipChecks;
 		const shouldCommit: boolean = flags.commit && !flags.skipChecks;
 
@@ -114,12 +151,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			this.error(`Package not found: ${rgOrPackageName}`);
 		}
 
-		// eslint-disable-next-line no-warning-comments
-		// TODO: can be removed once server team owns server releases
-		if (args.package_or_release_group === MonoRepoKind.Server && flags.bumpType === "minor") {
-			this.error(`ERROR: Server release are always a ${chalk.bold("MAJOR")} release`);
-		}
-
 		if (bumpType === undefined && flags.exact === undefined) {
 			this.error(`One of the following must be provided: --bumpType, --exact`);
 		}
@@ -127,18 +158,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
-		const exactDepType = flags.exactDepType ?? "^";
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
 
 		if (bumpType === undefined && exactVersion === null) {
 			this.error(`--exact value invalid: ${flags.exact}`);
-		}
-
-		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
-			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
-			// that the exactDepType will be one of the enum values.
-			this.error(`Invalid exactDepType: ${exactDepType}`);
 		}
 
 		if (rgOrPackage instanceof MonoRepo) {
@@ -147,6 +171,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
+			// Update the interdependency range to the configured default if the one provided isn't valid
+			interdependencyRange = interdependencyRange ?? releaseRepo.interdependencyRange;
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
@@ -172,8 +198,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const newVersion =
 			exactVersion === null
 				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  bumpVersionScheme(repoVersion, bumpType!, scheme).version
-				: exactVersion.version;
+				  bumpVersionScheme(repoVersion, bumpType!, scheme)
+				: exactVersion;
 
 		let bumpArg: VersionChangeType;
 		if (bumpType === undefined) {
@@ -193,8 +219,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Release group: ${chalk.blueBright(rgOrPackageName)}`);
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
+		this.log(`Workspace protocol: ${workspaceProtocol === true ? chalk.green("yes") : "no"}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
-		this.log(`Exact dependency type: ${exactDepType === "" ? "exact" : exactDepType}`);
+		this.log(
+			`Interdependency range: ${
+				interdependencyRange === "" ? "exact" : interdependencyRange
+			}`,
+		);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
@@ -215,12 +246,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			}
 		}
 
-		await bumpReleaseGroup(
+		this.log(`Updating version...`);
+		await setVersion(
 			context,
-			bumpArg,
 			packageOrReleaseGroup,
-			scheme,
-			exactDepType,
+			newVersion,
+			interdependencyRange,
 			this.logger,
 		);
 
