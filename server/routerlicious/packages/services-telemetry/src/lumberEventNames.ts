@@ -45,4 +45,5 @@ export enum LumberEventName {
 	HttpRequest = "HttpRequest",
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",
+	RestoreFromCheckpoint = "RestoreFromCheckpoint",
 }
