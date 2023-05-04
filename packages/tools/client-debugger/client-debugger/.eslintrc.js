@@ -24,6 +24,9 @@ module.exports = {
 			rules: {
 				"import/no-nodejs-modules": "off",
 				"unicorn/prefer-module": "off",
+
+				// Superceded by chai-expect rule
+				"@typescript-eslint/no-unused-expressions": "off",
 			},
 		},
 	],
