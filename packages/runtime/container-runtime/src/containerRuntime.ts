@@ -177,7 +177,6 @@ import {
 	RemoteMessageProcessor,
 	OpGroupingManager,
 } from "./opLifecycle";
-import { createSessionId, IdCompressor } from "./id-compressor";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
 export enum ContainerMessageType {
@@ -755,6 +754,19 @@ export class ContainerRuntime
 			}
 		}
 
+		// TODO: Can we get config here so we don't have two flag checks?
+		const idCompressorEnabled =
+			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
+		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+		if (idCompressorEnabled) {
+			const { IdCompressor, createSessionId } = await import("./id-compressor");
+			idCompressor =
+				serializedIdCompressor !== undefined
+					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
+					: // TODO: Pass in logger
+					  new IdCompressor(createSessionId());
+		}
+
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -779,7 +791,7 @@ export class ContainerRuntime
 			loadExisting,
 			blobManagerSnapshot,
 			context.storage,
-			serializedIdCompressor,
+			idCompressor,
 			requestHandler,
 			undefined, // summaryConfiguration
 			initializeEntryPoint,
@@ -1048,7 +1060,7 @@ export class ContainerRuntime
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		serializedIdCompressor: SerializedIdCompressorWithNoSession | undefined,
+		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1092,8 +1104,7 @@ export class ContainerRuntime
 
 			this.idCompressorEnabled =
 				this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
-				this.runtimeOptions.enableRuntimeIdCompressor ??
-				false;
+				idCompressor !== undefined;
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
@@ -1160,10 +1171,7 @@ export class ContainerRuntime
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
 		if (this.idCompressorEnabled) {
-			this.idCompressor =
-				serializedIdCompressor !== undefined
-					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: new IdCompressor(createSessionId(), this.logger);
+			this.idCompressor = idCompressor;
 		}
 
 		this.maxConsecutiveReconnects =
@@ -1802,6 +1810,7 @@ export class ContainerRuntime
 	 * @param content - An IdAllocationOp with "stashedState", which is a representation of un-ack'd local state.
 	 */
 	private async applyStashedIdAllocationOp(op: IdCreationRangeWithStashedState) {
+		const { IdCompressor } = await import("./id-compressor");
 		this.idCompressor = IdCompressor.deserialize(op.stashedState);
 	}
 
