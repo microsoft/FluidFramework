@@ -209,7 +209,10 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			destinationField !== undefined
 				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 				: this;
-
+		assert(
+			isFieldProxyTarget(destinationFieldProxy),
+			"destination field proxy must be a field proxy target",
+		);
 		assertValidIndex(destinationIndex, destinationFieldProxy, true);
 
 		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
