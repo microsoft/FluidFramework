@@ -10,7 +10,7 @@ import {
 	ILogger,
 	IDocumentRepository,
 	ICheckpointRepository,
-    CheckpointService,
+	CheckpointService,
 } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import { IConcreteNodeFactory } from "./interfaces";
@@ -25,8 +25,8 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
 		private readonly documentRepository: IDocumentRepository,
 		private readonly deliCheckpointRepository: ICheckpointRepository,
 		private readonly scribeCheckpointRepository: ICheckpointRepository,
-        private readonly deliCheckpointService: CheckpointService,
-        private readonly scribeCheckpointService: CheckpointService,
+		private readonly deliCheckpointService: CheckpointService,
+		private readonly scribeCheckpointService: CheckpointService,
 		private readonly timeoutLength: number,
 		private readonly webSocketServerFactory: () => IWebSocketServer,
 		private readonly maxMessageSize: number,
@@ -42,8 +42,8 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
 			this.documentRepository,
 			this.deliCheckpointRepository,
 			this.scribeCheckpointRepository,
-            this.deliCheckpointService,
-            this.scribeCheckpointService,
+			this.deliCheckpointService,
+			this.scribeCheckpointService,
 			this.timeoutLength,
 			this.webSocketServerFactory,
 			this.maxMessageSize,

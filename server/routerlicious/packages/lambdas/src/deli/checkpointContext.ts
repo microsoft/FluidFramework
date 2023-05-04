@@ -19,7 +19,7 @@ export class CheckpointContext {
 		private readonly id: string,
 		private readonly checkpointManager: IDeliCheckpointManager,
 		private readonly context: IContext,
-        private readonly checkpointService: ICheckpointService,
+		private readonly checkpointService: ICheckpointService,
 	) {}
 
 	/**
@@ -111,11 +111,10 @@ export class CheckpointContext {
 
 		let updateP: Promise<void>;
 
-        const localCheckpointEnabled = this.checkpointService.localCheckpointEnabled;
+		const localCheckpointEnabled = this.checkpointService.localCheckpointEnabled;
 
 		// determine if checkpoint is local
-		const isLocal =
-			localCheckpointEnabled && checkpoint.reason !== CheckpointReason.NoClients;
+		const isLocal = localCheckpointEnabled && checkpoint.reason !== CheckpointReason.NoClients;
 
 		if (checkpoint.clear) {
 			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);

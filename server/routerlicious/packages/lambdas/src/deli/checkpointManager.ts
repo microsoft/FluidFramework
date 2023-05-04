@@ -49,17 +49,22 @@ export interface ICheckpointParams {
 export function createDeliCheckpointManagerFromCollection(
 	tenantId: string,
 	documentId: string,
-    checkpointService: ICheckpointService,
+	checkpointService: ICheckpointService,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
 		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
-            return checkpointService.writeCheckpoint(documentId, tenantId, "deli", checkpoint, isLocal);
+			return checkpointService.writeCheckpoint(
+				documentId,
+				tenantId,
+				"deli",
+				checkpoint,
+				isLocal,
+			);
 		},
 		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return checkpointService.clearCheckpoint(documentId, tenantId, "deli", isLocal)
+			return checkpointService.clearCheckpoint(documentId, tenantId, "deli", isLocal);
 		},
 	};
 	return checkpointManager;
 }
-

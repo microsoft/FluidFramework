@@ -41,7 +41,7 @@ export async function deleteSummarizedOps(
 				doc.tenantId,
 				doc.documentId,
 			);
-      
+
 			const lastSummarySequenceNumber = JSON.parse(realDoc.scribe).lastSummarySequenceNumber;
 
 			// first "soft delete" operations older than the offline window, which have been summarised

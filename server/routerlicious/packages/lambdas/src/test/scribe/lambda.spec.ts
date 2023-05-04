@@ -41,7 +41,7 @@ describe("Routerlicious", () => {
 			let testMongoManager: MongoManager;
 			let testDocumentRepository: TestNotImplementedDocumentRepository;
 			let testCheckpointRepository: TestNotImplementedCheckpointRepository;
-            let testCheckpointService: ICheckpointService;
+			let testCheckpointService: ICheckpointService;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
 			let testContext: TestContext;
@@ -102,14 +102,14 @@ describe("Routerlicious", () => {
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
 
-                Sinon.replace(
+				Sinon.replace(
 					testCheckpointRepository,
 					"writeCheckpoint",
 					Sinon.fake.resolves(undefined),
 				);
 
-                testCheckpointService = new TestNotImplementedCheckpointService();
-                Sinon.replace(testCheckpointService, "writeCheckpoint", Sinon.fake());
+				testCheckpointService = new TestNotImplementedCheckpointService();
+				Sinon.replace(testCheckpointService, "writeCheckpoint", Sinon.fake());
 
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
@@ -138,7 +138,7 @@ describe("Routerlicious", () => {
 					false,
 					false,
 					[],
-                    testCheckpointService,
+					testCheckpointService,
 				);
 
 				testContext = new TestContext();

@@ -91,22 +91,26 @@ export interface ICheckpointRepository {
 	/**
 	 * Retrieves a checkpoint from the database
 	 */
-    getCheckpoint(documentId: string, tenantId: string): Promise<ICheckpoint>;
+	getCheckpoint(documentId: string, tenantId: string): Promise<ICheckpoint>;
 
-    /**
+	/**
 	 * Writes a checkpoint to the database
 	 */
-    writeCheckpoint(documentId: string, tenantId: string, checkpoint: IDeliState | IScribe ): Promise<void>;
+	writeCheckpoint(
+		documentId: string,
+		tenantId: string,
+		checkpoint: IDeliState | IScribe,
+	): Promise<void>;
 
-    /**
+	/**
 	 * Removes checkpoint for one service from the checkpoint's schema
 	 */
-    removeServiceCheckpoint(documentId: string, tenantId: string): Promise<void>;
+	removeServiceCheckpoint(documentId: string, tenantId: string): Promise<void>;
 
-    /**
+	/**
 	 * Deletes a checkpoint from the database
 	 */
-    deleteCheckpoint(documentId: string, tenantId: string): Promise<void>;
+	deleteCheckpoint(documentId: string, tenantId: string): Promise<void>;
 }
 
 /**

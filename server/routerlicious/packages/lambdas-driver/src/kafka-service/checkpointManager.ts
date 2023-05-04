@@ -95,10 +95,10 @@ export class CheckpointManager {
 	 */
 	public async flush(): Promise<void> {
 		if (this.lastCheckpoint) {
-            Lumberjack.info(`Checkpointing last recieved offset: ${this.lastCheckpoint.offset}`, {
-                offset: this.lastCheckpoint.offset,
-                partition: this.lastCheckpoint.partition,
-            })
+			Lumberjack.info(`Checkpointing last recieved offset: ${this.lastCheckpoint.offset}`, {
+				offset: this.lastCheckpoint.offset,
+				partition: this.lastCheckpoint.partition,
+			});
 			return this.checkpoint(this.lastCheckpoint);
 		}
 	}

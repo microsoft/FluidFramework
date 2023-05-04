@@ -56,7 +56,7 @@ export class DeliLambdaFactory
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
-        private readonly checkpointService: ICheckpointService,
+		private readonly checkpointService: ICheckpointService,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
 		private readonly forwardProducer: IProducer,
@@ -175,9 +175,14 @@ export class DeliLambdaFactory
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
 			} else {
-                lastCheckpoint = await this.checkpointService.restoreFromCheckpoint(documentId, tenantId, "deli", document);
-		    }
-        }
+				lastCheckpoint = await this.checkpointService.restoreFromCheckpoint(
+					documentId,
+					tenantId,
+					"deli",
+					document,
+				);
+			}
+		}
 
 		// Add checkpointTimestamp as UTC now if checkpoint doesn't have a timestamp yet.
 		if (
@@ -190,7 +195,7 @@ export class DeliLambdaFactory
 		const checkpointManager = createDeliCheckpointManagerFromCollection(
 			tenantId,
 			documentId,
-            this.checkpointService,
+			this.checkpointService,
 		);
 
 		const deliLambda = new DeliLambda(
@@ -207,7 +212,7 @@ export class DeliLambdaFactory
 			this.serviceConfiguration,
 			sessionMetric,
 			sessionStartMetric,
-            this.checkpointService
+			this.checkpointService,
 		);
 
 		deliLambda.on("close", (closeType) => {

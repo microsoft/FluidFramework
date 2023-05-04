@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
 	ControlMessageType,
-    ICheckpointService,
+	ICheckpointService,
 	ICollection,
 	IContext,
 	IControlMessage,
@@ -183,8 +183,13 @@ export class ScribeLambdaFactory
 				Lumberjack.info(checkpointMessage, lumberProperties);
 			}
 		} else {
-            lastCheckpoint = await this.checkpointService.restoreFromCheckpoint(documentId, tenantId, "scribe", document) as IScribe;
-            opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+			lastCheckpoint = (await this.checkpointService.restoreFromCheckpoint(
+				documentId,
+				tenantId,
+				"scribe",
+				document,
+			)) as IScribe;
+			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
 		}
 
 		// Filter and keep ops after protocol state
@@ -235,7 +240,7 @@ export class ScribeLambdaFactory
 			this.messageCollection,
 			this.deltaManager,
 			this.getDeltasViaAlfred,
-            this.checkpointService,
+			this.checkpointService,
 		);
 
 		const pendingMessageReader = new PendingMessageReader(
