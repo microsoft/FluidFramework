@@ -254,6 +254,7 @@ describe("Schema Evolution Examples", () => {
 				stored.tryUpdateTreeSchema(positionedCanvasItemIdentifier, positionedCanvasItem),
 			);
 			assert(stored.tryUpdateTreeSchema(textIdentifier, text));
+			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint));
 			assert(stored.tryUpdateFieldSchema(rootFieldKey, tolerantRoot));
 
 			// That will cause the document stored schema to change,
