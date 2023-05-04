@@ -342,21 +342,24 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param branch - the head of the branch to rebase onto
 	 * @param undoRedoManager - the undo redo manager of the branch to rebase onto. This is necessary for updating the
 	 * undo redo manager of this branch.
-	 * @returns the net change to this branch and the commits that were removed and added to this branch by the rebase
+	 * @returns the net change to this branch and the commits that were removed and added to this branch by the rebase,
+	 * or undefined if nothing changed
 	 */
 	public rebaseOnto(
 		branch: GraphCommit<TChange>,
 		undoRedoManager: UndoRedoManager<TChange, TEditor>,
-	): [
-		change: TChange | undefined,
-		removedCommits: GraphCommit<TChange>[],
-		newCommits: GraphCommit<TChange>[],
-	] {
+	):
+		| [
+				change: TChange | undefined,
+				removedCommits: GraphCommit<TChange>[],
+				newCommits: GraphCommit<TChange>[],
+		  ]
+		| undefined {
 		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
 		const rebaseResult = this.rebaseBranch(this.head, branch);
 		if (rebaseResult === undefined) {
-			return [undefined, [], []];
+			return undefined;
 		}
 
 		// The net change to this branch is provided by the `rebaseBranch` API
@@ -377,7 +380,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Apply all the divergent changes on the given branch to this branch.
 	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
-	 * or undefined if no changes occurred
+	 * or undefined if nothing changed
 	 */
 	public merge(
 		branch: SharedTreeBranch<TEditor, TChange>,
