@@ -25,7 +25,7 @@ export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>
  */
 export type CellSpanningMark<TNodeChange> = Exclude<Mark<TNodeChange>, NewAttach<TNodeChange>>;
 
-export interface Modify<TNodeChange = NodeChangeType> extends CellMark {
+export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark {
 	type: "Modify";
 	changes: TNodeChange;
 }
@@ -123,7 +123,7 @@ export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | Retur
 export interface Delete<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasChanges<TNodeChange>,
-		CellMark {
+		CellTargetingMark {
 	type: "Delete";
 	count: NodeCount;
 }
@@ -132,7 +132,7 @@ export interface MoveOut<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
 		HasChanges<TNodeChange>,
-		CellMark {
+		CellTargetingMark {
 	type: "MoveOut";
 	count: NodeCount;
 }
@@ -158,12 +158,24 @@ export type ExistingCellMark<TNodeChange> =
 	| Revive<TNodeChange>
 	| ReturnTo;
 
-export interface CellMark {
+/**
+ * Mark which targets a range of existing cells instead of creating new cells.
+ */
+export interface CellTargetingMark {
+	/**
+	 * Describes the detach which last emptied target cells.
+	 * Undefined if the target cells are not empty in this mark's input context.
+	 */
 	detachEvent?: DetachEvent;
+
+	/**
+	 * Lineage of detaches adjacent to the cells since `detachEvent`.
+	 * Should be empty if the cells are full in this mark's input context.
+	 */
 	lineage?: LineageEvent[];
 }
 
-export interface DetachedCellMark extends CellMark {
+export interface DetachedCellMark extends CellTargetingMark {
 	detachEvent: DetachEvent;
 }
 
@@ -171,13 +183,13 @@ export interface Revive<TNodeChange = NodeChangeType>
 	extends HasReattachFields,
 		HasRevisionTag,
 		HasChanges<TNodeChange>,
-		CellMark {
+		CellTargetingMark {
 	type: "Revive";
 	content: ITreeCursorSynchronous[];
 	count: NodeCount;
 }
 
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, CellMark {
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, CellTargetingMark {
 	type: "ReturnTo";
 	count: NodeCount;
 
@@ -192,7 +204,7 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
 		HasChanges<TNodeChange>,
-		CellMark {
+		CellTargetingMark {
 	type: "ReturnFrom";
 	count: NodeCount;
 

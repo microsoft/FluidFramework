@@ -46,7 +46,6 @@ import {
 	DetachEvent,
 	EmptyInputCellMark,
 	ExistingCellMark,
-	CellMark,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -61,28 +60,6 @@ import {
 
 export function isModify<TNodeChange>(mark: Mark<TNodeChange>): mark is Modify<TNodeChange> {
 	return isObjMark(mark) && mark.type === "Modify";
-}
-
-export function isCellMark(mark: Mark<unknown>): mark is CellMark & Mark<unknown> {
-	if (isSkipMark(mark)) {
-		return false;
-	}
-
-	const type = mark.type;
-	switch (type) {
-		case "Delete":
-		case "Modify":
-		case "MoveOut":
-		case "ReturnFrom":
-		case "ReturnTo":
-		case "Revive":
-			return true;
-		case "Insert":
-		case "MoveIn":
-			return false;
-		default:
-			unreachableCase(type);
-	}
 }
 
 export function isNewAttach<TNodeChange>(mark: Mark<TNodeChange>): mark is NewAttach<TNodeChange> {

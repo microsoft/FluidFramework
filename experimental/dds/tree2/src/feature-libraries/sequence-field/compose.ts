@@ -251,9 +251,7 @@ function composeMarks<TNodeChange>(
 			assert(nodeChange === undefined, "TODO: Support transient inserts");
 			return 0;
 		}
-		// TODO: Create a modify or transient insert mark.
-		// const length = getMarkLength(baseMark);
-		// return createModifyMark(length, nodeChange, getCellInputId(baseMark, undefined));
+		// TODO: Create modify mark for transient node.
 		return 0;
 	} else {
 		const length = getMarkLength(baseMark);
@@ -636,14 +634,6 @@ function compareCellPositions(
 		}
 		return baseCellId.index - newId.index;
 	}
-
-	// TODO: Reconcile indexes and offsets.
-	// if (newId !== undefined) {
-	// 	const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
-	// 	if (offsetInBase !== undefined) {
-	// 		return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
-	// 	}
-	// }
 
 	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseCellId.revision);
 	if (offsetInNew !== undefined) {
