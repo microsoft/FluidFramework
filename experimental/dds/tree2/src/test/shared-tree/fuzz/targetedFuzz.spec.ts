@@ -20,7 +20,13 @@ import {
 } from "../../utils";
 import { FuzzTestState, makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { initialTreeState, makeTree, runFuzzBatch, testSchema } from "./fuzzUtils";
+import {
+	generateInitialContainersInfo,
+	initialTreeState,
+	makeTree,
+	runFuzzBatch,
+	testSchema,
+} from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 export async function performFuzzActionsAbort(
@@ -49,7 +55,7 @@ export async function performFuzzActionsAbort(
 	const initialState: FuzzTestState = {
 		random,
 		trees: provider.trees,
-		containers: provider.containers,
+		containersInfo: generateInitialContainersInfo(provider.containers),
 		testTreeProvider: provider,
 		numberOfEdits: 0,
 	};

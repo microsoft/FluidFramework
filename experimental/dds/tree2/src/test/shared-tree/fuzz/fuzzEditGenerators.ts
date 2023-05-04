@@ -27,7 +27,7 @@ import {
 } from "../../../core";
 import {
 	ConnectionOps,
-	DisconnectionOp,
+	DisconnectOp,
 	FieldEdit,
 	FuzzDelete,
 	FuzzInsert,
@@ -37,6 +37,7 @@ import {
 	NodeEdit,
 	NodeRangePath,
 	Operation,
+	ReconnectOp,
 	SequenceFieldEdit,
 	TransactionAbortOp,
 	TransactionBoundary,
@@ -47,9 +48,15 @@ import {
 
 export interface FuzzTestState extends BaseFuzzTestState {
 	trees: readonly ISharedTree[];
-	containers?: readonly IContainer[];
+	containersInfo?: readonly ContainerInfo[];
 	testTreeProvider?: ITestTreeProvider;
 	numberOfEdits: number;
+}
+
+export interface ContainerInfo {
+	container: IContainer;
+	url: string;
+	pendingOps: string | undefined;
 }
 
 export interface TreeContext {
@@ -64,6 +71,8 @@ export interface EditGeneratorOpWeights {
 	commit: number;
 	abort: number;
 	synchronize: number;
+	disconnect: number;
+	reconnect: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	insert: 0,
@@ -73,6 +82,8 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	commit: 0,
 	abort: 0,
 	synchronize: 0,
+	disconnect: 0,
+	reconnect: 0,
 };
 
 export const makeNodeEditGenerator = (
@@ -341,14 +352,60 @@ export const makeTransactionEditGenerator = (
 	);
 };
 
-export function makeConnectionOpGenerator(): AsyncGenerator<ConnectionOps, FuzzTestState>;
-{
+export function makeConnectionOpGenerator(
+	opWeights: Partial<EditGeneratorOpWeights>,
+): AsyncGenerator<ConnectionOps, FuzzTestState> {
 	type EditState = FuzzTestState & TreeContext;
-	async function disconnectionOpGenerator(state: EditState): Promise<DisconnectionOp> {
+	const passedOpWeights = {
+		...defaultEditGeneratorOpWeights,
+		...opWeights,
+	};
+	async function disconnectOpGenerator(state: EditState): Promise<DisconnectOp> {
 		return {
 			type: "disconnect",
+			index: state.treeIndex,
+			isObserver: state.treeIndex < 3,
 		};
 	}
+	async function reconnectOpGenerator(state: EditState): Promise<ReconnectOp> {
+		return {
+			type: "reconnect",
+			index: state.treeIndex,
+			isObserver: state.treeIndex < 3,
+		};
+	}
+	const baseTransactionEditGenerator = createWeightedAsyncGenerator<ConnectionOps, EditState>([
+		[
+			disconnectOpGenerator,
+			passedOpWeights.disconnect,
+			({ containersInfo, treeIndex }) => {
+				const containersExist = containersInfo !== undefined;
+				if (!containersExist) {
+					return false;
+				}
+				return containersExist && containersInfo[treeIndex].container.connectionState === 2;
+			},
+		],
+		[
+			reconnectOpGenerator,
+			passedOpWeights.reconnect,
+			({ containersInfo, treeIndex }) => {
+				const containersExist = containersInfo !== undefined;
+				if (!containersExist) {
+					return false;
+				}
+				return containersInfo[treeIndex].container.connectionState === 0;
+			},
+		],
+	]);
+
+	const buildOperation = (contents: ConnectionOps) => {
+		return contents;
+	};
+	return createAsyncGenerator<ConnectionOps, ConnectionOps>(
+		baseTransactionEditGenerator,
+		buildOperation,
+	);
 }
 
 function createAsyncGenerator<Op, OpOut>(
@@ -393,8 +450,28 @@ export function makeOpGenerator(
 			makeTransactionEditGenerator(passedOpWeights),
 			sumWeights([passedOpWeights.abort, passedOpWeights.commit, passedOpWeights.start]),
 		],
+		[
+			makeConnectionOpGenerator(passedOpWeights),
+			sumWeights([passedOpWeights.disconnect, passedOpWeights.reconnect]),
+			({ containersInfo }) => {
+				return checkContainerConnections(containersInfo);
+			},
+		],
 	];
 	return createWeightedAsyncGenerator(generatorWeights);
+}
+
+function checkContainerConnections(containers: readonly ContainerInfo[] | undefined) {
+	if (containers === undefined) {
+		return false;
+	}
+	for (const containerInfo of containers) {
+		const connection = containerInfo.container.connectionState;
+		if (connection === 2 || connection === 0) {
+			return true;
+		}
+	}
+	return false;
 }
 
 function sumWeights(values: (number | undefined)[]): number {

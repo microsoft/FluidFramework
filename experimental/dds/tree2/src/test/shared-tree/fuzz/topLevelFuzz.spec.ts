@@ -17,7 +17,12 @@ import {
 	EditGeneratorOpWeights,
 } from "./fuzzEditGenerators";
 import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers";
-import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import {
+	generateInitialContainersInfo,
+	initialTreeState,
+	runFuzzBatch,
+	testSchema,
+} from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 export async function performFuzzActions(
@@ -33,7 +38,7 @@ export async function performFuzzActions(
 	const initialState: FuzzTestState = {
 		random,
 		trees: provider.trees,
-		containers: provider.containers,
+		containersInfo: generateInitialContainersInfo(provider.containers),
 		testTreeProvider: provider,
 		numberOfEdits: 0,
 	};

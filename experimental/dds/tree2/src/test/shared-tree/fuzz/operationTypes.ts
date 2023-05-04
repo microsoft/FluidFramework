@@ -5,7 +5,7 @@
 
 import { FieldKey, UpPath } from "../../../core";
 
-export type Operation = TreeOperation | Synchronize;
+export type Operation = TreeOperation | Synchronize | ReconnectOp | DisconnectOp;
 
 export type TreeOperation = TreeEdit | TransactionBoundary;
 
@@ -84,19 +84,19 @@ export interface NodeRangePath {
 	count: number;
 }
 
-export interface DisconnectionOp {
+export interface DisconnectOp {
 	type: "disconnect";
 	index: number;
 	isObserver: boolean;
 }
 
-export interface ReconnectionOp {
+export interface ReconnectOp {
 	type: "reconnect";
 	index: number;
 	isObserver: boolean;
 }
 
-export type ConnectionOps = DisconnectionOp | ReconnectionOp;
+export type ConnectionOps = DisconnectOp | ReconnectOp;
 
 export interface EditGeneratorOpWeights {
 	insert: number;

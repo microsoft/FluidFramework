@@ -10,6 +10,7 @@ import {
 	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import {
 	JsonableTree,
 	fieldSchema,
@@ -20,7 +21,7 @@ import {
 import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
-import { FuzzTestState, EditGeneratorOpWeights } from "./fuzzEditGenerators";
+import { FuzzTestState, EditGeneratorOpWeights, ContainerInfo } from "./fuzzEditGenerators";
 import { Operation } from "./operationTypes";
 
 export function runFuzzBatch(
@@ -87,4 +88,17 @@ export function makeTree(initialState: JsonableTree): ISharedTree {
 	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 	field.insert(0, singleTextCursor(initialState));
 	return tree;
+}
+
+export function generateInitialContainersInfo(containers: readonly IContainer[]): ContainerInfo[] {
+	const containersInfo: ContainerInfo[] = [];
+	for (const container of containers) {
+		const containerInfo: ContainerInfo = {
+			container,
+			url: "",
+			pendingOps: undefined,
+		};
+		containersInfo.push(containerInfo);
+	}
+	return containersInfo;
 }
