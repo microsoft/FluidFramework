@@ -1,19 +1,24 @@
-/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { MarkedArrayLike, UntypedField, valueSymbol } from "../../..";
-import { ValueSchema } from "../../../core";
+// This file is a simplified subset of schemaAware.ts which can be used to investigate typing issues which are too hard to diagnose in the full version.
+
 import {
+	MarkedArrayLike,
+	UntypedField,
+	valueSymbol,
 	Multiplicity,
 	FieldSchema,
 	TreeSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
-} from "../../../feature-libraries/modular-schema";
+} from "../../..";
+import { ValueSchema } from "../../../core";
+// eslint-disable-next-line import/no-internal-modules
 import { UntypedSequenceField } from "../../../feature-libraries/schema-aware/partlyTyped";
+// eslint-disable-next-line import/no-internal-modules
 import { TypedValue } from "../../../feature-libraries/schema-aware/schemaAwareUtil";
 
 /**
@@ -126,8 +131,6 @@ export type TypedNode<TSchema extends TreeSchema> = CollectOptions<
 	TypedFields<TSchema["localFieldsObject"]>,
 	TSchema["value"]
 >;
-
-// export type TypedNode<TSchema extends TreeSchema> = TypedFields<TSchema["localFieldsObject"]>;
 
 /**
  * Generate a schema aware API for a single tree schema.
