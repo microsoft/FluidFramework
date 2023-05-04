@@ -43,7 +43,7 @@ export interface ContainerInfo {
 }
 
 function initializeTinyliciousClient(logger?: ITelemetryBaseLogger): TinyliciousClient {
-	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
+	console.log(`Initializing Tinylicious client...`);
 	return new TinyliciousClient({
 		logger,
 	});
@@ -74,7 +74,7 @@ export async function createFluidContainer(
 	try {
 		createContainerResult = await client.createContainer(containerSchema);
 	} catch (error) {
-		console.error(`Encountered error creating Fluid container: "${error}".`);
+		console.error("Encountered error creating Fluid container:", error);
 		throw error;
 	}
 	console.log("Container created!");
@@ -84,7 +84,12 @@ export async function createFluidContainer(
 	// Populate the container with initial app contents (*before* attaching)
 	if (setContentsPreAttach !== undefined) {
 		console.log("Populating initial app data...");
-		await setContentsPreAttach(container);
+		try {
+			await setContentsPreAttach(container);
+		} catch (error) {
+			console.error("Encountered an error while setting Container contents:", error);
+			throw error;
+		}
 		console.log("Initial data populated!");
 	}
 

@@ -45,13 +45,13 @@ import { AudienceClientMetadata } from "./AudienceMetadata";
 import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
 
 /**
- * Properties for configuring a {@link IContainerDevtools}.
+ * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
  *
  * @public
  */
 export interface ContainerDevtoolsProps {
 	/**
-	 * The Container with which the {@link ContainerDevtools} instance will be associated.
+	 * The Container to register with the Devtools.
 	 */
 	container: IContainer;
 
@@ -97,7 +97,8 @@ export interface ContainerDevtoolsProps {
 	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
 	 * default visualization implementations.
 	 *
-	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
+	 * Any visualizer configurations specified here will take precedence over system defaults, as well as any
+	 * provided when initializing the Devtools.
 	 */
 	dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
@@ -153,7 +154,6 @@ export interface ContainerDevtoolsProps {
  * TODO: Document others as they are added.
  *
  * @sealed
- * @internal
  */
 export class ContainerDevtools implements IContainerDevtools {
 	/**

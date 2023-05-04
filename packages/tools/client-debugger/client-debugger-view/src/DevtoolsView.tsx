@@ -327,7 +327,8 @@ interface MenuProps {
 	setSelection(newSelection: MenuSelection | undefined): void;
 
 	/**
-	 * Set of features supported by the {@link FluidDevtools} instance being used by the page application.
+	 * Set of features supported by the {@link @fluid-tools/client-debugger#IFluidDevtools}
+	 * instance being used by the page application.
 	 */
 	supportedFeatures: DevtoolsFeatureFlags;
 
@@ -355,6 +356,7 @@ function Menu(props: MenuProps): React.ReactElement {
 
 	menuSections.push(
 		<ContainersMenuSection
+			key="containers-menu-section"
 			containers={containers}
 			currentContainerSelection={
 				currentSelection?.type === "containerMenuSelection"

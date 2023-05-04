@@ -26,6 +26,7 @@ import {
 	symbolFromKey,
 	GlobalFieldKey,
 	GraphCommit,
+	UndoRedoManager,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -135,6 +136,12 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
 	 */
 	undo(): void;
+
+	/**
+	 * Redoes the last completed undo made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 */
+	redo(): void;
 
 	/**
 	 * An collection of functions for managing transactions.
@@ -346,6 +353,10 @@ export class SharedTree
 		this.context.unwrappedRoot = data;
 	}
 
+	public get undoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
+		return this.localBranchUndoRedoManager;
+	}
+
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
 		const schema = this.storedSchema.inner.clone();
@@ -455,11 +466,13 @@ export class SharedTreeFork implements ISharedTreeFork {
 		public readonly context: EditableTreeContext,
 		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		branch.on("change", (change) => {
-			const delta = this.changeFamily.intoDelta(change);
-			this.forest.applyDelta(delta);
-			this.identifiedNodes.scanIdentifiers(this.context);
-			this.events.emit("afterBatch");
+		branch.on("change", ({ change }) => {
+			if (change !== undefined) {
+				const delta = this.changeFamily.intoDelta(change);
+				this.forest.applyDelta(delta);
+				this.identifiedNodes.scanIdentifiers(this.context);
+				this.events.emit("afterBatch");
+			}
 		});
 	}
 
@@ -480,6 +493,9 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public undo() {
 		this.branch.undo();
+	}
+	public redo() {
+		this.branch.redo();
 	}
 
 	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
@@ -510,7 +526,7 @@ export class SharedTreeFork implements ISharedTreeFork {
 	}
 
 	public rebaseOnto(view: ISharedTreeView): void {
-		this.branch.rebaseOnto(getHeadCommit(view));
+		this.branch.rebaseOnto(getHeadCommit(view), getUndoRedoManager(view));
 	}
 
 	public merge(view: ISharedTreeFork): void {
@@ -551,7 +567,7 @@ export function runSynchronous(
 }
 
 // #region Extraction functions
-// The following two functions assume the underlying classes/implementations of `ISharedTreeView` and `ISharedTreeFork`.
+// The following three functions assume the underlying classes/implementations of `ISharedTreeView` and `ISharedTreeFork`.
 // While `instanceof` checks are in general bad practice or code smell, these are justifiable because:
 // 1. `SharedTree` and `SharedTreeFork` are private and meant to be the only implementations of `ISharedTreeView` and `ISharedTreeFork`.
 // 2. The `ISharedTreeView` and `ISharedTreeFork` interfaces are not meant to specify input contracts, but exist solely to reduce the API provided by the underlying classes.
@@ -571,5 +587,17 @@ function getForkBranch(
 ): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
 	assert(fork instanceof SharedTreeFork, 0x5ca /* Unsupported ISharedTreeFork implementation */);
 	return fork.branch;
+}
+
+function getUndoRedoManager(
+	view: ISharedTreeView,
+): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
+	if (view instanceof SharedTree) {
+		return view.undoRedoManager;
+	} else if (view instanceof SharedTreeFork) {
+		return view.branch.undoRedoManager;
+	}
+
+	fail("Unsupported ISharedTreeView implementation");
 }
 // #endregion Extraction functions

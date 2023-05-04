@@ -35,6 +35,8 @@ import {
 	SimpleDependee,
 	tagChange,
 	TaggedChange,
+	UndoRedoManager,
+	UndoRedoManagerCommitType,
 } from "../core";
 import { SharedTreeBranch } from ".";
 
@@ -86,6 +88,12 @@ export class EditManager<
 	private localBranch: GraphCommit<TChangeset>;
 
 	/**
+	 * A map of local commit revisions to their undo redo manager commit types. This is stored so that
+	 * the trunk undo redo manager can properly track commits when they become sequenced.
+	 */
+	private readonly localCommitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>();
+
+	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence number of a commit on
 	 * the trunk, and the value is the set of all branches who have that commit as their common ancestor with the trunk.
 	 */
@@ -111,10 +119,18 @@ export class EditManager<
 	 */
 	private readonly trunkBase: TrunkCommit<TChangeset>;
 
+	/**
+	 * @param localBranchUndoRedoManager - the {@link UndoRedoManager} associated with the local branch.
+	 * localBranchUndoRedoManager.getHead can not be called within this constructor.
+	 * @param trunkUndoRedoManager - the {@link UndoRedoManager} associated with the trunk.
+	 * trunkUndoRedoManager.getHead can not be called within this constructor.
+	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
+		public readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, any>,
+		private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, any>,
 		public readonly anchors?: AnchorSet,
 	) {
 		super("EditManager");
@@ -137,14 +153,17 @@ export class EditManager<
 	public registerBranch(branch: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): void {
 		const trackBranch = (b: SharedTreeBranch<ChangeFamilyEditor, TChangeset>): SeqNumber => {
 			const trunkCommit = findCommonAncestor(this.trunk, b.getHead());
-			assert(isTrunkCommit(trunkCommit), "Expected commit to be on the trunk branch");
+			assert(
+				isTrunkCommit(trunkCommit),
+				0x66f /* Expected commit to be on the trunk branch */,
+			);
 			const branches = getOrCreate(
 				this.trunkBranches,
 				trunkCommit.sequenceNumber,
 				() => new Set(),
 			);
 
-			assert(!branches.has(b), "Branch was registered more than once");
+			assert(!branches.has(b), 0x670 /* Branch was registered more than once */);
 			branches.add(b);
 			return trunkCommit.sequenceNumber;
 		};
@@ -156,7 +175,7 @@ export class EditManager<
 			const branches =
 				this.trunkBranches.get(sequenceNumber) ?? fail("Expected branch to be tracked");
 
-			assert(branches.delete(b), "Expected branch to be tracked");
+			assert(branches.delete(b), 0x671 /* Expected branch to be tracked */);
 			if (branches.size === 0) {
 				this.trunkBranches.delete(sequenceNumber);
 			}
@@ -167,9 +186,11 @@ export class EditManager<
 		// Whenever the branch forks, register the new fork
 		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offRebase = branch.on("rebase", () => {
-			untrackBranch(branch, trunkBase.sequenceNumber);
-			trunkBase.sequenceNumber = trackBranch(branch);
+		const offRebase = branch.on("change", ({ type }) => {
+			if (type === "rebase") {
+				untrackBranch(branch, trunkBase.sequenceNumber);
+				trunkBase.sequenceNumber = trackBranch(branch);
+			}
 		});
 		// When the branch is disposed, update our branch set and trim the trunk
 		const offDispose = branch.on("dispose", () => {
@@ -248,7 +269,7 @@ export class EditManager<
 			// If no trunk commit is found, it means that all trunk commits are below the search key, so evict them all
 			assert(
 				this.trunkBranches.isEmpty,
-				"Expected no registered branches when clearing trunk",
+				0x672 /* Expected no registered branches when clearing trunk */,
 			);
 			this.trunk = this.trunkBase;
 			this.sequenceMap.clear();
@@ -317,6 +338,9 @@ export class EditManager<
 		this.sequenceMap.clear();
 		this.trunk = data.trunk.reduce((base, c) => {
 			const commit = mintTrunkCommit(base, c);
+			this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
+				this.changeFamily.intoDelta(commit.change),
+			);
 			this.sequenceMap.set(c.sequenceNumber, commit);
 			return commit;
 		}, this.trunkBase);
@@ -338,10 +362,10 @@ export class EditManager<
 	}
 
 	public getLastSequencedChange(): TChangeset {
-		return (this.getLastCommit() ?? fail("No sequenced changes")).change;
+		return (this.getTrunkHead() ?? fail("No sequenced changes")).change;
 	}
 
-	public getLastCommit(): Commit<TChangeset> | undefined {
+	public getTrunkHead(): GraphCommit<TChangeset> {
 		return this.trunk;
 	}
 
@@ -372,7 +396,7 @@ export class EditManager<
 				fail(
 					"Received a sequenced change from the local session despite having no local changes",
 				);
-			this.pushToTrunk(sequenceNumber, { ...newCommit, change });
+			this.pushToTrunk(sequenceNumber, { ...newCommit, change }, true);
 			// TODO: Can this be optimized by simply mutating the localPath parent pointers? Is it safe to do that?
 			this.localBranch = localPath.reduce(mintCommit, this.trunk);
 			return emptyDelta;
@@ -411,15 +435,22 @@ export class EditManager<
 			});
 		}
 
-		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
+		const delta = this.rebaseLocalBranchOverTrunk();
+		if (delta === undefined) {
+			return emptyDelta;
+		}
+
+		return this.changeFamily.intoDelta(delta);
 	}
 
 	public addLocalChange(
 		revision: RevisionTag,
 		change: TChangeset,
 		rebaseAnchors = true,
+		undoRedoType = UndoRedoManagerCommitType.Undoable,
 	): Delta.Root {
 		this.pushToLocalBranch(revision, change);
+		this.localCommitTypes.set(revision, undoRedoType);
 
 		if (rebaseAnchors && this.anchors !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
@@ -437,15 +468,21 @@ export class EditManager<
 		const [squashStart, commits] = this.findLocalCommit(startRevision);
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
-		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
+		const anonymousCommits = commits.map(({ change, revision }) => {
+			this.localCommitTypes.delete(revision);
+			return { change, revision: undefined };
+		});
 
 		{
 			const change = this.changeFamily.rebaser.compose(anonymousCommits);
+			const revision = mintRevisionTag();
 			this.localBranch = mintCommit(squashStart, {
-				revision: mintRevisionTag(),
+				revision,
 				sessionId: this.localSessionId,
 				change,
 			});
+			// A completed transaction is always undoable.
+			this.localCommitTypes.set(revision, UndoRedoManagerCommitType.Undoable);
 			return this.localBranch;
 		}
 	}
@@ -491,8 +528,22 @@ export class EditManager<
 		return [commit, commits];
 	}
 
-	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {
+	private pushToTrunk(
+		sequenceNumber: SeqNumber,
+		commit: Commit<TChangeset>,
+		local = false,
+	): void {
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
+		if (local) {
+			const type =
+				this.localCommitTypes.get(this.trunk.revision) ??
+				fail("Local commit types must be tracked until they are sequenced.");
+			this.localCommitTypes.delete(this.trunk.revision);
+			this.trunkUndoRedoManager.trackCommit(this.trunk, type);
+		}
+		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
+			this.changeFamily.intoDelta(commit.change),
+		);
 		this.sequenceMap.set(sequenceNumber, this.trunk);
 	}
 
@@ -504,16 +555,21 @@ export class EditManager<
 		});
 	}
 
-	private rebaseLocalBranchOverTrunk(): TChangeset {
+	private rebaseLocalBranchOverTrunk(): TChangeset | undefined {
 		const [newLocalChanges, netChange] = rebaseBranch(
 			this.changeFamily.rebaser,
 			this.localBranch,
 			this.trunk,
 		);
 
+		this.localBranchUndoRedoManager.updateAfterRebase(
+			newLocalChanges,
+			this.trunkUndoRedoManager,
+		);
+
 		this.localBranch = newLocalChanges;
 
-		if (this.anchors !== undefined) {
+		if (this.anchors !== undefined && netChange !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
 		}
 

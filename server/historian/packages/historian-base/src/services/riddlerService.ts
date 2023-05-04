@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { ITenantConfig } from "@fluidframework/server-services-core";
+import { ITenantConfig, ITenantConfigManager } from "@fluidframework/server-services-core";
 import { getCorrelationId } from "@fluidframework/server-services-utils";
 import { BasicRestWrapper, RestWrapper } from "@fluidframework/server-services-client";
 import * as uuid from "uuid";
@@ -14,7 +14,7 @@ import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 
-export class RiddlerService implements ITenantService {
+export class RiddlerService implements ITenantService, ITenantConfigManager {
 	private readonly restWrapper: RestWrapper;
 	constructor(
 		endpoint: string,
@@ -79,6 +79,17 @@ export class RiddlerService implements ITenantService {
 			Lumberjack.error(`Error caching tenant details to redis`, lumberProperties, error);
 		});
 		return details;
+	}
+
+	public async getTenantStorageName(tenantId: string): Promise<string> {
+		const tenantConfig = await this.getTenantDetails(tenantId);
+		const result = tenantConfig?.customData?.storageName as string;
+		if (!result) {
+			Lumberjack.error(`Tenant storage name not found`, {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+			});
+		}
+		return result;
 	}
 
 	private async verifyToken(
