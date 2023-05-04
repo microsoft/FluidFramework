@@ -73,6 +73,9 @@
 			},
 			"ClassDeclaration_MongoDatabaseManager": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITokenRevocationResponse": {
+				"backCompat": false
 			}
 		}
 	}

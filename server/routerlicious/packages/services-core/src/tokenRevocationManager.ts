@@ -22,9 +22,15 @@ export interface IWebSocketTracker {
 }
 
 export interface ITokenRevocationResponse {
-	requestId: string;
+	requestId?: string;
 }
 
+/**
+ * @deprecated
+ * No need to return requestId in error response.
+ * x-correlation-id in response header should be used for tracking purpose
+ * TODO: remove it once no usage from external users
+ */
 export class TokenRevocationError extends NetworkError {
 	constructor(
 		/**
@@ -81,8 +87,63 @@ export class TokenRevocationError extends NetworkError {
 	}
 }
 
+/**
+ * Indicate that a connect is rejected/dropped because the token has been revoked.
+ */
+export class TokenRevokedError extends NetworkError {
+	public readonly type: string = "TokenRevoked";
+	constructor(
+		/**
+		 * HTTP status code that describes the error.
+		 */
+		code: number,
+		/**
+		 * The message associated with the error.
+		 */
+		message: string,
+		/**
+		 * Optional boolean indicating whether this is an error that can be retried.
+		 * Only relevant when {@link NetworkError.isFatal} is false.
+		 */
+		canRetry?: boolean,
+		/**
+		 * Optional boolean indicating whether this error is fatal. This generally indicates that the error causes
+		 * negative, non-recoverable impact to the component/caller and cannot be ignored.
+		 */
+		isFatal?: boolean,
+		/**
+		 * Optional value representing the time in milliseconds that should be waited before retrying.
+		 */
+		retryAfterMs?: number,
+	) {
+		super(code, message, canRetry, isFatal, retryAfterMs);
+	}
+
+	public get details(): INetworkErrorDetails & { type: string } {
+		return {
+			message: this.message,
+			type: this.type,
+			canRetry: this.canRetry,
+			isFatal: this.isFatal,
+			retryAfter: this.retryAfter,
+			retryAfterMs: this.retryAfterMs,
+		};
+	}
+
+	/**
+	 * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
+	 * @public
+	 */
+	public toJSON(): INetworkErrorDetails & { code: number; type: string } {
+		return {
+			type: this.type,
+			...super.toJSON(),
+		};
+	}
+}
+
 export interface IRevokeTokenOptions {
-	httpCorrelationId: string;
+	correlationId: string;
 }
 
 /**

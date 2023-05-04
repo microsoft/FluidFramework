@@ -312,7 +312,7 @@ export function create(
 			if (tokenRevocationManager) {
 				const correlationId = getCorrelationIdWithHttpFallback(request, response);
 				const options: IRevokeTokenOptions = {
-					httpCorrelationId: correlationId,
+					correlationId,
 				};
 				const resultP = tokenRevocationManager.revokeToken(
 					tenantId,
