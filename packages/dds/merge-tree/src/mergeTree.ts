@@ -1026,7 +1026,7 @@ export class MergeTree {
 				slideGroup(currentSlideDestination, currentSlideIsForward, currentSlideGroup, pred);
 				reassign(segment.localRefs, slideToSegment, slideIsForward);
 			} else {
-				currentRightSlideGroup.push(segment.localRefs);
+				currentSlideGroup.push(segment.localRefs);
 			}
 		};
 
