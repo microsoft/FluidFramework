@@ -26,7 +26,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly getHead?: () => GraphCommit<TChange>,
-		public commitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>(),
+		public readonly commitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>(),
 		private headUndoableCommit?: ReversibleCommit<TChange>,
 		private headRedoableCommit?: ReversibleCommit<TChange>,
 	) {}
