@@ -12,6 +12,7 @@ import {
 	ICache,
 	IDocumentRepository,
 	ITokenRevocationManager,
+	IDocumentDeleteService,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -40,6 +41,7 @@ export function create(
 	deltaService: IDeltaService,
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
 	tokenManager?: ITokenRevocationManager,
 ) {
 	// Maximum REST request size
@@ -97,6 +99,7 @@ export function create(
 		producer,
 		appTenants,
 		documentRepository,
+		documentDeleteService,
 		tokenManager,
 	);
 

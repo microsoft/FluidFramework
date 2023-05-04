@@ -10,6 +10,7 @@ import {
 	ITenantManager,
 	ICache,
 	IDocumentRepository,
+	IDocumentDeleteService,
 	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import {
@@ -44,6 +45,7 @@ export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
 	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
@@ -249,8 +251,13 @@ export function create(
 			const tenantId = getParam(request.params, "tenantId");
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
-			// TODO: add implementation here.
-			response.status(501).json("Document delete is not supported yet");
+
+			// TODO: Replace dummy implementation bellow.
+			async (request, response, next) => {
+				const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
+				response.status(501).json("Document delete is not supported yet");
+				handleResponse(deleteP, response, undefined, 500);
+			}
 		},
 	);
 

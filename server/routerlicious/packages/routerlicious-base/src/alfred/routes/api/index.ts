@@ -8,6 +8,7 @@ import {
 	IDeltaService,
 	IDocumentRepository,
 	IDocumentStorage,
+	IDocumentDeleteService,
 	IProducer,
 	ITenantManager,
 	IThrottler,
@@ -32,6 +33,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
@@ -53,6 +55,7 @@ export function create(
 		config,
 		tenantManager,
 		documentRepository,
+		documentDeleteService,
 		tokenManager,
 	);
 	const apiRoute = api.create(

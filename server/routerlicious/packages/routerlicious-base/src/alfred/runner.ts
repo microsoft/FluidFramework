@@ -18,6 +18,7 @@ import {
 	IWebServer,
 	IWebServerFactory,
 	IDocumentRepository,
+	IDocumentDeleteService,
 	ITokenRevocationManager,
 	IWebSocketTracker,
 } from "@fluidframework/server-services-core";
@@ -53,6 +54,7 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
@@ -76,6 +78,7 @@ export class AlfredRunner implements IRunner {
 			this.deltaService,
 			this.producer,
 			this.documentRepository,
+			this.documentDeleteService,
 			this.tokenManager,
 		);
 		alfred.set("port", this.port);

@@ -11,6 +11,7 @@ import {
 	IThrottler,
 	ICache,
 	IDocumentRepository,
+	IDocumentDeleteService,
 	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
@@ -34,6 +35,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentRepository: IDocumentRepository,
+	documentDeleteService: IDocumentDeleteService,
 	tokenManager?: ITokenRevocationManager,
 ) {
 	return {
@@ -48,6 +50,7 @@ export function create(
 			producer,
 			appTenants,
 			documentRepository,
+			documentDeleteService,
 			tokenManager,
 		),
 	};
