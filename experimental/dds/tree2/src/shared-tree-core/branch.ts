@@ -22,7 +22,6 @@ import {
 	RevisionTag,
 } from "../core";
 import { EventEmitter } from "../events";
-import { TransactionResult } from "../util";
 import { TransactionStack } from "./transactionStack";
 
 /**
@@ -118,7 +117,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.head = head;
 	}
 
-	public apply(change: TChange, revision: RevisionTag): void {
+	/**
+	 * Apply a change to this branch.
+	 * @param change - the change to apply
+	 * @param revision - the revision of the new head commit of the branch that contains `change`
+	 * @returns the change that was applied and the new head commit of the branch
+	 */
+	public apply(
+		change: TChange,
+		revision: RevisionTag,
+	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		return this.applyChange(change, revision, UndoRedoManagerCommitType.Undoable);
 	}
 
@@ -126,7 +134,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		change: TChange,
 		revision: RevisionTag,
 		undoRedoType: UndoRedoManagerCommitType | undefined,
-	): void {
+	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 		this.head = mintCommit(this.head, {
 			revision,
@@ -143,6 +151,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		this.emitAndRebaseAnchors({ type: "append", change, newCommits: [this.head] });
+		return [change, this.head];
 	}
 
 	/**
@@ -152,6 +161,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return this.head;
 	}
 
+	/**
+	 * Begin a transaction on this branch. If the transaction is committed via {@link commitTransaction},
+	 * all commits made since this call will be squashed into a single head commit.
+	 * @param repairStore - the repair store associated with this transaction
+	 */
 	public startTransaction(repairStore?: RepairDataStore): void {
 		this.assertNotDisposed();
 		if (!this.isTransacting()) {
@@ -164,7 +178,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.editor.enterTransaction();
 	}
 
-	public commitTransaction(): TransactionResult.Commit {
+	/**
+	 * Commit the current transaction. There must be a transaction in progress that was begun via
+	 * {@link startTransaction}. All commits in the current transaction will be squashed into a new,
+	 * single head commit.
+	 * @returns the commits that were squashed, and the new squash commit
+	 */
+	public commitTransaction(): [
+		squashedCommits: GraphCommit<TChange>[],
+		newCommit: GraphCommit<TChange>,
+	] {
 		this.assertNotDisposed();
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
@@ -194,30 +217,46 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				this.head.revision,
 			);
 		}
-		return TransactionResult.Commit;
+		return [commits, this.head];
 	}
 
-	public abortTransaction(): TransactionResult.Abort {
+	/**
+	 * Cancel the current transaction. There must be a transaction in progress that was begun via
+	 * {@link startTransaction}. All commits made during the transaction will be removed.
+	 * @returns the change to this branch resulting in the removal of the commits, and a list of the
+	 * commits that were removed.
+	 */
+	public abortTransaction(): [
+		change: TChange | undefined,
+		abortedCommits: GraphCommit<TChange>[],
+	] {
 		this.assertNotDisposed();
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.editor.exitTransaction();
 		this.head = startCommit;
-		if (commits.length > 0) {
-			const inverses: TaggedChange<TChange>[] = [];
-			for (let i = commits.length - 1; i >= 0; i--) {
-				const inverse = this.changeFamily.rebaser.invert(commits[i], false, repairStore);
-				inverses.push(tagChange(inverse, mintRevisionTag()));
-			}
-			this.emitAndRebaseAnchors({
-				type: "rollback",
-				change:
-					inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined,
-				removedCommits: commits,
-			});
+		if (commits.length === 0) {
+			return [undefined, []];
 		}
-		return TransactionResult.Abort;
+
+		const inverses: TaggedChange<TChange>[] = [];
+		for (let i = commits.length - 1; i >= 0; i--) {
+			const inverse = this.changeFamily.rebaser.invert(commits[i], false, repairStore);
+			inverses.push(tagChange(inverse, mintRevisionTag()));
+		}
+		const change =
+			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
+
+		this.emitAndRebaseAnchors({
+			type: "rollback",
+			change,
+			removedCommits: commits,
+		});
+		return [change, commits];
 	}
 
+	/**
+	 * True iff this branch is in the middle of a transaction that was begin via {@link startTransaction}
+	 */
 	public isTransacting(): boolean {
 		return this.transactions.size !== 0;
 	}
@@ -240,31 +279,37 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Undoes the last completed transaction made by the client.
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to undo
 	 */
-	public undo(): void {
+	public undo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x66a /* Undo is not yet supported during transactions */);
 
 		const undoChange = this.undoRedoManager.undo();
 		if (undoChange !== undefined) {
-			this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
+			return this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
 		}
+
+		return undefined;
 	}
 
 	/**
 	 * Redoes the last completed undo made by the client.
 	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to redo
 	 */
-	public redo(): void {
+	public redo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), "Redo is not yet supported during transactions");
 
 		const redoChange = this.undoRedoManager.redo();
 		if (redoChange !== undefined) {
-			this.applyChange(redoChange, mintRevisionTag(), UndoRedoManagerCommitType.Redo);
+			return this.applyChange(redoChange, mintRevisionTag(), UndoRedoManagerCommitType.Redo);
 		}
+
+		return undefined;
 	}
 
 	/**
@@ -297,36 +342,46 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param branch - the head of the branch to rebase onto
 	 * @param undoRedoManager - the undo redo manager of the branch to rebase onto. This is necessary for updating the
 	 * undo redo manager of this branch.
-	 * @returns the net change to this branch
+	 * @returns the net change to this branch and the commits that were removed and added to this branch by the rebase
 	 */
 	public rebaseOnto(
 		branch: GraphCommit<TChange>,
 		undoRedoManager: UndoRedoManager<TChange, TEditor>,
-	): void {
+	): [
+		change: TChange | undefined,
+		removedCommits: GraphCommit<TChange>[],
+		newCommits: GraphCommit<TChange>[],
+	] {
 		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
 		const rebaseResult = this.rebaseBranch(this.head, branch);
-		if (rebaseResult !== undefined) {
-			// The net change to this branch is provided by the `rebaseBranch` API
-			const [newHead, change, { deletedSourceCommits, newSourceCommits }] = rebaseResult;
-
-			this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
-
-			this.head = newHead;
-			this.emitAndRebaseAnchors({
-				type: "rebase",
-				change,
-				removedCommits: deletedSourceCommits,
-				newCommits: newSourceCommits,
-			});
+		if (rebaseResult === undefined) {
+			return [undefined, [], []];
 		}
+
+		// The net change to this branch is provided by the `rebaseBranch` API
+		const [newHead, change, { deletedSourceCommits, newSourceCommits }] = rebaseResult;
+
+		this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
+
+		this.head = newHead;
+		this.emitAndRebaseAnchors({
+			type: "rebase",
+			change,
+			removedCommits: deletedSourceCommits,
+			newCommits: newSourceCommits,
+		});
+		return [change, deletedSourceCommits, newSourceCommits];
 	}
 
 	/**
 	 * Apply all the divergent changes on the given branch to this branch.
-	 * @returns the net change to this branch
+	 * @returns the net change to this branch and the commits that were added to this branch by the merge,
+	 * or undefined if no changes occurred
 	 */
-	public merge(branch: SharedTreeBranch<TEditor, TChange>): void {
+	public merge(
+		branch: SharedTreeBranch<TEditor, TChange>,
+	): [change: TChange, newCommits: GraphCommit<TChange>[]] | undefined {
 		this.assertNotDisposed();
 		assert(
 			!branch.isTransacting(),
@@ -335,21 +390,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// Rebase the given branch onto this branch
 		const rebaseResult = this.rebaseBranch(branch.head, this.head);
-		if (rebaseResult !== undefined) {
-			// Compute the net change to this branch
-			const [newHead] = rebaseResult;
-
-			this.undoRedoManager.updateAfterMerge(newHead, branch.undoRedoManager);
-
-			const newCommits: GraphCommit<TChange>[] = [];
-			findAncestor([newHead, newCommits], (c) => c === this.head);
-			this.head = newHead;
-			this.emitAndRebaseAnchors({
-				type: "append",
-				change: this.changeFamily.rebaser.compose(newCommits),
-				newCommits,
-			});
+		if (rebaseResult === undefined) {
+			return undefined;
 		}
+
+		// Compute the net change to this branch
+		const [newHead] = rebaseResult;
+		this.undoRedoManager.updateAfterMerge(newHead, branch.undoRedoManager);
+		const newCommits: GraphCommit<TChange>[] = [];
+		findAncestor([newHead, newCommits], (c) => c === this.head);
+		this.head = newHead;
+		const change = this.changeFamily.rebaser.compose(newCommits);
+		this.emitAndRebaseAnchors({
+			type: "append",
+			change,
+			newCommits,
+		});
+		return [change, newCommits];
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */

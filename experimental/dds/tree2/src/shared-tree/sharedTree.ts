@@ -322,8 +322,14 @@ export class SharedTree
 
 		this.transaction = {
 			start: () => this.startTransaction(repairDataStoreFromForest(this.forest)),
-			commit: () => this.commitTransaction(),
-			abort: () => this.abortTransaction(),
+			commit: () => {
+				this.commitTransaction();
+				return TransactionResult.Commit;
+			},
+			abort: () => {
+				this.abortTransaction();
+				return TransactionResult.Abort;
+			},
 			inProgress: () => this.isTransacting(),
 		};
 
@@ -361,10 +367,7 @@ export class SharedTree
 		const anchors = new AnchorSet();
 		const schema = this.storedSchema.inner.clone();
 		const forest = this.forest.clone(schema, anchors);
-		const branch = this.createBranch(
-			new ForestRepairDataStoreProvider(forest, schema),
-			anchors,
-		);
+		const branch = this.forkBranch(new ForestRepairDataStoreProvider(forest, schema), anchors);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -486,8 +489,14 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => this.branch.startTransaction(repairDataStoreFromForest(this.forest)),
-		commit: () => this.branch.commitTransaction(),
-		abort: () => this.branch.abortTransaction(),
+		commit: () => {
+			this.branch.commitTransaction();
+			return TransactionResult.Commit;
+		},
+		abort: () => {
+			this.branch.abortTransaction();
+			return TransactionResult.Abort;
+		},
 		inProgress: () => this.branch.isTransacting(),
 	};
 

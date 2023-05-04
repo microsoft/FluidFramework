@@ -95,14 +95,6 @@ export class EditManager<
 	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset>;
 
 	/**
-	 * A map of local commit revisions to their undo redo manager commit types. This is stored so that
-	 * the trunk undo redo manager can properly track commits when they become sequenced.
-	 */
-	private readonly localCommitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>();
-	// TODO: update on new submitted commits
-	// TODO: handle rollback case
-
-	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence number of a commit on
 	 * the trunk, and the value is the set of all branches who have that commit as their common ancestor with the trunk.
 	 */
@@ -412,6 +404,7 @@ export class EditManager<
 		newCommit: Commit<TChangeset>,
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
+		undoRedoType?: UndoRedoManagerCommitType,
 	): void {
 		if (newCommit.sessionId === this.localSessionId) {
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
@@ -424,7 +417,7 @@ export class EditManager<
 				fail(
 					"Received a sequenced change from the local session despite having no local changes",
 				);
-			this.pushToTrunk(sequenceNumber, { ...newCommit, change }, true);
+			this.pushToTrunk(sequenceNumber, { ...newCommit, change }, undoRedoType);
 			this.localBranch.rebaseOnto(this.trunk, this.trunkUndoRedoManager);
 			return;
 		}
@@ -444,7 +437,7 @@ export class EditManager<
 
 		if (rebasedBranch === this.trunk) {
 			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
-			this.pushToTrunk(sequenceNumber, newCommit);
+			this.pushToTrunk(sequenceNumber, newCommit, undoRedoType);
 			this.peerLocalBranches.set(newCommit.sessionId, this.trunk);
 		} else {
 			const newChangeFullyRebased = rebaseChange(
@@ -456,10 +449,14 @@ export class EditManager<
 
 			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
 
-			this.pushToTrunk(sequenceNumber, {
-				...newCommit,
-				change: newChangeFullyRebased,
-			});
+			this.pushToTrunk(
+				sequenceNumber,
+				{
+					...newCommit,
+					change: newChangeFullyRebased,
+				},
+				undoRedoType,
+			);
 		}
 
 		this.localBranch.rebaseOnto(this.trunk, this.trunkUndoRedoManager);
@@ -480,15 +477,11 @@ export class EditManager<
 	private pushToTrunk(
 		sequenceNumber: SeqNumber,
 		commit: Commit<TChangeset>,
-		local = false,
+		undoRedoType: UndoRedoManagerCommitType | undefined,
 	): void {
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
-		if (local) {
-			const type =
-				this.localCommitTypes.get(this.trunk.revision) ??
-				fail("Local commit types must be tracked until they are sequenced.");
-			this.localCommitTypes.delete(this.trunk.revision);
-			this.trunkUndoRedoManager.trackCommit(this.trunk, type);
+		if (undoRedoType !== undefined) {
+			this.trunkUndoRedoManager.trackCommit(this.trunk, undoRedoType);
 		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
 			this.changeFamily.intoDelta(commit.change),

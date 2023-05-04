@@ -14,7 +14,6 @@ import {
 	mintRevisionTag,
 	ChangeFamilyEditor,
 	UndoRedoManager,
-	UndoRedoManagerCommitType,
 	Delta,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
