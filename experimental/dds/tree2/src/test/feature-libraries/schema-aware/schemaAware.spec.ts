@@ -18,8 +18,6 @@ import {
 	UnbrandedName,
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { SimpleNodeDataFor } from "../../../feature-libraries/schema-aware/schemaAwareSimple";
-
 import { TreeSchemaIdentifier, ValueSchema } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
@@ -35,6 +33,7 @@ import {
 } from "../../../feature-libraries";
 import { FlexList, TypedSchema } from "../../../feature-libraries/modular-schema";
 import { FlexListToNonLazyArray } from "../../../feature-libraries/modular-schema/typedSchema";
+import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
 {

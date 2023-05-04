@@ -1,10 +1,11 @@
+/* eslint-disable import/no-internal-modules */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
-import { ValueSchema } from "../../core";
-import { MarkedArrayLike, valueSymbol } from "../contextuallyTyped";
+import { MarkedArrayLike, UntypedField, valueSymbol } from "../../..";
+import { ValueSchema } from "../../../core";
 import {
 	Multiplicity,
 	TypedSchema,
@@ -13,10 +14,9 @@ import {
 	AllowedTypes,
 	FlexList,
 	Assume,
-} from "../modular-schema";
-import { UntypedField } from "../untypedTree";
-import { UntypedSequenceField } from "./partlyTyped";
-import { TypedValue } from "./schemaAwareUtil";
+} from "../../../feature-libraries/modular-schema";
+import { UntypedSequenceField } from "../../../feature-libraries/schema-aware/partlyTyped";
+import { TypedValue } from "../../../feature-libraries/schema-aware/schemaAwareUtil";
 
 /**
  * @alpha
@@ -91,7 +91,7 @@ export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 	T extends FlexList<TreeSchema>
 		? TypedSchema.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
-					Assume<TypedSchema.FlexListToNonLazyArray<T>, readonly TreeSchema[]>
+					Assume<TypedSchema.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>
 				>
 		  >
 		: unknown,

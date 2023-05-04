@@ -384,7 +384,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("global fields are unwrapped", () => {
-		const builder = new SchemaBuilder("test");
+		const builder = new SchemaBuilder("test", personSchemaLibrary);
 		const globalFieldKeyAsLocalField: LocalFieldKey = brand("globalFieldKey");
 		const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 		const globalFieldSchema = builder.globalField(
@@ -655,7 +655,7 @@ describe("editable-tree: read-only", () => {
 		// assert its schema follows the primary field schema and get the primary key from it
 		assert.equal([...simplePhonesNode].length, 1);
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];
-		assert.deepEqual(simplePhonesSchema.extraLocalFields.types, undefined);
+		assert.deepEqual(simplePhonesSchema.extraLocalFields.types, new Set());
 		assert.deepEqual([...simplePhonesSchema.globalFields], []);
 		assert.equal(simplePhonesSchema.extraGlobalFields, false);
 		assert.equal(simplePhonesSchema.localFields.size, 1);

@@ -199,7 +199,7 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 		? TypedSchema.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
 					Mode,
-					Assume<TypedSchema.FlexListToNonLazyArray<T>, readonly TreeSchema[]>
+					Assume<TypedSchema.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>
 				>
 		  >
 		: UntypedApi<Mode>,

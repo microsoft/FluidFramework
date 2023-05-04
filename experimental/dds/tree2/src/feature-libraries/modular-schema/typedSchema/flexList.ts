@@ -22,6 +22,17 @@ export function normalizeFlexList<List extends FlexList>(t: List): FlexListToLaz
 	}) as FlexListToLazyArray<List>;
 }
 
+export function normalizeFlexListEager<List extends FlexList>(
+	t: List,
+): FlexListToNonLazyArray<List> {
+	return t.map((value: LazyItem) => {
+		if (typeof value === "function") {
+			return value() as unknown;
+		}
+		return value;
+	}) as FlexListToNonLazyArray<List>;
+}
+
 /**
  * T, but can be wrapped in a function to allow referring to types before they are declared.
  * This makes recursive and co-recursive types possible.
@@ -37,11 +48,19 @@ type NormalizeLazyItem<List extends LazyItem> = List extends () => unknown ? Lis
 /**
  * Normalize FlexList type to a non-lazy array.
  */
-export type FlexListToNonLazyArray<List extends FlexList> = List extends readonly [
+export type FlexListToNonLazyArray<List extends FlexList> = number extends List["length"]
+	? // Handle non compile time constant case
+	  NormalizedFlexList<List extends FlexList<infer Item> ? Item : unknown>
+	: ConstantFlexListToNonLazyArray<List>;
+
+/**
+ * Normalize FlexList type to a non-lazy array.
+ */
+export type ConstantFlexListToNonLazyArray<List extends FlexList> = List extends readonly [
 	infer Head,
 	...infer Tail,
 ]
-	? [ExtractItemType<Head>, ...FlexListToNonLazyArray<Tail>]
+	? [ExtractItemType<Head>, ...ConstantFlexListToNonLazyArray<Tail>]
 	: [];
 
 /**
@@ -50,6 +69,13 @@ export type FlexListToNonLazyArray<List extends FlexList> = List extends readonl
 export type FlexListToLazyArray<List extends FlexList> = number extends List["length"]
 	? // Handle non compile time constant case
 	  NormalizedLazyFlexList<List extends FlexList<infer Item> ? Item : unknown>
-	: List extends readonly [infer Head, ...infer Tail]
-	? [NormalizeLazyItem<Head>, ...FlexListToLazyArray<Tail>]
+	: ConstantFlexListToLazyArray<List>;
+/**
+ * Normalize FlexList type to a lazy array.
+ */
+export type ConstantFlexListToLazyArray<List extends FlexList> = List extends readonly [
+	infer Head,
+	...infer Tail,
+]
+	? [NormalizeLazyItem<Head>, ...ConstantFlexListToLazyArray<Tail>]
 	: [];

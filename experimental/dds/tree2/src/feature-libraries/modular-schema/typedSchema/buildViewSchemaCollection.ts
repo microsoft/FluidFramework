@@ -10,7 +10,8 @@ import { fail } from "../../../util";
 import { defaultSchemaPolicy } from "../../defaultSchema";
 import { forbidden, value } from "../../defaultFieldKinds";
 import { SchemaLibrary, SourcedAdapters } from "./schemaBuilder";
-import { FieldSchema, GlobalFieldSchema, TreeSchema } from "./typedTreeSchema";
+import { FieldSchema, GlobalFieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
+import { normalizeFlexListEager } from "./flexList";
 
 // TODO: tests for this file
 
@@ -119,7 +120,8 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 			validateField(
 				collection,
 				field,
-				() => `Local field "${key}" of "${identifier}" schema`,
+				() =>
+					`Local field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
 		}
@@ -127,7 +129,8 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 			validateField(
 				collection,
 				tree.extraLocalFields,
-				() => `Extra local fields of "${identifier}" schema`,
+				() =>
+					`Extra local fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
 			if (tree.extraLocalFields.kind === value) {
@@ -139,7 +142,7 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 		for (const key of tree.globalFields) {
 			if (!collection.globalFieldSchema.has(key)) {
 				errors.push(
-					`Tree schema "${identifier}" references undefined global field "${key}".`,
+					`Tree schema "${identifier}" from library "${tree.builder.name}" references undefined global field "${key}".`,
 				);
 			}
 		}
@@ -165,14 +168,20 @@ export function validateField(
 	describeField: () => string,
 	errors: string[],
 ): void {
-	const types = field.types;
-	if (types !== undefined) {
-		for (const type of types) {
-			if (!collection.treeSchema.has(type)) {
-				errors.push(`${describeField()} references type "${type}" which is not defined`);
+	const types = field.allowedTypes;
+	if (!allowedTypesIsAny(types)) {
+		const normalizedTypes = normalizeFlexListEager(types);
+		for (const type of normalizedTypes) {
+			const referenced = collection.treeSchema.get(type.name);
+			if (referenced === undefined) {
+				errors.push(
+					`${describeField()} references type "${type.name}" from library "${
+						type.builder.name
+					}" which is not defined. Perhaps another type was intended, or that library needs to be added.`,
+				);
 			}
 		}
-		if (types.size === 0) {
+		if (types.length === 0) {
 			errors.push(
 				`${describeField()} requires children to have a type from a set of zero types. This means the field must always be empty.`,
 			);

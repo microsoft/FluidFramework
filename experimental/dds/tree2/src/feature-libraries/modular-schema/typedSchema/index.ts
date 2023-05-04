@@ -46,4 +46,4 @@ export {
 	allowedTypesToTypeSet,
 } from "./typedTreeSchema";
 
-export { FlexList, FlexListToNonLazyArray } from "./flexList";
+export { FlexList, FlexListToNonLazyArray, ConstantFlexListToNonLazyArray } from "./flexList";
