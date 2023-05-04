@@ -1596,6 +1596,12 @@ export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 type Skip = number;
 
 // @alpha
+export interface Sourced {
+    // (undocumented)
+    readonly builder: Named<string>;
+}
+
+// @alpha
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy> extends Dependee, ISubscribable<SchemaEvents>, SchemaDataAndPolicy<TPolicy> {
     update(newSchema: SchemaData): void;
 }
