@@ -21,17 +21,22 @@ import {
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
  */
-export enum SlidingPreference {
+export const SlidingPreference = {
 	/**
 	 * Prefer sliding towards the start of the tree
 	 */
-	Backward = 0,
-
+	BACKWARD: 0,
 	/**
 	 * Prefer sliding towards the end of the tree
 	 */
-	Forward = 1,
-}
+	FORWARD: 1,
+} as const;
+
+/**
+ * Dictates the preferential direction for a {@link ReferencePosition} to slide
+ * in a merge-tree
+ */
+export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
 
 /**
  * @internal
@@ -85,7 +90,7 @@ class LocalReference implements LocalReferencePosition {
 	constructor(
 		public refType = ReferenceType.Simple,
 		properties?: PropertySet,
-		public readonly slidingPreference: SlidingPreference = SlidingPreference.Forward,
+		public readonly slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	) {
 		_validateReferenceType(refType);
 		this.properties = properties;

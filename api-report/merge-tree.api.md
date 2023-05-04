@@ -1248,10 +1248,13 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 // @public
-export enum SlidingPreference {
-    Backward = 0,
-    Forward = 1
-}
+export const SlidingPreference: {
+    readonly BACKWARD: 0;
+    readonly FORWARD: 1;
+};
+
+// @public
+export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
 
 // @internal (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {

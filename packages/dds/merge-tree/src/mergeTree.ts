@@ -851,7 +851,7 @@ export class MergeTree {
 	 */
 	public _getSlideToSegment(
 		segment: ISegment | undefined,
-		slidingPreference: SlidingPreference = SlidingPreference.Forward,
+		slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 		cache?: Map<ISegment, { seg?: ISegment }>,
 	): ISegment | undefined {
 		if (!segment || !isRemovedAndAcked(segment)) {
@@ -875,7 +875,7 @@ export class MergeTree {
 			return true;
 		};
 
-		if (slidingPreference === SlidingPreference.Backward) {
+		if (slidingPreference === SlidingPreference.BACKWARD) {
 			backwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
 			forwardExcursion(segment, goFurtherToFindSlideToSegment);
@@ -884,7 +884,7 @@ export class MergeTree {
 			return result.seg;
 		}
 
-		if (slidingPreference === SlidingPreference.Backward) {
+		if (slidingPreference === SlidingPreference.BACKWARD) {
 			forwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
 			backwardExcursion(segment, goFurtherToFindSlideToSegment);
@@ -939,13 +939,13 @@ export class MergeTree {
 		let currentRightSlideIsForward: boolean | undefined;
 		let currentRightSlideGroup: LocalReferenceCollection[] = [];
 		const rightPred = (ref: LocalReferencePosition) =>
-			ref.slidingPreference !== SlidingPreference.Backward;
+			ref.slidingPreference !== SlidingPreference.BACKWARD;
 
 		let currentLeftSlideDestination: ISegment | undefined;
 		let currentLeftSlideIsForward: boolean | undefined;
 		let currentLeftSlideGroup: LocalReferenceCollection[] = [];
 		const leftPred = (ref: LocalReferencePosition) =>
-			ref.slidingPreference === SlidingPreference.Backward;
+			ref.slidingPreference === SlidingPreference.BACKWARD;
 
 		const slideGroup = (
 			currentSlideDestination: ISegment | undefined,
@@ -1046,7 +1046,7 @@ export class MergeTree {
 				currentRightSlideIsForward,
 				currentRightSlideGroup,
 				rightPred,
-				SlidingPreference.Forward,
+				SlidingPreference.FORWARD,
 				(localRefs, slideToSegment, slideIsForward) => {
 					currentRightSlideGroup = [localRefs];
 					currentRightSlideDestination = slideToSegment;
@@ -1060,7 +1060,7 @@ export class MergeTree {
 				currentLeftSlideIsForward,
 				currentLeftSlideGroup,
 				leftPred,
-				SlidingPreference.Backward,
+				SlidingPreference.BACKWARD,
 				(localRefs, slideToSegment, slideIsForward) => {
 					currentLeftSlideGroup = [localRefs];
 					currentLeftSlideDestination = slideToSegment;
