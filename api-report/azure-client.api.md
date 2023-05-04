@@ -27,7 +27,11 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 // @public
 export class AzureClient {
     constructor(props: AzureClientProps);
-    copyContainer(id: string, containerSchema: ContainerSchema, version?: AzureContainerVersion): Promise<{
+    copyContainer(
+    id: string,
+    containerSchema: ContainerSchema,
+    version?: AzureContainerVersion,
+    ): Promise<{
         container: IFluidContainer;
         services: AzureContainerServices;
     }>;
@@ -35,11 +39,17 @@ export class AzureClient {
         container: IFluidContainer;
         services: AzureContainerServices;
     }>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
+    getContainer(
+    id: string,
+    containerSchema: ContainerSchema,
+    ): Promise<{
         container: IFluidContainer;
         services: AzureContainerServices;
     }>;
-    getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+    getContainerVersions(
+    id: string,
+    options?: AzureGetVersionsOptions,
+    ): Promise<AzureContainerVersion[]>;
 }
 
 // @public
@@ -71,7 +81,10 @@ export interface AzureContainerVersion {
 
 // @public
 export class AzureFunctionTokenProvider implements ITokenProvider {
-    constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
+    constructor(
+    azFunctionUrl: string,
+    user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined,
+    );
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
