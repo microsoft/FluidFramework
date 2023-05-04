@@ -5,6 +5,7 @@
 
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+
 import {
 	GetTelemetryHistory,
 	handleIncomingWindowMessage,
@@ -19,6 +20,12 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
 
 /**
  * Logger implementation that posts all telemetry events to the window (globalThis object).
+ * This logger is intended to integrate with the Fluid DevTools browser extension.
+ *
+ * @remarks
+ *
+ * This logger optionally wraps a provided base logger, and forwards all events to that logger (in addition to posting
+ * data to the window).
  *
  * **Messages it listens for:**
  *
@@ -32,8 +39,6 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * - {@link TelemetryEvent.Message}: This is posted any time a telemetry event is logged.
  *
  * TODO: Document others as they are added.
- *
- * @remarks This logger is intended to integrate with the Fluid DevTools browser extension.
  *
  * @sealed
  * @public
@@ -111,7 +116,6 @@ export class DevtoolsLogger extends TelemetryLogger {
 		// Forward event to base logger
 		this.baseLogger?.send(event);
 
-		// TODO: ability to disable the logger so the rest of this becomes a no-op
 		try {
 			const newEvent: ITimestampedTelemetryEvent = {
 				logContent: this.prepareEvent(event),

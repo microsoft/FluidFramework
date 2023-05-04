@@ -527,6 +527,7 @@ declare function get_old_InterfaceDeclaration_IDatabaseManager():
 declare function use_current_InterfaceDeclaration_IDatabaseManager(
     use: TypeOnly<current.IDatabaseManager>);
 use_current_InterfaceDeclaration_IDatabaseManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IDatabaseManager());
 
 /*
@@ -2713,6 +2714,7 @@ declare function get_old_ClassDeclaration_MongoDatabaseManager():
 declare function use_current_ClassDeclaration_MongoDatabaseManager(
     use: TypeOnly<current.MongoDatabaseManager>);
 use_current_ClassDeclaration_MongoDatabaseManager(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MongoDatabaseManager());
 
 /*
