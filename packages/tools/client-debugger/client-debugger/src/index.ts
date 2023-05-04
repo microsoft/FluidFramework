@@ -10,7 +10,11 @@
  * It listens for incoming messages from the corresponding extension, and posts direct responses as well as automatic
  * updates for Fluid state changes.
  *
- * Individual {@link @fluidframework/container-definitions#IContainer | Fluid Containers} can be registered to generate Container-level stats.
+ * Individual {@link @fluidframework/container-definitions#IContainer | Fluid Containers} can be registered to generate
+ * Container-level stats.
+ *
+ * Visualization of telemetry logs can be enabled by creating a {@link DevtoolsLogger} and providing it to Devtools
+ * initialization.
  *
  * See the package README for more details.
  *

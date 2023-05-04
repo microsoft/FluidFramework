@@ -239,6 +239,8 @@ export function App(): React.ReactElement {
 
 	React.useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.
+		// Note that this isn't strictly necessary, as the Devtools will dispose of themselves on
+		// window unload, but it is here for example completeness.
 		return (): void => devtools.dispose();
 	}, [devtools]);
 
