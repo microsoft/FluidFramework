@@ -1663,7 +1663,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		intervalType: IntervalType,
 		props?: PropertySet,
 	): TInterval {
-		assert(intervalType === IntervalType.SlideOnRemove, "interval type should be slide");
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
 		}

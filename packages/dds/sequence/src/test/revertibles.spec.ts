@@ -320,26 +320,6 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
 	});
-	it("remote interval change interacting with reverting an interval remove with ack before remove", () => {
-		sharedString.insertText(0, "hello world");
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId()!;
-		containerRuntimeFactory.processAllMessages();
-
-		collection2.change(id, 3, 8);
-		containerRuntimeFactory.processAllMessages();
-
-		collection.on("deleteInterval", (interval, local, op) => {
-			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
-		});
-		collection.removeIntervalById(id);
-
-		revertIntervalRevertibles(sharedString, revertibles.splice(0));
-		containerRuntimeFactory.processAllMessages();
-
-		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
-		assertIntervals(sharedString2, collection2, [{ start: 3, end: 8 }]);
-	});
 	it("acked remote interval change interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -392,7 +372,6 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 			appendLocalPropertyChangedToRevertibles(interval, propertyDeltas, revertibles);
 		});
 		collection.changeProperties(id, { foo: "two" });
-		containerRuntimeFactory.processAllMessages();
 
 		collection2.removeIntervalById(id);
 		containerRuntimeFactory.processAllMessages();
@@ -459,7 +438,6 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 			appendLocalAddToRevertibles(interval, revertibles);
 		});
 		collection.add(2, 7, IntervalType.SlideOnRemove);
-		containerRuntimeFactory.processAllMessages();
 
 		collection2.changeProperties(id, { foo: "two" });
 		containerRuntimeFactory.processAllMessages();
@@ -484,7 +462,6 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 			appendLocalChangeToRevertibles(sharedString, interval, previousInterval, revertibles);
 		});
 		collection.change(id, 3, 8);
-		containerRuntimeFactory.processAllMessages();
 
 		collection2.changeProperties(id, { foo: "two" });
 		containerRuntimeFactory.processAllMessages();

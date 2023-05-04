@@ -6,7 +6,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { LocalReferencePosition, PropertySet, ReferenceType } from "@fluidframework/merge-tree";
-import { IntervalType, SequenceInterval } from "./intervalCollection";
+import { SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
 
 const IntervalEventType = {
@@ -145,8 +145,8 @@ function revertLocalDelete(
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
-	const intType = revertible.interval.intervalType & ~IntervalType.Simple;
-	const type = intType | IntervalType.SlideOnRemove;
+	const type = revertible.interval.intervalType;
+	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
 	string.getIntervalCollection(label).add(start, end, type, props);
 
