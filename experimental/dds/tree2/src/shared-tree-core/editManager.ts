@@ -95,6 +95,14 @@ export class EditManager<
 	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset>;
 
 	/**
+	 * A map of local commit revisions to their undo redo manager commit types. This is stored so that
+	 * the trunk undo redo manager can properly track commits when they become sequenced.
+	 */
+	private readonly localCommitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>();
+	// TODO: update on new submitted commits
+	// TODO: handle rollback case
+
+	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence number of a commit on
 	 * the trunk, and the value is the set of all branches who have that commit as their common ancestor with the trunk.
 	 */
@@ -476,16 +484,11 @@ export class EditManager<
 	): void {
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
 		if (local) {
-			const localUndoableCommit = findAncestor(
-				this.localBranch.undoRedoManager.headUndoable,
-				(c) => c.commit.revision === commit.revision,
-			);
-			this.trunkUndoRedoManager.trackCommit(
-				this.trunk,
-				localUndoableCommit !== undefined
-					? UndoRedoManagerCommitType.Undoable
-					: UndoRedoManagerCommitType.Undo,
-			);
+			const type =
+				this.localCommitTypes.get(this.trunk.revision) ??
+				fail("Local commit types must be tracked until they are sequenced.");
+			this.localCommitTypes.delete(this.trunk.revision);
+			this.trunkUndoRedoManager.trackCommit(this.trunk, type);
 		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
 			this.changeFamily.intoDelta(commit.change),
