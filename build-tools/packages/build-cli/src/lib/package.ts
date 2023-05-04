@@ -14,10 +14,10 @@ import {
 import {
 	InterdependencyRange,
 	ReleaseVersion,
-	WorkspaceRanges,
 	detectVersionScheme,
 	getVersionRange,
 	isInterdependencyRange,
+	isInternalVersionRange,
 	isPrereleaseVersion,
 	isRangeOperator,
 	isWorkspaceRange,
@@ -453,17 +453,21 @@ export function getFluidDependencies(
 				continue;
 			}
 
-			const minVer = semver.minVersion(dep.version);
-			if (minVer === null) {
+			// If the dependency is a workspace dependency, then we need to use the current version of the package as the dep
+			// range. Otherwise pick the minimum version the range represents.
+			const newVersion = dep.version.startsWith("workspace:")
+				? semver.parse(pkg.version)
+				: semver.minVersion(dep.version);
+			if (newVersion === null) {
 				throw new Error(`Failed to parse depVersion: ${dep.version}`);
 			}
 
 			if (pkg.monoRepo !== undefined) {
-				releaseGroups[pkg.monoRepo.kind] = minVer.version;
+				releaseGroups[pkg.monoRepo.kind] = newVersion.version;
 				continue;
 			}
 
-			packages[pkg.name] = minVer.version;
+			packages[pkg.name] = newVersion.version;
 		}
 	}
 
@@ -599,16 +603,22 @@ export async function setVersion(
 		} else {
 			newRange = `${interdependencyRange}${translatedVersion.version}`;
 		}
+	} else {
+		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 
-	if (!isInterdependencyRange(newRange)) {
+	if (
+		newRange !== undefined &&
+		isInternalVersionRange(newRange, true) === false &&
+		!isInterdependencyRange(newRange)
+	) {
 		throw new Error(`New range is invalid: ${newRange}`);
 	}
 
 	const packagesToCheckAndUpdate = releaseGroupOrPackage.packages;
 	const dependencyVersionMap = new Map<string, DependencyWithRange>();
 	for (const pkg of packagesToCheckAndUpdate) {
-		dependencyVersionMap.set(pkg.name, { pkg, range: newRange });
+		dependencyVersionMap.set(pkg.name, { pkg, range: newRange as InterdependencyRange });
 	}
 
 	for (const pkg of packagesToCheckAndUpdate) {

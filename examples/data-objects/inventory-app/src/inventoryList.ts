@@ -29,8 +29,16 @@ export class InventoryList extends DataObject {
 		this.tree.storedSchema.update(schema);
 
 		this.tree.root = {
-			nuts: 0,
-			bolts: 0,
+			parts: [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
 		};
 
 		this.root.set(treeKey, this.tree.handle);
