@@ -459,7 +459,7 @@ export class EditManager<
 		const [squashStart, commits] = this.findLocalCommit(startRevision);
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
-		const anonymousCommits = commits.map(({ change, revision }) => ({
+		const anonymousCommits = commits.map(({ change }) => ({
 			change,
 			revision: undefined,
 		}));
