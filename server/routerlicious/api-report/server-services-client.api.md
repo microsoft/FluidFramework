@@ -66,6 +66,9 @@ export function createFluidServiceNetworkError(statusCode: number, errorData?: I
 export const defaultHash = "00000000";
 
 // @public (undocumented)
+export const DocDeleteScopeType = "doc:delete";
+
+// @public (undocumented)
 export const DriverVersionHeaderName = "x-driver-version";
 
 // @public (undocumented)
@@ -567,6 +570,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 
 // @public
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;
+
+// @public
+export const TokenRevokeScopeType = "token:revoke";
 
 // @public
 export function validateTokenClaims(token: string, documentId: string, tenantId: string): ITokenClaims;

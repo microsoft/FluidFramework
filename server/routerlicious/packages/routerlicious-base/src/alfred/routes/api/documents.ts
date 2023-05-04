@@ -18,12 +18,18 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	validateTokenRevocationClaims,
+	validateTokenClaimsScopes,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
-import { IAlfredTenant, ISession, NetworkError } from "@fluidframework/server-services-client";
+import {
+	IAlfredTenant,
+	ISession,
+	NetworkError,
+	DocDeleteScopeType,
+	TokenRevokeScopeType,
+} from "@fluidframework/server-services-client";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
@@ -229,24 +235,24 @@ export function create(
 		},
 	);
 
-    /**
-     * Delete a document
-     */
-    router.post(
-        "/:tenantId/document/:id/delete",
-        validateRequestParams("tenantId", "id"),
+	/**
+	 * Delete a document
+	 */
+	router.delete(
+		"/:tenantId/document/:id",
+		validateRequestParams("tenantId", "id"),
 		verifyStorageToken(tenantManager, config, tokenManager),
+		validateTokenClaimsScopes(DocDeleteScopeType),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-        async (request, response, next) => {
-            const documentId = getParam(request.params, "id");
-            const tenantId = getParam(request.params, "tenantId");
-            const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
-            Lumberjack.info(
-                `Received document delete request.`,
-                lumberjackProperties);
-            // TODO: add implementation here.
-            response.status(501).json("Document delete is not supported yet");
-        });
+		async (request, response, next) => {
+			const documentId = getParam(request.params, "id");
+			const tenantId = getParam(request.params, "tenantId");
+			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
+			// TODO: add implementation here.
+			response.status(501).json("Document delete is not supported yet");
+		},
+	);
 
 	/**
 	 * Revoke an access token
@@ -254,7 +260,7 @@ export function create(
 	router.post(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
-		validateTokenRevocationClaims(),
+		validateTokenClaimsScopes(TokenRevokeScopeType),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {

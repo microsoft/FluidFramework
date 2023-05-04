@@ -26,7 +26,15 @@ export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
 export { BasicRestWrapper, RestWrapper } from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
-export { canRead, canSummarize, canWrite, canRevokeToken, canDelete } from "./scopes";
+export {
+	canRead,
+	canSummarize,
+	canWrite,
+	canRevokeToken,
+	canDelete,
+	TokenRevokeScopeType,
+	DocDeleteScopeType,
+} from "./scopes";
 export {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,

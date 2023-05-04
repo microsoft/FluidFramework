@@ -14,6 +14,9 @@ import {
 	isNetworkError,
 	validateTokenClaimsExpiration,
 	canRevokeToken,
+	TokenRevokeScopeType,
+	canDelete,
+	DocDeleteScopeType,
 } from "@fluidframework/server-services-client";
 import type {
 	ICache,
@@ -246,7 +249,7 @@ export function verifyStorageToken(
 	};
 }
 
-export function validateTokenRevocationClaims(): RequestHandler {
+export function validateTokenClaimsScopes(expectedScopes: string): RequestHandler {
 	return async (request, response, next) => {
 		let token: string = "";
 		try {
@@ -271,12 +274,24 @@ export function validateTokenRevocationClaims(): RequestHandler {
 
 		if (
 			claims.scopes === undefined ||
-			claims.scopes.length === 0 ||
-			!canRevokeToken(claims.scopes)
+			claims.scopes.length === 0
 		) {
 			return respondWithNetworkError(
 				response,
 				new NetworkError(403, "Missing scopes in token claims."),
+			);
+		}
+
+		if (expectedScopes === TokenRevokeScopeType && !canRevokeToken(claims.scopes)) {
+			return respondWithNetworkError(
+				response,
+				new NetworkError(403, "Missing RevokeToken scopes in token claims."),
+			);
+		}
+		if (expectedScopes === DocDeleteScopeType && !canDelete(claims.scopes)) {
+			return respondWithNetworkError(
+				response,
+				new NetworkError(403, "Missing DocDelete scopes in token claims."),
 			);
 		}
 		next();
