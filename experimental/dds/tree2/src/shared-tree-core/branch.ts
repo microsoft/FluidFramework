@@ -235,6 +235,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
+	 * Redoes the last completed undo made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 */
+	public redo(): void {
+		// TODO: allow this once it becomes possible to compose the changesets created by edits made
+		// within transactions and edits that represent completed transactions.
+		assert(!this.isTransacting(), "Redo is not yet supported during transactions");
+
+		const redoChange = this.undoRedoManager.redo();
+		if (redoChange !== undefined) {
+			this.applyChange(redoChange, UndoRedoManagerCommitType.Redo);
+		}
+	}
+
+	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
 	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
@@ -353,6 +368,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	private assertNotDisposed(): void {
-		assert(!this.disposed, "Branch is disposed");
+		assert(!this.disposed, 0x66e /* Branch is disposed */);
 	}
 }

@@ -26,6 +26,14 @@ class MockResponse {
 	public get responseData(): string {
 		return this._responseData;
 	}
+	private _headers: { [key: string]: string } = {};
+	public setHeader(name: string, value: string) {
+		this._headers[name] = value;
+	}
+
+	public getHeader(name: string): string {
+		return this._headers[name];
+	}
 	public readonly endedP: Deferred<any> = new Deferred();
 
 	public status(status: number): MockResponse {
@@ -171,12 +179,18 @@ describe("HTTP Utils", () => {
 		it("handles success", async () => {
 			const mockResponse = new MockResponse();
 			const responseData = "hello";
+			const exposedHeaders = "Content-Encoding, Content-Length, Content-Type";
 			await handleResponse(
 				Promise.resolve(responseData),
 				mockResponse as unknown as Response,
 			);
 			assert.strictEqual(mockResponse.statusCode, 200);
 			assert.strictEqual(mockResponse.responseData, JSON.stringify(responseData));
+			assert.strictEqual(
+				mockResponse.getHeader("Access-Control-Expose-Headers"),
+				exposedHeaders,
+			);
+			assert.strictEqual(mockResponse.getHeader("Timing-Allow-Origin"), "*");
 		});
 		it("handles NetworkError error", async () => {
 			const mockResponse = new MockResponse();

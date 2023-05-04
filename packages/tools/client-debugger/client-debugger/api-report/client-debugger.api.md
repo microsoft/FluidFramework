@@ -15,7 +15,6 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
-import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @internal
@@ -200,8 +199,7 @@ export namespace DevtoolsFeatures {
 
 // @public @sealed
 export class DevtoolsLogger extends TelemetryLogger {
-    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): DevtoolsLogger;
-    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    constructor(baseLogger?: ITelemetryBaseLogger);
     send(event: ITelemetryBaseEvent): void;
 }
 
@@ -378,7 +376,7 @@ export interface InboundHandlers {
 }
 
 // @public
-export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
+export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
 export function isDevtoolsMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;
