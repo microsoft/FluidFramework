@@ -37,7 +37,7 @@ export interface ICompressionStorageConfig {
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
 	private readonly _compressedBlobIds: Map<string, number> = new Map();
-	private static readonly compressed_prefix: string = "compressed_";
+	public static readonly compressed_prefix: string = "compressed_";
 	private static readonly defaultIsUseB64OnCompressed = true;
 
 	constructor(
@@ -48,6 +48,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		super(service);
 	}
 
+	public get service(): IDocumentStorageService {
+		return this.internalStorageService;
+	}
+	
 	/**
 	 * This method returns true if the blob is compressed.
 	 * @param name - The name of the blob
