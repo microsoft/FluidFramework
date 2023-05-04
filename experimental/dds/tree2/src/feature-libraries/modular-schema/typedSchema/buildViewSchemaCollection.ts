@@ -8,7 +8,7 @@ import { GlobalFieldKey, TreeSchemaIdentifier } from "../../../core";
 import { ViewSchemaCollection } from "../view";
 import { fail } from "../../../util";
 import { defaultSchemaPolicy } from "../../defaultSchema";
-import { forbidden, value } from "../../defaultFieldKinds";
+import { FieldKinds, forbidden, value } from "../../defaultFieldKinds";
 import { SchemaLibrary, SourcedAdapters } from "./schemaBuilder";
 import { FieldSchema, GlobalFieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
@@ -213,4 +213,4 @@ export function validateField(
  * Schema for a field which must always be empty.
  * @alpha
  */
-export const emptyField = new FieldSchema(forbidden, []);
+export const emptyField = new FieldSchema(FieldKinds.forbidden, []);

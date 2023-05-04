@@ -4,11 +4,7 @@
  */
 
 // Used by public types, but not part of the desired API surface
-export {
-	ViewSchemaLibrary,
-	RecursiveTreeSchemaSpecification,
-	RecursiveTreeSchema,
-} from "./schemaBuilder";
+export { RecursiveTreeSchemaSpecification, RecursiveTreeSchema } from "./schemaBuilder";
 
 export {
 	ObjectToMap,
@@ -28,7 +24,13 @@ export {
 	ArrayToUnion,
 } from "./typeUtils";
 
-export { TreeSchemaSpecification } from "./typedTreeSchema";
+export {
+	TreeSchemaSpecification,
+	NormalizeLocalFieldsInner,
+	NormalizeLocalFields,
+	LocalFields,
+	NormalizeField,
+} from "./typedTreeSchema";
 
 export {
 	FlexList,

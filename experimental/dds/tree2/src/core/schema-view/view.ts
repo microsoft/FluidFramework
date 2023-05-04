@@ -49,6 +49,9 @@ export enum AllowedUpdateType {
 	SchemaCompatible,
 }
 
+/**
+ * @alpha
+ */
 export interface TreeAdapter {
 	readonly output: TreeSchemaIdentifier;
 	readonly input: TreeSchemaIdentifier;
@@ -56,6 +59,9 @@ export interface TreeAdapter {
 	// TODO: include actual adapter functionality, not just what types it converts
 }
 
+/**
+ * @alpha
+ */
 export interface FieldAdapter {
 	readonly field: GlobalFieldKey;
 
@@ -69,6 +75,7 @@ export interface FieldAdapter {
  *
  * TODO: Support more kinds of adapters
  * TODO: support efficient lookup of adapters
+ * @alpha
  */
 export interface Adapters {
 	readonly tree?: readonly TreeAdapter[];

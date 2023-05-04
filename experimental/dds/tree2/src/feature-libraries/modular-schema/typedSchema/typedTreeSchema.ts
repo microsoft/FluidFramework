@@ -15,10 +15,8 @@ import {
 	ValueSchema,
 	symbolFromKey,
 } from "../../../core";
-// TODO: consider refactors to avoid this cyclic dep
-import type { FieldKinds } from "../..";
-import { forbidden } from "../../defaultFieldKinds";
 import { MakeNominal } from "../../../util";
+import { FieldKindTypes, FieldKinds } from "../../defaultFieldKinds";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { Assume, ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
@@ -26,15 +24,24 @@ import { emptyField } from "./buildViewSchemaCollection";
 
 // TODO: tests for this file
 
-interface LocalFields {
+/**
+ * @alpha
+ */
+export interface LocalFields {
 	readonly [key: string]: FieldSchema;
 }
 
-type NormalizeLocalFieldsInner<T extends LocalFields> = {
+/**
+ * @alpha
+ */
+export type NormalizeLocalFieldsInner<T extends LocalFields> = {
 	[Property in keyof T]: NormalizeField<T[Property]>;
 };
 
-type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFieldsInner<
+/**
+ * @alpha
+ */
+export type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFieldsInner<
 	WithDefault<T, Record<string, never>>
 >;
 
@@ -42,6 +49,7 @@ type NormalizeLocalFields<T extends LocalFields | undefined> = NormalizeLocalFie
  * T must extend TreeSchemaSpecification.
  * This can not be enforced using TypeScript since doing so breaks recursive type support.
  * See note on SchemaBuilder.fieldRecursive.
+ * @alpha
  */
 export class TreeSchema<
 	Name extends string = string,
@@ -98,11 +106,12 @@ export class TreeSchema<
 }
 
 /**
- * Convert FieldSchemaSpecification | undefined into FieldSchema
+ * Convert FieldSchemaSpecification | undefined into FieldSchema.
+ * @alpha
  */
-type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema
+export type NormalizeField<T extends FieldSchema | undefined> = T extends FieldSchema
 	? T
-	: typeof emptyField;
+	: FieldSchema<typeof FieldKinds.forbidden, []>;
 
 function normalizeLocalFields<T extends LocalFields | undefined>(
 	fields: T,
@@ -130,7 +139,15 @@ function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField
 	return t as NormalizeField<T>;
 }
 
+/**
+ * Allow any node (as long as it meets the schema for its own type).
+ * @alpha
+ */
 export const Any = "Any" as const;
+/**
+ * Allow any node (as long as it meets the schema for its own type).
+ * @alpha
+ */
 export type Any = typeof Any;
 
 /**
@@ -146,6 +163,7 @@ export type NormalizedLazyAllowedTypes = Any | (() => TreeSchema)[];
  * Types for use in fields.
  *
  * "Any" is boxed in an array to allow use as variadic parameter.
+ * @alpha
  */
 export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
@@ -164,11 +182,6 @@ export interface TreeSchemaSpecification {
 	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
 }
-
-/**
- * @alpha
- */
-export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds] | typeof forbidden;
 
 /**
  * All policy for a specific field,

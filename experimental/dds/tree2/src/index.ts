@@ -93,6 +93,9 @@ export {
 	FieldKindSpecifier,
 	AllowedUpdateType,
 	PathVisitor,
+	Adapters,
+	FieldAdapter,
+	TreeAdapter,
 } from "./core";
 
 export {
@@ -236,6 +239,18 @@ export {
 	FieldKindTypes,
 	AllowedTypes,
 	TreeSchema,
+	BrandedFieldKind,
+	ValueFieldKind,
+	Optional,
+	Sequence,
+	Forbidden,
+	TypedViewSchemaCollection,
+	ViewSchemaLibrary,
+	SchemaLibrary,
+	FieldSchema,
+	GlobalFieldSchema,
+	Any,
+	Sourced,
 } from "./feature-libraries";
 
 export {

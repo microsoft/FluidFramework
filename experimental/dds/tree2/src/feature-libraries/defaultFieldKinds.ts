@@ -38,6 +38,9 @@ import {
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
 
+/**
+ * @alpha
+ */
 export type BrandedFieldKind<
 	TName extends string,
 	TMultiplicity extends Multiplicity,
@@ -889,3 +892,46 @@ export const forbidden = brandedFieldKind(
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s]),
 );
+
+// Create named Aliases for nicer intellisense.
+
+// TODO: Find a way to make docs like {@inheritDoc value} work in vscode.
+// TODO: ensure thy work in generated docs.
+// TODO: add these comments to the rest of the cases below.
+/**
+ * @alpha
+ */
+export interface ValueFieldKind
+	extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Optional
+	extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Sequence
+	extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Forbidden
+	extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {}
+
+/**
+ * Default FieldKinds with their editor types erased.
+ * @alpha
+ */
+export const FieldKinds: {
+	// TODO: inheritDoc for these somehow
+	readonly value: ValueFieldKind;
+	readonly optional: Optional;
+	readonly sequence: Sequence;
+	readonly forbidden: Forbidden;
+} = { value, optional, sequence, forbidden };
+
+/**
+ * @alpha
+ */
+export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds];

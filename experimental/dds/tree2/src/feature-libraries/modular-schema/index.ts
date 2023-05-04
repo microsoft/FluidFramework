@@ -58,7 +58,7 @@ export {
 	EditDescription,
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";
-export { ITreeSchema, ViewSchemaCollection, ViewSchema, IFieldSchema } from "./view";
+export { ITreeSchema, ViewSchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";
 
 export {
 	SchemaBuilder,
@@ -70,5 +70,6 @@ export {
 	InternalTypedSchemaTypes,
 	allowedTypesToTypeSet,
 	TypedViewSchemaCollection,
-	FieldKindTypes,
+	ViewSchemaLibrary,
+	SchemaLibrary,
 } from "./typedSchema";

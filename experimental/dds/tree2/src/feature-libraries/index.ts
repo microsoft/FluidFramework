@@ -125,7 +125,9 @@ export {
 	TypedViewSchemaCollection,
 	Any,
 	GlobalFieldSchema,
-	FieldKindTypes,
+	ViewSchemaLibrary,
+	SchemaLibrary,
+	Sourced,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
@@ -149,37 +151,15 @@ export {
 	identifierFieldSchemaLibrary,
 } from "./identifierIndex";
 
-// Split into separate import and export for compatibility with API-Extractor.
-import * as SchemaAware from "./schema-aware";
-import * as FieldKindsOriginal from "./defaultFieldKinds";
-export { SchemaAware };
-
-// Export subset of FieldKinds in an API-Extractor compatible way:
-import { FieldEditor, Multiplicity } from "./modular-schema";
-import { BrandedFieldKind } from "./defaultFieldKinds";
-
-// Create named Aliases for nicer intellisense.
-
-// TODO: FInd a way to make docs like this work in vscode.
-// TODO: ensure thy work in generated docs.
-// TODO: add these comments to the rest of the cases in this file.
-/**
- * {@inheritDoc FieldKindsOriginal.value}
- */
-export interface Value extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {}
-export interface Optional
-	extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {}
-export interface Sequence
-	extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {}
-
-/**
- * @alpha
- */
-export const FieldKinds: {
-	readonly value: Value;
-	readonly optional: Optional;
-	readonly sequence: Sequence;
-} = FieldKindsOriginal;
+export {
+	FieldKinds,
+	BrandedFieldKind,
+	ValueFieldKind,
+	Optional,
+	Sequence,
+	Forbidden,
+	FieldKindTypes,
+} from "./defaultFieldKinds";
 
 export {
 	UntypedField,
@@ -190,3 +170,7 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 } from "./untypedTree";
+
+// Split into separate import and export for compatibility with API-Extractor.
+import * as SchemaAware from "./schema-aware";
+export { SchemaAware };

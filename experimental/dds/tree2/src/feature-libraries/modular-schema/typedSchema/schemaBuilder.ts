@@ -14,7 +14,7 @@ import {
 } from "../../../core";
 import { Sourced, ViewSchemaCollection } from "../view";
 import { brand, requireAssignableTo } from "../../../util";
-import { optional, sequence, value } from "../../defaultFieldKinds";
+import { optional, sequence, value, FieldKindTypes } from "../../defaultFieldKinds";
 import type { FieldKinds } from "../..";
 import { InternalTypes } from "../../schema-aware";
 import { buildViewSchemaCollection } from "./buildViewSchemaCollection";
@@ -24,7 +24,6 @@ import {
 	TreeSchemaSpecification,
 	GlobalFieldSchema,
 	FieldSchema,
-	FieldKindTypes,
 } from "./typedTreeSchema";
 import { FlexList } from "./flexList";
 
@@ -255,6 +254,9 @@ export class SchemaBuilder {
 
 export type SchemaLibraries = ReadonlySet<SchemaLibrary>;
 
+/**
+ * @alpha
+ */
 export interface SchemaLibrary {
 	readonly name: string;
 	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, GlobalFieldSchema>;
@@ -262,6 +264,9 @@ export interface SchemaLibrary {
 	readonly adapters: Adapters;
 }
 
+/**
+ * @alpha
+ */
 export interface TypedViewSchemaCollection<T extends GlobalFieldSchema>
 	extends ViewSchemaCollection {
 	/**
@@ -271,6 +276,9 @@ export interface TypedViewSchemaCollection<T extends GlobalFieldSchema>
 	readonly root: T;
 }
 
+/**
+ * @alpha
+ */
 export interface ViewSchemaLibrary extends ViewSchemaCollection {
 	/**
 	 * Root field.

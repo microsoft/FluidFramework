@@ -220,6 +220,7 @@ export interface ViewSchemaCollection {
 
 /**
  * Record where a schema came from for error reporting purposes.
+ * @alpha
  */
 export interface Sourced {
 	readonly builder: Named<string>;

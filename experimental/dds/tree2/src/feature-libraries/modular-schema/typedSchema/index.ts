@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { SchemaBuilder, TypedViewSchemaCollection } from "./schemaBuilder";
+export {
+	SchemaBuilder,
+	TypedViewSchemaCollection,
+	ViewSchemaLibrary,
+	SchemaLibrary,
+} from "./schemaBuilder";
 
 export {
 	TreeSchema,
@@ -12,7 +17,6 @@ export {
 	Any,
 	allowedTypesToTypeSet,
 	AllowedTypes,
-	FieldKindTypes,
 } from "./typedTreeSchema";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
