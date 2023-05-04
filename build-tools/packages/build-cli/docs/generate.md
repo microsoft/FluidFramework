@@ -5,6 +5,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 
 * [`flub generate buildVersion`](#flub-generate-buildversion)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
+* [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 
 ## `flub generate buildVersion`
@@ -53,6 +54,28 @@ FLAGS
 DESCRIPTION
   Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
   consumption
+```
+
+## `flub generate changeset`
+
+Checks if a changeset was added when compared against a branch. This is used in CI to enforce that changesets are present for a PR.
+
+```
+USAGE
+  $ flub generate changeset -b <value> [-v]
+
+FLAGS
+  -b, --branch=<value>  (required) The branch to compare against.
+  -v, --verbose         Verbose logging.
+
+EXAMPLES
+  Check if a changeset was added when compared to the 'main' branch.
+
+    $ flub generate changeset -b main
+
+  Check if a changeset was added when compared to the 'next' branch.
+
+    $ flub generate changeset -b next
 ```
 
 ## `flub generate packageJson`
