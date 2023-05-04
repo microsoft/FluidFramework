@@ -104,8 +104,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	) {
 		super();
 		this.editor = this.changeFamily.buildEditor(
-			(change) =>
-				this.applyChange(change, mintRevisionTag(), UndoRedoManagerCommitType.Undoable),
+			(change) => this.apply(change, mintRevisionTag()),
 			new AnchorSet(), // This branch class handles the anchor rebasing, so we don't want the editor to do any rebasing; so pass it a dummy anchor set.
 		);
 	}
@@ -119,7 +118,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.head = head;
 	}
 
-	public applyChange(
+	public apply(change: TChange, revision: RevisionTag): void {
+		return this.applyChange(change, revision, UndoRedoManagerCommitType.Undoable);
+	}
+
+	private applyChange(
 		change: TChange,
 		revision: RevisionTag,
 		undoRedoType: UndoRedoManagerCommitType | undefined,

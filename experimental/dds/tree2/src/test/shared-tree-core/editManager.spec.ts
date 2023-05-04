@@ -333,11 +333,7 @@ describe("EditManager", () => {
 		it("Rebases anchors over local changes", () => {
 			const { manager, anchors } = editManagerFactory({});
 			const change = TestChange.mint([], 1);
-			manager.localBranch.applyChange(
-				change,
-				mintRevisionTag(),
-				UndoRedoManagerCommitType.Undoable,
-			);
+			manager.localBranch.apply(change, mintRevisionTag());
 			assert.deepEqual(anchors.rebases, [change]);
 			assert.deepEqual(anchors.intentions, change.intentions);
 		});
@@ -621,11 +617,7 @@ function runUnitTestScenario(
 					});
 					knownToLocal.push(seq);
 					// Local changes should always lead to a delta that is equivalent to the local change.
-					manager.localBranch.applyChange(
-						changeset,
-						revision,
-						UndoRedoManagerCommitType.Undoable,
-					);
+					manager.localBranch.apply(changeset, revision);
 					assert.deepEqual(
 						manager.changeFamily.intoDelta(manager.localBranch.getHead().change),
 						asDelta([seq]),

@@ -174,6 +174,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.on("newTrunkHead", (head) => {
 			this.changeEvents.emit("newSequencedChange", head.change);
 		});
+		// When the local branch changes, notify our listeners of the new change and our new state.
+		// Submit the commits that were appended to the local branch to Fluid for sequencing.
 		this.editManager.localBranch.on("change", (event) => {
 			if (event.type === "append") {
 				this.changeEvents.emit("newLocalChange", event.change);
@@ -360,11 +362,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const { revision, change } = parseCommit(content, this.changeCodec);
 		this.changeEvents.emit("newLocalChange", change);
 		this.applyingStashedCommit = true;
-		this.editManager.localBranch.applyChange(
-			change,
-			revision,
-			UndoRedoManagerCommitType.Undoable,
-		);
+		this.editManager.localBranch.apply(change, revision);
 		this.applyingStashedCommit = false;
 		return;
 	}
