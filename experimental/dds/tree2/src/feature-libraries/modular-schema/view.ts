@@ -160,7 +160,15 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 			// TODO: support missing field adapters for local fields.
 			localFields.set(key, this.adaptField(schema, undefined));
 		}
-		return { ...original, localFields };
+		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
+		// so copying the data over manually is better.
+		return {
+			globalFields: original.globalFields,
+			extraLocalFields: original.extraLocalFields,
+			extraGlobalFields: original.extraGlobalFields,
+			value: original.value,
+			localFields,
+		};
 	}
 }
 

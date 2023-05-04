@@ -56,9 +56,9 @@ describe("editable-tree utilities", () => {
 		};
 
 		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
-		const fullSchemaData: SchemaData = buildTestSchema(rootSchema);
+		const fullSchemaData = buildTestSchema(rootSchema);
 		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
-		assert.deepEqual(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), rootSchema);
+		assert.equal(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), fullSchemaData.root);
 		assert.throws(
 			() => getFieldSchema(brand(rootFieldKey), fullSchema),
 			(e) =>

@@ -34,6 +34,7 @@ import {
 	SchemaBuilder,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
+import { Kinds } from "../../../feature-libraries/modular-schema/typedSchema/typedTreeSchema";
 import {
 	fullSchemaData,
 	Person,
@@ -51,7 +52,6 @@ import {
 	personJsonableTree,
 	personSchemaLibrary,
 } from "./mockData";
-import { Kinds } from "../../../feature-libraries/modular-schema/typedSchema/typedTreeSchema";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
 const globalFieldSymbol = symbolFromKey(globalFieldKey);

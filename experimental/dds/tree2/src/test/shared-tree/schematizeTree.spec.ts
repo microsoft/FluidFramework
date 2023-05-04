@@ -12,7 +12,7 @@ const factory = new SharedTreeFactory();
 const builder = new SchemaBuilder("Schematize Tree Tests");
 
 const root = builder.primitive("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldValue(Any));
+const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 
 const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
 const rootGeneralized = builderGeneralized.object("root", { value: ValueSchema.Serializable });
