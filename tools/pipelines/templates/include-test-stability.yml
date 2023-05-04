@@ -137,36 +137,6 @@ jobs:
                 customCommand: 'run ${{ taskTestStep }}'
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
-      # Test - Upload coverage results
-      # Some webpacked file using externals introduce file name with quotes in them
-      # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
-      # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
-      - ${{ if eq(variables['testCoverage'], true) }}:
-        - task: Bash@3
-          displayName: 'Check for nyc/report directory'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
-          condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-        - task: Bash@3
-          displayName: Patch Coverage Results
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}/nyc/report
-            script: |
-              sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-          condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-        - task: PublishCodeCoverageResults@1
-          displayName: Publish Code Coverage
-          inputs:
-            codeCoverageTool: Cobertura
-            summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
-            reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
-            failIfCoverageEmpty: true
-          condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-
       # Test - Upload results
       - task: PublishTestResults@2
         displayName: Publish Test Results
@@ -176,3 +146,8 @@ jobs:
           searchFolder: ${{ parameters.buildDirectory }}/nyc
           mergeTestResults: false
         condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+      # Log Test Failures
+      - template: include-log-test-failures.yml
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
