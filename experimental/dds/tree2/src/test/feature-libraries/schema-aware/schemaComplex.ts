@@ -7,7 +7,6 @@
 
 import { FieldKinds, ValueSchema, SchemaAware } from "../../../";
 import { SchemaBuilder, TreeSchema } from "../../../feature-libraries";
-import { AllowedTypesToTypedTrees } from "../../../feature-libraries/schema-aware/schemaAware";
 import { requireAssignableTo } from "../../../util";
 
 const builder = new SchemaBuilder("Complex Schema Example");
@@ -47,7 +46,7 @@ type FlexibleListTask = SchemaAware.NodeDataFor<
 	typeof listTaskSchema
 >;
 
-type FlexibleTask = AllowedTypesToTypedTrees<
+type FlexibleTask = SchemaAware.AllowedTypesToTypedTrees<
 	SchemaAware.ApiMode.Flexible,
 	typeof rootFieldSchema.allowedTypes
 >;

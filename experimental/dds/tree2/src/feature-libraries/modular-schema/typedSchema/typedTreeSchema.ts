@@ -183,7 +183,7 @@ export interface TreeSchemaSpecification {
 	readonly value?: ValueSchema;
 }
 
-export type Kinds = typeof FieldKinds[keyof typeof FieldKinds] | typeof forbidden;
+export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds] | typeof forbidden;
 
 /**
  * All policy for a specific field,
@@ -192,7 +192,9 @@ export type Kinds = typeof FieldKinds[keyof typeof FieldKinds] | typeof forbidde
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @sealed @alpha
  */
-export class FieldSchema<Kind extends Kinds = Kinds, Types = AllowedTypes> implements IFieldSchema {
+export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes>
+	implements IFieldSchema
+{
 	protected _typeCheck?: MakeNominal;
 	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
 
@@ -219,7 +221,7 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  * @sealed @alpha
  */
 export class GlobalFieldSchema<
-	Kind extends Kinds = Kinds,
+	Kind extends FieldKindTypes = FieldKindTypes,
 	Types extends AllowedTypes = AllowedTypes,
 > implements IFieldSchema
 {

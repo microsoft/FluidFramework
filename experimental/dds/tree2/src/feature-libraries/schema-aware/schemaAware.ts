@@ -12,12 +12,10 @@ import {
 } from "../contextuallyTyped";
 import {
 	Multiplicity,
-	TypedSchema,
+	InternalTypedSchemaTypes,
 	FieldSchema,
 	TreeSchema,
 	AllowedTypes,
-	FlexList,
-	Assume,
 } from "../modular-schema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { UntypedSequenceField } from "./partlyTyped";
@@ -112,12 +110,12 @@ export type CollectOptions<
  * @alpha
  */
 export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
-	TypedSchema.FlattenKeys<
-		{ [typeNameSymbol]?: UnbrandedName<TName> } & TypedSchema.AllowOptional<
+	InternalTypedSchemaTypes.FlattenKeys<
+		{ [typeNameSymbol]?: UnbrandedName<TName> } & InternalTypedSchemaTypes.AllowOptional<
 			ValuePropertyFromSchema<TValueSchema>
 		>
 	>,
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 /**
  * Remove type brand from name.
@@ -125,7 +123,7 @@ export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
  */
 export type UnbrandedName<TName> = [
 	TName extends infer S & TreeSchemaIdentifier ? S : string,
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 export type IsInput<Mode extends ApiMode> = {
 	[ApiMode.Flexible]: true;
@@ -150,7 +148,7 @@ export type TypedFields<
 				[key in keyof TFields]: TypedField<Mode, TFields[key]>;
 		  }
 		: Record<string, never>,
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 /**
  * `FieldSchemaTypeInfo` to `TypedTree`
@@ -162,7 +160,7 @@ export type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
 		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
 		Mode
 	>,
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -195,15 +193,18 @@ export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArr
  * @alpha
  */
 export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
-	T extends FlexList<TreeSchema>
-		? TypedSchema.ArrayToUnion<
+	T extends InternalTypedSchemaTypes.FlexList<TreeSchema>
+		? InternalTypedSchemaTypes.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
 					Mode,
-					Assume<TypedSchema.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>
+					InternalTypedSchemaTypes.Assume<
+						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>,
+						readonly TreeSchema[]
+					>
 				>
 		  >
 		: UntypedApi<Mode>,
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
@@ -212,11 +213,14 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<Assume<Head, TreeSchema>, Mode>,
-				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>,
+				TypedNode<InternalTypedSchemaTypes.Assume<Head, TreeSchema>, Mode>,
+				...TypeArrayToTypedTreeArray<
+					Mode,
+					InternalTypedSchemaTypes.Assume<Tail, readonly TreeSchema[]>
+				>,
 		  ]
 		: [],
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 // TODO: make these more accurate
 type UntypedApi<Mode extends ApiMode> = {
@@ -246,7 +250,7 @@ export type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = Collec
  * Generate a schema aware API for a single tree schema.
  * @alpha
  */
-// TODO: make TypedSchema.FlattenKeys work here for recursive types?
+// TODO: make InternalTypedSchemaTypes.FlattenKeys work here for recursive types?
 export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<
 	TSchema,
 	Mode

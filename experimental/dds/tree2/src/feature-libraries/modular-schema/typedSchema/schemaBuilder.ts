@@ -24,7 +24,7 @@ import {
 	TreeSchemaSpecification,
 	GlobalFieldSchema,
 	FieldSchema,
-	Kinds,
+	FieldKindTypes,
 } from "./typedTreeSchema";
 import { FlexList } from "./flexList";
 
@@ -120,7 +120,7 @@ export class SchemaBuilder {
 	 * Define (and add to this library) a schema for a global field.
 	 * Global fields can be included in the schema for multiple objects.
 	 */
-	public globalField<Kind extends Kinds, Types extends AllowedTypes>(
+	public globalField<Kind extends FieldKindTypes, Types extends AllowedTypes>(
 		name: string,
 		t: FieldSchema<Kind, Types>,
 	): GlobalFieldSchema<Kind, Types> {
@@ -175,7 +175,7 @@ export class SchemaBuilder {
 	/**
 	 * Define a schema for a field.
 	 */
-	public static field<Kind extends Kinds, T extends AllowedTypes>(
+	public static field<Kind extends FieldKindTypes, T extends AllowedTypes>(
 		kind: Kind,
 		...allowedTypes: T
 	): FieldSchema<Kind, T> {
@@ -192,10 +192,10 @@ export class SchemaBuilder {
 	 *
 	 * TODO: how much more specific of a type can be provided without triggering the above error?
 	 */
-	public static fieldRecursive<Kind extends Kinds, T extends FlexList<RecursiveTreeSchema>>(
-		kind: Kind,
-		...allowedTypes: T
-	): FieldSchema<Kind, T> {
+	public static fieldRecursive<
+		Kind extends FieldKindTypes,
+		T extends FlexList<RecursiveTreeSchema>,
+	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
 		return new FieldSchema(kind, allowedTypes);
 	}
 
@@ -229,7 +229,7 @@ export class SchemaBuilder {
 	 *
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public intoDocumentSchema<Kind extends Kinds, Types extends AllowedTypes>(
+	public intoDocumentSchema<Kind extends FieldKindTypes, Types extends AllowedTypes>(
 		root: FieldSchema<Kind, Types>,
 	): TypedViewSchemaCollection<GlobalFieldSchema<Kind, Types>> {
 		this.finalize();

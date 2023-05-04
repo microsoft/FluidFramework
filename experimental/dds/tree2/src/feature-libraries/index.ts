@@ -53,6 +53,7 @@ export {
 	ContextuallyTypedFieldData,
 	cursorForTypedData,
 	cursorForTypedTreeData,
+	cursorsForTypedFieldData,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -111,7 +112,7 @@ export {
 	RevisionInfo,
 	HasFieldChanges,
 	ValueConstraint,
-	TypedSchema,
+	InternalTypedSchemaTypes,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
 	ViewSchemaCollection,
@@ -124,6 +125,7 @@ export {
 	TypedViewSchemaCollection,
 	Any,
 	GlobalFieldSchema,
+	FieldKindTypes,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

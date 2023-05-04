@@ -21,10 +21,10 @@ import {
 	allowsRepoSuperset,
 	TypedViewSchemaCollection,
 	GlobalFieldSchema,
+	SchemaAware,
+	cursorsForTypedFieldData,
 } from "../feature-libraries";
 import { fail } from "../util";
-import { ApiMode, TypedField } from "../feature-libraries/schema-aware";
-import { cursorsForTypedFieldData } from "../feature-libraries/contextuallyTyped";
 import { ISharedTreeView } from "./sharedTree";
 
 /**
@@ -176,5 +176,5 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree: TypedField<ApiMode.Simple, TRoot["schema"]>;
+	readonly initialTree: SchemaAware.TypedField<SchemaAware.ApiMode.Simple, TRoot["schema"]>;
 }

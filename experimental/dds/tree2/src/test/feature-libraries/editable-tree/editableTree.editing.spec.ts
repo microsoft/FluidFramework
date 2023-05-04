@@ -32,9 +32,9 @@ import {
 	EditableField,
 	getPrimaryField,
 	SchemaBuilder,
+	FieldKindTypes,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
-import { Kinds } from "../../../feature-libraries/modular-schema/typedSchema/typedTreeSchema";
 import {
 	fullSchemaData,
 	Person,
@@ -59,7 +59,7 @@ const globalFieldSymbol = symbolFromKey(globalFieldKey);
 const localFieldKey: LocalFieldKey = brand("foo");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
-function getTestSchema<Kind extends Kinds>(fieldKind: Kind): SchemaData {
+function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind): SchemaData {
 	const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
 	const globalField = builder.globalField(
 		globalFieldKey,

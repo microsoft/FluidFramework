@@ -60,20 +60,15 @@ export {
 } from "./modularChangeFamily";
 export { ITreeSchema, ViewSchemaCollection, ViewSchema, IFieldSchema } from "./view";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
-import * as TypedSchema from "./typedSchema";
-export { TypedSchema };
-
 export {
 	SchemaBuilder,
 	TreeSchema,
-	AllowedTypes,
 	FieldSchema,
 	GlobalFieldSchema,
 	Any,
-	TypedViewSchemaCollection,
-	TreeSchemaSpecification,
-	FlexList,
-	Assume,
+	AllowedTypes,
+	InternalTypedSchemaTypes,
 	allowedTypesToTypeSet,
+	TypedViewSchemaCollection,
+	FieldKindTypes,
 } from "./typedSchema";

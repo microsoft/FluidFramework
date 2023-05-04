@@ -216,7 +216,7 @@ export {
 	EditableTreeEvents,
 	on,
 	ValueConstraint,
-	TypedSchema,
+	InternalTypedSchemaTypes,
 	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,

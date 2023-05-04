@@ -18,7 +18,6 @@ import {
 	LocalFieldKey,
 	FieldStoredSchema,
 	InMemoryStoredSchemaRepository,
-	SchemaData,
 	EmptyKey,
 	rootFieldKey,
 	symbolFromKey,

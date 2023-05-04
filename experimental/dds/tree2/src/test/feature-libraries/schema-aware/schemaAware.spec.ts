@@ -30,9 +30,8 @@ import {
 	TreeSchema,
 	FieldSchema,
 	AllowedTypes,
+	InternalTypedSchemaTypes,
 } from "../../../feature-libraries";
-import { FlexList, TypedSchema } from "../../../feature-libraries/modular-schema";
-import { FlexListToNonLazyArray } from "../../../feature-libraries/modular-schema/typedSchema";
 import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
@@ -61,7 +60,9 @@ const numberSchema = builder.primitive("number", ValueSchema.Number);
 	type check3_ = requireAssignableTo<typeof numberField3, typeof numberField1>;
 
 	const numberFieldLazy = SchemaBuilder.field(value, () => numberSchema);
-	type NonLazy = FlexListToNonLazyArray<typeof numberFieldLazy.allowedTypes>;
+	type NonLazy = InternalTypedSchemaTypes.FlexListToNonLazyArray<
+		typeof numberFieldLazy.allowedTypes
+	>;
 	type check4_ = requireAssignableTo<NonLazy, typeof numberField1.allowedTypes>;
 }
 
@@ -245,8 +246,12 @@ type SimpleBall = {
 		type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
 		type BoolChild = ChildSchemaTypes[1];
 		type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
-		type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeSchema>>;
-		type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
+		type _check4 = requireAssignableTo<
+			ChildSchemaTypes,
+			InternalTypedSchemaTypes.FlexList<TreeSchema>
+		>;
+		type NormalizedChildSchemaTypes =
+			InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
 		type ChildTypes = AllowedTypesToTypedTrees<ApiMode.Flexible, ChildSchemaTypes>;
 		type _check5 = requireAssignableTo<FlexBool, ChildTypes>;
 		type _check6 = requireAssignableTo<FlexStr, ChildTypes>;
@@ -284,7 +289,7 @@ type SimpleBall = {
 	// Confirm schema's recursive type is correct.
 	{
 		type Allowed = RecFieldSchema["allowedTypes"];
-		type AllowedNonLazy = FlexListToNonLazyArray<Allowed>[0];
+		type AllowedNonLazy = InternalTypedSchemaTypes.FlexListToNonLazyArray<Allowed>[0];
 		type _check1 = requireTrue<areSafelyAssignable<AllowedNonLazy, RecObjectSchema>>;
 	}
 
@@ -350,11 +355,15 @@ type SimpleBall = {
 		type _check = requireAssignableTo<ChildSchemaTypes, AllowedChildTypes>;
 		type BoxChild = ChildSchemaTypes[1];
 		type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
-		type _check4 = requireAssignableTo<ChildSchemaTypes, FlexList<TreeSchema>>;
-		type NormalizedChildSchemaTypes = FlexListToNonLazyArray<ChildSchemaTypes>;
+		type _check4 = requireAssignableTo<
+			ChildSchemaTypes,
+			InternalTypedSchemaTypes.FlexList<TreeSchema>
+		>;
+		type NormalizedChildSchemaTypes =
+			InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
 		type ChildTypeArray = TypeArrayToTypedTreeArray<
 			ApiMode.Flexible,
-			TypedSchema.FlexListToNonLazyArray<ChildSchemaTypes>
+			InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>
 		>;
 		{
 			type _check5 = requireAssignableTo<FlexBox, ChildTypeArray[1]>;

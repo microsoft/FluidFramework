@@ -8,12 +8,10 @@ import { MarkedArrayLike, UntypedField, valueSymbol } from "../../..";
 import { ValueSchema } from "../../../core";
 import {
 	Multiplicity,
-	TypedSchema,
 	FieldSchema,
 	TreeSchema,
 	AllowedTypes,
-	FlexList,
-	Assume,
+	InternalTypedSchemaTypes,
 } from "../../../feature-libraries/modular-schema";
 import { UntypedSequenceField } from "../../../feature-libraries/schema-aware/partlyTyped";
 import { TypedValue } from "../../../feature-libraries/schema-aware/schemaAwareUtil";
@@ -50,7 +48,7 @@ export type TypedFields<TFields extends undefined | { [key: string]: FieldSchema
 				[key in keyof TFields]: TypedField<TFields[key]>;
 		  }
 		: Record<string, never>,
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 /**
  * `FieldSchemaTypeInfo` to `TypedTree`
@@ -61,7 +59,7 @@ export type TypedField<TField extends FieldSchema> = [
 		TField["kind"]["multiplicity"],
 		AllowedTypesToTypedTrees<TField["allowedTypes"]>
 	>,
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -88,14 +86,17 @@ export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArr
  * @alpha
  */
 export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
-	T extends FlexList<TreeSchema>
-		? TypedSchema.ArrayToUnion<
+	T extends InternalTypedSchemaTypes.FlexList<TreeSchema>
+		? InternalTypedSchemaTypes.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
-					Assume<TypedSchema.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>
+					InternalTypedSchemaTypes.Assume<
+						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>,
+						readonly TreeSchema[]
+					>
 				>
 		  >
 		: unknown,
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
@@ -104,11 +105,13 @@ export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<Assume<Head, TreeSchema>>,
-				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeSchema[]>>,
+				TypedNode<InternalTypedSchemaTypes.Assume<Head, TreeSchema>>,
+				...TypeArrayToTypedTreeArray<
+					InternalTypedSchemaTypes.Assume<Tail, readonly TreeSchema[]>
+				>,
 		  ]
 		: [],
-][TypedSchema._dummy];
+][InternalTypedSchemaTypes._dummy];
 
 /**
  * Generate a schema aware API for a list of types.
