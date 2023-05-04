@@ -95,7 +95,7 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-        throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
@@ -122,7 +122,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-        throttle(
+		throttle(
 			throttlersMap
 				.get(Constants.throttleGeneralCluster)
 				.get(Constants.createDocThrottleIdPrefix),
@@ -214,7 +214,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-        throttle(
+		throttle(
 			throttlersMap
 				.get(Constants.throttleGeneralCluster)
 				.get(Constants.getSessionThrottleIdPrefix),
@@ -246,7 +246,7 @@ export function create(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
 		validateTokenRevocationClaims(),
-        throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
