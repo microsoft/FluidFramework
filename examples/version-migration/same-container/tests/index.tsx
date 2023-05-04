@@ -4,9 +4,9 @@
  */
 
 import {
-	IMigratableModel,
+	ISameContainerMigratableModel,
 	IVersionedModel,
-	Migrator,
+	SameContainerMigrator,
 	SessionStorageModelLoader,
 } from "@fluid-example/example-utils";
 
@@ -47,7 +47,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		new DemoCodeLoader(testMode),
 	);
 	let id: string;
-	let model: IMigratableModel;
+	let model: ISameContainerMigratableModel;
 
 	if (location.hash.length === 0) {
 		// Normally our code loader is expected to match up with the version passed here.
@@ -88,7 +88,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		}
 	};
 
-	const migrator = new Migrator(modelLoader, model, id, inventoryListDataTransformationCallback);
+	const migrator = new SameContainerMigrator(
+		modelLoader,
+		model,
+		id,
+		inventoryListDataTransformationCallback,
+	);
 	migrator.on("migrated", () => {
 		model.close();
 		render(migrator.currentModel);

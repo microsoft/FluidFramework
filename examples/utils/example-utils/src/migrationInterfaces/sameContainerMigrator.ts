@@ -5,7 +5,10 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
-import type { IMigratableModel, SameContainerMigrationState } from "../migrationInterfaces";
+import type {
+	ISameContainerMigratableModel,
+	SameContainerMigrationState,
+} from "../migrationInterfaces";
 
 /**
  * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import
@@ -27,7 +30,7 @@ export interface ISameContainerMigrator extends IEventProvider<ISameContainerMig
 	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
 	 * migrated model and emit a "migrated" event.
 	 */
-	readonly currentModel: IMigratableModel;
+	readonly currentModel: ISameContainerMigratableModel;
 
 	/**
 	 * The container id of the current model.

@@ -6,7 +6,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import type { IMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
+import type { ISameContainerMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
 import { SameContainerMigrator, ModelLoader } from "@fluid-example/example-utils";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
@@ -63,7 +63,7 @@ async function start(): Promise<void> {
 	// in here as well as in the Migrator -- both places just need a reliable way to get a model regardless of the
 	// (unknown) container version.  So the ModelLoader would be replaced by whatever the consistent request call
 	// (e.g. container.request({ url: "mode" })) looks like.
-	const modelLoader = new ModelLoader<IMigratableModel>({
+	const modelLoader = new ModelLoader<IInventoryListAppModel>({
 		urlResolver: new InsecureTinyliciousUrlResolver(),
 		documentServiceFactory: new RouterliciousDocumentServiceFactory(
 			new InsecureTinyliciousTokenProvider(),
@@ -73,7 +73,7 @@ async function start(): Promise<void> {
 	});
 
 	let id: string;
-	let model: IMigratableModel;
+	let model: ISameContainerMigratableModel;
 
 	if (location.hash.length === 0) {
 		// Choosing to create with the "old" version for demo purposes, so we can demo the upgrade flow.

@@ -31,13 +31,29 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = (
 		const migrationStateChangedHandler = () => {
 			setDisableInput(model.migrationTool.migrationState !== "collaborating");
 		};
-		model.migrationTool.on("stopping", migrationStateChangedHandler);
-		model.migrationTool.on("migrating", migrationStateChangedHandler);
+		model.migrationTool.on("proposingMigration", migrationStateChangedHandler);
+		model.migrationTool.on("stoppingCollaboration", migrationStateChangedHandler);
+		model.migrationTool.on("generatingV1Summary", migrationStateChangedHandler);
+		model.migrationTool.on("uploadingV1Summary", migrationStateChangedHandler);
+		model.migrationTool.on("submittingV1Summary", migrationStateChangedHandler);
+		model.migrationTool.on("proposingV2Code", migrationStateChangedHandler);
+		model.migrationTool.on("waitingForV2ProposalCompletion", migrationStateChangedHandler);
+		model.migrationTool.on("readyForMigration", migrationStateChangedHandler);
+		model.migrationTool.on("uploadingV2Summary", migrationStateChangedHandler);
+		model.migrationTool.on("submittingV2Summary", migrationStateChangedHandler);
 		model.migrationTool.on("migrated", migrationStateChangedHandler);
 		migrationStateChangedHandler();
 		return () => {
-			model.migrationTool.off("stopping", migrationStateChangedHandler);
-			model.migrationTool.off("migrating", migrationStateChangedHandler);
+			model.migrationTool.off("proposingMigration", migrationStateChangedHandler);
+			model.migrationTool.off("stoppingCollaboration", migrationStateChangedHandler);
+			model.migrationTool.off("generatingV1Summary", migrationStateChangedHandler);
+			model.migrationTool.off("uploadingV1Summary", migrationStateChangedHandler);
+			model.migrationTool.off("submittingV1Summary", migrationStateChangedHandler);
+			model.migrationTool.off("proposingV2Code", migrationStateChangedHandler);
+			model.migrationTool.off("waitingForV2ProposalCompletion", migrationStateChangedHandler);
+			model.migrationTool.off("readyForMigration", migrationStateChangedHandler);
+			model.migrationTool.off("uploadingV2Summary", migrationStateChangedHandler);
+			model.migrationTool.off("submittingV2Summary", migrationStateChangedHandler);
 			model.migrationTool.off("migrated", migrationStateChangedHandler);
 		};
 	}, [model]);
