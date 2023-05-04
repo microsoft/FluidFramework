@@ -100,6 +100,7 @@ export interface ViewSchemaCollection2 extends ViewSchemaCollection {
 export function validateViewSchemaCollection(collection: ViewSchemaCollection2): string[] {
 	const errors: string[] = [];
 
+	// TODO: make this check specific to document schema. Replace check here for no tre or field schema (empty library).
 	if (collection.treeSchema.size === 0) {
 		errors.push("No tree schema are included, meaning no data can possibly be stored.");
 	}

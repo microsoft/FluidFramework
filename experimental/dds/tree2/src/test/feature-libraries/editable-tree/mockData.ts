@@ -9,7 +9,6 @@ import {
 	EditableField,
 	typeNameSymbol,
 	valueSymbol,
-	SchemaAware,
 	ContextuallyTypedNodeDataObject,
 	jsonableTreeFromCursor,
 	cursorFromContextualData,
@@ -23,20 +22,18 @@ import {
 	FieldSchema,
 	SchemaBuilder,
 	Any,
+	GlobalFieldSchema,
+	TypedViewSchemaCollection,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
-	GlobalFieldKey,
 	LocalFieldKey,
 	EmptyKey,
-	rootFieldKey,
 	JsonableTree,
 	GlobalFieldKeySymbol,
-	SchemaData,
 	IEditableForest,
 	SchemaDataAndPolicy,
 	InMemoryStoredSchemaRepository,
-	lookupGlobalFieldSchema,
 	initializeForest,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
@@ -76,13 +73,11 @@ export const complexPhoneSchema = builder.object("Test:Phone-1.0.0", {
 export const phonesSchema = builder.object("Test:Phones-1.0.0", {
 	local: {
 		[EmptyKey]: SchemaBuilder.fieldSequence(
-			SchemaBuilder.union(
-				stringSchema,
-				int32Schema,
-				complexPhoneSchema,
-				// array of arrays
-				simplePhonesSchema,
-			),
+			stringSchema,
+			int32Schema,
+			complexPhoneSchema,
+			// array of arrays
+			simplePhonesSchema,
 		),
 	},
 });
@@ -93,11 +88,11 @@ export const globalFieldSchemaSequencePhones = builder.globalField(
 );
 
 export const globalFieldSymbolSequencePhones: GlobalFieldKeySymbol =
-	globalFieldSchemaSequencePhones.name;
+	globalFieldSchemaSequencePhones.symbol;
 
 export const addressSchema = builder.object("Test:Address-1.0.0", {
 	local: {
-		zip: SchemaBuilder.field(FieldKinds.value, SchemaBuilder.union(stringSchema, int32Schema)),
+		zip: SchemaBuilder.field(FieldKinds.value, stringSchema, int32Schema),
 		street: SchemaBuilder.field(FieldKinds.optional, stringSchema),
 		city: SchemaBuilder.field(FieldKinds.optional, stringSchema),
 		country: SchemaBuilder.field(FieldKinds.optional, stringSchema),
@@ -117,10 +112,7 @@ export const personSchema = builder.object("Test:Person-1.0.0", {
 		name: SchemaBuilder.field(FieldKinds.value, stringSchema),
 		age: SchemaBuilder.field(FieldKinds.optional, int32Schema),
 		adult: SchemaBuilder.field(FieldKinds.optional, boolSchema),
-		salary: SchemaBuilder.field(
-			FieldKinds.optional,
-			SchemaBuilder.union(float64Schema, int32Schema, stringSchema),
-		),
+		salary: SchemaBuilder.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
 		friends: SchemaBuilder.field(FieldKinds.optional, mapStringSchema),
 		address: SchemaBuilder.field(FieldKinds.optional, addressSchema),
 	},
@@ -135,16 +127,15 @@ export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
 
 export const arraySchema = builder.object("Test:Array-1.0.0", {
 	local: {
-		[EmptyKey]: SchemaBuilder.field(
-			FieldKinds.sequence,
-			SchemaBuilder.union(stringSchema, int32Schema),
-		),
+		[EmptyKey]: SchemaBuilder.field(FieldKinds.sequence, stringSchema, int32Schema),
 	},
 });
 
 export const rootPersonSchema = SchemaBuilder.field(FieldKinds.optional, personSchema);
 
-export const fullSchemaData = builder.intoDocumentSchema(rootPersonSchema);
+export const personSchemaLibrary = builder.intoLibrary();
+
+export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
 // TODO: derive types like these from those schema, which subset EditableTree
 
@@ -275,16 +266,8 @@ export function getPerson(): Person {
 /**
  * Create schema supporting all type defined in this file, with the specified root field.
  */
-export function buildTestSchema(rootField: FieldSchema = rootPersonSchema): SchemaData {
-	return SchemaAware.typedSchemaData(
-		[
-			...(fullSchemaData.globalFieldSchema.entries() as Iterable<
-				[GlobalFieldKey, FieldSchema]
-			>),
-			[rootFieldKey, rootField],
-		],
-		...treeSchema,
-	);
+export function buildTestSchema<T extends FieldSchema>(rootField: T) {
+	return new SchemaBuilder("buildTestSchema", personSchemaLibrary).intoDocumentSchema(rootField);
 }
 
 export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
@@ -293,17 +276,13 @@ export function getReadonlyEditableTreeContext(forest: IEditableForest): Editabl
 	return getEditableTreeContext(forest, dummyEditor);
 }
 
-export function setupForest(
-	schema: SchemaData,
+export function setupForest<T extends GlobalFieldSchema>(
+	schema: TypedViewSchemaCollection<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
 	const forest = buildForest(schemaRepo);
-	const root = cursorsFromContextualData(
-		schemaRepo,
-		lookupGlobalFieldSchema(schemaRepo, rootFieldKey),
-		data,
-	);
+	const root = cursorsFromContextualData(schemaRepo, schema.root.schema, data);
 	initializeForest(forest, root);
 	return forest;
 }
@@ -312,7 +291,7 @@ export function buildTestTree(
 	data: ContextuallyTypedNodeData | undefined,
 	rootField: FieldSchema = rootPersonSchema,
 ): EditableTreeContext {
-	const schema: SchemaData = buildTestSchema(rootField);
+	const schema = buildTestSchema(rootField);
 	const forest = setupForest(schema, data);
 	const context = getReadonlyEditableTreeContext(forest);
 	return context;

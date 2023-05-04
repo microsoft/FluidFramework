@@ -4,7 +4,7 @@
  */
 
 import { ValueSchema } from "../../core";
-import { MarkedArrayLike, typeNameSymbol, valueSymbol } from "../contextuallyTyped";
+import { MarkedArrayLike, valueSymbol } from "../contextuallyTyped";
 import {
 	Multiplicity,
 	TypedSchema,

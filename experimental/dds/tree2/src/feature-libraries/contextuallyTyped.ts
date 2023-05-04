@@ -38,8 +38,7 @@ import {
 } from "./modular-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
 import { isPrimitive } from "./editable-tree";
-import { ApiMode, NodeDataFor } from "./schema-aware";
-import { AllowedTypesToTypedTrees, TypedField } from "./schema-aware/schemaAware";
+import { AllowedTypesToTypedTrees, ApiMode, NodeDataFor, TypedField } from "./schema-aware";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -387,7 +386,7 @@ export function cursorForTypedData<T extends AllowedTypes>(
  */
 export function cursorsFromContextualData(
 	schemaData: SchemaDataAndPolicy,
-	field: FieldSchema,
+	field: FieldStoredSchema,
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous[] {
 	const mapTrees = applyFieldTypesFromContext(schemaData, field, data);

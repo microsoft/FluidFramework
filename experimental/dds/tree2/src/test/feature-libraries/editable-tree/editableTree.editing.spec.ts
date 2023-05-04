@@ -10,7 +10,6 @@ import {
 	GlobalFieldKey,
 	JsonableTree,
 	LocalFieldKey,
-	rootFieldKey,
 	SchemaData,
 	symbolFromKey,
 	TreeSchemaIdentifier,
@@ -32,9 +31,6 @@ import {
 	isContextuallyTypedNodeDataObject,
 	EditableField,
 	getPrimaryField,
-	SchemaAware,
-	TypedSchema,
-	FieldKind,
 	SchemaBuilder,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
@@ -53,6 +49,7 @@ import {
 	Phones,
 	phonesSchema,
 	personJsonableTree,
+	personSchemaLibrary,
 } from "./mockData";
 import { Kinds } from "../../../feature-libraries/modular-schema/typedSchema/typedTreeSchema";
 
@@ -63,7 +60,11 @@ const localFieldKey: LocalFieldKey = brand("foo");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
 function getTestSchema<Kind extends Kinds>(fieldKind: Kind): SchemaData {
-	const builder = new SchemaBuilder("getTestSchema");
+	const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
+	const globalField = builder.globalField(
+		globalFieldKey,
+		SchemaBuilder.field(fieldKind, stringSchema),
+	);
 	const rootNodeSchema = builder.object("Test", {
 		local: {
 			[localFieldKey]: SchemaBuilder.field(fieldKind, stringSchema),
@@ -71,14 +72,7 @@ function getTestSchema<Kind extends Kinds>(fieldKind: Kind): SchemaData {
 		globalFields: [globalFieldKey],
 		value: ValueSchema.Serializable,
 	});
-	return SchemaAware.typedSchemaData(
-		[
-			[rootFieldKey, TypedSchema.field(FieldKinds.optional, rootNodeSchema)],
-			[globalFieldKey, TypedSchema.field(fieldKind, stringSchema)],
-		],
-		stringSchema,
-		rootNodeSchema,
-	);
+	return builder.intoDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
 }
 
 // TODO: There are two kinds of users of this in this file. Both should be changed:
@@ -367,10 +361,11 @@ describe("editable-tree: editing", () => {
 	});
 
 	it("validates schema of values", () => {
-		const schemaData = SchemaAware.typedSchemaData(
-			[[rootFieldKey, TypedSchema.field(FieldKinds.value, stringSchema)]],
-			stringSchema,
+		const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
+		const schemaData = builder.intoDocumentSchema(
+			SchemaBuilder.field(FieldKinds.value, stringSchema),
 		);
+
 		const [, trees] = createSharedTrees(schemaData, [{ type: stringSchema.name, value: "x" }]);
 		const root = trees[0].context.root.getNode(0);
 		// Confirm stetting value to a string does not error

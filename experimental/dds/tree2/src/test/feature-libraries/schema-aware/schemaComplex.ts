@@ -5,36 +5,32 @@
 /* eslint-disable unused-imports/no-unused-imports */
 /* eslint-disable no-inner-declarations */
 
-import {
-	FieldKinds,
-	rootFieldKey,
-	ValueSchema,
-	TypedSchema,
-	SchemaAware,
-	typeNameSymbol,
-	valueSymbol,
-} from "../../../";
+import { FieldKinds, ValueSchema, SchemaAware } from "../../../";
 import { SchemaBuilder, TreeSchema } from "../../../feature-libraries";
+import { AllowedTypesToTypedTrees } from "../../../feature-libraries/schema-aware/schemaAware";
+import { requireAssignableTo } from "../../../util";
 
-// Aliases for conciseness
-const { value, sequence } = FieldKinds;
 const builder = new SchemaBuilder("Complex Schema Example");
 
 // Schema
 export const stringTaskSchema = builder.primitive("StringTask", ValueSchema.String);
 // Polymorphic recursive schema:
-export const listTaskSchema = builder.object("ListTask", {
+export const listTaskSchema = builder.objectRecursive("ListTask", {
 	local: {
-		items: SchemaBuilder.fieldSequence(
-			// TODO: proper recursive schema
-			SchemaBuilder.union(stringTaskSchema, (): TreeSchema => listTaskSchema),
+		items: SchemaBuilder.fieldRecursive(
+			FieldKinds.sequence,
+			stringTaskSchema,
+			() => listTaskSchema,
 		),
 	},
 });
 
-export const rootFieldSchema = SchemaBuilder.fieldValue(
-	SchemaBuilder.union(stringTaskSchema, listTaskSchema),
-);
+{
+	// Recursive objects don't get this type checking automatically, so confirm it
+	type _check = requireAssignableTo<typeof listTaskSchema, TreeSchema>;
+}
+
+export const rootFieldSchema = SchemaBuilder.fieldValue(stringTaskSchema, listTaskSchema);
 
 export const appSchemaData = builder.intoDocumentSchema(rootFieldSchema);
 
@@ -51,9 +47,9 @@ type FlexibleListTask = SchemaAware.NodeDataFor<
 	typeof listTaskSchema
 >;
 
-type FlexibleTask = SchemaAware.TypedNode<
-	typeof listTaskSchema | typeof stringTaskSchema,
-	SchemaAware.ApiMode.Flexible
+type FlexibleTask = AllowedTypesToTypedTrees<
+	SchemaAware.ApiMode.Flexible,
+	typeof rootFieldSchema.allowedTypes
 >;
 
 // Example Use

@@ -12,7 +12,7 @@ import {
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	TypedSchema,
+	SchemaBuilder,
 } from "../../../feature-libraries";
 import {
 	LocalFieldKey,
@@ -55,7 +55,7 @@ describe("editable-tree utilities", () => {
 			schema,
 		};
 
-		const rootSchema = TypedSchema.field(FieldKinds.value, arraySchema);
+		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
 		const fullSchemaData: SchemaData = buildTestSchema(rootSchema);
 		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
 		assert.deepEqual(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), rootSchema);

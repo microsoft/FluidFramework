@@ -6,16 +6,15 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
-	ContextuallyTypedNodeData,
-	cursorFromContextualData,
 	FieldKinds,
 	isEditableField,
 	isUnwrappedNode,
 	jsonableTreeFromCursor,
 	SchemaAware,
 	SchemaBuilder,
-	TypedSchema,
 	UnwrappedEditableField,
+	cursorForTypedData,
+	cursorForTypedTreeData,
 } from "../../feature-libraries";
 import { jsonNumber, jsonSchema } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
@@ -28,7 +27,6 @@ import {
 	rootFieldKeySymbol,
 	UpPath,
 } from "../../core";
-import { cursorForTypedData } from "../../feature-libraries/contextuallyTyped";
 
 const localFieldKey: LocalFieldKey = brand("foo");
 
@@ -104,10 +102,7 @@ function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
  * @param endLeafValue - the value of the end leaf of the tree
  * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
-function makeJsWideTreeWithEndValue(
-	numberOfNodes: number,
-	endLeafValue: number,
-): JSWideTree & ContextuallyTypedNodeData {
+function makeJsWideTreeWithEndValue(numberOfNodes: number, endLeafValue: number): JSWideTree {
 	const numbers = [];
 	for (let index = 0; index < numberOfNodes - 1; index++) {
 		numbers.push(index);
@@ -376,9 +371,9 @@ describe("SharedTree benchmarks", () => {
 
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
-							cursorFromContextualData(
+							cursorForTypedTreeData(
 								tree.storedSchema,
-								TypedSchema.nameSet(wideRootSchema),
+								wideRootSchema,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),
 						);

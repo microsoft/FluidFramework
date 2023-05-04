@@ -52,6 +52,10 @@ export type RecursiveTreeSchema = unknown;
  */
 export type RecursiveTreeSchemaSpecification = unknown;
 
+{
+	type _check = requireAssignableTo<TreeSchemaSpecification, RecursiveTreeSchemaSpecification>;
+}
+
 /**
  * Builds schema libraries, and the schema within them.
  * @sealed @alpha
@@ -95,7 +99,9 @@ export class SchemaBuilder {
 		name: Name,
 		t: T,
 	): TreeSchema<Name, T> {
-		return new TreeSchema(this, name, t);
+		const schema = new TreeSchema(this, name, t);
+		this.treeSchema.set(schema.name, schema as TreeSchema);
+		return schema;
 	}
 
 	/**
