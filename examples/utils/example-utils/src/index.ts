@@ -15,6 +15,8 @@ export type {
 	IMigratorEvents,
 	ISameContainerMigrationTool,
 	ISameContainerMigrationToolEvents,
+	ISameContainerMigrator,
+	ISameContainerMigratorEvents,
 	IVersionedModel,
 	MigrationState,
 	SameContainerMigrationState,
@@ -25,7 +27,7 @@ export {
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,
 } from "./migrationTool";
-export { Migrator } from "./migrator";
+export { Migrator, SameContainerMigrator } from "./migrator";
 export {
 	IDetachedModel,
 	IModelLoader,

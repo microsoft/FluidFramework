@@ -7,7 +7,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import type { IMigratableModel, IVersionedModel } from "@fluid-example/example-utils";
-import { Migrator, ModelLoader } from "@fluid-example/example-utils";
+import { SameContainerMigrator, ModelLoader } from "@fluid-example/example-utils";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import {
 	createTinyliciousCreateNewRequest,
@@ -90,7 +90,12 @@ async function start(): Promise<void> {
 	// the migration logic and just lets us know when a new model is loaded and available (with the "migrated" event).
 	// It also takes a dataTransformationCallback to help in transforming data export format to be compatible for
 	// import with newly created models.
-	const migrator = new Migrator(modelLoader, model, id, inventoryListDataTransformationCallback);
+	const migrator = new SameContainerMigrator(
+		modelLoader,
+		model,
+		id,
+		inventoryListDataTransformationCallback,
+	);
 	migrator.on("migrated", () => {
 		model.close();
 		render(migrator.currentModel);

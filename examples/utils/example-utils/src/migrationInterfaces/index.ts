@@ -16,3 +16,4 @@ export {
 	ISameContainerMigrationToolEvents,
 	SameContainerMigrationState,
 } from "./sameContainerMigrationTool";
+export { ISameContainerMigrator, ISameContainerMigratorEvents } from "./sameContainerMigrator";
