@@ -204,15 +204,16 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			"Both source and destination fields must be sequence fields.",
 		);
 
-		assert(
-			keyIsValidIndex(destinationIndex, this.length + 1),
-			"Index must be less than or equal to length.",
-		);
-
 		const destinationFieldProxy =
 			destinationField !== undefined
 				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 				: this;
+
+		assert(
+			destinationFieldProxy === undefined ||
+				keyIsValidIndex(destinationIndex, this.length + 1),
+			"Index must be less than or equal to length.",
+		);
 		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
 
 		this.context.moveNodes(
@@ -222,7 +223,6 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			destinationFieldPath,
 			destinationIndex,
 		);
-		return;
 	}
 
 	public getfieldPath(): FieldUpPath {

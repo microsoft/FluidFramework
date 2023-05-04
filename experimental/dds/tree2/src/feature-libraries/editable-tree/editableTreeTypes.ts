@@ -329,7 +329,8 @@ export interface EditableField
 	insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
 
 	/**
-	 * Moves nodes from this field to destination.
+	 * Moves nodes from this field to destination iff both source and destination are sequence fields.
+	 * If the destinationField is not provided, the current field is used as the destination.
 	 */
 	moveNodes(
 		sourceIndex: number,
