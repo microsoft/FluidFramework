@@ -86,6 +86,10 @@ export type InterdependencyRange =
  * which is good because I don't know how to fix it.
  */
 export function isInterdependencyRange(r: any): r is InterdependencyRange {
+	if (semver.valid(r) !== null) {
+		return true;
+	}
+
 	if (RangeOperators.includes(r) || WorkspaceRanges.includes(r)) {
 		return true;
 	}
