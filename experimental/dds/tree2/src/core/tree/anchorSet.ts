@@ -491,7 +491,11 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			destinationPath.children.set(destination.parentField, coupleInfo.nodes);
 		} else {
 			// Update existing field contents
-			const numberBeforeCouple = this.increaseParentIndexes(field, destination.parentIndex, count);
+			const numberBeforeCouple = this.increaseParentIndexes(
+				field,
+				destination.parentIndex,
+				count,
+			);
 
 			// TODO: this will fail for very large numbers of anchors due to argument limits.
 			field.splice(numberBeforeCouple, 0, ...coupleInfo.nodes);
