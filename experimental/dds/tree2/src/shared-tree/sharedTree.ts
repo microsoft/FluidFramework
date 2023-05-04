@@ -322,14 +322,8 @@ export class SharedTree
 
 		this.transaction = {
 			start: () => this.startTransaction(repairDataStoreFromForest(this.forest)),
-			commit: () => {
-				this.commitTransaction();
-				return TransactionResult.Commit;
-			},
-			abort: () => {
-				this.abortTransaction();
-				return TransactionResult.Abort;
-			},
+			commit: () => this.commitTransaction(),
+			abort: () => this.abortTransaction(),
 			inProgress: () => this.isTransacting(),
 		};
 

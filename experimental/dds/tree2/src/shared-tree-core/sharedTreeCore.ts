@@ -173,12 +173,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		this.editManager.on("newTrunkHead", (head) => {
 			this.changeEvents.emit("newSequencedChange", head.change);
 		});
-		this.editor = changeFamily.buildEditor((c) => {
-			const [change, newCommit] = this.editManager.localBranch.apply(c, mintRevisionTag());
+		this.editor = changeFamily.buildEditor((change) => {
+			const [branchChange, newCommit] = this.editManager.localBranch.apply(
+				change,
+				mintRevisionTag(),
+			);
 			if (!this.isTransacting()) {
 				this.submitCommit(newCommit, UndoRedoManagerCommitType.Undoable);
 			}
-			this.changeEvents.emit("newLocalChange", change);
+			this.changeEvents.emit("newLocalChange", branchChange);
 		}, new AnchorSet());
 
 		// When the local branch changes, notify our listeners of the new state.
@@ -291,10 +294,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	protected startTransaction(repairStore?: RepairDataStore): void {
 		this.editManager.localBranch.startTransaction(repairStore);
+		this.editor.enterTransaction();
 	}
 
 	protected commitTransaction(): TransactionResult.Commit {
 		const [squashedCommits, newCommit] = this.editManager.localBranch.commitTransaction();
+		this.editor.exitTransaction();
 		for (const { revision } of squashedCommits) {
 			this.pendingLocalCommitTypes.delete(revision);
 		}
@@ -306,6 +311,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	protected abortTransaction(): TransactionResult.Abort {
 		const [_, abortedCommits] = this.editManager.localBranch.abortTransaction();
+		this.editor.exitTransaction();
 		for (const { revision } of abortedCommits) {
 			this.pendingLocalCommitTypes.delete(revision);
 		}
