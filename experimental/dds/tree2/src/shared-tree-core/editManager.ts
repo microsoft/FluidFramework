@@ -244,6 +244,15 @@ export class EditManager<
 				// no existing branches that are based off of any of the commits being removed.
 				(newTrunkTail as Mutable<TrunkCommit<TChangeset>>).parent = this.trunkBase;
 
+				this.sequenceMap.forRange(
+					minimumPossibleSequenceNumber,
+					newTrunkTail.sequenceNumber,
+					false,
+					(_seq, { revision }) => {
+						this.localBranchUndoRedoManager.untrackCommitType(revision);
+					},
+				);
+
 				deleted = this.sequenceMap.deleteRange(
 					minimumPossibleSequenceNumber,
 					newTrunkTail.sequenceNumber,
@@ -527,7 +536,6 @@ export class EditManager<
 			const type =
 				this.localBranchUndoRedoManager.getCommitType(this.trunk.revision) ??
 				fail("Local commit types must be tracked until they are sequenced.");
-			this.localBranchUndoRedoManager.untrackCommitType(this.trunk.revision);
 			this.trunkUndoRedoManager.trackCommit(this.trunk, type);
 		}
 		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
