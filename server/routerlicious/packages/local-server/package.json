@@ -97,6 +97,13 @@
 		"webpack-cli": "^4.9.2"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_ILocalDeltaConnectionServer": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalDeltaConnectionServer": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
