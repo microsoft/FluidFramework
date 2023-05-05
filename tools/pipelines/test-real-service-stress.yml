@@ -69,7 +69,6 @@ stages:
   - stage:
     displayName: Stress tests - tinylicious
     jobs:
-    - job: StressTestsTinylicious
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
@@ -77,23 +76,11 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
-        testCommand: start:t9s:gc
+        testCommand: start:t9s:gc:ci:tombstone
         splitTestVariants: 
           - name: Tombstone Mode
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-    - job: ErrorHandler
-      dependsOn: StressTestsTinylicious
-      condition: failed()
-      steps: 
-      - bash: az boards work-item create \
-         --title "Build $(build.buildNumber) failed" \
-          --type bug \
-         --org $(System.TeamFoundationCollectionUri) \
-          --project $(System.TeamProject)
-        env:
-          AZURE_DEVOPS_EXT_PAT: $(System.AccessToken)
-        displayName: 'Create work item on failure'
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
