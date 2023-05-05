@@ -31,7 +31,7 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
 	}
 
 	public incrementConnectionCount(): void {
-        if (!this.cache || !this.cache.incr) {
+		if (!this.cache || !this.cache.incr) {
 			return;
 		}
 		const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(
@@ -67,7 +67,7 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
 	}
 
 	public decrementConnectionCount(): void {
-        if (!this.cache || !this.cache.decr) {
+		if (!this.cache || !this.cache.decr) {
 			return;
 		}
 		const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(
