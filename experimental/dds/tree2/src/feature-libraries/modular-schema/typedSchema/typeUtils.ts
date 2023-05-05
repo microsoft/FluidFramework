@@ -19,18 +19,16 @@ export type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = R
 };
 
 // TODO: test + document
-export function objectToMap<ObjectMap, MapKey extends number | string, MapValue>(
-	objectMap: ObjectMap,
-): ObjectToMap<ObjectMap, MapKey, MapValue> {
+export function objectToMap<
+	ObjectMap extends Record<MapKey, MapValue>,
+	MapKey extends string,
+	MapValue,
+>(objectMap: ObjectMap): ObjectToMap<ObjectMap, MapKey, MapValue> {
 	const map = new Map<MapKey, MapValue>();
 	// This function must only be used with objects specifically intended to encode map like information.
-	// This makes `in` loops appropriate, though the caller has to be careful!
-	// eslint-disable-next-line no-restricted-syntax
-	for (const key in objectMap) {
-		if (Object.prototype.hasOwnProperty.call(objectMap, key)) {
-			const element = objectMap[key];
-			map.set(key as unknown as MapKey, element as unknown as MapValue);
-		}
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		map.set(key as MapKey, element);
 	}
 	return map as unknown as ObjectToMap<ObjectMap, MapKey, MapValue>;
 }
