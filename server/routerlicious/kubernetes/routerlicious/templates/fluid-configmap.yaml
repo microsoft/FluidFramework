@@ -70,21 +70,21 @@ data:
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
                 "tenantGroup1" : {{ toJson .Values.alfred.throttling.tenantGroup1 }},
-                "generalTenant" : {
-                    "generalRestCall": {{ toJson .Values.alfred.throttling.generalTenant.generalRestCall }},
-                    "createDoc": {{ toJson .Values.alfred.throttling.generalTenant.createDoc }},
-                    "getDeltas": {{ toJson .Values.alfred.throttling.generalTenant.getDeltas }},
-                    "getSession": {{ toJson .Values.alfred.throttling.generalTenant.getSession }},
-                    "socketConnections": {{ toJson .Values.alfred.throttling.generalTenant.socketConnections }},
-                    "submitOps": {{ toJson .Values.alfred.throttling.generalTenant.submitOps }}
+                "perTenant" : {
+                    "generalRestCall": {{ toJson .Values.alfred.throttling.perTenant.generalRestCall }},
+                    "createDoc": {{ toJson .Values.alfred.throttling.perTenant.createDoc }},
+                    "getDeltas": {{ toJson .Values.alfred.throttling.perTenant.getDeltas }},
+                    "getSession": {{ toJson .Values.alfred.throttling.perTenant.getSession }},
+                    "socketConnections": {{ toJson .Values.alfred.throttling.perTenant.socketConnections }},
+                    "submitOps": {{ toJson .Values.alfred.throttling.perTenant.submitOps }}
                 },
-                "generalCluster" : {
-                    "createDoc": {{ toJson .Values.alfred.throttling.generalCluster.createDoc }},
-                    "getDeltas": {{ toJson .Values.alfred.throttling.generalCluster.getDeltas }},
-                    "getSession": {{ toJson .Values.alfred.throttling.generalCluster.getSession }},
-                    "socketConnections": {{ toJson .Values.alfred.throttling.generalCluster.socketConnections }},
-                    "submitOps": {{ toJson .Values.alfred.throttling.generalCluster.submitOps }},
-                    "submitSignal": {{ toJson .Values.alfred.throttling.generalCluster.submitSignal }}
+                "perCluster" : {
+                    "createDoc": {{ toJson .Values.alfred.throttling.perCluster.createDoc }},
+                    "getDeltas": {{ toJson .Values.alfred.throttling.perCluster.getDeltas }},
+                    "getSession": {{ toJson .Values.alfred.throttling.perCluster.getSession }},
+                    "socketConnections": {{ toJson .Values.alfred.throttling.perCluster.socketConnections }},
+                    "submitOps": {{ toJson .Values.alfred.throttling.perCluster.submitOps }},
+                    "submitSignal": {{ toJson .Values.alfred.throttling.perCluster.submitSignal }}
                 }
             },
             "throttlingGroup" : {

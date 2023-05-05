@@ -12,7 +12,7 @@ export const Constants = Object.freeze({
 	submitOpsThrottleIdPrefix: "submitOps",
 	submitSignalThrottleIdPrefix: "submitSignal",
 	generalRestCallThrottleIdPrefix: "generalRestCall",
-	throttleGeneralTenant: "generalTenant",
-	throttleGeneralCluster: "generalCluster",
-	throttleTenantGroup1: "tenantGroup1",
+	perTenantThrottler: "perTenant",
+	perClusterThrottler: "perCluster",
+	tenantGroup1Throttler: "tenantGroup1",
 });

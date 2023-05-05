@@ -33,14 +33,14 @@ alfred:
         getSession: disabled
         socketConnections: disabled
         submitOps: disabled
-    generalTenant:
+    perTenant:
         generalRestCall: disabled
         createDoc: disabled
         getDeltas: disabled
         getSession: disabled
         socketConnections: disabled
         submitOps: disabled
-    generalCluster:
+    perCluster:
         createDoc:
             maxPerInterval: 1000000
             intervalInMs: 1000000

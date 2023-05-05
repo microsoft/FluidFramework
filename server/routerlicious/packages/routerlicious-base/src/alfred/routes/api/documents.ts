@@ -58,8 +58,8 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const generalTenantThrottler = throttlersMap
-		.get(Constants.throttleGeneralTenant)
+	const perTenantThrottler = throttlersMap
+		.get(Constants.perTenantThrottler)
 		.get(Constants.generalRestCallThrottleIdPrefix);
 
 	// Throttling logic for per-cluster rate-limiting at the HTTP route level
@@ -75,7 +75,7 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		throttle(perTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
@@ -104,7 +104,7 @@ export function create(
 		validateRequestParams("tenantId"),
 		throttle(
 			throttlersMap
-				.get(Constants.throttleGeneralCluster)
+				.get(Constants.perClusterThrottler)
 				.get(Constants.createDocThrottleIdPrefix),
 			winston,
 			createDocClusterThrottleOptions,
@@ -201,7 +201,7 @@ export function create(
 		"/:tenantId/session/:id",
 		throttle(
 			throttlersMap
-				.get(Constants.throttleGeneralCluster)
+				.get(Constants.perClusterThrottler)
 				.get(Constants.getSessionThrottleIdPrefix),
 			winston,
 			getSessionClusterThrottleOptions,
@@ -236,7 +236,7 @@ export function create(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
 		validateTokenRevocationClaims(),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		throttle(perTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");

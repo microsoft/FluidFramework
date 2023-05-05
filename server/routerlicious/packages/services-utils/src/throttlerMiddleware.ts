@@ -77,7 +77,7 @@ export function tenantThrottle(
 		};
 		const throttler = tenantGroup
 			? throttlersMap.get(tenantGroup)?.get(throttleApi)
-			: throttlersMap.get("generalTenant")?.get(throttleApi);
+			: throttlersMap.get("perTenant")?.get(throttleApi);
 		if (throttler) {
 			return throttle(throttler, undefined, throttleOptions)(req, rest, next);
 		}

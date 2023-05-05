@@ -267,7 +267,7 @@ export function configureWebSocketServices(
 		async function connectDocument(message: IConnect): Promise<IConnectedClient> {
 			const startTime = Date.now();
 			const throttleErrorPerCluster = checkThrottleAndUsage(
-				throttlersMap?.get("generalCluster")?.get("socketConnections"),
+				throttlersMap?.get("perCluster")?.get("socketConnections"),
 				getSocketConnectThrottleId("connectDoc"),
 				message.tenantId,
 				logger,
@@ -279,13 +279,15 @@ export function configureWebSocketServices(
 			const tenantGroup: string | undefined = message.tenantId
 				? tenantThrottlersMap?.get(message.tenantId) ?? undefined
 				: undefined;
+			const connectThrottlerPerTenant = tenantGroup
+				? throttlersMap?.get(tenantGroup)?.get("socketConnections")
+				: throttlersMap?.get("generalTenant")?.get("socketConnections");
+			const connectThrottlerPerTenantId = tenantGroup
+				? `${getSocketConnectThrottleId(message.tenantId)}_${tenantGroup}`
+				: getSocketConnectThrottleId(message.tenantId);
 			const throttleErrorPerTenant = checkThrottleAndUsage(
-				tenantGroup
-					? throttlersMap?.get(tenantGroup)?.get("socketConnections")
-					: throttlersMap?.get("generalTenant")?.get("socketConnections"),
-				tenantGroup
-					? `${getSocketConnectThrottleId(message.tenantId)}_${tenantGroup}`
-					: getSocketConnectThrottleId(message.tenantId),
+				connectThrottlerPerTenant,
+				connectThrottlerPerTenantId,
 				message.tenantId,
 				logger,
 			);
@@ -687,7 +689,7 @@ export function configureWebSocketServices(
 						messageCount += Array.isArray(messageBatch) ? messageBatch.length : 1;
 					}
 					const throttleErrorPerCluster = checkThrottleAndUsage(
-						throttlersMap?.get("generalCluster")?.get("submitOps"),
+						throttlersMap?.get("perCluster")?.get("submitOps"),
 						"submitOps",
 						connection.tenantId,
 						logger,
@@ -709,16 +711,15 @@ export function configureWebSocketServices(
 					const tenantGroup: string | undefined = connection.tenantId
 						? tenantThrottlersMap?.get(connection.tenantId) ?? undefined
 						: undefined;
+					const submitOpsThrottlerPerTenant = tenantGroup
+						? throttlersMap?.get(tenantGroup)?.get("submitOps")
+						: throttlersMap?.get("perTenant")?.get("submitOps");
+					const submitOpsThrottlerPerTenantId = tenantGroup
+						? `${getSubmitOpThrottleId(clientId, connection.tenantId)}_${tenantGroup}`
+						: getSubmitOpThrottleId(clientId, connection.tenantId);
 					const throttleErrorPerTenant = checkThrottleAndUsage(
-						tenantGroup
-							? throttlersMap?.get(tenantGroup)?.get("submitOps")
-							: throttlersMap?.get("generalTenant")?.get("submitOps"),
-						tenantGroup
-							? `${getSubmitOpThrottleId(
-									clientId,
-									connection.tenantId,
-							  )}_${tenantGroup}`
-							: getSubmitOpThrottleId(clientId, connection.tenantId),
+						submitOpsThrottlerPerTenant,
+						submitOpsThrottlerPerTenantId,
 						connection.tenantId,
 						logger,
 						undefined,
@@ -837,7 +838,7 @@ export function configureWebSocketServices(
 						clientId,
 					};
 					const throttleError = checkThrottleAndUsage(
-						throttlersMap?.get("generalCluster")?.get("submitSignal"),
+						throttlersMap?.get("perCluster")?.get("submitSignal"),
 						getSubmitSignalThrottleId(clientId, room.tenantId),
 						room.tenantId,
 						logger,

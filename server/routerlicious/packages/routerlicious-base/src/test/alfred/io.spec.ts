@@ -174,9 +174,9 @@ describe("Routerlicious", () => {
 						testSubmitSignalThrottlerPerCluster,
 					);
 
-					throttlersMap.set(Constants.throttleGeneralTenant, tenantThrottlers);
-					throttlersMap.set(Constants.throttleGeneralCluster, clusterThrottlers);
-					throttlersMap.set(Constants.throttleTenantGroup1, tenantGroup1Throttlers);
+					throttlersMap.set(Constants.perTenantThrottler, tenantThrottlers);
+					throttlersMap.set(Constants.perClusterThrottler, clusterThrottlers);
+					throttlersMap.set(Constants.tenantGroup1Throttler, tenantGroup1Throttlers);
 
 					const tenantThrottlersMap = new Map<string, string>();
 
@@ -685,9 +685,9 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						testSubmitSignalThrottlerPerCluster,
 					);
 
-					throttlersMap.set(Constants.throttleGeneralTenant, tenantThrottlers);
-					throttlersMap.set(Constants.throttleGeneralCluster, clusterThrottlers);
-					throttlersMap.set(Constants.throttleTenantGroup1, tenantGroup1Throttlers);
+					throttlersMap.set(Constants.perTenantThrottler, tenantThrottlers);
+					throttlersMap.set(Constants.perClusterThrottler, clusterThrottlers);
+					throttlersMap.set(Constants.tenantGroup1Throttler, tenantGroup1Throttlers);
 
 					const tenantThrottlersMap = new Map<string, string>();
 

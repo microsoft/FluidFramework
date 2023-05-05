@@ -48,8 +48,8 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const generalTenantThrottler = throttlersMap
-		.get("generalTenant")
+	const perTenantThrottler = throttlersMap
+		.get("perTenant")
 		.get(Constants.generalRestCallThrottleIdPrefix);
 
 	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[]) {
@@ -63,7 +63,7 @@ export function create(
 
 	router.get(
 		"/ping",
-		throttle(generalTenantThrottler, winston, {
+		throttle(perTenantThrottler, winston, {
 			...tenantThrottleOptions,
 			throttleIdPrefix: "ping",
 		}),
@@ -75,7 +75,7 @@ export function create(
 	router.patch(
 		"/:tenantId/:id/root",
 		validateRequestParams("tenantId", "id"),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		throttle(perTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response) => {
 			const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
 			const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
@@ -101,7 +101,7 @@ export function create(
 	router.post(
 		"/:tenantId/:id/blobs",
 		validateRequestParams("tenantId", "id"),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		throttle(perTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const blobData = request.body as IBlobData;

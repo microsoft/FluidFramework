@@ -66,7 +66,7 @@
 				"socketConnections": "disabled",
 				"submitOps": "disabled"
 			},
-			"generalTenant": {
+			"perTenant": {
 				"generalRestCall": "disabled",
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
@@ -74,7 +74,7 @@
 				"socketConnections": "disabled",
 				"submitOps": "disabled"
 			},
-			"generalCluster": {
+			"perCluster": {
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
 				"getSession": "disabled",
