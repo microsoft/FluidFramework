@@ -19,6 +19,7 @@ import {
 	FieldAnchor,
 	ITreeCursor,
 	inCursorNode,
+	FieldUpPath,
 } from "../../core";
 import { Multiplicity } from "../modular-schema";
 import {
@@ -29,6 +30,8 @@ import {
 	arrayLikeMarkerSymbol,
 	cursorFromContextualData,
 } from "../contextuallyTyped";
+import { sequence } from "../defaultFieldKinds";
+import { assertValidIndex } from "../../util";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -182,6 +185,49 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		);
 		const fieldPath = this.cursor.getFieldPath();
 		this.context.insertNodes(fieldPath, index, newContent);
+	}
+
+	public moveNodes(
+		sourceIndex: number,
+		count: number,
+		destinationIndex: number,
+		destinationField?: EditableField,
+	): void {
+		const sourceFieldPath = this.cursor.getFieldPath();
+		const destinationFieldKindIdentifier =
+			destinationField !== undefined
+				? destinationField.fieldSchema.kind.identifier
+				: this.fieldSchema.kind.identifier;
+
+		assert(
+			this.fieldSchema.kind.identifier === sequence.identifier &&
+				destinationFieldKindIdentifier === sequence.identifier,
+			0x683 /* Both source and destination fields must be sequence fields. */,
+		);
+
+		const destinationFieldProxy =
+			destinationField !== undefined
+				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
+				: this;
+		assert(
+			isFieldProxyTarget(destinationFieldProxy),
+			0x684 /* destination field proxy must be a field proxy target */,
+		);
+		assertValidIndex(destinationIndex, destinationFieldProxy, true);
+
+		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
+
+		this.context.moveNodes(
+			sourceFieldPath,
+			sourceIndex,
+			count,
+			destinationFieldPath,
+			destinationIndex,
+		);
+	}
+
+	public getfieldPath(): FieldUpPath {
+		return this.cursor.getFieldPath();
 	}
 
 	public deleteNodes(index: number, count?: number): void {

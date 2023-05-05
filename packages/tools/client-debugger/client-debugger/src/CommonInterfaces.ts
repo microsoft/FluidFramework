@@ -7,7 +7,7 @@
  * Base interface used in message data for events targeting a particular debugger instance via
  * its Container ID.
  *
- * @public
+ * @internal
  */
 export interface HasContainerId {
 	/**
@@ -27,7 +27,7 @@ export type FluidObjectId = string;
  * Base interface used in message data for events targeting a particular Fluid object (DDS) via
  * a unique ID.
  *
- * @public
+ * @internal
  */
 export interface HasFluidObjectId {
 	/**

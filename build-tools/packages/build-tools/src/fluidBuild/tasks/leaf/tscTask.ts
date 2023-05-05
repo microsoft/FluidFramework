@@ -66,9 +66,7 @@ export class TscTask extends LeafTask {
 			isSameFileOrDir(this.configFileFullPath, this.getPackageFileFullPath(testConfig));
 		for (const child of this.node.dependentPackages) {
 			// TODO: Need to look at the output from tsconfig
-			if (this.addChildTask(dependentTasks, child, "tsc")) {
-				this.logVerboseDependency(child, "tsc");
-			}
+			this.addChildCompileAndCopyScripts(dependentTasks, child, "tsc");
 
 			if (isTestTsc) {
 				// TODO: Not all test package depends on test from dependents.
@@ -92,15 +90,16 @@ export class TscTask extends LeafTask {
 					`${this.node.pkg.nameColored}: Only package root project is supported for project references`,
 				);
 			}
-			this._projectReference = this.addChildTask(dependentTasks, this.node, "tsc") as
-				| TscTask
-				| undefined;
+			this._projectReference = this.addChildCompileAndCopyScripts(
+				dependentTasks,
+				this.node,
+				"tsc",
+			) as TscTask | undefined;
 			if (!this._projectReference) {
 				throw new Error(
 					`${this.node.pkg.nameColored}: tsc not found for project reference`,
 				);
 			}
-			this.logVerboseDependency(this.node, "tsc");
 		}
 	}
 
@@ -440,7 +439,12 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 		}
 	}
 	protected addTscTask(dependentTasks: LeafTask[], options?: any) {
-		const tscTask = this.addChildTask(dependentTasks, this.node, "tsc", options);
+		const tscTask = this.addChildCompileAndCopyScripts(
+			dependentTasks,
+			this.node,
+			"tsc",
+			options,
+		);
 		if (!tscTask) {
 			if (options) {
 				throw new Error(
@@ -453,7 +457,6 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 			}
 		}
 		this.tscTasks.push(tscTask as TscTask);
-		this.logVerboseDependency(this.node, tscTask.command);
 	}
 
 	protected abstract get configFileFullPath(): string;

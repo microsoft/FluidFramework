@@ -138,6 +138,12 @@ export interface ISharedTreeView extends AnchorLocator {
 	undo(): void;
 
 	/**
+	 * Redoes the last completed undo made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 */
+	redo(): void;
+
+	/**
 	 * An collection of functions for managing transactions.
 	 * Transactions allow edits to be batched into atomic units.
 	 * Edits made during a transaction will update the local state of the tree immediately, but will be squashed into a single edit when the transaction is committed.
@@ -460,11 +466,13 @@ export class SharedTreeFork implements ISharedTreeFork {
 		public readonly context: EditableTreeContext,
 		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		branch.on("change", (change) => {
-			const delta = this.changeFamily.intoDelta(change);
-			this.forest.applyDelta(delta);
-			this.identifiedNodes.scanIdentifiers(this.context);
-			this.events.emit("afterBatch");
+		branch.on("change", ({ change }) => {
+			if (change !== undefined) {
+				const delta = this.changeFamily.intoDelta(change);
+				this.forest.applyDelta(delta);
+				this.identifiedNodes.scanIdentifiers(this.context);
+				this.events.emit("afterBatch");
+			}
 		});
 	}
 
@@ -485,6 +493,9 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public undo() {
 		this.branch.undo();
+	}
+	public redo() {
+		this.branch.redo();
 	}
 
 	public schematize<TSchema extends SchemaAware.TypedSchemaData>(

@@ -4,7 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { generateStableId, isStableId, StableId } from "../../id-compressor";
+import { generateStableId, isStableId } from "@fluidframework/container-runtime";
+import { StableId } from "@fluidframework/runtime-definitions";
+import { brandedStringType } from "../../util";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -18,6 +20,7 @@ export type SessionId = string;
  */
 // TODO: These can be compressed by an `IdCompressor` in the future
 export type RevisionTag = StableId;
+export const RevisionTagSchema = brandedStringType<StableId>();
 
 /**
  * @returns a `RevisionTag` from the given string, or fails if the string is not a valid `RevisionTag`
