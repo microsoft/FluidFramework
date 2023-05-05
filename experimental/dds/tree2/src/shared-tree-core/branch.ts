@@ -90,8 +90,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param sessionId - the session ID used to author commits made by this branch
 	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
 	 * @param changeFamily - determines the set of changes that this branch can commit
-	 * @param undoRedoManager - the undo/redo manager used to track undoable commits. undoRedoManager.getHead
-	 * can not be called within this constructor.
+	 * @param undoRedoManager - the undo/redo manager used to track undoable commits
 	 * @param anchors - an optional set of anchors that this branch will rebase whenever the branch head changes
 	 */
 	public constructor(

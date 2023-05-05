@@ -114,9 +114,7 @@ export class EditManager<
 
 	/**
 	 * @param localBranchUndoRedoManager - the {@link UndoRedoManager} associated with the local branch.
-	 * localBranchUndoRedoManager.getHead can not be called within this constructor.
 	 * @param trunkUndoRedoManager - the {@link UndoRedoManager} associated with the trunk.
-	 * trunkUndoRedoManager.getHead can not be called within this constructor.
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,

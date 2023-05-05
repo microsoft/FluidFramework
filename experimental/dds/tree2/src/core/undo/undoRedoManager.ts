@@ -179,7 +179,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased after merging.
-	 * @param newCommits - All commits which were not part of the source branch before the rebase, but are after the rebase.
+	 * @param newCommits - all commits which were appended to the source branch.
 	 * @param mergedUndoRedoManager - the {@link UndoRedoManager} of the branch that was merged.
 	 */
 	public updateAfterMerge(
@@ -191,7 +191,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased.
-	 * @param newCommits - All commits which were not part of the source branch before the rebase, but are after the rebase.
+	 * @param newCommits - all commits from the original branch that have rebased versions present on the new branch.
 	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
 	 */
 	public updateAfterRebase(
