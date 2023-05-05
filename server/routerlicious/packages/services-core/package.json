@@ -69,6 +69,12 @@
 			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_AlfredResources": {
+				"forwardCompat": false
+			},
+			"VariableDeclaration_Constants": {
+				"forwardCompat": false
 			}
 		}
 	}

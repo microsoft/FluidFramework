@@ -4,11 +4,12 @@
  */
 
 import { IDocumentDeleteService } from "@fluidframework/server-services-core";
+import { NonImplementedError } from "@fluidframework/server-services-client";
 
 export class DocumentDeleteService implements IDocumentDeleteService {
 	constructor() {}
 
 	public async deleteDocument(tenantId: string, documentId: string): Promise<void> {
-		return;
+		throw new NonImplementedError("Function is not implemented.");
 	}
 }

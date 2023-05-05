@@ -14,8 +14,8 @@ import {
 	isNetworkError,
 	validateTokenClaimsExpiration,
 	canRevokeToken,
+	canDeleteDoc,
 	TokenRevokeScopeType,
-	canDelete,
 	DocDeleteScopeType,
 } from "@fluidframework/server-services-client";
 import type {
@@ -288,7 +288,7 @@ export function validateTokenClaimsScopes(expectedScopes: string): RequestHandle
 				new NetworkError(403, "Missing RevokeToken scopes in token claims."),
 			);
 		}
-		if (expectedScopes === DocDeleteScopeType && !canDelete(claims.scopes)) {
+		if (expectedScopes === DocDeleteScopeType && !canDeleteDoc(claims.scopes)) {
 			return respondWithNetworkError(
 				response,
 				new NetworkError(403, "Missing DocDelete scopes in token claims."),

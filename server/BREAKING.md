@@ -1,5 +1,24 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
+## 0.1042 Breaking Changes
+#### `auth.ts` Refactor function validateTokenRevocationClaims to validateTokenClaimsScopes 
+Before: `validateTokenRevocationClaims()`
+Now: `validateTokenClaimsScopes(expectedScopes: string)`
+#### `IDocumentDeleteService` added to alfred `runnerFactory` and `resource`
+```ts
+export class AlfredResources implements core.IResources {
+...
+	constructor(
+    ...
+		public documentRepository: core.IDocumentRepository,
+		public documentDeleteService: core.IDocumentDeleteService,
+		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+    ...
+  )
+...
+}
+
+```
 ## 0.1041 Breaking Changes
 - [DocumentStorage class take one additional IStorageNameAllocator parameter](#DocumentStorage-class-take-one-additional-IStorageNameAllocator-parameter)
 

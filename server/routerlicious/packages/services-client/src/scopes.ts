@@ -15,4 +15,4 @@ export const canRead = (scopes: string[]) => scopes.includes(ScopeType.DocRead);
 export const canWrite = (scopes: string[]) => scopes.includes(ScopeType.DocWrite);
 export const canSummarize = (scopes: string[]) => scopes.includes(ScopeType.SummaryWrite);
 export const canRevokeToken = (scopes: string[]) => scopes.includes(TokenRevokeScopeType);
-export const canDelete = (scopes: string[]) => scopes.includes(DocDeleteScopeType);
+export const canDeleteDoc = (scopes: string[]) => scopes.includes(DocDeleteScopeType);

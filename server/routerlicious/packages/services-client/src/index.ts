@@ -17,6 +17,8 @@ export {
 	isNetworkError,
 	NetworkError,
 	throwFluidServiceNetworkError,
+	NonImplementedError,
+	isNonImplementedError,
 } from "./error";
 export { choose, getRandomName } from "./generateNames";
 export { GitManager } from "./gitManager";
@@ -31,7 +33,7 @@ export {
 	canSummarize,
 	canWrite,
 	canRevokeToken,
-	canDelete,
+	canDeleteDoc,
 	TokenRevokeScopeType,
 	DocDeleteScopeType,
 } from "./scopes";

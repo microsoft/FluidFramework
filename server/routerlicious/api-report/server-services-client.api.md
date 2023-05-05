@@ -30,7 +30,7 @@ export class BasicRestWrapper extends RestWrapper {
 export const buildTreePath: (...nodeNames: string[]) => string;
 
 // @public (undocumented)
-export const canDelete: (scopes: string[]) => boolean;
+export const canDeleteDoc: (scopes: string[]) => boolean;
 
 // @public (undocumented)
 export const canRead: (scopes: string[]) => boolean;

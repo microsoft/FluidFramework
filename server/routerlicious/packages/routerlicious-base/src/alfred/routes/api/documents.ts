@@ -28,6 +28,7 @@ import {
 	IAlfredTenant,
 	ISession,
 	NetworkError,
+	isNonImplementedError,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 } from "@fluidframework/server-services-client";
@@ -243,8 +244,8 @@ export function create(
 	router.delete(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager),
 		validateTokenClaimsScopes(DocDeleteScopeType),
+		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
@@ -254,10 +255,30 @@ export function create(
 
 			// TODO: Replace dummy implementation bellow.
 			async (request, response, next) => {
-				const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
-				response.status(501).json("Document delete is not supported yet");
-				handleResponse(deleteP, response, undefined, 500);
-			}
+				await documentDeleteService
+					.deleteDocument(tenantId, documentId)
+					.catch(async (error) => {
+						if (isNonImplementedError(error)) {
+							return handleResponse(
+								Promise.reject(
+									new NetworkError(
+										501,
+										"Document delete is not supported yet.",
+										false /* canRetry */,
+									),
+								),
+								response,
+							);
+						} else {
+							return handleResponse(
+								Promise.reject(new NetworkError(500, error)),
+								response,
+							);
+						}
+					});
+
+				handleResponse(Promise.resolve(), response);
+			};
 		},
 	);
 
