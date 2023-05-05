@@ -9,9 +9,9 @@ import path from "path";
 import sortPackageJson from "sort-package-json";
 
 import { MonoRepoKind } from "../common/monoRepo";
-import { Package, ScriptDependencies } from "../common/npmPackage";
+import { Package } from "../common/npmPackage";
 import { existsSync, readFileAsync, resolveNodeModule, writeFileAsync } from "../common/utils";
-import * as TscUtils from "./tscUtils";
+import * as TscUtils from "../common/tscUtils";
 
 export class FluidPackageCheck {
 	private static fixPackageVersions: { [key: string]: string } = {
@@ -62,7 +62,6 @@ export class FluidPackageCheck {
 			FluidPackageCheck.checkClientTestScripts(pkg, fix),
 			FluidPackageCheck.checkJestJunitTestEntry(pkg, fix),
 			FluidPackageCheck.checkLintScripts(pkg, fix),
-			FluidPackageCheck.checkFluidBuildDependencies(pkg),
 		];
 		return fixed.some((bool) => bool);
 	}
@@ -907,71 +906,6 @@ export class FluidPackageCheck {
 					.filter((dirent) => dirent.isDirectory())
 					.map((dirent) => path.join(dir, dirent.name)),
 			);
-		}
-	}
-
-	private static checkFluidBuildScriptDependencies(
-		pkg: Package,
-		name: string,
-		scriptDeps: { [key: string]: ScriptDependencies },
-	) {
-		const type = typeof scriptDeps;
-		if (type !== "object") {
-			this.logWarn(
-				pkg,
-				`invalid type ${type} for fluidBuild.buildDependencies.${name}`,
-				false,
-			);
-			return;
-		}
-		for (const key of Object.keys(scriptDeps)) {
-			if (!pkg.getScript(key)) {
-				this.logWarn(
-					pkg,
-					`non-exist script ${key} specified in fluidBuild.buildDependencies.${name}`,
-					false,
-				);
-				continue;
-			}
-			const scriptDep = scriptDeps[key];
-			const scriptDepType = typeof scriptDep;
-			if (scriptDepType !== "object") {
-				this.logWarn(
-					pkg,
-					`invalid type ${scriptDepType} for fluidBuild.buildDependencies.${name}.${key}`,
-					false,
-				);
-				return;
-			}
-			for (const depPackage of Object.keys(scriptDep)) {
-				if (
-					!pkg.packageJson.dependencies?.[depPackage] &&
-					!pkg.packageJson.devDependencies?.[depPackage]
-				) {
-					this.logWarn(
-						pkg,
-						`non-dependent package ${depPackage} specified in fluidBuild.buildDependencies.${name}.${key}`,
-						false,
-					);
-				}
-				if (!Array.isArray(scriptDep[depPackage])) {
-					this.logWarn(
-						pkg,
-						`non-array specified in fluidBuild.buildDependencies.${name}.${key}.${depPackage}`,
-						false,
-					);
-				}
-			}
-		}
-	}
-
-	private static checkFluidBuildDependencies(pkg: Package) {
-		const buildDependencies = pkg.packageJson.fluidBuild?.buildDependencies;
-		if (!buildDependencies) {
-			return;
-		}
-		if (buildDependencies.merge) {
-			this.checkFluidBuildScriptDependencies(pkg, "merge", buildDependencies.merge);
 		}
 	}
 }

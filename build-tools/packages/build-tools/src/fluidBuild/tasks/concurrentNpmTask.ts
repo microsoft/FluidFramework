@@ -9,8 +9,8 @@ import { NPMTask } from "./npmTask";
 import { Task, TaskExec } from "./task";
 
 export class ConcurrentNPMTask extends NPMTask {
-	constructor(node: BuildPackage, command: string, tasks: Task[]) {
-		super(node, command, tasks);
+	constructor(node: BuildPackage, command: string, tasks: Task[], target: string | undefined) {
+		super(node, command, tasks, target);
 	}
 
 	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {

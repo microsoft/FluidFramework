@@ -113,6 +113,13 @@
 		"typescript": "~4.5.5",
 		"webpack": "^5.76.2"
 	},
+	"fluidBuild": {
+		"tasks": {
+			"gen:tscdef": [
+				"^tsc"
+			]
+		}
+	},
 	"jest-junit": {
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"

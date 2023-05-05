@@ -11,39 +11,39 @@ import { LeafTask } from "./leaf/leafTask";
 import { Task, TaskExec } from "./task";
 
 const { verbose } = defaultLogger;
+
 const traceTaskExec = registerDebug("fluid-build:task:exec");
 
 export class NPMTask extends Task {
-	constructor(node: BuildPackage, command: string, protected readonly subTasks: Task[]) {
-		super(node, command);
-	}
-
-	public initializeDependentTask() {
-		for (const task of this.subTasks) {
-			task.initializeDependentTask();
-		}
+	constructor(
+		node: BuildPackage,
+		command: string,
+		protected readonly subTasks: Task[],
+		target: string | undefined,
+	) {
+		super(node, command, target);
 	}
 
 	public get isLeaf() {
 		return false;
 	}
 
-	public matchTask(command: string, options?: any): Task | undefined {
-		if (command === this.command) {
-			return this;
-		}
-		for (const task of this.subTasks) {
-			const t = task.matchTask(command, options);
-			if (t) {
-				return t;
-			}
-		}
-		return undefined;
+	public initializeDependentTasks() {
+		// Push this task's dependencies to the leaves
+		const dependentTasks = new Set<LeafTask>();
+		this.collectDependentTasks(dependentTasks);
+		this.addDependentTasks(dependentTasks);
 	}
 
-	public collectLeafTasks(leafTasks: LeafTask[]) {
+	public collectLeafTasks(leafTasks: Set<LeafTask>) {
 		for (const task of this.subTasks) {
 			task.collectLeafTasks(leafTasks);
+		}
+	}
+
+	public addDependentTasks(dependentTasks: Set<LeafTask>): void {
+		for (const task of this.subTasks) {
+			task.addDependentTasks(dependentTasks);
 		}
 	}
 

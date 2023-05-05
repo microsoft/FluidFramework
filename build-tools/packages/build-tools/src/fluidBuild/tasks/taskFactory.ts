@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ScriptDependencies } from "../../common/npmPackage";
 import { getExecutableFromCommand } from "../../common/utils";
 import { BuildPackage } from "../buildGraph";
 import { ConcurrentNPMTask } from "./concurrentNpmTask";
@@ -23,26 +22,9 @@ import { WebpackTask } from "./leaf/webpackTask";
 import { NPMTask } from "./npmTask";
 import { Task } from "./task";
 
-function mergeScriptDependencies(oldDeps: ScriptDependencies, newDeps?: ScriptDependencies) {
-	if (!newDeps) {
-		return oldDeps;
-	}
-	const mergedScriptDeps = { ...oldDeps };
-	for (const pkg of Object.keys(newDeps)) {
-		const oldValues = mergedScriptDeps[pkg];
-		const newValues = newDeps[pkg];
-		mergedScriptDeps[pkg] = oldValues ? oldValues.concat(newValues) : newValues;
-	}
-	return mergedScriptDeps;
-}
-
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
-	[key: string]: new (
-		node: BuildPackage,
-		command: string,
-		scriptDeps: ScriptDependencies,
-	) => LeafTask;
+	[key: string]: new (node: BuildPackage, command: string, target?: string) => LeafTask;
 } = {
 	"tsc": TscTask,
 	"tslint": TsLintTask,
@@ -61,7 +43,23 @@ const executableToLeafTask: {
 };
 
 export class TaskFactory {
-	private static Create(node: BuildPackage, command: string, scriptDeps: ScriptDependencies) {
+	public static Create(
+		node: BuildPackage,
+		command: string,
+		pendingInitDep: Task[],
+		target?: string,
+	) {
+		// Split the "&&" first
+		const subTasks = new Array<Task>();
+		const steps = command.split("&&");
+		if (steps.length > 1) {
+			for (const step of steps) {
+				subTasks.push(TaskFactory.Create(node, step.trim(), pendingInitDep));
+			}
+			return new NPMTask(node, command, subTasks, target);
+		}
+
+		// Parse concurrently
 		const concurrently = command.startsWith("concurrently ");
 		if (concurrently) {
 			const subTasks = new Array<Task>();
@@ -69,55 +67,48 @@ export class TaskFactory {
 			for (const step of steps) {
 				const stepT = step.trim();
 				if (stepT.startsWith("npm:")) {
-					subTasks.push(
-						TaskFactory.Create(
-							node,
-							"npm run " + stepT.substring("npm:".length),
-							scriptDeps,
-						),
-					);
+					const scriptName = stepT.substring("npm:".length);
+					const task = node.getScriptTask(scriptName, pendingInitDep);
+					if (task === undefined) {
+						throw new Error(
+							`${node.pkg.nameColored}: Unable to find script '${scriptName}' in 'npm run' command`,
+						);
+					}
+					subTasks.push(task);
 				} else {
-					subTasks.push(TaskFactory.Create(node, stepT, scriptDeps));
+					subTasks.push(TaskFactory.Create(node, stepT, pendingInitDep));
 				}
 			}
-			return new ConcurrentNPMTask(node, command, subTasks);
+			return new ConcurrentNPMTask(node, command, subTasks, target);
 		}
+
+		// Resolve "npm run" to the actual script
 		if (command.startsWith("npm run ")) {
-			const subTasks = new Array<Task>();
 			const scriptName = command.substring("npm run ".length);
-			const script = node.pkg.getScript(scriptName);
-			if (script) {
-				const mergeDeps =
-					node.pkg.packageJson.fluidBuild?.buildDependencies?.merge?.[scriptName];
-				const newScriptDeps = mergeScriptDependencies(scriptDeps, mergeDeps);
-				const steps = script.split("&&");
-				for (const step of steps) {
-					subTasks.push(TaskFactory.Create(node, step.trim(), newScriptDeps));
-				}
+			const subTask = node.getScriptTask(scriptName, pendingInitDep);
+			if (subTask === undefined) {
+				throw new Error(
+					`${node.pkg.nameColored}: Unable to find script '${scriptName}' in 'npm run' command`,
+				);
 			}
-			return new NPMTask(node, command, subTasks);
+			return new NPMTask(node, command, [subTask], target);
 		}
 
 		// Leaf task
 		const executable = getExecutableFromCommand(command).toLowerCase();
 		const ctor = executableToLeafTask[executable];
 		if (ctor) {
-			return new ctor(node, command, scriptDeps);
+			return new ctor(node, command, target);
 		}
-		return new UnknownLeafTask(node, command, scriptDeps);
+		return new UnknownLeafTask(node, command, target);
 	}
 
-	public static CreateScriptTasks(node: BuildPackage, scripts: string[]) {
-		if (scripts.length === 0) {
-			return undefined;
-		}
-		const tasks = scripts.map((value) => TaskFactory.Create(node, `npm run ${value}`, {}));
-		return tasks.length == 1
-			? tasks[0]
-			: new NPMTask(
-					node,
-					`npm run ${scripts.map((name) => `npm run ${name}`).join(" && ")}`,
-					tasks,
-			  );
+	public static CreateConcurrentGroupTask(
+		node: BuildPackage,
+		command: string,
+		subTasks: Task[],
+		target: string | undefined,
+	) {
+		return new ConcurrentNPMTask(node, command, subTasks, target);
 	}
 }

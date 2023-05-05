@@ -116,6 +116,22 @@
 			}
 		}
 	},
+	"fluidBuild": {
+		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"build:copy-resources"
+				],
+				"script": false
+			},
+			"tsc": [
+				"^tsc",
+				"build:genver",
+				"@fluid-example/collaborative-textarea#build:esnext"
+			]
+		}
+	},
 	"jest-junit": {
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"

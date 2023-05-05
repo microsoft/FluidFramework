@@ -109,6 +109,19 @@
 		"webpack-dev-server": "~4.6.0"
 	},
 	"fluidBuild": {
+		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"webpack"
+				],
+				"script": false
+			},
+			"tsc": [
+				"...",
+				"@fluid-experimental/property-inspector-table#build:copy-resources"
+			]
+		},
 		"buildDependencies": {
 			"merge": {
 				"tsc": {

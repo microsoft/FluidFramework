@@ -10,7 +10,6 @@ import registerDebug from "debug";
 import * as path from "path";
 
 import { defaultLogger } from "../../../common/logging";
-import { ScriptDependencies } from "../../../common/npmPackage";
 import {
 	ExecAsyncResult,
 	execAsync,
@@ -33,11 +32,11 @@ interface TaskExecResult extends ExecAsyncResult {
 }
 
 export abstract class LeafTask extends Task {
-	private dependentTasks?: LeafTask[];
+	private dependentTasks?: Set<LeafTask>;
 	private parentCount: number = 0;
 
-	constructor(node: BuildPackage, command: string, private scriptDeps: ScriptDependencies) {
-		super(node, command);
+	constructor(node: BuildPackage, command: string, target: string | undefined) {
+		super(node, command, target);
 		if (!this.isDisabled) {
 			this.node.buildContext.taskStats.leafTotalCount++;
 		}
@@ -56,36 +55,32 @@ export abstract class LeafTask extends Task {
 		return getExecutableFromCommand(this.command);
 	}
 
-	public initializeDependentTask() {
-		this.dependentTasks = new Array<LeafTask>();
-		if (Object.keys(this.scriptDeps).length) {
-			for (const depPackage of this.node.dependentPackages) {
-				const depScripts = this.scriptDeps[depPackage.pkg.name];
-				if (depScripts) {
-					for (const depScript of depScripts) {
-						if (
-							this.addChildTask(
-								this.dependentTasks,
-								depPackage,
-								`npm run ${depScript}`,
-							)
-						) {
-							this.logVerboseDependency(depPackage, depScript);
-						}
-					}
-				}
+	public initializeDependentTasks() {
+		this.ensureDependentTasks();
+	}
+
+	private ensureDependentTasks() {
+		if (this.dependentTasks === undefined) {
+			this.dependentTasks = new Set();
+			this.collectDependentTasks(this.dependentTasks);
+			this.addDependentTasks(this.dependentTasks);
+		}
+		return this.dependentTasks;
+	}
+
+	public addDependentTasks(dependentTasks: Set<LeafTask>): void {
+		const dependentTaskSet = this.ensureDependentTasks();
+		for (const task of dependentTasks) {
+			if (!dependentTaskSet.has(task)) {
+				dependentTaskSet.add(task);
+				task.parentCount++;
+				traceTaskDep(`${this.nameColored} -> ${task.nameColored}`);
 			}
 		}
-		this.addDependentTasks(this.dependentTasks);
 	}
 
-	public matchTask(command: string, options?: any): LeafTask | undefined {
-		return this.command === command ? this : undefined;
-	}
-
-	public collectLeafTasks(leafTasks: LeafTask[]) {
-		leafTasks.push(this);
-		this.parentCount++;
+	public collectLeafTasks(leafTasks: Set<LeafTask>) {
+		leafTasks.add(this);
 	}
 
 	protected get useWorker() {
@@ -265,39 +260,6 @@ export abstract class LeafTask extends Task {
 		return leafIsUpToDate;
 	}
 
-	protected addChildTask(
-		dependentTasks: LeafTask[],
-		node: BuildPackage,
-		command: string,
-		options?: any,
-	) {
-		const task = node.findTask(command, options);
-		if (task) {
-			task.collectLeafTasks(dependentTasks);
-			return task;
-		}
-		return undefined;
-	}
-
-	protected addChildCompileAndCopyScripts(
-		dependentTasks: LeafTask[],
-		node: BuildPackage,
-		script: string,
-		options?: any,
-	) {
-		const command = script === "tsc" ? script : `npm run ${script}`;
-		const task = this.addChildTask(dependentTasks, node, command, options);
-		if (task) {
-			this.logVerboseDependency(node, options ? task.command : script);
-
-			// Assume build:copy is needed as well
-			if (this.addChildTask(dependentTasks, node, "npm run build:copy")) {
-				this.logVerboseDependency(node, "build:copy");
-			}
-		}
-		return task;
-	}
-
 	private async checkDependentTasksIsUpToDate(): Promise<boolean> {
 		const dependentTasks = this.getDependentTasks();
 		for (const dependentTask of dependentTasks) {
@@ -309,9 +271,10 @@ export abstract class LeafTask extends Task {
 		return true;
 	}
 
-	private getDependentTasks(): LeafTask[] {
+	protected getDependentTasks() {
 		assert.notStrictEqual(this.dependentTasks, undefined);
-		return this.dependentTasks!;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.dependentTasks!.values();
 	}
 
 	private async buildDependentTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
@@ -350,9 +313,6 @@ export abstract class LeafTask extends Task {
 	 * Subclass should override these to configure the leaf task
 	 */
 
-	// collect the dependent task this leaf task has
-	protected abstract addDependentTasks(dependentTasks: LeafTask[]): void;
-
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
@@ -379,25 +339,8 @@ export abstract class LeafTask extends Task {
 		verbose(msg);
 	}
 
-	protected logVerboseDependency(child: BuildPackage, dep: string) {
-		const msg = `Task Dependency: ${this.node.pkg.nameColored} ${this.executable} -> ${child.pkg.nameColored} ${dep}`;
-		traceTaskDep(msg);
-		verbose(msg);
-	}
-
 	protected logVerboseTask(msg: string) {
 		verbose(`Task: ${this.node.pkg.nameColored} ${this.executable}: ${msg}`);
-	}
-
-	protected addAllDependentPackageTasks(dependentTasks: LeafTask[]) {
-		for (const child of this.node.dependentPackages) {
-			if (child.task) {
-				child.task.collectLeafTasks(dependentTasks);
-				this.logVerboseDependency(child, "*");
-			}
-		}
-
-		// TODO: we should add all the prefix tasks in the task tree of the current package as well.
 	}
 }
 
@@ -484,11 +427,6 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 }
 
 export class UnknownLeafTask extends LeafTask {
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		// Because we don't know, we need to depends on all the task in the dependent packages
-		this.addAllDependentPackageTasks(dependentTasks);
-	}
-
 	protected async checkLeafIsUpToDate() {
 		// Because we don't know, it is always out of date and need to rebuild
 		return false;

@@ -84,6 +84,18 @@
 			}
 		}
 	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"^tsc",
+				"@fluid-example/multiview-coordinate-interface#build:esnext"
+			],
+			"build:esnext": [
+				"^tsc",
+				"@fluid-example/multiview-coordinate-interface#build:esnext"
+			]
+		}
+	},
 	"jest-junit": {
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"

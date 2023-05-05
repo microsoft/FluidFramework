@@ -114,6 +114,28 @@
 			}
 		}
 	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"^tsc",
+				"@fluid-example/clicker#build:esnext",
+				"@fluid-example/codemirror#build:esnext",
+				"@fluid-example/collaborative-textarea#build:esnext",
+				"@fluid-example/multiview-coordinate-model#build:esnext",
+				"@fluid-example/multiview-slider-coordinate-view#build:esnext",
+				"@fluid-example/prosemirror#build:esnext"
+			],
+			"build:esnext": [
+				"^tsc",
+				"@fluid-example/clicker#build:esnext",
+				"@fluid-example/codemirror#build:esnext",
+				"@fluid-example/collaborative-textarea#build:esnext",
+				"@fluid-example/multiview-coordinate-model#build:esnext",
+				"@fluid-example/multiview-slider-coordinate-view#build:esnext",
+				"@fluid-example/prosemirror#build:esnext"
+			]
+		}
+	},
 	"jest-junit": {
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"

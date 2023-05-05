@@ -100,6 +100,30 @@
 			}
 		}
 	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"^tsc",
+				"@fluid-example/multiview-constellation-model#build:esnext",
+				"@fluid-example/multiview-constellation-view#build:esnext",
+				"@fluid-example/multiview-coordinate-interface#build:esnext",
+				"@fluid-example/multiview-coordinate-model#build:esnext",
+				"@fluid-example/multiview-plot-coordinate-view#build:esnext",
+				"@fluid-example/multiview-slider-coordinate-view#build:esnext",
+				"@fluid-example/multiview-triangle-view#build:esnext"
+			],
+			"build:esnext": [
+				"^tsc",
+				"@fluid-example/multiview-constellation-model#build:esnext",
+				"@fluid-example/multiview-constellation-view#build:esnext",
+				"@fluid-example/multiview-coordinate-interface#build:esnext",
+				"@fluid-example/multiview-coordinate-model#build:esnext",
+				"@fluid-example/multiview-plot-coordinate-view#build:esnext",
+				"@fluid-example/multiview-slider-coordinate-view#build:esnext",
+				"@fluid-example/multiview-triangle-view#build:esnext"
+			]
+		}
+	},
 	"jest-junit": {
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"
