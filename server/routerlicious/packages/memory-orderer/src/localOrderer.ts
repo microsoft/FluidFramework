@@ -390,6 +390,7 @@ export class LocalOrderer implements IOrderer {
 			scribeMessages.map((message) => message.operation),
 			undefined,
 			new Set<string>(),
+			true,
 		);
 	}
 

@@ -134,7 +134,8 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"getDeltasViaAlfred": true
+		"getDeltasViaAlfred": true,
+		"restartOnCheckpointFailure": false
 	},
 	"system": {
 		"httpServer": {
