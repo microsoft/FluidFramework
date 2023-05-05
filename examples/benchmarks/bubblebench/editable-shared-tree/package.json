@@ -39,8 +39,6 @@
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
 		"tsc": "tsc",
-		"tsfmt": "tsfmt --verify",
-		"tsfmt:fix": "tsfmt --replace",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
