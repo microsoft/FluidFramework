@@ -25,7 +25,7 @@ export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 
 // @alpha
 type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
-T extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Mode, InternalTypedSchemaTypes.Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>>> : UntypedApi<Mode>
+T extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Mode, Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>>> : UntypedApi<Mode>
 ][InternalTypedSchemaTypes._dummy];
 
 // @alpha
@@ -124,13 +124,7 @@ export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<
 type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[] ? TValue : never;
 
 // @alpha
-type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
-
-// @alpha
-type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNames<Tail, TName>] : [], TName[]>;
-
-// @alpha
-type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -821,11 +815,7 @@ declare namespace InternalTypedSchemaTypes {
         RecursiveTreeSchemaSpecification,
         RecursiveTreeSchema,
         ObjectToMap,
-        AsNames,
-        Assume,
         WithDefault,
-        AsName,
-        ListToKeys,
         AllowOptional,
         RequiredFields,
         OptionalFields,
@@ -1095,11 +1085,6 @@ export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
 // @alpha
 type LazyItem<Item = unknown> = Item | (() => Item);
-
-// @alpha
-type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
-    [key in T[number]]: TValue;
-};
 
 // @alpha
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
@@ -1749,8 +1734,8 @@ export interface TreeValue extends Serializable {
 // @alpha
 type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
 T extends readonly [infer Head, ...infer Tail] ? [
-TypedNode<InternalTypedSchemaTypes.Assume<Head, TreeSchema>, Mode>,
-...TypeArrayToTypedTreeArray<Mode, InternalTypedSchemaTypes.Assume<Tail, readonly TreeSchema[]>>
+TypedNode<Assume<Head, TreeSchema>, Mode>,
+...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>
 ] : []
 ][InternalTypedSchemaTypes._dummy];
 

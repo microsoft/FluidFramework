@@ -8,11 +8,7 @@ export { RecursiveTreeSchemaSpecification, RecursiveTreeSchema } from "./schemaB
 
 export {
 	ObjectToMap,
-	AsNames,
-	Assume,
 	WithDefault,
-	AsName,
-	ListToKeys,
 	AllowOptional,
 	RequiredFields,
 	OptionalFields,

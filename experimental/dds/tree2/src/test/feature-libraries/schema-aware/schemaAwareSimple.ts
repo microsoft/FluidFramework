@@ -20,6 +20,7 @@ import { ValueSchema } from "../../../core";
 import { UntypedSequenceField } from "../../../feature-libraries/schema-aware/partlyTyped";
 // eslint-disable-next-line import/no-internal-modules
 import { TypedValue } from "../../../feature-libraries/schema-aware/schemaAwareUtil";
+import { Assume } from "../../../util";
 
 /**
  * @alpha
@@ -94,7 +95,7 @@ export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 	T extends InternalTypedSchemaTypes.FlexList<TreeSchema>
 		? InternalTypedSchemaTypes.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
-					InternalTypedSchemaTypes.Assume<
+					Assume<
 						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>,
 						readonly TreeSchema[]
 					>
@@ -110,10 +111,8 @@ export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<InternalTypedSchemaTypes.Assume<Head, TreeSchema>>,
-				...TypeArrayToTypedTreeArray<
-					InternalTypedSchemaTypes.Assume<Tail, readonly TreeSchema[]>
-				>,
+				TypedNode<Assume<Head, TreeSchema>>,
+				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeSchema[]>>,
 		  ]
 		: [],
 ][InternalTypedSchemaTypes._dummy];

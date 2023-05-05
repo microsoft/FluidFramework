@@ -288,8 +288,6 @@ export class SchemaBuilder {
 	}
 }
 
-export type SchemaLibraries = ReadonlySet<SchemaLibraryData>;
-
 /**
  * Schema data collected by a single SchemaBuilder (does not include referenced libraries).
  * @alpha

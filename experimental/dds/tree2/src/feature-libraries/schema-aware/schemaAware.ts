@@ -20,6 +20,7 @@ import {
 } from "../modular-schema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { contextSymbol, typeSymbol } from "../editable-tree";
+import { Assume } from "../../util";
 import { UntypedSequenceField } from "./partlyTyped";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 
@@ -199,7 +200,7 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 		? InternalTypedSchemaTypes.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
 					Mode,
-					InternalTypedSchemaTypes.Assume<
+					Assume<
 						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>,
 						readonly TreeSchema[]
 					>
@@ -215,11 +216,8 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<InternalTypedSchemaTypes.Assume<Head, TreeSchema>, Mode>,
-				...TypeArrayToTypedTreeArray<
-					Mode,
-					InternalTypedSchemaTypes.Assume<Tail, readonly TreeSchema[]>
-				>,
+				TypedNode<Assume<Head, TreeSchema>, Mode>,
+				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>,
 		  ]
 		: [],
 ][InternalTypedSchemaTypes._dummy];

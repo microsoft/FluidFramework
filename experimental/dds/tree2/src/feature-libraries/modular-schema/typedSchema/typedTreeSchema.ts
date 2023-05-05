@@ -15,10 +15,10 @@ import {
 	ValueSchema,
 	symbolFromKey,
 } from "../../../core";
-import { MakeNominal } from "../../../util";
+import { MakeNominal, Assume } from "../../../util";
 import { FieldKindTypes, FieldKinds } from "../../defaultFieldKinds";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
-import { Assume, ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
+import { ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
 import { emptyField } from "./buildViewSchemaCollection";
 
