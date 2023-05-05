@@ -56,6 +56,13 @@ export interface FieldMapObject<TChild> {
 }
 
 /**
+ * Json comparable tree node, generic over child type.
+ * Json compatibility assumes `TChild` is also json compatible.
+ * @alpha
+ */
+export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
+
+/**
  * Json comparable field collection, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
  * @alpha
@@ -64,13 +71,6 @@ export interface GenericFieldsNode<TChild> {
 	[FieldScope.local]?: FieldMapObject<TChild>;
 	[FieldScope.global]?: FieldMapObject<TChild>;
 }
-
-/**
- * Json comparable tree node, generic over child type.
- * Json compatibility assumes `TChild` is also json compatible.
- * @alpha
- */
-export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
 
 /**
  * A tree represented using plain JavaScript objects.
