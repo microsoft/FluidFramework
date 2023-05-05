@@ -114,7 +114,7 @@ async function main() {
 		}
 	});
 
-	let testFailed: boolean = true;
+	let testFailed: boolean = false;
 	const fileLogger = await FileLogger.loggerP;
 	// Check for InactiveObject or SweepReadyObject logs
 	fileLogger.observer.on("logEvent", (logEvent: ITelemetryBaseEvent) => {
