@@ -37,7 +37,6 @@ import {
 	UndoRedoManager,
 	IRepairDataStoreProvider,
 	UndoRedoManagerCommitType,
-	markCommits,
 	rebaseBranch,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
@@ -158,14 +157,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = uuid();
-		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily, () =>
-			this.editManager.getLocalBranchHead(),
-		);
+		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
 			undoRedoManager,
-			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
+			undoRedoManager.clone(),
 			anchors,
 		);
 		this.summarizables = [
@@ -266,7 +263,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		revision: RevisionTag,
 		undoRedoType: UndoRedoManagerCommitType | undefined,
 	): GraphCommit<TChange> {
-		const [commit, delta] = this.addLocalChange(change, revision, undoRedoType);
+		const [commit, delta] = this.addLocalChange(change, revision);
 
 		// submitCommit should not be called for stashed ops so this is kept separate from
 		// addLocalChange
@@ -285,17 +282,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param revision - The revision to associate with the change.
 	 * @returns the commit and the delta resulting from applying `change`
 	 */
-	private addLocalChange(
-		change: TChange,
-		revision: RevisionTag,
-		undoRedoType: UndoRedoManagerCommitType | undefined,
-	): [Commit<TChange>, Delta.Root] {
+	private addLocalChange(change: TChange, revision: RevisionTag): [Commit<TChange>, Delta.Root] {
 		const commit: Commit<TChange> = {
 			change,
 			revision,
 			sessionId: this.editManager.localSessionId,
 		};
-		const delta = this.editManager.addLocalChange(revision, change, false, undoRedoType);
+		const delta = this.editManager.addLocalChange(revision, change, false);
 		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
 		return [commit, delta];
 	}
@@ -369,7 +362,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x66b /* Undo is not yet supported during transactions */);
 
-		const undoChange = this.editManager.localBranchUndoRedoManager.undo();
+		const undoChange = this.editManager.localBranchUndoRedoManager.undo(
+			this.getLocalBranchHead(),
+		);
 		if (undoChange !== undefined) {
 			this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
 		}
@@ -384,7 +379,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x67f /* Redo is not yet supported during transactions */);
 
-		const redoChange = this.editManager.localBranchUndoRedoManager.redo();
+		const redoChange = this.editManager.localBranchUndoRedoManager.redo(
+			this.getLocalBranchHead(),
+		);
 		if (redoChange !== undefined) {
 			this.applyChange(redoChange, mintRevisionTag(), UndoRedoManagerCommitType.Redo);
 		}
@@ -406,10 +403,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.editManager.getLocalBranchHead(),
 			this.editManager.localSessionId,
 			this.changeFamily,
-			this.editManager.localBranchUndoRedoManager.clone(
-				() => branch.getHead(),
-				repairDataStoreProvider,
-			),
+			this.editManager.localBranchUndoRedoManager.clone(repairDataStoreProvider),
 			anchors,
 		);
 		this.editManager.registerBranch(branch);
@@ -431,20 +425,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		const localBranchHead = this.editManager.getLocalBranchHead();
 		const ancestor = findAncestor([branch.getHead(), commits], (c) => c === localBranchHead);
 		if (ancestor === localBranchHead) {
-			const markedCommits = markCommits(
-				commits,
-				branch.undoRedoManager.headUndoable,
-				branch.undoRedoManager.headRedoable,
-			);
-			for (const {
-				commit: { change, revision },
-				undoRedoManagerCommitType,
-			} of markedCommits) {
+			for (const { change, revision } of commits) {
+				const type = branch.undoRedoManager.getCommitType(revision);
 				// Only track commits that are undoable.
-				this.applyChange(change, revision, undoRedoManagerCommitType);
+				if (type !== undefined) {
+					this.applyChange(change, revision, type);
+				}
 			}
 		} else {
-			const [newHead] = rebaseBranch(
+			const [newHead, _, { rebasedSourceCommits }] = rebaseBranch(
 				this.changeFamily.rebaser,
 				branch.getHead(),
 				this.getLocalBranchHead(),
@@ -453,7 +442,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			findAncestor([newHead, changes], (c) => c === localBranchHead);
 
 			this.editManager.localBranchUndoRedoManager.updateAfterMerge(
-				newHead,
+				rebasedSourceCommits,
 				branch.undoRedoManager,
 			);
 
@@ -493,11 +482,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
 		const { revision, change } = parseCommit(content, this.changeCodec);
-		const [commit, delta] = this.addLocalChange(
-			change,
-			revision,
-			UndoRedoManagerCommitType.Undoable,
-		);
+		const [commit, delta] = this.addLocalChange(change, revision);
 		this.editManager.localBranchUndoRedoManager.trackCommit(
 			commit,
 			UndoRedoManagerCommitType.Undoable,
