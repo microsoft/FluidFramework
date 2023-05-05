@@ -4,14 +4,12 @@
  */
 import { IFluidContainer, IValueChanged, SharedMap } from "fluid-framework";
 
-import { DevtoolsLogger, initializeDevtools } from "@fluid-experimental/azure-client-devtools";
 import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { DebugLogger } from "@fluidframework/telemetry-utils";
 import { InsecureTokenProvider, generateTestUser } from "@fluidframework/test-client-utils";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider";
@@ -106,14 +104,10 @@ async function initializeNewContainer(
 }
 
 async function start(): Promise<void> {
-	// Create telemetry logger and wrap it in DevtoolsLogger to ensure events are visible in the browser Devtools view.
-	const logger = new DevtoolsLogger(DebugLogger.create("test-namespace"));
-
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 	// and hook to the Telemetry system
 	const clientProps = {
 		connection: connectionConfig,
-		logger,
 	};
 	const client = new AzureClient(clientProps);
 
@@ -158,18 +152,6 @@ async function start(): Promise<void> {
 	// Here we are guaranteed that the maps have already been initialized for use with a DiceRollerController
 	const diceRollerController1 = new DiceRollerController(diceRollerController1Props);
 	const diceRollerController2 = new DiceRollerController(diceRollerController2Props);
-
-	// Initialize Devtools
-	initializeDevtools({
-		logger,
-		initialContainers: [
-			{
-				container,
-				containerId: id,
-				containerNickname: "Dice Roller Container",
-			},
-		],
-	});
 
 	const contentDiv = document.getElementById("content") as HTMLDivElement;
 	contentDiv.append(
