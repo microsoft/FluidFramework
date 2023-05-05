@@ -1245,6 +1245,59 @@ describe("SharedTree", () => {
 			validateRootField(tree2, ["a"]);
 		});
 
+		it.skip("revived optional field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const path = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
+			});
+
+			provider.processMessages();
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(undefined, false);
+			});
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint({
+					parent: path,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+
+				tree2.editor.setValue(path, "b");
+			});
+
+			const expectedState: JsonableTree = {
+				type: brand("TestValue"),
+				value: "b",
+				fields: {
+					foo: [{ type: jsonString.name, value: "x" }],
+				},
+			};
+
+			provider.processMessages();
+
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
+		});
+
 		it("transaction dropped when constraint violated", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
