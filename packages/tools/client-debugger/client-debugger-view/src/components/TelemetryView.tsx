@@ -376,7 +376,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 							placeholder="Select an event"
 							onChange={onEventNameChange}
 							onOptionSelect={handleEventNameSelect}
-							style={{marginBottom: "10px"}}
+							style={{ marginBottom: "10px" }}
 						>
 							{customSearch ? (
 								<Option
