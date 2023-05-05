@@ -155,9 +155,6 @@ export type Any = typeof Any;
  */
 export type LazyTreeSchema = TreeSchema | (() => TreeSchema);
 
-export type NormalizedAllowedTypes = Any | readonly TreeSchema[];
-export type NormalizedLazyAllowedTypes = Any | (() => TreeSchema)[];
-
 /**
  * Types for use in fields.
  *

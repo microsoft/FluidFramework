@@ -35,4 +35,6 @@ export {
 	LazyItem,
 	NormalizedFlexList,
 	ExtractItemType,
+	ArrayHasFixedLength,
+	ExtractListItemType,
 } from "./flexList";

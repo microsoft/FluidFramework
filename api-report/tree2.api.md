@@ -116,6 +116,9 @@ type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild, Mode exte
 }[TMultiplicity];
 
 // @alpha
+type ArrayHasFixedLength<List extends readonly unknown[]> = number extends List["length"] ? false : true;
+
+// @alpha
 export interface ArrayLikeMut<TGet, TSet extends TGet = TGet> extends ArrayLike<TGet> {
     // (undocumented)
     [n: number]: TSet;
@@ -215,11 +218,11 @@ export interface ChildLocation {
 
 // @alpha
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
-    [ApiMode.Flexible]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TTypedFields;
+    [ApiMode.Flexible]: EmptyObject extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TTypedFields;
     [ApiMode.Editable]: {
         [typeNameSymbol]: TName & TreeSchemaIdentifier;
     } & ValuePropertyFromSchema<TValueSchema> & TTypedFields & UntypedTreeCore;
-    [ApiMode.EditableUnwrapped]: [Record<string, never>, TValueSchema] extends [
+    [ApiMode.EditableUnwrapped]: [EmptyObject, TValueSchema] extends [
     TTypedFields,
     PrimitiveValueSchema
     ] ? TypedValue<TValueSchema> : CollectOptions<ApiMode.Editable, TTypedFields, TValueSchema, TName>;
@@ -227,7 +230,7 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
         [typeNameSymbol]: TName;
         [valueSymbol]: TypedValue<TValueSchema>;
     } & TTypedFields;
-    [ApiMode.Simple]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> : FlexibleObject<TValueSchema, TName> & TTypedFields;
+    [ApiMode.Simple]: EmptyObject extends TTypedFields ? TypedValue<TValueSchema> : FlexibleObject<TValueSchema, TName> & TTypedFields;
 }[Mode];
 
 // @alpha
@@ -439,6 +442,9 @@ export const emptyField: FieldStoredSchema;
 export const EmptyKey: LocalFieldKey;
 
 // @alpha
+type EmptyObject = {};
+
+// @alpha
 export type Events<E> = {
     [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
@@ -450,7 +456,10 @@ export type ExtractFromOpaque<TOpaque extends BrandedType<any, string>> = TOpaqu
 export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(value: TOpaque): ExtractFromOpaque<TOpaque>;
 
 // @alpha (undocumented)
-type ExtractItemType<List extends LazyItem> = List extends () => infer Result ? Result : List;
+type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+
+// @alpha (undocumented)
+type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item> ? Item : unknown;
 
 // @alpha (undocumented)
 export function fail(message: string): never;
@@ -630,7 +639,7 @@ InternalTypedSchemaTypes.FlattenKeys<{
 type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @alpha
-type FlexListToNonLazyArray<List extends FlexList> = number extends List["length"] ? NormalizedFlexList<List extends FlexList<infer Item> ? Item : unknown> : ConstantFlexListToNonLazyArray<List>;
+type FlexListToNonLazyArray<List extends FlexList> = ArrayHasFixedLength<List> extends true ? ConstantFlexListToNonLazyArray<List> : NormalizedFlexList<ExtractListItemType<List>>;
 
 // @alpha (undocumented)
 export interface Forbidden extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {
@@ -839,7 +848,9 @@ declare namespace InternalTypedSchemaTypes {
         ConstantFlexListToNonLazyArray,
         LazyItem,
         NormalizedFlexList,
-        ExtractItemType
+        ExtractItemType,
+        ArrayHasFixedLength,
+        ExtractListItemType
     }
 }
 export { InternalTypedSchemaTypes }
@@ -857,6 +868,7 @@ declare namespace InternalTypes {
         UnbrandedName,
         TypeArrayToTypedTreeArray,
         UntypedApi,
+        EmptyObject,
         ValuesOf,
         TypedValue,
         PrimitiveValueSchema,
@@ -1756,7 +1768,7 @@ TFields extends {
     [key: string]: FieldSchema;
 } ? {
     [key in keyof TFields]: TypedField<Mode, TFields[key]>;
-} : Record<string, never>
+} : EmptyObject
 ][InternalTypedSchemaTypes._dummy];
 
 // @alpha
@@ -1910,7 +1922,7 @@ export interface ValueFieldKind extends BrandedFieldKind<"Value", Multiplicity.V
 export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
 // @alpha (undocumented)
-type ValuePropertyFromSchema<TSchema extends ValueSchema> = TSchema extends ValueSchema.Nothing ? {} : undefined extends TypedValue<TSchema> ? {
+type ValuePropertyFromSchema<TSchema extends ValueSchema> = TSchema extends ValueSchema.Nothing ? EmptyObject : undefined extends TypedValue<TSchema> ? {
     [valueSymbol]?: TypedValue<TSchema>;
 } : {
     [valueSymbol]: TypedValue<TSchema>;

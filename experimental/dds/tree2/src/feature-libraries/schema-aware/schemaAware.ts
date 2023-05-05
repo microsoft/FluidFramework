@@ -26,13 +26,20 @@ import { UntypedSequenceField } from "./partlyTyped";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 
 /**
+ * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
+ * @alpha
+ */
+// Using {} instead of EmptyObject for empty object here produces better IntelliSense in the generated types than `Record<string, never>` recommended by the linter.
+// Making this a type instead of an interface prevents it from showing up in IntelliSense, and also avoids breaking the typing somehow.
+// eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/consistent-type-definitions
+export type EmptyObject = {};
+
+/**
  * @alpha
  */
 export type ValuePropertyFromSchema<TSchema extends ValueSchema> =
 	TSchema extends ValueSchema.Nothing
-		? // Using {} instead of Record<string, never> for empty object here produces better IntelliSense
-		  // eslint-disable-next-line @typescript-eslint/ban-types
-		  {}
+		? EmptyObject
 		: undefined extends TypedValue<TSchema>
 		? {
 				[valueSymbol]?: TypedValue<TSchema>;
@@ -93,7 +100,7 @@ export type CollectOptions<
 	TValueSchema extends ValueSchema,
 	TName,
 > = {
-	[ApiMode.Flexible]: Record<string, never> extends TTypedFields
+	[ApiMode.Flexible]: EmptyObject extends TTypedFields
 		? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName>
 		: FlexibleObject<TValueSchema, TName> & TTypedFields;
 	[ApiMode.Editable]: {
@@ -101,7 +108,7 @@ export type CollectOptions<
 	} & ValuePropertyFromSchema<TValueSchema> &
 		TTypedFields &
 		UntypedTreeCore;
-	[ApiMode.EditableUnwrapped]: [Record<string, never>, TValueSchema] extends [
+	[ApiMode.EditableUnwrapped]: [EmptyObject, TValueSchema] extends [
 		TTypedFields,
 		PrimitiveValueSchema,
 	]
@@ -112,7 +119,7 @@ export type CollectOptions<
 		[typeNameSymbol]: TName;
 		[valueSymbol]: TypedValue<TValueSchema>;
 	} & TTypedFields;
-	[ApiMode.Simple]: Record<string, never> extends TTypedFields
+	[ApiMode.Simple]: EmptyObject extends TTypedFields
 		? TypedValue<TValueSchema>
 		: FlexibleObject<TValueSchema, TName> & TTypedFields;
 }[Mode];
@@ -152,7 +159,7 @@ export type TypedFields<
 		? {
 				[key in keyof TFields]: TypedField<Mode, TFields[key]>;
 		  }
-		: Record<string, never>,
+		: EmptyObject,
 ][InternalTypedSchemaTypes._dummy];
 
 /**

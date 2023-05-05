@@ -9,12 +9,29 @@ import {
 	FlexListToNonLazyArray,
 	FlexListToLazyArray,
 	normalizeFlexList,
+	LazyItem,
+	ArrayHasFixedLength,
+	normalizeFlexListEager,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../../feature-libraries/modular-schema/typedSchema/flexList";
-import { requireAssignableTo } from "../../../../util";
+import { requireAssignableTo, requireFalse, requireTrue } from "../../../../util";
 
-// These tests currently just cover the type checking, so its all compile time.
+// Test ArrayHasFixedLength
+{
+	type _check1 = requireTrue<ArrayHasFixedLength<[]>>;
+	type _check2 = requireTrue<ArrayHasFixedLength<readonly []>>;
+	type _check3 = requireTrue<ArrayHasFixedLength<[0]>>;
+	type _check4 = requireTrue<ArrayHasFixedLength<[1, 2, 3]>>;
+
+	type _check5 = requireFalse<ArrayHasFixedLength<number[]>>;
+	type _check6 = requireFalse<ArrayHasFixedLength<readonly number[]>>;
+	type _check7 = requireFalse<ArrayHasFixedLength<string[]>>;
+
+	// Cases like this are not super clear how they should be handled, but currently are as indicated below:
+	type _check8 = requireTrue<ArrayHasFixedLength<[0] | []>>;
+	type _check9 = requireFalse<ArrayHasFixedLength<[0] | string[]>>;
+}
 
 // Test FlexListToNonLazyArray
 {
@@ -35,6 +52,9 @@ import { requireAssignableTo } from "../../../../util";
 
 	type f = FlexListToNonLazyArray<readonly [2, () => 1]>;
 	type checkF = requireAssignableTo<f, [2, 1]>;
+
+	type g = FlexListToNonLazyArray<LazyItem<number>[]>;
+	type checkG = requireAssignableTo<readonly number[], g>;
 }
 
 // Test FlexListToLazyArray
@@ -56,13 +76,17 @@ import { requireAssignableTo } from "../../../../util";
 }
 
 describe("FlexList", () => {
-	describe("normalizeFlexList", () => {
-		it("normalizeFlexList", () => {
-			const list = [2, (): 1 => 1] as const;
-			const normalized = normalizeFlexList(list);
-			assert(normalized.length === 2);
-			const data = normalized.map((f) => f());
-			assert.deepEqual(data, [2, 1]);
-		});
+	it("normalizeFlexList", () => {
+		const list = [2, (): 1 => 1] as const;
+		const normalized = normalizeFlexList(list);
+		assert(normalized.length === 2);
+		const data = normalized.map((f) => f());
+		assert.deepEqual(data, [2, 1]);
+	});
+
+	it("normalizeFlexListEager", () => {
+		const list = [2, (): 1 => 1] as const;
+		const normalized: readonly [2, 1] = normalizeFlexListEager(list);
+		assert.deepEqual(normalized, [2, 1]);
 	});
 });

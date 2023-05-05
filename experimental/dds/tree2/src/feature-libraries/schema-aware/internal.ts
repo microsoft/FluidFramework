@@ -16,6 +16,7 @@ export {
 	UnbrandedName,
 	TypeArrayToTypedTreeArray,
 	UntypedApi,
+	EmptyObject,
 } from "./schemaAware";
 
 export { ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";
