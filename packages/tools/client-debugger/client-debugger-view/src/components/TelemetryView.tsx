@@ -334,12 +334,12 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			renderHeaderCell: () => {
 				return (
 					<div>
-						<h2 style={{ marginBottom: 0 }}>Category</h2>
+						<h2 style={{ margin: "0 0 5px 0" }}>Category</h2>
 						<Dropdown
 							placeholder="Filter Category"
 							size="small"
 							onOptionSelect={handleCategoryChange}
-							style={{ minWidth: "120px" }}
+							style={{ minWidth: "120px", marginBottom: "10px" }}
 						>
 							{getCategories().map((option) => (
 								<Option style={{ minWidth: "120px" }} key={option.key}>
@@ -369,13 +369,14 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			renderHeaderCell: () => {
 				return (
 					<div>
-						<h2 style={{ marginBottom: 0 }}>Event Name</h2>
+						<h2 style={{ margin: "0 0 5px 0" }}>Event Name</h2>
 						<Combobox
 							freeform
 							size="small"
 							placeholder="Select an event"
 							onChange={onEventNameChange}
 							onOptionSelect={handleEventNameSelect}
+							style={{marginBottom: "10px"}}
 						>
 							{customSearch ? (
 								<Option
@@ -440,10 +441,6 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 						eventName: {
 							minWidth: 375,
 							idealWidth: 375,
-						},
-						information: {
-							minWidth: 250,
-							idealWidth: 250,
 						},
 					}}
 				>
