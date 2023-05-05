@@ -327,6 +327,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			brand(message.referenceSequenceNumber),
 			this.repairData,
 		);
+
+		if (local) {
+			this.repairData.delete(commit.revision);
+		}
+
 		const sequencedChange = this.editManager.getLastSequencedChange();
 		this.changeEvents.emit("newSequencedChange", sequencedChange);
 		this.changeEvents.emit("newLocalState", delta);
