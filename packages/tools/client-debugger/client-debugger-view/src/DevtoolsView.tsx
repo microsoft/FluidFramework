@@ -381,7 +381,7 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 
 	return (
-		<Stack.Item grow={1} styles={menuStyles}>
+		<Stack.Item styles={menuStyles}>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
 		</Stack.Item>
 	);

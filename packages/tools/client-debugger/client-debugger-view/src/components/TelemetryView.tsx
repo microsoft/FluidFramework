@@ -7,7 +7,6 @@ import {
 	tokens,
 	Combobox,
 	ComboboxProps,
-	ToggleButton,
 	DataGridBody,
 	DataGridRow,
 	DataGrid,
@@ -20,9 +19,8 @@ import {
 	TableColumnDefinition,
 	createTableColumn,
 } from "@fluentui/react-components";
-import { Info24Regular, Info24Filled } from "@fluentui/react-icons";
-import React, { useState } from "react";
-
+import React, { useState, useRef } from "react";
+import SplitPane from "react-split-pane";
 import {
 	GetTelemetryHistory,
 	handleIncomingMessage,
@@ -209,6 +207,12 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	 */
 	const [matchingOptions, setMatchingOptions] = React.useState<string[]>([]);
 
+	const [selectedEvent, setSelectedEvent] = React.useState<Item>();
+	const eventNameOptionsRef = useRef<string[]>([]);
+	React.useEffect(() => {
+		eventNameOptionsRef.current = eventNameOptions;
+	}, [eventNameOptions]);
+
 	React.useEffect(() => {
 		/**
 		 * Filters all telemetry events based on category and event name
@@ -243,7 +247,8 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			),
 		]);
 		// Initially matching options are all options
-		setMatchingOptions(eventNameOptions.sort());
+		setMatchingOptions(eventNameOptionsRef.current);
+
 		const filtered = getFilteredEvents();
 		setFilteredTelemetryEvents(filtered);
 	}, [telemetryEvents, selectedCategory, customSearch]);
@@ -402,73 +407,83 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 				);
 			},
 		}),
-		createTableColumn<Item>({
-			columnId: "information",
-			renderHeaderCell: () => {
-				return <h2>Information</h2>;
-			},
-			renderCell: (message) => {
-				// eslint-disable-next-line react-hooks/rules-of-hooks
-				const [expanded, setExpanded] = useState(false);
-				const toggleExpanded = (): void => {
-					setExpanded(!expanded);
-				};
-				return (
-					<div>
-						<ToggleButton
-							checked={expanded}
-							icon={expanded ? <Info24Filled /> : <Info24Regular />}
-							size="small"
-							onClick={toggleExpanded}
-						>
-							{expanded ? "Hide" : "Show"} Info
-						</ToggleButton>
-						{expanded && <pre>{message.information}</pre>}
-					</div>
-				);
-			},
-		}),
 	];
 
 	return (
 		<>
 			<h3 style={{ marginLeft: "6px" }}>Telemetry events (newest first):</h3>
-			<DataGrid
-				items={items}
-				columns={columns}
-				resizableColumns
-				columnSizingOptions={{
-					category: {
-						minWidth: 120,
-						idealWidth: 120,
-					},
-					eventName: {
-						minWidth: 375,
-						idealWidth: 375,
-					},
-					information: {
-						minWidth: 250,
-						idealWidth: 250,
-					},
+			<SplitPane
+				split="vertical"
+				minSize={580}
+				style={{
+					position: "relative",
+					borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
+				}}
+				pane2Style={{ margin: "10px" }}
+				resizerStyle={{
+					borderRight: `2px solid ${tokens.colorNeutralForeground2}`,
+					borderLeft: `2px solid ${tokens.colorNeutralForeground2}`,
+					zIndex: 1,
+					cursor: "col-resize",
 				}}
 			>
-				<DataGridHeader>
-					<DataGridRow style={{ whiteSpace: "normal" }}>
-						{({ renderHeaderCell }): JSX.Element => (
-							<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
-						)}
-					</DataGridRow>
-				</DataGridHeader>
-				<DataGridBody<Item>>
-					{({ item, rowId }): JSX.Element => (
-						<DataGridRow<Item> key={rowId}>
-							{({ renderCell }): JSX.Element => (
-								<DataGridCell>{renderCell(item)}</DataGridCell>
+				<DataGrid
+					items={items}
+					columns={columns}
+					resizableColumns
+					selectionMode="single"
+					columnSizingOptions={{
+						category: {
+							minWidth: 120,
+							idealWidth: 120,
+						},
+						eventName: {
+							minWidth: 375,
+							idealWidth: 375,
+						},
+						information: {
+							minWidth: 250,
+							idealWidth: 250,
+						},
+					}}
+				>
+					<DataGridHeader>
+						<DataGridRow style={{ whiteSpace: "normal" }}>
+							{({ renderHeaderCell }): JSX.Element => (
+								<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
 							)}
 						</DataGridRow>
+					</DataGridHeader>
+					<DataGridBody<Item>>
+						{({ item, rowId }): JSX.Element => (
+							<DataGridRow<Item>
+								key={rowId}
+								style={{ cursor: "pointer" }}
+								onClick={(): void => {
+									setSelectedEvent(item);
+								}}
+							>
+								{({ renderCell }): JSX.Element => (
+									<DataGridCell>{renderCell(item)}</DataGridCell>
+								)}
+							</DataGridRow>
+						)}
+					</DataGridBody>
+				</DataGrid>
+				<div
+					style={{
+						position: "relative",
+						height: "100%",
+					}}
+				>
+					<h1 style={{ margin: 0 }}>Event Information</h1>
+					{selectedEvent === undefined ? (
+						<h3>Select an event from the table to get started</h3>
+					) : (
+						<pre> {selectedEvent?.information} </pre>
 					)}
-				</DataGridBody>
-			</DataGrid>
+				</div>
+			</SplitPane>
 		</>
 	);
 }
