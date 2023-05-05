@@ -51,11 +51,14 @@ Checks if a changeset was added when compared against a branch. This is used in 
 
 ```
 USAGE
-  $ flub check changeset -b <value> [-v]
+  $ flub check changeset -b <value> [-v] [--json]
 
 FLAGS
   -b, --branch=<value>  (required) The branch to compare against.
   -v, --verbose         Verbose logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
 
 EXAMPLES
   Check if a changeset was added when compared to the 'main' branch.

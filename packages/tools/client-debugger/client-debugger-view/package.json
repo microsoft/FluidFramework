@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/client-debugger-view",
-	"version": "2.0.0-internal.4.2.0",
+	"version": "2.0.0-internal.4.3.0",
 	"private": true,
 	"description": "Contains an extensible debug visualizer / editor for the Fluid client",
 	"homepage": "https://fluidframework.com",
@@ -63,7 +63,7 @@
 		"@fluid-example/collaborative-textarea": "workspace:~",
 		"@fluid-experimental/react-inputs": "workspace:~",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.16.1",
+		"@fluidframework/build-tools": "^0.17.0",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
