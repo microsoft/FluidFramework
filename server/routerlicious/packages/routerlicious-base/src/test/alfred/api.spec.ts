@@ -199,31 +199,34 @@ describe("Routerlicious", () => {
 					const restSocketConnectionsThrottlerGroup1 = new TestThrottler(limitTenant);
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(limitTenant);
 
-					const tenantGroup1Throttlers = new Map<string, TestThrottler>();
-					tenantGroup1Throttlers.set(
+					const tenantsGroup1PerTenantThrottlers = new Map<string, TestThrottler>();
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
 
 					throttlerMap.set(Constants.perTenantThrottler, restTenantThrottlers);
 					throttlerMap.set(Constants.perClusterThrottler, clusterThrottlers);
-					throttlerMap.set(Constants.tenantGroup1Throttler, tenantGroup1Throttlers);
+					throttlerMap.set(
+						Constants.tenantsGroup1PerTenantThrottler,
+						tenantsGroup1PerTenantThrottlers,
+					);
 
 					const tenantThrottlersMap = new Map<string, string>();
 
@@ -462,31 +465,34 @@ describe("Routerlicious", () => {
 					);
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
 
-					const tenantGroup1Throttlers = new Map<string, TestThrottler>();
-					tenantGroup1Throttlers.set(
+					const tenantsGroup1PerTenantThrottlers = new Map<string, TestThrottler>();
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
 
 					throttlerMap.set(Constants.perTenantThrottler, restTenantThrottlers);
 					throttlerMap.set(Constants.perClusterThrottler, clusterThrottlers);
-					throttlerMap.set(Constants.tenantGroup1Throttler, tenantGroup1Throttlers);
+					throttlerMap.set(
+						Constants.tenantsGroup1PerTenantThrottler,
+						tenantsGroup1PerTenantThrottlers,
+					);
 
 					const tenantThrottlersMap = new Map<string, string>();
 
@@ -642,31 +648,34 @@ describe("Routerlicious", () => {
 					);
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
 
-					const tenantGroup1Throttlers = new Map<string, TestThrottler>();
-					tenantGroup1Throttlers.set(
+					const tenantsGroup1PerTenantThrottlers = new Map<string, TestThrottler>();
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
 
 					throttlerMap.set(Constants.perTenantThrottler, restTenantThrottlers);
 					throttlerMap.set(Constants.perClusterThrottler, clusterThrottlers);
-					throttlerMap.set(Constants.tenantGroup1Throttler, tenantGroup1Throttlers);
+					throttlerMap.set(
+						Constants.tenantsGroup1PerTenantThrottler,
+						tenantsGroup1PerTenantThrottlers,
+					);
 
 					const tenantThrottlersMap = new Map<string, string>();
 
@@ -818,31 +827,34 @@ describe("Routerlicious", () => {
 					const restSocketConnectionsThrottlerGroup1 = new TestThrottler(limit);
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(limit);
 
-					const tenantGroup1Throttlers = new Map<string, TestThrottler>();
-					tenantGroup1Throttlers.set(
+					const tenantsGroup1PerTenantThrottlers = new Map<string, TestThrottler>();
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
 
 					throttlerMap.set(Constants.perTenantThrottler, restTenantThrottlers);
 					throttlerMap.set(Constants.perClusterThrottler, clusterThrottlers);
-					throttlerMap.set(Constants.tenantGroup1Throttler, tenantGroup1Throttlers);
+					throttlerMap.set(
+						Constants.tenantsGroup1PerTenantThrottler,
+						tenantsGroup1PerTenantThrottlers,
+					);
 
 					const tenantThrottlersMap = new Map<string, string>();
 
@@ -963,31 +975,34 @@ describe("Routerlicious", () => {
 					);
 					const restSubmitOpsThrottlerGroup1 = new TestThrottler(maxThrottlerLimit);
 
-					const tenantGroup1Throttlers = new Map<string, TestThrottler>();
-					tenantGroup1Throttlers.set(
+					const tenantsGroup1PerTenantThrottlers = new Map<string, TestThrottler>();
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restCreateDocThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						restSocketConnectionsThrottlerGroup1,
 					);
-					tenantGroup1Throttlers.set(
+					tenantsGroup1PerTenantThrottlers.set(
 						Constants.submitOpsThrottleIdPrefix,
 						restSubmitOpsThrottlerGroup1,
 					);
 
 					throttlerMap.set(Constants.perTenantThrottler, restTenantThrottlers);
 					throttlerMap.set(Constants.perClusterThrottler, clusterThrottlers);
-					throttlerMap.set(Constants.tenantGroup1Throttler, tenantGroup1Throttlers);
+					throttlerMap.set(
+						Constants.tenantsGroup1PerTenantThrottler,
+						tenantsGroup1PerTenantThrottlers,
+					);
 
 					const tenantThrottlersMap = new Map<string, string>();
 

@@ -69,7 +69,7 @@ data:
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
-                "tenantGroup1" : {{ toJson .Values.alfred.throttling.tenantGroup1 }},
+                "tenantsGroup1PerTenant" : {{ toJson .Values.alfred.throttling.tenantsGroup1PerTenant }},
                 "perTenant" : {
                     "generalRestCall": {{ toJson .Values.alfred.throttling.perTenant.generalRestCall }},
                     "createDoc": {{ toJson .Values.alfred.throttling.perTenant.createDoc }},
@@ -87,9 +87,6 @@ data:
                     "submitSignal": {{ toJson .Values.alfred.throttling.perCluster.submitSignal }}
                 }
             },
-            "throttlingGroup" : {
-                "tenantGroup1": {{ toJson .Values.alfred.throttlingGroup.tenantGroup1 }}
-            }
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
             "bucket": "snapshots",
             "restJsonSize": "50mb",
@@ -146,7 +143,8 @@ data:
             "signalUsageCountingEnabled": {{ .Values.usage.signalUsageCountingEnabled }}
         },
         "shared": {
-            "transientTenants": {{ toJson .Values.shared.transientTenants }}
+            "transientTenants": {{ toJson .Values.shared.transientTenants }},
+            "tenantsGroup1PerTenant": {{ toJson .Values.shared.tenantsGroup1PerTenant }}
         },
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}",

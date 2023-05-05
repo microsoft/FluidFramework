@@ -261,8 +261,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		};
 
 		const tenantThrottlersMap = new Map<string, string>();
-		const tenantGroup1 = config.get("alfred:throttlingGroup:tenantGroup1") as string[];
-		tenantGroup1.forEach((t) => tenantThrottlersMap.set(t, "tenantGroup1"));
+		const tenantsGroup1PerTenant = config.get("shared:tenantsGroup1PerTenant") as string[];
+		tenantsGroup1PerTenant.forEach((t) => tenantThrottlersMap.set(t, "tenantsGroup1PerTenant"));
 
 		const throttlersMap = new Map<string, Map<string, core.IThrottler>>();
 		// Per-tenant Rest API Throttlers
@@ -356,64 +356,70 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		// Tenant Group 1 Rest API Throttlers
 		const restApiCreateDocThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:tenantGroup1:createDoc"),
+			config.get("alfred:throttling:tenantsGroup1PerTenant:createDoc"),
 		);
 		const restCreateDocThrottlerGroup1 = configureThrottler(
 			restApiCreateDocThrottleConfigGroup1,
 		);
 		const restApiGetDeltasThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:tenantGroup1:getDeltas"),
+			config.get("alfred:throttling:tenantsGroup1PerTenant:getDeltas"),
 		);
 		const restGetDeltasThrottlerGroup1 = configureThrottler(
 			restApiGetDeltasThrottleConfigGroup1,
 		);
 		const restApiGetSessionThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:tenantGroup1:getSession"),
+			config.get("alfred:throttling:tenantsGroup1PerTenant:getSession"),
 		);
 		const restGetSessionThrottlerGroup1 = configureThrottler(
 			restApiGetSessionThrottleConfigGroup1,
 		);
 		const socketConnectionThrottleConfigPerClusterGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:tenantGroup1:socketConnections"),
+			config.get("alfred:throttling:tenantsGroup1PerTenant:socketConnections"),
 		);
 		const socketConnectClusterThrottlerGroup1 = configureThrottler(
 			socketConnectionThrottleConfigPerClusterGroup1,
 		);
 		const submitOpThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:tenantGroup1:submitOps"),
+			config.get("alfred:throttling:tenantsGroup1PerTenant:submitOps"),
 		);
 		const submitOpThrottlerGroup1 = configureThrottler(submitOpThrottleConfigGroup1);
 		const submitSignalThrottleConfigGroup1 = utils.getThrottleConfig(
-			config.get("alfred:throttling:tenantGroup1:submitSignals"),
+			config.get("alfred:throttling:tenantsGroup1PerTenant:submitSignals"),
 		);
 		const submitSignalThrottlerGroup1 = configureThrottler(submitSignalThrottleConfigGroup1);
 
-		const tenantGroup1Throttlers = new Map<string, core.IThrottler>();
-		tenantGroup1Throttlers.set(
+		const tenantsGroup1PerTenantThrottlers = new Map<string, core.IThrottler>();
+		tenantsGroup1PerTenantThrottlers.set(
 			Constants.createDocThrottleIdPrefix,
 			restCreateDocThrottlerGroup1,
 		);
-		tenantGroup1Throttlers.set(
+		tenantsGroup1PerTenantThrottlers.set(
 			Constants.getDeltasThrottleIdPrefix,
 			restGetDeltasThrottlerGroup1,
 		);
-		tenantGroup1Throttlers.set(
+		tenantsGroup1PerTenantThrottlers.set(
 			Constants.getSessionThrottleIdPrefix,
 			restGetSessionThrottlerGroup1,
 		);
-		tenantGroup1Throttlers.set(
+		tenantsGroup1PerTenantThrottlers.set(
 			Constants.socketConnectionsThrottleIdPrefix,
 			socketConnectClusterThrottlerGroup1,
 		);
-		tenantGroup1Throttlers.set(Constants.submitOpsThrottleIdPrefix, submitOpThrottlerGroup1);
-		tenantGroup1Throttlers.set(
+		tenantsGroup1PerTenantThrottlers.set(
+			Constants.submitOpsThrottleIdPrefix,
+			submitOpThrottlerGroup1,
+		);
+		tenantsGroup1PerTenantThrottlers.set(
 			Constants.submitSignalThrottleIdPrefix,
 			submitSignalThrottlerGroup1,
 		);
 
 		throttlersMap.set(Constants.perTenantThrottler, restTenantThrottlers);
 		throttlersMap.set(Constants.perClusterThrottler, clusterThrottlers);
-		throttlersMap.set(Constants.tenantGroup1Throttler, tenantGroup1Throttlers);
+		throttlersMap.set(
+			Constants.tenantsGroup1PerTenantThrottler,
+			tenantsGroup1PerTenantThrottlers,
+		);
 
 		const documentRepository =
 			customizations?.documentRepository ??

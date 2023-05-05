@@ -59,7 +59,7 @@
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
 		"throttling": {
-			"tenantGroup1": {
+			"tenantsGroup1PerTenant": {
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
 				"getSession": "disabled",
@@ -82,9 +82,6 @@
 				"submitOps": "disabled",
 				"submitSignal": "disabled"
 			}
-		},
-		"throttlingGroup": {
-			"tenantGroup1": []
 		},
 		"topic": "rawdeltas",
 		"bucket": "snapshots",
@@ -156,7 +153,8 @@
 		"signalUsageCountingEnabled": false
 	},
 	"shared": {
-		"transientTenants": []
+		"transientTenants": [],
+		"tenantsGroup1PerTenant": []
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
