@@ -16,10 +16,9 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run build:tsc",
+		"build:compile": "npm run tsc",
 		"build:full": "concurrently npm:build npm:webpack",
 		"build:full:compile": "concurrently npm:build:compile npm:webpack",
-		"build:tsc": "npm run tsc",
 		"clean": "rimraf coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
@@ -57,7 +56,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.16.0-155814",
+		"@fluidframework/build-tools": "^0.16.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@testing-library/dom": "^8.2.0",

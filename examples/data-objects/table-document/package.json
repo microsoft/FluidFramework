@@ -68,8 +68,8 @@
 		"debug": "^4.1.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/test-version-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.16.0-155814",
+		"@fluid-internal/test-version-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluid-tools/build-cli": "^0.16.1",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
