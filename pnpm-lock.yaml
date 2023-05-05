@@ -7798,6 +7798,7 @@ importers:
 
   packages/framework/client-logger/app-insights-logger:
     specifiers:
+      '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
@@ -7806,6 +7807,7 @@ importers:
       '@types/sinon': ^7.0.13
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
+      cross-env: ^7.0.3
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-jest: ~27.1.5
@@ -7821,12 +7823,14 @@ importers:
       '@fluidframework/common-definitions': 0.20.1
       '@microsoft/applicationinsights-web': 2.8.12_tslib@1.14.1
     devDependencies:
+      '@fluidframework/build-common': 1.1.0
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.4
       '@types/mocha': 9.1.1
       '@types/sinon': 7.5.2
       concurrently: 7.6.0
       copyfiles: 2.4.1
+      cross-env: 7.0.3
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-jest: 27.1.7_kufnqfq7tb5rpdawkdb6g5smma
