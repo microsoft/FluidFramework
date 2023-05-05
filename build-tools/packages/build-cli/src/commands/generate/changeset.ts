@@ -172,9 +172,9 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			}
 		}
 
-		// this.log(changedReleaseGroups.join(", "));
-		// this.log(changedPackages.map((p) => p.name).join(", "));
-		// this.log(changedFiles.join(", "));
+		this.log(changedReleaseGroups.join(", "));
+		this.log(changedPackages.map((p) => p.name).join(", "));
+		this.log(changedFiles.join(", "));
 
 		const response = await prompts({
 			choices: [...choices, { title: " ", heading: true, disabled: true }],
