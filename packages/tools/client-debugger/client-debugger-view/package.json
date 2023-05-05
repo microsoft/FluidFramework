@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/client-debugger-view",
-	"version": "2.0.0-internal.4.2.0",
+	"version": "2.0.0-internal.4.3.0",
 	"private": true,
 	"description": "Contains an extensible debug visualizer / editor for the Fluid client",
 	"homepage": "https://fluidframework.com",
