@@ -177,7 +177,6 @@ import {
 	RemoteMessageProcessor,
 	OpGroupingManager,
 } from "./opLifecycle";
-import { createSessionId, IdCompressor } from "./id-compressor";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
 export enum ContainerMessageType {
@@ -755,6 +754,17 @@ export class ContainerRuntime
 			}
 		}
 
+		const idCompressorEnabled =
+			metadata?.idCompressorEnabled ?? runtimeOptions.enableRuntimeIdCompressor ?? false;
+		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+		if (idCompressorEnabled) {
+			const { IdCompressor, createSessionId } = await import("./id-compressor");
+			idCompressor =
+				serializedIdCompressor !== undefined
+					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
+					: new IdCompressor(createSessionId(), logger);
+		}
+
 		const runtime = new containerRuntimeCtor(
 			context,
 			registry,
@@ -779,7 +789,7 @@ export class ContainerRuntime
 			loadExisting,
 			blobManagerSnapshot,
 			context.storage,
-			serializedIdCompressor,
+			idCompressor,
 			requestHandler,
 			undefined, // summaryConfiguration
 			initializeEntryPoint,
@@ -1048,7 +1058,7 @@ export class ContainerRuntime
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		serializedIdCompressor: SerializedIdCompressorWithNoSession | undefined,
+		idCompressor: (IIdCompressor & IIdCompressorCore) | undefined,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1092,8 +1102,7 @@ export class ContainerRuntime
 
 			this.idCompressorEnabled =
 				this.mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled") ??
-				this.runtimeOptions.enableRuntimeIdCompressor ??
-				false;
+				idCompressor !== undefined;
 		}
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
@@ -1160,10 +1169,7 @@ export class ContainerRuntime
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
 		if (this.idCompressorEnabled) {
-			this.idCompressor =
-				serializedIdCompressor !== undefined
-					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: new IdCompressor(createSessionId(), this.logger);
+			this.idCompressor = idCompressor;
 		}
 
 		this.maxConsecutiveReconnects =
@@ -1802,6 +1808,7 @@ export class ContainerRuntime
 	 * @param content - An IdAllocationOp with "stashedState", which is a representation of un-ack'd local state.
 	 */
 	private async applyStashedIdAllocationOp(op: IdCreationRangeWithStashedState) {
+		const { IdCompressor } = await import("./id-compressor");
 		this.idCompressor = IdCompressor.deserialize(op.stashedState);
 	}
 
@@ -3370,29 +3377,7 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		if (this.summaryStateUpdateMethod === "restart") {
-			const error = new GenericError("Restarting summarizer instead of refreshing");
-
-			this.mc.logger.sendTelemetryEvent(
-				{
-					...event,
-					eventName: "ClosingSummarizerOnSummaryStale",
-					codePath: event.eventName,
-					message: "Stopping fetch from storage",
-					versionId: versionId != null ? versionId : undefined,
-					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
-				},
-				error,
-			);
-
-			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
-			await delay(this.closeSummarizerDelayMs);
-			this._summarizer?.stop("latestSummaryStateStale");
-			this.closeFn();
-			throw error;
-		}
-
-		return PerformanceEvent.timedExecAsync(
+		const snapshotResults = await PerformanceEvent.timedExecAsync(
 			logger,
 			event,
 			async (perfEvent: {
@@ -3438,6 +3423,33 @@ export class ContainerRuntime
 				};
 			},
 		);
+
+		// We choose to close the summarizer after the snapshot cache is updated to avoid
+		// situations which the main client (which is likely to be re-elected as the leader again)
+		// loads the summarizer from cache.
+		if (this.summaryStateUpdateMethod === "restart") {
+			const error = new GenericError("Restarting summarizer instead of refreshing");
+
+			this.mc.logger.sendTelemetryEvent(
+				{
+					...event,
+					eventName: "ClosingSummarizerOnSummaryStale",
+					codePath: event.eventName,
+					message: "Stopping fetch from storage",
+					versionId: versionId != null ? versionId : undefined,
+					closeSummarizerDelayMs: this.closeSummarizerDelayMs,
+				},
+				error,
+			);
+
+			// Delay 10 seconds before restarting summarizer to prevent the summarizer from restarting too frequently.
+			await delay(this.closeSummarizerDelayMs);
+			this._summarizer?.stop("latestSummaryStateStale");
+			this.closeFn();
+			throw error;
+		}
+
+		return snapshotResults;
 	}
 
 	public notifyAttaching() {} // do nothing (deprecated method)

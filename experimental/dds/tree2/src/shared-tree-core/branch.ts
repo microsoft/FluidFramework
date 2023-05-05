@@ -241,7 +241,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public redo(): void {
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
-		assert(!this.isTransacting(), "Redo is not yet supported during transactions");
+		assert(!this.isTransacting(), 0x67e /* Redo is not yet supported during transactions */);
 
 		const redoChange = this.undoRedoManager.redo();
 		if (redoChange !== undefined) {
@@ -290,7 +290,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const rebaseResult = this.rebaseBranch(this.head, branch);
 		if (rebaseResult !== undefined) {
 			// The net change to this branch is provided by the `rebaseBranch` API
-			const [newHead, change, { deletedSourceCommits, newSourceCommits }] = rebaseResult;
+			const [newHead, change, { deletedSourceCommits, targetCommits, rebasedSourceCommits }] =
+				rebaseResult;
 
 			this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
 
@@ -299,7 +300,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				type: "rebase",
 				change,
 				removedCommits: deletedSourceCommits,
-				newCommits: newSourceCommits,
+				newCommits: targetCommits.concat(rebasedSourceCommits),
 			});
 		}
 	}
@@ -319,7 +320,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const rebaseResult = this.rebaseBranch(branch.head, this.head);
 		if (rebaseResult !== undefined) {
 			// Compute the net change to this branch
-			const [newHead, _, commits] = rebaseResult;
+			const [newHead, _, { targetCommits, rebasedSourceCommits }] = rebaseResult;
 
 			this.undoRedoManager.updateAfterMerge(newHead, branch.undoRedoManager);
 
@@ -329,7 +330,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.emitAndRebaseAnchors({
 				type: "append",
 				change: this.changeFamily.rebaser.compose(changes),
-				newCommits: commits.newSourceCommits,
+				newCommits: targetCommits.concat(rebasedSourceCommits),
 			});
 		}
 	}

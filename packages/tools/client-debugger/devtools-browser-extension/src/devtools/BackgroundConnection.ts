@@ -113,7 +113,8 @@ export class BackgroundConnection
 	/**
 	 * Post a message to the Background Script.
 	 *
-	 * @remarks These messages are mostly for the debugger, but some are for the Background Script itself (for initialization).
+	 * @remarks These messages are mostly for the devtools library, but some are for the Background Script
+	 * itself (for initialization).
 	 */
 	public postMessage(message: IDevtoolsMessage): void {
 		const sourcedMessage: ISourcedDevtoolsMessage = {
