@@ -24,7 +24,8 @@ export function useTree<TRoot extends GlobalFieldSchema>(
 	tree: ISharedTreeView,
 	config: SchematizeConfiguration<TRoot>,
 ): SchemaAware.TypedField<SchemaAware.ApiMode.Editable, TRoot["schema"]> {
-	const typedTree = tree.schematize(config);
+	// TODO: reconsider where this belongs. Consider error handling from schema changes.
+	const typedTree = React.useMemo<ISharedTreeView>(() => tree.schematize(config), [tree]);
 
 	// This proof-of-concept implementation allocates a state variable this is modified
 	// when the tree changes to trigger re-render.
