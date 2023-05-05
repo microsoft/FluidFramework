@@ -346,13 +346,9 @@ export class FluidPackageCheck {
 				buildCompile.push("build:realsvctest");
 			}
 
-			// build:commonjs build:es5 and build:esnext should be in build:compile if they exist
+			// build:commonjs and build:esnext should be in build:compile if they exist
 			if (pkg.getScript("build:commonjs")) {
 				buildCompile.push("build:commonjs");
-			}
-
-			if (pkg.getScript("build:es5")) {
-				buildCompile.push("build:es5");
 			}
 
 			if (pkg.getScript("build:esnext")) {
