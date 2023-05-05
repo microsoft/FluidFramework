@@ -140,63 +140,6 @@ importers:
       start-server-and-test: 1.14.0
       typescript: 4.5.5
 
-  azure/packages/azure-client-devtools:
-    specifiers:
-      '@fluid-experimental/devtools': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
-      '@fluid-tools/client-debugger': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/azure-client': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.16.1
-      '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0'
-      '@microsoft/api-extractor': ^7.34.4
-      '@types/chai': ^4.0.0
-      '@types/mocha': ^9.1.1
-      chai: ^4.2.0
-      concurrently: ^7.6.0
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.3
-      eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
-      eslint-plugin-chai-expect: ~3.0.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      nyc: ^15.1.0
-      prettier: ~2.6.2
-      rimraf: ^4.4.0
-      typescript: ~4.5.5
-    dependencies:
-      '@fluid-experimental/devtools': link:../../../packages/tools/client-debugger/devtools
-      '@fluid-tools/client-debugger': link:../../../packages/tools/client-debugger/client-debugger
-      '@fluidframework/azure-client': link:../azure-client
-    devDependencies:
-      '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.16.1
-      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
-      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.34.4
-      '@types/chai': 4.3.4
-      '@types/mocha': 9.1.1
-      chai: 4.3.7
-      concurrently: 7.6.0
-      copyfiles: 2.4.1
-      cross-env: 7.0.3
-      eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
-      eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      nyc: 15.1.0
-      prettier: 2.6.2
-      rimraf: 4.4.0
-      typescript: 4.5.5
-
   azure/packages/azure-local-service:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
@@ -271,7 +214,6 @@ importers:
 
   azure/packages/external-controller:
     specifiers:
-      '@fluid-experimental/azure-client-devtools': workspace:~
       '@fluidframework/azure-client': workspace:~
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-definitions': ^0.20.1
@@ -282,7 +224,6 @@ importers:
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/server-local-server': ^0.1038.4000
-      '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-client-utils': workspace:~
       '@fluidframework/test-tools': ^0.2.3074
       '@types/expect-puppeteer': 2.2.1
@@ -317,11 +258,9 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
-      '@fluid-experimental/azure-client-devtools': link:../azure-client-devtools
       '@fluidframework/azure-client': link:../azure-client
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/telemetry-utils': link:../../../packages/utils/telemetry-utils
       assert: 2.0.0
       axios: 0.26.1
       events: 3.3.0
@@ -10715,7 +10654,7 @@ importers:
     specifiers:
       '@fluid-tools/client-debugger': workspace:~
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.16.1
+      '@fluidframework/build-tools': ^0.17.0
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-utils': workspace:~
@@ -10749,7 +10688,7 @@ importers:
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.16.1
+      '@fluidframework/build-tools': 0.17.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
