@@ -363,6 +363,10 @@ export class FluidPackageCheck {
 				buildCompile.push("build:copy");
 			}
 
+			if (pkg.getScript("build:copy-resources")) {
+				buildCompile.push("build:copy-resources");
+			}
+
 			if (pkg.getScript("lint")) {
 				build.push("lint");
 			}
@@ -816,7 +820,10 @@ export class FluidPackageCheck {
 		if (this.hasMainBuild(pkg)) {
 			// We should only have references if we have a main build.
 			const references = [{ path: referencePath }];
-			if (!isEqual(configJson.references, references)) {
+			if (
+				configJson.references !== undefined &&
+				!isEqual(configJson.references, references)
+			) {
 				this.logWarn(pkg, `Unexpected references in ${configFile}`, fix);
 				if (fix) {
 					configJson.references = references;
