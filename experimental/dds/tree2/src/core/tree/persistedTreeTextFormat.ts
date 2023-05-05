@@ -25,6 +25,7 @@ import { TreeSchemaIdentifierSchema } from "../schema-stored";
  * (and types in this module should not be changed except in compliance with persisted type compatibility guidelines).
  *
  * Longer-term, usages of these types should likely be replaced with a more optimized format.
+ * If that switch happens before SharedTree commits to back-compat, this persisted format file can be deleted.
  */
 
 /**
