@@ -159,7 +159,7 @@ export async function symlinkPackage(
 	for (const { name: dep, version } of pkg.combinedDependencies) {
 		const depBuildPackage = buildPackages.get(dep);
 		// Check and fix link if it is a known package and version satisfy the version.
-		// TODO: check of extranous symlinks
+		// TODO: check of extraneous symlinks
 		if (depBuildPackage) {
 			const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
 			const satisfied =

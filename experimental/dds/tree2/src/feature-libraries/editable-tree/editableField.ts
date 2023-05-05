@@ -202,7 +202,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		assert(
 			this.fieldSchema.kind.identifier === sequence.identifier &&
 				destinationFieldKindIdentifier === sequence.identifier,
-			"Both source and destination fields must be sequence fields.",
+			0x683 /* Both source and destination fields must be sequence fields. */,
 		);
 
 		const destinationFieldProxy =
@@ -211,7 +211,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				: this;
 		assert(
 			isFieldProxyTarget(destinationFieldProxy),
-			"destination field proxy must be a field proxy target",
+			0x684 /* destination field proxy must be a field proxy target */,
 		);
 		assertValidIndex(destinationIndex, destinationFieldProxy, true);
 
