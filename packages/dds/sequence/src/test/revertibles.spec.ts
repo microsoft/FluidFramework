@@ -14,6 +14,7 @@ import {
 	appendLocalChangeToRevertibles,
 	appendLocalDeleteToRevertibles,
 	appendLocalPropertyChangedToRevertibles,
+	idMap,
 	IntervalRevertible,
 	revertIntervalRevertibles,
 } from "../revertibles";
@@ -423,8 +424,13 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
-		const int = collection.findOverlappingIntervals(0, 5);
-		assert.equal(int[0].properties.foo, "one");
+		let int = collection.getIntervalById(id);
+		while (int === undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const newId = idMap.get(id)!;
+			int = collection.getIntervalById(newId);
+		}
+		assert.equal(int?.properties.foo, "one");
 	});
 	it("remote interval property change interacting with reverting an interval add", () => {
 		sharedString.insertText(0, "hello world");

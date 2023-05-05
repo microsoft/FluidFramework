@@ -16,6 +16,8 @@ const IntervalEventType = {
 	PROPERTYCHANGED: 3,
 } as const;
 
+export const idMap = new Map<string, string>();
+
 type IntervalEventType = typeof IntervalEventType[keyof typeof IntervalEventType];
 
 export type IntervalRevertible =
@@ -148,7 +150,15 @@ function revertLocalDelete(
 	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
-	string.getIntervalCollection(label).add(start, end, type, props);
+	const int = string.getIntervalCollection(label).add(start, end, type, props);
+
+	idMap.forEach((oldId, newId) => {
+		if (int.getIntervalId() === oldId) {
+			idMap.set(intervalId, newId);
+		}
+	});
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	idMap.set(intervalId, int.getIntervalId()!);
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);
