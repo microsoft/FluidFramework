@@ -1310,5 +1310,7 @@ export const shortCodeMap = {
 	"0x67f": "Redo is not yet supported during transactions",
 	"0x680": "new range must not already exist",
 	"0x681": "count must be positive",
-	"0x682": "coupleInfo must have nodes to couple"
+	"0x682": "coupleInfo must have nodes to couple",
+	"0x683": "Both source and destination fields must be sequence fields.",
+	"0x684": "destination field proxy must be a field proxy target"
 };
