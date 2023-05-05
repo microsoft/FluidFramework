@@ -5,9 +5,9 @@
 
 import { fail, requireAssignableTo } from "../../util";
 import {
-	FieldSchema,
+	FieldStoredSchema,
 	LocalFieldKey,
-	TreeSchema,
+	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	SchemaData,
 	GlobalFieldKey,
@@ -17,7 +17,9 @@ import {
 	Compatibility,
 	FieldAdapter,
 	SchemaDataAndPolicy,
-	SchemaPolicy,
+	Named,
+	NamedTreeSchema,
+	TreeTypeSet,
 } from "../../core";
 import { FieldKind, FullSchemaPolicy } from "./fieldKind";
 import { allowsRepoSuperset, isNeverTree } from "./comparison";
@@ -29,7 +31,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 	public constructor(
 		policy: FullSchemaPolicy,
 		adapters: Adapters,
-		public readonly schema: ViewSchemaCollection,
+		public readonly schema: SchemaCollection,
 	) {
 		super(policy, adapters);
 	}
@@ -113,8 +115,8 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 			}
 		}
 		const adapted = {
-			globalFieldSchema: new Map<GlobalFieldKey, FieldSchema>(),
-			treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>(),
+			globalFieldSchema: new Map<GlobalFieldKey, FieldStoredSchema>(),
+			treeSchema: new Map<TreeSchemaIdentifier, TreeStoredSchema>(),
 		};
 		for (const [key, schema] of stored.globalFieldSchema) {
 			const adaptedField = this.adaptField(schema, this.adapters.fieldAdapters?.get(key));
@@ -132,11 +134,14 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 	/**
 	 * Adapt original such that it allows member types which can be adapted to its specified types.
 	 */
-	private adaptField(original: FieldSchema, adapter: FieldAdapter | undefined): FieldSchema {
-		if (original.types) {
+	private adaptField(
+		original: FieldStoredSchema,
+		adapter: FieldAdapter | undefined,
+	): FieldStoredSchema {
+		if (original.types !== undefined) {
 			const types: Set<TreeSchemaIdentifier> = new Set(original.types);
 			for (const treeAdapter of this.adapters?.tree ?? []) {
-				if (original.types.has(treeAdapter.input)) {
+				if (types.has(treeAdapter.input)) {
 					types.delete(treeAdapter.input);
 					types.add(treeAdapter.output);
 				}
@@ -149,21 +154,33 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 		return adapter?.convert?.(original) ?? original;
 	}
 
-	private adaptTree(original: TreeSchema): TreeSchema {
-		const localFields: Map<LocalFieldKey, FieldSchema> = new Map();
+	private adaptTree(original: TreeStoredSchema): TreeStoredSchema {
+		const localFields: Map<LocalFieldKey, FieldStoredSchema> = new Map();
 		for (const [key, schema] of original.localFields) {
 			// TODO: support missing field adapters for local fields.
 			localFields.set(key, this.adaptField(schema, undefined));
 		}
-		return { ...original, localFields };
+		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
+		// so copying the data over manually is better.
+		return {
+			globalFields: original.globalFields,
+			extraLocalFields: original.extraLocalFields,
+			extraGlobalFields: original.extraGlobalFields,
+			value: original.value,
+			localFields,
+		};
 	}
 }
 
-// TODO: Separate this from TreeSchema, adding more data.
+// TODO: Separate this from TreeStoredSchema, adding more data.
 /**
  * @alpha
  */
-export interface TreeViewSchema extends TreeSchema {}
+export interface ITreeSchema extends NamedTreeSchema, Sourced {
+	readonly localFields: ReadonlyMap<LocalFieldKey, IFieldSchema>;
+	readonly globalFields: ReadonlySet<GlobalFieldKey>;
+	readonly extraLocalFields: IFieldSchema;
+}
 
 /**
  * All policy for a specific field kind,
@@ -172,22 +189,39 @@ export interface TreeViewSchema extends TreeSchema {}
  * This can include policy for how to use this schema for "view" purposes, and well as how to expose editing APIs.
  * @alpha
  */
-export interface FieldViewSchema<Kind extends FieldKind = FieldKind> extends FieldSchema {
-	readonly kind: Kind;
+export interface IFieldSchema {
+	readonly kind: FieldKind;
+	/**
+	 * Types allowed in this field.
+	 *
+	 * TODO: Put behind a function so it can be lazy and support cycles.
+	 */
+	readonly types: TreeTypeSet;
 }
 
 /**
- * Schema data that can be stored in a document.
+ * Schema data that can be be used to view a document.
  * @alpha
  */
-export interface ViewSchemaCollection {
-	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
-	readonly policy: SchemaPolicy;
+export interface SchemaCollection {
+	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, IFieldSchema>;
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, ITreeSchema>;
+	readonly policy: FullSchemaPolicy;
+	readonly adapters: Adapters;
 }
 
 {
-	// ViewSchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
+	// SchemaCollection can't extend the SchemaDataAndPolicy interface due to odd TypeScript issues,
 	// but want to be compatible with it, so check that here:
-	type _test = requireAssignableTo<ViewSchemaCollection, SchemaDataAndPolicy>;
+	type _test0 = requireAssignableTo<IFieldSchema, FieldStoredSchema>;
+	type _test1 = requireAssignableTo<SchemaCollection, SchemaData>;
+	type _test2 = requireAssignableTo<SchemaCollection, SchemaDataAndPolicy<FullSchemaPolicy>>;
+}
+
+/**
+ * Record where a schema came from for error reporting purposes.
+ * @alpha
+ */
+export interface Sourced {
+	readonly builder: Named<string>;
 }

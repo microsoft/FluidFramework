@@ -22,7 +22,7 @@ import {
 	makeAnonChange,
 	UndoRedoManager,
 } from "../../core";
-import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
+import { cursorToJsonObject, jsonSchema, singleJsonCursor } from "../../domains";
 import {
 	buildForest,
 	DefaultChangeFamily,
@@ -79,7 +79,7 @@ export class TestTree {
 		options: TestTreeOptions = {},
 	): TestTree {
 		const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
-		return TestTree.fromCursor(cursors, { schemaData: jsonSchemaData, ...options });
+		return TestTree.fromCursor(cursors, { schemaData: jsonSchema, ...options });
 	}
 
 	public readonly sessionId: string;

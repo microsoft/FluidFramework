@@ -17,8 +17,8 @@ import {
 	namedTreeSchema,
 	on,
 	valueSymbol,
-	TypedSchema,
-	SchemaAware,
+	SchemaBuilder,
+	Any,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
@@ -2356,11 +2356,9 @@ const testValueSchema = namedTreeSchema({
 
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory();
-	const treeSchema = TypedSchema.tree("root", { value: ValueSchema.Number });
-	const schema = SchemaAware.typedSchemaData(
-		[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.optional)]],
-		treeSchema,
-	);
+	const builder = new SchemaBuilder("testTreeView");
+	const treeSchema = builder.object("root", { value: ValueSchema.Number });
+	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 	return tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
