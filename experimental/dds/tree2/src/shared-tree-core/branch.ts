@@ -290,7 +290,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const rebaseResult = this.rebaseBranch(this.head, branch);
 		if (rebaseResult !== undefined) {
 			// The net change to this branch is provided by the `rebaseBranch` API
-			const [newHead, change, { deletedSourceCommits, newSourceCommits }] = rebaseResult;
+			const [
+				newHead,
+				change,
+				{ deletedSourceCommits, rebasedTargetCommits, rebasedSourceCommits },
+			] = rebaseResult;
 
 			this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
 
@@ -299,7 +303,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				type: "rebase",
 				change,
 				removedCommits: deletedSourceCommits,
-				newCommits: newSourceCommits,
+				newCommits: rebasedTargetCommits.concat(rebasedSourceCommits),
 			});
 		}
 	}
@@ -319,7 +323,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const rebaseResult = this.rebaseBranch(branch.head, this.head);
 		if (rebaseResult !== undefined) {
 			// Compute the net change to this branch
-			const [newHead, _, commits] = rebaseResult;
+			const [newHead, _, { rebasedTargetCommits, rebasedSourceCommits }] = rebaseResult;
 
 			this.undoRedoManager.updateAfterMerge(newHead, branch.undoRedoManager);
 
@@ -329,7 +333,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.emitAndRebaseAnchors({
 				type: "append",
 				change: this.changeFamily.rebaser.compose(changes),
-				newCommits: commits.newSourceCommits,
+				newCommits: rebasedTargetCommits.concat(rebasedSourceCommits),
 			});
 		}
 	}
