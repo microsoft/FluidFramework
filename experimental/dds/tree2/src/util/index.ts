@@ -8,6 +8,8 @@ export {
 	Brand,
 	BrandedType,
 	brandOpaque,
+	brandedNumberType,
+	brandedStringType,
 	extractFromOpaque,
 	ExtractFromOpaque,
 	NameFromBranded,
@@ -56,10 +58,12 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlySchema,
 	makeArray,
 	mapIterable,
 	Mutable,
 	RecursiveReadonly,
 	zipIterables,
+	assertValidIndex,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";

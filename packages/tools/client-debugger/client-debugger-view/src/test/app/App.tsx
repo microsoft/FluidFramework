@@ -20,11 +20,7 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import {
-	DevtoolsLogger,
-	IFluidDevtools,
-	initializeFluidDevtools,
-} from "@fluid-tools/client-debugger";
+import { DevtoolsLogger, IFluidDevtools, initializeDevtools } from "@fluid-tools/client-debugger";
 
 import {
 	ContainerInfo,
@@ -236,13 +232,15 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Fluid Debugger logger
-	const logger = React.useMemo(() => DevtoolsLogger.create(), []);
+	const logger = React.useMemo(() => new DevtoolsLogger(), []);
 
-	// Initialize devtools
-	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);
+	// Initialize Devtools
+	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
 
 	React.useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.
+		// Note that this isn't strictly necessary, as the Devtools will dispose of themselves on
+		// window unload, but it is here for example completeness.
 		return (): void => devtools.dispose();
 	}, [devtools]);
 

@@ -25,7 +25,7 @@ import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGrap
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 
-const { info, verbose, warning } = defaultLogger;
+const { info, verbose } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
 const traceTaskDep = registerDebug("fluid-build:task:dep");
 interface TaskExecResult extends ExecAsyncResult {
@@ -48,7 +48,7 @@ export abstract class LeafTask extends Task {
 	}
 
 	public get isDisabled() {
-		const isLintTask = this.executable === "eslint" || this.executable === "tsfmt";
+		const isLintTask = this.executable === "eslint" || this.executable === "prettier";
 		return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
 	}
 

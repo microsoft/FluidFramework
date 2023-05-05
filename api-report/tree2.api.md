@@ -343,6 +343,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     readonly fieldSchema: FieldSchema;
     getNode(index: number): EditableTree;
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: EditableField): void;
     readonly parent?: EditableTree;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
@@ -806,6 +807,7 @@ export interface ISharedTreeView extends AnchorLocator {
     fork(): ISharedTreeFork;
     readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
     merge(view: ISharedTreeFork): void;
+    redo(): void;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;

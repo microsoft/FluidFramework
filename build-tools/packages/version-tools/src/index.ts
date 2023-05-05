@@ -26,6 +26,7 @@ export {
 	changePreReleaseIdentifier,
 	getVersionRange,
 	fromInternalScheme,
+	isInternalVersionRange,
 	isInternalVersionScheme,
 	toInternalScheme,
 } from "./internalVersionScheme";

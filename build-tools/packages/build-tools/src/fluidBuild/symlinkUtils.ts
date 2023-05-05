@@ -162,7 +162,9 @@ export async function symlinkPackage(
 		// TODO: check of extranous symlinks
 		if (depBuildPackage) {
 			const sameMonoRepo = MonoRepo.isSame(pkg.monoRepo, depBuildPackage.monoRepo);
-			const satisfied = semver.satisfies(depBuildPackage.version, version);
+			const satisfied =
+				version.startsWith("workspace:") ||
+				semver.satisfies(depBuildPackage.version, version);
 			verbose(
 				`${pkg.nameColored}: Dependent ${depBuildPackage.nameColored} version ${
 					depBuildPackage.version
