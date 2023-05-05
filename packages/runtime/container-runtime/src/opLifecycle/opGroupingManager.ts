@@ -25,7 +25,8 @@ export class OpGroupingManager {
 			return batch;
 		}
 
-		for (const message of batch.content) {
+		for (let i = 0; i < batch.content.length; i++) {
+			const message = batch.content[i];
 			if (message.metadata) {
 				const keys = Object.keys(message.metadata);
 				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
@@ -34,6 +35,11 @@ export class OpGroupingManager {
 					0x5de /* unexpected op metadata */,
 				);
 			}
+			assert(
+				// First message, or cannot simplify, or content is undefined
+				i === 0 || !canSimplifyEmptyMessages || message.contents === undefined,
+				"trailing messages must have no content",
+			);
 		}
 
 		const deserializedContent = {
@@ -104,6 +110,7 @@ export class OpGroupingManager {
 			}
 		}
 
+		// Re-add the batch metadata (in case it isn't present)
 		if (result.length > 1) {
 			result[0].metadata = {
 				...result[0].metadata,
