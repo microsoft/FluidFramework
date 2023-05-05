@@ -110,7 +110,6 @@ async function start(): Promise<void> {
 		connection: connectionConfig,
 	};
 	const client = new AzureClient(clientProps);
-
 	let container: IFluidContainer;
 	let services: AzureContainerServices;
 	let id: string;
