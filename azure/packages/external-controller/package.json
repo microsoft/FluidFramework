@@ -44,9 +44,11 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluid-experimental/azure-client-devtools": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/routerlicious-driver": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"assert": "^2.0.0",
 		"axios": "^0.26.0",
 		"events": "^3.1.0",
