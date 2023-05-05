@@ -62,12 +62,13 @@ Generates a new changeset file.
 
 ```
 USAGE
-  $ flub generate changeset [-v] [-b <value>] [--empty]
+  $ flub generate changeset [-v] [-b <value>] [--empty] [--all]
 
 FLAGS
   -b, --branch=<value>  [default: main] The branch to compare against. This is used to populate the list of changed
                         packages.
   -v, --verbose         Verbose logging.
+  --all                 Include ALL packages, including examples.
   --empty               Create an empty changeset file.
 ```
 
