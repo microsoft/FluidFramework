@@ -31,15 +31,15 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
 	}
 
 	public incrementConnectionCount(): void {
+        if (!this.cache || !this.cache.incr) {
+			return;
+		}
 		const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(
 			LumberEventName.ConnectionCountPerNode,
 		);
 		const totalConnectionCountMetric = Lumberjack.newLumberMetric(
 			LumberEventName.TotalConnectionCount,
 		);
-		if (!this.cache || !this.cache.incr) {
-			return;
-		}
 		this.cache.incr(this.perNodeKeyName).then(
 			(val) => {
 				connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
@@ -67,15 +67,15 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
 	}
 
 	public decrementConnectionCount(): void {
+        if (!this.cache || !this.cache.decr) {
+			return;
+		}
 		const connectionCountPerNodeMetric = Lumberjack.newLumberMetric(
 			LumberEventName.ConnectionCountPerNode,
 		);
 		const totalConnectionCountMetric = Lumberjack.newLumberMetric(
 			LumberEventName.TotalConnectionCount,
 		);
-		if (!this.cache || !this.cache.decr) {
-			return;
-		}
 		this.cache.decr(this.perNodeKeyName).then(
 			(val) => {
 				connectionCountPerNodeMetric.setProperty("TotalConnectionCount", val);
