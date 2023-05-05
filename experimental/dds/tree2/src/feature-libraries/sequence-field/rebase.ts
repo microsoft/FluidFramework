@@ -284,9 +284,7 @@ class RebaseQueue<T> {
 					// TODO: find a way to make the lineage and detachIndex info more comparable so we can correctly
 					// handle scenarios where either all or some fraction of newMark should come first.
 					if (offset >= baseMark.detachIndex + baseMark.count) {
-						return {
-							baseMark: this.baseMarks.dequeue(),
-						};
+						return this.dequeueBase();
 					}
 				}
 			}
@@ -302,9 +300,7 @@ class RebaseQueue<T> {
 					// TODO: find a way to make the lineage and detachIndex info more comparable so we can correctly
 					// handle scenarios where either all or some fraction of baseMark should come first.
 					if (offset >= newMark.detachIndex + newMark.count) {
-						return {
-							newMark: this.newMarks.dequeue(),
-						};
+						return this.dequeueNew();
 					}
 				}
 			}
@@ -312,10 +308,10 @@ class RebaseQueue<T> {
 			if (reattachOffset !== undefined) {
 				const offset = reattachOffset - this.reattachOffset;
 				if (offset === 0) {
-					return { newMark: this.newMarks.dequeue() };
+					return this.dequeueNew();
 				} else if (offset >= getOutputLength(baseMark)) {
 					this.reattachOffset += getOutputLength(baseMark);
-					return { baseMark: this.baseMarks.dequeue() };
+					return this.dequeueBase();
 				} else {
 					const splitBaseMark = this.baseMarks.dequeueOutput(offset);
 					this.reattachOffset += offset;
@@ -325,12 +321,12 @@ class RebaseQueue<T> {
 				isAttachAfterBaseAttach(newMark, baseMark) ||
 				isConflictedReattach(newMark)
 			) {
-				return { baseMark: this.baseMarks.dequeue() };
+				return this.dequeueBase();
 			} else {
-				return { newMark: this.newMarks.dequeue() };
+				return this.dequeueNew();
 			}
 		} else if (isAttachInGap(newMark)) {
-			return { newMark: this.newMarks.dequeue() };
+			return this.dequeueNew();
 		} else if (
 			// The `isNewAttach(baseMark)` bit is needed because of the way sandwich rebasing makes
 			// the rebased local new attaches relevant to later local changes.
@@ -362,14 +358,14 @@ class RebaseQueue<T> {
 				}
 			} else if (newMark.detachIndex < baseMark.detachIndex) {
 				if (newMark.detachIndex + newMarkLength <= baseMark.detachIndex) {
-					return { newMark: this.newMarks.dequeue() };
+					return this.dequeueNew();
 				}
 				return {
 					newMark: this.newMarks.dequeueInput(baseMark.detachIndex - newMark.detachIndex),
 				};
 			} else {
 				if (baseMark.detachIndex + baseMarkLength <= newMark.detachIndex) {
-					return { baseMark: this.baseMarks.dequeue() };
+					return this.dequeueBase();
 				}
 				return {
 					baseMark: this.baseMarks.dequeueOutput(
@@ -382,7 +378,7 @@ class RebaseQueue<T> {
 		// TODO: Handle case where `baseMarks` has adjacent or nested inverse reattaches from multiple revisions
 		this.reattachOffset = 0;
 		if (isAttachInGap(baseMark)) {
-			return { baseMark: this.baseMarks.dequeue() };
+			return this.dequeueBase();
 		} else {
 			this.reattachOffset = 0;
 			const newMarkLength = getInputLength(newMark);
@@ -404,6 +400,14 @@ class RebaseQueue<T> {
 				};
 			}
 		}
+	}
+
+	private dequeueBase(): RebaseMarks<T> {
+		return { baseMark: this.baseMarks.dequeue() };
+	}
+
+	private dequeueNew(): RebaseMarks<T> {
+		return { newMark: this.newMarks.dequeue() };
 	}
 }
 

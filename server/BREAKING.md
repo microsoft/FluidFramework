@@ -1,6 +1,10 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
-## 0.1042 Breaking Changes
+## 0.1041 Breaking Changes
+- [DocumentStorage class take one additional IStorageNameAllocator parameter](#DocumentStorage-class-take-one-additional-IStorageNameAllocator-parameter)
+
+#### `DocumentStorage` class take one additional `IStorageNameAllocator` parameter
+One more `IStorageNameAllocator` parameter need for DocumentStorage class to assign a storage name while initial upload
 
 -  [The foreman lambda was removed](#the-foreman-lambda-was-removed)
 

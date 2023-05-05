@@ -34,6 +34,7 @@ data:
             "collectionNames": {
                 "deltas": "deltas",
                 "documents": "documents",
+                "checkpoints": "checkpoints",
                 "partitions": "partitions",
                 "tenants": "tenants",
                 "nodes": "nodes",
@@ -61,6 +62,9 @@ data:
             "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
             "storageUrl": "{{ .Values.storage.storageUrl }}"
         },
+        "checkpoints": {
+            "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }}
+            },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
@@ -116,9 +120,15 @@ data:
                 "send": "{{ .Values.kafka.topics.deltas }}"
             },
             "kafkaClientId": "{{ template "deli.fullname" . }}",
+            "checkpointHeuristics": {
+                "enable": {{ .Values.deli.checkpointHeuristics.enable }},
+                "idleTime": {{ .Values.deli.checkpointHeuristics.idleTime }},
+                "maxTime": {{ .Values.deli.checkpointHeuristics.maxTime }},
+                "maxMessages": {{ .Values.deli.checkpointHeuristics.maxMessages }}
+            },
             "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
-            "checkpointTimeIntervalMsec": 1000
+            "checkpointTimeIntervalMsec": 1000,
         },
         "scribe": {
             "kafkaClientId": "{{ template "scribe.fullname" . }}",

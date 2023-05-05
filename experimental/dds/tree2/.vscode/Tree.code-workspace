@@ -9,7 +9,5 @@
 			"path": ".."
 		}
 	],
-	"settings": {
-		"terminal.integrated.cwd": "../../.."
-	}
+	"settings": {}
 }

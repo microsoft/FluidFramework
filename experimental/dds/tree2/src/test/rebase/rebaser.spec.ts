@@ -4,13 +4,13 @@
  */
 
 import { strict as assert } from "assert";
+import { assertIsStableId } from "@fluidframework/container-runtime";
 import { ChangeRebaser, RevisionTag } from "../../core";
 
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
-import { GraphCommit, Rebaser } from "../../core/rebase";
+import { GraphCommit, rebaseBranch } from "../../core/rebase";
 
-import { assertIsStableId } from "../../id-compressor";
 import { fail } from "../../util";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
@@ -126,14 +126,18 @@ describe("rebaser", () => {
 			}`;
 
 			it(title, () => {
-				const rebaser = new Rebaser(new DummyChangeRebaser());
 				const tester = new BranchTester(main, branch);
 				const base =
 					baseInMain !== undefined
 						? tester[baseInMain] ?? fail("Expected baseInMain to be in main")
 						: tester.main;
 
-				const [result] = rebaser.rebaseBranch(tester.branch, base, tester.main);
+				const [result] = rebaseBranch(
+					new DummyChangeRebaser(),
+					tester.branch,
+					base,
+					tester.main,
+				);
 				// The `expected` parameter starts at the base of the branch. Prepend the rest of the main
 				// branch to it so that it can be fully compared against the `BranchTester`'s `main`.
 				const expectedBaseIndex = main.indexOf(expected[0]);

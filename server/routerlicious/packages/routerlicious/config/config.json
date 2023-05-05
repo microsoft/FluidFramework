@@ -23,6 +23,7 @@
 			"deltas": "deltas",
 			"rawdeltas": "rawdeltas",
 			"documents": "documents",
+			"checkpoints": "checkpoints",
 			"partitions": "partitions",
 			"tenants": "tenants",
 			"nodes": "nodes",
@@ -49,6 +50,9 @@
 	"storage": {
 		"enableWholeSummaryUpload": false,
 		"storageUrl": "http://gitrest:3000"
+	},
+	"checkpoints": {
+		"localCheckpointEnabled": true
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",

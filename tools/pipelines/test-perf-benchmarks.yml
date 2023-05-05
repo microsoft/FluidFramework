@@ -42,9 +42,13 @@ parameters:
 - name: endpoints
   type: object
   default:
-  - "local"
-  - "odsp"
-  - "frs"
+  - endpointName: 'local'
+  - endpointName: 'odsp'
+    lockVariableGroupName: 'e2e-odsp-lock'
+    timeoutInMinutes: 360
+  - endpointName: 'frs'
+    lockVariableGroupName: 'e2e-frs-lock'
+    timeoutInMinutes: 360
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -67,6 +71,7 @@ variables:
     readonly: true
   - group: prague-key-vault
 
+lockBehavior: sequential
 stages:
   # Performance unit tests - runtime
   - stage: perf_unit_tests_runtime
@@ -384,12 +389,16 @@ stages:
             artifactName: 'perf-test-outputs_memory-usage'
           condition: succeededOrFailed()
 
-  - ${{ each endpoint in parameters.endpoints }}:
+  - ${{ each endpointObject in parameters.endpoints }}:
 
-    - stage: perf_e2e_tests_${{ endpoint }}
-      displayName: Perf e2e tests - ${{ endpoint }}
+    - stage: perf_e2e_tests_${{ endpointObject.endpointName }}
+      displayName: Perf e2e tests - ${{ endpointObject.endpointName }}
       dependsOn: []
       variables:
+        # Use contention-lock variable groups when appropriate. Note that null gets coalesced into an empty string.
+        - ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
+          - group: ${{ endpointObject.lockVariableGroupName }}
+
         # The following two paths are defined by the npm scripts invocations in @fluid-internal/test-end-to-end-tests
         - name: executionTimeTestOutputFolder
           value: ${{ variables.testWorkspace }}/node_modules/@fluid-internal/test-end-to-end-tests/.timeTestsOutput
@@ -408,6 +417,7 @@ stages:
         parameters:
           poolBuild: ${{ parameters.poolBuild }}
           testWorkspace: ${{ variables.testWorkspace }}
+          timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 60) }}
           customSteps:
 
           # Download test package
@@ -471,7 +481,7 @@ stages:
           # Doing this with separate ADO steps is not easy.
           # This step reports failure if either of the test runs reports failure.
           - task: Bash@3
-            displayName: Run tests ${{ endpoint }}
+            displayName: Run tests ${{ endpointObject.endpointName }}
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
@@ -479,29 +489,29 @@ stages:
 
                 # Run execution time tests
                 echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
-                if [[ '${{ endpoint }}' == 'local' ]]; then
+                if [[ '${{ endpointObject.endpointName }}' == 'local' ]]; then
                   npm run test:benchmark:report;
                 else
-                  npm run test:benchmark:report:${{ endpoint }};
+                  npm run test:benchmark:report:${{ endpointObject.endpointName }};
                 fi
                 executionTimeTestsExitCode=$?;
 
                 echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
                 # Run memory tests
-                if [[ '${{ endpoint }}' == 'local' ]]; then
+                if [[ '${{ endpointObject.endpointName }}' == 'local' ]]; then
                   npm run test:memory-profiling:report;
                 else
-                  npm run test:memory-profiling:report:${{ endpoint }};
+                  npm run test:memory-profiling:report:${{ endpointObject.endpointName }};
                 fi
 
                 memoryTestsExitCode=$?;
 
                 if [[ $executionTimeTestsExitCode -ne 0 ]]; then
-                  echo "##vso[task.logissue type=error]Exit code for runtime tests execution = $executionTimeTestsExitCode ${{ endpoint }}"
+                  echo "##vso[task.logissue type=error]Exit code for runtime tests execution = $executionTimeTestsExitCode ${{ endpointObject.endpointName }}"
                 fi
 
                 if [[ $memoryTestsExitCode -ne 0 ]]; then
-                  echo "##vso[task.logissue type=error]Exit code for memory tests execution = $memoryTestsExitCode ${{ endpoint }}"
+                  echo "##vso[task.logissue type=error]Exit code for memory tests execution = $memoryTestsExitCode ${{ endpointObject.endpointName }}"
                 fi
 
                 if [[ $executionTimeTestsExitCode -ne 0 ]] || [[ $memoryTestsExitCode -ne 0 ]]; then
@@ -510,43 +520,43 @@ stages:
             env:
               FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
               FLUID_BUILD_ID: $(Build.BuildId)
-              FLUID_ENDPOINTNAME: ${{ endpoint }}
+              FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
               login__microsoft__clientId: $(login-microsoft-clientId)
               login__microsoft__secret: $(login-microsoft-secret)
-              ${{ if eq( endpoint, 'odsp' ) }}: 
+              ${{ if eq( endpointObject.endpointName, 'odsp' ) }}:
                 login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-              ${{ if eq( endpoint, 'frs' ) }}: 
+              ${{ if eq( endpointObject.endpointName, 'frs' ) }}:
                 fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
 
           - task: Bash@3
-            displayName: Write measurements to Aria/Kusto - execution time ${{ endpoint }}
+            displayName: Write measurements to Aria/Kusto - execution time ${{ endpointObject.endpointName }}
             condition: succeededOrFailed()
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
               script: |
-                echo "Writing the following performance tests results to Aria/Kusto - ${{ endpoint }}"
+                echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
                 ls -la ${{ variables.executionTimeTestOutputFolder }};
                 node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
             env:
-              FLUID_ENDPOINTNAME: ${{ endpoint }}
+              FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
           - task: Bash@3
-            displayName: Write measurements to Aria/Kusto - memory usage ${{ endpoint }}
+            displayName: Write measurements to Aria/Kusto - memory usage ${{ endpointObject.endpointName }}
             condition: succeededOrFailed()
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
               script: |
-                echo "Writing the following performance tests results to Aria/Kusto - ${{ endpoint }}"
+                echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
                 ls -la ${{ variables.memoryUsageTestOutputFolder }};
                 node --require @ff-internal/aria-logger bin/run --handlerModule $(toolAbsolutePath)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
             env:
-              FLUID_ENDPOINTNAME: ${{ endpoint }}
+              FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
           - task: Bash@3
             displayName: Send Execution Time Perf Benchmark Measurements to Azure App Insights
-            condition: eq('${{ endpoint }}', 'local')
+            condition: eq('${{ endpointObject.endpointName }}', 'local')
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
@@ -557,11 +567,11 @@ stages:
             env:
               BUILD_ID: $(Build.BuildId)
               BRANCH_NAME: $(Build.SourceBranchName)
-              FLUID_ENDPOINTNAME: ${{ endpoint }}
+              FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
           - task: Bash@3
             displayName: Send Memory Usage Perf Benchmark Measurements to Azure App Insights
-            condition: eq('${{ endpoint }}', 'local')
+            condition: eq('${{ endpointObject.endpointName }}', 'local')
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
@@ -572,7 +582,7 @@ stages:
             env:
               BUILD_ID: $(Build.BuildId)
               BRANCH_NAME: $(Build.SourceBranchName)
-              FLUID_ENDPOINTNAME: ${{ endpoint }}
+              FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - E2E perf tests output - execution time {{ $stage }}
@@ -580,17 +590,17 @@ stages:
 
             inputs:
               targetPath: '${{ variables.executionTimeTestOutputFolder }}'
-              artifactName: 'perf-test-outputs-e2e_execution-time-${{ endpoint }}'
+              artifactName: 'perf-test-outputs-e2e_execution-time-${{ endpointObject.endpointName }}'
 
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - E2E perf tests output - memory usage {{ $stage }}
             condition: succeededOrFailed()
             inputs:
               targetPath: '${{ variables.memoryUsageTestOutputFolder }}'
-              artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpoint }}'
+              artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpointObject.endpointName }}'
 
           - task: Bash@3
-            displayName: Remove Output Folders from local server run ${{ endpoint }}
+            displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)

@@ -11,6 +11,7 @@ import {
 	TreeSchema,
 	ITreeCursor,
 	UpPath,
+	PathVisitor,
 } from "../../core";
 import {
 	PrimitiveValue,
@@ -99,11 +100,13 @@ export interface EditableTreeEvents {
 
 	/**
 	 * Raised when something in the tree is changing, including this node and its descendants.
+	 * The event can optionally return a {@link PathVisitor} to traverse the subtree
 	 * This event is called on every parent (transitively) when a change is occurring.
 	 * Includes changes to this node itself.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
+	 * @returns a visitor to traverse the subtree or `void`.
 	 */
-	subtreeChanging(upPath: UpPath): void;
+	subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
 /**
@@ -324,6 +327,17 @@ export interface EditableField
 	 * Inserts new nodes into this field.
 	 */
 	insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+
+	/**
+	 * Moves nodes from this field to destination iff both source and destination are sequence fields.
+	 * If the destinationField is not provided, the current field is used as the destination.
+	 */
+	moveNodes(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		destinationField?: EditableField,
+	): void;
 
 	/**
 	 * Sequentially deletes the nodes from this field.

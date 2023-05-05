@@ -33,6 +33,9 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
+	defaultChangeFamily,
+	DefaultChangeset,
+	DefaultEditBuilder,
 	FieldKinds,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
@@ -63,6 +66,7 @@ import {
 	ITreeCursorSynchronous,
 	FieldKey,
 	IRepairDataStoreProvider,
+	UndoRedoManager,
 } from "../core";
 import { brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
@@ -252,10 +256,7 @@ export class TestTreeProvider {
 		const container =
 			this.trees.length === 0
 				? await this.provider.makeTestContainer(testContainerConfig)
-				: await this.provider.loadTestContainer({
-						// TODO: remove this once SharedTree has full reconnect logic implemented (AB#4023)
-						simulateReadConnectionUsingDelay: false,
-				  });
+				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
 		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
@@ -531,7 +532,7 @@ export function initializeTestTree(
 	tree.storedSchema.update(schema);
 	// Apply an edit to the tree which inserts a node with a value
 	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.insert(0, writeCursor);
 }
 
@@ -577,6 +578,10 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 		// Noop
 	}
 
+	public applyDelta(change: Delta.Root): void {
+		// Noop
+	}
+
 	public createRepairData(): MockRepairDataStore {
 		return new MockRepairDataStore();
 	}
@@ -584,6 +589,10 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 	public clone(): IRepairDataStoreProvider {
 		return new MockRepairDataStoreProvider();
 	}
+}
+
+export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
+	return new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily);
 }
 
 /**

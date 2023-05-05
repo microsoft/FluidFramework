@@ -88,6 +88,7 @@ export {
 	inCursorNode,
 	AnchorEvents,
 	AnchorSetRootEvents,
+	ProtoNodes,
 } from "./tree";
 
 export {
@@ -107,8 +108,11 @@ export {
 
 export {
 	LocalFieldKey,
+	LocalFieldKeySchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	TreeSchemaIdentifier,
+	TreeSchemaIdentifierSchema,
 	NamedTreeSchema,
 	Named,
 	FieldSchema,
@@ -116,6 +120,7 @@ export {
 	TreeSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
@@ -148,6 +153,7 @@ export {
 	GraphCommit,
 	isRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -158,7 +164,8 @@ export {
 	SessionId,
 	mintCommit,
 	mintRevisionTag,
-	Rebaser,
+	rebaseBranch,
+	rebaseChange,
 } from "./rebase";
 
 export {
