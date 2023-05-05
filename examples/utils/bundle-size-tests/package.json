@@ -29,14 +29,14 @@
 		"webpack:profile": "npm run webpack"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree2": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/aqueduct": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/container-loader": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/container-runtime": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/map": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/matrix": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/odsp-driver": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/sequence": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluid-experimental/tree2": "workspace:~",
+		"@fluidframework/aqueduct": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
+		"@fluidframework/map": "workspace:~",
+		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/odsp-driver": "workspace:~",
+		"@fluidframework/sequence": "workspace:~",
 		"source-map-loader": "^2.0.0"
 	},
 	"devDependencies": {

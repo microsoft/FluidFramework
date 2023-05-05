@@ -36,12 +36,12 @@
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
-		"@fluidframework/container-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/container-loader": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/fluid-static": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/map": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/sequence": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0"
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/map": "workspace:~",
+		"@fluidframework/sequence": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.16.1",
