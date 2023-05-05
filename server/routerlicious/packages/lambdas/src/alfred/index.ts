@@ -279,15 +279,16 @@ export function configureWebSocketServices(
 			const tenantGroup: string | undefined = message.tenantId
 				? tenantThrottlersMap?.get(message.tenantId) ?? undefined
 				: undefined;
+			// If the tenant is found in tenant group list, apply specific tenant group's throttling limits. Else, apply perTenant's.
 			const connectThrottlerPerTenant = tenantGroup
 				? throttlersMap?.get(tenantGroup)?.get("socketConnections")
 				: throttlersMap?.get("generalTenant")?.get("socketConnections");
-			const connectThrottlerPerTenantId = tenantGroup
+			const connectThrottlerIdPerTenant = tenantGroup
 				? `${getSocketConnectThrottleId(message.tenantId)}_${tenantGroup}`
 				: getSocketConnectThrottleId(message.tenantId);
 			const throttleErrorPerTenant = checkThrottleAndUsage(
 				connectThrottlerPerTenant,
-				connectThrottlerPerTenantId,
+				connectThrottlerIdPerTenant,
 				message.tenantId,
 				logger,
 			);
@@ -711,15 +712,16 @@ export function configureWebSocketServices(
 					const tenantGroup: string | undefined = connection.tenantId
 						? tenantThrottlersMap?.get(connection.tenantId) ?? undefined
 						: undefined;
+					// If the tenant is found in tenant group list, apply specific tenant group's throttling limits. Else, apply perTenant's.
 					const submitOpsThrottlerPerTenant = tenantGroup
 						? throttlersMap?.get(tenantGroup)?.get("submitOps")
 						: throttlersMap?.get("perTenant")?.get("submitOps");
-					const submitOpsThrottlerPerTenantId = tenantGroup
+					const submitOpsThrottlerIdPerTenant = tenantGroup
 						? `${getSubmitOpThrottleId(clientId, connection.tenantId)}_${tenantGroup}`
 						: getSubmitOpThrottleId(clientId, connection.tenantId);
 					const throttleErrorPerTenant = checkThrottleAndUsage(
 						submitOpsThrottlerPerTenant,
-						submitOpsThrottlerPerTenantId,
+						submitOpsThrottlerIdPerTenant,
 						connection.tenantId,
 						logger,
 						undefined,

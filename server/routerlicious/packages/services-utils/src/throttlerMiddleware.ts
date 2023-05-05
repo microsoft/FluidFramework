@@ -71,6 +71,7 @@ export function tenantThrottle(
 		const tenantGroup: string | undefined = tenantId
 			? tenantThrottlersMap?.get(tenantId)
 			: undefined;
+		// If the tenant is found in tenant group list, apply specific tenant group's throttling options and limits. Else, apply perTenant's.
 		const throttleOptions: Partial<IThrottleMiddlewareOptions> = {
 			throttleIdPrefix: tenantGroup ? `${tenantId}_${tenantGroup}` : tenantId,
 			throttleIdSuffix: throttleApi,
