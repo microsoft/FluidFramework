@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.16.0",
+	"version": "0.17.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -29,7 +29,7 @@
 		"build:docs": "api-extractor run --local",
 		"build:machine-diagram": "jssm-viz -i \"./src/machines/*.fsl\"",
 		"build:manifest": "cross-env NODE_OPTIONS='--experimental-abortcontroller' oclif manifest",
-		"build:readme": "node \"./bin/dev\" generate readme --multi",
+		"build:readme": "fluid-readme generate readme --multi",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf dist lib oclif.manifest.json *.tsbuildinfo *.build.log",
 		"clean:manifest": "rimraf oclif.manifest.json",
@@ -104,7 +104,7 @@
 		"type-fest": "^2.19.0"
 	},
 	"devDependencies": {
-		"@fluid-internal/readme-command": "~0.16.0",
+		"@fluid-internal/readme-command": "workspace:*",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -159,7 +159,6 @@
 			"-V"
 		],
 		"plugins": [
-			"@fluid-internal/readme-command",
 			"@oclif/plugin-autocomplete",
 			"@oclif/plugin-commands",
 			"@oclif/plugin-help",

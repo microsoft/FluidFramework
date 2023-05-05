@@ -430,8 +430,6 @@ export type Detach<TNodeChange = NodeChangeType> =
 export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([DeleteSchema(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
 
-export type MarkList<TNodeChange = NodeChangeType> = Mark<TNodeChange>[];
-
 export interface Modify<TNodeChange = NodeChangeType> {
 	type: "Modify";
 	changes: TNodeChange;
@@ -469,6 +467,8 @@ export type Mark<TNodeChange = NodeChangeType> =
 	| OutputSpanningMark<TNodeChange>;
 export const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([InputSpanningMark(tNodeChange), OutputSpanningMark(tNodeChange)]);
+
+export type MarkList<TNodeChange = NodeChangeType> = Mark<TNodeChange>[];
 
 export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
 export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
