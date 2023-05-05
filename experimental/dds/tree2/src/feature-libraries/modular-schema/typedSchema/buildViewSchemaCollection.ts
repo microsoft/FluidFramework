@@ -46,7 +46,8 @@ export function buildViewSchemaCollection(
 		}
 
 		for (const [key, field] of library.globalFieldSchema) {
-			assert(field.builder.name === library.name, "unexpected builder on field");
+			// This check is an assert since if it fails, the other error messages would be incorrect.
+			assert(field.builder.name === library.name, "field must be part by the library its in");
 			const existing = globalFieldSchema.get(key);
 			if (existing !== undefined) {
 				errors.push(
@@ -57,7 +58,8 @@ export function buildViewSchemaCollection(
 			}
 		}
 		for (const [key, tree] of library.treeSchema) {
-			assert(tree.builder.name === library.name, "unexpected builder on tree");
+			// This check is an assert since if it fails, the other error messages would be incorrect.
+			assert(tree.builder.name === library.name, "tree must be part by the library its in");
 			const existing = treeSchema.get(key);
 			if (existing !== undefined) {
 				errors.push(
@@ -68,10 +70,10 @@ export function buildViewSchemaCollection(
 			}
 		}
 		for (const [_key, _adapter] of library.adapters.fieldAdapters ?? []) {
-			return fail("Adapters not yet supported");
+			fail("Adapters not yet supported");
 		}
 		for (const _adapter of library.adapters.tree ?? []) {
-			return fail("Adapters not yet supported");
+			fail("Adapters not yet supported");
 		}
 	}
 
