@@ -381,8 +381,82 @@ describe("editable-tree: editing", () => {
 		trees[0].context.free();
 	});
 
+	describe(`can move nodes`, () => {
+		it("to the left within the same field", () => {
+			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+				{ type: rootSchemaName },
+			]);
+			assert(isUnwrappedNode(trees[0].root));
+			// create using `createFieldSymbol`
+			trees[0].root[createField](localFieldKey, [
+				singleTextCursor({ type: stringSchema.name, value: "foo" }),
+				singleTextCursor({ type: stringSchema.name, value: "bar" }),
+			]);
+			const field_0 = trees[0].root[localFieldKey];
+			assert(isEditableField(field_0));
+			assert.deepEqual([...field_0], ["foo", "bar"]);
+
+			// move node
+			field_0.moveNodes(1, 1, 0);
+
+			// check that node was moved from field_0
+			assert.deepEqual([...field_0], ["bar", "foo"]);
+		});
+		it("to the right within the same field", () => {
+			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+				{ type: rootSchemaName },
+			]);
+			assert(isUnwrappedNode(trees[0].root));
+			// create using `createFieldSymbol`
+			trees[0].root[createField](localFieldKey, [
+				singleTextCursor({ type: stringSchema.name, value: "foo" }),
+				singleTextCursor({ type: stringSchema.name, value: "bar" }),
+			]);
+			const field_0 = trees[0].root[localFieldKey];
+			assert(isEditableField(field_0));
+			assert.deepEqual([...field_0], ["foo", "bar"]);
+
+			// move node
+			field_0.moveNodes(0, 1, 1);
+
+			// check that node was moved from field_0
+			assert.deepEqual([...field_0], ["bar", "foo"]);
+		});
+		it("to a different field", () => {
+			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+				{ type: rootSchemaName },
+			]);
+			assert(isUnwrappedNode(trees[0].root));
+			// create using `createFieldSymbol`
+			trees[0].root[createField](localFieldKey, [
+				singleTextCursor({ type: stringSchema.name, value: "foo" }),
+				singleTextCursor({ type: stringSchema.name, value: "bar" }),
+			]);
+			trees[0].root[createField](globalFieldSymbol, [
+				singleTextCursor({ type: stringSchema.name, value: "foo" }),
+				singleTextCursor({ type: stringSchema.name, value: "bar" }),
+			]);
+			const field_0 = trees[0].root[localFieldKey];
+			assert(isEditableField(field_0));
+			assert.deepEqual([...field_0], ["foo", "bar"]);
+
+			const field_1 = trees[0].root[globalFieldSymbol];
+			assert(isEditableField(field_1));
+			assert.deepEqual([...field_1], ["foo", "bar"]);
+
+			// move node
+			field_0.moveNodes(0, 1, 1, field_1);
+
+			// check that node was moved out from field_0
+			assert.deepEqual([...field_0], ["bar"]);
+
+			// check that node was moved into field_1
+			assert.deepEqual([...field_1], ["foo", "foo", "bar"]);
+		});
+	});
+
 	for (const [fieldDescription, fieldKey] of testCases) {
-		describe(`can create, edit and delete ${fieldDescription}`, () => {
+		describe(`can create, edit, move and delete ${fieldDescription}`, () => {
 			it("as sequence field", () => {
 				const [provider, trees] = createSharedTrees(
 					getTestSchema(FieldKinds.sequence),
@@ -483,6 +557,12 @@ describe("editable-tree: editing", () => {
 				assert.equal(field_0[1], "changed");
 				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
+
+				const firstNodeBeforeMove = field_0[0];
+				// move using `moveNodes()`
+				field_0.moveNodes(0, 1, 1);
+				const secondNodeAfterMove = field_0[1];
+				assert.equal(firstNodeBeforeMove, secondNodeAfterMove);
 
 				// delete using `deleteNodes()`
 				field_0.deleteNodes(1, 1);
