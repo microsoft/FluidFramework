@@ -157,12 +157,6 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 	type check4x_ = requireAssignableTo<NumberTree, Child2>;
 }
 
-interface TypeBuilder<TSchema extends TreeSchema> {
-	a: NodeDataFor<ApiMode.Flexible, TSchema>;
-	b: NodeDataFor<ApiMode.Editable, TSchema>;
-	c: NodeDataFor<ApiMode.Simple, TSchema>;
-}
-
 type FlexNumber =
 	| number
 	| {
@@ -172,13 +166,14 @@ type FlexNumber =
 
 // Test terminal cases:
 {
-	type F = TypeBuilder<typeof numberSchema>;
-	type XA = F["a"];
-	type XB = F["b"];
-	type XC = F["c"];
-	type _check1 = requireTrue<areSafelyAssignable<XA, FlexNumber>>;
-	type _check2 = requireTrue<areSafelyAssignable<XB, number>>;
-	type _check3 = requireTrue<areSafelyAssignable<XC, number>>;
+	type F = NodeDataFor<ApiMode.Flexible, typeof numberSchema>;
+	type E = NodeDataFor<ApiMode.Editable, typeof numberSchema>;
+	type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof numberSchema>;
+	type S = NodeDataFor<ApiMode.Simple, typeof numberSchema>;
+	type _check1 = requireTrue<areSafelyAssignable<F, FlexNumber>>;
+	type _check2 = requireAssignableTo<E, UntypedTreeCore>;
+	type _check3 = requireTrue<areSafelyAssignable<Eu, number>>;
+	type _check4 = requireTrue<areSafelyAssignable<S, number>>;
 }
 
 interface FlexBall {
@@ -205,13 +200,15 @@ type SimpleBall = {
 
 // Test non recursive cases:
 {
-	type F = TypeBuilder<typeof ballSchema>;
-	type XA = F["a"];
-	type XB = F["b"];
-	type XC = F["c"];
-	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBall>>;
-	// type _check2 = requireTrue<areSafelyAssignable<XB, EditableBall>>;
-	type _check3 = requireTrue<areSafelyAssignable<XC, SimpleBall>>;
+	type F = NodeDataFor<ApiMode.Flexible, typeof ballSchema>;
+	type E = NodeDataFor<ApiMode.Editable, typeof ballSchema>;
+	type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof ballSchema>;
+	type S = NodeDataFor<ApiMode.Simple, typeof ballSchema>;
+	type _check1 = requireTrue<areSafelyAssignable<F, FlexBall>>;
+	type _check2 = requireAssignableTo<E, SimpleBall & UntypedTreeCore>;
+	type _check3 = requireAssignableTo<Eu, SimpleBall & UntypedTreeCore>;
+	type _check4 = requireTrue<areSafelyAssignable<S, SimpleBall>>;
+	type _check5 = requireTrue<areSafelyAssignable<Eu, E>>;
 }
 
 // Test polymorphic cases:
@@ -240,6 +237,11 @@ type SimpleBall = {
 		child: FlexBool | FlexStr;
 	}
 
+	interface SimpleParent {
+		[typeNameSymbol]?: "parent";
+		child: boolean | string;
+	}
+
 	// Check child handling
 	{
 		type ChildSchema = typeof parentField;
@@ -262,13 +264,15 @@ type SimpleBall = {
 	}
 
 	{
-		type F = TypeBuilder<typeof parent>;
-		type XA = F["a"];
-		type XB = F["b"];
-		type XC = F["c"];
-		type _check1 = requireTrue<areSafelyAssignable<XA, FlexParent>>;
-		// type _check2 = requireTrue<areSafelyAssignable<XB, EditableParent>>;
-		// type _check3 = requireTrue<areSafelyAssignable<XC, SimpleParent>>;
+		type F = NodeDataFor<ApiMode.Flexible, typeof parent>;
+		type E = NodeDataFor<ApiMode.Editable, typeof parent>;
+		type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof parent>;
+		type S = NodeDataFor<ApiMode.Simple, typeof parent>;
+		type _check1 = requireTrue<areSafelyAssignable<F, FlexParent>>;
+		type _check2 = requireAssignableTo<E, SimpleParent & UntypedTreeCore>;
+		type _check3 = requireAssignableTo<Eu, SimpleParent & UntypedTreeCore>;
+		type _check4 = requireTrue<areSafelyAssignable<S, SimpleParent>>;
+		type _check5 = requireTrue<areSafelyAssignable<Eu, E>>;
 	}
 }
 
@@ -311,7 +315,6 @@ type SimpleBall = {
 			x: ExpectedSimple2 | undefined;
 		};
 
-		type F = TypeBuilder<typeof rec>;
 		type Flexible = NodeDataFor<ApiMode.Flexible, typeof rec>;
 		type Edit = NodeDataFor<ApiMode.Editable, typeof rec>;
 		type Simple = NodeDataFor<ApiMode.Simple, typeof rec>;
@@ -339,10 +342,10 @@ type SimpleBall = {
 
 // Test recursive cases:
 {
-	type F = TypeBuilder<typeof boxSchema>;
-	type XA = F["a"];
-	type XB = F["b"];
-	type XC = F["c"];
+	type F = NodeDataFor<ApiMode.Flexible, typeof boxSchema>;
+	type E = NodeDataFor<ApiMode.Editable, typeof boxSchema>;
+	type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof boxSchema>;
+	type S = NodeDataFor<ApiMode.Simple, typeof boxSchema>;
 
 	interface FlexBox {
 		[typeNameSymbol]?: "box";
@@ -401,18 +404,18 @@ type SimpleBall = {
 		type Field = TypedField<ApiMode.Flexible, ChildSchema>;
 	}
 
-	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBox>>;
+	type _check1 = requireTrue<areSafelyAssignable<F, FlexBox>>;
 	interface NormalizedBox extends UntypedTreeCore {
 		[typeNameSymbol]: typeof boxSchema.name;
 		children: EditableField<EditableBall | NormalizedBox>;
 	}
-	type _check2 = requireAssignableTo<XB, NormalizedBox>;
+	type _check2 = requireAssignableTo<E, NormalizedBox>;
 
 	{
-		const child: XA = {
+		const child: F = {
 			children: [],
 		};
-		const parent: XA = {
+		const parent: F = {
 			children: [
 				child,
 				{
@@ -427,11 +430,11 @@ type SimpleBall = {
 	}
 
 	{
-		const child: XC = {
+		const child: S = {
 			[typeNameSymbol]: boxSchema.name,
 			children: [],
 		};
-		const parent: XC = {
+		const parent: S = {
 			[typeNameSymbol]: boxSchema.name,
 			children: [
 				child,

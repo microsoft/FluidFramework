@@ -101,16 +101,17 @@ export type Any = typeof Any;
 // @alpha
 const enum ApiMode {
     Editable = 1,
+    EditableUnwrapped = 2,
     Flexible = 0,
-    Simple = 3,
-    Wrapped = 2
+    Simple = 4,
+    Wrapped = 3
 }
 
 // @alpha
 type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild, Mode extends ApiMode> = {
     [Multiplicity.Forbidden]: undefined;
     [Multiplicity.Optional]: undefined | TypedChild;
-    [Multiplicity.Sequence]: Mode extends ApiMode.Editable ? EditableSequenceField<TypedChild> : TypedChild[];
+    [Multiplicity.Sequence]: Mode extends ApiMode.Editable | ApiMode.EditableUnwrapped ? EditableSequenceField<TypedChild> : TypedChild[];
     [Multiplicity.Value]: TypedChild;
 }[TMultiplicity];
 
@@ -215,12 +216,13 @@ export interface ChildLocation {
 // @alpha
 type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends ValueSchema, TName> = {
     [ApiMode.Flexible]: Record<string, never> extends TTypedFields ? TypedValue<TValueSchema> | FlexibleObject<TValueSchema, TName> : FlexibleObject<TValueSchema, TName> & TTypedFields;
-    [ApiMode.Editable]: [Record<string, never>, TValueSchema] extends [
-    TTypedFields,
-    PrimitiveValueSchema
-    ] ? TypedValue<TValueSchema> : {
+    [ApiMode.Editable]: {
         [typeNameSymbol]: TName & TreeSchemaIdentifier;
     } & ValuePropertyFromSchema<TValueSchema> & TTypedFields & UntypedTreeCore;
+    [ApiMode.EditableUnwrapped]: [Record<string, never>, TValueSchema] extends [
+    TTypedFields,
+    PrimitiveValueSchema
+    ] ? TypedValue<TValueSchema> : CollectOptions<ApiMode.Editable, TTypedFields, TValueSchema, TName>;
     [ApiMode.Wrapped]: {
         [typeNameSymbol]: TName;
         [valueSymbol]: TypedValue<TValueSchema>;
@@ -1741,7 +1743,7 @@ TypedNode<Assume<Head, TreeSchema>, Mode>,
 
 // @alpha
 type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
-ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>, Mode>
+ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>, Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode>
 ][InternalTypedSchemaTypes._dummy];
 
 // @alpha
@@ -1756,7 +1758,7 @@ TFields extends {
 ][InternalTypedSchemaTypes._dummy];
 
 // @alpha
-type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = CollectOptions<Mode, TypedFields<Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>;
+type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>;
 
 // @alpha (undocumented)
 export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {
@@ -1792,6 +1794,7 @@ type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail]
 // @alpha
 type UntypedApi<Mode extends ApiMode> = {
     [ApiMode.Editable]: UntypedTree;
+    [ApiMode.EditableUnwrapped]: UntypedTree | PrimitiveValue;
     [ApiMode.Flexible]: ContextuallyTypedNodeData;
     [ApiMode.Simple]: ContextuallyTypedNodeData;
     [ApiMode.Wrapped]: UntypedTree;
@@ -1905,7 +1908,7 @@ export interface ValueFieldKind extends BrandedFieldKind<"Value", Multiplicity.V
 export type ValueFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<infer ValueType, string> ? ValueType : never;
 
 // @alpha (undocumented)
-type ValuePropertyFromSchema<TSchema extends ValueSchema> = undefined extends TypedValue<TSchema> ? {
+type ValuePropertyFromSchema<TSchema extends ValueSchema> = TSchema extends ValueSchema.Nothing ? {} : undefined extends TypedValue<TSchema> ? {
     [valueSymbol]?: TypedValue<TSchema>;
 } : {
     [valueSymbol]: TypedValue<TSchema>;
