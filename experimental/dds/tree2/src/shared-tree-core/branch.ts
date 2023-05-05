@@ -241,7 +241,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public redo(): void {
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
-		assert(!this.isTransacting(), "Redo is not yet supported during transactions");
+		assert(!this.isTransacting(), 0x67e /* Redo is not yet supported during transactions */);
 
 		const redoChange = this.undoRedoManager.redo(this.getHead());
 		if (redoChange !== undefined) {
