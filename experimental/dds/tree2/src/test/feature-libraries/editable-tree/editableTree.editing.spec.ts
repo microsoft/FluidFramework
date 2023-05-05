@@ -385,13 +385,10 @@ describe("editable-tree: editing", () => {
 
 	describe(`can move nodes`, () => {
 		it("to the left within the same field", () => {
-			const [provider, trees] = createSharedTrees(
-				getTestSchema(FieldKinds.sequence),
-				[{ type: rootSchemaName }],
-				2,
-			);
+			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+				{ type: rootSchemaName },
+			]);
 			assert(isUnwrappedNode(trees[0].root));
-			assert(isUnwrappedNode(trees[1].root));
 			// create using `createFieldSymbol`
 			trees[0].root[createField](localFieldKey, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
@@ -408,13 +405,10 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field_0], ["bar", "foo"]);
 		});
 		it("to the right within the same field", () => {
-			const [provider, trees] = createSharedTrees(
-				getTestSchema(FieldKinds.sequence),
-				[{ type: rootSchemaName }],
-				2,
-			);
+			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+				{ type: rootSchemaName },
+			]);
 			assert(isUnwrappedNode(trees[0].root));
-			assert(isUnwrappedNode(trees[1].root));
 			// create using `createFieldSymbol`
 			trees[0].root[createField](localFieldKey, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
@@ -431,13 +425,10 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field_0], ["bar", "foo"]);
 		});
 		it("to a different field", () => {
-			const [provider, trees] = createSharedTrees(
-				getTestSchema(FieldKinds.sequence),
-				[{ type: rootSchemaName }],
-				2,
-			);
+			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
+				{ type: rootSchemaName },
+			]);
 			assert(isUnwrappedNode(trees[0].root));
-			assert(isUnwrappedNode(trees[1].root));
 			// create using `createFieldSymbol`
 			trees[0].root[createField](localFieldKey, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
