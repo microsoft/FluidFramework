@@ -12,19 +12,19 @@ import { Counter } from "./counter";
 export const MainView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
 	const inventory = useTree<Inventory>(tree);
 
-	const counters = Object.keys(inventory).map((key) => {
-		const value = inventory[key] as number;
+	const counters: JSX.Element[] = [];
 
-		return (
+	for (const part of inventory.parts) {
+		counters.push(
 			<Counter
-				key={key}
-				title={key}
-				count={value}
-				onDecrement={() => (inventory[key] as number)--}
-				onIncrement={() => (inventory[key] as number)++}
-			></Counter>
+				key={part.name}
+				title={part.name}
+				count={part.quantity}
+				onDecrement={() => part.quantity--}
+				onIncrement={() => part.quantity++}
+			></Counter>,
 		);
-	});
+	}
 
 	return (
 		<div>

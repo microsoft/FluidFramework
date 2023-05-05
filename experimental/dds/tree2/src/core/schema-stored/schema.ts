@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Brand } from "../../util";
+import { Brand, brandedStringType } from "../../util";
 
 /**
  * Example internal schema representation types.
@@ -31,12 +31,14 @@ export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
  * @alpha
  */
 export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
+export const TreeSchemaIdentifierSchema = brandedStringType<TreeSchemaIdentifier>();
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeSchema.
  * @alpha
  */
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
+export const LocalFieldKeySchema = brandedStringType<LocalFieldKey>();
 
 /**
  * Identifier for a FieldKind.
@@ -46,6 +48,7 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
  * @alpha
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
+export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>();
 
 /**
  * SchemaIdentifier for a "global field",
@@ -54,6 +57,7 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
  * @alpha
  */
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
+export const GlobalFieldKeySchema = brandedStringType<GlobalFieldKey>();
 
 /**
  * Example for how we might want to handle values.

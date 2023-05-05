@@ -15,13 +15,13 @@ import { browser } from "../utilities";
  */
 
 // TODOs:
-// - Check page (via messages) to see if any debuggers are registered.
+// - Check page (via messages) to see if the Devtools have been initialized.
 //   If not, we may want to display an error message with a link to docs explaining how to
-//   use the debugger.
+//   use them.
 
 browser.tabs.query({ active: true, currentWindow: true }, (tab) => {
 	const popupElement = document.createElement("div");
-	popupElement.id = "fluid-client-debugger-popup";
+	popupElement.id = "fluid-devtools-popup";
 	popupElement.style.height = "100%";
 	popupElement.style.width = "100%";
 	popupElement.textContent =
