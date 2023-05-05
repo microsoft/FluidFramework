@@ -4,13 +4,30 @@
  */
 
 import * as React from "react";
-import { ISharedTree } from "@fluid-experimental/tree2";
+import { AllowedUpdateType, ISharedTree } from "@fluid-experimental/tree2";
 import { useTree } from "@fluid-experimental/tree-react-api";
-import { Inventory } from "../schema";
+import { Inventory, schema } from "../schema";
 import { Counter } from "./counter";
 
+const schemaPolicy = {
+	schema,
+	initialTree: {
+		parts: [
+			{
+				name: "nut",
+				quantity: 0,
+			},
+			{
+				name: "bolt",
+				quantity: 0,
+			},
+		],
+	},
+	allowedSchemaModifications: AllowedUpdateType.None,
+};
+
 export const MainView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
-	const inventory = useTree<Inventory>(tree);
+	const inventory: Inventory = useTree(tree, schemaPolicy);
 
 	const counters: JSX.Element[] = [];
 
