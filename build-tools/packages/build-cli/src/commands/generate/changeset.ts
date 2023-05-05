@@ -12,12 +12,12 @@ import prompts from "prompts-ncu";
 
 import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
-import { MonoRepoKind, Package } from "@fluidframework/build-tools";
+import { Package } from "@fluidframework/build-tools";
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { writeFile } from "node:fs/promises";
 
 const DEFAULT_BRANCH = "main";
-const HINT = `
+const INSTRUCTIONS = `
 ↑/↓: Change selection
 Space: Toggle selection
 a: Toggle all
@@ -25,8 +25,11 @@ Enter: Done`;
 
 inquirer.registerPrompt("checkbox-plus", CheckboxPlusPrompt);
 
+const excludedScopes = new Set(["@fluid-example", "@fluid-internal", "@fluid-test"]);
+
 interface Choice {
 	title: string;
+	disabled?: boolean;
 	selected?: boolean;
 	heading?: boolean;
 	value?: string;
@@ -68,11 +71,11 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 
 		if (empty) {
 			// TODO: This only works for the root release group (client). Is that OK?
-			const newFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
+			const emptyFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
 			this.logHr();
 			this.log(
 				`Created empty changeset: ${chalk.green(
-					path.relative(context.gitRepo.resolvedRoot, newFile),
+					path.relative(context.gitRepo.resolvedRoot, emptyFile),
 				)}`,
 			);
 			this.exit(0);
@@ -99,22 +102,17 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 
 		if (changedPackages.length === 0) {
 			this.error(`No changed packages when compared to ${branch}.`, { exit: 1 });
-			// this.log(changedPackages.join(", "));
 		}
 
 		if (changedReleaseGroups.length > 1) {
 			this.warning(
 				`More than one release group changed when compared to ${branch}. Is this expected?`,
 			);
-			// this.log(changedPackages.join(", "));
 		}
 
-		for (const [rgName, rg] of context.repo.releaseGroups) {
-		}
-
-		const groups = new Map<string, Choice[]>();
 		const choices: Choice[] = [];
 
+		// Handle changed release groups first so they show up in the list first.
 		for (const rgName of changedReleaseGroups) {
 			const rg = context.repo.releaseGroups.get(rgName);
 			if (rg === undefined) {
@@ -122,24 +120,34 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			}
 
 			choices.push(
-				{ title: `${chalk.bold(rg.kind)}`, heading: true },
-				...rg.packages.sort().map((p) => {
-					const changed = changedPackages.some((cp) => cp.name === p.name);
-					return {
-						title: changed ? `${p.nameColored} *` : p.name,
-						value: p.name,
-						selected: changed,
-					};
-				}),
+				{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
+				...rg.packages
+					.filter((pkg) => isIncludedByDefault(pkg))
+					.sort((a, b) =>
+						a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
+					)
+					.map((pkg) => {
+						const changed = changedPackages.some((cp) => cp.name === pkg.name);
+						return {
+							title: changed
+								? `${pkg.nameColored} ${chalk.red.bold("(changed)")}`
+								: pkg.name,
+							value: pkg.name,
+							selected: changed,
+						};
+					}),
 			);
 		}
 
-		choices.push({ title: chalk.bold("Independent Packages"), heading: true });
-		for (const p of context.independentPackages) {
-			const changed = changedPackages.some((cp) => cp.name === p.name);
+		choices.push({ title: chalk.bold("Independent Packages"), heading: true, disabled: true });
+		for (const pkg of context.independentPackages) {
+			if (!isIncludedByDefault(pkg)) {
+				continue;
+			}
+			const changed = changedPackages.some((cp) => cp.name === pkg.name);
 			choices.push({
-				title: p.name,
-				value: p.name,
+				title: changed ? `${pkg.nameColored} ${chalk.red.bold("(changed)")}` : pkg.name,
+				value: pkg.name,
 				selected: changed,
 			});
 		}
@@ -147,42 +155,32 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		for (const rg of context.repo.releaseGroups.values()) {
 			if (!changedReleaseGroups.includes(rg.kind)) {
 				choices.push(
-					{ title: `${chalk.bold(rg.kind)}`, heading: true },
-					...rg.packages.sort().map((p) => {
-						return {
-							title: p.name,
-							value: p.name,
-							selected: false,
-						};
-					}),
+					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
+					...rg.packages
+						.filter((pkg) => isIncludedByDefault(pkg))
+						.sort((a, b) =>
+							a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
+						)
+						.map((pkg) => {
+							return {
+								title: pkg.name,
+								value: pkg.name,
+								selected: false,
+							};
+						}),
 				);
 			}
 		}
 
-		this.log(changedReleaseGroups.join(", "));
-		this.log(changedPackages.map((p) => p.name).join(", "));
-		this.log(changedFiles.join(", "));
-
-		// const _choices = groups.flatMap(({ heading, groupName, packages }) => {
-		// 	return [
-		// 		{ title: "\n" + heading, heading: true },
-		// 		// eslint-disable-next-line fp/no-mutating-methods
-		// 		...Object.keys(packages)
-		// 			.sort()
-		// 			.map((dep) => ({
-		// 				title: formattedLines[dep],
-		// 				value: dep,
-		// 				selected: ["patch", "minor"].includes(groupName),
-		// 			})),
-		// 	];
-		// });
+		// this.log(changedReleaseGroups.join(", "));
+		// this.log(changedPackages.map((p) => p.name).join(", "));
+		// this.log(changedFiles.join(", "));
 
 		const response = await prompts({
-			choices: [...choices, { title: " ", heading: true }],
-			hint: HINT,
-			instructions: HINT,
-			message: "Choose which packages to include in the changeset",
-			name: "value",
+			choices: [...choices, { title: " ", heading: true, disabled: true }],
+			instructions: INSTRUCTIONS,
+			message: "Choose which packages to include in the changeset. Type to filter the list.",
+			name: "selectedPackages",
 			optionsPerPage: 10,
 			type: "autocompleteMultiselect",
 			onState: (state: any) => {
@@ -193,24 +191,18 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			},
 		});
 
-		this.log(`RESPONSE: ${JSON.stringify(response)}`);
+		const selectedPackages: string[] = response.selectedPackages;
 
-		// const colors = ["red", "green", "blue", "yellow"];
+		this.log(`RESPONSE: ${JSON.stringify(selectedPackages)}`);
 
-		// const answers = await inquirer
-		// 	.prompt([
-		// 		{
-		// 			type: "checkbox-plus",
-		// 			name: "colors",
-		// 			message: "Enter colors",
-		// 			pageSize: 10,
-		// 			highlight: true,
-		// 			default: ["yellow", "red"],
-		// 			source: async (answersSoFar: any, input: any) => {
-		// 				return colors.map((color) => color);
-		// 			},
-		// 		},
-		// ]);
+		const newFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
+		this.logHr();
+		this.log(
+			`Created empty changeset: ${chalk.green(
+				path.relative(context.gitRepo.resolvedRoot, newFile),
+			)}`,
+		);
+		this.exit(0);
 	}
 }
 
@@ -235,4 +227,12 @@ async function createChangesetContent(packages: Map<Package, VersionBumpType>, b
 	const frontMatter = lines.join("\n");
 	const changesetContents = [frontMatter, body].join("\n");
 	return changesetContents;
+}
+
+function isIncludedByDefault(pkg: Package) {
+	if (pkg.packageJson.private === true || excludedScopes.has(pkg.scope)) {
+		return false;
+	}
+
+	return true;
 }
