@@ -8,7 +8,7 @@ import { GlobalFieldKey, TreeSchemaIdentifier } from "../../../core";
 import { SchemaCollection } from "../view";
 import { fail } from "../../../util";
 import { defaultSchemaPolicy } from "../../defaultSchema";
-import { FieldKinds, forbidden, value } from "../../defaultFieldKinds";
+import { forbidden, value } from "../../defaultFieldKinds";
 import { SchemaLibraryData, SourcedAdapters } from "./schemaBuilder";
 import { FieldSchema, GlobalFieldSchema, TreeSchema, allowedTypesIsAny } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
@@ -125,7 +125,7 @@ export function validateViewSchemaCollection(collection: ViewSchemaCollection2):
 				errors,
 			);
 		}
-		if (tree.extraLocalFields !== emptyField) {
+		if (tree.extraLocalFields !== FieldSchema.empty) {
 			validateField(
 				collection,
 				tree.extraLocalFields,
@@ -208,9 +208,3 @@ export function validateField(
 	// 	);
 	// }
 }
-
-/**
- * Schema for a field which must always be empty.
- * @alpha
- */
-export const emptyField = new FieldSchema(FieldKinds.forbidden, []);

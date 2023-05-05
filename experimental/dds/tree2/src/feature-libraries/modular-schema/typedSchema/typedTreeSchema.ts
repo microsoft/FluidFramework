@@ -20,7 +20,6 @@ import { FieldKindTypes, FieldKinds } from "../../defaultFieldKinds";
 import { FlexList, LazyItem, normalizeFlexList } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMap } from "./typeUtils";
 import { RecursiveTreeSchemaSpecification } from "./schemaBuilder";
-import { emptyField } from "./buildViewSchemaCollection";
 
 // TODO: tests for this file
 
@@ -132,7 +131,7 @@ function normalizeLocalFields<T extends LocalFields | undefined>(
 
 function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField<T> {
 	if (t === undefined) {
-		return emptyField as unknown as NormalizeField<T>;
+		return FieldSchema.empty as unknown as NormalizeField<T>;
 	}
 
 	assert(t instanceof FieldSchema, "invalid FieldSchema");
@@ -193,6 +192,11 @@ export interface TreeSchemaSpecification {
 export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = AllowedTypes>
 	implements IFieldSchema
 {
+	/**
+	 * Schema for a field which must always be empty.
+	 */
+	public static readonly empty = new FieldSchema(FieldKinds.forbidden, []);
+
 	protected _typeCheck?: MakeNominal;
 	public constructor(public readonly kind: Kind, public readonly allowedTypes: Types) {}
 

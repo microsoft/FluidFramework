@@ -579,6 +579,7 @@ export class FieldSchema<Kind extends FieldKindTypes = FieldKindTypes, Types = A
     constructor(kind: Kind, allowedTypes: Types);
     // (undocumented)
     readonly allowedTypes: Types;
+    static readonly empty: FieldSchema<Forbidden, never[]>;
     // (undocumented)
     readonly kind: Kind;
     // (undocumented)
