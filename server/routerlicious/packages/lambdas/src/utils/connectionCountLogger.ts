@@ -38,8 +38,6 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
 			LumberEventName.TotalConnectionCount,
 		);
 		if (!this.cache || !this.cache.incr) {
-			connectionCountPerNodeMetric.error(`Redis Cache not found.`);
-			totalConnectionCountMetric.error(`Redis Cache not found.`);
 			return;
 		}
 		this.cache.incr(this.perNodeKeyName).then(
@@ -76,8 +74,6 @@ export class ConnectionCountLogger implements IConnectionCountLogger {
 			LumberEventName.TotalConnectionCount,
 		);
 		if (!this.cache || !this.cache.decr) {
-			connectionCountPerNodeMetric.error(`Redis Cache not found.`);
-			totalConnectionCountMetric.error(`Redis Cache not found.`);
 			return;
 		}
 		this.cache.decr(this.perNodeKeyName).then(
