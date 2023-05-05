@@ -9,7 +9,7 @@ import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
- * @example
+ * @remarks
  * ```text
  * Consider the commit graph below containing two branches, X and Y, with head commits C and E, respectively.
  * Branch Y branches off of Branch X at their common ancestor commit A, i.e. "Y is based off of X at commit A".
@@ -24,7 +24,7 @@ import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
  *
  * Commits D' and E' are the rebased versions of commits D and E, respectively. This results in:
  * deletedSourceCommits: [D, E],
- * rebasedTargetCommits: [B, C],
+ * targetCommits: [B, C],
  * rebasedSourceCommits: [D', E']
  * ```
  */
@@ -38,7 +38,7 @@ export interface RebasedCommits<TChange> {
 	 * All commits on the target branch that the source branch's commits were rebased over. These are now the direct
 	 * ancestors of {@link rebasedSourceCommits}.
 	 */
-	rebasedTargetCommits: GraphCommit<TChange>[];
+	targetCommits: GraphCommit<TChange>[];
 	/**
 	 * All commits on the new source branch that are rebases of commits on the original source branch. These are the rebased versions
 	 * of {@link deletedSourceCommits}.
@@ -157,7 +157,7 @@ export function rebaseBranch<TChange>(
 		return [
 			sourceHead,
 			undefined,
-			{ deletedSourceCommits: [], rebasedTargetCommits: [], rebasedSourceCommits: [] },
+			{ deletedSourceCommits: [], targetCommits: [], rebasedSourceCommits: [] },
 		];
 	}
 
@@ -181,12 +181,12 @@ export function rebaseBranch<TChange>(
 	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
 	const newBase = targetPath[newBaseIndex];
 	// Figure out how much of the trunk to start rebasing over.
-	const rebasedTargetCommits = targetPath.slice(0, newBaseIndex + 1);
+	const targetCommits = targetPath.slice(0, newBaseIndex + 1);
 	const deletedSourceCommits = [...sourcePath];
 
 	// If the source and target rebase path begin with a range that has all the same revisions, remove it; it is
 	// equivalent on both branches and doesn't need to be rebased.
-	const targetRebasePath = [...rebasedTargetCommits];
+	const targetRebasePath = [...targetCommits];
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
 		if (sourcePath[0].revision === targetRebasePath[0].revision) {
@@ -212,7 +212,7 @@ export function rebaseBranch<TChange>(
 			undefined,
 			{
 				deletedSourceCommits,
-				rebasedTargetCommits,
+				targetCommits,
 				rebasedSourceCommits,
 			},
 		];
@@ -247,7 +247,7 @@ export function rebaseBranch<TChange>(
 		changeRebaser.compose([...inverses, ...targetRebasePath]),
 		{
 			deletedSourceCommits,
-			rebasedTargetCommits,
+			targetCommits,
 			rebasedSourceCommits,
 		},
 	];

@@ -85,7 +85,7 @@ describe("rebaseBranch", () => {
 		assert.equal(n4_1, n4);
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
-		assert.deepEqual(commits.rebasedTargetCommits, []);
+		assert.deepEqual(commits.targetCommits, []);
 		assert.deepEqual(commits.rebasedSourceCommits, []);
 	});
 
@@ -102,7 +102,7 @@ describe("rebaseBranch", () => {
 		assert.equal(n3_1, n3);
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
-		assert.deepEqual(commits.rebasedTargetCommits, []);
+		assert.deepEqual(commits.targetCommits, []);
 		assert.deepEqual(commits.rebasedSourceCommits, []);
 	});
 
@@ -126,7 +126,7 @@ describe("rebaseBranch", () => {
 		);
 		assertOutputContext(change, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
-		assert.deepEqual(commits.rebasedTargetCommits, [n2, n3]);
+		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.rebasedSourceCommits, newPath);
 	});
 
@@ -150,7 +150,7 @@ describe("rebaseBranch", () => {
 		);
 		assertOutputContext(change, 1, 2, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
-		assert.deepEqual(commits.rebasedTargetCommits, [n2]);
+		assert.deepEqual(commits.targetCommits, [n2]);
 		assert.deepEqual(commits.rebasedSourceCommits, newPath);
 	});
 
@@ -176,7 +176,7 @@ describe("rebaseBranch", () => {
 		});
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
-		assert.deepEqual(commits.rebasedTargetCommits, [n2, n3]);
+		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.rebasedSourceCommits, newPath);
 	});
 
@@ -202,7 +202,7 @@ describe("rebaseBranch", () => {
 		});
 		assertOutputContext(change, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
-		assert.deepEqual(commits.rebasedTargetCommits, [n2, n3, n4]);
+		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
 		assert.deepEqual(commits.rebasedSourceCommits, newPath);
 	});
 
@@ -222,7 +222,7 @@ describe("rebaseBranch", () => {
 		assert.equal(n3_2, n3);
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
-		assert.deepEqual(commits.rebasedTargetCommits, [n2, n3]);
+		assert.deepEqual(commits.targetCommits, [n2, n3]);
 		assert.deepEqual(commits.rebasedSourceCommits, []);
 	});
 });
