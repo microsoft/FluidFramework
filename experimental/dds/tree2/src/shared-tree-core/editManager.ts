@@ -553,14 +553,14 @@ export class EditManager<
 	}
 
 	private rebaseLocalBranchOverTrunk(): TChangeset | undefined {
-		const [newLocalChanges, netChange] = rebaseBranch(
+		const [newLocalChanges, netChange, { rebasedSourceCommits }] = rebaseBranch(
 			this.changeFamily.rebaser,
 			this.localBranch,
 			this.trunk,
 		);
 
 		this.localBranchUndoRedoManager.updateAfterRebase(
-			newLocalChanges,
+			rebasedSourceCommits,
 			this.trunkUndoRedoManager,
 		);
 

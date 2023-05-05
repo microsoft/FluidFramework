@@ -181,36 +181,32 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased after merging.
-	 * @param newHead - the head commit of the newly rebased branch.
+	 * @param newCommits - All commits which were not part of the source branch before the rebase, but are after the rebase.
 	 * @param mergedUndoRedoManager - the {@link UndoRedoManager} of the branch that was merged.
 	 */
 	public updateAfterMerge(
-		newHead: GraphCommit<TChange>,
+		newCommits: GraphCommit<TChange>[],
 		mergedUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
 		if (this.getHead !== undefined) {
-			this.updateBasedOnNewCommits(this.getHead(), newHead, this, mergedUndoRedoManager);
+			this.updateBasedOnNewCommits(newCommits, this, mergedUndoRedoManager);
 		}
 	}
 
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased.
-	 * @param newHead - the head commit of the newly rebased branch.
+	 * @param newCommits - All commits which were not part of the source branch before the rebase, but are after the rebase.
 	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
 	 */
 	public updateAfterRebase(
-		newHead: GraphCommit<TChange>,
+		newCommits: GraphCommit<TChange>[],
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
-		if (baseUndoRedoManager.getHead !== undefined) {
-			const baseHead = baseUndoRedoManager.getHead();
-			this.updateBasedOnNewCommits(baseHead, newHead, baseUndoRedoManager, this);
-		}
+		this.updateBasedOnNewCommits(newCommits, baseUndoRedoManager, this);
 	}
 
 	private updateBasedOnNewCommits(
-		baseHead: GraphCommit<TChange>,
-		rebasedHead: GraphCommit<TChange>,
+		newCommits: GraphCommit<TChange>[],
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 		originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
@@ -225,14 +221,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			return;
 		}
 
-		const rebasedPath: GraphCommit<TChange>[] = [];
-		const ancestor = findCommonAncestor([baseHead], [rebasedHead, rebasedPath]);
-		assert(
-			ancestor === baseHead,
-			0x678 /* The rebased head should be based off of the base branch. */,
-		);
-
-		if (rebasedPath.length === 0) {
+		if (newCommits.length === 0) {
 			this.headUndoableCommit = baseUndoRedoManager.headUndoable;
 			this.headRedoableCommit = baseUndoRedoManager.headRedoable;
 			return;
@@ -241,7 +230,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		// Create a complete clone of the base undo redo manager for tracking the rebased path
 		const undoRedoManager = baseUndoRedoManager.clone();
 
-		for (const commit of rebasedPath) {
+		for (const commit of newCommits) {
 			const type = originalUndoRedoManager.commitTypes.get(commit.revision);
 			if (type !== undefined) {
 				undoRedoManager.trackCommit(commit, type);

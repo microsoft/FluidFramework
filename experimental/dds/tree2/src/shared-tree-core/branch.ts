@@ -293,7 +293,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			const [newHead, change, { deletedSourceCommits, targetCommits, rebasedSourceCommits }] =
 				rebaseResult;
 
-			this.undoRedoManager.updateAfterRebase(newHead, undoRedoManager);
+			this.undoRedoManager.updateAfterRebase(rebasedSourceCommits, undoRedoManager);
 
 			this.head = newHead;
 			this.emitAndRebaseAnchors({
@@ -322,7 +322,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// Compute the net change to this branch
 			const [newHead, _, { targetCommits, rebasedSourceCommits }] = rebaseResult;
 
-			this.undoRedoManager.updateAfterMerge(newHead, branch.undoRedoManager);
+			this.undoRedoManager.updateAfterMerge(rebasedSourceCommits, branch.undoRedoManager);
 
 			const changes: GraphCommit<TChange>[] = [];
 			findAncestor([newHead, changes], (c) => c === this.head);

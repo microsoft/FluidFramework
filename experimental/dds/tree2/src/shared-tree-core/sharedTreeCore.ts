@@ -434,7 +434,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 				}
 			}
 		} else {
-			const [newHead] = rebaseBranch(
+			const [newHead, _, { rebasedSourceCommits }] = rebaseBranch(
 				this.changeFamily.rebaser,
 				branch.getHead(),
 				this.getLocalBranchHead(),
@@ -443,7 +443,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			findAncestor([newHead, changes], (c) => c === localBranchHead);
 
 			this.editManager.localBranchUndoRedoManager.updateAfterMerge(
-				newHead,
+				rebasedSourceCommits,
 				branch.undoRedoManager,
 			);
 
