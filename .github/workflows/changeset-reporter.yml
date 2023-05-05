@@ -22,7 +22,7 @@ jobs:
           run_id: ${{ github.event.workflow_run.id }}
           name: changeset-metadata
 
-      - name: Load release metadata into env variable
+      - name: Load changeset metadata into env variable
         run: echo "CHANGESET=$(cat changeset-metadata.json)" >> $GITHUB_ENV
 
       - name: Required but missing
