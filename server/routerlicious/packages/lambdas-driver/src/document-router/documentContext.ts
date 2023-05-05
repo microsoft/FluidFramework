@@ -23,6 +23,8 @@ export class DocumentContext extends EventEmitter implements IContext {
 	private closed = false;
 	private contextError = undefined;
 
+	private restartOnCheckpointFailure: boolean = true;
+
 	constructor(
 		private readonly routingKey: IRoutingKey,
 		head: IQueuedMessage,
@@ -43,6 +45,10 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 	public get tail(): IQueuedMessage {
 		return this.tailInternal;
+	}
+
+	public get restartOnCheckpointFailureFlag(): boolean {
+		return this.restartOnCheckpointFailure;
 	}
 
 	/**
@@ -71,7 +77,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		this.headInternal = head;
 	}
 
-	public checkpoint(message: IQueuedMessage) {
+	public checkpoint(message: IQueuedMessage, restartOnCheckpointFailure?: boolean) {
 		if (this.closed) {
 			return;
 		}
@@ -87,6 +93,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
+		this.restartOnCheckpointFailure = restartOnCheckpointFailure ?? this.restartOnCheckpointFailure;
 		this.emit("checkpoint", this);
 	}
 
