@@ -64,5 +64,6 @@ export {
 	Mutable,
 	RecursiveReadonly,
 	zipIterables,
+	assertValidIndex,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";

@@ -404,7 +404,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	private createEmptyDetachedField(): FieldKey {
 		const detached: DetachedField = brand(String(this.nextRange++));
 		const key = detachedFieldAsKey(detached);
-		assert(!this.root.children.has(key), "new range must not already exist");
+		assert(!this.root.children.has(key), 0x680 /* new range must not already exist */);
 		this.root.children.set(key, []);
 		return key;
 	}
@@ -420,7 +420,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	 * TODO: tests
 	 */
 	private decoupleNodes(startPath: UpPath, count: number): PathNode[] {
-		assert(count > 0, "count must be positive");
+		assert(count > 0, 0x681 /* count must be positive */);
 
 		const sourceParent = this.find(startPath.parent ?? this.root);
 		const sourceChildren = sourceParent?.children?.get(startPath.parentField);
@@ -473,7 +473,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 		count: number,
 		coupleInfo: { startParentIndex: number; nodes: PathNode[] },
 	): void {
-		assert(coupleInfo.nodes.length > 0, "coupleInfo must have nodes to couple");
+		assert(coupleInfo.nodes.length > 0, 0x682 /* coupleInfo must have nodes to couple */);
 
 		// The destination needs to be created if it does not exist yet.
 		const destinationPath = this.trackInner(destination.parent ?? this.root);
