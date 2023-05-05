@@ -48,15 +48,14 @@ jobs:
       - id: changeset-status
         name: Changeset status
         run: |
-          set +e # don't exit on failure
-          pnpm exec flub check changeset --branch=${{ github.base_ref }}
-          echo "$?" > ./changeset-status
+          # JSON output is piped through jq to compact it to a single line
+          pnpm exec flub check changeset --branch=${{ github.base_ref }} --json | jq -c > changeset-metadata.json
 
       - name: Upload changeset status
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
         with:
-          name: changeset-status
-          path: ./changeset-status
+          name: changeset-metadata.json
+          path: ./changeset-metadata
           retention-days: 3
 
   # Any PR without the changeset-required label will be ignored.
@@ -68,12 +67,12 @@ jobs:
       - id: changeset-status
         name: Changeset disabled
         run: |
-          # Always output 0 to signal that changesets aren't needed
-          echo "0" > ./changeset-status
+          # Always output changesetFound=true to signal that changesets aren't needed
+          echo "{'branch': '${{ github.base_ref }}','changesetFound': true}" > ./changeset-metadata.json
 
       - name: Upload changeset status
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
         with:
-          name: changeset-status
-          path: ./changeset-status
+          name: changeset-metadata.json
+          path: ./changeset-metadata
           retention-days: 3
