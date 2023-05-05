@@ -114,14 +114,14 @@ describe("UndoRedoManager", () => {
 				repairData: new MockRepairDataStore(),
 			};
 			const manager = undoRedoManagerFactory(initialCommit);
-			const undoChange = manager.undo();
+			const undoChange = manager.undo(commit);
 			const invertedTestChange = TestChange.invert(commit.change);
 			assert.deepEqual(undoChange, invertedTestChange);
 		});
 
 		it("should return undefined if there is no head undoable commit", () => {
 			const manager = undoRedoManagerFactory();
-			const undoChange = manager.undo();
+			const undoChange = manager.undo(createTestGraphCommit([], 0, localSessionId));
 
 			assert.equal(undoChange, undefined);
 		});
@@ -135,14 +135,14 @@ describe("UndoRedoManager", () => {
 				repairData: new MockRepairDataStore(),
 			};
 			const manager = undoRedoManagerFactory(undefined, initialCommit);
-			const redoChange = manager.redo();
+			const redoChange = manager.redo(commit);
 			const invertedTestChange = TestChange.invert(commit.change);
 			assert.deepEqual(redoChange, invertedTestChange);
 		});
 
 		it("should return undefined if there is no head redoble commit", () => {
 			const manager = undoRedoManagerFactory();
-			const redoChange = manager.redo();
+			const redoChange = manager.redo(createTestGraphCommit([], 0, localSessionId));
 
 			assert.equal(redoChange, undefined);
 		});
@@ -157,7 +157,6 @@ function undoRedoManagerFactory(
 	return new UndoRedoManager(
 		new MockRepairDataStoreProvider(),
 		testChangeFamilyFactory(rebaser),
-		undefined,
 		headUndoableCommit,
 		headRedoableCommit,
 		undefined,

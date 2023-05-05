@@ -228,7 +228,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x66a /* Undo is not yet supported during transactions */);
 
-		const undoChange = this.undoRedoManager.undo();
+		const undoChange = this.undoRedoManager.undo(this.getHead());
 		if (undoChange !== undefined) {
 			this.applyChange(undoChange, UndoRedoManagerCommitType.Undo);
 		}
@@ -243,7 +243,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), "Redo is not yet supported during transactions");
 
-		const redoChange = this.undoRedoManager.redo();
+		const redoChange = this.undoRedoManager.redo(this.getHead());
 		if (redoChange !== undefined) {
 			this.applyChange(redoChange, UndoRedoManagerCommitType.Redo);
 		}
@@ -263,10 +263,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.head,
 			this.sessionId,
 			this.changeFamily,
-			this.undoRedoManager.clone(
-				(): GraphCommit<TChange> => fork.getHead(),
-				repairDataStoreProvider,
-			),
+			this.undoRedoManager.clone(repairDataStoreProvider),
 			anchors,
 		);
 		this.emit("fork", fork);

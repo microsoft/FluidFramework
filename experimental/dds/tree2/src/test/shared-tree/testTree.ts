@@ -106,13 +106,12 @@ export class TestTree {
 		const undoRedoManager = new UndoRedoManager(
 			new MockRepairDataStoreProvider(),
 			defaultChangeFamily,
-			() => this.editManager.getLocalBranchHead(),
 		);
 		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 			defaultChangeFamily,
 			this.sessionId,
 			undoRedoManager,
-			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
+			undoRedoManager.clone(),
 			forest.anchors,
 		);
 	}

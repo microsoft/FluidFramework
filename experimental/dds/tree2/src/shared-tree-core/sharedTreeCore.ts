@@ -157,14 +157,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = uuid();
-		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily, () =>
-			this.editManager.getLocalBranchHead(),
-		);
+		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
 			undoRedoManager,
-			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
+			undoRedoManager.clone(),
 			anchors,
 		);
 		this.summarizables = [
@@ -364,7 +362,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x66b /* Undo is not yet supported during transactions */);
 
-		const undoChange = this.editManager.localBranchUndoRedoManager.undo();
+		const undoChange = this.editManager.localBranchUndoRedoManager.undo(
+			this.getLocalBranchHead(),
+		);
 		if (undoChange !== undefined) {
 			this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
 		}
@@ -379,7 +379,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), "Redo is not yet supported during transactions");
 
-		const redoChange = this.editManager.localBranchUndoRedoManager.redo();
+		const redoChange = this.editManager.localBranchUndoRedoManager.redo(
+			this.getLocalBranchHead(),
+		);
 		if (redoChange !== undefined) {
 			this.applyChange(redoChange, mintRevisionTag(), UndoRedoManagerCommitType.Redo);
 		}
@@ -401,10 +403,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			this.editManager.getLocalBranchHead(),
 			this.editManager.localSessionId,
 			this.changeFamily,
-			this.editManager.localBranchUndoRedoManager.clone(
-				() => branch.getHead(),
-				repairDataStoreProvider,
-			),
+			this.editManager.localBranchUndoRedoManager.clone(repairDataStoreProvider),
 			anchors,
 		);
 		this.editManager.registerBranch(branch);
