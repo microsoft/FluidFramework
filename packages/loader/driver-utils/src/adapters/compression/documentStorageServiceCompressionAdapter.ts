@@ -51,7 +51,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	public get service(): IDocumentStorageService {
 		return this.internalStorageService;
 	}
-	
+
 	/**
 	 * This method returns true if the blob is compressed.
 	 * @param name - The name of the blob

@@ -26,7 +26,11 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { applyStorageCompression } from "../adapters";
+import {
+	applyStorageCompression,
+	ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
+} from "../adapters";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
 import { snapshotTree, summaryTemplate } from "./summaryCompresssionUtils";
 
@@ -110,6 +114,12 @@ class InternalTestStorage implements IDocumentStorageService {
 	public get uploadedSummary(): ISummaryTree | undefined {
 		return this._uploadedSummary;
 	}
+
+	public thisIsReallyOriginalStorage: string = "yes";
+}
+
+function isOriginalStorage(storage: IDocumentStorageService): boolean {
+	return (storage as InternalTestStorage).thisIsReallyOriginalStorage === "yes";
 }
 
 class InternalTestDocumentService implements IDocumentService {
@@ -150,10 +160,13 @@ class InternalTestDocumentServiceFactory implements IDocumentServiceFactory {
 	}
 }
 
-async function buildCompressionStorage(): Promise<IDocumentStorageService> {
+async function buildCompressionStorage(
+	config?: ICompressionStorageConfig | boolean,
+): Promise<IDocumentStorageService> {
 	{
 		const factory: IDocumentServiceFactory = applyStorageCompression(
-			new InternalTestDocumentServiceFactory(),true
+			new InternalTestDocumentServiceFactory(),
+			config,
 		);
 		const documentService = await factory.createContainer(undefined, { type: "web", data: "" });
 		const storage = await documentService.connectToStorage();
@@ -169,10 +182,34 @@ describe("Summary Compression Test", () => {
 			content.length === 1000000 + 11,
 			`The content size is ${content.length} and should be 1000011`,
 		);
-		await buildCompressionStorage();
+		await buildCompressionStorage(true);
+	});
+	it("Verify Config True", async () => {
+		const storage = await buildCompressionStorage(true);
+		checkCompressionConfig(storage, 500, SummaryCompressionAlgorithm.LZ4);
+	});
+	it("Verify Config False", async () => {
+		const storage = await buildCompressionStorage(false);
+		const config = (storage as any)._config;
+		assert(config === undefined, "The storage has compression");
+		assert(isOriginalStorage(storage), "The storage is not the original storage");
+	});
+	it("Verify Config Empty", async () => {
+		const storage = await buildCompressionStorage();
+		const config = (storage as any)._config;
+		assert(config === undefined, "The storage has compression");
+		assert(isOriginalStorage(storage), "The storage is not the original storage");
+	});
+	it("Verify Config Object", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.None,
+			minSizeToCompress: 763,
+		};
+		const storage = await buildCompressionStorage(config);
+		checkCompressionConfig(storage, 763, SummaryCompressionAlgorithm.None);
 	});
 	it("Verify Compressed Markup at Summary", async () => {
-		const storage = (await buildCompressionStorage()) as DocumentStorageServiceProxy;
+		const storage = (await buildCompressionStorage(true)) as DocumentStorageServiceProxy;
 		const summary = generateSummaryWithContent(1000);
 		await storage.uploadSummaryWithContext(summary, {
 			referenceSequenceNumber: 0,
@@ -187,9 +224,31 @@ describe("Summary Compression Test", () => {
 		assert(headerHolder.tree[keyName] !== undefined, `The header is not compressed ${keyName}`);
 	});
 });
+function checkCompressionConfig(
+	storage: IDocumentStorageService,
+	expectedMinSizeToCompress: number,
+	expectedAlgorithm: SummaryCompressionAlgorithm,
+) {
+	const config = (storage as any)._config;
+	assert(config !== undefined, "The storage has no compression");
+	assert(
+		(config.minSizeToCompress === expectedMinSizeToCompress,
+		`Unexpected minSizeToCompress config ${config.minSizeToCompress}`),
+	);
+	assert(
+		(config.algorithmm === expectedAlgorithm,
+		`Unexpected minSizeToCompress config ${config.algorithmm}`),
+	);
+}
+
 function getHeaderContent(summary: ISummaryTree) {
 	return getHeaderHolder(summary).tree.header["content"] as string;
 }
+
+/* getCompressedHeaderContent(summary: ISummaryTree) {
+	return getHeaderHolder(summary).tree.compressed_2_header["content"] as string;
+}
+*/
 
 function getHeaderHolder(summary: ISummaryTree) {
 	return (
