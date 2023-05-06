@@ -359,13 +359,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		// The net change to this branch is provided by the `rebaseBranch` API
-		const [newHead, change, { deletedSourceCommits, targetCommits, rebasedSourceCommits }] =
+		const [newHead, change, { deletedSourceCommits, targetCommits, sourceCommits }] =
 			rebaseResult;
 
-		this.undoRedoManager.updateAfterRebase(rebasedSourceCommits, undoRedoManager);
-
+		this.undoRedoManager.updateAfterRebase(sourceCommits, undoRedoManager);
 		this.head = newHead;
-		const newCommits = targetCommits.concat(rebasedSourceCommits);
+		const newCommits = targetCommits.concat(sourceCommits);
 		this.emitAndRebaseAnchors({
 			type: "rebase",
 			change,
@@ -396,19 +395,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		// Compute the net change to this branch
-		const [newHead, _, { rebasedSourceCommits }] = rebaseResult;
-		this.undoRedoManager.updateAfterMerge(rebasedSourceCommits, branch.undoRedoManager);
-
-		const newCommits: GraphCommit<TChange>[] = [];
-		findAncestor([newHead, newCommits], (c) => c === this.head);
+		const [newHead, _, { sourceCommits }] = rebaseResult;
+		this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
 		this.head = newHead;
-		const change = this.changeFamily.rebaser.compose(newCommits);
+		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		this.emitAndRebaseAnchors({
 			type: "append",
 			change,
-			newCommits,
+			newCommits: sourceCommits,
 		});
-		return [change, newCommits];
+		return [change, sourceCommits];
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
