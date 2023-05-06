@@ -18,7 +18,7 @@ import {
 	FluidObjectTreeNode,
 	UnknownObjectNode,
 	VisualNodeKind,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 import { UnknownDataView, FluidTreeView } from "../components";
 import { MessageRelayContext } from "../MessageRelayContext";
 import { MockMessageRelay } from "./MockMessageRelay";

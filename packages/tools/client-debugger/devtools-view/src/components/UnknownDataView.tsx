@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { UnknownObjectNode } from "@fluid-tools/client-debugger";
+import { UnknownObjectNode } from "@fluid-experimental/devtools-core";
 
 /**
  * {@link UnknownDataView} input props.

@@ -13,7 +13,7 @@ import {
 	ISourcedDevtoolsMessage,
 	InboundHandlers,
 	handleIncomingMessage,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 import React from "react";
 
 import { initializeFluentUiIcons } from "../InitializeIcons";
@@ -69,7 +69,7 @@ enum PanelView {
 
 /**
  * Container Devtools view.
- * Communicates with {@link @fluid-tools/client-debugger#ContainerDevtools} via {@link MessageRelayContext} to get
+ * Communicates with {@link @fluid-experimental/devtools-core#ContainerDevtools} via {@link MessageRelayContext} to get
  * Container-level stats to display, including Container states and history, Audience state and history, and Container
  * data.
  */

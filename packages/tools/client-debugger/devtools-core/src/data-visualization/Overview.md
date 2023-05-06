@@ -1,4 +1,4 @@
-# @fluid-tools/client-debugger DDS Visualization
+# @fluid-experimental/devtools-core DDS Visualization
 
 This directory contains a system for describing Fluid Distributed Data Structure (DDS) visuals in a declarative manner, and for communicating incremental updates to those visuals.
 
@@ -14,7 +14,7 @@ For the purpose of demonstrating the intended usage flow of the system, we will 
 
 -   "Application": The client application, which initializes the "debugger".
 -   "Debugger": Represents the client-side debugger, which communicates application state updates via message passing to the "consumer".
--   "Consumer": External tooling which consumes data from the "debugger" via message passing (e.g. our [browser extension](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-chrome-extension)).
+-   "Consumer": External tooling which consumes data from the "debugger" via message passing (e.g. our [browser extension](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/devtools-browser-extension)).
     -   Note that multiple consumers may be associated with a single debugger instance.
 
 When initializing the debugger, the initializing application may optionally provide a root DDS(s) they wish to have visualized by the tooling.

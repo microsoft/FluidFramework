@@ -11,7 +11,7 @@ import {
 	IMessageRelayEvents,
 	isDevtoolsMessage,
 	devtoolsMessageSource,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 
 /**
  * Message relay used by a debugger view rendered in the same page as the application to communicate with the
@@ -35,7 +35,7 @@ export class WindowMessageRelay
 		 * All messages sent through the returned instance's {@link WindowMessageRelay.postMessage}
 		 * method will get this value written to their 'source' property.
 		 *
-		 * @see {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage}
+		 * @see {@link @fluid-experimental/devtools-core#ISourcedDevtoolsMessage}
 		 */
 		private readonly messageSource: string,
 	) {
@@ -60,7 +60,7 @@ export class WindowMessageRelay
 
 	/**
 	 * Handler for incoming messages from the window object.
-	 * Messages are forwarded on to subscribers for valid {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage}s
+	 * Messages are forwarded on to subscribers for valid {@link @fluid-experimental/devtools-core#ISourcedDevtoolsMessage}s
 	 * from the expected source.
 	 */
 	private readonly onWindowMessage = (

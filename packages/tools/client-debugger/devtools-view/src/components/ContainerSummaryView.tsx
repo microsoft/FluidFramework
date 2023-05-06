@@ -37,7 +37,7 @@ import {
 	IMessageRelay,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 

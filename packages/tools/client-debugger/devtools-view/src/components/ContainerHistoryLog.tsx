@@ -24,7 +24,7 @@ import {
 	LockClosed24Filled,
 } from "@fluentui/react-icons";
 import { Stack, StackItem, IStackItemStyles } from "@fluentui/react";
-import { ConnectionStateChangeLogEntry } from "@fluid-tools/client-debugger";
+import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
 
 /**
  * Represents container state history data which is rendered in {@link ContainerHistoryLog}.

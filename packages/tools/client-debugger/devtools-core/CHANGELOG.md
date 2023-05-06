@@ -1,4 +1,4 @@
-# @fluid-tools/client-debugger
+# @fluid-experimental/devtools-core
 
 ## 2.0.0-internal.4.1.0
 

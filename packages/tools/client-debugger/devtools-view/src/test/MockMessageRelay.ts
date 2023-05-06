@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IMessageRelay, IMessageRelayEvents, IDevtoolsMessage } from "@fluid-tools/client-debugger";
+import {
+	IMessageRelay,
+	IMessageRelayEvents,
+	IDevtoolsMessage,
+} from "@fluid-experimental/devtools-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 /**
@@ -14,7 +18,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 export type MockRelayMessageHandler = (message: IDevtoolsMessage) => IDevtoolsMessage | undefined;
 
 /**
- * Mock implementation of {@link @fluid-tools/client-debugger#IMessageRelay} for use in tests.
+ * Mock implementation of {@link @fluid-experimental/devtools-core#IMessageRelay} for use in tests.
  *
  * Takes in a message handler that (optionally) directly returns a response message to be emitted.
  */

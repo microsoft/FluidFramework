@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { HasContainerId, FluidObjectTreeNode } from "@fluid-tools/client-debugger";
+import { HasContainerId, FluidObjectTreeNode } from "@fluid-experimental/devtools-core";
 import { Tree } from "./Tree";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";

@@ -15,7 +15,7 @@ import {
 	handleIncomingMessage,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { FluentProvider } from "@fluentui/react-components";
@@ -139,7 +139,7 @@ const menuStyles: IStackItemStyles = {
 
 /**
  * Primary Devtools view.
- * Communicates with {@link @fluid-tools/client-debugger#FluidDevtools} via {@link MessageRelayContext} to get
+ * Communicates with {@link @fluid-experimental/devtools-core#FluidDevtools} via {@link MessageRelayContext} to get
  * runtime-level stats to display, as well as the list of Container-level Devtools instances to display as menu options
  * and sub-views.
  */
@@ -327,7 +327,7 @@ interface MenuProps {
 	setSelection(newSelection: MenuSelection | undefined): void;
 
 	/**
-	 * Set of features supported by the {@link @fluid-tools/client-debugger#IFluidDevtools}
+	 * Set of features supported by the {@link @fluid-experimental/devtools-core#IFluidDevtools}
 	 * instance being used by the page application.
 	 */
 	supportedFeatures: DevtoolsFeatureFlags;

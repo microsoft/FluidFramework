@@ -4,7 +4,7 @@
 
 ```ts
 
-import { IMessageRelay } from '@fluid-tools/client-debugger';
+import { IMessageRelay } from '@fluid-experimental/devtools-core';
 import { default as React_2 } from 'react';
 
 // @public
