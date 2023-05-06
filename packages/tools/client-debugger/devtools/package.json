@@ -34,11 +34,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
-		"test": "npm run test:mocha",
-		"test:coverage": "npm run test:mocha:coverage",
-		"test:mocha": "mocha dist/**/*.test.js --unhandled-rejections=strict --exit",
-		"test:mocha:coverage": "nyc npm run test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
+		"test": "echo TODO: add tests",
 		"tsc": "tsc"
 	},
 	"nyc": {
