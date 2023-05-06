@@ -10698,6 +10698,7 @@ importers:
       '@fluentui/react-hooks': ^8.6.12
       '@fluentui/react-icons': ^2.0.199
       '@fluid-example/collaborative-textarea': workspace:~
+      '@fluid-experimental/devtools': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluid-tools/client-debugger': workspace:~
       '@fluidframework/build-common': ^1.1.0
@@ -10767,6 +10768,7 @@ importers:
       scheduler: 0.20.2
     devDependencies:
       '@fluid-example/collaborative-textarea': link:../../../../examples/apps/collaborative-textarea
+      '@fluid-experimental/devtools': link:../devtools
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.17.0_webpack-cli@4.10.0
