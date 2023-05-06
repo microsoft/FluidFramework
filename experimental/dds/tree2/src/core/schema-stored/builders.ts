@@ -6,9 +6,9 @@
 import { brand } from "../../util";
 import {
 	FieldKindIdentifier,
-	FieldSchema,
+	FieldStoredSchema,
 	GlobalFieldKey,
-	TreeSchema,
+	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	ValueSchema,
 } from "./schema";
@@ -31,13 +31,13 @@ export const emptySet: ReadonlySet<never> = new Set();
 export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
- * Helper for building {@link FieldSchema}.
+ * Helper for building {@link FieldStoredSchema}.
  * @alpha
  */
 export function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
 	types?: Iterable<TreeSchemaIdentifier>,
-): FieldSchema {
+): FieldStoredSchema {
 	return {
 		kind,
 		types: types === undefined ? undefined : new Set(types),
@@ -47,21 +47,21 @@ export function fieldSchema(
 const defaultExtraGlobalFields = false;
 
 /**
- * See {@link TreeSchema} for details.
+ * See {@link TreeStoredSchema} for details.
  * @alpha
  */
 export interface TreeSchemaBuilder {
-	readonly localFields?: { [key: string]: FieldSchema };
+	readonly localFields?: { [key: string]: FieldStoredSchema };
 	readonly globalFields?: Iterable<GlobalFieldKey>;
-	readonly extraLocalFields: FieldSchema;
+	readonly extraLocalFields: FieldStoredSchema;
 	readonly extraGlobalFields?: boolean;
 	readonly value?: ValueSchema;
 }
 
 /**
- * Helper for building {@link TreeSchema}.
+ * Helper for building {@link TreeStoredSchema}.
  */
-export function treeSchema(data: TreeSchemaBuilder): TreeSchema {
+export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
 	const localFields = new Map();
 	const local = data.localFields ?? {};
 	// eslint-disable-next-line no-restricted-syntax

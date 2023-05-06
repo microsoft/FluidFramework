@@ -21,8 +21,9 @@ import {
 	RevisionTag,
 	makeAnonChange,
 	UndoRedoManager,
+	UndoRedoManagerCommitType,
 } from "../../core";
-import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
+import { cursorToJsonObject, jsonSchema, singleJsonCursor } from "../../domains";
 import {
 	buildForest,
 	DefaultChangeFamily,
@@ -30,10 +31,10 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	ForestRepairDataStoreProvider,
 } from "../../feature-libraries";
 import { brand, JsonCompatible } from "../../util";
 import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
+import { MockRepairDataStoreProvider } from "../utils";
 
 export interface TestTreeEdit {
 	sessionId: SessionId;
@@ -79,7 +80,7 @@ export class TestTree {
 		options: TestTreeOptions = {},
 	): TestTree {
 		const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
-		return TestTree.fromCursor(cursors, { schemaData: jsonSchemaData, ...options });
+		return TestTree.fromCursor(cursors, { schemaData: jsonSchema, ...options });
 	}
 
 	public readonly sessionId: string;
@@ -103,18 +104,14 @@ export class TestTree {
 		this.sessionId = options.sessionId ?? uuid();
 		this.forest = forest;
 		const undoRedoManager = new UndoRedoManager(
-			new ForestRepairDataStoreProvider(
-				this.forest,
-				new InMemoryStoredSchemaRepository(defaultSchemaPolicy),
-			),
+			new MockRepairDataStoreProvider(),
 			defaultChangeFamily,
-			() => this.editManager.getLocalBranchHead(),
 		);
 		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 			defaultChangeFamily,
 			this.sessionId,
 			undoRedoManager,
-			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
+			undoRedoManager.clone(),
 			forest.anchors,
 		);
 	}
@@ -183,6 +180,12 @@ export class TestTree {
 			return;
 		}
 		for (const edit of edits) {
+			if (edit.sessionId === this.editManager.localSessionId) {
+				this.editManager.localBranchUndoRedoManager.trackCommit(
+					edit,
+					UndoRedoManagerCommitType.Undoable,
+				);
+			}
 			const delta = this.editManager.addSequencedChange(edit, edit.seqNumber, edit.refNumber);
 			this.forest.applyDelta(delta);
 			this._remoteEditsApplied += 1;

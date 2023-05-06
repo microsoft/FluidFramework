@@ -9,19 +9,22 @@ import {
 	GlobalFieldKeySymbol,
 	SchemaData,
 	symbolFromKey,
+	TreeSchemaIdentifier,
 	ValueSchema,
 } from "../core";
 import { compareSets } from "../util";
 import { EditableTree, EditableTreeContext, getField, typeSymbol } from "./editable-tree";
-import { TypedSchema } from "./modular-schema";
-import { value as valueFieldKind } from "./defaultFieldKinds";
+import { SchemaBuilder } from "./modular-schema";
 import { valueSymbol } from "./contextuallyTyped";
+
+const builder = new SchemaBuilder("Identifier Domain");
 
 /**
  * The primitive type used as an identifier
  * @alpha
  */
 // TODO: This type will replaced with the CompressedId type from the IdCompressor, when available in the runtime
+// TODO: This us unsafe since "unknown" can contain other types of numbers.
 export type Identifier = number;
 function isIdentifier(id: unknown | Identifier): id is Identifier {
 	return typeof id === "number";
@@ -30,12 +33,17 @@ function isIdentifier(id: unknown | Identifier): id is Identifier {
 /**
  * The tree schema for the identifier primitive
  */
-export const identifierSchema = TypedSchema.tree("identifier", { value: ValueSchema.Number });
+export const identifierSchema = builder.primitive("identifier", ValueSchema.Number);
 
 /**
  * The field schema for fields which contain identifiers (see {@link identifierSchema})
  */
-export const identifierFieldSchema = TypedSchema.field(valueFieldKind, identifierSchema);
+export const identifierFieldSchema = builder.globalField(
+	"identifier",
+	SchemaBuilder.fieldValue(identifierSchema),
+);
+
+export const identifierFieldSchemaLibrary = builder.intoLibrary();
 
 /**
  * The identifier index allows nodes that have a special identifier field to be looked up via a query.
@@ -66,7 +74,7 @@ export class IdentifierIndex<TField extends GlobalFieldKey>
 
 		// TODO: is there a better way to check "the field schema is `identifierFieldSchema`"?
 		{
-			if (fieldSchema.kind.identifier !== identifierFieldSchema.kind.identifier) {
+			if (fieldSchema.kind.identifier !== identifierFieldSchema.schema.kind.identifier) {
 				return false;
 			}
 
@@ -74,7 +82,10 @@ export class IdentifierIndex<TField extends GlobalFieldKey>
 				return false;
 			}
 
-			return compareSets({ a: fieldSchema.types, b: identifierFieldSchema.types });
+			return compareSets({
+				a: fieldSchema.types,
+				b: identifierFieldSchema.schema.types as ReadonlySet<TreeSchemaIdentifier>,
+			});
 		}
 	}
 

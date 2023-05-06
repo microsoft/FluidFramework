@@ -17,6 +17,7 @@ import {
 	ChangeFamilyEditor,
 	makeAnonChange,
 	UndoRedoManager,
+	UndoRedoManagerCommitType,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -656,16 +657,21 @@ function runUnitTestScenario(
 					iNextAck += 1;
 					const changeset = TestChange.mint(knownToLocal, seq);
 					const revision = mintRevisionTag();
-					localCommits.push({
+					const commit: TestCommit = {
 						revision,
 						sessionId: localSessionId,
 						seqNumber: brand(seq),
 						refNumber: brand(localRef),
 						change: changeset,
-					});
+					};
+					localCommits.push(commit);
 					knownToLocal.push(seq);
 					// Local changes should always lead to a delta that is equivalent to the local change.
 					assert.deepEqual(manager.addLocalChange(revision, changeset), asDelta([seq]));
+					manager.localBranchUndoRedoManager.trackCommit(
+						commit,
+						UndoRedoManagerCommitType.Undoable,
+					);
 					break;
 				}
 				case "Ack": {

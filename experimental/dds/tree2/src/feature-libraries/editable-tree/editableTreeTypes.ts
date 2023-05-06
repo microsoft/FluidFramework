@@ -6,12 +6,12 @@
 import {
 	Value,
 	FieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
 	ITreeCursor,
 	UpPath,
 	PathVisitor,
+	NamedTreeSchema,
 } from "../../core";
 import {
 	PrimitiveValue,
@@ -142,7 +142,8 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	readonly [typeSymbol]: TreeSchema;
+	// TODO: update implementation to ensure a NamedTreeSchema is returned, and view schema is used in typed views.
+	readonly [typeSymbol]: NamedTreeSchema;
 
 	/**
 	 * Value stored on this node.
@@ -290,9 +291,9 @@ export interface EditableField
 	// TODO: replace the numeric indexed access with getters and setters if possible.
 	extends MarkedArrayLike<UnwrappedEditableTree> {
 	/**
-	 * The `FieldSchema` of this field.
+	 * The `FieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldSchema;
+	readonly fieldSchema: FieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.
