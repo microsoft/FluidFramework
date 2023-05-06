@@ -57,7 +57,7 @@ export class DocumentContextManager extends EventEmitter {
 			() => this.tail,
 		);
 		this.contexts.add(context);
-		context.addListener("checkpoint", (contextObject, restartOnCheckpointFailure?: boolean) =>
+		context.addListener("checkpoint", (restartOnCheckpointFailure?: boolean) =>
 			this.updateCheckpoint(restartOnCheckpointFailure),
 		);
 		context.addListener("error", (error, errorData: IContextErrorData) =>

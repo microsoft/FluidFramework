@@ -87,7 +87,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
-		this.emit("checkpoint", this, restartOnCheckpointFailure);
+		this.emit("checkpoint", restartOnCheckpointFailure);
 	}
 
 	public error(error: any, errorData: IContextErrorData) {
