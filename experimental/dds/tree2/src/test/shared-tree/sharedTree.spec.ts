@@ -882,8 +882,7 @@ describe("SharedTree", () => {
 			validateTree(tree2, expectedAfterRedo);
 		});
 
-		// TODO: skipped because it fails on a rebasing bug but does verify that the second undo undoes the correct commit
-		it.skip("an insert after another undo has been sequenced", () => {
+		it("an insert after another undo has been sequenced", () => {
 			const value = "42";
 			const value2 = "43";
 			const value3 = "44";
@@ -930,8 +929,8 @@ describe("SharedTree", () => {
 			tree1.redo();
 			provider.processMessages();
 
-			validateTree(tree1, stringToJsonableTree([value3, value3, "A", "B", "C", "D"]));
-			validateTree(tree2, stringToJsonableTree([value3, value3, "A", "B", "C", "D"]));
+			validateTree(tree1, stringToJsonableTree([value3, value3, "A", value, "B", "C", "D"]));
+			validateTree(tree2, stringToJsonableTree([value3, value3, "A", value, "B", "C", "D"]));
 		});
 	});
 

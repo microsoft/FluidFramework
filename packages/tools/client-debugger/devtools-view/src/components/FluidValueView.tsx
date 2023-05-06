@@ -5,7 +5,7 @@
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeItem } from "@fluentui/react-components/unstable";
-import { FluidObjectValueNode } from "@fluid-tools/client-debugger";
+import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
 import { TreeHeader } from "./TreeHeader";
 import { HasLabel } from "./CommonInterfaces";
 

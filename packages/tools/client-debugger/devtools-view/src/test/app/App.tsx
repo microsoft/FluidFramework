@@ -21,7 +21,11 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { DevtoolsLogger, IFluidDevtools, initializeDevtools } from "@fluid-tools/client-debugger";
+import {
+	DevtoolsLogger,
+	IFluidDevtools,
+	initializeDevtools,
+} from "@fluid-experimental/devtools-core";
 
 import {
 	ContainerInfo,

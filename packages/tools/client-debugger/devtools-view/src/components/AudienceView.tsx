@@ -12,7 +12,7 @@ import {
 	HasContainerId,
 	IDevtoolsMessage,
 	InboundHandlers,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { useMessageRelay } from "../MessageRelayContext";
 import { AudienceStateTable } from "./AudienceStateTable";

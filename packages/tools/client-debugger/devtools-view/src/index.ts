@@ -19,4 +19,4 @@
 export { DevtoolsPanel, DevtoolsPanelProps } from "./DevtoolsPanel";
 
 // Convenience re-exports
-export { IMessageRelay } from "@fluid-tools/client-debugger";
+export { IMessageRelay } from "@fluid-experimental/devtools-core";

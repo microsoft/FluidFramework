@@ -1,4 +1,4 @@
-# @fluid-tools/client-debugger
+# @fluid-experimental/devtools-core
 
 This library contains developer tools for use alongside the Fluid Framework.
 It is used to power our associated browser extensions.
@@ -15,7 +15,7 @@ TODO: link to extensions once they are published.
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-tools/client-debugger -D
+npm i @fluid-experimental/devtools-core -D
 ```
 
 <!-- prettier-ignore-end -->
@@ -70,7 +70,7 @@ Next, run `npm run test` from a terminal within this directory.
 
 ## API Documentation
 
-API documentation for **@fluid-tools/client-debugger** is available at <https://fluidframework.com/docs/apis/client-debugger>.
+API documentation for **@fluid-experimental/devtools-core** is available at <https://fluidframework.com/docs/apis/devtools-core>.
 
 <!-- prettier-ignore-end -->
 
