@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDevtoolsMessage } from "@fluid-tools/client-debugger";
+import { ISourcedDevtoolsMessage } from "@fluid-experimental/devtools-core";
 
 /**
- * {@link DevToolsInitMessage} {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage."type"}
+ * {@link DevToolsInitMessage} {@link @fluid-experimental/devtools-core#ISourcedDevtoolsMessage."type"}
  */
 export const devToolsInitMessageType = "initialize-devtools";
 
@@ -31,7 +31,7 @@ export interface DevToolsInitMessage extends ISourcedDevtoolsMessage {
 }
 
 /**
- * {@link DevToolsInitAcknowledgement} {@link @fluid-tools/client-debugger#ISourcedDevtoolsMessage."type"}
+ * {@link DevToolsInitAcknowledgement} {@link @fluid-experimental/devtools-core#ISourcedDevtoolsMessage."type"}
  */
 export const devToolsInitAcknowledgementType = "acknowledge-initialize-devtools";
 
