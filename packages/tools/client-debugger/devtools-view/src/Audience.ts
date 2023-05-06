@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluidframework/protocol-definitions";
-import { AudienceClientMetadata } from "@fluid-tools/client-debugger";
+import { AudienceClientMetadata } from "@fluid-experimental/devtools-core";
 
 /**
  * Represents a single audience user, aggregating their client connections.

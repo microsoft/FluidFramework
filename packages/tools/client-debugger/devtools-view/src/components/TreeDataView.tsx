@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-tools/client-debugger";
+import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-experimental/devtools-core";
 import { FluidHandleView } from "./FluidHandleView";
 import { TreeView } from "./TreeView";
 import { FluidTreeView } from "./FluidTreeView";

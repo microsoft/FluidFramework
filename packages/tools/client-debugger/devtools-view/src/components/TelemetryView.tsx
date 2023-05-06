@@ -31,7 +31,7 @@ import {
 	ITimestampedTelemetryEvent,
 	TelemetryHistory,
 	TelemetryEvent,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 

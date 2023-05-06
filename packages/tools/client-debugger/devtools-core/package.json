@@ -1,13 +1,13 @@
 {
-	"name": "@fluid-tools/client-debugger",
+	"name": "@fluid-experimental/devtools-core",
 	"version": "2.0.0-internal.4.3.0",
 	"private": true,
-	"description": "A library containing a Fluid Client debugging API",
+	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/tools/client-debugger/client-debugger"
+		"directory": "packages/tools/client-debugger/devtools-core"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

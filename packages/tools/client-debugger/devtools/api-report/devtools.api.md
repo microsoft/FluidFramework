@@ -4,10 +4,10 @@
 
 ```ts
 
-import { DevtoolsLogger } from '@fluid-tools/client-debugger';
+import { DevtoolsLogger } from '@fluid-experimental/devtools-core';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
-import { VisualizeSharedObject } from '@fluid-tools/client-debugger';
+import { VisualizeSharedObject } from '@fluid-experimental/devtools-core';
 
 // @public
 export interface ContainerDevtoolsProps {

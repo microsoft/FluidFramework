@@ -4,7 +4,7 @@
  */
 
 import React from "react";
-import { HasContainerId, VisualTreeNode } from "@fluid-tools/client-debugger";
+import { HasContainerId, VisualTreeNode } from "@fluid-experimental/devtools-core";
 import { Tree } from "./Tree";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";

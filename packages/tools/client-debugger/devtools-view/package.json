@@ -49,7 +49,7 @@
 		"@fluentui/react-components": "^9.18.6",
 		"@fluentui/react-hooks": "^8.6.12",
 		"@fluentui/react-icons": "^2.0.199",
-		"@fluid-tools/client-debugger": "workspace:~",
+		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
