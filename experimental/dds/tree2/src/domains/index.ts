@@ -11,7 +11,7 @@ export {
 	jsonNumber,
 	jsonObject,
 	jsonRoot,
-	jsonSchemaData,
+	jsonSchema,
 	jsonString,
 	singleJsonCursor,
 } from "./json";

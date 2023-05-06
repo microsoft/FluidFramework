@@ -47,10 +47,10 @@ import {
 	IdentifierIndex,
 	EditableTree,
 	Identifier,
-	SchemaAware,
 	ForestRepairDataStoreProvider,
 	repairDataStoreFromForest,
 	ModularChangeset,
+	GlobalFieldSchema,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
@@ -228,8 +228,8 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
 }
 
@@ -335,8 +335,8 @@ export class SharedTree
 		});
 	}
 
-	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	public schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
 	}
@@ -501,8 +501,8 @@ export class SharedTreeFork implements ISharedTreeFork {
 		this.branch.redo();
 	}
 
-	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	public schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
 	}
