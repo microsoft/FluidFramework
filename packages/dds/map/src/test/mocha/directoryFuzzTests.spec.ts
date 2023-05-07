@@ -357,11 +357,6 @@ describe("SharedDirectory fuzz", () => {
 
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
-		/**
-		 * TODO: This test suite currently fails with reconnect enabled.
-		 * AB#4064 tracks fixing any eventual consistency issues and enabling this (or a similar model with
-		 * reconnection enabled).
-		 */
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
 		clientJoinOptions: {
