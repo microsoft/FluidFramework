@@ -362,7 +362,7 @@ describe("SharedDirectory fuzz", () => {
 		 * AB#4064 tracks fixing any eventual consistency issues and enabling this (or a similar model with
 		 * reconnection enabled).
 		 */
-		reconnectProbability: 0,
+		reconnectProbability: 0.15,
 		numberOfClients: 3,
 		clientJoinOptions: {
 			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
