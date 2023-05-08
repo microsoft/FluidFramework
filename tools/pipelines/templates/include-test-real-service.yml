@@ -72,9 +72,6 @@ parameters:
   type: stepList
   default: []
 
-variables:
-  - group: ado-feeds
-
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -83,6 +80,7 @@ jobs:
       condition: ${{ parameters.condition }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
+      - group: ado-feeds
       - name: isTestBranch
         value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
         readonly: true

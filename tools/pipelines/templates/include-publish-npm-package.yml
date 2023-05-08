@@ -18,14 +18,13 @@ parameters:
   type: object
   default: Small
 
-variables:
-  - group: ado-feeds
-
 stages:
 - stage: publish_npm_internal_test
   dependsOn: build
   displayName: Publish Internal Test Packages
   condition: and(succeeded(), eq(variables['testBuild'], true))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:

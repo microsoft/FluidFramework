@@ -21,15 +21,13 @@ parameters:
   type: number
   default: 60
 
-variables:
-  - group: ado-feeds
-
 jobs:
   - job: runTests
     displayName: Run tests
     pool: ${{ parameters.poolBuild }}
     timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
     variables:
+    - group: ado-feeds
     - name: isTestBranch
       value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
       readonly: true
