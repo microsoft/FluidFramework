@@ -18,7 +18,7 @@ import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 } from "@fluid-internal/test-dds-utils";
-import { DirectoryFactory, ICreateInfo } from "../../directory";
+import { DirectoryFactory } from "../../directory";
 import { IDirectory } from "../../interfaces";
 
 type FuzzTestState = DDSFuzzTestState<DirectoryFactory>;
