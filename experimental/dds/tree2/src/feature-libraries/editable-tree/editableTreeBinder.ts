@@ -295,7 +295,7 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 				case BindingType.Insert:
 					this.emitter.emit(BindingType.Insert, cmd);
 					break;
-				case "setValue":
+				case BindingType.SetValue:
 					this.emitter.emit(BindingType.SetValue, cmd);
 					break;
 				default:
