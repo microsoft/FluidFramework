@@ -7,7 +7,7 @@ export enum MessageType {
 	/**
 	 * Empty operation message. Used to send an updated reference sequence number.
 	 * Relay service is free to coalesce these messages or fully drop them, if
-	 * another op was used to update MSN to a number equal or higher than referenced
+	 * another message was used to update MSN to a number equal or higher than referenced
 	 * sequence number in Noop.
 	 */
 	NoOp = "noop",
@@ -38,22 +38,22 @@ export enum MessageType {
 	Accept = "accept",
 
 	/**
-	 * Summary operation (op).
+	 * Summary operation (message).
 	 */
 	Summarize = "summarize",
 
 	/**
-	 * Summary operation (op) written.
+	 * Summary operation (message) written.
 	 */
 	SummaryAck = "summaryAck",
 
 	/**
-	 * Summary operation (op) write failure.
+	 * Summary operation (message) write failure.
 	 */
 	SummaryNack = "summaryNack",
 
 	/**
-	 * Operation (op) produced by container runtime.
+	 * Operation (message) produced by container runtime.
 	 */
 	Operation = "op",
 
@@ -150,23 +150,17 @@ export interface IDocumentMessage {
 	/**
 	 * The contents of the message.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	contents: any;
+	contents: unknown;
 
 	/**
 	 * App provided metadata about the operation.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	metadata?: any;
+	metadata?: unknown;
 
 	/**
 	 * Server provided metadata about the operation.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	serverMetadata?: any;
+	serverMetadata?: unknown;
 
 	/**
 	 * Traces related to the packet.
@@ -174,7 +168,7 @@ export interface IDocumentMessage {
 	traces?: ITrace[];
 
 	/**
-	 * The compression algorithm that was used to compress contents of this op.
+	 * The compression algorithm that was used to compress contents of this message.
 	 * @experimental Not ready for use
 	 */
 	compression?: string;
@@ -212,9 +206,11 @@ export interface IBranchOrigin {
  */
 export interface ISequencedDocumentMessage {
 	/**
-	 * The client ID that submitted the delta.
+	 * The client ID that submitted the message.
+	 * For server generated messages the clientId will be null;
 	 */
-	clientId: string;
+	// eslint-disable-next-line @rushstack/no-new-null
+	clientId: string | null;
 
 	/**
 	 * The sequenced identifier.
@@ -244,23 +240,17 @@ export interface ISequencedDocumentMessage {
 	/**
 	 * The contents of the message.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	contents: any;
+	contents: unknown;
 
 	/**
 	 * App provided metadata about the operation.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	metadata?: any;
+	metadata?: unknown;
 
 	/**
 	 * Server provided metadata about the operation.
 	 */
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	serverMetadata?: any;
+	serverMetadata?: unknown;
 
 	/**
 	 * Origin branch information for the message.
@@ -289,7 +279,7 @@ export interface ISequencedDocumentMessage {
 	expHash1?: string;
 
 	/**
-	 * The compression algorithm that was used to compress contents of this op.
+	 * The compression algorithm that was used to compress contents of this message.
 	 * @experimental Not ready for use.
 	 */
 	compression?: string;
@@ -304,13 +294,14 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 }
 
 export interface ISignalMessage {
-	// TODO: Update this to use undefined instead of null.
+	/**
+	 * The client ID that submitted the message.
+	 * For server generated messages the clientId will be null.
+	 */
 	// eslint-disable-next-line @rushstack/no-new-null
 	clientId: string | null;
 
-	// TODO: use `unknown` instead.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	content: any;
+	content: unknown;
 
 	/**
 	 * Counts the number of signals sent by the client
@@ -360,11 +351,11 @@ export interface IServerError {
 }
 
 /**
- * Data about the original proposed summary op.
+ * Data about the original proposed summary message.
  */
 export interface ISummaryProposal {
 	/**
-	 * Actual sequence number of the summary op proposal.
+	 * Actual sequence number of the summary message proposal.
 	 */
 	summarySequenceNumber: number;
 }
@@ -379,7 +370,7 @@ export interface ISummaryAck {
 	handle: string;
 
 	/**
-	 * Information about the proposed summary op.
+	 * Information about the proposed summary message.
 	 */
 	summaryProposal: ISummaryProposal;
 }
@@ -389,13 +380,13 @@ export interface ISummaryAck {
  */
 export interface ISummaryNack {
 	/**
-	 * Information about the proposed summary op.
+	 * Information about the proposed summary message.
 	 */
 	summaryProposal: ISummaryProposal;
 
 	/**
 	 * An error code number that represents the error. It will be a valid HTTP error code.
-	 * 403 errors are non retryable.
+	 * 403 errors are non retriable.
 	 * 400 errors are always immediately retriable.
 	 * 429 errors are retriable or non retriable (depends on type field).
 	 */
@@ -442,7 +433,7 @@ export interface IQueueMessage {
 export interface INackContent {
 	/**
 	 * An error code number that represents the error. It will be a valid HTTP error code.
-	 * 403 errors are non retryable and client should acquire a new identity before reconnection.
+	 * 403 errors are non retriable and client should acquire a new identity before reconnection.
 	 * 400 errors are always immediately retriable
 	 * 429 errors are retriable or non retriable (depends on type field).
 	 */
@@ -467,9 +458,9 @@ export interface INackContent {
 
 /**
  * Type of the Nack.
- * InvalidScopeError: Client's token is not valid for the intended op.
- * ThrottlingError: Retryable after retryAfter number.
- * BadRequestError: Clients op is invalid and should retry immediately with a valid op.
+ * InvalidScopeError: Client's token is not valid for the intended message.
+ * ThrottlingError: Retriable after retryAfter number.
+ * BadRequestError: Clients message is invalid and should retry immediately with a valid message.
  * LimitExceededError: Service is having issues. Client should not retry.
  */
 export enum NackErrorType {

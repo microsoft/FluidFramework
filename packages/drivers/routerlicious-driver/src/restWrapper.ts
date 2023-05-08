@@ -203,7 +203,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 		requestHeaders?: AxiosRequestHeaders | undefined,
 	): Promise<Record<string, string>> {
 		const token = await this.getToken();
-		assert(token !== undefined, "token should be present");
+		assert(token !== undefined, 0x679 /* token should be present */);
 		const correlationId = requestHeaders?.["x-correlation-id"] ?? uuid();
 
 		return {

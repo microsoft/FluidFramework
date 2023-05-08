@@ -3,25 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Named } from "../../../core";
-
 /**
  * Utilities for manipulating types.
  */
-
-/**
- * Assume that `TInput` is a `TAssumeToBe`.
- *
- * @remarks
- * This is useful in generic code when it is impractical (or messy)
- * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
- * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow complication of the generic code.
- * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
- * it will behave like `TInput` was used directly.
- *
- * @alpha
- */
-export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 /**
  * Convert a object type into the type of a ReadonlyMap from field name to value.
@@ -34,22 +18,30 @@ export type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = R
 	get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
 };
 
+// TODO: test + document
+export function objectToMap<
+	ObjectMap extends Record<MapKey, MapValue>,
+	MapKey extends string,
+	MapValue,
+>(objectMap: ObjectMap): ObjectToMap<ObjectMap, MapKey, MapValue> {
+	const map = new Map<MapKey, MapValue>();
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		map.set(key as MapKey, element);
+	}
+	return map as unknown as ObjectToMap<ObjectMap, MapKey, MapValue>;
+}
+
 /**
  * Convert a Array type into the type of ReadonlySet.
  *
  * Same as `keyof ListToKeys<T, unknown>` but work for values that are not valid keys.
+ * @alpha
  */
 export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[]
 	? TValue
 	: never;
-
-/**
- * Takes in a list and returns an object with its members as keys.
- * @alpha
- */
-export type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
-	[key in T[number]]: TValue;
-};
 
 /**
  * Replaces undefined and unknown with a default value.
@@ -62,21 +54,6 @@ export type WithDefault<T, Default> = T extends undefined
 	: unknown extends T
 	? Default
 	: T;
-
-/**
- * Normalize a name or `Named` into the name.
- * @alpha
- */
-export type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
-
-/**
- * Converts list of names or named objects into list of names.
- * @alpha
- */
-export type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<
-	T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNames<Tail, TName>] : [],
-	TName[]
->;
 
 /**
  * Removes a type brand. See {@link brand}.
@@ -135,6 +112,7 @@ export type OptionalFields<T> = [
  * See also `AllowOptional`.
  * @alpha
  */
+// export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
 export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
 
 /**
