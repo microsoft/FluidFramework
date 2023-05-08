@@ -157,7 +157,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		const localSessionId = uuid();
-		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily);
+		const undoRedoManager = UndoRedoManager.create(repairDataStoreProvider, changeFamily);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,

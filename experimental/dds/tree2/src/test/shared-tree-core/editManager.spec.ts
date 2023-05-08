@@ -49,7 +49,7 @@ function editManagerFactory(options: {
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
+	const undoRedoManager = UndoRedoManager.create(new MockRepairDataStoreProvider(), family);
 	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
 		options.sessionId ?? localSessionId,
@@ -344,7 +344,7 @@ describe("EditManager", () => {
 				manager.getLocalBranchHead(),
 				"",
 				defaultChangeFamily,
-				new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily),
+				UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily),
 			);
 			manager.registerBranch(branch);
 			assert.throws(
