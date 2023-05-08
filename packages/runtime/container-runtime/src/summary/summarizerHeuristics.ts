@@ -58,7 +58,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		public lastOpSequenceNumber: number,
 		/** Baseline attempt data used for comparisons with subsequent attempts/calculations. */
 		attemptBaseline: ISummarizeAttempt,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger?: ITelemetryLogger,
 	) {
 		this._lastAttempt = attemptBaseline;
 		this._lastSuccessfulSummary = { ...attemptBaseline };
@@ -79,7 +79,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		this.numRuntimeOpsBefore = this.numRuntimeOps;
 		this.totalOpsSizeBefore = this.totalOpsSize;
 
-		this.logger.sendTelemetryEvent({
+		this.logger?.sendTelemetryEvent({
 			eventName: "SummarizeHeuristicData_recordAttempt",
 			referenceSequenceNumber: this._lastAttempt.refSequenceNumber,
 			numRuntimeOps: this.numRuntimeOps,
@@ -91,7 +91,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 	public markLastAttemptAsSuccessful() {
 		this._lastSuccessfulSummary = { ...this.lastAttempt };
 
-		this.logger.sendTelemetryEvent({
+		this.logger?.sendTelemetryEvent({
 			eventName: "SummarizeHeuristicData_markLastAttemptAsSuccessful",
 			referenceSequenceNumber: this._lastSuccessfulSummary.refSequenceNumber,
 			numRuntimeOps: this.numRuntimeOps,
