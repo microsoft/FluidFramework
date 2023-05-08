@@ -213,7 +213,6 @@ export class DataVisualizerGraph
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction =
-				sharedObject.attributes?.type !== undefined &&
 				this.visualizers[sharedObject.attributes.type] !== undefined
 					? this.visualizers[sharedObject.attributes.type]
 					: visualizeUnknownSharedObject;
