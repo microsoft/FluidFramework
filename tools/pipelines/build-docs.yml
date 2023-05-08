@@ -193,20 +193,9 @@ stages:
           inputs:
             version: 16.x
 
-        - task: Cache@2
-          displayName: Cache pnpm store
-          inputs:
-            key: '"pnpm-store" | "$(Agent.OS)" | $(Build.SourcesDirectory)/docs/pnpm-lock.yaml'
-            path: ${{ variables.pnpmStorePath }}
-
-        - task: Bash@3
-          displayName: Install and configure pnpm
-          inputs:
-            targetType: 'inline'
-            script: |
-              corepack enable
-              pnpm -v
-              pnpm config set store-dir $(pnpmStorePath)
+        - template: include-install-pnpm.yml
+          parameters:
+            buildDirectory: ${{ parameters.buildDirectory }}
 
         - task: Bash@3
           displayName: Install dependencies

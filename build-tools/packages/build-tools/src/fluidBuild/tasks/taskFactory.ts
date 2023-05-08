@@ -8,11 +8,12 @@ import { BuildPackage } from "../buildGraph";
 import { ConcurrentNPMTask } from "./concurrentNpmTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { LeafTask, UnknownLeafTask } from "./leaf/leafTask";
-import { EsLintTask, TsFormatTask, TsLintTask } from "./leaf/lintTasks";
+import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
 	EchoTask,
 	GenVerTask,
+	GoodFence,
 	LesscTask,
 	TypeValidationTask,
 } from "./leaf/miscTasks";
@@ -46,7 +47,6 @@ const executableToLeafTask: {
 	"tsc": TscTask,
 	"tslint": TsLintTask,
 	"eslint": EsLintTask,
-	"tsfmt": TsFormatTask,
 	"webpack": WebpackTask,
 	"parallel-webpack": WebpackTask,
 	"lessc": LesscTask,
@@ -54,6 +54,7 @@ const executableToLeafTask: {
 	"echo": EchoTask,
 	"prettier": PrettierTask,
 	"gen-version": GenVerTask,
+	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,

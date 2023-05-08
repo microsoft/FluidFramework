@@ -35,3 +35,7 @@ The container does the assembly of the implementation packages above, which othe
 The container developer must perform first-time setup when the container is instantiated for the first time.  In this case, we prepare `Coordinate`s and `Constellation`s for the views we'll want to show.
 
 The container developer also has the responsibility of determining how to respond to requests against the `Container`.  In this case, it only responds to a default request (`"/"`) with a composition of several views, using the models it initialized upon its creation.
+
+## TODO
+
+Remove usage of webpack-fluid-loader and relocate to /examples/view-integration

@@ -263,7 +263,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 					newEvent[key] = value;
 					break;
 				case TelemetryDataTag.UserData:
-					// Strip out anything tagged explicitly as PII.
+					// Strip out anything tagged explicitly as UserData.
 					// Alternate strategy would be to hash these props
 					newEvent[key] = "REDACTED (UserData)";
 					break;
