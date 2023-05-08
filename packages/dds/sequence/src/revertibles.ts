@@ -16,7 +16,7 @@ const IntervalEventType = {
 	PROPERTYCHANGED: 3,
 } as const;
 
-export const idMap = new Map<string, string>();
+const idMap = new Map<string, string>();
 
 type IntervalEventType = typeof IntervalEventType[keyof typeof IntervalEventType];
 
@@ -134,8 +134,8 @@ function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.ADD>,
 ) {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
+	const maybeId = revertible.interval.getIntervalId();
+	const id = idMap.get(maybeId) ?? maybeId;
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	string.getIntervalCollection(label).removeIntervalById(id);
 }
@@ -157,8 +157,7 @@ function revertLocalDelete(
 			idMap.set(intervalId, newId);
 		}
 	});
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	idMap.set(intervalId, int.getIntervalId()!);
+	idMap.set(intervalId, int.getIntervalId());
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);
@@ -169,8 +168,8 @@ function revertLocalChange(
 	revertible: TypedRevertible<typeof IntervalEventType.CHANGE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
+	const maybeId = revertible.interval.getIntervalId();
+	const id = idMap.get(maybeId) ?? maybeId;
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	string.getIntervalCollection(label).change(id, start, end);
@@ -184,8 +183,8 @@ function revertLocalPropertyChanged(
 	revertible: TypedRevertible<typeof IntervalEventType.PROPERTYCHANGED>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
+	const maybeId = revertible.interval.getIntervalId();
+	const id = idMap.get(maybeId) ?? maybeId;
 	const newProps = revertible.propertyDeltas;
 	string.getIntervalCollection(label).changeProperties(id, newProps);
 }
