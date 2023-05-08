@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
 import { MapFactory, SharedMap } from "../../map";
+import { assertEquivalentDirectories } from "./directoryFuzzTests.spec";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {
@@ -267,6 +268,84 @@ describe("Reconnection", () => {
 				undefined,
 				"The remote client did not delete sub directory",
 			);
+		});
+
+		it("Test1: Can reach eventual consistency on reconnection", async () => {
+			const subDirName = "subDir";
+
+			const subDir1 = directory1.createSubDirectory(subDirName);
+			containerRuntimeFactory.processAllMessages();
+
+			// This op will not be submitted first as we are going to disconnect the client.
+			subDir1.createSubDirectory(subDirName);
+			containerRuntime1.connected = false;
+
+			directory2.deleteSubDirectory(subDirName);
+			directory2.createSubDirectory(subDirName);
+			containerRuntimeFactory.processAllMessages();
+			// Now client1 rconnects causing it to delete the /subdir, so that the create /subdir/subdir will not be submitted
+			containerRuntime1.connected = true;
+
+			containerRuntimeFactory.processAllMessages();
+			assertEquivalentDirectories(directory1, directory2);
+		});
+
+		it("Test2: Can reach eventual consistency on reconnection", async () => {
+			const subDirName = "subDir";
+			const subDirKey = "testSubDirKey";
+			const subDirValue = "testSubDirValue";
+
+			const subDir1 = directory1.createSubDirectory(subDirName);
+			containerRuntimeFactory.processAllMessages();
+
+			// This op will not be submitted first as we are going to disconnect the client.
+			subDir1.set(subDirKey, subDirValue);
+			containerRuntime1.connected = false;
+
+			directory2.deleteSubDirectory(subDirName);
+			directory2.createSubDirectory(subDirName);
+			containerRuntimeFactory.processAllMessages();
+			// Now client1 rconnects causing it to delete the /subdir, so that the set /subdir/testSubDirKey will not be submitted.
+			containerRuntime1.connected = true;
+
+			containerRuntimeFactory.processAllMessages();
+			assertEquivalentDirectories(directory1, directory2);
+		});
+
+		it("Test3: Can reach eventual consistency on reconnection", async () => {
+			const subDirName = "subDir";
+
+			containerRuntime1.connected = false;
+			const subDir = directory1.createSubDirectory(subDirName);
+			subDir.createSubDirectory(subDirName);
+
+			directory2.createSubDirectory(subDirName);
+			directory2.deleteSubDirectory(subDirName);
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertEquivalentDirectories(directory1, directory2);
+		});
+
+		it("Test4: Can reach eventual consistency on reconnection", async () => {
+			const subDirName1 = "subDir";
+			const subDirName2 = "subDir2";
+
+			containerRuntime1.connected = false;
+			const subDir = directory1.createSubDirectory(subDirName1);
+			subDir.createSubDirectory(subDirName1);
+
+			const subDir1 = directory2.createSubDirectory(subDirName1);
+			subDir1.createSubDirectory(subDirName2);
+			directory2.deleteSubDirectory(subDirName1);
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertEquivalentDirectories(directory1, directory2);
 		});
 	});
 });

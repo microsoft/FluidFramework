@@ -1635,7 +1635,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		localOpMetadata: unknown,
 	): void {
 		this.throwIfDisposed();
-		if (!this.needProcessSubDirectoryOperation(msg, op, local, localOpMetadata)) {
+		if (
+			!(
+				this.isMessageForCurrentInstanceOfSubDirectory(msg) &&
+				this.needProcessSubDirectoryOperation(msg, op, local, localOpMetadata)
+			)
+		) {
 			return;
 		}
 		this.createSubDirectoryCore(op.subdirName, local, msg.sequenceNumber, msg.clientId);

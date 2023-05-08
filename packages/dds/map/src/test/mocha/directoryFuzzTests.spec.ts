@@ -18,7 +18,7 @@ import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 } from "@fluid-internal/test-dds-utils";
-import { DirectoryFactory } from "../../directory";
+import { DirectoryFactory, ICreateInfo } from "../../directory";
 import { IDirectory } from "../../interfaces";
 
 type FuzzTestState = DDSFuzzTestState<DirectoryFactory>;
@@ -294,7 +294,7 @@ function makeReducer(loggingInfo?: LoggingInfo): AsyncReducer<Operation, FuzzTes
 	return withLogging(reducer);
 }
 
-function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
+export function assertEquivalentDirectories(first: IDirectory, second: IDirectory): void {
 	assertEventualConsistencyCore(first.getWorkingDirectory("/"), second.getWorkingDirectory("/"));
 }
 
@@ -333,6 +333,19 @@ function assertEventualConsistencyCore(
 		`Number of subDirectories not same: Number of subdirectory in ` +
 			`first at path ${first.absolutePath}: ${first.countSubDirectory()} and in second` +
 			`at path ${second.absolutePath}: ${second.countSubDirectory()}`,
+	);
+
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const createInfo1: ICreateInfo = first["getSerializableCreateInfo"]();
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	const createInfo2: ICreateInfo = first["getSerializableCreateInfo"]();
+	createInfo1.ccIds.sort();
+	createInfo2.ccIds.sort();
+	assert.strictEqual(createInfo1.csn, createInfo2.csn, "csn should match");
+	assert.strictEqual(
+		createInfo1.ccIds.toString(),
+		createInfo2.ccIds.toString(),
+		"ccids should match",
 	);
 
 	// Check for consistency of subdirectores with both directories.
