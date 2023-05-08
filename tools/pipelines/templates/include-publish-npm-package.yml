@@ -40,6 +40,8 @@ stages:
   dependsOn: build
   displayName: Publish Internal Packages
   condition: and(succeeded(), eq(variables['testBuild'], false))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
@@ -55,6 +57,8 @@ stages:
   dependsOn: build
   displayName: Publish Official Packages
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
