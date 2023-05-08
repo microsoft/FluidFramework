@@ -71,25 +71,7 @@ describe("rebaseBranch", () => {
 		);
 	});
 
-	it("does nothing if already rebased past target", () => {
-		// 1 ─ 2
-		//     └─ 3 ─ 4
-		const n1 = newCommit([], 1);
-		const n2 = newCommit([1], 2, n1);
-		const n3 = newCommit([1, 2], 3, n2);
-		const n4 = newCommit([1, 2, 3], 4, n3);
-
-		// (1)─ 2
-		//      └─ 4 ─ 5
-		const [n4_1, change, commits] = rebaseBranch(new TestChangeRebaser(), n4, n1);
-		assert.equal(n4_1, n4);
-		assert.equal(change, undefined);
-		assert.deepEqual(commits.deletedSourceCommits, []);
-		assert.deepEqual(commits.targetCommits, []);
-		assert.deepEqual(commits.rebasedSourceCommits, []);
-	});
-
-	it("does nothing if already rebased at target", () => {
+	it("does nothing if already rebased onto target", () => {
 		// 1
 		// └─ 2 ─ 3
 		const n1 = newCommit([], 1);
@@ -103,7 +85,7 @@ describe("rebaseBranch", () => {
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, []);
 		assert.deepEqual(commits.targetCommits, []);
-		assert.deepEqual(commits.rebasedSourceCommits, []);
+		assert.deepEqual(commits.sourceCommits, [n2, n3]);
 	});
 
 	it("can rebase a branch onto the head of another branch", () => {
@@ -127,7 +109,7 @@ describe("rebaseBranch", () => {
 		assertOutputContext(change, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
-		assert.deepEqual(commits.rebasedSourceCommits, newPath);
+		assert.deepEqual(commits.sourceCommits, newPath);
 	});
 
 	it("can rebase a branch onto the middle of another branch", () => {
@@ -151,7 +133,7 @@ describe("rebaseBranch", () => {
 		assertOutputContext(change, 1, 2, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n4, n5]);
 		assert.deepEqual(commits.targetCommits, [n2]);
-		assert.deepEqual(commits.rebasedSourceCommits, newPath);
+		assert.deepEqual(commits.sourceCommits, newPath);
 	});
 
 	it("skips and advances over commits with the same revision tag", () => {
@@ -177,7 +159,7 @@ describe("rebaseBranch", () => {
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
-		assert.deepEqual(commits.rebasedSourceCommits, newPath);
+		assert.deepEqual(commits.sourceCommits, newPath);
 	});
 
 	it("correctly rebases over branches that share some commits", () => {
@@ -203,7 +185,7 @@ describe("rebaseBranch", () => {
 		assertOutputContext(change, 1, 2, 3, 4, 5);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1, n5]);
 		assert.deepEqual(commits.targetCommits, [n2, n3, n4]);
-		assert.deepEqual(commits.rebasedSourceCommits, newPath);
+		assert.deepEqual(commits.sourceCommits, newPath);
 	});
 
 	it("reports no change for equivalent branches", () => {
@@ -223,7 +205,7 @@ describe("rebaseBranch", () => {
 		assert.equal(change, undefined);
 		assert.deepEqual(commits.deletedSourceCommits, [n2_1, n3_1]);
 		assert.deepEqual(commits.targetCommits, [n2, n3]);
-		assert.deepEqual(commits.rebasedSourceCommits, []);
+		assert.deepEqual(commits.sourceCommits, []);
 	});
 });
 

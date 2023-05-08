@@ -89,7 +89,6 @@ import {
 	CreateChildSummarizerNodeParam,
 	SummarizeInternalFn,
 	channelsTreeName,
-	IAttachMessage,
 	IDataStore,
 	ITelemetryContext,
 	SerializedIdCompressorWithNoSession,
@@ -97,6 +96,7 @@ import {
 	IIdCompressorCore,
 	IdCreationRange,
 	IdCreationRangeWithStashedState,
+	IAttachMessage,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -1812,23 +1812,18 @@ export class ContainerRuntime
 		this.idCompressor = IdCompressor.deserialize(op.stashedState);
 	}
 
-	private async applyStashedOp(
-		type: ContainerMessageType,
-		op: ISequencedDocumentMessage,
-	): Promise<unknown> {
+	private async applyStashedOp(type: ContainerMessageType, contents: unknown): Promise<unknown> {
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
-				return this.dataStores.applyStashedOp(op);
+				return this.dataStores.applyStashedOp(contents as IEnvelope);
 			case ContainerMessageType.Attach:
-				return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
+				return this.dataStores.applyStashedAttachOp(contents as IAttachMessage);
 			case ContainerMessageType.IdAllocation:
 				assert(
 					this.idCompressor !== undefined,
 					0x67b /* IdCompressor should be defined if enabled */,
 				);
-				return this.applyStashedIdAllocationOp(
-					op as unknown as IdCreationRangeWithStashedState,
-				);
+				return this.applyStashedIdAllocationOp(contents as IdCreationRangeWithStashedState);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;

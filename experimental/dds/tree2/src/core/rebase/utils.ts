@@ -25,25 +25,28 @@ import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
  * Commits D' and E' are the rebased versions of commits D and E, respectively. This results in:
  * deletedSourceCommits: [D, E],
  * targetCommits: [B, C],
- * rebasedSourceCommits: [D', E']
+ * sourceCommits: [D', E']
  * ```
  */
 export interface RebasedCommits<TChange> {
 	/**
 	 * The commits on the original source branch that were rebased. These are no longer referenced by the source branch and have
-	 * been replaced with new versions on the new source branch, see {@link rebasedSourceCommits}.
+	 * been replaced with new versions on the new source branch, see {@link sourceCommits}. In the case that the source
+	 * branch was already ahead of the target branch before the rebase, this list will be empty.
 	 */
 	deletedSourceCommits: GraphCommit<TChange>[];
 	/**
 	 * All commits on the target branch that the source branch's commits were rebased over. These are now the direct
-	 * ancestors of {@link rebasedSourceCommits}.
+	 * ancestors of {@link sourceCommits}. In the case that the source branch was already ahead of the target branch
+	 * before the rebase, this list will be empty.
 	 */
 	targetCommits: GraphCommit<TChange>[];
 	/**
-	 * All commits on the new source branch that are rebases of commits on the original source branch. These are the rebased versions
-	 * of {@link deletedSourceCommits}.
+	 * All commits on the source branch that are not also on the target branch after the rebase operation. In the case that the
+	 * source branch was already ahead of the target branch before the rebase, these are the same commits that were already on
+	 * the source branch before the rebase, otherwise these are the new, rebased versions of {@link deletedSourceCommits}.
 	 */
-	rebasedSourceCommits: GraphCommit<TChange>[];
+	sourceCommits: GraphCommit<TChange>[];
 }
 
 /**
@@ -157,7 +160,7 @@ export function rebaseBranch<TChange>(
 		return [
 			sourceHead,
 			undefined,
-			{ deletedSourceCommits: [], targetCommits: [], rebasedSourceCommits: [] },
+			{ deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
 		];
 	}
 
@@ -195,7 +198,7 @@ export function rebaseBranch<TChange>(
 		}
 	}
 
-	const rebasedSourceCommits: GraphCommit<TChange>[] = [];
+	const sourceCommits: GraphCommit<TChange>[] = [];
 
 	// If all commits that are about to be rebased over on the target branch already comprise the start of the source branch,
 	// are in the same order, and have no other commits interleaving them, then no rebasing needs to occur. Those commits can
@@ -203,17 +206,15 @@ export function rebaseBranch<TChange>(
 	// base commit.
 	if (targetRebasePath.length === 0) {
 		for (const c of sourcePath) {
-			rebasedSourceCommits.push(
-				mintCommit(rebasedSourceCommits[rebasedSourceCommits.length - 1] ?? newBase, c),
-			);
+			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1] ?? newBase, c));
 		}
 		return [
-			rebasedSourceCommits[rebasedSourceCommits.length - 1] ?? newBase,
+			sourceCommits[sourceCommits.length - 1] ?? newBase,
 			undefined,
 			{
 				deletedSourceCommits,
 				targetCommits,
-				rebasedSourceCommits,
+				sourceCommits,
 			},
 		];
 	}
@@ -234,7 +235,7 @@ export function rebaseBranch<TChange>(
 				change,
 				parent: newHead,
 			};
-			rebasedSourceCommits.push(newHead);
+			sourceCommits.push(newHead);
 			targetRebasePath.push({ ...c, change });
 		}
 		inverses.unshift(
@@ -248,7 +249,7 @@ export function rebaseBranch<TChange>(
 		{
 			deletedSourceCommits,
 			targetCommits,
-			rebasedSourceCommits,
+			sourceCommits,
 		},
 	];
 }
