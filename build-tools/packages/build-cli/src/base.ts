@@ -10,7 +10,7 @@ import chalk from "chalk";
 import { Context, GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
 
 import { rootPathFlag } from "./flags";
-import { indentString } from "./lib";
+import { indentString, Repository } from "./lib";
 import { CommandLogger } from "./logging";
 
 /**

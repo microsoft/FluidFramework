@@ -89,7 +89,11 @@ export interface ITenantManager {
 	/**
 	 * Retrieves GitManager instance for the given tenant
 	 */
-	getTenantGitManager(tenantId: string, documentId: string): Promise<IGitManager>;
+	getTenantGitManager(
+		tenantId: string,
+		documentId: string,
+		storageName?: string,
+	): Promise<IGitManager>;
 
 	/**
 	 * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.
@@ -100,4 +104,8 @@ export interface ITenantManager {
 	 * Retrieves the key for the given tenant. This is a privileged op and should be used with care.
 	 */
 	getKey(tenantId: string): Promise<string>;
+}
+
+export interface ITenantConfigManager {
+	getTenantStorageName(tenantId: string): Promise<string>;
 }

@@ -11,9 +11,9 @@ import {
 	symbolIsFieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
+	TreeStoredSchema,
 	lookupTreeSchema,
 	mapCursorFields,
 	CursorLocationType,
@@ -133,7 +133,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return this.cursor.type;
 	}
 
-	public get type(): TreeSchema {
+	public get type(): TreeStoredSchema {
 		return lookupTreeSchema(this.context.schema, this.typeName);
 	}
 
@@ -157,7 +157,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return getFieldKind(this.getFieldSchema(field));
 	}
 
-	public getFieldSchema(field: FieldKey): FieldSchema {
+	public getFieldSchema(field: FieldKey): FieldStoredSchema {
 		return getFieldSchema(field, this.context.schema, this.type);
 	}
 
@@ -198,18 +198,18 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public createField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
 		assert(!this.has(fieldKey), 0x44f /* The field already exists. */);
 		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = this.anchorNode;
+		const path = { parent: this.anchorNode, field: fieldKey };
 		switch (fieldKind.multiplicity) {
 			case Multiplicity.Optional: {
 				assert(
 					!Array.isArray(newContent),
 					0x450 /* Use single cursor to create the optional field */,
 				);
-				this.context.setOptionalField(path, fieldKey, newContent, true);
+				this.context.setOptionalField(path, newContent, true);
 				break;
 			}
 			case Multiplicity.Sequence: {
-				this.context.insertNodes(path, fieldKey, 0, newContent);
+				this.context.insertNodes(path, 0, newContent);
 				break;
 			}
 			case Multiplicity.Value:
@@ -225,15 +225,15 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 	public deleteField(fieldKey: FieldKey): void {
 		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = this.anchorNode;
+		const path = { parent: this.anchorNode, field: fieldKey };
 		switch (fieldKind.multiplicity) {
 			case Multiplicity.Optional: {
-				this.context.setOptionalField(path, fieldKey, undefined, false);
+				this.context.setOptionalField(path, undefined, false);
 				break;
 			}
 			case Multiplicity.Sequence: {
 				const length = this.fieldLength(fieldKey);
-				this.context.deleteNodes(path, fieldKey, 0, length);
+				this.context.deleteNodes(path, 0, length);
 				break;
 			}
 			case Multiplicity.Value:
@@ -248,14 +248,14 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		newContent: undefined | ITreeCursor | ITreeCursor[],
 	): void {
 		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = this.anchorNode;
+		const path = { parent: this.anchorNode, field: fieldKey };
 		switch (fieldKind.multiplicity) {
 			case Multiplicity.Optional: {
 				assert(
 					!Array.isArray(newContent),
 					0x4cd /* It is invalid to replace the optional field using the array data. */,
 				);
-				this.context.setOptionalField(path, fieldKey, newContent, !this.has(fieldKey));
+				this.context.setOptionalField(path, newContent, !this.has(fieldKey));
 				break;
 			}
 			case Multiplicity.Sequence: {
@@ -271,7 +271,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				 * for the desired `replaceField` semantics is not yet avaialble.
 				 */
 				// TODO: update implementation once the low-level editing API is available.
-				this.context.replaceNodes(path, fieldKey, 0, length, newContent);
+				this.context.replaceNodes(path, 0, length, newContent);
 				break;
 			}
 			case Multiplicity.Value: {
@@ -283,7 +283,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 					newContent !== undefined,
 					0x5cd /* It is invalid to replace a value field with undefined */,
 				);
-				this.context.setValueField(path, fieldKey, newContent);
+				this.context.setValueField(path, newContent);
 				break;
 			}
 			default:

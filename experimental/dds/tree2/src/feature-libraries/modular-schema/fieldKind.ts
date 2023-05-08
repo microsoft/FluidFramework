@@ -4,7 +4,7 @@
  */
 
 import {
-	FieldSchema,
+	FieldStoredSchema,
 	FieldKindIdentifier,
 	SchemaPolicy,
 	fieldSchema,
@@ -55,7 +55,7 @@ export class FieldKind<
 		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
 		private readonly allowsTreeSupersetOf: (
 			originalTypes: TreeTypeSet,
-			superset: FieldSchema,
+			superset: FieldStoredSchema,
 		) => boolean,
 		public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 	) {}
@@ -68,7 +68,7 @@ export class FieldKind<
 		policy: FullSchemaPolicy,
 		originalData: SchemaData,
 		originalTypes: TreeTypeSet,
-		superset: FieldSchema,
+		superset: FieldStoredSchema,
 	): boolean {
 		if (isNeverField(policy, originalData, fieldSchema(this, originalTypes))) {
 			return true;

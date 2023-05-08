@@ -57,6 +57,7 @@ import {
 	IExtendClientControlMessageContents,
 	ISequencedSignalClient,
 	IClientManager,
+	ICheckpointService,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -228,6 +229,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private lastSentMSN = 0;
 	private lastHash: string;
 	private lastInstruction: InstructionType | undefined = InstructionType.NoOp;
+	private lastMessageType: string | undefined;
 
 	private activityIdleTimer: any;
 	private readClientIdleTimer: any;
@@ -272,6 +274,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
+		private readonly checkpointService: ICheckpointService,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -335,6 +338,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.documentId,
 			checkpointManager,
 			context,
+			this.checkpointService,
 		);
 
 		// start the activity idle timer when created
@@ -442,6 +446,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 			switch (ticketedMessage.ticketType) {
 				case TicketType.Sequenced: {
+					this.lastMessageType = ticketedMessage.type;
 					if (ticketedMessage.type !== MessageType.ClientLeave) {
 						// Check for idle write clients.
 						this.checkIdleWriteClients(ticketedMessage.timestamp);
@@ -595,7 +600,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.checkpointInfo.rawMessagesSinceCheckpoint++;
 		this.updateCheckpointMessages(rawMessage);
 
-		const checkpointReason = this.getCheckpointReason();
+		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
 		if (checkpointReason !== undefined) {
 			// checkpoint the current up to date state
 			this.checkpoint(checkpointReason);
@@ -1826,7 +1831,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Determines a checkpoint reason based on some heuristics
 	 * @returns a reason when it's time to checkpoint, or undefined if no checkpoint should be made
 	 */
-	private getCheckpointReason(): CheckpointReason | undefined {
+	private getCheckpointReason(messageType: string | undefined): CheckpointReason | undefined {
 		const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
 		if (!checkpointHeuristics.enable) {
 			// always checkpoint since heuristics are disabled
@@ -1849,6 +1854,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			return CheckpointReason.ClearCache;
 		}
 
+		if (this.noActiveClients && messageType === MessageType.NoClient) {
+			return CheckpointReason.NoClients;
+		}
+
 		return undefined;
 	}
 
@@ -1861,10 +1870,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.checkpointInfo.lastCheckpointTime = Date.now();
 		this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
 
-		const checkpointParams = this.generateCheckpoint(reason);
-
 		Promise.all([this.lastSendP, this.lastNoClientP]).then(
 			() => {
+				const checkpointParams = this.generateCheckpoint(reason);
 				if (reason === CheckpointReason.ClearCache) {
 					checkpointParams.clear = true;
 				}

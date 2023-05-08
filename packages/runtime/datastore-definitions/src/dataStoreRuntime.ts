@@ -27,6 +27,7 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
+	IIdCompressor,
 	IInboundSignalMessage,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
@@ -69,6 +70,8 @@ export interface IFluidDataStoreRuntime
 	 * Indicates the attachment state of the data store to a host service.
 	 */
 	readonly attachState: AttachState;
+
+	readonly idCompressor?: IIdCompressor;
 
 	/**
 	 * Returns the channel with the given id

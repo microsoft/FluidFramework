@@ -5,14 +5,7 @@
 import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
-import {
-	AnchorSet,
-	GraphCommit,
-	ITreeCursorSynchronous,
-	RepairDataStore,
-	RevisionTag,
-	UndoRedoManagerCommitType,
-} from "../../core";
+import { AnchorSet, GraphCommit, ITreeCursorSynchronous, RepairDataStore } from "../../core";
 import {
 	defaultChangeFamily,
 	DefaultChangeset,
@@ -48,20 +41,6 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		);
 	}
 
-	public override applyChange(
-		change: DefaultChangeset,
-		revision?: RevisionTag,
-		undoRedoManagerCommitType?: UndoRedoManagerCommitType,
-		skipUndoRedoManagerTracking?: boolean,
-	): GraphCommit<DefaultChangeset> {
-		return super.applyChange(
-			change,
-			revision,
-			undoRedoManagerCommitType,
-			skipUndoRedoManagerTracking,
-		);
-	}
-
 	public override startTransaction(
 		repairStore?: RepairDataStore<ITreeCursorSynchronous> | undefined,
 	): void {
@@ -80,8 +59,8 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		return super.isTransacting();
 	}
 
-	public override createBranch(): SharedTreeBranch<DefaultEditBuilder, ModularChangeset> {
-		return super.createBranch(new MockRepairDataStoreProvider());
+	public override forkBranch(): SharedTreeBranch<DefaultEditBuilder, ModularChangeset> {
+		return super.forkBranch(new MockRepairDataStoreProvider());
 	}
 
 	public override mergeBranch(

@@ -55,6 +55,7 @@ import {
 	ISummaryTreeWithStats,
 	VisibilityState,
 	ITelemetryContext,
+	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -161,6 +162,10 @@ export class FluidDataStoreRuntime
 
 	public get routeContext(): IFluidHandleContext {
 		return this.dataStoreContext.IFluidHandleContext;
+	}
+
+	public get idCompressor(): IIdCompressor | undefined {
+		return this.dataStoreContext.idCompressor;
 	}
 
 	public get IFluidHandleContext() {

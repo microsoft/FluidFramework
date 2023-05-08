@@ -13,6 +13,7 @@ By default, the runtime is configured with a max batch size of `716800` bytes, w
 -   [Introduction](#introduction)
     -   [Compression](#compression)
     -   [Grouped batching](#grouped-batching)
+        -   [Risks](#risks)
     -   [Chunking for compression](#chunking-for-compression)
     -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
     -   [Example configs](#example-configs)
@@ -37,6 +38,18 @@ The `IContainerRuntimeOptions.enableGroupedBatching` option has been added to th
 The purpose for enabling grouped batching on top of compression is that regular compression won't include the empty messages in the chunks. Thus, if we have batches with many messages (i.e. more than 4k), we will go over the batch size limit just on empty op envelopes alone.
 
 See [below](#how-grouped-batching-works) for an example.
+
+### Risks
+
+This option is experimental and should not be enabled yet in production. This option should **ONLY** be enabled after observing that 99.9% of your application sessions contains these changes (runtime version "2.0.0-internal.4.1.0" or later). Containers created with this option may not open in future versions of the framework.
+
+This option will change a couple of expectations around message structure and runtime layer expectations. Only enable this option after testing
+and verifying that the following expectation changes won't have any effects:
+
+-   batch messages observed at the runtime layer will not match messages seen at the loader layer (i.e. grouped form at loader layer, ungrouped form at runtime layer)
+-   messages within the same batch will have the same sequence number
+-   client sequence numbers on batch messages can only be used to order messages with the same sequenceNumber
+-   requires all ops to be processed by runtime layer (version "2.0.0-internal.1.2.0" or later https://github.com/microsoft/FluidFramework/pull/11832)
 
 ## Chunking for compression
 
