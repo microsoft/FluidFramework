@@ -63,7 +63,6 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/devtools": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
-		"@fluid-tools/client-debugger": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/azure-client": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0"
 	},
 	"devDependencies": {

@@ -12,7 +12,7 @@
  * The Devtools will automatically dispose of themselves upon Window unload, but if you would like to close them
  * earlier, call {@link IDevtools.dispose}.
  *
- * To enable visualization of Telemetry data, you may create a {@link @fluid-tools/client-debugger#DevtoolsLogger} and
+ * To enable visualization of Telemetry data, you may create a {@link @fluid-experimental/devtools-core#DevtoolsLogger} and
  * provide it during Devtools initialization.
  *
  * @packageDocumentation
@@ -24,7 +24,7 @@ import {
 	initializeDevtools as initializeDevtoolsBase,
 	DevtoolsLogger,
 	VisualizeSharedObject,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 import { IDisposable } from "@fluidframework/common-definitions";
 import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 
@@ -235,4 +235,4 @@ function mapContainerProps(
 }
 
 // Convenience re-exports
-export { DevtoolsLogger } from "@fluid-tools/client-debugger";
+export { DevtoolsLogger } from "@fluid-experimental/devtools-core";

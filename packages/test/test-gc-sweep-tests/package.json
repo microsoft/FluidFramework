@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-gc-sweep-tests",
-	"version": "2.0.0-internal.4.2.0",
+	"version": "2.0.0-internal.4.3.0",
 	"private": true,
 	"description": "Long running GC Sweep tests",
 	"homepage": "https://fluidframework.com",
@@ -82,7 +82,7 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.16.1",
+		"@fluid-tools/build-cli": "^0.17.0",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
