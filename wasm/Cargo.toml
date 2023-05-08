@@ -1,8 +1,5 @@
 [workspace]
-members = ["./fluid-experimental-wasm-add", "./fluid-experimental-wasm-subtract", "./fluid-wasm"]
-
-[metadata]
-fluid-wasm-packages = ["./fluid-experimental-wasm-add", "./fluid-experimental-wasm-subtract"]
+members = ["./fluid-wasm-add", "./fluid-wasm-subtract", "./fluid-wasm"]
 
 [profile.release]
 debug = true

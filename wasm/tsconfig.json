@@ -1,11 +1,4 @@
 {
-    "compilerOptions": {
-        "target": "ES2015",
-        "module": "CommonJs",
-        "moduleResolution": "node",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
-    }
+	"files": [],
+	"references": [{ "path": "./typescript/arithmetic" }],
 }

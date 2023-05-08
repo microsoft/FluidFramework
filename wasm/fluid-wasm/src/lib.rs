@@ -1,5 +1,5 @@
-use fluid_experimental_wasm_add::add as add_core;
-use fluid_experimental_wasm_subtract::subtract as subtract_core;
+use fluid_wasm_add::add as add_core;
+use fluid_wasm_subtract::subtract as subtract_core;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
