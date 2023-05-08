@@ -68,13 +68,13 @@ export function appendLocalDeleteToRevertibles(
 		startSeg,
 		interval.start.getOffset(),
 		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-		startSeg.properties,
+		undefined,
 	);
 	const endRef = string.createLocalReferencePosition(
 		endSeg,
 		interval.end.getOffset(),
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-		endSeg.properties,
+		undefined,
 	);
 	revertibles.push({
 		event: IntervalEventType.DELETE,
@@ -98,13 +98,13 @@ export function appendLocalChangeToRevertibles(
 		startSeg,
 		previousInterval.start.getOffset(),
 		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-		startSeg.properties,
+		undefined,
 	);
 	const prevEndRef = string.createLocalReferencePosition(
 		endSeg,
 		previousInterval.end.getOffset(),
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-		endSeg.properties,
+		undefined,
 	);
 	revertibles.push({
 		event: IntervalEventType.CHANGE,
