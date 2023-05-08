@@ -10444,7 +10444,7 @@ importers:
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.76.2
 
-  packages/tools/client-debugger/devtools:
+  packages/tools/devtools/devtools:
     specifiers:
       '@fluid-experimental/devtools-core': workspace:~
       '@fluidframework/build-common': ^1.1.0
@@ -10505,7 +10505,7 @@ importers:
       rimraf: 4.4.0
       typescript: 4.5.5
 
-  packages/tools/client-debugger/devtools-browser-extension:
+  packages/tools/devtools/devtools-browser-extension:
     specifiers:
       '@fluentui/react': ^8.96.1
       '@fluid-experimental/devtools-core': workspace:~
@@ -10606,7 +10606,7 @@ importers:
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.76.2
 
-  packages/tools/client-debugger/devtools-core:
+  packages/tools/devtools/devtools-core:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.17.0
@@ -10691,7 +10691,7 @@ importers:
       rimraf: 4.4.0
       typescript: 4.5.5
 
-  packages/tools/client-debugger/devtools-view:
+  packages/tools/devtools/devtools-view:
     specifiers:
       '@fluentui/react': ^8.96.1
       '@fluentui/react-components': ^9.18.6
