@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDevtoolsMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
+import { ISourcedDevtoolsMessage, MessageLoggingOptions } from "@fluid-experimental/devtools-core";
 
 import { TypedPortConnection } from "./TypedPortConnection";
 

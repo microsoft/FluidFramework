@@ -125,3 +125,4 @@ extends:
     - syncpack:deps
     - syncpack:versions
     - prettier
+    - check:versions

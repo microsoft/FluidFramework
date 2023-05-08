@@ -10444,7 +10444,169 @@ importers:
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.76.2
 
-  packages/tools/client-debugger/client-debugger:
+  packages/tools/client-debugger/devtools:
+    specifiers:
+      '@fluid-experimental/devtools-core': workspace:~
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.17.0
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-utils': workspace:~
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@microsoft/api-extractor': ^7.34.4
+      '@types/chai': ^4.0.0
+      '@types/mocha': ^9.1.1
+      chai: ^4.2.0
+      concurrently: ^7.6.0
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      eslint-plugin-chai-expect: ~3.0.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nyc: ^15.1.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      typescript: ~4.5.5
+    dependencies:
+      '@fluid-experimental/devtools-core': link:../devtools-core
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-utils': link:../../../loader/container-utils
+      '@fluidframework/fluid-static': link:../../../framework/fluid-static
+    devDependencies:
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.17.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
+      '@microsoft/api-extractor': 7.34.4
+      '@types/chai': 4.3.4
+      '@types/mocha': 9.1.1
+      chai: 4.3.7
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      nyc: 15.1.0
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      typescript: 4.5.5
+
+  packages/tools/client-debugger/devtools-browser-extension:
+    specifiers:
+      '@fluentui/react': ^8.96.1
+      '@fluid-experimental/devtools-core': workspace:~
+      '@fluid-experimental/devtools-view': workspace:~
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.17.0
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@microsoft/api-extractor': ^7.34.4
+      '@types/chai': ^4.0.0
+      '@types/chrome': 0.0.232
+      '@types/jsdom': ^21.1.1
+      '@types/jsdom-global': ^3.0.4
+      '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.38
+      '@types/proxyquire': ^1.3.28
+      '@types/react': ^17.0.44
+      '@types/react-dom': ^17.0.18
+      '@types/sinon': ^7.0.13
+      '@types/sinon-chrome': ^2.2.11
+      chai: ^4.2.0
+      concurrently: ^7.6.0
+      copy-webpack-plugin: ^11.0.0
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      eslint-plugin-chai-expect: ~3.0.0
+      good-fences: ^1.1.1
+      html-webpack-plugin: ^5.5.0
+      jsdom: ^16.7.0
+      jsdom-global: ^3.0.2
+      mocha: ^10.2.0
+      nyc: ^15.1.0
+      prettier: ~2.6.2
+      proxyquire: ^2.1.3
+      react: ^17.0.1
+      react-dom: ^17.0.1
+      rimraf: ^4.4.0
+      sinon: ^7.4.2
+      sinon-chrome: ^3.0.1
+      start-server-and-test: ^1.11.7
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+      webpack: ^5.76.2
+      webpack-cli: ^4.9.2
+    dependencies:
+      '@fluentui/react': 8.107.0_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluid-experimental/devtools-core': link:../devtools-core
+      '@fluid-experimental/devtools-view': link:../devtools-view
+      '@fluidframework/common-utils': 1.1.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    devDependencies:
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.17.0_gcaeyjp6ykwlupauelnobztche
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
+      '@types/chai': 4.3.4
+      '@types/chrome': 0.0.232
+      '@types/jsdom': 21.1.1
+      '@types/jsdom-global': 3.0.4
+      '@types/mocha': 9.1.1
+      '@types/node': 14.18.38
+      '@types/proxyquire': 1.3.28
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      '@types/sinon': 7.5.2
+      '@types/sinon-chrome': 2.2.11
+      chai: 4.3.7
+      concurrently: 7.6.0
+      copy-webpack-plugin: 11.0.0_webpack@5.76.2
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
+      good-fences: 1.1.2
+      html-webpack-plugin: 5.5.0_webpack@5.76.2
+      jsdom: 16.7.0
+      jsdom-global: 3.0.2_jsdom@16.7.0
+      mocha: 10.2.0
+      nyc: 15.1.0
+      prettier: 2.6.2
+      proxyquire: 2.1.3
+      rimraf: 4.4.0
+      sinon: 7.5.0
+      sinon-chrome: 3.0.1
+      start-server-and-test: 1.14.0
+      ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
+      typescript: 4.5.5
+      webpack: 5.76.2_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_webpack@5.76.2
+
+  packages/tools/client-debugger/devtools-core:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.17.0
@@ -10529,15 +10691,16 @@ importers:
       rimraf: 4.4.0
       typescript: 4.5.5
 
-  packages/tools/client-debugger/client-debugger-view:
+  packages/tools/client-debugger/devtools-view:
     specifiers:
       '@fluentui/react': ^8.96.1
       '@fluentui/react-components': ^9.18.6
       '@fluentui/react-hooks': ^8.6.12
       '@fluentui/react-icons': ^2.0.199
       '@fluid-example/collaborative-textarea': workspace:~
+      '@fluid-experimental/devtools': workspace:~
+      '@fluid-experimental/devtools-core': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
-      '@fluid-tools/client-debugger': workspace:~
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.17.0
       '@fluidframework/cell': workspace:~
@@ -10590,11 +10753,11 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
-      '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react': 8.107.0_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-components': 9.18.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
-      '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-hooks': 8.6.20_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/react-icons': 2.0.199_react@17.0.2
-      '@fluid-tools/client-debugger': link:../client-debugger
+      '@fluid-experimental/devtools-core': link:../devtools-core
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
@@ -10605,6 +10768,7 @@ importers:
       scheduler: 0.20.2
     devDependencies:
       '@fluid-example/collaborative-textarea': link:../../../../examples/apps/collaborative-textarea
+      '@fluid-experimental/devtools': link:../devtools
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.17.0_webpack-cli@4.10.0
@@ -10649,107 +10813,6 @@ importers:
       webpack-cli: 4.10.0_7grl5awahfdjaulopckzaywq64
       webpack-dev-server: 4.6.0_x7pknmm2t3vm5puavzdpmh6qv4
       webpack-merge: 5.8.0
-
-  packages/tools/client-debugger/devtools-browser-extension:
-    specifiers:
-      '@fluentui/react': ^8.96.1
-      '@fluid-tools/client-debugger': workspace:~
-      '@fluid-tools/client-debugger-view': workspace:~
-      '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': ^0.17.0
-      '@fluidframework/common-utils': ^1.1.1
-      '@fluidframework/container-definitions': workspace:~
-      '@fluidframework/container-loader': workspace:~
-      '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@microsoft/api-extractor': ^7.34.4
-      '@types/chai': ^4.0.0
-      '@types/chrome': 0.0.232
-      '@types/jsdom': ^21.1.1
-      '@types/jsdom-global': ^3.0.4
-      '@types/mocha': ^9.1.1
-      '@types/node': ^14.18.38
-      '@types/proxyquire': ^1.3.28
-      '@types/react': ^17.0.44
-      '@types/react-dom': ^17.0.18
-      '@types/sinon': ^7.0.13
-      '@types/sinon-chrome': ^2.2.11
-      chai: ^4.2.0
-      concurrently: ^7.6.0
-      copy-webpack-plugin: ^11.0.0
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.3
-      eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
-      eslint-plugin-chai-expect: ~3.0.0
-      good-fences: ^1.1.1
-      html-webpack-plugin: ^5.5.0
-      jsdom: ^16.7.0
-      jsdom-global: ^3.0.2
-      mocha: ^10.2.0
-      nyc: ^15.1.0
-      prettier: ~2.6.2
-      proxyquire: ^2.1.3
-      react: ^17.0.1
-      react-dom: ^17.0.1
-      rimraf: ^4.4.0
-      sinon: ^7.4.2
-      sinon-chrome: ^3.0.1
-      start-server-and-test: ^1.11.7
-      ts-loader: ^9.3.0
-      typescript: ~4.5.5
-      webpack: ^5.76.2
-      webpack-cli: ^4.9.2
-    dependencies:
-      '@fluentui/react': 8.107.0_74b3ggvk3akyhuq4eydyx3fqim
-      '@fluid-tools/client-debugger': link:../client-debugger
-      '@fluid-tools/client-debugger-view': link:../client-debugger-view
-      '@fluidframework/common-utils': 1.1.1
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
-    devDependencies:
-      '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.17.0_gcaeyjp6ykwlupauelnobztche
-      '@fluidframework/container-definitions': link:../../../common/container-definitions
-      '@fluidframework/container-loader': link:../../../loader/container-loader
-      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
-      '@types/chai': 4.3.4
-      '@types/chrome': 0.0.232
-      '@types/jsdom': 21.1.1
-      '@types/jsdom-global': 3.0.4
-      '@types/mocha': 9.1.1
-      '@types/node': 14.18.38
-      '@types/proxyquire': 1.3.28
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
-      '@types/sinon': 7.5.2
-      '@types/sinon-chrome': 2.2.11
-      chai: 4.3.7
-      concurrently: 7.6.0
-      copy-webpack-plugin: 11.0.0_webpack@5.76.2
-      copyfiles: 2.4.1
-      cross-env: 7.0.3
-      eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
-      eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
-      good-fences: 1.1.2
-      html-webpack-plugin: 5.5.0_webpack@5.76.2
-      jsdom: 16.7.0
-      jsdom-global: 3.0.2_jsdom@16.7.0
-      mocha: 10.2.0
-      nyc: 15.1.0
-      prettier: 2.6.2
-      proxyquire: 2.1.3
-      rimraf: 4.4.0
-      sinon: 7.5.0
-      sinon-chrome: 3.0.1
-      start-server-and-test: 1.14.0
-      ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
-      typescript: 4.5.5
-      webpack: 5.76.2_webpack-cli@4.10.0
-      webpack-cli: 4.10.0_webpack@5.76.2
 
   packages/tools/fetch-tool:
     specifiers:
@@ -11500,7 +11563,7 @@ packages:
     resolution: {integrity: sha512-duORpUiYrEpzKIop6iNbjnwKLAKnJ47csTyRACyEmWj0QdUrm5aqNJGHSSEQSUAvNW0ojX0dOmK9dZduvkfeXA==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.20.2
+      '@babel/types': 7.21.4
 
   /@babel/helper-builder-binary-assignment-operator-visitor/7.18.9:
     resolution: {integrity: sha512-yFQ0YCHoIqarl8BCRwBL8ulYUaZpz3bNsA7oFepAzee+8/+ImtADXNOmO5vJvsPff3qi+hvpkY/NYBTrBQgdNw==}
@@ -11640,7 +11703,7 @@ packages:
     resolution: {integrity: sha512-HP59oD9/fEHQkdcbgFCnbmgH5vIQTJbxh2yf+CdM89/glUNnuzr87Q8GIjGEnOktTROemO0Pe0iPAYbqZuOUiA==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.20.2
+      '@babel/types': 7.21.4
 
   /@babel/helper-plugin-utils/7.10.4:
     resolution: {integrity: sha512-O4KCvQA6lLiMU9l2eawBPMf1xPP8xPfB3iEQw150hOVTqj/rfXz0ThTb4HEzqQfs2Bmo5Ay8BzxfzVtBrr9dVg==}
@@ -11688,13 +11751,13 @@ packages:
     resolution: {integrity: sha512-5y1JYeNKfvnT8sZcK9DVRtpTbGiomYIHviSP3OQWmDPU3DeH4a1ZlT/N2lyQ5P8egjcRaT/Y9aNqUxK0WsnIIg==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.20.2
+      '@babel/types': 7.21.4
 
   /@babel/helper-split-export-declaration/7.18.6:
     resolution: {integrity: sha512-bde1etTx6ZyTmobl9LLMMQsaizFVZrquTEHOqKeQESMKo4PlObf+8+JA25ZsIpZhT/WEd39+vOdLXAFG/nELpA==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/types': 7.20.2
+      '@babel/types': 7.21.4
 
   /@babel/helper-string-parser/7.19.4:
     resolution: {integrity: sha512-nHtDoQcuqFmwYNYPz3Rah5ph2p8PFeFCsZk9A/48dPc/rGocJ5J3hAAZ7pb76VWX3fZKu+uEr/FhH5jLx7umrw==}
@@ -13246,13 +13309,6 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@fluentui/date-time-utilities/8.5.3:
-    resolution: {integrity: sha512-jwbwcJlnerdjENIAfn/YHxl5H2sQruReOMWXWMgmvX0CmcbqsN9VBxBt+E35Tlr4Ds3MbGs60eyfZUIPpaB5RQ==}
-    dependencies:
-      '@fluentui/set-version': 8.2.6
-      tslib: 2.5.0
-    dev: false
-
   /@fluentui/date-time-utilities/8.5.6:
     resolution: {integrity: sha512-BS5EgnB5GFLg4p84GWqCjt6Pbnjnz0RZA94FAfVOYoqHcnjLURZ1BkQuorGdwS7ipaE4AVgNaQsPq90PsAfuXw==}
     dependencies:
@@ -13286,33 +13342,6 @@ packages:
       - react
     dev: false
 
-  /@fluentui/font-icons-mdl2/8.5.5_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-mCyQNGT2axvU2M7+dc0HmwQa9vzE33HXxcz32nZJugliy4lA3H2gIrkEt3xfY80DnzCUWz2Wd9RmComGFrei0g==}
-    dependencies:
-      '@fluentui/set-version': 8.2.6
-      '@fluentui/style-utilities': 8.9.6_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
-      tslib: 2.5.0
-    transitivePeerDependencies:
-      - '@types/react'
-      - react
-    dev: false
-
-  /@fluentui/foundation-legacy/8.2.25_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-yK14cYaviKs7UW8GFB5rR1+2GtLOMzZ71pPw8Od5ilOTYD6VgUTTRZZfUjAidFCJ1+XsocNnzUQXX73q4tSC3Q==}
-    peerDependencies:
-      '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@fluentui/merge-styles': 8.5.7
-      '@fluentui/set-version': 8.2.6
-      '@fluentui/style-utilities': 8.9.6_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
-      '@types/react': 17.0.52
-      react: 17.0.2
-      tslib: 2.5.0
-    dev: false
-
   /@fluentui/foundation-legacy/8.2.33_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-Z1Nl1hmyICAjTwaU2fvIGenzczRfyf0P3oaRniwac4gAa5MidE6QlpAkEcwCka2QEG/qUjcx/cMacDGLN/Dd0A==}
     peerDependencies:
@@ -13344,13 +13373,6 @@ packages:
     resolution: {integrity: sha512-yB+mD96zhFnKyHCJ0AfTjSwA56LJtossToKSZbCEN38X3457TL2v8F9vzTrcO6Ha01n9YLcJ0O5ZgNIKrpP8fg==}
     dependencies:
       '@swc/helpers': 0.4.14
-    dev: false
-
-  /@fluentui/merge-styles/8.5.4:
-    resolution: {integrity: sha512-CeQIEcEgZu0cxqqyhJyTqySXoUL1vXfdWDJ8WMzchaNnhvOvoXISw8xXHpNXUtEn+HgPrcy9mHQwFcAc+jv3Wg==}
-    dependencies:
-      '@fluentui/set-version': 8.2.6
-      tslib: 2.5.0
     dev: false
 
   /@fluentui/merge-styles/8.5.7:
@@ -13742,22 +13764,6 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@fluentui/react-focus/8.8.11_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-RJlytqrdhVC6HqtUKk/SGqOx8IW5S6SxxUbutsto7LZT72wFMBf8VsrxvkfweVrWT2jQp+VkH/c0CHJzzZtztQ==}
-    peerDependencies:
-      '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@fluentui/keyboard-key': 0.4.6
-      '@fluentui/merge-styles': 8.5.7
-      '@fluentui/set-version': 8.2.6
-      '@fluentui/style-utilities': 8.9.6_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
-      '@types/react': 17.0.52
-      react: 17.0.2
-      tslib: 2.5.0
-    dev: false
-
   /@fluentui/react-focus/8.8.19_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-Gswx0aOazRVFJONmcsj5o6SI/ebWQeZyBAlOsdFeSUuK38aRlVy4DbwVQ+5tQ675u3wmf/+Ln2a0xCixOAVvWg==}
     peerDependencies:
@@ -13769,20 +13775,6 @@ packages:
       '@fluentui/set-version': 8.2.6
       '@fluentui/style-utilities': 8.9.6_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
-      '@types/react': 17.0.52
-      react: 17.0.2
-      tslib: 2.5.0
-    dev: false
-
-  /@fluentui/react-hooks/8.6.14_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-mM2bW7xIRGGx7thBXKDR64SaZB1tYwICdM9qpM/Jfiu0H+VPQhhhtMPJ+ImmG+DM8MxX9n5Su8ePo2QWtz9mYA==}
-    peerDependencies:
-      '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@fluentui/react-window-provider': 2.2.4_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/set-version': 8.2.3
-      '@fluentui/utilities': 8.13.4_q5o373oqrklnndq2vhekyuzhxi
       '@types/react': 17.0.52
       react: 17.0.2
       tslib: 2.5.0
@@ -14014,17 +14006,6 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       scheduler: 0.20.2
-    dev: false
-
-  /@fluentui/react-portal-compat-context/9.0.4_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-qw2lmkxZ2TmgC0pB2dvFyrzVffxBdpCx1BdWRaF+MRGUlTxRtqfybSx3Edsqa6NMewc3J0ThLMFdVFBQ5Yafqw==}
-    peerDependencies:
-      '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@types/react': 17.0.52
-      react: 17.0.2
-      tslib: 2.5.0
     dev: false
 
   /@fluentui/react-portal-compat-context/9.0.5_q5o373oqrklnndq2vhekyuzhxi:
@@ -14540,18 +14521,6 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@fluentui/react-window-provider/2.2.4_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-tCiIGQSILSipcn8DwwRgYq5IMtwBKiSQ+/cVRNq54cJZoq5ie/kMGFpldZ+vREDbM8wjmO3eNgNi63A3QRx39g==}
-    peerDependencies:
-      '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@fluentui/set-version': 8.2.6
-      '@types/react': 17.0.52
-      react: 17.0.2
-      tslib: 2.5.0
-    dev: false
-
   /@fluentui/react-window-provider/2.2.9_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-BRa23ITjwUgewS9ynzCnW2bJIgaNHwhPUY0htLKcYSSv3fG7iib91B6FVC7QqmXDBTia00kqVul1TZz5G0qrlQ==}
     peerDependencies:
@@ -14561,34 +14530,6 @@ packages:
       '@fluentui/set-version': 8.2.6
       '@types/react': 17.0.52
       react: 17.0.2
-      tslib: 2.5.0
-    dev: false
-
-  /@fluentui/react/8.104.3_74b3ggvk3akyhuq4eydyx3fqim:
-    resolution: {integrity: sha512-XazBjhStkMSDG9tUwX105fEoi7Tl0HcZQCNfqoZUBcXMGHa9DJ/GdiMPPC5DQD5G2bk22XgmXZtVSXE3BHaBmQ==}
-    peerDependencies:
-      '@types/react': '>=16.8.0 <19.0.0'
-      '@types/react-dom': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@fluentui/date-time-utilities': 8.5.3
-      '@fluentui/font-icons-mdl2': 8.5.5_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/foundation-legacy': 8.2.25_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/merge-styles': 8.5.4
-      '@fluentui/react-focus': 8.8.11_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/react-portal-compat-context': 9.0.4_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/react-window-provider': 2.2.4_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/set-version': 8.2.3
-      '@fluentui/style-utilities': 8.8.4_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/theme': 2.6.20_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/utilities': 8.13.4_q5o373oqrklnndq2vhekyuzhxi
-      '@microsoft/load-themed-styles': 1.10.295
-      '@types/react': 17.0.52
-      '@types/react-dom': 17.0.18
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
       tslib: 2.5.0
     dev: false
 
@@ -14620,30 +14561,10 @@ packages:
       tslib: 2.5.0
     dev: false
 
-  /@fluentui/set-version/8.2.3:
-    resolution: {integrity: sha512-/+5vrI1Bq/ZsNDEK9++RClnDOeCILS8RXxZb7OAqmOc8GnPScxKcIN8e/1bosUxTjb2EB1KbVk6XeUpk0WvQIg==}
-    dependencies:
-      tslib: 2.5.0
-    dev: false
-
   /@fluentui/set-version/8.2.6:
     resolution: {integrity: sha512-zXIfscQ1ZAiEpHc5taMrDEtTP2NtPBGlz2HbOpZiQ3aj/xcnUT7nT73ctb+Q2bHIqlDCHEaFRQxy/HG6koGYAA==}
     dependencies:
       tslib: 2.5.0
-    dev: false
-
-  /@fluentui/style-utilities/8.8.4_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-Zu7ddNd9p3rQbeHijCWfMzjCt6aWqpr02HNj8qRa8egGuzb5zmVoOXHiuYcJIbHpMvK+TNCbRK1HjUKkHHCusw==}
-    dependencies:
-      '@fluentui/merge-styles': 8.5.7
-      '@fluentui/set-version': 8.2.6
-      '@fluentui/theme': 2.6.25_q5o373oqrklnndq2vhekyuzhxi
-      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
-      '@microsoft/load-themed-styles': 1.10.295
-      tslib: 2.5.0
-    transitivePeerDependencies:
-      - '@types/react'
-      - react
     dev: false
 
   /@fluentui/style-utilities/8.9.6_q5o373oqrklnndq2vhekyuzhxi:
@@ -14678,20 +14599,6 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@fluentui/theme/2.6.20_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-nJbKBx676hqV7e0RWDSavleIZ0ixrIP2/lOcD651PItLogpe1IexlH6LbMIhNI56BfKmDttE+MYEzELK7ORr/w==}
-    peerDependencies:
-      '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@fluentui/merge-styles': 8.5.7
-      '@fluentui/set-version': 8.2.6
-      '@fluentui/utilities': 8.13.9_q5o373oqrklnndq2vhekyuzhxi
-      '@types/react': 17.0.52
-      react: 17.0.2
-      tslib: 2.5.0
-    dev: false
-
   /@fluentui/theme/2.6.25_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-slp+Tk+FEDj6HtZNWzckEMPLZMYfe2bECz4hLj/aq2ok51f2ztVTM8rjjmiJjOAidcTirF/gdYVbayc/5MOKag==}
     peerDependencies:
@@ -14710,20 +14617,6 @@ packages:
     resolution: {integrity: sha512-fzA4O2XTUqvMGW6H2Lny97uRRfO6CThEn8Vz1J1P8s6KIoSJOewUday5+2SCgJ2qA8xBtkXuaURy17IJjTGKDw==}
     dependencies:
       '@swc/helpers': 0.4.14
-    dev: false
-
-  /@fluentui/utilities/8.13.4_q5o373oqrklnndq2vhekyuzhxi:
-    resolution: {integrity: sha512-oJ6q8BvVdr0eEG5RgI/VBtKX2JvJV2h0AUkR7FwZoT8fvUUH/iykPZO/5CAVcQDyiXj73hmBibiEGkWNFFuPfw==}
-    peerDependencies:
-      '@types/react': '>=16.8.0 <19.0.0'
-      react: '>=16.8.0 <19.0.0 || 17.0.2'
-    dependencies:
-      '@fluentui/dom-utilities': 2.2.6
-      '@fluentui/merge-styles': 8.5.7
-      '@fluentui/set-version': 8.2.6
-      '@types/react': 17.0.52
-      react: 17.0.2
-      tslib: 2.5.0
     dev: false
 
   /@fluentui/utilities/8.13.9_q5o373oqrklnndq2vhekyuzhxi:
@@ -22136,7 +22029,7 @@ packages:
     resolution: {integrity: sha512-P6iIPyYQ+qH8CvGauAqanhVnjrnRe0IZFSYCeGkSRW9q3u8bdVn2NPI+lasFyVsEQn1J/IFmp5Aax41+dAP9wg==}
     engines: {node: '>=12'}
     dependencies:
-      '@babel/code-frame': 7.18.6
+      '@babel/code-frame': 7.21.4
       '@babel/runtime': 7.21.0
       '@types/aria-query': 5.0.1
       aria-query: 5.1.3
