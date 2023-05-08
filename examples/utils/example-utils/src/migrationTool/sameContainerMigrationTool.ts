@@ -78,11 +78,36 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	};
 
 	private readonly stopCollaboration = () => {
-		// TODO Also force the container to go silent and kill summarizers
+		// TODO Actually force the container to go silent and kill summarizers
 		this.emit("stoppingCollaboration");
 	};
 
-	private readonly ensureV1Summary = () => {};
+	private readonly ensureV1Summary = async () => {
+		// TODO: Start by awaiting connected?
+		// If someone else finishes this while the local client is still working on it, the local
+		// client should immediately abort this step and move on to the next one.
+		// TODO: actual implementation
+		const generateV1Summary = async () => {
+			// TODO: retry also
+			this.emit("generatingV1Summary");
+			return "v1Summary";
+		};
+		const uploadV1Summary = async (_v1Summary) => {
+			// Do upload of v1Summary
+			// TODO: Retry also
+			this.emit("uploadingV1Summary");
+			console.log(_v1Summary);
+			return "v1SummaryHandle";
+		};
+		const submitV1Summary = async (_v1SummaryHandle) => {
+			// Submit summarize op for v1Summary
+			this.emit("submittingV1Summary");
+			// TODO: Retry also
+		};
+		const v1Summary = await generateV1Summary();
+		const v1SummaryHandle = await uploadV1Summary(v1Summary);
+		await submitV1Summary(v1SummaryHandle);
+	};
 
 	protected async initializingFirstTime() {
 		const pactMap = PactMap.create(this.runtime);
@@ -90,25 +115,72 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	}
 
 	protected async hasInitialized() {
-		// TODO: First figure out what state we're in probably?
-
 		const pactMapHandle = this.root.get<IFluidHandle<IPactMap<string>>>(pactMapKey);
 		this._pactMap = await pactMapHandle?.get();
 
-		this.pactMap.on("pending", (key: string) => {
-			if (key === newVersionKey) {
-				this.stopCollaboration();
-			}
-		});
+		// TODO real error handling
+		this.overseeMigration().catch(console.error);
+	}
 
-		this.pactMap.on("accepted", (key: string) => {
-			if (key === newVersionKey) {
-				// TODO Here also do the final v1 summarization
-				this.ensureV1Summary();
-				// After summarization completes need another state transition
-				this.emit("migrating");
-			}
-		});
+	private async overseeMigration() {
+		// TODO: First figure out what state we're in probably?  Wait for first connected state?
+		// All of this runs before processing the incoming ops (we'll just have the snapshot loaded here).
+		// Maybe don't need to deduce it or do anything special as long as all the "taking action" steps have
+		// guards to wait for connected state.
+
+		// If no proposal has been accepted or is pending, we wait for the proposal to be made.
+		// The proposal will be set by someone calling proposeVersion().
+		if (
+			this.pactMap.get(newVersionKey) === undefined &&
+			this.pactMap.getPending(newVersionKey) === undefined
+		) {
+			await new Promise<void>((resolve) => {
+				const watchForPending = (key: string) => {
+					if (key === newVersionKey) {
+						this.pactMap.off("pending", watchForPending);
+						resolve();
+					}
+				};
+				this.pactMap.on("pending", watchForPending);
+			});
+		}
+
+		// Once we get here the proposal is either pending or accepted.
+		// This could either be that the snapshot already had the proposal in one of these states (so we
+		// didn't need to wait above), or we encountered a proposal op during catchup or normal operation.
+		// In response, we need to stop normal collaboration and summarization.
+		this.stopCollaboration();
+
+		if (this.pactMap.get(newVersionKey) === undefined) {
+			await new Promise<void>((resolve) => {
+				const watchForAccepted = (key: string) => {
+					if (key === newVersionKey) {
+						this.pactMap.off("accepted", watchForAccepted);
+						resolve();
+					}
+				};
+				this.pactMap.on("accepted", watchForAccepted);
+			});
+		}
+
+		// Once we get here the proposal is accepted (either from the snapshot or from an op).
+		// In response, we need to ensure the final v1 summary is taken.
+		await this.ensureV1Summary();
+		this.emit("migrating");
+
+		// on("v1SummaryAck", proposeQuorumCodeDetails)
+
+		// on("quorumDetailsAccepted", waitForV2ProposalCompletion)
+
+		// Can watch container.on("codeDetailsProposed", (, proposal) => { proposal.sequenceNumber })
+		// This will let us learn the sequence number of each proposal that comes in.
+		// Unfortunately no event on proposal acceptance (from the container) but we can still watch the MSN
+		// ourselves to know when we're done processing them.
+		// on("v2ProposalCompletion", this.emit("readyForMigration"))
+
+		// Here we're going to be waiting for the finalize step, but then more event listeners
+
+		// on("v2summaryAck", this.emit("migrated"))
 
 		// These states are purely the ones that can be detected in the data/opstream, one-way transition.
 		// Should also do states for the runtime bits like submitting the v2 summary?

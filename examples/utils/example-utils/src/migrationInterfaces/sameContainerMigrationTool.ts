@@ -40,6 +40,7 @@ export type SameContainerMigrationState =
 	| "submittingV2Summary"
 	| "migrated";
 
+// TODO: Consider whether these should be after-the-fact events (collaborationStopped)
 export interface ISameContainerMigrationToolEvents extends IEvent {
 	(
 		event:
