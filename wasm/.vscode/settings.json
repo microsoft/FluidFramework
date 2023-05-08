@@ -1,0 +1,10 @@
+{
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "rust-analyzer.cargo.features": "all",
+  "rust-analyzer.debug.engine": "vadimcn.vscode-lldb"
+}

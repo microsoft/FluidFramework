@@ -1,3 +1,5 @@
 target/
 web-packages/**/bundler/**
 web-packages/**/nodejs/**
+**/_api-extractor-temp/**
+**/dist/**
