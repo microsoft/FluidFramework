@@ -2,19 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { Package } from "@fluidframework/build-tools";
+import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
 import humanId from "human-id";
-import inquirer from "inquirer";
-import CheckboxPlusPrompt from "inquirer-checkbox-plus-prompt";
+import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import prompts from "prompts-ncu";
+import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
-import { Repository } from "../../lib";
-import { Package } from "@fluidframework/build-tools";
-import { VersionBumpType } from "@fluid-tools/version-tools";
-import { writeFile } from "node:fs/promises";
+import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
 
 const DEFAULT_BRANCH = "main";
 const INSTRUCTIONS = `
@@ -23,20 +21,19 @@ Space: Toggle selection
 a: Toggle all
 Enter: Done`;
 
-inquirer.registerPrompt("checkbox-plus", CheckboxPlusPrompt);
-
 const excludedScopes = new Set(["@fluid-example", "@fluid-internal", "@fluid-test"]);
 
 interface Choice {
 	title: string;
+	value?: Package;
 	disabled?: boolean;
 	selected?: boolean;
 	heading?: boolean;
-	value?: string;
 }
 
 export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
 	static summary = `Generates a new changeset file.`;
+	static enableJsonFlag = true;
 
 	static flags = {
 		branch: Flags.string({
@@ -50,35 +47,56 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		}),
 		all: Flags.boolean({
 			description: `Include ALL packages, including examples.`,
+			default: false,
+		}),
+		uiMode: Flags.string({
+			description: `Controls the mode in which the interactive UI is displayed. The 'default' mode includes an autocomplete filter to narrow the list of packages. The 'simple' mode does not include the autocomplete filter, but has better UI that may display better in some terminal configurations. This flag is experimental and may change or be removed at any time.`,
+			default: "default",
+			options: ["default", "simple"],
+			helpGroup: "EXPERIMENTAL",
 		}),
 		...BaseCommand.flags,
 	};
 
 	static examples = [
-		// {
-		// 	description: "Check if a changeset was added when compared to the 'main' branch.",
-		// 	command: "<%= config.bin %> <%= command.id %> -b main",
-		// },
-		// {
-		// 	description: "Check if a changeset was added when compared to the 'next' branch.",
-		// 	command: "<%= config.bin %> <%= command.id %> -b next",
-		// },
+		{
+			description: "Create an empty changeset.",
+			command: "<%= config.bin %> <%= command.id %> --empty",
+		},
+		{
+			description: `Create a changeset interactively. Any packages edited relative to the '${DEFAULT_BRANCH}' branch will be selected by default.`,
+			command: "<%= config.bin %> <%= command.id %>",
+		},
+		{
+			description: `You can select packages relative to a different branch using --branch.`,
+			command: "<%= config.bin %> <%= command.id %> --branch next",
+		},
+		{
+			description: `By default example and private packages are excluded, but they can be included with --all.`,
+			command: "<%= config.bin %> <%= command.id %> --all",
+		},
 	];
 
-	public async run(): Promise<void> {
+	public async run(): Promise<{
+		branch: string;
+		selectedPackages: string[];
+		changesetPath?: string;
+	}> {
 		const context = await this.getContext();
-		const { branch, empty } = this.flags;
+		const { all, branch, empty, uiMode } = this.flags;
 
 		if (empty) {
 			// TODO: This only works for the root release group (client). Is that OK?
 			const emptyFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
+			// eslint-disable-next-line @typescript-eslint/no-shadow
+			const changesetPath = path.relative(context.gitRepo.resolvedRoot, emptyFile);
 			this.logHr();
-			this.log(
-				`Created empty changeset: ${chalk.green(
-					path.relative(context.gitRepo.resolvedRoot, emptyFile),
-				)}`,
-			);
-			this.exit(0);
+			this.log(`Created empty changeset: ${chalk.green(changesetPath)}`);
+			return {
+				branch,
+				selectedPackages: [],
+				changesetPath,
+			};
 		}
 
 		const repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
@@ -122,7 +140,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			choices.push(
 				{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 				...rg.packages
-					.filter((pkg) => isIncludedByDefault(pkg))
+					.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
 					.sort((a, b) =>
 						a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
 					)
@@ -132,7 +150,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 							title: changed
 								? `${pkg.nameColored} ${chalk.red.bold("(changed)")}`
 								: pkg.name,
-							value: pkg.name,
+							value: pkg,
 							selected: changed,
 						};
 					}),
@@ -141,13 +159,13 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 
 		choices.push({ title: chalk.bold("Independent Packages"), heading: true, disabled: true });
 		for (const pkg of context.independentPackages) {
-			if (!isIncludedByDefault(pkg)) {
+			if (!all && !isIncludedByDefault(pkg)) {
 				continue;
 			}
 			const changed = changedPackages.some((cp) => cp.name === pkg.name);
 			choices.push({
 				title: changed ? `${pkg.nameColored} ${chalk.red.bold("(changed)")}` : pkg.name,
-				value: pkg.name,
+				value: pkg,
 				selected: changed,
 			});
 		}
@@ -157,14 +175,14 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				choices.push(
 					{ title: `${chalk.bold(rg.kind)}`, heading: true, disabled: true },
 					...rg.packages
-						.filter((pkg) => isIncludedByDefault(pkg))
+						.filter((pkg) => (all ? true : isIncludedByDefault(pkg)))
 						.sort((a, b) =>
 							a.nameUnscoped < b.nameUnscoped ? -1 : a.name === b.name ? 0 : 1,
 						)
 						.map((pkg) => {
 							return {
 								title: pkg.name,
-								value: pkg.name,
+								value: pkg,
 								selected: false,
 							};
 						}),
@@ -182,7 +200,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			message: "Choose which packages to include in the changeset. Type to filter the list.",
 			name: "selectedPackages",
 			optionsPerPage: 10,
-			type: "autocompleteMultiselect",
+			type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
 			onState: (state: any) => {
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 				if (state.aborted) {
@@ -191,18 +209,21 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			},
 		});
 
-		const selectedPackages: string[] = response.selectedPackages;
+		const selectedPackages: Package[] = response.selectedPackages;
+		const bumpType = getDefaultBumpTypeForBranch(branch) ?? "minor";
 
-		this.log(`RESPONSE: ${JSON.stringify(selectedPackages)}`);
-
-		const newFile = await createChangesetFile(context.gitRepo.resolvedRoot, new Map());
-		this.logHr();
-		this.log(
-			`Created empty changeset: ${chalk.green(
-				path.relative(context.gitRepo.resolvedRoot, newFile),
-			)}`,
+		const newFile = await createChangesetFile(
+			context.gitRepo.resolvedRoot,
+			new Map(selectedPackages.map((p) => [p, bumpType])),
 		);
-		this.exit(0);
+		const changesetPath = path.relative(context.gitRepo.resolvedRoot, newFile);
+		this.logHr();
+		this.log(`Created new changeset: ${chalk.green(changesetPath)}`);
+		return {
+			branch,
+			selectedPackages: selectedPackages.map((p) => p.name),
+			changesetPath,
+		};
 	}
 }
 
@@ -218,7 +239,10 @@ async function createChangesetFile(
 	return changesetPath;
 }
 
-async function createChangesetContent(packages: Map<Package, VersionBumpType>, body?: string) {
+async function createChangesetContent(
+	packages: Map<Package, VersionBumpType>,
+	body?: string,
+): Promise<string> {
 	const lines: string[] = ["---"];
 	for (const [pkg, bump] of packages.entries()) {
 		lines.push(`"${pkg.name}": ${bump}`);
@@ -229,7 +253,7 @@ async function createChangesetContent(packages: Map<Package, VersionBumpType>, b
 	return changesetContents;
 }
 
-function isIncludedByDefault(pkg: Package) {
+function isIncludedByDefault(pkg: Package): boolean {
 	if (pkg.packageJson.private === true || excludedScopes.has(pkg.scope)) {
 		return false;
 	}
