@@ -28,6 +28,11 @@ export { BasicRestWrapper, RestWrapper } from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
 export { canRead, canSummarize, canWrite, canRevokeToken } from "./scopes";
 export {
+	getQuorumTreeEntries,
+	mergeAppAndProtocolTree,
+	generateServiceProtocolEntries,
+} from "./scribeHelper";
+export {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,
 	IGitCache,

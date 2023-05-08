@@ -8,7 +8,6 @@ import * as git from '@fluidframework/gitresources';
 import { IAttachment } from '@fluidframework/protocol-definitions';
 import { IBlob } from '@fluidframework/protocol-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
-import { ICreateTreeEntry } from '@fluidframework/gitresources';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IProcessMessageResult } from '@fluidframework/protocol-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
@@ -22,8 +21,6 @@ import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions'
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
-import { ITree as ITree_2 } from '@fluidframework/gitresources';
-import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
@@ -61,17 +58,11 @@ export class BlobTreeEntry {
 // @public
 export function buildHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
-// @public (undocumented)
-export function generateServiceProtocolEntries(deli: string, scribe: string): ITreeEntry[];
-
 // @public
 export function getGitMode(value: SummaryObject): string;
 
 // @public
 export function getGitType(value: SummaryObject): "blob" | "tree";
-
-// @public (undocumented)
-export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
 // @public (undocumented)
 export interface ILocalSequencedClient extends ISequencedClient {
@@ -125,9 +116,6 @@ export const isServiceMessageType: (type: string) => boolean;
 
 // @public (undocumented)
 export function isSystemMessage(message: ISequencedDocumentMessage): boolean;
-
-// @public (undocumented)
-export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: ITree_2): ICreateTreeEntry[];
 
 // @public
 export class ProtocolOpHandler implements IProtocolHandler {
