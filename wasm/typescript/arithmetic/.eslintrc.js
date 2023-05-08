@@ -7,6 +7,7 @@ module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		tsconfigRootDir: __dirname,
 	},
 	rules: {
 		"@typescript-eslint/no-shadow": "off",
@@ -15,7 +16,7 @@ module.exports = {
 	},
 	overrides: [
 		{
-			files: ["./typescript/**/src/test/**"],
+			files: ["./**/src/test/**"],
 			rules: {
 				"import/no-nodejs-modules": "off",
 			},
