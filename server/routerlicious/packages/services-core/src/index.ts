@@ -41,7 +41,6 @@ export {
 	IDocumentStorage,
 	IScribe,
 } from "./document";
-export { IDocumentDeleteService } from "./documentDelete";
 export { IDocumentManager } from "./documentManager";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
 export {

@@ -23,7 +23,7 @@ import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
-import { DeltaService, StorageNameAllocator, DocumentDeleteService } from "./services";
+import { DeltaService, StorageNameAllocator, IDocumentDeleteService, DocumentDeleteService } from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
@@ -101,7 +101,7 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public metricClientConfig: any,
 		public documentRepository: core.IDocumentRepository,
-		public documentDeleteService: core.IDocumentDeleteService,
+		public documentDeleteService: IDocumentDeleteService,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,

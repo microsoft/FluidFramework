@@ -16,7 +16,7 @@ export {
 	respondWithNetworkError,
 	validateTokenClaims,
 	verifyStorageToken,
-	validateTokenClaimsScopes,
+	validateTokenScopeClaims,
 } from "./auth";
 export { parseBoolean } from "./conversion";
 export { deleteSummarizedOps } from "./deleteSummarizedOps";

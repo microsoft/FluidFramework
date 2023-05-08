@@ -11,13 +11,13 @@ import {
 	IThrottler,
 	ICache,
 	IDocumentRepository,
-	IDocumentDeleteService,
 	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import * as api from "./api";
+import { IDocumentDeleteService } from "../services";
 
 export interface IRoutes {
 	agent: Router;

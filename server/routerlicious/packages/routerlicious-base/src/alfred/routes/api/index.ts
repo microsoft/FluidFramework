@@ -8,7 +8,6 @@ import {
 	IDeltaService,
 	IDocumentRepository,
 	IDocumentStorage,
-	IDocumentDeleteService,
 	IProducer,
 	ITenantManager,
 	IThrottler,
@@ -21,6 +20,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
+import { IDocumentDeleteService } from "../../services";
 
 export function create(
 	config: Provider,

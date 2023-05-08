@@ -12,7 +12,6 @@ import {
 	ICache,
 	IDocumentRepository,
 	ITokenRevocationManager,
-	IDocumentDeleteService,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -29,6 +28,7 @@ import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
+import { IDocumentDeleteService } from "../alfred/services";
 
 export function create(
 	config: Provider,

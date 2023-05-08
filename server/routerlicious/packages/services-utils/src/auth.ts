@@ -249,7 +249,7 @@ export function verifyStorageToken(
 	};
 }
 
-export function validateTokenClaimsScopes(expectedScopes: string): RequestHandler {
+export function validateTokenScopeClaims(expectedScopes: string): RequestHandler {
 	return async (request, response, next) => {
 		let token: string = "";
 		try {

@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentDeleteService } from "@fluidframework/server-services-core";
-import { NonImplementedError } from "@fluidframework/server-services-client";
+import { NetworkError } from "@fluidframework/server-services-client";
+
+export interface IDocumentDeleteService {
+	deleteDocument(tenantId: string, documentId: string): Promise<void>;
+}
 
 export class DocumentDeleteService implements IDocumentDeleteService {
 	constructor() {}
 
 	public async deleteDocument(tenantId: string, documentId: string): Promise<void> {
-		throw new NonImplementedError("Function is not implemented.");
+		throw new NetworkError(501, "Document delete service is not implemented.", false /* canRetry */);
 	}
 }

@@ -10,7 +10,6 @@ import {
 	ITenantManager,
 	ICache,
 	IDocumentRepository,
-	IDocumentDeleteService,
 	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import {
@@ -19,7 +18,7 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	validateTokenClaimsScopes,
+	validateTokenScopeClaims,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -28,7 +27,6 @@ import {
 	IAlfredTenant,
 	ISession,
 	NetworkError,
-	isNonImplementedError,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 } from "@fluidframework/server-services-client";
@@ -36,6 +34,7 @@ import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-serv
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, getSession } from "../../../utils";
+import { IDocumentDeleteService } from "../../services";
 
 export function create(
 	storage: IDocumentStorage,
@@ -244,7 +243,7 @@ export function create(
 	router.delete(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
-		validateTokenClaimsScopes(DocDeleteScopeType),
+		validateTokenScopeClaims(DocDeleteScopeType),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
@@ -253,32 +252,8 @@ export function create(
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
 
-			// TODO: Replace dummy implementation bellow.
-			async (request, response, next) => {
-				await documentDeleteService
-					.deleteDocument(tenantId, documentId)
-					.catch(async (error) => {
-						if (isNonImplementedError(error)) {
-							return handleResponse(
-								Promise.reject(
-									new NetworkError(
-										501,
-										"Document delete is not supported yet.",
-										false /* canRetry */,
-									),
-								),
-								response,
-							);
-						} else {
-							return handleResponse(
-								Promise.reject(new NetworkError(500, error)),
-								response,
-							);
-						}
-					});
-
-				handleResponse(Promise.resolve(), response);
-			};
+			const deleteP =  documentDeleteService.deleteDocument(tenantId, documentId);
+			handleResponse(deleteP, response, undefined, undefined, 204);
 		},
 	);
 
@@ -288,7 +263,7 @@ export function create(
 	router.post(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
-		validateTokenClaimsScopes(TokenRevokeScopeType),
+		validateTokenScopeClaims(TokenRevokeScopeType),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {

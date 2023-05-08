@@ -4,5 +4,5 @@
  */
 
 export { DeltaService } from "./deltaService";
-export { DocumentDeleteService } from "./documentDeleteService";
+export { IDocumentDeleteService, DocumentDeleteService } from "./documentDeleteService";
 export { StorageNameAllocator } from "./storageNameAllocator";

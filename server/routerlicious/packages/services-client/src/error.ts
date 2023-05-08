@@ -227,17 +227,3 @@ export function throwFluidServiceNetworkError(
 	const networkError = createFluidServiceNetworkError(statusCode, errorData);
 	throw networkError;
 }
-
-export class NonImplementedError extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = "NonImplementedError";
-	}
-}
-
-export function isNonImplementedError(error: unknown): error is NonImplementedError {
-	return (
-		error instanceof NonImplementedError &&
-		(error as NonImplementedError).name === "NonImplementedError"
-	);
-}
