@@ -10,19 +10,19 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(typescript@4.5.5)
       '@microsoft/api-documenter':
         specifier: ^7.21.6
-        version: 7.22.3(@types/node@16.18.25)
+        version: 7.22.3
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.7(@types/node@16.18.25)
+        version: 7.34.7
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -49,13 +49,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -84,18 +84,18 @@ importers:
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -130,25 +130,25 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../gitresources
       '@fluidframework/protocol-base':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../protocol-base
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-lambdas-driver':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../lambdas-driver
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       '@types/semver':
         specifier: ^6.0.1
@@ -161,7 +161,7 @@ importers:
         version: 3.2.4
       axios:
         specifier: ^0.26.0
-        version: 0.26.1(debug@4.3.4)
+        version: 0.26.1
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -192,21 +192,21 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
       '@fluidframework/server-lambdas-previous':
         specifier: npm:@fluidframework/server-lambdas@0.1040.1000
-        version: /@fluidframework/server-lambdas@0.1040.1000(debug@4.3.4)
+        version: /@fluidframework/server-lambdas@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/async':
         specifier: ^3.2.9
@@ -264,7 +264,7 @@ importers:
         version: 4.5.5
       webpack:
         specifier: ^5.76.2
-        version: 5.82.0(webpack-cli@4.10.0)
+        version: 5.82.0
 
   packages/lambdas-driver:
     dependencies:
@@ -272,13 +272,13 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       assert:
         specifier: ^2.0.0
@@ -295,13 +295,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -309,7 +309,7 @@ importers:
         specifier: npm:@fluidframework/server-lambdas-driver@0.1040.1000
         version: /@fluidframework/server-lambdas-driver@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/async':
         specifier: ^3.2.9
@@ -354,26 +354,26 @@ importers:
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-lambdas':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../lambdas
       '@fluidframework/server-memory-orderer':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../memory-orderer
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -386,7 +386,7 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
@@ -460,22 +460,22 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/protocol-base':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../protocol-base
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-lambdas':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../lambdas
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       '@types/debug':
         specifier: ^4.1.5
@@ -497,7 +497,7 @@ importers:
         version: 2.0.0
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -519,13 +519,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -566,7 +566,7 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../gitresources
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
@@ -580,13 +580,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -636,43 +636,43 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../gitresources
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-kafka-orderer':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../kafka-orderer
       '@fluidframework/server-lambdas':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../lambdas
       '@fluidframework/server-lambdas-driver':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../lambdas-driver
       '@fluidframework/server-memory-orderer':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../memory-orderer
       '@fluidframework/server-routerlicious-base':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../routerlicious-base
       '@fluidframework/server-services':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-shared':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-shared
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       '@fluidframework/server-services-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-utils
       commander:
         specifier: ^2.17.1
@@ -692,24 +692,24 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
       '@fluidframework/server-local-server':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../local-server
       '@fluidframework/server-routerlicious-previous':
         specifier: npm:@fluidframework/server-routerlicious@0.1040.1000
         version: /@fluidframework/server-routerlicious@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/ioredis':
         specifier: ^4.22.0
@@ -742,46 +742,46 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../gitresources
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-kafka-orderer':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../kafka-orderer
       '@fluidframework/server-lambdas':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../lambdas
       '@fluidframework/server-lambdas-driver':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../lambdas-driver
       '@fluidframework/server-memory-orderer':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../memory-orderer
       '@fluidframework/server-services':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-ordering-kafkanode':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-ordering-kafkanode
       '@fluidframework/server-services-ordering-rdkafka':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-ordering-rdkafka
       '@fluidframework/server-services-ordering-zookeeper':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-ordering-zookeeper
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       '@fluidframework/server-services-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-utils
       body-parser:
         specifier: ^1.17.1
@@ -831,24 +831,24 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
       '@fluidframework/server-local-server':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../local-server
       '@fluidframework/server-routerlicious-base-previous':
         specifier: npm:@fluidframework/server-routerlicious-base@0.1040.1000
         version: /@fluidframework/server-routerlicious-base@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/body-parser':
         specifier: ^1.19.2
@@ -944,25 +944,25 @@ importers:
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-ordering-kafkanode':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-ordering-kafkanode
       '@fluidframework/server-services-ordering-rdkafka':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-ordering-rdkafka
       '@fluidframework/server-services-shared':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-shared
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       '@fluidframework/server-services-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-utils
       '@socket.io/redis-emitter':
         specifier: ^4.1.1
@@ -975,7 +975,7 @@ importers:
         version: 0.26.1(debug@4.3.4)
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -1006,13 +1006,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1020,7 +1020,7 @@ importers:
         specifier: npm:@fluidframework/server-services@0.1040.1000
         version: /@fluidframework/server-services@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/amqplib':
         specifier: ^0.5.17
@@ -1086,10 +1086,10 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../gitresources
       '@fluidframework/protocol-base':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../protocol-base
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
@@ -1102,7 +1102,7 @@ importers:
         version: 1.2.0
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -1124,13 +1124,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1189,16 +1189,16 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../gitresources
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       '@types/nconf':
         specifier: ^0.10.2
@@ -1208,7 +1208,7 @@ importers:
         version: 16.18.25
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -1218,13 +1218,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1250,13 +1250,13 @@ importers:
   packages/services-ordering-kafkanode:
     dependencies:
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-ordering-zookeeper':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-ordering-zookeeper
       events:
         specifier: ^3.1.0
@@ -1273,13 +1273,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1287,7 +1287,7 @@ importers:
         specifier: npm:@fluidframework/server-services-ordering-kafkanode@0.1040.1000
         version: /@fluidframework/server-services-ordering-kafkanode@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/debug':
         specifier: ^4.1.5
@@ -1335,10 +1335,10 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       events:
         specifier: ^3.1.0
@@ -1355,13 +1355,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1369,7 +1369,7 @@ importers:
         specifier: npm:@fluidframework/server-services-ordering-rdkafka@0.1040.1000
         version: /@fluidframework/server-services-ordering-rdkafka@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/amqplib':
         specifier: ^0.5.17
@@ -1417,7 +1417,7 @@ importers:
   packages/services-ordering-zookeeper:
     dependencies:
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       zookeeper:
         specifier: ^5.3.2
@@ -1425,13 +1425,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1439,7 +1439,7 @@ importers:
         specifier: npm:@fluidframework/server-services-ordering-zookeeper@0.1040.1000
         version: /@fluidframework/server-services-ordering-zookeeper@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/debug':
         specifier: ^4.1.5
@@ -1487,22 +1487,22 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../gitresources
       '@fluidframework/protocol-base':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../protocol-base
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       '@socket.io/redis-adapter':
         specifier: ^7.2.0
@@ -1512,7 +1512,7 @@ importers:
         version: 1.20.2
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -1549,13 +1549,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1637,13 +1637,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1693,17 +1693,17 @@ importers:
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       express:
         specifier: ^4.17.3
         version: 4.18.2
@@ -1743,13 +1743,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1757,7 +1757,7 @@ importers:
         specifier: npm:@fluidframework/server-services-utils@0.1040.1000
         version: /@fluidframework/server-services-utils@0.1040.1000
       '@fluidframework/server-test-utils':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../test-utils
       '@types/debug':
         specifier: ^4.1.5
@@ -1826,29 +1826,29 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../gitresources
       '@fluidframework/protocol-base':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../protocol-base
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.2.0
       '@fluidframework/server-services-client':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-client
       '@fluidframework/server-services-core':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-core
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1041.1000
+        specifier: workspace:*
         version: link:../services-telemetry
       assert:
         specifier: ^2.0.0
         version: 2.0.0
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       events:
         specifier: ^3.1.0
         version: 3.3.0
@@ -1864,13 +1864,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.16.1
-        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0)
+        version: 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.27.0)(typescript@4.5.5)
@@ -1924,7 +1924,7 @@ packages:
     engines: {node: '>=0.8'}
     dependencies:
       buffer-more-ints: 1.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       safe-buffer: 5.1.2
     transitivePeerDependencies:
       - supports-color
@@ -1964,7 +1964,7 @@ packages:
       '@babel/traverse': 7.21.5
       '@babel/types': 7.21.5
       convert-source-map: 1.9.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.0
@@ -2132,7 +2132,7 @@ packages:
       '@babel/helper-split-export-declaration': 7.18.6
       '@babel/parser': 7.21.8
       '@babel/types': 7.21.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -2184,7 +2184,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       espree: 9.5.1
       globals: 13.20.0
       ignore: 5.2.4
@@ -2196,7 +2196,60 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/build-cli@0.16.1(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)(webpack-cli@4.10.0):
+  /@fluid-tools/build-cli@0.16.1(@types/node@16.18.25)(typescript@4.5.5):
+    resolution: {integrity: sha512-ylA3ob4SxOfg4jfqlme+6eBzZDSi3I3pX+2xZtgAlsx1tVYF/lP4C/WBSwCrdOFhpDO9eu3in9TXWDdLOCNRpw==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
+      '@fluidframework/build-tools': 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
+      '@fluidframework/bundle-size-tools': 0.16.1
+      '@oclif/core': 2.8.5(@types/node@16.18.25)(typescript@4.5.5)
+      '@oclif/plugin-autocomplete': 2.1.9(@types/node@16.18.25)(typescript@4.5.5)
+      '@oclif/plugin-commands': 2.2.14(@types/node@16.18.25)(typescript@4.5.5)
+      '@oclif/plugin-help': 5.2.9(@types/node@16.18.25)(typescript@4.5.5)
+      '@oclif/plugin-not-found': 2.3.23(@types/node@16.18.25)(typescript@4.5.5)
+      '@oclif/plugin-plugins': 2.4.7(@types/node@16.18.25)(typescript@4.5.5)
+      '@oclif/test': 2.3.17(@types/node@16.18.25)(typescript@4.5.5)
+      '@octokit/core': 4.2.0
+      '@rushstack/node-core-library': 3.58.0(@types/node@16.18.25)
+      async: 3.2.4
+      chalk: 2.4.2
+      date-fns: 2.30.0
+      execa: 5.1.1
+      fs-extra: 9.1.0
+      inquirer: 8.2.5
+      inquirer-table-prompt: 0.2.1
+      jssm: 5.88.4
+      jssm-viz-cli: 5.88.4
+      minimatch: 7.4.6
+      npm-check-updates: 16.10.9
+      oclif: 3.9.0(@types/node@16.18.25)(typescript@4.5.5)
+      prettier: 2.6.2
+      read-pkg-up: 7.0.1
+      semver: 7.5.0
+      semver-utils: 1.1.4
+      simple-git: 3.18.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.1
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - bluebird
+      - encoding
+      - esbuild
+      - mem-fs
+      - supports-color
+      - typescript
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluid-tools/build-cli@0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0):
     resolution: {integrity: sha512-ylA3ob4SxOfg4jfqlme+6eBzZDSi3I3pX+2xZtgAlsx1tVYF/lP4C/WBSwCrdOFhpDO9eu3in9TXWDdLOCNRpw==}
     engines: {node: '>=14.0.0'}
     hasBin: true
@@ -2224,7 +2277,7 @@ packages:
       jssm-viz-cli: 5.88.4
       minimatch: 7.4.6
       npm-check-updates: 16.10.9
-      oclif: 3.9.0(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5)
+      oclif: 3.9.0(@types/node@16.18.25)(typescript@4.5.5)
       prettier: 2.6.2
       read-pkg-up: 7.0.1
       semver: 7.5.0
@@ -2243,7 +2296,59 @@ packages:
       - encoding
       - esbuild
       - mem-fs
-      - mem-fs-editor
+      - supports-color
+      - typescript
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluid-tools/build-cli@0.16.1(typescript@4.5.5):
+    resolution: {integrity: sha512-ylA3ob4SxOfg4jfqlme+6eBzZDSi3I3pX+2xZtgAlsx1tVYF/lP4C/WBSwCrdOFhpDO9eu3in9TXWDdLOCNRpw==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.16.1(typescript@4.5.5)
+      '@fluidframework/build-tools': 0.16.1(typescript@4.5.5)
+      '@fluidframework/bundle-size-tools': 0.16.1
+      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/plugin-autocomplete': 2.1.9(typescript@4.5.5)
+      '@oclif/plugin-commands': 2.2.14(typescript@4.5.5)
+      '@oclif/plugin-help': 5.2.9(typescript@4.5.5)
+      '@oclif/plugin-not-found': 2.3.23(typescript@4.5.5)
+      '@oclif/plugin-plugins': 2.4.7(typescript@4.5.5)
+      '@oclif/test': 2.3.17(typescript@4.5.5)
+      '@octokit/core': 4.2.0
+      '@rushstack/node-core-library': 3.58.0
+      async: 3.2.4
+      chalk: 2.4.2
+      date-fns: 2.30.0
+      execa: 5.1.1
+      fs-extra: 9.1.0
+      inquirer: 8.2.5
+      inquirer-table-prompt: 0.2.1
+      jssm: 5.88.4
+      jssm-viz-cli: 5.88.4
+      minimatch: 7.4.6
+      npm-check-updates: 16.10.9
+      oclif: 3.9.0(typescript@4.5.5)
+      prettier: 2.6.2
+      read-pkg-up: 7.0.1
+      semver: 7.5.0
+      semver-utils: 1.1.4
+      simple-git: 3.18.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.8.1
+      type-fest: 2.19.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - bluebird
+      - encoding
+      - esbuild
+      - mem-fs
       - supports-color
       - typescript
       - uglify-js
@@ -2272,18 +2377,40 @@ packages:
       - typescript
     dev: true
 
+  /@fluid-tools/version-tools@0.16.1(typescript@4.5.5):
+    resolution: {integrity: sha512-GG86JOEOp7yRlVKEyoXK42uGse5vN3+SzaD/jGH4OwBctLyMPpP3jCMeSqJIaCe9UffDxwXweFoFwPsSberMGw==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+    dependencies:
+      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/plugin-autocomplete': 2.1.9(typescript@4.5.5)
+      '@oclif/plugin-commands': 2.2.14(typescript@4.5.5)
+      '@oclif/plugin-help': 5.2.9(typescript@4.5.5)
+      '@oclif/plugin-not-found': 2.3.23(typescript@4.5.5)
+      '@oclif/plugin-plugins': 2.4.7(typescript@4.5.5)
+      chalk: 2.4.2
+      semver: 7.5.0
+      table: 6.8.1
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - supports-color
+      - typescript
+    dev: true
+
   /@fluidframework/build-common@1.1.0:
     resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools@0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0):
+  /@fluidframework/build-tools@0.16.1(@types/node@16.18.25)(typescript@4.5.5):
     resolution: {integrity: sha512-j9UN0PiMJ96xkS+y4R+aeBO7ew+5pjE034Yaz9XaAnB6bq5y9hxpXIs5YZk+8T9vjZXtl3vx7hZhx6ImGOL36g==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
       '@fluid-tools/version-tools': 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
-      '@fluidframework/bundle-size-tools': 0.16.1(webpack-cli@4.10.0)
+      '@fluidframework/bundle-size-tools': 0.16.1
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.2.0
       '@rushstack/node-core-library': 3.58.0(@types/node@16.18.25)
@@ -2293,7 +2420,7 @@ packages:
       cosmiconfig: 8.1.3
       danger: 10.9.0(@octokit/core@4.2.0)
       date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       detect-indent: 6.1.0
       execa: 5.1.1
       find-up: 5.0.0
@@ -2322,6 +2449,120 @@ packages:
       - esbuild
       - supports-color
       - typescript
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluidframework/build-tools@0.16.1(@types/node@16.18.25)(typescript@4.5.5)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-j9UN0PiMJ96xkS+y4R+aeBO7ew+5pjE034Yaz9XaAnB6bq5y9hxpXIs5YZk+8T9vjZXtl3vx7hZhx6ImGOL36g==}
+    engines: {node: '>=14.13.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.16.1(@types/node@16.18.25)(typescript@4.5.5)
+      '@fluidframework/bundle-size-tools': 0.16.1(webpack-cli@4.10.0)
+      '@manypkg/get-packages': 2.1.0
+      '@octokit/core': 4.2.0
+      '@rushstack/node-core-library': 3.58.0(@types/node@16.18.25)
+      async: 3.2.4
+      chalk: 2.4.2
+      commander: 6.2.1
+      cosmiconfig: 8.1.3
+      danger: 10.9.0(@octokit/core@4.2.0)
+      date-fns: 2.30.0
+      debug: 4.3.4
+      detect-indent: 6.1.0
+      execa: 5.1.1
+      find-up: 5.0.0
+      fs-extra: 9.1.0
+      glob: 7.2.3
+      ignore: 5.2.4
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      lodash.merge: 4.6.2
+      minimatch: 7.4.6
+      npm-package-json-lint: 6.4.0
+      replace-in-file: 6.3.5
+      rimraf: 2.7.1
+      semver: 7.5.0
+      shelljs: 0.8.5
+      sort-package-json: 1.57.0
+      ts-morph: 17.0.1
+      type-fest: 2.19.0
+      yaml: 2.2.2
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - typescript
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluidframework/build-tools@0.16.1(typescript@4.5.5):
+    resolution: {integrity: sha512-j9UN0PiMJ96xkS+y4R+aeBO7ew+5pjE034Yaz9XaAnB6bq5y9hxpXIs5YZk+8T9vjZXtl3vx7hZhx6ImGOL36g==}
+    engines: {node: '>=14.13.0'}
+    hasBin: true
+    dependencies:
+      '@fluid-tools/version-tools': 0.16.1(typescript@4.5.5)
+      '@fluidframework/bundle-size-tools': 0.16.1
+      '@manypkg/get-packages': 2.1.0
+      '@octokit/core': 4.2.0
+      '@rushstack/node-core-library': 3.58.0
+      async: 3.2.4
+      chalk: 2.4.2
+      commander: 6.2.1
+      cosmiconfig: 8.1.3
+      danger: 10.9.0(@octokit/core@4.2.0)
+      date-fns: 2.30.0
+      debug: 4.3.4
+      detect-indent: 6.1.0
+      execa: 5.1.1
+      find-up: 5.0.0
+      fs-extra: 9.1.0
+      glob: 7.2.3
+      ignore: 5.2.4
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      lodash.merge: 4.6.2
+      minimatch: 7.4.6
+      npm-package-json-lint: 6.4.0
+      replace-in-file: 6.3.5
+      rimraf: 2.7.1
+      semver: 7.5.0
+      shelljs: 0.8.5
+      sort-package-json: 1.57.0
+      ts-morph: 17.0.1
+      type-fest: 2.19.0
+      yaml: 2.2.2
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - encoding
+      - esbuild
+      - supports-color
+      - typescript
+      - uglify-js
+      - webpack-cli
+    dev: true
+
+  /@fluidframework/bundle-size-tools@0.16.1:
+    resolution: {integrity: sha512-alnZgJtIKG4lOrlFLNwQndL2Wj42/+AOU9s1WPZoVK7Jue+eCmLWkKmx5kIWcNKX8OULzhb/ktxOIhaoaSf7Rg==}
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      pako: 2.1.0
+      typescript: 4.5.5
+      webpack: 5.82.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
       - uglify-js
       - webpack-cli
     dev: true
@@ -2425,6 +2666,36 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/server-lambdas@0.1040.1000:
+    resolution: {integrity: sha512-esOBe6UAK+nUCnwdgTgj8wD2Uic79B2PhxwYlBABFOa0sIWe7dU+C0z1nHlAPe24R+N04iU3DRMvFor6lWC73Q==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1040.1000
+      '@fluidframework/protocol-base': 0.1040.1000
+      '@fluidframework/protocol-definitions': 1.2.0
+      '@fluidframework/server-lambdas-driver': 0.1040.1000
+      '@fluidframework/server-services-client': 0.1040.1000
+      '@fluidframework/server-services-core': 0.1040.1000
+      '@fluidframework/server-services-telemetry': 0.1040.1000
+      '@types/semver': 6.2.3
+      assert: 2.0.0
+      async: 3.2.4
+      axios: 0.26.1
+      buffer: 6.0.3
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      json-stringify-safe: 5.0.1
+      lodash: 4.17.21
+      nconf: 0.12.0
+      semver: 6.3.0
+      sha.js: 2.4.11
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
+
   /@fluidframework/server-lambdas@0.1040.1000(debug@4.3.4):
     resolution: {integrity: sha512-esOBe6UAK+nUCnwdgTgj8wD2Uic79B2PhxwYlBABFOa0sIWe7dU+C0z1nHlAPe24R+N04iU3DRMvFor6lWC73Q==}
     dependencies:
@@ -2466,7 +2737,7 @@ packages:
       '@fluidframework/server-services-core': 0.1040.1000
       '@fluidframework/server-services-telemetry': 0.1040.1000
       '@fluidframework/server-test-utils': 0.1040.1000
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       jsrsasign: 10.8.6
       uuid: 8.3.2
@@ -2492,7 +2763,7 @@ packages:
       '@types/node': 16.18.25
       '@types/ws': 6.0.4
       assert: 2.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
@@ -2512,7 +2783,7 @@ packages:
       '@fluidframework/gitresources': 0.1040.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/server-kafka-orderer': 0.1040.1000
-      '@fluidframework/server-lambdas': 0.1040.1000(debug@4.3.4)
+      '@fluidframework/server-lambdas': 0.1040.1000
       '@fluidframework/server-lambdas-driver': 0.1040.1000
       '@fluidframework/server-memory-orderer': 0.1040.1000
       '@fluidframework/server-services': 0.1040.1000
@@ -2552,7 +2823,7 @@ packages:
       '@fluidframework/gitresources': 0.1040.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/server-kafka-orderer': 0.1040.1000
-      '@fluidframework/server-lambdas': 0.1040.1000(debug@4.3.4)
+      '@fluidframework/server-lambdas': 0.1040.1000
       '@fluidframework/server-lambdas-driver': 0.1040.1000
       '@fluidframework/server-memory-orderer': 0.1040.1000
       '@fluidframework/server-routerlicious-base': 0.1040.1000
@@ -2584,7 +2855,7 @@ packages:
       '@fluidframework/protocol-definitions': 1.2.0
       axios: 0.26.1(debug@4.3.4)
       crc-32: 1.2.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       json-stringify-safe: 5.0.1
       jsrsasign: 10.8.6
       jwt-decode: 3.1.2
@@ -2605,7 +2876,7 @@ packages:
       '@fluidframework/server-services-telemetry': 0.1040.1000
       '@types/nconf': 0.10.3
       '@types/node': 16.18.25
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       nconf: 0.12.0
     transitivePeerDependencies:
@@ -2661,7 +2932,7 @@ packages:
       '@fluidframework/server-services-telemetry': 0.1040.1000
       '@socket.io/redis-adapter': 7.2.0
       body-parser: 1.20.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       ioredis: 4.28.5
       lodash: 4.17.21
@@ -2696,7 +2967,7 @@ packages:
       '@fluidframework/server-services-client': 0.1040.1000
       '@fluidframework/server-services-core': 0.1040.1000
       '@fluidframework/server-services-telemetry': 0.1040.1000
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       express: 4.18.2
       ioredis: 4.28.5
       json-stringify-safe: 5.0.1
@@ -2728,7 +2999,7 @@ packages:
       '@socket.io/redis-emitter': 4.1.1
       amqplib: 0.10.3
       axios: 0.26.1(debug@4.3.4)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       ioredis: 4.28.5
       lru-cache: 6.0.0
@@ -2755,7 +3026,7 @@ packages:
       '@fluidframework/server-services-core': 0.1040.1000
       '@fluidframework/server-services-telemetry': 0.1040.1000
       assert: 2.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       events: 3.3.0
       lodash: 4.17.21
       string-hash: 1.1.3
@@ -2773,7 +3044,7 @@ packages:
     engines: {node: '>=10.10.0'}
     dependencies:
       '@humanwhocodes/object-schema': 1.2.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -2881,7 +3152,7 @@ packages:
   /@kwsites/file-exists@1.1.1:
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3636,17 +3907,27 @@ packages:
       read-yaml-file: 1.1.0
     dev: true
 
-  /@microsoft/api-documenter@7.22.3(@types/node@16.18.25):
+  /@microsoft/api-documenter@7.22.3:
     resolution: {integrity: sha512-K94pvKlePz5ow8KR8+DnjL+PXJX+Iw+C4vRS7tDM0fg17k0LvJn/lzZKQf4S5RaOwDiVjLpXUpngFO+/yURFTg==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.26.7(@types/node@16.18.25)
+      '@microsoft/api-extractor-model': 7.26.7
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.58.0(@types/node@16.18.25)
+      '@rushstack/node-core-library': 3.58.0
       '@rushstack/ts-command-line': 4.13.2
       colors: 1.2.5
       js-yaml: 3.13.1
       resolve: 1.22.2
+    transitivePeerDependencies:
+      - '@types/node'
+    dev: true
+
+  /@microsoft/api-extractor-model@7.26.7:
+    resolution: {integrity: sha512-rx3Tq632VG3ddR74kPuPbv1qmUgO2IuCvn1z16hbNWNS5RhnTQqNPWIm7NVoi6lCh2E7uxzfmdnWXIXiJhM5IQ==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@microsoft/tsdoc-config': 0.16.2
+      '@rushstack/node-core-library': 3.58.0
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -3657,6 +3938,26 @@ packages:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
       '@rushstack/node-core-library': 3.58.0(@types/node@16.18.25)
+    transitivePeerDependencies:
+      - '@types/node'
+    dev: true
+
+  /@microsoft/api-extractor@7.34.7:
+    resolution: {integrity: sha512-8CrrYyOBWqc4XFviR1KSuHSlmJjlnC5CVpPkcFB8HXiLABUVaVWFTsOzJIwUU6z8mc4BZPZ8tSGAg/mwFDU31Q==}
+    hasBin: true
+    dependencies:
+      '@microsoft/api-extractor-model': 7.26.7
+      '@microsoft/tsdoc': 0.14.2
+      '@microsoft/tsdoc-config': 0.16.2
+      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/rig-package': 0.3.18
+      '@rushstack/ts-command-line': 4.13.2
+      colors: 1.2.5
+      lodash: 4.17.21
+      resolve: 1.22.2
+      semver: 7.3.8
+      source-map: 0.6.1
+      typescript: 4.8.4
     transitivePeerDependencies:
       - '@types/node'
     dev: true
@@ -4200,13 +4501,69 @@ packages:
       - typescript
     dev: true
 
+  /@oclif/core@2.8.5(typescript@4.5.5):
+    resolution: {integrity: sha512-316DLfrHQDYmWDriI4Woxk9y1wVUrPN1sZdbQLHdOdlTA9v/twe7TdHpWOriEypfl6C85NWEJKc1870yuLtjrQ==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@types/cli-progress': 3.11.0
+      ansi-escapes: 4.3.2
+      ansi-styles: 4.3.0
+      cardinal: 2.1.1
+      chalk: 4.1.2
+      clean-stack: 3.0.1
+      cli-progress: 3.12.0
+      debug: 4.3.4(supports-color@8.1.1)
+      ejs: 3.1.9
+      fs-extra: 9.1.0
+      get-package-type: 0.1.0
+      globby: 11.1.0
+      hyperlinker: 1.0.0
+      indent-string: 4.0.0
+      is-wsl: 2.2.0
+      js-yaml: 3.14.1
+      natural-orderby: 2.0.3
+      object-treeify: 1.1.33
+      password-prompt: 1.1.2
+      semver: 7.5.0
+      string-width: 4.2.3
+      strip-ansi: 6.0.1
+      supports-color: 8.1.1
+      supports-hyperlinks: 2.3.0
+      ts-node: 10.9.1(typescript@4.5.5)
+      tslib: 2.5.0
+      widest-line: 3.1.0
+      wordwrap: 1.0.0
+      wrap-ansi: 7.0.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
   /@oclif/plugin-autocomplete@2.1.9(@types/node@16.18.25)(typescript@4.5.5):
     resolution: {integrity: sha512-Fx3YTb1tZJUZXlWw41HOCTJnrE58Qiyta7PxKzqlCl7TxFPHst1lxIdNo+93Kqc3StWc6+zOEHnqNLHsu/+HrA==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.8.5(@types/node@16.18.25)(typescript@4.5.5)
       chalk: 4.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
+      fs-extra: 9.1.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - supports-color
+      - typescript
+    dev: true
+
+  /@oclif/plugin-autocomplete@2.1.9(typescript@4.5.5):
+    resolution: {integrity: sha512-Fx3YTb1tZJUZXlWw41HOCTJnrE58Qiyta7PxKzqlCl7TxFPHst1lxIdNo+93Kqc3StWc6+zOEHnqNLHsu/+HrA==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 2.8.5(typescript@4.5.5)
+      chalk: 4.1.2
+      debug: 4.3.4
       fs-extra: 9.1.0
     transitivePeerDependencies:
       - '@swc/core'
@@ -4229,11 +4586,36 @@ packages:
       - typescript
     dev: true
 
+  /@oclif/plugin-commands@2.2.14(typescript@4.5.5):
+    resolution: {integrity: sha512-/0l/behJ6Abw9PzgMCi9wRzdOZ1Ex/RmdXLSkSEU2wXTrJTsdMFvEg5Sd6nJd++zPZrhcQ7S+jRjT5FWxGdZtw==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 2.8.5(typescript@4.5.5)
+      lodash: 4.17.21
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
   /@oclif/plugin-help@5.2.9(@types/node@16.18.25)(typescript@4.5.5):
     resolution: {integrity: sha512-0J3oowPURZJ4Dn1p1WpQ46E4+CoV20KTn1cvsNiDl6Hmbw+qoljKQnArJJzNFeZQxWo4R7/S42PrzKJTVYh68Q==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.8.5(@types/node@16.18.25)(typescript@4.5.5)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
+  /@oclif/plugin-help@5.2.9(typescript@4.5.5):
+    resolution: {integrity: sha512-0J3oowPURZJ4Dn1p1WpQ46E4+CoV20KTn1cvsNiDl6Hmbw+qoljKQnArJJzNFeZQxWo4R7/S42PrzKJTVYh68Q==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 2.8.5(typescript@4.5.5)
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -4256,6 +4638,21 @@ packages:
       - typescript
     dev: true
 
+  /@oclif/plugin-not-found@2.3.23(typescript@4.5.5):
+    resolution: {integrity: sha512-UZM8aolxXvqwH8WcmJxRNASDWgMoSQm/pgCdkc1AGCRevYc8+LBSO+U6nLWq+Dx8H/dn9RyIv5oiUIOGkKDlZA==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/color': 1.0.4
+      '@oclif/core': 2.8.5(typescript@4.5.5)
+      fast-levenshtein: 3.0.0
+      lodash: 4.17.21
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - typescript
+    dev: true
+
   /@oclif/plugin-plugins@2.4.7(@types/node@16.18.25)(typescript@4.5.5):
     resolution: {integrity: sha512-6fzUDLWrSK7n6+EBrEekEEYrYTCneRoOF9TzojkjuFn1+ailvUlr98G90bblxKOyy8fqMe7QjvqwTgIDQ9ZIzg==}
     engines: {node: '>=12.0.0'}
@@ -4263,7 +4660,30 @@ packages:
       '@oclif/color': 1.0.4
       '@oclif/core': 2.8.5(@types/node@16.18.25)(typescript@4.5.5)
       chalk: 4.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
+      fs-extra: 9.1.0
+      http-call: 5.3.0
+      load-json-file: 5.3.0
+      npm-run-path: 4.0.1
+      semver: 7.5.0
+      tslib: 2.5.0
+      yarn: 1.22.19
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - supports-color
+      - typescript
+    dev: true
+
+  /@oclif/plugin-plugins@2.4.7(typescript@4.5.5):
+    resolution: {integrity: sha512-6fzUDLWrSK7n6+EBrEekEEYrYTCneRoOF9TzojkjuFn1+ailvUlr98G90bblxKOyy8fqMe7QjvqwTgIDQ9ZIzg==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/color': 1.0.4
+      '@oclif/core': 2.8.5(typescript@4.5.5)
+      chalk: 4.1.2
+      debug: 4.3.4
       fs-extra: 9.1.0
       http-call: 5.3.0
       load-json-file: 5.3.0
@@ -4285,7 +4705,26 @@ packages:
     dependencies:
       '@oclif/core': 2.8.5(@types/node@16.18.25)(typescript@4.5.5)
       chalk: 4.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
+      fs-extra: 9.1.0
+      http-call: 5.3.0
+      lodash: 4.17.21
+      semver: 7.5.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - supports-color
+      - typescript
+    dev: true
+
+  /@oclif/plugin-warn-if-update-available@2.0.36(typescript@4.5.5):
+    resolution: {integrity: sha512-mHWoEWFICw1Amqn8C7oURxOsR6sT2Hx+xNi30Jbsui5MrCIYYo369dhjl27VfaWlcLjVqpjMVzVFMn5zXjgzBw==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 2.8.5(typescript@4.5.5)
+      chalk: 4.1.2
+      debug: 4.3.4
       fs-extra: 9.1.0
       http-call: 5.3.0
       lodash: 4.17.21
@@ -4303,6 +4742,20 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.8.5(@types/node@16.18.25)(typescript@4.5.5)
+      fancy-test: 2.0.21
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - supports-color
+      - typescript
+    dev: true
+
+  /@oclif/test@2.3.17(typescript@4.5.5):
+    resolution: {integrity: sha512-Ph3Gg1n7Sz2JHsoLHNifzwbeDs8kKlBK+JcFikkoH7Fc+FoNXOsEBY6HTF0/8P3SeVK3H3MyBEvGNsGbeClhtg==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/core': 2.8.5(typescript@4.5.5)
       fancy-test: 2.0.21
     transitivePeerDependencies:
       - '@swc/core'
@@ -4657,6 +5110,23 @@ packages:
       - typescript
     dev: true
 
+  /@rushstack/node-core-library@3.58.0:
+    resolution: {integrity: sha512-DHAZ3LTOEq2/EGURznpTJDnB3SNE2CKMDXuviQ6afhru6RykE3QoqXkeyjbpLb5ib5cpIRCPE/wykNe0xmQj3w==}
+    peerDependencies:
+      '@types/node': '*'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+    dependencies:
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.2
+      semver: 7.3.8
+      z-schema: 5.0.5
+    dev: true
+
   /@rushstack/node-core-library@3.58.0(@types/node@16.18.25):
     resolution: {integrity: sha512-DHAZ3LTOEq2/EGURznpTJDnB3SNE2CKMDXuviQ6afhru6RykE3QoqXkeyjbpLb5ib5cpIRCPE/wykNe0xmQj3w==}
     peerDependencies:
@@ -4741,7 +5211,7 @@ packages:
     resolution: {integrity: sha512-/r6oF6Myz0K9uatB/pfCi0BhKg/KRMh1OokrqcjlNz6aq40WiXdFLRbHJQuwGHq/KvB+D6141K+IynbVxZGvhw==}
     engines: {node: '>=10.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       notepack.io: 2.2.0
       socket.io-adapter: 2.5.2
       uid2: 0.0.3
@@ -4753,7 +5223,7 @@ packages:
   /@socket.io/redis-emitter@4.1.1:
     resolution: {integrity: sha512-N0wfcfcVJvPF1AjIlZ5efxGCz+8uY6qeCwIaRU+QUCNdqvtXQtlC/MtUJQCwVqs1MWP6Bv3TDuZGC04gIj7YuQ==}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       notepack.io: 2.1.3
       socket.io-parser: 4.2.2
     transitivePeerDependencies:
@@ -5184,7 +5654,7 @@ packages:
       '@typescript-eslint/parser': 5.9.1(eslint@8.27.0)(typescript@4.5.5)
       '@typescript-eslint/scope-manager': 5.9.1
       '@typescript-eslint/type-utils': 5.9.1(eslint@8.27.0)(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       functional-red-black-tree: 1.0.1
       ignore: 5.2.4
@@ -5245,7 +5715,7 @@ packages:
       '@typescript-eslint/scope-manager': 5.9.1
       '@typescript-eslint/types': 5.9.1
       '@typescript-eslint/typescript-estree': 5.9.1(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -5279,7 +5749,7 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/experimental-utils': 5.9.1(eslint@8.27.0)(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       tsutils: 3.21.0(typescript@4.5.5)
       typescript: 4.5.5
@@ -5308,7 +5778,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.6.0
       '@typescript-eslint/visitor-keys': 5.6.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.5.0
@@ -5329,7 +5799,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.9.1
       '@typescript-eslint/visitor-keys': 5.9.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.5.0
@@ -5587,7 +6057,7 @@ packages:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
     engines: {node: '>= 6.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -5596,7 +6066,7 @@ packages:
     resolution: {integrity: sha512-7Epl1Blf4Sy37j4v9f9FjICCh4+KAQOyXgHEwlyBiAQLbhKdq/i2QQU3amQalS/wPhdPzDXPL5DMR5bkn+YeWg==}
     engines: {node: '>= 8.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       depd: 2.0.0
       humanize-ms: 1.2.1
     transitivePeerDependencies:
@@ -5979,6 +6449,13 @@ packages:
       is-buffer: 2.0.5
     dev: true
 
+  /axios@0.26.1:
+    resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
+    dependencies:
+      follow-redirects: 1.15.2
+    transitivePeerDependencies:
+      - debug
+
   /axios@0.26.1(debug@4.3.4):
     resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
     dependencies:
@@ -5989,7 +6466,7 @@ packages:
   /axios@1.4.0:
     resolution: {integrity: sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==}
     dependencies:
-      follow-redirects: 1.15.2(debug@4.3.4)
+      follow-redirects: 1.15.2
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -7173,7 +7650,7 @@ packages:
       async-retry: 1.2.3
       chalk: 2.4.2
       commander: 2.20.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       fast-json-patch: 3.1.1
       get-stdin: 6.0.0
       gitlab: 10.2.1
@@ -7269,6 +7746,17 @@ packages:
       ms: 2.1.3
     dev: true
 
+  /debug@4.3.4:
+    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    dependencies:
+      ms: 2.1.2
+
   /debug@4.3.4(supports-color@8.1.1):
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
     engines: {node: '>=6.0'}
@@ -7280,6 +7768,7 @@ packages:
     dependencies:
       ms: 2.1.2
       supports-color: 8.1.1
+    dev: true
 
   /debuglog@1.0.1:
     resolution: {integrity: sha512-syBZ+rnAK3EgMsH2aYEOLUW7mZSY9Gb+0wUMCFsZvcmiz+HigA0LOcq/HoQqVuGG+EKykunc7QG2bzrponfaSw==}
@@ -7642,7 +8131,7 @@ packages:
       base64id: 2.0.0
       cookie: 0.4.2
       cors: 2.8.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       engine.io-parser: 5.0.6
       ws: 8.11.0
     transitivePeerDependencies:
@@ -7942,7 +8431,7 @@ packages:
     dependencies:
       '@es-joy/jsdoccomment': 0.33.4
       comment-parser: 1.3.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       escape-string-regexp: 4.0.0
       eslint: 8.27.0
       esquery: 1.5.0
@@ -8082,7 +8571,7 @@ packages:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.0
@@ -8547,6 +9036,15 @@ packages:
   /fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
 
+  /follow-redirects@1.15.2:
+    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+
   /follow-redirects@1.15.2(debug@4.3.4):
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
     engines: {node: '>=4.0'}
@@ -8556,7 +9054,7 @@ packages:
       debug:
         optional: true
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
 
   /for-each@0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
@@ -9205,6 +9703,7 @@ packages:
   /has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
+    dev: true
 
   /has-property-descriptors@1.0.0:
     resolution: {integrity: sha512-62DVLZGoiEBDHQyqG4w9xCuZ7eJEwNmJRWw2VY84Oedb7WFcA27fiEVe8oUQx9hAUJ4ekurquucTGwsyO1XGdQ==}
@@ -9310,7 +9809,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       content-type: 1.0.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       is-retry-allowed: 1.2.0
       is-stream: 2.0.1
       parse-json: 4.0.0
@@ -9345,7 +9844,7 @@ packages:
     dependencies:
       '@tootallnate/once': 1.1.2
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -9356,7 +9855,7 @@ packages:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -9401,7 +9900,7 @@ packages:
     engines: {node: '>= 6'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -9639,7 +10138,7 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       cluster-key-slot: 1.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       denque: 1.5.1
       lodash.defaults: 4.2.0
       lodash.flatten: 4.4.0
@@ -10069,7 +10568,7 @@ packages:
     resolution: {integrity: sha512-n3s8EwkdFIJCG3BPKBYvskgXGoy88ARzvegkitk60NxRdwltLOTaH7CUiMRXvwYorl0Q712iEjcWB+fK/MrWVw==}
     engines: {node: '>=10'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       istanbul-lib-coverage: 3.2.0
       source-map: 0.6.1
     transitivePeerDependencies:
@@ -10909,6 +11408,27 @@ packages:
     resolution: {integrity: sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==}
     engines: {node: '>= 0.6'}
 
+  /mem-fs-editor@9.7.0:
+    resolution: {integrity: sha512-ReB3YD24GNykmu4WeUL/FDIQtkoyGB6zfJv60yfCo3QjKeimNcTqv2FT83bP0ccs6uu+sm5zyoBlspAzigmsdg==}
+    engines: {node: '>=12.10.0'}
+    peerDependencies:
+      mem-fs: ^2.1.0
+    peerDependenciesMeta:
+      mem-fs:
+        optional: true
+    dependencies:
+      binaryextensions: 4.18.0
+      commondir: 1.0.1
+      deep-extend: 0.6.0
+      ejs: 3.1.9
+      globby: 11.1.0
+      isbinaryfile: 5.0.0
+      minimatch: 7.4.6
+      multimatch: 5.0.0
+      normalize-path: 3.0.0
+      textextensions: 5.16.0
+    dev: true
+
   /mem-fs-editor@9.7.0(mem-fs@2.3.0):
     resolution: {integrity: sha512-ReB3YD24GNykmu4WeUL/FDIQtkoyGB6zfJv60yfCo3QjKeimNcTqv2FT83bP0ccs6uu+sm5zyoBlspAzigmsdg==}
     engines: {node: '>=12.10.0'}
@@ -11402,7 +11922,7 @@ packages:
     engines: {node: '>= 6.0'}
     dependencies:
       chai: 4.3.7
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       deep-equal: 1.1.1
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
@@ -11418,7 +11938,7 @@ packages:
     resolution: {integrity: sha512-vHnopocZuI93p2ccivFyGuUfzjq2fxNyNurp7816mlT5V5HF4SzXu8lvLrVzBbNqzs+ODooZ6OksuSUNM7Njkw==}
     engines: {node: '>= 10.13'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       propagate: 2.0.1
@@ -11758,7 +12278,7 @@ packages:
       ajv-errors: 1.0.1(ajv@6.12.6)
       chalk: 4.1.2
       cosmiconfig: 8.1.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       ignore: 5.2.4
       is-plain-obj: 3.0.0
@@ -12094,7 +12614,7 @@ packages:
       es-abstract: 1.21.2
     dev: true
 
-  /oclif@3.9.0(@types/node@16.18.25)(mem-fs-editor@9.7.0)(mem-fs@2.3.0)(typescript@4.5.5):
+  /oclif@3.9.0(@types/node@16.18.25)(typescript@4.5.5):
     resolution: {integrity: sha512-fsFyHVQYJdE50EcKrBjwzl2WT5sZUtTiRY1vqMwykgLFUDYrQS0lj7yqy2IgcPSmAWaLQryODdfBujCWOU98Ww==}
     engines: {node: '>=12.0.0'}
     hasBin: true
@@ -12105,7 +12625,7 @@ packages:
       '@oclif/plugin-warn-if-update-available': 2.0.36(@types/node@16.18.25)(typescript@4.5.5)
       aws-sdk: 2.1370.0
       concurrently: 7.6.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       find-yarn-workspace-root: 2.0.0
       fs-extra: 8.1.0
       github-slugger: 1.5.0
@@ -12115,8 +12635,8 @@ packages:
       semver: 7.5.0
       shelljs: 0.8.5
       tslib: 2.5.0
-      yeoman-environment: 3.15.1(mem-fs-editor@9.7.0)(mem-fs@2.3.0)
-      yeoman-generator: 5.8.0(mem-fs@2.3.0)(yeoman-environment@3.15.1)
+      yeoman-environment: 3.15.1
+      yeoman-generator: 5.8.0(yeoman-environment@3.15.1)
       yosay: 2.0.2
     transitivePeerDependencies:
       - '@swc/core'
@@ -12125,7 +12645,41 @@ packages:
       - bluebird
       - encoding
       - mem-fs
-      - mem-fs-editor
+      - supports-color
+      - typescript
+    dev: true
+
+  /oclif@3.9.0(typescript@4.5.5):
+    resolution: {integrity: sha512-fsFyHVQYJdE50EcKrBjwzl2WT5sZUtTiRY1vqMwykgLFUDYrQS0lj7yqy2IgcPSmAWaLQryODdfBujCWOU98Ww==}
+    engines: {node: '>=12.0.0'}
+    hasBin: true
+    dependencies:
+      '@oclif/core': 2.8.5(typescript@4.5.5)
+      '@oclif/plugin-help': 5.2.9(typescript@4.5.5)
+      '@oclif/plugin-not-found': 2.3.23(typescript@4.5.5)
+      '@oclif/plugin-warn-if-update-available': 2.0.36(typescript@4.5.5)
+      aws-sdk: 2.1370.0
+      concurrently: 7.6.0
+      debug: 4.3.4
+      find-yarn-workspace-root: 2.0.0
+      fs-extra: 8.1.0
+      github-slugger: 1.5.0
+      got: 11.8.6
+      lodash: 4.17.21
+      normalize-package-data: 3.0.3
+      semver: 7.5.0
+      shelljs: 0.8.5
+      tslib: 2.5.0
+      yeoman-environment: 3.15.1
+      yeoman-generator: 5.8.0(yeoman-environment@3.15.1)
+      yosay: 2.0.2
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@swc/wasm'
+      - '@types/node'
+      - bluebird
+      - encoding
+      - mem-fs
       - supports-color
       - typescript
     dev: true
@@ -12337,7 +12891,7 @@ packages:
     resolution: {integrity: sha512-UJKdSzgd3KOnXXAtqN5+/eeHcvTn1hBkesEmElVgvO/NAYcxAvmjzIGmnNd3Tb/gRAvMBdNRFD4qAWdHxY6QXg==}
     engines: {node: '>=12.10.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       p-queue: 6.6.2
     transitivePeerDependencies:
       - supports-color
@@ -13008,7 +13562,7 @@ packages:
   /rc-config-loader@4.1.2:
     resolution: {integrity: sha512-qKTnVWFl9OQYKATPzdfaZIbTxcHziQl92zYSxYC6umhOqyAsoj8H8Gq/+aFjAso68sBdjTz3A7omqeAkkF1MWg==}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       js-yaml: 4.1.0
       json5: 2.2.3
       require-from-string: 2.0.2
@@ -13763,7 +14317,7 @@ packages:
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -13829,7 +14383,7 @@ packages:
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
 
@@ -13839,7 +14393,7 @@ packages:
     dependencies:
       accepts: 1.3.8
       base64id: 2.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       engine.io: 6.4.2
       socket.io-adapter: 2.5.2
       socket.io-parser: 4.2.2
@@ -13853,7 +14407,7 @@ packages:
     engines: {node: '>= 10'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       socks: 2.7.1
     transitivePeerDependencies:
       - supports-color
@@ -13864,7 +14418,7 @@ packages:
     engines: {node: '>= 10'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       socks: 2.7.1
     transitivePeerDependencies:
       - supports-color
@@ -14063,7 +14617,7 @@ packages:
     resolution: {integrity: sha512-Xnt9/HHHYfjZ7NeQLvuQDyL1LnbsbddgMFKCuaQKwGCdJm8LnstZIXop+uOY36UR1UXXoHXfMbC1KlVdVd2JLA==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       strip-ansi: 6.0.1
     transitivePeerDependencies:
       - supports-color
@@ -14323,6 +14877,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       has-flag: 4.0.0
+    dev: true
 
   /supports-hyperlinks@1.0.1:
     resolution: {integrity: sha512-HHi5kVSefKaJkGYXbDuKbUGRVxqnWGn3J2e39CYcNJEfWciGq2zYtOhXLTlvrOZW1QU7VX67w7fMmWafHX9Pfw==}
@@ -14450,7 +15005,7 @@ packages:
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
       terser: 5.17.1
-      webpack: 5.82.0(webpack-cli@4.10.0)
+      webpack: 5.82.0
     dev: true
 
   /terser@5.17.1:
@@ -14619,7 +15174,7 @@ packages:
       micromatch: 4.0.5
       semver: 7.5.0
       typescript: 4.5.5
-      webpack: 5.82.0(webpack-cli@4.10.0)
+      webpack: 5.82.0
     dev: true
 
   /ts-morph@17.0.1:
@@ -14649,6 +15204,36 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.18.25
+      acorn: 8.8.2
+      acorn-walk: 8.2.0
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 4.5.5
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    dev: true
+
+  /ts-node@10.9.1(typescript@4.5.5):
+    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
+    hasBin: true
+    peerDependencies:
+      '@swc/core': '>=1.2.50'
+      '@swc/wasm': '>=1.2.50'
+      '@types/node': '*'
+      typescript: '>=2.7'
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      '@swc/wasm':
+        optional: true
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.3
       acorn: 8.8.2
       acorn-walk: 8.2.0
       arg: 4.1.3
@@ -15191,6 +15776,46 @@ packages:
     engines: {node: '>=10.13.0'}
     dev: true
 
+  /webpack@5.82.0:
+    resolution: {integrity: sha512-iGNA2fHhnDcV1bONdUu554eZx+XeldsaeQ8T67H6KKHl2nUSwX8Zm7cmzOA46ox/X1ARxf7Bjv8wQ/HsB5fxBg==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    peerDependencies:
+      webpack-cli: '*'
+    peerDependenciesMeta:
+      webpack-cli:
+        optional: true
+    dependencies:
+      '@types/eslint-scope': 3.7.4
+      '@types/estree': 1.0.1
+      '@webassemblyjs/ast': 1.11.5
+      '@webassemblyjs/wasm-edit': 1.11.5
+      '@webassemblyjs/wasm-parser': 1.11.5
+      acorn: 8.8.2
+      acorn-import-assertions: 1.8.0(acorn@8.8.2)
+      browserslist: 4.21.5
+      chrome-trace-event: 1.0.3
+      enhanced-resolve: 5.13.0
+      es-module-lexer: 1.2.1
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 3.1.2
+      tapable: 2.2.1
+      terser-webpack-plugin: 5.3.7(webpack@5.82.0)
+      watchpack: 2.4.0
+      webpack-sources: 3.2.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+    dev: true
+
   /webpack@5.82.0(webpack-cli@4.10.0):
     resolution: {integrity: sha512-iGNA2fHhnDcV1bONdUu554eZx+XeldsaeQ8T67H6KKHl2nUSwX8Zm7cmzOA46ox/X1ARxf7Bjv8wQ/HsB5fxBg==}
     engines: {node: '>=10.13.0'}
@@ -15632,13 +16257,10 @@ packages:
       buffer-crc32: 0.2.13
       fd-slicer: 1.1.0
 
-  /yeoman-environment@3.15.1(mem-fs-editor@9.7.0)(mem-fs@2.3.0):
+  /yeoman-environment@3.15.1:
     resolution: {integrity: sha512-P4DTQxqCxNTBD7gph+P+dIckBdx0xyHmvOYgO3vsc9/Sl67KJ6QInz5Qv6tlXET3CFFJ/YxPIdl9rKb0XwTRLg==}
     engines: {node: '>=12.10.0'}
     hasBin: true
-    peerDependencies:
-      mem-fs: ^1.2.0 || ^2.0.0
-      mem-fs-editor: ^8.1.2 || ^9.0.0
     dependencies:
       '@npmcli/arborist': 4.3.1
       are-we-there-yet: 2.0.0
@@ -15648,7 +16270,7 @@ packages:
       cli-table: 0.3.11
       commander: 7.1.0
       dateformat: 4.6.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       diff: 5.1.0
       error: 10.4.0
       escape-string-regexp: 4.0.0
@@ -15681,7 +16303,7 @@ packages:
       - supports-color
     dev: true
 
-  /yeoman-generator@5.8.0(mem-fs@2.3.0)(yeoman-environment@3.15.1):
+  /yeoman-generator@5.8.0(yeoman-environment@3.15.1):
     resolution: {integrity: sha512-dsrwFn9/c2/MOe80sa2nKfbZd/GaPTgmmehdgkFifs1VN/I7qPsW2xcBfvSkHNGK+PZly7uHyH8kaVYSFNUDhQ==}
     engines: {node: '>=12.10.0'}
     peerDependencies:
@@ -15692,11 +16314,11 @@ packages:
     dependencies:
       chalk: 4.1.2
       dargs: 7.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       execa: 5.1.1
       github-username: 6.0.0
       lodash: 4.17.21
-      mem-fs-editor: 9.7.0(mem-fs@2.3.0)
+      mem-fs-editor: 9.7.0
       minimist: 1.2.8
       read-pkg-up: 7.0.1
       run-async: 2.4.1
@@ -15704,7 +16326,7 @@ packages:
       shelljs: 0.8.5
       sort-keys: 4.2.0
       text-table: 0.2.0
-      yeoman-environment: 3.15.1(mem-fs-editor@9.7.0)(mem-fs@2.3.0)
+      yeoman-environment: 3.15.1
     transitivePeerDependencies:
       - encoding
       - mem-fs
