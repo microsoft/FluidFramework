@@ -160,7 +160,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, []);
 	});
-	it("ensures that revert functions properly when an id is recreated on revert of a delete", () => {
+	it("checks that revert functions properly when an id is recreated on revert of a delete", () => {
 		sharedString.insertText(0, "hello world");
 		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
 
@@ -172,6 +172,28 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		collection.change(id, 3, 8);
+		collection.removeIntervalById(id);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+	});
+	it("checks id consistency when a remove is undone and redone", () => {
+		sharedString.insertText(0, "hello world");
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendLocalChangeToRevertibles(sharedString, interval, previousInterval, revertibles);
+		});
+
+		collection.change(id, 3, 8);
+		collection.removeIntervalById(id);
+
+		revertIntervalRevertibles(sharedString, revertibles.splice(1, 1));
+		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
+
 		collection.removeIntervalById(id);
 
 		revertIntervalRevertibles(sharedString, revertibles.splice(0));
