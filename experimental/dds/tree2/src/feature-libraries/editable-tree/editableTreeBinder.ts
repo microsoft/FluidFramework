@@ -5,8 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { FieldKey, PathVisitor, ProtoNodes, TreeValue, UpPath, topDownPath } from "../../core";
-import { IEmitter, ISubscribable, createEmitter } from "../../events";
-import { ISharedTreeView } from "../../shared-tree";
+import { Events, IEmitter, ISubscribable, createEmitter } from "../../events";
 import { EditableTree, on } from "./editableTreeTypes";
 
 /**
@@ -35,13 +34,12 @@ export interface BinderOptions {
 	matchPolicy: MatchPolicyType;
 }
 
-export interface FlushableBinderOptions extends BinderOptions {
+export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
 	autoFlush: boolean;
-	autoFlushPolicy: AutoFlushPolicyType;
+	autoFlushPolicy: keyof Events<E>;
 }
 
 export type MatchPolicyType = "subtree" | "path";
-export type AutoFlushPolicyType = "afterBatch";
 
 export interface DataBinder {
 	register<K extends keyof BinderEvents>(
@@ -349,13 +347,13 @@ class AbstractDataBinder<V extends AbstractPathVisitor> implements DataBinder {
 	}
 }
 
-class BufferingDataBinder
+class BufferingDataBinder<E extends Events<E>>
 	extends AbstractDataBinder<BufferingPathVisitor>
 	implements FlushableDataBinder
 {
-	protected readonly view: ISharedTreeView;
-	protected readonly autoFlushPolicy;
-	public constructor(view: ISharedTreeView, options: FlushableBinderOptions) {
+	protected readonly view: ISubscribable<E>;
+	protected readonly autoFlushPolicy: keyof Events<E>;
+	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
 		const events = createEmitter<BinderEvents>();
 		super(events, options, (anchor: EditableTree) => new BufferingPathVisitor(events, options));
 		this.view = view;
@@ -373,28 +371,29 @@ class BufferingDataBinder
 	}
 
 	private enableAutoFlush(): FlushableDataBinder {
-		const unregisterFlushing = this.view.events.on(this.autoFlushPolicy, () => {
+		const callbackFn = (() => {
 			this.flush();
-		});
+		}) as E[keyof Events<E>];
+		const unregisterFlushing = this.view.on(this.autoFlushPolicy, callbackFn);
 		this.unregisterHandles.add(unregisterFlushing);
 		return this;
 	}
 }
 
-class DirectDataBinder extends AbstractDataBinder<DirectPathVisitor> {
-	public constructor(view: ISharedTreeView, options: BinderOptions) {
+class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<DirectPathVisitor> {
+	public constructor(view: ISubscribable<E>, options: BinderOptions) {
 		const events = createEmitter<BinderEvents>();
 		super(events, options, (anchor: EditableTree) => new DirectPathVisitor(events, options));
 	}
 }
 
-class InvalidateDataBinder
+class InvalidateDataBinder<E extends Events<E>>
 	extends AbstractDataBinder<InvalidatePathVisitor>
 	implements FlushableDataBinder
 {
-	protected readonly view: ISharedTreeView;
+	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy;
-	public constructor(view: ISharedTreeView, options: FlushableBinderOptions) {
+	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
 		const events = createEmitter<BinderEvents>();
 		super(
 			events,
@@ -414,9 +413,10 @@ class InvalidateDataBinder
 		return this;
 	}
 	private enableAutoFlush(): FlushableDataBinder {
-		const unregisterFlushing = this.view.events.on(this.autoFlushPolicy, () => {
+		const callbackFn = (() => {
 			this.flush();
-		});
+		}) as E[keyof Events<E>];
+		const unregisterFlushing = this.view.on(this.autoFlushPolicy, callbackFn);
 		this.unregisterHandles.add(unregisterFlushing);
 		return this;
 	}
@@ -431,20 +431,23 @@ export function toBindPath(upPath: UpPath): BindPath {
 	return stepDownPath;
 }
 
-export function createDataBinderBuffering(
-	view: ISharedTreeView,
-	options: FlushableBinderOptions,
+export function createDataBinderBuffering<E extends Events<E>>(
+	view: ISubscribable<E>,
+	options: FlushableBinderOptions<E>,
 ): FlushableDataBinder {
 	return new BufferingDataBinder(view, options);
 }
 
-export function createDataBinderDirect(view: ISharedTreeView, options: BinderOptions): DataBinder {
+export function createDataBinderDirect<E extends Events<E>>(
+	view: ISubscribable<E>,
+	options: BinderOptions,
+): DataBinder {
 	return new DirectDataBinder(view, options);
 }
 
-export function createDataBinderInvalidate(
-	view: ISharedTreeView,
-	options: FlushableBinderOptions,
+export function createDataBinderInvalidate<E extends Events<E>>(
+	view: ISubscribable<E>,
+	options: FlushableBinderOptions<E>,
 ): FlushableDataBinder {
 	return new InvalidateDataBinder(view, options);
 }
@@ -461,16 +464,18 @@ export function createBinderOptionsSubtree(
 	return { matchPolicy: "subtree", sortFn };
 }
 
-export function createFlushableBinderOptionsDefault(
+export function createFlushableBinderOptionsDefault<E extends Events<E>>(
+	event: keyof Events<E>,
 	sortFn?: (a: BindingContext, b: BindingContext) => number,
-): FlushableBinderOptions {
+): FlushableBinderOptions<E> {
 	const options = createBinderOptionsDefault(sortFn);
-	return { ...options, autoFlush: true, autoFlushPolicy: "afterBatch" };
+	return { ...options, autoFlush: true, autoFlushPolicy: event };
 }
 
-export function createFlushableBinderOptionsSubtree(
+export function createFlushableBinderOptionsSubtree<E extends Events<E>>(
+	event: keyof Events<E>,
 	sortFn?: (a: BindingContext, b: BindingContext) => number,
-): FlushableBinderOptions {
+): FlushableBinderOptions<E> {
 	const options = createBinderOptionsSubtree(sortFn);
-	return { ...options, autoFlush: true, autoFlushPolicy: "afterBatch" };
+	return { ...options, autoFlush: true, autoFlushPolicy: event };
 }
