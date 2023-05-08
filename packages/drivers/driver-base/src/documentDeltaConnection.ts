@@ -82,20 +82,14 @@ export class DocumentDeltaConnection
 	}
 
 	public get disposed() {
-		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
-		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
-		const originalStackTraceLimit = (Error as any).stackTraceLimit;
-		try {
-			(Error as any).stackTraceLimit = 50;
-			assert(
-				this._disposed || this.socket.connected,
-				0x244 /* "Socket is closed, but connection is not!" */,
-			);
-		} catch (error) {
-			const normalizedError = this.addPropsToError(error);
-			throw normalizedError;
-		} finally {
-			(Error as any).stackTraceLimit = originalStackTraceLimit;
+		if (!(this._disposed || this.socket.connected)) {
+			this.logger.sendTelemetryEvent({
+				eventName: "ConnectionNotYetDisposed",
+				driverVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			});
 		}
 		return this._disposed;
 	}
@@ -235,7 +229,14 @@ export class DocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
-	private checkNotClosed() {
+	private get connected(): boolean {
+		if (!this.disposed && this.socket.connected) {
+			return true;
+		}
+		return false;
+	}
+
+	private checkNotDisposed() {
 		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
 		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
 		const originalStackTraceLimit = (Error as any).stackTraceLimit;
@@ -256,7 +257,7 @@ export class DocumentDeltaConnection
 	 * @returns messages sent during the connection
 	 */
 	public get initialMessages(): ISequencedDocumentMessage[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 
 		// If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
 		// latest ops.  This could possibly indicate that initialMessages was called twice.
@@ -282,7 +283,7 @@ export class DocumentDeltaConnection
 	 * @returns signals sent during the connection
 	 */
 	public get initialSignals(): ISignalMessage[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 		assert(this.listeners("signal").length !== 0, 0x090 /* "No signal handler is setup!" */);
 
 		this.removeEarlySignalHandler();
@@ -302,15 +303,15 @@ export class DocumentDeltaConnection
 	 * @returns initial client list sent during the connection
 	 */
 	public get initialClients(): ISignalClient[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 		return this.details.initialClients;
 	}
 
 	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
-		// on the still-live socket.
-		if (!this.disposed) {
+		// on the still-live socket. Also in case, connection is not yet disposed, then don't emit the messages.
+		if (this.connected) {
 			this.socket.emit(type, this.clientId, messages);
 		}
 	}
@@ -325,7 +326,6 @@ export class DocumentDeltaConnection
 	 * @param message - delta operation to submit
 	 */
 	public submit(messages: IDocumentMessage[]): void {
-		this.checkNotClosed();
 		this.submitCore("submitOp", messages);
 	}
 
@@ -335,7 +335,6 @@ export class DocumentDeltaConnection
 	 * @param message - signal to submit
 	 */
 	public submitSignal(message: IDocumentMessage): void {
-		this.checkNotClosed();
 		this.submitCore("submitSignal", [message]);
 	}
 
