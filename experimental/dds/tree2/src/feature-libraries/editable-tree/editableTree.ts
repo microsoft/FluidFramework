@@ -11,9 +11,9 @@ import {
 	symbolIsFieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
+	TreeStoredSchema,
 	lookupTreeSchema,
 	mapCursorFields,
 	CursorLocationType,
@@ -133,7 +133,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return this.cursor.type;
 	}
 
-	public get type(): TreeSchema {
+	public get type(): TreeStoredSchema {
 		return lookupTreeSchema(this.context.schema, this.typeName);
 	}
 
@@ -157,7 +157,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return getFieldKind(this.getFieldSchema(field));
 	}
 
-	public getFieldSchema(field: FieldKey): FieldSchema {
+	public getFieldSchema(field: FieldKey): FieldStoredSchema {
 		return getFieldSchema(field, this.context.schema, this.type);
 	}
 

@@ -7,6 +7,7 @@ import * as semver from "semver";
 import { ReleaseVersion, VersionBumpType, VersionBumpTypeExtended } from "./bumpTypes";
 import {
 	bumpInternalVersion,
+	detectInternalVersionConstraintType,
 	fromInternalScheme,
 	getVersionRange,
 	isInternalVersionScheme,
@@ -58,7 +59,7 @@ export function bumpRange(
 		}
 
 		case "internal": {
-			const constraintType = detectConstraintType(range);
+			const constraintType = detectInternalVersionConstraintType(range);
 			const original = semver.minVersion(range);
 			if (original === null) {
 				throw new Error(`Couldn't determine minVersion from ${range}.`);
@@ -71,30 +72,6 @@ export function bumpRange(
 			throw new Error(`${scheme} wasn't handled. Was a new version scheme added?`);
 		}
 	}
-}
-
-/**
- * Detects the type of upgrade constraint that a version range represents. Only works for Fluid internal version scheme
- * versions.
- *
- * @param range - The range to check.
- * @returns The constraint type.
- *
- * @remarks
- *
- * Throws an Error if the range is not valid.
- */
-export function detectConstraintType(range: string): "minor" | "patch" {
-	const minVer = semver.minVersion(range);
-	if (minVer === null) {
-		throw new Error(`Couldn't determine minVersion from ${range}.`);
-	}
-
-	const patch = bumpInternalVersion(minVer, "patch");
-	const minor = bumpInternalVersion(minVer, "minor");
-
-	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
-	return maxSatisfying === patch ? "patch" : "minor";
 }
 
 /**
