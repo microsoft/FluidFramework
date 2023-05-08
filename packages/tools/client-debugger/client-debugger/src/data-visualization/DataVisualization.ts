@@ -211,6 +211,7 @@ export class DataVisualizerGraph
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction =
+				sharedObject.attributes?.type !== undefined &&
 				this.visualizers[sharedObject.attributes.type] !== undefined
 					? this.visualizers[sharedObject.attributes.type]
 					: visualizeUnknownSharedObject;
@@ -247,7 +248,7 @@ export class DataVisualizerGraph
 
 		// TODO: is this the right type check for this?
 		const sharedObject = resolvedObject as ISharedObject;
-		if (sharedObject?.id !== undefined) {
+		if (sharedObject?.id !== undefined && sharedObject.attributes !== undefined) {
 			return this.registerVisualizerForSharedObject(sharedObject);
 		} else {
 			// Unknown data.
