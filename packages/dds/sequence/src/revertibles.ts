@@ -224,8 +224,7 @@ export function appendSharedStringDeltaToRevertibles(
 				}
 
 				revertible.intervals.push({
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					intervalId: interval.getIntervalId()!,
+					intervalId: interval.getIntervalId(),
 					label: interval.properties.referenceRangeLabels[0],
 					startOffset: offset,
 					endOffset,
@@ -235,8 +234,7 @@ export function appendSharedStringDeltaToRevertibles(
 			// add any remaining endIntervals that aren't matched with a startInterval
 			endIntervals.forEach(({ interval, offset }) => {
 				revertible.intervals.push({
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					intervalId: interval.getIntervalId()!,
+					intervalId: interval.getIntervalId(),
 					label: interval.properties.referenceRangeLabels[0],
 					endOffset: offset,
 				});
