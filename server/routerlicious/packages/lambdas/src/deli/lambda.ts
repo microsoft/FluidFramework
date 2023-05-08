@@ -57,6 +57,7 @@ import {
 	IExtendClientControlMessageContents,
 	ISequencedSignalClient,
 	IClientManager,
+	ICheckpointService,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -217,10 +218,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private signalClientConnectionNumber: number;
 	private durableSequenceNumber: number;
 
-	// 'epoch' and 'term' are readonly and should never change when lambda is running.
-	private readonly term: number;
-	private readonly epoch: number;
-
 	private logOffset: number;
 
 	// Client sequence number mapping
@@ -232,6 +229,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	private lastSentMSN = 0;
 	private lastHash: string;
 	private lastInstruction: InstructionType | undefined = InstructionType.NoOp;
+	private lastMessageType: string | undefined;
 
 	private activityIdleTimer: any;
 	private readClientIdleTimer: any;
@@ -276,6 +274,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
+		private readonly checkpointService: ICheckpointService,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -302,8 +301,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.sequenceNumber = lastCheckpoint.sequenceNumber;
 		this.signalClientConnectionNumber = lastCheckpoint.signalClientConnectionNumber ?? 0;
 		this.lastHash = lastCheckpoint.expHash1 ?? defaultHash;
-		this.term = lastCheckpoint.term;
-		this.epoch = lastCheckpoint.epoch;
 		this.durableSequenceNumber = lastCheckpoint.durableSequenceNumber;
 		this.lastSentMSN = lastCheckpoint.lastSentMSN ?? 0;
 		this.logOffset = lastCheckpoint.logOffset;
@@ -341,6 +338,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.documentId,
 			checkpointManager,
 			context,
+			this.checkpointService,
 		);
 
 		// start the activity idle timer when created
@@ -448,6 +446,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 			switch (ticketedMessage.ticketType) {
 				case TicketType.Sequenced: {
+					this.lastMessageType = ticketedMessage.type;
 					if (ticketedMessage.type !== MessageType.ClientLeave) {
 						// Check for idle write clients.
 						this.checkIdleWriteClients(ticketedMessage.timestamp);
@@ -601,7 +600,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.checkpointInfo.rawMessagesSinceCheckpoint++;
 		this.updateCheckpointMessages(rawMessage);
 
-		const checkpointReason = this.getCheckpointReason();
+		const checkpointReason = this.getCheckpointReason(this.lastMessageType);
 		if (checkpointReason !== undefined) {
 			// checkpoint the current up to date state
 			this.checkpoint(checkpointReason);
@@ -1314,7 +1313,8 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			origin,
 			referenceSequenceNumber: message.operation.referenceSequenceNumber,
 			sequenceNumber,
-			term: this.term,
+			// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+			term: 1,
 			timestamp: message.timestamp,
 			traces: message.operation.traces,
 			type: message.operation.type,
@@ -1655,12 +1655,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		return {
 			clients: this.clientSeqManager.cloneValues(),
 			durableSequenceNumber: this.durableSequenceNumber,
-			epoch: this.epoch,
 			expHash1: this.lastHash,
 			logOffset: this.logOffset,
 			sequenceNumber: this.sequenceNumber,
 			signalClientConnectionNumber: this.signalClientConnectionNumber,
-			term: this.term,
 			lastSentMSN: this.lastSentMSN,
 			nackMessages: Array.from(this.nackMessages),
 			successfullyStartedLambdas: this.successfullyStartedLambdas,
@@ -1833,7 +1831,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	 * Determines a checkpoint reason based on some heuristics
 	 * @returns a reason when it's time to checkpoint, or undefined if no checkpoint should be made
 	 */
-	private getCheckpointReason(): CheckpointReason | undefined {
+	private getCheckpointReason(messageType: string | undefined): CheckpointReason | undefined {
 		const checkpointHeuristics = this.serviceConfiguration.deli.checkpointHeuristics;
 		if (!checkpointHeuristics.enable) {
 			// always checkpoint since heuristics are disabled
@@ -1856,6 +1854,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			return CheckpointReason.ClearCache;
 		}
 
+		if (this.noActiveClients && messageType === MessageType.NoClient) {
+			return CheckpointReason.NoClients;
+		}
+
 		return undefined;
 	}
 
@@ -1868,10 +1870,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		this.checkpointInfo.lastCheckpointTime = Date.now();
 		this.checkpointInfo.rawMessagesSinceCheckpoint = 0;
 
-		const checkpointParams = this.generateCheckpoint(reason);
-
 		Promise.all([this.lastSendP, this.lastNoClientP]).then(
 			() => {
+				const checkpointParams = this.generateCheckpoint(reason);
 				if (reason === CheckpointReason.ClearCache) {
 					checkpointParams.clear = true;
 				}

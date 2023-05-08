@@ -356,6 +356,8 @@ export class SummaryManager implements IDisposable {
 			startThrottlerMaxDelayMs: this.startThrottler.maxDelayMs,
 			opsSinceLastAck: this.summaryCollection.opsSinceLastAck,
 			opsToBypassInitialDelay: this.opsToBypassInitialDelay,
+			electedParentId: this.clientElection.electedParentId,
+			electedClientId: this.clientElection.electedClientId,
 		});
 
 		// This delay helps ensure that last summarizer that might be left from previous client

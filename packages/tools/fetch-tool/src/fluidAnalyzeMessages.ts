@@ -578,6 +578,7 @@ function processOp(
 				}
 				// eslint-disable-next-line no-fallthrough
 			}
+			case ContainerMessageType.IdAllocation:
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.Rejoin: {

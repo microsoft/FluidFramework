@@ -728,6 +728,20 @@ export interface ISegmentChanges {
     replaceCurrent?: ISegment;
 }
 
+// @public (undocumented)
+export interface ITrackingGroup {
+    // (undocumented)
+    has(trackable: Trackable): boolean;
+    // (undocumented)
+    link(trackable: Trackable): void;
+    // (undocumented)
+    size: number;
+    // (undocumented)
+    tracked: readonly Trackable[];
+    // (undocumented)
+    unlink(trackable: Trackable): boolean;
+}
+
 // @internal (undocumented)
 export interface KeyComparer<TKey> {
     // (undocumented)
@@ -882,13 +896,13 @@ export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTr
 // @alpha
 export type MergeTreeDeltaRevertible = {
     operation: typeof MergeTreeDeltaType.INSERT;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
 } | {
     operation: typeof MergeTreeDeltaType.REMOVE;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
 } | {
     operation: typeof MergeTreeDeltaType.ANNOTATE;
-    trackingGroup: TrackingGroup;
+    trackingGroup: ITrackingGroup;
     propertyDeltas: PropertySet;
 };
 
@@ -921,18 +935,18 @@ export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typ
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): any;
-    // (undocumented)
+    // @deprecated (undocumented)
     createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // (undocumented)
+    // @deprecated (undocumented)
     getContainingSegment(pos: number): {
         segment: ISegment | undefined;
         offset: number | undefined;
     };
-    // (undocumented)
+    // @deprecated (undocumented)
     getPosition(segment: ISegment): number;
     // (undocumented)
     insertFromSpec(pos: number, spec: IJSONSegment): any;
-    // (undocumented)
+    // @deprecated (undocumented)
     localReferencePositionToPosition(lref: LocalReferencePosition): number;
     // (undocumented)
     removeRange(start: number, end: number): any;
@@ -1336,7 +1350,7 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 export type Trackable = ISegment | LocalReferencePosition;
 
 // @public (undocumented)
-export class TrackingGroup {
+export class TrackingGroup implements ITrackingGroup {
     constructor();
     // (undocumented)
     has(trackable: Trackable): boolean;
@@ -1360,13 +1374,13 @@ export class TrackingGroupCollection {
     // (undocumented)
     get empty(): boolean;
     // (undocumented)
-    link(trackingGroup: TrackingGroup): void;
+    link(trackingGroup: ITrackingGroup): void;
     // (undocumented)
     matches(trackingCollection: TrackingGroupCollection): boolean;
     // (undocumented)
-    readonly trackingGroups: Set<TrackingGroup>;
+    get trackingGroups(): Set<TrackingGroup>;
     // (undocumented)
-    unlink(trackingGroup: TrackingGroup): boolean;
+    unlink(trackingGroup: ITrackingGroup): boolean;
 }
 
 // @public (undocumented)

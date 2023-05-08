@@ -5,11 +5,12 @@
 
 export { ConnectionState } from "./connectionState";
 export {
-	IContainerLoadOptions,
 	IContainerConfig,
+	IContainerLoadOptions,
 	IPendingContainerState,
 	waitContainerToCatchUp,
 } from "./container";
+export { ISerializableBlobContents } from "./containerStorageAdapter";
 export {
 	ICodeDetailsLoader,
 	IDetachedBlobStorage,
@@ -18,5 +19,6 @@ export {
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
+	requestResolvedObjectFromContainer,
 } from "./loader";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";

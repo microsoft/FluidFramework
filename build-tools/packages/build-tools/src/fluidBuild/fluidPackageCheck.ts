@@ -124,18 +124,6 @@ export class FluidPackageCheck {
 					fixed = true;
 				}
 			}
-
-			if (!hasConfig) {
-				// Make sure --unhandled-rejections=strict switch used
-				const unhandledRejectionsSwitch = "--unhandled-rejections=strict";
-				if (!testScript.includes(unhandledRejectionsSwitch)) {
-					this.logWarn(pkg, `missing --unhandled-rejection switch in test script`, fix);
-					if (fix) {
-						pkg.packageJson.scripts[testScriptName] += ` ${unhandledRejectionsSwitch}`;
-						fixed = true;
-					}
-				}
-			}
 		}
 
 		return fixed;
@@ -255,7 +243,7 @@ export class FluidPackageCheck {
 			if (this.ensureTestDevDependency(pkg, fix, "nyc")) {
 				fixed = true;
 			}
-			if (pkg.packageJson.nyc) {
+			if (pkg.packageJson.nyc !== undefined && pkg.packageJson.nyc !== null) {
 				if (pkg.packageJson.nyc["exclude-after-remap"] !== false) {
 					this.logWarn(pkg, `nyc.exclude-after-remap need to be false`, fix);
 					if (fix) {
@@ -358,13 +346,9 @@ export class FluidPackageCheck {
 				buildCompile.push("build:realsvctest");
 			}
 
-			// build:commonjs build:es5 and build:esnext should be in build:compile if they exist
+			// build:commonjs and build:esnext should be in build:compile if they exist
 			if (pkg.getScript("build:commonjs")) {
 				buildCompile.push("build:commonjs");
-			}
-
-			if (pkg.getScript("build:es5")) {
-				buildCompile.push("build:es5");
 			}
 
 			if (pkg.getScript("build:esnext")) {
@@ -373,6 +357,10 @@ export class FluidPackageCheck {
 
 			if (pkg.getScript("build:copy")) {
 				buildCompile.push("build:copy");
+			}
+
+			if (pkg.getScript("build:copy-resources")) {
+				buildCompile.push("build:copy-resources");
 			}
 
 			if (pkg.getScript("lint")) {
@@ -828,7 +816,10 @@ export class FluidPackageCheck {
 		if (this.hasMainBuild(pkg)) {
 			// We should only have references if we have a main build.
 			const references = [{ path: referencePath }];
-			if (!isEqual(configJson.references, references)) {
+			if (
+				configJson.references !== undefined &&
+				!isEqual(configJson.references, references)
+			) {
 				this.logWarn(pkg, `Unexpected references in ${configFile}`, fix);
 				if (fix) {
 					configJson.references = references;
@@ -954,8 +945,8 @@ export class FluidPackageCheck {
 			}
 			for (const depPackage of Object.keys(scriptDep)) {
 				if (
-					!pkg.packageJson.dependencies[depPackage] &&
-					!pkg.packageJson.devDependencies[depPackage]
+					!pkg.packageJson.dependencies?.[depPackage] &&
+					!pkg.packageJson.devDependencies?.[depPackage]
 				) {
 					this.logWarn(
 						pkg,

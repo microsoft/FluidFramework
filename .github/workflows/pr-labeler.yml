@@ -11,7 +11,7 @@ jobs:
       - uses: actions/labeler@5c7539237e04b714afd8ad9b4aed733815b9fab4 # ratchet:actions/labeler@v4.0.2
         with:
           configuration-path: ".github/actions-labeler.yml"
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          repo-token: "${{ github.token }}"
           sync-labels: true # add/remove labels as modified paths in the PR change
   branches_label:
     runs-on: ubuntu-latest
@@ -19,4 +19,4 @@ jobs:
     steps:
       - uses: srvaroa/labeler@953347905ec8e4884e85c9957d24508e24119fc3 # ratchet:srvaroa/labeler@v1.3
         env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_TOKEN: "${{ github.token }}"

@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.0.1",
+	"version": "0.18.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,16 +11,15 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run build:genver && npm run build:compile && npm run lint && npm run build:docs",
-		"build:ci": "npm run build:genver && lerna run build:compile --stream",
+		"build": "npm run build:compile && npm run lint && npm run build:docs",
+		"build:ci": "lerna run build:compile --stream",
 		"build:compile": "lerna run build:compile --stream",
 		"build:docs": "lerna run build:docs --stream --parallel",
 		"build:fast": "fluid-build --root .. --buildTools",
-		"build:genver": "lerna run build:genver --stream --parallel",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
-		"ci:build": "npm run build:genver && lerna run build:compile --stream",
+		"ci:build": "lerna run build:compile --stream",
 		"ci:build:docs": "lerna run ci:build:docs --stream --parallel",
 		"ci:test": "npm run test:report ; t1=$? ; npm run test:copyresults ; exit $t1",
 		"ci:test:coverage": "npm run test:coverage ; t1=$? ; npm run test:copyresults ; exit $t1",
@@ -78,6 +77,7 @@
 		"@commitlint/cli": "^17.1.2",
 		"@commitlint/config-conventional": "^17.1.0",
 		"@commitlint/cz-commitlint": "^17.1.2",
+		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/test-tools": "^0.2.3074",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -96,10 +96,10 @@
 		"run-script-os": "^1.1.6",
 		"typescript": "~4.5.5"
 	},
+	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
 	"engines": {
 		"node": ">=14.17.0"
 	},
-	"packageManager": "pnpm@7.14.2",
 	"pnpm": {
 		"peerDependencyRules": {
 			"allowedVersions": {

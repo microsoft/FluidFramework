@@ -61,22 +61,16 @@ export class WebpackTask extends LeafWithDoneFileTask {
 	protected addDependentTasks(dependentTasks: LeafTask[]) {
 		for (const child of this.node.dependentPackages) {
 			// TODO: Need to look at the output from tsconfig
-			if (this.addChildTask(dependentTasks, child, "npm run build:esnext")) {
-				this.logVerboseDependency(child, "build:esnext");
-				if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
-					this.logVerboseDependency(child, "build:copy");
-				}
-			} else if (this.addChildTask(dependentTasks, child, "npm run webpack")) {
-				this.logVerboseDependency(child, "webpack");
-				if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
-					this.logVerboseDependency(child, "build:copy");
-				}
-			} else if (this.addChildTask(dependentTasks, child, "tsc")) {
-				this.logVerboseDependency(child, "tsc");
-				if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
-					this.logVerboseDependency(child, "build:copy");
-				}
-			} else if (child.task) {
+			if (this.addChildCompileAndCopyScripts(dependentTasks, child, "build:esnext")) {
+				continue;
+			}
+			if (this.addChildCompileAndCopyScripts(dependentTasks, child, "webpack")) {
+				continue;
+			}
+			if (this.addChildCompileAndCopyScripts(dependentTasks, child, "tsc")) {
+				continue;
+			}
+			if (child.task) {
 				child.task.collectLeafTasks(dependentTasks);
 				this.logVerboseDependency(child, "*");
 			}
