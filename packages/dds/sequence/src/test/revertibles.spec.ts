@@ -410,6 +410,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
 		let int = collection.getIntervalById(id);
 		while (int === undefined) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const newId = idMap.get(id)!;
 			int = collection.getIntervalById(newId);
 		}
