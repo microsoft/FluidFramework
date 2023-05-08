@@ -46,5 +46,4 @@ export {
 } from "./configuration";
 export { transformDocNode } from "./DocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
-export { apiPackageToDocument } from "./TransformApiPackage";
-export { apiModelToDocument } from "./TransformModel";
+export { transformApiModel } from "./TransformApiModel";

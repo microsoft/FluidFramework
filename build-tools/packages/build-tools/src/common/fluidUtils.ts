@@ -2,20 +2,21 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as path from "path";
+import * as path from "node:path";
+import { existsSync } from "node:fs";
 import { cosmiconfigSync } from "cosmiconfig";
+import findUp from "find-up";
 
 import { commonOptions } from "./commonOptions";
 import { IFluidBuildConfig } from "./fluidRepo";
-import { defaultLogger } from "./logging";
-import { existsSync, lookUpDirAsync, readJsonAsync, realpathAsync } from "./utils";
+import { Logger, defaultLogger } from "./logging";
+import { realpathAsync } from "./utils";
+import { readJson } from "fs-extra";
 
-const { verbose } = defaultLogger;
-
-async function isFluidRootLerna(dir: string) {
+async function isFluidRootLerna(dir: string, log: Logger = defaultLogger) {
 	const filename = path.join(dir, "lerna.json");
 	if (!existsSync(filename)) {
-		verbose(`InferRoot: lerna.json not found`);
+		log.verbose(`InferRoot: lerna.json not found`);
 		return false;
 	}
 	const rootPackageManifest = getFluidBuildConfig(dir);
@@ -23,7 +24,7 @@ async function isFluidRootLerna(dir: string) {
 		rootPackageManifest.repoPackages.server !== undefined &&
 		!existsSync(path.join(dir, rootPackageManifest.repoPackages.server as string, "lerna.json"))
 	) {
-		verbose(
+		log.verbose(
 			`InferRoot: ${dir}/${
 				rootPackageManifest.repoPackages.server as string
 			}/lerna.json not found`,
@@ -34,18 +35,18 @@ async function isFluidRootLerna(dir: string) {
 	return true;
 }
 
-async function isFluidRootPackage(dir: string) {
+async function isFluidRootPackage(dir: string, log: Logger = defaultLogger) {
 	const filename = path.join(dir, "package.json");
 	if (!existsSync(filename)) {
-		verbose(`InferRoot: package.json not found`);
+		log.verbose(`InferRoot: package.json not found`);
 		return false;
 	}
 
-	const parsed = await readJsonAsync(filename);
+	const parsed = await readJson(filename);
 	if (parsed.name === "root" && parsed.private === true) {
 		return true;
 	}
-	verbose(`InferRoot: package.json not matched`);
+	log.verbose(`InferRoot: package.json not matched`);
 	return false;
 }
 
@@ -53,48 +54,48 @@ async function isFluidRoot(dir: string) {
 	return (await isFluidRootLerna(dir)) && (await isFluidRootPackage(dir));
 }
 
-async function inferRoot() {
-	return lookUpDirAsync(process.cwd(), async (curr) => {
-		verbose(`InferRoot: probing ${curr}`);
-		try {
-			if (await isFluidRoot(curr)) {
-				return true;
-			}
-			// eslint-disable-next-line no-empty
-		} catch {}
-		return false;
-	});
+async function inferRoot(log: Logger = defaultLogger) {
+	const fluidConfig = findUp.sync("fluidBuild.config.cjs", { cwd: process.cwd(), type: "file" });
+	if (fluidConfig === undefined) {
+		return undefined;
+	}
+	const isRoot = await isFluidRootPackage(path.dirname(fluidConfig), log);
+	if (isRoot) {
+		return path.dirname(fluidConfig);
+	}
+
+	return undefined;
 }
 
-export async function getResolvedFluidRoot() {
+export async function getResolvedFluidRoot(log: Logger = defaultLogger) {
 	let checkFluidRoot = true;
 	let root = commonOptions.root;
 	if (root) {
-		verbose(`Using argument root @ ${root}`);
+		log.verbose(`Using argument root @ ${root}`);
 	} else {
 		root = await inferRoot();
 		if (root) {
 			checkFluidRoot = false;
-			verbose(`Using inferred root @ ${root}`);
+			log.verbose(`Using inferred root @ ${root}`);
 		} else if (commonOptions.defaultRoot) {
 			root = commonOptions.defaultRoot;
-			verbose(`Using default root @ ${root}`);
+			log.verbose(`Using default root @ ${root}`);
 		} else {
-			console.error(
-				`ERROR: Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`,
+			log.errorLog(
+				`Unknown repo root. Specify it with --root or environment variable _FLUID_ROOT_`,
 			);
 			process.exit(-101);
 		}
 	}
 
 	if (checkFluidRoot && !isFluidRoot(root)) {
-		console.error(`ERROR: '${root}' is not a root of Fluid repo.`);
+		log.errorLog(`'${root}' is not a root of Fluid repo.`);
 		process.exit(-100);
 	}
 
 	const resolvedRoot = path.resolve(root);
 	if (!existsSync(resolvedRoot)) {
-		console.error(`ERROR: Repo root '${resolvedRoot}' does not exist.`);
+		log.errorLog(`Repo root '${resolvedRoot}' does not exist.`);
 		process.exit(-102);
 	}
 
