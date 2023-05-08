@@ -10,7 +10,10 @@ import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
@@ -39,8 +42,15 @@ export function handleResponse<T>(
 			} else if (allowClientCache === false) {
 				response.setHeader("Cache-Control", "no-store, max-age=0");
 			}
-
+			// Make sure the browser will expose specific headers for performance analysis.
+			response.setHeader(
+				"Access-Control-Expose-Headers",
+				"Content-Encoding, Content-Length, Content-Type",
+			);
+			// In order to report W3C timings, Time-Allow-Origin needs to be set.
+			response.setHeader("Timing-Allow-Origin", "*");
 			onSuccess(result);
+			// Express' json call below will set the content-length.
 			response.status(successStatus).json(result);
 		},
 		(error) => {
@@ -65,6 +75,7 @@ export class createGitServiceArgs {
 	tenantId: string;
 	authorization: string;
 	tenantService: ITenantService;
+	storageNameRetriever: IStorageNameRetriever;
 	cache?: ICache;
 	asyncLocalStorage?: AsyncLocalStorage<string>;
 	initialUpload?: boolean = false;
@@ -78,6 +89,7 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 		tenantId,
 		authorization,
 		tenantService,
+		storageNameRetriever,
 		cache,
 		asyncLocalStorage,
 		initialUpload,
@@ -96,7 +108,9 @@ export async function createGitService(createArgs: createGitServiceArgs): Promis
 	const writeToExternalStorage = !!customData?.externalStorageData;
 	const storageUrl = config.get("storageUrl") as string | undefined;
 	const calculatedStorageName =
-		initialUpload && storageName ? storageName : customData?.storageName;
+		initialUpload && storageName
+			? storageName
+			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
 	const service = new RestGitService(
 		details.storage,
 		writeToExternalStorage,

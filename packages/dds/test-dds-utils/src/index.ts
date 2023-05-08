@@ -14,4 +14,5 @@ export {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	Synchronize,
+	replayTest,
 } from "./ddsFuzzHarness";

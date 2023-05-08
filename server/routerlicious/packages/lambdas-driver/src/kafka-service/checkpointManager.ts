@@ -6,6 +6,7 @@
 import assert from "assert";
 import { Deferred } from "@fluidframework/common-utils";
 import { IConsumer, IQueuedMessage } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export class CheckpointManager {
 	private checkpointing = false;
@@ -94,6 +95,10 @@ export class CheckpointManager {
 	 */
 	public async flush(): Promise<void> {
 		if (this.lastCheckpoint) {
+			Lumberjack.info(`Checkpointing last recieved offset: ${this.lastCheckpoint.offset}`, {
+				offset: this.lastCheckpoint.offset,
+				partition: this.lastCheckpoint.partition,
+			});
 			return this.checkpoint(this.lastCheckpoint);
 		}
 	}
