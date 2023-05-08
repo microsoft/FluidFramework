@@ -27,7 +27,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 	}
 
 	public get opsSinceLastSummary(): number {
-		return this.numSystemOpsBefore + this.numNonSystemOpsBefore;
+		return this.numNonRuntimeOpsBefore + this.numRuntimeOpsBefore;
 	}
 
 	public numNonRuntimeOps: number = 0;
@@ -42,22 +42,23 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 	private totalOpsSizeBefore: number = 0;
 
 	/**
-	 * Number of system ops at beginning of attempting to summarize.
-	 * Is used to adjust numSystemOps appropriately after successful summarization.
+	 * Number of non-runtime ops at beginning of attempting to summarize.
+	 * Is used to adjust numNonRuntimeOps appropriately after successful summarization.
 	 */
-	private numSystemOpsBefore: number = 0;
+	private numNonRuntimeOpsBefore: number = 0;
 
 	public numRuntimeOps: number = 0;
 	/**
-	 * Number of non-system ops at beginning of attempting to summarize.
-	 * Is used to adjust numNonSystemOps appropriately after successful summarization.
+	 * Number of runtime ops at beginning of attempting to summarize.
+	 * Is used to adjust numRuntimeOps appropriately after successful summarization.
 	 */
-	private numNonSystemOpsBefore: number = 0;
+	private numRuntimeOpsBefore: number = 0;
 
 	constructor(
 		public lastOpSequenceNumber: number,
 		/** Baseline attempt data used for comparisons with subsequent attempts/calculations. */
 		attemptBaseline: ISummarizeAttempt,
+		private readonly logger: ITelemetryLogger,
 	) {
 		this._lastAttempt = attemptBaseline;
 		this._lastSuccessfulSummary = { ...attemptBaseline };
@@ -74,19 +75,38 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 			summaryTime: Date.now(),
 		};
 
-		this.numSystemOpsBefore = this.numNonRuntimeOps;
-		this.numNonSystemOpsBefore = this.numRuntimeOps;
+		this.numNonRuntimeOpsBefore = this.numNonRuntimeOps;
+		this.numRuntimeOpsBefore = this.numRuntimeOps;
 		this.totalOpsSizeBefore = this.totalOpsSize;
+
+		this.logger.sendTelemetryEvent({
+			eventName: "SummarizeHeuristicData_recordAttempt",
+			referenceSequenceNumber: this._lastAttempt.refSequenceNumber,
+			numRuntimeOps: this.numRuntimeOps,
+			numNonRuntimeOps: this.numNonRuntimeOps,
+			totalOpsSize: this.totalOpsSize,
+		});
 	}
 
 	public markLastAttemptAsSuccessful() {
 		this._lastSuccessfulSummary = { ...this.lastAttempt };
 
-		this.numNonRuntimeOps -= this.numSystemOpsBefore;
-		this.numSystemOpsBefore = 0;
+		this.logger.sendTelemetryEvent({
+			eventName: "SummarizeHeuristicData_markLastAttemptAsSuccessful",
+			referenceSequenceNumber: this._lastSuccessfulSummary.refSequenceNumber,
+			numRuntimeOps: this.numRuntimeOps,
+			numRuntimeOpsBefore: this.numRuntimeOpsBefore,
+			numNonRuntimeOps: this.numNonRuntimeOps,
+			numNonRuntimeOpsBefore: this.numNonRuntimeOpsBefore,
+			totalOpsSize: this.totalOpsSize,
+			totalOpsSizeBefore: this.totalOpsSizeBefore,
+		});
 
-		this.numRuntimeOps -= this.numNonSystemOpsBefore;
-		this.numNonSystemOpsBefore = 0;
+		this.numNonRuntimeOps -= this.numNonRuntimeOpsBefore;
+		this.numNonRuntimeOpsBefore = 0;
+
+		this.numRuntimeOps -= this.numRuntimeOpsBefore;
+		this.numRuntimeOpsBefore = 0;
 
 		this.totalOpsSize -= this.totalOpsSizeBefore;
 		this.totalOpsSizeBefore = 0;

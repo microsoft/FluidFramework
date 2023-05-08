@@ -258,11 +258,15 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
 			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryCallback
-			new SummarizeHeuristicData(this.runtime.deltaManager.lastSequenceNumber, {
-				/** summary attempt baseline for heuristics */
-				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
-				summaryTime: Date.now(),
-			} as const),
+			new SummarizeHeuristicData(
+				this.runtime.deltaManager.lastSequenceNumber,
+				{
+					/** summary attempt baseline for heuristics */
+					refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
+					summaryTime: Date.now(),
+				} as const,
+				this.logger,
+			),
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,

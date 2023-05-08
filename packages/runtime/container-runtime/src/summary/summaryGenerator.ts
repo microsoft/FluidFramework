@@ -282,16 +282,20 @@ export class SummaryGenerator {
 				cancellationToken,
 			});
 
-			this.heuristicData.recordAttempt(summaryData.referenceSequenceNumber);
+			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
+
+			// Need to record before we record new attempt
+			const opsSinceLastAttempt =
+				referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber;
+
+			this.heuristicData.recordAttempt(referenceSequenceNumber);
 
 			// Cumulatively add telemetry properties based on how far generateSummary went.
-			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
 			summarizeTelemetryProps = {
 				...summarizeTelemetryProps,
 				referenceSequenceNumber,
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
-				opsSinceLastAttempt:
-					referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
+				opsSinceLastAttempt,
 				opsSinceLastSummary:
 					referenceSequenceNumber -
 					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
@@ -481,6 +485,7 @@ export class SummaryGenerator {
 					hasMissingOpData: this.heuristicData.hasMissingOpData,
 					opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
 					nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
+					runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 				};
 
 			default:
