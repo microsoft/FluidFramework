@@ -18,6 +18,9 @@ parameters:
   type: object
   default: Small
 
+variables:
+  - group: ado-feeds
+
 stages:
 - stage: publish_npm_internal_test
   dependsOn: build
@@ -27,8 +30,8 @@ stages:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
-      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
+      devFeedName: $(testFeed) # Comes from the ado-feeds variable group
+      feedName: $(testFeed) # Comes from the ado-feeds variable group
       official: false
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
@@ -42,8 +45,8 @@ stages:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
-      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      devFeedName: $(devFeed) # Comes from the ado-feeds variable group
+      feedName: $(buildFeed) # Comes from the ado-feeds variable group
       official: false
       environment: package-build-feed
       pool: ${{ parameters.pool }}
@@ -59,7 +62,7 @@ stages:
       namespace: ${{ parameters.namespace }}
       # internal/msinternal/example packages are deleted for official releases, but in case something goes wrong with that,
       # using the `dev` registry is safe.
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
+      devFeedName: $(devFeed) # Comes from the ado-feeds variable group
       feedName: https://registry.npmjs.org
       official: true
       environment: package-npmjs-feed
