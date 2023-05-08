@@ -302,7 +302,6 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				...testContainerConfig,
 				loaderProps: {
 					detachedBlobStorage,
-					options: { },
 				},
 			});
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);

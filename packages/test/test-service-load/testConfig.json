@@ -97,12 +97,7 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-<<<<<<< HEAD
-						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
-=======
-						"Fluid.Container.summarizeProtocolTree2": [true, false],
 						"Fluid.ContainerRuntime.Test.SummaryStateUpdateMethod": ["restart", "default"]
->>>>>>> a5bda16510c8eb08c158ea213540ce26365340d4
 					}
 				}
 			}

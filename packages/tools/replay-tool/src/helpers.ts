@@ -180,9 +180,7 @@ export async function loadContainer(
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
-		options: loaderOptions
-			? { ...loaderOptions }
-			: { },
+		options: loaderOptions ?? {},
 		logger,
 		configProvider,
 	});
