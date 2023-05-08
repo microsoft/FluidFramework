@@ -1,15 +1,16 @@
 {
 	"scripts": {
-		"build": "pnpm run build:wasm:web && pnpm run build:wasm:nodejs && pnpm i && tsc --project \"tsconfig.json\"",
-		"build:release": "pnpm run build:wasm:web:release && pnpm run build:wasm:nodejs:release && pnpm i && tsc --project \"tsconfig.json\"",
-		"build:wasm:web:release": "wasm-pack build --target bundler --out-dir ../web-packages/fluid-wasm/bundler ./fluid-wasm && pnpm run build:snip:web && pnpm run build:opt:web",
-		"build:wasm:web": "wasm-pack build --debug --target bundler --out-dir ../web-packages/fluid-wasm/bundler ./fluid-wasm && pnpm run build:snip:web && pnpm run build:opt:web",
-		"build:wasm:nodejs:release": "wasm-pack build --target nodejs --out-dir ../web-packages/fluid-wasm/nodejs ./fluid-wasm && pnpm run build:snip:nodejs && pnpm run build:opt:nodejs",
-		"build:wasm:nodejs": "wasm-pack build --debug --target bundler --out-dir ../web-packages/fluid-wasm/nodejs ./fluid-wasm && pnpm run build:snip:nodejs && pnpm run build:opt:nodejs",
-		"build:snip:web": "wasm-snip ./web-packages/fluid-wasm/bundler/fluid_wasm_bg.wasm --snip-rust-fmt-code --snip-rust-panicking-code -o ./web-packages/fluid-wasm/bundler/fluid_wasm_bg.wasm",
-		"build:snip:nodejs": "wasm-snip ./web-packages/fluid-wasm/nodejs/fluid_wasm_bg.wasm --snip-rust-fmt-code --snip-rust-panicking-code -o ./web-packages/fluid-wasm/nodejs/fluid_wasm_bg.wasm",
-		"build:opt:web": "wasm-opt -O2 --enable-mutable-globals -o ./web-packages/fluid-wasm/bundler/fluid_wasm_bg.wasm ./web-packages/fluid-wasm/bundler/fluid_wasm_bg.wasm",
-		"build:opt:nodejs": "wasm-opt -O2 --enable-mutable-globals -o ./web-packages/fluid-wasm/nodejs/fluid_wasm_bg.wasm ./web-packages/fluid-wasm/nodejs/fluid_wasm_bg.wasm",
+		"build": "pnpm run build:wasm:web && pnpm run build:wasm:nodejs && pnpm run build:ts",
+		"build:ts": "pnpm i && tsc --project \"tsconfig.json\"",
+		"build:release": "pnpm run build:wasm:web:release && pnpm run build:wasm:nodejs:release && pnpm i && pnpm run build:ts",
+		"build:wasm:web:release": "wasm-pack build --target bundler --out-dir ../web-packages/bundler ./fluid-wasm && pnpm run build:snip:web && pnpm run build:opt:web",
+		"build:wasm:web": "wasm-pack build --debug --target bundler --out-dir ../web-packages/bundler ./fluid-wasm && pnpm run build:snip:web && pnpm run build:opt:web",
+		"build:wasm:nodejs:release": "wasm-pack build --target nodejs --out-dir ../web-packages/nodejs ./fluid-wasm && pnpm run build:snip:nodejs && pnpm run build:opt:nodejs",
+		"build:wasm:nodejs": "wasm-pack build --debug --target bundler --out-dir ../web-packages/nodejs ./fluid-wasm && pnpm run build:snip:nodejs && pnpm run build:opt:nodejs",
+		"build:snip:web": "wasm-snip ./web-packages/bundler/fluid_wasm_bg.wasm --snip-rust-fmt-code --snip-rust-panicking-code -o ./web-packages/bundler/fluid_wasm_bg.wasm",
+		"build:snip:nodejs": "wasm-snip ./web-packages/nodejs/fluid_wasm_bg.wasm --snip-rust-fmt-code --snip-rust-panicking-code -o ./web-packages/nodejs/fluid_wasm_bg.wasm",
+		"build:opt:web": "wasm-opt -O2 --enable-mutable-globals -o ./web-packages/bundler/fluid_wasm_bg.wasm ./web-packages/bundler/fluid_wasm_bg.wasm",
+		"build:opt:nodejs": "wasm-opt -O2 --enable-mutable-globals -o ./web-packages/nodejs/fluid_wasm_bg.wasm ./web-packages/nodejs/fluid_wasm_bg.wasm",
 		"clean": "rimraf web-packages/*/bundler && rimraf web-packages/*/nodejs"
 	},
 	"devDependencies": {
