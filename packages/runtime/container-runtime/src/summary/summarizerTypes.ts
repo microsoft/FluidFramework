@@ -76,13 +76,13 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	disposeFn?(): void;
+	disposeFn(): void;
 	closeFn(): void;
-	on?(
+	on(
 		event: "op",
 		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
 	): this;
-	off?(
+	off(
 		event: "op",
 		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
 	): this;

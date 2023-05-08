@@ -165,18 +165,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	}
 
 	/**
-	 * Ensure all tracked containers are synchronized with a time limit
-	 *
-	 * @deprecated - this method is equivalent to @see {@link LoaderContainerTracker.ensureSynchronized}, please configure the test timeout instead
-	 */
-	public async ensureSynchronizedWithTimeout?(
-		timeoutDuration: number | undefined,
-		...containers: IContainer[]
-	) {
-		await this.ensureSynchronized(...containers);
-	}
-
-	/**
 	 * Make sure all the tracked containers are synchronized.
 	 *
 	 * No isDirty (non-readonly) containers
