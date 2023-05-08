@@ -90,6 +90,10 @@
 		"broken": {
 			"ClassDeclaration_ProtocolOpHandler": {
 				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_isSystemMessage": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

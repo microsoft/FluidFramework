@@ -16,7 +16,6 @@ export {
 	ILocalSequencedClient,
 	IProtocolHandler,
 	IScribeProtocolState,
-	isSystemMessage,
 	ProtocolOpHandler,
 } from "./protocol";
 export {

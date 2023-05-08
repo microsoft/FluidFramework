@@ -73,7 +73,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree";
 // @public (undocumented)
 export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ILocalSequencedClient extends ISequencedClient {
     shouldHaveLeft?: boolean;
 }
@@ -122,9 +122,6 @@ export interface IScribeProtocolState {
 
 // @public
 export const isServiceMessageType: (type: string) => boolean;
-
-// @public (undocumented)
-export function isSystemMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public (undocumented)
 export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: ITree_2): ICreateTreeEntry[];

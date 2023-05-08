@@ -5,7 +5,6 @@
 
 import { IAudienceOwner } from "@fluidframework/container-definitions";
 import {
-	ILocalSequencedClient,
 	IProtocolHandler as IBaseProtocolHandler,
 	IQuorumSnapshot,
 	ProtocolOpHandler,
@@ -13,6 +12,7 @@ import {
 import {
 	IDocumentAttributes,
 	IProcessMessageResult,
+	ISequencedClient,
 	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
@@ -28,6 +28,13 @@ export enum SignalType {
 	ClientJoin = "join", // same value as MessageType.ClientJoin,
 	ClientLeave = "leave", // same value as MessageType.ClientLeave,
 	Clear = "clear", // used only by client for synthetic signals
+}
+
+export interface ILocalSequencedClient extends ISequencedClient {
+	/**
+	 * True if the client should have left the quorum, false otherwise
+	 */
+	shouldHaveLeft?: boolean;
 }
 
 /**

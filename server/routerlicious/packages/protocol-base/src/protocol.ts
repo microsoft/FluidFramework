@@ -29,6 +29,9 @@ export interface IScribeProtocolState {
 	values: [string, ICommittedProposal][];
 }
 
+/**
+ * @deprecated No usage of this function found in any release group. Will be removed
+ */
 export function isSystemMessage(message: ISequencedDocumentMessage) {
 	switch (message.type) {
 		case MessageType.ClientJoin:
@@ -46,6 +49,9 @@ export function isSystemMessage(message: ISequencedDocumentMessage) {
 	}
 }
 
+/**
+ * @deprecated moved to `@fluidframework/container-loader#protocol.ts`
+ */
 export interface ILocalSequencedClient extends ISequencedClient {
 	/**
 	 * True if the client should have left the quorum, false otherwise

@@ -497,26 +497,14 @@ use_old_VariableDeclaration_isServiceMessageType(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isSystemMessage": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_isSystemMessage": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_isSystemMessage():
-    TypeOnly<typeof old.isSystemMessage>;
-declare function use_current_FunctionDeclaration_isSystemMessage(
-    use: TypeOnly<typeof current.isSystemMessage>);
-use_current_FunctionDeclaration_isSystemMessage(
-    get_old_FunctionDeclaration_isSystemMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isSystemMessage": {"backCompat": false}
+* "RemovedFunctionDeclaration_isSystemMessage": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_isSystemMessage():
-    TypeOnly<typeof current.isSystemMessage>;
-declare function use_old_FunctionDeclaration_isSystemMessage(
-    use: TypeOnly<typeof old.isSystemMessage>);
-use_old_FunctionDeclaration_isSystemMessage(
-    get_current_FunctionDeclaration_isSystemMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
