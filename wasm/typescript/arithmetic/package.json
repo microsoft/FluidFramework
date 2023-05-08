@@ -36,7 +36,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@fluid-experimental/fluid-wasm": "workspace:~",
+		"@fluidframework/client-wasm": "workspace:~",
 		"chai": "^4.2.0",
 		"chalk": "^4.1.2",
 		"easy-table": "^1.1.1",

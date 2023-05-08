@@ -1,5 +1,8 @@
 [workspace]
-members = ["./fluid-wasm-add", "./fluid-wasm-subtract", "./fluid-wasm"]
+members = ["./fluid-wasm-add", "./fluid-wasm-subtract", "./client-wasm"]
+
+[workspace.metadata]
+fluid-wasm-output-bundles = ["./client-wasm"]
 
 [profile.release]
 debug = true
