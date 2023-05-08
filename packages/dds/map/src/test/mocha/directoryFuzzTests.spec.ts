@@ -335,19 +335,6 @@ function assertEventualConsistencyCore(
 			`at path ${second.absolutePath}: ${second.countSubDirectory()}`,
 	);
 
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const createInfo1: ICreateInfo = first["getSerializableCreateInfo"]();
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const createInfo2: ICreateInfo = first["getSerializableCreateInfo"]();
-	createInfo1.ccIds.sort();
-	createInfo2.ccIds.sort();
-	assert.strictEqual(createInfo1.csn, createInfo2.csn, "csn should match");
-	assert.strictEqual(
-		createInfo1.ccIds.toString(),
-		createInfo2.ccIds.toString(),
-		"ccids should match",
-	);
-
 	// Check for consistency of subdirectores with both directories.
 	for (const [name, subDirectory1] of first.subdirectories()) {
 		const subDirectory2 = second.getSubDirectory(name);
