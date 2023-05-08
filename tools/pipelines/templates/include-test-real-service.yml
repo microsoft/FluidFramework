@@ -316,6 +316,7 @@ jobs:
         env:
           ${{ parameters.env }}
         inputs:
+          targetType: 'inline'
           script: |
             printenv
 
