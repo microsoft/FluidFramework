@@ -316,7 +316,7 @@ export class PassManager {
 	path = getPath(this.seed);
 
 	/**
-	 * Returns whether it reproduces crash
+	 * Returns true if the current operations reproduce a crash
 	 */
 	async runTest(): Promise<boolean> {
 		const ddsModel: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
@@ -335,6 +335,8 @@ export class PassManager {
 			});
 			return false;
 		} catch (e: any) {
+			// ignore these errors as they generally don't indicate a bug in the program,
+			// but rather malformed input/operations
 			if (
 				e?.message === "RangeOutOfBounds" ||
 				e?.message === "Non-transient references need segment"
