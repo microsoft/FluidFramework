@@ -592,7 +592,7 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 }
 
 export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-	return new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily);
+	return UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily);
 }
 
 /**
