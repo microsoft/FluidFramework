@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { FieldKinds, singleTextCursor } from "../../feature-libraries";
-import { jsonSchemaData, jsonString, singleJsonCursor } from "../../domains";
+import { jsonSchema, jsonString, singleJsonCursor } from "../../domains";
 import { rootFieldKeySymbol, fieldSchema, rootFieldKey, SchemaData } from "../../core";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 
@@ -13,7 +13,7 @@ const factory = new SharedTreeFactory();
 const runtime = new MockFluidDataStoreRuntime();
 // For now, require tree to be a list of strings.
 const schema: SchemaData = {
-	treeSchema: jsonSchemaData.treeSchema,
+	treeSchema: jsonSchema.treeSchema,
 	globalFieldSchema: new Map([
 		[rootFieldKey, fieldSchema(FieldKinds.sequence, [jsonString.name])],
 	]),

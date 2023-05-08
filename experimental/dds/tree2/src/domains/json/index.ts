@@ -5,7 +5,7 @@
 
 export { singleJsonCursor, cursorToJsonObject } from "./jsonCursor";
 export {
-	jsonSchemaData,
+	jsonSchema,
 	jsonObject,
 	jsonArray,
 	jsonNumber,

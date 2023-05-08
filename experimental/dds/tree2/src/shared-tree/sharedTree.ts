@@ -47,10 +47,10 @@ import {
 	IdentifierIndex,
 	EditableTree,
 	Identifier,
-	SchemaAware,
 	ForestRepairDataStoreProvider,
 	repairDataStoreFromForest,
 	ModularChangeset,
+	GlobalFieldSchema,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
@@ -228,8 +228,8 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
 }
 
@@ -335,8 +335,8 @@ export class SharedTree
 		});
 	}
 
-	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	public schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
 	}
@@ -361,10 +361,7 @@ export class SharedTree
 		const anchors = new AnchorSet();
 		const schema = this.storedSchema.inner.clone();
 		const forest = this.forest.clone(schema, anchors);
-		const branch = this.createBranch(
-			new ForestRepairDataStoreProvider(forest, schema),
-			anchors,
-		);
+		const branch = this.forkBranch(new ForestRepairDataStoreProvider(forest, schema), anchors);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -486,8 +483,14 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => this.branch.startTransaction(repairDataStoreFromForest(this.forest)),
-		commit: () => this.branch.commitTransaction(),
-		abort: () => this.branch.abortTransaction(),
+		commit: () => {
+			this.branch.commitTransaction();
+			return TransactionResult.Commit;
+		},
+		abort: () => {
+			this.branch.abortTransaction();
+			return TransactionResult.Abort;
+		},
 		inProgress: () => this.branch.isTransacting(),
 	};
 
@@ -498,8 +501,8 @@ export class SharedTreeFork implements ISharedTreeFork {
 		this.branch.redo();
 	}
 
-	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	public schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
 	}

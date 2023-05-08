@@ -7,7 +7,7 @@ import {
 	ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
-} from "@fluid-tools/client-debugger";
+} from "@fluid-experimental/devtools-core";
 
 import {
 	DevToolsInitAcknowledgement,
