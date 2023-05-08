@@ -1,4 +1,4 @@
-import { add } from "@fluid-experimental/fluid-wasm";
+import { add } from "@fluidframework/client-wasm";
 
 export function multiply(x: number, y: number) {
 	let result = 0;
