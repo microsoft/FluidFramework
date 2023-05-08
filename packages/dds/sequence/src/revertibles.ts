@@ -6,7 +6,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
-	appendToMergeTreeDeltaRevertibles as appendToMergeTreeRevertibles,
+	appendToMergeTreeDeltaRevertibles,
 	LocalReferencePosition,
 	PropertySet,
 	MergeTreeDeltaRevertible,
@@ -202,7 +202,7 @@ export function appendSharedStringDeltaToRevertibles(
 
 		if (startIntervals.length > 0 || endIntervals.length > 0) {
 			const removeRevertibles: MergeTreeDeltaRevertible[] = [];
-			appendToMergeTreeRevertibles(string, delta.deltaArgs, removeRevertibles);
+			appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, removeRevertibles);
 			assert(removeRevertibles.length === 1, "Remove revertible should be a single delta");
 
 			const revertible: TypedRevertible<typeof IntervalEventType.POSITIONREMOVE> = {
@@ -253,7 +253,7 @@ export function appendSharedStringDeltaToRevertibles(
 	if (revertibles.length > 0 && "operation" in revertibles[revertibles.length - 1]) {
 		mergeTreeRevertibles.push(revertibles.pop() as MergeTreeDeltaRevertible);
 	}
-	appendToMergeTreeRevertibles(string, delta.deltaArgs, mergeTreeRevertibles);
+	appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, mergeTreeRevertibles);
 	revertibles.push(...mergeTreeRevertibles);
 }
 
