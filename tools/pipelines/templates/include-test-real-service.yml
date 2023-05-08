@@ -311,16 +311,6 @@ jobs:
             customRegistry: 'useNpmrc'
 
       # run the test
-      - task: Bash@3
-        displayName: 'Check if env variables for t9s logging are making it up to here'
-        env:
-          ${{ parameters.env }}
-        inputs:
-          targetType: 'inline'
-          script: |
-            printenv
-
-      # run the test
       - task: Npm@1
         displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
         continueOnError: ${{ parameters.continueOnError }}
