@@ -65,7 +65,7 @@ import {
 	genericFieldKind,
 	newGenericChangeset,
 } from "./genericFieldKind";
-import { makeModularChangeCodecFamily } from "./modularChangeEncoding";
+import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind

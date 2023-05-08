@@ -6,10 +6,9 @@
 export {
 	ApiMode,
 	NodeDataFor,
-	typedSchemaData,
 	TypedNode,
 	TypedField,
-	TypedSchemaData,
+	AllowedTypesToTypedTrees,
 } from "./schemaAware";
 
 // Below here are things that are used by the above, but not part of the desired API surface.

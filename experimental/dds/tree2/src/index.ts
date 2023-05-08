@@ -58,9 +58,9 @@ export {
 	TreeSchemaBuilder,
 	NamedTreeSchema,
 	Named,
-	FieldSchema,
+	FieldStoredSchema,
 	ValueSchema,
-	TreeSchema,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	TreeTypeSet,
@@ -93,6 +93,9 @@ export {
 	FieldKindSpecifier,
 	AllowedUpdateType,
 	PathVisitor,
+	Adapters,
+	FieldAdapter,
+	TreeAdapter,
 } from "./core";
 
 export {
@@ -116,6 +119,7 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
+	Assume,
 } from "./util";
 
 export {
@@ -137,7 +141,7 @@ export {
 	jsonNumber,
 	jsonObject,
 	jsonString,
-	jsonSchemaData,
+	jsonSchema,
 } from "./domains";
 
 export {
@@ -216,14 +220,14 @@ export {
 	EditableTreeEvents,
 	on,
 	ValueConstraint,
-	TypedSchema,
+	InternalTypedSchemaTypes,
 	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
-	ViewSchemaCollection,
+	SchemaCollection,
 	ContextuallyTypedFieldData,
-	TreeViewSchema,
-	FieldViewSchema,
+	ITreeSchema,
+	IFieldSchema,
 	cursorFromContextualData,
 	UntypedField,
 	UntypedTree,
@@ -232,6 +236,22 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
+	SchemaBuilder,
+	FieldKindTypes,
+	AllowedTypes,
+	TreeSchema,
+	BrandedFieldKind,
+	ValueFieldKind,
+	Optional,
+	Sequence,
+	Forbidden,
+	TypedSchemaCollection,
+	SchemaLibrary,
+	SchemaLibraryData,
+	FieldSchema,
+	GlobalFieldSchema,
+	Any,
+	Sourced,
 } from "./feature-libraries";
 
 export {
