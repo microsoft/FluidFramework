@@ -29,7 +29,6 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { add } from "@fluid-experimental/fluid-experimental-wasm-add";
 import {
 	assert,
 	delay,
