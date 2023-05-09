@@ -64,7 +64,6 @@ data:
         },
         "checkpoints": {
             "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
-            "checkpointsTTL": 864000
         },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
