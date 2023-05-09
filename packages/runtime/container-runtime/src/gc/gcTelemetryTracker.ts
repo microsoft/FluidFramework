@@ -1,0 +1,295 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
+import {
+	generateStack,
+	MonitoringContext,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
+import { ICreateContainerMetadata } from "../summary";
+import {
+	disableSweepLogKey,
+	GCNodeType,
+	UnreferencedState,
+	IGarbageCollectorConfigs,
+} from "./gcDefinitions";
+import { sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+
+type NodeUsageType = "Changed" | "Loaded" | "Revived";
+
+/** The event that is logged when unreferenced node is used after a certain time. */
+interface IUnreferencedEventProps
+	extends ICreateContainerMetadata,
+		Omit<INodeUsageProps, "nodeId" | "currentReferenceTimestampMs" | "packagePath"> {
+	usageType: NodeUsageType;
+	state: UnreferencedState;
+	id: string;
+	type: GCNodeType;
+	unrefTime: number;
+	age: number;
+	timeout?: number;
+}
+
+/** Properties passed to nodeUsed function when a node is used. */
+interface INodeUsageProps {
+	nodeId: string;
+	usageType: NodeUsageType;
+	currentReferenceTimestampMs: number | undefined;
+	packagePath: readonly string[] | undefined;
+	completedGCRuns: number;
+	isTombstoned: boolean;
+	lastSummaryTime?: number;
+	fromId?: string;
+	viaHandle?: boolean;
+}
+
+/**
+ * Encapsulates the logic that tracks the various telemetry logged by the Garbage Collector. There are 4 types of
+ * telemetry logged:
+ * 1. inactiveObject telemetry - When an inactive node is used - A node that has been unreferenced for inactiveTimeoutMs.
+ * 2. sweepReadyObject telemetry - When a sweep ready node is used - A node that has been unreferenced for sweepTimeoutMs.
+ * 3. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
+ * 4. Sweep / deleted telemetry - When a node is detected as sweep ready in the sweep phase.
+ */
+export class GCTelemetryTracker {
+	// Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
+	// per event per node.
+	private readonly loggedUnreferencedEvents: Set<string> = new Set();
+	// Queue for unreferenced events that should be logged the next time GC runs.
+	private pendingEventsQueue: IUnreferencedEventProps[] = [];
+
+	constructor(
+		private readonly mc: MonitoringContext,
+		private readonly configs: Pick<
+			IGarbageCollectorConfigs,
+			"inactiveTimeoutMs" | "sweepTimeoutMs"
+		>,
+		private readonly isSummarizerClient: boolean,
+		private readonly gcTombstoneEnforcementAllowed: boolean,
+		private readonly createContainerMetadata: ICreateContainerMetadata,
+		private readonly getNodeType: (nodeId: string) => GCNodeType,
+		private readonly getNodeStateTracker: (
+			nodeId: string,
+		) => UnreferencedStateTracker | undefined,
+		private readonly getNodePackagePath: (
+			nodePath: string,
+		) => Promise<readonly string[] | undefined>,
+	) {}
+
+	private shouldLogEvent(
+		nodeId: string,
+		nodeType: GCNodeType,
+		usageType: NodeUsageType,
+		nodeStateTracker: UnreferencedStateTracker,
+	) {
+		if (nodeStateTracker.state === UnreferencedState.Active) {
+			return false;
+		}
+
+		// For sub data store (DDS) nodes, if they are changed or loaded, its data store will also be changed or loaded,
+		// so skip logging to make the telemetry less noisy.
+		if (nodeType === GCNodeType.SubDataStore && usageType !== "Revived") {
+			return false;
+		}
+		if (nodeType === GCNodeType.Other) {
+			return false;
+		}
+
+		const uniqueEventId = `${nodeStateTracker.state}-${nodeId}-${usageType}`;
+		if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
+			return false;
+		}
+		this.loggedUnreferencedEvents.add(uniqueEventId);
+		return true;
+	}
+
+	/**
+	 * Called when an inactive node is used after. Queue up an event that will be logged next time GC runs.
+	 */
+	public nodeUsed(props: INodeUsageProps) {
+		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
+		// logging as nothing interesting would have happened worth logging.
+		// If the node is not unreferenced, skip logging.
+		const nodeStateTracker = this.getNodeStateTracker(props.nodeId);
+		if (!nodeStateTracker || props.currentReferenceTimestampMs === undefined) {
+			return;
+		}
+
+		const nodeType = this.getNodeType(props.nodeId);
+		if (!this.shouldLogEvent(props.nodeId, nodeType, props.usageType, nodeStateTracker)) {
+			return;
+		}
+
+		const state = nodeStateTracker.state;
+		const propsToLog: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
+			id: props.nodeId,
+			type: nodeType,
+			unrefTime: nodeStateTracker.unreferencedTimestampMs,
+			age: props.currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+			timeout:
+				state === UnreferencedState.Inactive
+					? this.configs.inactiveTimeoutMs
+					: this.configs.sweepTimeoutMs,
+			...props,
+			...this.createContainerMetadata,
+		};
+
+		// For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
+		// For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
+		// but it's a good signal nonetheless and we can consume it with a grain of salt.
+		// Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
+		// SweepReady errors are usages of Objects that will be deleted by GC Sweep!
+		if (this.isSummarizerClient) {
+			this.pendingEventsQueue.push({ ...propsToLog, usageType: props.usageType, state });
+		} else {
+			// For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
+			// summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
+			// Events generated:
+			// InactiveObject_Loaded, SweepReadyObject_Loaded
+			if (props.usageType === "Loaded") {
+				const event = {
+					eventName: `${state}Object_${props.usageType}`,
+					pkg: packagePathToTelemetryProperty(props.packagePath),
+					stack: generateStack(),
+					...propsToLog,
+				};
+
+				// Do not log the inactive object x events as error events as they are not the best signal for
+				// detecting something wrong with GC either from the partner or from the runtime itself.
+				if (state === UnreferencedState.Inactive) {
+					this.mc.logger.sendTelemetryEvent(event);
+				} else {
+					this.mc.logger.sendErrorEvent(event);
+				}
+			}
+
+			// This will log the following events:
+			// GC_Tombstone_DataStore_Revived, GC_Tombstone_SubDataStore_Revived, GC_Tombstone_Blob_Revived
+			if (props.usageType === "Revived" && props.isTombstoned) {
+				sendGCUnexpectedUsageEvent(
+					this.mc,
+					{
+						eventName: `GC_Tombstone_${nodeType}_Revived`,
+						category: "generic",
+						url: props.nodeId,
+						gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
+					},
+					undefined /* packagePath */,
+				);
+			}
+		}
+	}
+
+	public async logUnreferencedEvents(logger: ITelemetryLogger) {
+		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
+		// summary time they are then logged.
+		// Events generated:
+		// InactiveObject_Loaded, InactiveObject_Changed, InactiveObject_Revived
+		// SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
+		for (const eventProps of this.pendingEventsQueue) {
+			const { usageType, state, ...propsToLog } = eventProps;
+			/**
+			 * Revived event is logged only if the node is active. If the node is not active, the reference to it was
+			 * from another unreferenced node and this scenario is not interesting to log.
+			 * Loaded and Changed events are logged only if the node is not active. If the node is active, it was
+			 * revived and a Revived event will be logged for it.
+			 */
+			const nodeStateTracker = this.getNodeStateTracker(eventProps.id);
+
+			// This will log the following events:
+			// GC_Tombstone_DataStore_Revived, GC_Tombstone_SubDataStore_Revived, GC_Tombstone_Blob_Revived
+			if (usageType === "Revived" && propsToLog.isTombstoned) {
+				const packagePath = await this.getNodePackagePath(eventProps.id);
+				sendGCUnexpectedUsageEvent(
+					this.mc,
+					{
+						eventName: `GC_Tombstone_${propsToLog.type}_Revived`,
+						category: "generic",
+						url: propsToLog.id,
+						gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
+					},
+					packagePath,
+				);
+			}
+
+			const active =
+				nodeStateTracker === undefined ||
+				nodeStateTracker.state === UnreferencedState.Active;
+			if ((usageType === "Revived") === active) {
+				const pkg = await this.getNodePackagePath(eventProps.id);
+				const fromPkg = eventProps.fromId
+					? await this.getNodePackagePath(eventProps.fromId)
+					: undefined;
+				const event = {
+					...propsToLog,
+					eventName: `${state}Object_${usageType}`,
+					pkg: pkg
+						? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
+						: undefined,
+					fromPkg: fromPkg
+						? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
+						: undefined,
+				};
+
+				if (state === UnreferencedState.Inactive) {
+					logger.sendTelemetryEvent(event);
+				} else {
+					logger.sendErrorEvent(event);
+				}
+			}
+		}
+		this.pendingEventsQueue = [];
+	}
+
+	/**
+	 * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
+	 * this will give us a view into how much deleted content a container has.
+	 */
+	public logSweepEvents(
+		logger: ITelemetryLogger,
+		currentReferenceTimestampMs: number,
+		unreferencedNodesState: Map<string, UnreferencedStateTracker>,
+		completedGCRuns: number,
+		lastSummaryTime?: number,
+	) {
+		if (
+			this.mc.config.getBoolean(disableSweepLogKey) === true ||
+			this.configs.sweepTimeoutMs === undefined
+		) {
+			return;
+		}
+
+		unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
+			if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
+				return;
+			}
+
+			const nodeType = this.getNodeType(nodeId);
+			if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
+				return;
+			}
+
+			// Log deleted event for each node only once to reduce noise in telemetry.
+			const uniqueEventId = `Deleted-${nodeId}`;
+			if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
+				return;
+			}
+			this.loggedUnreferencedEvents.add(uniqueEventId);
+			logger.sendTelemetryEvent({
+				eventName: "GCObjectDeleted",
+				id: nodeId,
+				type: nodeType,
+				age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+				timeout: this.configs.sweepTimeoutMs,
+				completedGCRuns,
+				lastSummaryTime,
+				...this.createContainerMetadata,
+			});
+		});
+	}
+}

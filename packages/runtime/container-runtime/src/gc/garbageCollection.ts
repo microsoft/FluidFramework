@@ -14,21 +14,18 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty, ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
-	generateStack,
 	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
-	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils";
 
 import { RuntimeHeaders } from "../containerRuntime";
-import { ICreateContainerMetadata, RefreshSummaryResult } from "../summary";
+import { RefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
-	disableSweepLogKey,
 	GCNodeType,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
@@ -39,31 +36,12 @@ import {
 	IGCMetadata,
 	IGarbageCollectorConfigs,
 } from "./gcDefinitions";
-import {
-	cloneGCData,
-	concatGarbageCollectionData,
-	getGCDataFromSnapshot,
-	sendGCUnexpectedUsageEvent,
-} from "./gcHelpers";
+import { cloneGCData, concatGarbageCollectionData, getGCDataFromSnapshot } from "./gcHelpers";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
-
-/** The event that is logged when unreferenced node is used after a certain time. */
-interface IUnreferencedEventProps {
-	usageType: "Changed" | "Loaded" | "Revived";
-	state: UnreferencedState;
-	id: string;
-	type: GCNodeType;
-	unrefTime: number;
-	age: number;
-	completedGCRuns: number;
-	fromId?: string;
-	timeout?: number;
-	lastSummaryTime?: number;
-	viaHandle?: boolean;
-}
+import { GCTelemetryTracker } from "./gcTelemetryTracker";
 
 /**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
@@ -121,20 +99,14 @@ export class GarbageCollector implements IGarbageCollector {
 	// The Timer responsible for closing the container when the session has expired
 	private sessionExpiryTimer: Timer | undefined;
 
-	// Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
-	// per event per node.
-	private readonly loggedUnreferencedEvents: Set<string> = new Set();
-	// Queue for unreferenced events that should be logged the next time GC runs.
-	private pendingEventsQueue: IUnreferencedEventProps[] = [];
-
 	// The number of times GC has successfully completed on this instance of GarbageCollector.
 	private completedRuns = 0;
 
 	private readonly runtime: IGarbageCollectionRuntime;
-	private readonly createContainerMetadata: ICreateContainerMetadata;
 	private readonly isSummarizerClient: boolean;
 
 	private readonly summaryStateTracker: GCSummaryStateTracker;
+	private readonly telemetryTracker: GCTelemetryTracker;
 
 	/** For a given node path, returns the node's package path. */
 	private readonly getNodePackagePath: (
@@ -152,7 +124,6 @@ export class GarbageCollector implements IGarbageCollector {
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
-		this.createContainerMetadata = createParams.createContainerMetadata;
 		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
 		this.activeConnection = createParams.activeConnection;
@@ -187,6 +158,17 @@ export class GarbageCollector implements IGarbageCollector {
 		this.summaryStateTracker = new GCSummaryStateTracker(
 			this.configs,
 			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
+		);
+
+		this.telemetryTracker = new GCTelemetryTracker(
+			this.mc,
+			this.configs,
+			this.isSummarizerClient,
+			this.runtime.gcTombstoneEnforcementAllowed,
+			createParams.createContainerMetadata,
+			(nodeId: string) => this.runtime.getNodeType(nodeId),
+			(nodeId: string) => this.unreferencedNodesState.get(nodeId),
+			this.getNodePackagePath,
 		);
 
 		// Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
@@ -548,7 +530,13 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
 		// delete these objects here instead.
-		this.logSweepEvents(logger, currentReferenceTimestampMs);
+		this.telemetryTracker.logSweepEvents(
+			logger,
+			currentReferenceTimestampMs,
+			this.unreferencedNodesState,
+			this.completedRuns,
+			this.getLastSummaryTimestampMs(),
+		);
 
 		let updatedGCData: IGarbageCollectionData = gcData;
 
@@ -571,7 +559,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
 		// updates its state so that we don't send false positives based on intermediate state. For example, we may get
 		// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
-		await this.logUnreferencedEvents(logger);
+		await this.telemetryTracker.logUnreferencedEvents(logger);
 
 		return gcStats;
 	}
@@ -686,18 +674,17 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		const nodeStateTracker = this.unreferencedNodesState.get(nodePath);
-		if (nodeStateTracker && nodeStateTracker.state !== UnreferencedState.Active) {
-			this.inactiveNodeUsed(
-				reason,
-				nodePath,
-				nodeStateTracker,
-				undefined /* fromNodeId */,
-				packagePath,
-				timestampMs,
-				requestHeaders,
-			);
-		}
+		this.telemetryTracker.nodeUsed({
+			nodeId: nodePath,
+			usageType: reason,
+			currentReferenceTimestampMs:
+				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
+			packagePath,
+			completedGCRuns: this.completedRuns,
+			isTombstoned: this.tombstones.includes(nodePath),
+			lastSummaryTime: this.getLastSummaryTimestampMs(),
+			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
+		});
 	}
 
 	/**
@@ -716,33 +703,16 @@ export class GarbageCollector implements IGarbageCollector {
 		outboundRoutes.push(toNodePath);
 		this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
-		const nodeStateTracker = this.unreferencedNodesState.get(toNodePath);
-		if (nodeStateTracker && nodeStateTracker.state !== UnreferencedState.Active) {
-			this.inactiveNodeUsed("Revived", toNodePath, nodeStateTracker, fromNodePath);
-		}
-
-		if (this.tombstones.includes(toNodePath)) {
-			const nodeType = this.runtime.getNodeType(toNodePath);
-
-			let eventName = "GC_Tombstone_SubDatastore_Revived";
-			if (nodeType === GCNodeType.DataStore) {
-				eventName = "GC_Tombstone_Datastore_Revived";
-			} else if (nodeType === GCNodeType.Blob) {
-				eventName = "GC_Tombstone_Blob_Revived";
-			}
-
-			sendGCUnexpectedUsageEvent(
-				this.mc,
-				{
-					eventName,
-					category: "generic",
-					url: toNodePath,
-					nodeType,
-					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-				},
-				undefined /* packagePath */,
-			);
-		}
+		this.telemetryTracker.nodeUsed({
+			nodeId: toNodePath,
+			usageType: "Revived",
+			currentReferenceTimestampMs: this.runtime.getCurrentReferenceTimestampMs(),
+			packagePath: undefined,
+			completedGCRuns: this.completedRuns,
+			isTombstoned: this.tombstones.includes(toNodePath),
+			lastSummaryTime: this.getLastSummaryTimestampMs(),
+			fromId: fromNodePath,
+		});
 	}
 
 	/**
@@ -1080,172 +1050,5 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		return gcStats;
-	}
-
-	/**
-	 * For nodes that are ready to sweep, log an event for now. Until we start running sweep which deletes objects,
-	 * this will give us a view into how much deleted content a container has.
-	 */
-	private logSweepEvents(logger: ITelemetryLogger, currentReferenceTimestampMs: number) {
-		if (
-			this.mc.config.getBoolean(disableSweepLogKey) === true ||
-			this.configs.sweepTimeoutMs === undefined
-		) {
-			return;
-		}
-
-		this.unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
-			if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
-				return;
-			}
-
-			const nodeType = this.runtime.getNodeType(nodeId);
-			if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
-				return;
-			}
-
-			// Log deleted event for each node only once to reduce noise in telemetry.
-			const uniqueEventId = `Deleted-${nodeId}`;
-			if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
-				return;
-			}
-			this.loggedUnreferencedEvents.add(uniqueEventId);
-			logger.sendTelemetryEvent({
-				eventName: "GCObjectDeleted",
-				id: nodeId,
-				type: nodeType,
-				age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
-				timeout: this.configs.sweepTimeoutMs,
-				completedGCRuns: this.completedRuns,
-				lastSummaryTime: this.getLastSummaryTimestampMs(),
-			});
-		});
-	}
-
-	/**
-	 * Called when an inactive node is used after. Queue up an event that will be logged next time GC runs.
-	 */
-	private inactiveNodeUsed(
-		usageType: "Changed" | "Loaded" | "Revived",
-		nodeId: string,
-		nodeStateTracker: UnreferencedStateTracker,
-		fromNodeId?: string,
-		packagePath?: readonly string[],
-		currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs(),
-		requestHeaders?: IRequestHeader,
-	) {
-		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
-		// logging as nothing interesting would have happened worth logging.
-		// If the node is active, skip logging.
-		if (
-			currentReferenceTimestampMs === undefined ||
-			nodeStateTracker.state === UnreferencedState.Active
-		) {
-			return;
-		}
-
-		// We only care about data stores and attachment blobs for this telemetry since GC only marks these objects
-		// as unreferenced. Also, if an inactive DDS is used, the corresponding data store store will also be used.
-		const nodeType = this.runtime.getNodeType(nodeId);
-		if (nodeType !== GCNodeType.DataStore && nodeType !== GCNodeType.Blob) {
-			return;
-		}
-
-		const state = nodeStateTracker.state;
-		const uniqueEventId = `${state}-${nodeId}-${usageType}`;
-		if (this.loggedUnreferencedEvents.has(uniqueEventId)) {
-			return;
-		}
-		this.loggedUnreferencedEvents.add(uniqueEventId);
-
-		const propsToLog = {
-			id: nodeId,
-			type: nodeType,
-			unrefTime: nodeStateTracker.unreferencedTimestampMs,
-			age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
-			timeout:
-				nodeStateTracker.state === UnreferencedState.Inactive
-					? this.configs.inactiveTimeoutMs
-					: this.configs.sweepTimeoutMs,
-			completedGCRuns: this.completedRuns,
-			lastSummaryTime: this.getLastSummaryTimestampMs(),
-			...this.createContainerMetadata,
-			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
-			fromId: fromNodeId,
-		};
-
-		// For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
-		// For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
-		// but it's a good signal nonetheless and we can consume it with a grain of salt.
-		// Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
-		// SweepReady errors are usages of Objects that will be deleted by GC Sweep!
-		if (this.isSummarizerClient) {
-			this.pendingEventsQueue.push({ ...propsToLog, usageType, state });
-		} else {
-			// For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
-			// summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
-			// Events generated:
-			// InactiveObject_Loaded, SweepReadyObject_Loaded
-			if (usageType === "Loaded") {
-				const event = {
-					...propsToLog,
-					eventName: `${state}Object_${usageType}`,
-					pkg: packagePathToTelemetryProperty(packagePath),
-					stack: generateStack(),
-				};
-
-				// Do not log the inactive object x events as error events as they are not the best signal for
-				// detecting something wrong with GC either from the partner or from the runtime itself.
-				if (state === UnreferencedState.Inactive) {
-					this.mc.logger.sendTelemetryEvent(event);
-				} else {
-					this.mc.logger.sendErrorEvent(event);
-				}
-			}
-		}
-	}
-
-	private async logUnreferencedEvents(logger: ITelemetryLogger) {
-		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
-		// summary time they are then logged.
-		// Events generated:
-		// InactiveObject_Loaded, InactiveObject_Changed, InactiveObject_Revived
-		// SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
-		for (const eventProps of this.pendingEventsQueue) {
-			const { usageType, state, ...propsToLog } = eventProps;
-			/**
-			 * Revived event is logged only if the node is active. If the node is not active, the reference to it was
-			 * from another unreferenced node and this scenario is not interesting to log.
-			 * Loaded and Changed events are logged only if the node is not active. If the node is active, it was
-			 * revived and a Revived event will be logged for it.
-			 */
-			const nodeStateTracker = this.unreferencedNodesState.get(eventProps.id);
-			const active =
-				nodeStateTracker === undefined ||
-				nodeStateTracker.state === UnreferencedState.Active;
-			if ((usageType === "Revived") === active) {
-				const pkg = await this.getNodePackagePath(eventProps.id);
-				const fromPkg = eventProps.fromId
-					? await this.getNodePackagePath(eventProps.fromId)
-					: undefined;
-				const event = {
-					...propsToLog,
-					eventName: `${state}Object_${usageType}`,
-					pkg: pkg
-						? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
-						: undefined,
-					fromPkg: fromPkg
-						? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
-						: undefined,
-				};
-
-				if (state === UnreferencedState.Inactive) {
-					logger.sendTelemetryEvent(event);
-				} else {
-					logger.sendErrorEvent(event);
-				}
-			}
-		}
-		this.pendingEventsQueue = [];
 	}
 }
