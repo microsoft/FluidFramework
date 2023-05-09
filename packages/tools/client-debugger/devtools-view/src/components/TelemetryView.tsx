@@ -59,6 +59,7 @@ export function TelemetryView(): React.ReactElement {
 	const [telemetryEvents, setTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
 	>();
+	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
 
 	React.useEffect(() => {
@@ -68,9 +69,9 @@ export function TelemetryView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			[TelemetryEvent.MessageType]: (untypedMessage) => {
 				const message = untypedMessage as TelemetryEvent.Message;
-				setTelemetryEvents((currentEvents) => [
+				setBufferedEvents((currentBuffer) => [
 					message.data.event,
-					...(currentEvents ?? []),
+					...(currentBuffer ?? []),
 				]);
 				return true;
 			},
@@ -96,6 +97,25 @@ export function TelemetryView(): React.ReactElement {
 		};
 	}, [messageRelay, setTelemetryEvents]);
 
+	React.useEffect(() => {
+		if (
+			telemetryEvents &&
+			bufferedEvents.length > 0 &&
+			telemetryEvents.length < maxEventsToDisplay
+		) {
+			const newEvents = bufferedEvents.slice(0, maxEventsToDisplay - telemetryEvents.length);
+			const remainingBuffer = bufferedEvents.slice(
+				maxEventsToDisplay - telemetryEvents.length,
+			);
+			setTelemetryEvents([...newEvents, ...telemetryEvents]);
+			setBufferedEvents(remainingBuffer);
+		}
+	}, [telemetryEvents, bufferedEvents, maxEventsToDisplay]);
+
+	const handleLoadMore = ():void => {
+		setMaxEventsToDisplay(prevMaxEvents => prevMaxEvents + bufferedEvents.length);
+	};
+
 	return (
 		<Stack>
 			<StackItem>
@@ -105,6 +125,12 @@ export function TelemetryView(): React.ReactElement {
 				/>
 			</StackItem>
 			<StackItem>
+				<p style={{ marginLeft: "6px" }}>
+					Note: {bufferedEvents.length} newer telemetry events have been
+					received/buffered.
+				</p>
+				<button onClick={handleLoadMore}>Load More</button>
+
 				{telemetryEvents !== undefined ? (
 					<FilteredTelemetryView telemetryEvents={telemetryEvents} />
 				) : (
