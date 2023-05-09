@@ -15,7 +15,6 @@ import {
 	appendLocalDeleteToRevertibles,
 	appendLocalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
-	idMap,
 	revertSharedStringRevertibles,
 	SharedStringRevertible,
 } from "../revertibles";
@@ -148,7 +147,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		collection.removeIntervalById(id);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
-		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
+		assertIntervals(sharedString, collection, []);
 	});
 	it("performs two local changes, then reverts the first", () => {
 		collection.on("addInterval", (interval, local, op) => {
@@ -161,6 +160,45 @@ describe("Sequence.Revertibles with Local Edits", () => {
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, []);
+	});
+	it("checks that revert functions properly when an id is recreated on revert of a delete", () => {
+		sharedString.insertText(0, "hello world");
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendLocalChangeToRevertibles(sharedString, interval, previousInterval, revertibles);
+		});
+
+		collection.change(id, 3, 8);
+		collection.removeIntervalById(id);
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+	});
+	it("checks id consistency when a remove is undone and redone", () => {
+		sharedString.insertText(0, "hello world");
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+		collection.on("deleteInterval", (interval, local, op) => {
+			appendLocalDeleteToRevertibles(sharedString, interval, revertibles);
+		});
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendLocalChangeToRevertibles(sharedString, interval, previousInterval, revertibles);
+		});
+
+		collection.change(id, 3, 8);
+		collection.removeIntervalById(id);
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(1, 1));
+		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
+
+		collection.removeIntervalById(id);
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 	});
 });
 describe("Sequence.Revertibles with Remote Edits", () => {
@@ -402,13 +440,8 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
-		let int = collection.getIntervalById(id);
-		while (int === undefined) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const newId = idMap.get(id)!;
-			int = collection.getIntervalById(newId);
-		}
-		assert.equal(int?.properties.foo, "one");
+		const int = collection.findOverlappingIntervals(0, 5);
+		assert.equal(int[0].properties.foo, "one");
 	});
 	it("remote interval property change interacting with reverting an interval add", () => {
 		sharedString.insertText(0, "hello world");

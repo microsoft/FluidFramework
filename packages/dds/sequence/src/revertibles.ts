@@ -30,7 +30,7 @@ const IntervalEventType = {
 	POSITIONREMOVE: 4,
 } as const;
 
-export const idMap = new Map<string, string>();
+const idMap = new Map<string, string>();
 
 type IntervalEventType = typeof IntervalEventType[keyof typeof IntervalEventType];
 
@@ -69,6 +69,11 @@ export type IntervalRevertible =
 
 type TypedRevertible<T extends IntervalRevertible["event"]> = IntervalRevertible & { event: T };
 
+export function getId(interval: SequenceInterval): string {
+	const maybeId = interval.getIntervalId();
+	return idMap.get(maybeId) ?? maybeId;
+}
+
 export function appendLocalAddToRevertibles(
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
@@ -92,13 +97,13 @@ export function appendLocalDeleteToRevertibles(
 		startSeg,
 		interval.start.getOffset(),
 		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-		startSeg.properties,
+		undefined,
 	);
 	const endRef = string.createLocalReferencePosition(
 		endSeg,
 		interval.end.getOffset(),
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-		endSeg.properties,
+		undefined,
 	);
 	revertibles.push({
 		event: IntervalEventType.DELETE,
@@ -122,13 +127,13 @@ export function appendLocalChangeToRevertibles(
 		startSeg,
 		previousInterval.start.getOffset(),
 		ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
-		startSeg.properties,
+		undefined,
 	);
 	const prevEndRef = string.createLocalReferencePosition(
 		endSeg,
 		previousInterval.end.getOffset(),
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
-		endSeg.properties,
+		undefined,
 	);
 	revertibles.push({
 		event: IntervalEventType.CHANGE,
@@ -260,8 +265,7 @@ function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.ADD>,
 ) {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
+	const id = getId(revertible.interval);
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	string.getIntervalCollection(label).removeIntervalById(id);
 }
@@ -279,12 +283,11 @@ function revertLocalDelete(
 	const int = string.getIntervalCollection(label).add(start, end, type, props);
 
 	idMap.forEach((oldId, newId) => {
-		if (int.getIntervalId() === oldId) {
-			idMap.set(intervalId, newId);
+		if (intervalId === newId) {
+			idMap.set(oldId, getId(int));
 		}
 	});
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	idMap.set(intervalId, int.getIntervalId()!);
+	idMap.set(intervalId, getId(int));
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);
@@ -295,8 +298,7 @@ function revertLocalChange(
 	revertible: TypedRevertible<typeof IntervalEventType.CHANGE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
+	const id = getId(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	string.getIntervalCollection(label).change(id, start, end);
@@ -310,8 +312,7 @@ function revertLocalPropertyChanged(
 	revertible: TypedRevertible<typeof IntervalEventType.PROPERTYCHANGED>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const id = revertible.interval.getIntervalId()!;
+	const id = getId(revertible.interval);
 	const newProps = revertible.propertyDeltas;
 	string.getIntervalCollection(label).changeProperties(id, newProps);
 }
