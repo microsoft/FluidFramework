@@ -12,6 +12,7 @@ import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/tele
 import {
 	IClient,
 	IConnect,
+	IDocumentMessage,
 	INack,
 	ISequencedDocumentMessage,
 	ISignalMessage,
@@ -626,6 +627,32 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			default:
 				super.addTrackedListener(event, listener);
 				break;
+		}
+	}
+
+	public get disposed() {
+		if (!(this._disposed || this.socket.connected)) {
+			this.logger.sendTelemetryEvent({
+				eventName: "ConnectionNotYetDisposed",
+				driverVersion: pkgVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			});
+		}
+		return this._disposed;
+	}
+
+	private get connected(): boolean {
+		if (!this.disposed && this.socket.connected) {
+			return true;
+		}
+		return false;
+	}
+
+	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+		if (this.connected) {
+			this.socket.emit(type, this.clientId, messages);
 		}
 	}
 

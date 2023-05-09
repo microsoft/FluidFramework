@@ -82,14 +82,20 @@ export class DocumentDeltaConnection
 	}
 
 	public get disposed() {
-		if (!(this._disposed || this.socket.connected)) {
-			this.logger.sendTelemetryEvent({
-				eventName: "ConnectionNotYetDisposed",
-				driverVersion,
-				details: JSON.stringify({
-					...this.getConnectionDetailsProps(),
-				}),
-			});
+		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		try {
+			(Error as any).stackTraceLimit = 50;
+			assert(
+				this._disposed || this.socket.connected,
+				0x244 /* "Socket is closed, but connection is not!" */,
+			);
+		} catch (error) {
+			const normalizedError = this.addPropsToError(error);
+			throw normalizedError;
+		} finally {
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
 		}
 		return this._disposed;
 	}
@@ -229,13 +235,6 @@ export class DocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
-	private get connected(): boolean {
-		if (!this.disposed && this.socket.connected) {
-			return true;
-		}
-		return false;
-	}
-
 	private checkNotDisposed() {
 		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
 		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
@@ -311,9 +310,8 @@ export class DocumentDeltaConnection
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
 		// on the still-live socket. Also in case, connection is not yet disposed, then don't emit the messages.
-		if (this.connected) {
-			this.socket.emit(type, this.clientId, messages);
-		}
+		this.checkNotDisposed();
+		this.socket.emit(type, this.clientId, messages);
 	}
 
 	protected submitCore(type: string, messages: IDocumentMessage[]) {
@@ -638,7 +636,7 @@ export class DocumentDeltaConnection
 		return normalizedError;
 	}
 
-	private getConnectionDetailsProps() {
+	protected getConnectionDetailsProps() {
 		return {
 			disposed: this._disposed,
 			socketConnected: this.socket?.connected,
