@@ -43,6 +43,7 @@ export {
 	BinderOptions,
 	FlushableBinderOptions,
 	FlushableDataBinder,
+	DownPath,
 	BindPath,
 	PathStep,
 	BindingType,
@@ -56,7 +57,13 @@ export {
 	BinderEvents,
 	OperationBinderEvents,
 	InvalidationBinderEvents,
-	toBindPath,
+	CompareFunction,
+	BinderEventsCompare,
+	AnchorsCompare,
+	toDownPath,
+	compareBinderEventsDeleteFirst,
+	compareAnchorsDepthFirst,
+	comparePipeline,
 } from "./editable-tree";
 
 export {

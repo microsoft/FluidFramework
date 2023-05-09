@@ -3,8 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
-import { FieldKey, PathVisitor, ProtoNodes, TreeValue, UpPath, topDownPath } from "../../core";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
+import {
+	FieldKey,
+	PathVisitor,
+	ProtoNodes,
+	TreeValue,
+	UpPath,
+	getDepth,
+	topDownPath,
+} from "../../core";
 import { Events, IEmitter, ISubscribable, createEmitter } from "../../events";
 import { EditableTree, on } from "./editableTreeTypes";
 
@@ -32,6 +40,12 @@ export interface InvalidationBinderEvents extends BinderEvents {
 	invalidState(context: InvalidStateBindingContext): void;
 }
 
+export type CompareFunction<T> = (a: T, b: T) => number;
+
+export type BinderEventsCompare = CompareFunction<BindingContext>;
+
+export type AnchorsCompare = CompareFunction<UpPath>;
+
 /**
  * Options to configure binder behavior.
  *
@@ -41,7 +55,8 @@ export interface InvalidationBinderEvents extends BinderEvents {
  * @alpha
  */
 export interface BinderOptions {
-	sortFn?: (a: BindingContext, b: BindingContext) => number;
+	sort: boolean;
+	sortFn?: BinderEventsCompare;
 	matchPolicy: MatchPolicyType;
 }
 
@@ -53,6 +68,8 @@ export interface BinderOptions {
 export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
 	autoFlush: boolean;
 	autoFlushPolicy: keyof Events<E>;
+	sortAnchors: boolean;
+	sortAnchorsFn?: AnchorsCompare;
 }
 
 /**
@@ -113,11 +130,18 @@ export interface PathStep {
 }
 
 /**
+ * A down path
+ *
+ * @alpha
+ */
+export type DownPath = PathStep[];
+
+/**
  * A bind path
  *
  * @alpha
  */
-export type BindPath = PathStep[];
+export type BindPath = DownPath;
 
 /**
  * @alpha
@@ -254,7 +278,7 @@ class DirectPathVisitor extends AbstractPathVisitor<OperationBinderEvents> {
 	}
 
 	public onDelete(path: UpPath, count: number): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.Delete);
 		if (this.matchesAny(visitPaths, current)) {
 			this.emitter.emit(BindingType.Delete, {
@@ -266,7 +290,7 @@ class DirectPathVisitor extends AbstractPathVisitor<OperationBinderEvents> {
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.Insert);
 		if (this.matchesAny(visitPaths, current)) {
 			this.emitter.emit(BindingType.Insert, {
@@ -278,7 +302,7 @@ class DirectPathVisitor extends AbstractPathVisitor<OperationBinderEvents> {
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.SetValue);
 		if (this.matchesAny(visitPaths, current)) {
 			this.emitter.emit(BindingType.SetValue, {
@@ -299,7 +323,7 @@ class InvalidatePathVisitor
 		super(emitter, options);
 	}
 	public onDelete(path: UpPath, count: number): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.InvalidState);
 		if (this.matchesAny(visitPaths, current)) {
 			this.invalidState = true;
@@ -307,7 +331,7 @@ class InvalidatePathVisitor
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.InvalidState);
 		if (this.matchesAny(visitPaths, current)) {
 			this.invalidState = true;
@@ -315,7 +339,7 @@ class InvalidatePathVisitor
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.InvalidState);
 		if (this.matchesAny(visitPaths, current)) {
 			this.invalidState = true;
@@ -343,7 +367,7 @@ class BufferingPathVisitor
 		super(emitter, options);
 	}
 	public onDelete(path: UpPath, count: number): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.Delete);
 		if (this.matchesAny(visitPaths, current)) {
 			this.eventQueue.push({ type: BindingType.Delete, path, count });
@@ -351,7 +375,7 @@ class BufferingPathVisitor
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.Insert);
 		if (this.matchesAny(visitPaths, current)) {
 			this.eventQueue.push({ type: BindingType.Insert, path, content });
@@ -359,7 +383,7 @@ class BufferingPathVisitor
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
-		const current = toBindPath(path);
+		const current = toDownPath<BindPath>(path);
 		const visitPaths = this.registeredPaths.get(BindingType.SetValue);
 		if (this.matchesAny(visitPaths, current)) {
 			this.eventQueue.push({ type: BindingType.SetValue, path, value });
@@ -367,8 +391,9 @@ class BufferingPathVisitor
 	}
 
 	public flush(): BufferingPathVisitor {
-		if (this.options.sortFn) {
-			this.eventQueue.sort(this.options.sortFn);
+		if (this.options.sort) {
+			const sortFn = this.options.sortFn ?? compareBinderEventsDeleteFirst;
+			this.eventQueue.sort(sortFn);
 		}
 		for (const cmd of this.eventQueue) {
 			switch (cmd.type) {
@@ -395,14 +420,18 @@ class BufferingPathVisitor
 	}
 }
 
-class AbstractDataBinder<B extends BinderEvents, V extends AbstractPathVisitor<B>>
-	implements DataBinder<B>
+class AbstractDataBinder<
+	B extends BinderEvents,
+	V extends AbstractPathVisitor<B>,
+	O extends BinderOptions,
+> implements DataBinder<B>
 {
 	protected readonly visitors = new Map<EditableTree, V>();
+	protected readonly visitorLocations = new Map<V, UpPath>();
 	protected readonly unregisterHandles: Set<() => void> = new Set();
 	public constructor(
 		protected readonly events: IEmitter<B> & ISubscribable<B>,
-		protected readonly options: BinderOptions,
+		protected readonly options: O,
 		protected readonly visitorFactory: (anchor: EditableTree) => V,
 	) {}
 
@@ -417,7 +446,15 @@ class AbstractDataBinder<B extends BinderEvents, V extends AbstractPathVisitor<B
 		if (visitor === undefined) {
 			visitor = this.visitorFactory(anchor);
 			this.visitors.set(anchor, visitor);
-			this.unregisterHandles.add(anchor[on]("subtreeChanging", () => visitor));
+			this.unregisterHandles.add(
+				anchor[on]("subtreeChanging", (upPath: UpPath) => {
+					assert(visitor !== undefined, "visitor expected to be defined");
+					if (!this.visitorLocations.has(visitor)) {
+						this.visitorLocations.set(visitor, upPath);
+					}
+					return visitor;
+				}),
+			);
 		}
 		const contextType: BindingContextType = eventType as BindingContextType;
 		visitor.registerPaths(contextType, eventPaths);
@@ -436,7 +473,11 @@ class AbstractDataBinder<B extends BinderEvents, V extends AbstractPathVisitor<B
 }
 
 class BufferingDataBinder<E extends Events<E>>
-	extends AbstractDataBinder<OperationBinderEvents, BufferingPathVisitor>
+	extends AbstractDataBinder<
+		OperationBinderEvents,
+		BufferingPathVisitor,
+		FlushableBinderOptions<E>
+	>
 	implements FlushableDataBinder<OperationBinderEvents>
 {
 	protected readonly view: ISubscribable<E>;
@@ -452,9 +493,26 @@ class BufferingDataBinder<E extends Events<E>>
 	}
 
 	public flush(): FlushableDataBinder<OperationBinderEvents> {
-		for (const visitor of this.visitors.values()) {
-			visitor.flush();
+		if (this.options.sortAnchors) {
+			const sortFn = this.options.sortAnchorsFn ?? compareAnchorsDepthFirst;
+			const sortedVisitors: BufferingPathVisitor[] = Array.from(
+				this.visitorLocations.keys(),
+			).sort((a, b) => {
+				const pathA = this.visitorLocations.get(a);
+				const pathB = this.visitorLocations.get(b);
+				assert(pathA !== undefined, "pathA expected to be defined");
+				assert(pathB !== undefined, "pathB expected to be defined");
+				return sortFn(pathA, pathB);
+			});
+			for (const visitor of sortedVisitors) {
+				visitor.flush();
+			}
+		} else {
+			for (const visitor of this.visitors.values()) {
+				visitor.flush();
+			}
 		}
+
 		return this;
 	}
 
@@ -470,7 +528,8 @@ class BufferingDataBinder<E extends Events<E>>
 
 class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
 	OperationBinderEvents,
-	DirectPathVisitor
+	DirectPathVisitor,
+	BinderOptions
 > {
 	public constructor(view: ISubscribable<E>, options: BinderOptions) {
 		const events = createEmitter<OperationBinderEvents>();
@@ -479,7 +538,11 @@ class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
 }
 
 class InvalidateDataBinder<E extends Events<E>>
-	extends AbstractDataBinder<InvalidationBinderEvents, InvalidatePathVisitor>
+	extends AbstractDataBinder<
+		InvalidationBinderEvents,
+		InvalidatePathVisitor,
+		FlushableBinderOptions<E>
+	>
 	implements FlushableDataBinder<InvalidationBinderEvents>
 {
 	protected readonly view: ISubscribable<E>;
@@ -516,13 +579,13 @@ class InvalidateDataBinder<E extends Events<E>>
 /**
  * @alpha
  */
-export function toBindPath(upPath: UpPath): BindPath {
+export function toDownPath<T extends DownPath = DownPath>(upPath: UpPath): T {
 	const downPath: UpPath[] = topDownPath(upPath);
-	const stepDownPath: BindPath = downPath.map((u) => {
+	const stepDownPath: PathStep[] = downPath.map((u) => {
 		return { field: u.parentField, index: u.parentIndex };
 	});
 	stepDownPath.shift(); // remove last step to the root node
-	return stepDownPath;
+	return stepDownPath as T;
 }
 
 /**
@@ -561,7 +624,7 @@ export function createDataBinderInvalidate<E extends Events<E>>(
 export function createBinderOptionsDefault(
 	sortFn?: (a: BindingContext, b: BindingContext) => number,
 ): BinderOptions {
-	return { matchPolicy: "path", sortFn };
+	return { matchPolicy: "path", sort: true, sortFn };
 }
 
 /**
@@ -570,27 +633,78 @@ export function createBinderOptionsDefault(
 export function createBinderOptionsSubtree(
 	sortFn?: (a: BindingContext, b: BindingContext) => number,
 ): BinderOptions {
-	return { matchPolicy: "subtree", sortFn };
+	return { matchPolicy: "subtree", sort: true, sortFn };
 }
 
 /**
  * @alpha
  */
-export function createFlushableBinderOptionsDefault<E extends Events<E>>(
-	event: keyof Events<E>,
-	sortFn?: (a: BindingContext, b: BindingContext) => number,
-): FlushableBinderOptions<E> {
+export function createFlushableBinderOptionsDefault<E extends Events<E>>({
+	flushEvent,
+	sortFn,
+	sortAnchorsFn,
+}: {
+	flushEvent: keyof Events<E>;
+	sortFn?: BinderEventsCompare;
+	sortAnchorsFn?: AnchorsCompare;
+}): FlushableBinderOptions<E> {
 	const options = createBinderOptionsDefault(sortFn);
-	return { ...options, autoFlush: true, autoFlushPolicy: event };
+	return {
+		...options,
+		autoFlush: true,
+		autoFlushPolicy: flushEvent,
+		sortAnchors: true,
+		sortAnchorsFn,
+	};
 }
 
 /**
  * @alpha
  */
-export function createFlushableBinderOptionsSubtree<E extends Events<E>>(
-	event: keyof Events<E>,
-	sortFn?: (a: BindingContext, b: BindingContext) => number,
-): FlushableBinderOptions<E> {
+export function createFlushableBinderOptionsSubtree<E extends Events<E>>({
+	flushEvent,
+	sortFn,
+	sortAnchorsFn,
+}: {
+	flushEvent: keyof Events<E>;
+	sortFn?: BinderEventsCompare;
+	sortAnchorsFn?: AnchorsCompare;
+}): FlushableBinderOptions<E> {
 	const options = createBinderOptionsSubtree(sortFn);
-	return { ...options, autoFlush: true, autoFlushPolicy: event };
+	return {
+		...options,
+		autoFlush: true,
+		autoFlushPolicy: flushEvent,
+		sortAnchors: true,
+		sortAnchorsFn,
+	};
+}
+
+export function compareBinderEventsDeleteFirst(a: BindingContext, b: BindingContext): number {
+	if (a.type === BindingType.Delete && b.type === BindingType.Delete) {
+		return 0;
+	}
+	if (a.type === BindingType.Delete) {
+		return -1;
+	}
+	if (b.type === BindingType.Delete) {
+		return 1;
+	}
+	return 0;
+}
+
+export function compareAnchorsDepthFirst(a: UpPath, b: UpPath): number {
+	return getDepth(a) - getDepth(b);
+}
+
+export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunction<T> {
+	return (a: T, b: T): number => {
+		for (const fn of fns) {
+			const result = fn(a, b);
+			if (result !== 0) {
+				return result;
+			}
+		}
+		return 0;
+	};
 }

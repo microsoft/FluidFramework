@@ -11,7 +11,7 @@ import {
 	getField,
 	BindPath,
 	BindingType,
-	toBindPath,
+	toDownPath,
 	InsertBindingContext,
 	DeleteBindingContext,
 	BindingContext,
@@ -27,6 +27,8 @@ import {
 	DataBinder,
 	InvalidationBinderEvents,
 	OperationBinderEvents,
+	DownPath,
+	BindingContextType,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTreeView, SharedTreeFactory, ViewEvents } from "../../../shared-tree";
@@ -54,27 +56,28 @@ describe("editable-tree: data binder", () => {
 					{ field: fieldZip, index: 0 },
 				],
 			];
-			const options: FlushableBinderOptions<ViewEvents> =
-				createFlushableBinderOptionsDefault("afterBatch");
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptionsDefault(
+				{ flushEvent: "afterBatch" },
+			);
 			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
 				createDataBinderBuffering(tree.events, options);
-			const insertLog: BindPath[] = [];
+			const insertLog: DownPath[] = [];
 			dataBinder.register(
 				root,
 				BindingType.Insert,
 				insertPaths,
 				({ path, content }: InsertBindingContext) => {
-					const downPath: BindPath = toBindPath(path);
+					const downPath: DownPath = toDownPath(path);
 					insertLog.push(downPath);
 				},
 			);
-			const deleteLog: BindPath[] = [];
+			const deleteLog: DownPath[] = [];
 			dataBinder.register(
 				root,
 				BindingType.Delete,
 				deletePaths,
 				({ path, count }: DeleteBindingContext) => {
-					const downPath: BindPath = toBindPath(path);
+					const downPath: DownPath = toDownPath(path);
 					deleteLog.push(downPath);
 				},
 			);
@@ -108,17 +111,18 @@ describe("editable-tree: data binder", () => {
 					{ field: fieldZip, index: 1 },
 				],
 			];
-			const options: FlushableBinderOptions<ViewEvents> =
-				createFlushableBinderOptionsDefault("afterBatch");
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptionsDefault(
+				{ flushEvent: "afterBatch" },
+			);
 			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
 				createDataBinderBuffering(tree.events, options);
-			const insertLog: BindPath[] = [];
+			const insertLog: DownPath[] = [];
 			dataBinder.register(
 				address,
 				BindingType.Insert,
 				insertPaths,
 				({ path, content }: InsertBindingContext) => {
-					const downPath: BindPath = toBindPath(path);
+					const downPath: DownPath = toDownPath(path);
 					insertLog.push(downPath);
 				},
 			);
@@ -138,17 +142,18 @@ describe("editable-tree: data binder", () => {
 		it("registers to root, enables autoFlush, matches paths with any index", () => {
 			const { tree, root, address } = retrieveNodes();
 			const insertPaths: BindPath[] = [[{ field: fieldAddress }, { field: fieldZip }]];
-			const options: FlushableBinderOptions<ViewEvents> =
-				createFlushableBinderOptionsDefault("afterBatch");
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptionsDefault(
+				{ flushEvent: "afterBatch" },
+			);
 			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
 				createDataBinderBuffering(tree.events, options);
-			const log: BindPath[] = [];
+			const log: DownPath[] = [];
 			dataBinder.register(
 				root,
 				BindingType.Insert,
 				insertPaths,
 				({ path, content }: InsertBindingContext) => {
-					const downPath: BindPath = toBindPath(path);
+					const downPath: DownPath = toDownPath(path);
 					log.push(downPath);
 				},
 			);
@@ -165,7 +170,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 
-		it("registers to root, matches paths with subtree policy and any index, sorts using a prescribed order. Flush method called directly.", () => {
+		it("registers to root, matches paths with subtree policy and any index, sorts using a custom prescribed order. Flush method called directly.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const insertPaths: BindPath[] = [[{ field: fieldAddress }]];
 			const prescribeOrder = [fieldZip, fieldStreet, fieldPhones, fieldSequencePhones];
@@ -173,21 +178,23 @@ describe("editable-tree: data binder", () => {
 				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
+				sort: true,
 				sortFn: (a: BindingContext, b: BindingContext) => {
 					const aIndex = prescribeOrder.indexOf(a.path.parentField);
 					const bIndex = prescribeOrder.indexOf(b.path.parentField);
 					return aIndex - bIndex;
 				},
+				sortAnchors: true,
 			};
 			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
 				createDataBinderBuffering(tree.events, options);
-			const log: BindPath[] = [];
+			const log: DownPath[] = [];
 			dataBinder.register(
 				root,
 				BindingType.Insert,
 				insertPaths,
 				(insertContext: InsertBindingContext) => {
-					const downPath: BindPath = toBindPath(insertContext.path);
+					const downPath: DownPath = toDownPath(insertContext.path);
 					log.push(downPath);
 				},
 			);
@@ -233,14 +240,149 @@ describe("editable-tree: data binder", () => {
 			address.sequencePhones = ["114", "115"];
 			assert.deepEqual(log, []);
 		});
+
+		it("registers to root, matches paths with subtree policy and any index, default sorting enabled (ie. deletes first). Flush method called directly.", () => {
+			const { tree, root, address } = retrieveNodes();
+			const insertPaths: BindPath[] = [[{ field: fieldAddress }]];
+			const options: FlushableBinderOptions<ViewEvents> = {
+				matchPolicy: "subtree",
+				autoFlush: false,
+				autoFlushPolicy: "afterBatch",
+				sort: true,
+				sortAnchors: true,
+			};
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
+			const log: { type: BindingContextType }[] = [];
+			dataBinder.register(
+				root,
+				BindingType.Insert,
+				insertPaths,
+				(insertContext: InsertBindingContext) => {
+					const downPath: DownPath = toDownPath(insertContext.path);
+					log.push({ ...downPath, type: BindingType.Insert });
+				},
+			);
+			dataBinder.register(
+				root,
+				BindingType.Delete,
+				insertPaths,
+				(insertContext: DeleteBindingContext) => {
+					const downPath: DownPath = toDownPath(insertContext.path);
+					log.push({ ...downPath, type: BindingType.Delete });
+				},
+			);
+			address.phones = [111, 112];
+			address.sequencePhones = ["111", "112"];
+			address.zip = "33428";
+			address.street = "street 1";
+			// manual flush
+			dataBinder.flush();
+			const expectedLog = [
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "phones",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "zip",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "street",
+						index: 0,
+					},
+					"type": "delete",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "phones",
+						index: 1,
+					},
+					"type": "insert",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "sequencePhones",
+						index: 0,
+					},
+					"type": "insert",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "zip",
+						index: 1,
+					},
+					"type": "insert",
+				},
+				{
+					"0": {
+						field: "address",
+						index: 0,
+					},
+					"1": {
+						field: "street",
+						index: 1,
+					},
+					"type": "insert",
+				},
+			];
+			assert.deepEqual(log, expectedLog);
+			dataBinder.unregister();
+			log.length = 0;
+			address.sequencePhones = ["114", "115"];
+			assert.deepEqual(log, []);
+		});
 	});
 
 	describe("invalidating state data binder", () => {
 		it("registers to root, enables autoFlush, matches paths with subtree policy and any index.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const insertPaths: BindPath[] = [[{ field: fieldAddress }]];
-			const options: FlushableBinderOptions<ViewEvents> =
-				createFlushableBinderOptionsSubtree("afterBatch");
+			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptionsSubtree(
+				{ flushEvent: "afterBatch" },
+			);
 			const dataBinder: FlushableDataBinder<InvalidationBinderEvents> =
 				createDataBinderInvalidate(tree.events, options);
 			let invalidationCount = 0;
@@ -265,7 +407,7 @@ describe("editable-tree: data binder", () => {
 		it("registers to root, enables autoFlush, matches paths with subtree policy and any index.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const insertPaths: BindPath[] = [[{ field: fieldAddress }]];
-			const options: BinderOptions = { matchPolicy: "subtree" };
+			const options: BinderOptions = { matchPolicy: "subtree", sort: false };
 			const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
 				tree.events,
 				options,
@@ -276,7 +418,7 @@ describe("editable-tree: data binder", () => {
 				BindingType.Insert,
 				insertPaths,
 				(insertContext: InsertBindingContext) => {
-					const downPath: BindPath = toBindPath(insertContext.path);
+					const downPath: BindPath = toDownPath<BindPath>(insertContext.path);
 					log.push(downPath);
 				},
 			);
