@@ -81,6 +81,14 @@
 			},
 			"InterfaceDeclaration_ISequencedDocumentSystemMessage": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IHelpMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IQueueMessage": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

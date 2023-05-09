@@ -166,14 +166,6 @@ export interface IDocumentSystemMessage extends IDocumentMessage {
     data: string;
 }
 
-// @public
-export interface IHelpMessage {
-    // (undocumented)
-    tasks: string[];
-    // (undocumented)
-    version?: string;
-}
-
 // @public (undocumented)
 export interface INack {
     content: INackContent;
@@ -213,18 +205,6 @@ export interface IProtocolState {
     sequenceNumber: number;
     // (undocumented)
     values: [string, ICommittedProposal][];
-}
-
-// @public
-export interface IQueueMessage {
-    // (undocumented)
-    documentId: string;
-    // (undocumented)
-    message: IHelpMessage;
-    // (undocumented)
-    tenantId: string;
-    // (undocumented)
-    token: string;
 }
 
 // @public
