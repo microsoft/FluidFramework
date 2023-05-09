@@ -95,10 +95,6 @@ export class Package {
 		return this._packageJson;
 	}
 
-	public toString() {
-		return this.name;
-	}
-
 	constructor(
 		private readonly packageJsonFileName: string,
 		public readonly group: string,
