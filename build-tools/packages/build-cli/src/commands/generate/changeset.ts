@@ -33,6 +33,7 @@ interface Choice {
 
 export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
 	static summary = `Generates a new changeset file.`;
+	static aliases: string[] = ["changeset:add"];
 	static enableJsonFlag = true;
 
 	static flags = {

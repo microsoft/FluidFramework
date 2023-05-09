@@ -85,6 +85,9 @@ EXPERIMENTAL FLAGS
                      This flag is experimental and may change or be removed at any time.
                      <options: default|simple>
 
+ALIASES
+  $ flub changeset add
+
 EXAMPLES
   Create an empty changeset.
 
