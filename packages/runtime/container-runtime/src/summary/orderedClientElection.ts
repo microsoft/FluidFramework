@@ -416,15 +416,13 @@ export class OrderedClientElection
 			change = true;
 		}
 		if (change) {
-			if (!isSummarizerClient) {
-				this.logger.sendTelemetryEvent({
-					eventName: "SummarizerClientElected",
-					electedClientId: this._electedClient?.clientId,
-					electedParentId: this._electedParent?.clientId,
-					electionSequenceNumber: sequenceNumber,
-					isSummarizerClient,
-				});
-			}
+			this.logger.sendTelemetryEvent({
+				eventName: "SummarizerClientElected",
+				electedClientId: this._electedClient?.clientId,
+				electedParentId: this._electedParent?.clientId,
+				electionSequenceNumber: sequenceNumber,
+				isSummarizerClient,
+			});
 			this.emit("election", client, sequenceNumber, prevClient);
 		}
 	}
