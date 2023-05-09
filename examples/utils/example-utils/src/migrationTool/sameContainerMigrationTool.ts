@@ -133,6 +133,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// TODO: Start by awaiting connected?
 		// If someone else finishes this while the local client is still working on it, the local
 		// client should immediately abort this step and move on to the next one.
+		// Retain the generated summary and summary handle for retry in subsequent phases
 		// TODO: actual implementation
 		const generateV1Summary = async () => {
 			// TODO: retry also
@@ -264,62 +265,31 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		await this._pendingP;
-		// Once we get here the proposal is either pending or accepted.
-		// This could either be that the snapshot already had the proposal in one of these states (so we
-		// didn't need to wait above), or we encountered a proposal op during catchup or normal operation.
-		// In response, we need to stop normal collaboration and summarization.
+		// After the proposal is detected to be pending (or accepted), we must stop collaboration and summarization
+		// to avoid unexpected ops and summaries sneaking in after the proposal's acceptance.
 		// TODO: Determine if we need to stop collaboration within the promise executor to avoid something slipping
 		// in between the microtasks - bearing in mind that we still might need to send out our accept op.
 		this.stopCollaboration();
 		await this._acceptedP;
 
-		// Once we get here the proposal is accepted (either from the snapshot or from an op).
-		// In response, we need to ensure the final v1 summary is taken.
-		// Even if we load from this v1 summary we will still see its summarize and summaryAck in the logTail
+		// After the proposal is detected to be accepted, we need to ensure the final v1 summary is taken.
+		// Even if a client loads from this v1 summary it will still see its summarize and summaryAck in the logTail and
+		// know that this step is done.
 		await this.ensureV1Summary();
 
+		// The last step to prepare for the migration phase is to put the new code details into the quorum.  We have to
+		// do this here to ensure the correct summary is produced for services that have server-produced .protocol trees.
 		await this.ensureQuorumCodeDetails();
 
-		// TODO: Here we're going to be waiting for the finalize step
+		// TODO: At this point we need to await the finalizeMigration call.
 
+		// Once we have the v2 contents in hand, we can work on sending it as the next summary (which will look like a v2
+		// summary, due to the v2 code details being in the quorum).  This is the final step.
 		await this.ensureV2Summary();
 
 		this.emit("migrated");
 
-		// These states are purely the ones that can be detected in the data/opstream, one-way transition.
-		// Should also do states for the runtime bits like submitting the v2 summary?
-		// Or alternatively, could go simpler like "preparingForMigration", "readyForMigration", "migrated"
-
-		// All one-way transitions (including in-memory state)
-		// collaborating (base state in v1)
-		// proposingMigration (if the local client has sent a proposal but not gotten an ack yet?)
-		// stoppingCollaboration (between proposal and acceptance)
-		// generatingV1Summary (we can retain this for retries of upload)
-		// uploadingV1Summary (we can retain the handle to it for retries of submission)
-		// submittingV1Summary (completion visible in op stream as summaryAck)
-		// proposingV2Code
-		// waitingForV2ProposalCompletion - waiting for proposal flurry to finish
-		// readyForMigration (awaiting a call to migrationTool.finalizeTransform(v2summary))
-		// uploadingV2Summary (can retain the contents in case we need to retry the upload, can retain the handle for retries of submission)
-		// submittingV2Summary (completion visible in op stream as summaryAck)
-		// migrated
-
-		// Detectable in the data/opstream, one-way transition
-		// stopping
-		// summarizingV1 + proposingV2QuorumCode === preparingForExport?
-		// readyForMigration
-		// migrated
-
-		// MigrationTool probably gets additional states beyond migrating/migrated.  But Migrator keeps just the simple
-		// two-state because its consumers just need to know whether it's ready for render, etc.
-		// ???.on("v1SummaryAck", this.emit("readyForExport")) // Maybe this includes a sequence number for loading?
-		// ???.on("v1SummaryAck", proposeQuorumCodeDetails)
-
-		// after the summary ack emit, the migrator will respond by doing export/transform/import into v2, and get that snapshot
-		// Next we hear back should be Migrator calling a migrationTool.finalizeTransform(v2summary) or something
-
-		// ???.on("v2SummaryAck", this.emit("readyForReload"))
-		// ???.on("v2SummaryAck", closeAndDispose)
+		// TODO: close and dispose somewhere in here
 
 		// Make build shut up
 		await this._v1SummaryAckP;

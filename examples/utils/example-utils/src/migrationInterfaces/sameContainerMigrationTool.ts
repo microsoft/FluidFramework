@@ -5,26 +5,21 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
-// All one-way transitions (including in-memory state)
-// collaborating (base state in v1)
-// proposingMigration (if the local client has sent a proposal but not gotten an ack yet?)
-// stoppingCollaboration (between proposal and acceptance)
-// generatingV1Summary (we can retain this for retries of upload)
-// uploadingV1Summary (we can retain the handle to it for retries of submission)
-// submittingV1Summary (completion visible in op stream as summaryAck)
-// proposingV2Code
-// waitingForV2ProposalCompletion - waiting for proposal flurry to finish
-// readyForMigration (awaiting a call to migrationTool.finalizeTransform(v2summary))
-// uploadingV2Summary (can retain the contents in case we need to retry the upload, can retain the handle for retries of submission)
-// submittingV2Summary (completion visible in op stream as summaryAck)
-// migrated
-
 /**
- * The collaboration session may be in one of four states:
+ * The collaboration session may be in one of these states:
  * * collaborating - normal collaboration is ongoing.  The client may send data.
- * * stopping - a proposal to migrate has been made, but not accepted yet.  The client must stop sending data.
- * * migrating - a proposal to migrate has been accepted.  The data is currently being migrated.
- * * migrated - migration has completed and the new container is available.
+ * * proposingMigration - a proposal to migrate has been sent by the local client, but not sequenced yet.  The client doesn't strictly have to stop sending data until it goes pending.
+ * * stoppingCollaboration - a proposal to migrate has been sequenced, but not accepted yet.  The client must stop sending data.
+ * // TODO should there be an event here for non-summarizer clients to observe (collaborationStopped maybe) since they won't be generating the summary?
+ * * generatingV1Summary - the proposal has been accepted and we have started generating the final v1 summary locally, reflecting the state at the time of the acceptance.
+ * * uploadingV1Summary - the final v1 summary has been generated locally and the local client is in the process of uploading it to the service.
+ * * submittingV1Summary - the final v1 summary has been uploaded by the local client and is sending the summarize op, awaiting its summaryAck.
+ * * proposingV2Code - the local client is in the process of proposing v2 code
+ * * waitingForV2ProposalCompletion - at least one v2 code proposal has been approved, and we are waiting on remaining outstanding proposals to be approved.
+ * * readyForMigration - awaiting a call to migrationTool.finalizeTransform(v2Summary)
+ * * uploadingV2Summary - similar to above
+ * * submittingV2Summary - similar to above
+ * * migrated - migration has completed, if the client reloads from the latest summary they will be on v2.
  */
 export type SameContainerMigrationState =
 	| "collaborating"
