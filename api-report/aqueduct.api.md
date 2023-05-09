@@ -68,7 +68,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
-    request(request: IRequest): Promise<IResponse>;
     protected get root(): ISharedDirectory;
 }
 

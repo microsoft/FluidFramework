@@ -15,6 +15,16 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.4.3.0
+
+## 2.0.0-internal.4.3.0 Breaking changes
+
+-   [bigBlobs request handling removed from DataObject](#bigBlobs-request-handling-removed-from-DataObject)
+
+### bigBlobs request handling removed from DataObject
+
+Previously, `DataObject` would perform undocumented special handling for requests to it starting with `bigBlobs/` to pull objects out of its `root` directory. This special handling has been removed.
+
 # 2.0.0-internal.4.1.0
 
 ## 2.0.0-internal.4.1.0 Breaking changes
