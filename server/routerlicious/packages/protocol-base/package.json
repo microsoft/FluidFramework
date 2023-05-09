@@ -89,6 +89,10 @@
 		"broken": {
 			"ClassDeclaration_ProtocolOpHandler": {
 				"backCompat": false
+			},
+			"RemovedVariableDeclaration_isServiceMessageType": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
