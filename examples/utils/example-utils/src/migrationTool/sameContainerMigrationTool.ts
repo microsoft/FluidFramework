@@ -6,6 +6,7 @@
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { MessageType } from "@fluidframework/protocol-definitions";
 
 import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 
@@ -232,12 +233,21 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		this._v1SummaryAckP = new Promise<void>((resolve) => {
-			// TODO implement
-			// Should be watching for the summaryAck to come in.
-			// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
-			// Or maybe set that up in ensureV1Summary().
-			this._seenV1SummaryAck = true;
-			resolve();
+			// TODO implement for real
+			// Challenge here: ContainerRuntime only emits "op" for runtime ops, which doesn't include summaryAck.
+			// SummaryCollection's approach is to go listen to the deltaManager directly, which is gross but works.
+			// Alternatively could have ContainerRuntime emit some summaryAck event
+			this.context.deltaManager.on("op", (op) => {
+				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
+				// random ack.  Probably means storing the PactMap accept sequence number and verifying the referenceSequenceNumber(?)
+				// of the summaryAck matches that.
+				if (op.type === MessageType.SummaryAck) {
+					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
+					// Or maybe set that up in ensureV1Summary().
+					this._seenV1SummaryAck = true;
+					resolve();
+				}
+			});
 		});
 
 		this._anyQuorumProposalSeenP = new Promise<void>((resolve) => {
