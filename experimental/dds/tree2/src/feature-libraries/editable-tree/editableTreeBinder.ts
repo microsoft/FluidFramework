@@ -9,17 +9,26 @@ import { Events, IEmitter, ISubscribable, createEmitter } from "../../events";
 import { EditableTree, on } from "./editableTreeTypes";
 
 /**
- * Union of supported binder events
- *
- * TODO:
- * - split invalidState into separate interface
- * - parametrize DataBinder so that specialized binders can validate subsets of events (eg. only invalidState for InvalidateDataBinder)
+ * Interface that describes generic binder events
  * @alpha
  */
-export interface BinderEvents {
+export interface BinderEvents {}
+
+/**
+ * Binder events reflecting atomic data operations
+ * @alpha
+ */
+export interface OperationBinderEvents extends BinderEvents {
 	delete(context: DeleteBindingContext): void;
 	insert(context: InsertBindingContext): void;
 	setValue(context: SetValueBindingContext): void;
+}
+
+/**
+ * Binder events signaling state invalidation
+ * @alpha
+ */
+export interface InvalidationBinderEvents extends BinderEvents {
 	invalidState(context: InvalidStateBindingContext): void;
 }
 
@@ -58,16 +67,15 @@ export type MatchPolicyType = "subtree" | "path";
  *
  * @alpha
  */
-export interface DataBinder {
+export interface DataBinder<B extends BinderEvents> {
 	/**
-	 * Register a listener.
-	 *
+	 * Listen to specific binder events filtered by anchor, event type and path.
 	 */
-	register<K extends keyof BinderEvents>(
+	register<K extends keyof Events<B>>(
 		anchor: EditableTree,
-		eventName: K,
+		eventType: K,
 		eventPaths: BindPath[],
-		listener: BinderEvents[K],
+		listener: B[K],
 	): void;
 
 	/**
@@ -90,7 +98,9 @@ export interface Flushable<T> {
  *
  * @alpha
  */
-export interface FlushableDataBinder extends DataBinder, Flushable<FlushableDataBinder> {}
+export interface FlushableDataBinder<B extends BinderEvents>
+	extends DataBinder<B>,
+		Flushable<FlushableDataBinder<B>> {}
 
 /**
  * A step in a bind path
@@ -175,10 +185,10 @@ export interface InvalidStateBindingContext extends AbstractBindingContext {
 	readonly type: typeof BindingType.InvalidState;
 }
 
-abstract class AbstractPathVisitor implements PathVisitor {
+abstract class AbstractPathVisitor<B extends BinderEvents> implements PathVisitor {
 	protected readonly registeredPaths: Map<BindingContextType, Set<BindPath>> = new Map();
 	public constructor(
-		protected readonly emitter: IEmitter<BinderEvents>,
+		protected readonly emitter: IEmitter<B>,
 		protected readonly options: BinderOptions,
 	) {}
 	public abstract onDelete(path: UpPath, count: number): void;
@@ -238,8 +248,8 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	}
 }
 
-class DirectPathVisitor extends AbstractPathVisitor {
-	public constructor(emitter: IEmitter<BinderEvents>, options: BinderOptions) {
+class DirectPathVisitor extends AbstractPathVisitor<OperationBinderEvents> {
+	public constructor(emitter: IEmitter<OperationBinderEvents>, options: BinderOptions) {
 		super(emitter, options);
 	}
 
@@ -281,11 +291,11 @@ class DirectPathVisitor extends AbstractPathVisitor {
 }
 
 class InvalidatePathVisitor
-	extends AbstractPathVisitor
+	extends AbstractPathVisitor<InvalidationBinderEvents>
 	implements Flushable<InvalidatePathVisitor>
 {
 	protected invalidState = false;
-	public constructor(emitter: IEmitter<BinderEvents>, options: BinderOptions) {
+	public constructor(emitter: IEmitter<InvalidationBinderEvents>, options: BinderOptions) {
 		super(emitter, options);
 	}
 	public onDelete(path: UpPath, count: number): void {
@@ -323,10 +333,13 @@ class InvalidatePathVisitor
 	}
 }
 
-class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<BufferingPathVisitor> {
+class BufferingPathVisitor
+	extends AbstractPathVisitor<OperationBinderEvents>
+	implements Flushable<BufferingPathVisitor>
+{
 	private readonly eventQueue: BindingContext[] = [];
 
-	public constructor(emitter: IEmitter<BinderEvents>, options: BinderOptions) {
+	public constructor(emitter: IEmitter<OperationBinderEvents>, options: BinderOptions) {
 		super(emitter, options);
 	}
 	public onDelete(path: UpPath, count: number): void {
@@ -382,20 +395,22 @@ class BufferingPathVisitor extends AbstractPathVisitor implements Flushable<Buff
 	}
 }
 
-class AbstractDataBinder<V extends AbstractPathVisitor> implements DataBinder {
+class AbstractDataBinder<B extends BinderEvents, V extends AbstractPathVisitor<B>>
+	implements DataBinder<B>
+{
 	protected readonly visitors = new Map<EditableTree, V>();
 	protected readonly unregisterHandles: Set<() => void> = new Set();
 	public constructor(
-		protected readonly events: IEmitter<BinderEvents> & ISubscribable<BinderEvents>,
+		protected readonly events: IEmitter<B> & ISubscribable<B>,
 		protected readonly options: BinderOptions,
 		protected readonly visitorFactory: (anchor: EditableTree) => V,
 	) {}
 
-	public register<K extends keyof BinderEvents>(
+	public register<K extends keyof Events<B>>(
 		anchor: EditableTree,
-		eventName: K,
+		eventType: K,
 		eventPaths: BindPath[],
-		listener: BinderEvents[K],
+		listener: B[K],
 	): void {
 		// TODO: validate BindPath semantics against the schema
 		let visitor = this.visitors.get(anchor);
@@ -404,8 +419,9 @@ class AbstractDataBinder<V extends AbstractPathVisitor> implements DataBinder {
 			this.visitors.set(anchor, visitor);
 			this.unregisterHandles.add(anchor[on]("subtreeChanging", () => visitor));
 		}
-		visitor.registerPaths(eventName, eventPaths);
-		this.unregisterHandles.add(this.events.on(eventName, listener));
+		const contextType: BindingContextType = eventType as BindingContextType;
+		visitor.registerPaths(contextType, eventPaths);
+		this.unregisterHandles.add(this.events.on(eventType, listener));
 	}
 	public unregister(): void {
 		for (const unregisterHandle of this.unregisterHandles) {
@@ -420,13 +436,13 @@ class AbstractDataBinder<V extends AbstractPathVisitor> implements DataBinder {
 }
 
 class BufferingDataBinder<E extends Events<E>>
-	extends AbstractDataBinder<BufferingPathVisitor>
-	implements FlushableDataBinder
+	extends AbstractDataBinder<OperationBinderEvents, BufferingPathVisitor>
+	implements FlushableDataBinder<OperationBinderEvents>
 {
 	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy: keyof Events<E>;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
-		const events = createEmitter<BinderEvents>();
+		const events = createEmitter<OperationBinderEvents>();
 		super(events, options, (anchor: EditableTree) => new BufferingPathVisitor(events, options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
@@ -435,14 +451,14 @@ class BufferingDataBinder<E extends Events<E>>
 		}
 	}
 
-	public flush(): FlushableDataBinder {
+	public flush(): FlushableDataBinder<OperationBinderEvents> {
 		for (const visitor of this.visitors.values()) {
 			visitor.flush();
 		}
 		return this;
 	}
 
-	private enableAutoFlush(): FlushableDataBinder {
+	private enableAutoFlush(): FlushableDataBinder<OperationBinderEvents> {
 		const callbackFn = (() => {
 			this.flush();
 		}) as E[keyof Events<E>];
@@ -452,21 +468,24 @@ class BufferingDataBinder<E extends Events<E>>
 	}
 }
 
-class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<DirectPathVisitor> {
+class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
+	OperationBinderEvents,
+	DirectPathVisitor
+> {
 	public constructor(view: ISubscribable<E>, options: BinderOptions) {
-		const events = createEmitter<BinderEvents>();
+		const events = createEmitter<OperationBinderEvents>();
 		super(events, options, (anchor: EditableTree) => new DirectPathVisitor(events, options));
 	}
 }
 
 class InvalidateDataBinder<E extends Events<E>>
-	extends AbstractDataBinder<InvalidatePathVisitor>
-	implements FlushableDataBinder
+	extends AbstractDataBinder<InvalidationBinderEvents, InvalidatePathVisitor>
+	implements FlushableDataBinder<InvalidationBinderEvents>
 {
 	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
-		const events = createEmitter<BinderEvents>();
+		const events = createEmitter<InvalidationBinderEvents>();
 		super(
 			events,
 			options,
@@ -478,13 +497,13 @@ class InvalidateDataBinder<E extends Events<E>>
 			this.enableAutoFlush();
 		}
 	}
-	public flush(): FlushableDataBinder {
+	public flush(): FlushableDataBinder<InvalidationBinderEvents> {
 		for (const visitor of this.visitors.values()) {
 			visitor.flush();
 		}
 		return this;
 	}
-	private enableAutoFlush(): FlushableDataBinder {
+	private enableAutoFlush(): FlushableDataBinder<InvalidationBinderEvents> {
 		const callbackFn = (() => {
 			this.flush();
 		}) as E[keyof Events<E>];
@@ -512,7 +531,7 @@ export function toBindPath(upPath: UpPath): BindPath {
 export function createDataBinderBuffering<E extends Events<E>>(
 	view: ISubscribable<E>,
 	options: FlushableBinderOptions<E>,
-): FlushableDataBinder {
+): FlushableDataBinder<OperationBinderEvents> {
 	return new BufferingDataBinder(view, options);
 }
 
@@ -522,7 +541,7 @@ export function createDataBinderBuffering<E extends Events<E>>(
 export function createDataBinderDirect<E extends Events<E>>(
 	view: ISubscribable<E>,
 	options: BinderOptions,
-): DataBinder {
+): DataBinder<OperationBinderEvents> {
 	return new DirectDataBinder(view, options);
 }
 
@@ -532,7 +551,7 @@ export function createDataBinderDirect<E extends Events<E>>(
 export function createDataBinderInvalidate<E extends Events<E>>(
 	view: ISubscribable<E>,
 	options: FlushableBinderOptions<E>,
-): FlushableDataBinder {
+): FlushableDataBinder<InvalidationBinderEvents> {
 	return new InvalidateDataBinder(view, options);
 }
 

@@ -25,6 +25,8 @@ import {
 	createDataBinderDirect,
 	InvalidStateBindingContext,
 	DataBinder,
+	InvalidationBinderEvents,
+	OperationBinderEvents,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { ISharedTreeView, SharedTreeFactory, ViewEvents } from "../../../shared-tree";
@@ -54,7 +56,8 @@ describe("editable-tree: data binder", () => {
 			];
 			const options: FlushableBinderOptions<ViewEvents> =
 				createFlushableBinderOptionsDefault("afterBatch");
-			const dataBinder: FlushableDataBinder = createDataBinderBuffering(tree.events, options);
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
 			const insertLog: BindPath[] = [];
 			dataBinder.register(
 				root,
@@ -107,7 +110,8 @@ describe("editable-tree: data binder", () => {
 			];
 			const options: FlushableBinderOptions<ViewEvents> =
 				createFlushableBinderOptionsDefault("afterBatch");
-			const dataBinder: FlushableDataBinder = createDataBinderBuffering(tree.events, options);
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
 			const insertLog: BindPath[] = [];
 			dataBinder.register(
 				address,
@@ -136,7 +140,8 @@ describe("editable-tree: data binder", () => {
 			const insertPaths: BindPath[] = [[{ field: fieldAddress }, { field: fieldZip }]];
 			const options: FlushableBinderOptions<ViewEvents> =
 				createFlushableBinderOptionsDefault("afterBatch");
-			const dataBinder: FlushableDataBinder = createDataBinderBuffering(tree.events, options);
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
 			const log: BindPath[] = [];
 			dataBinder.register(
 				root,
@@ -174,7 +179,8 @@ describe("editable-tree: data binder", () => {
 					return aIndex - bIndex;
 				},
 			};
-			const dataBinder: FlushableDataBinder = createDataBinderBuffering(tree.events, options);
+			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
+				createDataBinderBuffering(tree.events, options);
 			const log: BindPath[] = [];
 			dataBinder.register(
 				root,
@@ -235,10 +241,8 @@ describe("editable-tree: data binder", () => {
 			const insertPaths: BindPath[] = [[{ field: fieldAddress }]];
 			const options: FlushableBinderOptions<ViewEvents> =
 				createFlushableBinderOptionsSubtree("afterBatch");
-			const dataBinder: FlushableDataBinder = createDataBinderInvalidate(
-				tree.events,
-				options,
-			);
+			const dataBinder: FlushableDataBinder<InvalidationBinderEvents> =
+				createDataBinderInvalidate(tree.events, options);
 			let invalidationCount = 0;
 			dataBinder.register(
 				root,
@@ -262,7 +266,10 @@ describe("editable-tree: data binder", () => {
 			const { tree, root, address } = retrieveNodes();
 			const insertPaths: BindPath[] = [[{ field: fieldAddress }]];
 			const options: BinderOptions = { matchPolicy: "subtree" };
-			const dataBinder: DataBinder = createDataBinderDirect(tree.events, options);
+			const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
+				tree.events,
+				options,
+			);
 			const log: BindPath[] = [];
 			dataBinder.register(
 				root,

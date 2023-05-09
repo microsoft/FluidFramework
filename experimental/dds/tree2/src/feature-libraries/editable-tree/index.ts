@@ -45,6 +45,8 @@ export {
 	SetValueBindingContext,
 	InvalidStateBindingContext,
 	BinderEvents,
+	OperationBinderEvents,
+	InvalidationBinderEvents,
 	toBindPath,
 } from "./editableTreeBinder";
 
