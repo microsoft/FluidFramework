@@ -98,6 +98,10 @@
 			"RemovedFunctionDeclaration_isSystemMessage": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ILocalSequencedClient": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

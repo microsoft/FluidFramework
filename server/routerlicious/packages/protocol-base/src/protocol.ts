@@ -29,36 +29,6 @@ export interface IScribeProtocolState {
 	values: [string, ICommittedProposal][];
 }
 
-/**
- * @deprecated No usage of this function found in any release group. Will be removed
- */
-export function isSystemMessage(message: ISequencedDocumentMessage) {
-	switch (message.type) {
-		case MessageType.ClientJoin:
-		case MessageType.ClientLeave:
-		case MessageType.Propose:
-		case MessageType.Reject:
-		case MessageType.NoOp:
-		case MessageType.NoClient:
-		case MessageType.Summarize:
-		case MessageType.SummaryAck:
-		case MessageType.SummaryNack:
-			return true;
-		default:
-			return false;
-	}
-}
-
-/**
- * @deprecated moved to `@fluidframework/container-loader#protocol.ts`
- */
-export interface ILocalSequencedClient extends ISequencedClient {
-	/**
-	 * True if the client should have left the quorum, false otherwise
-	 */
-	shouldHaveLeft?: boolean;
-}
-
 export interface IProtocolHandler {
 	readonly quorum: IQuorum;
 	readonly attributes: IDocumentAttributes;

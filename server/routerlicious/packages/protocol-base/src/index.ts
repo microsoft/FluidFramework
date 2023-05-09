@@ -12,12 +12,7 @@ export {
 	getGitType,
 	TreeTreeEntry,
 } from "./blobs";
-export {
-	ILocalSequencedClient,
-	IProtocolHandler,
-	IScribeProtocolState,
-	ProtocolOpHandler,
-} from "./protocol";
+export { IProtocolHandler, IScribeProtocolState, ProtocolOpHandler } from "./protocol";
 export {
 	IQuorumSnapshot,
 	Quorum,
