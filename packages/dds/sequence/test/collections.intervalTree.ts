@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IInterval, IntervalTree } from "../intervalTree";
+import { IInterval, IntervalTree } from "../src/intervalTree";
 
 class TestInterval implements IInterval {
 	constructor(public start: number, public end: number) {}

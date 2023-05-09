@@ -26,8 +26,8 @@ import {
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import { getTextAndMarkers, SharedString } from "../sharedString";
-import { SharedStringFactory } from "../sequenceFactory";
+import { getTextAndMarkers, SharedString } from "../src/sharedString";
+import { SharedStringFactory } from "../src/sequenceFactory";
 
 describe("SharedString", () => {
 	let sharedString: SharedString;

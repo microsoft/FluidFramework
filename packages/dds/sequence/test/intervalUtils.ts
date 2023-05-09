@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../sharedString";
+import { SharedString } from "../src/sharedString";
 
 export interface Client {
 	sharedString: SharedString;

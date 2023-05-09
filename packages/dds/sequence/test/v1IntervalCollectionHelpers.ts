@@ -10,13 +10,13 @@ import {
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { Client } from "@fluidframework/merge-tree";
-import { DefaultMap } from "../defaultMap";
+import { DefaultMap } from "../src/defaultMap";
 import {
 	IValueFactory,
 	IValueOpEmitter,
 	IValueType,
 	IValueOperation,
-} from "../defaultMapInterfaces";
+} from "../src/defaultMapInterfaces";
 import {
 	ISerializableInterval,
 	ISerializedInterval,
@@ -28,9 +28,9 @@ import {
 	createSequenceInterval,
 	compareSequenceIntervalEnds,
 	LocalIntervalCollection,
-} from "../intervalCollection";
-import { pkgVersion } from "../packageVersion";
-import { SharedString } from "../sharedString";
+} from "../src/intervalCollection";
+import { pkgVersion } from "../src/packageVersion";
+import { SharedString } from "../src/sharedString";
 
 export interface IntervalCollectionInternals<TInterval extends ISerializableInterval> {
 	client: Client;

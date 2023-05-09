@@ -143,7 +143,7 @@ module.exports = {
 		"import/no-extraneous-dependencies": [
 			"error",
 			{
-				devDependencies: ["**/*.spec.ts", "src/test/**"],
+				devDependencies: ["**/*.spec.ts", "src/test/**", "test/**"],
 			},
 		],
 		"import/no-internal-modules": "error",

@@ -17,8 +17,8 @@ import * as MergeTree from "@fluidframework/merge-tree/dist/test/";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import JsDiff from "diff";
 import random from "random-js";
-import * as SharedString from "../intervalCollection";
-import { IntervalTree } from "../intervalTree";
+import * as SharedString from "../src/intervalCollection";
+import { IntervalTree } from "../src/intervalTree";
 
 const clock = () => Trace.start();
 
