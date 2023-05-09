@@ -10739,6 +10739,7 @@ importers:
       re-resizable: ^6.9.9
       react: ^17.0.1
       react-dom: ^17.0.1
+      react-split-pane: ^0.1.92
       rimraf: ^4.4.0
       scheduler: ^0.20.0
       start-server-and-test: ^1.11.7
@@ -10763,6 +10764,7 @@ importers:
       '@fluidframework/protocol-definitions': 1.1.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+      react-split-pane: 0.1.92_sfoxds7t5ydpegc3knd667wn6m
       scheduler: 0.20.2
     devDependencies:
       '@fluid-example/collaborative-textarea': link:../../../../examples/apps/collaborative-textarea
@@ -37501,6 +37503,25 @@ packages:
       react: 17.0.2
       react-is: 18.2.0
     dev: true
+
+  /react-split-pane/0.1.92_sfoxds7t5ydpegc3knd667wn6m:
+    resolution: {integrity: sha512-GfXP1xSzLMcLJI5BM36Vh7GgZBpy+U/X0no+VM3fxayv+p1Jly5HpMofZJraeaMl73b3hvlr+N9zJKvLB/uz9w==}
+    peerDependencies:
+      react: ^16.0.0-0 || 17.0.2
+      react-dom: ^16.0.0-0 || 17.0.2
+    dependencies:
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      react-lifecycles-compat: 3.0.4
+      react-style-proptype: 3.2.2
+    dev: false
+
+  /react-style-proptype/3.2.2:
+    resolution: {integrity: sha512-ywYLSjNkxKHiZOqNlso9PZByNEY+FTyh3C+7uuziK0xFXu9xzdyfHwg4S9iyiRRoPCR4k2LqaBBsWVmSBwCWYQ==}
+    dependencies:
+      prop-types: 15.8.1
+    dev: false
 
   /react-test-renderer/17.0.2_react@17.0.2:
     resolution: {integrity: sha512-yaQ9cB89c17PUb0x6UfWRs7kQCorVdHlutU1boVPEsB8IDZH6n9tHxMacc3y0JoXOJUsZb/t/Mb8FUWMKaM7iQ==}
