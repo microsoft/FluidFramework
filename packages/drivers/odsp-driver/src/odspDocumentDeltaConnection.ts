@@ -471,9 +471,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			this.logger.sendTelemetryEvent(
 				{
 					eventName: "ServerDisconnect",
-					clientId: this.hasDetails ? this.clientId : undefined,
+					driverVersion: pkgVersion,
 					details: JSON.stringify({
-						connection: this.connectionId,
+						...this.getConnectionDetailsProps(),
 					}),
 				},
 				error,
@@ -659,9 +659,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	}
 
 	/**
- 	* Submits a new delta operation to the server
- 	* @param message - delta operation to submit
- 	*/
+	 * Submits a new delta operation to the server
+	 * @param message - delta operation to submit
+	 */
 	public submit(messages: IDocumentMessage[]): void {
 		this.submitCore("submitOp", messages);
 	}
