@@ -239,9 +239,14 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Alternatively could have ContainerRuntime emit some summaryAck event
 			const watchForV1Ack = (op: ISequencedDocumentMessage) => {
 				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
-				// random ack.  Probably means storing the PactMap accept sequence number and verifying the referenceSequenceNumber(?)
-				// of the summaryAck matches that.
-				if (op.type === MessageType.SummaryAck) {
+				// random ack.  Probably means storing the PactMap accept sequence number and verifying the summary is based on that sequence number.
+				// Probably not the referenceSequenceNumber, since the summarizer will be generating based on a sequence number that is probably below the MSN.
+				// TODO: Not really appropriate to check the pactMap here, I'm just using this as an approximation of v1 summaryAck detection
+				// as in "Is this the first summary we've seen after proposal acceptance".
+				if (
+					this.pactMap.get(newVersionKey) !== undefined &&
+					op.type === MessageType.SummaryAck
+				) {
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().
 					this.context.deltaManager.off("op", watchForV1Ack);
@@ -298,12 +303,32 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		this._v2SummaryAckP = new Promise<void>((resolve) => {
-			// TODO implement
-			// Should be watching for the summaryAck to come in.
+			// TODO implement for real
+			// Here we want to watch for the v2 summary which will signify that migration is complete and we can reload to start running v2.
+			// Similar challenges to watching for the v1 ack, but one additional challenge is that we don't know exactly what the referenceSequenceNumber
+			// should be.  Should be watching for the summaryAck to come in.
 			// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 			// Or maybe set that up in ensureV2Summary().
-			this._seenV2SummaryAck = true;
-			resolve();
+			// TODO: acksSeen is a hack, I'm just doing this as an approximation of v2 summary
+			// detection as in "is this at least the second summaryAck we've seen"
+			let acksSeen = 0;
+			const watchForV2Ack = (op: ISequencedDocumentMessage) => {
+				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
+				// random ack.  Probably means storing the Quorum code accept sequence number and verifying the summary is based on that sequence number.
+				// Would be good if we can verify the contents somehow too.
+				// TODO: Not appropriate to be watching _seenV1SummaryAck here, I'm just doing this to simulate second ack after acceptance
+				if (this._seenV1SummaryAck && op.type === MessageType.SummaryAck) {
+					acksSeen++;
+					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
+					// Or maybe set that up in ensureV1Summary().
+					if (acksSeen === 2) {
+						this.context.deltaManager.off("op", watchForV2Ack);
+						this._seenV2SummaryAck = true;
+						resolve();
+					}
+				}
+			};
+			this.context.deltaManager.on("op", watchForV2Ack);
 		});
 
 		await this._pendingP;
