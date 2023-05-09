@@ -13,7 +13,7 @@ importers:
       '@fluid-tools/build-cli': ^0.17.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.17.0
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
       '@octokit/core': ^4.0.5
@@ -36,7 +36,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.17.0
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@microsoft/api-documenter': 7.21.6
       '@microsoft/api-extractor': 7.34.4
       '@octokit/core': 4.2.0
@@ -223,7 +223,7 @@ importers:
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/server-local-server': ^0.1038.4000
       '@fluidframework/test-client-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -272,7 +272,7 @@ importers:
       '@fluidframework/local-driver': link:../../../packages/drivers/local-driver
       '@fluidframework/server-local-server': 0.1038.4000
       '@fluidframework/test-client-utils': link:../../../packages/framework/test-client-utils
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -473,7 +473,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -524,7 +524,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -564,7 +564,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -611,7 +611,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -657,7 +657,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/view-adapters': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -727,7 +727,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -770,7 +770,7 @@ importers:
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-client': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -805,7 +805,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -845,7 +845,7 @@ importers:
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/task-manager': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -890,7 +890,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -929,7 +929,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -968,7 +968,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1005,7 +1005,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/view-interfaces': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
@@ -1043,7 +1043,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/react': 17.0.52
@@ -1075,7 +1075,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1117,7 +1117,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1157,7 +1157,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1199,7 +1199,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1238,7 +1238,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1278,7 +1278,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1485,7 +1485,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/ink': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1525,7 +1525,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1566,7 +1566,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/task-manager': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/test-utils': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -1605,7 +1605,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -1719,7 +1719,7 @@ importers:
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -1756,7 +1756,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1791,7 +1791,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@rushstack/eslint-config': ^2.5.1
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -1828,7 +1828,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -1936,7 +1936,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1969,7 +1969,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -1999,7 +1999,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2035,7 +2035,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2080,7 +2080,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/view-adapters': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -2128,7 +2128,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2165,7 +2165,7 @@ importers:
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2196,7 +2196,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2267,7 +2267,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2302,7 +2302,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2336,7 +2336,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2371,7 +2371,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2405,7 +2405,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2440,7 +2440,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2594,7 +2594,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/undo-redo': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -2658,7 +2658,7 @@ importers:
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -2921,7 +2921,7 @@ importers:
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-adapters': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -2968,7 +2968,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -3139,7 +3139,7 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/cors': ^2.8.4
       '@types/expect-puppeteer': 2.2.1
@@ -3232,7 +3232,7 @@ importers:
     devDependencies:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/cors': 2.8.13
       '@types/expect-puppeteer': 2.2.1
       '@types/express': 4.17.14
@@ -3424,7 +3424,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -3471,7 +3471,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3522,7 +3522,7 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-driver': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
@@ -3594,7 +3594,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3646,7 +3646,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/view-adapters': workspace:~
       '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
@@ -3694,7 +3694,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3732,7 +3732,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3772,7 +3772,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3809,7 +3809,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/runtime-utils': workspace:~
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3857,7 +3857,7 @@ importers:
       '@fluid-tools/build-cli': 0.17.0_gcaeyjp6ykwlupauelnobztche
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 22.2.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -7533,7 +7533,7 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/server-services-client': ^0.1039.1000
-      '@fluidframework/test-tools': ^0.2.3074
+      '@fluidframework/test-tools': ^0.2.158186
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-internal.4.1.0
       '@types/jsrsasign': ^8.0.8
       '@types/mocha': ^9.1.1
@@ -7563,7 +7563,7 @@ importers:
       '@fluidframework/build-tools': 0.17.0_@types+node@14.18.38
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
-      '@fluidframework/test-tools': 0.2.3074
+      '@fluidframework/test-tools': 0.2.158186
       '@fluidframework/tinylicious-driver-previous': /@fluidframework/tinylicious-driver/2.0.0-internal.4.1.0
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 9.1.1
@@ -10442,7 +10442,7 @@ importers:
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.76.2
 
-  packages/tools/client-debugger/devtools:
+  packages/tools/devtools/devtools:
     specifiers:
       '@fluid-experimental/devtools-core': workspace:~
       '@fluidframework/build-common': ^1.1.0
@@ -10503,7 +10503,7 @@ importers:
       rimraf: 4.4.0
       typescript: 4.5.5
 
-  packages/tools/client-debugger/devtools-browser-extension:
+  packages/tools/devtools/devtools-browser-extension:
     specifiers:
       '@fluentui/react': ^8.96.1
       '@fluid-experimental/devtools-core': workspace:~
@@ -10604,7 +10604,7 @@ importers:
       webpack: 5.76.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_webpack@5.76.2
 
-  packages/tools/client-debugger/devtools-core:
+  packages/tools/devtools/devtools-core:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.17.0
@@ -10689,7 +10689,7 @@ importers:
       rimraf: 4.4.0
       typescript: 4.5.5
 
-  packages/tools/client-debugger/devtools-view:
+  packages/tools/devtools/devtools-view:
     specifiers:
       '@fluentui/react': ^8.96.1
       '@fluentui/react-components': ^9.18.6
@@ -16969,8 +16969,8 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluidframework/test-tools/0.2.3074:
-    resolution: {integrity: sha512-ZRSSKPXMm/ni/hDztf38GMBtzFez0Q9XXaY5abd2rQz76A3wIK+yzQerTqnZYBnwrzGwZi22Ne1FXND1JeFMZA==}
+  /@fluidframework/test-tools/0.2.158186:
+    resolution: {integrity: sha512-PwO7X/Kg46befSo28mSuef95/fQUmfOFWmoY1FdWAMz+6srX4o/8B4KVaKQ/3nmFD5a/PQHYHqyzAxWiFZYpfQ==}
     hasBin: true
     dev: true
 
