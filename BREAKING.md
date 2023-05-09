@@ -31,7 +31,7 @@ Previously, `DataObject` would perform undocumented special handling for request
 
 ### PureDataObject.getFluidObjectFromDirectory deprecated
 
-`PureDataObject.getFluidObjectFromDirectory` has been deprecated and will be removed in an upcoming release.  Instead prefer to interface directly with the directory and handles.
+`PureDataObject.getFluidObjectFromDirectory` has been deprecated and will be removed in an upcoming release. Instead prefer to interface directly with the directory and handles.
 
 # 2.0.0-internal.4.1.0
 
