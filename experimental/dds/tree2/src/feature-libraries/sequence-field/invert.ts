@@ -121,15 +121,8 @@ function invertMark<TNodeChange>(
 						},
 					];
 				}
-				return [
-					invertModifyOrSkip(
-						mark.count,
-						mark.changes,
-						inputIndex,
-						invertChild,
-						mark.detachEvent,
-					),
-				];
+				// TODO: preserve modifications to the removed nodes.
+				return [];
 			}
 			case "Revive": {
 				if (!isReattachConflicted(mark)) {
@@ -151,25 +144,22 @@ function invertMark<TNodeChange>(
 				];
 			}
 			case "Modify": {
-				return [
-					{
-						type: "Modify",
-						changes: invertChild(mark.changes, inputIndex),
-					},
-				];
+				if (mark.detachEvent === undefined) {
+					return [
+						{
+							type: "Modify",
+							changes: invertChild(mark.changes, inputIndex),
+						},
+					];
+				}
+				// TODO: preserve modifications to the removed nodes.
+				return [];
 			}
 			case "MoveOut":
 			case "ReturnFrom": {
 				if (areInputCellsEmpty(mark)) {
-					return [
-						invertModifyOrSkip(
-							mark.count,
-							mark.changes,
-							inputIndex,
-							invertChild,
-							mark.detachEvent,
-						),
-					];
+					// TODO: preserve modifications to the removed nodes.
+					return [];
 				}
 				if (mark.type === "ReturnFrom" && mark.isDstConflicted) {
 					// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
@@ -199,8 +189,9 @@ function invertMark<TNodeChange>(
 			case "MoveIn":
 			case "ReturnTo": {
 				if (mark.isSrcConflicted) {
-					// The nodes could have been attached but were not because of the source.
-					return [];
+					return mark.type === "ReturnTo" && mark.detachEvent === undefined
+						? [mark.count]
+						: [];
 				}
 				if (mark.type === "ReturnTo") {
 					if (mark.detachEvent === undefined) {

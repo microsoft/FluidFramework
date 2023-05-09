@@ -42,6 +42,15 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("child changes of removed content", () => {
+		const detachEvent = { revision: tag1, index: 0 };
+		const input = Change.modifyDetached(0, childChange1, detachEvent);
+		// TODO: use the line below once we apply modifications to removed content
+		// const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
+		const actual = invert(input);
+		assert.deepEqual(actual, []);
+	});
+
 	it("insert => delete", () => {
 		const input = Change.insert(0, 2);
 		const expected = Change.delete(0, 2);
@@ -72,48 +81,6 @@ describe("SequenceField - Invert", () => {
 		const modify = Change.modify(0, TestChange.mint([], 42));
 		const input = composeAnonChanges([revive, modify]);
 		const expected = Change.delete(0, 2);
-		const actual = invert(input);
-		assert.deepEqual(actual, expected);
-	});
-
-	it("revert-only conflicted revive => skip", () => {
-		const input: TestChangeset = [
-			{
-				type: "Modify",
-				changes: childChange1,
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 0, 1),
-				count: 1,
-				detachEvent: { revision: tag2, index: 0 },
-				inverseOf: tag1,
-				changes: childChange2,
-			},
-			{
-				type: "Modify",
-				changes: childChange3,
-			},
-		];
-		const expected = composeAnonChanges([
-			Change.modify(0, inverseChildChange1),
-			Change.mutedModify(1, inverseChildChange2, { revision: tag2, index: 0 }),
-			Change.modify(1, inverseChildChange3),
-		]);
-		const actual = invert(input);
-		assert.deepEqual(actual, expected);
-	});
-
-	it("revert-only blocked revive => no-op", () => {
-		const input = composeAnonChanges([
-			Change.modify(0, childChange1),
-			Change.blockedRevive(1, 2, tag1, 1),
-			Change.modify(1, childChange2),
-		]);
-		const expected = composeAnonChanges([
-			Change.modify(0, inverseChildChange1),
-			Change.modify(1, inverseChildChange2),
-		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -158,7 +125,7 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	describe("Muted changes", () => {
+	describe("Redundant changes", () => {
 		it("delete", () => {
 			const detachEvent = { revision: tag1, index: 0 };
 			const input: TestChangeset = [
@@ -171,8 +138,9 @@ describe("SequenceField - Invert", () => {
 			];
 
 			const actual = invert(input);
-			const expected = Change.mutedModify(0, inverseChildChange1, detachEvent);
-			assert.deepEqual(actual, expected);
+			// TODO: use the line below once we apply modifications to removed content
+			// const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
+			assert.deepEqual(actual, []);
 		});
 
 		it("move out", () => {
@@ -194,11 +162,67 @@ describe("SequenceField - Invert", () => {
 			];
 
 			const actual = invert(input);
-			const expected = Change.mutedModify(0, inverseChildChange1, detachEvent);
+			// TODO: use the line below once we apply modifications to removed content
+			// const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
+			assert.deepEqual(actual, []);
+		});
+
+		it("revert-only redundant revive => skip", () => {
+			const input: TestChangeset = [
+				{
+					type: "Modify",
+					changes: childChange1,
+				},
+				{
+					type: "Revive",
+					content: fakeRepair(tag1, 0, 1),
+					count: 1,
+					inverseOf: tag1,
+					changes: childChange2,
+				},
+				{
+					type: "Modify",
+					changes: childChange3,
+				},
+			];
+			const expected = composeAnonChanges([
+				Change.modify(0, inverseChildChange1),
+				Change.modify(1, inverseChildChange2),
+				Change.modify(2, inverseChildChange3),
+			]);
+			const actual = invert(input);
 			assert.deepEqual(actual, expected);
 		});
 
-		it("return-from + conflicted return-to => skip + skip", () => {
+		it("revert-only blocked revive => no-op", () => {
+			const input = composeAnonChanges([
+				Change.modify(0, childChange1),
+				Change.blockedRevive(1, 2, tag1, tag2),
+				Change.modify(1, childChange2),
+			]);
+			const expected = composeAnonChanges([
+				Change.modify(0, inverseChildChange1),
+				Change.modify(1, inverseChildChange2),
+			]);
+			const actual = invert(input);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("intentional redundant revive => skip", () => {
+			const input = composeAnonChanges([
+				Change.modify(0, childChange1),
+				Change.redundantRevive(1, 1, tag1, 1, undefined, true),
+				Change.modify(2, childChange2),
+			]);
+			const expected = composeAnonChanges([
+				Change.modify(0, inverseChildChange1),
+				Change.modify(2, inverseChildChange2),
+			]);
+			const actual = invert(input);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("return-from + redundant return-to => skip + skip", () => {
 			const input: TestChangeset = [
 				{
 					type: "ReturnFrom",
@@ -227,7 +251,38 @@ describe("SequenceField - Invert", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("conflicted return-from", () => {
+		it("redundant move-out + move-in => nil + nil", () => {
+			const input: TestChangeset = [
+				{
+					type: "MoveOut",
+					count: 1,
+					id: brand(0),
+					detachEvent: { revision: tag2, index: 0 },
+				},
+				{
+					type: "Modify",
+					changes: childChange1,
+				},
+				{
+					type: "MoveIn",
+					count: 1,
+					id: brand(0),
+					isSrcConflicted: true,
+				},
+				{
+					type: "Modify",
+					changes: childChange2,
+				},
+			];
+			const actual = invert(input);
+			const expected = composeAnonChanges([
+				Change.modify(0, inverseChildChange1),
+				Change.modify(1, inverseChildChange2),
+			]);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("redundant return-from + return to => nil + nil", () => {
 			const input: TestChangeset = [
 				{
 					type: "ReturnFrom",
@@ -255,6 +310,38 @@ describe("SequenceField - Invert", () => {
 			const expected = composeAnonChanges([
 				Change.modify(0, inverseChildChange1),
 				Change.modify(1, inverseChildChange2),
+			]);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("redundant return-from + redundant return-to => nil + skip", () => {
+			const input: TestChangeset = [
+				{
+					type: "ReturnFrom",
+					count: 1,
+					id: brand(0),
+					detachEvent: { revision: tag2, index: 0 },
+					isDstConflicted: true,
+				},
+				{
+					type: "Modify",
+					changes: childChange1,
+				},
+				{
+					type: "ReturnTo",
+					count: 1,
+					id: brand(0),
+					isSrcConflicted: true,
+				},
+				{
+					type: "Modify",
+					changes: childChange2,
+				},
+			];
+			const actual = invert(input);
+			const expected = composeAnonChanges([
+				Change.modify(0, inverseChildChange1),
+				Change.modify(2, inverseChildChange2),
 			]);
 			assert.deepEqual(actual, expected);
 		});
