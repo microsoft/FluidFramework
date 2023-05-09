@@ -290,7 +290,7 @@ describe("Reconnection", () => {
 			assertEquivalentDirectories(directory1, directory2);
 		});
 
-		it("Test2: Can reach eventual consistency on reconnection", async () => {
+		it("avoids sending setValue ops on recreated directories", async () => {
 			const subDirName = "subDir";
 			const subDirKey = "testSubDirKey";
 			const subDirValue = "testSubDirValue";
