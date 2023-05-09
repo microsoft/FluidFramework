@@ -6,7 +6,6 @@
 import { ICodecFamily } from "../codec";
 import {
 	ChangeFamily,
-	ProgressiveEditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
 	AnchorSet,
@@ -115,12 +114,10 @@ export interface IDefaultEditBuilder {
 }
 
 /**
- * Implementation of {@link ProgressiveEditBuilder} based on the default set of supported field kinds.
+ * Implementation of {@link IDefaultEditBuilder} based on the default set of supported field kinds.
  * @sealed
  */
-export class DefaultEditBuilder
-	implements ProgressiveEditBuilder<DefaultChangeset>, IDefaultEditBuilder
-{
+export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuilder {
 	private readonly modularBuilder: ModularEditBuilder;
 
 	public constructor(
@@ -267,13 +264,6 @@ export class DefaultEditBuilder
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 		};
-	}
-
-	/**
-	 * {@inheritDoc (ProgressiveEditBuilder:interface).getChanges}
-	 */
-	public getChanges(): DefaultChangeset[] {
-		return this.modularBuilder.getChanges();
 	}
 }
 

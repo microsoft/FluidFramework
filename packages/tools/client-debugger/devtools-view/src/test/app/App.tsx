@@ -14,17 +14,13 @@ import React from "react";
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import {
-	DevtoolsLogger,
-	IFluidDevtools,
-	initializeDevtools,
-} from "@fluid-experimental/devtools-core";
+import { DevtoolsLogger, IDevtools, initializeDevtools } from "@fluid-experimental/devtools";
 
 import {
 	ContainerInfo,
@@ -107,19 +103,12 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 /**
  * Registers container described by the input `containerInfo` with the provided devtools instance.
  */
-function registerContainerWithDevtools(
-	devtools: IFluidDevtools,
-	containerInfo: ContainerInfo,
-): void {
-	const fluidContainer = containerInfo.container as FluidContainer;
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE!();
-
+function registerContainerWithDevtools(devtools: IDevtools, containerInfo: ContainerInfo): void {
+	const { container, containerId, containerNickname } = containerInfo;
 	devtools.registerContainerDevtools({
-		container: innerContainer,
-		containerId: containerInfo.containerId,
-		containerNickname: containerInfo.containerNickname,
-		containerData: fluidContainer.initialObjects,
+		container,
+		containerId,
+		containerNickname,
 		dataVisualizers: undefined, // Use defaults
 	});
 }
@@ -129,7 +118,7 @@ function registerContainerWithDevtools(
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
 function useContainerInfo(
-	devtools: IFluidDevtools,
+	devtools: IDevtools,
 	logger: DevtoolsLogger,
 ): {
 	privateContainer: ContainerInfo | undefined;

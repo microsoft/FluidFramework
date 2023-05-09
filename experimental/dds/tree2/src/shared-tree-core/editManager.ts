@@ -161,7 +161,7 @@ export class EditManager<
 			sequenceNumber: minimumPossibleSequenceNumber,
 		};
 		this.trunk = this.trunkBase;
-		this.localBranchUndoRedoManager = new UndoRedoManager(
+		this.localBranchUndoRedoManager = UndoRedoManager.create(
 			repairDataStoreProvider,
 			changeFamily,
 		);

@@ -249,7 +249,7 @@ export class DataVisualizerGraph
 
 		// TODO: is this the right type check for this?
 		const sharedObject = resolvedObject as ISharedObject;
-		if (sharedObject?.id !== undefined) {
+		if (sharedObject?.id !== undefined && sharedObject.attributes !== undefined) {
 			return this.registerVisualizerForSharedObject(sharedObject);
 		} else {
 			// Unknown data.
