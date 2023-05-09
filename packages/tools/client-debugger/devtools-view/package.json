@@ -45,11 +45,11 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluentui/react": "^8.96.1",
-		"@fluentui/react-charting": "5.13.4",
-		"@fluentui/react-components": "^9.18.6",
-		"@fluentui/react-hooks": "^8.6.12",
-		"@fluentui/react-icons": "^2.0.199",
+		"@fluentui/react": "^8.109.3",
+		"@fluentui/react-charting": "5.16.28",
+		"@fluentui/react-components": "^9.19.1",
+		"@fluentui/react-hooks": "^8.6.24",
+		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": "workspace:~",
