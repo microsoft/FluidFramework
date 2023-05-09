@@ -270,7 +270,7 @@ describe("Reconnection", () => {
 			);
 		});
 
-		it("Test1: Can reach eventual consistency on reconnection", async () => {
+		it("avoids resending createSubDirectory ops on recreated directories", async () => {
 			const subDirName = "subDir";
 
 			const subDir1 = directory1.createSubDirectory(subDirName);
