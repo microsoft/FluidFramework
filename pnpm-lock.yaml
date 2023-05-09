@@ -6794,6 +6794,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@types/mocha': ^9.1.1
@@ -6801,6 +6802,7 @@ importers:
       concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
+      execa: ^5.1.1
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -6821,11 +6823,13 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
+      execa: 5.1.1
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
