@@ -120,9 +120,6 @@ export interface IScribeProtocolState {
     values: [string, ICommittedProposal][];
 }
 
-// @public
-export const isServiceMessageType: (type: string) => boolean;
-
 // @public (undocumented)
 export function mergeAppAndProtocolTree(appSummaryTree: ITree_2, protocolTree: ITree_2): ICreateTreeEntry[];
 

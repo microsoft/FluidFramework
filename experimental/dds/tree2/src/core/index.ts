@@ -138,12 +138,7 @@ export {
 	SchemaEvents,
 } from "./schema-stored";
 
-export {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ProgressiveEditBuilder,
-	ProgressiveEditBuilderBase,
-} from "./change-family";
+export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
 	assertIsRevisionTag,

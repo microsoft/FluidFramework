@@ -417,7 +417,7 @@ describe("Branches", () => {
 			initCommit,
 			"testSession",
 			changeFamily,
-			new UndoRedoManager(new MockRepairDataStoreProvider(), changeFamily),
+			UndoRedoManager.create(new MockRepairDataStoreProvider(), changeFamily),
 			new AnchorSet(),
 		);
 

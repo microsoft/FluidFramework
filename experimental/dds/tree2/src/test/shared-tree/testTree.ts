@@ -105,7 +105,7 @@ export class TestTree {
 		this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
 		this.sessionId = options.sessionId ?? uuid();
 		this.forest = forest;
-		const undoRedoManager = new UndoRedoManager(
+		const undoRedoManager = UndoRedoManager.create(
 			new MockRepairDataStoreProvider(),
 			defaultChangeFamily,
 		);
