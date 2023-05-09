@@ -12,6 +12,12 @@ import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 const pactMapKey = "pact-map";
 const newVersionKey = "newVersion";
 
+// RANDOM NOTES
+// Should the migration tool emit state changes and such REGARDLESS of connection state, etc.?
+// It would be simpler to just observe the state changing and report that, but it externalizes the knowledge that we might still be anticipating the state to continue
+// changing as we connect and that the Migrator should NOT take action.  Otherwise the Migrator would need to have the knowledge that it shouldn't immediately act upon
+// the state changes if not connected.
+
 export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
 
@@ -179,14 +185,15 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	}
 
 	private async overseeMigration() {
-		// TODO: First figure out what state we're in probably?  Wait for first connected state?
-		// Maybe have this emit purely on the op stream but have the Migrator wait for connected state to take any action?
-		// All of this runs before processing the incoming ops (we'll just have the snapshot loaded here).
-		// Maybe don't need to deduce it or do anything special as long as all the "taking action" steps have
-		// guards to wait for connected state.
-		// We need guards set up from the start I think, because the logTail probably gets processed synchronously.
-		// So even though it would be resolving these promises, if there's more than one then we wouldn't be able
-		// to get subsequent promises set up to awaiting the next op processing in time.
+		// The overall strategy here is to set up all of our state observers synchronously upon instantiation.
+		// This lets us get them all ready BEFORE we start processing ANY ops on top of the summary, including
+		// logTail ops.  If we were to instead defer setting them up until the respective phase starts, we'll
+		// frequently miss the op we're looking for because it will already have been processed before our
+		// microtask runs.
+
+		// We must not miss any ops to correctly observe the summaryAcks and quorum proposals:
+		// * The summaryAcks aren't inspectable after they've been processed
+		// * The quorum eventing makes it challenging to understand state when proposals are racing.
 
 		this._pendingP = new Promise<void>((resolve) => {
 			if (
