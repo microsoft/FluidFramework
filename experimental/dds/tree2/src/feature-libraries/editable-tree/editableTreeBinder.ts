@@ -14,6 +14,7 @@ import { EditableTree, on } from "./editableTreeTypes";
  * TODO:
  * - split invalidState into separate interface
  * - parametrize DataBinder so that specialized binders can validate subsets of events (eg. only invalidState for InvalidateDataBinder)
+ * @alpha
  */
 export interface BinderEvents {
 	delete(context: DeleteBindingContext): void;
@@ -24,6 +25,7 @@ export interface BinderEvents {
 
 /**
  * Options to configure binder behavior.
+ *
  * TODO: add more options:
  * `filterFn?: (context: BindingContext) => boolean;`
  * `pathPolicy?: "relative" | "absolute";`
@@ -34,40 +36,92 @@ export interface BinderOptions {
 	matchPolicy: MatchPolicyType;
 }
 
+/**
+ * Specialized binder options for flushable binders.
+ *
+ * @alpha
+ */
 export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
 	autoFlush: boolean;
 	autoFlushPolicy: keyof Events<E>;
 }
 
+/**
+ * Match categories for bind paths.
+ *
+ * @alpha
+ */
 export type MatchPolicyType = "subtree" | "path";
 
+/**
+ * The data binder interface
+ *
+ * @alpha
+ */
 export interface DataBinder {
+	/**
+	 * Register a listener.
+	 *
+	 */
 	register<K extends keyof BinderEvents>(
 		anchor: EditableTree,
 		eventName: K,
 		eventPaths: BindPath[],
 		listener: BinderEvents[K],
 	): void;
+
+	/**
+	 * Unregister all listeners.
+	 */
 	unregister(): void;
 }
 
+/**
+ * An interface describing the ability to flush.
+ *
+ * @alpha
+ */
 export interface Flushable<T> {
 	flush(): T;
 }
 
+/**
+ * An interface describing a flushable data binder.
+ *
+ * @alpha
+ */
 export interface FlushableDataBinder extends DataBinder, Flushable<FlushableDataBinder> {}
 
+/**
+ * A step in a bind path
+ *
+ * @alpha
+ */
 export interface PathStep {
 	readonly field: FieldKey;
 	readonly index?: number;
 }
 
+/**
+ * A bind path
+ *
+ * @alpha
+ */
 export type BindPath = PathStep[];
 
+/**
+ * @alpha
+ */
 export type BindingContext = DeleteBindingContext | InsertBindingContext | SetValueBindingContext;
 
+/**
+ * @alpha
+ */
 export type BindingContextQueue = BindingContext[];
 
+/**
+ * @alpha
+ */
 export const BindingType = {
 	Delete: "delete",
 	Insert: "insert",
@@ -75,30 +129,48 @@ export const BindingType = {
 	InvalidState: "invalidState",
 } as const;
 
+/**
+ * @alpha
+ */
 export type BindingContextType = typeof BindingType[keyof typeof BindingType];
 
+/**
+ * @alpha
+ */
 export interface AbstractBindingContext {
 	readonly type: BindingContextType;
 }
 
+/**
+ * @alpha
+ */
 export interface DeleteBindingContext extends AbstractBindingContext {
 	readonly type: typeof BindingType.Delete;
 	readonly path: UpPath;
 	readonly count: number;
 }
 
+/**
+ * @alpha
+ */
 export interface InsertBindingContext extends AbstractBindingContext {
 	readonly type: typeof BindingType.Insert;
 	readonly path: UpPath;
 	readonly content: ProtoNodes;
 }
 
+/**
+ * @alpha
+ */
 export interface SetValueBindingContext extends AbstractBindingContext {
 	readonly type: typeof BindingType.SetValue;
 	readonly path: UpPath;
 	readonly value: TreeValue;
 }
 
+/**
+ * @alpha
+ */
 export interface InvalidStateBindingContext extends AbstractBindingContext {
 	readonly type: typeof BindingType.InvalidState;
 }
@@ -422,6 +494,9 @@ class InvalidateDataBinder<E extends Events<E>>
 	}
 }
 
+/**
+ * @alpha
+ */
 export function toBindPath(upPath: UpPath): BindPath {
 	const downPath: UpPath[] = topDownPath(upPath);
 	const stepDownPath: BindPath = downPath.map((u) => {
@@ -431,6 +506,9 @@ export function toBindPath(upPath: UpPath): BindPath {
 	return stepDownPath;
 }
 
+/**
+ * @alpha
+ */
 export function createDataBinderBuffering<E extends Events<E>>(
 	view: ISubscribable<E>,
 	options: FlushableBinderOptions<E>,
@@ -438,6 +516,9 @@ export function createDataBinderBuffering<E extends Events<E>>(
 	return new BufferingDataBinder(view, options);
 }
 
+/**
+ * @alpha
+ */
 export function createDataBinderDirect<E extends Events<E>>(
 	view: ISubscribable<E>,
 	options: BinderOptions,
@@ -445,6 +526,9 @@ export function createDataBinderDirect<E extends Events<E>>(
 	return new DirectDataBinder(view, options);
 }
 
+/**
+ * @alpha
+ */
 export function createDataBinderInvalidate<E extends Events<E>>(
 	view: ISubscribable<E>,
 	options: FlushableBinderOptions<E>,
@@ -452,18 +536,27 @@ export function createDataBinderInvalidate<E extends Events<E>>(
 	return new InvalidateDataBinder(view, options);
 }
 
+/**
+ * @alpha
+ */
 export function createBinderOptionsDefault(
 	sortFn?: (a: BindingContext, b: BindingContext) => number,
 ): BinderOptions {
 	return { matchPolicy: "path", sortFn };
 }
 
+/**
+ * @alpha
+ */
 export function createBinderOptionsSubtree(
 	sortFn?: (a: BindingContext, b: BindingContext) => number,
 ): BinderOptions {
 	return { matchPolicy: "subtree", sortFn };
 }
 
+/**
+ * @alpha
+ */
 export function createFlushableBinderOptionsDefault<E extends Events<E>>(
 	event: keyof Events<E>,
 	sortFn?: (a: BindingContext, b: BindingContext) => number,
@@ -472,6 +565,9 @@ export function createFlushableBinderOptionsDefault<E extends Events<E>>(
 	return { ...options, autoFlush: true, autoFlushPolicy: event };
 }
 
+/**
+ * @alpha
+ */
 export function createFlushableBinderOptionsSubtree<E extends Events<E>>(
 	event: keyof Events<E>,
 	sortFn?: (a: BindingContext, b: BindingContext) => number,
