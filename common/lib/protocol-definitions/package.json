@@ -89,6 +89,9 @@
 			"RemovedInterfaceDeclaration_IQueueMessage": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"EnumDeclaration_MessageType": {
+				"forwardCompat": false
 			}
 		}
 	}

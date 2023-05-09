@@ -58,12 +58,6 @@ export enum MessageType {
 	Operation = "op",
 
 	/**
-	 * Message to indicate the need of a remote agent for a document.
-	 * @deprecated 1.2.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
-	 */
-	RemoteHelp = "remoteHelp",
-
-	/**
 	 * Message to indicate that no active clients are present.
 	 */
 	NoClient = "noClient",

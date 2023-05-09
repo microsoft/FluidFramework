@@ -502,8 +502,6 @@ export enum MessageType {
     Operation = "op",
     Propose = "propose",
     Reject = "reject",
-    // @deprecated
-    RemoteHelp = "remoteHelp",
     RoundTrip = "tripComplete",
     Summarize = "summarize",
     SummaryAck = "summaryAck",
