@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
@@ -110,12 +111,25 @@ export class Package {
 		verbose(`Package loaded: ${this.nameColored}`);
 	}
 
+	/**
+	 * The name of the package including the scope.
+	 */
 	public get name(): string {
 		return this.packageJson.name;
 	}
 
+	/**
+	 * The name of the package with a color for terminal output.
+	 */
 	public get nameColored(): string {
 		return this.color(this.name);
+	}
+
+	/**
+	 * The name of the package excluding the scope.
+	 */
+	public get nameUnscoped(): string {
+		return PackageName.getUnscopedName(this.name);
 	}
 
 	public get version(): string {
@@ -133,6 +147,7 @@ export class Package {
 	public get isTestPackage(): boolean {
 		return this.name.split("/")[1]?.startsWith("test-") === true;
 	}
+
 	public get matched() {
 		return this._matched;
 	}

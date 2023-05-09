@@ -49,10 +49,7 @@ export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
-	applyStashedOp: (
-		type: ContainerMessageType,
-		content: ISequencedDocumentMessage,
-	) => Promise<unknown>;
+	applyStashedOp: (type: ContainerMessageType, content: unknown) => Promise<unknown>;
 	reSubmit(
 		type: ContainerMessageType,
 		content: any,
