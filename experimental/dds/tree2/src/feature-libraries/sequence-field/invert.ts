@@ -189,8 +189,9 @@ function invertMark<TNodeChange>(
 			case "MoveIn":
 			case "ReturnTo": {
 				if (mark.isSrcConflicted) {
-					// The nodes could have been attached but were not because of the source.
-					return [];
+					return mark.type === "ReturnTo" && mark.detachEvent === undefined
+						? [mark.count]
+						: [];
 				}
 				if (mark.type === "ReturnTo") {
 					if (mark.detachEvent === undefined) {

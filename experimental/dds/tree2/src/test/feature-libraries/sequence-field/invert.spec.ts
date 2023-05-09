@@ -251,7 +251,38 @@ describe("SequenceField - Invert", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("redundant return-from", () => {
+		it("redundant move-out + move-in => nil + nil", () => {
+			const input: TestChangeset = [
+				{
+					type: "MoveOut",
+					count: 1,
+					id: brand(0),
+					detachEvent: { revision: tag2, index: 0 },
+				},
+				{
+					type: "Modify",
+					changes: childChange1,
+				},
+				{
+					type: "MoveIn",
+					count: 1,
+					id: brand(0),
+					isSrcConflicted: true,
+				},
+				{
+					type: "Modify",
+					changes: childChange2,
+				},
+			];
+			const actual = invert(input);
+			const expected = composeAnonChanges([
+				Change.modify(0, inverseChildChange1),
+				Change.modify(1, inverseChildChange2),
+			]);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("redundant return-from + return to => nil + nil", () => {
 			const input: TestChangeset = [
 				{
 					type: "ReturnFrom",
@@ -279,6 +310,38 @@ describe("SequenceField - Invert", () => {
 			const expected = composeAnonChanges([
 				Change.modify(0, inverseChildChange1),
 				Change.modify(1, inverseChildChange2),
+			]);
+			assert.deepEqual(actual, expected);
+		});
+
+		it("redundant return-from + redundant return-to => nil + skip", () => {
+			const input: TestChangeset = [
+				{
+					type: "ReturnFrom",
+					count: 1,
+					id: brand(0),
+					detachEvent: { revision: tag2, index: 0 },
+					isDstConflicted: true,
+				},
+				{
+					type: "Modify",
+					changes: childChange1,
+				},
+				{
+					type: "ReturnTo",
+					count: 1,
+					id: brand(0),
+					isSrcConflicted: true,
+				},
+				{
+					type: "Modify",
+					changes: childChange2,
+				},
+			];
+			const actual = invert(input);
+			const expected = composeAnonChanges([
+				Change.modify(0, inverseChildChange1),
+				Change.modify(2, inverseChildChange2),
 			]);
 			assert.deepEqual(actual, expected);
 		});
