@@ -65,7 +65,7 @@ function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<n
 	return SF.sequenceFieldEditor.delete(startIndex, size);
 }
 
-function createMutedDeleteChangeset(
+function createRedundantRemoveChangeset(
 	index: number,
 	size: number,
 	detachEvent: DetachEvent,
@@ -101,12 +101,13 @@ function createReviveChangeset(
 	return markList;
 }
 
-function createBlockedReviveChangeset(
+function createRedundantReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachedBy: RevisionTag,
 	detachIndex?: number,
 	reviver = fakeRepair,
+	isIntention?: boolean,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
 		startIndex,
@@ -114,9 +115,30 @@ function createBlockedReviveChangeset(
 		detachedBy,
 		reviver,
 		detachIndex,
+		isIntention,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 	delete mark.detachEvent;
+	return markList;
+}
+
+function createBlockedReviveChangeset(
+	startIndex: number,
+	count: number,
+	inverseOf: RevisionTag,
+	lastDetachedBy: RevisionTag,
+	lastDetachIndex?: number,
+	reviver = fakeRepair,
+): SF.Changeset<never> {
+	const markList = SF.sequenceFieldEditor.revive(
+		startIndex,
+		count,
+		inverseOf,
+		reviver,
+		lastDetachIndex,
+	);
+	const mark = markList[markList.length - 1] as SF.Reattach;
+	mark.detachEvent = { revision: lastDetachedBy, index: lastDetachIndex ?? startIndex };
 	return markList;
 }
 
@@ -177,7 +199,7 @@ function createModifyChangeset<TNodeChange>(
 	return SF.sequenceFieldEditor.buildChildChange(index, change);
 }
 
-function createMutedModifyChangeset<TNodeChange>(
+function createModifyDetachedChangeset<TNodeChange>(
 	index: number,
 	change: TNodeChange,
 	detachEvent: DetachEvent,
@@ -195,12 +217,13 @@ function createMutedModifyChangeset<TNodeChange>(
 export const ChangeMaker = {
 	insert: createInsertChangeset,
 	delete: createDeleteChangeset,
-	mutedDelete: createMutedDeleteChangeset,
+	redundantRemove: createRedundantRemoveChangeset,
 	revive: createReviveChangeset,
 	intentionalRevive: createIntentionalReviveChangeset,
+	redundantRevive: createRedundantReviveChangeset,
 	blockedRevive: createBlockedReviveChangeset,
 	move: createMoveChangeset,
 	return: createReturnChangeset,
 	modify: createModifyChangeset,
-	mutedModify: createMutedModifyChangeset,
+	modifyDetached: createModifyDetachedChangeset,
 };
