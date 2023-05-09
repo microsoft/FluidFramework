@@ -468,8 +468,12 @@ export class ComposeQueue<T> {
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
 				if (baseRevision === undefined || baseIntention === undefined) {
-					// This case should only happen when squashing a transaction.
-					assert(isNewAttach(newMark), "Unhandled case");
+					// The base revision always be defined except when squashing changes into a transaction.
+					// In the future, we want to support reattaches in the new change here.
+					// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
+					// (which will be obtained by rebasing the reattach over interim changes
+					// (which requires the local changes to have a revision tag))
+					assert(isNewAttach(newMark), "TODO: Assign revision tags to each change in a transaction");
 					return this.dequeueNew();
 				}
 				baseCellId = {
