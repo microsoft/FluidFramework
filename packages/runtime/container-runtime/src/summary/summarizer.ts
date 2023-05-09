@@ -262,7 +262,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
 				summaryTime: Date.now(),
 			} as const,
-			this.logger,
 		);
 
 		const runningSummarizer = await RunningSummarizer.start(
