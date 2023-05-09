@@ -23,11 +23,16 @@ import { InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFa
 // This ICodeDetailsLoader specifically supports versions one and two.  Other approaches might have network calls to
 // dynamically load in the appropriate code for unknown versions.
 export class DemoCodeLoader implements ICodeDetailsLoader {
+	public get IFluidCodeDetailsComparer() {
+		return this;
+	}
+
 	/**
 	 * Code loader for the demo. Supports a test mode which spawns the summarizer instantly.
 	 * @param testMode - True to enable instant summarizer spawning.
 	 */
 	public constructor(private readonly testMode = false) {}
+
 	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const version = source.package;
 		if (typeof version !== "string") {
@@ -52,5 +57,15 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 			default:
 				throw new Error("Unknown version");
 		}
+	}
+
+	// TODO: Think about the right implementation here.  For the main flow we want to always satisfies() because
+	// it's not safe to reload until the v2 summary is done.  But, for clients on 1.0 trying to get to 1.1 they may
+	// want a real answer.
+	public async satisfies() {
+		return true;
+	}
+	public async compare() {
+		return undefined;
 	}
 }

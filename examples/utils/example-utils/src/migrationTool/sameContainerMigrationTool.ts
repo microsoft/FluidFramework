@@ -360,13 +360,14 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 
 		// Make build shut up
 		await this._v1SummaryAckP;
-		console.log(this._seenV1SummaryAck);
+		console.log("Seen v1 summary", this._seenV1SummaryAck);
 		await this._anyQuorumProposalSeenP;
-		console.log(this._anyQuorumProposalSeen);
+		console.log("Seen any quorum proposal", this._anyQuorumProposalSeen);
 		await this._quorumApprovalCompleteP;
-		console.log(this._quorumApprovalComplete);
+		console.log("Quorum proposal complete", this._quorumApprovalComplete);
 		await this._v2SummaryAckP;
-		console.log(this._seenV2SummaryAck);
+		console.log("Seen v2 summary", this._seenV2SummaryAck);
+		console.log("All done!");
 	}
 }
 
