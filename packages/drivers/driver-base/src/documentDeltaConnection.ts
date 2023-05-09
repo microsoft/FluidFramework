@@ -310,8 +310,9 @@ export class DocumentDeltaConnection
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
 		// on the still-live socket.
-		this.checkNotDisposed();
-		this.socket.emit(type, this.clientId, messages);
+		if (!this.disposed) {
+			this.socket.emit(type, this.clientId, messages);
+		}
 	}
 
 	protected submitCore(type: string, messages: IDocumentMessage[]) {
@@ -324,6 +325,7 @@ export class DocumentDeltaConnection
 	 * @param message - delta operation to submit
 	 */
 	public submit(messages: IDocumentMessage[]): void {
+		this.checkNotDisposed();
 		this.submitCore("submitOp", messages);
 	}
 
@@ -333,6 +335,7 @@ export class DocumentDeltaConnection
 	 * @param message - signal to submit
 	 */
 	public submitSignal(message: IDocumentMessage): void {
+		this.checkNotDisposed();
 		this.submitCore("submitSignal", [message]);
 	}
 

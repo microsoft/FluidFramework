@@ -648,9 +648,31 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	}
 
 	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+		// Only submit the op/signals if we are connected.
 		if (this.connected) {
 			this.socket.emit(type, this.clientId, messages);
 		}
+	}
+
+	protected submitCore(type: string, messages: IDocumentMessage[]) {
+		this.emitMessages(type, [messages]);
+	}
+
+	/**
+ 	* Submits a new delta operation to the server
+ 	* @param message - delta operation to submit
+ 	*/
+	public submit(messages: IDocumentMessage[]): void {
+		this.submitCore("submitOp", messages);
+	}
+
+	/**
+	 * Submits a new signal to the server
+	 *
+	 * @param message - signal to submit
+	 */
+	public submitSignal(message: IDocumentMessage): void {
+		this.submitCore("submitSignal", [message]);
 	}
 
 	/**
