@@ -23,6 +23,7 @@ import {
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	IRepairDataStoreProvider,
 	mintCommit,
 	rebaseBranch,
 	rebaseChange,
@@ -82,6 +83,11 @@ export class EditManager<
 	private trunk: TrunkCommit<TChangeset>;
 
 	/**
+	 * The {@link UndoRedoManager} associated with the trunk.
+	 */
+	private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
+
+	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
@@ -92,6 +98,11 @@ export class EditManager<
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
 	 */
 	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset>;
+
+	/**
+	 * The {@link UndoRedoManager} associated with the local branch.
+	 */
+	private readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
 
 	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence number of a commit on
@@ -129,15 +140,17 @@ export class EditManager<
 	}
 
 	/**
-	 * @param localBranchUndoRedoManager - the {@link UndoRedoManager} associated with the local branch.
-	 * @param trunkUndoRedoManager - the {@link UndoRedoManager} associated with the trunk.
+	 *
+	 * @param changeFamily - the change family of changes on the trunk and local branch
+	 * @param localSessionId - the id of the local session that will be used for local commits
+	 * @param repairDataStoreProvider - used for undoing/redoing the local branch
+	 * @param anchors - an optional set of anchors to be rebased by the local branch when it changes
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		localSessionId: SessionId,
-		public readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, any>,
-		private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, any>,
+		repairDataStoreProvider: IRepairDataStoreProvider,
 		anchors?: AnchorSet,
 	) {
 		super("EditManager");
@@ -148,11 +161,16 @@ export class EditManager<
 			sequenceNumber: minimumPossibleSequenceNumber,
 		};
 		this.trunk = this.trunkBase;
+		this.localBranchUndoRedoManager = new UndoRedoManager(
+			repairDataStoreProvider,
+			changeFamily,
+		);
+		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
 		this.localBranch = new SharedTreeBranch(
 			this.trunk,
 			localSessionId,
 			changeFamily,
-			localBranchUndoRedoManager,
+			this.localBranchUndoRedoManager,
 			anchors,
 		);
 		// This registers each fork of the local branch, rather than registering the local branch directly.
@@ -466,7 +484,15 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk, this.trunkUndoRedoManager);
+		// Constructing this short-lived SharedTreeBranch for the trunk allows the local branch
+		// to rebase onto it. TODO: Investigate if `this.trunk` can be a SharedTreeBranch.
+		const trunkBranch = new SharedTreeBranch(
+			this.trunk,
+			this.localSessionId,
+			this.changeFamily,
+			this.trunkUndoRedoManager,
+		);
+		this.localBranch.rebaseOnto(trunkBranch);
 	}
 
 	public findLocalCommit(

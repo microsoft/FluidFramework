@@ -29,10 +29,8 @@ import {
 	AnchorSet,
 	Delta,
 	RevisionTag,
-	GraphCommit,
 	RepairDataStore,
 	ChangeFamilyEditor,
-	UndoRedoManager,
 	IRepairDataStoreProvider,
 	mintRevisionTag,
 } from "../core";
@@ -153,12 +151,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = uuid();
-		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
-			undoRedoManager,
-			undoRedoManager.clone(),
+			repairDataStoreProvider,
 			anchors,
 		);
 		this.editManager.on("newTrunkHead", (head) => {
@@ -320,10 +316,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	protected get localBranchUndoRedoManager(): UndoRedoManager<TChange, TEditor> {
-		return this.editManager.localBranch.undoRedoManager;
-	}
-
 	/**
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.
@@ -360,8 +352,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	/**
 	 * @returns the head commit of the root local branch
 	 */
-	protected getLocalBranchHead(): GraphCommit<TChange> {
-		return this.editManager.localBranch.getHead();
+	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
+		return this.editManager.localBranch;
 	}
 
 	protected onDisconnect() {}
