@@ -237,25 +237,37 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Challenge here: ContainerRuntime only emits "op" for runtime ops, which doesn't include summaryAck.
 			// SummaryCollection's approach is to go listen to the deltaManager directly, which is gross but works.
 			// Alternatively could have ContainerRuntime emit some summaryAck event
-			this.context.deltaManager.on("op", (op) => {
+			const watchForV1Ack = (op) => {
 				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
 				// random ack.  Probably means storing the PactMap accept sequence number and verifying the referenceSequenceNumber(?)
 				// of the summaryAck matches that.
 				if (op.type === MessageType.SummaryAck) {
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().
+					this.context.deltaManager.off("op", watchForV1Ack);
 					this._seenV1SummaryAck = true;
 					resolve();
 				}
-			});
+			};
+			this.context.deltaManager.on("op", watchForV1Ack);
 		});
 
 		this._anyQuorumProposalSeenP = new Promise<void>((resolve) => {
-			// TODO implement
-			// Need to watch the quorum and resolve on the first sequenced proposal.
-			// TODO Also will want to emit state here probably to abort any ongoing attempts to propose it ourselves.
-			this._anyQuorumProposalSeen = true;
-			resolve();
+			// TODO implement for real
+			// Here we want to watch the quorum and resolve on the first sequenced proposal.
+			// This is also awkward because the only clean eventing is on the QuorumProposals itself, or the Container.
+			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
+			const watchForQuorumProposal = (op) => {
+				// TODO: Also verify the proposal looks like what we expect
+				if (op.type === MessageType.Propose) {
+					// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
+					// Or maybe set that up in ensureQuorumCodeDetails().
+					this.context.deltaManager.off("op", watchForQuorumProposal);
+					this._anyQuorumProposalSeen = true;
+					resolve();
+				}
+			};
+			this.context.deltaManager.on("op", watchForQuorumProposal);
 		});
 
 		this._quorumApprovalCompleteP = new Promise<void>((resolve) => {
