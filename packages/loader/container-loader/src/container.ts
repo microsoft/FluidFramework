@@ -34,17 +34,14 @@ import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IDocumentService,
 	IDocumentStorageService,
-	IFluidResolvedUrl,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	readAndParse,
 	OnlineStatus,
 	isOnline,
-	ensureFluidResolvedUrl,
 	combineAppAndProtocolSummary,
 	runWithRetry,
-	isFluidResolvedUrl,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
@@ -116,7 +113,6 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 /**
- * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface IContainerLoadOptions {
@@ -128,7 +124,7 @@ export interface IContainerLoadOptions {
 	 * Client details provided in the override will be merged over the default client.
 	 */
 	clientDetailsOverride?: IClientDetails;
-	resolvedUrl: IFluidResolvedUrl;
+	resolvedUrl: IResolvedUrl;
 	/**
 	 * Control which snapshot version to load from.  See IParsedUrl for detailed information.
 	 */
@@ -140,11 +136,9 @@ export interface IContainerLoadOptions {
 }
 
 /**
- * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface IContainerConfig {
-	resolvedUrl?: IFluidResolvedUrl;
 	canReconnect?: boolean;
 	/**
 	 * Client details provided in the override will be merged over the default client.
@@ -273,7 +267,6 @@ export async function ReportIfTooLong(
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
- * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface IPendingContainerState {
@@ -300,9 +293,6 @@ export interface IPendingContainerState {
 
 const summarizerClientType = "summarizer";
 
-/**
- * @deprecated - In the next release Container will no longer be exported, IContainer should be used in its place.
- */
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
 	implements IContainer, IContainerExperimental
@@ -323,7 +313,6 @@ export class Container
 			loader,
 			{
 				clientDetailsOverride: loadOptions.clientDetailsOverride,
-				resolvedUrl: loadOptions.resolvedUrl,
 				canReconnect: loadOptions.canReconnect,
 				serializedContainerState: pendingLocalState,
 			},
@@ -353,7 +342,7 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(version, mode, pendingLocalState)
+						.load(version, mode, loadOptions.resolvedUrl, pendingLocalState)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
@@ -502,7 +491,6 @@ export class Container
 	private readonly connectionTransitionTimes: number[] = [];
 	private messageCountAfterDisconnection: number = 0;
 	private _loadedFromVersion: IVersion | undefined;
-	private _resolvedUrl: IFluidResolvedUrl | undefined;
 	private attachStarted = false;
 	private _dirtyContainer = false;
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
@@ -526,7 +514,18 @@ export class Container
 	}
 
 	public get resolvedUrl(): IResolvedUrl | undefined {
-		return this._resolvedUrl;
+		/**
+		 * All attached containers will have a document service,
+		 * this is required, as attached containers are attached to
+		 * a service. Detached containers will neither have a document
+		 * service or a resolved url as they only exist locally.
+		 * in order to create a document service a resolved url must
+		 * first be obtained, this is how the container is identified.
+		 * Because of this, the document service's resolved url
+		 * is always the same as the containers, as we had to
+		 * obtain the resolved url, and then create the service from it.
+		 */
+		return this.service?.resolvedUrl;
 	}
 
 	public get loadedFromVersion(): IVersion | undefined {
@@ -699,7 +698,6 @@ export class Container
 		});
 
 		this.clientDetailsOverride = config.clientDetailsOverride;
-		this._resolvedUrl = config.resolvedUrl;
 		if (config.canReconnect !== undefined) {
 			this._canReconnect = config.canReconnect;
 		}
@@ -716,7 +714,7 @@ export class Container
 			all: {
 				clientType, // Differentiating summarizer container from main container
 				containerId: uuid(),
-				docId: () => this._resolvedUrl?.id ?? undefined,
+				docId: () => this.resolvedUrl?.id,
 				containerAttachState: () => this._attachState,
 				containerLifecycleState: () => this._lifecycleState,
 				containerConnectionState: () => ConnectionState[this.connectionState],
@@ -868,7 +866,7 @@ export class Container
 		return this.protocolHandler.quorum;
 	}
 
-	public dispose?(error?: ICriticalContainerError) {
+	public dispose(error?: ICriticalContainerError) {
 		this._deltaManager.close(error, true /* doDispose */);
 		this.verifyClosed();
 	}
@@ -920,15 +918,6 @@ export class Container
 				this._protocolHandler?.close();
 
 				this.connectionStateHandler.dispose();
-
-				this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
-
-				this.storageAdapter.dispose();
-
-				// Notify storage about critical errors. They may be due to disconnect between client & server knowledge
-				// about file, like file being overwritten in storage, but client having stale local cache.
-				// Driver need to ensure all caches are cleared on critical errors
-				this.service?.dispose(error);
 			} catch (exception) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, exception);
 			}
@@ -1113,11 +1102,11 @@ export class Container
 					}
 
 					// Actually go and create the resolved document
-					const createNewResolvedUrl = await this.urlResolver.resolve(request);
-					ensureFluidResolvedUrl(createNewResolvedUrl);
 					if (this.service === undefined) {
+						const createNewResolvedUrl = await this.urlResolver.resolve(request);
 						assert(
-							this.client.details.type !== summarizerClientType,
+							this.client.details.type !== summarizerClientType &&
+								createNewResolvedUrl !== undefined,
 							0x2c4 /* "client should not be summarizer before container is created" */,
 						);
 						this.service = await runWithRetry(
@@ -1135,9 +1124,6 @@ export class Container
 							}, // progress
 						);
 					}
-					const resolvedUrl = this.service.resolvedUrl;
-					ensureFluidResolvedUrl(resolvedUrl);
-					this._resolvedUrl = resolvedUrl;
 					await this.storageAdapter.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
@@ -1196,12 +1182,8 @@ export class Container
 				} catch (error) {
 					// add resolved URL on error object so that host has the ability to find this document and delete it
 					const newError = normalizeError(error);
-					const resolvedUrl = this.resolvedUrl;
-					if (isFluidResolvedUrl(resolvedUrl)) {
-						newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
-					}
+					newError.addTelemetryProperties({ resolvedUrl: this.resolvedUrl?.url });
 					this.close(newError);
-					this.dispose?.(newError);
 					throw newError;
 				}
 			},
@@ -1348,7 +1330,6 @@ export class Container
 		// pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
 		const error = new GenericError("Existing context does not satisfy incoming proposal");
 		this.close(error);
-		this.dispose?.(error);
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
@@ -1381,13 +1362,11 @@ export class Container
 	private async load(
 		specifiedVersion: string | undefined,
 		loadMode: IContainerLoadMode,
+		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	) {
-		if (this._resolvedUrl === undefined) {
-			throw new Error("Attempting to load without a resolved url");
-		}
 		this.service = await this.serviceFactory.createDocumentService(
-			this._resolvedUrl,
+			resolvedUrl,
 			this.subLogger,
 			this.client.details.type === summarizerClientType,
 		);
@@ -1419,7 +1398,6 @@ export class Container
 			// if we have pendingLocalState we can load without storage; don't wait for connection
 			this.storageAdapter.connectToService(this.service).catch((error) => {
 				this.close(error);
-				this.dispose?.(error);
 			});
 		}
 
@@ -1732,7 +1710,6 @@ export class Container
 				this.processCodeProposal().catch((error) => {
 					const normalizedError = normalizeError(error);
 					this.close(normalizedError);
-					this.dispose?.(normalizedError);
 					throw error;
 				});
 			}
@@ -2006,7 +1983,6 @@ export class Container
 					{ messageType: type },
 				);
 				this.close(newError);
-				this.dispose?.(newError);
 				return -1;
 			}
 		}
@@ -2193,7 +2169,7 @@ export class Container
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
 			(message) => this.submitSignal(message),
-			(error?: ICriticalContainerError) => this.dispose?.(error),
+			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			Container.version,
 			(dirty: boolean) => this.updateDirtyContainerState(dirty),
