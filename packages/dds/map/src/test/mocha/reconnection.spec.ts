@@ -287,6 +287,11 @@ describe("Reconnection", () => {
 			containerRuntime1.connected = true;
 
 			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName) !== undefined, "/subdir should exist");
+			assert(
+				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName) === undefined,
+				"/subdir/subdir should not exist",
+			);
 			assertEquivalentDirectories(directory1, directory2);
 		});
 
@@ -309,42 +314,79 @@ describe("Reconnection", () => {
 			containerRuntime1.connected = true;
 
 			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName) !== undefined, "/subdir should exist");
+			assert(
+				directory1.getSubDirectory(subDirName)?.get(subDirKey) === undefined,
+				"/subdir(testSubDirKey) should not exist",
+			);
 			assertEquivalentDirectories(directory1, directory2);
 		});
 
-		it("Test3: Can reach eventual consistency on reconnection", async () => {
+		it("does not delete pending create subdirs on reconnection", async () => {
+			const subDirName1 = "subDir";
+			const subDirName2 = "subDir2";
+
+			containerRuntime1.connected = false;
+			// These ops will not be sent initially as we are in disconnected state.
+			const subDir = directory1.createSubDirectory(subDirName1);
+			subDir.createSubDirectory(subDirName1);
+
+			const subDir1 = directory2.createSubDirectory(subDirName1);
+			subDir1.createSubDirectory(subDirName2);
+			// /subDir deleted by other connected client.
+			directory2.deleteSubDirectory(subDirName1);
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+
+			// When op for deleting /subdir comes, it will not delete subdirectories who are created locally and
+			// ack is pending as they will recreated again. Both directories will contain /subDir/subDir but
+			// no /subDir/subDir2.
+			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName1) !== undefined, "/subdir should exist");
+			assert(
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) !== undefined,
+				"/subdir/subdir should exist",
+			);
+			assert(
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName2) === undefined,
+				"/subdir/subdir2 should not exist",
+			);
+
+			assertEquivalentDirectories(directory1, directory2);
+		});
+
+		it("does not delete pending keys within pending subdirs on reconnection", async () => {
 			const subDirName = "subDir";
+			const subDirKey = "testSubDirKey";
+			const subDirValue = "testSubDirValue";
 
 			containerRuntime1.connected = false;
 			const subDir = directory1.createSubDirectory(subDirName);
-			subDir.createSubDirectory(subDirName);
+			const subdir2 = subDir.createSubDirectory(subDirName);
+			subdir2.set(subDirKey, subDirValue);
 
 			directory2.createSubDirectory(subDirName);
 			directory2.deleteSubDirectory(subDirName);
 			containerRuntimeFactory.processAllMessages();
 			containerRuntime1.connected = true;
 
+			// When op for deleting /subdir comes, it will not delete subdirectories who are created locally and
+			// ack is pending as they will recreated again. Both directories will contain /subDir/subDir but
+			// no /subDir/subDir2. It will also not delete pending keys in pending subdirs.
 			containerRuntimeFactory.processAllMessages();
 
-			assertEquivalentDirectories(directory1, directory2);
-		});
-
-		it("Test4: Can reach eventual consistency on reconnection", async () => {
-			const subDirName1 = "subDir";
-			const subDirName2 = "subDir2";
-
-			containerRuntime1.connected = false;
-			const subDir = directory1.createSubDirectory(subDirName1);
-			subDir.createSubDirectory(subDirName1);
-
-			const subDir1 = directory2.createSubDirectory(subDirName1);
-			subDir1.createSubDirectory(subDirName2);
-			directory2.deleteSubDirectory(subDirName1);
-			containerRuntimeFactory.processAllMessages();
-			containerRuntime1.connected = true;
-
-			containerRuntimeFactory.processAllMessages();
-
+			assert(directory1.getSubDirectory(subDirName) !== undefined, "/subdir should exist");
+			assert(
+				directory1.getSubDirectory(subDirName)?.getSubDirectory(subDirName) !== undefined,
+				"/subdir/subdir should exist",
+			);
+			assert(
+				directory1
+					.getSubDirectory(subDirName)
+					?.getSubDirectory(subDirName)
+					?.get(subDirKey) === subDirValue,
+				"/subdir/subdir(subdirkey) should exist",
+			);
 			assertEquivalentDirectories(directory1, directory2);
 		});
 	});
