@@ -81,7 +81,7 @@ function createReviveChangeset(
 	detachedBy: RevisionTag,
 	detachIndex?: number,
 	reviver = fakeRepair,
-	linage?: SF.LineageEvent[],
+	lineage?: SF.LineageEvent[],
 	lastDetach?: DetachEvent,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
@@ -95,8 +95,8 @@ function createReviveChangeset(
 	if (lastDetach !== undefined) {
 		mark.detachEvent = lastDetach;
 	}
-	if (linage !== undefined) {
-		mark.lineage = linage;
+	if (lineage !== undefined) {
+		mark.lineage = lineage;
 	}
 	return markList;
 }
@@ -181,9 +181,14 @@ function createMutedModifyChangeset<TNodeChange>(
 	index: number,
 	change: TNodeChange,
 	detachEvent: DetachEvent,
+	lineage?: SF.LineageEvent [],
 ): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);
-	(changeset[changeset.length - 1] as SF.Modify).detachEvent = detachEvent;
+	const modify = (changeset[changeset.length - 1] as SF.Modify);
+	modify.detachEvent = detachEvent;
+	if (lineage !== undefined) {
+		modify.lineage = lineage;
+	}
 	return changeset;
 }
 

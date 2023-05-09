@@ -855,4 +855,112 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		assert.deepEqual(actual, expected);
 	});
+
+	it("adjacent detached modifies 1", () => {
+		// Starting state [A B]
+		// Revision 1 deletes A
+		// Revision 2 deletes B
+		// Revision 3 modifies A
+		// Revision 4 modifies B
+		const nodeChange1 = "Change1";
+		const nodeChange2 = "Change2";
+		const detach1 = { revision: tag1, index: 0 };
+		const detach2 = { revision: tag2, index: 0 };
+
+		const lineage = [{ revision: tag2, offset: 0 }];
+		const modify1 = Change.mutedModify(0, nodeChange1, detach1, lineage);
+		const modify2 = Change.mutedModify(0, nodeChange2, detach2);
+		const actual = shallowCompose([
+			tagChange(modify1, tag3),
+			tagChange(modify2, tag4),
+		]);
+
+		const expected: SF.Changeset<string> = [
+			{ type: "Modify", changes: nodeChange1, detachEvent: detach1, lineage },
+			{ type: "Modify", changes: nodeChange2, detachEvent: detach2 },
+		];
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("adjacent detached modifies 2", () => {
+		// Starting state [A B]
+		// Revision 1 deletes B
+		// Revision 2 deletes A
+		// Revision 3 modifies B
+		// Revision 4 modifies A
+		const nodeChange1 = "Change1";
+		const nodeChange2 = "Change2";
+		const detach1 = { revision: tag1, index: 1 };
+		const detach2 = { revision: tag2, index: 0 };
+
+		const lineage = [{ revision: tag2, offset: 1 }];
+		const modify1 = Change.mutedModify(0, nodeChange1, detach1, lineage);
+		const modify2 = Change.mutedModify(0, nodeChange2, detach2);
+		const actual = shallowCompose([
+			tagChange(modify1, tag3),
+			tagChange(modify2, tag4),
+		]);
+
+		const expected: SF.Changeset<string> = [
+			{ type: "Modify", changes: nodeChange2, detachEvent: detach2 },
+			{ type: "Modify", changes: nodeChange1, detachEvent: detach1, lineage },
+		];
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("adjacent detached modifies 3", () => {
+		// Starting state [A B]
+		// Revision 1 deletes A
+		// Revision 2 deletes B
+		// Revision 3 modifies B
+		// Revision 4 modifies A
+		const nodeChange1 = "Change1";
+		const nodeChange2 = "Change2";
+		const detach1 = { revision: tag1, index: 0 };
+		const detach2 = { revision: tag2, index: 0 };
+
+		const lineage = [{ revision: tag2, offset: 0 }];
+		const modify1 = Change.mutedModify(0, nodeChange1, detach2);
+		const modify2 = Change.mutedModify(0, nodeChange2, detach1, lineage);
+		const actual = shallowCompose([
+			tagChange(modify1, tag3),
+			tagChange(modify2, tag4),
+		]);
+
+		const expected: SF.Changeset<string> = [
+			{ type: "Modify", changes: nodeChange2, detachEvent: detach2 },
+			{ type: "Modify", changes: nodeChange1, detachEvent: detach1, lineage },
+		];
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("adjacent detached modifies 4", () => {
+		// Starting state [A B]
+		// Revision 1 deletes B
+		// Revision 2 deletes A
+		// Revision 3 modifies A
+		// Revision 4 modifies B
+		const nodeChange1 = "Change1";
+		const nodeChange2 = "Change2";
+		const detach1 = { revision: tag1, index: 1 };
+		const detach2 = { revision: tag2, index: 0 };
+
+		const lineage = [{ revision: tag2, offset: 1 }];
+		const modify1 = Change.mutedModify(0, nodeChange1, detach2);
+		const modify2 = Change.mutedModify(0, nodeChange2, detach1, lineage);
+		const actual = shallowCompose([
+			tagChange(modify1, tag3),
+			tagChange(modify2, tag4),
+		]);
+
+		const expected: SF.Changeset<string> = [
+			{ type: "Modify", changes: nodeChange1, detachEvent: detach1, lineage },			
+			{ type: "Modify", changes: nodeChange2, detachEvent: detach2 },			
+		];
+
+		assert.deepEqual(actual, expected);
+	});
 });
