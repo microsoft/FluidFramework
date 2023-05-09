@@ -37,7 +37,7 @@ export function getPackageInfo(): PackageInfo[] {
 	}
 }
 
-function main(): void {
+export function writePortMapFile(): void {
 	const info: PackageInfo[] = getPackageInfo();
 
 	// Assign a unique port to each package
@@ -55,5 +55,3 @@ function main(): void {
 	const portMapPath = path.join(os.tmpdir(), "testportmap.json");
 	fs.writeFileSync(portMapPath, JSON.stringify(portMap));
 }
-
-main();
