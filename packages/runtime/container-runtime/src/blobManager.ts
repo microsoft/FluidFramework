@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { IFluidHandle, IFluidHandleContext } from "@fluidframework/core-interfaces";
-import { DriverErrorType, IDocumentStorageService } from "@fluidframework/driver-definitions";
+import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	ICreateBlobResponse,
 	ISequencedDocumentMessage,
@@ -133,7 +133,7 @@ interface PendingBlob {
 	status: PendingBlobStatus;
 	storageId?: string;
 	handleP: Deferred<IFluidHandle<ArrayBufferLike>>;
-	uploadP?: Promise<void | ICreateBlobResponse>;
+	uploadP?: Promise<ICreateBlobResponse>;
 	uploadTime?: number;
 	minTTLInSeconds?: number;
 }
@@ -439,35 +439,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return pendingEntry.handleP.promise;
 	}
 
-	private async uploadBlob(
-		localId: string,
-		blob: ArrayBufferLike,
-	): Promise<void | ICreateBlobResponse> {
+	private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "createBlob" },
 			async () => this.getStorage().createBlob(blob),
 			{ end: true, cancel: this.runtime.connected ? "error" : "generic" },
-		)
-			.then(
-				(response) => this.onUploadResolve(localId, response),
-				async (err) => this.onUploadReject(localId, err),
-			)
-			.catch((error) => {
-				// an error has occured while handling upload response
-				const entry = this.pendingBlobs.get(localId);
-				this.mc.logger.sendErrorEvent(
-					{
-						eventName: "blobUploadResponseHandlingError",
-						localId,
-						status: entry?.status,
-					},
-					error,
-				);
-				// We can't rethrow here because it will be unhandled. Reject the promise returned by
-				// createBlob() if possible.
-				entry?.handleP.reject(error);
-			});
+		).then(
+			(response) => this.onUploadResolve(localId, response),
+			async (err) => this.onUploadReject(localId, err),
+		);
 	}
 
 	/**
@@ -489,11 +470,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
-		// if this is a rehydrated blob we may see the successful BlobAttach op and delete the
-		// entry before reupload finishes
-		if (!entry) {
-			return response;
-		}
 		assert(
 			entry?.status === PendingBlobStatus.OnlinePendingUpload ||
 				entry?.status === PendingBlobStatus.OfflinePendingUpload,
@@ -545,14 +521,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private async onUploadReject(localId: string, error) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
-		// Disconnect due to ping timeout on websocket takes ~45s; until then driver will throw errors with
-		// errorType "offlineError" or the enigmatic "fetchFailure".
-		if (
-			!this.runtime.connected ||
-			error.errorType === DriverErrorType.offlineError ||
-			error.errorType === DriverErrorType.fetchFailure
-		) {
-			if (!this.runtime.connected && entry.status === PendingBlobStatus.OnlinePendingUpload) {
+		if (!this.runtime.connected) {
+			if (entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.transitionToOffline(localId);
 			}
 			// we are probably not connected to storage but start another upload request in case we are
@@ -934,19 +904,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public getPendingBlobs(): IPendingBlobs {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
-			// We never gave out handles for online-flow entries, so at this point there is no reason to save them
-			if (
-				entry.status === PendingBlobStatus.OfflinePendingOp ||
-				entry.status === PendingBlobStatus.OfflinePendingUpload
-			) {
-				blobs[key] = entry.minTTLInSeconds
-					? {
-							blob: bufferToString(entry.blob, "base64"),
-							uploadTime: entry.uploadTime,
-							minTTLInSeconds: entry.minTTLInSeconds,
-					  }
-					: { blob: bufferToString(entry.blob, "base64") };
-			}
+			blobs[key] = entry.minTTLInSeconds
+				? {
+						blob: bufferToString(entry.blob, "base64"),
+						uploadTime: entry.uploadTime,
+						minTTLInSeconds: entry.minTTLInSeconds,
+				  }
+				: { blob: bufferToString(entry.blob, "base64") };
 		}
 		return blobs;
 	}

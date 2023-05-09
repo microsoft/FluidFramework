@@ -267,6 +267,7 @@ async function runnerProcess(
 					offline.delayMs.max,
 					offline.durationMs.min,
 					offline.durationMs.max,
+					offline.stashPercent,
 				);
 			}
 
@@ -422,6 +423,7 @@ async function scheduleOffline(
 	offlineDelayMaxMs: number,
 	offlineDurationMinMs: number,
 	offlineDurationMaxMs: number,
+	stashPercent = 1,
 ): Promise<string | undefined> {
 	return new Promise<void>((resolve) => {
 		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
@@ -455,12 +457,12 @@ async function scheduleOffline(
 				if (container.closed) {
 					return undefined;
 				}
-				if (runConfig.loaderConfig?.enableOfflineLoad === true) {
+				if (runConfig.loaderConfig?.enableOfflineLoad === true && random.real() < stashPercent) {
 					printStatus(runConfig, "closing offline container!");
 					return container.closeAndGetPendingLocalState();
 				}
-				ds.goOnline();
 				printStatus(runConfig, "going online!");
+				ds.goOnline();
 				return schedule();
 			};
 			return schedule();
