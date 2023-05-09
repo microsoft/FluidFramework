@@ -5,19 +5,16 @@
 
 import { fail, strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/common-utils";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	ChangeFamily,
 	SessionId,
 	ChangeRebaser,
-	FieldKey,
 	TaggedChange,
 	emptyDelta,
 	mintRevisionTag,
 	ChangeFamilyEditor,
-	makeAnonChange,
 	UndoRedoManager,
-	UndoRedoManagerCommitType,
+	Delta,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -29,15 +26,10 @@ import {
 	testChangeFamilyFactory,
 	asDelta,
 } from "../testChange";
-import { MockRepairDataStoreProvider, assertDeltaEqual, createMockUndoRedoManager } from "../utils";
-import { Commit, EditManager, SeqNumber, SharedTreeBranch } from "../../shared-tree-core";
-import {
-	DefaultChangeFamily,
-	DefaultChangeset,
-	defaultChangeFamily,
-} from "../../feature-libraries";
+import { MockRepairDataStoreProvider } from "../utils";
+import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
 
-type TestEditManager = EditManager<TestChange, TestChangeFamily>;
+type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestChangeFamily>;
 
 function editManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
@@ -49,8 +41,12 @@ function editManagerFactory(options: {
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
-	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
+	const undoRedoManager = UndoRedoManager.create(new MockRepairDataStoreProvider(), family);
+	const manager = new EditManager<
+		ChangeFamilyEditor,
+		TestChange,
+		ChangeFamily<ChangeFamilyEditor, TestChange>
+	>(
 		family,
 		options.sessionId ?? localSessionId,
 		undoRedoManager,
@@ -333,30 +329,10 @@ describe("EditManager", () => {
 			assert.equal(manager.getTrunk().length, 1);
 		});
 
-		it("Errors when a branch is registered multiple times", () => {
-			const manager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
-				defaultChangeFamily,
-				"",
-				createMockUndoRedoManager(),
-				createMockUndoRedoManager(),
-			);
-			const branch = new SharedTreeBranch(
-				manager.getLocalBranchHead(),
-				"",
-				defaultChangeFamily,
-				new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily),
-			);
-			manager.registerBranch(branch);
-			assert.throws(
-				() => manager.registerBranch(branch),
-				(e) => validateAssertionError(e, "Branch was registered more than once"),
-			);
-		});
-
 		it("Rebases anchors over local changes", () => {
 			const { manager, anchors } = editManagerFactory({});
 			const change = TestChange.mint([], 1);
-			manager.addLocalChange(mintRevisionTag(), change, true);
+			manager.localBranch.apply(change, mintRevisionTag());
 			assert.deepEqual(anchors.rebases, [change]);
 			assert.deepEqual(anchors.intentions, change.intentions);
 		});
@@ -377,31 +353,6 @@ describe("EditManager", () => {
 			assert.deepEqual(anchors.intentions, change.intentions);
 		});
 
-		it("Can rollback changes", () => {
-			const { manager, anchors, family } = editManagerFactory({});
-			const startingRevision = manager.getLocalBranchHead().revision;
-			const changes = [
-				TestChange.mint([], 1),
-				TestChange.mint([1], 2),
-				TestChange.mint([1, 2], -2),
-				TestChange.mint([1], 3),
-			];
-			for (const change of changes) {
-				manager.addLocalChange(mintRevisionTag(), change, true);
-			}
-			assert.deepEqual(anchors.rebases, changes);
-			assert.deepEqual(anchors.intentions, [1, 3]);
-
-			const inverseChanges = changes.map(TestChange.invert).reverse();
-			const composedInverse = TestChange.compose(inverseChanges.map(makeAnonChange));
-			const inverseDelta = family.intoDelta(composedInverse);
-			const delta = manager.rollbackLocalChanges(startingRevision);
-			assertDeltaEqual(delta, inverseDelta);
-			const totalRebases = [...changes, composedInverse];
-			assert.deepEqual(anchors.rebases, totalRebases);
-			assert.deepEqual(anchors.intentions, []);
-		});
-
 		it("Updates local branch when loading from summary", () => {
 			// This regression tests ensures that the local branch is rebased to the head of the trunk
 			// when the trunk is modified by a summary load
@@ -418,7 +369,7 @@ describe("EditManager", () => {
 				],
 				branches: new Map(),
 			});
-			const delta = manager.addSequencedChange(
+			manager.addSequencedChange(
 				{
 					change: TestChange.mint([0, 1], [2]),
 					revision: mintRevisionTag(),
@@ -427,8 +378,7 @@ describe("EditManager", () => {
 				brand(2),
 				brand(1),
 			);
-			// TODO: This is probably not the best way to assert that the change was rebased properly
-			assert.equal(delta.get("root" as FieldKey)?.length, 1);
+			assert.equal(manager.localBranch.getHead(), manager.getTrunkHead());
 		});
 	});
 
@@ -667,10 +617,10 @@ function runUnitTestScenario(
 					localCommits.push(commit);
 					knownToLocal.push(seq);
 					// Local changes should always lead to a delta that is equivalent to the local change.
-					assert.deepEqual(manager.addLocalChange(revision, changeset), asDelta([seq]));
-					manager.localBranchUndoRedoManager.trackCommit(
-						commit,
-						UndoRedoManagerCommitType.Undoable,
+					manager.localBranch.apply(changeset, revision);
+					assert.deepEqual(
+						manager.changeFamily.intoDelta(manager.localBranch.getHead().change),
+						asDelta([seq]),
 					);
 					break;
 				}
@@ -685,7 +635,8 @@ function runUnitTestScenario(
 							"Invalid test scenario: acknowledged commit does not mach oldest local change",
 						);
 					}
-					const delta = manager.addSequencedChange(
+					const delta = addSequencedChange(
+						manager,
 						commit,
 						commit.seqNumber,
 						commit.refNumber,
@@ -737,7 +688,8 @@ function runUnitTestScenario(
 						seq,
 						...localIntentions,
 					];
-					const delta = manager.addSequencedChange(
+					const delta = addSequencedChange(
+						manager,
 						commit,
 						commit.seqNumber,
 						commit.refNumber,
@@ -795,4 +747,20 @@ function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[
 		.getTrunk()
 		.map((c) => c.change)
 		.concat(manager.getLocalChanges());
+}
+
+/** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
+function addSequencedChange(
+	editManager: TestEditManager,
+	...args: Parameters<typeof editManager["addSequencedChange"]>
+): Delta.Root {
+	let delta: Delta.Root = emptyDelta;
+	const offChange = editManager.localBranch.on("change", ({ change }) => {
+		if (change !== undefined) {
+			delta = editManager.changeFamily.intoDelta(change);
+		}
+	});
+	editManager.addSequencedChange(...args);
+	offChange();
+	return delta;
 }

@@ -154,12 +154,11 @@ function undoRedoManagerFactory(
 	headRedoableCommit?: ReversibleCommit<TestChange>,
 	rebaser?: ChangeRebaser<TestChange>,
 ): UndoRedoManager<TestChange, ChangeFamilyEditor> {
-	return new UndoRedoManager(
+	return UndoRedoManager.create(
 		new MockRepairDataStoreProvider(),
 		testChangeFamilyFactory(rebaser),
 		headUndoableCommit,
 		headRedoableCommit,
-		undefined,
 	);
 }
 

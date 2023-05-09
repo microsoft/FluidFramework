@@ -40,6 +40,9 @@ export async function deliCreate(
 
 	const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled");
 
+	const restartOnCheckpointFailure =
+		(config.get("deli:restartOnCheckpointFailure") as boolean) ?? true;
+
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
@@ -159,6 +162,7 @@ export async function deliCreate(
 		undefined,
 		reverseProducer,
 		serviceConfiguration,
+		restartOnCheckpointFailure,
 	);
 }
 

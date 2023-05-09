@@ -104,6 +104,7 @@ export class ScribeLambda implements IPartitionLambda {
 		messages: ISequencedDocumentMessage[],
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
 		private readonly transientTenants: Set<string>,
+		private readonly restartOnCheckpointFailure: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -115,7 +116,7 @@ export class ScribeLambda implements IPartitionLambda {
 		// we had already checkpointed at a given offset.
 		if (message.offset <= this.lastOffset) {
 			this.updateCheckpointMessages(message);
-			this.context.checkpoint(message);
+			this.context.checkpoint(message, this.restartOnCheckpointFailure);
 			return;
 		}
 
@@ -551,7 +552,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.pendingP.then(
 			() => {
 				this.pendingP = undefined;
-				this.context.checkpoint(queuedMessage);
+				this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
 
 				const pendingScribe = this.pendingCheckpointScribe;
 				const pendingOffset = this.pendingCheckpointOffset;

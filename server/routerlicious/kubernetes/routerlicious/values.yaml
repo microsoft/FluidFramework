@@ -62,10 +62,12 @@ deli:
         idleTime: 10000
         maxTime: 60000
         maxMessages: 500
+    restartOnCheckpointFailure: true
 
 scriptorium:
     name: scriptorium
     replicas: 8
+    restartOnCheckpointFailure: true
 
 scribe:
     name: scribe
@@ -76,6 +78,7 @@ scribe:
         idleTime: 10000
         maxTime: 60000
         maxMessages: 500
+    restartOnCheckpointFailure: true
         
 riddler:
     name: riddler
