@@ -1093,18 +1093,25 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private readonly _subdirectories: Map<string, SubDirectory> = new Map();
 
 	/**
-	 * Keys that have been modified locally but not yet ack'd from the server.
+	 * Keys that have been modified locally but not yet ack'd from the server. This is for operations on keys like
+	 * set/delete operations on keys. The value of this map is list of pendingMessageIds at which that key
+	 * was modified. We don't store the type of ops, and behaviour of key ops are different from behaviour of sub
+	 * directory ops, so we have separate map from pendingSubDirectories.
 	 */
 	private readonly pendingKeys: Map<string, number[]> = new Map();
 
 	/**
-	 * Subdirectories that have been created/deleted locally but not yet ack'd from the server.
+	 * Subdirectories that have been created/deleted locally but not yet ack'd from the server. This is for operations
+	 * like create/delete sub directories. The value of this map is list of pendingMessageIds at which that sub
+	 * directory was created/deleted. We don't store the type of ops, and behaviour of key ops are different from
+	 * behaviour of sub directory ops, so we have separate map from pendingSubDirectories.
 	 */
 	private readonly pendingSubDirectories: Map<string, number[]> = new Map();
 
 	/**
 	 * Subdirectories that have been deleted locally but not yet ack'd from the server. This maintains the record
-	 * of delete op that are pending or yet to be acked from server.
+	 * of delete op that are pending or yet to be acked from server. This is maintained just to track the locally
+	 * deleted sub directory as pendingSubDirectories does not track that specifically.
 	 */
 	private readonly pendingDeleteSubDirectoriesTracker: Set<string> = new Set();
 
