@@ -293,7 +293,7 @@ export class FluidPackageCheck {
 			const buildPrefix = pkg.getScript("build:gen")
 				? "npm run build:gen && "
 				: pkg.getScript("build:genver")
-				? ""
+				? "npm run build:genver && "
 				: "";
 
 			// if build:docs script exist, we require it in to be called in the build script for @fluidframework packages
