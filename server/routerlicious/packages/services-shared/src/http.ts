@@ -66,8 +66,15 @@ export function handleResponse<T>(
 			} else if (allowClientCache === false) {
 				response.setHeader("Cache-Control", "no-store, max-age=0");
 			}
-
+			// Make sure the browser will expose specific headers for performance analysis.
+			response.setHeader(
+				"Access-Control-Expose-Headers",
+				"Content-Encoding, Content-Length, Content-Type",
+			);
+			// In order to report W3C timings, Time-Allow-Origin needs to be set.
+			response.setHeader("Timing-Allow-Origin", "*");
 			onSuccess(result);
+			// Express' json call below will set the content-length.
 			response.status(successStatus).json(result);
 		},
 		(error) => {

@@ -164,7 +164,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 					eventName: "initialize",
 				},
 				async (event) => {
-					void runtime.runtimeAttributor?.initialize(
+					await runtime.runtimeAttributor?.initialize(
 						deltaManager,
 						audience,
 						baseSnapshot,

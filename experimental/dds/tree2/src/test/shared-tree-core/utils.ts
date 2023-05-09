@@ -59,8 +59,8 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		return super.isTransacting();
 	}
 
-	public override createBranch(): SharedTreeBranch<DefaultEditBuilder, ModularChangeset> {
-		return super.createBranch(new MockRepairDataStoreProvider());
+	public override forkBranch(): SharedTreeBranch<DefaultEditBuilder, ModularChangeset> {
+		return super.forkBranch(new MockRepairDataStoreProvider());
 	}
 
 	public override mergeBranch(

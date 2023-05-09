@@ -149,7 +149,14 @@ async function main() {
 		info(`Other switches with no explicit build script, not building.`);
 	}
 
-	info(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s`);
+	const timeInMinutes =
+		timer.getTotalTime() > 60000
+			? ` (${Math.floor(timer.getTotalTime() / 60000)}m ${(
+					(timer.getTotalTime() % 60000) /
+					1000
+			  ).toFixed(3)}s)`
+			: "";
+	info(`Total time: ${(timer.getTotalTime() / 1000).toFixed(3)}s${timeInMinutes}`);
 
 	if (failureSummary !== "") {
 		info(`\n${failureSummary}`);
