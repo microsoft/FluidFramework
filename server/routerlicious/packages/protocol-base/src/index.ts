@@ -27,4 +27,3 @@ export {
 	QuorumProposals,
 	QuorumProposalsSnapshot,
 } from "./quorum";
-export { isServiceMessageType } from "./utils";

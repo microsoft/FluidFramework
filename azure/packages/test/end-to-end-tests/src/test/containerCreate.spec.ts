@@ -179,12 +179,11 @@ describe("Container create with feature flags", () => {
 	 */
 	it("can create containers with feature gates", async () => {
 		await client.createContainer(schema);
-		mockLogger.assertMatchAny([
-			{
-				featureGates: JSON.stringify({
-					disableOpReentryCheck: true,
-				}),
-			},
-		]);
+		const event = mockLogger.events.find(
+			(e) => e.eventName === "fluid:telemetry:ContainerLoadStats",
+		);
+		assert(event !== undefined, "ContainerLoadStats event should exist");
+		const featureGates = event.featureGates as string;
+		assert(featureGates.includes('"disableOpReentryCheck":true'));
 	});
 });

@@ -41,7 +41,7 @@ function editManagerFactory(options: {
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const undoRedoManager = new UndoRedoManager(new MockRepairDataStoreProvider(), family);
+	const undoRedoManager = UndoRedoManager.create(new MockRepairDataStoreProvider(), family);
 	const manager = new EditManager<
 		ChangeFamilyEditor,
 		TestChange,

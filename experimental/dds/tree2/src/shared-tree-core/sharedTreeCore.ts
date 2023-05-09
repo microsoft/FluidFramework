@@ -153,7 +153,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = uuid();
-		const undoRedoManager = new UndoRedoManager(repairDataStoreProvider, changeFamily);
+		const undoRedoManager = UndoRedoManager.create(repairDataStoreProvider, changeFamily);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
