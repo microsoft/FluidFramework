@@ -138,6 +138,12 @@ export interface MoveOut<TNodeChange = NodeChangeType>
 }
 
 export interface HasReattachFields extends HasPlaceFields {
+	/**
+	 * The revision this mark is inverting a detach from.
+	 * If defined this mark is a revert-only inverse,
+	 * meaning that it will only reattach nodes if those nodes were last detached by `inverseOf`.
+	 * If `inverseOf` is undefined, this mark will reattach nodes regardless of when they were last detached.
+	 */
 	inverseOf?: RevisionTag;
 }
 

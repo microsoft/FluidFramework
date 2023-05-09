@@ -496,16 +496,14 @@ export class ComposeQueue<T> {
 			} else if (cmp > 0) {
 				return { newMark: this.newMarks.dequeueUpTo(cmp) };
 			} else {
-				const length = Math.min(getMarkLength(baseMark), getMarkLength(newMark));
-				return this.dequeueLength(length);
+				return this.dequeueBoth();
 			}
 		} else if (areOutputCellsEmpty(baseMark)) {
 			return this.dequeueBase();
 		} else if (areInputCellsEmpty(newMark)) {
 			return this.dequeueNew();
 		} else {
-			const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
-			return this.dequeueLength(length);
+			return this.dequeueBoth();
 		}
 	}
 
@@ -572,7 +570,14 @@ export class ComposeQueue<T> {
 		};
 	}
 
-	private dequeueLength(length: number): ComposeMarks<T> {
+	private dequeueBoth(): ComposeMarks<T> {
+		const baseMark = this.baseMarks.peek();
+		const newMark = this.newMarks.peek();
+		assert(
+			baseMark !== undefined && newMark !== undefined,
+			"Cannot dequeue both unless both mark queues are non-empty",
+		);
+		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
 		return {
 			baseMark: this.baseMarks.dequeueUpTo(length),
 			newMark: this.newMarks.dequeueUpTo(length),
@@ -610,6 +615,14 @@ function getIntention(
 }
 
 // TODO: Try to share more logic with the version in rebase.ts.
+/**
+ * Returns a number N which encodes how the cells of the two marks are aligned.
+ * - If N is zero, then the first cell of `baseMark` is the same as the first cell of `newMark`.
+ * - If N is positive, then the first N cells of `newMark` (or all its cells if N is greater than its length)
+ * are before the first cell of `baseMark`.
+ * - If N is negative, then the first N cells of `baseMark` (or all its cells if N is greater than its length)
+ * are before the first cell of `newMark`.
+ */
 function compareCellPositions(
 	baseCellId: DetachEvent,
 	baseMark: ExistingCellMark<unknown>,
