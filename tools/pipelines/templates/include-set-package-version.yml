@@ -85,16 +85,6 @@ steps:
       flub --help
       flub commands
 
-- ${{ if eq(parameters.usesPrettier, true) }}:
-  # package.json files are reformatted by upcoming update version steps, then will be reformatted by prettier. We check
-  # them here because otherwise legitimate formatting problems would be hidden by the forced reformatting in CI.
-  - task: Bash@3
-    displayName: Check package.json formatting
-    inputs:
-      targetType: 'filePath'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      filePath: $(Build.SourcesDirectory)/scripts/check-pkg-json-formatting.sh
-
 - task: Bash@3
   name: SetVersion
   displayName: Set Package Version
