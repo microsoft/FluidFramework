@@ -15156,7 +15156,7 @@ importers:
         specifier: ^4.9.2
         version: 4.10.0(webpack@5.76.2)
 
-  packages/tools/client-debugger/devtools:
+  packages/tools/devtools/devtools:
     dependencies:
       '@fluid-experimental/devtools-core':
         specifier: workspace:~
@@ -15244,7 +15244,7 @@ importers:
         specifier: ~4.5.5
         version: 4.5.5
 
-  packages/tools/client-debugger/devtools-browser-extension:
+  packages/tools/devtools/devtools-browser-extension:
     dependencies:
       '@fluentui/react':
         specifier: ^8.96.1
@@ -15392,7 +15392,7 @@ importers:
         specifier: ^4.9.2
         version: 4.10.0(webpack@5.76.2)
 
-  packages/tools/client-debugger/devtools-core:
+  packages/tools/devtools/devtools-core:
     dependencies:
       '@fluidframework/cell':
         specifier: workspace:~
@@ -15516,7 +15516,7 @@ importers:
         specifier: ~4.5.5
         version: 4.5.5
 
-  packages/tools/client-debugger/devtools-view:
+  packages/tools/devtools/devtools-view:
     dependencies:
       '@fluentui/react':
         specifier: ^8.96.1
