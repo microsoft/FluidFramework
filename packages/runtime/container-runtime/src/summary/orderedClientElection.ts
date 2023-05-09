@@ -422,6 +422,7 @@ export class OrderedClientElection
 					electedClientId: this._electedClient?.clientId,
 					electedParentId: this._electedParent?.clientId,
 					electionSequenceNumber: sequenceNumber,
+					isSummarizerClient,
 				});
 			}
 			this.emit("election", client, sequenceNumber, prevClient);
@@ -471,7 +472,7 @@ export class OrderedClientElection
 			const newClientIsSummarizer = client.client.details.type === summarizerClientType;
 			const electedClientIsSummarizer =
 				this._electedClient?.client.details.type === summarizerClientType;
-			// Note that we allow a summarizer client to supercede an interactive client as elected client.
+			// Note that we allow a summarizer client to supersede an interactive client as elected client.
 			if (
 				this._electedClient === undefined ||
 				(!electedClientIsSummarizer && newClientIsSummarizer)
