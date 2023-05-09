@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-For quick setup, run `./node init.js`
+For quick setup on windows, run `./init.ps1`
 
-For manual setup, install the following:
+For setup on linux or codespaces, install the following:
 
 1. rust, rustup, and cargo - https://www.rust-lang.org/tools/install
 1. wasm-pack - https://rustwasm.github.io/wasm-pack/installer/
@@ -28,9 +28,11 @@ Write code as you normally would. Build with cargo and write tests in Rust. Inst
 
 ### Typescript Development
 
-Run the build script in the root package.json to output WASM binaries of declared rust "glue" crates.
+Run the build script in the root package.json to output WASM binaries of declared rust "glue" crates and build any typescript projects in the `typescript` directory. To build just typescript projects (without any rust changes), run `pnpm run build:ts`.
 
 ### E2E development
+
+### Adding a new package/crate
 
 ## Try it out
 
@@ -51,7 +53,5 @@ To get this working locally:
 
 ## TODO
 
-1. Build steps/Debug steps for native
-2. Recommended/Required extensions
-3. Docs stuff
-4. New package setup instructions
+1. Docs stuff
+2. New package setup instructions
