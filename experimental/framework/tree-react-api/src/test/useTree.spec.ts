@@ -9,21 +9,13 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import React from "react";
 import { SinonSandbox, createSandbox } from "sinon";
 import { useTree } from "..";
-import { schema, Inventory } from "./schema";
+import { schema } from "./schema";
 
 describe("useTree()", () => {
 	function createLocalTree(id: string): ISharedTreeView {
 		const factory = new SharedTreeFactory();
 		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
-		const treeView: ISharedTreeView = tree.schematize({
-			schema,
-			initialTree: {
-				nuts: 0,
-				bolts: 0,
-			},
-			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-		});
-		return treeView;
+		return tree;
 	}
 
 	// Mock 'React.setState()'
@@ -56,8 +48,14 @@ describe("useTree()", () => {
 
 	it("works", () => {
 		const tree = createLocalTree("tree");
-
-		const inventory = useTree<Inventory>(tree);
+		const inventory = useTree(tree, {
+			schema,
+			initialTree: {
+				nuts: 0,
+				bolts: 0,
+			},
+			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+		});
 
 		assert.deepEqual(JSON.parse(JSON.stringify(inventory)), { nuts: 0, bolts: 0 });
 	});

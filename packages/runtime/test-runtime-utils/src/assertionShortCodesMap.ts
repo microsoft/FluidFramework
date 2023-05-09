@@ -632,7 +632,6 @@ export const shortCodeMap = {
 	"0x349": "this.mc and/or this.logger has not been set",
 	"0x350": "Index summary element keys must be unique",
 	"0x351": "cannot forget unknown Anchor",
-	"0x352": "moveChildren is a no-op and should not be called if there is no src or dst",
 	"0x355": "PathNode.parent is an UpPath API and thus should never be called on the root PathNode.",
 	"0x35c": "child must be parented to be removed",
 	"0x369": "counts must match",
@@ -1306,5 +1305,12 @@ export const shortCodeMap = {
 	"0x67a": "IdCompressor should be defined if enabled",
 	"0x67b": "IdCompressor should be defined if enabled",
 	"0x67c": "IdCompressor should be defined if enabled",
-	"0x67d": "IdCompressor should be defined if enabled"
+	"0x67d": "IdCompressor should be defined if enabled",
+	"0x67e": "Redo is not yet supported during transactions",
+	"0x67f": "Redo is not yet supported during transactions",
+	"0x680": "new range must not already exist",
+	"0x681": "count must be positive",
+	"0x682": "coupleInfo must have nodes to couple",
+	"0x683": "Both source and destination fields must be sequence fields.",
+	"0x684": "destination field proxy must be a field proxy target"
 };
