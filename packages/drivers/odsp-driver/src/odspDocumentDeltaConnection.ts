@@ -644,7 +644,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	}
 
 	private get connected(): boolean {
-		return this.disposed && this.socket.connected;
+		return !this.disposed && this.socket.connected;
 	}
 
 	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
