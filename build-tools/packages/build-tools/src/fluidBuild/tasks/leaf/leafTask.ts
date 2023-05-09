@@ -17,6 +17,7 @@ import {
 	existsSync,
 	getExecutableFromCommand,
 	readFileAsync,
+	statAsync,
 	unlinkAsync,
 	writeFileAsync,
 } from "../../../common/utils";
@@ -24,7 +25,7 @@ import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGrap
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 
-const { info, verbose, warning } = defaultLogger;
+const { info, verbose } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
 const traceTaskDep = registerDebug("fluid-build:task:dep");
 interface TaskExecResult extends ExecAsyncResult {
@@ -47,7 +48,7 @@ export abstract class LeafTask extends Task {
 	}
 
 	public get isDisabled() {
-		const isLintTask = this.executable === "eslint" || this.executable === "tsfmt";
+		const isLintTask = this.executable === "eslint" || this.executable === "prettier";
 		return (options.nolint && isLintTask) || (options.lintonly && !isLintTask);
 	}
 
@@ -278,6 +279,25 @@ export abstract class LeafTask extends Task {
 		return undefined;
 	}
 
+	protected addChildCompileAndCopyScripts(
+		dependentTasks: LeafTask[],
+		node: BuildPackage,
+		script: string,
+		options?: any,
+	) {
+		const command = script === "tsc" ? script : `npm run ${script}`;
+		const task = this.addChildTask(dependentTasks, node, command, options);
+		if (task) {
+			this.logVerboseDependency(node, options ? task.command : script);
+
+			// Assume build:copy is needed as well
+			if (this.addChildTask(dependentTasks, node, "npm run build:copy")) {
+				this.logVerboseDependency(node, "build:copy");
+			}
+		}
+		return task;
+	}
+
 	private async checkDependentTasksIsUpToDate(): Promise<boolean> {
 		const dependentTasks = this.getDependentTasks();
 		for (const dependentTask of dependentTasks) {
@@ -472,5 +492,33 @@ export class UnknownLeafTask extends LeafTask {
 	protected async checkLeafIsUpToDate() {
 		// Because we don't know, it is always out of date and need to rebuild
 		return false;
+	}
+}
+
+export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
+	protected abstract getInputFiles(): Promise<string[]>;
+	protected abstract getOutputFiles(): Promise<string[]>;
+
+	protected async getDoneFileContent(): Promise<string | undefined> {
+		// Gather the file information
+		try {
+			const srcFiles = await this.getInputFiles();
+			const dstFiles = await this.getOutputFiles();
+			const srcTimesP = Promise.all(srcFiles.map((match) => statAsync(match)));
+			const dstTimesP = Promise.all(dstFiles.map((match) => statAsync(match)));
+			const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
+
+			const srcInfo = srcTimes.map((srcTime) => {
+				return { mtimeMs: srcTime.mtimeMs, size: srcTime.size };
+			});
+			const dstInfo = dstTimes.map((dstTime) => {
+				return { mtimeMs: dstTime.mtimeMs, size: dstTime.size };
+			});
+			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
+		} catch (e: any) {
+			this.logVerboseTask(`error comparing file times ${e.message}`);
+			this.logVerboseTrigger("failed to get file stats");
+			return undefined;
+		}
 	}
 }

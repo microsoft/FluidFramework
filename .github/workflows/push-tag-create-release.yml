@@ -1,0 +1,129 @@
+name: "push-tag-create-release"
+
+# When a release tag is pushed to the repo, this workflow is triggered. It first installs the Fluid build-tools, then
+# uses the flub release fromTag command to load some release metadata into an environment variable. Once loaded, it
+# checks out the tagged commit and runs flub release report to generate release reports. It also uses auto-changelog to
+# create a changelog for patch releases (only patches). All the artifacts are uploaded for debugging purposes.
+
+# Once the artifacts are created, the workflow creates a GitHub release and attaches the release reports to it. The
+# release is a draft so that the release engineer can verify the contents before publishing.
+
+on:
+  push:
+    tags:
+      - "*_v*"
+
+jobs:
+  create-release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          fetch-depth: "0" # all history
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Fluid build tools
+        continue-on-error: true
+        run: |
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
+
+          # add the bin dir of build-cli to the path
+          cd packages/build-cli/bin
+          echo "$(pwd)" >> $GITHUB_PATH
+
+      - name: Check build-tools installation
+        run: |
+          # Info for debugging
+          which flub
+          flub --help
+          flub commands
+
+      - name: Get release metadata JSON
+        run: |
+          flub release fromTag ${{ github.ref }} --json | jq -c > release-metadata.json
+      - name: Upload release metadata JSON
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        with:
+          name: release-metadata
+          path: release-metadata.json
+          retention-days: 3
+      - name: Load release metadata into env variable
+        run: |
+          echo "RELEASE_JSON=$(cat release-metadata.json)" >> $GITHUB_ENV
+      - name: Set releaseType output variable
+        run: |
+         echo "releaseType=${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}" >> "$GITHUB_OUTPUT"
+
+      # Generate release reports
+      - name: Check out tag
+        run: |
+          git checkout ${{ github.ref }}
+      - name: Create release reports (manifests)
+        run: |
+          mkdir reports
+          flub release report -g ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }} -o reports
+      - name: Upload release reports
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
+        with:
+          name: release-reports
+          path: reports
+          retention-days: 7
+
+      # Generate changelog
+      - name: Generate changelog
+        # This changelog is only for client patch releases and build-tools releases
+        if: (fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools'
+        run: |
+          # We only need the root dependencies
+          pnpm install -w --frozen-lockfile
+
+          # starting and ending versions are the same because we want to generate a changelog for a single release
+          pnpm exec auto-changelog \
+          --starting-version ${{ fromJson(env.RELEASE_JSON).tag }} \
+          --ending-version ${{ fromJson(env.RELEASE_JSON).tag }} \
+          --tag-prefix ${{ fromJson(env.RELEASE_JSON).packageOrReleaseGroup }}_v \
+          --output auto-changelog.md \
+          --template .changeset/templates/patch-changelog.hbs
+      - name: Generate changelog
+        # This changelog is a basically empty one used for everything except client patches and build-tools.
+        if: ${{ !(fromJson(env.RELEASE_JSON).releaseType == 'patch' && fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client') && fromJson(env.RELEASE_JSON).packageOrReleaseGroup != 'build-tools' }}
+        run: |
+          echo "This is a **${{ fromJson(env.RELEASE_JSON).releaseType }}** release." > auto-changelog.md
+
+      # Only creates GH releases for client and build-tools releases.
+      - name: Create GH release
+        if: fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'client' || fromJson(env.RELEASE_JSON).packageOrReleaseGroup == 'build-tools'
+        uses: ncipollo/release-action@eb05307dcee34deaad054e98128088a30d7980dc # ratchet:ncipollo/release-action@main
+        with:
+          # Allow updates to existing releases.
+          allowUpdates: true
+
+          # Will skip if a published (non-draft) release already exists.
+          skipIfReleaseExists: true
+
+          # Leave the release as a draft so that the release engineer can verify it before it's public. Once we are
+          # more confident in the automation, we may update this workflow to publish the release as well.
+          draft: true
+          omitDraftDuringUpdate: true # don't change the draft state when updating
+
+          name: ${{ fromJson(env.RELEASE_JSON).title }}
+          omitNameDuringUpdate: false # always overwrite the name
+
+          # Created in the "Generate changelog" step
+          bodyFile: auto-changelog.md
+          omitBodyDuringUpdate: true # Don't overwrite the body
+
+          # Created in the "Create release reports (manifests)" step
+          artifacts: "reports/*.*"
+          artifactErrorsFailBuild: true
+          tag: ${{ fromJson(env.RELEASE_JSON).tag }}
