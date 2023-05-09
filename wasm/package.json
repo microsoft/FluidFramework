@@ -3,7 +3,7 @@
 		"build": "node ./wasm-pack-workspace.js --debug && pnpm i && pnpm run build:ts",
 		"build:ts": "pnpm -r build",
 		"build:release": "node ./wasm-pack-workspace.js --release && pnpm i && pnpm run build:ts",
-		"clean": "rimraf web-packages/*/bundler && rimraf web-packages/*/nodejs && rimraf target && rimraf typescript/**/dist"
+		"clean": "rimraf \"web-packages/*/bundler\" && rimraf \"web-packages/*/nodejs\" && rimraf \"target\" && rimraf \"typescript/**/!(node_modules)/**/dist\" && rimraf \"**/*.tsbuildinfo\""
 	},
 	"devDependencies": {
 		"rimraf": "^3.0.2",
