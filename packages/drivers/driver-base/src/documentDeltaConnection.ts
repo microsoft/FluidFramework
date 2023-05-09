@@ -309,7 +309,7 @@ export class DocumentDeltaConnection
 	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
-		// on the still-live socket. Also in case, connection is not yet disposed, then don't emit the messages.
+		// on the still-live socket.
 		this.checkNotDisposed();
 		this.socket.emit(type, this.clientId, messages);
 	}
