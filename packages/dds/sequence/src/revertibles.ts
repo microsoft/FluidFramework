@@ -61,8 +61,8 @@ export type IntervalRevertible =
 			intervals: {
 				intervalId: string;
 				label: string;
-				startOffset?: number; // index in removed range of any interval start
-				endOffset?: number; // index in removed range of any interval end
+				startOffset?: number; // interval start index within a removed range
+				endOffset?: number; // interval end index within a removed range
 			}[];
 			mergeTreeRevertible: MergeTreeDeltaRevertible;
 	  };

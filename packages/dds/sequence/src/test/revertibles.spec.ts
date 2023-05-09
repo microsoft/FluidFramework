@@ -92,9 +92,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection
-			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
-			.getIntervalId();
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
 		collection.changeProperties(id, { foo: "two" });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -350,9 +348,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval remove interacting with reverting an interval property change", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection
-			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
-			.getIntervalId();
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
@@ -390,9 +386,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval property change interacting with reverting an interval remove", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection
-			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
-			.getIntervalId();
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("deleteInterval", (interval, local, op) => {
@@ -418,9 +412,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval property change interacting with reverting an interval add", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection
-			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
-			.getIntervalId();
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("addInterval", (interval, local, op) => {
@@ -441,9 +433,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval property change interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection
-			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
-			.getIntervalId();
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
@@ -464,9 +454,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval property change interacting with reverting an interval property change", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection
-			.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" })
-			.getIntervalId();
+		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
@@ -616,9 +604,9 @@ describe("Undo/redo for string remove containing intervals", () => {
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 			assert.equal(sharedString.getText(), "hello world");
-			assert.equal(collection.getIntervalById(interval.getIntervalId()), undefined);
+			assertIntervals(sharedString, collection, []);
 			containerRuntimeFactory.processAllMessages();
-			assert.equal(collection2.getIntervalById(interval.getIntervalId()), undefined);
+			assertIntervals(sharedString2, collection2, []);
 		});
 		it("handles remote interval move with one contained endpoint", () => {
 			sharedString.insertText(0, "hello world");
@@ -640,6 +628,8 @@ describe("Undo/redo for string remove containing intervals", () => {
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 			assert.equal(sharedString.getText(), "hello world");
+			// Intervals don't currently enforce that start >= end,
+			// so this happens since only start was within the restored range
 			assertIntervals(sharedString, collection, [{ start: 6, end: 3 }]);
 			containerRuntimeFactory.processAllMessages();
 			assertIntervals(sharedString2, collection2, [{ start: 6, end: 3 }]);
@@ -666,7 +656,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 		assert.equal(sharedString.getText(), "hello world");
-		assertIntervals(sharedString, collection, [{ /* start: 6, end: 6 */ start: 2, end: 4 }]);
+		assertIntervals(sharedString, collection, [{ start: 2, end: 4 }]);
 		assert.equal(
 			interval.start.getOffset(),
 			2,
@@ -692,7 +682,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 		assert.equal(sharedString.getText(), "hello world");
-		assertIntervals(sharedString, collection, [{ /* start: 6, end: 6 */ start: 0, end: 6 }]);
+		assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
 	});
 	it("has an interval with one endpoint within the deleted range", () => {
 		sharedString.insertText(0, "hello world");
@@ -708,7 +698,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 		assert.equal(sharedString.getText(), "hello world");
-		assertIntervals(sharedString, collection, [{ start: 5, /* start: 7, */ end: 9 }]);
+		assertIntervals(sharedString, collection, [{ start: 5, end: 9 }]);
 	});
 	it("restores an interval after two removes", () => {
 		sharedString.insertText(0, "hello world");
@@ -726,7 +716,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 		assert.equal(sharedString.getText(), "hello world");
-		assertIntervals(sharedString, collection, [{ /* start: 4, end: 9 */ start: 3, end: 6 }]);
+		assertIntervals(sharedString, collection, [{ start: 3, end: 6 }]);
 	});
 	it("reverts an ack'ed remove", () => {
 		sharedString.insertText(0, "hello world");
