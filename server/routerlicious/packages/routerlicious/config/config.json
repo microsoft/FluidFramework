@@ -52,7 +52,8 @@
 		"storageUrl": "http://gitrest:3000"
 	},
 	"checkpoints": {
-		"localCheckpointEnabled": true
+		"localCheckpointEnabled": true,
+        "checkpointsTTL": 864000
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",

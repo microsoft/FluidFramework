@@ -227,8 +227,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			},
 			false,
 		);
-
-		const checkpointsTTLSeconds = 60; // * 60 * 24 * 10
+        
+        const checkpointsTTLSeconds = config.get("checkpoints:checkpointsTTL");
 
 		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
 
