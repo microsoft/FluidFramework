@@ -611,6 +611,14 @@ function tryRemoveLineageEvent<T>(mark: Attach<T>, revisionToRemove: RevisionTag
 	}
 }
 
+/**
+ * Returns a number N which encodes how the cells of the two marks are aligned.
+ * - If N is zero, then the first cell of `baseMark` is the same as the first cell of `newMark`.
+ * - If N is positive, then the first N cells of `newMark` (or all its cells if N is greater than its length)
+ * are before the first cell of `baseMark`.
+ * - If N is negative, then the first N cells of `baseMark` (or all its cells if N is greater than its length)
+ * are before the first cell of `newMark`.
+ */
 function compareCellPositions(
 	baseRevision: RevisionTag | undefined,
 	baseMark: EmptyInputCellMark<unknown>,
@@ -624,8 +632,6 @@ function compareCellPositions(
 		return baseId.index - newId.index;
 	}
 
-	// TODO: Function should take in `reattachOffset` and use it to compute offsets.
-	// TODO: Reconcile indexes and offsets.
 	if (newId !== undefined) {
 		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
 		if (offsetInBase !== undefined) {
