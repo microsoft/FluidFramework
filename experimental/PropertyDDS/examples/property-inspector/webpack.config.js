@@ -51,9 +51,5 @@ module.exports = (env) => {
 		resolve: {
 			extensions: [".ts", ".tsx", ".js"],
 		},
-		experiments: {
-			asyncWebAssembly: true,
-			topLevelAwait: true
-		}
 	};
 };

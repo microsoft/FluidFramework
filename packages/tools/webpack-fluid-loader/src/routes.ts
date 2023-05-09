@@ -48,10 +48,6 @@ export function devServerConfig(baseDir: string, env: RouteOptions) {
 			onBeforeSetupMiddleware: (devServer) => before(devServer.app),
 			onAfterSetupMiddleware: (devServer) => after(devServer.app, devServer, baseDir, env),
 		},
-		experiments: {
-			asyncWebAssembly: true,
-			topLevelAwait: true
-		}
 	};
 }
 
