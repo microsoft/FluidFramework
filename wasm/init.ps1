@@ -33,12 +33,12 @@ rustup --version
 rustc --version
 
 Write-Host "Installing wasm-pack..."
-cargo install wasm-pack --version 0.10.2
+npm i wasm-pack@0.10.3 -g
+
+Write-Host "Installing wasm-opt..."
+npm i wasm-opt@1.4.0 -g
 
 Write-Host "Installing wasm-snip..."
 cargo install wasm-snip --version 0.4.0
-
-Write-Host "Installing wasm-opt..."
-cargo install wasm-opt --version 0.112.0
 
 Read-Host -Prompt "Press Enter to exit"
