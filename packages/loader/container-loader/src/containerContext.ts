@@ -15,6 +15,7 @@ import {
 	AttachState,
 	ILoaderOptions,
 	IRuntimeFactory,
+	IProvideRuntimeFactory,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IProvideFluidCodeDetailsComparer,
