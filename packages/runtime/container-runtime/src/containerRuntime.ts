@@ -2737,6 +2737,8 @@ export class ContainerRuntime
 				return { continue: true };
 			};
 
+			this._summarizer?.markSummaryAttempt?.(summaryRefSeqNum);
+
 			let continueResult = checkContinue();
 			if (!continueResult.continue) {
 				return {

@@ -275,6 +275,9 @@ export class SummaryGenerator {
 		// Use record type to prevent unexpected value types
 		let summaryData: SubmitSummaryResult | undefined;
 		try {
+			// Need to record before we record new attempt
+			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
+
 			summaryData = await this.submitSummaryCallback({
 				fullTree,
 				refreshLatestAck,
@@ -282,20 +285,13 @@ export class SummaryGenerator {
 				cancellationToken,
 			});
 
-			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
-
-			// Need to record before we record new attempt
-			const opsSinceLastAttempt =
-				referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber;
-
-			this.heuristicData.recordAttempt(referenceSequenceNumber);
-
 			// Cumulatively add telemetry properties based on how far generateSummary went.
+			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
 			summarizeTelemetryProps = {
 				...summarizeTelemetryProps,
 				referenceSequenceNumber,
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
-				opsSinceLastAttempt,
+				opsSinceLastAttempt: referenceSequenceNumber - lastAttemptRefSeqNum,
 				opsSinceLastSummary:
 					referenceSequenceNumber -
 					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
@@ -342,9 +338,6 @@ export class SummaryGenerator {
 		} catch (error) {
 			return fail("submitSummaryFailure", error);
 		} finally {
-			if (summaryData === undefined) {
-				this.heuristicData.recordAttempt();
-			}
 			this.summarizeTimer.clear();
 		}
 
