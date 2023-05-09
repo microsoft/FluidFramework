@@ -6,7 +6,7 @@
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 
 import type { ISameContainerMigrationTool } from "../migrationInterfaces";
 
@@ -237,7 +237,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Challenge here: ContainerRuntime only emits "op" for runtime ops, which doesn't include summaryAck.
 			// SummaryCollection's approach is to go listen to the deltaManager directly, which is gross but works.
 			// Alternatively could have ContainerRuntime emit some summaryAck event
-			const watchForV1Ack = (op) => {
+			const watchForV1Ack = (op: ISequencedDocumentMessage) => {
 				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
 				// random ack.  Probably means storing the PactMap accept sequence number and verifying the referenceSequenceNumber(?)
 				// of the summaryAck matches that.
@@ -257,7 +257,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Here we want to watch the quorum and resolve on the first sequenced proposal.
 			// This is also awkward because the only clean eventing is on the QuorumProposals itself, or the Container.
 			// For now, spying on the deltaManager and using insider knowledge about how the QuorumProposals works.
-			const watchForQuorumProposal = (op) => {
+			const watchForQuorumProposal = (op: ISequencedDocumentMessage) => {
 				// TODO: Also verify the proposal looks like what we expect
 				if (op.type === MessageType.Propose) {
 					// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
@@ -271,10 +271,30 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		});
 
 		this._quorumApprovalCompleteP = new Promise<void>((resolve) => {
-			// TODO implement
-			// Need to watch the quorum and track the final proposal, and resolve on the MSN advancing past its sequence number.
-			this._quorumApprovalComplete = true;
-			resolve();
+			// TODO implement for real
+			// Here we want to watch the quorum and track all proposals, and resolve on the MSN advancing past the last one's sequence number.
+			// This is even more awkward than the proposal tracking, because there is no event for proposal acceptance on the Container, only on the QuorumProposals.
+			// Again for now, spying on the deltaManager and using insider knowledge.
+			const proposalSequenceNumbers: number[] = [];
+			const watchForLastQuorumAccept = (op: ISequencedDocumentMessage) => {
+				// TODO: Also verify the proposals looks like what we expect
+				if (op.type === MessageType.Propose) {
+					proposalSequenceNumbers.push(op.sequenceNumber);
+				}
+				if (
+					proposalSequenceNumbers.length > 0 &&
+					proposalSequenceNumbers.every(
+						(sequenceNumber) => sequenceNumber <= op.minimumSequenceNumber,
+					)
+				) {
+					// TODO Is this also where I want to emit an internal state event of the proposal coming in to help with abort flows?
+					// Or maybe set that up in ensureQuorumCodeDetails().
+					this.context.deltaManager.off("op", watchForLastQuorumAccept);
+					this._quorumApprovalComplete = true;
+					resolve();
+				}
+			};
+			this.context.deltaManager.on("op", watchForLastQuorumAccept);
 		});
 
 		this._v2SummaryAckP = new Promise<void>((resolve) => {
