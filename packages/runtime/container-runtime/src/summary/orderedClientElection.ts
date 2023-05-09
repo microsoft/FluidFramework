@@ -416,7 +416,7 @@ export class OrderedClientElection
 			change = true;
 		}
 		if (change) {
-			if (isSummarizerClient) {
+			if (!isSummarizerClient) {
 				this.logger.sendTelemetryEvent({
 					eventName: "SummarizerClientElected",
 					electedClientId: this._electedClient?.clientId,
@@ -431,14 +431,12 @@ export class OrderedClientElection
 	private tryElectingParent(client: ILinkedClient | undefined, sequenceNumber: number): void {
 		if (this._electedParent !== client) {
 			this._electedParent = client;
-			if (client?.client.details.type === summarizerClientType) {
-				this.logger.sendTelemetryEvent({
-					eventName: "SummarizerParentElected",
-					electedClientId: this._electedClient?.clientId,
-					electedParentId: this._electedParent?.clientId,
-					electionSequenceNumber: sequenceNumber,
-				});
-			}
+			this.logger.sendTelemetryEvent({
+				eventName: "SummarizerParentElected",
+				electedClientId: this._electedClient?.clientId,
+				electedParentId: this._electedParent?.clientId,
+				electionSequenceNumber: sequenceNumber,
+			});
 			this.emit("election", this._electedClient, sequenceNumber, this._electedClient);
 		}
 	}
