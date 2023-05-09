@@ -41,4 +41,7 @@ npm i wasm-opt@1.4.0 -g
 Write-Host "Installing wasm-snip..."
 cargo install wasm-snip --version 0.4.0
 
+Write-Host "Installing twiggy..."
+cargo install twiggy
+
 Read-Host -Prompt "Press Enter to exit"
