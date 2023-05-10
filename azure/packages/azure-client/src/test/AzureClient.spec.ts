@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 // eslint-disable-next-line unicorn/prefer-node-protocol
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
