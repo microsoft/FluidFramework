@@ -14,6 +14,13 @@
 	"main": "dist/index.js",
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
+	"files": [
+		"dist/**",
+		"!dist/test/**",
+		"lib/**",
+		"src/**",
+		"!src/test/**"
+	],
 	"scripts": {
 		"bench": "mocha --recursive dist/test --timeout 999999 -r node_modules/@fluidframework/mocha-test-setup --perfMode --parentProcess --fgrep @Benchmark --reporter \"../../../node_modules/@fluid-tools/benchmark/dist/MochaReporter.js\"",
 		"build": "concurrently npm:build:compile npm:lint",
