@@ -35,7 +35,7 @@ describe("VisualTreeView component tests", () => {
 
 		render(<UnknownDataView node={input} />);
 
-		await screen.findByText(/Encountered an unrecognized kind of data object/); // Will throw if exact text not found
+		await screen.findByText(/Not supported/); // Will throw if exact text not found
 	});
 
 	// eslint-disable-next-line jest/expect-expect
