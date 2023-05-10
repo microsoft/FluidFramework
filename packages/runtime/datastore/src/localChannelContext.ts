@@ -37,7 +37,6 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime";
  * Channel context for a locally created channel
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
-	private _channel: IChannel | undefined;
 	private globallyVisible = false;
 	protected readonly pending: ISequencedDocumentMessage[] = [];
 	protected factory: IChannelFactory | undefined;
@@ -47,6 +46,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		protected readonly runtime: IFluidDataStoreRuntime,
 		protected readonly services: Lazy<ChannelServiceEndpoints>,
 		private readonly channelP: Promise<IChannel>,
+		private _channel?: IChannel,
 	) {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
@@ -300,6 +300,12 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	) {
+		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
+		const factory = registry.get(type);
+		if (factory === undefined) {
+			throw new Error(`Channel Factory ${type} not registered`);
+		}
+		const channel = factory.create(runtime, id);
 		super(
 			id,
 			registry,
@@ -314,14 +320,12 @@ export class LocalChannelContext extends LocalChannelContextBase {
 					logger,
 				);
 			}),
-			new Promise(() => this.channel),
+			Promise.resolve(channel),
+			channel,
 		);
-		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
-		this.factory = registry.get(type);
-		if (this.factory === undefined) {
-			throw new Error(`Channel Factory ${type} not registered`);
-		}
-		this.channel = this.factory.create(runtime, id);
+		this.channel = channel;
+		this.factory = factory;
+
 		this.dirtyFn = () => {
 			dirtyFn(id);
 		};
