@@ -392,7 +392,7 @@ export function inCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
 
 /**
  * Runs `f` inside of node `index` on `cursor`.
- * @param cursor - Cursor whoso node to enter and exit. Must be in `fields` mode.
+ * @param cursor - Cursor whose node to enter and exit. Must be in `fields` mode.
  * @param index - Node to enter.
  * @param f - Callback to run when in node.
  * @returns return value of `f`

@@ -25,7 +25,6 @@ import {
 import { brand } from "../../../util";
 import {
 	isPrimitive,
-	getOwnArrayKeys,
 	keyIsValidIndex,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
@@ -77,13 +76,6 @@ describe("editable-tree utilities", () => {
 		assert.deepEqual(primary, expectedPrimary);
 		assert(getPrimaryField(optionalChildSchema) === undefined);
 		assert(getPrimaryField(mapStringSchema) === undefined);
-	});
-
-	it("get array-like keys", () => {
-		assert.deepEqual(getOwnArrayKeys(1), Object.getOwnPropertyNames([""]));
-		assert.deepEqual(getOwnArrayKeys(0), Object.getOwnPropertyNames([]));
-		assert.deepEqual(getOwnArrayKeys(1), [...Object.keys([""]), "length"]);
-		assert.deepEqual(getOwnArrayKeys(0), [...Object.keys([]), "length"]);
 	});
 
 	it("key is a valid array index", () => {

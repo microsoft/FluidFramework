@@ -32,13 +32,7 @@ import {
 } from "../contextuallyTyped";
 import { sequence } from "../defaultFieldKinds";
 import { assertValidIndex } from "../../util";
-import {
-	AdaptingProxyHandler,
-	adaptWithProxy,
-	isPrimitive,
-	keyIsValidIndex,
-	getOwnArrayKeys,
-} from "./utilities";
+import { AdaptingProxyHandler, adaptWithProxy, isPrimitive, keyIsValidIndex } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
@@ -90,6 +84,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public readonly fieldKey: FieldKey;
 	public readonly [arrayLikeMarkerSymbol]: true;
 
+	// Used to override the default value of [Symbol.isConcatSpreadable].
+	private isSpreadable?: boolean;
+
 	public constructor(
 		context: ProxyContext,
 		public readonly fieldSchema: FieldStoredSchema,
@@ -135,8 +132,30 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 
 	[index: number]: UnwrappedEditableTree;
 
+	// This field controls if an array is inlined during concatenation.
+	public get [Symbol.isConcatSpreadable]() {
+		return this.isSpreadable ?? true;
+	}
+
+	public set [Symbol.isConcatSpreadable](value: boolean) {
+		this.isSpreadable = value;
+	}
+
 	public get length(): number {
 		return this.cursor.getFieldLength();
+	}
+
+	public set length(value: number) {
+		const count = this.length - value;
+
+		if (count > 0) {
+			this.deleteNodes(value, count);
+		} else if (count === 0) {
+		} else if (count < 0) {
+			throw new Error("Not supported. Use `insertNodes()` instead");
+		} else {
+			throw new RangeError("Invalid array length");
+		}
 	}
 
 	/**
@@ -273,21 +292,79 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	}
 }
 
-const editableFieldPropertySetWithoutLength = new Set<string>([
-	"fieldKey",
-	"fieldSchema",
-	"primaryType",
-	"parent",
-	"context",
-]);
 /**
  * The set of `EditableField` properties exposed by `fieldProxyHandler`.
  * Any other properties are considered to be non-existing.
  */
 const editableFieldPropertySet = new Set<string>([
 	"length",
-	...editableFieldPropertySetWithoutLength,
+	"fieldKey",
+	"fieldSchema",
+	"parent",
+	"context",
 ]);
+
+const propertyGetDispatch: Record<string | symbol, (...args: any[]) => any> = {
+	/* eslint-disable @typescript-eslint/unbound-method */
+
+	// Array
+	[Symbol.iterator]: (target: FieldProxyTarget) => target[Symbol.iterator].bind(target),
+	[Symbol.isConcatSpreadable]: (target: FieldProxyTarget) => target[Symbol.isConcatSpreadable],
+	// at: () => Array.prototype.at,			   			// TODO: Requires newer ES lib
+	forEach: () => Array.prototype.forEach,
+	concat: () => Array.prototype.concat,
+	every: () => Array.prototype.every,
+	filter: () => Array.prototype.filter,
+	find: () => Array.prototype.find,
+	findIndex: () => Array.prototype.findIndex,
+	// findLast: () => Array.prototype.findLast,   			// TODO: Requires newer ES lib
+	// findLastIndex: () => Array.prototype.findLastIndex,	// TODO: Requires newer ES lib
+	// flat: () => Array.prototype.flat, 					// TODO: Requires newer ES lib
+	// flatMap: () => Array.prototype.flatMap, 				// TODO: Requires newer ES lib
+	includes: () => Array.prototype.includes,
+	indexOf: () => Array.prototype.indexOf,
+	join: () => Array.prototype.join,
+	keys: () => Array.prototype.keys,
+	lastIndexOf: () => Array.prototype.lastIndexOf,
+	length: (target: FieldProxyTarget) => target.length,
+	map: () => Array.prototype.map,
+	push: () => Array.prototype.push,
+	slice: () => Array.prototype.slice,
+	reduce: () => Array.prototype.reduce,
+	reduceRight: () => Array.prototype.reduceRight,
+	some: () => Array.prototype.some,
+	// splice: () => Array.prototype.splice,				// TODO: Needs custom implementation
+	toLocaleString: () => Array.prototype.toLocaleString,
+	toString: () => Array.prototype.toString,
+	unshift: () => Array.prototype.unshift,
+	values: () => Array.prototype.values,
+	// with: () => Array.prototype.with,					// TODO: Requires newer ES lib
+
+	// EditableField
+	[proxyTargetSymbol]: (target: FieldProxyTarget) => target,
+	[arrayLikeMarkerSymbol]: () => true,
+	context: (target: FieldProxyTarget) => target.context,
+	deleteNodes: (target: FieldProxyTarget) => target.deleteNodes.bind(target),
+	fieldKey: (target: FieldProxyTarget) => target.fieldKey,
+	fieldSchema: (target: FieldProxyTarget) => target.fieldSchema,
+	getNode: (target: FieldProxyTarget) => target.getNode.bind(target),
+	insertNodes: (target: FieldProxyTarget) => target.insertNodes.bind(target),
+	moveNodes: (target: FieldProxyTarget) => target.moveNodes.bind(target),
+	parent: (target: FieldProxyTarget) => target.parent,
+	replaceNodes: (target: FieldProxyTarget) => target.replaceNodes.bind(target),
+
+	/* eslint-enable @typescript-eslint/unbound-method */
+};
+
+const propertySetDispatch: Record<string | symbol, (target: FieldProxyTarget, value: any) => void> =
+	{
+		length: (target, value) => {
+			target.length = value;
+		},
+		[Symbol.isConcatSpreadable]: (target, value) => {
+			target[Symbol.isConcatSpreadable] = value;
+		},
+	};
 
 /**
  * Returns a Proxy handler, which together with a {@link FieldProxyTarget} implements a basic read/write access to
@@ -295,33 +372,17 @@ const editableFieldPropertySet = new Set<string>([
  */
 const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> = {
 	get: (target: FieldProxyTarget, key: string | symbol, receiver: object): unknown => {
+		const fn = propertyGetDispatch[key];
+		if (fn !== undefined) {
+			return fn(target, receiver);
+		}
+
 		if (typeof key === "string") {
-			if (editableFieldPropertySet.has(key)) {
-				return Reflect.get(target, key);
-			} else if (keyIsValidIndex(key, target.length)) {
+			if (keyIsValidIndex(key, target.length)) {
 				return target.unwrappedTree(Number(key));
 			}
-			// This maps the methods of the `EditableField` to their implementation in the `FieldProxyTarget`.
-			// Expected are only the methods declared in the `EditableField` interface,
-			// as only those are visible for the users of the public API.
-			// Such implicit delegation is chosen for a future array implementation in case it will be needed.
-			const reflected = Reflect.get(target, key);
-			if (typeof reflected === "function") {
-				return function (...args: unknown[]): unknown {
-					return Reflect.apply(reflected, target, args);
-				};
-			}
-			return undefined;
 		}
-		switch (key) {
-			case proxyTargetSymbol:
-				return target;
-			case Symbol.iterator:
-				return target[Symbol.iterator].bind(target);
-			case arrayLikeMarkerSymbol:
-				return true;
-			default:
-		}
+
 		return undefined;
 	},
 	set: (
@@ -330,6 +391,12 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		value: ContextuallyTypedNodeData,
 		receiver: unknown,
 	): boolean => {
+		const fn = propertySetDispatch[key];
+		if (fn !== undefined) {
+			fn(target, value);
+			return true;
+		}
+
 		const cursor = cursorFromContextualData(
 			target.context.schema,
 			target.fieldSchema.types,
@@ -351,25 +418,18 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 	},
 	// Include documented symbols and all non-empty fields.
 	has: (target: FieldProxyTarget, key: string | symbol): boolean => {
-		if (typeof key === "symbol") {
-			switch (key) {
-				case Symbol.iterator:
-				case proxyTargetSymbol:
-				case arrayLikeMarkerSymbol:
-					return true;
-				default:
-			}
-		} else {
-			if (keyIsValidIndex(key, target.length) || editableFieldPropertySet.has(key)) {
-				return true;
-			}
+		if (key === Symbol.isConcatSpreadable) {
+			return false;
 		}
-		return false;
+
+		return (
+			Reflect.has(propertyGetDispatch, key) ||
+			(typeof key === "string" && keyIsValidIndex(key, target.length))
+		);
 	},
 	ownKeys: (target: FieldProxyTarget): ArrayLike<keyof EditableField> => {
-		// This includes 'length' property.
-		const keys: string[] = getOwnArrayKeys(target.length);
-		keys.push(...editableFieldPropertySetWithoutLength);
+		const keys: string[] = Array.from({ length: target.length }, (_, index) => `${index}`);
+		keys.push(...editableFieldPropertySet);
 		return keys as ArrayLike<keyof EditableField>;
 	},
 	getOwnPropertyDescriptor: (
@@ -393,6 +453,13 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 						configurable: true,
 						enumerable: false,
 						value: target[Symbol.iterator].bind(target),
+						writable: false,
+					};
+				case Symbol.isConcatSpreadable:
+					return {
+						configurable: true,
+						enumerable: false,
+						value: target[Symbol.isConcatSpreadable],
 						writable: false,
 					};
 				default:

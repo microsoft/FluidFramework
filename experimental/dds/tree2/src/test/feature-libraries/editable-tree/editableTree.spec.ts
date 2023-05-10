@@ -610,7 +610,6 @@ describe("editable-tree: read-only", () => {
 			"length",
 			"fieldKey",
 			"fieldSchema",
-			"primaryType",
 			"parent",
 			"context",
 		]);
