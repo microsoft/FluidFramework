@@ -125,7 +125,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
 		assert(
-			this.isLoaded && this._channel !== undefined,
+			this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,
 		);
 		return summarizeChannel(
