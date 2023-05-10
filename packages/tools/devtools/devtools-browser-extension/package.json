@@ -61,7 +61,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluentui/react": "^8.96.1",
+		"@fluentui/react": "^8.109.3",
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluid-experimental/devtools-view": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
@@ -109,7 +109,7 @@
 		"start-server-and-test": "^1.11.7",
 		"ts-loader": "^9.3.0",
 		"typescript": "~4.5.5",
-		"webpack": "^5.76.2",
+		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2"
 	},
 	"typeValidation": {

@@ -130,7 +130,7 @@
 		"@fluid-tools/build-cli": "^0.17.0",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.17.0",
-		"@fluidframework/test-tools": "^0.2.3074",
+		"@fluidframework/test-tools": "^0.2.158186",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@octokit/core": "^4.0.5",
@@ -165,7 +165,7 @@
 			"allowedVersions": {
 				"react": "17.0.2",
 				"react-dom": "17.0.2",
-				"webpack": "5.76.2"
+				"webpack": "5.82.0"
 			},
 			"ignoreMissing": [
 				"fluid-framework"
