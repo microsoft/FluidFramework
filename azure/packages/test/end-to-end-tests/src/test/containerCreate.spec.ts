@@ -18,7 +18,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 });
 
 describe("Container create scenarios", () => {
-	const connectTimeoutMs = 10000;
+	const connectTimeoutMs = 10_000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
 
