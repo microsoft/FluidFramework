@@ -71,6 +71,10 @@ describe("GC Telemetry Tracker", () => {
 		return tracker;
 	}
 
+	/**
+	 * For each node in nodeIds, add an entry in `unreferencedNodesState` indicating that the node was
+	 * just unreferenced.
+	 */
 	function markNodesUnreferenced(nodeIds: string[]) {
 		nodeIds.forEach((nodeId) => {
 			unreferencedNodesState.set(
@@ -107,6 +111,7 @@ describe("GC Telemetry Tracker", () => {
 		});
 	}
 
+	// Mock node revived activity for the given nodes.
 	function reviveNode(fromId: string, toId: string) {
 		telemetryTracker.nodeUsed({
 			nodeId: toId,
@@ -120,7 +125,11 @@ describe("GC Telemetry Tracker", () => {
 		unreferencedNodesState.delete(toId);
 	}
 
-	async function logAllEvents(isSummarizerClient: boolean) {
+	/**
+	 * For summarizer clients, inactive / sweep ready events are not logged when on node usage. They are logged when GC
+	 * runs next time. This emulates that by calling the functions in the telemetry tracker that are called when GC runs.
+	 */
+	async function generateAllEvents(isSummarizerClient: boolean) {
 		if (!isSummarizerClient) {
 			return;
 		}
@@ -151,35 +160,48 @@ describe("GC Telemetry Tracker", () => {
 		clock.restore();
 	});
 
-	const tests = (isSummarizerClient: boolean) => {
+	// Tests that are run once for summarizer client and once for interactive client.
+	const clientTypeTests = (isSummarizerClient: boolean) => {
+		/**
+		 * Filter the given events to what's expected and what's unexpected based on whether its a summarizer client.
+		 * For non-summarizer (interactive) clients, only Loaded events are logged.
+		 */
 		function filterEvents(events: Omit<ITelemetryBaseEvent, "category">[]) {
-			const filteredEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
+			const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
+			const unexpectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 			for (const event of events) {
 				const eventName = event.eventName as string;
+				// For non-summarizer clients, events that are not "Loaded" are unexpected.
 				if (!isSummarizerClient && !eventName.includes("Loaded")) {
-					continue;
+					unexpectedEvents.push(event);
+				} else {
+					expectedEvents.push(event);
 				}
-				filteredEvents.push(event);
 			}
-			return filteredEvents;
+			return { expectedEvents, unexpectedEvents };
 		}
 
+		/**
+		 * Asserts that the events are as expected based on whether its a summarizer client or not.
+		 */
 		function assertMatchEvents(
 			expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 			message: string,
 		) {
 			const filteredEvents = filterEvents(expectedEvents);
-			mockLogger.assertMatch(filteredEvents, message);
+			mockLogger.assertMatch(filteredEvents.expectedEvents, message);
+			mockLogger.assertMatchNone(filteredEvents.unexpectedEvents, message);
 		}
 
-		it("generates both inactive and sweep ready events when nodes are used after time out", async () => {
+		it("generates inactive and sweep ready events when nodes are used after time out", async () => {
 			telemetryTracker = createTelemetryTracker(true /* enable Sweep */, isSummarizerClient);
+			// Mark nodes 2 and 3 as unreferenced.
 			markNodesUnreferenced([nodes[2], nodes[3]]);
 
-			// Advance the clock to trigger inactive timeout and validate that we get inactive events.
+			// Advance the clock to trigger inactive timeout and validate that inactive events are as expected.
 			clock.tick(inactiveTimeoutMs + 1);
 			updateNodes(nodes);
-			await logAllEvents(isSummarizerClient);
+			await generateAllEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
 					{
@@ -206,10 +228,10 @@ describe("GC Telemetry Tracker", () => {
 				"inactive events not as expected",
 			);
 
-			// Advance the clock to trigger sweep timeout and validate that we get sweep ready events.
+			// Advance the clock to trigger sweep timeout and validate that sweep ready events are as expected.
 			clock.tick(sweepTimeoutMs - inactiveTimeoutMs);
 			updateNodes(nodes);
-			await logAllEvents(isSummarizerClient);
+			await generateAllEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
 					{
@@ -237,7 +259,8 @@ describe("GC Telemetry Tracker", () => {
 			);
 		});
 
-		const individualEventTests = (
+		/** Tests that validate either inactive or sweep events are logged as expected. */
+		const inactiveOrSweepEventTests = (
 			timeout: number,
 			mode: "inactive" | "sweep",
 			revivedEventName: string,
@@ -246,6 +269,7 @@ describe("GC Telemetry Tracker", () => {
 			expectDeleteLogs?: boolean,
 		) => {
 			const deleteEventName = "GarbageCollector:GCObjectDeleted";
+
 			// Validates that no unexpected event has been fired.
 			function validateNoUnexpectedEvents() {
 				mockLogger.assertMatchNone(
@@ -261,44 +285,43 @@ describe("GC Telemetry Tracker", () => {
 
 			beforeEach(() => {
 				telemetryTracker = createTelemetryTracker(
-					mode === "sweep" ? true : false,
+					mode === "sweep" ? true : false /* enableSweep */,
 					isSummarizerClient,
 				);
 			});
 
 			it("doesn't generate events for referenced nodes", async () => {
 				updateNodes(nodes);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 				validateNoUnexpectedEvents();
 
+				// Advance the clock to just before the timeout expires, update nodes and validate no events.
 				clock.tick(timeout - 1);
 				updateNodes(nodes);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 				validateNoUnexpectedEvents();
 
-				// Advance the clock to expire the timeout.
+				// Advance the clock to expire the timeout, update nodes and validate no events.
 				clock.tick(1);
-
-				// Update all nodes again. Validate that no unexpected events are generated since everything is referenced.
 				updateNodes(nodes);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 				validateNoUnexpectedEvents();
 			});
 
 			it("generates events for nodes that are used after inactive / sweep ready", async () => {
+				// Mark nodes 1 and 2 as unreferenced.
 				markNodesUnreferenced([nodes[1], nodes[2]]);
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
 				updateNodes(nodes);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 				validateNoUnexpectedEvents();
 
-				// Expire the timeout and validate that all events for node 1 and node 2 are logged.
+				// Expire the timeout, update nodes and validate that all events for node 1 and node 2 are logged.
 				clock.tick(1);
 				updateNodes(nodes);
-				await logAllEvents(isSummarizerClient);
-
+				await generateAllEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs && isSummarizerClient) {
 					expectedEvents.push(
@@ -343,8 +366,9 @@ describe("GC Telemetry Tracker", () => {
 				);
 				assertMatchEvents(expectedEvents, "all events not as expected");
 
+				// Revived node 2 and validate that revived event is as expected.
 				reviveNode(nodes[0], nodes[2]);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 				assertMatchEvents(
 					[
 						{
@@ -360,20 +384,20 @@ describe("GC Telemetry Tracker", () => {
 			});
 
 			it("generates events once per node", async () => {
-				// Remove node 3's reference from node 2.
+				// Mark node 2 as unreferenced.
 				markNodesUnreferenced([nodes[2]]);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
 				updateNodes(nodes);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 				validateNoUnexpectedEvents();
 
-				// Expire the timeout and validate that all events for node 3 are logged.
+				// Expire the timeout, updated nodes and validate that events are logged as expected.
 				clock.tick(1);
 				updateNodes(nodes);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs && isSummarizerClient) {
 					expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[2] });
@@ -391,18 +415,20 @@ describe("GC Telemetry Tracker", () => {
 
 				// Update all nodes again. There shouldn't be any more events since for each node the event is only once.
 				updateNodes(nodes);
-				await logAllEvents(isSummarizerClient);
+				await generateAllEvents(isSummarizerClient);
 				validateNoUnexpectedEvents();
 			});
 
+			// This test is only relevant for summarizer client because it does not log changed events if the node is revived.
 			if (isSummarizerClient) {
 				it("generates only revived event in summarizer when an inactive node is updated and revived", async () => {
+					// Mark node 2 as unreferenced.
 					markNodesUnreferenced([nodes[2]]);
 
 					// Advance the clock just before the timeout and validate no unexpected events are logged.
 					clock.tick(timeout - 1);
 					updateNodes(nodes);
-					await logAllEvents(isSummarizerClient);
+					await generateAllEvents(isSummarizerClient);
 
 					validateNoUnexpectedEvents();
 
@@ -410,7 +436,7 @@ describe("GC Telemetry Tracker", () => {
 					clock.tick(1);
 					updateNodes([nodes[2]]);
 					reviveNode(nodes[1], nodes[2]);
-					await logAllEvents(isSummarizerClient);
+					await generateAllEvents(isSummarizerClient);
 
 					for (const event of mockLogger.events) {
 						assert.notStrictEqual(
@@ -441,7 +467,7 @@ describe("GC Telemetry Tracker", () => {
 		};
 
 		describe("Inactive events", () => {
-			individualEventTests(
+			inactiveOrSweepEventTests(
 				inactiveTimeoutMs,
 				"inactive",
 				"GarbageCollector:InactiveObject_Revived",
@@ -455,7 +481,7 @@ describe("GC Telemetry Tracker", () => {
 				injectedSettings[disableSweepLogKey] = true;
 			});
 
-			individualEventTests(
+			inactiveOrSweepEventTests(
 				sweepTimeoutMs,
 				"sweep",
 				"GarbageCollector:SweepReadyObject_Revived",
@@ -467,7 +493,7 @@ describe("GC Telemetry Tracker", () => {
 
 		if (isSummarizerClient) {
 			describe("SweepReady events - with delete log", () => {
-				individualEventTests(
+				inactiveOrSweepEventTests(
 					sweepTimeoutMs,
 					"sweep",
 					"GarbageCollector:SweepReadyObject_Revived",
@@ -479,11 +505,11 @@ describe("GC Telemetry Tracker", () => {
 		}
 	};
 
-	describe("Summarizer container", () => {
-		tests(true);
+	describe("Summarizer client", () => {
+		clientTypeTests(true /* isSummarizerClient */);
 	});
 
-	describe("Interactive container", () => {
-		tests(false);
+	describe("Interactive client", () => {
+		clientTypeTests(false /* isSummarizerClient */);
 	});
 });
