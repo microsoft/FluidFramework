@@ -9,24 +9,16 @@ import { tokens } from "@fluentui/react-components";
 
 import { Primitive } from "@fluid-experimental/devtools-core";
 
+import { HasLabel } from "./CommonInterfaces";
+
 /**
  * Input props to {@link TreeHeader}
  */
-export interface TreeHeaderProps {
-	/**
-	 * Key of the child node from Record {@link VisauTree}.
-	 */
-	label: string;
-
+export interface TreeHeaderProps extends HasLabel {
 	/**
 	 * Type of the object.
 	 */
 	nodeTypeMetadata?: string | undefined;
-
-	/**
-	 * Nodekinds to filter rendering pattern in {@link TreeDataView}.
-	 */
-	nodeKind?: string;
 
 	/**
 	 * Size of the children inside the data.
@@ -43,7 +35,7 @@ export interface TreeHeaderProps {
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, nodeKind, itemSize, nodeValue } = props;
+	const { label, nodeTypeMetadata, itemSize, nodeValue } = props;
 
 	return nodeValue !== undefined ? (
 		<TreeItemLayout style={{ marginLeft: "25px" }}>
@@ -57,7 +49,7 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 		<TreeItemLayout>
 			{`${label === undefined ? nodeTypeMetadata : label}`}
 			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
-				({nodeTypeMetadata === undefined ? nodeKind : nodeTypeMetadata})
+				({nodeTypeMetadata === undefined ? "UNKNOWN" : nodeTypeMetadata})
 			</span>
 			{`${
 				itemSize === undefined

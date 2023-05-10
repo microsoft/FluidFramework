@@ -69,9 +69,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 				/>
 			);
 		default:
-			{
-				console.log("DevTools hit unknown data. This is NOT expected.");
-			}
+			console.log("DevTools hit unknown data. This is NOT expected.");
 			return <div>{`Unknown ${JSON.stringify(node)}`}</div>;
 	}
 }

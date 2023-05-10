@@ -4,13 +4,14 @@
  */
 
 import React from "react";
+
 // eslint-disable-next-line import/no-internal-modules
 import { Tree as FluentTree, TreeItem, TreeItemLayout } from "@fluentui/react-components/unstable";
 
 /**
  * Input to {@link Tree}
  */
-export type TreeProps = React.PropsWithChildren<{
+export interface TreeProps {
 	/**
 	 * Header label created by {@link TreeHeader}.
 	 */
@@ -19,8 +20,8 @@ export type TreeProps = React.PropsWithChildren<{
 	/**
 	 * List of child React Elements populated by recursion.
 	 */
-	children: React.ReactElement[];
-}>;
+	children?: React.ReactElement[];
+}
 
 /**
  * Outlays the React element populated by components in {@link TreeDataView}.
@@ -33,11 +34,8 @@ export function Tree(props: TreeProps): React.ReactElement {
 			<TreeItem>
 				<TreeItemLayout>{header}</TreeItemLayout>
 				<FluentTree aria-label="Sub-Tree">
-					{React.Children?.map(children, (child, index) => {
-						return (
-							// TODO: Wrap with <TreeItem>
-							<div key={index}>{child}</div>
-						);
+					{children?.map((child, index) => {
+						return <TreeItem key={index}>{child}</TreeItem>;
 					})}
 				</FluentTree>
 			</TreeItem>

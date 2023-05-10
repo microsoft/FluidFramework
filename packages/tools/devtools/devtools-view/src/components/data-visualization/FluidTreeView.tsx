@@ -32,7 +32,6 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 		<TreeHeader
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
-			nodeKind={node.nodeKind}
 			itemSize={node.metadata?.size}
 		/>
 	);

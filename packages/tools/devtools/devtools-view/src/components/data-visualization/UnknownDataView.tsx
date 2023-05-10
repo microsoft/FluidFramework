@@ -6,7 +6,9 @@ import React from "react";
 
 import { UnknownObjectNode } from "@fluid-experimental/devtools-core";
 
+import { Tree } from "../utility-components";
 import { DataVisalizationTreeProps } from "./CommonInterfaces";
+import { TreeHeader } from "./TreeHeader";
 
 /**
  * {@link UnknownDataView} input props.
@@ -17,7 +19,8 @@ export type UnknownDataViewProps = DataVisalizationTreeProps<UnknownObjectNode>;
  * Render data with type VisualNodeKind.UnknownObjectNode and render its children.
  */
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
-	const { node } = props;
+	const { label, node } = props;
 
-	return <div>{`Encountered an unrecognized kind of data object: ${node.nodeKind}`} </div>;
+	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
+	return <Tree header={header} />;
 }

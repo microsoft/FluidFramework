@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeItem } from "@fluentui/react-components/unstable";
 
 import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
 
+import { Tree } from "../utility-components";
 import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
 
@@ -22,10 +21,9 @@ export type FluidValueViewProps = DataVisalizationTreeProps<FluidObjectValueNode
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node } = props;
 
-	return (
-		// TODO: Remove TreeItem
-		<TreeItem>
-			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
-		</TreeItem>
+	const header = (
+		<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
 	);
+
+	return <Tree header={header} />;
 }

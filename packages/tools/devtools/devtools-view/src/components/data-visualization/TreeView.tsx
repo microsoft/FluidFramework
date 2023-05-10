@@ -31,7 +31,6 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 		<TreeHeader
 			label={label}
 			nodeTypeMetadata={node.typeMetadata}
-			nodeKind={node.nodeKind}
 			itemSize={node.metadata?.size}
 		/>
 	);
