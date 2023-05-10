@@ -44,7 +44,7 @@ There are several tools being used to facilitate Rust WASM development:
 
 **Note:** Due to wasm-snip, anything that depends on on text formatting (`std::fmt`) in rust should not be used as it will be snipped out and will result in a runtime error.
 
-### Typescript Development
+### TypeScript Development
 
 Run the build script in the root package.json to output WASM binaries of declared rust "glue" crates and build any typescript projects in the `typescript` directory.
 To build just typescript projects (without any rust changes), run `pnpm run build:ts`.
