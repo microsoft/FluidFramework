@@ -17,17 +17,22 @@ import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
+import { merge } from "../../objMerge";
 
 const type: TreeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 const tag4: RevisionTag = mintRevisionTag();
+const tag5: RevisionTag = mintRevisionTag();
+const tag6: RevisionTag = mintRevisionTag();
 const revInfos: RevisionInfo[] = [
 	{ revision: tag1 },
 	{ revision: tag2 },
 	{ revision: tag3 },
 	{ revision: tag4 },
+	{ revision: tag5 },
+	{ revision: tag6 },
 ];
 
 const defaultInsertId: ChangesetLocalId = brand(0);
@@ -868,8 +873,8 @@ describe("SequenceField - Compose", () => {
 		const detach2 = { revision: tag2, index: 0 };
 
 		const lineage = [{ revision: tag2, offset: 0 }];
-		const modify1 = Change.mutedModify(0, nodeChange1, detach1, lineage);
-		const modify2 = Change.mutedModify(0, nodeChange2, detach2);
+		const modify1 = Change.modifyDetached(0, nodeChange1, detach1, lineage);
+		const modify2 = Change.modifyDetached(0, nodeChange2, detach2);
 		const actual = shallowCompose([
 			tagChange(modify1, tag3),
 			tagChange(modify2, tag4),
@@ -895,8 +900,8 @@ describe("SequenceField - Compose", () => {
 		const detach2 = { revision: tag2, index: 0 };
 
 		const lineage = [{ revision: tag2, offset: 1 }];
-		const modify1 = Change.mutedModify(0, nodeChange1, detach1, lineage);
-		const modify2 = Change.mutedModify(0, nodeChange2, detach2);
+		const modify1 = Change.modifyDetached(0, nodeChange1, detach1, lineage);
+		const modify2 = Change.modifyDetached(0, nodeChange2, detach2);
 		const actual = shallowCompose([
 			tagChange(modify1, tag3),
 			tagChange(modify2, tag4),
@@ -922,16 +927,16 @@ describe("SequenceField - Compose", () => {
 		const detach2 = { revision: tag2, index: 0 };
 
 		const lineage = [{ revision: tag2, offset: 0 }];
-		const modify1 = Change.mutedModify(0, nodeChange1, detach2);
-		const modify2 = Change.mutedModify(0, nodeChange2, detach1, lineage);
+		const modify1 = Change.modifyDetached(0, nodeChange1, detach2);
+		const modify2 = Change.modifyDetached(0, nodeChange2, detach1, lineage);
 		const actual = shallowCompose([
 			tagChange(modify1, tag3),
 			tagChange(modify2, tag4),
 		]);
 
 		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange2, detachEvent: detach2 },
-			{ type: "Modify", changes: nodeChange1, detachEvent: detach1, lineage },
+			{ type: "Modify", changes: nodeChange2, detachEvent: detach1, lineage },
+			{ type: "Modify", changes: nodeChange1, detachEvent: detach2 },
 		];
 
 		assert.deepEqual(actual, expected);
@@ -949,16 +954,33 @@ describe("SequenceField - Compose", () => {
 		const detach2 = { revision: tag2, index: 0 };
 
 		const lineage = [{ revision: tag2, offset: 1 }];
-		const modify1 = Change.mutedModify(0, nodeChange1, detach2);
-		const modify2 = Change.mutedModify(0, nodeChange2, detach1, lineage);
+		const modify1 = Change.modifyDetached(0, nodeChange1, detach2);
+		const modify2 = Change.modifyDetached(0, nodeChange2, detach1, lineage);
 		const actual = shallowCompose([
 			tagChange(modify1, tag3),
 			tagChange(modify2, tag4),
 		]);
 
 		const expected: SF.Changeset<string> = [
-			{ type: "Modify", changes: nodeChange1, detachEvent: detach1, lineage },			
-			{ type: "Modify", changes: nodeChange2, detachEvent: detach2 },			
+			{ type: "Modify", changes: nodeChange1, detachEvent: detach2 },			
+			{ type: "Modify", changes: nodeChange2, detachEvent: detach1, lineage },			
+		];
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("adjacent blocked revives", () => {
+		const lineage = [{ revision: tag2, offset: 1 }];
+		const revive1 = Change.blockedRevive(0, 5, tag1, tag2);
+		const revive2 = Change.blockedRevive(0, 4, tag3, tag4, undefined, undefined, lineage);
+		const actual = shallowCompose([
+			tagChange(revive1, tag5),
+			tagChange(revive2, tag6),
+		]);
+
+		const expected: SF.Changeset<never> = [
+			{ type: "Revive", revision: tag5, count: 5, content: fakeRepair(tag1, 0, 5), detachEvent: { revision: tag2, index: 0 }, inverseOf: tag1 },
+			{ type: "Revive", revision: tag6, count: 4, content: fakeRepair(tag3, 0, 4), detachEvent: { revision: tag4, index: 0 }, inverseOf: tag3, lineage },
 		];
 
 		assert.deepEqual(actual, expected);

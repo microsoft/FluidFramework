@@ -129,6 +129,7 @@ function createBlockedReviveChangeset(
 	lastDetachedBy: RevisionTag,
 	lastDetachIndex?: number,
 	reviver = fakeRepair,
+	lineage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
 		startIndex,
@@ -139,6 +140,9 @@ function createBlockedReviveChangeset(
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 	mark.detachEvent = { revision: lastDetachedBy, index: lastDetachIndex ?? startIndex };
+	if (lineage !== undefined) {
+		mark.lineage = lineage;
+	}
 	return markList;
 }
 

@@ -635,8 +635,8 @@ function compareCellPositions(
 	cancelledInserts: Set<RevisionTag>,
 	gapTracker: GapTracker,
 ): number {
-	const newId = getCellId(newMark, newRevision);
-	if (baseCellId.revision === newId?.revision) {
+	const newCellId = getCellId(newMark, newRevision);
+	if (baseCellId.revision === newCellId?.revision) {
 		if (isNewAttach(newMark)) {
 			// There is some change foo that is being cancelled out as part of a rebase sandwich.
 			// The marks that make up this change (and its inverse) may be broken up differently between the base
@@ -649,13 +649,27 @@ function compareCellPositions(
 			// cell. This means we can safely treat them as inverses of one another.
 			return 0;
 		}
-		return baseCellId.index - newId.index;
+		return baseCellId.index - newCellId.index;
+	}
+
+	if (newCellId !== undefined) {
+		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newCellId.revision);
+		if (offsetInBase !== undefined) {
+			const newOffset = gapTracker.getOffset(newCellId.revision);
+			
+			// `newOffset` refers to the index of `newMark`'s first cell within the adjacent cells detached in `newCellId.revision`.
+			// `offsetInBase` refers to the index of the position between those detached cells where `baseMark`'s cells would be.			
+			// Note that `baseMark`'s cells were not detached in `newCellId.revision`, as that case is handled above.
+			// Therefore, when `offsetInBase === newOffset` `baseMark`'s cells come before `newMark`'s cells,
+			// as the nth position between detached cells is before the nth detached cell.
+			return offsetInBase <= newOffset ? -Infinity : Infinity;
+		}	
 	}
 
 	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseCellId.revision);
 	if (offsetInNew !== undefined) {
 		const baseOffset = gapTracker.getOffset(baseCellId.revision);
-		return offsetInNew <= baseOffset ? Infinity : baseOffset - offsetInNew;
+		return offsetInNew <= baseOffset ? Infinity : -Infinity;
 	}
 
 	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
