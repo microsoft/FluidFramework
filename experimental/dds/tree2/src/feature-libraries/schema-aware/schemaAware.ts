@@ -266,7 +266,7 @@ export type TypedNode<
 /**
  * Generate a schema aware API for a single tree schema.
  * @alpha
- * @deprecated Use `TypedNode` instead (and revers the type parameter order).
+ * @deprecated Use `TypedNode` instead (and reverse the type parameter order).
  */
 export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<
 	TSchema,
