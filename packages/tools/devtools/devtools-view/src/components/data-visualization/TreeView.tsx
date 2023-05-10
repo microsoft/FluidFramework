@@ -8,16 +8,14 @@ import React from "react";
 import { HasContainerId, VisualTreeNode } from "@fluid-experimental/devtools-core";
 
 import { Tree } from "../utility-components";
-import { HasLabel } from "./CommonInterfaces";
+import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";
 
 /**
  * {@link TreeView} input props.
  */
-export interface TreeViewProps extends HasContainerId, HasLabel {
-	node: VisualTreeNode;
-}
+export interface TreeViewProps extends HasContainerId, DataVisalizationTreeProps<VisualTreeNode> {}
 
 /**
  * Render data with type VisualNodeKind.TreeNode and render its children.

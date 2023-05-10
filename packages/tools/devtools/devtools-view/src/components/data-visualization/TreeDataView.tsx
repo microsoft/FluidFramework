@@ -4,9 +4,9 @@
  */
 import React from "react";
 
-import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-experimental/devtools-core";
+import { HasContainerId, VisualNodeKind } from "@fluid-experimental/devtools-core";
 
-import { HasLabel } from "./CommonInterfaces";
+import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { FluidHandleView } from "./FluidHandleView";
 import { TreeView } from "./TreeView";
 import { FluidTreeView } from "./FluidTreeView";
@@ -18,9 +18,7 @@ import { UnknownDataView } from "./UnknownDataView";
 /**
  * {@link TreeDataView} input props.
  */
-export interface TreeDataViewProps extends HasContainerId, HasLabel {
-	node: VisualNode;
-}
+export interface TreeDataViewProps extends HasContainerId, DataVisalizationTreeProps {}
 
 /**
  * Displays visual summary trees for DDS_s within the container based on the current node's type.
@@ -53,12 +51,12 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		 * Unknown data type.
 		 */
 		case VisualNodeKind.UnknownObjectNode:
-			return <UnknownDataView node={node} />;
+			return <UnknownDataView label={label} node={node} />;
 		/**
 		 * Unknown SharedObject data type.
 		 */
 		case VisualNodeKind.FluidUnknownObjectNode:
-			return <UnknownFluidObjectView node={node} />;
+			return <UnknownFluidObjectView label={label} node={node} />;
 		/**
 		 * POST request to FluidClientDebugger.
 		 */

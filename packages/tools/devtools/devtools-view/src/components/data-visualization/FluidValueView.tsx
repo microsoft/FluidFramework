@@ -8,15 +8,13 @@ import { TreeItem } from "@fluentui/react-components/unstable";
 
 import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
 
-import { HasLabel } from "./CommonInterfaces";
+import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
 
 /**
  * {@link ValueView} input props.
  */
-export interface FluidValueViewProps extends HasLabel {
-	node: FluidObjectValueNode;
-}
+export type FluidValueViewProps = DataVisalizationTreeProps<FluidObjectValueNode>;
 
 /**
  * Render data with type VisualNodeKind.FluidValueNode and render its children.

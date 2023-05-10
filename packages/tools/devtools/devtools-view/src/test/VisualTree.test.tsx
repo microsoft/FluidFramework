@@ -33,7 +33,7 @@ describe("VisualTreeView component tests", () => {
 			nodeKind: VisualNodeKind.UnknownObjectNode,
 		};
 
-		render(<UnknownDataView node={input} />);
+		render(<UnknownDataView label="test-label" node={input} />);
 
 		await screen.findByText(/Encountered an unrecognized kind of data object/); // Will throw if exact text not found
 	});

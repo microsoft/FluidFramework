@@ -6,12 +6,12 @@ import React from "react";
 
 import { UnknownObjectNode } from "@fluid-experimental/devtools-core";
 
+import { DataVisalizationTreeProps } from "./CommonInterfaces";
+
 /**
  * {@link UnknownDataView} input props.
  */
-export interface UnknownDataViewProps {
-	node: UnknownObjectNode;
-}
+export type UnknownDataViewProps = DataVisalizationTreeProps<UnknownObjectNode>;
 
 /**
  * Render data with type VisualNodeKind.UnknownObjectNode and render its children.
