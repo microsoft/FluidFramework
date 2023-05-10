@@ -290,6 +290,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		private readonly checkpointService: ICheckpointService,
+		private readonly restartOnCheckpointFailure: boolean,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -430,7 +431,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.updateCheckpointMessages(rawMessage);
 
 			if (this.checkpointInfo.currentKafkaCheckpointMessage) {
-				this.context.checkpoint(this.checkpointInfo.currentKafkaCheckpointMessage);
+				this.context.checkpoint(
+					this.checkpointInfo.currentKafkaCheckpointMessage,
+					this.restartOnCheckpointFailure,
+				);
 			}
 
 			return undefined;
@@ -1891,7 +1895,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				if (reason === CheckpointReason.ClearCache) {
 					checkpointParams.clear = true;
 				}
-				void this.checkpointContext.checkpoint(checkpointParams);
+				void this.checkpointContext.checkpoint(
+					checkpointParams,
+					this.restartOnCheckpointFailure,
+				);
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
 				const checkpointResult = `Writing checkpoint. Reason: ${checkpointReason}`;
 				const lumberjackProperties = {
