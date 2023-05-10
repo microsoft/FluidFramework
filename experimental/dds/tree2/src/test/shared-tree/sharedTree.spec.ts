@@ -26,6 +26,7 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
+	insert,
 } from "../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import {
@@ -2348,11 +2349,6 @@ function initializeTestTree(
 	}
 }
 
-const testValueSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	value: ValueSchema.Serializable,
-});
-
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory();
 	const builder = new SchemaBuilder("testTreeView");
@@ -2403,25 +2399,6 @@ function getTestValues({ forest }: ISharedTreeView): TreeValue[] {
 	}
 	readCursor.free();
 	return values;
-}
-
-/**
- * Helper function to insert node at a given index.
- *
- * TODO: delete once the JSON editing API is ready for use.
- *
- * @param tree - The tree on which to perform the insert.
- * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted node.
- */
-function insert(tree: ISharedTreeView, index: number, ...values: TreeValue[]): void {
-	runSynchronous(tree, () => {
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-		const nodes = values.map((value) =>
-			singleTextCursor({ type: testValueSchema.name, value }),
-		);
-		field.insert(index, nodes);
-	});
 }
 
 function remove(tree: ISharedTree, index: number, count: number): void {

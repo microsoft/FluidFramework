@@ -18,7 +18,7 @@ import {
 } from "../../feature-libraries";
 import { jsonNumber, jsonSchema } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
-import { toJsonableTree } from "../utils";
+import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
@@ -385,6 +385,27 @@ describe("SharedTree benchmarks", () => {
 				},
 				// Force batch size of 1
 				minBatchDurationSeconds: 0,
+			});
+		}
+	});
+
+	describe("acking local commits", () => {
+		const localCommitSize = [1, 25, 100, 500, 1000];
+		for (const size of localCommitSize) {
+			benchmark({
+				type: BenchmarkType.Measurement,
+				title: `for ${size} local commit${size === 1 ? "" : "s"}`,
+				benchmarkFn: () => {
+					const provider = new TestTreeProviderLite();
+					const [tree] = provider.trees;
+					for (let i = 0; i < size; i++) {
+						insert(tree, i, i);
+					}
+
+					for (let i = 0; i < size; i++) {
+						provider.processMessages(1);
+					}
+				},
 			});
 		}
 	});

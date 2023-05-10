@@ -31,7 +31,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory, runSynchronous } from "../shared-tree";
 import {
 	defaultChangeFamily,
 	DefaultChangeset,
@@ -67,6 +67,8 @@ import {
 	FieldKey,
 	IRepairDataStoreProvider,
 	UndoRedoManager,
+	TreeValue,
+	ValueSchema,
 } from "../core";
 import { brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
@@ -629,4 +631,28 @@ export function makeEncodingTestSuite<TDecoded>(
 			}
 		});
 	}
+}
+
+const testValueSchema = namedTreeSchema({
+	name: brand("TestValue"),
+	value: ValueSchema.Serializable,
+});
+
+/**
+ * Helper function to insert node at a given index.
+ *
+ * TODO: delete once the JSON editing API is ready for use.
+ *
+ * @param tree - The tree on which to perform the insert.
+ * @param index - The index in the root field at which to insert.
+ * @param value - The value of the inserted node.
+ */
+export function insert(tree: ISharedTreeView, index: number, ...values: TreeValue[]): void {
+	runSynchronous(tree, () => {
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		const nodes = values.map((value) =>
+			singleTextCursor({ type: testValueSchema.name, value }),
+		);
+		field.insert(index, nodes);
+	});
 }
