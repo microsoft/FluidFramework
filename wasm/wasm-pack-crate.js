@@ -1,19 +1,17 @@
-// TODO: Good error messages
-// TODO: Print out wasm-pack output as it is produced rather than after it finishes
-// TODO: Optional properties with good error messages/warnings
-// TODO: Name and version aren't optional
-// TODO: Good usage message if invoked incorrectly
-
 const path = require("node:path");
 const fs = require("fs");
 const toml = require("toml");
-const child_process = require("child_process");
+const { execSync } = require("child_process");
 const rimraf = require("rimraf");
 
 const webPackagesPath = path.resolve("./web-packages");
 
 const package = process.argv[2];
 const mode_arg = process.argv[3];
+if (package === undefined || mode_arg === undefined) {
+	throw new Error("Usage: node wasm-pack-crate.js <package> <mode>");
+}
+
 let debug;
 if (mode_arg === "--debug") {
 	debug = true;
@@ -23,10 +21,18 @@ if (mode_arg === "--debug") {
 	throw new Error("Must specify --debug or --release");
 }
 
+function readFileOrError(fileName) {
+	try {
+		return fs.readFileSync(fileName, "utf-8");
+	} catch {
+		throw new Error(`File ${fileName} not found`);
+	}
+}
+
 const name = path.basename(package);
-const subTomlData = fs.readFileSync(path.join(package, "Cargo.toml"), "utf-8");
+const subTomlData = readFileOrError(path.join(package, "Cargo.toml"));
 const parsedSubToml = toml.parse(subTomlData);
-const existingPackageJsonTemplateData = fs.readFileSync("package-combo-template.json", "utf-8");
+const existingPackageJsonTemplateData = readFileOrError("package-combo-template.json");
 const parsedJson = JSON.parse(existingPackageJsonTemplateData);
 const outputJsonPath = path.join(webPackagesPath, package, "package.json");
 const nameWithUnderscores = name.replace(/-/g, "_");
@@ -35,16 +41,24 @@ const webFolderName = "bundler";
 const nodeFolderName = "nodejs";
 const webEntryName = "entry";
 
+if (parsedSubToml.package.name === undefined) {
+	throw new Error("Cargo.toml must have a name");
+}
+
+if (parsedSubToml.package.description === undefined) {
+	throw new Error("Cargo.toml must have a description");
+}
+
+if (parsedSubToml.package.version === undefined) {
+	throw new Error("Cargo.toml must have a version");
+}
+
 parsedJson.name = `@fluidframework/${parsedSubToml.package.name}`;
+parsedJson.description = parsedSubToml.package.description;
 parsedJson.module = `./${webFolderName}/${webEntryName}.js`;
 parsedJson.types = `./${nodeFolderName}/${nameWithUnderscores}.d.ts`;
 parsedJson.main = `./${nodeFolderName}/${nameWithUnderscores}.js`;
 parsedJson.version = parsedSubToml.package.version;
-if (parsedSubToml.package.description !== undefined) {
-	parsedJson.description = parsedSubToml.package.description;
-} else {
-	delete parsedJson.description;
-}
 
 parsedJson.files = [
 	`/${nodeFolderName}/${nameWithUnderscores}_bg.wasm`,
@@ -61,7 +75,7 @@ parsedJson.sideEffects = [`./${webFolderName}/${nameWithUnderscores}.js`];
 function build(target) {
 	const pathname = path.join(webPackagesPath, name, target);
 
-	child_process.execSync(
+	execSync(
 		`wasm-pack build ${
 			debug ? "--debug" : ""
 		} --target ${target} --out-dir ${pathname} ${package}`,
@@ -69,11 +83,11 @@ function build(target) {
 
 	const output_path = path.join(pathname, `${nameWithUnderscores}_bg.wasm`);
 
-	child_process.execSync(
+	execSync(
 		`wasm-snip ${output_path} --snip-rust-fmt-code --snip-rust-panicking-code -o ${output_path}`,
 	);
 
-	child_process.execSync(
+	execSync(
 		`wasm-opt -O2 --enable-mutable-globals -o ${output_path} ${output_path}`,
 	);
 }
