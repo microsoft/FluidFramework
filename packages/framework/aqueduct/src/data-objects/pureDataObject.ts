@@ -171,6 +171,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * @param directory - directory containing the object
 	 * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
 	 * define custom types/getters for object retrieval
+	 *
+	 * @deprecated - 2.0.0-internal.4.3.0 - Will be removed in an upcoming release.
 	 */
 	public async getFluidObjectFromDirectory<T extends IFluidLoadable>(
 		key: string,

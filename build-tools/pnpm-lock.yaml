@@ -22,8 +22,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/test-tools':
-        specifier: ^0.2.3074
-        version: 0.2.3074
+        specifier: ^0.2.158186
+        version: 0.2.158186
       '@microsoft/api-documenter':
         specifier: ^7.21.6
         version: 7.21.6
@@ -1303,8 +1303,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/test-tools@0.2.3074:
-    resolution: {integrity: sha512-ZRSSKPXMm/ni/hDztf38GMBtzFez0Q9XXaY5abd2rQz76A3wIK+yzQerTqnZYBnwrzGwZi22Ne1FXND1JeFMZA==}
+  /@fluidframework/test-tools@0.2.158186:
+    resolution: {integrity: sha512-PwO7X/Kg46befSo28mSuef95/fQUmfOFWmoY1FdWAMz+6srX4o/8B4KVaKQ/3nmFD5a/PQHYHqyzAxWiFZYpfQ==}
     hasBin: true
     dev: true
 
