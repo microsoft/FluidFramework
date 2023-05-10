@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
+import { LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
@@ -867,22 +867,16 @@ export class GarbageCollector implements IGarbageCollector {
 			return undefined;
 		}
 
-		// Find any references that haven't been identified correctly.
-		const missingExplicitReferences = this.findMissingExplicitReferences(
+		/**
+		 * If there are references that were not explicitly notified to GC, log an error because this should never happen.
+		 * If it does, this may result in the unreferenced timestamps of these nodes not updated when they were referenced.
+		 */
+		this.telemetryTracker.logIfMissingExplicitReferences(
 			currentGCData,
 			previousGCData,
 			this.newReferencesSinceLastRun,
+			logger,
 		);
-
-		if (missingExplicitReferences.length > 0) {
-			missingExplicitReferences.forEach((missingExplicitReference) => {
-				logger.sendErrorEvent({
-					eventName: "gcUnknownOutboundReferences",
-					gcNodeId: missingExplicitReference[0],
-					gcRoutes: JSON.stringify(missingExplicitReference[1]),
-				});
-			});
-		}
 
 		// No references were added since the last run so we don't have to update reference states of any unreferenced
 		// nodes. There is no in between state at this point.
@@ -929,64 +923,6 @@ export class GarbageCollector implements IGarbageCollector {
 			...newOutboundRoutesSinceLastRun,
 		]);
 		return gcResult.referencedNodeIds;
-	}
-
-	/**
-	 * Finds all new references or outbound routes in the current graph that haven't been explicitly notified to GC.
-	 * The principle is that every new reference or outbound route must be notified to GC via the
-	 * addedOutboundReference method. It it hasn't, its a bug and we want to identify these scenarios.
-	 *
-	 * In more simple terms:
-	 * Missing Explicit References = Current References - Previous References - Explicitly Added References;
-	 *
-	 * @param currentGCData - The GC data (reference graph) from the current GC run.
-	 * @param previousGCData - The GC data (reference graph) from the previous GC run.
-	 * @param explicitReferences - New references added explicity between the previous and the current run.
-	 * @returns - a list of missing explicit references
-	 */
-	private findMissingExplicitReferences(
-		currentGCData: IGarbageCollectionData,
-		previousGCData: IGarbageCollectionData,
-		explicitReferences: Map<string, string[]>,
-	): [string, string[]][] {
-		assert(
-			previousGCData !== undefined,
-			0x2b7 /* "Can't validate correctness without GC data from last run" */,
-		);
-
-		const currentGraph = Object.entries(currentGCData.gcNodes);
-		const missingExplicitReferences: [string, string[]][] = [];
-		currentGraph.forEach(([nodeId, currentOutboundRoutes]) => {
-			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
-			const explicitRoutes = explicitReferences.get(nodeId) ?? [];
-			const missingExplicitRoutes: string[] = [];
-
-			/**
-			 * 1. For routes in the current GC data, routes that were not present in previous GC data and did not have
-			 * explicit references should be added to missing explicit routes list.
-			 * 2. Only include data store and blob routes since GC only works for these two.
-			 * Note: Due to a bug with de-duped blobs, only adding data store routes for now.
-			 * 3. Ignore DDS routes to their parent datastores since those were added implicitly. So, there won't be
-			 * explicit routes to them.
-			 */
-			currentOutboundRoutes.forEach((route) => {
-				const nodeType = this.runtime.getNodeType(route);
-				if (
-					(nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob) &&
-					!nodeId.startsWith(route) &&
-					!previousRoutes.includes(route) &&
-					!explicitRoutes.includes(route)
-				) {
-					missingExplicitRoutes.push(route);
-				}
-			});
-			if (missingExplicitRoutes.length > 0) {
-				missingExplicitReferences.push([nodeId, missingExplicitRoutes]);
-			}
-		});
-
-		// Ideally missingExplicitReferences should always have a size 0
-		return missingExplicitReferences;
 	}
 
 	/**

@@ -4,6 +4,7 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
 	generateStack,
@@ -205,6 +206,59 @@ export class GCTelemetryTracker {
 		}
 	}
 
+	/**
+	 * Log all new references or outbound routes in the current graph that haven't been explicitly notified to GC.
+	 * The principle is that every new reference or outbound route must be notified to GC via the
+	 * addedOutboundReference method. It it hasn't, its a bug and we want to identify these scenarios.
+	 *
+	 * In more simple terms:
+	 * Missing Explicit References = Current References - Previous References - Explicitly Added References;
+	 *
+	 * @param currentGCData - The GC data (reference graph) from the current GC run.
+	 * @param previousGCData - The GC data (reference graph) from the previous GC run.
+	 * @param explicitReferences - New references added explicity between the previous and the current run.
+	 */
+	public logIfMissingExplicitReferences(
+		currentGCData: IGarbageCollectionData,
+		previousGCData: IGarbageCollectionData,
+		explicitReferences: Map<string, string[]>,
+		logger: ITelemetryLogger,
+	) {
+		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
+			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
+			const explicitRoutes = explicitReferences.get(nodeId) ?? [];
+
+			/**
+			 * 1. For routes in the current GC data, routes that were not present in previous GC data and did not have
+			 * explicit references should be added to missing explicit routes list.
+			 * 2. Only include data store and blob routes since GC only works for these two.
+			 * Note: Due to a bug with de-duped blobs, only adding data store routes for now.
+			 * 3. Ignore DDS routes to their parent datastores since those were added implicitly. So, there won't be
+			 * explicit routes to them.
+			 */
+			const missingExplicitRoutes: string[] = [];
+			for (const route of currentOutboundRoutes) {
+				const nodeType = this.getNodeType(route);
+				if (
+					(nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob) &&
+					!nodeId.startsWith(route) &&
+					!previousRoutes.includes(route) &&
+					!explicitRoutes.includes(route)
+				) {
+					missingExplicitRoutes.push(route);
+				}
+			}
+
+			if (missingExplicitRoutes.length > 0) {
+				logger.sendErrorEvent({
+					eventName: "gcUnknownOutboundReferences",
+					gcNodeId: nodeId,
+					gcRoutes: JSON.stringify(missingExplicitRoutes),
+				});
+			}
+		}
+	}
+
 	public async logUnreferencedEvents(logger: ITelemetryLogger) {
 		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
 		// summary time they are then logged.
@@ -267,7 +321,7 @@ export class GCTelemetryTracker {
 			return;
 		}
 
-		unreferencedNodesState.forEach((nodeStateTracker, nodeId) => {
+		for (const [nodeId, nodeStateTracker] of unreferencedNodesState) {
 			if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
 				return;
 			}
@@ -293,6 +347,6 @@ export class GCTelemetryTracker {
 				lastSummaryTime,
 				...this.createContainerMetadata,
 			});
-		});
+		}
 	}
 }
