@@ -9,7 +9,6 @@
 
 import {
 	ApiMode,
-	NodeDataFor,
 	AllowedTypesToTypedTrees,
 	TypedNode,
 	EditableField,
@@ -165,10 +164,10 @@ type FlexNumber =
 
 // Test terminal cases:
 {
-	type F = NodeDataFor<ApiMode.Flexible, typeof numberSchema>;
+	type F = TypedNode<typeof numberSchema, ApiMode.Flexible>;
 	type E = TypedNode<typeof numberSchema>;
-	type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof numberSchema>;
-	type S = NodeDataFor<ApiMode.Simple, typeof numberSchema>;
+	type Eu = TypedNode<typeof numberSchema, ApiMode.EditableUnwrapped>;
+	type S = TypedNode<typeof numberSchema, ApiMode.Simple>;
 	type _check1 = requireTrue<areSafelyAssignable<F, FlexNumber>>;
 	type _check2 = requireAssignableTo<E, UntypedTreeCore>;
 	type _check3 = requireTrue<areSafelyAssignable<Eu, number>>;
