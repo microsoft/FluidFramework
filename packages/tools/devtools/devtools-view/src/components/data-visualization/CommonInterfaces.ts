@@ -4,7 +4,7 @@
  */
 
 /**
- * Base interface used in passing key of the child node from Record {@link VisaulTree}
+ * Base interface used in passing key of the child node from Record {@link VisualTree}
  *
  * @public
  */
