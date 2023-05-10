@@ -652,6 +652,8 @@ export class ContainerRuntime
 		containerRuntimeCtor?: typeof ContainerRuntime;
 		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
+		await import("@fluidframework/client-wasm");
+
 		const {
 			context,
 			registryEntries,

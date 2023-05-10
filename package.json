@@ -159,6 +159,7 @@
 			"@types/node": "^14.18.38",
 			"node-fetch": "^2.6.9",
 			"qs": "^6.11.0",
+			"@fluidframework/client-wasm": "/workspaces/FluidFramework/wasm/web-packages/client-wasm",
 			"@fluid-experimental/arithmetic": "/workspaces/FluidFramework/wasm/typescript/arithmetic"
 		},
 		"peerDependencyRules": {
