@@ -82,8 +82,6 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     protected readonly socket: Socket;
     submit(messages: IDocumentMessage[]): void;
-    // (undocumented)
-    protected submitCore(type: string, messages: IDocumentMessage[]): void;
     submitSignal(message: IDocumentMessage): void;
     get version(): string;
 }

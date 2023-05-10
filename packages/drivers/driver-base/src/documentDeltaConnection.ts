@@ -315,10 +315,6 @@ export class DocumentDeltaConnection
 		}
 	}
 
-	protected submitCore(type: string, messages: IDocumentMessage[]) {
-		this.emitMessages(type, [messages]);
-	}
-
 	/**
 	 * Submits a new delta operation to the server
 	 *
@@ -326,7 +322,7 @@ export class DocumentDeltaConnection
 	 */
 	public submit(messages: IDocumentMessage[]): void {
 		this.checkNotDisposed();
-		this.submitCore("submitOp", messages);
+		this.emitMessages("submitOp", [messages]);
 	}
 
 	/**
@@ -336,7 +332,7 @@ export class DocumentDeltaConnection
 	 */
 	public submitSignal(message: IDocumentMessage): void {
 		this.checkNotDisposed();
-		this.submitCore("submitSignal", [message]);
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**

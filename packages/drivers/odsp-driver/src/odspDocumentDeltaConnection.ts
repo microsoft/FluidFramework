@@ -309,6 +309,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		new Map();
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
+	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -632,17 +633,29 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 	public get disposed() {
 		if (!(this._disposed || this.socket.connected)) {
-			this.logger.sendTelemetryEvent({
-				eventName: "ConnectionNotYetDisposed",
-				driverVersion: pkgVersion,
-				details: JSON.stringify({
-					...this.getConnectionDetailsProps(),
-				}),
-			});
+			// Send error event if this connection is not yet disposed after socket is disconnected for 30s.
+			if (this.connectionNotYetDisposedTimeout === undefined) {
+				this.connectionNotYetDisposedTimeout = setTimeout(() => {
+					if (!this._disposed) {
+						this.logger.sendTelemetryEvent({
+							eventName: "ConnectionNotYetDisposed",
+							driverVersion: pkgVersion,
+							details: JSON.stringify({
+								...this.getConnectionDetailsProps(),
+							}),
+						});
+					}
+				}, 30000);
+			}
 		}
 		return this._disposed;
 	}
 
+	/**
+	 * Returns true in case the connection is not yet disposed and the socket is also connected. The expectation is
+	 * that it will be called only after connection is fully established. i.e. there should no way to submit an op
+	 * while we are connecting, as connection object is not exposed to Loader layer until connection is established.
+	 */
 	private get connected(): boolean {
 		return !this.disposed && this.socket.connected;
 	}
@@ -654,16 +667,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		}
 	}
 
-	protected submitCore(type: string, messages: IDocumentMessage[]) {
-		this.emitMessages(type, [messages]);
-	}
-
 	/**
 	 * Submits a new delta operation to the server
 	 * @param message - delta operation to submit
 	 */
 	public submit(messages: IDocumentMessage[]): void {
-		this.submitCore("submitOp", messages);
+		this.emitMessages("submitOp", [messages]);
 	}
 
 	/**
@@ -672,7 +681,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * @param message - signal to submit
 	 */
 	public submitSignal(message: IDocumentMessage): void {
-		this.submitCore("submitSignal", [message]);
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**
