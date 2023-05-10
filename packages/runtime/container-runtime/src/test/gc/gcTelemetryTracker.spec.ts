@@ -112,14 +112,14 @@ describe("GC Telemetry Tracker", () => {
 	}
 
 	// Mock node revived activity for the given nodes.
-	function reviveNode(fromId: string, toId: string) {
+	function reviveNode(fromId: string, toId: string, isTombstoned = false) {
 		telemetryTracker.nodeUsed({
 			nodeId: toId,
 			usageType: "Revived",
 			currentReferenceTimestampMs: Date.now(),
 			packagePath: testPkgPath,
 			completedGCRuns: 0,
-			isTombstoned: false,
+			isTombstoned,
 			fromId,
 		});
 		unreferencedNodesState.delete(toId);
@@ -182,14 +182,20 @@ describe("GC Telemetry Tracker", () => {
 		}
 
 		/**
-		 * Asserts that the events are as expected based on whether its a summarizer client or not.
+		 * Asserts that the events are as expected based on whether its a summarizer client or not. In non-summarizer
+		 * clients, only "InactiveObject_Loaded" and "SweepReadyObject_Loaded" events are logged. "Changed" and "Revived"
+		 * events are not logged.
 		 */
 		function assertMatchEvents(
 			expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 			message: string,
 		) {
 			const filteredEvents = filterEvents(expectedEvents);
+			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
+			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
+			const cachedEvents = Array.from(mockLogger.events);
 			mockLogger.assertMatch(filteredEvents.expectedEvents, message);
+			mockLogger.events = cachedEvents;
 			mockLogger.assertMatchNone(filteredEvents.unexpectedEvents, message);
 		}
 
@@ -256,6 +262,25 @@ describe("GC Telemetry Tracker", () => {
 					},
 				],
 				"sweep ready events not as expected",
+			);
+		});
+
+		it("generates tombstone revived events when nodes are used after they are tombstoned", async () => {
+			telemetryTracker = createTelemetryTracker(true /* enable Sweep */, isSummarizerClient);
+			// Mark node 2 as unreferenced.
+			markNodesUnreferenced([nodes[2]]);
+
+			// Advance the clock to trigger sweep timeout and validate that tombstone revived event is as expected.
+			clock.tick(sweepTimeoutMs + 1);
+			reviveNode(nodes[1], nodes[2], true /* isTombstoned */);
+			mockLogger.assertMatch(
+				[
+					{
+						eventName: "GarbageCollector:GC_Tombstone_DataStore_Revived",
+						url: nodes[2],
+					},
+				],
+				"inactive events not as expected",
 			);
 		});
 
