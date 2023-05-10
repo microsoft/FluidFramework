@@ -215,9 +215,12 @@ export const visualizeTaskManager: VisualizeSharedObject = async (
 	let tasks: string[] | undefined = taskManager.getTasks?.();
 
 	if (tasks === undefined) {
+		// Special backwards compat attempt to get the underlying task list out, for users missing the `getTasks` method.
+		// TODO (once `getTasks` is required): Remove this.
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 		const taskQueues = (taskManager as any).taskQueues as Map<string, unknown> | undefined;
 		if (taskQueues === undefined) {
+			// If we can't get to the underlying tasks, then we will simply note that we can't visualize this.
 			return visualizeUnknownSharedObject(taskManager, visualizeChildData);
 		}
 		tasks = [...taskQueues.keys()];

@@ -8,13 +8,14 @@
 
 import { expect } from "chai";
 
-import { SharedCell } from "@fluidframework/cell";
+import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
+import { ISharedDirectory, ISharedMap, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { SharedString } from "@fluidframework/sequence";
+import { ISharedString, SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { FluidObjectId } from "../CommonInterfaces";
@@ -30,6 +31,7 @@ import {
 	visualizeSharedMap,
 	visualizeSharedMatrix,
 	visualizeSharedString,
+	visualizeTaskManager,
 	visualizeUnknownSharedObject,
 	VisualNodeKind,
 } from "../data-visualization";
@@ -49,7 +51,11 @@ async function visualizeChildData(data: unknown): Promise<VisualChildNode> {
 describe("DefaultVisualizers unit tests", () => {
 	it("SharedCell", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
+		const sharedCell: ISharedCell = new SharedCell(
+			"test-cell",
+			runtime,
+			SharedCell.getFactory().attributes,
+		);
 
 		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
@@ -71,7 +77,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedCounter", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedCounter = new SharedCounter(
+		const sharedCounter: ISharedCounter = new SharedCounter(
 			"test-counter",
 			runtime,
 			SharedCounter.getFactory().attributes,
@@ -92,7 +98,7 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedDirectory", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedDirectory = new SharedDirectory(
+		const sharedDirectory: ISharedDirectory = new SharedDirectory(
 			"test-directory",
 			runtime,
 			SharedDirectory.getFactory().attributes,
@@ -205,7 +211,11 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedMap", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedMap = new SharedMap("test-map", runtime, SharedMap.getFactory().attributes);
+		const sharedMap: ISharedMap = new SharedMap(
+			"test-map",
+			runtime,
+			SharedMap.getFactory().attributes,
+		);
 		sharedMap.set("foo", 42);
 		sharedMap.set("bar", true);
 		sharedMap.set("baz", {
@@ -362,9 +372,115 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
+	it("TaskManager", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const taskManager: ITaskManager = new TaskManager(
+			"test-task-manager",
+			runtime,
+			TaskManager.getFactory().attributes,
+		);
+
+		await taskManager.volunteerForTask("task-1");
+		await taskManager.volunteerForTask("task-2");
+
+		const result1 = await visualizeTaskManager(taskManager, visualizeChildData);
+
+		const expected1: FluidObjectTreeNode = {
+			fluidObjectId: "test-task-manager",
+			children: {
+				"task-1": {
+					children: {
+						assigned: {
+							value: true,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						queued: {
+							value: true,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						subscribed: {
+							value: false,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+					},
+					nodeKind: VisualNodeKind.TreeNode,
+				},
+				"task-2": {
+					children: {
+						assigned: {
+							value: true,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						queued: {
+							value: true,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						subscribed: {
+							value: false,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+					},
+					nodeKind: VisualNodeKind.TreeNode,
+				},
+			},
+			metadata: {
+				tasks: 2,
+			},
+			typeMetadata: "TaskManager",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+		};
+
+		expect(result1).to.deep.equal(expected1);
+
+		// Subscribe to task 2, complete a task 1, and re-run visualization
+		taskManager.subscribeToTask("task-2");
+		taskManager.complete("task-1");
+
+		const result2 = await visualizeTaskManager(taskManager, visualizeChildData);
+
+		const expected2: FluidObjectTreeNode = {
+			fluidObjectId: "test-task-manager",
+			children: {
+				"task-2": {
+					children: {
+						assigned: {
+							value: true,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						queued: {
+							value: true,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						subscribed: {
+							value: true,
+							typeMetadata: "boolean",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+					},
+					nodeKind: VisualNodeKind.TreeNode,
+				},
+			},
+			metadata: {
+				tasks: 1,
+			},
+			typeMetadata: "TaskManager",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+		};
+
+		expect(result2).to.deep.equal(expected2);
+	});
+
 	it("SharedString", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
-		const sharedString = new SharedString(
+		const sharedString: ISharedString = new SharedString(
 			runtime,
 			"test-string",
 			SharedString.getFactory().attributes,

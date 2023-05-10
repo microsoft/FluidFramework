@@ -21,6 +21,7 @@ export {
 	visualizeSharedMap,
 	visualizeSharedMatrix,
 	visualizeSharedString,
+	visualizeTaskManager,
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers";
 export {
