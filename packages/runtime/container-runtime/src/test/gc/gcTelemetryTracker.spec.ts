@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
 	TelemetryDataTag,
@@ -22,8 +23,10 @@ import {
 	oneDayMs,
 	disableSweepLogKey,
 	UnreferencedStateTracker,
+	cloneGCData,
 } from "../../gc";
 import { pkgVersion } from "../../packageVersion";
+import { BlobManager } from "../../blobManager";
 
 export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -52,11 +55,22 @@ describe("GC Telemetry Tracker", () => {
 		enableSweep: boolean,
 		isSummarizerClient = true,
 	): GCTelemetryTracker {
+		// Node types are as follows based on the path:
+		// Path starting with "/_blobs" - blob.
+		// Path with one part such as "/id1" - data stores.
+		// Path with two parts such as "/id1/id2" - sub data stores.
+		// Everything else - other.
 		const getNodeType = (nodePath: string) => {
-			if (nodePath.split("/").length !== 2) {
-				return GCNodeType.Other;
+			if (nodePath.split("/")[1] === BlobManager.basePath) {
+				return GCNodeType.Blob;
 			}
-			return GCNodeType.DataStore;
+			if (nodePath.split("/").length === 2) {
+				return GCNodeType.DataStore;
+			}
+			if (nodePath.split("/").length === 3) {
+				return GCNodeType.SubDataStore;
+			}
+			return GCNodeType.Other;
 		};
 		const tracker = new GCTelemetryTracker(
 			mc,
@@ -528,5 +542,196 @@ describe("GC Telemetry Tracker", () => {
 
 	describe("Interactive client", () => {
 		clientTypeTests(false /* isSummarizerClient */);
+	});
+
+	describe("gcUnknownOutboundReferences telemetry", () => {
+		const unknownReferenceEventName = "GarbageCollector:gcUnknownOutboundReferences";
+		const currentGCData: IGarbageCollectionData = { gcNodes: {} };
+		let previousGCData: IGarbageCollectionData;
+		let explicitReferences: Map<string, string[]>;
+
+		beforeEach(() => {
+			telemetryTracker = createTelemetryTracker(
+				true /* enableSweep */,
+				true /* isSummarizerClient */,
+			);
+
+			currentGCData.gcNodes["/"] = [nodes[0]];
+			currentGCData.gcNodes[nodes[0]] = [nodes[1]];
+			currentGCData.gcNodes[nodes[1]] = [nodes[0], nodes[2]];
+			currentGCData.gcNodes[nodes[2]] = [nodes[1], nodes[3]];
+			currentGCData.gcNodes[nodes[3]] = [nodes[0]];
+
+			previousGCData = cloneGCData(currentGCData);
+			explicitReferences = new Map();
+		});
+
+		it("does not log gcUnknownOutboundReferences when there are no new references", async () => {
+			telemetryTracker.logIfMissingExplicitReferences(
+				currentGCData,
+				previousGCData,
+				explicitReferences,
+				mc.logger,
+			);
+
+			mockLogger.assertMatchNone(
+				[
+					{
+						eventName: unknownReferenceEventName,
+					},
+				],
+				"There should be no gcUnknownOutboundReferences event",
+			);
+		});
+
+		it("logs gcUnknownOutboundReferences when there are unknown data store references", async () => {
+			const gcNodeId = nodes[0];
+			const gcRoutes = [nodes[2], nodes[3]];
+			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+
+			telemetryTracker.logIfMissingExplicitReferences(
+				currentGCData,
+				previousGCData,
+				explicitReferences,
+				mc.logger,
+			);
+
+			mockLogger.assertMatch(
+				[
+					{
+						eventName: unknownReferenceEventName,
+						gcNodeId,
+						gcRoutes: JSON.stringify(gcRoutes),
+					},
+				],
+				"gcUnknownOutboundReferences event not logged as expected",
+			);
+		});
+
+		it("logs gcUnknownOutboundReferences when there are multiple unknown data store references", async () => {
+			const gcNodeId1 = nodes[0];
+			const gcRoutes1 = [nodes[2], nodes[3]];
+			const gcNodeId2 = nodes[3];
+			const gcRoutes2 = [nodes[1], nodes[2]];
+			currentGCData.gcNodes[gcNodeId1] = gcRoutes1;
+			currentGCData.gcNodes[gcNodeId2] = gcRoutes2;
+
+			telemetryTracker.logIfMissingExplicitReferences(
+				currentGCData,
+				previousGCData,
+				explicitReferences,
+				mc.logger,
+			);
+
+			mockLogger.assertMatch(
+				[
+					{
+						eventName: unknownReferenceEventName,
+						gcNodeId: gcNodeId1,
+						gcRoutes: JSON.stringify(gcRoutes1),
+					},
+					{
+						eventName: unknownReferenceEventName,
+						gcNodeId: gcNodeId2,
+						gcRoutes: JSON.stringify(gcRoutes2),
+					},
+				],
+				"gcUnknownOutboundReferences event not logged as expected",
+			);
+		});
+
+		it("logs gcUnknownOutboundReferences when there are unknown blob references", async () => {
+			const gcNodeId = nodes[0];
+			// Id of type `/_blobs/id1 is treated as a blob node.
+			const gcRoutes = ["/_blobs/id1"];
+			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+
+			telemetryTracker.logIfMissingExplicitReferences(
+				currentGCData,
+				previousGCData,
+				explicitReferences,
+				mc.logger,
+			);
+
+			mockLogger.assertMatch(
+				[
+					{
+						eventName: unknownReferenceEventName,
+						gcNodeId,
+						gcRoutes: JSON.stringify(gcRoutes),
+					},
+				],
+				"gcUnknownOutboundReferences event not logged as expected for blob nodes",
+			);
+		});
+
+		it("does not log gcUnknownOutboundReferences for back-routes (ex: DDS to data store)", async () => {
+			// Id of type `/id1/id2 is treated as a sub-data store (DDS) node.
+			const gcNodeId = `${nodes[1]}/dds`;
+			const gcRoutes = [nodes[1]];
+			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+
+			telemetryTracker.logIfMissingExplicitReferences(
+				currentGCData,
+				previousGCData,
+				explicitReferences,
+				mc.logger,
+			);
+
+			mockLogger.assertMatchNone(
+				[
+					{
+						eventName: unknownReferenceEventName,
+					},
+				],
+				"There should be no gcUnknownOutboundReferences event when back-routes are added",
+			);
+		});
+
+		it("does not log gcUnknownOutboundReferences for sub-dataStore routes (ex: to DDS)", async () => {
+			const gcNodeId = nodes[1];
+			// Id of type `/id1/id2 is treated as a sub-data store (DDS) node.
+			const gcRoutes = [`${nodes[1]}/dds`];
+			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+
+			telemetryTracker.logIfMissingExplicitReferences(
+				currentGCData,
+				previousGCData,
+				explicitReferences,
+				mc.logger,
+			);
+
+			mockLogger.assertMatchNone(
+				[
+					{
+						eventName: unknownReferenceEventName,
+					},
+				],
+				"There should be no gcUnknownOutboundReferences event when sub-dataStore routes are added",
+			);
+		});
+
+		it("does not log gcUnknownOutboundReferences for other routes (ex: unknown routes)", async () => {
+			const gcNodeId = nodes[1];
+			// Id of type `/id1/id2/ids31` is treated as a other node type.
+			const gcRoutes = [`${nodes[1]}/ids2/ids3`];
+			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+
+			telemetryTracker.logIfMissingExplicitReferences(
+				currentGCData,
+				previousGCData,
+				explicitReferences,
+				mc.logger,
+			);
+
+			mockLogger.assertMatchNone(
+				[
+					{
+						eventName: unknownReferenceEventName,
+					},
+				],
+				"There should be no gcUnknownOutboundReferences event when other node routes are added",
+			);
+		});
 	});
 });
