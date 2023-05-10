@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocument } from "./document";
+import { ICheckpoint, IDeliState, IDocument, IScribe } from "./document";
 import { ISequencedOperationMessage } from "./messages";
 import { INode } from "./orderer";
 
@@ -20,6 +20,11 @@ export interface IDatabaseManager {
 	 * Retrieves the document collection
 	 */
 	getDocumentCollection(): Promise<ICollection<IDocument>>;
+
+	/**
+	 * Retrieves the document collection
+	 */
+	getCheckpointCollection(): Promise<ICollection<ICheckpoint>>;
 
 	/**
 	 * Retrieves the delta collection
@@ -77,6 +82,35 @@ export interface IDocumentRepository {
 	 * @param filter - filter to check the existence of document
 	 */
 	exists(filter: any): Promise<boolean>;
+}
+
+/**
+ * Abstract away ICheckpoint collection logic
+ */
+export interface ICheckpointRepository {
+	/**
+	 * Retrieves a checkpoint from the database
+	 */
+	getCheckpoint(documentId: string, tenantId: string): Promise<ICheckpoint>;
+
+	/**
+	 * Writes a checkpoint to the database
+	 */
+	writeCheckpoint(
+		documentId: string,
+		tenantId: string,
+		checkpoint: IDeliState | IScribe,
+	): Promise<void>;
+
+	/**
+	 * Removes checkpoint for one service from the checkpoint's schema
+	 */
+	removeServiceCheckpoint(documentId: string, tenantId: string): Promise<void>;
+
+	/**
+	 * Deletes a checkpoint from the database
+	 */
+	deleteCheckpoint(documentId: string, tenantId: string): Promise<void>;
 }
 
 /**

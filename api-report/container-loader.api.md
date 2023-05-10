@@ -55,6 +55,11 @@ export interface IContainerConfig {
     serializedContainerState?: IPendingContainerState;
 }
 
+// @internal
+export interface IContainerExperimental extends IContainer {
+    getPendingLocalState(): string;
+}
+
 // @internal @deprecated (undocumented)
 export interface IContainerLoadOptions {
     canReconnect?: boolean;

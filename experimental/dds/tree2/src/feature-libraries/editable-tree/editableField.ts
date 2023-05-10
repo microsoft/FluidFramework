@@ -9,9 +9,9 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldSchema,
+	FieldStoredSchema,
 	LocalFieldKey,
-	TreeSchema,
+	TreeStoredSchema,
 	ValueSchema,
 	lookupTreeSchema,
 	mapCursorField,
@@ -19,6 +19,7 @@ import {
 	FieldAnchor,
 	ITreeCursor,
 	inCursorNode,
+	FieldUpPath,
 } from "../../core";
 import { Multiplicity } from "../modular-schema";
 import {
@@ -29,6 +30,8 @@ import {
 	arrayLikeMarkerSymbol,
 	cursorFromContextualData,
 } from "../contextuallyTyped";
+import { sequence } from "../defaultFieldKinds";
+import { assertValidIndex } from "../../util";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -49,7 +52,7 @@ import { ProxyTarget } from "./ProxyTarget";
 
 export function makeField(
 	context: ProxyContext,
-	fieldSchema: FieldSchema,
+	fieldSchema: FieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): EditableField {
 	const targetSequence = new FieldProxyTarget(context, fieldSchema, cursor);
@@ -64,8 +67,8 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  * @returns the key, if any, of the primary array field.
  */
 function getPrimaryArrayKey(
-	type: TreeSchema,
-): { key: LocalFieldKey; schema: FieldSchema } | undefined {
+	type: TreeStoredSchema,
+): { key: LocalFieldKey; schema: FieldStoredSchema } | undefined {
 	const primary = getPrimaryField(type);
 	if (primary === undefined) {
 		return undefined;
@@ -85,18 +88,16 @@ function getPrimaryArrayKey(
  */
 export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField {
 	public readonly fieldKey: FieldKey;
-	public readonly fieldSchema: FieldSchema;
 	public readonly [arrayLikeMarkerSymbol]: true;
 
 	public constructor(
 		context: ProxyContext,
-		fieldSchema: FieldSchema,
+		public readonly fieldSchema: FieldStoredSchema,
 		cursor: ITreeSubscriptionCursor,
 	) {
-		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		super(context, cursor);
+		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		this.fieldKey = cursor.getFieldKey();
-		this.fieldSchema = fieldSchema;
 		this[arrayLikeMarkerSymbol] = true;
 	}
 
@@ -183,7 +184,50 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			0x456 /* Index must be less than or equal to length. */,
 		);
 		const fieldPath = this.cursor.getFieldPath();
-		this.context.insertNodes(fieldPath.parent, fieldPath.field, index, newContent);
+		this.context.insertNodes(fieldPath, index, newContent);
+	}
+
+	public moveNodes(
+		sourceIndex: number,
+		count: number,
+		destinationIndex: number,
+		destinationField?: EditableField,
+	): void {
+		const sourceFieldPath = this.cursor.getFieldPath();
+		const destinationFieldKindIdentifier =
+			destinationField !== undefined
+				? destinationField.fieldSchema.kind.identifier
+				: this.fieldSchema.kind.identifier;
+
+		assert(
+			this.fieldSchema.kind.identifier === sequence.identifier &&
+				destinationFieldKindIdentifier === sequence.identifier,
+			0x683 /* Both source and destination fields must be sequence fields. */,
+		);
+
+		const destinationFieldProxy =
+			destinationField !== undefined
+				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
+				: this;
+		assert(
+			isFieldProxyTarget(destinationFieldProxy),
+			0x684 /* destination field proxy must be a field proxy target */,
+		);
+		assertValidIndex(destinationIndex, destinationFieldProxy, true);
+
+		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
+
+		this.context.moveNodes(
+			sourceFieldPath,
+			sourceIndex,
+			count,
+			destinationFieldPath,
+			destinationIndex,
+		);
+	}
+
+	public getfieldPath(): FieldUpPath {
+		return this.cursor.getFieldPath();
 	}
 
 	public deleteNodes(index: number, count?: number): void {
@@ -199,7 +243,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const maxCount = this.length - index;
 		const _count = count === undefined || count > maxCount ? maxCount : count;
 		const fieldPath = this.cursor.getFieldPath();
-		this.context.deleteNodes(fieldPath.parent, fieldPath.field, index, _count);
+		this.context.deleteNodes(fieldPath, index, _count);
 	}
 
 	public replaceNodes(
@@ -225,7 +269,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const maxCount = this.length - index;
 		const _count = count === undefined || count > maxCount ? maxCount : count;
 		const fieldPath = this.cursor.getFieldPath();
-		this.context.replaceNodes(fieldPath.parent, fieldPath.field, index, _count, newContent);
+		this.context.replaceNodes(fieldPath, index, _count, newContent);
 	}
 }
 
@@ -407,12 +451,12 @@ function unwrappedTree(
 
 /**
  * @param context - the common context of the field.
- * @param fieldSchema - the FieldSchema of the field.
+ * @param fieldSchema - the FieldStoredSchema of the field.
  * @param cursor - the cursor, which must point to the field being proxified.
  */
 export function unwrappedField(
 	context: ProxyContext,
-	fieldSchema: FieldSchema,
+	fieldSchema: FieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): UnwrappedEditableField {
 	const fieldKind = getFieldKind(fieldSchema);

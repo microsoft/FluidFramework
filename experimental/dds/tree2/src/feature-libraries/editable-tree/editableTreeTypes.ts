@@ -6,11 +6,12 @@
 import {
 	Value,
 	FieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
 	ITreeCursor,
 	UpPath,
+	PathVisitor,
+	NamedTreeSchema,
 } from "../../core";
 import {
 	PrimitiveValue,
@@ -99,11 +100,13 @@ export interface EditableTreeEvents {
 
 	/**
 	 * Raised when something in the tree is changing, including this node and its descendants.
+	 * The event can optionally return a {@link PathVisitor} to traverse the subtree
 	 * This event is called on every parent (transitively) when a change is occurring.
 	 * Includes changes to this node itself.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
+	 * @returns a visitor to traverse the subtree or `void`.
 	 */
-	subtreeChanging(upPath: UpPath): void;
+	subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
 
 /**
@@ -139,7 +142,8 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	readonly [typeSymbol]: TreeSchema;
+	// TODO: update implementation to ensure a NamedTreeSchema is returned, and view schema is used in typed views.
+	readonly [typeSymbol]: NamedTreeSchema;
 
 	/**
 	 * Value stored on this node.
@@ -287,9 +291,9 @@ export interface EditableField
 	// TODO: replace the numeric indexed access with getters and setters if possible.
 	extends MarkedArrayLike<UnwrappedEditableTree> {
 	/**
-	 * The `FieldSchema` of this field.
+	 * The `FieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldSchema;
+	readonly fieldSchema: FieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.
@@ -324,6 +328,17 @@ export interface EditableField
 	 * Inserts new nodes into this field.
 	 */
 	insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+
+	/**
+	 * Moves nodes from this field to destination iff both source and destination are sequence fields.
+	 * If the destinationField is not provided, the current field is used as the destination.
+	 */
+	moveNodes(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		destinationField?: EditableField,
+	): void;
 
 	/**
 	 * Sequentially deletes the nodes from this field.

@@ -22,6 +22,7 @@
 			"deltas": "deltas",
 			"rawdeltas": "rawdeltas",
 			"documents": "documents",
+			"checkpoints": "checkpoints",
 			"partitions": "partitions",
 			"tenants": "tenants",
 			"nodes": "nodes",
@@ -48,6 +49,9 @@
 	"storage": {
 		"enableWholeSummaryUpload": false,
 		"storageUrl": "http://gitrest:3000"
+	},
+	"checkpoints": {
+		"localCheckpointEnabled": true
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
@@ -119,7 +123,8 @@
 			"idleTime": 10000,
 			"maxTime": 60000,
 			"maxMessages": 500
-		}
+		},
+		"restartOnCheckpointFailure": true
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -129,7 +134,8 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"getDeltasViaAlfred": true
+		"getDeltasViaAlfred": true,
+		"restartOnCheckpointFailure": true
 	},
 	"system": {
 		"httpServer": {
@@ -184,7 +190,8 @@
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
 		"enableTelemetry": true,
-		"maxDbBatchSize": 1000
+		"maxDbBatchSize": 1000,
+		"restartOnCheckpointFailure": true
 	},
 	"copier": {
 		"topic": "rawdeltas",

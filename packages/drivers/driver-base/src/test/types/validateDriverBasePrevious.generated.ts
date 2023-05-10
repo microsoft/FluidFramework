@@ -36,3 +36,27 @@ declare function use_old_ClassDeclaration_DocumentDeltaConnection(
     use: TypeOnly<old.DocumentDeltaConnection>);
 use_old_ClassDeclaration_DocumentDeltaConnection(
     get_current_ClassDeclaration_DocumentDeltaConnection());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getW3CData": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getW3CData():
+    TypeOnly<typeof old.getW3CData>;
+declare function use_current_FunctionDeclaration_getW3CData(
+    use: TypeOnly<typeof current.getW3CData>);
+use_current_FunctionDeclaration_getW3CData(
+    get_old_FunctionDeclaration_getW3CData());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getW3CData": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getW3CData():
+    TypeOnly<typeof current.getW3CData>;
+declare function use_old_FunctionDeclaration_getW3CData(
+    use: TypeOnly<typeof old.getW3CData>);
+use_old_FunctionDeclaration_getW3CData(
+    get_current_FunctionDeclaration_getW3CData());

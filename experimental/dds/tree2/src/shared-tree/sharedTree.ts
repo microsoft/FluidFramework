@@ -25,7 +25,6 @@ import {
 	AnchorSetRootEvents,
 	symbolFromKey,
 	GlobalFieldKey,
-	GraphCommit,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -46,10 +45,9 @@ import {
 	IdentifierIndex,
 	EditableTree,
 	Identifier,
-	SchemaAware,
 	ForestRepairDataStoreProvider,
 	repairDataStoreFromForest,
-	ModularChangeset,
+	GlobalFieldSchema,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
@@ -137,6 +135,12 @@ export interface ISharedTreeView extends AnchorLocator {
 	undo(): void;
 
 	/**
+	 * Redoes the last completed undo made by the client.
+	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 */
+	redo(): void;
+
+	/**
 	 * An collection of functions for managing transactions.
 	 * Transactions allow edits to be batched into atomic units.
 	 * Edits made during a transaction will update the local state of the tree immediately, but will be squashed into a single edit when the transaction is committed.
@@ -221,8 +225,8 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
 }
 
@@ -328,8 +332,8 @@ export class SharedTree
 		});
 	}
 
-	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	public schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
 	}
@@ -350,10 +354,7 @@ export class SharedTree
 		const anchors = new AnchorSet();
 		const schema = this.storedSchema.inner.clone();
 		const forest = this.forest.clone(schema, anchors);
-		const branch = this.createBranch(
-			new ForestRepairDataStoreProvider(forest, schema),
-			anchors,
-		);
+		const branch = this.forkBranch(new ForestRepairDataStoreProvider(forest, schema), anchors);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
 			branch,
@@ -369,8 +370,8 @@ export class SharedTree
 		this.mergeBranch(getForkBranch(view));
 	}
 
-	public override getLocalBranchHead(): GraphCommit<ModularChangeset> {
-		return super.getLocalBranchHead();
+	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+		return super.getLocalBranch();
 	}
 
 	/**
@@ -455,11 +456,13 @@ export class SharedTreeFork implements ISharedTreeFork {
 		public readonly context: EditableTreeContext,
 		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		branch.on("change", (change) => {
-			const delta = this.changeFamily.intoDelta(change);
-			this.forest.applyDelta(delta);
-			this.identifiedNodes.scanIdentifiers(this.context);
-			this.events.emit("afterBatch");
+		branch.on("change", ({ change }) => {
+			if (change !== undefined) {
+				const delta = this.changeFamily.intoDelta(change);
+				this.forest.applyDelta(delta);
+				this.identifiedNodes.scanIdentifiers(this.context);
+				this.events.emit("afterBatch");
+			}
 		});
 	}
 
@@ -473,17 +476,26 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => this.branch.startTransaction(repairDataStoreFromForest(this.forest)),
-		commit: () => this.branch.commitTransaction(),
-		abort: () => this.branch.abortTransaction(),
+		commit: () => {
+			this.branch.commitTransaction();
+			return TransactionResult.Commit;
+		},
+		abort: () => {
+			this.branch.abortTransaction();
+			return TransactionResult.Abort;
+		},
 		inProgress: () => this.branch.isTransacting(),
 	};
 
 	public undo() {
 		this.branch.undo();
 	}
+	public redo() {
+		this.branch.redo();
+	}
 
-	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
-		config: SchematizeConfiguration<TSchema>,
+	public schematize<TRoot extends GlobalFieldSchema>(
+		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		return schematizeView(this, config);
 	}
@@ -510,7 +522,7 @@ export class SharedTreeFork implements ISharedTreeFork {
 	}
 
 	public rebaseOnto(view: ISharedTreeView): void {
-		this.branch.rebaseOnto(getHeadCommit(view));
+		this.branch.rebaseOnto(getBranch(view));
 	}
 
 	public merge(view: ISharedTreeFork): void {
@@ -556,11 +568,11 @@ export function runSynchronous(
 // 1. `SharedTree` and `SharedTreeFork` are private and meant to be the only implementations of `ISharedTreeView` and `ISharedTreeFork`.
 // 2. The `ISharedTreeView` and `ISharedTreeFork` interfaces are not meant to specify input contracts, but exist solely to reduce the API provided by the underlying classes.
 //    It is never expected that a user would create their own object or class which satisfies `ISharedTreeView` or `ISharedTreeFork`.
-function getHeadCommit(view: ISharedTreeView): GraphCommit<DefaultChangeset> {
+function getBranch(view: ISharedTreeView): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
 	if (view instanceof SharedTree) {
-		return view.getLocalBranchHead();
+		return view.getLocalBranch();
 	} else if (view instanceof SharedTreeFork) {
-		return view.branch.getHead();
+		return view.branch;
 	}
 
 	fail("Unsupported ISharedTreeView implementation");
@@ -572,4 +584,5 @@ function getForkBranch(
 	assert(fork instanceof SharedTreeFork, 0x5ca /* Unsupported ISharedTreeFork implementation */);
 	return fork.branch;
 }
+
 // #endregion Extraction functions

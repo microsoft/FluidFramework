@@ -10,6 +10,7 @@ export {
 	mintCommit,
 	GraphCommit,
 	RevisionTag,
+	RevisionTagSchema,
 	SessionId,
 } from "./types";
 export {
@@ -29,5 +30,4 @@ export {
 	verifyChangeRebaser,
 	Violation,
 } from "./verifyChangeRebaser";
-export { Rebaser } from "./rebaser";
-export { findAncestor, findCommonAncestor } from "./utils";
+export { findAncestor, findCommonAncestor, rebaseBranch, rebaseChange } from "./utils";

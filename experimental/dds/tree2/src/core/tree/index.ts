@@ -30,6 +30,7 @@ export {
 	inCursorField,
 	inCursorNode,
 } from "./cursor";
+export { ProtoNodes } from "./delta";
 export {
 	GlobalFieldKeySymbol,
 	keyFromSymbol,
@@ -60,6 +61,13 @@ export {
 	setGenericTreeField,
 } from "./treeTextFormat";
 export {
+	EncodedFieldMapObject,
+	EncodedGenericFieldsNode,
+	EncodedGenericTreeNode,
+	EncodedJsonableTree,
+	EncodedNodeData,
+} from "./persistedTreeTextFormat";
+export {
 	EmptyKey,
 	FieldKey,
 	TreeType,
@@ -78,7 +86,7 @@ export {
 	isLocalKey,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
-export { PathVisitor } from "./visithPath";
+export { PathVisitor } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as Delta from "./delta";

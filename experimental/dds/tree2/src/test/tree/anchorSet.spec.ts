@@ -39,9 +39,7 @@ describe("AnchorSet", () => {
 		checkEquality(anchors.locate(anchor3), path3);
 	});
 
-	// TODO: Fix bug in move handling.
-	// See https://github.com/microsoft/FluidFramework/pull/14358 and https://dev.azure.com/fluidframework/internal/_workitems/edit/3559
-	it.skip("can move within field", () => {
+	it("can move within field", () => {
 		const anchors = new AnchorSet();
 		const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
 		const anchor1 = anchors.track(makePath([rootFieldKeySymbol, 1]));
@@ -131,9 +129,7 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor3));
 	});
 
-	// TODO: Fix bug in move handling.
-	// See https://github.com/microsoft/FluidFramework/pull/14358 and https://dev.azure.com/fluidframework/internal/_workitems/edit/3559
-	it.skip("can rebase over move", () => {
+	it("can rebase over move", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
@@ -318,10 +314,7 @@ describe("AnchorSet", () => {
 				log.logger(`visitSubtreeChange.onSetValue-${value}`)();
 			},
 		};
-		const unsubscribePathVisitor = node0.on(
-			"visitSubtreeChanging",
-			(n: AnchorNode) => pathVisitor,
-		);
+		const unsubscribePathVisitor = node0.on("subtreeChanging", (n: AnchorNode) => pathVisitor);
 		anchors.applyDelta(makeDelta(insertMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 4])));
 		log.expect([["visitSubtreeChange.onInsert-foo-4", 1]]);
 		log.clear();
