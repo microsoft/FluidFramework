@@ -71,7 +71,7 @@ export type IntervalRevertible =
 
 type TypedRevertible<T extends IntervalRevertible["event"]> = IntervalRevertible & { event: T };
 
-export function getId(interval: SequenceInterval): string {
+function getId(interval: SequenceInterval): string {
 	const maybeId = interval.getIntervalId();
 	return idMap.get(maybeId) ?? maybeId;
 }
@@ -284,12 +284,12 @@ function revertLocalDelete(
 	const { intervalId, ...props } = revertible.interval.properties;
 	const int = string.getIntervalCollection(label).add(start, end, type, props);
 
-	idMap.forEach((oldId, newId) => {
+	idMap.forEach((newId, oldId) => {
 		if (intervalId === newId) {
 			idMap.set(oldId, getId(int));
 		}
 	});
-	idMap.set(intervalId, getId(int));
+	idMap.set(intervalId, int.getIntervalId());
 
 	string.removeLocalReferencePosition(revertible.start);
 	string.removeLocalReferencePosition(revertible.end);

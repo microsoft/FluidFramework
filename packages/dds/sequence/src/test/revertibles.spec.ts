@@ -178,7 +178,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 	});
-	it("checks id consistency when a remove is undone and redone", () => {
+	it("checks that revertibles still finds correct interval across multiple remove and reverts", () => {
 		sharedString.insertText(0, "hello world");
 		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
 
@@ -195,7 +195,9 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(1, 1));
 		assertIntervals(sharedString, collection, [{ start: 3, end: 8 }]);
 
-		collection.removeIntervalById(id);
+		const intervals = Array.from(collection);
+		const removed = collection.removeIntervalById(intervals[0].getIntervalId());
+		assert(removed, "interval was not removed from the collection");
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
@@ -440,8 +442,8 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 		assertIntervals(sharedString2, collection2, [{ start: 0, end: 5 }]);
-		const int = collection.findOverlappingIntervals(0, 5);
-		assert.equal(int[0].properties.foo, "one");
+		const intervals = Array.from(collection);
+		assert.equal(intervals[0].properties.foo, "one");
 	});
 	it("remote interval property change interacting with reverting an interval add", () => {
 		sharedString.insertText(0, "hello world");
