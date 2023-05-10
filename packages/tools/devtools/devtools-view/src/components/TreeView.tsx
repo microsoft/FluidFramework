@@ -5,7 +5,7 @@
 
 import React from "react";
 import { HasContainerId, VisualTreeNode } from "@fluid-experimental/devtools-core";
-import { Tree } from "./Tree";
+import { Tree } from "./utility-components";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";
 import { HasLabel } from "./CommonInterfaces";
