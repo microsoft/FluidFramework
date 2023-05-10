@@ -5,21 +5,23 @@
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeItem } from "@fluentui/react-components/unstable";
-import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
+
+import { ValueNodeBase } from "@fluid-experimental/devtools-core";
+
+import { HasLabel } from "../CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
-import { HasLabel } from "./CommonInterfaces";
 
 /**
  * {@link ValueView} input props.
  */
-export interface FluidValueViewProps extends HasLabel {
-	node: FluidObjectValueNode;
+export interface ValueViewProps extends HasLabel {
+	node: ValueNodeBase;
 }
 
 /**
- * Render data with type VisualNodeKind.FluidValueNode and render its children.
+ * Render data with type VisualNodeKind.ValueNode and render its children.
  */
-export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
+export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { label, node } = props;
 
 	return (

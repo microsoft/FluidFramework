@@ -14,8 +14,8 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { useMessageRelay } from "../MessageRelayContext";
+import { TreeDataView } from "./data-visualization";
 import { Waiting } from "./Waiting";
-import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "INLINE(VIEW)";
 

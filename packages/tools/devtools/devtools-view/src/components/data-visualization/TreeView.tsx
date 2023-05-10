@@ -2,24 +2,27 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
-import { HasContainerId, FluidObjectTreeNode } from "@fluid-experimental/devtools-core";
-import { Tree } from "./utility-components";
+
+import { HasContainerId, VisualTreeNode } from "@fluid-experimental/devtools-core";
+
+import { HasLabel } from "../CommonInterfaces";
+import { Tree } from "../utility-components";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";
-import { HasLabel } from "./CommonInterfaces";
 
 /**
  * {@link TreeView} input props.
  */
-export interface FluidTreeViewProps extends HasContainerId, HasLabel {
-	node: FluidObjectTreeNode;
+export interface TreeViewProps extends HasContainerId, HasLabel {
+	node: VisualTreeNode;
 }
 
 /**
- * Render data with type VisualNodeKind.FluidTreeNode and render its children.
+ * Render data with type VisualNodeKind.TreeNode and render its children.
  */
-export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
+export function TreeView(props: TreeViewProps): React.ReactElement {
 	const { containerId, label, node } = props;
 
 	const childNodes = Object.entries(node.children).map(([key, fluidObject]) => (

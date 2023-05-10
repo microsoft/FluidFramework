@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { Primitive } from "@fluid-experimental/devtools-core";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeItemLayout } from "@fluentui/react-components/unstable";
 import { tokens } from "@fluentui/react-components";
+
+import { Primitive } from "@fluid-experimental/devtools-core";
 
 /**
  * Input props to {@link TreeHeader}
