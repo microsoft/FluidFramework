@@ -1,0 +1,5 @@
+_api-extractor-temp
+dist
+lib
+node_modules
+src/**/test/types/
