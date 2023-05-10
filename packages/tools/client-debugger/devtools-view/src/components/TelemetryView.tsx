@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IStackTokens, Stack, StackItem } from "@fluentui/react";
 import {
 	tokens,
 	Combobox,
@@ -97,21 +96,17 @@ export function TelemetryView(): React.ReactElement {
 	}, [messageRelay, setTelemetryEvents]);
 
 	return (
-		<Stack>
-			<StackItem>
-				<ListLengthSelection
-					currentLimit={maxEventsToDisplay}
-					onChangeSelection={(key): void => setMaxEventsToDisplay(key)}
-				/>
-			</StackItem>
-			<StackItem>
-				{telemetryEvents !== undefined ? (
-					<FilteredTelemetryView telemetryEvents={telemetryEvents} />
-				) : (
-					<Waiting label={"Waiting for Telemetry events"} />
-				)}
-			</StackItem>
-		</Stack>
+		<>
+			<ListLengthSelection
+				currentLimit={maxEventsToDisplay}
+				onChangeSelection={(key): void => setMaxEventsToDisplay(key)}
+			/>
+			{telemetryEvents !== undefined ? (
+				<FilteredTelemetryView telemetryEvents={telemetryEvents} />
+			) : (
+				<Waiting label={"Waiting for Telemetry events"} />
+			)}
+		</>
 	);
 }
 
@@ -135,7 +130,6 @@ interface ListLengthSelectionProps {
  */
 function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElement {
 	const { currentLimit, onChangeSelection } = props;
-	const stackTokens: IStackTokens = { childrenGap: 20 };
 
 	// Options formatted for the Fluent Dropdown component
 	const dropdownOptions: { key: number; text: string }[] = [
@@ -150,27 +144,25 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 	};
 
 	return (
-		<Stack tokens={stackTokens}>
-			<div style={{ marginLeft: "6px" }}>
-				<h3>Max number of telemetry events to display: </h3>
-				<Dropdown
-					placeholder="Select an option"
-					size="small"
-					style={{ minWidth: "300px", zIndex: "1" }}
-					defaultValue={currentLimit.toString()}
-					// change the number of logs displayed on the page
-					onOptionSelect={handleMaxEventChange}
-				>
-					{dropdownOptions.map((option) => {
-						return (
-							<Option style={{ minWidth: "120px" }} key={option.key}>
-								{option.text}
-							</Option>
-						);
-					})}
-				</Dropdown>
-			</div>
-		</Stack>
+		<div style={{ marginLeft: "6px" }}>
+			<h3>Max number of telemetry events to display: </h3>
+			<Dropdown
+				placeholder="Select an option"
+				size="small"
+				style={{ minWidth: "300px", zIndex: "1" }}
+				defaultValue={currentLimit.toString()}
+				// change the number of logs displayed on the page
+				onOptionSelect={handleMaxEventChange}
+			>
+				{dropdownOptions.map((option) => {
+					return (
+						<Option style={{ minWidth: "120px" }} key={option.key}>
+							{option.text}
+						</Option>
+					);
+				})}
+			</Dropdown>
+		</div>
 	);
 }
 

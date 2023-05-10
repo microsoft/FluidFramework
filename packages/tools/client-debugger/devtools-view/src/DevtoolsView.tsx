@@ -202,7 +202,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				cursor: "col-resize",
 			}}
 		>
-			<Pane className="pane1">
+			<Pane className="devtools-menu">
 				<Menu
 					currentSelection={menuSelection}
 					setSelection={setMenuSelection}
@@ -210,7 +210,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 					supportedFeatures={supportedFeatures}
 				/>
 			</Pane>
-			<Pane className="pane2">
+			<Pane className="devtools-view">
 				<View menuSelection={menuSelection} containers={containers} />
 			</Pane>
 		</SplitPane>
