@@ -12,13 +12,12 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+		"build": "concurrently npm:build:compile npm:lint",
 		"build-and-test": "npm run build && npm run test",
 		"build:compile": "concurrently npm:tsc npm:build:copy-resources npm:build:webpack",
 		"build:copy-resources": "copyfiles -u 1 \"src/**/*.{css,json,html}\" dist",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
-		"build:genver": "gen-version",
 		"build:webpack": "npm run webpack",
 		"clean": "rimraf \"coverage\" \"dist\" \"nyc\" \"*.tsbuildinfo\" \"*.build.log\" --glob",
 		"eslint": "eslint src",
@@ -62,7 +61,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluentui/react": "^8.96.1",
+		"@fluentui/react": "^8.109.3",
 		"@fluid-experimental/devtools-core": "workspace:~",
 		"@fluid-experimental/devtools-view": "workspace:~",
 		"@fluidframework/common-utils": "^1.1.1",
