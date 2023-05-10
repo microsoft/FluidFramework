@@ -90,4 +90,8 @@ extends:
     packageManager: pnpm
     test: test
     tagName: historian
+    taskLint: true
+    taskLintName: ci:lint
     pack: true
+    checks:
+    - prettier

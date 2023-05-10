@@ -107,8 +107,7 @@ parameters:
 # in a pipeline stage separate from the build stage.
 - name: checks
   type: object
-  default:
-  - prettier
+  default: []
 
 
 variables:
