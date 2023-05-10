@@ -73,6 +73,7 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {

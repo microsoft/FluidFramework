@@ -24,6 +24,7 @@ import {
 	VisualChildNode,
 	VisualTreeNode,
 } from "./VisualTree";
+import { TaskManager } from "@fluidframework/task-manager";
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
@@ -199,6 +200,34 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 };
 
 /**
+ * Default {@link VisualizeSharedObject} for {@link TaskManager}.
+ */
+export const visualizeTaskManager: VisualizeSharedObject = async (
+	sharedObject: ISharedObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const taskManager = sharedObject as TaskManager;
+
+	const { id: fluidObjectId } = taskManager;
+	
+	taskManager.
+
+	// TODO
+
+	return {
+		fluidObjectId,
+		children: {
+			// TODO
+		},
+		metadata: {
+			// TODO
+		},
+		typeMetadata: "TaskManager",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
+};
+
+/**
  * {@link VisualizeSharedObject} for unrecognized {@link ISharedObject}s.
  */
 export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
@@ -221,5 +250,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
+	[TaskManager.getFactory().type]: visualizeTaskManager,
 	// TODO: the others
 };
