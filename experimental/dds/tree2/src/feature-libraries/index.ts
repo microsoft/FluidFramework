@@ -53,6 +53,7 @@ export {
 	DeleteBindingContext,
 	InsertBindingContext,
 	SetValueBindingContext,
+	BatchBindingContext,
 	InvalidStateBindingContext,
 	BinderEvents,
 	OperationBinderEvents,

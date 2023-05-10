@@ -30,6 +30,7 @@ export interface OperationBinderEvents extends BinderEvents {
 	delete(context: DeleteBindingContext): void;
 	insert(context: InsertBindingContext): void;
 	setValue(context: SetValueBindingContext): void;
+	batch(context: BatchBindingContext): void;
 }
 
 /**
@@ -92,7 +93,7 @@ export interface DataBinder<B extends BinderEvents> {
 		anchor: EditableTree,
 		eventType: K,
 		eventPaths: BindPath[],
-		listener: B[K],
+		listener?: B[K],
 	): void;
 
 	/**
@@ -161,6 +162,7 @@ export const BindingType = {
 	Insert: "insert",
 	SetValue: "setValue",
 	InvalidState: "invalidState",
+	Batch: "batch",
 } as const;
 
 /**
@@ -207,6 +209,14 @@ export interface SetValueBindingContext extends AbstractBindingContext {
  */
 export interface InvalidStateBindingContext extends AbstractBindingContext {
 	readonly type: typeof BindingType.InvalidState;
+}
+
+/**
+ * @alpha
+ */
+export interface BatchBindingContext extends AbstractBindingContext {
+	readonly type: typeof BindingType.Batch;
+	readonly events: BindingContext[];
 }
 
 abstract class AbstractPathVisitor<B extends BinderEvents> implements PathVisitor {
@@ -265,6 +275,14 @@ abstract class AbstractPathVisitor<B extends BinderEvents> implements PathVisito
 			contextType,
 			new Set([...(this.registeredPaths.get(contextType) ?? []), ...paths]),
 		);
+	}
+
+	public hasRegisteredContextType(contextType: BindingContextType): boolean {
+		return this.registeredPaths.has(contextType);
+	}
+
+	public getRegisteredPaths(contextType: BindingContextType): Set<BindPath> | undefined {
+		return this.registeredPaths.get(contextType);
 	}
 
 	public dispose(): void {
@@ -394,6 +412,25 @@ class BufferingPathVisitor
 		if (this.options.sort) {
 			const sortFn = this.options.sortFn ?? compareBinderEventsDeleteFirst;
 			this.eventQueue.sort(sortFn);
+		}
+		if (this.hasRegisteredContextType(BindingType.Batch)) {
+			const batchPaths = this.getRegisteredPaths(BindingType.Batch);
+			assert(batchPaths !== undefined, "batch paths confirmed registered");
+			const batchEvents = this.eventQueue.filter((event) => {
+				const current = toDownPath<BindPath>(event.path);
+				return this.matchesAny(batchPaths, current);
+			});
+			if (batchEvents.length > 0) {
+				this.emitter.emit(BindingType.Batch, {
+					type: BindingType.Batch,
+					events: batchEvents,
+				});
+			}
+			for (const event of batchEvents) {
+				const index = this.eventQueue.indexOf(event);
+				assert(index >= 0, "event confirmed in the queue");
+				this.eventQueue.splice(index, 1);
+			}
 		}
 		for (const cmd of this.eventQueue) {
 			switch (cmd.type) {
