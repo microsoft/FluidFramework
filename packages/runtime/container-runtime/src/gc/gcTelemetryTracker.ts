@@ -56,6 +56,7 @@ interface INodeUsageProps {
  * 2. sweepReadyObject telemetry - When a sweep ready node is used - A node that has been unreferenced for sweepTimeoutMs.
  * 3. Tombstone telemetry - When a tombstoned node is used - A node that that has been marked as tombstone.
  * 4. Sweep / deleted telemetry - When a node is detected as sweep ready in the sweep phase.
+ * 5. Unknown outbound reference telemetry - When a node is referenced but GC is not explicitly notified of it.
  */
 export class GCTelemetryTracker {
 	// Keeps track of unreferenced events that are logged for a node. This is used to limit the log generation to one
