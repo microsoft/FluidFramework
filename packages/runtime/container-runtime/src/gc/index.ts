@@ -62,4 +62,5 @@ export {
 	closuresMapLocalStorageKey,
 	SweepReadyUsageDetectionHandler,
 } from "./gcSweepReadyUsageDetection";
+export { GCTelemetryTracker } from "./gcTelemetryTracker";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";

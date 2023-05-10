@@ -81,7 +81,12 @@ export class GCTelemetryTracker {
 		) => Promise<readonly string[] | undefined>,
 	) {}
 
-	private shouldLogEvent(
+	/**
+	 * Returns whether an event should be logged for a not that isn't active anymore. Some scenarios where we won't log:
+	 * 1. When a DDS is changed or loaded. The corresponding data store's event will be logged instead.
+	 * 2. An event is logged only once per container instance per event per node.
+	 */
+	private shouldLogNonActiveEvent(
 		nodeId: string,
 		nodeType: GCNodeType,
 		usageType: NodeUsageType,
@@ -109,35 +114,61 @@ export class GCTelemetryTracker {
 	}
 
 	/**
-	 * Called when an inactive node is used after. Queue up an event that will be logged next time GC runs.
+	 * Called when a node is used. If the node is not active, log an event indicating object is used when its not active.
 	 */
-	public nodeUsed(props: INodeUsageProps) {
+	public nodeUsed(nodeUsageProps: INodeUsageProps) {
 		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
 		// logging as nothing interesting would have happened worth logging.
 		// If the node is not unreferenced, skip logging.
-		const nodeStateTracker = this.getNodeStateTracker(props.nodeId);
-		if (!nodeStateTracker || props.currentReferenceTimestampMs === undefined) {
+		const nodeStateTracker = this.getNodeStateTracker(nodeUsageProps.nodeId);
+		if (!nodeStateTracker || nodeUsageProps.currentReferenceTimestampMs === undefined) {
 			return;
 		}
 
-		const nodeType = this.getNodeType(props.nodeId);
-		if (!this.shouldLogEvent(props.nodeId, nodeType, props.usageType, nodeStateTracker)) {
+		const nodeType = this.getNodeType(nodeUsageProps.nodeId);
+		if (
+			!this.shouldLogNonActiveEvent(
+				nodeUsageProps.nodeId,
+				nodeType,
+				nodeUsageProps.usageType,
+				nodeStateTracker,
+			)
+		) {
 			return;
 		}
 
 		const state = nodeStateTracker.state;
-		const propsToLog: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
-			id: props.nodeId,
+		const { usageType, currentReferenceTimestampMs, packagePath, ...propsToLog } =
+			nodeUsageProps;
+		const eventProps: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
+			id: nodeUsageProps.nodeId,
 			type: nodeType,
 			unrefTime: nodeStateTracker.unreferencedTimestampMs,
-			age: props.currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+			age:
+				nodeUsageProps.currentReferenceTimestampMs -
+				nodeStateTracker.unreferencedTimestampMs,
 			timeout:
 				state === UnreferencedState.Inactive
 					? this.configs.inactiveTimeoutMs
 					: this.configs.sweepTimeoutMs,
-			...props,
+			...propsToLog,
 			...this.createContainerMetadata,
 		};
+
+		// This will log the following events:
+		// GC_Tombstone_DataStore_Revived, GC_Tombstone_SubDataStore_Revived, GC_Tombstone_Blob_Revived
+		if (nodeUsageProps.usageType === "Revived" && nodeUsageProps.isTombstoned) {
+			sendGCUnexpectedUsageEvent(
+				this.mc,
+				{
+					eventName: `GC_Tombstone_${nodeType}_Revived`,
+					category: "generic",
+					url: nodeUsageProps.nodeId,
+					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
+				},
+				undefined /* packagePath */,
+			);
+		}
 
 		// For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
 		// For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
@@ -145,18 +176,22 @@ export class GCTelemetryTracker {
 		// Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
 		// SweepReady errors are usages of Objects that will be deleted by GC Sweep!
 		if (this.isSummarizerClient) {
-			this.pendingEventsQueue.push({ ...propsToLog, usageType: props.usageType, state });
+			this.pendingEventsQueue.push({
+				...eventProps,
+				usageType: nodeUsageProps.usageType,
+				state,
+			});
 		} else {
 			// For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
 			// summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
 			// Events generated:
 			// InactiveObject_Loaded, SweepReadyObject_Loaded
-			if (props.usageType === "Loaded") {
+			if (nodeUsageProps.usageType === "Loaded") {
 				const event = {
-					eventName: `${state}Object_${props.usageType}`,
-					pkg: packagePathToTelemetryProperty(props.packagePath),
+					eventName: `${state}Object_${nodeUsageProps.usageType}`,
+					pkg: packagePathToTelemetryProperty(nodeUsageProps.packagePath),
 					stack: generateStack(),
-					...propsToLog,
+					...eventProps,
 				};
 
 				// Do not log the inactive object x events as error events as they are not the best signal for
@@ -166,21 +201,6 @@ export class GCTelemetryTracker {
 				} else {
 					this.mc.logger.sendErrorEvent(event);
 				}
-			}
-
-			// This will log the following events:
-			// GC_Tombstone_DataStore_Revived, GC_Tombstone_SubDataStore_Revived, GC_Tombstone_Blob_Revived
-			if (props.usageType === "Revived" && props.isTombstoned) {
-				sendGCUnexpectedUsageEvent(
-					this.mc,
-					{
-						eventName: `GC_Tombstone_${nodeType}_Revived`,
-						category: "generic",
-						url: props.nodeId,
-						gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
-					},
-					undefined /* packagePath */,
-				);
 			}
 		}
 	}
@@ -200,23 +220,6 @@ export class GCTelemetryTracker {
 			 * revived and a Revived event will be logged for it.
 			 */
 			const nodeStateTracker = this.getNodeStateTracker(eventProps.id);
-
-			// This will log the following events:
-			// GC_Tombstone_DataStore_Revived, GC_Tombstone_SubDataStore_Revived, GC_Tombstone_Blob_Revived
-			if (usageType === "Revived" && propsToLog.isTombstoned) {
-				const packagePath = await this.getNodePackagePath(eventProps.id);
-				sendGCUnexpectedUsageEvent(
-					this.mc,
-					{
-						eventName: `GC_Tombstone_${propsToLog.type}_Revived`,
-						category: "generic",
-						url: propsToLog.id,
-						gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
-					},
-					packagePath,
-				);
-			}
-
 			const active =
 				nodeStateTracker === undefined ||
 				nodeStateTracker.state === UnreferencedState.Active;
