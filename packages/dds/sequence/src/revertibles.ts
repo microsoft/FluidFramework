@@ -7,18 +7,20 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	appendToMergeTreeDeltaRevertibles,
+	isMergeTreeDeltaRevertible,
 	LocalReferencePosition,
-	PropertySet,
+	MergeTreeDeltaOperationType,
 	MergeTreeDeltaRevertible,
-	ReferenceType,
 	MergeTreeDeltaType,
+	PropertySet,
+	ReferenceType,
 	refTypeIncludesFlag,
 	revertMergeTreeDeltaRevertibles,
-	ISegment,
+	SortedSet,
 } from "@fluidframework/merge-tree";
 import { SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
-import { SequenceDeltaEvent } from "./sequenceDeltaEvent";
+import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
@@ -253,7 +255,7 @@ export function appendSharedStringDeltaToRevertibles(
 	// Handle any merge tree delta that is not REMOVE or is REMOVE with no interval endpoints
 	const mergeTreeRevertibles: MergeTreeDeltaRevertible[] = [];
 	// Allow merging MergeTreeDeltaRevertible with previous
-	if (revertibles.length > 0 && "operation" in revertibles[revertibles.length - 1]) {
+	if (revertibles.length > 0 && isMergeTreeDeltaRevertible(revertibles[revertibles.length - 1])) {
 		mergeTreeRevertibles.push(revertibles.pop() as MergeTreeDeltaRevertible);
 	}
 	appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, mergeTreeRevertibles);
@@ -319,7 +321,7 @@ function revertLocalPropertyChanged(
 
 function newEndpointPosition(
 	offset: number | undefined,
-	restoredSegments: ISegment[],
+	restoredRanges: SortedRangeSet,
 	sharedString: SharedString,
 ) {
 	if (offset === undefined) {
@@ -327,41 +329,63 @@ function newEndpointPosition(
 	}
 
 	let offsetFromSegment = offset;
-	for (const segment of restoredSegments) {
-		if (segment.cachedLength > offsetFromSegment) {
-			return sharedString.getPosition(segment) + offsetFromSegment;
+	for (const rangeInfo of restoredRanges.items) {
+		if (offsetFromSegment < rangeInfo.length) {
+			// find the segment inside the range
+			for (const range of rangeInfo.ranges) {
+				if (range.segment.cachedLength > offsetFromSegment) {
+					return sharedString.getPosition(range.segment) + offsetFromSegment;
+				}
+				offsetFromSegment -= range.segment.cachedLength;
+			}
 		}
-		offsetFromSegment -= segment.cachedLength;
+		offsetFromSegment -= rangeInfo.length;
 	}
 
 	return undefined;
+}
+
+interface RangeInfo {
+	ranges: readonly Readonly<ISequenceDeltaRange<MergeTreeDeltaOperationType>>[];
+	length: number;
+}
+
+class SortedRangeSet extends SortedSet<RangeInfo, string> {
+	protected getKey(item: RangeInfo): string {
+		return item.ranges[0].segment.ordinal;
+	}
 }
 
 function revertLocalSequenceRemove(
 	sharedString: SharedString,
 	revertible: TypedRevertible<typeof IntervalEventType.POSITIONREMOVE>,
 ) {
-	const restoredSegments: ISegment[] = [];
+	const restoredRanges = new SortedRangeSet();
 	const saveSegments = (event: SequenceDeltaEvent) => {
-		event.deltaArgs.deltaSegments.forEach((d) => restoredSegments.push(d.segment));
+		if (event.ranges.length > 0) {
+			let length = 0;
+			event.ranges.forEach((range) => {
+				length += range.segment.cachedLength;
+			});
+			restoredRanges.addOrUpdate({ ranges: event.ranges, length });
+		}
 	};
 	sharedString.on("sequenceDelta", saveSegments);
 	revertMergeTreeDeltaRevertibles(sharedString, [revertible.mergeTreeRevertible]);
 	sharedString.off("sequenceDelta", saveSegments);
-	restoredSegments.sort((a, b) => (a.ordinal < b.ordinal ? -1 : 1));
 
 	revertible.intervals.forEach((intervalInfo) => {
 		const intervalCollection = sharedString.getIntervalCollection(intervalInfo.label);
 		const interval = intervalCollection.getIntervalById(intervalInfo.intervalId);
-		if (interval !== undefined && restoredSegments !== undefined) {
+		if (interval !== undefined) {
 			const newStart = newEndpointPosition(
 				intervalInfo.startOffset,
-				restoredSegments,
+				restoredRanges,
 				sharedString,
 			);
 			const newEnd = newEndpointPosition(
 				intervalInfo.endOffset,
-				restoredSegments,
+				restoredRanges,
 				sharedString,
 			);
 			if (newStart !== undefined || newEnd !== undefined) {

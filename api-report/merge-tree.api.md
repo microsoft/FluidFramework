@@ -728,6 +728,9 @@ export interface ISegmentChanges {
     replaceCurrent?: ISegment;
 }
 
+// @alpha
+export function isMergeTreeDeltaRevertible(x: unknown): x is MergeTreeDeltaRevertible;
+
 // @public (undocumented)
 export interface ITrackingGroup {
     // (undocumented)
