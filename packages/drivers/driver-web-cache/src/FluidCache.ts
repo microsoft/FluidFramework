@@ -58,6 +58,9 @@ export class FluidCache implements IPersistedCache {
 
 	private readonly maxCacheItemAge: number;
 
+	private db: IDBPDatabase<FluidCacheDBSchema> | undefined;
+	private dbCloseTimer: ReturnType<typeof setTimeout> | undefined;
+
 	constructor(config: FluidCacheConfig) {
 		this.logger = ChildLogger.create(config.logger);
 		this.partitionKey = config.partitionKey;
@@ -117,10 +120,35 @@ export class FluidCache implements IPersistedCache {
 		});
 	}
 
+	private async openDb() {
+		if (this.db === undefined) {
+			this.db = await getFluidCacheIndexedDbInstance(this.logger);
+			// Need to close the db on version change if opened.
+			this.db.addEventListener("versionchange", (ev) => {
+				this.db?.close();
+				this.db = undefined;
+			});
+			this.db.addEventListener("close", (ev) => {
+				clearTimeout(this.dbCloseTimer);
+				this.dbCloseTimer = undefined;
+				this.db = undefined;
+			});
+			// Schedule db close after 30s.
+			if (this.dbCloseTimer === undefined) {
+				this.dbCloseTimer = setTimeout(() => {
+					this.db?.close();
+					this.db = undefined;
+					this.dbCloseTimer = undefined;
+				}, 30000);
+			}
+		}
+		return this.db;
+	}
+
 	public async removeEntries(file: IFileEntry): Promise<void> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		try {
-			db = await getFluidCacheIndexedDbInstance(this.logger);
+			db = await this.openDb();
 
 			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
 			const index = transaction.store.index("fileId");
@@ -136,8 +164,6 @@ export class FluidCache implements IPersistedCache {
 				},
 				error,
 			);
-		} finally {
-			db?.close();
 		}
 	}
 
@@ -152,7 +178,6 @@ export class FluidCache implements IPersistedCache {
 			type: cacheEntry.type,
 			duration: performance.now() - startTime,
 			dbOpenPerf: cachedItem?.dbOpenPerf,
-			dbClosePerf: cachedItem?.dbClosePerf,
 		});
 
 		// Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
@@ -166,12 +191,11 @@ export class FluidCache implements IPersistedCache {
 			const key = getKeyForCacheEntry(cacheEntry);
 
 			const dbOpenStartTime = performance.now();
-			db = await getFluidCacheIndexedDbInstance(this.logger);
+			db = await this.openDb();
 			const dbOpenPerf = performance.now() - dbOpenStartTime;
 			const value = await db.get(FluidDriverObjectStoreName, key);
 
 			if (!value) {
-				db.close();
 				return undefined;
 			}
 
@@ -182,7 +206,6 @@ export class FluidCache implements IPersistedCache {
 					subCategory: FluidCacheEventSubCategories.FluidCache,
 				});
 
-				db.close();
 				return undefined;
 			}
 
@@ -190,14 +213,10 @@ export class FluidCache implements IPersistedCache {
 
 			// If too much time has passed since this cache entry was used, we will also return undefined
 			if (currentTime - value.createdTimeMs > this.maxCacheItemAge) {
-				db.close();
 				return undefined;
 			}
 
-			const dbCloseStartTime = performance.now();
-			db.close();
-			const dbClosePerf = performance.now() - dbCloseStartTime;
-			return { ...value, dbOpenPerf, dbClosePerf };
+			return { ...value, dbOpenPerf };
 		} catch (error: any) {
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us. Return undefined in this case
@@ -205,7 +224,6 @@ export class FluidCache implements IPersistedCache {
 				{ eventName: FluidCacheErrorEvent.FluidCacheGetError },
 				error,
 			);
-			db?.close();
 			return undefined;
 		}
 	}
@@ -213,7 +231,7 @@ export class FluidCache implements IPersistedCache {
 	public async put(entry: ICacheEntry, value: any): Promise<void> {
 		let db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 		try {
-			db = await getFluidCacheIndexedDbInstance(this.logger);
+			db = await this.openDb();
 
 			const currentTime = new Date().getTime();
 
@@ -230,8 +248,6 @@ export class FluidCache implements IPersistedCache {
 				},
 				getKeyForCacheEntry(entry),
 			);
-
-			db.close();
 		} catch (error: any) {
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us
@@ -239,8 +255,6 @@ export class FluidCache implements IPersistedCache {
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError },
 				error,
 			);
-		} finally {
-			db?.close();
 		}
 	}
 }

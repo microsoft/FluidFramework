@@ -238,4 +238,26 @@ describe("Fluid Cache tests", () => {
 		const result = await fluidCache.get(cacheEntry);
 		expect(result).toEqual(undefined);
 	});
+
+	it("does not hang when client is getting data after putting in the cache", async () => {
+		const fluidCache = getFluidCache();
+
+		const cacheEntry = getMockCacheEntry("someKey");
+		const cachedItem = { dateToStore: "foo" };
+		await fluidCache.put(cacheEntry, cachedItem);
+
+		const result = await fluidCache.get(cacheEntry);
+		expect(result).toEqual(cachedItem);
+	});
+
+	it("does not hang when client is getting data after removing the entry from cache", async () => {
+		const fluidCache = getFluidCache();
+
+		const cacheEntry = getMockCacheEntry("someKey");
+		const cachedItem = { dateToStore: "foo" };
+		await fluidCache.put(cacheEntry, cachedItem);
+		await fluidCache.removeEntries(cacheEntry.file);
+		const result = await fluidCache.get(cacheEntry);
+		expect(result).toEqual(undefined);
+	});
 });
