@@ -34,16 +34,16 @@ stages:
       inputs:
         version: 16.x
 
+    - template: include-install-pnpm.yml
+      parameters:
+        buildDirectory: $(Build.SourcesDirectory)
+
     - task: Bash@3
       displayName: Install root dependencies
       inputs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
-          # Install pnpm globally
-          corepack enable
-          pnpm -v
-
           # We only need the root dependencies
           pnpm install --workspace-root --frozen-lockfile
 
