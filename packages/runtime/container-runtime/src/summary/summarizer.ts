@@ -370,7 +370,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		return this.runningSummarizer.enqueueSummarize(...args);
 	};
 
-	public markSummaryAttempt?(summaryRefSeqNum: number) {
+	public recordSummaryAttempt?(summaryRefSeqNum?: number) {
 		this._heuristicData?.recordAttempt(summaryRefSeqNum);
 	}
 }

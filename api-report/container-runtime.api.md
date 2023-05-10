@@ -671,7 +671,7 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     // (undocumented)
     get ISummarizer(): this;
     // (undocumented)
-    markSummaryAttempt?(summaryRefSeqNum: number): void;
+    recordSummaryAttempt?(summaryRefSeqNum?: number): void;
     // (undocumented)
     run(onBehalfOf: string): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;

@@ -275,7 +275,7 @@ export class SummaryGenerator {
 		// Use record type to prevent unexpected value types
 		let summaryData: SubmitSummaryResult | undefined;
 		try {
-			// Need to record before we record new attempt
+			// Need to save refSeqNum before we record new attempt (happens as part of submitSummaryCallback)
 			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
 
 			summaryData = await this.submitSummaryCallback({
