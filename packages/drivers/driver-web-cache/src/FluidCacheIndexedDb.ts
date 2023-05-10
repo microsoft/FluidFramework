@@ -131,6 +131,11 @@ export interface FluidCacheDBSchema extends DBSchema {
 			 * so as to not upgrade the schema version.
 			 */
 			lastAccessTimeMs: number;
+
+			/**
+			 * Size of cachedObject stored.
+			 */
+			size?: number;
 		};
 
 		indexes: {

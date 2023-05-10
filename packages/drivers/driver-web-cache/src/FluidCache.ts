@@ -153,6 +153,7 @@ export class FluidCache implements IPersistedCache {
 			duration: performance.now() - startTime,
 			dbOpenPerf: cachedItem?.dbOpenPerf,
 			dbClosePerf: cachedItem?.dbClosePerf,
+			size: cachedItem?.size,
 		});
 
 		// Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
@@ -217,6 +218,11 @@ export class FluidCache implements IPersistedCache {
 
 			const currentTime = new Date().getTime();
 
+			let size: number | undefined;
+			try {
+				size = JSON.stringify(value).length;
+			} catch (error) {}
+
 			await db.put(
 				FluidDriverObjectStoreName,
 				{
@@ -227,6 +233,7 @@ export class FluidCache implements IPersistedCache {
 					partitionKey: this.partitionKey,
 					createdTimeMs: currentTime,
 					lastAccessTimeMs: currentTime,
+					size,
 				},
 				getKeyForCacheEntry(entry),
 			);
