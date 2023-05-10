@@ -206,36 +206,37 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 				);
 			}),
 			new LazyPromise<IChannel>(async () => {
-				const { attributes, factory } = await loadChannelFactoryAndAttributes(
-					dataStoreContext,
-					this.services.value,
-					this.id,
-					registry,
-				);
-				const channel = await loadChannel(
-					runtime,
-					attributes,
-					factory,
-					this.services.value,
-					logger,
-					this.id,
-				).catch((err) => {
+				try {
+					const { attributes, factory } = await loadChannelFactoryAndAttributes(
+						dataStoreContext,
+						this.services.value,
+						this.id,
+						registry,
+					);
+					const channel = await loadChannel(
+						runtime,
+						attributes,
+						factory,
+						this.services.value,
+						logger,
+						this.id,
+					);
+					// Send all pending messages to the channel
+					for (const message of this.pending) {
+						this.services.value.deltaConnection.process(
+							message,
+							false,
+							undefined /* localOpMetadata */,
+						);
+					}
+					return channel;
+				} catch (err) {
 					throw DataProcessingError.wrapIfUnrecognized(
 						err,
 						"rehydratedLocalChannelContextFailedToLoadChannel",
 						undefined,
 					);
-				});
-
-				// Send all pending messages to the channel
-				for (const message of this.pending) {
-					this.services.value.deltaConnection.process(
-						message,
-						false,
-						undefined /* localOpMetadata */,
-					);
 				}
-				return channel;
 			}),
 		);
 
