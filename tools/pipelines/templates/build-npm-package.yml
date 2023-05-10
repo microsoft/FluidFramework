@@ -103,11 +103,13 @@ parameters:
   type: string
   default: "^"
 
-# A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
-# a pipeline stage separate from the build stage.
+# A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
+# in a pipeline stage separate from the build stage.
 - name: checks
   type: object
-  default: []
+  default:
+  - prettier
+
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
