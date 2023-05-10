@@ -17,8 +17,8 @@ import {
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
-import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { FluentProvider } from "@fluentui/react-components";
+import SplitPane, { Pane } from "react-split-pane";
+import { FluentProvider, tokens } from "@fluentui/react-components";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
@@ -80,62 +80,6 @@ interface TelemetryMenuSelection {
  * is selected, and has a 'containerId' property to indicate which Container.
  */
 type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
-
-// #region Styles definitions
-
-const stackStyles: IStackStyles = {
-	root: {
-		"display": "flex",
-		"flexDirection": "row",
-		"flexWrap": "nowrap",
-		"width": "auto",
-		"height": "auto",
-		"boxSizing": "border-box",
-		"> *": {
-			textOverflow: "ellipsis",
-		},
-		"> :not(:first-child)": {
-			marginTop: "0px",
-		},
-		"> *:not(.ms-StackItem)": {
-			flexShrink: 1,
-		},
-	},
-};
-
-const contentViewStyles: IStackItemStyles = {
-	root: {
-		"alignItems": "center",
-		"display": "flex",
-		"justifyContent": "center",
-		"flexDirection": "column",
-		"flexWrap": "nowrap",
-		"width": "auto",
-		"height": "auto",
-		"boxSizing": "border-box",
-		"> *": {
-			textOverflow: "ellipsis",
-		},
-		"> :not(:first-child)": {
-			marginTop: "0px",
-		},
-		"> *:not(.ms-StackItem)": {
-			flexShrink: 1,
-		},
-	},
-};
-
-const menuStyles: IStackItemStyles = {
-	root: {
-		...contentViewStyles,
-		display: "flex",
-		flexDirection: "column",
-		borderRight: `2px solid`,
-		minWidth: 150,
-	},
-};
-
-// #endregion
 
 /**
  * Primary Devtools view.
@@ -243,15 +187,33 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	}, [messageRelay, setContainers]);
 
 	return (
-		<Stack enableScopedSelectors horizontal styles={stackStyles}>
-			<Menu
-				currentSelection={menuSelection}
-				setSelection={setMenuSelection}
-				containers={containers}
-				supportedFeatures={supportedFeatures}
-			/>
-			<View menuSelection={menuSelection} containers={containers} />
-		</Stack>
+		<SplitPane
+			split="vertical"
+			minSize={200}
+			maxSize={350}
+			style={{
+				position: "relative",
+			}}
+			pane2Style={{ margin: "5px" }}
+			resizerStyle={{
+				borderRight: `1px solid ${tokens.colorNeutralForeground2}`,
+				borderLeft: `1px solid ${tokens.colorNeutralForeground2}`,
+				zIndex: 1,
+				cursor: "col-resize",
+			}}
+		>
+			<Pane className="pane1">
+				<Menu
+					currentSelection={menuSelection}
+					setSelection={setMenuSelection}
+					containers={containers}
+					supportedFeatures={supportedFeatures}
+				/>
+			</Pane>
+			<Pane className="pane2">
+				<View menuSelection={menuSelection} containers={containers} />
+			</Pane>
+		</SplitPane>
 	);
 }
 
@@ -298,16 +260,7 @@ function View(props: ViewProps): React.ReactElement {
 			break;
 	}
 
-	return (
-		<Stack.Item grow={5} styles={contentViewStyles}>
-			<div
-				id="devtools-view-content"
-				style={{ width: "100%", height: "100%", overflowY: "auto" }}
-			>
-				{view}
-			</div>
-		</Stack.Item>
-	);
+	return <>{view}</>;
 }
 
 /**
@@ -380,11 +333,7 @@ function Menu(props: MenuProps): React.ReactElement {
 		);
 	}
 
-	return (
-		<Stack.Item styles={menuStyles}>
-			{menuSections.length === 0 ? <Waiting /> : menuSections}
-		</Stack.Item>
-	);
+	return <>{menuSections.length === 0 ? <Waiting /> : menuSections}</>;
 }
 
 /**
