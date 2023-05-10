@@ -34,6 +34,10 @@ const getThisOrigin = (options: RouteOptions): string => `http://localhost:${opt
  */
 export function devServerConfig(baseDir: string, env: RouteOptions) {
 	return {
+		experiments: {
+			asyncWebAssembly: true,
+			topLevelAwait: true,
+		},
 		devServer: {
 			static: {
 				directory: path.join(
