@@ -369,7 +369,7 @@ module.exports = {
 		},
 		{
 			// Rules only for test files
-			files: ["*.spec.ts", "src/test/**", "test/**"],
+			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				"@typescript-eslint/no-invalid-this": "off",
 				"@typescript-eslint/unbound-method": "off", // This rule has false positives in many of our test projects.

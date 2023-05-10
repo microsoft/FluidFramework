@@ -11,8 +11,8 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../src/sharedString";
-import { SharedStringFactory } from "../src/sequenceFactory";
+import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
 import { LocationBase } from "./generateSharedStrings";
 
 describe("SharedString Snapshot Version - Empty Props", () => {

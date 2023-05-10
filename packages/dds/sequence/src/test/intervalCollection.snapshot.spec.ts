@@ -10,14 +10,14 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { SharedString } from "../src/sharedString";
-import { SharedStringFactory } from "../src/sequenceFactory";
+import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
 import {
 	IntervalCollection,
 	intervalLocatorFromEndpoint,
 	IntervalType,
 	SequenceInterval,
-} from "../src/intervalCollection";
+} from "../intervalCollection";
 
 const assertIntervals = (
 	sharedString: SharedString,

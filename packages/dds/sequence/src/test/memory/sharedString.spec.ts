@@ -6,8 +6,8 @@
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import { SharedString } from "../../src/sharedString";
-import { SharedStringFactory } from "../../src/sequenceFactory";
+import { SharedString } from "../../sharedString";
+import { SharedStringFactory } from "../../sequenceFactory";
 
 function createLocalSharedString(id: string) {
 	return new SharedString(new MockFluidDataStoreRuntime(), id, SharedStringFactory.Attributes);

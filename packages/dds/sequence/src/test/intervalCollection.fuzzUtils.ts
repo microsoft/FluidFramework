@@ -10,8 +10,8 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { IntervalType } from "../src/intervalCollection";
-import { SharedStringFactory } from "../src/sequenceFactory";
+import { IntervalType } from "../intervalCollection";
+import { SharedStringFactory } from "../sequenceFactory";
 
 export interface RangeSpec {
 	start: number;

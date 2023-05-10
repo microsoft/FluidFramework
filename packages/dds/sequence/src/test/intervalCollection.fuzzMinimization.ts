@@ -11,11 +11,11 @@ import {
 	makeRandom,
 } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzModel, replayTest } from "@fluid-internal/test-dds-utils";
-import { SharedStringFactory } from "../src/sequenceFactory";
+import { SharedStringFactory } from "../sequenceFactory";
 import { LoggingInfo, Operation, FuzzTestState, makeReducer } from "./intervalCollection.fuzzUtils";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 
-const directory = path.join(__dirname, "../results/default-interval-collection");
+const directory = path.join(__dirname, "../../src/test/results/default-interval-collection");
 
 function getPath(seed: number): string {
 	return path.join(directory, `${seed}.json`);

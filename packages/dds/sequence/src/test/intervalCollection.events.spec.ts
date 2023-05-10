@@ -11,9 +11,9 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { SharedString } from "../src/sharedString";
-import { SharedStringFactory } from "../src/sequenceFactory";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../src/intervalCollection";
+import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };

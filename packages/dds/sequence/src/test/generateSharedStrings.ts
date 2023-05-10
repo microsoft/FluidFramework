@@ -7,9 +7,9 @@
 import { SnapshotLegacy as Snapshot } from "@fluidframework/merge-tree/dist/test";
 import Random from "random-js";
 import * as mocks from "@fluidframework/test-runtime-utils";
-import { SharedString } from "../src/sharedString";
-import { SharedStringFactory } from "../src/sequenceFactory";
-import { IntervalType } from "../src/intervalCollection";
+import { SharedString } from "../sharedString";
+import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalType } from "../intervalCollection";
 import {
 	SharedStringWithV1IntervalCollection,
 	V1IntervalCollectionSharedStringFactory,
