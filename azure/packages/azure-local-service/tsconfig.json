@@ -1,6 +1,6 @@
 {
     "extends": "@fluidframework/build-common/ts-common-config.json",
-    "exclude": ["dist", "node_modules"],
+    "exclude": [],
     "compilerOptions": {
         "strictNullChecks": false,
         "rootDir": "./src",
