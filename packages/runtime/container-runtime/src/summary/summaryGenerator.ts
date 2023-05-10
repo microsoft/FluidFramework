@@ -338,6 +338,9 @@ export class SummaryGenerator {
 		} catch (error) {
 			return fail("submitSummaryFailure", error);
 		} finally {
+			if (summaryData === undefined) {
+				this.heuristicData.recordAttempt();
+			}
 			this.summarizeTimer.clear();
 		}
 
