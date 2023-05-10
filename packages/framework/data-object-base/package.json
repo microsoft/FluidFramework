@@ -16,8 +16,8 @@
 	"types": "dist/index.d.ts",
 	"files": [
 		"dist/**/*",
-		"lib/**/*",
-		"es5/**/*"
+		"!dist/test/**",
+		"lib/**/*"
 	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
