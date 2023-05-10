@@ -75,7 +75,7 @@
 		"test:jest:bail": "assign-test-ports && pnpm run -r --no-sort --stream test:jest",
 		"test:jest:report": "assign-test-ports && pnpm run -r --no-sort --stream --no-bail test:jest --ci --reporters=default --reporters=jest-junit",
 		"test:memory-profiling:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/memoryProfilingOutput/**\" memoryProfilingOutput",
-		"test:memory-profiling:report": "pnpm run -r --no-sort --stream --no-bail test:memory-profiling:report --reporterOptions reportDir=./memoryProfilingOutput",
+		"test:memory-profiling:report": "pnpm run -r --no-sort --stream --no-bail test:memory-profiling:report -- --reporterOptions reportDir=./memoryProfilingOutput",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
 		"test:mocha:bail": "pnpm run -r --no-sort --stream test:mocha",
 		"test:mocha:report": "pnpm run -r --no-sort --stream test:mocha:multireport -- --timeout 4s",
