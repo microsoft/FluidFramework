@@ -103,11 +103,6 @@ parameters:
   type: string
   default: "^"
 
-# If true, then this pipeline will check and format package.json files according to prettier settings.
-- name: usesPrettier
-  type: boolean
-  default: true
-
 # A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
 # a pipeline stage separate from the build stage.
 - name: checks
@@ -271,7 +266,6 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
-              usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
