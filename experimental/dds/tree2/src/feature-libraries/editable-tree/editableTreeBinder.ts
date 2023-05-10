@@ -452,8 +452,8 @@ class BufferingPathVisitor
 	}
 
 	public override dispose(): void {
-		super.dispose();
 		this.flush();
+		super.dispose();
 	}
 }
 
