@@ -228,7 +228,10 @@ async function runnerProcess(
 			// temp fix for #15538: remove clientId from empty stash blobs
 			if (stashedOps !== undefined) {
 				const parsed = JSON.parse(stashedOps);
-				if (parsed.pendingRuntimeState.pending === undefined && Object.keys(parsed.pendingRuntimeState.pendingAttachmentBlobs).length === 0) {
+				if (
+					parsed.pendingRuntimeState.pending === undefined &&
+					Object.keys(parsed.pendingRuntimeState.pendingAttachmentBlobs).length === 0
+				) {
 					parsed.clientId = undefined;
 					stashedOps = JSON.stringify(parsed);
 				}
@@ -467,7 +470,10 @@ async function scheduleOffline(
 				if (container.closed) {
 					return undefined;
 				}
-				if (runConfig.loaderConfig?.enableOfflineLoad === true && random.real() < stashPercent) {
+				if (
+					runConfig.loaderConfig?.enableOfflineLoad === true &&
+					random.real() < stashPercent
+				) {
 					printStatus(runConfig, "closing offline container!");
 					return container.closeAndGetPendingLocalState();
 				}
