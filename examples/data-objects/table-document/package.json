@@ -1,6 +1,7 @@
 {
 	"name": "@fluid-example/table-document",
 	"version": "2.0.0-internal.4.3.0",
+	"private": true,
 	"description": "Chaincode component containing a table's data",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,6 +15,7 @@
 	"main": "dist/index.js",
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
+	"files": [],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc && npm run build:test",
