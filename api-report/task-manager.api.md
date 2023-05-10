@@ -21,6 +21,7 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
     assigned(taskId: string): boolean;
     canVolunteer(): boolean;
     complete(taskId: string): void;
+    getTasks?(): string[];
     queued(taskId: string): boolean;
     subscribed(taskId: string): boolean;
     subscribeToTask(taskId: string): void;
@@ -43,6 +44,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     complete(taskId: string): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): TaskManager;
     static getFactory(): IChannelFactory;
+    getTasks?(): string[];
     // @internal (undocumented)
     protected initializeLocalCore(): void;
     // @internal (undocumented)

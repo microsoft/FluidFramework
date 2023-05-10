@@ -863,4 +863,11 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	public applyStashedOp() {
 		throw new Error("not implemented");
 	}
+
+	/**
+	 * {@inheritDoc ITaskManager.getTasks}
+	 */
+	public getTasks?(): string[] {
+		return [...this.taskQueues.keys()];
+	}
 }

@@ -14,6 +14,8 @@ import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { TaskManager } from "@fluidframework/task-manager";
+
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 
 import {
@@ -23,8 +25,8 @@ import {
 	VisualNodeKind,
 	VisualChildNode,
 	VisualTreeNode,
+	FluidObjectNode,
 } from "./VisualTree";
-import { TaskManager } from "@fluidframework/task-manager";
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
@@ -205,22 +207,52 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 export const visualizeTaskManager: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
-): Promise<FluidObjectTreeNode> => {
+): Promise<FluidObjectNode> => {
 	const taskManager = sharedObject as TaskManager;
 
 	const { id: fluidObjectId } = taskManager;
-	
-	taskManager.
 
-	// TODO
+	let tasks: string[] | undefined = taskManager.getTasks?.();
+
+	if (tasks === undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		const taskQueues = (taskManager as any).taskQueues as Map<string, unknown> | undefined;
+		if (taskQueues === undefined) {
+			return visualizeUnknownSharedObject(taskManager, visualizeChildData);
+		}
+		tasks = [...taskQueues.keys()];
+	}
+
+	const children: Record<string, VisualChildNode> = {};
+	for (const taskId of tasks) {
+		const renderedChild: VisualTreeNode = {
+			children: {
+				assigned: {
+					value: taskManager.assigned(taskId),
+					typeMetadata: "boolean",
+					nodeKind: VisualNodeKind.ValueNode,
+				},
+				queued: {
+					value: taskManager.queued(taskId),
+					typeMetadata: "boolean",
+					nodeKind: VisualNodeKind.ValueNode,
+				},
+				subscribed: {
+					value: taskManager.subscribed(taskId),
+					typeMetadata: "boolean",
+					nodeKind: VisualNodeKind.ValueNode,
+				},
+			},
+			nodeKind: VisualNodeKind.TreeNode,
+		};
+		children[taskId] = renderedChild;
+	}
 
 	return {
 		fluidObjectId,
-		children: {
-			// TODO
-		},
+		children,
 		metadata: {
-			// TODO
+			tasks: tasks.length,
 		},
 		typeMetadata: "TaskManager",
 		nodeKind: VisualNodeKind.FluidTreeNode,

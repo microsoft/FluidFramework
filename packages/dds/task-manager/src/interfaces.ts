@@ -71,4 +71,11 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 	 * Check whether this client can currently volunteer for a task.
 	 */
 	canVolunteer(): boolean;
+
+	/**
+	 * Gets the list of currently queued task IDs.
+	 *
+	 * @remarks This method is optional for backwards compatibility. It will be required in the future.
+	 */
+	getTasks?(): string[];
 }
