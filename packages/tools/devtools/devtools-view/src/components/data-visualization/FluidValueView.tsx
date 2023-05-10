@@ -8,7 +8,7 @@ import { TreeItem } from "@fluentui/react-components/unstable";
 
 import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
 
-import { HasLabel } from "../CommonInterfaces";
+import { HasLabel } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
 
 /**

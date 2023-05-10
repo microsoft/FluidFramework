@@ -15,9 +15,9 @@ import {
 	FluidObjectNode,
 } from "@fluid-experimental/devtools-core";
 
-import { HasLabel } from "../CommonInterfaces";
 import { useMessageRelay } from "../../MessageRelayContext";
 import { Waiting } from "../Waiting";
+import { HasLabel } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "EXTENSION(HandleView)";

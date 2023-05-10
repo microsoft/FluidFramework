@@ -6,8 +6,8 @@ import React from "react";
 
 import { HasContainerId, FluidObjectTreeNode } from "@fluid-experimental/devtools-core";
 
-import { HasLabel } from "../CommonInterfaces";
 import { Tree } from "../utility-components";
+import { HasLabel } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";
 

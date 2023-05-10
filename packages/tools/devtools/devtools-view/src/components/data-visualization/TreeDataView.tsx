@@ -6,7 +6,7 @@ import React from "react";
 
 import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-experimental/devtools-core";
 
-import { HasLabel } from "../CommonInterfaces";
+import { HasLabel } from "./CommonInterfaces";
 import { FluidHandleView } from "./FluidHandleView";
 import { TreeView } from "./TreeView";
 import { FluidTreeView } from "./FluidTreeView";
