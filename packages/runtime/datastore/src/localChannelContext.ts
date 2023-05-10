@@ -46,7 +46,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		protected readonly registry: ISharedObjectRegistry,
 		protected readonly runtime: IFluidDataStoreRuntime,
 		protected readonly services: Lazy<ChannelServiceEndpoints>,
-		private readonly channelP: LazyPromise<IChannel>,
+		private readonly channelP: Promise<IChannel>,
 	) {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
@@ -314,7 +314,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 					logger,
 				);
 			}),
-			new LazyPromise(async () => this.channel),
+			new Promise(() => this.channel),
 		);
 		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
 		this.factory = registry.get(type);
