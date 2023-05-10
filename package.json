@@ -37,7 +37,7 @@
 		"ci:test:realsvc:tinylicious:coverage": "c8 --no-clean pnpm run -r --stream --no-bail --parallel test:realsvc:tinylicious:report ",
 		"ci:test:stress:tinylicious": "pnpm run -r --stream --no-bail --parallel test:stress:tinylicious:report ",
 		"ci:test:stress:tinylicious:coverage": "c8 --no-clean pnpm run -r --stream --no-bail --parallel test:stress:tinylicious:report ",
-		"clean": "pnpm run -r clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
+		"clean": "pnpm run -r  --stream --parallel clean && npm run clean:docs && npm run clean:nyc",
 		"clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
 		"clean:nyc": "rimraf nyc/**",
 		"clean:r11s": "cd server/routerlicious && npm run clean",
