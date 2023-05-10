@@ -1,4 +1,5 @@
 // TODO: Good error messages
+// TODO: Print out wasm-pack output as it is produced rather than after it finishes
 // TODO: Optional properties with good error messages/warnings
 // TODO: Name and version aren't optional
 // TODO: Good usage message if invoked incorrectly
@@ -29,10 +30,15 @@ const existingPackageJsonTemplateData = fs.readFileSync("package-combo-template.
 const parsedJson = JSON.parse(existingPackageJsonTemplateData);
 const outputJsonPath = path.join(webPackagesPath, package, "package.json");
 const nameWithUnderscores = name.replace(/-/g, "_");
+
+const webFolderName = "bundler";
+const nodeFolderName = "nodejs";
+const webEntryName = "entry";
+
 parsedJson.name = `@fluidframework/${parsedSubToml.package.name}`;
-parsedJson.module = `./bundler/${nameWithUnderscores}.js`;
-parsedJson.types = `./nodejs/${nameWithUnderscores}.d.ts`;
-parsedJson.main = `./nodejs/${nameWithUnderscores}.js`;
+parsedJson.module = `./${webFolderName}/${webEntryName}.js`;
+parsedJson.types = `./${nodeFolderName}/${nameWithUnderscores}.d.ts`;
+parsedJson.main = `./${nodeFolderName}/${nameWithUnderscores}.js`;
 parsedJson.version = parsedSubToml.package.version;
 if (parsedSubToml.package.description !== undefined) {
 	parsedJson.description = parsedSubToml.package.description;
@@ -41,13 +47,17 @@ if (parsedSubToml.package.description !== undefined) {
 }
 
 parsedJson.files = [
-	`/nodejs/${nameWithUnderscores}_bg.wasm`,
-	`/nodejs/${nameWithUnderscores}.js`,
-	`/nodejs/${nameWithUnderscores}.d.ts`,
-	`/bundler/${nameWithUnderscores}_bg.wasm`,
-	`/bundler/${nameWithUnderscores}.js`,
-	`/bundler/${nameWithUnderscores}_bg.js`,
+	`/${nodeFolderName}/${nameWithUnderscores}_bg.wasm`,
+	`/${nodeFolderName}/${nameWithUnderscores}.js`,
+	`/${nodeFolderName}/${nameWithUnderscores}.d.ts`,
+	`/${webFolderName}/${nameWithUnderscores}_bg.wasm`,
+	`/${webFolderName}/${nameWithUnderscores}.js`,
+	`/${webFolderName}/${nameWithUnderscores}_bg.js`,
+	`/${webFolderName}/${nameWithUnderscores}_bg.js`,
+	`/${webFolderName}/${webEntryName}.js`,
 ];
+
+parsedJson.sideEffects = [`./${webFolderName}/${nameWithUnderscores}.js`];
 
 function build(target) {
 	const pathname = path.join(webPackagesPath, name, target);
@@ -69,11 +79,17 @@ function build(target) {
 	);
 }
 
-build("bundler");
-rimraf.sync(path.join(webPackagesPath, name, "bundler", "package.json"));
-rimraf.sync(path.join(webPackagesPath, name, "bundler", ".gitignore"));
-build("nodejs");
+build(webFolderName);
+rimraf.sync(path.join(webPackagesPath, name, webFolderName, "package.json"));
+rimraf.sync(path.join(webPackagesPath, name, webFolderName, ".gitignore"));
+const outputWebEntryPath = path.join(webPackagesPath, package, `${webFolderName}/${webEntryName}.js`);
+fs.writeFileSync(outputWebEntryPath, `
+await import("./${nameWithUnderscores}");
+export * from "./${nameWithUnderscores}";
+`);
 
-rimraf.sync(path.join(webPackagesPath, name, "nodejs", "package.json"));
-rimraf.sync(path.join(webPackagesPath, name, "nodejs", ".gitignore"));
+build(nodeFolderName);
+rimraf.sync(path.join(webPackagesPath, name, nodeFolderName, "package.json"));
+rimraf.sync(path.join(webPackagesPath, name, nodeFolderName, ".gitignore"));
+
 fs.writeFileSync(outputJsonPath, JSON.stringify(parsedJson, undefined, 4));
