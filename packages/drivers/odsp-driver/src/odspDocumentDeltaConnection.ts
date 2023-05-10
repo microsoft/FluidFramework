@@ -633,7 +633,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 	public get disposed() {
 		if (!(this._disposed || this.socket.connected)) {
-			// Send error event if this connection is not yet disposed after socket is disconnected for 30s.
+			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
 			if (this.connectionNotYetDisposedTimeout === undefined) {
 				this.connectionNotYetDisposedTimeout = setTimeout(() => {
 					if (!this._disposed) {
@@ -645,7 +645,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 							}),
 						});
 					}
-				}, 30000);
+				}, 15000);
 			}
 		}
 		return this._disposed;
