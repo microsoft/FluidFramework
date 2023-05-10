@@ -53,7 +53,6 @@ parsedJson.files = [
 	`/${webFolderName}/${nameWithUnderscores}_bg.wasm`,
 	`/${webFolderName}/${nameWithUnderscores}.js`,
 	`/${webFolderName}/${nameWithUnderscores}_bg.js`,
-	`/${webFolderName}/${nameWithUnderscores}_bg.js`,
 	`/${webFolderName}/${webEntryName}.js`,
 ];
 
