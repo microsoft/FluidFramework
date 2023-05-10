@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 import { Stack } from "@fluentui/react";
-import { Tab, TabList, TabValue, SelectTabData, SelectTabEvent } from "@fluentui/react-components";
+import {
+	Tab,
+	TabList,
+	TabValue,
+	SelectTabData,
+	SelectTabEvent,
+	Divider,
+} from "@fluentui/react-components";
 import {
 	ContainerDevtoolsFeature,
 	ContainerDevtoolsFeatureFlags,
@@ -182,6 +189,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 			<Stack.Item>
 				<ContainerSummaryView containerId={containerId} />
 			</Stack.Item>
+			<Divider appearance="strong" />
 			<Stack.Item style={{ width: "100%", height: "100%", overflowY: "auto" }}>
 				<Stack tokens={{ childrenGap: 10 }}>
 					<TabList selectedValue={innerViewSelection} onTabSelect={onTabSelect}>

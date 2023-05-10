@@ -7,7 +7,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/tools/devtools/devtools-core"
+		"directory": "packages/tools/client-debugger/devtools-core"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -15,11 +15,12 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "npm run tsc",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
+		"build:genver": "gen-version",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"clean": "rimraf _api-extractor-temp nyc dist *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",

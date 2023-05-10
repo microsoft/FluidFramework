@@ -47,7 +47,7 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	return nodeValue !== undefined ? (
 		<TreeItemLayout style={{ marginLeft: "25px" }}>
 			{`${label}`}
-			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
+			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "10px" }}>
 				({nodeTypeMetadata})
 			</span>
 			{`: ${String(nodeValue)}`}
@@ -55,7 +55,7 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	) : (
 		<TreeItemLayout>
 			{`${label === undefined ? nodeTypeMetadata : label}`}
-			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
+			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "10px" }}>
 				({nodeTypeMetadata === undefined ? nodeKind : nodeTypeMetadata})
 			</span>
 			{`${

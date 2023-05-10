@@ -13,7 +13,7 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { EditRegular, Search20Regular, Person24Regular } from "@fluentui/react-icons";
+import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-icons";
 import { TransformedAudienceStateData } from "./AudienceView";
 
 /**
@@ -42,15 +42,15 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 	];
 
 	return (
-		<Table size="small" aria-label="Audience state table">
+		<Table size="extra-small" aria-label="Audience state table">
 			<TableHeader>
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "clientId" && <Person24Regular />}
-							{column.columnKey === "userId" && <Person24Regular />}
+							{column.columnKey === "clientId" && <Person12Regular />}
+							{column.columnKey === "userId" && <Person12Regular />}
 							{column.columnKey === "mode" && <EditRegular />}
-							{column.columnKey === "scopes" && <Search20Regular />}
+							{column.columnKey === "scopes" && <Search12Regular />}
 							{column.label}
 						</TableHeaderCell>
 					))}

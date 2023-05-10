@@ -4,6 +4,9 @@
  */
 import React from "react";
 import { UnknownObjectNode } from "@fluid-experimental/devtools-core";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeItem } from "@fluentui/react-components/unstable";
+import { TreeHeader } from "./TreeHeader";
 
 /**
  * {@link UnknownDataView} input props.
@@ -18,5 +21,13 @@ export interface UnknownDataViewProps {
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
 	const { node } = props;
 
-	return <div>{`Encountered an unrecognized kind of data object: ${node.nodeKind}`} </div>;
+	return (
+		<TreeItem v-bind:leaf="true">
+			<TreeHeader
+				label="Fluid Data Object"
+				nodeTypeMetadata={node.nodeKind}
+				nodeValue="Not supported"
+			/>
+		</TreeItem>
+	);
 }

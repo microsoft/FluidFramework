@@ -302,7 +302,12 @@ function View(props: ViewProps): React.ReactElement {
 		<Stack.Item grow={5} styles={contentViewStyles}>
 			<div
 				id="devtools-view-content"
-				style={{ width: "100%", height: "100%", overflowY: "auto" }}
+				style={{
+					width: "100%",
+					height: window.innerHeight,
+					overflowY: "auto",
+					overflowX: "auto",
+				}}
 			>
 				{view}
 			</div>
@@ -373,7 +378,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			<MenuSection header="Telemetry" key="telemetry-menu-section">
 				<MenuItem
 					isActive={currentSelection?.type === "telemetryMenuSelection"}
-					text="See Telemetry"
+					text="Events"
 					onClick={onTelemetryClicked}
 				/>
 			</MenuSection>,
