@@ -486,7 +486,7 @@ export class FluidDataStoreRuntime
 	public bindChannel(channel: IChannel): void {
 		assert(
 			this.notBoundedChannelContextSet.has(channel.id),
-			0x17b /* "Channel to be binded should be in not bounded set" */,
+			0x17b /* "Channel to be bound should be in not bounded set" */,
 		);
 		this.notBoundedChannelContextSet.delete(channel.id);
 		// If our data store is attached, then attach the channel.
