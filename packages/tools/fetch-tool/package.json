@@ -14,6 +14,13 @@
 	"bin": {
 		"fluid-fetch": "bin/fluid-fetch"
 	},
+	"files": [
+		"dist/**",
+		"!dist/test/**",
+		"lib/**",
+		"src/**",
+		"!src/test/**"
+	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",

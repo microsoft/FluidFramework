@@ -18,6 +18,13 @@
 		"./lib/indexNode.js": "./lib/indexBrowser.js"
 	},
 	"types": "dist/index.d.ts",
+	"files": [
+		"dist/**",
+		"!dist/test/**",
+		"lib/**",
+		"src/**",
+		"!src/test/**"
+	],
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
