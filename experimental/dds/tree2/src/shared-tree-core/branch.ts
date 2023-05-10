@@ -90,7 +90,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
 	 * @param changeFamily - determines the set of changes that this branch can commit
 	 * @param undoRedoManager - an optional {@link UndoRedoManager} to manage the undo/redo operations of this
-	 * branch. If not provided, the `undo` and `redo` methods will have no effect.
+	 * branch. This must be provided in order to use the `undo` and `redo` methods of this branch.
 	 * @param anchors - an optional set of anchors that this branch will rebase whenever the branch head changes
 	 */
 	public constructor(
@@ -276,12 +276,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Undoes the last change made by the client. If there is no change to undo, or if there was no
-	 * {@link UndoRedoManager} provider when this branch was constructed, this method has no effect.
+	 * Undoes the last change made by the client. If there is no change to undo then this method has no effect.
+	 * This method will error if no {@link UndoRedoManager} was provided when this branch was constructed.
 	 * It is invalid to call this method while a transaction is open (this will be supported in the future).
 	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to undo
 	 */
 	public undo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+		assert(
+			this.undoRedoManager !== undefined,
+			"Must construct branch with an `UndoRedoManager` in order to undo.",
+		);
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x66a /* Undo is not yet supported during transactions */);
@@ -295,12 +299,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Redoes the last change undone by the client via {@link undo}. If there is no change to redo,
-	 * or if there was no {@link UndoRedoManager} provider when this branch was constructed, this method has no effect.
+	 * Redoes the last change made by the client. If there is no change to redo then this method has no effect.
+	 * This method will error if no {@link UndoRedoManager} was provided when this branch was constructed.
 	 * It is invalid to call this method while a transaction is open (this will be supported in the future).
 	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to redo
 	 */
 	public redo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+		assert(
+			this.undoRedoManager !== undefined,
+			"Must construct branch with an `UndoRedoManager` in order to redo.",
+		);
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x67e /* Redo is not yet supported during transactions */);

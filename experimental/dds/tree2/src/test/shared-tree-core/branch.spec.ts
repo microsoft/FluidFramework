@@ -9,18 +9,20 @@ import { SharedTreeBranch, SharedTreeBranchChange } from "../../shared-tree-core
 import {
 	GraphCommit,
 	RevisionTag,
+	UndoRedoManager,
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
 	rootFieldKeySymbol,
 } from "../../core";
 import {
-	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
+	defaultChangeFamily,
 	singleTextCursor,
 } from "../../feature-libraries";
 import { brand } from "../../util";
+import { MockRepairDataStoreProvider } from "../utils";
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 
@@ -399,23 +401,99 @@ describe("Branches", () => {
 		assert.equal(branch.getHead().revision, nullRevisionTag);
 	});
 
+	it("error if undo is called with no undo redo manager", () => {
+		const branch = create();
+		assert.throws(
+			() => branch.undo(),
+			(e) =>
+				validateAssertionError(
+					e,
+					"Must construct branch with an `UndoRedoManager` in order to undo.",
+				),
+		);
+	});
+
+	it("error if redo is called with no undo redo manager", () => {
+		const branch = create();
+		assert.throws(
+			() => branch.redo(),
+			(e) =>
+				validateAssertionError(
+					e,
+					"Must construct branch with an `UndoRedoManager` in order to redo.",
+				),
+		);
+	});
+
+	it("can rebase a non-revertible branch onto a revertible branch", () => {
+		const branch = create();
+		const revertibleBranch = createRevertible(branch);
+		change(revertibleBranch);
+		branch.rebaseOnto(revertibleBranch);
+		assert.equal(branch.getHead(), revertibleBranch.getHead());
+	});
+
+	it("error when rebasing a revertible branch onto a non-revertible branch", () => {
+		const branch = create();
+		const revertibleBranch = createRevertible(branch);
+		change(branch);
+		assert.throws(
+			() => revertibleBranch.rebaseOnto(branch),
+			(e) =>
+				validateAssertionError(
+					e,
+					"Cannot rebase a revertible branch onto a non-revertible branch",
+				),
+		);
+	});
+
+	it("can merge a revertible branch into a non-revertible branch", () => {
+		const branch = create();
+		const revertibleBranch = createRevertible(branch);
+		change(revertibleBranch);
+		branch.merge(revertibleBranch);
+		assert.equal(branch.getHead(), revertibleBranch.getHead());
+	});
+
+	it("error when merging a non-revertible branch into a revertible branch", () => {
+		const branch = create();
+		const revertibleBranch = createRevertible(branch);
+		change(branch);
+		assert.throws(
+			() => revertibleBranch.merge(branch),
+			(e) =>
+				validateAssertionError(
+					e,
+					"Cannot merge a non-revertible branch into a revertible branch",
+				),
+		);
+	});
+
 	/** Creates a new root branch */
 	function create(
 		onChange?: (change: SharedTreeBranchChange<DefaultChangeset>) => void,
 	): DefaultBranch {
-		const changeFamily = new DefaultChangeFamily();
 		const initCommit: GraphCommit<DefaultChangeset> = {
-			change: changeFamily.rebaser.compose([]),
+			change: defaultChangeFamily.rebaser.compose([]),
 			revision: nullRevisionTag,
 			sessionId: "testSession",
 		};
 
-		const branch = new SharedTreeBranch(initCommit, "testSession", changeFamily);
+		const branch = new SharedTreeBranch(initCommit, "testSession", defaultChangeFamily);
 		if (onChange !== undefined) {
 			branch.on("change", onChange);
 		}
 
 		return branch;
+	}
+
+	function createRevertible(from: DefaultBranch): DefaultBranch {
+		return new SharedTreeBranch(
+			from.getHead(),
+			from.sessionId,
+			defaultChangeFamily,
+			UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily),
+		);
 	}
 
 	let changeValue = 0;
