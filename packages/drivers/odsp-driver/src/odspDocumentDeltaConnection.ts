@@ -637,7 +637,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			if (this.connectionNotYetDisposedTimeout === undefined) {
 				this.connectionNotYetDisposedTimeout = setTimeout(() => {
 					if (!this._disposed) {
-						this.logger.sendTelemetryEvent({
+						this.logger.sendErrorEvent({
 							eventName: "ConnectionNotYetDisposed",
 							driverVersion: pkgVersion,
 							details: JSON.stringify({
