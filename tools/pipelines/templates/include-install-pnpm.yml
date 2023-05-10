@@ -45,3 +45,4 @@ steps:
       corepack enable
       pnpm -v
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
+      pnpm config set -g workspace-concurrency `node -e 'console.log(require("os").cpus().length)'`
