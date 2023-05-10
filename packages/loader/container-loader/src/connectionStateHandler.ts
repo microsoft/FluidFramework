@@ -416,9 +416,6 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private applyForConnectedState(
 		source: "removeMemberEvent" | "addMemberEvent" | "timeout" | "containerSaved",
 	) {
-		if (this.connection === undefined) {
-			return;
-		}
 		assert(
 			this.protocol !== undefined,
 			0x236 /* "In all cases it should be already installed" */,
@@ -434,9 +431,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		// or timeout has occurred while doing so.
 		if (
 			this.pendingClientId !== this.clientId &&
-			// shouldWaitForJoinSignal === false -> read connection AND read connections should not wait (and
-			// we will not check audience so it won't work anyway)
-			(this.hasMember(this.pendingClientId) || !this.shouldWaitForJoinSignal()) &&
+			this.hasMember(this.pendingClientId) &&
 			!this.waitingForLeaveOp
 		) {
 			this.waitEvent?.end({ source });
