@@ -14,6 +14,13 @@
 	"main": "dist/index.js",
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
+	"files": [
+		"dist/**",
+		"!dist/test/**",
+		"lib/**",
+		"src/**",
+		"!src/test/**"
+	],
 	"scripts": {
 		"bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
 		"bench:profile": "cd bench && tsc && node -r ts-node/register --prof src/index.ts --runInBand && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
