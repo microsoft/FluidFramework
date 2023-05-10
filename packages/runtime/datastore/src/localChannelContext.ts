@@ -8,11 +8,7 @@ import cloneDeep from "lodash/cloneDeep";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import {
-	IChannel,
-	IFluidDataStoreRuntime,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions";
+import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import {
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
@@ -39,10 +35,8 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime";
 export abstract class LocalChannelContextBase implements IChannelContext {
 	private globallyVisible = false;
 	protected readonly pending: ISequencedDocumentMessage[] = [];
-	protected factory: IChannelFactory | undefined;
 	constructor(
 		protected readonly id: string,
-		protected readonly registry: ISharedObjectRegistry,
 		protected readonly runtime: IFluidDataStoreRuntime,
 		protected readonly services: Lazy<ChannelServiceEndpoints>,
 		private readonly channelP: Promise<IChannel>,
@@ -190,7 +184,6 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 	) {
 		super(
 			id,
-			registry,
 			runtime,
 			new Lazy(() => {
 				const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>();
@@ -217,7 +210,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					dataStoreContext,
 					this.services.value,
 					this.id,
-					this.registry,
+					registry,
 				);
 				const channel = await loadChannel(
 					runtime,
@@ -308,7 +301,6 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		const channel = factory.create(runtime, id);
 		super(
 			id,
-			registry,
 			runtime,
 			new Lazy(() => {
 				return createChannelServiceEndpoints(
@@ -324,7 +316,6 @@ export class LocalChannelContext extends LocalChannelContextBase {
 			channel,
 		);
 		this.channel = channel;
-		this.factory = factory;
 
 		this.dirtyFn = () => {
 			dirtyFn(id);

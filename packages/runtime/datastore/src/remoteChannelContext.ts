@@ -42,25 +42,25 @@ export class RemoteChannelContext implements IChannelContext {
 	private static readonly pendingOpsCountThreshold = 1000;
 
 	constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly dataStoreContext: IFluidDataStoreContext,
+		runtime: IFluidDataStoreRuntime,
+		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
 		submitFn: (content: any, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly id: string,
 		baseSnapshot: ISnapshotTree,
-		private readonly registry: ISharedObjectRegistry,
+		registry: ISharedObjectRegistry,
 		extraBlobs: Map<string, ArrayBufferLike> | undefined,
 		createSummarizerNode: CreateChildSummarizerNodeFn,
-		private readonly attachMessageType?: string,
+		attachMessageType?: string,
 	) {
 		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
-		this.subLogger = ChildLogger.create(this.runtime.logger, "RemoteChannelContext");
+		this.subLogger = ChildLogger.create(runtime.logger, "RemoteChannelContext");
 
 		this.services = createChannelServiceEndpoints(
-			this.dataStoreContext.connected,
+			dataStoreContext.connected,
 			submitFn,
 			() => dirtyFn(this.id),
 			addedGCOutboundReferenceFn,
@@ -72,15 +72,15 @@ export class RemoteChannelContext implements IChannelContext {
 
 		this.channelP = new LazyPromise<IChannel>(async () => {
 			const { attributes, factory } = await loadChannelFactoryAndAttributes(
-				this.dataStoreContext,
+				dataStoreContext,
 				this.services,
 				this.id,
-				this.registry,
-				this.attachMessageType,
+				registry,
+				attachMessageType,
 			);
 
 			const channel = await loadChannel(
-				this.runtime,
+				runtime,
 				attributes,
 				factory,
 				this.services,
@@ -106,7 +106,7 @@ export class RemoteChannelContext implements IChannelContext {
 
 			// Because have some await between we created the service and here, the connection state might have changed
 			// and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-			this.services.deltaConnection.setConnectionState(this.dataStoreContext.connected);
+			this.services.deltaConnection.setConnectionState(dataStoreContext.connected);
 			return this.channel;
 		});
 
