@@ -227,6 +227,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			},
 			false,
 		);
+		const checkpointsTTLSeconds = 864000;
+
+		await checkpointsCollection.createTTLIndex({ _ts: 1 }, checkpointsTTLSeconds);
 
 		// Foreman agent uploader does not run locally.
 		// TODO: Make agent uploader run locally.

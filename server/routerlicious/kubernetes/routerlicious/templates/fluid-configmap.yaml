@@ -63,8 +63,8 @@ data:
             "storageUrl": "{{ .Values.storage.storageUrl }}"
         },
         "checkpoints": {
-            "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }}
-            },
+            "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
+        },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
