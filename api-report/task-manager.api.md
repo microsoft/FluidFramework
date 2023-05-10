@@ -29,10 +29,17 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 
 // @public
 export interface ITaskManagerEvents extends ISharedObjectEvents {
-    (event: "assigned" | "completed" | "lost", listener: (taskId: string) => void): any;
+    // Warning: (ae-forgotten-export) The symbol "TaskEventListener" needs to be exported by the entry point index.d.ts
+    //
+    // @eventProperty
+    (event: "assigned", listener: TaskEventListener): any;
+    // @eventProperty
+    (event: "completed", listener: TaskEventListener): any;
+    // @eventProperty
+    (event: "lost", listener: TaskEventListener): any;
 }
 
-// @public
+// @public @sealed
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     abandon(taskId: string): void;
@@ -62,7 +69,5 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     volunteerForTask(taskId: string): Promise<boolean>;
 }
-
-// (No @packageDocumentation comment for this package)
 
 ```
