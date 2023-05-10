@@ -15585,6 +15585,9 @@ importers:
       '@fluidframework/counter':
         specifier: workspace:~
         version: link:../../../dds/counter
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../runtime/datastore-definitions
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
@@ -15600,6 +15603,9 @@ importers:
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../dds/sequence
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/test-runtime-utils
