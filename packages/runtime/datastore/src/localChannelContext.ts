@@ -12,7 +12,6 @@ import {
 	IChannel,
 	IFluidDataStoreRuntime,
 	IChannelFactory,
-	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import {
 	IFluidDataStoreContext,
@@ -20,25 +19,25 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
-import { assert, Lazy } from "@fluidframework/common-utils";
+import { assert, Lazy, LazyPromise } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
-	createServiceEndpoints,
+	ChannelServiceEndpoints,
+	createChannelServiceEndpoints,
 	IChannelContext,
+	loadChannel,
+	loadChannelFactoryAndAttributes,
 	summarizeChannel,
 	summarizeChannelAsync,
 } from "./channelContext";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
-import { ChannelStorageService } from "./channelStorageService";
 
 /**
  * Channel context for a locally created channel
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
-	public channel: IChannel | undefined;
+	private _channel: IChannel | undefined;
 	private globallyVisible = false;
 	protected readonly pending: ISequencedDocumentMessage[] = [];
 	protected factory: IChannelFactory | undefined;
@@ -46,27 +45,27 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		protected readonly id: string,
 		protected readonly registry: ISharedObjectRegistry,
 		protected readonly runtime: IFluidDataStoreRuntime,
-		private readonly servicesGetter: () => Lazy<{
-			readonly deltaConnection: ChannelDeltaConnection;
-			readonly objectStorage: ChannelStorageService;
-		}>,
+		protected readonly services: Lazy<ChannelServiceEndpoints>,
+		private readonly channelP: LazyPromise<IChannel>,
 	) {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
 
 	public async getChannel(): Promise<IChannel> {
-		assert(this.channel !== undefined, 0x207 /* "Channel should be defined" */);
-		return this.channel;
+		if (this._channel === undefined) {
+			return this.channelP.then((c) => (this._channel = c));
+		}
+		return this.channelP;
 	}
 
 	public get isLoaded(): boolean {
-		return this.channel !== undefined;
+		return this._channel !== undefined;
 	}
 
 	public setConnectionState(connected: boolean, clientId?: string) {
 		// Connection events are ignored if the data store is not yet globallyVisible or loaded
 		if (this.globallyVisible && this.isLoaded) {
-			this.servicesGetter().value.deltaConnection.setConnectionState(connected);
+			this.services.value.deltaConnection.setConnectionState(connected);
 		}
 	}
 
@@ -84,7 +83,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		// delay loading. So after the container is attached and some other client joins which start generating
 		// ops for this channel. So not loaded local channel can still receive ops and we store them to process later.
 		if (this.isLoaded) {
-			this.servicesGetter().value.deltaConnection.process(message, local, localOpMetadata);
+			this.services.value.deltaConnection.process(message, local, localOpMetadata);
 		} else {
 			assert(
 				local === false,
@@ -100,7 +99,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			this.globallyVisible,
 			0x2d4 /* "Local channel must be globally visible when resubmitting op" */,
 		);
-		this.servicesGetter().value.deltaConnection.reSubmit(content, localOpMetadata);
+		this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
 	}
 	public rollback(content: any, localOpMetadata: unknown) {
 		assert(this.isLoaded, 0x2ee /* "Channel should be loaded to rollback ops" */);
@@ -108,7 +107,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			this.globallyVisible,
 			0x2ef /* "Local channel must be globally visible when rolling back op" */,
 		);
-		this.servicesGetter().value.deltaConnection.rollback(content, localOpMetadata);
+		this.services.value.deltaConnection.rollback(content, localOpMetadata);
 	}
 
 	public applyStashedOp() {
@@ -126,20 +125,17 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult> {
-		assert(
-			this.isLoaded && this.channel !== undefined,
-			0x18c /* "Channel should be loaded to summarize" */,
-		);
-		return summarizeChannelAsync(this.channel, fullTree, trackState, telemetryContext);
+		const channel = await this.getChannel();
+		return summarizeChannelAsync(channel, fullTree, trackState, telemetryContext);
 	}
 
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummarizeResult {
 		assert(
-			this.isLoaded && this.channel !== undefined,
+			this.isLoaded && this._channel !== undefined,
 			0x18d /* "Channel should be loaded to take snapshot" */,
 		);
 		return summarizeChannel(
-			this.channel,
+			this._channel,
 			true /* fullTree */,
 			false /* trackState */,
 			telemetryContext,
@@ -152,8 +148,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		}
 
 		if (this.isLoaded) {
-			assert(!!this.channel, 0x192 /* "Channel should be there if loaded!!" */);
-			this.channel.connect(this.servicesGetter().value);
+			assert(!!this._channel, 0x192 /* "Channel should be there if loaded!!" */);
+			this._channel.connect(this.services.value);
 		}
 		this.globallyVisible = true;
 	}
@@ -165,11 +161,8 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
 	 */
 	public async getGCData(fullGC: boolean = false): Promise<IGarbageCollectionData> {
-		assert(
-			this.isLoaded && this.channel !== undefined,
-			0x193 /* "Channel should be loaded to run GC" */,
-		);
-		return this.channel.getGCData(fullGC);
+		const channel = await this.getChannel();
+		return channel.getGCData(fullGC);
 	}
 
 	public updateUsedRoutes(usedRoutes: string[]) {
@@ -182,13 +175,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 }
 
 export class RehydratedLocalChannelContext extends LocalChannelContextBase {
-	private readonly services: Lazy<{
-		readonly deltaConnection: ChannelDeltaConnection;
-		readonly objectStorage: ChannelStorageService;
-	}>;
-
 	private readonly dirtyFn: () => void;
-
 	constructor(
 		id: string,
 		registry: ISharedObjectRegistry,
@@ -201,86 +188,67 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly snapshotTree: ISnapshotTree,
 	) {
-		super(id, registry, runtime, () => this.services);
-		const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>();
-		const clonedSnapshotTree = cloneDeep(this.snapshotTree);
-		// 0.47 back-compat Need to sanitize if snapshotTree.blobs still contains blob contents too.
-		// This is for older snapshot which is generated by loader <=0.47 version which still contains
-		// the contents within blobs. After a couple of revisions we can remove it.
-		if (this.isSnapshotInOldFormatAndCollectBlobs(clonedSnapshotTree, blobMap)) {
-			this.sanitizeSnapshot(clonedSnapshotTree);
-		}
+		super(
+			id,
+			registry,
+			runtime,
+			new Lazy(() => {
+				const blobMap: Map<string, ArrayBufferLike> = new Map<string, ArrayBufferLike>();
+				const clonedSnapshotTree = cloneDeep(this.snapshotTree);
+				// 0.47 back-compat Need to sanitize if snapshotTree.blobs still contains blob contents too.
+				// This is for older snapshot which is generated by loader <=0.47 version which still contains
+				// the contents within blobs. After a couple of revisions we can remove it.
+				if (this.isSnapshotInOldFormatAndCollectBlobs(clonedSnapshotTree, blobMap)) {
+					this.sanitizeSnapshot(clonedSnapshotTree);
+				}
+				return createChannelServiceEndpoints(
+					dataStoreContext.connected,
+					submitFn,
+					this.dirtyFn,
+					addedGCOutboundReferenceFn,
+					storageService,
+					logger,
+					clonedSnapshotTree,
+					blobMap,
+				);
+			}),
+			new LazyPromise<IChannel>(async () => {
+				const { attributes, factory } = await loadChannelFactoryAndAttributes(
+					dataStoreContext,
+					this.services.value,
+					this.id,
+					this.registry,
+				);
+				const channel = await loadChannel(
+					runtime,
+					attributes,
+					factory,
+					this.services.value,
+					logger,
+					this.id,
+				).catch((err) => {
+					throw DataProcessingError.wrapIfUnrecognized(
+						err,
+						"rehydratedLocalChannelContextFailedToLoadChannel",
+						undefined,
+					);
+				});
 
-		this.services = new Lazy(() => {
-			return createServiceEndpoints(
-				this.id,
-				dataStoreContext.connected,
-				submitFn,
-				this.dirtyFn,
-				addedGCOutboundReferenceFn,
-				storageService,
-				logger,
-				clonedSnapshotTree,
-				blobMap,
-			);
-		});
+				// Send all pending messages to the channel
+				for (const message of this.pending) {
+					this.services.value.deltaConnection.process(
+						message,
+						false,
+						undefined /* localOpMetadata */,
+					);
+				}
+				return channel;
+			}),
+		);
+
 		this.dirtyFn = () => {
 			dirtyFn(id);
 		};
-	}
-
-	public async getChannel(): Promise<IChannel> {
-		if (this.channel === undefined) {
-			this.channel = await this.loadChannel().catch((err) => {
-				throw DataProcessingError.wrapIfUnrecognized(
-					err,
-					"rehydratedLocalChannelContextFailedToLoadChannel",
-					undefined,
-				);
-			});
-		}
-		return this.channel;
-	}
-
-	private async loadChannel(): Promise<IChannel> {
-		assert(!this.isLoaded, 0x18e /* "Channel must not already be loaded when loading" */);
-		assert(
-			await this.services.value.objectStorage.contains(".attributes"),
-			0x190 /* ".attributes blob should be present" */,
-		);
-		const attributes = await readAndParse<IChannelAttributes>(
-			this.services.value.objectStorage,
-			".attributes",
-		);
-
-		assert(
-			this.factory === undefined,
-			0x208 /* "Factory should be undefined before loading" */,
-		);
-		this.factory = this.registry.get(attributes.type);
-		if (this.factory === undefined) {
-			throw new Error(`Channel Factory ${attributes.type} not registered`);
-		}
-		// Services will be assigned during this load.
-		const channel = await this.factory.load(
-			this.runtime,
-			this.id,
-			this.services.value,
-			attributes,
-		);
-
-		// Commit changes.
-		this.channel = channel;
-
-		// Send all pending messages to the channel
-		for (const message of this.pending) {
-			this.services.value.deltaConnection.process(
-				message,
-				false,
-				undefined /* localOpMetadata */,
-			);
-		}
-		return this.channel;
 	}
 
 	private isSnapshotInOldFormatAndCollectBlobs(
@@ -318,11 +286,8 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 }
 
 export class LocalChannelContext extends LocalChannelContextBase {
-	private readonly services: Lazy<{
-		readonly deltaConnection: ChannelDeltaConnection;
-		readonly objectStorage: ChannelStorageService;
-	}>;
 	private readonly dirtyFn: () => void;
+	public readonly channel: IChannel;
 	constructor(
 		id: string,
 		registry: ISharedObjectRegistry,
@@ -335,24 +300,28 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	) {
-		super(id, registry, runtime, () => this.services);
+		super(
+			id,
+			registry,
+			runtime,
+			new Lazy(() => {
+				return createChannelServiceEndpoints(
+					dataStoreContext.connected,
+					submitFn,
+					this.dirtyFn,
+					addedGCOutboundReferenceFn,
+					storageService,
+					logger,
+				);
+			}),
+			new LazyPromise(async () => this.channel),
+		);
 		assert(type !== undefined, 0x209 /* "Factory Type should be defined" */);
 		this.factory = registry.get(type);
 		if (this.factory === undefined) {
 			throw new Error(`Channel Factory ${type} not registered`);
 		}
 		this.channel = this.factory.create(runtime, id);
-		this.services = new Lazy(() => {
-			return createServiceEndpoints(
-				this.id,
-				dataStoreContext.connected,
-				submitFn,
-				this.dirtyFn,
-				addedGCOutboundReferenceFn,
-				storageService,
-				logger,
-			);
-		});
 		this.dirtyFn = () => {
 			dirtyFn(id);
 		};
