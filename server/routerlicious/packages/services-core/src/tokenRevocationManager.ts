@@ -91,7 +91,7 @@ export class TokenRevocationError extends NetworkError {
  * Indicate that a connect is rejected/dropped because the token has been revoked.
  */
 export class TokenRevokedError extends NetworkError {
-	public readonly type: string = "TokenRevoked";
+	public readonly errorType: string = "TokenRevoked";
 	constructor(
 		/**
 		 * HTTP status code that describes the error.
@@ -119,10 +119,10 @@ export class TokenRevokedError extends NetworkError {
 		super(code, message, canRetry, isFatal, retryAfterMs);
 	}
 
-	public get details(): INetworkErrorDetails & { type: string } {
+	public get details(): INetworkErrorDetails & { errorType: string } {
 		return {
 			message: this.message,
-			type: this.type,
+			errorType: this.errorType,
 			canRetry: this.canRetry,
 			isFatal: this.isFatal,
 			retryAfter: this.retryAfter,
@@ -134,9 +134,9 @@ export class TokenRevokedError extends NetworkError {
 	 * Explicitly define how to serialize as JSON so that socket.io can emit relevant info.
 	 * @public
 	 */
-	public toJSON(): INetworkErrorDetails & { code: number; type: string } {
+	public toJSON(): INetworkErrorDetails & { code: number; errorType: string } {
 		return {
-			type: this.type,
+			errorType: this.errorType,
 			...super.toJSON(),
 		};
 	}

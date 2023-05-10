@@ -498,7 +498,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
 		// Set up token revocation if enabled
-		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
+		const tokenRevocationEnabled: boolean = utils.getBooleanFromConfig(
+			"tokenRevocation:enable",
+			config,
+		);
 		let socketTracker: core.IWebSocketTracker | undefined;
 		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
