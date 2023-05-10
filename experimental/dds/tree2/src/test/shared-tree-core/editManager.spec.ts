@@ -13,7 +13,6 @@ import {
 	emptyDelta,
 	mintRevisionTag,
 	ChangeFamilyEditor,
-	UndoRedoManager,
 	Delta,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
@@ -41,18 +40,11 @@ function editManagerFactory(options: {
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const undoRedoManager = UndoRedoManager.create(new MockRepairDataStoreProvider(), family);
 	const manager = new EditManager<
 		ChangeFamilyEditor,
 		TestChange,
 		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>(
-		family,
-		options.sessionId ?? localSessionId,
-		undoRedoManager,
-		undoRedoManager.clone(),
-		anchors,
-	);
+	>(family, options.sessionId ?? localSessionId, new MockRepairDataStoreProvider(), anchors);
 	return { manager, anchors, family };
 }
 
