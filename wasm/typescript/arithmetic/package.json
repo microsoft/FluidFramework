@@ -11,6 +11,7 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
+	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",

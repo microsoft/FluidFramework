@@ -1,25 +1,23 @@
 {
-	"name": "@fluidframework/client-wasm",
-	"description": "WASM glue crate to be used in the Fluid client release group",
-	"author": "Microsoft and contributors",
-	"version": "0.1.0",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework"
-	},
-	"files": [
-		"/nodejs/client_wasm_bg.wasm",
-		"/nodejs/client_wasm.js",
-		"/nodejs/client_wasm.d.ts",
-		"/bundler/client_wasm_bg.wasm",
-		"/bundler/client_wasm.js",
-		"/bundler/client_wasm_bg.js"
-	],
-	"main": "./nodejs/client_wasm.js",
-	"types": "./nodejs/client_wasm.d.ts",
-	"module": "./bundler/client_wasm.js",
-	"sideEffects": [
-		"./bundler/client_wasm.js"
-	]
+    "name": "@fluidframework/client-wasm",
+    "description": "WASM glue crate to be used in the Fluid client release group",
+    "author": "Microsoft and contributors",
+    "version": "0.1.0",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/microsoft/FluidFramework"
+    },
+    "files": [
+        "/nodejs/client_wasm_bg.wasm",
+        "/nodejs/client_wasm.js",
+        "/nodejs/client_wasm.d.ts",
+        "/bundler/client_wasm_bg.wasm",
+        "/bundler/client_wasm.js",
+        "/bundler/client_wasm_bg.js"
+    ],
+    "main": "./nodejs/client_wasm.js",
+    "types": "./nodejs/client_wasm.d.ts",
+    "module": "./bundler/client_wasm.js",
+    "sideEffects": false
 }
