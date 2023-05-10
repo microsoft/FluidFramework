@@ -61,7 +61,7 @@ Rust crates must be added under the `wasm` root folder (`cargo new --lib {name}`
 After creating a crate, it must be added to the root `Cargo.toml` as a member of the workspace.
 If the crate is surfacing a WASM API (being directly consumed by a project in the `typescript` directory), it must be added to the `fluid-wasm-output-bundles` list under the root `Cargo.toml`'s metadata.
 
-#### Typescript
+#### TypeScript
 
 New typescript projects must be added to the `typescript` directory and can only consume projects listed in the root `Cargo.toml`'s `fluid-wasm-output-bundles` metadata list.
 The dependency should be added as a workspace dependency using `workspace:~` (e.g. `"@fluidframework/client-wasm": "workspace:~"`).
