@@ -163,40 +163,32 @@ describe("GC Telemetry Tracker", () => {
 	// Tests that are run once for summarizer client and once for interactive client.
 	const clientTypeTests = (isSummarizerClient: boolean) => {
 		/**
-		 * Filter the given events to what's expected and what's unexpected based on whether its a summarizer client.
-		 * For non-summarizer (interactive) clients, only Loaded events are logged.
+		 * Asserts that the events are as expected based on whether its a summarizer client or not. In non-summarizer
+		 * clients, only "InactiveObject_Loaded" and "SweepReadyObject_Loaded" events are logged. "Changed" and "Revived"
+		 * events are not logged.
 		 */
-		function filterEvents(events: Omit<ITelemetryBaseEvent, "category">[]) {
+		function assertMatchEvents(
+			events: Omit<ITelemetryBaseEvent, "category">[],
+			message: string,
+		) {
 			const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 			const unexpectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
+			// For non-summarizer clients, events that are not "Loaded" are unexpected. Everything else is expected.
 			for (const event of events) {
 				const eventName = event.eventName as string;
-				// For non-summarizer clients, events that are not "Loaded" are unexpected.
 				if (!isSummarizerClient && !eventName.includes("Loaded")) {
 					unexpectedEvents.push(event);
 				} else {
 					expectedEvents.push(event);
 				}
 			}
-			return { expectedEvents, unexpectedEvents };
-		}
 
-		/**
-		 * Asserts that the events are as expected based on whether its a summarizer client or not. In non-summarizer
-		 * clients, only "InactiveObject_Loaded" and "SweepReadyObject_Loaded" events are logged. "Changed" and "Revived"
-		 * events are not logged.
-		 */
-		function assertMatchEvents(
-			expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
-			message: string,
-		) {
-			const filteredEvents = filterEvents(expectedEvents);
 			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
 			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
 			const cachedEvents = Array.from(mockLogger.events);
-			mockLogger.assertMatch(filteredEvents.expectedEvents, message);
+			mockLogger.assertMatch(expectedEvents, message);
 			mockLogger.events = cachedEvents;
-			mockLogger.assertMatchNone(filteredEvents.unexpectedEvents, message);
+			mockLogger.assertMatchNone(unexpectedEvents, message);
 		}
 
 		it("generates inactive and sweep ready events when nodes are used after time out", async () => {
