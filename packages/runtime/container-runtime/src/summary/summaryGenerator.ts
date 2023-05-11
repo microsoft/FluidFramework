@@ -288,7 +288,8 @@ export class SummaryGenerator {
 				...summarizeTelemetryProps,
 				referenceSequenceNumber,
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
-				opsSinceLastAttempt: referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
+				opsSinceLastAttempt:
+					referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
 				opsSinceLastSummary:
 					referenceSequenceNumber -
 					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,

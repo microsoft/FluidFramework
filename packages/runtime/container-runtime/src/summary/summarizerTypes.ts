@@ -418,7 +418,7 @@ export interface ISummarizeHeuristicData {
 	/** Record an incoming non-runtime op's sequence number */
 	recordNonRuntimeOp(sequenceNumber: number): void;
 
-	/** 
+	/**
 	 * Get the number of recorded ops that are included in a given summary
 	 * @param referenceSequenceNumber - reference sequence number of sent summary
 	 */
