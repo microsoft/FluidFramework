@@ -5,8 +5,6 @@
 import React from "react";
 import { tokens } from "@fluentui/react-components";
 
-import { Primitive } from "@fluid-experimental/devtools-core";
-
 import { HasLabel } from "./CommonInterfaces";
 
 /**
@@ -19,9 +17,9 @@ export interface TreeHeaderProps extends HasLabel {
 	nodeTypeMetadata?: string | undefined;
 
 	/**
-	 * Primitive value of the node if node is {@link VisualNodeKind.FluidValueNode} or {@link VisualNodeKind.ValueNode}
+	 * Inline value to display alongside the metadata.
 	 */
-	nodeValue?: Primitive;
+	inlineValue?: React.ReactElement | string;
 
 	// TODO: metadata
 }
@@ -30,7 +28,7 @@ export interface TreeHeaderProps extends HasLabel {
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, nodeValue } = props;
+	const { label, nodeTypeMetadata, inlineValue } = props;
 
 	return (
 		<span>
@@ -38,7 +36,10 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
 				{nodeTypeMetadata === undefined ? "" : ` (${nodeTypeMetadata})`}
 			</span>
-			{nodeValue === undefined ? "" : `: ${String(nodeValue)}`}
+			<span>
+				{inlineValue === undefined ? "" : ": "}
+				{inlineValue}
+			</span>
 		</span>
 	);
 }

@@ -22,7 +22,11 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { label, node } = props;
 
 	const header = (
-		<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			inlineValue={String(node.value)}
+		/>
 	);
 	return <TreeItem header={header} />;
 }

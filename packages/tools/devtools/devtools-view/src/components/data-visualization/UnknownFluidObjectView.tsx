@@ -21,10 +21,12 @@ export type UnknownFluidObjectViewProps = DataVisalizationTreeProps<FluidUnknown
 export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): React.ReactElement {
 	const { label, node } = props;
 
-	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
-	return (
-		<TreeItem header={header} id={node.fluidObjectId}>
-			<TreeItem header={<i>Unrecognized kind of Fluid Object.</i>} />
-		</TreeItem>
+	const header = (
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			inlineValue={<i>Unrecognized kind of Fluid Object.</i>}
+		/>
 	);
+	return <TreeItem header={header} id={node.fluidObjectId} />;
 }

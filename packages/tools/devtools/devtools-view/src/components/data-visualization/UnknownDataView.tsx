@@ -21,10 +21,12 @@ export type UnknownDataViewProps = DataVisalizationTreeProps<UnknownObjectNode>;
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
 	const { label, node } = props;
 
-	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
-	return (
-		<TreeItem header={header}>
-			<TreeItem header={<i>Unrecognized kind of data.</i>} />
-		</TreeItem>
+	const header = (
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			inlineValue={<i>Unrecognized kind of data.</i>}
+		/>
 	);
+	return <TreeItem header={header} />;
 }
