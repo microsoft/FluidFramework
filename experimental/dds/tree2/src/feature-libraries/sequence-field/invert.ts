@@ -207,10 +207,6 @@ function invertMark<TNodeChange>(
 					type: "ReturnFrom",
 					id: mark.id,
 					count: mark.count,
-					// inverseOf: {
-					// 	revision: mark.revision ?? revision ?? fail("Revision must be defined"),
-					// 	index: inputIndex,
-					// },
 				};
 
 				const movedChanges = crossFieldManager.get(

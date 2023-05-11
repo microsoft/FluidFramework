@@ -251,10 +251,6 @@ function composeMarks<TNodeChange>(
 				true,
 			).mark = withNodeChange(baseMark, nodeChange);
 			return 0;
-		} else if (isNewAttach(baseMark) && baseMark.revision === undefined) {
-			// This case is to support squashing an attach and detach in the same transaction.
-			assert(nodeChange === undefined, "TODO: Support transient inserts");
-			return 0;
 		}
 		// TODO: Create modify mark for transient node.
 		return 0;
@@ -610,12 +606,12 @@ function areInverseMoves(
 ): boolean {
 	if (
 		baseMark.type === "ReturnTo" &&
-		baseMark.detachEvent?.revision === (newMark.revision ?? newIntention)
+		baseMark.detachEvent?.revision === newIntention
 	) {
 		return true;
 	}
 
-	// TODO: Handle `newMark.type === "ReturnFrom"`
+	assert(newMark.type !== "ReturnTo", "TODO: Unhandled case");
 	return false;
 }
 
@@ -703,7 +699,8 @@ function compareCellPositions(
 		return Infinity;
 	}
 
-	// `newMark` points to cells which were emptied before `baseMark` was created.
+	// We know `newMark` points to cells which were emptied before `baseMark` was created,
+	// because otherwise `baseMark` would have lineage refering to the emptying of the cell.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	// TODO: Use specified tiebreak instead of always tiebreaking left.
 	if (isNewAttach(baseMark)) {
@@ -713,5 +710,6 @@ function compareCellPositions(
 	// If `newMark`'s lineage does not overlap with `baseMark`'s,
 	// then `newMark` must be referring to cells which were created after `baseMark` was applied.
 	// The creation of those cells should happen in this composition, so they must be later in the base mark list.
+	// This is true because there may be any number of changesets between the base and new changesets, which the new changeset might be refering to the cells of.
 	return -Infinity;
 }
