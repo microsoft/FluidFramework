@@ -462,6 +462,8 @@ export class ComposeQueue<T> {
 			const length = getOutputLength(baseMark);
 			return this.dequeueBase(length);
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
+			// TODO: `baseMark` might be a MoveIn, which is not an ExistingCellMark.
+			// See test "[Move ABC, Return ABC] ↷ Delete B" in sequenceChangeRebaser.spec.ts
 			assert(isExistingCellMark(baseMark), "Only existing cell mark can have empty output");
 			let baseCellId: DetachEvent;
 			if (markEmptiesCells(baseMark)) {
