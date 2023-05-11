@@ -21,6 +21,16 @@ module.exports = {
 
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
+
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: [
+					// Allow use of unstable API
+					"@fluentui/react-components/unstable",
+				],
+			},
+		],
 	},
 	overrides: [
 		{
