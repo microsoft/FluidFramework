@@ -16,8 +16,8 @@ import {
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import * as api from "./api";
 import { IDocumentDeleteService } from "../services";
+import * as api from "./api";
 
 export interface IRoutes {
 	agent: Router;

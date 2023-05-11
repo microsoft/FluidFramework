@@ -4,7 +4,7 @@
  */
 
 import { IDocumentRepository, IStorageNameAllocator } from "@fluidframework/server-services-core";
-import { IDocumentDeleteService } from "../alfred/services";
+import { IDocumentDeleteService } from "./services";
 
 export interface IAlfredResourcesCustomizations {
 	documentRepository?: IDocumentRepository;

@@ -17,10 +17,10 @@ import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IDocumentDeleteService } from "../../services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
-import { IDocumentDeleteService } from "../../services";
 
 export function create(
 	config: Provider,

@@ -13,6 +13,10 @@ export class DocumentDeleteService implements IDocumentDeleteService {
 	constructor() {}
 
 	public async deleteDocument(tenantId: string, documentId: string): Promise<void> {
-		throw new NetworkError(501, "Document delete service is not implemented.", false /* canRetry */);
+		throw new NetworkError(
+			501,
+			"Document delete service is not implemented.",
+			false /* canRetry */,
+		);
 	}
 }

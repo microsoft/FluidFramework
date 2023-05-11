@@ -272,10 +272,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		if (
-			claims.scopes === undefined ||
-			claims.scopes.length === 0
-		) {
+		if (claims.scopes === undefined || claims.scopes.length === 0) {
 			return respondWithNetworkError(
 				response,
 				new NetworkError(403, "Missing scopes in token claims."),

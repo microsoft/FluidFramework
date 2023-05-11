@@ -28,7 +28,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
 import * as app from "./app";
-import { IDocumentDeleteService } from "../alfred/services";
+import { IDocumentDeleteService } from "./services";
 
 export class AlfredRunner implements IRunner {
 	private server: IWebServer;

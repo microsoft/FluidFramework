@@ -29,7 +29,7 @@ export class BasicRestWrapper extends RestWrapper {
 // @public
 export const buildTreePath: (...nodeNames: string[]) => string;
 
-// @public (undocumented)
+// @public
 export const canDeleteDoc: (scopes: string[]) => boolean;
 
 // @public (undocumented)
@@ -65,7 +65,7 @@ export function createFluidServiceNetworkError(statusCode: number, errorData?: I
 // @public (undocumented)
 export const defaultHash = "00000000";
 
-// @public (undocumented)
+// @public
 export const DocDeleteScopeType = "doc:delete";
 
 // @public (undocumented)

@@ -23,7 +23,12 @@ import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
-import { DeltaService, StorageNameAllocator, IDocumentDeleteService, DocumentDeleteService } from "./services";
+import {
+	DeltaService,
+	StorageNameAllocator,
+	IDocumentDeleteService,
+	DocumentDeleteService,
+} from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 
 class NodeWebSocketServer implements core.IWebSocketServer {

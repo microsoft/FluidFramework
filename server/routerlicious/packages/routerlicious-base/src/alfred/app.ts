@@ -27,8 +27,8 @@ import {
 import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
+import { IDocumentDeleteService } from "./services";
 import * as alfredRoutes from "./routes";
-import { IDocumentDeleteService } from "../alfred/services";
 
 export function create(
 	config: Provider,

@@ -245,14 +245,13 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
 		verifyStorageToken(tenantManager, config, tokenManager),
-		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
 
-			const deleteP =  documentDeleteService.deleteDocument(tenantId, documentId);
+			const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
 			handleResponse(deleteP, response, undefined, undefined, 204);
 		},
 	);
