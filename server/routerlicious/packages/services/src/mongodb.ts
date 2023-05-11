@@ -422,6 +422,7 @@ export class MongoDb implements core.IDb {
 		private readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
+		private readonly databaseName: string,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -433,8 +434,8 @@ export class MongoDb implements core.IDb {
 		this.client.on(event, listener);
 	}
 
-	public collection<T>(name: string, dbName = "admin"): core.ICollection<T> {
-		const collection = this.client.db(dbName).collection<T>(name);
+	public collection<T>(name: string): core.ICollection<T> {
+		const collection = this.client.db(this.databaseName).collection<T>(name);
 		return new MongoCollection<T>(
 			collection,
 			this.retryEnabled,
@@ -443,8 +444,8 @@ export class MongoDb implements core.IDb {
 		);
 	}
 
-	public async dropCollection(name: string, dbName = "admin"): Promise<boolean> {
-		return this.client.db(dbName).dropCollection(name);
+	public async dropCollection(name: string): Promise<boolean> {
+		return this.client.db(this.databaseName).dropCollection(name);
 	}
 }
 
@@ -461,6 +462,7 @@ interface IMongoDBConfig {
 	facadeLevelTelemetry?: boolean;
 	facadeLevelRetryRuleOverride?: any;
 	connectionNotAvailableMode?: ConnectionNotAvailableMode;
+	databaseName?: string;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -472,6 +474,7 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly retryEnabled: boolean = false;
 	private readonly telemetryEnabled: boolean = false;
 	private readonly connectionNotAvailableMode: ConnectionNotAvailableMode = "ruleBehavior";
+	private readonly databaseName: string = "admin";
 	private readonly retryRuleOverride: Map<string, boolean>;
 	constructor(config: IMongoDBConfig) {
 		const {
@@ -492,6 +495,7 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
+		this.databaseName = this.databaseName || "admin";
 		this.retryEnabled = config.facadeLevelRetry || false;
 		this.telemetryEnabled = config.facadeLevelTelemetry || false;
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
@@ -534,6 +538,6 @@ export class MongoDbFactory implements core.IDbFactory {
 			this.connectionNotAvailableMode,
 		);
 
-		return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer);
+		return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer, this.databaseName);
 	}
 }
