@@ -170,6 +170,11 @@ function composeMarks<TNodeChange>(
 	);
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
+		if (isSkipMark(baseMark)) {
+			return withNodeChange(newMark, nodeChange);
+		} else if (isSkipMark(newMark)) {
+			return withNodeChange(baseMark, nodeChange);
+		}
 		return createModifyMark(getMarkLength(newMark), nodeChange, getCellId(baseMark, undefined));
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
