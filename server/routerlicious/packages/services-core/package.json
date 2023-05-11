@@ -75,12 +75,6 @@
 			},
 			"ClassDeclaration_MongoDatabaseManager": {
 				"forwardCompat": false
-			},
-			"ClassDeclaration_AlfredResources": {
-				"forwardCompat": false
-			},
-			"VariableDeclaration_Constants": {
-				"forwardCompat": false
 			}
 		}
 	}
