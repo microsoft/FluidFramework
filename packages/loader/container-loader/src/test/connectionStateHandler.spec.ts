@@ -81,13 +81,14 @@ describe("ConnectionStateHandler Tests", () => {
 	function createHandler(
 		connectedRaisedWhenCaughtUp: boolean,
 		readClientsWaitForJoinSignal: boolean,
+		pausedClientId?: string,
 	) {
 		const handler = createConnectionStateHandlerCore(
 			connectedRaisedWhenCaughtUp,
 			readClientsWaitForJoinSignal,
 			handlerInputs,
 			deltaManagerForCatchingUp as any,
-			undefined,
+			pausedClientId,
 		);
 		handler.initProtocol(protocolHandler);
 		return handler;
@@ -522,6 +523,45 @@ describe("ConnectionStateHandler Tests", () => {
 			connectionStateHandler.connectionState,
 			ConnectionState.Connected,
 			"Client 2 should be in connected state",
+		);
+	});
+
+	it("Should wait for client from stash blob to leave before moving to connected state", async () => {
+		const stashId = "stashed client ID";
+		// Container loads with clientId from stash blob
+		connectionStateHandler = createHandler(
+			false, // connectedRaisedWhenCaughtUp
+			false, // readClientsWaitForJoinSignal
+			stashId,
+		);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Disconnected,
+			"Client should be in disconnected state",
+		);
+		// Container replays saved ops from stash blob, including previous client's join op
+		connectionStateHandler_receivedAddMemberEvent(stashId);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Disconnected,
+			"Client should be in disconnected state",
+		);
+		// Container connects to websocket in read mode, since runtime is not dirty
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		connectionStateHandler_receivedJoinSignalEvent(connectionDetails);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.CatchingUp,
+			"Client should be in connecting state",
+		);
+		// We are now connected and processing ops; we see our previous client's leave op
+		connectionStateHandler_receivedRemoveMemberEvent(stashId);
+		// this should cause Container to move to Connected state, as we are connected to websocket and no
+		// longer waiting for previous client to leave
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"Client should be in connected state",
 		);
 	});
 
