@@ -49,7 +49,7 @@ import {
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
-import { DefaultMap } from "./defaultMap";
+import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import {
 	IntervalCollection,
@@ -647,7 +647,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			);
 
 			const handled = this.intervalCollections.tryProcessMessage(
-				message.contents,
+				message.contents as IMapOperation,
 				local,
 				message,
 				localOpMetadata,

@@ -109,7 +109,7 @@ export interface IConnect {
     mode: ConnectionMode;
     nonce?: string;
     relayUserAgent?: string;
-    supportedFeatures?: Record<string, any>;
+    supportedFeatures?: Record<string, unknown>;
     tenantId: string;
     token: string | null;
     versions: string[];
@@ -130,7 +130,7 @@ export interface IConnected {
     nonce?: string;
     relayServiceAgent?: string;
     serviceConfiguration: IClientConfiguration;
-    supportedFeatures?: Record<string, any>;
+    supportedFeatures?: Record<string, unknown>;
     supportedVersions: string[];
     timestamp?: number;
     version: string;
@@ -152,10 +152,10 @@ export interface IDocumentAttributes {
 export interface IDocumentMessage {
     clientSequenceNumber: number;
     compression?: string;
-    contents: any;
-    metadata?: any;
+    contents: unknown;
+    metadata?: unknown;
     referenceSequenceNumber: number;
-    serverMetadata?: any;
+    serverMetadata?: unknown;
     traces?: ITrace[];
     type: string;
 }
@@ -164,14 +164,6 @@ export interface IDocumentMessage {
 export interface IDocumentSystemMessage extends IDocumentMessage {
     // (undocumented)
     data: string;
-}
-
-// @public
-export interface IHelpMessage {
-    // (undocumented)
-    tasks: string[];
-    // (undocumented)
-    version?: string;
 }
 
 // @public (undocumented)
@@ -198,7 +190,7 @@ export interface IProcessMessageResult {
 // @public
 export interface IProposal {
     key: string;
-    value: any;
+    value: unknown;
 }
 
 // @public (undocumented)
@@ -213,18 +205,6 @@ export interface IProtocolState {
     sequenceNumber: number;
     // (undocumented)
     values: [string, ICommittedProposal][];
-}
-
-// @public
-export interface IQueueMessage {
-    // (undocumented)
-    documentId: string;
-    // (undocumented)
-    message: IHelpMessage;
-    // (undocumented)
-    tenantId: string;
-    // (undocumented)
-    token: string;
 }
 
 // @public
@@ -253,11 +233,11 @@ export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 // @public
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>, IDisposable {
     // (undocumented)
-    get(key: string): any;
+    get(key: string): unknown;
     // (undocumented)
     has(key: string): boolean;
     // (undocumented)
-    propose(key: string, value: any): Promise<void>;
+    propose(key: string, value: unknown): Promise<void>;
 }
 
 // @public
@@ -265,7 +245,7 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     // (undocumented)
     (event: "addProposal", listener: (proposal: ISequencedProposal) => void): any;
     // (undocumented)
-    (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): any;
+    (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: unknown, approvalSequenceNumber: number) => void): any;
 }
 
 // @public
@@ -282,20 +262,20 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 
 // @public
 export interface ISequencedDocumentMessage {
-    clientId: string;
+    clientId: string | null;
     clientSequenceNumber: number;
     compression?: string;
-    contents: any;
+    contents: unknown;
     // (undocumented)
     data?: string;
     // @alpha
     expHash1?: string;
-    metadata?: any;
+    metadata?: unknown;
     minimumSequenceNumber: number;
     origin?: IBranchOrigin;
     referenceSequenceNumber: number;
     sequenceNumber: number;
-    serverMetadata?: any;
+    serverMetadata?: unknown;
     timestamp: number;
     traces?: ITrace[];
     type: string;
@@ -328,10 +308,9 @@ export interface ISignalClient {
 // @public (undocumented)
 export interface ISignalMessage {
     clientConnectionNumber?: number;
-    // (undocumented)
     clientId: string | null;
     // (undocumented)
-    content: any;
+    content: unknown;
     referenceSequenceNumber?: number;
 }
 
@@ -523,8 +502,6 @@ export enum MessageType {
     Operation = "op",
     Propose = "propose",
     Reject = "reject",
-    // @deprecated
-    RemoteHelp = "remoteHelp",
     RoundTrip = "tripComplete",
     Summarize = "summarize",
     SummaryAck = "summaryAck",

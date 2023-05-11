@@ -473,26 +473,14 @@ use_old_FunctionDeclaration_getQuorumTreeEntries(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isServiceMessageType": {"forwardCompat": false}
+* "RemovedVariableDeclaration_isServiceMessageType": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_isServiceMessageType():
-    TypeOnly<typeof old.isServiceMessageType>;
-declare function use_current_VariableDeclaration_isServiceMessageType(
-    use: TypeOnly<typeof current.isServiceMessageType>);
-use_current_VariableDeclaration_isServiceMessageType(
-    get_old_VariableDeclaration_isServiceMessageType());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isServiceMessageType": {"backCompat": false}
+* "RemovedVariableDeclaration_isServiceMessageType": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_isServiceMessageType():
-    TypeOnly<typeof current.isServiceMessageType>;
-declare function use_old_VariableDeclaration_isServiceMessageType(
-    use: TypeOnly<typeof old.isServiceMessageType>);
-use_old_VariableDeclaration_isServiceMessageType(
-    get_current_VariableDeclaration_isServiceMessageType());
 
 /*
 * Validate forward compat by using old type in place of current type

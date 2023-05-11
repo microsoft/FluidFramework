@@ -40,9 +40,8 @@ steps:
     targetType: 'inline'
     workingDirectory: .
     script: |
-      # We only want to install the root package deps, so we set recursive-install to false
-      pnpm config set recursive-install false
-      pnpm install --frozen-lockfile
+      # We only need to install the root dependencies
+      pnpm install --workspace-root --frozen-lockfile
 
 - task: Npm@1
   displayName: Policy Check

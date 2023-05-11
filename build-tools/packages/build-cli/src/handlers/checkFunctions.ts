@@ -396,7 +396,7 @@ export const checkPolicy: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execa(`npm run policy-check`, {
+		const result = await execa.command(`npm run policy-check`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);
@@ -454,7 +454,7 @@ export const checkAssertTagging: StateHandlerFunction = async (
 		// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 		// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 		// like we do in CI.
-		const result = await execa(`npm run policy-check:asserts`, {
+		const result = await execa.command(`npm run policy-check:asserts`, {
 			cwd: context.gitRepo.resolvedRoot,
 		});
 		log.verbose(result.stdout);
