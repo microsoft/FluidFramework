@@ -282,6 +282,8 @@ export class SummaryGenerator {
 				cancellationToken,
 			});
 
+			this.heuristicData.recordAttempt(summaryData.referenceSequenceNumber);
+
 			// Cumulatively add telemetry properties based on how far generateSummary went.
 			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
 			summarizeTelemetryProps = {
@@ -317,7 +319,7 @@ export class SummaryGenerator {
 			if (!fullTree && !summaryData.forcedFullTree) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
-				const numOpsInSummary = this.heuristicData.numOpsInSummary(referenceSequenceNumber);
+				const numOpsInSummary = this.heuristicData.numOpsInAttempt;
 				if (summarizedDataStoreCount > gcStateUpdatedDataStoreCount + numOpsInSummary) {
 					logger.sendErrorEvent({
 						eventName: "IncrementalSummaryViolation",
@@ -334,7 +336,9 @@ export class SummaryGenerator {
 		} catch (error) {
 			return fail("submitSummaryFailure", error);
 		} finally {
-			this.heuristicData.recordAttempt(summaryData?.referenceSequenceNumber);
+			if (summaryData === undefined) {
+				this.heuristicData.recordAttempt();
+			}
 			this.summarizeTimer.clear();
 		}
 

@@ -389,6 +389,9 @@ export interface ISummarizeHeuristicData {
 	/** Number of non-runtime ops since last summary */
 	readonly numNonRuntimeOps: number;
 
+	/** Numer of ops in the current summary attempt */
+	readonly numOpsInAttempt: number;
+
 	/** Cumulative size in bytes of all the ops since the last summary */
 	totalOpsSize: number;
 
@@ -417,12 +420,6 @@ export interface ISummarizeHeuristicData {
 
 	/** Record an incoming non-runtime op's sequence number */
 	recordNonRuntimeOp(sequenceNumber: number): void;
-
-	/**
-	 * Get the number of recorded ops that are included in a given summary
-	 * @param referenceSequenceNumber - reference sequence number of sent summary
-	 */
-	numOpsInSummary(referenceSequenceNumber: number): number;
 
 	/** Record inbound ops that were missed by heuristics */
 	recordMissingSequenceNumbers(numMissing: number): void;

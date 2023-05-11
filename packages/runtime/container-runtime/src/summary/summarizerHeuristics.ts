@@ -29,7 +29,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 
 	private readonly runtimeOps = new Deque<number>();
 	public get numRuntimeOps(): number {
-		return this.runtimeOps.length;
+		return this.runtimeOps.length + this.numRuntimeOpsInAttempt;
 	}
 
 	public recordRuntimeOp(sequenceNumber: number): void {
@@ -38,7 +38,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 
 	private readonly nonRuntimeOps = new Deque<number>();
 	public get numNonRuntimeOps(): number {
-		return this.nonRuntimeOps.length;
+		return this.nonRuntimeOps.length + this.numNonRuntimeOpsInAttempt;
 	}
 
 	public recordNonRuntimeOp(sequenceNumber: number): void {
@@ -68,11 +68,38 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		this._lastSuccessfulSummary = { ...lastSummary };
 	}
 
+	private numRuntimeOpsInAttempt = 0;
+	private numNonRuntimeOpsInAttempt = 0;
+
+	public get numOpsInAttempt(): number {
+		return this.numRuntimeOpsInAttempt + this.numNonRuntimeOpsInAttempt;
+	}
+
 	public recordAttempt(refSequenceNumber?: number) {
 		this._lastAttempt = {
 			refSequenceNumber: refSequenceNumber ?? this.lastOpSequenceNumber,
 			summaryTime: Date.now(),
 		};
+
+		// Record which runtime ops apply to this summary attempt and remove from the queue
+		while (
+			!this.runtimeOps.isEmpty() &&
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.runtimeOps.peekFront()! <= this._lastAttempt.refSequenceNumber
+		) {
+			this.runtimeOps.removeFront();
+			this.numRuntimeOpsInAttempt++;
+		}
+
+		// Record which non-runtime ops apply to this summary attempt and remove from the queue
+		while (
+			!this.nonRuntimeOps.isEmpty() &&
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.nonRuntimeOps.peekFront()! <= this._lastAttempt.refSequenceNumber
+		) {
+			this.nonRuntimeOps.removeFront();
+			this.numNonRuntimeOpsInAttempt++;
+		}
 
 		this.totalOpsSizeBefore = this.totalOpsSize;
 	}
@@ -80,32 +107,12 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 	public markLastAttemptAsSuccessful() {
 		this._lastSuccessfulSummary = { ...this.lastAttempt };
 
-		for (const queue of [this.runtimeOps, this.nonRuntimeOps]) {
-			while (
-				!queue.isEmpty() &&
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				queue.peekFront()! <= this._lastSuccessfulSummary.refSequenceNumber
-			) {
-				queue.removeFront();
-			}
-		}
+		// These ops have been summarized
+		this.numRuntimeOpsInAttempt = 0;
+		this.numNonRuntimeOpsInAttempt = 0;
 
 		this.totalOpsSize -= this.totalOpsSizeBefore;
 		this.totalOpsSizeBefore = 0;
-	}
-
-	public numOpsInSummary(referenceSequenceNumber: number): number {
-		let total = 0;
-
-		for (const queue of [this.runtimeOps, this.nonRuntimeOps]) {
-			for (const seqNum of queue.toArray()) {
-				if (seqNum <= referenceSequenceNumber) {
-					total++;
-				}
-			}
-		}
-
-		return total;
 	}
 
 	public recordMissingSequenceNumbers(numMissing: number): void {
