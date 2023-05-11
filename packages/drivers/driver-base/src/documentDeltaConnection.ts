@@ -235,7 +235,7 @@ export class DocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
-	private checkNotClosed() {
+	private checkNotDisposed() {
 		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
 		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
 		const originalStackTraceLimit = (Error as any).stackTraceLimit;
@@ -256,7 +256,7 @@ export class DocumentDeltaConnection
 	 * @returns messages sent during the connection
 	 */
 	public get initialMessages(): ISequencedDocumentMessage[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 
 		// If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
 		// latest ops.  This could possibly indicate that initialMessages was called twice.
@@ -282,7 +282,7 @@ export class DocumentDeltaConnection
 	 * @returns signals sent during the connection
 	 */
 	public get initialSignals(): ISignalMessage[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 		assert(this.listeners("signal").length !== 0, 0x090 /* "No signal handler is setup!" */);
 
 		this.removeEarlySignalHandler();
@@ -302,7 +302,7 @@ export class DocumentDeltaConnection
 	 * @returns initial client list sent during the connection
 	 */
 	public get initialClients(): ISignalClient[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 		return this.details.initialClients;
 	}
 
@@ -315,18 +315,14 @@ export class DocumentDeltaConnection
 		}
 	}
 
-	protected submitCore(type: string, messages: IDocumentMessage[]) {
-		this.emitMessages(type, [messages]);
-	}
-
 	/**
 	 * Submits a new delta operation to the server
 	 *
 	 * @param message - delta operation to submit
 	 */
 	public submit(messages: IDocumentMessage[]): void {
-		this.checkNotClosed();
-		this.submitCore("submitOp", messages);
+		this.checkNotDisposed();
+		this.emitMessages("submitOp", [messages]);
 	}
 
 	/**
@@ -335,8 +331,8 @@ export class DocumentDeltaConnection
 	 * @param message - signal to submit
 	 */
 	public submitSignal(message: IDocumentMessage): void {
-		this.checkNotClosed();
-		this.submitCore("submitSignal", [message]);
+		this.checkNotDisposed();
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**
@@ -639,7 +635,7 @@ export class DocumentDeltaConnection
 		return normalizedError;
 	}
 
-	private getConnectionDetailsProps() {
+	protected getConnectionDetailsProps() {
 		return {
 			disposed: this._disposed,
 			socketConnected: this.socket?.connected,
@@ -713,9 +709,6 @@ export class DocumentDeltaConnection
 	 * Error raising for socket.io issues
 	 */
 	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
-		// Note: we suspect the incoming error object is either:
-		// - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-		// - an Error object thrown by socket.io engine. Be careful with not recording PII!
 		let message: string;
 		if (error?.type === "TransportError") {
 			// JSON.stringify drops Error.message
