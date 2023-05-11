@@ -18,8 +18,6 @@ import {
 	SchemaPolicy,
 	SessionId,
 	RevisionTag,
-	UndoRedoManager,
-	UndoRedoManagerCommitType,
 } from "../../core";
 import { cursorToJsonObject, jsonSchema, singleJsonCursor } from "../../domains";
 import {
@@ -105,21 +103,11 @@ export class TestTree {
 		this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
 		this.sessionId = options.sessionId ?? uuid();
 		this.forest = forest;
-		const undoRedoManager = UndoRedoManager.create(
-			new MockRepairDataStoreProvider(),
-			defaultChangeFamily,
-		);
 		this.editManager = new EditManager<
 			DefaultEditBuilder,
 			DefaultChangeset,
 			DefaultChangeFamily
-		>(
-			defaultChangeFamily,
-			this.sessionId,
-			undoRedoManager,
-			undoRedoManager.clone(),
-			forest.anchors,
-		);
+		>(defaultChangeFamily, this.sessionId, new MockRepairDataStoreProvider(), forest.anchors);
 		this.editManager.localBranch.on("change", ({ change: c }) => {
 			if (c !== undefined) {
 				this.forest.applyDelta(defaultChangeFamily.intoDelta(c));
@@ -179,12 +167,6 @@ export class TestTree {
 			return;
 		}
 		for (const edit of edits) {
-			if (edit.sessionId === this.editManager.localSessionId) {
-				this.editManager.localBranchUndoRedoManager.trackCommit(
-					edit,
-					UndoRedoManagerCommitType.Undoable,
-				);
-			}
 			this.editManager.addSequencedChange(edit, edit.seqNumber, edit.refNumber);
 			this._remoteEditsApplied += 1;
 			this.refNumber = edit.seqNumber;

@@ -21,7 +21,6 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 	}
 
 	constructor(
-		public objectId: string,
 		private _connected: boolean,
 		public readonly submit: (message: IDocumentMessage, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
