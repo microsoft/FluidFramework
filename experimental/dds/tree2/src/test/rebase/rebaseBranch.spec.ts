@@ -18,7 +18,6 @@ function newCommit(
 	return {
 		change: TestChange.mint(inputContext, intention),
 		revision: intention.toString() as RevisionTag,
-		sessionId: "TestSession",
 		parent,
 	};
 }

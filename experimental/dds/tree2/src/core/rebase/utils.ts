@@ -231,7 +231,6 @@ export function rebaseBranch<TChange>(
 			]);
 			newHead = {
 				revision: c.revision,
-				sessionId: c.sessionId,
 				change,
 				parent: newHead,
 			};

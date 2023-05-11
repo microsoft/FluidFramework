@@ -33,6 +33,7 @@ import {
 	ChangeFamilyEditor,
 	IRepairDataStoreProvider,
 	mintRevisionTag,
+	GraphCommit,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -230,7 +231,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Submits an op to the Fluid runtime containing the given commit
 	 * @param commit - the commit to submit
 	 */
-	private submitCommit(commit: Commit<TChange>): void {
+	private submitCommit(commit: GraphCommit<TChange>): void {
 		// Edits should not be submitted until all transactions finish
 		assert(!this.isTransacting(), "Unexpected edit submitted during transaction");
 
@@ -240,7 +241,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
+			this.editManager.addSequencedChange(
+				{ ...commit, sessionId: this.editManager.localSessionId },
+				newRevision,
+				this.detachedRevision,
+			);
 		}
 		const message: Message = {
 			revision: commit.revision,
