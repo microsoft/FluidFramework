@@ -21,7 +21,6 @@
 # Generated bundle analysis files
 **/bundleAnalysis/**
 
-
 # Test coverage reports
 **/coverage/*
 **/nyc/*
@@ -29,3 +28,6 @@
 # Server Files
 LICENSE.txt
 nginx.conf
+
+# Kubernetes
+kubernetes/**
