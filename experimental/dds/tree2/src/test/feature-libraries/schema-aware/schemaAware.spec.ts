@@ -9,7 +9,6 @@
 
 import {
 	ApiMode,
-	NodeDataFor,
 	AllowedTypesToTypedTrees,
 	TypedNode,
 	EditableField,
@@ -102,8 +101,7 @@ type x = typeof numberSchema.name;
 const schemaData = builder.intoLibrary();
 
 // Example Use:
-type BallTreeX = TypedNode<typeof ballSchema, ApiMode.Flexible>;
-type BallTree = NodeDataFor<ApiMode.Flexible, typeof ballSchema>;
+type BallTree = TypedNode<typeof ballSchema, ApiMode.Flexible>;
 
 {
 	type check1_ = requireAssignableTo<BallTree, ContextuallyTypedNodeDataObject>;
@@ -166,10 +164,10 @@ type FlexNumber =
 
 // Test terminal cases:
 {
-	type F = NodeDataFor<ApiMode.Flexible, typeof numberSchema>;
-	type E = NodeDataFor<ApiMode.Editable, typeof numberSchema>;
-	type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof numberSchema>;
-	type S = NodeDataFor<ApiMode.Simple, typeof numberSchema>;
+	type F = TypedNode<typeof numberSchema, ApiMode.Flexible>;
+	type E = TypedNode<typeof numberSchema>;
+	type Eu = TypedNode<typeof numberSchema, ApiMode.EditableUnwrapped>;
+	type S = TypedNode<typeof numberSchema, ApiMode.Simple>;
 	type _check1 = requireTrue<areSafelyAssignable<F, FlexNumber>>;
 	type _check2 = requireAssignableTo<E, UntypedTreeCore>;
 	type _check3 = requireTrue<areSafelyAssignable<Eu, number>>;
@@ -200,10 +198,10 @@ type SimpleBall = {
 
 // Test non recursive cases:
 {
-	type F = NodeDataFor<ApiMode.Flexible, typeof ballSchema>;
-	type E = NodeDataFor<ApiMode.Editable, typeof ballSchema>;
-	type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof ballSchema>;
-	type S = NodeDataFor<ApiMode.Simple, typeof ballSchema>;
+	type F = TypedNode<typeof ballSchema, ApiMode.Flexible>;
+	type E = TypedNode<typeof ballSchema>;
+	type Eu = TypedNode<typeof ballSchema, ApiMode.EditableUnwrapped>;
+	type S = TypedNode<typeof ballSchema, ApiMode.Simple>;
 	type _check1 = requireTrue<areSafelyAssignable<F, FlexBall>>;
 	type _check2 = requireAssignableTo<E, SimpleBall & UntypedTreeCore>;
 	type _check3 = requireAssignableTo<Eu, SimpleBall & UntypedTreeCore>;
@@ -264,10 +262,10 @@ type SimpleBall = {
 	}
 
 	{
-		type F = NodeDataFor<ApiMode.Flexible, typeof parent>;
-		type E = NodeDataFor<ApiMode.Editable, typeof parent>;
-		type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof parent>;
-		type S = NodeDataFor<ApiMode.Simple, typeof parent>;
+		type F = TypedNode<typeof parent, ApiMode.Flexible>;
+		type E = TypedNode<typeof parent>;
+		type Eu = TypedNode<typeof parent, ApiMode.EditableUnwrapped>;
+		type S = TypedNode<typeof parent, ApiMode.Simple>;
 		type _check1 = requireTrue<areSafelyAssignable<F, FlexParent>>;
 		type _check2 = requireAssignableTo<E, SimpleParent & UntypedTreeCore>;
 		type _check3 = requireAssignableTo<Eu, SimpleParent & UntypedTreeCore>;
@@ -315,9 +313,9 @@ type SimpleBall = {
 			x: ExpectedSimple2 | undefined;
 		};
 
-		type Flexible = NodeDataFor<ApiMode.Flexible, typeof rec>;
-		type Edit = NodeDataFor<ApiMode.Editable, typeof rec>;
-		type Simple = NodeDataFor<ApiMode.Simple, typeof rec>;
+		type Flexible = TypedNode<typeof rec, ApiMode.Flexible>;
+		type Edit = TypedNode<typeof rec>;
+		type Simple = TypedNode<typeof rec, ApiMode.Simple>;
 		type Simple2 = SimpleNodeDataFor<typeof rec>;
 
 		// Check Simple's field type unit tests
@@ -342,10 +340,10 @@ type SimpleBall = {
 
 // Test recursive cases:
 {
-	type F = NodeDataFor<ApiMode.Flexible, typeof boxSchema>;
-	type E = NodeDataFor<ApiMode.Editable, typeof boxSchema>;
-	type Eu = NodeDataFor<ApiMode.EditableUnwrapped, typeof boxSchema>;
-	type S = NodeDataFor<ApiMode.Simple, typeof boxSchema>;
+	type F = TypedNode<typeof boxSchema, ApiMode.Flexible>;
+	type E = TypedNode<typeof boxSchema>;
+	type Eu = TypedNode<typeof boxSchema, ApiMode.EditableUnwrapped>;
+	type S = TypedNode<typeof boxSchema, ApiMode.Simple>;
 
 	interface FlexBox {
 		[typeNameSymbol]?: "box";
