@@ -50,8 +50,6 @@ export function mintRevisionTag(): RevisionTag {
 export interface GraphCommit<TChange> {
 	/** The tag for this commit. If this commit is rebased, the corresponding rebased commit will retain this tag. */
 	readonly revision: RevisionTag;
-	/** An identifier representing the session/user/client that made this commit */
-	readonly sessionId: SessionId;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
 	/** The parent of this commit, on whose change this commit's change is based */
@@ -70,10 +68,9 @@ export function mintCommit<TChange>(
 	parent: GraphCommit<TChange>,
 	commit: Omit<GraphCommit<TChange>, "parent">,
 ): GraphCommit<TChange> {
-	const { revision, sessionId, change } = commit;
+	const { revision, change } = commit;
 	return {
 		revision,
-		sessionId,
 		change,
 		parent,
 	};

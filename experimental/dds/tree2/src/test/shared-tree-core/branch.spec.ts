@@ -476,10 +476,9 @@ describe("Branches", () => {
 		const initCommit: GraphCommit<DefaultChangeset> = {
 			change: defaultChangeFamily.rebaser.compose([]),
 			revision: nullRevisionTag,
-			sessionId: "testSession",
 		};
 
-		const branch = new SharedTreeBranch(initCommit, "testSession", defaultChangeFamily);
+		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
 		if (onChange !== undefined) {
 			branch.on("change", onChange);
 		}
@@ -490,7 +489,6 @@ describe("Branches", () => {
 	function createRevertible(from: DefaultBranch): DefaultBranch {
 		return new SharedTreeBranch(
 			from.getHead(),
-			from.sessionId,
 			defaultChangeFamily,
 			UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily),
 		);

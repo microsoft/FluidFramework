@@ -39,7 +39,10 @@ export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 /**
  * Contains a single change to the `SharedTree` and associated metadata
  */
-export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
+export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {
+	/** An identifier representing the session/user/client that made this commit */
+	readonly sessionId: SessionId;
+}
 /**
  * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary
  */
@@ -149,7 +152,7 @@ export class EditManager<
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
-		localSessionId: SessionId,
+		public readonly localSessionId: SessionId,
 		repairDataStoreProvider: IRepairDataStoreProvider,
 		anchors?: AnchorSet,
 	) {
@@ -168,7 +171,6 @@ export class EditManager<
 		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
 		this.localBranch = new SharedTreeBranch(
 			this.trunk,
-			localSessionId,
 			changeFamily,
 			this.localBranchUndoRedoManager,
 			anchors,
@@ -181,10 +183,6 @@ export class EditManager<
 		// actually safely evict that last commit (assuming there are no other outstanding branches).
 		// TODO: Fiddle with the local case of addSequencedChange some more, and see if you can make it actually do a rebase.
 		this.localBranch.on("fork", (fork) => this.registerBranch(fork));
-	}
-
-	public get localSessionId(): SessionId {
-		return this.localBranch.sessionId;
 	}
 
 	/**
@@ -377,7 +375,7 @@ export class EditManager<
 					sessionId,
 					{
 						base: ancestor.revision,
-						commits: branchPath,
+						commits: branchPath.map((c) => ({ ...c, sessionId })),
 					},
 				];
 			}),
@@ -404,7 +402,7 @@ export class EditManager<
 		this.localBranch.setHead(this.trunk);
 
 		for (const [sessionId, branch] of data.branches) {
-			const commit =
+			const commit: GraphCommit<TChangeset> =
 				findAncestor(this.trunk, (r) => r.revision === branch.base) ??
 				fail("Expected summary branch to be based off of a revision in the trunk");
 
@@ -488,7 +486,6 @@ export class EditManager<
 		// to rebase onto it. TODO: Investigate if `this.trunk` can be a SharedTreeBranch.
 		const trunkBranch = new SharedTreeBranch(
 			this.trunk,
-			this.localSessionId,
 			this.changeFamily,
 			this.trunkUndoRedoManager,
 		);
@@ -547,11 +544,11 @@ export interface SummaryData<TChangeset> {
 /**
  * @returns the path from the base of a branch to its head
  */
-function getPathFromBase<TChange>(
-	branchHead: GraphCommit<TChange>,
-	baseBranchHead: GraphCommit<TChange>,
-): GraphCommit<TChange>[] {
-	const path: GraphCommit<TChange>[] = [];
+function getPathFromBase<TCommit extends { parent?: TCommit }>(
+	branchHead: TCommit,
+	baseBranchHead: TCommit,
+): TCommit[] {
+	const path: TCommit[] = [];
 	assert(
 		findCommonAncestor([branchHead, path], baseBranchHead) !== undefined,
 		0x573 /* Expected branches to be related */,
