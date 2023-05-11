@@ -84,9 +84,6 @@
 		"start-server-and-test": "^1.11.7",
 		"typescript": "~4.5.5"
 	},
-	"peerDependencies": {
-		"fluid-framework": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0"
-	},
 	"typeValidation": {
 		"broken": {}
 	}
