@@ -186,10 +186,6 @@ describe("editable-tree: array-like", () => {
 
 		const tests = [[], ["a"], ["a", "b"], ["c", "b"], ["a", "c"]];
 
-		type IterativeCallbackFn =
-			| ((value: arrayItem, index: number, array: arrayItem[]) => unknown)
-			| ((previous: unknown, value: arrayItem, index: number, array: arrayItem[]) => unknown);
-
 		function checkIterativeFn(
 			actualFn: (
 				target: arrayItem[],
@@ -496,4 +492,70 @@ describe("editable-tree: array-like", () => {
 	// 	check(["a"], /* start: */ 0, /* deleteCount: */ 1);
 	// 	check(["a"], /* start: */ 0, /* deleteCount: */ 1, "b");
 	// });
+
+	describe("toLocaleString()", () => {
+		const check = (array: arrayItem[]) => {
+			const expected = array.toLocaleString();
+			it(prettyCall("toLocaleString", array, [], expected), () => {
+				const proxy = createProxy(array);
+				const actual = proxy.toLocaleString();
+				assert.deepEqual(actual, expected);
+			});
+		};
+
+		// TODO: Pass explicit locale when permitted by TS lib.
+		// For now, the results should at least be conistent on the same machine.
+		// In 'en' locale, we're expecting to see a comma thousands separator.
+		[[1000, 2000, 3000]].forEach(check);
+	});
+
+	describe("toString()", () => {
+		const check = (array: arrayItem[]) => {
+			const expected = array.toString();
+			it(prettyCall("toString", array, [], expected), () => {
+				const proxy = createProxy(array);
+				const actual = proxy.toString();
+				assert.deepEqual(actual, expected);
+			});
+		};
+
+		// We do not expect to see a thousands separator.
+		[[1000, 2000, 3000]].forEach(check);
+	});
+
+	// describe("unshift()", () => {
+	// 	const check = (array: arrayItem[], ...items: arrayItem[]) => {
+	// 		const expected = array.slice();
+	// 		const expectedLength = expected.unshift(...items);
+	// 		it(prettyCall("unshift", array, items, expected), () => {
+	// 			const proxy = createProxy(array);
+	// 			const actualLength = proxy.unshift(...items);
+	// 			const actual = proxy.slice();
+
+	// 			assert.deepEqual(actual, expected);
+	// 			assert.deepEqual(actualLength, expectedLength);
+	// 		});
+	// 	};
+
+	// 	check([]);
+	// 	check([], 1);
+	// 	check([], 1, 2);
+	// 	check([0], 1, 2);
+	// 	check([0, 1], 2);
+	// });
+
+	describe("values()", () => {
+		const check = (array: arrayItem[]) => {
+			const expected = array.values();
+			it(prettyCall("values", array, [], expected), () => {
+				const proxy = createProxy(array);
+				const actual = proxy.values();
+				assert.deepEqual(actual, expected);
+			});
+		};
+
+		check([]);
+		check(["a"]);
+		check(["a", "b"]);
+	});
 });

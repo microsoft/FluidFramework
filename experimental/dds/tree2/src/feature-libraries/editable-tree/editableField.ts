@@ -333,10 +333,13 @@ const propertyGetDispatch: Record<string | symbol, (...args: any[]) => any> = {
 	reduce: () => Array.prototype.reduce,
 	reduceRight: () => Array.prototype.reduceRight,
 	some: () => Array.prototype.some,
-	// splice: () => Array.prototype.splice,				// TODO: Needs custom implementation
+	// splice: () => Array.prototype.splice,				// TODO: Needs custom implementation (increases length to resize)
 	toLocaleString: () => Array.prototype.toLocaleString,
 	toString: () => Array.prototype.toString,
-	unshift: () => Array.prototype.unshift,
+	// toReversed: () => Array.prototype.toReversed,		// TODO: Requires newer ES lib
+	// toSorted: () => Array.prototype.toSorted,			// TODO: Requires newer ES lib
+	// toSpliced: () => Array.prototype.toSpliced,			// TODO: Requires newer ES lib
+	// unshift: () => Array.prototype.unshift,				// TODO: Needs custom implementation (sets indices > length)
 	values: () => Array.prototype.values,
 	// with: () => Array.prototype.with,					// TODO: Requires newer ES lib
 
