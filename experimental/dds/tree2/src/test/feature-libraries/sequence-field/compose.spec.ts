@@ -448,6 +448,7 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	// TODO: update this test to expect the node change to be represented for the transient node
 	it("revive and modify ○ delete", () => {
 		const nodeChange = { valueChange: { value: 1 } };
 		const detachEvent = { revision: tag1, index: 0 };
@@ -741,6 +742,23 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("revive ○ redundant revive", () => {
+		const reviveA = Change.revive(0, 2, tag1, 0);
+		const reviveB = Change.redundantRevive(0, 2, tag1, 0);
+		const expected: SF.Changeset = [
+			{
+				type: "Revive",
+				content: fakeRepair(tag1, 0, 2),
+				count: 2,
+				detachEvent: { revision: tag1, index: 0 },
+				inverseOf: tag1,
+				revision: tag2,
+			},
+		];
+		const actual = shallowCompose([tagChange(reviveA, tag2), makeAnonChange(reviveB)]);
+		assert.deepEqual(actual, expected);
+	});
+
 	it("insert ○ revive", () => {
 		const insert: SF.Changeset = [
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
@@ -805,6 +823,8 @@ describe("SequenceField - Compose", () => {
 			1,
 			{ type: "MoveIn", id: brand(0), count: 1 },
 		];
+		const actual = shallowCompose([makeAnonChange(move), makeAnonChange(modify)]);
+		assert.deepEqual(actual, expected);
 	});
 
 	it("move ○ delete", () => {

@@ -604,10 +604,7 @@ function areInverseMoves(
 	newMark: MoveMark<unknown>,
 	newIntention: RevisionTag | undefined,
 ): boolean {
-	if (
-		baseMark.type === "ReturnTo" &&
-		baseMark.detachEvent?.revision === newIntention
-	) {
+	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
 		return true;
 	}
 

@@ -141,17 +141,17 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it.skip("conflicted revive ↷ related delete", () => {
+	it("redundant revive ↷ related delete", () => {
 		const revive = Change.redundantRevive(0, 3, tag1, 1, rebaseRepair);
 		const deletion = Change.delete(1, 1);
 		const actual = rebase(revive, deletion, tag2);
 		const expected = composeAnonChanges([
 			// Earlier revive is unaffected
 			Change.redundantRevive(0, 1, tag1, 1, rebaseRepair),
-			// Overlapping revive is no longer conflicted
-			Change.revive(1, 1, tag1, 1, rebaseRepair),
+			// Overlapping revive is no longer redundant
+			Change.revive(1, 1, tag1, 1, rebaseRepair, undefined, { revision: tag2, index: 1 }),
 			// Later revive is unaffected
-			Change.redundantRevive(2, 1, tag1, 3, rebaseRepair),
+			Change.redundantRevive(1, 1, tag1, 3, rebaseRepair),
 		]);
 		assert.deepEqual(actual, expected);
 	});
