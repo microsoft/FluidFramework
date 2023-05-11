@@ -6,9 +6,9 @@ import React from "react";
 
 import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
 
-import { Tree } from "../utility-components";
 import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link ValueView} input props.
@@ -25,5 +25,5 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 		<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
 	);
 
-	return <Tree header={header} />;
+	return <TreeItem header={header} id={node.fluidObjectId} />;
 }

@@ -6,12 +6,12 @@ import React from "react";
 
 import { FluidUnknownObjectNode } from "@fluid-experimental/devtools-core";
 
-import { Tree } from "../utility-components";
 import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
- * {@link UnknownDataView} input props.
+ * {@link UnknownFluidObjectView} input props.
  */
 export type UnknownFluidObjectViewProps = DataVisalizationTreeProps<FluidUnknownObjectNode>;
 
@@ -23,8 +23,8 @@ export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): Reac
 
 	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
 	return (
-		<Tree header={header}>
-			<span>Unrecognized kind of Fluid Object.</span>
-		</Tree>
+		<TreeItem header={header} id={node.fluidObjectId}>
+			<TreeItem header={<i>Unrecognized kind of Fluid Object.</i>} />
+		</TreeItem>
 	);
 }

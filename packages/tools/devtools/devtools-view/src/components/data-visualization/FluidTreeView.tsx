@@ -6,10 +6,10 @@ import React from "react";
 
 import { HasContainerId, FluidObjectTreeNode } from "@fluid-experimental/devtools-core";
 
-import { Tree } from "../utility-components";
 import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link TreeView} input props.
@@ -30,5 +30,9 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 
 	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
 
-	return <Tree header={header}>{childNodes}</Tree>;
+	return (
+		<TreeItem header={header} id={node.fluidObjectId}>
+			{childNodes}
+		</TreeItem>
+	);
 }

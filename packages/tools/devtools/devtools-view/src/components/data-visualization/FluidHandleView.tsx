@@ -19,6 +19,7 @@ import { useMessageRelay } from "../../MessageRelayContext";
 import { Waiting } from "../Waiting";
 import { HasLabel } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
+import { TreeItem } from "./TreeItem";
 
 const loggingContext = "EXTENSION(HandleView)";
 
@@ -81,7 +82,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}, [containerId, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
-		return <Waiting />;
+		return <TreeItem header={<Waiting />} id={fluidObjectId} />;
 	}
 
 	return <TreeDataView containerId={containerId} label={label} node={visualTree} />;

@@ -6,9 +6,9 @@ import React from "react";
 
 import { ValueNodeBase } from "@fluid-experimental/devtools-core";
 
-import { Tree } from "../utility-components";
 import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link ValueView} input props.
@@ -24,5 +24,5 @@ export function ValueView(props: ValueViewProps): React.ReactElement {
 	const header = (
 		<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
 	);
-	return <Tree header={header} />;
+	return <TreeItem header={header} />;
 }

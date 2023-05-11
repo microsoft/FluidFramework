@@ -22,6 +22,8 @@ export interface TreeHeaderProps extends HasLabel {
 	 * Primitive value of the node if node is {@link VisualNodeKind.FluidValueNode} or {@link VisualNodeKind.ValueNode}
 	 */
 	nodeValue?: Primitive;
+
+	// TODO: metadata
 }
 
 /**
@@ -31,12 +33,12 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	const { label, nodeTypeMetadata, nodeValue } = props;
 
 	return (
-		<>
-			{`${label}`}
+		<span>
+			{`${label} `}
 			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
-				{nodeTypeMetadata === undefined ? "" : `(${nodeTypeMetadata})`}
+				{nodeTypeMetadata === undefined ? "" : ` (${nodeTypeMetadata})`}
 			</span>
 			{nodeValue === undefined ? "" : `: ${String(nodeValue)}`}
-		</>
+		</span>
 	);
 }

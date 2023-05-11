@@ -7,10 +7,10 @@ import React from "react";
 
 import { HasContainerId, VisualTreeNode } from "@fluid-experimental/devtools-core";
 
-import { Tree } from "../utility-components";
 import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link TreeView} input props.
@@ -29,5 +29,5 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 
 	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
 
-	return <Tree header={header}>{childNodes}</Tree>;
+	return <TreeItem header={header}>{childNodes}</TreeItem>;
 }

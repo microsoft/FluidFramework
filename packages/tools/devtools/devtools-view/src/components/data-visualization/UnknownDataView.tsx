@@ -6,9 +6,9 @@ import React from "react";
 
 import { UnknownObjectNode } from "@fluid-experimental/devtools-core";
 
-import { Tree } from "../utility-components";
 import { DataVisalizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link UnknownDataView} input props.
@@ -23,8 +23,8 @@ export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement
 
 	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
 	return (
-		<Tree header={header}>
-			<span>Unrecognized kind of data.</span>
-		</Tree>
+		<TreeItem header={header}>
+			<TreeItem header={<i>Unrecognized kind of data.</i>} />
+		</TreeItem>
 	);
 }
