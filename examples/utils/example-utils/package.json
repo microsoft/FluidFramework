@@ -34,6 +34,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
+		"@fluid-experimental/attributor": "workspace:~",
 		"@fluid-experimental/pact-map": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
@@ -52,7 +53,6 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/server-local-server": "^0.1039.1000",
-		"@fluid-experimental/attributor": "workspace:~",
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
