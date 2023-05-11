@@ -302,12 +302,7 @@ function View(props: ViewProps): React.ReactElement {
 		<Stack.Item grow={5} styles={contentViewStyles}>
 			<div
 				id="devtools-view-content"
-				style={{
-					width: "100%",
-					height: window.innerHeight,
-					overflowY: "auto",
-					overflowX: "auto",
-				}}
+				style={{ width: "100%", height: "100%", overflowY: "auto" }}
 			>
 				{view}
 			</div>
