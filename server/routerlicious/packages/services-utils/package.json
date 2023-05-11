@@ -102,7 +102,7 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"FunctionDeclaration_validateTokenRevocationClaims": {
+			"RemovedFunctionDeclaration_validateTokenRevocationClaims": {
 				"forwardCompat": false,
 				"backCompat": false
 			}
