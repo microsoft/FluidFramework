@@ -6,14 +6,14 @@ import React from "react";
 
 import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
 
-import { DataVisalizationTreeProps } from "./CommonInterfaces";
+import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
 import { TreeItem } from "./TreeItem";
 
 /**
  * {@link ValueView} input props.
  */
-export type FluidValueViewProps = DataVisalizationTreeProps<FluidObjectValueNode>;
+export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode>;
 
 /**
  * Render data with type VisualNodeKind.FluidValueNode and render its children.

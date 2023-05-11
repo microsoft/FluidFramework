@@ -6,14 +6,14 @@ import React from "react";
 
 import { UnknownObjectNode } from "@fluid-experimental/devtools-core";
 
-import { DataVisalizationTreeProps } from "./CommonInterfaces";
+import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
 import { TreeItem } from "./TreeItem";
 
 /**
  * {@link UnknownDataView} input props.
  */
-export type UnknownDataViewProps = DataVisalizationTreeProps<UnknownObjectNode>;
+export type UnknownDataViewProps = DataVisualizationTreeProps<UnknownObjectNode>;
 
 /**
  * Render data with type VisualNodeKind.UnknownObjectNode and render its children.
