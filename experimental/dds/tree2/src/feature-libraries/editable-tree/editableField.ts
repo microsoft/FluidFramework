@@ -43,6 +43,7 @@ import {
 } from "./editableTreeTypes";
 import { makeTree } from "./editableTree";
 import { ProxyTarget } from "./ProxyTarget";
+import { propertiesMap } from "./arrayLike";
 
 export function makeField(
 	context: ProxyContext,
@@ -304,61 +305,6 @@ const editableFieldPropertySet = new Set<string>([
 	"context",
 ]);
 
-const propertyGetDispatch: Record<string | symbol, (...args: any[]) => any> = {
-	/* eslint-disable @typescript-eslint/unbound-method */
-
-	// Array
-	[Symbol.iterator]: (target: FieldProxyTarget) => target[Symbol.iterator].bind(target),
-	[Symbol.isConcatSpreadable]: (target: FieldProxyTarget) => target[Symbol.isConcatSpreadable],
-	// at: () => Array.prototype.at,			   			// TODO: Requires newer ES lib
-	forEach: () => Array.prototype.forEach,
-	concat: () => Array.prototype.concat,
-	every: () => Array.prototype.every,
-	filter: () => Array.prototype.filter,
-	find: () => Array.prototype.find,
-	findIndex: () => Array.prototype.findIndex,
-	// findLast: () => Array.prototype.findLast,   			// TODO: Requires newer ES lib
-	// findLastIndex: () => Array.prototype.findLastIndex,	// TODO: Requires newer ES lib
-	// flat: () => Array.prototype.flat, 					// TODO: Requires newer ES lib
-	// flatMap: () => Array.prototype.flatMap, 				// TODO: Requires newer ES lib
-	includes: () => Array.prototype.includes,
-	indexOf: () => Array.prototype.indexOf,
-	join: () => Array.prototype.join,
-	keys: () => Array.prototype.keys,
-	lastIndexOf: () => Array.prototype.lastIndexOf,
-	length: (target: FieldProxyTarget) => target.length,
-	map: () => Array.prototype.map,
-	push: () => Array.prototype.push,
-	slice: () => Array.prototype.slice,
-	reduce: () => Array.prototype.reduce,
-	reduceRight: () => Array.prototype.reduceRight,
-	some: () => Array.prototype.some,
-	// splice: () => Array.prototype.splice,				// TODO: Needs custom implementation (increases length to resize)
-	toLocaleString: () => Array.prototype.toLocaleString,
-	toString: () => Array.prototype.toString,
-	// toReversed: () => Array.prototype.toReversed,		// TODO: Requires newer ES lib
-	// toSorted: () => Array.prototype.toSorted,			// TODO: Requires newer ES lib
-	// toSpliced: () => Array.prototype.toSpliced,			// TODO: Requires newer ES lib
-	// unshift: () => Array.prototype.unshift,				// TODO: Needs custom implementation (sets indices > length)
-	values: () => Array.prototype.values,
-	// with: () => Array.prototype.with,					// TODO: Requires newer ES lib
-
-	// EditableField
-	[proxyTargetSymbol]: (target: FieldProxyTarget) => target,
-	[arrayLikeMarkerSymbol]: () => true,
-	context: (target: FieldProxyTarget) => target.context,
-	deleteNodes: (target: FieldProxyTarget) => target.deleteNodes.bind(target),
-	fieldKey: (target: FieldProxyTarget) => target.fieldKey,
-	fieldSchema: (target: FieldProxyTarget) => target.fieldSchema,
-	getNode: (target: FieldProxyTarget) => target.getNode.bind(target),
-	insertNodes: (target: FieldProxyTarget) => target.insertNodes.bind(target),
-	moveNodes: (target: FieldProxyTarget) => target.moveNodes.bind(target),
-	parent: (target: FieldProxyTarget) => target.parent,
-	replaceNodes: (target: FieldProxyTarget) => target.replaceNodes.bind(target),
-
-	/* eslint-enable @typescript-eslint/unbound-method */
-};
-
 const propertySetDispatch: Record<string | symbol, (target: FieldProxyTarget, value: any) => void> =
 	{
 		length: (target, value) => {
@@ -375,9 +321,9 @@ const propertySetDispatch: Record<string | symbol, (target: FieldProxyTarget, va
  */
 const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> = {
 	get: (target: FieldProxyTarget, key: string | symbol, receiver: object): unknown => {
-		const fn = propertyGetDispatch[key];
-		if (fn !== undefined) {
-			return fn(target, receiver);
+		const desc = propertiesMap[key as string];
+		if (desc !== undefined) {
+			return desc.get ? desc.get() : desc.value;
 		}
 
 		if (typeof key === "string") {
@@ -426,7 +372,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		}
 
 		return (
-			Reflect.has(propertyGetDispatch, key) ||
+			Reflect.has(propertiesMap, key) ||
 			(typeof key === "string" && keyIsValidIndex(key, target.length))
 		);
 	},
