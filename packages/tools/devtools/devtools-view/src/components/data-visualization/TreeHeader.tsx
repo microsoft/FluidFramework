@@ -31,15 +31,13 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	const { label, nodeTypeMetadata, inlineValue } = props;
 
 	return (
-		<span>
-			{`${label} `}
+		<div style={{ width: "auto" }}>
+			{`${label}`}
 			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
 				{nodeTypeMetadata === undefined ? "" : ` (${nodeTypeMetadata})`}
 			</span>
-			<span>
-				{inlineValue === undefined ? "" : ": "}
-				{inlineValue}
-			</span>
-		</span>
+			{inlineValue === undefined ? "" : ": "}
+			{inlineValue}
+		</div>
 	);
 }
