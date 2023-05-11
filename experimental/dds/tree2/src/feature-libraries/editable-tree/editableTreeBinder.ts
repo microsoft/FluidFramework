@@ -56,9 +56,9 @@ export type AnchorsCompare = CompareFunction<UpPath>;
  * @alpha
  */
 export interface BinderOptions {
-	sort: boolean;
+	sortPolicy: SortPolicy;
 	sortFn?: BinderEventsCompare;
-	matchPolicy: MatchPolicyType;
+	matchPolicy: MatchPolicy;
 }
 
 /**
@@ -69,7 +69,7 @@ export interface BinderOptions {
 export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
 	autoFlush: boolean;
 	autoFlushPolicy: keyof Events<E>;
-	sortAnchors: boolean;
+	sortAnchorsPolicy: SortPolicy;
 	sortAnchorsFn?: AnchorsCompare;
 }
 
@@ -78,7 +78,14 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
  *
  * @alpha
  */
-export type MatchPolicyType = "subtree" | "path";
+export type MatchPolicy = "subtree" | "path";
+
+/**
+ * Possible sort policies.
+ *
+ * @alpha
+ */
+export type SortPolicy = "merge" | "native" | "none";
 
 /**
  * The data binder interface
@@ -409,14 +416,30 @@ class BufferingPathVisitor
 	}
 
 	public flush(): BufferingPathVisitor {
-		if (this.options.sort) {
-			const sortFn = this.options.sortFn ?? compareBinderEventsDeleteFirst;
-			this.eventQueue.sort(sortFn);
+		let sortedQueue: BindingContext[];
+		switch (this.options.sortPolicy) {
+			case "merge":
+				sortedQueue = mergeSort(
+					this.eventQueue,
+					this.options.sortFn ?? compareBinderEventsDeleteFirst,
+				);
+				break;
+			case "native":
+				sortedQueue = nativeSort(
+					this.eventQueue,
+					this.options.sortFn ?? compareBinderEventsDeleteFirst,
+				);
+				break;
+			case "none":
+				sortedQueue = this.eventQueue;
+				break;
+			default:
+				unreachableCase(this.options.sortPolicy);
 		}
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
 			const batchPaths = this.getRegisteredPaths(BindingType.Batch);
 			assert(batchPaths !== undefined, "batch paths confirmed registered");
-			const batchEvents = this.eventQueue.filter((event) => {
+			const batchEvents = sortedQueue.filter((event) => {
 				const current = toDownPath<BindPath>(event.path);
 				return this.matchesAny(batchPaths, current);
 			});
@@ -427,12 +450,12 @@ class BufferingPathVisitor
 				});
 			}
 			for (const event of batchEvents) {
-				const index = this.eventQueue.indexOf(event);
+				const index = sortedQueue.indexOf(event);
 				assert(index >= 0, "event confirmed in the queue");
-				this.eventQueue.splice(index, 1);
+				sortedQueue.splice(index, 1);
 			}
 		}
-		for (const cmd of this.eventQueue) {
+		for (const cmd of sortedQueue) {
 			switch (cmd.type) {
 				case BindingType.Delete:
 					this.emitter.emit(BindingType.Delete, cmd);
@@ -530,26 +553,32 @@ class BufferingDataBinder<E extends Events<E>>
 	}
 
 	public flush(): FlushableDataBinder<OperationBinderEvents> {
-		if (this.options.sortAnchors) {
-			const sortFn = this.options.sortAnchorsFn ?? compareAnchorsDepthFirst;
-			const sortedVisitors: BufferingPathVisitor[] = Array.from(
-				this.visitorLocations.keys(),
-			).sort((a, b) => {
-				const pathA = this.visitorLocations.get(a);
-				const pathB = this.visitorLocations.get(b);
-				assert(pathA !== undefined, "pathA expected to be defined");
-				assert(pathB !== undefined, "pathB expected to be defined");
-				return sortFn(pathA, pathB);
-			});
-			for (const visitor of sortedVisitors) {
-				visitor.flush();
-			}
-		} else {
-			for (const visitor of this.visitors.values()) {
-				visitor.flush();
-			}
+		const unsortedVisitors: BufferingPathVisitor[] = Array.from(this.visitorLocations.keys());
+		const sortFn = this.options.sortAnchorsFn ?? compareAnchorsDepthFirst;
+		const compareFn = (a: BufferingPathVisitor, b: BufferingPathVisitor) => {
+			const pathA = this.visitorLocations.get(a);
+			const pathB = this.visitorLocations.get(b);
+			assert(pathA !== undefined, "pathA expected to be defined");
+			assert(pathB !== undefined, "pathB expected to be defined");
+			return sortFn(pathA, pathB);
+		};
+		let sortedVisitors: BufferingPathVisitor[];
+		switch (this.options.sortAnchorsPolicy) {
+			case "merge":
+				sortedVisitors = mergeSort(unsortedVisitors, compareFn);
+				break;
+			case "native":
+				sortedVisitors = nativeSort(unsortedVisitors, compareFn);
+				break;
+			case "none":
+				sortedVisitors = unsortedVisitors;
+				break;
+			default:
+				unreachableCase(this.options.sortAnchorsPolicy);
 		}
-
+		for (const visitor of sortedVisitors) {
+			visitor.flush();
+		}
 		return this;
 	}
 
@@ -658,62 +687,46 @@ export function createDataBinderInvalidate<E extends Events<E>>(
 /**
  * @alpha
  */
-export function createBinderOptionsDefault(
-	sortFn?: (a: BindingContext, b: BindingContext) => number,
-): BinderOptions {
-	return { matchPolicy: "path", sort: true, sortFn };
-}
-
-/**
- * @alpha
- */
-export function createBinderOptionsSubtree(
-	sortFn?: (a: BindingContext, b: BindingContext) => number,
-): BinderOptions {
-	return { matchPolicy: "subtree", sort: true, sortFn };
-}
-
-/**
- * @alpha
- */
-export function createFlushableBinderOptionsDefault<E extends Events<E>>({
-	flushEvent,
+export function createBinderOptions({
+	matchPolicy = "path",
+	sortPolicy = "native",
 	sortFn,
-	sortAnchorsFn,
 }: {
-	flushEvent: keyof Events<E>;
+	matchPolicy?: MatchPolicy;
+	sortPolicy?: SortPolicy;
 	sortFn?: BinderEventsCompare;
-	sortAnchorsFn?: AnchorsCompare;
-}): FlushableBinderOptions<E> {
-	const options = createBinderOptionsDefault(sortFn);
-	return {
-		...options,
-		autoFlush: true,
-		autoFlushPolicy: flushEvent,
-		sortAnchors: true,
-		sortAnchorsFn,
-	};
+}): BinderOptions {
+	return { matchPolicy, sortPolicy, sortFn };
 }
 
 /**
  * @alpha
  */
-export function createFlushableBinderOptionsSubtree<E extends Events<E>>({
-	flushEvent,
+export function createFlushableBinderOptions<E extends Events<E>>({
+	matchPolicy = "path",
+	sortPolicy = "native",
 	sortFn,
+	sortAnchorsPolicy = "native",
 	sortAnchorsFn,
+	autoFlush = true,
+	autoFlushPolicy,
 }: {
-	flushEvent: keyof Events<E>;
+	matchPolicy?: MatchPolicy;
+	sortPolicy?: SortPolicy;
 	sortFn?: BinderEventsCompare;
+	sortAnchorsPolicy?: SortPolicy;
 	sortAnchorsFn?: AnchorsCompare;
+	autoFlush?: boolean;
+	autoFlushPolicy: keyof Events<E>;
 }): FlushableBinderOptions<E> {
-	const options = createBinderOptionsSubtree(sortFn);
 	return {
-		...options,
-		autoFlush: true,
-		autoFlushPolicy: flushEvent,
-		sortAnchors: true,
+		matchPolicy,
+		sortPolicy,
+		sortFn,
+		sortAnchorsPolicy,
 		sortAnchorsFn,
+		autoFlush,
+		autoFlushPolicy,
 	};
 }
 
@@ -744,4 +757,34 @@ export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunctio
 		}
 		return 0;
 	};
+}
+
+export function nativeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
+	return [...arr].sort(compareFn);
+}
+
+export function mergeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
+	if (arr.length <= 1) {
+		return arr;
+	}
+	const middle = Math.floor(arr.length / 2);
+	const left = arr.slice(0, middle);
+	const right = arr.slice(middle);
+	return merge(mergeSort(right, compareFn), mergeSort(left, compareFn), compareFn);
+}
+
+export function merge<T>(left: T[], right: T[], compareFn: CompareFunction<T>): T[] {
+	const result = [];
+	let i = 0;
+	let j = 0;
+	while (i < left.length && j < right.length) {
+		if (compareFn(left[i], right[j]) <= 0) {
+			result.push(left[i]);
+			i++;
+		} else {
+			result.push(right[j]);
+			j++;
+		}
+	}
+	return result.concat(left.slice(i)).concat(right.slice(j));
 }
