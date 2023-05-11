@@ -32,6 +32,7 @@ const content = [nodeX];
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
 const moveId = brand<ChangesetLocalId>(4242);
 const tag: RevisionTag = mintRevisionTag();
+const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 const deltaMoveId = brandOpaque<Delta.MoveId>(moveId);
@@ -55,7 +56,6 @@ function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 
 const childChange1 = TestChange.mint([0], 1);
 const childChange1Delta = TestChange.toDelta(childChange1);
-const tag1: RevisionTag = mintRevisionTag();
 
 describe("SequenceField - toDelta", () => {
 	it("empty mark list", () => {
@@ -103,16 +103,6 @@ describe("SequenceField - toDelta", () => {
 		];
 		assertMarkListEqual(actual, expected);
 	});
-
-	// it("conflicted revive => skip", () => {
-	// 	const changeset: TestChangeset = composeAnonChanges([
-	// 		Change.revive(0, 1, tag, 0, undefined, tag2),
-	// 		Change.modify(1, childChange1),
-	// 	]);
-	// 	const actual = toDelta(changeset);
-	// 	const expected: Delta.MarkList = [1, childChange1Delta];
-	// 	assertMarkListEqual(actual, expected);
-	// });
 
 	it("revive and modify => insert", () => {
 		const nestedChange: FieldChange = {
@@ -326,7 +316,7 @@ describe("SequenceField - toDelta", () => {
 			assertMarkListEqual(actual, expected);
 		});
 
-		it("revive", () => {
+		it("redundant revive", () => {
 			const changeset: TestChangeset = [
 				{ type: "Revive", count: 1, content: fakeRepairData(tag, 0, 1) },
 				{
@@ -338,6 +328,29 @@ describe("SequenceField - toDelta", () => {
 			];
 			const actual = toDelta(changeset);
 			const expected: Delta.MarkList = [1, childChange1Delta];
+			assertMarkListEqual(actual, expected);
+		});
+
+		it("blocked revive", () => {
+			const changeset: TestChangeset = [
+				{
+					type: "Revive",
+					count: 1,
+					content: fakeRepairData(tag, 0, 1),
+					inverseOf: tag1,
+					detachEvent: { revision: tag2, index: 0 },
+				},
+				{
+					type: "Revive",
+					count: 1,
+					changes: childChange1,
+					content: fakeRepairData(tag, 1, 1),
+					inverseOf: tag1,
+					detachEvent: { revision: tag2, index: 1 },
+				},
+			];
+			const actual = toDelta(changeset);
+			const expected: Delta.MarkList = [];
 			assertMarkListEqual(actual, expected);
 		});
 	});
