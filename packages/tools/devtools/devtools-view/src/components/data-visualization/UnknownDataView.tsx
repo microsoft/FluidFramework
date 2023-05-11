@@ -22,5 +22,9 @@ export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement
 	const { label, node } = props;
 
 	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
-	return <Tree header={header} />;
+	return (
+		<Tree header={header}>
+			<span>Unrecognized kind of data.</span>
+		</Tree>
+	);
 }
