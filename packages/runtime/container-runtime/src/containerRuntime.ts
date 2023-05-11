@@ -2685,7 +2685,6 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
-
 		try {
 			await this.deltaManager.inbound.pause();
 			if (shouldPauseInboundSignal) {
