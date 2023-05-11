@@ -33,10 +33,6 @@
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
-	"jest-junit": {
-		"outputDirectory": "nyc",
-		"outputName": "jest-junit-report.xml"
-	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/attributable-map": "workspace:~",
@@ -89,6 +85,10 @@
 				"library": "main"
 			}
 		}
+	},
+	"jest-junit": {
+		"outputDirectory": "nyc",
+		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
 		"disabled": true,
