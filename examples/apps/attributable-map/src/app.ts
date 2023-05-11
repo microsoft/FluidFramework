@@ -5,11 +5,8 @@
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 import { enableOnNewFileKey } from "@fluid-experimental/attributor";
-import {
-	TimestampWatcherContainerRuntimeFactory,
-	ITimestampWatcherAppModel,
-} from "./containerCode";
-import { renderTimestampWatcher } from "./view";
+import { HitCounterContainerRuntimeFactory, IHitCounterAppModel } from "./containerCode";
+import { renderHitCounter } from "./view";
 
 /**
  * Start the app and render.
@@ -22,12 +19,12 @@ async function start() {
 	 */
 	sessionStorage.setItem(enableOnNewFileKey, "true");
 
-	const tinyliciousModelLoader = new TinyliciousModelLoader<ITimestampWatcherAppModel>(
-		new StaticCodeLoader(new TimestampWatcherContainerRuntimeFactory()),
+	const tinyliciousModelLoader = new TinyliciousModelLoader<IHitCounterAppModel>(
+		new StaticCodeLoader(new HitCounterContainerRuntimeFactory()),
 	);
 
 	let id: string;
-	let model: ITimestampWatcherAppModel;
+	let model: IHitCounterAppModel;
 
 	if (location.hash.length === 0) {
 		// Normally our code loader is expected to match up with the version passed here.
@@ -46,7 +43,7 @@ async function start() {
 	document.title = id;
 
 	const contentDiv = document.getElementById("content") as HTMLDivElement;
-	renderTimestampWatcher(model.timestampWatcher, model.runtimeAttributor, contentDiv);
+	renderHitCounter(model.hitCounter, model.runtimeAttributor, contentDiv);
 }
 
 start().catch((error) => console.error(error));

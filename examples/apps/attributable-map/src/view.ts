@@ -4,10 +4,10 @@
  */
 
 import { IRuntimeAttributor } from "@fluid-experimental/attributor";
-import { ITimestampWatcher, greenKey, redKey, ITinyliciousUser } from "./dataObject";
+import { IHitCounter, greenKey, redKey, ITinyliciousUser } from "./dataObject";
 
-export function renderTimestampWatcher(
-	timestampWatcher: ITimestampWatcher,
+export function renderHitCounter(
+	hitCounter: IHitCounter,
 	runtimeAttributor: IRuntimeAttributor | undefined,
 	div: HTMLDivElement,
 ) {
@@ -61,7 +61,7 @@ export function renderTimestampWatcher(
 	buttonsContainerDiv.appendChild(redButton);
 
 	redButton.addEventListener("click", () => {
-		timestampWatcher.refresh("red");
+		hitCounter.hit("red");
 	});
 
 	// Create green button element and add styling
@@ -77,7 +77,7 @@ export function renderTimestampWatcher(
 	buttonsContainerDiv.appendChild(greenButton);
 
 	greenButton.addEventListener("click", () => {
-		timestampWatcher.refresh("green");
+		hitCounter.hit("green");
 	});
 
 	// Create container div for attribution text and add styling
@@ -104,41 +104,38 @@ export function renderTimestampWatcher(
 
 	// Function to update counter value and attribution text
 	const updateView = () => {
-		const greenValue = timestampWatcher.map?.get(greenKey);
-		const redValue = timestampWatcher.map?.get(redKey);
+		const greenValue = hitCounter.map?.get(greenKey);
+		const redValue = hitCounter.map?.get(redKey);
 
-		const greenAttributionKey = timestampWatcher.map?.getAttribution(greenKey);
-		const redAttributionKey = timestampWatcher.map?.getAttribution(redKey);
-
-		// update the text
+		// update the counter value
 		redCounterContainerDiv.textContent = redValue.toString();
 		greenCounterContainerDiv.textContent = greenValue.toString();
 
-		if (redAttributionKey !== undefined && redAttributionKey.type === "op") {
-			const redAttribution = runtimeAttributor?.get(redAttributionKey);
-			const userString = JSON.stringify(redAttribution?.user);
-			const user = JSON.parse(userString) as ITinyliciousUser;
-			const timestamp = new Date(redAttribution?.timestamp ?? JSON.stringify(null));
-			redAttributionContainerDiv.textContent = `Last updated by ${user.name}\non ${timestamp.toLocaleString()}`;
-			redAttributionContainerDiv.style.display = "block";
-		} else {
-			redAttributionContainerDiv.style.display = "none";
-		}
+		const greenAttributionKey = hitCounter.map?.getAttribution(greenKey);
+		const redAttributionKey = hitCounter.map?.getAttribution(redKey);
 
-		if (greenAttributionKey !== undefined && greenAttributionKey.type === "op") {
-			const greenAttribution = runtimeAttributor?.get(greenAttributionKey);
-			const userString = JSON.stringify(greenAttribution?.user);
-			const user = JSON.parse(userString) as ITinyliciousUser;
-			const timestamp = new Date(greenAttribution?.timestamp ?? JSON.stringify(null));
-			greenAttributionContainerDiv.textContent = `Last updated by ${user.name}\non ${timestamp.toLocaleString()}`;
-			greenAttributionContainerDiv.style.display = "block";
-		} else {
-			greenAttributionContainerDiv.style.display = "none";
-		}
+		// update the attribution text
+		const updateAttributionDisplay = (attributionKey, containerDiv) => {
+			if (attributionKey !== undefined && attributionKey.type === "op") {
+				const attribution = runtimeAttributor?.get(attributionKey);
+				const userString = JSON.stringify(attribution?.user);
+				const user = JSON.parse(userString) as ITinyliciousUser;
+				const timestamp = new Date(attribution?.timestamp ?? JSON.stringify(null));
+				containerDiv.textContent = `Last updated by ${
+					user.name
+				}\non ${timestamp.toLocaleString()}`;
+				containerDiv.style.display = "block";
+			} else {
+				containerDiv.style.display = "none";
+			}
+		};
+
+		updateAttributionDisplay(redAttributionKey, redAttributionContainerDiv);
+		updateAttributionDisplay(greenAttributionKey, greenAttributionContainerDiv);
 	};
 
 	updateView();
 
-	// Use the timeRefresh event to trigger the rerender whenever the value changes.
-	timestampWatcher.on("timeRefresh", updateView);
+	// Use the hit event to trigger the re-render whenever the value changes.
+	hitCounter.on("hit", updateView);
 }

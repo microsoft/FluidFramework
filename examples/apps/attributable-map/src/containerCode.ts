@@ -9,26 +9,26 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IRuntimeAttributor, IProvideRuntimeAttributor } from "@fluid-experimental/attributor";
-import { TimestampWatcher } from "./dataObject";
+import { HitCounter } from "./dataObject";
 
-export interface ITimestampWatcherAppModel {
-	readonly timestampWatcher: TimestampWatcher;
+export interface IHitCounterAppModel {
+	readonly hitCounter: HitCounter;
 	readonly runtimeAttributor?: IRuntimeAttributor | undefined;
 }
 
-class TimestampWatcherAppModel implements ITimestampWatcherAppModel {
+class HitCounterAppModel implements IHitCounterAppModel {
 	public constructor(
-		public readonly timestampWatcher: TimestampWatcher,
+		public readonly hitCounter: HitCounter,
 		public readonly runtimeAttributor?: IRuntimeAttributor,
 	) {}
 }
 
-const timestampWatcherId = "time-stamp-watcher";
+const hitCounterId = "hit-counter";
 
-export class TimestampWatcherContainerRuntimeFactory extends ModelContainerRuntimeFactoryWithAttribution<ITimestampWatcherAppModel> {
+export class HitCounterContainerRuntimeFactory extends ModelContainerRuntimeFactoryWithAttribution<IHitCounterAppModel> {
 	constructor() {
 		super(
-			new Map([TimestampWatcher.getFactory().registryEntry]), // registryEntries
+			new Map([HitCounter.getFactory().registryEntry]), // registryEntries
 		);
 	}
 
@@ -36,20 +36,20 @@ export class TimestampWatcherContainerRuntimeFactory extends ModelContainerRunti
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const timestampWatcher = await runtime.createDataStore(TimestampWatcher.getFactory().type);
-		await timestampWatcher.trySetAlias(timestampWatcherId);
+		const hitCounter = await runtime.createDataStore(HitCounter.getFactory().type);
+		await hitCounter.trySetAlias(hitCounterId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const timestampWatcher = await requestFluidObject<TimestampWatcher>(
-			await runtime.getRootDataStore(timestampWatcherId),
+		const hitCounter = await requestFluidObject<HitCounter>(
+			await runtime.getRootDataStore(hitCounterId),
 			"",
 		);
 		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = runtime.scope;
 		const runtimeAttributor = maybeProvidesAttributor.IRuntimeAttributor;
-		return new TimestampWatcherAppModel(timestampWatcher, runtimeAttributor);
+		return new HitCounterAppModel(hitCounter, runtimeAttributor);
 	}
 }
