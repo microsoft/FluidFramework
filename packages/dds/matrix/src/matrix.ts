@@ -25,11 +25,11 @@ import {
 	MergeTreeDeltaType,
 	IMergeTreeOp,
 	SegmentGroup,
-	ISegment,
 	Client,
+	IJSONSegment,
 } from "@fluidframework/merge-tree";
 import { MatrixOp } from "./ops";
-import { PermutationVector, PermutationSegment } from "./permutationvector";
+import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector";
 import { SparseArray2D } from "./sparsearray2d";
 import { SharedMatrixFactory } from "./runtime";
 import { Handle, isHandleValid } from "./handletable";
@@ -368,25 +368,9 @@ export class SharedMatrix<T = any>
 		this.submitRowMessage(this.rows.remove(rowStart, count));
 	}
 
-	/** @internal */ public _undoRemoveRows(segment: ISegment) {
-		const original = segment as PermutationSegment;
-
-		// (Re)insert the removed number of rows at the original position.
-		const { op, inserted } = this.rows.insertRelative(original, original.cachedLength);
+	/** @internal */ public _undoRemoveRows(rowStart: number, spec: IJSONSegment) {
+		const { op, inserted } = reinsertSegmentIntoVector(this.rows, rowStart, spec);
 		this.submitRowMessage(op);
-
-		// Transfer handles and undo/redo tracking groups from the original segment to the
-		// newly inserted segment.
-		original.transferToReplacement(inserted);
-
-		// Invalidate the handleCache in case it was populated during the 'rowsChanged'
-		// callback, which occurs before the handle span is populated.
-		const rowStart = this.rows.getPosition(inserted);
-		this.rows.handleCache.itemsChanged(
-			rowStart,
-			/* removedCount: */ 0,
-			/* insertedCount: */ inserted.cachedLength,
-		);
 
 		// Generate setCell ops for each populated cell in the reinserted rows.
 		let rowHandle = inserted.start;
@@ -407,25 +391,9 @@ export class SharedMatrix<T = any>
 		}
 	}
 
-	/** @internal */ public _undoRemoveCols(segment: ISegment) {
-		const original = segment as PermutationSegment;
-
-		// (Re)insert the removed number of columns at the original position.
-		const { op, inserted } = this.cols.insertRelative(original, original.cachedLength);
+	/** @internal */ public _undoRemoveCols(colStart: number, spec: IJSONSegment) {
+		const { op, inserted } = reinsertSegmentIntoVector(this.cols, colStart, spec);
 		this.submitColMessage(op);
-
-		// Transfer handles and undo/redo tracking groups from the original segment to the
-		// newly inserted segment.
-		original.transferToReplacement(inserted);
-
-		// Invalidate the handleCache in case it was populated during the 'colsChanged'
-		// callback, which occurs before the handle span is populated.
-		const colStart = this.cols.getPosition(inserted);
-		this.cols.handleCache.itemsChanged(
-			colStart,
-			/* removedCount: */ 0,
-			/* insertedCount: */ inserted.cachedLength,
-		);
 
 		// Generate setCell ops for each populated cell in the reinserted cols.
 		let colHandle = inserted.start;
