@@ -28,5 +28,5 @@ export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): Reac
 			inlineValue={<i>Unrecognized kind of Fluid Object.</i>}
 		/>
 	);
-	return <TreeItem header={header} id={node.fluidObjectId} />;
+	return <TreeItem header={header} />;
 }

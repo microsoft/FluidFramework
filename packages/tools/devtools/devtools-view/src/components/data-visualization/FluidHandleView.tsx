@@ -84,7 +84,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 
 	if (visualTree === undefined) {
 		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
-		return <TreeItem header={header} id={fluidObjectId} />;
+		return <TreeItem header={header} />;
 	}
 
 	return <TreeDataView containerId={containerId} label={label} node={visualTree} />;

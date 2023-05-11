@@ -29,5 +29,5 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 		/>
 	);
 
-	return <TreeItem header={header} id={node.fluidObjectId} />;
+	return <TreeItem header={header} />;
 }

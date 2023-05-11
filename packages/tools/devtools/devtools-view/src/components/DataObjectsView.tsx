@@ -82,7 +82,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	}
 
 	return (
-		<FluentTree id="devtools-data-tree-root">
+		<FluentTree>
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
 				return (
 					<TreeDataView
