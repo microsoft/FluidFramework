@@ -58,7 +58,7 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("modified insert => delete", () => {
+	it("insert & modify => modify & delete", () => {
 		const insert = Change.insert(0, 1);
 		const nodeChange = TestChange.mint([], 42);
 		const modify = Change.modify(0, nodeChange);
