@@ -598,17 +598,25 @@ interface ComposeMarks<T> {
 	newMark?: Mark<T>;
 }
 
+/**
+ * Returns whether `baseMark` and `newMark` are inverses.
+ * It is assumed that both marks are active and `baseMark` is an attach.
+ */
 function areInverseMoves(
 	baseMark: MoveMark<unknown>,
 	baseIntention: RevisionTag | undefined,
 	newMark: MoveMark<unknown>,
 	newIntention: RevisionTag | undefined,
 ): boolean {
+	assert(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo", "TODO: Handle case where `baseMark` is a detach");
 	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
 		return true;
 	}
 
-	assert(newMark.type !== "ReturnTo", "TODO: Unhandled case");
+	if (newMark.type === "ReturnFrom" && newMark.detachEvent?.revision === baseIntention) {
+		return true;
+	}
+
 	return false;
 }
 
