@@ -27,9 +27,9 @@ export class RemoteMessageProcessor {
 	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		const result: ISequencedDocumentMessage[] = [];
 
-		// Ungroup before processing chunks
-		for (let ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
-			ungroupedMessage = this.opDecompressor.processMessage(ungroupedMessage).message;
+		const message = this.opDecompressor.processMessage(copy(remoteMessage)).message;
+
+		for (let ungroupedMessage of this.opGroupingManager.ungroupOp(message)) {
 			unpackRuntimeMessage(ungroupedMessage);
 
 			const chunkProcessingResult = this.opSplitter.processRemoteMessage(ungroupedMessage);
@@ -41,14 +41,10 @@ export class RemoteMessageProcessor {
 				continue;
 			}
 
-			// Ungroup the chunked message before decompressing
-			for (let ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
-				ungroupedMessage,
+			const decompressionAfterChunking = this.opDecompressor.processMessage(ungroupedMessage);
+			for (const ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
+				decompressionAfterChunking.message,
 			)) {
-				const decompressionAfterChunking = this.opDecompressor.processMessage(
-					ungroupedMessageAfterChunking,
-				);
-				ungroupedMessageAfterChunking = decompressionAfterChunking.message;
 				if (decompressionAfterChunking.state === "Skipped") {
 					// After chunking, if the original message was not compressed,
 					// there is no need to continue processing
@@ -61,6 +57,7 @@ export class RemoteMessageProcessor {
 				result.push(ungroupedMessageAfterChunking);
 			}
 		}
+
 		return result;
 	}
 }
