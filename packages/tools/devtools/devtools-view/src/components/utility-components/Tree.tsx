@@ -10,7 +10,7 @@ import { Tree as FluentTree, TreeItem, TreeItemLayout } from "@fluentui/react-co
 /**
  * Input to {@link Tree}
  */
-type TreeProps = React.PropsWithChildren<{
+export type TreeProps = React.PropsWithChildren<{
 	/**
 	 * Header label created by {@link TreeHeader}.
 	 */

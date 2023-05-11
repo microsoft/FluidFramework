@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { ValueNodeBase } from "@fluid-experimental/devtools-core";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeItem } from "@fluentui/react-components/unstable";
-import { TreeHeader } from "./TreeHeader";
+
+import { ValueNodeBase } from "@fluid-experimental/devtools-core";
+
 import { HasLabel } from "./CommonInterfaces";
+import { TreeHeader } from "./TreeHeader";
 
 /**
  * {@link ValueView} input props.

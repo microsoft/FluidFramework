@@ -248,8 +248,8 @@ export class DataVisualizerGraph
 		const resolvedObject = await handle.get();
 
 		// TODO: is this the right type check for this?
-		const sharedObject = resolvedObject as ISharedObject;
-		if (sharedObject?.id !== undefined && sharedObject.attributes !== undefined) {
+		const sharedObject = resolvedObject as Partial<ISharedObject>;
+		if (isSharedObject(sharedObject)) {
 			return this.registerVisualizerForSharedObject(sharedObject);
 		} else {
 			// Unknown data.
@@ -340,7 +340,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	) {
 		super();
 
-		this.sharedObject.on("op", this.syncOpHandler);
+		this.sharedObject.on?.("op", this.syncOpHandler);
 
 		this._disposed = false;
 	}
@@ -459,4 +459,12 @@ export async function visualizeChildData(
 		nodeKind: VisualNodeKind.TreeNode,
 		typeMetadata: "object",
 	};
+}
+
+/**
+ * Determines whether or not the provided value is an {@link ISharedObject}, for the purposes of this library.
+ * @remarks Implemented by checking for the particular properties / methods we use in this module.
+ */
+function isSharedObject(value: Partial<ISharedObject>): value is ISharedObject {
+	return value.id !== undefined && value.attributes?.type !== undefined && value.on !== undefined;
 }

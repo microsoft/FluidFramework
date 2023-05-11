@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+
 import {
 	DataVisualization,
 	GetDataVisualization,
@@ -13,10 +14,11 @@ import {
 	HasFluidObjectId,
 	FluidObjectNode,
 } from "@fluid-experimental/devtools-core";
-import { useMessageRelay } from "../MessageRelayContext";
-import { Waiting } from "./Waiting";
-import { TreeDataView } from "./TreeDataView";
+
+import { useMessageRelay } from "../../MessageRelayContext";
+import { Waiting } from "../Waiting";
 import { HasLabel } from "./CommonInterfaces";
+import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "EXTENSION(HandleView)";
 

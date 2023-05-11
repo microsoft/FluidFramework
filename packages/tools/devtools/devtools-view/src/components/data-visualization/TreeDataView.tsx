@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+
 import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-experimental/devtools-core";
+
+import { HasLabel } from "./CommonInterfaces";
 import { FluidHandleView } from "./FluidHandleView";
 import { TreeView } from "./TreeView";
 import { FluidTreeView } from "./FluidTreeView";
@@ -11,7 +14,6 @@ import { ValueView } from "./ValueView";
 import { FluidValueView } from "./FluidValueView";
 import { UnknownFluidObjectView } from "./UnknownFluidObjectView";
 import { UnknownDataView } from "./UnknownDataView";
-import { HasLabel } from "./CommonInterfaces";
 
 /**
  * {@link TreeDataView} input props.
