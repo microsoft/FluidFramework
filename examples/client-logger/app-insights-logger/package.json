@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-insights-logger",
-	"version": "2.0.0-internal.4.2.0",
+	"version": "2.0.0-internal.4.3.0",
 	"private": true,
 	"description": "Provides a simple Fluid application with a UI view written in React to test the Fluid App Insights telemetry logger that will route typical Fluid telemetry to configured Azure App Insights",
 	"homepage": "https://fluidframework.com",
@@ -86,7 +86,7 @@
 		"ts-loader": "^9.3.0",
 		"tslib": "^1.10.0",
 		"typescript": "~4.5.5",
-		"webpack": "^5.76.2",
+		"webpack": "^5.82.0",
 		"webpack-cli": "^4.9.2",
 		"webpack-dev-server": "~4.6.0",
 		"webpack-merge": "^5.8.0"

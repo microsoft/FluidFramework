@@ -26,7 +26,7 @@ export class CheckpointContext {
 	 * Checkpoints to the database & kafka
 	 * Note: This is an async method, but you should not await this
 	 */
-	public async checkpoint(checkpoint: ICheckpointParams) {
+	public async checkpoint(checkpoint: ICheckpointParams, restartOnCheckpointFailure?: boolean) {
 		// Exit early if already closed
 		if (this.closed) {
 			return;
@@ -72,7 +72,7 @@ export class CheckpointContext {
 					kafkaCheckpointMessage.offset > this.lastKafkaCheckpointOffset)
 			) {
 				this.lastKafkaCheckpointOffset = kafkaCheckpointMessage.offset;
-				this.context.checkpoint(kafkaCheckpointMessage);
+				this.context.checkpoint(kafkaCheckpointMessage, restartOnCheckpointFailure);
 			}
 		} catch (ex) {
 			// TODO flag context as error / use this.context.error() instead?

@@ -16,19 +16,42 @@ import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKindIdentifierSchema,
-	FieldSchema,
+	FieldStoredSchema,
 	GlobalFieldKey,
 	GlobalFieldKeySchema,
 	LocalFieldKey,
 	LocalFieldKeySchema,
 	Named,
 	SchemaData,
-	TreeSchema,
+	TreeStoredSchema,
 	TreeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	ValueSchema,
 } from "../core";
 import { brand, fail } from "../util";
+
+const Baz = Type.Recursive((Baz2) =>
+	Type.Object({
+		child: Type.Optional(Baz2),
+	}),
+);
+
+type Baz = Static<typeof Baz>;
+
+const _baz: Baz = { child: { child: {} } };
+
+const Foo = Type.Recursive((Foo2) =>
+	Type.Object({
+		child1: Type.Object({
+			child2: Type.Optional(Foo2),
+		}),
+	}),
+);
+
+type Foo = Static<typeof Foo>;
+type Bar = Required<Foo>["child1"];
+
+const _bar: Bar = { child2: { child1: {} } };
 
 const version = "1.0.0" as const;
 
@@ -132,7 +155,7 @@ function compareNamed(a: Named<string>, b: Named<string>) {
 	return 0;
 }
 
-function encodeTree(name: TreeSchemaIdentifier, schema: TreeSchema): TreeSchemaFormat {
+function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeSchemaFormat {
 	const out: TreeSchemaFormat = {
 		name,
 		extraGlobalFields: schema.extraGlobalFields,
@@ -146,7 +169,7 @@ function encodeTree(name: TreeSchemaIdentifier, schema: TreeSchema): TreeSchemaF
 	return out;
 }
 
-function encodeField(schema: FieldSchema): FieldSchemaFormat {
+function encodeField(schema: FieldStoredSchema): FieldSchemaFormat {
 	const out: FieldSchemaFormat = {
 		kind: schema.kind.identifier,
 	};
@@ -156,7 +179,7 @@ function encodeField(schema: FieldSchema): FieldSchemaFormat {
 	return out;
 }
 
-function encodeNamedField<T>(name: T, schema: FieldSchema): FieldSchemaFormat & Named<T> {
+function encodeNamedField<T>(name: T, schema: FieldStoredSchema): FieldSchemaFormat & Named<T> {
 	return {
 		...encodeField(schema),
 		name,
@@ -164,8 +187,8 @@ function encodeNamedField<T>(name: T, schema: FieldSchema): FieldSchemaFormat & 
 }
 
 function decode(f: Format): SchemaData {
-	const globalFieldSchema: Map<GlobalFieldKey, FieldSchema> = new Map();
-	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
+	const globalFieldSchema: Map<GlobalFieldKey, FieldStoredSchema> = new Map();
+	const treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema> = new Map();
 	for (const field of f.globalFieldSchema) {
 		globalFieldSchema.set(field.name, decodeField(field));
 	}
@@ -178,8 +201,8 @@ function decode(f: Format): SchemaData {
 	};
 }
 
-function decodeField(schema: FieldSchemaFormat): FieldSchema {
-	const out: FieldSchema = {
+function decodeField(schema: FieldSchemaFormat): FieldStoredSchema {
+	const out: FieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: { identifier: schema.kind },
 		types: schema.types === undefined ? undefined : new Set(schema.types),
@@ -187,13 +210,13 @@ function decodeField(schema: FieldSchemaFormat): FieldSchema {
 	return out;
 }
 
-function decodeTree(schema: TreeSchemaFormat): TreeSchema {
-	const out: TreeSchema = {
+function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
+	const out: TreeStoredSchema = {
 		extraGlobalFields: schema.extraGlobalFields,
 		extraLocalFields: decodeField(schema.extraLocalFields),
 		globalFields: new Set(schema.globalFields),
 		localFields: new Map(
-			schema.localFields.map((field): [LocalFieldKey, FieldSchema] => [
+			schema.localFields.map((field): [LocalFieldKey, FieldStoredSchema] => [
 				brand(field.name),
 				decodeField(field),
 			]),

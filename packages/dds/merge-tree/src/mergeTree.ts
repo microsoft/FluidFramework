@@ -23,7 +23,6 @@ import { LocalReferenceCollection, LocalReferencePosition } from "./localReferen
 import {
 	BaseSegment,
 	BlockAction,
-	BlockUpdateActions,
 	CollaborationWindow,
 	IHierBlock,
 	IMergeBlock,
@@ -44,6 +43,7 @@ import {
 	reservedMarkerIdKey,
 	SegmentActions,
 	SegmentGroup,
+	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
 import {
@@ -549,10 +549,8 @@ export class MergeTree {
 		zamboniSegments: true,
 	};
 
-	private static readonly initBlockUpdateActions: BlockUpdateActions;
 	private static readonly theUnfinishedNode = <IMergeBlock>{ childCount: -1 };
 
-	private readonly blockUpdateActions: BlockUpdateActions = MergeTree.initBlockUpdateActions;
 	public readonly collabWindow = new CollaborationWindow();
 
 	public readonly pendingSegments = new List<SegmentGroup>();
@@ -638,11 +636,7 @@ export class MergeTree {
 		if (localSeq === undefined) {
 			if (removalInfo !== undefined) {
 				if (this.options?.mergeTreeUseNewLengthCalculations !== true) {
-					const normalizedRemovedSeq =
-						removalInfo.removedSeq === UnassignedSequenceNumber
-							? Number.MAX_SAFE_INTEGER
-							: removalInfo.removedSeq;
-					if (normalizedRemovedSeq > this.collabWindow.minSeq) {
+					if (!seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
 						return 0;
 					}
 					// this segment removed and outside the collab window which means it is zamboni eligible
@@ -1010,33 +1004,19 @@ export class MergeTree {
 				const segment = node;
 				const removalInfo = toRemovalInfo(segment);
 				if (this.options?.mergeTreeUseNewLengthCalculations === true) {
-					// normalize the seq numbers
-					// if the remove is local (UnassignedSequenceNumber) give it the highest possible
-					// seq for comparison, as it will get a seq higher than any other seq once sequenced
-					// if the segments seq is local (UnassignedSequenceNumber) give it the second highest
-					// possible seq, as the highest is reserved for the remove.
-					const seq =
-						node.seq === UnassignedSequenceNumber
-							? Number.MAX_SAFE_INTEGER - 1
-							: node.seq ?? 0;
-
 					if (removalInfo !== undefined) {
-						const removedSeq =
-							removalInfo.removedSeq === UnassignedSequenceNumber
-								? Number.MAX_SAFE_INTEGER
-								: removalInfo?.removedSeq;
-						if (removedSeq <= this.collabWindow.minSeq) {
+						if (seqLTE(removalInfo.removedSeq, this.collabWindow.minSeq)) {
 							return undefined;
 						}
 						if (
-							removedSeq <= refSeq ||
+							seqLTE(removalInfo.removedSeq, refSeq) ||
 							removalInfo.removedClientIds.includes(clientId)
 						) {
 							return 0;
 						}
 					}
 
-					return seq <= refSeq || segment.clientId === clientId
+					return seqLTE(node.seq ?? 0, refSeq) || segment.clientId === clientId
 						? segment.cachedLength
 						: 0;
 				}
@@ -2495,10 +2475,8 @@ export class MergeTree {
 					hierBlock.rangeStacks,
 				);
 			}
-			if (this.blockUpdateActions) {
-				this.blockUpdateActions.child(block, i);
-			}
 		}
+
 		block.cachedLength = len;
 	}
 

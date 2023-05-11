@@ -36,9 +36,9 @@ export type TreeType = TreeSchemaIdentifier;
  * and in some abstractions the APIs for this field should be inlined onto the node.
  *
  * TODO:
- * This has to be a LocalFieldKey since different nodes will have different FieldSchema for it.
+ * This has to be a LocalFieldKey since different nodes will have different FieldStoredSchema for it.
  * This makes it prone to collisions and suggests
- * that this intention may be better conveyed by metadata on the TreeViewSchema.
+ * that this intention may be better conveyed by metadata on the ITreeSchema.
  * @alpha
  */
 export const EmptyKey: LocalFieldKey = brand("");
