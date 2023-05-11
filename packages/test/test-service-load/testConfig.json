@@ -162,11 +162,7 @@
 				}
 			},
 			"totalBlobCount": 300,
-			"blobSize": 10240,
-			"stashedOps": {
-				"min": 0,
-				"max": 100
-			}
+			"blobSize": 10240
 		},
 		"offline": {
 			"opRatePerMin": 60,
