@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -22,7 +22,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	constructor(
 		private _connected: boolean,
-		public readonly submit: (message: IDocumentMessage, localOpMetadata: unknown) => void,
+		public readonly submit: (content: any, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
 		public readonly addedGCOutboundReference: (
 			srcHandle: IFluidHandle,
