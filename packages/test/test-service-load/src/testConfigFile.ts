@@ -49,7 +49,7 @@ export interface ILoadTestConfig {
 		/**
 		 * Percentage of containers for which to stash pending changes when the offline period ends. Note
 		 * that this will only affect containers that have offline load enabled. A float between 0 and 1,
-		 * 1 meaning always stash.
+		 * 1 meaning always stash. Default is 0.5
 		 */
 		stashPercent?: number;
 	};

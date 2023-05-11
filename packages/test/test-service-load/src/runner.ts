@@ -436,7 +436,7 @@ async function scheduleOffline(
 	offlineDelayMaxMs: number,
 	offlineDurationMinMs: number,
 	offlineDurationMaxMs: number,
-	stashPercent = 1,
+	stashPercent = 0.5,
 ): Promise<string | undefined> {
 	return new Promise<void>((resolve) => {
 		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
