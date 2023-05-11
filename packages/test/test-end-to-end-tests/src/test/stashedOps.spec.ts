@@ -376,6 +376,16 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(directory2.get(testKey), testValue);
 	});
 
+	it("connects when loaded with empty stash blob and no delta connection", async function () {
+		const pendingOps = await getPendingOps(provider, false);
+
+		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+		const container2 = await loader.resolve({ url, headers }, pendingOps);
+		container2.connect();
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+	});
+
 	it("doesn't resend successful op", async function () {
 		const pendingOps = await getPendingOps(provider, true, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
