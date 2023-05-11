@@ -10,7 +10,6 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import {
 	IClientDetails,
 	IDocumentMessage,
-	IHelpMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -32,10 +31,6 @@ export interface IDataStoreWithBindToContext_Deprecated extends IDataStore {
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 	(event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
-	/**
-	 * @deprecated - 2.0.0-internal.4.3.0 - This will be removed in a later release.
-	 */
-	(event: "localHelp", listener: (message: IHelpMessage) => void);
 }
 
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &

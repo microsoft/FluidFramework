@@ -17,7 +17,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IHelpMessage } from '@fluidframework/protocol-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
@@ -59,8 +58,6 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
-    // @deprecated (undocumented)
-    (event: "localHelp", listener: (message: IHelpMessage) => void): any;
 }
 
 // @public @deprecated (undocumented)
