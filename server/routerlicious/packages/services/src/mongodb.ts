@@ -538,6 +538,12 @@ export class MongoDbFactory implements core.IDbFactory {
 			this.connectionNotAvailableMode,
 		);
 
-		return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer, this.databaseName);
+		return new MongoDb(
+			connection,
+			this.retryEnabled,
+			this.telemetryEnabled,
+			retryAnalyzer,
+			this.databaseName,
+		);
 	}
 }
