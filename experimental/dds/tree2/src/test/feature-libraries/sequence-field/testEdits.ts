@@ -207,10 +207,10 @@ function createModifyDetachedChangeset<TNodeChange>(
 	index: number,
 	change: TNodeChange,
 	detachEvent: DetachEvent,
-	lineage?: SF.LineageEvent [],
+	lineage?: SF.LineageEvent[],
 ): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);
-	const modify = (changeset[changeset.length - 1] as SF.Modify);
+	const modify = changeset[changeset.length - 1] as SF.Modify;
 	modify.detachEvent = detachEvent;
 	if (lineage !== undefined) {
 		modify.lineage = lineage;

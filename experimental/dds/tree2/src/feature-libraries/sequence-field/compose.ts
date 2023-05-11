@@ -473,7 +473,10 @@ export class ComposeQueue<T> {
 					// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
 					// (which will be obtained by rebasing the reattach over interim changes
 					// (which requires the local changes to have a revision tag))
-					assert(isNewAttach(newMark), "TODO: Assign revision tags to each change in a transaction");
+					assert(
+						isNewAttach(newMark),
+						"TODO: Assign revision tags to each change in a transaction",
+					);
 					return this.dequeueNew();
 				}
 				baseCellId = {
@@ -655,19 +658,21 @@ function compareCellPositions(
 	if (newCellId !== undefined) {
 		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newCellId.revision);
 		if (offsetInBase !== undefined) {
+			// BUG: `newCellId.revision` may not be the revision of a change in the composition.
 			const newOffset = gapTracker.getOffset(newCellId.revision);
-			
+
 			// `newOffset` refers to the index of `newMark`'s first cell within the adjacent cells detached in `newCellId.revision`.
-			// `offsetInBase` refers to the index of the position between those detached cells where `baseMark`'s cells would be.			
+			// `offsetInBase` refers to the index of the position between those detached cells where `baseMark`'s cells would be.
 			// Note that `baseMark`'s cells were not detached in `newCellId.revision`, as that case is handled above.
 			// Therefore, when `offsetInBase === newOffset` `baseMark`'s cells come before `newMark`'s cells,
 			// as the nth position between detached cells is before the nth detached cell.
 			return offsetInBase <= newOffset ? -Infinity : Infinity;
-		}	
+		}
 	}
 
 	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseCellId.revision);
 	if (offsetInNew !== undefined) {
+		// BUG: `baseCellId.revision` may not be the revision of a change in the composition.
 		const baseOffset = gapTracker.getOffset(baseCellId.revision);
 		return offsetInNew <= baseOffset ? Infinity : -Infinity;
 	}

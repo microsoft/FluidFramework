@@ -635,6 +635,7 @@ function compareCellPositions(
 	if (newId !== undefined) {
 		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
 		if (offsetInBase !== undefined) {
+			// BUG: Cell offsets are not comparable to cell indices.
 			return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
 		}
 	}
@@ -645,6 +646,7 @@ function compareCellPositions(
 			const offset = offsetInNew - detachOffset;
 			return offset === 0 ? Infinity : -offset;
 		}
+		// BUG: Cell offsets are not comparable to cell indices.
 		return offsetInNew > baseId.index ? baseId.index - offsetInNew : Infinity;
 	}
 
