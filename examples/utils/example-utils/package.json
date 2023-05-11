@@ -55,6 +55,7 @@
 		"@fluidframework/task-manager": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/tinylicious-driver": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/view-adapters": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluid-experimental/attributor": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {

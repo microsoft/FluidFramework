@@ -4,6 +4,7 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import { enableOnNewFileKey } from "@fluid-experimental/attributor";
 import {
 	TimestampWatcherContainerRuntimeFactory,
 	ITimestampWatcherAppModel,
@@ -16,6 +17,11 @@ import { renderTimestampWatcher } from "./view";
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
+	/**
+	 * Manually enable the attribution config,
+	 */
+	sessionStorage.setItem(enableOnNewFileKey, "true");
+
 	const tinyliciousModelLoader = new TinyliciousModelLoader<ITimestampWatcherAppModel>(
 		new StaticCodeLoader(new TimestampWatcherContainerRuntimeFactory()),
 	);
@@ -40,7 +46,7 @@ async function start() {
 	document.title = id;
 
 	const contentDiv = document.getElementById("content") as HTMLDivElement;
-	renderTimestampWatcher(model.timestampWatcher, contentDiv);
+	renderTimestampWatcher(model.timestampWatcher, model.runtimeAttributor, contentDiv);
 }
 
 start().catch((error) => console.error(error));

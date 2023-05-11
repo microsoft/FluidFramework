@@ -3,23 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactoryWithAttribution } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { IRuntimeAttributor, IProvideRuntimeAttributor } from "@fluid-experimental/attributor";
 import { TimestampWatcher } from "./dataObject";
 
 export interface ITimestampWatcherAppModel {
 	readonly timestampWatcher: TimestampWatcher;
+	readonly runtimeAttributor?: IRuntimeAttributor | undefined;
 }
 
 class TimestampWatcherAppModel implements ITimestampWatcherAppModel {
-	public constructor(public readonly timestampWatcher: TimestampWatcher) {}
+	public constructor(
+		public readonly timestampWatcher: TimestampWatcher,
+		public readonly runtimeAttributor?: IRuntimeAttributor,
+	) {}
 }
 
 const timestampWatcherId = "time-stamp-watcher";
 
-export class TimestampWatcherContainerRuntimeFactory extends ModelContainerRuntimeFactory<ITimestampWatcherAppModel> {
+export class TimestampWatcherContainerRuntimeFactory extends ModelContainerRuntimeFactoryWithAttribution<ITimestampWatcherAppModel> {
 	constructor() {
 		super(
 			new Map([TimestampWatcher.getFactory().registryEntry]), // registryEntries
@@ -42,6 +48,8 @@ export class TimestampWatcherContainerRuntimeFactory extends ModelContainerRunti
 			await runtime.getRootDataStore(timestampWatcherId),
 			"",
 		);
-		return new TimestampWatcherAppModel(timestampWatcher);
+		const maybeProvidesAttributor: FluidObject<IProvideRuntimeAttributor> = runtime.scope;
+		const runtimeAttributor = maybeProvidesAttributor.IRuntimeAttributor;
+		return new TimestampWatcherAppModel(timestampWatcher, runtimeAttributor);
 	}
 }

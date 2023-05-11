@@ -3,9 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITimestampWatcher } from "./dataObject";
+import { IRuntimeAttributor } from "@fluid-experimental/attributor";
+import { ITimestampWatcher, greenKey, redKey, ITinyliciousUser } from "./dataObject";
 
-export function renderTimestampWatcher(timestampWatcher: ITimestampWatcher, div: HTMLDivElement) {
+export function renderTimestampWatcher(
+	timestampWatcher: ITimestampWatcher,
+	runtimeAttributor: IRuntimeAttributor | undefined,
+	div: HTMLDivElement,
+) {
 	// Create wrapper div and add styling
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.display = "flex";
@@ -15,54 +20,125 @@ export function renderTimestampWatcher(timestampWatcher: ITimestampWatcher, div:
 	wrapperDiv.style.minHeight = "100vh";
 	div.appendChild(wrapperDiv);
 
-	// Create container div for timestamp text and add styling
-	const timestampContainerDiv = document.createElement("div");
-	timestampContainerDiv.style.fontSize = "5rem";
-	timestampContainerDiv.style.fontWeight = "bold";
-	timestampContainerDiv.style.marginBottom = "2rem";
-	timestampContainerDiv.style.textAlign = "center";
-	wrapperDiv.appendChild(timestampContainerDiv);
+	// Create container div for counters and add styling
+	const countersContainerDiv = document.createElement("div");
+	countersContainerDiv.style.display = "flex";
+	countersContainerDiv.style.width = "100%";
+	countersContainerDiv.style.justifyContent = "space-around";
+	countersContainerDiv.style.marginBottom = "2rem";
+	wrapperDiv.appendChild(countersContainerDiv);
+
+	const redCounterContainerDiv = document.createElement("div");
+	redCounterContainerDiv.style.fontSize = "5rem";
+	redCounterContainerDiv.style.fontWeight = "bold";
+	redCounterContainerDiv.style.textAlign = "center";
+	countersContainerDiv.appendChild(redCounterContainerDiv);
+
+	const greenCounterContainerDiv = document.createElement("div");
+	greenCounterContainerDiv.style.fontSize = "5rem";
+	greenCounterContainerDiv.style.fontWeight = "bold";
+	greenCounterContainerDiv.style.textAlign = "center";
+	countersContainerDiv.appendChild(greenCounterContainerDiv);
+
+	// Create container div for buttons and add styling
+	const buttonsContainerDiv = document.createElement("div");
+	buttonsContainerDiv.style.display = "flex";
+	buttonsContainerDiv.style.width = "100%";
+	buttonsContainerDiv.style.justifyContent = "space-around";
+	buttonsContainerDiv.style.marginBottom = "2rem";
+	wrapperDiv.appendChild(buttonsContainerDiv);
+
+	// Create red button element and add styling
+	const redButton = document.createElement("button");
+	redButton.style.fontSize = "2rem";
+	redButton.style.padding = "1rem 2rem";
+	redButton.style.borderRadius = "1rem";
+	redButton.style.backgroundColor = "#F84F31";
+	redButton.style.color = "white";
+	redButton.style.border = "none";
+	redButton.style.cursor = "pointer";
+	redButton.textContent = "Hit";
+	buttonsContainerDiv.appendChild(redButton);
+
+	redButton.addEventListener("click", () => {
+		timestampWatcher.refresh("red");
+	});
+
+	// Create green button element and add styling
+	const greenButton = document.createElement("button");
+	greenButton.style.fontSize = "2rem";
+	greenButton.style.padding = "1rem 2rem";
+	greenButton.style.borderRadius = "1rem";
+	greenButton.style.backgroundColor = "#23C552";
+	greenButton.style.color = "white";
+	greenButton.style.border = "none";
+	greenButton.style.cursor = "pointer";
+	greenButton.textContent = "Hit";
+	buttonsContainerDiv.appendChild(greenButton);
+
+	greenButton.addEventListener("click", () => {
+		timestampWatcher.refresh("green");
+	});
 
 	// Create container div for attribution text and add styling
 	const attributionContainerDiv = document.createElement("div");
-	attributionContainerDiv.style.fontSize = "2rem";
-	attributionContainerDiv.style.fontStyle = "italic";
-	attributionContainerDiv.style.textAlign = "center";
+	attributionContainerDiv.style.display = "flex";
+	attributionContainerDiv.style.width = "100%";
+	attributionContainerDiv.style.justifyContent = "space-around";
 	attributionContainerDiv.style.marginBottom = "2rem";
 	wrapperDiv.appendChild(attributionContainerDiv);
 
-	// Create button element and add styling
-	const button = document.createElement("button");
-	button.style.fontSize = "2rem";
-	button.style.padding = "1rem 2rem";
-	button.style.borderRadius = "1rem";
-	button.style.backgroundColor = "#077b8a";
-	button.style.color = "white";
-	button.style.border = "none";
-	button.style.cursor = "pointer";
-	button.textContent = "Refresh";
-	wrapperDiv.appendChild(button);
+	const redAttributionContainerDiv = document.createElement("div");
+	redAttributionContainerDiv.style.fontSize = "2rem";
+	redAttributionContainerDiv.style.fontStyle = "italic";
+	redAttributionContainerDiv.style.textAlign = "center";
+	redAttributionContainerDiv.style.marginBottom = "2rem";
+	attributionContainerDiv.appendChild(redAttributionContainerDiv);
 
-	button.addEventListener("click", timestampWatcher.refresh);
+	const greenAttributionContainerDiv = document.createElement("div");
+	greenAttributionContainerDiv.style.fontSize = "2rem";
+	greenAttributionContainerDiv.style.fontStyle = "italic";
+	greenAttributionContainerDiv.style.textAlign = "center";
+	greenAttributionContainerDiv.style.marginBottom = "2rem";
+	attributionContainerDiv.appendChild(greenAttributionContainerDiv);
 
-	// Function to update timestamp and attribution text
-	const updateTimestamp = () => {
-		const timestampString = timestampWatcher.map?.get("time-key").time ?? null;
-		const attribution =
-			JSON.stringify(timestampWatcher.map?.get("time-key").attribution) ?? null;
+	// Function to update counter value and attribution text
+	const updateView = () => {
+		const greenValue = timestampWatcher.map?.get(greenKey);
+		const redValue = timestampWatcher.map?.get(redKey);
 
-		timestampContainerDiv.textContent = timestampString;
+		const greenAttributionKey = timestampWatcher.map?.getAttribution(greenKey);
+		const redAttributionKey = timestampWatcher.map?.getAttribution(redKey);
 
-		if (attribution !== null) {
-			attributionContainerDiv.textContent = `Last updated by ${attribution}`;
-			attributionContainerDiv.style.display = "block";
+		// update the text
+		redCounterContainerDiv.textContent = redValue.toString();
+		greenCounterContainerDiv.textContent = greenValue.toString();
+
+		if (redAttributionKey !== undefined && redAttributionKey.type === "op") {
+			const redAttribution = runtimeAttributor?.get(redAttributionKey);
+			const userString = JSON.stringify(redAttribution?.user);
+			const user = JSON.parse(userString) as ITinyliciousUser;
+			const timestamp = new Date(redAttribution?.timestamp ?? JSON.stringify(null));
+			redAttributionContainerDiv.textContent = `Last updated by ${user.name}\non ${timestamp.toLocaleString()}`;
+			redAttributionContainerDiv.style.display = "block";
 		} else {
-			attributionContainerDiv.style.display = "none";
+			redAttributionContainerDiv.style.display = "none";
+		}
+
+		if (greenAttributionKey !== undefined && greenAttributionKey.type === "op") {
+			const greenAttribution = runtimeAttributor?.get(greenAttributionKey);
+			const userString = JSON.stringify(greenAttribution?.user);
+			const user = JSON.parse(userString) as ITinyliciousUser;
+			const timestamp = new Date(greenAttribution?.timestamp ?? JSON.stringify(null));
+			greenAttributionContainerDiv.textContent = `Last updated by ${user.name}\non ${timestamp.toLocaleString()}`;
+			greenAttributionContainerDiv.style.display = "block";
+		} else {
+			greenAttributionContainerDiv.style.display = "none";
 		}
 	};
 
-	updateTimestamp();
+	updateView();
 
 	// Use the timeRefresh event to trigger the rerender whenever the value changes.
-	timestampWatcher.on("timeRefresh", updateTimestamp);
+	timestampWatcher.on("timeRefresh", updateView);
 }

@@ -42,6 +42,7 @@
 		"@fluidframework/container-runtime-definitions": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
+		"@fluid-experimental/attributor": ">=2.0.0-internal.4.2.0 <2.0.0-internal.5.0.0",
 		"css-loader": "^1.0.0",
 		"style-loader": "^1.0.0"
 	},

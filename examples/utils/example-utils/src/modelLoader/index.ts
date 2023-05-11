@@ -9,3 +9,4 @@ export { makeModelRequestHandler, ModelLoader } from "./modelLoader";
 export { SessionStorageModelLoader } from "./sessionStorageModelLoader";
 export { StaticCodeLoader } from "./staticCodeLoader";
 export { TinyliciousModelLoader } from "./tinyliciousModelLoader";
+export { ModelContainerRuntimeFactoryWithAttribution } from "./modelContainerRuntimeFactoryWithAttribution";
