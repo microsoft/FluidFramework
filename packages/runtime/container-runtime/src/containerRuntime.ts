@@ -2686,15 +2686,13 @@ export class ContainerRuntime
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
 
-		let summaryRefSeqNum: number | undefined;
-
 		try {
 			await this.deltaManager.inbound.pause();
 			if (shouldPauseInboundSignal) {
 				await this.deltaManager.inboundSignal.pause();
 			}
 
-			summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
+			const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
