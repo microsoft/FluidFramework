@@ -7,6 +7,7 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	appendToMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
 	isMergeTreeDeltaRevertible,
 	LocalReferencePosition,
 	MergeTreeDeltaOperationType,
@@ -260,6 +261,24 @@ export function appendSharedStringDeltaToRevertibles(
 	}
 	appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, mergeTreeRevertibles);
 	revertibles.push(...mergeTreeRevertibles);
+}
+
+/**
+ * Clean up resources held by revertibles that are no longer needed.
+ * @alpha
+ */
+export function discardSharedStringRevertibles(
+	sharedString: SharedString,
+	revertibles: SharedStringRevertible[],
+) {
+	revertibles.forEach((r) => {
+		if (isMergeTreeDeltaRevertible(r)) {
+			discardMergeTreeDeltaRevertible([r]);
+		} else if (r.event === IntervalEventType.CHANGE || r.event === IntervalEventType.DELETE) {
+			sharedString.removeLocalReferencePosition(r.start);
+			sharedString.removeLocalReferencePosition(r.end);
+		}
+	});
 }
 
 // Uses of referenceRangeLabels will be removed once AB#4081 is completed.
