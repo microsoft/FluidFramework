@@ -86,7 +86,7 @@ extends:
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskLintName: ci:lint
+    taskLintName: ci:eslint
     poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: false
