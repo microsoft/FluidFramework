@@ -70,17 +70,23 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("delete => revive", () => {
-		const input = Change.delete(0, 2);
-		const expected = Change.revive(0, 2, tag1, 0);
+		const input = composeAnonChanges([Change.modify(0, childChange1), Change.delete(0, 2)]);
+		const expected = composeAnonChanges([
+			Change.revive(0, 2, tag1, 0),
+			Change.modify(0, inverseChildChange1),
+		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("revert-only active revive => delete", () => {
 		const revive = Change.revive(0, 2, tag1, 0);
-		const modify = Change.modify(0, TestChange.mint([], 42));
+		const modify = Change.modify(0, childChange1);
 		const input = composeAnonChanges([revive, modify]);
-		const expected = Change.delete(0, 2);
+		const expected = composeAnonChanges([
+			Change.modify(0, inverseChildChange1),
+			Change.delete(0, 2),
+		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});

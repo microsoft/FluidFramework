@@ -610,7 +610,10 @@ function areInverseMoves(
 	newMark: MoveMark<unknown>,
 	newIntention: RevisionTag | undefined,
 ): boolean {
-	assert(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo", "TODO: Handle case where `baseMark` is a detach");
+	assert(
+		baseMark.type === "MoveIn" || baseMark.type === "ReturnTo",
+		"TODO: Handle case where `baseMark` is a detach",
+	);
 	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
 		return true;
 	}

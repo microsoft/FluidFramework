@@ -111,7 +111,7 @@ function invertMark<TNodeChange>(
 			case "Delete": {
 				assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 				if (mark.detachEvent === undefined) {
-					return [
+					const inverse = withNodeChange(
 						{
 							type: "Revive",
 							detachEvent: { revision: mark.revision ?? revision, index: inputIndex },
@@ -119,19 +119,24 @@ function invertMark<TNodeChange>(
 							count: mark.count,
 							inverseOf: mark.revision ?? revision,
 						},
-					];
+						invertNodeChange(mark.changes, inputIndex, invertChild),
+					);
+
+					return [inverse];
 				}
 				// TODO: preserve modifications to the removed nodes.
 				return [];
 			}
 			case "Revive": {
 				if (!isReattachConflicted(mark)) {
-					return [
+					const inverse = withNodeChange(
 						{
 							type: "Delete",
 							count: mark.count,
 						},
-					];
+						invertNodeChange(mark.changes, inputIndex, invertChild),
+					);
+					return [inverse];
 				}
 				return [
 					invertModifyOrSkip(
