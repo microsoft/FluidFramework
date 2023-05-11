@@ -12,6 +12,7 @@ import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/tele
 import {
 	IClient,
 	IConnect,
+	IDocumentMessage,
 	INack,
 	ISequencedDocumentMessage,
 	ISignalMessage,
@@ -294,30 +295,8 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			enableMultiplexing,
 		);
 
-		try {
-			await deltaConnection.initialize(connectMessage, timeoutMs);
-			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
-		} catch (errorObject: any) {
-			if (errorObject !== null && typeof errorObject === "object") {
-				// We have to special-case error types here in terms of what is re-triable.
-				// These errors have to re-retried, we just need new joinSession result to connect to right server:
-				//    400: Invalid tenant or document id. The WebSocket is connected to a different document
-				//         Document is full (with retryAfter)
-				//    404: Invalid document. The document \"local/w1-...\" does not exist
-				// But this has to stay not-retriable:
-				//    406: Unsupported client protocol. This path is the only gatekeeper, have to fail!
-				//    409: Epoch Version Mismatch. Client epoch and server epoch does not match, so app needs
-				//         to be refreshed.
-				// This one is fine either way
-				//    401/403: Code will retry once with new token either way, then it becomes fatal - on this path
-				//         and on join Session path.
-				//    501: (Fluid not enabled): this is fine either way, as joinSession is gatekeeper
-				if (errorObject.statusCode === 400 || errorObject.statusCode === 404) {
-					errorObject.canRetry = true;
-				}
-			}
-			throw errorObject;
-		}
+		await deltaConnection.initialize(connectMessage, timeoutMs);
+		await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
 
 		return deltaConnection;
 	}
@@ -330,6 +309,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		new Map();
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
+	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -492,9 +472,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			this.logger.sendTelemetryEvent(
 				{
 					eventName: "ServerDisconnect",
-					clientId: this.hasDetails ? this.clientId : undefined,
+					driverVersion: pkgVersion,
 					details: JSON.stringify({
-						connection: this.connectionId,
+						...this.getConnectionDetailsProps(),
 					}),
 				},
 				error,
@@ -649,6 +629,59 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				super.addTrackedListener(event, listener);
 				break;
 		}
+	}
+
+	public get disposed() {
+		if (!(this._disposed || this.socket.connected)) {
+			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
+			if (this.connectionNotYetDisposedTimeout === undefined) {
+				this.connectionNotYetDisposedTimeout = setTimeout(() => {
+					if (!this._disposed) {
+						this.logger.sendErrorEvent({
+							eventName: "ConnectionNotYetDisposed",
+							driverVersion: pkgVersion,
+							details: JSON.stringify({
+								...this.getConnectionDetailsProps(),
+							}),
+						});
+					}
+				}, 15000);
+			}
+		}
+		return this._disposed;
+	}
+
+	/**
+	 * Returns true in case the connection is not yet disposed and the socket is also connected. The expectation is
+	 * that it will be called only after connection is fully established. i.e. there should no way to submit an op
+	 * while we are connecting, as connection object is not exposed to Loader layer until connection is established.
+	 */
+	private get connected(): boolean {
+		return !this.disposed && this.socket.connected;
+	}
+
+	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+		// Only submit the op/signals if we are connected.
+		if (this.connected) {
+			this.socket.emit(type, this.clientId, messages);
+		}
+	}
+
+	/**
+	 * Submits a new delta operation to the server
+	 * @param message - delta operation to submit
+	 */
+	public submit(messages: IDocumentMessage[]): void {
+		this.emitMessages("submitOp", [messages]);
+	}
+
+	/**
+	 * Submits a new signal to the server
+	 *
+	 * @param message - signal to submit
+	 */
+	public submitSignal(message: IDocumentMessage): void {
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**

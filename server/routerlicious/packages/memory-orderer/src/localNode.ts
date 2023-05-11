@@ -13,12 +13,12 @@ import {
 	INode,
 	IOrderer,
 	IOrdererConnection,
-	ITaskMessageSender,
-	ITenantManager,
 	IWebSocketServer,
 	ILogger,
-	TokenGenerator,
 	DefaultServiceConfiguration,
+	IDocumentRepository,
+	ICheckpointRepository,
+	CheckpointService,
 } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 import sillyname from "sillyname";
@@ -68,13 +68,14 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		address: string,
 		storage: IDocumentStorage,
 		databaseManager: IDatabaseManager,
+		documentRepository: IDocumentRepository,
+		deliCheckpointRepository: ICheckpointRepository,
+		scribeCheckpointRepository: ICheckpointRepository,
+		deliCheckpointService: CheckpointService,
+		scribeCheckpointService: CheckpointService,
 		timeoutLength: number,
 		webSocketServerFactory: () => IWebSocketServer,
-		taskMessageSender: ITaskMessageSender,
-		tenantManager: ITenantManager,
-		permission: any,
 		maxMessageSize: number,
-		tokenGenerator: TokenGenerator,
 		logger: ILogger,
 	) {
 		// Look up any existing information for the node or create a new one
@@ -85,12 +86,13 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			node,
 			storage,
 			databaseManager,
+			documentRepository,
+			deliCheckpointRepository,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
 			timeoutLength,
-			taskMessageSender,
-			tenantManager,
-			permission,
 			maxMessageSize,
-			tokenGenerator,
 			logger,
 		);
 	}
@@ -157,12 +159,13 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 		private node: INode,
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
+		private readonly documentRepository: IDocumentRepository,
+		private readonly deliCheckpointRepository: ICheckpointRepository,
+		private readonly scribeCheckpointRepository: ICheckpointRepository,
+		private readonly deliCheckpointService: CheckpointService,
+		private readonly scribeCheckpointService: CheckpointService,
 		private readonly timeoutLength: number,
-		private readonly taskMessageSender: ITaskMessageSender,
-		private readonly tenantManager: ITenantManager,
-		private readonly permission: any,
 		private readonly maxMessageSize: number,
-		private readonly tokenGenerator: TokenGenerator,
 		private readonly logger: ILogger,
 	) {
 		super();
@@ -256,11 +259,12 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			this.databaseManager,
 			tenantId,
 			documentId,
-			this.taskMessageSender,
-			this.tenantManager,
-			this.permission,
-			this.tokenGenerator,
 			this.logger,
+			this.documentRepository,
+			this.deliCheckpointRepository,
+			this.scribeCheckpointRepository,
+			this.deliCheckpointService,
+			this.scribeCheckpointService,
 		);
 		assert(!this.orderMap.has(fullId));
 		this.orderMap.set(fullId, orderer);

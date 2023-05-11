@@ -56,8 +56,6 @@ export class LocalDocumentDeltaConnection extends DocumentDeltaConnection {
     disconnectClient(disconnectReason: string): void;
     nackClient(code: number | undefined, type: NackErrorType | undefined, message: any): void;
     submit(messages: IDocumentMessage[]): void;
-    // (undocumented)
-    protected submitCore(type: string, messages: IDocumentMessage[]): void;
     submitSignal(message: any): void;
 }
 
@@ -83,13 +81,11 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     disconnectClient(clientId: string, disconnectReason: string): void;
     nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any): void;
-    // @deprecated (undocumented)
-    readonly protocolName = "fluid-test:";
 }
 
 // @public (undocumented)
 export class LocalDocumentStorageService implements IDocumentStorageService {
-    constructor(id: string, manager: GitManager, policies: IDocumentStorageServicePolicies);
+    constructor(id: string, manager: GitManager, policies: IDocumentStorageServicePolicies, localDeltaConnectionServer?: ILocalDeltaConnectionServer | undefined, resolvedUrl?: IResolvedUrl | undefined);
     // (undocumented)
     protected readonly blobsShaCache: Map<string, string>;
     // (undocumented)

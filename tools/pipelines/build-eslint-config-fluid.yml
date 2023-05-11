@@ -41,6 +41,7 @@ trigger:
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
@@ -60,6 +61,7 @@ pr:
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
 
 extends:
   template: templates/build-npm-package.yml
@@ -69,6 +71,8 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/build/eslint-config-fluid
     tagName: eslint-config-fluid
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     taskBuild: build
     taskBuildDocs: false
     taskLint: false

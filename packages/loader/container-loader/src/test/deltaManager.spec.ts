@@ -5,6 +5,10 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+import {
+	MockDocumentDeltaConnection,
+	MockDocumentService,
+} from "@fluid-internal/test-loader-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -13,10 +17,6 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import {
-	MockDocumentDeltaConnection,
-	MockDocumentService,
-} from "@fluidframework/test-loader-utils";
 import { MessageType2 } from "@fluidframework/driver-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { DeltaManager } from "../deltaManager";
@@ -64,6 +64,7 @@ describe("Loader", () => {
 					(props: IConnectionManagerFactoryArgs) =>
 						new ConnectionManager(
 							() => service,
+							() => false,
 							client as IClient,
 							reconnectAllowed,
 							logger,
@@ -81,7 +82,7 @@ describe("Loader", () => {
 					noopCountFrequency,
 				);
 
-				await deltaManager.attachOpHandler(0, 0, 1, {
+				await deltaManager.attachOpHandler(0, 0, {
 					process: (message) =>
 						tracker.scheduleSequenceNumberUpdate(message, immediateNoOp),
 					processSignal() {},

@@ -24,8 +24,15 @@ export {
 	SummarizerClientElection,
 	summarizerClientType,
 } from "./summarizerClientElection";
-export { SummarizerHandle } from "./summarizerHandle";
 export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics";
+export {
+	createRootSummarizerNode,
+	createRootSummarizerNodeWithGC,
+	IFetchSnapshotResult,
+	IRootSummarizerNode,
+	IRootSummarizerNodeWithGC,
+	RefreshSummaryResult,
+} from "./summarizerNode";
 export {
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
@@ -50,7 +57,6 @@ export {
 	IGenerateSummaryTreeResult,
 	INackSummaryResult,
 	IOnDemandSummarizeOptions,
-	IProvideSummarizer,
 	ISubmitSummaryOpResult,
 	ISummarizeOptions,
 	ISummarizingWarning,
@@ -88,8 +94,9 @@ export {
 	rootHasIsolatedChannels,
 	WriteFluidDataStoreAttributes,
 	wrapSummaryInChannelsTree,
+	idCompressorBlobName,
 } from "./summaryFormat";
-export { SummarizeReason } from "./summaryGenerator";
+export { getFailMessage, SummarizeReason } from "./summaryGenerator";
 export {
 	IConnectedEvents,
 	IConnectedState,

@@ -18,7 +18,7 @@ import {
 	describeFullCompat,
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 import { pkgVersion } from "../packageVersion";
 

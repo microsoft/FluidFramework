@@ -119,7 +119,7 @@ export class Interval implements ISerializableInterval {
     end: number;
     // (undocumented)
     getAdditionalPropertySets(): PropertySet[];
-    getIntervalId(): string | undefined;
+    getIntervalId(): string;
     // (undocumented)
     getProperties(): PropertySet;
     // @deprecated
@@ -150,8 +150,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // @internal (undocumented)
     ackDelete(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage): void;
     add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
-    // (undocumented)
-    addConflictResolver(conflictResolver: IntervalConflictResolver<TInterval>): void;
+    // @deprecated (undocumented)
+    addConflictResolver(_: IntervalConflictResolver<TInterval>): void;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
@@ -192,7 +192,7 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
     next(): IteratorResult<TInterval>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
 
 // @public
@@ -318,7 +318,7 @@ export class SequenceInterval implements ISerializableInterval {
     compareEnd(b: SequenceInterval): number;
     compareStart(b: SequenceInterval): number;
     end: LocalReferencePosition;
-    getIntervalId(): string | undefined;
+    getIntervalId(): string;
     // (undocumented)
     intervalType: IntervalType;
     // @deprecated

@@ -74,7 +74,13 @@ export function createSummarizer(provider: ITestObjectProvider, container: ICont
 }>;
 
 // @public
-export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries): Promise<{
+export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger): Promise<{
+    container: IContainer;
+    summarizer: ISummarizer;
+}>;
+
+// @public
+export function createSummarizerWithTestConfig(provider: ITestObjectProvider, container: IContainer, config: ITestContainerConfig, summaryVersion?: string, logger?: ITelemetryBaseLogger): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
@@ -105,9 +111,6 @@ export enum DataObjectFactoryType {
 
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
-
-// @public @deprecated
-export function ensureContainerConnected(container: IContainer): Promise<void>;
 
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
@@ -157,6 +160,7 @@ export interface ITestContainerConfig {
     loaderProps?: Partial<ILoaderProps>;
     registry?: ChannelFactoryRegistry;
     runtimeOptions?: IContainerRuntimeOptions;
+    simulateReadConnectionUsingDelay?: boolean;
 }
 
 // @public (undocumented)
@@ -215,6 +219,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
     constructor(syncSummarizerClients?: boolean);
     add<LoaderType extends IHostLoader>(loader: LoaderType): void;
     ensureSynchronized(...containers: IContainer[]): Promise<void>;
+    // @deprecated
     ensureSynchronizedWithTimeout?(timeoutDuration: number | undefined, ...containers: IContainer[]): Promise<void>;
     pauseProcessing(...containers: IContainer[]): Promise<void>;
     processIncoming(...containers: IContainer[]): Promise<void>;

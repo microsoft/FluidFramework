@@ -90,7 +90,7 @@ stages:
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           # Disable colorization for tinylicious logs (not useful when printing to a file)
-          logger__colorize: false
+          logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
           logger__morganFormat: tiny
         additionalSteps:
 
@@ -122,4 +122,23 @@ stages:
         testCommand: start:frs
         env:
           fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+  # stress tests frs canary
+  - stage:
+    displayName: Stress tests - frs canary
+    dependsOn: []
+    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
+    variables:
+    - group: stress-frs-canary
+    jobs:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        timeoutInMinutes: 120
+        testCommand: start:frs:canary
+        env:
+          fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

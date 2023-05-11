@@ -23,11 +23,13 @@ export {
 	IServiceConfiguration,
 } from "./configuration";
 export {
+	ICheckpointRepository,
 	ICollection,
 	IDatabaseManager,
 	IDb,
 	IDbEvents,
 	IDbFactory,
+	IDocumentRepository,
 	IRetryable,
 	isRetryEnabled,
 } from "./database";
@@ -36,10 +38,12 @@ export {
 	IClientSequenceNumber,
 	IDeliState,
 	IDocument,
+	ICheckpoint,
 	IDocumentDetails,
 	IDocumentStorage,
 	IScribe,
 } from "./document";
+export { IDocumentManager } from "./documentManager";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
 export {
 	IHttpServer,
@@ -54,7 +58,6 @@ export {
 	IContext,
 	IContextErrorData,
 	ILogger,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
@@ -94,13 +97,15 @@ export {
 export { DefaultMetricClient, IMetricClient } from "./metricClient";
 export { MongoManager } from "./mongo";
 export { MongoDatabaseManager } from "./mongoDatabaseManager";
+export { MongoDocumentRepository } from "./mongoDocumentRepository";
+export { MongoCheckpointRepository } from "./mongoCheckpointRepository";
+export { CheckpointService, ICheckpointService } from "./checkpointService";
 export { INode, IOrderer, IOrdererConnection, IOrdererManager, IOrdererSocket } from "./orderer";
 export { MaxBatchSize, PendingBoxcar } from "./pendingBoxcar";
 export { IMessageBatch, IPublisher, ITopic } from "./publisher";
 export {
 	IConsumer,
 	IPartition,
-	IPartitionWithEpoch,
 	IPendingBoxcar,
 	IPendingMessage,
 	IProducer,
@@ -114,6 +119,8 @@ export {
 	shouldRetryNetworkError,
 } from "./runWithRetry";
 export { ISecretManager } from "./secretManager";
+export { IStorageNameAllocator } from "./storageNameAllocator";
+export { IStorageNameRetriever } from "./storageNameRetriever";
 export {
 	IAgent,
 	IAgentUploader,
@@ -124,6 +131,7 @@ export {
 export {
 	ITenant,
 	ITenantConfig,
+	ITenantConfigManager,
 	ITenantCustomData,
 	ITenantKeys,
 	ITenantManager,
@@ -142,3 +150,10 @@ export {
 export { TokenGenerator } from "./token";
 export { clientConnectivityStorageId, IUsageData, signalUsageStorageId } from "./usageData";
 export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
+export {
+	IWebSocketTracker,
+	ITokenRevocationManager,
+	ITokenRevocationResponse,
+	TokenRevocationError,
+	createCompositeTokenId,
+} from "./tokenRevocationManager";

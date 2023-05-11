@@ -339,7 +339,7 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 				boxcar.partitionId ?? null, // partition id or null for consistent random for keyed messages
 				message, // message
 				boxcar.documentId, // key
-				undefined, // timestamp
+				Date.now(), // timestamp
 				(ex: any, offset?: number) => {
 					this.inflightPromises.delete(boxcar.deferred);
 

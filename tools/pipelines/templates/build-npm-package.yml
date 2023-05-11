@@ -19,6 +19,10 @@ parameters:
   type: boolean
   default: true
 
+- name: taskLintName
+  type: string
+  default: lint
+
 - name: taskTest
   type: object
   default:
@@ -92,6 +96,12 @@ parameters:
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
+
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
+- name: interdependencyRange
+  type: string
+  default: "^"
 
 # If true, then this pipeline will check and format package.json files according to prettier settings.
 - name: usesPrettier
@@ -168,6 +178,7 @@ stages:
                 BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 Lint=${{ parameters.taskLint }}
+                LintName: ${{ parameters.taskLintName }}
                 Test=${{ convertToJson(parameters.taskTest) }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
@@ -178,6 +189,7 @@ stages:
 
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
+                interdependencyRange='${{ parameters.interdependencyRange }}'
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -229,29 +241,14 @@ stages:
 
         # Install
         - task: UseNode@1
-          displayName: Use Node 14.x
+          displayName: Use Node 16.x
           inputs:
-            version: 14.x
+            version: 16.x
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-          - task: Cache@2
-            displayName: Cache pnpm store
-            inputs:
-              # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
-              # in the cache key
-              key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
-              path: ${{ variables.pnpmStorePath }}
-              restoreKeys: |
-                pnpm-store | "$(Agent.OS)"
-
-          - task: Bash@3
-            displayName: Install and configure pnpm
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                npm i -g pnpm
-                pnpm config set store-dir $(pnpmStorePath)
+          - template: include-install-pnpm.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
 
         - task: Bash@3
           displayName: Install dependencies
@@ -261,14 +258,19 @@ stages:
             script: |
               ${{ parameters.packageManagerInstallCommand }}
 
-        # Set version
-        - template: include-set-package-version.yml
-          parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
-            buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-            buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-            tagName: ${{ parameters.tagName }}
-            usesPrettier: ${{ parameters.usesPrettier }}
+        # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
+        # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
+        # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
+        # true, we use that to determine whether to set versions.
+        - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
+          - template: include-set-package-version.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+              tagName: ${{ parameters.tagName }}
+              interdependencyRange: ${{ parameters.interdependencyRange }}
+              usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -282,11 +284,11 @@ stages:
         # Lint
         - ${{ if ne(parameters.taskLint, false) }}:
           - task: Npm@1
-            displayName: npm run lint
+            displayName: npm run ${{ parameters.taskLintName }}
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run lint'
+              customCommand: 'run ${{ parameters.taskLintName }}'
 
         # Test
         - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
@@ -355,6 +357,22 @@ stages:
               mergeTestResults: false
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
+          # Publish tinylicious log for troubleshooting
+          - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
+            - task: PublishPipelineArtifact@1
+              displayName: Publish Artifact - Tinylicious Log
+              inputs:
+                targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
+                artifactName: 'tinyliciousLog'
+                publishLocation: 'pipeline'
+              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+              continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+
+          # Log Test Failures
+          - template: include-log-test-failures.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
@@ -366,8 +384,6 @@ stages:
                 mkdir $(Build.ArtifactStagingDirectory)/pack/
                 mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
                 mkdir $(Build.ArtifactStagingDirectory)/test-files/
-                mkdir $(Build.ArtifactStagingDirectory)/logs/
-                mv ${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/logs/
                 if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
@@ -406,13 +422,6 @@ stages:
             inputs:
               targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
               artifactName: 'test-files'
-              publishLocation: 'pipeline'
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Artifact - Tinylicious Log
-            inputs:
-              targetPath: '$(Build.ArtifactStagingDirectory)/logs'
-              artifactName: 'tinyliciousLog'
               publishLocation: 'pipeline'
 
         # Collect/publish/run bundle analysis
@@ -569,7 +578,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"

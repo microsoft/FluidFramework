@@ -280,6 +280,30 @@ use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAttributionCollectionSpec": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IAttributionCollectionSpec():
+    TypeOnly<old.IAttributionCollectionSpec<any>>;
+declare function use_current_InterfaceDeclaration_IAttributionCollectionSpec(
+    use: TypeOnly<current.IAttributionCollectionSpec<any>>);
+use_current_InterfaceDeclaration_IAttributionCollectionSpec(
+    get_old_InterfaceDeclaration_IAttributionCollectionSpec());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IAttributionCollectionSpec": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IAttributionCollectionSpec():
+    TypeOnly<current.IAttributionCollectionSpec<any>>;
+declare function use_old_InterfaceDeclaration_IAttributionCollectionSpec(
+    use: TypeOnly<old.IAttributionCollectionSpec<any>>);
+use_old_InterfaceDeclaration_IAttributionCollectionSpec(
+    get_current_InterfaceDeclaration_IAttributionCollectionSpec());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICombiningOp": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICombiningOp():
@@ -1116,6 +1140,30 @@ declare function use_old_InterfaceDeclaration_ISegmentChanges(
     use: TypeOnly<old.ISegmentChanges>);
 use_old_InterfaceDeclaration_ISegmentChanges(
     get_current_InterfaceDeclaration_ISegmentChanges());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITrackingGroup": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ITrackingGroup():
+    TypeOnly<old.ITrackingGroup>;
+declare function use_current_InterfaceDeclaration_ITrackingGroup(
+    use: TypeOnly<current.ITrackingGroup>);
+use_current_InterfaceDeclaration_ITrackingGroup(
+    get_old_InterfaceDeclaration_ITrackingGroup());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ITrackingGroup": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ITrackingGroup():
+    TypeOnly<current.ITrackingGroup>;
+declare function use_old_InterfaceDeclaration_ITrackingGroup(
+    use: TypeOnly<old.ITrackingGroup>);
+use_old_InterfaceDeclaration_ITrackingGroup(
+    get_current_InterfaceDeclaration_ITrackingGroup());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2248,6 +2296,30 @@ use_old_ClassDeclaration_SegmentGroupCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SequenceOffsets": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_SequenceOffsets():
+    TypeOnly<old.SequenceOffsets>;
+declare function use_current_InterfaceDeclaration_SequenceOffsets(
+    use: TypeOnly<current.SequenceOffsets>);
+use_current_InterfaceDeclaration_SequenceOffsets(
+    get_old_InterfaceDeclaration_SequenceOffsets());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_SequenceOffsets": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_SequenceOffsets():
+    TypeOnly<current.SequenceOffsets>;
+declare function use_old_InterfaceDeclaration_SequenceOffsets(
+    use: TypeOnly<old.SequenceOffsets>);
+use_old_InterfaceDeclaration_SequenceOffsets(
+    get_current_InterfaceDeclaration_SequenceOffsets());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_SerializedAttributionCollection": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_SerializedAttributionCollection():
@@ -2267,7 +2339,6 @@ declare function get_current_InterfaceDeclaration_SerializedAttributionCollectio
 declare function use_old_InterfaceDeclaration_SerializedAttributionCollection(
     use: TypeOnly<old.SerializedAttributionCollection>);
 use_old_InterfaceDeclaration_SerializedAttributionCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_SerializedAttributionCollection());
 
 /*

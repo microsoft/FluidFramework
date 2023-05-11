@@ -7,13 +7,10 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import * as util from "util";
 import { ICollection, IDb } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
-import rimrafCallback from "rimraf";
+import { rimraf } from "rimraf";
 import { getDbFactory } from "../services";
-
-const rimraf = util.promisify(rimrafCallback);
 
 /**
  * Test database document

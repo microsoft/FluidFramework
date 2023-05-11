@@ -83,7 +83,6 @@ declare function get_current_TypeAliasDeclaration_AttributionKey():
 declare function use_old_TypeAliasDeclaration_AttributionKey(
     use: TypeOnly<old.AttributionKey>);
 use_old_TypeAliasDeclaration_AttributionKey(
-    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_AttributionKey());
 
 /*
@@ -373,6 +372,30 @@ declare function use_old_InterfaceDeclaration_IEnvelope(
     use: TypeOnly<old.IEnvelope>);
 use_old_InterfaceDeclaration_IEnvelope(
     get_current_InterfaceDeclaration_IEnvelope());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IExperimentalIncrementalSummaryContext": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IExperimentalIncrementalSummaryContext():
+    TypeOnly<old.IExperimentalIncrementalSummaryContext>;
+declare function use_current_InterfaceDeclaration_IExperimentalIncrementalSummaryContext(
+    use: TypeOnly<current.IExperimentalIncrementalSummaryContext>);
+use_current_InterfaceDeclaration_IExperimentalIncrementalSummaryContext(
+    get_old_InterfaceDeclaration_IExperimentalIncrementalSummaryContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IExperimentalIncrementalSummaryContext": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IExperimentalIncrementalSummaryContext():
+    TypeOnly<current.IExperimentalIncrementalSummaryContext>;
+declare function use_old_InterfaceDeclaration_IExperimentalIncrementalSummaryContext(
+    use: TypeOnly<old.IExperimentalIncrementalSummaryContext>);
+use_old_InterfaceDeclaration_IExperimentalIncrementalSummaryContext(
+    get_current_InterfaceDeclaration_IExperimentalIncrementalSummaryContext());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1045,6 +1068,30 @@ declare function use_old_TypeAliasDeclaration_InboundAttachMessage(
     use: TypeOnly<old.InboundAttachMessage>);
 use_old_TypeAliasDeclaration_InboundAttachMessage(
     get_current_TypeAliasDeclaration_InboundAttachMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_LocalAttributionKey": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_LocalAttributionKey():
+    TypeOnly<old.LocalAttributionKey>;
+declare function use_current_InterfaceDeclaration_LocalAttributionKey(
+    use: TypeOnly<current.LocalAttributionKey>);
+use_current_InterfaceDeclaration_LocalAttributionKey(
+    get_old_InterfaceDeclaration_LocalAttributionKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_LocalAttributionKey": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_LocalAttributionKey():
+    TypeOnly<current.LocalAttributionKey>;
+declare function use_old_InterfaceDeclaration_LocalAttributionKey(
+    use: TypeOnly<old.LocalAttributionKey>);
+use_old_InterfaceDeclaration_LocalAttributionKey(
+    get_current_InterfaceDeclaration_LocalAttributionKey());
 
 /*
 * Validate forward compat by using old type in place of current type

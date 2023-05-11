@@ -4,10 +4,12 @@
  */
 
 import { resolve } from 'path';
+import { assert } from '@fluidframework/common-utils';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
+import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
-import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
+import { Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
@@ -23,13 +25,12 @@ import {
 	createAndAttachContainer,
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
-import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { TelemetryNullLogger } from '@fluidframework/telemetry-utils';
+import { ConfigTypes, IConfigProviderBase, TelemetryNullLogger } from '@fluidframework/telemetry-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
@@ -40,7 +41,7 @@ import {
 	SessionId,
 	StableNodeId,
 } from '../../Identifiers';
-import { assert, fail, identity, ReplaceRecursive } from '../../Common';
+import { fail, identity, ReplaceRecursive } from '../../Common';
 import { IdCompressor } from '../../id-compressor';
 import { createSessionId } from '../../id-compressor/NumericUuid';
 import { getChangeNodeFromViewNode } from '../../SerializationUtilities';
@@ -225,7 +226,7 @@ export interface LocalServerSharedTreeTestingComponents {
 	/** The SharedTree created and set up. */
 	tree: SharedTree;
 	/** The container created and set up. */
-	container: Container;
+	container: IContainer;
 	/** Handles to any blobs uploaded via `blobs` */
 	uploadedBlobs: IFluidHandle<ArrayBufferLike>[];
 }
@@ -324,7 +325,6 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
-				enableOfflineLoad: true,
 				summaryOptions: {
 					summaryConfigOverrides: {
 						...DefaultSummaryConfiguration,
@@ -347,23 +347,28 @@ export async function setUpLocalServerTestSharedTree(
 
 	function makeTestLoader(provider: TestObjectProvider): IHostLoader {
 		const fluidEntryPoint = runtimeFactory();
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+
 		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
 			options: { maxClientLeaveWaitTime: 1000 },
+			configProvider: configProvider({
+				'Fluid.Container.enableOfflineLoad': true,
+				'Fluid.ContainerRuntime.DisablePartialFlush': true,
+			}),
 		});
 	}
 
 	let provider: TestObjectProvider;
-	let container: Container;
+	let container: IContainer;
 
 	if (testObjectProvider !== undefined) {
 		provider = testObjectProvider;
 		const driver = new LocalServerTestDriver();
 		const loader = makeTestLoader(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
-		container = (await loader.resolve(
-			{ url: await driver.createContainerUrl(treeId), headers },
-			pendingLocalState
-		)) as Container;
+		container = await loader.resolve({ url: await driver.createContainerUrl(treeId), headers }, pendingLocalState);
 		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();
@@ -371,11 +376,7 @@ export async function setUpLocalServerTestSharedTree(
 		testObjectProviders.push(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.makeTestContainer` instead.
 		const loader = makeTestLoader(provider);
-		container = (await createAndAttachContainer(
-			defaultCodeDetails,
-			loader,
-			driver.createCreateNewRequest(treeId)
-		)) as Container;
+		container = await createAndAttachContainer(defaultCodeDetails, loader, driver.createCreateNewRequest(treeId));
 	}
 
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
@@ -501,7 +502,7 @@ export const versionComparator = (versionA: string, versionB: string): number =>
 
 	assert(
 		versionASplit.length === versionBSplit.length && versionASplit.length === 3,
-		'Version numbers should follow semantic versioning.'
+		0x668 /* Version numbers should follow semantic versioning. */
 	);
 
 	for (let i = 0; i < 3; ++i) {
@@ -526,7 +527,7 @@ export const versionComparator = (versionA: string, versionB: string): number =>
 export function setUpTestTree(idSource?: IdCompressor | SharedTree, expensiveValidation = false): TestTree {
 	const source = idSource ?? new IdCompressor(createSessionId(), reservedIdCount);
 	if (source instanceof SharedTree) {
-		assert(source.edits.length === 0, 'tree must be a new SharedTree');
+		assert(source.edits.length === 0, 0x669 /* tree must be a new SharedTree */);
 		const getNormalizer = () => getIdNormalizerFromSharedTree(source);
 		const contextWrapper = {
 			normalizeToOpSpace: (id: NodeId) => getNormalizer().normalizeToOpSpace(id),

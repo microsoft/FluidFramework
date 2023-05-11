@@ -13,9 +13,7 @@ abstract class LintBaseTask extends TscDependentTask {
 	protected addDependentTasks(dependentTasks: LeafTask[]) {
 		for (const child of this.node.dependentPackages) {
 			// TODO: Need to look at the output from tsconfig
-			if (this.addChildTask(dependentTasks, child, "tsc")) {
-				this.logVerboseDependency(child, "tsc");
-			}
+			this.addChildCompileAndCopyScripts(dependentTasks, child, "tsc");
 		}
 		super.addDependentTasks(dependentTasks);
 	}
@@ -48,6 +46,7 @@ export class EsLintTask extends LintBaseTask {
 	}
 
 	protected addDependentTasks(dependentTasks: LeafTask[]) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		let config: any;
 		try {
 			const ext = path.parse(this.configFileFullPath).ext;
@@ -85,12 +84,5 @@ export class EsLintTask extends LintBaseTask {
 			return this.node.buildContext.workerPool?.useWorkerThreads === false;
 		}
 		return false;
-	}
-}
-
-export class TsFormatTask extends LintBaseTask {
-	protected get configFileFullPath() {
-		// Currently there's no package-level config file, so just use tsconfig.json
-		return this.getPackageFileFullPath("tsconfig.json");
 	}
 }

@@ -9,8 +9,9 @@ import { Provider } from "nconf";
 import Redis from "ioredis";
 import winston from "winston";
 import * as historianServices from "./services";
-import { normalizePort } from "./utils";
+import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
+import { IHistorianResourcesCustomizations } from "./customizations";
 
 export class HistorianResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -19,20 +20,29 @@ export class HistorianResources implements core.IResources {
 		public readonly config: Provider,
 		public readonly port: string | number,
 		public readonly riddler: historianServices.ITenantService,
-		public readonly throttler: core.IThrottler,
+		public readonly storageNameRetriever: core.IStorageNameRetriever,
+		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
+		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+		public tokenRevocationManager?: core.ITokenRevocationManager,
 	) {
 		this.webServerFactory = new services.BasicWebServerFactory();
 	}
 
 	public async dispose(): Promise<void> {
+		if (this.tokenRevocationManager) {
+			await this.tokenRevocationManager.close();
+		}
 		return;
 	}
 }
 
 export class HistorianResourcesFactory implements core.IResourcesFactory<HistorianResources> {
-	public async create(config: Provider): Promise<HistorianResources> {
+	public async create(
+		config: Provider,
+		customizations: IHistorianResourcesCustomizations,
+	): Promise<HistorianResources> {
 		const redisConfig = config.get("redis");
 		const redisOptions: Redis.RedisOptions = {
 			host: redisConfig.host,
@@ -83,41 +93,94 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				| undefined,
 		};
 
-		const throttleMaxRequestsPerMs = config.get("throttling:maxRequestsPerMs") as
-			| number
-			| undefined;
-		const throttleMaxRequestBurst = config.get("throttling:maxRequestBurst") as
-			| number
-			| undefined;
-		const throttleMinCooldownIntervalInMs = config.get("throttling:minCooldownIntervalInMs") as
-			| number
-			| undefined;
-		const minThrottleIntervalInMs = config.get("throttling:minThrottleIntervalInMs") as
-			| number
-			| undefined;
-		const maxInMemoryCacheSize = config.get("throttling:maxInMemoryCacheSize") as
-			| number
-			| undefined;
-		const maxInMemoryCacheAgeInMs = config.get("throttling:maxInMemoryCacheAgeInMs") as
-			| number
-			| undefined;
-		const throttleStorageManager = new services.RedisThrottleAndUsageStorageManager(
-			redisClientForThrottling,
-			redisParamsForThrottling,
+		const redisThrottleAndUsageStorageManager =
+			new services.RedisThrottleAndUsageStorageManager(
+				redisClientForThrottling,
+				redisParamsForThrottling,
+			);
+
+		interface IThrottleConfig {
+			maxPerMs: number;
+			maxBurst: number;
+			minCooldownIntervalInMs: number;
+			minThrottleIntervalInMs: number;
+			maxInMemoryCacheSize: number;
+			maxInMemoryCacheAgeInMs: number;
+			enableEnhancedTelemetry?: boolean;
+		}
+		const configureThrottler = (throttleConfig: Partial<IThrottleConfig>): core.IThrottler => {
+			const throttlerHelper = new services.ThrottlerHelper(
+				redisThrottleAndUsageStorageManager,
+				throttleConfig.maxPerMs,
+				throttleConfig.maxBurst,
+				throttleConfig.minCooldownIntervalInMs,
+			);
+			return new services.Throttler(
+				throttlerHelper,
+				throttleConfig.minThrottleIntervalInMs,
+				winston,
+				throttleConfig.maxInMemoryCacheSize,
+				throttleConfig.maxInMemoryCacheAgeInMs,
+				throttleConfig.enableEnhancedTelemetry,
+			);
+		};
+
+		// Rest API Throttler
+		const restApiTenantGeneralThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling:restCallsPerTenant:generalRestCall") ?? {};
+		const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
+
+		const restApiTenantGetSummaryThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling:restCallsPerTenant:getSummary") ?? {};
+		const restTenantGetSummaryThrottler = configureThrottler(
+			restApiTenantGetSummaryThrottleConfig,
 		);
-		const throttlerHelper = new services.ThrottlerHelper(
-			throttleStorageManager,
-			throttleMaxRequestsPerMs,
-			throttleMaxRequestBurst,
-			throttleMinCooldownIntervalInMs,
+
+		const restApiTenantCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling:restCallsPerTenant:createSummary") ?? {};
+		const restTenantCreateSummaryThrottler = configureThrottler(
+			restApiTenantCreateSummaryThrottleConfig,
 		);
-		const throttler = new services.Throttler(
-			throttlerHelper,
-			minThrottleIntervalInMs,
-			winston,
-			maxInMemoryCacheSize,
-			maxInMemoryCacheAgeInMs,
+
+		const restTenantThrottlers = new Map<string, core.IThrottler>();
+		restTenantThrottlers.set(
+			Constants.createSummaryThrottleIdPrefix,
+			restTenantCreateSummaryThrottler,
 		);
+		restTenantThrottlers.set(
+			Constants.getSummaryThrottleIdPrefix,
+			restTenantGetSummaryThrottler,
+		);
+		restTenantThrottlers.set(
+			Constants.generalRestCallThrottleIdPrefix,
+			restTenantGeneralThrottler,
+		);
+
+		const restApiClusterCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling:restCallsPerCluster:createSummary") ?? {};
+		const throttlerCreateSummaryPerCluster = configureThrottler(
+			restApiClusterCreateSummaryThrottleConfig,
+		);
+
+		const restApiClusterGetSummaryThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling:restCallsPerCluster:getSummary") ?? {};
+		const throttlerGetSummaryPerCluster = configureThrottler(
+			restApiClusterGetSummaryThrottleConfig,
+		);
+
+		const restClusterThrottlers = new Map<string, core.IThrottler>();
+		restClusterThrottlers.set(
+			Constants.createSummaryThrottleIdPrefix,
+			throttlerCreateSummaryPerCluster,
+		);
+		restClusterThrottlers.set(
+			Constants.getSummaryThrottleIdPrefix,
+			throttlerGetSummaryPerCluster,
+		);
+		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
+		const storageNameRetriever = storagePerDocEnabled
+			? customizations?.storageNameRetriever ?? new services.StorageNameRetriever()
+			: undefined;
 
 		const port = normalizePort(process.env.PORT || "3000");
 
@@ -125,7 +188,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			config,
 			port,
 			riddler,
-			throttler,
+			storageNameRetriever,
+			restTenantThrottlers,
+			restClusterThrottlers,
 			gitCache,
 			asyncLocalStorage,
 		);
@@ -139,9 +204,12 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.config,
 			resources.port,
 			resources.riddler,
-			resources.throttler,
+			resources.storageNameRetriever,
+			resources.restTenantThrottlers,
+			resources.restClusterThrottlers,
 			resources.cache,
 			resources.asyncLocalStorage,
+			resources.tokenRevocationManager,
 		);
 	}
 }

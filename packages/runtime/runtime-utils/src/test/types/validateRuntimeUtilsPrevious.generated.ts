@@ -40,98 +40,26 @@ use_old_TypeAliasDeclaration_Factory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFetchSnapshotResult": {"forwardCompat": false}
+* "ClassDeclaration_GCDataBuilder": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IFetchSnapshotResult():
-    TypeOnly<old.IFetchSnapshotResult>;
-declare function use_current_InterfaceDeclaration_IFetchSnapshotResult(
-    use: TypeOnly<current.IFetchSnapshotResult>);
-use_current_InterfaceDeclaration_IFetchSnapshotResult(
-    get_old_InterfaceDeclaration_IFetchSnapshotResult());
+declare function get_old_ClassDeclaration_GCDataBuilder():
+    TypeOnly<old.GCDataBuilder>;
+declare function use_current_ClassDeclaration_GCDataBuilder(
+    use: TypeOnly<current.GCDataBuilder>);
+use_current_ClassDeclaration_GCDataBuilder(
+    get_old_ClassDeclaration_GCDataBuilder());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IFetchSnapshotResult": {"backCompat": false}
+* "ClassDeclaration_GCDataBuilder": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IFetchSnapshotResult():
-    TypeOnly<current.IFetchSnapshotResult>;
-declare function use_old_InterfaceDeclaration_IFetchSnapshotResult(
-    use: TypeOnly<old.IFetchSnapshotResult>);
-use_old_InterfaceDeclaration_IFetchSnapshotResult(
-    get_current_InterfaceDeclaration_IFetchSnapshotResult());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootSummarizerNode": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IRootSummarizerNode():
-    TypeOnly<old.IRootSummarizerNode>;
-declare function use_current_InterfaceDeclaration_IRootSummarizerNode(
-    use: TypeOnly<current.IRootSummarizerNode>);
-use_current_InterfaceDeclaration_IRootSummarizerNode(
-    get_old_InterfaceDeclaration_IRootSummarizerNode());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootSummarizerNode": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IRootSummarizerNode():
-    TypeOnly<current.IRootSummarizerNode>;
-declare function use_old_InterfaceDeclaration_IRootSummarizerNode(
-    use: TypeOnly<old.IRootSummarizerNode>);
-use_old_InterfaceDeclaration_IRootSummarizerNode(
-    get_current_InterfaceDeclaration_IRootSummarizerNode());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootSummarizerNodeWithGC": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IRootSummarizerNodeWithGC():
-    TypeOnly<old.IRootSummarizerNodeWithGC>;
-declare function use_current_InterfaceDeclaration_IRootSummarizerNodeWithGC(
-    use: TypeOnly<current.IRootSummarizerNodeWithGC>);
-use_current_InterfaceDeclaration_IRootSummarizerNodeWithGC(
-    get_old_InterfaceDeclaration_IRootSummarizerNodeWithGC());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootSummarizerNodeWithGC": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IRootSummarizerNodeWithGC():
-    TypeOnly<current.IRootSummarizerNodeWithGC>;
-declare function use_old_InterfaceDeclaration_IRootSummarizerNodeWithGC(
-    use: TypeOnly<old.IRootSummarizerNodeWithGC>);
-use_old_InterfaceDeclaration_IRootSummarizerNodeWithGC(
-    get_current_InterfaceDeclaration_IRootSummarizerNodeWithGC());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummarizerNodeRootContract": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_ISummarizerNodeRootContract():
-    TypeOnly<old.ISummarizerNodeRootContract>;
-declare function use_current_InterfaceDeclaration_ISummarizerNodeRootContract(
-    use: TypeOnly<current.ISummarizerNodeRootContract>);
-use_current_InterfaceDeclaration_ISummarizerNodeRootContract(
-    get_old_InterfaceDeclaration_ISummarizerNodeRootContract());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummarizerNodeRootContract": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_ISummarizerNodeRootContract():
-    TypeOnly<current.ISummarizerNodeRootContract>;
-declare function use_old_InterfaceDeclaration_ISummarizerNodeRootContract(
-    use: TypeOnly<old.ISummarizerNodeRootContract>);
-use_old_InterfaceDeclaration_ISummarizerNodeRootContract(
-    get_current_InterfaceDeclaration_ISummarizerNodeRootContract());
+declare function get_current_ClassDeclaration_GCDataBuilder():
+    TypeOnly<current.GCDataBuilder>;
+declare function use_old_ClassDeclaration_GCDataBuilder(
+    use: TypeOnly<old.GCDataBuilder>);
+use_old_ClassDeclaration_GCDataBuilder(
+    get_current_ClassDeclaration_GCDataBuilder());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -180,30 +108,6 @@ declare function use_old_TypeAliasDeclaration_ReadAndParseBlob(
     use: TypeOnly<old.ReadAndParseBlob>);
 use_old_TypeAliasDeclaration_ReadAndParseBlob(
     get_current_TypeAliasDeclaration_ReadAndParseBlob());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_RefreshSummaryResult": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_RefreshSummaryResult():
-    TypeOnly<old.RefreshSummaryResult>;
-declare function use_current_TypeAliasDeclaration_RefreshSummaryResult(
-    use: TypeOnly<current.RefreshSummaryResult>);
-use_current_TypeAliasDeclaration_RefreshSummaryResult(
-    get_old_TypeAliasDeclaration_RefreshSummaryResult());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_RefreshSummaryResult": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_RefreshSummaryResult():
-    TypeOnly<current.RefreshSummaryResult>;
-declare function use_old_TypeAliasDeclaration_RefreshSummaryResult(
-    use: TypeOnly<old.RefreshSummaryResult>);
-use_old_TypeAliasDeclaration_RefreshSummaryResult(
-    get_current_TypeAliasDeclaration_RefreshSummaryResult());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -568,54 +472,6 @@ use_old_FunctionDeclaration_createResponseError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_createRootSummarizerNode": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_createRootSummarizerNode():
-    TypeOnly<typeof old.createRootSummarizerNode>;
-declare function use_current_VariableDeclaration_createRootSummarizerNode(
-    use: TypeOnly<typeof current.createRootSummarizerNode>);
-use_current_VariableDeclaration_createRootSummarizerNode(
-    get_old_VariableDeclaration_createRootSummarizerNode());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_createRootSummarizerNode": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_createRootSummarizerNode():
-    TypeOnly<typeof current.createRootSummarizerNode>;
-declare function use_old_VariableDeclaration_createRootSummarizerNode(
-    use: TypeOnly<typeof old.createRootSummarizerNode>);
-use_old_VariableDeclaration_createRootSummarizerNode(
-    get_current_VariableDeclaration_createRootSummarizerNode());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_createRootSummarizerNodeWithGC": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_createRootSummarizerNodeWithGC():
-    TypeOnly<typeof old.createRootSummarizerNodeWithGC>;
-declare function use_current_VariableDeclaration_createRootSummarizerNodeWithGC(
-    use: TypeOnly<typeof current.createRootSummarizerNodeWithGC>);
-use_current_VariableDeclaration_createRootSummarizerNodeWithGC(
-    get_old_VariableDeclaration_createRootSummarizerNodeWithGC());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_createRootSummarizerNodeWithGC": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_createRootSummarizerNodeWithGC():
-    TypeOnly<typeof current.createRootSummarizerNodeWithGC>;
-declare function use_old_VariableDeclaration_createRootSummarizerNodeWithGC(
-    use: TypeOnly<typeof old.createRootSummarizerNodeWithGC>);
-use_old_VariableDeclaration_createRootSummarizerNodeWithGC(
-    get_current_VariableDeclaration_createRootSummarizerNodeWithGC());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_exceptionToResponse": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_exceptionToResponse():
@@ -852,6 +708,30 @@ declare function use_old_FunctionDeclaration_seqFromTree(
     use: TypeOnly<typeof old.seqFromTree>);
 use_old_FunctionDeclaration_seqFromTree(
     get_current_FunctionDeclaration_seqFromTree());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_unpackChildNodesUsedRoutes": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_unpackChildNodesUsedRoutes():
+    TypeOnly<typeof old.unpackChildNodesUsedRoutes>;
+declare function use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    use: TypeOnly<typeof current.unpackChildNodesUsedRoutes>);
+use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    get_old_FunctionDeclaration_unpackChildNodesUsedRoutes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_unpackChildNodesUsedRoutes": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_unpackChildNodesUsedRoutes():
+    TypeOnly<typeof current.unpackChildNodesUsedRoutes>;
+declare function use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    use: TypeOnly<typeof old.unpackChildNodesUsedRoutes>);
+use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
+    get_current_FunctionDeclaration_unpackChildNodesUsedRoutes());
 
 /*
 * Validate forward compat by using old type in place of current type

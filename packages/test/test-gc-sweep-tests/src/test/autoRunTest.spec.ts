@@ -7,7 +7,7 @@ import { assert } from "console";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import {
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,

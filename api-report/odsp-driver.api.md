@@ -126,8 +126,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
-    // @deprecated (undocumented)
-    readonly protocolName = "fluid-odsp:";
     // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)

@@ -163,7 +163,6 @@ jobs:
               labels: [
                 'main-next-integrate',
                 'do-not-squash-merge',
-                'msftbot: merge-next'
               ]
             })
   remove-from-queue:

@@ -11,16 +11,13 @@ export interface IQueuedMessage {
 	partition: number;
 	offset: number;
 	value: string | any;
+	timestamp?: number | undefined;
 }
 
 export interface IPartition {
 	topic: string;
 	partition: number;
 	offset: number;
-}
-
-export interface IPartitionWithEpoch extends IPartition {
-	leaderEpoch: number;
 }
 
 export interface IConsumer {
@@ -68,7 +65,7 @@ export interface IConsumer {
 	): this;
 	on(event: "data", listener: (message: IQueuedMessage) => void): this;
 	on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
-	on(event: "rebalanced", listener: (partitions: IPartitionWithEpoch[]) => void): this;
+	on(event: "rebalanced", listener: (partitions: IPartition[]) => void): this;
 	on(event: string, listener: (...args: any[]) => void): this;
 	once(
 		event: "connected" | "disconnected" | "closed" | "paused" | "resumed",

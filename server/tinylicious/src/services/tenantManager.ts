@@ -10,7 +10,7 @@ import {
 	ITenantOrderer,
 	ITenantStorage,
 } from "@fluidframework/server-services-core";
-import { GitManager, Historian } from "@fluidframework/server-services-client";
+import { GitManager, Historian, IGitManager } from "@fluidframework/server-services-client";
 
 export class TinyliciousTenant implements ITenant {
 	private readonly owner = "tinylicious";
@@ -47,6 +47,11 @@ export class TinyliciousTenant implements ITenant {
 
 export class TenantManager implements ITenantManager {
 	constructor(private readonly url: string) {}
+
+	public async getTenantGitManager(tenantId: string, _documentId: string): Promise<IGitManager> {
+		const tenant = await this.getTenant(tenantId);
+		return tenant.gitManager;
+	}
 
 	public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
 		throw new Error("Method not implemented.");

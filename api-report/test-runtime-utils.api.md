@@ -33,6 +33,8 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
+import { IIdCompressor } from '@fluidframework/runtime-definitions';
+import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -85,7 +87,9 @@ export class InsecureTokenProvider implements ITokenProvider {
 
 // @public
 export class MockContainerRuntime {
-    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory);
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, overrides?: {
+        minimumSequenceNumber?: number | undefined;
+    } | undefined);
     // (undocumented)
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
@@ -102,6 +106,10 @@ export class MockContainerRuntime {
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
+    // (undocumented)
+    protected readonly overrides?: {
+        minimumSequenceNumber?: number | undefined;
+    } | undefined;
     // (undocumented)
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
@@ -139,12 +147,16 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     // (undocumented)
     clearOutstandingClientMessages(clientId: string): void;
     // (undocumented)
-    createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntimeForReconnection;
+    createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
+        minimumSequenceNumber?: number;
+    }): MockContainerRuntimeForReconnection;
 }
 
 // @public
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
-    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection);
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, overrides?: {
+        minimumSequenceNumber?: number;
+    });
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
@@ -314,6 +326,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
+    // (undocumented)
+    idCompressor: IIdCompressorCore & IIdCompressor;
     // (undocumented)
     IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     // (undocumented)
@@ -581,7 +595,7 @@ export class MockStorage implements IChannelStorageService {
 }
 
 // @public
-export function validateAssertionError(error: Error, expectedErrorMsg: string): boolean;
+export function validateAssertionError(error: Error, expectedErrorMsg: string | RegExp): boolean;
 
 // (No @packageDocumentation comment for this package)
 

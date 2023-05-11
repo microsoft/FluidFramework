@@ -118,6 +118,8 @@ resources:
 stages:
 - stage: build
   displayName: 'Build website'
+  env:
+    COREPACK_DEFAULT_TO_LATEST: 0
   dependsOn: [] # run in parallel
   jobs:
     - job: debug_variables
@@ -187,23 +189,13 @@ stages:
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - task: UseNode@1
-          displayName: 'Use Node 14.x'
+          displayName: 'Use Node 16.x'
           inputs:
-            version: 14.x
+            version: 16.x
 
-        - task: Cache@2
-          displayName: Cache pnpm store
-          inputs:
-            key: '"pnpm-store" | "$(Agent.OS)" | $(Build.SourcesDirectory)/docs/pnpm-lock.yaml'
-            path: ${{ variables.pnpmStorePath }}
-
-        - task: Bash@3
-          displayName: Install and configure pnpm
-          inputs:
-            targetType: 'inline'
-            script: |
-              npm i -g pnpm
-              pnpm config set store-dir $(pnpmStorePath)
+        - template: include-install-pnpm.yml
+          parameters:
+            buildDirectory: ${{ parameters.buildDirectory }}
 
         - task: Bash@3
           displayName: Install dependencies
@@ -248,9 +240,9 @@ stages:
           clean: true
 
         - task: UseNode@1
-          displayName: 'Use Node 14.x'
+          displayName: 'Use Node 16.x'
           inputs:
-            version: 14.x
+            version: 16.x
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'

@@ -235,7 +235,7 @@ export class DocumentDeltaConnection
 		return this.details.serviceConfiguration;
 	}
 
-	private checkNotClosed() {
+	private checkNotDisposed() {
 		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
 		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
 		const originalStackTraceLimit = (Error as any).stackTraceLimit;
@@ -256,7 +256,7 @@ export class DocumentDeltaConnection
 	 * @returns messages sent during the connection
 	 */
 	public get initialMessages(): ISequencedDocumentMessage[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 
 		// If we call this when the earlyOpHandler is not attached, then the queuedMessages may not include the
 		// latest ops.  This could possibly indicate that initialMessages was called twice.
@@ -282,7 +282,7 @@ export class DocumentDeltaConnection
 	 * @returns signals sent during the connection
 	 */
 	public get initialSignals(): ISignalMessage[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 		assert(this.listeners("signal").length !== 0, 0x090 /* "No signal handler is setup!" */);
 
 		this.removeEarlySignalHandler();
@@ -302,7 +302,7 @@ export class DocumentDeltaConnection
 	 * @returns initial client list sent during the connection
 	 */
 	public get initialClients(): ISignalClient[] {
-		this.checkNotClosed();
+		this.checkNotDisposed();
 		return this.details.initialClients;
 	}
 
@@ -315,18 +315,14 @@ export class DocumentDeltaConnection
 		}
 	}
 
-	protected submitCore(type: string, messages: IDocumentMessage[]) {
-		this.emitMessages(type, [messages]);
-	}
-
 	/**
 	 * Submits a new delta operation to the server
 	 *
 	 * @param message - delta operation to submit
 	 */
 	public submit(messages: IDocumentMessage[]): void {
-		this.checkNotClosed();
-		this.submitCore("submitOp", messages);
+		this.checkNotDisposed();
+		this.emitMessages("submitOp", [messages]);
 	}
 
 	/**
@@ -335,8 +331,8 @@ export class DocumentDeltaConnection
 	 * @param message - signal to submit
 	 */
 	public submitSignal(message: IDocumentMessage): void {
-		this.checkNotClosed();
-		this.submitCore("submitSignal", [message]);
+		this.checkNotDisposed();
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**
@@ -350,11 +346,8 @@ export class DocumentDeltaConnection
 					eventName: "SocketCloseOnDisposedConnection",
 					driverVersion,
 					details: JSON.stringify({
-						disposed: this._disposed,
-						socketConnected: this.socket?.connected,
+						...this.getConnectionDetailsProps(),
 						trackedListenerCount: this.trackedListeners.size,
-						clientId: this.clientId,
-						connectionId: this.connectionId,
 					}),
 				},
 				error,
@@ -378,10 +371,7 @@ export class DocumentDeltaConnection
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
 			details: JSON.stringify({
-				disposed: this._disposed,
-				socketConnected: this.socket.connected,
-				clientId: this._details?.clientId,
-				connectionId: this.connectionId,
+				...this.getConnectionDetailsProps(),
 			}),
 		});
 		this.disconnect(
@@ -409,26 +399,24 @@ export class DocumentDeltaConnection
 		// to prevent normal messages from being emitted.
 		this._disposed = true;
 
-		// Let user of connection object know about disconnect. This has to happen in between setting _disposed and
-		// removing all listeners!
+		// Remove all listeners listening on the socket. These are listeners on socket and not on this connection
+		// object. Anyway since we have disposed this connection object, nobody should listen to event on socket
+		// anymore.
+		this.removeTrackedListeners();
+
+		// Clear the connection/socket before letting the deltaManager/connection manager know about the disconnect.
+		this.disconnectCore();
+
+		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
 		this.logger.sendTelemetryEvent({
 			eventName: "AfterDisconnectEvent",
 			driverVersion,
 			details: JSON.stringify({
-				disposed: this._disposed,
-				clientId: this.clientId,
-				socketConnected: this.socket.connected,
+				...this.getConnectionDetailsProps(),
 				disconnectListenerCount: this.listenerCount("disconnect"),
-				connectionId: this.connectionId,
 			}),
 		});
-		// user of DeltaConnection should have processed "disconnect" event and removed all listeners. Not clear
-		// if we want to enforce that, as some users (like LocalDocumentService) do not unregister any handlers
-		// assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");
-
-		this.removeTrackedListeners();
-		this.disconnectCore();
 	}
 
 	/**
@@ -640,14 +628,20 @@ export class DocumentDeltaConnection
 		const normalizedError = normalizeError(errorToBeNormalized, {
 			props: {
 				details: JSON.stringify({
-					disposed: this._disposed,
-					socketConnected: this.socket?.connected,
-					clientId: this._details?.clientId,
-					conenctionId: this.connectionId,
+					...this.getConnectionDetailsProps(),
 				}),
 			},
 		});
 		return normalizedError;
+	}
+
+	protected getConnectionDetailsProps() {
+		return {
+			disposed: this._disposed,
+			socketConnected: this.socket?.connected,
+			clientId: this._details?.clientId,
+			connectionId: this.connectionId,
+		};
 	}
 
 	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -715,9 +709,6 @@ export class DocumentDeltaConnection
 	 * Error raising for socket.io issues
 	 */
 	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
-		// Note: we suspect the incoming error object is either:
-		// - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-		// - an Error object thrown by socket.io engine. Be careful with not recording PII!
 		let message: string;
 		if (error?.type === "TransportError") {
 			// JSON.stringify drops Error.message
@@ -734,7 +725,12 @@ export class DocumentDeltaConnection
 		const errorObj = createGenericNetworkError(
 			`socket.io (${handler}): ${message}`,
 			{ canRetry },
-			{ driverVersion },
+			{
+				driverVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			},
 		);
 
 		return errorObj;

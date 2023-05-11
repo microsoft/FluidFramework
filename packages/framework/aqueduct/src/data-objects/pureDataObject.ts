@@ -12,14 +12,11 @@ import {
 	IProvideFluidHandle,
 	IRequest,
 	IResponse,
-	FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDirectory } from "@fluidframework/map";
-import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { serviceRoutePathRoot } from "../container-services";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
 import { DataObjectTypes, IDataObjectProps } from "./types";
 
@@ -174,6 +171,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * @param directory - directory containing the object
 	 * @param getObjectFromDirectory - optional callback for fetching object from the directory, allows users to
 	 * define custom types/getters for object retrieval
+	 *
+	 * @deprecated - 2.0.0-internal.4.3.0 - Will be removed in an upcoming release.
 	 */
 	public async getFluidObjectFromDirectory<T extends IFluidLoadable>(
 		key: string,
@@ -188,18 +187,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return handle.get();
 		}
-	}
-
-	/**
-	 * Gets the service at a given id.
-	 * @param id - service id
-	 * @deprecated See https://github.com/microsoft/FluidFramework/pull/14430 for context
-	 */
-	protected async getService<T extends FluidObject>(id: string): Promise<T> {
-		return handleFromLegacyUri<T>(
-			`/${serviceRoutePathRoot}/${id}`,
-			this.context.containerRuntime,
-		).get();
 	}
 
 	/**

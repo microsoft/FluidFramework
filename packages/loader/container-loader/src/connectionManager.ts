@@ -13,7 +13,7 @@ import { assert, performance, TypedEventEmitter } from "@fluidframework/common-u
 import {
 	IDeltaQueue,
 	ReadOnlyInfo,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
@@ -278,9 +278,21 @@ export class ConnectionManager implements IConnectionManager {
 
 	public shouldJoinWrite(): boolean {
 		// We don't have to wait for ack for topmost NoOps. So subtract those.
-		return (
-			this.clientSequenceNumberObserved < this.clientSequenceNumber - this.localOpsToIgnore
-		);
+		const outstandingOps =
+			this.clientSequenceNumberObserved < this.clientSequenceNumber - this.localOpsToIgnore;
+
+		// Previous behavior was to force write mode here only when there are outstanding ops (besides
+		// no-ops). The dirty signal from runtime should provide the same behavior, but also support
+		// stashed ops that weren't submitted to container layer yet. For safety, we want to retain the
+		// same behavior whenever dirty is false.
+		const isDirty = this.containerDirty();
+		if (outstandingOps !== isDirty) {
+			this.logger.sendTelemetryEvent({
+				eventName: "DesiredConnectionModeMismatch",
+				details: JSON.stringify({ outstandingOps, isDirty }),
+			});
+		}
+		return outstandingOps || isDirty;
 	}
 
 	/**
@@ -293,10 +305,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * and do not know if user has write access to a file.
 	 */
 	private get readonly(): boolean | undefined {
-		if (this._forceReadonly) {
-			return true;
-		}
-		return this._readonlyPermissions;
+		return this.readOnlyInfo.readonly;
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
@@ -314,11 +323,12 @@ export class ConnectionManager implements IConnectionManager {
 		return { readonly: this._readonlyPermissions };
 	}
 
-	private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
+	private static detailsFromConnection(
+		connection: IDocumentDeltaConnection,
+	): IConnectionDetailsInternal {
 		return {
 			claims: connection.claims,
 			clientId: connection.clientId,
-			existing: connection.existing,
 			checkpointSequenceNumber: connection.checkpointSequenceNumber,
 			get initialClients() {
 				return connection.initialClients;
@@ -331,6 +341,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
+		public readonly containerDirty: () => boolean,
 		private client: IClient,
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLogger,

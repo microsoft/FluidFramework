@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { ConnectionNotAvailableMode } from "../../mongodb";
 import { BaseMongoExceptionRetryRule, IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
 class InternalErrorRule extends BaseMongoExceptionRetryRule {
 	private static readonly codeName = "InternalError";
-	protected defaultRetryDecision: boolean = false;
+	protected defaultRetryDecision: boolean = true;
 
 	constructor(retryRuleOverride: Map<string, boolean>) {
 		super("InternalErrorRule", retryRuleOverride);
@@ -21,13 +23,33 @@ class InternalErrorRule extends BaseMongoExceptionRetryRule {
 	}
 }
 
+class InternalBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
+	private static readonly errorName = "BulkWriteError";
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("InternalBulkWriteErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.code === 1 &&
+			error.name &&
+			(error.name as string) === InternalBulkWriteErrorRule.errorName
+		);
+	}
+}
+
 // This handles the requested queued on client side buffer overflow. Should relies on reconnect instead of retry?
 class NoConnectionAvailableRule extends BaseMongoExceptionRetryRule {
 	private static readonly messagePrefix =
 		"no connection available for operation and number of stored operation";
 	protected defaultRetryDecision: boolean = false;
 
-	constructor(retryRuleOverride: Map<string, boolean>) {
+	constructor(
+		retryRuleOverride: Map<string, boolean>,
+		private readonly connectionNotAvailableMode: ConnectionNotAvailableMode,
+	) {
 		super("NoConnectionAvailableRule", retryRuleOverride);
 	}
 
@@ -40,6 +62,17 @@ class NoConnectionAvailableRule extends BaseMongoExceptionRetryRule {
 			error.message &&
 			(error.message as string).startsWith(NoConnectionAvailableRule.messagePrefix)
 		);
+	}
+
+	public shouldRetry(): boolean {
+		if (this.connectionNotAvailableMode === "stop") {
+			// This logic is to automate the process of handling a pod with death note on it, so
+			// kubernetes would automatically handle the restart process.
+			Lumberjack.warning(`${this.ruleName} will terminate the process`);
+			process.kill(process.pid, "SIGTERM");
+		}
+
+		return super.shouldRetry();
 	}
 }
 
@@ -74,7 +107,6 @@ class PoolDestroyedRule extends BaseMongoExceptionRetryRule {
 
 	public match(error: any): boolean {
 		return (
-			error.code === 16 &&
 			error.message &&
 			((error.message as string) === PoolDestroyedRule.message1 ||
 				(error.message as string) === PoolDestroyedRule.message2)
@@ -178,6 +210,23 @@ class RequestTimedOutWithRateLimitFalse extends BaseMongoExceptionRetryRule {
 	}
 }
 
+class RequestTimedOutBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
+	private static readonly errorName = "BulkWriteError";
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("RequestTimedOutBulkWriteErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.code === 50 &&
+			error.name &&
+			(error.name as string) === RequestTimedOutBulkWriteErrorRule.errorName
+		);
+	}
+}
+
 // This handles server side temporary 503 issue
 class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 	private static readonly errorDetails =
@@ -190,9 +239,10 @@ class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 
 	public match(error: any): boolean {
 		return (
-			error.code === 1 &&
-			error.errorDetails &&
-			(error.errorDetails as string).includes(ServiceUnavailableRule.errorDetails)
+			(error.code === 1 &&
+				error.errorDetails &&
+				(error.errorDetails as string).includes(ServiceUnavailableRule.errorDetails)) ||
+			(error.errmsg && (error.errmsg as string).includes(ServiceUnavailableRule.errorDetails))
 		);
 	}
 }
@@ -232,17 +282,36 @@ class UnauthorizedRule extends BaseMongoExceptionRetryRule {
 	}
 }
 
+// handles transient connection closed errors, eg: connection 1 to <mongo-name>.mongo.cosmos.azure.com:<port> closed
+// this is also handled by MongoNetworkError retry rule but this handles the case when errorName is MongoError instead of MongoNetworkError
+class ConnectionClosedMongoErrorRule extends BaseMongoExceptionRetryRule {
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("ConnectionClosedMongoErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.message && /^connection .+ closed$/.test(error.message as string) === true // matches any message of format "connection <some-info> closed"
+		);
+	}
+}
+
 // Maintain the list from more strick faster comparison to less strict slower comparison
 export function createMongoErrorRetryRuleset(
 	retryRuleOverride: Map<string, boolean>,
+	connectionNotAvailableMode: ConnectionNotAvailableMode,
 ): IMongoExceptionRetryRule[] {
 	const mongoErrorRetryRuleset: IMongoExceptionRetryRule[] = [
 		// The rules are using exactly equal
 		new InternalErrorRule(retryRuleOverride),
+		new InternalBulkWriteErrorRule(retryRuleOverride),
 		new NoPrimaryInReplicasetRule(retryRuleOverride),
 		new RequestTimedNoRateLimitInfo(retryRuleOverride),
 		new RequestTimedOutWithRateLimitTrue(retryRuleOverride),
 		new RequestTimedOutWithRateLimitFalse(retryRuleOverride),
+		new RequestTimedOutBulkWriteErrorRule(retryRuleOverride),
 		new TopologyDestroyed(retryRuleOverride),
 		new UnauthorizedRule(retryRuleOverride),
 
@@ -250,12 +319,15 @@ export function createMongoErrorRetryRuleset(
 		new PoolDestroyedRule(retryRuleOverride),
 
 		// The rules are using string startWith
-		new NoConnectionAvailableRule(retryRuleOverride),
+		new NoConnectionAvailableRule(retryRuleOverride, connectionNotAvailableMode),
 		new RequestSizeLargeRule(retryRuleOverride),
 		new RequestTimedOutWithHttpInfo(retryRuleOverride),
 
 		// The rules are using string contains
 		new ServiceUnavailableRule(retryRuleOverride),
+
+		// The rules are using regex
+		new ConnectionClosedMongoErrorRule(retryRuleOverride),
 	];
 	return mongoErrorRetryRuleset;
 }
