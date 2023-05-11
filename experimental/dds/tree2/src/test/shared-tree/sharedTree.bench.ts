@@ -78,7 +78,7 @@ interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
 
-type JSDeepTree2 = SchemaAware.NodeDataFor<SchemaAware.ApiMode.Simple, typeof linkedListSchema>;
+type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema, SchemaAware.ApiMode.Simple>;
 
 {
 	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;

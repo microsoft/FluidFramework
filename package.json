@@ -26,7 +26,7 @@
 		"check:versions": "flub check buildVersion -g client --path .",
 		"ci:build": "npm run build:genver && lerna run build:compile --stream",
 		"ci:build:docs": "lerna run ci:build:docs --stream --parallel",
-		"ci:lint": "lerna run eslint --no-sort --stream",
+		"ci:eslint": "lerna run eslint --no-sort --stream",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha:report",
@@ -48,7 +48,7 @@
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
 		"lerna": "lerna",
-		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run ci:lint",
+		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run ci:eslint",
 		"lint:fix": "npm run prettier:root:fix && lerna run lint:fix --no-sort --stream",
 		"policy-check": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json",
 		"policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
@@ -150,7 +150,7 @@
 		"syncpack": "^9.8.4",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
+	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"engines": {
 		"node": ">=16.16.0",
 		"pnpm": "7"
