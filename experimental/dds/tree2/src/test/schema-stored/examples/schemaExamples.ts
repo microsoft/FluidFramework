@@ -13,7 +13,7 @@
 
 import { emptyField, FieldKinds } from "../../../feature-libraries";
 import {
-	TreeSchema,
+	TreeStoredSchema,
 	ValueSchema,
 	NamedTreeSchema,
 	emptyMap,
@@ -34,7 +34,7 @@ export const codePoint: NamedTreeSchema = {
 /**
  * String made of unicode code points, allowing for sequence editing of a string.
  */
-export const string: TreeSchema = {
+export const string: TreeStoredSchema = {
 	globalFields: emptySet,
 	extraLocalFields: emptyField,
 	extraGlobalFields: false,

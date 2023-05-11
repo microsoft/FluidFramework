@@ -192,6 +192,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			try {
 				const result = await this.collection.insertOne(value);
 				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return result.insertedId;
 			} catch (error) {
 				this.sanitizeError(error);
