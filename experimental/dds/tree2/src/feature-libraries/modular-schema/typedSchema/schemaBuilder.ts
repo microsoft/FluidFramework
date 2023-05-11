@@ -53,7 +53,8 @@ export type RecursiveTreeSchema = unknown;
 export type RecursiveTreeSchemaSpecification = unknown;
 
 {
-	type _check = requireAssignableTo<TreeSchemaSpecification, RecursiveTreeSchemaSpecification>;
+	type _check1 = requireAssignableTo<TreeSchemaSpecification, RecursiveTreeSchemaSpecification>;
+	type _check2 = requireAssignableTo<TreeSchema, RecursiveTreeSchema>;
 }
 
 /**

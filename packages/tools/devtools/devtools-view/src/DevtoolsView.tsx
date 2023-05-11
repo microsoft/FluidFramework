@@ -183,7 +183,7 @@ export function DevtoolsView(): React.ReactElement {
 	}, [messageRelay, setSupportedFeatures]);
 
 	return (
-		<FluentProvider theme={getFluentUIThemeToUse()}>
+		<FluentProvider theme={getFluentUIThemeToUse()} style={{ height: "100%" }}>
 			{supportedFeatures === undefined ? (
 				<Waiting />
 			) : (

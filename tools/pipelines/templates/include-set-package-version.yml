@@ -16,11 +16,6 @@ parameters:
   type: string
   default: repo
 
-# If true, then this pipeline will check and format package.json files according to prettier settings.
-- name: usesPrettier
-  type: boolean
-  default: true
-
 # The path to the pnpm store.
 - name: pnpmStorePath
   type: string
@@ -121,22 +116,6 @@ steps:
     targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
-
-- ${{ if eq(parameters.usesPrettier, true) }}:
-  # package.json files are reformatted by the prior set version steps, so reformat them (and only them) with prettier
-  - task: Bash@3
-    displayName: Reformat package.json files
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        if [ -f "lerna.json" ]; then
-          # Run on all the release group packages, if in a release group
-          npx --no-install lerna exec prettier -- --write package.json
-        fi
-
-        # Format the package.json at the root of the release group/package
-        npx --no-install prettier --write package.json
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.

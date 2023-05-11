@@ -112,7 +112,7 @@ extends:
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: true
-    taskLintName: ci:lint
+    taskLintName: ci:eslint
     taskTest:
     - webpack
     - ci:test:mocha
