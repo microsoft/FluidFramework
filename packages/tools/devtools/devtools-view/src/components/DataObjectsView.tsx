@@ -82,7 +82,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	}
 
 	return (
-		<FluentTree>
+		<FluentTree aria-label="Data tree view">
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
 				return (
 					<TreeDataView
