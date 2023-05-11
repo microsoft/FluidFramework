@@ -64,7 +64,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		this.handler.rollback(content, localOpMetadata);
 	}
 
-	public applyStashedOp(message: ISequencedDocumentMessage): unknown {
-		return this.handler.applyStashedOp(message);
+	public applyStashedOp(content: any): unknown {
+		return this.handler.applyStashedOp(content);
 	}
 }
