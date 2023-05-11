@@ -6,11 +6,11 @@
 import {
 	Value,
 	FieldKey,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeSchemaIdentifier,
-	TreeSchema,
 	ForestEvents,
 	SchemaDataAndPolicy,
+	NamedTreeSchema,
 } from "../core";
 import { ISubscribable } from "../events";
 import { requireAssignableTo } from "../util";
@@ -79,7 +79,7 @@ export interface UntypedTreeCore extends Iterable<UntypedField> {
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.
 	 */
-	readonly [typeSymbol]: TreeSchema;
+	readonly [typeSymbol]: NamedTreeSchema;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.
@@ -136,9 +136,9 @@ export type UnwrappedUntypedField = UnwrappedUntypedTree | undefined | UntypedFi
  */
 export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
 	/**
-	 * The `FieldSchema` of this field.
+	 * The `FieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldSchema;
+	readonly fieldSchema: FieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.
@@ -158,7 +158,7 @@ export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
 
 	/**
 	 * Gets a node of this field by its index without unwrapping.
-	 * Note that the node must exists at the given index.
+	 * Note that a node must exist at the given index.
 	 */
 	getNode(index: number): UntypedTree;
 }

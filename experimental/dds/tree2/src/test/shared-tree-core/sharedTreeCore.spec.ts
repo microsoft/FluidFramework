@@ -266,8 +266,8 @@ describe("SharedTreeCore", () => {
 		changeTree(tree);
 		factory.processAllMessages(); //          [1]
 		assert.equal(getTrunkLength(tree), 1);
-		const branch1 = tree.createBranch();
-		const branch2 = tree.createBranch();
+		const branch1 = tree.forkBranch();
+		const branch2 = tree.forkBranch();
 		const branch3 = branch2.fork();
 		changeTree(tree);
 		factory.processAllMessages(); //          [1 (b1, b2, b3), 2]
@@ -280,13 +280,13 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 3);
 		branch3.dispose(); //                     [x, 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
-		const branch4 = tree.createBranch(); //   [x, 2, 3 (b4)]
+		const branch4 = tree.forkBranch(); //     [x, 2, 3 (b4)]
 		changeTree(tree);
 		changeTree(tree);
 		factory.processAllMessages(); //          [x, x, 3 (b4), 4, 5]
 		assert.equal(getTrunkLength(tree), 3);
-		const branch5 = tree.createBranch(); //   [x, x, 3 (b4), 4, 5 (b5)]
-		branch4.rebaseOnto(branch5.getHead(), branch5.undoRedoManager); // [x, x, 3, 4, 5 (b4, b5)]
+		const branch5 = tree.forkBranch(); //     [x, x, 3 (b4), 4, 5 (b5)]
+		branch4.rebaseOnto(branch5); //           [x, x, 3, 4, 5 (b4, b5)]
 		branch4.dispose(); //                     [x, x, 3, 4, 5 (b5)]
 		assert.equal(getTrunkLength(tree), 3);
 		changeTree(tree);
@@ -383,7 +383,7 @@ function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): number {
 	const { editManager } = tree as unknown as {
-		editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
+		editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	};
 	assert(
 		editManager !== undefined,
