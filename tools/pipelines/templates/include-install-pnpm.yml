@@ -42,7 +42,9 @@ steps:
     # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
     # restoration, we want to continue even if it timed out.
     condition: or(succeeded(), canceled())
+    # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
       corepack enable
       pnpm -v
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
+      pnpm config set -g workspace-concurrency 0
