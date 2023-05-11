@@ -6,7 +6,7 @@ import React from "react";
 
 import { HasContainerId, VisualNodeKind } from "@fluid-experimental/devtools-core";
 
-import { DataVisalizationTreeProps } from "./CommonInterfaces";
+import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { FluidHandleView } from "./FluidHandleView";
 import { TreeView } from "./TreeView";
 import { FluidTreeView } from "./FluidTreeView";
@@ -18,7 +18,7 @@ import { UnknownDataView } from "./UnknownDataView";
 /**
  * {@link TreeDataView} input props.
  */
-export interface TreeDataViewProps extends HasContainerId, DataVisalizationTreeProps {}
+export interface TreeDataViewProps extends HasContainerId, DataVisualizationTreeProps {}
 
 /**
  * Displays visual summary trees for DDS_s within the container based on the current node's type.

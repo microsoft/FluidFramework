@@ -23,7 +23,7 @@ export interface HasLabel {
 /**
  * Base props interface for components displaying {@link @fluid-experimental/devtools-core#VisualTreeNode}s.
  */
-export interface DataVisalizationTreeProps<TNode extends VisualNodeBase = VisualNode>
+export interface DataVisualizationTreeProps<TNode extends VisualNodeBase = VisualNode>
 	extends HasLabel {
 	/**
 	 * The visual data to be displayed.
