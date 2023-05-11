@@ -121,7 +121,7 @@ describe("VisualTreeView component tests", () => {
 		);
 
 		// TODO: Loop the expand button for n-amount of times.
-		const expandButton = await screen.findByTestId("expand-button");
+		const expandButton = await screen.findByTestId("tree-button");
 		await userEvent.click(expandButton);
 
 		await screen.findByText(/test-node-key/);

@@ -38,7 +38,7 @@ export function TreeItem(props: TreeItemProps): React.ReactElement {
 	const isLeaf = React.Children.count(children) === 0;
 
 	return (
-		<FluentTreeItem value={id} key={id} leaf={isLeaf}>
+		<FluentTreeItem value={id} key={id} leaf={isLeaf} data-testid="tree-button">
 			<FluentTreeItemLayout>{header}</FluentTreeItemLayout>
 			<FluentTree>{children}</FluentTree>
 		</FluentTreeItem>
