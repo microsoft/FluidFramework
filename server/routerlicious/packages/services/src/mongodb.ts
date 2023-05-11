@@ -55,7 +55,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		public readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
-	) {}
+	) { }
 
 	public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
 		const req = async () =>
@@ -423,7 +423,7 @@ export class MongoDb implements core.IDb {
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
 		private readonly databaseName: string,
-	) {}
+	) { }
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public close(): Promise<void> {
@@ -462,7 +462,8 @@ interface IMongoDBConfig {
 	facadeLevelTelemetry?: boolean;
 	facadeLevelRetryRuleOverride?: any;
 	connectionNotAvailableMode?: ConnectionNotAvailableMode;
-	databaseName?: string;
+	operationsDbName?: string;
+	globalDbName?: string;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -474,7 +475,8 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly retryEnabled: boolean = false;
 	private readonly telemetryEnabled: boolean = false;
 	private readonly connectionNotAvailableMode: ConnectionNotAvailableMode = "ruleBehavior";
-	private readonly databaseName: string = "admin";
+	private readonly operationsDbName: string = "admin";
+	private readonly globalDbName: string = "admin";
 	private readonly retryRuleOverride: Map<string, boolean>;
 	constructor(config: IMongoDBConfig) {
 		const {
@@ -485,6 +487,8 @@ export class MongoDbFactory implements core.IDbFactory {
 			connectionPoolMinSize,
 			connectionPoolMaxSize,
 			connectionNotAvailableMode,
+			operationsDbName,
+			globalDbName,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
@@ -495,7 +499,8 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
-		this.databaseName = this.databaseName || "admin";
+		this.operationsDbName = operationsDbName || "admin";
+		this.globalDbName = globalDbName || "admin";
 		this.retryEnabled = config.facadeLevelRetry || false;
 		this.telemetryEnabled = config.facadeLevelTelemetry || false;
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
@@ -537,13 +542,14 @@ export class MongoDbFactory implements core.IDbFactory {
 			this.retryRuleOverride,
 			this.connectionNotAvailableMode,
 		);
+		const databaseName = global ? this.globalDbName : this.operationsDbName;
 
 		return new MongoDb(
 			connection,
 			this.retryEnabled,
 			this.telemetryEnabled,
 			retryAnalyzer,
-			this.databaseName,
+			databaseName,
 		);
 	}
 }
