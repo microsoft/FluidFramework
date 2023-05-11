@@ -666,7 +666,7 @@ function compareCellPositions(
 			// Note that `baseMark`'s cells were not detached in `newCellId.revision`, as that case is handled above.
 			// Therefore, when `offsetInBase === newOffset` `baseMark`'s cells come before `newMark`'s cells,
 			// as the nth position between detached cells is before the nth detached cell.
-			return offsetInBase <= newOffset ? -Infinity : Infinity;
+			return offsetInBase <= newOffset ? -Infinity : offsetInBase - newOffset;
 		}
 	}
 
@@ -674,7 +674,7 @@ function compareCellPositions(
 	if (offsetInNew !== undefined) {
 		// BUG: `baseCellId.revision` may not be the revision of a change in the composition.
 		const baseOffset = gapTracker.getOffset(baseCellId.revision);
-		return offsetInNew <= baseOffset ? Infinity : -Infinity;
+		return offsetInNew <= baseOffset ? Infinity : baseOffset - offsetInNew;
 	}
 
 	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
