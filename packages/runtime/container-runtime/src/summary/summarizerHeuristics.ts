@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Timer } from "@fluidframework/common-utils";
+import Deque from "double-ended-queue";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import {
 	ISummarizeHeuristicData,
@@ -26,11 +27,24 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		return this._lastSuccessfulSummary;
 	}
 
-	public get opsSinceLastSummary(): number {
-		return this.numNonRuntimeOpsBefore + this.numRuntimeOpsBefore;
+	private readonly runtimeOps = new Deque<number>();
+	public get numRuntimeOps(): number {
+		return this.runtimeOps.length;
 	}
 
-	public numNonRuntimeOps: number = 0;
+	public recordRuntimeOp(sequenceNumber: number): void {
+		this.runtimeOps.insertBack(sequenceNumber);
+	}
+
+	private readonly nonRuntimeOps = new Deque<number>();
+	public get numNonRuntimeOps(): number {
+		return this.nonRuntimeOps.length;
+	}
+
+	public recordNonRuntimeOp(sequenceNumber: number): void {
+		this.nonRuntimeOps.insertBack(sequenceNumber);
+	}
+
 	public totalOpsSize: number = 0;
 	public hasMissingOpData: boolean = false;
 
@@ -38,21 +52,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 	 * Cumulative size in bytes of all the ops at the beginning of the summarization attempt.
 	 * Is used to adjust totalOpsSize appropriately after successful summarization.
 	 */
-	/** */
 	private totalOpsSizeBefore: number = 0;
-
-	/**
-	 * Number of non-runtime ops at beginning of attempting to summarize.
-	 * Is used to adjust numNonRuntimeOps appropriately after successful summarization.
-	 */
-	private numNonRuntimeOpsBefore: number = 0;
-
-	public numRuntimeOps: number = 0;
-	/**
-	 * Number of runtime ops at beginning of attempting to summarize.
-	 * Is used to adjust numRuntimeOps appropriately after successful summarization.
-	 */
-	private numRuntimeOpsBefore: number = 0;
 
 	constructor(
 		public lastOpSequenceNumber: number,
@@ -74,22 +74,54 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 			summaryTime: Date.now(),
 		};
 
-		this.numNonRuntimeOpsBefore = this.numNonRuntimeOps;
-		this.numRuntimeOpsBefore = this.numRuntimeOps;
 		this.totalOpsSizeBefore = this.totalOpsSize;
 	}
 
 	public markLastAttemptAsSuccessful() {
 		this._lastSuccessfulSummary = { ...this.lastAttempt };
 
-		this.numNonRuntimeOps -= this.numNonRuntimeOpsBefore;
-		this.numNonRuntimeOpsBefore = 0;
-
-		this.numRuntimeOps -= this.numRuntimeOpsBefore;
-		this.numRuntimeOpsBefore = 0;
+		for (const queue of [this.runtimeOps, this.nonRuntimeOps]) {
+			while (
+				!queue.isEmpty() &&
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				queue.peekFront()! <= this._lastSuccessfulSummary.refSequenceNumber
+			) {
+				queue.removeFront();
+			}
+		}
 
 		this.totalOpsSize -= this.totalOpsSizeBefore;
 		this.totalOpsSizeBefore = 0;
+	}
+
+	public numOpsInSummary(referenceSequenceNumber: number): number {
+		let total = 0;
+
+		for (const queue of [this.runtimeOps, this.nonRuntimeOps]) {
+			for (const seqNum of queue.toArray()) {
+				if (seqNum <= referenceSequenceNumber) {
+					total++;
+				}
+			}
+		}
+
+		return total;
+	}
+
+	public recordMissingSequenceNumbers(numMissing: number): void {
+		// Split the diff 50-50 and increment the counts appropriately
+		const runtimeOpsToAdd = Math.floor(numMissing / 2);
+		const nonRuntimeOpsToAdd = Math.ceil(numMissing / 2);
+
+		let fakeSqn = -1;
+
+		for (let i = 0; i < runtimeOpsToAdd; i++) {
+			this.runtimeOps.insertFront(fakeSqn--);
+		}
+
+		for (let i = 0; i < nonRuntimeOpsToAdd; i++) {
+			this.nonRuntimeOps.insertFront(fakeSqn--);
+		}
 	}
 }
 

@@ -25,7 +25,6 @@ import { RunningSummarizer } from "./runningSummarizer";
 import {
 	IConnectableRuntime,
 	ISummarizer,
-	ISummarizeHeuristicData,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
@@ -216,8 +215,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		return stopReason === "parentNotConnected";
 	}
 
-	private _heuristicData: ISummarizeHeuristicData | undefined;
-
 	/**
 	 * Put the summarizer in a started state, including creating and initializing the RunningSummarizer.
 	 * The start request can come either from the SummaryManager (in the auto-summarize case) or from the user
@@ -255,22 +252,17 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 			throw new UsageError("clientId should be defined if connected.");
 		}
 
-		this._heuristicData = new SummarizeHeuristicData(
-			this.runtime.deltaManager.lastSequenceNumber,
-			{
-				/** summary attempt baseline for heuristics */
-				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
-				summaryTime: Date.now(),
-			} as const,
-		);
-
 		const runningSummarizer = await RunningSummarizer.start(
 			this.logger,
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
 			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryCallback
-			this._heuristicData,
+			new SummarizeHeuristicData(this.runtime.deltaManager.lastSequenceNumber, {
+				/** summary attempt baseline for heuristics */
+				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
+				summaryTime: Date.now(),
+			} as const),
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,
@@ -369,8 +361,4 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		}
 		return this.runningSummarizer.enqueueSummarize(...args);
 	};
-
-	public recordSummaryAttempt?(summaryRefSeqNum?: number) {
-		this._heuristicData?.recordAttempt(summaryRefSeqNum);
-	}
 }

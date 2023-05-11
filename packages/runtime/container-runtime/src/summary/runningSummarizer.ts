@@ -106,9 +106,7 @@ export class RunningSummarizer implements IDisposable {
 		heuristicData.hasMissingOpData = diff > 0;
 
 		if (heuristicData.hasMissingOpData) {
-			// Split the diff 50-50 and increment the counts appropriately
-			heuristicData.numNonRuntimeOps += Math.ceil(diff / 2);
-			heuristicData.numRuntimeOps += Math.floor(diff / 2);
+			heuristicData.recordMissingSequenceNumbers(diff);
 		}
 
 		// Update last seq number (in case the handlers haven't processed anything yet)
@@ -376,9 +374,9 @@ export class RunningSummarizer implements IDisposable {
 		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
 		if (runtimeMessage) {
-			this.heuristicData.numRuntimeOps++;
+			this.heuristicData.recordRuntimeOp(op.sequenceNumber);
 		} else {
-			this.heuristicData.numNonRuntimeOps++;
+			this.heuristicData.recordNonRuntimeOp(op.sequenceNumber);
 		}
 
 		this.heuristicData.totalOpsSize += opSize(op);

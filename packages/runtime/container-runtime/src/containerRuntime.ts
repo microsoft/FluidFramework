@@ -2889,9 +2889,6 @@ export class ContainerRuntime
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
 
-			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
-			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
-
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();
 			if (shouldPauseInboundSignal) {

@@ -319,15 +319,13 @@ export class SummaryGenerator {
 			if (!fullTree && !summaryData.forcedFullTree) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
-				if (
-					summarizedDataStoreCount >
-					gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary
-				) {
+				const numOpsInSummary = this.heuristicData.numOpsInSummary(referenceSequenceNumber);
+				if (summarizedDataStoreCount > gcStateUpdatedDataStoreCount + numOpsInSummary) {
 					logger.sendErrorEvent({
 						eventName: "IncrementalSummaryViolation",
 						summarizedDataStoreCount,
 						gcStateUpdatedDataStoreCount,
-						opsSinceLastSummary: this.heuristicData.opsSinceLastSummary,
+						numOpsInSummary,
 					});
 				}
 			}
@@ -338,9 +336,7 @@ export class SummaryGenerator {
 		} catch (error) {
 			return fail("submitSummaryFailure", error);
 		} finally {
-			if (summaryData === undefined) {
-				this.heuristicData.recordAttempt();
-			}
+			this.heuristicData.recordAttempt(summaryData?.referenceSequenceNumber);
 			this.summarizeTimer.clear();
 		}
 
