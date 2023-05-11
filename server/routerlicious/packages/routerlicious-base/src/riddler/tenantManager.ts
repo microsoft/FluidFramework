@@ -249,6 +249,7 @@ export class TenantManager {
 			throw new NetworkError(500, "Tenant key1 encryption failed.");
 		}
 
+
 		const tenantKey2 = this.generateTenantKey();
 		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2);
 		if (encryptedTenantKey2 == null) {
