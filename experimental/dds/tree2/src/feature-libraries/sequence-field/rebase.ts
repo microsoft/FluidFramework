@@ -285,7 +285,7 @@ class RebaseQueue<T> {
 				if (markFillsCells(baseMark)) {
 					this.reattachOffset += length;
 				}
-				return this.dequeueLength(length);
+				return this.dequeueBoth();
 			}
 		} else if (areInputCellsEmpty(newMark)) {
 			return this.dequeueNew();
@@ -294,8 +294,7 @@ class RebaseQueue<T> {
 			return this.dequeueBase();
 		} else {
 			this.reattachOffset = 0;
-			const length = Math.min(getInputLength(newMark), getInputLength(baseMark));
-			return this.dequeueLength(length);
+			return this.dequeueBoth();
 		}
 	}
 
@@ -307,7 +306,14 @@ class RebaseQueue<T> {
 		return { newMark: this.newMarks.dequeue() };
 	}
 
-	private dequeueLength(length: number): RebaseMarks<T> {
+	private dequeueBoth(): RebaseMarks<T> {
+		const baseMark = this.baseMarks.peek();
+		const newMark = this.newMarks.peek();
+		assert(
+			baseMark !== undefined && newMark !== undefined,
+			"Cannot dequeue both unless both mark queues are non-empty",
+		);
+		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
 		return {
 			baseMark: this.baseMarks.dequeueUpTo(length),
 			newMark: this.newMarks.dequeueUpTo(length),
