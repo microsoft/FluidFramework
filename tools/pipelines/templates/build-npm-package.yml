@@ -125,6 +125,7 @@ variables:
   - name: toolAbsolutePath
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
+  - group: ado-feeds
 
 stages:
   - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
@@ -464,6 +465,7 @@ stages:
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ variables.toolAbsolutePath }}
+                # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
                 script: |
                   echo Initialize package
                   npm init --yes
@@ -475,8 +477,8 @@ stages:
                   echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
-                  echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
-                  echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+                  echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+                  echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
                   echo "always-auth=true" >> ./.npmrc
                   cat .npmrc
 
