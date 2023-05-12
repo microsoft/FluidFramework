@@ -166,6 +166,10 @@ export type EmptyInputCellMark<TNodeChange> =
 	| NewAttach<TNodeChange>
 	| (DetachedCellMark & ExistingCellMark<TNodeChange>);
 
+/**
+ * A mark which extends `CellTargetingMark`.
+ * Conceptually `Skip` marks also target existing cells, but are not included because they do not have the `CellTargetingMark` fields.
+ */
 export type ExistingCellMark<TNodeChange> =
 	| Delete<TNodeChange>
 	| MoveOut<TNodeChange>

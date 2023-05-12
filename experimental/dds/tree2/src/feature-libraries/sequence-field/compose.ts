@@ -217,6 +217,8 @@ function composeMarks<TNodeChange>(
 			const baseIntention = getIntention(baseMark.revision, revisionMetadata);
 			const newIntention = getIntention(newMark.revision ?? newRev, revisionMetadata);
 			if (areInverseMoves(baseMark, baseIntention, newMark, newIntention)) {
+				// BUG 4280: This will drop any node changes the marks had.
+				// In practice the node changes will typically also be inverses so this problem should rarely be noticeable.
 				srcEffect.shouldRemove = true;
 				dstEffect.shouldRemove = true;
 			} else {
