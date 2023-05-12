@@ -40,15 +40,9 @@ parameters:
   type: string
   default: null
 
-- name: downloadAzureTestArtifacts
-  type: boolean
-  default: false
-
 # Id of the pipeline run that contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
 # incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
-# Make sure that the value provided corresponds to a run of the 'Build - azure' pipeline if downloadAzureTestArtifacts=true
-# or a run of the 'Build - client packages' otherwise.
 - name: artifactBuildId
   type: string
 
@@ -107,9 +101,6 @@ jobs:
           value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
         ${{ else }}:
           value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
-      - name: artifactPipeline
-        ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
-          value: Build - azure
         ${{ else }}:
           value: Build - client packages
 

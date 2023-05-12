@@ -40,8 +40,7 @@ stages:
         testPackage: "@fluidframework/azure-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:azure
-        downloadAzureTestArtifacts: true
-        artifactBuildId: $(resources.pipeline.azure.runID)
+        artifactBuildId: $(resources.pipeline.client.runID)
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
@@ -57,7 +56,6 @@ stages:
         testPackage: "@fluidframework/azure-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:tinylicious
-        downloadAzureTestArtifacts: true
-        artifactBuildId: $(resources.pipeline.azure.runID)
+        artifactBuildId: $(resources.pipeline.client.runID)
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
