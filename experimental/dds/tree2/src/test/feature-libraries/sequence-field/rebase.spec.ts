@@ -487,6 +487,24 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	// TODO: Renable after changing lineage to use cell IDs instead of offsets.
+	it.skip("reviveAA ↷ reviveCB => CBAA", () => {
+		const reviveAA = Change.revive(0, 2, tag1, 1, rebaseRepair, [
+			{ revision: tag2, offset: 1 },
+			{ revision: tag3, offset: 1 },
+		]);
+		const reviveB = composeAnonChanges([
+			Change.revive(0, 1, tag2, 0, rebaseRepair),
+			Change.revive(0, 1, tag3, 0, rebaseRepair),
+		]);
+		const expected = Change.revive(2, 2, tag1, 1, rebaseRepair, [
+			{ revision: tag2, offset: 1 },
+			{ revision: tag3, offset: 1 },
+		]);
+		const actual = rebase(reviveAA, reviveB);
+		assert.deepEqual(actual, expected);
+	});
+
 	it("intentional revive ↷ same revive", () => {
 		const reviveA = Change.intentionalRevive(0, 3, tag1, 1, rebaseRepair);
 		const reviveB = Change.revive(0, 1, tag1, 2, rebaseRepair);

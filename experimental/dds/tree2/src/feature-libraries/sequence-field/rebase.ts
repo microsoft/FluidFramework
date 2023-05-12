@@ -627,12 +627,12 @@ function tryRemoveLineageEvent<T>(mark: Attach<T>, revisionToRemove: RevisionTag
  * are before the first cell of `newMark`.
  */
 function compareCellPositions(
-	baseRevision: RevisionTag | undefined,
+	baseIntention: RevisionTag | undefined,
 	baseMark: EmptyInputCellMark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
-	detachOffset: number,
+	gapOffsetInBase: number,
 ): number {
-	const baseId = getCellId(baseMark, baseRevision);
+	const baseId = getCellId(baseMark, baseIntention);
 	assert(baseId !== undefined, "baseMark should have cell ID");
 	const newId = getCellId(newMark, undefined);
 	if (baseId.revision === newId?.revision) {
@@ -640,21 +640,25 @@ function compareCellPositions(
 	}
 
 	if (newId !== undefined) {
-		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newId.revision);
-		if (offsetInBase !== undefined) {
+		const baseOffset = getOffsetAtRevision(baseMark.lineage, newId.revision);
+		if (baseOffset !== undefined) {
 			// BUG: Cell offsets are not comparable to cell indices.
-			return offsetInBase > newId.index ? offsetInBase - newId.index : -Infinity;
+			return baseOffset > newId.index ? baseOffset - newId.index : -Infinity;
 		}
 	}
 
-	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseId.revision);
-	if (offsetInNew !== undefined) {
+	const newOffset = getOffsetAtRevision(newMark.lineage, baseId.revision);
+	if (newOffset !== undefined) {
 		if (isAttach(baseMark)) {
-			const offset = offsetInNew - detachOffset;
+			// BUG: This logic assumes that `baseId.revision` is the revision of the baseMark,
+			// so this block should be gated on `isNewAttach(baseMark)`.
+			// However, this logic happens to work in more cases than the logic after this block.
+			// This should be fixed by changing LineageEvent to refer to cell IDs instead of offsets.
+			const offset = newOffset - gapOffsetInBase;
 			return offset === 0 ? Infinity : -offset;
 		}
 		// BUG: Cell offsets are not comparable to cell indices.
-		return offsetInNew > baseId.index ? baseId.index - offsetInNew : Infinity;
+		return newOffset > baseId.index ? baseId.index - newOffset : Infinity;
 	}
 
 	const cmp = compareLineages(baseMark.lineage, newMark.lineage);

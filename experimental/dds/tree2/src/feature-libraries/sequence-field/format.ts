@@ -147,8 +147,18 @@ export interface HasReattachFields extends HasPlaceFields {
 	inverseOf?: RevisionTag;
 }
 
+/**
+ * Identifies an empty cell.
+ */
 export interface DetachEvent {
+	/**
+	 * The intention of edit which last emptied the cell.
+	 */
 	revision: RevisionTag;
+
+	/**
+	 * The absolute position of the node in this cell in the input context of the revision which emptied it.
+	 */
 	index: number;
 }
 

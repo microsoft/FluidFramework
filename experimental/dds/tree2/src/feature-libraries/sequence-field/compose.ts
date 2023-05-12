@@ -645,11 +645,11 @@ function compareCellPositions(
 	baseCellId: DetachEvent,
 	baseMark: ExistingCellMark<unknown>,
 	newMark: EmptyInputCellMark<unknown>,
-	newRevision: RevisionTag | undefined,
+	newIntention: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
 	gapTracker: GapTracker,
 ): number {
-	const newCellId = getCellId(newMark, newRevision);
+	const newCellId = getCellId(newMark, newIntention);
 	if (baseCellId.revision === newCellId?.revision) {
 		if (isNewAttach(newMark)) {
 			// There is some change foo that is being cancelled out as part of a rebase sandwich.
@@ -667,8 +667,8 @@ function compareCellPositions(
 	}
 
 	if (newCellId !== undefined) {
-		const offsetInBase = getOffsetAtRevision(baseMark.lineage, newCellId.revision);
-		if (offsetInBase !== undefined) {
+		const baseOffset = getOffsetAtRevision(baseMark.lineage, newCellId.revision);
+		if (baseOffset !== undefined) {
 			// BUG: `newCellId.revision` may not be the revision of a change in the composition.
 			const newOffset = gapTracker.getOffset(newCellId.revision);
 
@@ -677,15 +677,17 @@ function compareCellPositions(
 			// Note that `baseMark`'s cells were not detached in `newCellId.revision`, as that case is handled above.
 			// Therefore, when `offsetInBase === newOffset` `baseMark`'s cells come before `newMark`'s cells,
 			// as the nth position between detached cells is before the nth detached cell.
-			return offsetInBase <= newOffset ? -Infinity : offsetInBase - newOffset;
+			return baseOffset <= newOffset ? -Infinity : baseOffset - newOffset;
 		}
 	}
 
-	const offsetInNew = getOffsetAtRevision(newMark.lineage, baseCellId.revision);
-	if (offsetInNew !== undefined) {
-		// BUG: `baseCellId.revision` may not be the revision of a change in the composition.
-		const baseOffset = gapTracker.getOffset(baseCellId.revision);
-		return offsetInNew <= baseOffset ? Infinity : baseOffset - offsetInNew;
+	{
+		const newOffset = getOffsetAtRevision(newMark.lineage, baseCellId.revision);
+		if (newOffset !== undefined) {
+			// BUG: `baseCellId.revision` may not be the revision of a change in the composition.
+			const baseOffset = gapTracker.getOffset(baseCellId.revision);
+			return newOffset <= baseOffset ? Infinity : baseOffset - newOffset;
+		}
 	}
 
 	const cmp = compareLineages(baseMark.lineage, newMark.lineage);
@@ -694,9 +696,9 @@ function compareCellPositions(
 	}
 
 	if (
-		newRevision !== undefined &&
+		newIntention !== undefined &&
 		newMark.type === "Insert" &&
-		cancelledInserts.has(newRevision)
+		cancelledInserts.has(newIntention)
 	) {
 		// We know the new insert is getting cancelled out so we need to delay returning it.
 		// The base mark that cancels the insert must appear later in the base marks.
