@@ -66,13 +66,6 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 						},
 					},
 				});
-				// {
-				// 	summaryOptions: {
-				// 		summaryConfigOverrides: {
-				// 			state: "disabled",
-				// 		},
-				// 	},
-				// }
 
 				const loader = new Loader({
 					urlResolver: provider.urlResolver,
