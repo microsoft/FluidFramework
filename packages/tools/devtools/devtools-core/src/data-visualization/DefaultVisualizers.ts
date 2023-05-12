@@ -151,27 +151,19 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
 
 	const { rowCount, colCount: columnCount, id: fluidObjectId } = sharedMatrix;
 
-	// Output will list child contents by row first, then by cell (column).
-	const rows: Record<string, VisualTreeNode> = {};
+	// Output will list cells as a flat list, keyed by their row,column indices (e.g. `[0,1]`)
+	const cells: Record<string, VisualChildNode> = {};
 	for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-		const cells: Record<string, VisualChildNode> = {};
 		for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
 			const cell = sharedMatrix.getCell(rowIndex, columnIndex) as unknown;
 			const renderedCell = await visualizeChildData(cell);
-			cells[columnIndex] = renderedCell;
+			cells[`[${rowIndex},${columnIndex}]`] = renderedCell;
 		}
-		rows[rowIndex] = {
-			children: cells,
-			metadata: {
-				cells: columnCount,
-			},
-			nodeKind: VisualNodeKind.TreeNode,
-		};
 	}
 
 	return {
 		fluidObjectId,
-		children: rows,
+		children: cells,
 		metadata: {
 			rows: rowCount,
 			columns: columnCount,

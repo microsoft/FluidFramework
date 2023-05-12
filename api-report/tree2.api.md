@@ -1290,7 +1290,7 @@ export interface NodeData {
     value?: TreeValue;
 }
 
-// @alpha
+// @alpha @deprecated
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
 
 // @alpha (undocumented)
@@ -1764,7 +1764,7 @@ TFields extends {
 ][InternalTypedSchemaTypes._dummy];
 
 // @alpha
-type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>;
+type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = InternalTypedSchemaTypes.FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
 
 // @alpha (undocumented)
 export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {

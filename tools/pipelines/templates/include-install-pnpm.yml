@@ -24,7 +24,8 @@ steps:
 - ${{ if eq(parameters.enableCache, true) }}:
   - task: Cache@2
     displayName: Cache pnpm store
-    timeoutInMinutes: 5
+    timeoutInMinutes: 3
+    continueOnError: true
     inputs:
       # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
       # in the cache key
@@ -41,7 +42,9 @@ steps:
     # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
     # restoration, we want to continue even if it timed out.
     condition: or(succeeded(), canceled())
+    # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
       corepack enable
       pnpm -v
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
+      pnpm config set -g workspace-concurrency 0

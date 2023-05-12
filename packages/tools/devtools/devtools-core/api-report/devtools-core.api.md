@@ -19,7 +19,7 @@ import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 
 // @internal
 export interface AudienceChangeLogEntry extends LogEntry {
-    changeKind: "added" | "removed";
+    changeKind: "joined" | "left";
     client: IClient;
     clientId: string;
 }
@@ -399,8 +399,8 @@ export interface LogEntry {
 
 // @internal
 export enum MemberChangeKind {
-    Added = "Added",
-    Removed = "Removed"
+    Joined = "Joined",
+    Left = "Left"
 }
 
 // @internal

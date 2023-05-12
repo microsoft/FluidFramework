@@ -86,7 +86,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
-	 * @param sessionId - the session ID used to author commits made by this branch
 	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
 	 * @param changeFamily - determines the set of changes that this branch can commit
 	 * @param undoRedoManager - an optional {@link UndoRedoManager} to manage the undo/redo operations of this
@@ -95,7 +94,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
-		public readonly sessionId: string,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
@@ -137,7 +135,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.assertNotDisposed();
 		this.head = mintCommit(this.head, {
 			revision,
-			sessionId: this.sessionId,
 			change,
 		});
 
@@ -200,7 +197,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			const change = this.changeFamily.rebaser.compose(anonymousCommits);
 			this.head = mintCommit(startCommit, {
 				revision: mintRevisionTag(),
-				sessionId: this.sessionId,
 				change,
 			});
 
@@ -333,7 +329,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			this.head,
-			this.sessionId,
 			this.changeFamily,
 			this.undoRedoManager?.clone(repairDataStoreProvider),
 			anchors,

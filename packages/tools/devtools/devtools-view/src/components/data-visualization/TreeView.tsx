@@ -4,18 +4,18 @@
  */
 
 import React from "react";
+
 import { HasContainerId, VisualTreeNode } from "@fluid-experimental/devtools-core";
-import { Tree } from "./Tree";
+
+import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
 import { TreeHeader } from "./TreeHeader";
-import { HasLabel } from "./CommonInterfaces";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link TreeView} input props.
  */
-export interface TreeViewProps extends HasContainerId, HasLabel {
-	node: VisualTreeNode;
-}
+export interface TreeViewProps extends HasContainerId, DataVisualizationTreeProps<VisualTreeNode> {}
 
 /**
  * Render data with type VisualNodeKind.TreeNode and render its children.
@@ -27,14 +27,7 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 		<TreeDataView key={key} containerId={containerId} label={key} node={fluidObject} />
 	));
 
-	const header = (
-		<TreeHeader
-			label={label}
-			nodeTypeMetadata={node.typeMetadata}
-			nodeKind={node.nodeKind}
-			itemSize={node.metadata?.size}
-		/>
-	);
+	const header = <TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} />;
 
-	return <Tree header={header}>{childNodes}</Tree>;
+	return <TreeItem header={header}>{childNodes}</TreeItem>;
 }
