@@ -5,7 +5,6 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Timer } from "@fluidframework/common-utils";
-import Deque from "double-ended-queue";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import {
 	ISummarizeHeuristicData,
@@ -27,32 +26,32 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		return this._lastSuccessfulSummary;
 	}
 
-	private readonly runtimeOps = new Deque<number>();
-	public get numRuntimeOps(): number {
-		return this.runtimeOps.length + this.numRuntimeOpsInAttempt;
+	public get opsSinceLastSummary(): number {
+		return this.numNonRuntimeOpsBefore + this.numRuntimeOpsBefore;
 	}
 
-	public recordRuntimeOp(sequenceNumber: number): void {
-		this.runtimeOps.insertBack(sequenceNumber);
-	}
-
-	private readonly nonRuntimeOps = new Deque<number>();
-	public get numNonRuntimeOps(): number {
-		return this.nonRuntimeOps.length + this.numNonRuntimeOpsInAttempt;
-	}
-
-	public recordNonRuntimeOp(sequenceNumber: number): void {
-		this.nonRuntimeOps.insertBack(sequenceNumber);
-	}
-
-	public totalOpsSize: number = 0;
 	public hasMissingOpData: boolean = false;
 
+	public totalOpsSize: number = 0;
 	/**
 	 * Cumulative size in bytes of all the ops at the beginning of the summarization attempt.
 	 * Is used to adjust totalOpsSize appropriately after successful summarization.
 	 */
 	private totalOpsSizeBefore: number = 0;
+
+	public numNonRuntimeOps: number = 0;
+	/**
+	 * Number of non-runtime ops at beginning of attempting to summarize.
+	 * Is used to adjust numNonRuntimeOps appropriately after successful summarization.
+	 */
+	private numNonRuntimeOpsBefore: number = 0;
+
+	public numRuntimeOps: number = 0;
+	/**
+	 * Number of runtime ops at beginning of attempting to summarize.
+	 * Is used to adjust numRuntimeOps appropriately after successful summarization.
+	 */
+	private numRuntimeOpsBefore: number = 0;
 
 	constructor(
 		public lastOpSequenceNumber: number,
@@ -68,67 +67,28 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		this._lastSuccessfulSummary = { ...lastSummary };
 	}
 
-	private numRuntimeOpsInAttempt = 0;
-	private numNonRuntimeOpsInAttempt = 0;
-
-	public get numOpsInAttempt(): number {
-		return this.numRuntimeOpsInAttempt + this.numNonRuntimeOpsInAttempt;
-	}
-
 	public recordAttempt(refSequenceNumber?: number) {
 		this._lastAttempt = {
 			refSequenceNumber: refSequenceNumber ?? this.lastOpSequenceNumber,
 			summaryTime: Date.now(),
 		};
 
-		// Record which runtime ops apply to this summary attempt and remove from the queue
-		while (
-			!this.runtimeOps.isEmpty() &&
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.runtimeOps.peekFront()! <= this._lastAttempt.refSequenceNumber
-		) {
-			this.runtimeOps.removeFront();
-			this.numRuntimeOpsInAttempt++;
-		}
-
-		// Record which non-runtime ops apply to this summary attempt and remove from the queue
-		while (
-			!this.nonRuntimeOps.isEmpty() &&
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.nonRuntimeOps.peekFront()! <= this._lastAttempt.refSequenceNumber
-		) {
-			this.nonRuntimeOps.removeFront();
-			this.numNonRuntimeOpsInAttempt++;
-		}
-
+		this.numNonRuntimeOpsBefore = this.numNonRuntimeOps;
+		this.numRuntimeOpsBefore = this.numRuntimeOps;
 		this.totalOpsSizeBefore = this.totalOpsSize;
 	}
 
 	public markLastAttemptAsSuccessful() {
 		this._lastSuccessfulSummary = { ...this.lastAttempt };
 
-		// These ops have been summarized
-		this.numRuntimeOpsInAttempt = 0;
-		this.numNonRuntimeOpsInAttempt = 0;
+		this.numNonRuntimeOps -= this.numNonRuntimeOpsBefore;
+		this.numNonRuntimeOpsBefore = 0;
+
+		this.numRuntimeOps -= this.numRuntimeOpsBefore;
+		this.numRuntimeOpsBefore = 0;
 
 		this.totalOpsSize -= this.totalOpsSizeBefore;
 		this.totalOpsSizeBefore = 0;
-	}
-
-	public recordMissingSequenceNumbers(numMissing: number): void {
-		// Split the diff 50-50 and increment the counts appropriately
-		const runtimeOpsToAdd = Math.floor(numMissing / 2);
-		const nonRuntimeOpsToAdd = Math.ceil(numMissing / 2);
-
-		let fakeSqn = -1;
-
-		for (let i = 0; i < runtimeOpsToAdd; i++) {
-			this.runtimeOps.insertFront(fakeSqn--);
-		}
-
-		for (let i = 0; i < nonRuntimeOpsToAdd; i++) {
-			this.nonRuntimeOps.insertFront(fakeSqn--);
-		}
 	}
 }
 

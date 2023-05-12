@@ -106,9 +106,10 @@ describe("Runtime", () => {
 				timestamp: number = Date.now(),
 				type: string = MessageType.Operation,
 			) {
-				increaseRuntimeOpCount(increment - 1);
+				heuristicData.numRuntimeOps += increment - 1; // -1 because we emit an op below
+				lastRefSeq += increment;
 				const op: Partial<ISequencedDocumentMessage> = {
-					sequenceNumber: ++lastRefSeq,
+					sequenceNumber: lastRefSeq,
 					timestamp,
 					type,
 				};
@@ -118,9 +119,10 @@ describe("Runtime", () => {
 			}
 
 			async function emitNoOp(increment: number = 1) {
-				increaseNonRuntimeOpCount(increment - 1);
+				heuristicData.numNonRuntimeOps += increment - 1; // -1 because we emit an op below
+				lastRefSeq += increment;
 				const op: Partial<ISequencedDocumentMessage> = {
-					sequenceNumber: ++lastRefSeq,
+					sequenceNumber: lastRefSeq,
 					timestamp: Date.now(),
 					type: MessageType.NoOp,
 				};
@@ -283,18 +285,6 @@ describe("Runtime", () => {
 					mockRuntime as any as ISummarizerRuntime,
 				);
 			};
-
-			function increaseRuntimeOpCount(increment: number): void {
-				for (let i = 0; i < increment; i++) {
-					heuristicData.recordRuntimeOp(++lastRefSeq);
-				}
-			}
-
-			function increaseNonRuntimeOpCount(increment: number): void {
-				for (let i = 0; i < increment; i++) {
-					heuristicData.recordNonRuntimeOp(++lastRefSeq);
-				}
-			}
 
 			before(() => {
 				// eslint-disable-next-line import/no-named-as-default-member

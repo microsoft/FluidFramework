@@ -384,13 +384,10 @@ export interface ISummarizeHeuristicData {
 	readonly lastSuccessfulSummary: Readonly<ISummarizeAttempt>;
 
 	/** Number of runtime ops since last summary */
-	readonly numRuntimeOps: number;
+	numRuntimeOps: number;
 
 	/** Number of non-runtime ops since last summary */
-	readonly numNonRuntimeOps: number;
-
-	/** Numer of ops in the current summary attempt */
-	readonly numOpsInAttempt: number;
+	numNonRuntimeOps: number;
 
 	/** Cumulative size in bytes of all the ops since the last summary */
 	totalOpsSize: number;
@@ -415,14 +412,7 @@ export interface ISummarizeHeuristicData {
 	/** Mark that the last sent summary attempt has received an ack */
 	markLastAttemptAsSuccessful(): void;
 
-	/** Record an incoming runtime op's sequence number */
-	recordRuntimeOp(sequenceNumber: number): void;
-
-	/** Record an incoming non-runtime op's sequence number */
-	recordNonRuntimeOp(sequenceNumber: number): void;
-
-	/** Record inbound ops that were missed by heuristics */
-	recordMissingSequenceNumbers(numMissing: number): void;
+	opsSinceLastSummary: number;
 }
 
 /** Responsible for running heuristics determining when to summarize. */

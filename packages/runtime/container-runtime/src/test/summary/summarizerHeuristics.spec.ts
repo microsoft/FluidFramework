@@ -110,18 +110,6 @@ describe("Runtime", () => {
 				}
 			}
 
-			function increaseRuntimeOpCount(increment: number): void {
-				for (let i = 0; i < increment; i++) {
-					data.recordRuntimeOp(0);
-				}
-			}
-
-			function increaseNonRuntimeOpCount(increment: number): void {
-				for (let i = 0; i < increment; i++) {
-					data.recordNonRuntimeOp(0);
-				}
-			}
-
 			beforeEach(() => {
 				attempts = [];
 			});
@@ -134,12 +122,12 @@ describe("Runtime", () => {
 				initialize({ maxOps });
 
 				data.lastOpSequenceNumber = maxOps;
-				increaseRuntimeOpCount(maxOps);
+				data.numRuntimeOps = maxOps;
 				runner.run();
 				assertAttemptCount(0, "should not run yet");
 
 				data.lastOpSequenceNumber++;
-				increaseRuntimeOpCount(1);
+				data.numRuntimeOps++;
 				runner.run();
 				assertAttemptCount(1, "should run now");
 				assert(getLastAttempt() === "maxOps");
@@ -151,12 +139,12 @@ describe("Runtime", () => {
 				initialize({ refSequenceNumber: lastSummary, maxOps });
 
 				data.lastOpSequenceNumber = lastSummary + maxOps;
-				increaseRuntimeOpCount(maxOps);
+				data.numRuntimeOps = maxOps;
 				runner.run();
 				assertAttemptCount(0, "should not run yet");
 
 				data.lastOpSequenceNumber++;
-				increaseRuntimeOpCount(1);
+				data.numRuntimeOps++;
 				runner.run();
 				assertAttemptCount(1, "should run now");
 				assert(getLastAttempt() === "maxOps");
@@ -246,7 +234,7 @@ describe("Runtime", () => {
 				const minOpsForLastSummaryAttempt = 10;
 				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1.0 });
 
-				increaseRuntimeOpCount(minOpsForLastSummaryAttempt);
+				data.numRuntimeOps = minOpsForLastSummaryAttempt;
 				assert.strictEqual(runner.shouldRunLastSummary(), true, "should run on close");
 			});
 
@@ -254,7 +242,7 @@ describe("Runtime", () => {
 				const minOpsForLastSummaryAttempt = 10;
 				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1.0 });
 
-				increaseRuntimeOpCount(minOpsForLastSummaryAttempt - 1);
+				data.numRuntimeOps = minOpsForLastSummaryAttempt - 1;
 				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run on close");
 			});
 
@@ -266,13 +254,13 @@ describe("Runtime", () => {
 					nonRuntimeOpWeight: 1.1,
 				});
 
-				increaseRuntimeOpCount(8);
+				data.numRuntimeOps += 8;
 				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run yet");
 
-				increaseNonRuntimeOpCount(1);
+				data.numNonRuntimeOps += 1;
 				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run yet");
 
-				increaseRuntimeOpCount(1);
+				data.numRuntimeOps += 1;
 				assert.strictEqual(runner.shouldRunLastSummary(), true, "should run");
 			});
 
@@ -318,22 +306,22 @@ describe("Runtime", () => {
 				data.lastOpSequenceNumber = maxOps;
 				assert.strictEqual(runner.idleTime, maxIdleTime, "should start at the maxIdleTime");
 
-				increaseRuntimeOpCount(50);
+				data.numRuntimeOps += 50;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 0.05);
 
-				increaseRuntimeOpCount(123);
+				data.numRuntimeOps += 123;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 0.173);
 
-				increaseRuntimeOpCount(500);
+				data.numRuntimeOps += 500;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 0.673);
 
-				increaseRuntimeOpCount(326);
+				data.numRuntimeOps += 326;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 0.999);
 
-				increaseRuntimeOpCount(1);
+				data.numRuntimeOps += 1;
 				assert.strictEqual(runner.idleTime, minIdleTime);
 
-				increaseRuntimeOpCount(100);
+				data.numRuntimeOps += 100;
 				assert.strictEqual(
 					runner.idleTime,
 					minIdleTime,
@@ -360,16 +348,16 @@ describe("Runtime", () => {
 				data.lastOpSequenceNumber = maxOps;
 				assert.strictEqual(runner.idleTime, maxIdleTime, "should start at the maxIdleTime");
 
-				increaseRuntimeOpCount(50);
+				data.numRuntimeOps += 50;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 5);
 
-				increaseRuntimeOpCount(123);
+				data.numRuntimeOps += 123;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 17.3);
 
-				increaseNonRuntimeOpCount(500);
+				data.numNonRuntimeOps += 500;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 567.3);
 
-				increaseNonRuntimeOpCount(1);
+				data.numNonRuntimeOps += 1;
 				assert.strictEqual(runner.idleTime, maxIdleTime - 568.4);
 			});
 
@@ -381,15 +369,15 @@ describe("Runtime", () => {
 
 				data.lastOpSequenceNumber = maxOps;
 
-				increaseRuntimeOpCount(9);
+				data.numRuntimeOps += 9;
 				runner.run();
 				assertAttemptCount(0, "should not run yet");
 
-				increaseNonRuntimeOpCount(1);
+				data.numNonRuntimeOps += 1;
 				runner.run();
 				assertAttemptCount(0, "should not run yet");
 
-				increaseRuntimeOpCount(1);
+				data.numRuntimeOps += 1;
 				runner.run();
 				assertAttemptCount(1, "should run");
 				assert(getLastAttempt() === "maxOps");
