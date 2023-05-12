@@ -101,7 +101,7 @@ jobs:
           value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
         ${{ else }}:
           value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
-        ${{ else }}:
+      - name: artifactPipeline
           value: Build - client packages
 
       steps:
