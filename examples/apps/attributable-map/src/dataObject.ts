@@ -12,7 +12,8 @@ export const greenKey = "green";
 export const redKey = "red";
 
 /**
- * The format of the default users created through tinylicious server
+ * ITinyliciousUser describes the default format for users created through the Tinylicious server.
+ * However, the specific details for a user may differ depending on the server.
  */
 export interface ITinyliciousUser {
 	id: string;

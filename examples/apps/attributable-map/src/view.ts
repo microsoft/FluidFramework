@@ -116,6 +116,10 @@ export function renderHitCounter(
 
 		// update the attribution text
 		const updateAttributionDisplay = (attributionKey, containerDiv) => {
+			/**
+			 * A production application would manage detached and local attribution key types as well.
+			 * The current example and attributor will concentrate solely on handling the attribution of the Op-stream type.
+			 */
 			if (attributionKey !== undefined && attributionKey.type === "op") {
 				const attribution = runtimeAttributor?.get(attributionKey);
 				const userString = JSON.stringify(attribution?.user);

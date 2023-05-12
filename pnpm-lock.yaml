@@ -690,12 +690,6 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
-      css-loader:
-        specifier: ^1.0.0
-        version: 1.0.1(webpack@5.82.1)
-      style-loader:
-        specifier: ^1.0.0
-        version: 1.3.0(webpack@5.82.1)
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.17.0
@@ -724,9 +718,6 @@ importers:
       '@types/puppeteer':
         specifier: 1.3.0
         version: 1.3.0
-      clean-webpack-plugin:
-        specifier: ^4.0.0
-        version: 4.0.0(webpack@5.82.1)
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
