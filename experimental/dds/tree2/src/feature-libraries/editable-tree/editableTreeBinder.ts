@@ -99,7 +99,7 @@ export interface DataBinder<B extends BinderEvents> {
 	register<K extends keyof Events<B>>(
 		anchor: EditableTree,
 		eventType: K,
-		eventPaths: BindPath[],
+		eventTrees: BindTree[],
 		listener?: B[K],
 	): void;
 
@@ -135,6 +135,23 @@ export interface FlushableDataBinder<B extends BinderEvents>
 export interface PathStep {
 	readonly field: FieldKey;
 	readonly index?: number;
+}
+/**
+ * A node in a bind path
+ *
+ * @alpha
+ */
+export interface BindTree extends PathStep {
+	readonly children: Map<FieldKey, BindTree>;
+}
+
+/**
+ * A syntax node for the bind language
+ *
+ * @alpha
+ */
+export interface BindSyntaxTree extends PathStep {
+	readonly parent?: FieldKey | undefined;
 }
 
 /**
@@ -498,7 +515,7 @@ class AbstractDataBinder<
 	public register<K extends keyof Events<B>>(
 		anchor: EditableTree,
 		eventType: K,
-		eventPaths: BindPath[],
+		eventTrees: BindTree[],
 		listener: B[K],
 	): void {
 		// TODO: validate BindPath semantics against the schema
@@ -517,7 +534,10 @@ class AbstractDataBinder<
 			);
 		}
 		const contextType: BindingContextType = eventType as BindingContextType;
-		visitor.registerPaths(contextType, eventPaths);
+		for (const eventTree of eventTrees) {
+			const bindPaths = this.extractBindPaths(eventTree);
+			visitor.registerPaths(contextType, bindPaths);
+		}
 		this.unregisterHandles.add(this.events.on(eventType, listener));
 	}
 	public unregister(): void {
@@ -529,6 +549,21 @@ class AbstractDataBinder<
 			visitor.dispose();
 		}
 		this.visitors.clear();
+	}
+
+	public extractBindPaths(root: BindTree): BindPath[] {
+		const result: BindPath[] = [];
+		const depthFirst = (node: BindTree, path: PathStep[] = [root]): void => {
+			if (node.children.size === 0) {
+				result.push(path);
+				return;
+			}
+			for (const [field, childNode] of node.children.entries()) {
+				depthFirst(childNode, [...path, { field, index: childNode.index }]);
+			}
+		};
+		depthFirst(root);
+		return result;
 	}
 }
 
@@ -787,4 +822,24 @@ export function merge<T>(left: T[], right: T[], compareFn: CompareFunction<T>): 
 		}
 	}
 	return result.concat(left.slice(i)).concat(right.slice(j));
+}
+
+export function compileSyntaxTree(flatNodes: BindSyntaxTree[]): BindTree {
+	const nodes = new Map<FieldKey, BindTree>();
+	let rootNode: BindTree | undefined;
+	for (const node of flatNodes) {
+		const currentNode = { field: node.field, index: node.index, children: new Map() };
+		nodes.set(node.field, currentNode);
+		if (node.parent !== undefined) {
+			const parentNode = nodes.get(node.parent);
+			if (parentNode) {
+				parentNode.children.set(node.field, currentNode);
+			}
+		} else {
+			rootNode = currentNode;
+		}
+	}
+	if (rootNode === undefined) {
+		throw new Error("Invalid bind syntax tree. Root is undefined.");
+	} else return rootNode;
 }

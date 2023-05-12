@@ -31,9 +31,11 @@ export {
 	DataBinder,
 	BinderOptions,
 	FlushableBinderOptions,
+	FlushableDataBinder,
 	MatchPolicy,
 	SortPolicy,
-	FlushableDataBinder,
+	BindSyntaxTree,
+	BindTree,
 	DownPath,
 	BindPath,
 	PathStep,
@@ -56,6 +58,7 @@ export {
 	compareBinderEventsDeleteFirst,
 	compareAnchorsDepthFirst,
 	comparePipeline,
+	compileSyntaxTree,
 } from "./editableTreeBinder";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";

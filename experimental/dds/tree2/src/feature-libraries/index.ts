@@ -43,6 +43,8 @@ export {
 	FlushableDataBinder,
 	MatchPolicy,
 	SortPolicy,
+	BindSyntaxTree,
+	BindTree,
 	DownPath,
 	BindPath,
 	PathStep,
@@ -65,6 +67,7 @@ export {
 	compareBinderEventsDeleteFirst,
 	compareAnchorsDepthFirst,
 	comparePipeline,
+	compileSyntaxTree,
 } from "./editable-tree";
 
 export {
