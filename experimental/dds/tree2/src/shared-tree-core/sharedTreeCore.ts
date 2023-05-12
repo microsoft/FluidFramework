@@ -29,12 +29,11 @@ import {
 	AnchorSet,
 	Delta,
 	RevisionTag,
-	GraphCommit,
 	RepairDataStore,
 	ChangeFamilyEditor,
-	UndoRedoManager,
 	IRepairDataStoreProvider,
 	mintRevisionTag,
+	GraphCommit,
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
@@ -153,12 +152,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = uuid();
-		const undoRedoManager = UndoRedoManager.create(repairDataStoreProvider, changeFamily);
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
-			undoRedoManager,
-			undoRedoManager.clone(),
+			repairDataStoreProvider,
 			anchors,
 		);
 		this.editManager.on("newTrunkHead", (head) => {
@@ -234,7 +231,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * Submits an op to the Fluid runtime containing the given commit
 	 * @param commit - the commit to submit
 	 */
-	private submitCommit(commit: Commit<TChange>): void {
+	private submitCommit(commit: GraphCommit<TChange>): void {
 		// Edits should not be submitted until all transactions finish
 		assert(!this.isTransacting(), "Unexpected edit submitted during transaction");
 
@@ -244,7 +241,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
+			this.editManager.addSequencedChange(
+				{ ...commit, sessionId: this.editManager.localSessionId },
+				newRevision,
+				this.detachedRevision,
+			);
 		}
 		const message: Message = {
 			revision: commit.revision,
@@ -320,10 +321,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		}
 	}
 
-	protected get localBranchUndoRedoManager(): UndoRedoManager<TChange, TEditor> {
-		return this.editManager.localBranch.undoRedoManager;
-	}
-
 	/**
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.
@@ -360,8 +357,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	/**
 	 * @returns the head commit of the root local branch
 	 */
-	protected getLocalBranchHead(): GraphCommit<TChange> {
-		return this.editManager.localBranch.getHead();
+	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
+		return this.editManager.localBranch;
 	}
 
 	protected onDisconnect() {}

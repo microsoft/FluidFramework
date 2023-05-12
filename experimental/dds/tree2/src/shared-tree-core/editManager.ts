@@ -23,6 +23,7 @@ import {
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	IRepairDataStoreProvider,
 	mintCommit,
 	rebaseBranch,
 	rebaseChange,
@@ -38,7 +39,10 @@ export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 /**
  * Contains a single change to the `SharedTree` and associated metadata
  */
-export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
+export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {
+	/** An identifier representing the session/user/client that made this commit */
+	readonly sessionId: SessionId;
+}
 /**
  * A commit with a sequence number but no parentage; used for serializing the `EditManager` into a summary
  */
@@ -82,6 +86,11 @@ export class EditManager<
 	private trunk: TrunkCommit<TChangeset>;
 
 	/**
+	 * The {@link UndoRedoManager} associated with the trunk.
+	 */
+	private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
+
+	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
@@ -92,6 +101,11 @@ export class EditManager<
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
 	 */
 	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset>;
+
+	/**
+	 * The {@link UndoRedoManager} associated with the local branch.
+	 */
+	private readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
 
 	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence number of a commit on
@@ -129,15 +143,17 @@ export class EditManager<
 	}
 
 	/**
-	 * @param localBranchUndoRedoManager - the {@link UndoRedoManager} associated with the local branch.
-	 * @param trunkUndoRedoManager - the {@link UndoRedoManager} associated with the trunk.
+	 *
+	 * @param changeFamily - the change family of changes on the trunk and local branch
+	 * @param localSessionId - the id of the local session that will be used for local commits
+	 * @param repairDataStoreProvider - used for undoing/redoing the local branch
+	 * @param anchors - an optional set of anchors to be rebased by the local branch when it changes
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
-		localSessionId: SessionId,
-		public readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, any>,
-		private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, any>,
+		public readonly localSessionId: SessionId,
+		repairDataStoreProvider: IRepairDataStoreProvider,
 		anchors?: AnchorSet,
 	) {
 		super("EditManager");
@@ -148,11 +164,15 @@ export class EditManager<
 			sequenceNumber: minimumPossibleSequenceNumber,
 		};
 		this.trunk = this.trunkBase;
+		this.localBranchUndoRedoManager = UndoRedoManager.create(
+			repairDataStoreProvider,
+			changeFamily,
+		);
+		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
 		this.localBranch = new SharedTreeBranch(
 			this.trunk,
-			localSessionId,
 			changeFamily,
-			localBranchUndoRedoManager,
+			this.localBranchUndoRedoManager,
 			anchors,
 		);
 		// This registers each fork of the local branch, rather than registering the local branch directly.
@@ -163,10 +183,6 @@ export class EditManager<
 		// actually safely evict that last commit (assuming there are no other outstanding branches).
 		// TODO: Fiddle with the local case of addSequencedChange some more, and see if you can make it actually do a rebase.
 		this.localBranch.on("fork", (fork) => this.registerBranch(fork));
-	}
-
-	public get localSessionId(): SessionId {
-		return this.localBranch.sessionId;
 	}
 
 	/**
@@ -359,7 +375,7 @@ export class EditManager<
 					sessionId,
 					{
 						base: ancestor.revision,
-						commits: branchPath,
+						commits: branchPath.map((c) => ({ ...c, sessionId })),
 					},
 				];
 			}),
@@ -386,7 +402,7 @@ export class EditManager<
 		this.localBranch.setHead(this.trunk);
 
 		for (const [sessionId, branch] of data.branches) {
-			const commit =
+			const commit: GraphCommit<TChangeset> =
 				findAncestor(this.trunk, (r) => r.revision === branch.base) ??
 				fail("Expected summary branch to be based off of a revision in the trunk");
 
@@ -466,7 +482,14 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk, this.trunkUndoRedoManager);
+		// Constructing this short-lived SharedTreeBranch for the trunk allows the local branch
+		// to rebase onto it. TODO: Investigate if `this.trunk` can be a SharedTreeBranch.
+		const trunkBranch = new SharedTreeBranch(
+			this.trunk,
+			this.changeFamily,
+			this.trunkUndoRedoManager,
+		);
+		this.localBranch.rebaseOnto(trunkBranch);
 	}
 
 	public findLocalCommit(
@@ -521,11 +544,11 @@ export interface SummaryData<TChangeset> {
 /**
  * @returns the path from the base of a branch to its head
  */
-function getPathFromBase<TChange>(
-	branchHead: GraphCommit<TChange>,
-	baseBranchHead: GraphCommit<TChange>,
-): GraphCommit<TChange>[] {
-	const path: GraphCommit<TChange>[] = [];
+function getPathFromBase<TCommit extends { parent?: TCommit }>(
+	branchHead: TCommit,
+	baseBranchHead: TCommit,
+): TCommit[] {
+	const path: TCommit[] = [];
 	assert(
 		findCommonAncestor([branchHead, path], baseBranchHead) !== undefined,
 		0x573 /* Expected branches to be related */,

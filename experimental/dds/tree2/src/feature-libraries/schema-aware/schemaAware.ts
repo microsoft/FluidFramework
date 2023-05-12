@@ -245,29 +245,29 @@ export type UntypedApi<Mode extends ApiMode> = {
 }[Mode];
 
 /**
- * Generate a schema aware API for a list of types.
- *
- * @remarks
- * The arguments here are in an order that makes the truncated strings printed for the types more useful.
- * This is important since this generic type is not inlined when recursing.
- * That mens it will show up in IntelliSense and errors.
+ * Generate a schema aware API for a single tree schema.
  * @alpha
  */
-export type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = CollectOptions<
-	Mode,
-	TypedFields<
-		Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode,
-		TSchema["localFieldsObject"]
-	>,
-	TSchema["value"],
-	TSchema["name"]
+export type TypedNode<
+	TSchema extends TreeSchema,
+	Mode extends ApiMode = ApiMode.Editable,
+> = InternalTypedSchemaTypes.FlattenKeys<
+	CollectOptions<
+		Mode,
+		TypedFields<
+			Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode,
+			TSchema["localFieldsObject"]
+		>,
+		TSchema["value"],
+		TSchema["name"]
+	>
 >;
 
 /**
  * Generate a schema aware API for a single tree schema.
  * @alpha
+ * @deprecated Use `TypedNode` instead (and reverse the type parameter order).
  */
-// TODO: make InternalTypedSchemaTypes.FlattenKeys work here for recursive types?
 export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<
 	TSchema,
 	Mode
@@ -281,7 +281,7 @@ export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = Type
 export function downCast<TSchema extends TreeSchema>(
 	schema: TSchema,
 	tree: UntypedTreeCore,
-): tree is NodeDataFor<ApiMode.Editable, TSchema> {
+): tree is TypedNode<TSchema> {
 	if (typeof tree !== "object") {
 		return false;
 	}
