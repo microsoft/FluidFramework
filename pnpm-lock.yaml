@@ -32,10 +32,10 @@ importers:
         version: 0.2.158186
       '@microsoft/api-documenter':
         specifier: ^7.21.6
-        version: 7.22.4
+        version: 7.22.5
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@octokit/core':
         specifier: ^4.0.5
         version: 4.2.0
@@ -162,7 +162,7 @@ importers:
         version: link:../../../packages/test/test-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -217,7 +217,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -275,7 +275,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/jsrsasign':
         specifier: ^8.0.8
         version: 8.0.13
@@ -4936,7 +4936,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/node':
         specifier: ^14.18.38
         version: 14.18.46
@@ -5974,7 +5974,7 @@ importers:
         version: 17.0.2(react@17.0.2)
       react-virtualized-auto-sizer:
         specifier: ^1.0.6
-        version: 1.0.9(react-dom@17.0.2)(react@17.0.2)
+        version: 1.0.7(react-dom@17.0.2)(react@17.0.2)
     devDependencies:
       '@fluidframework/build-common':
         specifier: ^1.1.0
@@ -6335,7 +6335,7 @@ importers:
         version: link:../../../../packages/test/mocha-test-setup
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.5
@@ -6497,7 +6497,7 @@ importers:
         version: link:../../../../packages/test/test-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.14.194
@@ -7256,7 +7256,7 @@ importers:
         version: link:../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -7341,7 +7341,7 @@ importers:
         version: link:../../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -7432,7 +7432,7 @@ importers:
         version: link:../../../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -7523,7 +7523,7 @@ importers:
         version: link:../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.5
@@ -7662,7 +7662,7 @@ importers:
         version: link:../../../packages/framework/undo-redo
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.5
@@ -7765,7 +7765,7 @@ importers:
         version: 1.20.2(graphql@15.8.0)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -7898,7 +7898,7 @@ importers:
         version: link:../../../packages/test/test-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.5
@@ -8004,7 +8004,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/node':
         specifier: ^14.18.38
         version: 14.18.46
@@ -8068,7 +8068,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -8132,7 +8132,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/node':
         specifier: ^14.18.38
         version: 14.18.46
@@ -8193,7 +8193,7 @@ importers:
         version: link:../../../packages/runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@rushstack/eslint-config':
         specifier: ^2.5.1
         version: 2.6.2(eslint@8.6.0)(typescript@4.5.5)
@@ -8281,7 +8281,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/events':
         specifier: ^3.0.0
         version: 3.0.0
@@ -8323,7 +8323,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/node':
         specifier: ^14.18.38
         version: 14.18.46
@@ -8368,7 +8368,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -8447,7 +8447,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -8517,7 +8517,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -8608,7 +8608,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -8702,7 +8702,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -8811,7 +8811,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -8932,7 +8932,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@tiny-calc/micro':
         specifier: 0.0.0-alpha.5
         version: 0.0.0-alpha.5
@@ -9062,7 +9062,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.5
@@ -9168,7 +9168,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -9259,7 +9259,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/events':
         specifier: ^3.0.0
         version: 3.0.0
@@ -9359,7 +9359,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -9480,7 +9480,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.5
@@ -9601,7 +9601,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/benchmark':
         specifier: ^2.1.0
         version: 2.1.2
@@ -9701,7 +9701,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/benchmark':
         specifier: ^2.1.0
         version: 2.1.2
@@ -9819,7 +9819,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -9974,7 +9974,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -10041,7 +10041,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/node':
         specifier: ^14.18.38
         version: 14.18.46
@@ -10099,7 +10099,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/jest':
         specifier: 22.2.3
         version: 22.2.3
@@ -10169,7 +10169,7 @@ importers:
         version: /@fluidframework/file-driver@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/node':
         specifier: ^14.18.38
         version: 14.18.46
@@ -10342,7 +10342,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/jsrsasign':
         specifier: ^8.0.8
         version: 8.0.13
@@ -10463,7 +10463,7 @@ importers:
         version: /@fluidframework/odsp-driver@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -10545,7 +10545,7 @@ importers:
         version: 1.2.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -10676,7 +10676,7 @@ importers:
         version: /@fluidframework/replay-driver@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -10779,7 +10779,7 @@ importers:
         version: /@fluidframework/routerlicious-driver@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -11164,7 +11164,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -11279,7 +11279,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -11340,7 +11340,7 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -11446,7 +11446,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -11519,7 +11519,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.5
@@ -11610,7 +11610,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -11704,7 +11704,7 @@ importers:
         version: link:../../dds/sequence
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -11783,7 +11783,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -11862,7 +11862,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.5
@@ -11946,7 +11946,7 @@ importers:
         version: /@fluidframework/synthesize@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -12022,7 +12022,7 @@ importers:
         version: /@fluidframework/test-client-utils@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/uuid':
         specifier: ^8.3.0
         version: 8.3.4
@@ -12116,7 +12116,7 @@ importers:
         version: /@fluidframework/tinylicious-client@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -12192,7 +12192,7 @@ importers:
         version: /@fluidframework/undo-redo@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/diff':
         specifier: ^3.5.1
         version: 3.5.5
@@ -12283,7 +12283,7 @@ importers:
         version: /@fluidframework/view-adapters@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/react':
         specifier: 17.0.52
         version: 17.0.52
@@ -12332,7 +12332,7 @@ importers:
         version: /@fluidframework/view-interfaces@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/react':
         specifier: 17.0.52
         version: 17.0.52
@@ -12432,7 +12432,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/double-ended-queue':
         specifier: ^2.1.0
         version: 2.1.2
@@ -12532,7 +12532,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -12635,7 +12635,7 @@ importers:
         version: link:../../runtime/runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -12723,7 +12723,7 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -12905,7 +12905,7 @@ importers:
         version: link:../test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/double-ended-queue':
         specifier: ^2.1.0
         version: 2.1.2
@@ -12999,7 +12999,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -13093,7 +13093,7 @@ importers:
         version: link:../test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -13178,7 +13178,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -13233,7 +13233,7 @@ importers:
         version: link:../../test/mocha-test-setup
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/events':
         specifier: ^3.0.0
         version: 3.0.0
@@ -13318,7 +13318,7 @@ importers:
         version: /@fluidframework/runtime-definitions@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       concurrently:
         specifier: ^7.6.0
         version: 7.6.0
@@ -13391,7 +13391,7 @@ importers:
         version: /@fluidframework/runtime-utils@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -13512,7 +13512,7 @@ importers:
         version: /@fluidframework/test-runtime-utils@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/jsrsasign':
         specifier: ^8.0.8
         version: 8.0.13
@@ -13865,7 +13865,7 @@ importers:
         version: /@fluidframework/mocha-test-setup@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -14178,7 +14178,7 @@ importers:
         version: /@fluidframework/test-driver-definitions@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -14284,7 +14284,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -14925,7 +14925,7 @@ importers:
         version: /@fluidframework/test-utils@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
@@ -15191,7 +15191,7 @@ importers:
         version: link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.5
@@ -15285,7 +15285,7 @@ importers:
         version: link:../../../test/mocha-test-setup
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.5
@@ -15457,7 +15457,7 @@ importers:
         version: link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@types/chai':
         specifier: ^4.0.0
         version: 4.3.5
@@ -15614,7 +15614,7 @@ importers:
         version: link:../../../framework/tinylicious-client
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8
+        version: 7.34.9
       '@testing-library/dom':
         specifier: ^8.2.0
         version: 8.20.0
@@ -15989,7 +15989,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/json-stable-stringify':
         specifier: ^1.0.32
         version: 1.0.34
@@ -16301,7 +16301,7 @@ importers:
         version: /@fluidframework/telemetry-utils@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
@@ -16404,7 +16404,7 @@ importers:
         version: /@fluidframework/tool-utils@2.0.0-internal.4.1.0
       '@microsoft/api-extractor':
         specifier: ^7.34.4
-        version: 7.34.8(@types/node@14.18.46)
+        version: 7.34.9(@types/node@14.18.46)
       '@types/debug':
         specifier: ^4.1.5
         version: 4.1.7
@@ -19894,7 +19894,7 @@ packages:
       '@oclif/plugin-plugins': 2.4.7(@types/node@14.18.46)(typescript@4.5.5)
       '@oclif/test': 2.3.19(@types/node@14.18.46)(typescript@4.5.5)
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0(@types/node@14.18.46)
+      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.46)
       async: 3.2.4
       chalk: 2.4.2
       date-fns: 2.30.0
@@ -19947,7 +19947,7 @@ packages:
       '@oclif/plugin-plugins': 2.4.7(@types/node@14.18.46)(typescript@4.5.5)
       '@oclif/test': 2.3.19(@types/node@14.18.46)(typescript@4.5.5)
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0(@types/node@14.18.46)
+      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.46)
       async: 3.2.4
       chalk: 2.4.2
       date-fns: 2.30.0
@@ -20000,7 +20000,7 @@ packages:
       '@oclif/plugin-plugins': 2.4.7(typescript@4.5.5)
       '@oclif/test': 2.3.19(typescript@4.5.5)
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/node-core-library': 3.59.0
       async: 3.2.4
       chalk: 2.4.2
       date-fns: 2.30.0
@@ -20328,7 +20328,7 @@ packages:
       '@fluidframework/bundle-size-tools': 0.17.0
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0(@types/node@14.18.46)
+      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.46)
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
@@ -20377,7 +20377,7 @@ packages:
       '@fluidframework/bundle-size-tools': 0.17.0(webpack-cli@4.10.0)
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0(@types/node@14.18.46)
+      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.46)
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
@@ -20426,7 +20426,7 @@ packages:
       '@fluidframework/bundle-size-tools': 0.17.0
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/node-core-library': 3.59.0
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
@@ -20475,7 +20475,7 @@ packages:
       '@fluidframework/bundle-size-tools': 0.17.0(webpack-cli@4.10.0)
       '@manypkg/get-packages': 2.1.0
       '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/node-core-library': 3.59.0
       async: 3.2.4
       chalk: 2.4.2
       commander: 6.2.1
@@ -24449,13 +24449,13 @@ packages:
     resolution: {integrity: sha512-H1rQc1ZOHANWBvPcW+JpGwr+juXSxM8Q8YCkm3GhZd8REu1fHR3z99CErO1p9pkcfcxZnMdIZdIsXkOHY0NilA==}
     dev: true
 
-  /@microsoft/api-documenter@7.22.4:
-    resolution: {integrity: sha512-d4htEhBd8UkFKff/+/nAi/z7rrspm1DanFmsRHLUp4gKMo/8hYDH/IQBWB4r9X/8X72jCv3I++VVWAfichL1rw==}
+  /@microsoft/api-documenter@7.22.5:
+    resolution: {integrity: sha512-umZ2Xn/q8CXi31pQ3+6aQdjmNULej41VSuKm5AFf8QT/75bqJmjstiwb4t1M9I4ZBIrfnGcn217h9XKp0Xkf9w==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.26.8
+      '@microsoft/api-extractor-model': 7.26.9
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/node-core-library': 3.59.0
       '@rushstack/ts-command-line': 4.13.2
       colors: 1.2.5
       js-yaml: 3.13.1
@@ -24464,34 +24464,34 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model@7.26.8:
-    resolution: {integrity: sha512-ESj3bBJkiMg/8tS0PW4+2rUgTVwOEfy41idTnFgdbVX+O50bN6S99MV6FIPlCZWCnRDcBfwxRXLdAkOQQ0JqGw==}
+  /@microsoft/api-extractor-model@7.26.9:
+    resolution: {integrity: sha512-1AowqcRy5qMH/OB7UNkdXa4qLoJp58WFdJ026IMFS8skA0OOAOcvBV/Fi4L7fO1R/8uCMz5KHi3NsqVH4Li8xg==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/node-core-library': 3.59.0
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor-model@7.26.8(@types/node@14.18.46):
-    resolution: {integrity: sha512-ESj3bBJkiMg/8tS0PW4+2rUgTVwOEfy41idTnFgdbVX+O50bN6S99MV6FIPlCZWCnRDcBfwxRXLdAkOQQ0JqGw==}
+  /@microsoft/api-extractor-model@7.26.9(@types/node@14.18.46):
+    resolution: {integrity: sha512-1AowqcRy5qMH/OB7UNkdXa4qLoJp58WFdJ026IMFS8skA0OOAOcvBV/Fi4L7fO1R/8uCMz5KHi3NsqVH4Li8xg==}
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.58.0(@types/node@14.18.46)
+      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.46)
     transitivePeerDependencies:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor@7.34.8:
-    resolution: {integrity: sha512-2Eh1PlZ8wULtH3kyAWcj62gFtjGKRXrEplsCO54vMLjiav3qet454VpSBXwKkXBenBylZRMk3SMBcpcuJ8RnKQ==}
+  /@microsoft/api-extractor@7.34.9:
+    resolution: {integrity: sha512-dasBIbqgHgxvfRfEOX4+ynNYQPnTYc6k7jkL3V4f/MoaS2xFUoIj/D71crrsDxf5MNMybjzeyZPdRNZdzvKBVw==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.26.8
+      '@microsoft/api-extractor-model': 7.26.9
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.58.0
+      '@rushstack/node-core-library': 3.59.0
       '@rushstack/rig-package': 0.3.18
       '@rushstack/ts-command-line': 4.13.2
       colors: 1.2.5
@@ -24504,14 +24504,14 @@ packages:
       - '@types/node'
     dev: true
 
-  /@microsoft/api-extractor@7.34.8(@types/node@14.18.46):
-    resolution: {integrity: sha512-2Eh1PlZ8wULtH3kyAWcj62gFtjGKRXrEplsCO54vMLjiav3qet454VpSBXwKkXBenBylZRMk3SMBcpcuJ8RnKQ==}
+  /@microsoft/api-extractor@7.34.9(@types/node@14.18.46):
+    resolution: {integrity: sha512-dasBIbqgHgxvfRfEOX4+ynNYQPnTYc6k7jkL3V4f/MoaS2xFUoIj/D71crrsDxf5MNMybjzeyZPdRNZdzvKBVw==}
     hasBin: true
     dependencies:
-      '@microsoft/api-extractor-model': 7.26.8(@types/node@14.18.46)
+      '@microsoft/api-extractor-model': 7.26.9(@types/node@14.18.46)
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.58.0(@types/node@14.18.46)
+      '@rushstack/node-core-library': 3.59.0(@types/node@14.18.46)
       '@rushstack/rig-package': 0.3.18
       '@rushstack/ts-command-line': 4.13.2
       colors: 1.2.5
@@ -25723,8 +25723,8 @@ packages:
       - typescript
     dev: true
 
-  /@rushstack/node-core-library@3.58.0:
-    resolution: {integrity: sha512-DHAZ3LTOEq2/EGURznpTJDnB3SNE2CKMDXuviQ6afhru6RykE3QoqXkeyjbpLb5ib5cpIRCPE/wykNe0xmQj3w==}
+  /@rushstack/node-core-library@3.59.0:
+    resolution: {integrity: sha512-f8ilzooAu8vj60dDe7weqHvR1NujOaKfe3TaNgAoT22rk+daUTmDtY3TlVGJ3HayVPmw3ffWToDatITi7Ic4ag==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -25740,8 +25740,8 @@ packages:
       z-schema: 5.0.5
     dev: true
 
-  /@rushstack/node-core-library@3.58.0(@types/node@14.18.46):
-    resolution: {integrity: sha512-DHAZ3LTOEq2/EGURznpTJDnB3SNE2CKMDXuviQ6afhru6RykE3QoqXkeyjbpLb5ib5cpIRCPE/wykNe0xmQj3w==}
+  /@rushstack/node-core-library@3.59.0(@types/node@14.18.46):
+    resolution: {integrity: sha512-f8ilzooAu8vj60dDe7weqHvR1NujOaKfe3TaNgAoT22rk+daUTmDtY3TlVGJ3HayVPmw3ffWToDatITi7Ic4ag==}
     peerDependencies:
       '@types/node': '*'
     peerDependenciesMeta:
@@ -43874,16 +43874,6 @@ packages:
   /react-virtualized-auto-sizer@1.0.7(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-Mxi6lwOmjwIjC1X4gABXMJcKHsOo0xWl3E3ugOgufB8GJU+MqrtY35aBuvCYv/razQ1Vbp7h1gWJjGjoNN5pmA==}
     engines: {node: '>8.0.0'}
-    peerDependencies:
-      react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc || 17.0.2
-      react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc || 17.0.2
-    dependencies:
-      react: 17.0.2
-      react-dom: 17.0.2(react@17.0.2)
-    dev: false
-
-  /react-virtualized-auto-sizer@1.0.9(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-O1pYgygCDtFKa9GaKJtX5Ws/QRqxkx2zPlXZqEoRXCMmnNuhoMk5nhXCQqixsc1AcrUzOJwKdzEaDAU9WQ6aJQ==}
     peerDependencies:
       react: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc || 17.0.2
       react-dom: ^15.3.0 || ^16.0.0-alpha || ^17.0.0 || ^18.0.0-rc || 17.0.2
