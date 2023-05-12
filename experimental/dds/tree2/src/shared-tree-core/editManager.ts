@@ -5,15 +5,7 @@
 
 import BTree from "sorted-btree";
 import { assert } from "@fluidframework/common-utils";
-import {
-	brand,
-	Brand,
-	fail,
-	getOrCreate,
-	mapIterable,
-	Mutable,
-	RecursiveReadonly,
-} from "../util";
+import { brand, Brand, fail, getOrCreate, mapIterable, Mutable, RecursiveReadonly } from "../util";
 import {
 	AnchorSet,
 	assertIsRevisionTag,
@@ -76,9 +68,12 @@ export class EditManager<
 	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
 	private readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
 	/** Records extra data associated with trunk commits */
-	private readonly trunkMetadata = new Map<RevisionTag, { sequenceNumber: SeqNumber, sessionId: SessionId }>();
-		/** A map from a sequence number to the commit in the trunk which has that sequence number */
-		private readonly sequenceMap = new BTree<SeqNumber, GraphCommit<TChangeset>>();
+	private readonly trunkMetadata = new Map<
+		RevisionTag,
+		{ sequenceNumber: SeqNumber; sessionId: SessionId }
+	>();
+	/** A map from a sequence number to the commit in the trunk which has that sequence number */
+	private readonly sequenceMap = new BTree<SeqNumber, GraphCommit<TChangeset>>();
 
 	/** The {@link UndoRedoManager} associated with the trunk */
 	private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
@@ -174,13 +169,13 @@ export class EditManager<
 	 */
 	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
 		const trackBranch = (b: SharedTreeBranch<TEditor, TChangeset>): SeqNumber => {
-			const trunkCommit = findCommonAncestor(this.trunk.getHead(), b.getHead()) ?? fail("Expected branch to be related to trunk");
-			const sequenceNumber = this.trunkMetadata.get(trunkCommit.revision)?.sequenceNumber ?? minimumPossibleSequenceNumber;
-			const branches = getOrCreate(
-				this.trunkBranches,
-				sequenceNumber,
-				() => new Set(),
-			);
+			const trunkCommit =
+				findCommonAncestor(this.trunk.getHead(), b.getHead()) ??
+				fail("Expected branch to be related to trunk");
+			const sequenceNumber =
+				this.trunkMetadata.get(trunkCommit.revision)?.sequenceNumber ??
+				minimumPossibleSequenceNumber;
+			const branches = getOrCreate(this.trunkBranches, sequenceNumber, () => new Set());
 
 			assert(!branches.has(b), 0x670 /* Branch was registered more than once */);
 			branches.add(b);
@@ -270,7 +265,9 @@ export class EditManager<
 				// no existing branches that are based off of any of the commits being removed.
 				(newTrunkTail as Mutable<GraphCommit<TChangeset>>).parent = this.trunkBase;
 
-				const sequenceNumber = this.trunkMetadata.get(newTrunkTail.revision)?.sequenceNumber ?? minimumPossibleSequenceNumber;
+				const sequenceNumber =
+					this.trunkMetadata.get(newTrunkTail.revision)?.sequenceNumber ??
+					minimumPossibleSequenceNumber;
 				this.sequenceMap.forRange(
 					minimumPossibleSequenceNumber,
 					sequenceNumber,
@@ -332,7 +329,10 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
-		const trunk = getPathFromBase(this.trunk.getHead(), this.trunkBase).map((c) => ({...c, ...this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit") }));
+		const trunk = getPathFromBase(this.trunk.getHead(), this.trunkBase).map((c) => ({
+			...c,
+			...(this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit")),
+		}));
 		const branches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
@@ -359,15 +359,20 @@ export class EditManager<
 			"Attempted to load from summary after edit manager was already mutated",
 		);
 		this.sequenceMap.clear();
-		this.trunk.setHead(data.trunk.reduce((base, c) => {
-			const commit = mintCommit(base, c);
-			this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
-				this.changeFamily.intoDelta(commit.change),
-			);
-			this.sequenceMap.set(c.sequenceNumber, commit);
-			this.trunkMetadata.set(c.revision, { sequenceNumber: c.sequenceNumber, sessionId: c.sessionId });
-			return commit;
-		}, this.trunkBase));
+		this.trunk.setHead(
+			data.trunk.reduce((base, c) => {
+				const commit = mintCommit(base, c);
+				this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
+					this.changeFamily.intoDelta(commit.change),
+				);
+				this.sequenceMap.set(c.sequenceNumber, commit);
+				this.trunkMetadata.set(c.revision, {
+					sequenceNumber: c.sequenceNumber,
+					sessionId: c.sessionId,
+				});
+				return commit;
+			}, this.trunkBase),
+		);
 
 		this.localBranch.setHead(this.trunk.getHead());
 
@@ -389,7 +394,9 @@ export class EditManager<
 	}
 
 	public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
-		return getPathFromBase(this.localBranch.getHead(), this.trunk.getHead()).map((c) => c.change);
+		return getPathFromBase(this.localBranch.getHead(), this.trunk.getHead()).map(
+			(c) => c.change,
+		);
 	}
 
 	public addSequencedChange(
@@ -451,7 +458,7 @@ export class EditManager<
 				change: newChangeFullyRebased,
 			});
 		}
-		
+
 		this.localBranch.rebaseOnto(this.trunk);
 	}
 
@@ -485,7 +492,7 @@ export class EditManager<
 			this.changeFamily.intoDelta(commit.change),
 		);
 		this.sequenceMap.set(sequenceNumber, trunkHead);
-		this.trunkMetadata.set(trunkHead.revision, {sequenceNumber, sessionId: commit.sessionId});
+		this.trunkMetadata.set(trunkHead.revision, { sequenceNumber, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);
 	}
 }

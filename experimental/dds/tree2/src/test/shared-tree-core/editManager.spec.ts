@@ -735,9 +735,7 @@ function checkChangeList(manager: TestEditManager, intentions: number[]): void {
 }
 
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
-	return manager
-		.getTrunkChanges()
-		.concat(manager.getLocalChanges());
+	return manager.getTrunkChanges().concat(manager.getLocalChanges());
 }
 
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
