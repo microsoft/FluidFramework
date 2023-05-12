@@ -451,15 +451,8 @@ export class EditManager<
 				change: newChangeFullyRebased,
 			});
 		}
-
-		// Constructing this short-lived SharedTreeBranch for the trunk allows the local branch
-		// to rebase onto it. TODO: Investigate if `this.trunk` can be a SharedTreeBranch.
-		const trunkBranch = new SharedTreeBranch(
-			this.trunk.getHead(),
-			this.changeFamily,
-			this.trunkUndoRedoManager,
-		);
-		this.localBranch.rebaseOnto(trunkBranch);
+		
+		this.localBranch.rebaseOnto(this.trunk);
 	}
 
 	public findLocalCommit(
