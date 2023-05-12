@@ -14,10 +14,13 @@
         "/nodejs/client_wasm.d.ts",
         "/bundler/client_wasm_bg.wasm",
         "/bundler/client_wasm.js",
-        "/bundler/client_wasm_bg.js"
+        "/bundler/client_wasm_bg.js",
+        "/bundler/entry.js"
     ],
     "main": "./nodejs/client_wasm.js",
     "types": "./nodejs/client_wasm.d.ts",
-    "module": "./bundler/client_wasm.js",
-    "sideEffects": false
+    "module": "./bundler/entry.js",
+    "sideEffects": [
+        "./bundler/client_wasm.js"
+    ]
 }
