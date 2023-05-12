@@ -154,9 +154,13 @@
 		"pnpm": "7"
 	},
 	"pnpm": {
+		"comments": [
+			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details."
+		],
 		"overrides": {
 			"@types/node": "^14.18.38",
 			"node-fetch": "^2.6.9",
+			"nodegit": "npm:empty-npm-package@1.0.0",
 			"qs": "^6.11.0"
 		},
 		"peerDependencyRules": {
