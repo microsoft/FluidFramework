@@ -10,6 +10,7 @@ import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver
 import {
 	ISnapshotTree,
 	ISummaryBlob,
+	ISummaryHandle,
 	ISummaryTree,
 	IVersion,
 	SummaryObject,
@@ -57,7 +58,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param name - The name of the blob
 	 * @returns - True if the blob is compressed.
 	 */
-	private hasCompression(name: string): boolean {
+	private static hasCompression(name: string): boolean {
 		const trimmed = name.trim();
 		return trimmed.startsWith(DocumentStorageServiceCompressionAdapter.compressed_prefix);
 	}
@@ -67,8 +68,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * into the number. It also asserts that the algorithm string represents the number.
 	 * @param name - The name of the blob
 	 */
-	private extractAlgorithm(name: string): number {
-		const algorithmStr = this.extractAlgorithmString(name);
+	private static extractAlgorithm(name: string): number {
+		const algorithmStr = DocumentStorageServiceCompressionAdapter.extractAlgorithmString(name);
 		assert(algorithmStr !== undefined, "Algorithm string is undefined");
 		assert(!isNaN(parseInt(algorithmStr, 10)), "Algorithm string is not a number");
 		return parseInt(algorithmStr, 10);
@@ -80,8 +81,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * located as follows "compressed_\<algorithm string\>_\<blob name\>"
 	 * @param name - The name of the blob
 	 */
-	private extractAlgorithmString(name: string): string | undefined {
-		assert(this.hasCompression(name), "Blob has no compression");
+	private static extractAlgorithmString(name: string): string | undefined {
+		assert(
+			DocumentStorageServiceCompressionAdapter.hasCompression(name),
+			"Blob has no compression",
+		);
 		const trimmed = name.trim();
 		const regex = new RegExp(
 			`^${DocumentStorageServiceCompressionAdapter.compressed_prefix}(.+?)_`,
@@ -95,7 +99,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * return the same path
 	 * @param name - The path of the blob
 	 */
-	private decodeName(name: string): string {
+	private static decodeName(name: string): string {
 		if (!this.hasCompression(name)) {
 			return name;
 		}
@@ -103,7 +107,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			.trim()
 			.substring(DocumentStorageServiceCompressionAdapter.compressed_prefix.length);
 
-		const algorithmStr = this.extractAlgorithmString(name);
+		const algorithmStr = DocumentStorageServiceCompressionAdapter.extractAlgorithmString(name);
 		if (algorithmStr !== undefined) {
 			decoded = decoded.substring(algorithmStr.length + 1);
 		}
@@ -123,11 +127,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			await this.decodeSnapshotBlobNames(obj);
 		}
 		for (const key of Object.keys(snapshot.blobs)) {
-			if (!this.hasCompression(key)) {
+			if (!DocumentStorageServiceCompressionAdapter.hasCompression(key)) {
 				continue;
 			}
-			const algorithm = this.extractAlgorithm(key);
-			const origKey = this.decodeName(key);
+			const algorithm = DocumentStorageServiceCompressionAdapter.extractAlgorithm(key);
+			const origKey = DocumentStorageServiceCompressionAdapter.decodeName(key);
 			const blobId = snapshot.blobs[key];
 			if (blobId !== undefined) {
 				this._compressedBlobIds.set(blobId, algorithm);
@@ -136,6 +140,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 				delete snapshot.blobs[key];
 			}
 		}
+	}
+
+	private static toBinaryArray(input: string | Uint8Array): Uint8Array {
+		return typeof input === "string" ? new TextEncoder().encode(input) : input;
 	}
 
 	/**
@@ -147,44 +155,54 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param isUseB64OnCompressed - If true, the compressed blob will be encoded to base64 string
 	 * @returns - The compressed SummaryObject
 	 */
-	private static readonly blobReplacer = (
+	private static readonly blobEncoder = (
 		input: SummaryObject,
 		config: ICompressionStorageConfig,
 		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
-			const decompressed: Uint8Array =
-				typeof summaryBlob.content === "string"
-					? new TextEncoder().encode(summaryBlob.content)
-					: summaryBlob.content;
+			const original: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+				summaryBlob.content,
+			);
 			if (
 				config.minSizeToCompress !== undefined &&
-				decompressed.length < config.minSizeToCompress
+				original.length < config.minSizeToCompress
 			) {
 				return input;
 			}
-			const compressed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
-				decompressed,
+			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
+				original,
 				config.algorithm,
+				isUseB64OnCompressed,
 			);
-			let newSummaryBlob;
-			if (isUseB64OnCompressed) {
-				// TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummarPyBlob
-				// fails on assertion at 2 different generations of the hash which do not lead to
-				// the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
-				const compressedString = Uint8ArrayToString(IsoBuffer.from(compressed), "base64");
-				const compressedEncoded = new TextEncoder().encode(compressedString);
-				newSummaryBlob = {
-					type: SummaryType.Blob,
-					content: compressedEncoded,
-				};
-			} else {
-				newSummaryBlob = {
-					type: SummaryType.Blob,
-					content: IsoBuffer.from(compressed),
-				};
-			}
+			const newSummaryBlob = {
+				type: SummaryType.Blob,
+				content: IsoBuffer.from(processed),
+			};
+			return newSummaryBlob;
+		} else {
+			return input;
+		}
+	};
+
+	private static readonly blobDecoder = (
+		input: SummaryObject,
+		algorithm: SummaryCompressionAlgorithm | undefined,
+	): SummaryObject => {
+		if (input.type === SummaryType.Blob && algorithm !== undefined) {
+			const summaryBlob: ISummaryBlob = input;
+			const original: Uint8Array = DocumentStorageServiceCompressionAdapter.toBinaryArray(
+				summaryBlob.content,
+			);
+			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.decodeBlob(
+				original,
+				algorithm,
+			);
+			const newSummaryBlob = {
+				type: SummaryType.Blob,
+				content: IsoBuffer.from(processed),
+			};
 			return newSummaryBlob;
 		} else {
 			return input;
@@ -197,13 +215,27 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param algorithm - The algorithm to be used for compression
 	 * @returns - The compressed blob
 	 */
-	private static encodeBlob(file: ArrayBufferLike, algorithm: number): ArrayBufferLike {
+	private static encodeBlob(
+		file: ArrayBufferLike,
+		algorithm: number,
+		isUseB64OnCompressed: boolean,
+	): ArrayBufferLike {
 		let compressed: ArrayBufferLike;
 		if (algorithm === undefined || algorithm === SummaryCompressionAlgorithm.None) {
 			return file;
 		} else {
 			if (algorithm === SummaryCompressionAlgorithm.LZ4) {
 				compressed = compress(file) as ArrayBufferLike;
+				if (isUseB64OnCompressed) {
+					// TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummarPyBlob
+					// fails on assertion at 2 different generations of the hash which do not lead to
+					// the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
+					const compressedString = Uint8ArrayToString(
+						IsoBuffer.from(compressed),
+						"base64",
+					);
+					compressed = new TextEncoder().encode(compressedString);
+				}
 			} else {
 				throw new Error(`Unknown Algorithm ${algorithm}`);
 			}
@@ -259,18 +291,27 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns - The SummaryObject with the replaced SummaryBlob type blobs.
 	 */
 	private static recursivelyReplace(
+		isEncode: boolean,
 		input: SummaryObject,
-		replacer: (
+		encoder: (
 			input: SummaryObject,
 			config: ICompressionStorageConfig,
 			isUseB64OnCompressed: boolean,
 		) => SummaryObject,
+		decoder: (
+			input: SummaryObject,
+			algorithm: SummaryCompressionAlgorithm | undefined,
+		) => SummaryObject,
 		config: ICompressionStorageConfig,
 		isUseB64OnCompressed: boolean,
+		algorithm?: SummaryCompressionAlgorithm,
 		context?: ISummaryContext,
 	): SummaryObject {
 		assert(typeof input === "object", "input must be a non-null object");
-		const maybeReplaced = replacer(input, config, isUseB64OnCompressed);
+		const maybeReplaced = isEncode
+			? encoder(input, config, isUseB64OnCompressed)
+			: decoder(input, algorithm);
+
 		if (maybeReplaced !== input) {
 			return maybeReplaced;
 		}
@@ -279,11 +320,19 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			const value = input[key];
 
 			if (Boolean(value) && typeof value === "object") {
+				const myAlgorithm = isEncode
+					? undefined
+					: this.hasCompression(key)
+					? this.extractAlgorithm(key)
+					: undefined;
 				const replaced = this.recursivelyReplace(
+					isEncode,
 					value as SummaryObject,
-					replacer,
+					encoder,
+					decoder,
 					config,
 					isUseB64OnCompressed,
+					myAlgorithm,
 					context,
 				);
 				if (replaced !== value) {
@@ -292,7 +341,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 					if (replaced.type === SummaryType.Blob) {
 						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 						delete clone[key];
-						newKey = this.buildPrefix(config.algorithm) + key;
+						newKey = isEncode
+							? this.buildPrefix(config.algorithm) + key
+							: DocumentStorageServiceCompressionAdapter.decodeName(key);
 					}
 					clone[newKey] = replaced;
 				}
@@ -315,8 +366,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
 	): ISummaryTree {
 		const prep = DocumentStorageServiceCompressionAdapter.recursivelyReplace(
+			true,
 			summary,
-			DocumentStorageServiceCompressionAdapter.blobReplacer,
+			DocumentStorageServiceCompressionAdapter.blobEncoder,
+			DocumentStorageServiceCompressionAdapter.blobDecoder,
 			config,
 			isUseB64OnCompressed,
 		) as ISummaryTree;
@@ -381,5 +434,22 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			this._isUseB64OnCompressed,
 		);
 		return super.uploadSummaryWithContext(prep, context);
+	}
+
+	/**
+	 * This method downloads the summary from the storage and then applies decompression on the compressed blobs.
+	 * @param id - The ID of the summary to be downloaded
+	 * @returns - The summary with decompressed blobs
+	 */
+	public override async downloadSummary(id: ISummaryHandle): Promise<ISummaryTree> {
+		const summary = await super.downloadSummary(id);
+		return DocumentStorageServiceCompressionAdapter.recursivelyReplace(
+			false,
+			summary,
+			DocumentStorageServiceCompressionAdapter.blobEncoder,
+			DocumentStorageServiceCompressionAdapter.blobDecoder,
+			this._config,
+			this._isUseB64OnCompressed,
+		) as ISummaryTree;
 	}
 }

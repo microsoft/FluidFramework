@@ -9,9 +9,11 @@ import {
 	IClient,
 	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryBlob,
 	ISummaryHandle,
 	ISummaryTree,
 	IVersion,
+	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
 	FetchSource,
@@ -80,7 +82,8 @@ class InternalTestStorage implements IDocumentStorageService {
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
 	): Promise<ISnapshotTree | null> {
-		return snapshotTree;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return JSON.parse(JSON.stringify(snapshotTree));
 	}
 	async getVersions(
 		versionId: string | null,
@@ -94,7 +97,8 @@ class InternalTestStorage implements IDocumentStorageService {
 		throw new Error("Method not implemented.");
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
-		throw new Error("Method not implemented.");
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
+		return getCompressedHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
 		summary: ISummaryTree,
@@ -104,7 +108,8 @@ class InternalTestStorage implements IDocumentStorageService {
 		return "test";
 	}
 	async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-		throw new Error("Method not implemented.");
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._uploadedSummary!;
 	}
 	disposed?: boolean | undefined;
 	dispose?(error?: Error | undefined): void {
@@ -223,6 +228,49 @@ describe("Summary Compression Test", () => {
 		const keyName = "compressed_2_header";
 		assert(headerHolder.tree[keyName] !== undefined, `The header is not compressed ${keyName}`);
 	});
+	it("Verify Blob Enc/Dec Symetry", async () => {
+		const storage = (await buildCompressionStorage(true)) as DocumentStorageServiceProxy;
+		const summary = generateSummaryWithContent(1000);
+		const originHeaderHolder: ISummaryTree = getHeaderHolder(summary);
+		const originBlob = (originHeaderHolder.tree.header as ISummaryBlob).content;
+		await storage.uploadSummaryWithContext(summary, {
+			referenceSequenceNumber: 0,
+			proposalHandle: "test",
+			ackHandle: "test",
+		});
+		await storage.getSnapshotTree({ id: "test", treeId: "test" }, "test");
+		const blob: ArrayBufferLike = await storage.readBlob(
+			"ee84b67e86708c9dd7fc79ff8f3380b78f000b79",
+		);
+		const blobStr = new TextDecoder().decode(blob);
+		assert(blobStr === originBlob, "The origin and the downloaded blob are not the same");
+	});
+	it("Verify Upload / Download Summary", async () => {
+		const storage = (await buildCompressionStorage(true)) as DocumentStorageServiceProxy;
+		const summary = generateSummaryWithContent(1000);
+		const originBlobContent = getHeaderContent(summary);
+		await storage.uploadSummaryWithContext(summary, {
+			referenceSequenceNumber: 0,
+			proposalHandle: "test",
+			ackHandle: "test",
+		});
+		await storage.getSnapshotTree({ id: "test", treeId: "test" }, "test");
+		const summaryHandle: ISummaryHandle = {
+			type: SummaryType.Handle,
+			handleType: SummaryType.Tree,
+			handle: "test",
+		};
+		const downloadedSummary: ISummaryTree = await storage.downloadSummary(summaryHandle);
+		const downloadedBlobContentBin = getHeaderContent(downloadedSummary);
+		// const blobStr = new TextDecoder().decode(blob);
+		const downloadedBlobContent = new TextDecoder().decode(downloadedBlobContentBin);
+		assert(
+			originBlobContent === downloadedBlobContent,
+			`The origin and the downloaded blob are not the same
+		\norigin     : ${originBlobContent} 
+		\ndownloaded : ${downloadedBlobContent}`,
+		);
+	});
 });
 function checkCompressionConfig(
 	storage: IDocumentStorageService,
@@ -242,13 +290,24 @@ function checkCompressionConfig(
 }
 
 function getHeaderContent(summary: ISummaryTree) {
-	return getHeaderHolder(summary).tree.header["content"] as string;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return getHeader(summary)["content"];
 }
 
-/* getCompressedHeaderContent(summary: ISummaryTree) {
-	return getHeaderHolder(summary).tree.compressed_2_header["content"] as string;
+function getCompressedHeaderContent(summary: ISummaryTree) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return getCompressedHeader(summary)["content"];
 }
-*/
+
+function getHeader(summary: ISummaryTree) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return getHeaderHolder(summary).tree.header;
+}
+
+function getCompressedHeader(summary: ISummaryTree) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return getHeaderHolder(summary).tree.compressed_2_header;
+}
 
 function getHeaderHolder(summary: ISummaryTree) {
 	return (
