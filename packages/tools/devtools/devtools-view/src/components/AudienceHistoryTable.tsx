@@ -13,7 +13,7 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { Clock20Regular, DoorArrowLeft24Regular, Person24Regular } from "@fluentui/react-icons";
+import { Clock12Regular, DoorArrowLeftRegular, Person12Regular } from "@fluentui/react-icons";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 
 /**
@@ -41,14 +41,14 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 	];
 
 	return (
-		<Table size="small" aria-label="Audience history table">
+		<Table size="extra-small" aria-label="Audience history table">
 			<TableHeader>
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "event" && <DoorArrowLeft24Regular />}
-							{column.columnKey === "clientId" && <Person24Regular />}
-							{column.columnKey === "time" && <Clock20Regular />}
+							{column.columnKey === "event" && <DoorArrowLeftRegular />}
+							{column.columnKey === "clientId" && <Person12Regular />}
+							{column.columnKey === "time" && <Clock12Regular />}
 							{column.label}
 						</TableHeaderCell>
 					))}
@@ -60,7 +60,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 						key={itemIndex}
 						style={{
 							backgroundColor:
-								item.changeKind === "added"
+								item.changeKind === "joined"
 									? tokens.colorPaletteRoyalBlueBackground2
 									: tokens.colorPaletteRedBorder1,
 						}}

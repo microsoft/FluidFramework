@@ -33,7 +33,7 @@ export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
 	return (
 		<div style={{ width: "auto" }}>
 			{`${label}`}
-			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
+			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "10px" }}>
 				{nodeTypeMetadata === undefined ? "" : ` (${nodeTypeMetadata})`}
 			</span>
 			{inlineValue === undefined ? "" : ": "}
