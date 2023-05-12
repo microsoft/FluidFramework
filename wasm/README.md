@@ -7,8 +7,8 @@ For quick setup on windows, run `./init.ps1`
 For setup on linux or codespaces, install the following:
 
 1. [rust, rustup, and cargo](https://www.rust-lang.org/tools/install)
-1. [wasm-pack](https://rustwasm.github.io/wasm-pack/installer/)
-1. wasm-opt - `cargo install wasm-opt --version 0.112.0`
+1. wasm-pack - `npm i wasm-pack@0.10.3 -g`
+1. wasm-opt - `npm i wasm-opt@1.4.0 -g`
 1. wasm-snip - `cargo install wasm-snip --version 0.4.0`
 
 ## Architecture
