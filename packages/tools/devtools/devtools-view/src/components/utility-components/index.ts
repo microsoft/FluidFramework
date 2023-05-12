@@ -4,4 +4,3 @@
  */
 
 export { Accordion, AccordionProps } from "./Accordion";
-export { Tree, TreeProps } from "./Tree";

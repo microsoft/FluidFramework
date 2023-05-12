@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeItem } from "@fluentui/react-components/unstable";
 
 import { FluidObjectValueNode } from "@fluid-experimental/devtools-core";
 
-import { HasLabel } from "./CommonInterfaces";
+import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
 
 /**
  * {@link ValueView} input props.
  */
-export interface FluidValueViewProps extends HasLabel {
-	node: FluidObjectValueNode;
-}
+export type FluidValueViewProps = DataVisualizationTreeProps<FluidObjectValueNode>;
 
 /**
  * Render data with type VisualNodeKind.FluidValueNode and render its children.
@@ -24,10 +21,13 @@ export interface FluidValueViewProps extends HasLabel {
 export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { label, node } = props;
 
-	return (
-		// TODO: Remove TreeItem
-		<TreeItem>
-			<TreeHeader label={label} nodeTypeMetadata={node.typeMetadata} nodeValue={node.value} />
-		</TreeItem>
+	const header = (
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			inlineValue={String(node.value)}
+		/>
 	);
+
+	return <TreeItem header={header} />;
 }
