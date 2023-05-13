@@ -229,6 +229,8 @@ export async function start(
 ): Promise<void> {
 	let documentId: string = id;
 	let url = window.location.href;
+	console.log(fluidModule);
+	console.log(packageJson);
 
 	/**
 	 * For new documents, the `url` is of the format - http://localhost:8080/new or http://localhost:8080/manualAttach.
