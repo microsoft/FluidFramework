@@ -18,12 +18,12 @@ import {
 	IProvideRuntimeAttributor,
 } from "@fluid-experimental/attributor";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { makeModelRequestHandler } from "./modelLoader";
+import { makeModelRequestHandler } from "@fluid-example/example-utils";
 
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
 /**
- * ModelContainerRuntimeFactoryWithAttribution is an abstract class that gives a basic structure for container runtime initialization.
+ * ModelContainerRuntimeFactoryWithAttribution is an abstract class that gives a basic structure for container runtime initialization with attributor enabled.
  * It also requires a createModel method to returns the expected model type.
  */
 export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>

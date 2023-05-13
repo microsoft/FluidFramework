@@ -40,8 +40,10 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~"
 	},
 	"devDependencies": {

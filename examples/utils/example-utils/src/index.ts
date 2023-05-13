@@ -28,5 +28,4 @@ export {
 	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,
-	ModelContainerRuntimeFactoryWithAttribution,
 } from "./modelLoader";

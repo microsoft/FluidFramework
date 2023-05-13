@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactoryWithAttribution } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IRuntimeAttributor, IProvideRuntimeAttributor } from "@fluid-experimental/attributor";
+import { ModelContainerRuntimeFactoryWithAttribution } from "./modelContainerRuntimeFactoryWithAttribution";
 import { HitCounter } from "./dataObject";
 
 export interface IHitCounterAppModel {
