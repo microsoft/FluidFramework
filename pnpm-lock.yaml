@@ -4974,9 +4974,6 @@ importers:
 
   examples/utils/example-utils:
     dependencies:
-      '@fluid-experimental/attributor':
-        specifier: workspace:~
-        version: link:../../../packages/framework/attributor
       '@fluid-experimental/pact-map':
         specifier: workspace:~
         version: link:../../../packages/dds/pact-map
