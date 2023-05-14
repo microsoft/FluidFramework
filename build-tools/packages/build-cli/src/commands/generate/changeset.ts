@@ -57,8 +57,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			default: DEFAULT_BRANCH,
 		}),
 		empty: Flags.boolean({
-			description:
-				`Create an empty changeset file. If this flag is used, all other flags are ignored. A new, randomly named changeset file will be created every time --empty is used.`,
+			description: `Create an empty changeset file. If this flag is used, all other flags are ignored. A new, randomly named changeset file will be created every time --empty is used.`,
 		}),
 		all: Flags.boolean({
 			description: `Include ALL packages, including examples and other unpublished packages.`,
