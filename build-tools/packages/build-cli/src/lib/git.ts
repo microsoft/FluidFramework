@@ -142,13 +142,14 @@ export class Repository {
 		const files = await this.getChangedFilesSinceRef(ref, remote);
 		const dirs = await this.getChangedDirectoriesSinceRef(ref, remote);
 
-		const changedPackages = [
-			...new Set(
-				dirs
-					.map((dir) => readPkgUp.sync({ cwd: dir })?.packageJson.name)
-					.filter((name): name is string => name !== undefined),
-			),
-		]
+		const changedPackageNames = dirs
+			.map((dir) => {
+				const cwd = path.resolve(context.repo.resolvedRoot, dir);
+				return readPkgUp.sync({ cwd })?.packageJson.name;
+			})
+			.filter((name): name is string => name !== undefined);
+
+		const changedPackages = [...new Set(changedPackageNames)]
 			.map((name) => context.fullPackageMap.get(name))
 			.filter((pkg): pkg is Package => pkg !== undefined);
 

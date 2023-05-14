@@ -129,6 +129,10 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			releaseGroups: changedReleaseGroups,
 		} = await repo.getChangedSinceRef(branch, remote, context);
 
+		this.verbose(`release groups: ${changedReleaseGroups.join(", ")}`);
+		this.verbose(`packages: ${changedPackages.map((p) => p.name).join(", ")}`);
+		this.verbose(`files: ${changedFiles.join(", ")}`);
+
 		if (changedFiles.length === 0) {
 			this.error(`No changes when compared to ${branch}.`, { exit: 1 });
 		}
@@ -206,10 +210,6 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				);
 			}
 		}
-
-		this.verbose(changedReleaseGroups.join(", "));
-		this.verbose(changedPackages.map((p) => p.name).join(", "));
-		this.verbose(changedFiles.join(", "));
 
 		const response = await prompts({
 			choices: [...choices, { title: " ", heading: true, disabled: true }],

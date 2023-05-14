@@ -42,11 +42,11 @@
 			// Runs the `flub release report --all` command with a debugger attached.
 			"name": "flub generate changeset",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
-			"cwd": "${workspaceFolder}",
+			"cwd": "${workspaceFolder}/build-tools",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["generate", "changeset", "-v"]
+			"args": ["generate", "changeset", "-v", "-b", "main"]
 		},
 		{
 			"name": "flub bump deps",
