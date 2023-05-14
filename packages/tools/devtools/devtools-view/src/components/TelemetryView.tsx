@@ -99,14 +99,28 @@ export function TelemetryView(): React.ReactElement {
 	return (
 		<Stack>
 			<StackItem>
-				<ListLengthSelection
-					currentLimit={maxEventsToDisplay}
-					onChangeSelection={(key): void => setMaxEventsToDisplay(key)}
-				/>
-			</StackItem>
-			<StackItem>
 				{telemetryEvents !== undefined ? (
-					<FilteredTelemetryView telemetryEvents={telemetryEvents} />
+					<>
+						<table>
+							<tr>
+								<td>
+									<h3 style={{ marginLeft: "6px" }}>
+										Telemetry events (newest first):
+									</h3>
+								</td>
+								<td>
+									<ListLengthSelection
+										currentLimit={maxEventsToDisplay}
+										onChangeSelection={(key): void =>
+											setMaxEventsToDisplay(key)
+										}
+									/>
+								</td>
+							</tr>
+						</table>
+						<br />
+						<FilteredTelemetryView telemetryEvents={telemetryEvents} />
+					</>
 				) : (
 					<Waiting label={"Waiting for Telemetry events"} />
 				)}
@@ -152,18 +166,18 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 	return (
 		<Stack tokens={stackTokens}>
 			<div style={{ marginLeft: "6px" }}>
-				<h3>Max number of telemetry events to display: </h3>
+				Show &nbsp;
 				<Dropdown
 					placeholder="Select an option"
 					size="small"
-					style={{ minWidth: "300px", zIndex: "1" }}
+					style={{ minWidth: "30px", zIndex: "1" }}
 					defaultValue={currentLimit.toString()}
 					// change the number of logs displayed on the page
 					onOptionSelect={handleMaxEventChange}
 				>
 					{dropdownOptions.map((option) => {
 						return (
-							<Option style={{ minWidth: "120px" }} key={option.key}>
+							<Option style={{ minWidth: "30px" }} key={option.key}>
 								{option.text}
 							</Option>
 						);
@@ -334,7 +348,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			renderHeaderCell: () => {
 				return (
 					<div>
-						<h2 style={{ margin: "0 0 5px 0" }}>Category</h2>
+						<h4 style={{ margin: "0 0 5px 0" }}>Category</h4>
 						<Dropdown
 							placeholder="Filter Category"
 							size="small"
@@ -369,7 +383,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			renderHeaderCell: () => {
 				return (
 					<div>
-						<h2 style={{ margin: "0 0 5px 0" }}>Event Name</h2>
+						<h4 style={{ margin: "0 0 5px 0" }}>Event</h4>
 						<Combobox
 							freeform
 							size="small"
@@ -390,7 +404,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 							{matchingOptions.map((option) => (
 								<Option
 									key={option}
-									style={{ fontSize: "12px", overflowWrap: "anywhere" }}
+									style={{ fontSize: "10px", overflowWrap: "anywhere" }}
 								>
 									{option}
 								</Option>
@@ -412,10 +426,9 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 
 	return (
 		<>
-			<h3 style={{ marginLeft: "6px" }}>Telemetry events (newest first):</h3>
 			<SplitPane
 				split="vertical"
-				minSize={580}
+				minSize={540}
 				style={{
 					position: "relative",
 					borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
@@ -431,16 +444,17 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 				<DataGrid
 					items={items}
 					columns={columns}
+					size="extra-small"
 					resizableColumns
 					selectionMode="single"
 					columnSizingOptions={{
 						category: {
-							minWidth: 120,
-							idealWidth: 120,
+							minWidth: 110,
+							idealWidth: 110,
 						},
 						eventName: {
-							minWidth: 375,
-							idealWidth: 375,
+							minWidth: 330,
+							idealWidth: 330,
 						},
 					}}
 				>
@@ -471,11 +485,12 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					style={{
 						position: "relative",
 						height: "100%",
+						fontSize: "10px",
 					}}
 				>
-					<h1 style={{ margin: 0 }}>Event Information</h1>
+					<h4 style={{ margin: 0, fontSize: 14 }}>Event Information</h4>
 					{selectedEvent === undefined ? (
-						<h3>Select an event from the table to get started</h3>
+						<h5>Select an event from the table to get started</h5>
 					) : (
 						<pre> {selectedEvent?.information} </pre>
 					)}

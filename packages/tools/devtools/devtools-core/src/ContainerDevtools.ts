@@ -263,7 +263,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		this._audienceChangeLog.push({
 			clientId,
 			client,
-			changeKind: "added",
+			changeKind: "joined",
 			timestamp: Date.now(),
 		});
 		this.postAudienceStateChange();
@@ -273,7 +273,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		this._audienceChangeLog.push({
 			clientId,
 			client,
-			changeKind: "removed",
+			changeKind: "left",
 			timestamp: Date.now(),
 		});
 		this.postAudienceStateChange();
