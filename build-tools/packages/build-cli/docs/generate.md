@@ -62,17 +62,19 @@ DESCRIPTION
 
 ## `flub generate changeset`
 
-Generates a new changeset file.
+Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.
 
 ```
 USAGE
   $ flub generate changeset [-v] [--json] [-b <value>] [--empty] [--all] [--uiMode default|simple]
 
 FLAGS
-  -b, --branch=<value>  [default: main] The branch to compare against. This is used to populate the list of changed
-                        packages.
-  --all                 Include ALL packages, including examples.
-  --empty               Create an empty changeset file.
+  -b, --branch=<value>  [default: main] The branch to compare the current changes against. The current changes will be
+                        compared with this branch to populate the list of changed packages. You must have a valid remote
+                        pointing to the microsoft/FluidFramework repo.
+  --all                 Include ALL packages, including examples and other unpublished packages.
+  --empty               Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
+                        randomly named changeset file will be created every time --empty is used.
 
 GLOBAL FLAGS
   -v, --verbose  Verbose logging.
@@ -89,15 +91,16 @@ ALIASES
   $ flub changeset add
 
 EXAMPLES
-  Create an empty changeset.
+  Create an empty changeset using the --empty flag.
 
     $ flub generate changeset --empty
 
-  Create a changeset interactively. Any packages edited relative to the 'main' branch will be selected by default.
+  Create a changeset interactively. Any package whose contents has changed relative to the 'main' branch will be
+  selected by default.
 
     $ flub generate changeset
 
-  You can select packages relative to a different branch using --branch.
+  You can compare with a different branch using --branch (-b).
 
     $ flub generate changeset --branch next
 

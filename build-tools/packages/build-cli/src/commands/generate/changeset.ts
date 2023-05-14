@@ -21,8 +21,15 @@ Space: Toggle selection
 a: Toggle all
 Enter: Done`;
 
+/**
+ * Package scopes that will be excluded by default. The default list contains scopes that are not typically published to
+ * a public registry, and thus are the least likely to have a changeset-relevant change.
+ */
 const excludedScopes = new Set(["@fluid-example", "@fluid-internal", "@fluid-test"]);
 
+/**
+ * Represents a choice in the CLI prompt UX.
+ */
 interface Choice {
 	title: string;
 	value?: Package;
@@ -32,22 +39,29 @@ interface Choice {
 }
 
 export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
-	static summary = `Generates a new changeset file.`;
-	static aliases: string[] = ["changeset:add"];
+	static summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
+	static aliases: string[] = [
+		// 'cangesets add' is the changesets cli command.
+		"changeset:add",
+	];
+
+	// Enables the global JSON flag in oclif.
 	static enableJsonFlag = true;
 
 	static flags = {
 		branch: Flags.string({
 			char: "b",
-			description:
-				"The branch to compare against. This is used to populate the list of changed packages.",
+			description: `The branch to compare the current changes against. The current changes will be compared with this branch to populate the list of changed packages. ${chalk.bold(
+				"You must have a valid remote pointing to the microsoft/FluidFramework repo.",
+			)}`,
 			default: DEFAULT_BRANCH,
 		}),
 		empty: Flags.boolean({
-			description: "Create an empty changeset file.",
+			description:
+				`Create an empty changeset file. If this flag is used, all other flags are ignored. A new, randomly named changeset file will be created every time --empty is used.`,
 		}),
 		all: Flags.boolean({
-			description: `Include ALL packages, including examples.`,
+			description: `Include ALL packages, including examples and other unpublished packages.`,
 			default: false,
 		}),
 		uiMode: Flags.string({
@@ -61,15 +75,15 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 
 	static examples = [
 		{
-			description: "Create an empty changeset.",
+			description: "Create an empty changeset using the --empty flag.",
 			command: "<%= config.bin %> <%= command.id %> --empty",
 		},
 		{
-			description: `Create a changeset interactively. Any packages edited relative to the '${DEFAULT_BRANCH}' branch will be selected by default.`,
+			description: `Create a changeset interactively. Any package whose contents has changed relative to the '${DEFAULT_BRANCH}' branch will be selected by default.`,
 			command: "<%= config.bin %> <%= command.id %>",
 		},
 		{
-			description: `You can select packages relative to a different branch using --branch.`,
+			description: `You can compare with a different branch using --branch (-b).`,
 			command: "<%= config.bin %> <%= command.id %> --branch next",
 		},
 		{
@@ -101,13 +115,14 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 		}
 
 		const repo = new Repository({ baseDir: context.gitRepo.resolvedRoot });
+		// context.originRemotePartialUrl is 'microsoft/FluidFramework'; see BaseCommand.getContext().
 		const remote = await repo.getRemote(context.originRemotePartialUrl);
 
 		if (remote === undefined) {
 			// Logs and exits
 			this.error(`Can't find a remote with ${context.originRemotePartialUrl}`, { exit: 1 });
 		}
-		this.verbose(`Remote is: ${remote}`);
+		this.log(`Remote for ${context.originRemotePartialUrl} is: ${chalk.bold(remote)}`);
 
 		const {
 			packages: changedPackages,
@@ -149,7 +164,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 						const changed = changedPackages.some((cp) => cp.name === pkg.name);
 						return {
 							title: changed
-								? `${pkg.nameColored} ${chalk.red.bold("(changed)")}`
+								? `${pkg.name} ${chalk.red.bold("(changed)")}`
 								: pkg.name,
 							value: pkg,
 							selected: changed,
@@ -158,6 +173,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			);
 		}
 
+		// Next list independent packages in a group
 		choices.push({ title: chalk.bold("Independent Packages"), heading: true, disabled: true });
 		for (const pkg of context.independentPackages) {
 			if (!all && !isIncludedByDefault(pkg)) {
@@ -171,6 +187,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			});
 		}
 
+		// Finally list the remaining (unchanged) release groups and their packages
 		for (const rg of context.repo.releaseGroups.values()) {
 			if (!changedReleaseGroups.includes(rg.kind)) {
 				choices.push(
@@ -191,9 +208,9 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			}
 		}
 
-		this.log(changedReleaseGroups.join(", "));
-		this.log(changedPackages.map((p) => p.name).join(", "));
-		this.log(changedFiles.join(", "));
+		this.verbose(changedReleaseGroups.join(", "));
+		this.verbose(changedPackages.map((p) => p.name).join(", "));
+		this.verbose(changedFiles.join(", "));
 
 		const response = await prompts({
 			choices: [...choices, { title: " ", heading: true, disabled: true }],
