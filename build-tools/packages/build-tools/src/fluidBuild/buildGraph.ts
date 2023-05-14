@@ -23,7 +23,7 @@ import {
 import registerDebug from "debug";
 
 const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
-const traceTaskDepTarget = registerDebug("fluid-build:task:dep:target");
+const traceTaskDepTask = registerDebug("fluid-build:task:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
 const { info, verbose } = defaultLogger;
@@ -63,8 +63,7 @@ class BuildContext {
 }
 
 export class BuildPackage {
-	private buildTask: Task | null | undefined = null;
-	private targetTasks = new Map<string, Task>();
+	private tasks = new Map<string, Task>();
 	public readonly parents = new Array<BuildPackage>();
 	public readonly dependentPackages = new Array<BuildPackage>();
 	public level: number = -1;
@@ -74,7 +73,7 @@ export class BuildPackage {
 	constructor(
 		public readonly buildContext: BuildContext,
 		public readonly pkg: Package,
-		private readonly buildTargetNames: string[],
+		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 	) {
 		this.taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions);
@@ -88,89 +87,83 @@ export class BuildPackage {
 	}
 
 	public createTasks() {
-		assert.strictEqual(this.buildTask, null);
-		const targets = this.buildTargetNames;
-		if (targets.length === 0) {
+		const taskNames = this.buildTaskNames;
+		if (taskNames.length === 0) {
 			return undefined;
 		}
 
 		const pendingInitDep: Task[] = [];
-		const tasks = targets
-			.map((value) => this.getTargetTask(value, pendingInitDep)!)
+		const tasks = taskNames
+			.map((value) => this.getTask(value, pendingInitDep)!)
 			.filter((task) => task !== undefined);
 
 		while (pendingInitDep.length !== 0) {
 			const task = pendingInitDep.pop()!;
-			task.initializeDependentTarget(pendingInitDep);
+			task.initializeDependentTasks(pendingInitDep);
 		}
 
 		return tasks.length !== 0;
 	}
 
-	private createTask(target: string, pendingInitDep: Task[]) {
-		const config = this.taskDefinitions[target];
+	private createTask(taskName: string, pendingInitDep: Task[]) {
+		const config = this.taskDefinitions[taskName];
 		if (config?.script === false) {
-			const task = TaskFactory.CreateConcurrentGroupTask(
-				this,
-				`fluid-build -t ${target}`,
-				[],
-				target,
-			);
+			const task = TaskFactory.CreateTargetTask(this, taskName);
 			pendingInitDep.push(task);
 			return task;
 		}
-		return this.createScriptTask(target, pendingInitDep);
+		return this.createScriptTask(taskName, pendingInitDep);
 	}
 
-	private createScriptTask(target: string, pendingInitDep: Task[]) {
-		const command = this.pkg.getScript(target);
+	private createScriptTask(taskName: string, pendingInitDep: Task[]) {
+		const command = this.pkg.getScript(taskName);
 		if (command !== undefined) {
-			const task = TaskFactory.Create(this, command, pendingInitDep, target);
+			const task = TaskFactory.Create(this, command, pendingInitDep, taskName);
 			pendingInitDep.push(task);
 			return task;
 		}
 		return undefined;
 	}
 
-	private getTargetTask(target: string, pendingInitDep: Task[]): Task | undefined {
-		const existing = this.targetTasks.get(target);
+	private getTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
+		const existing = this.tasks.get(taskName);
 		if (existing) {
 			return existing;
 		}
 
-		const task = this.createTask(target, pendingInitDep);
+		const task = this.createTask(taskName, pendingInitDep);
 		if (task !== undefined) {
-			this.targetTasks.set(target, task);
+			this.tasks.set(taskName, task);
 		}
 		return task;
 	}
 
-	public getScriptTask(target: string, pendingInitDep: Task[]): Task | undefined {
-		const config = this.taskDefinitions[target];
+	public getScriptTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
+		const config = this.taskDefinitions[taskName];
 		if (config?.script === false) {
 			// it is not a script task
 			return undefined;
 		}
-		const existing = this.targetTasks.get(target);
+		const existing = this.tasks.get(taskName);
 		if (existing) {
 			return existing;
 		}
 
-		const task = this.createScriptTask(target, pendingInitDep);
+		const task = this.createScriptTask(taskName, pendingInitDep);
 		if (task !== undefined) {
-			this.targetTasks.set(target, task);
+			this.tasks.set(taskName, task);
 		}
 		return task;
 	}
 
-	public getDependentTargets(task: Task, target: string, pendingInitDep: Task[]) {
-		const dependentTargets: Task[] = [];
-		const taskConfig = this.taskDefinitions[target];
+	public getDependentTasks(task: Task, taskName: string, pendingInitDep: Task[]) {
+		const dependentTasks: Task[] = [];
+		const taskConfig = this.taskDefinitions[taskName];
 		if (taskConfig === undefined) {
-			return dependentTargets;
+			return dependentTasks;
 		}
 
-		traceTaskDepTarget(`${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`);
+		traceTaskDepTask(`${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`);
 		for (const dep of taskConfig.dependsOn) {
 			let found = false;
 			// should have be replaced already.
@@ -178,30 +171,30 @@ export class BuildPackage {
 			if (dep.startsWith("^")) {
 				found = true; // Don't worry if we can't find any
 				for (const depPackage of this.dependentPackages) {
-					const depTarget = depPackage.getTargetTask(dep.substring(1), pendingInitDep);
-					if (depTarget !== undefined) {
-						traceTaskDepTarget(`${task.nameColored} -> ${depTarget.nameColored}`);
-						dependentTargets.push(depTarget);
+					const depTask = depPackage.getTask(dep.substring(1), pendingInitDep);
+					if (depTask !== undefined) {
+						traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
+						dependentTasks.push(depTask);
 					}
 				}
 			} else if (dep.includes("#")) {
 				const [pkg, script] = dep.split("#");
 				for (const depPackage of this.dependentPackages) {
 					if (pkg === depPackage.pkg.name) {
-						const depTarget = depPackage.getTargetTask(script, pendingInitDep);
-						if (depTarget !== undefined) {
-							traceTaskDepTarget(`${task.nameColored} -> ${depTarget.nameColored}`);
-							dependentTargets.push(depTarget);
+						const depTask = depPackage.getTask(script, pendingInitDep);
+						if (depTask !== undefined) {
+							traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
+							dependentTasks.push(depTask);
 							found = true;
 						}
 						break;
 					}
 				}
 			} else {
-				const depTarget = this.getTargetTask(dep, pendingInitDep);
-				if (depTarget !== undefined) {
-					traceTaskDepTarget(`${task.nameColored} -> ${depTarget.nameColored}`);
-					dependentTargets.push(depTarget);
+				const depTask = this.getTask(dep, pendingInitDep);
+				if (depTask !== undefined) {
+					traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
+					dependentTasks.push(depTask);
 					found = true;
 				}
 			}
@@ -210,38 +203,38 @@ export class BuildPackage {
 			}
 		}
 
-		return dependentTargets;
+		return dependentTasks;
 	}
 
-	public initializeDependentTasks() {
-		this.targetTasks.forEach((target) => {
-			target.initializeDependentTasks();
+	public initializeDependentLeafTasks() {
+		this.tasks.forEach((task) => {
+			task.initializeDependentLeafTasks();
 		});
 	}
 
 	public async isUpToDate(): Promise<boolean> {
-		if (this.targetTasks.size == 0) {
+		if (this.tasks.size == 0) {
 			return true;
 		}
 		const isUpToDateP = new Array<Promise<boolean>>();
-		for (const task of this.targetTasks.values()) {
+		for (const task of this.tasks.values()) {
 			isUpToDateP.push(task.isUpToDate());
 		}
 		const isUpToDateArr = await Promise.all(isUpToDateP);
 		return isUpToDateArr.every((isUpToDate) => isUpToDate);
 	}
 
-	private async buildAllTargetTasks(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
+	private async buildAllTasks(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		const runP: Promise<BuildResult>[] = [];
-		for (const task of this.targetTasks.values()) {
+		for (const task of this.tasks.values()) {
 			runP.push(task.run(q));
 		}
 		return summarizeBuildResult(await Promise.all(runP));
 	}
 	public async build(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		if (!this.buildP) {
-			if (this.targetTasks.size !== 0) {
-				this.buildP = this.buildAllTargetTasks(q);
+			if (this.tasks.size !== 0) {
+				this.buildP = this.buildAllTasks(q);
 			} else {
 				this.buildP = Promise.resolve(BuildResult.UpToDate);
 			}
@@ -260,14 +253,14 @@ export class BuildGraph {
 
 	public constructor(
 		packages: Package[],
-		private readonly buildTargetNames: string[],
+		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
 	) {
 		packages.forEach((value) =>
 			this.buildPackages.set(
 				value.name,
-				new BuildPackage(this.buildContext, value, buildTargetNames, globalTaskDefinitions),
+				new BuildPackage(this.buildContext, value, buildTaskNames, globalTaskDefinitions),
 			),
 		);
 
@@ -304,7 +297,7 @@ export class BuildGraph {
 		if (timer) timer.time(`Check up to date completed`);
 
 		info(
-			`Starting build targets "${chalk.cyanBright(this.buildTargetNames.join(" && "))}" for ${
+			`Starting build tasks "${chalk.cyanBright(this.buildTaskNames.join(" && "))}" for ${
 				this.buildPackages.size
 			} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`,
 		);
@@ -460,14 +453,14 @@ export class BuildGraph {
 		});
 
 		if (!hasTask) {
-			throw new Error(`No task for target(s) '${this.buildTargetNames.join()}' found`);
+			throw new Error(`No task(s) found for '${this.buildTaskNames.join()}'`);
 		}
 
 		traceGraph("package filtered and task initialize");
 
 		// All the task has been created, initialize the dependent tasks
 		this.buildPackages.forEach((node) => {
-			node.initializeDependentTasks();
+			node.initializeDependentLeafTasks();
 		});
 
 		traceGraph("dependent task initialized");

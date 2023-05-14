@@ -32,18 +32,14 @@ interface TaskExecResult extends ExecAsyncResult {
 }
 
 export abstract class LeafTask extends Task {
-	private dependentTasks?: Set<LeafTask>;
+	private dependentLeafTasks?: Set<LeafTask>;
 	private parentCount: number = 0;
 
-	constructor(node: BuildPackage, command: string, target: string | undefined) {
-		super(node, command, target);
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
 		if (!this.isDisabled) {
 			this.node.buildContext.taskStats.leafTotalCount++;
 		}
-	}
-
-	public get isLeaf(): boolean {
-		return true;
 	}
 
 	public get isDisabled() {
@@ -55,24 +51,24 @@ export abstract class LeafTask extends Task {
 		return getExecutableFromCommand(this.command);
 	}
 
-	public initializeDependentTasks() {
-		this.ensureDependentTasks();
+	public initializeDependentLeafTasks() {
+		this.ensureDependentLeafTasks();
 	}
 
-	private ensureDependentTasks() {
-		if (this.dependentTasks === undefined) {
-			this.dependentTasks = new Set();
-			this.collectDependentTasks(this.dependentTasks);
-			this.addDependentTasks(this.dependentTasks);
+	private ensureDependentLeafTasks() {
+		if (this.dependentLeafTasks === undefined) {
+			this.dependentLeafTasks = new Set();
+			this.collectDependentLeafTasks(this.dependentLeafTasks);
+			this.addDependentLeafTasks(this.dependentLeafTasks);
 		}
-		return this.dependentTasks;
+		return this.dependentLeafTasks;
 	}
 
-	public addDependentTasks(dependentTasks: Set<LeafTask>): void {
-		const dependentTaskSet = this.ensureDependentTasks();
-		for (const task of dependentTasks) {
-			if (!dependentTaskSet.has(task)) {
-				dependentTaskSet.add(task);
+	public addDependentLeafTasks(dependentLeafTasks: Set<LeafTask>): void {
+		const dependentLeafTaskSet = this.ensureDependentLeafTasks();
+		for (const task of dependentLeafTasks) {
+			if (!dependentLeafTaskSet.has(task)) {
+				dependentLeafTaskSet.add(task);
 				task.parentCount++;
 				traceTaskDep(`${this.nameColored} -> ${task.nameColored}`);
 			}
@@ -251,7 +247,7 @@ export abstract class LeafTask extends Task {
 		}
 
 		const leafIsUpToDate =
-			(await this.checkDependentTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
+			(await this.checkDependentLeafTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
 		if (leafIsUpToDate) {
 			this.node.buildContext.taskStats.leafUpToDateCount++;
 			this.logVerboseTask(`Skipping Leaf Task`);
@@ -260,27 +256,29 @@ export abstract class LeafTask extends Task {
 		return leafIsUpToDate;
 	}
 
-	private async checkDependentTasksIsUpToDate(): Promise<boolean> {
-		const dependentTasks = this.getDependentTasks();
-		for (const dependentTask of dependentTasks) {
-			if (!(await dependentTask.isUpToDate())) {
-				this.logVerboseTrigger(`dependent task ${dependentTask.toString()} not up to date`);
+	private async checkDependentLeafTasksIsUpToDate(): Promise<boolean> {
+		const dependentLeafTasks = this.getDependentLeafTasks();
+		for (const dependentLeafTask of dependentLeafTasks) {
+			if (!(await dependentLeafTask.isUpToDate())) {
+				this.logVerboseTrigger(
+					`dependent task ${dependentLeafTask.toString()} not up to date`,
+				);
 				return false;
 			}
 		}
 		return true;
 	}
 
-	protected getDependentTasks() {
-		assert.notStrictEqual(this.dependentTasks, undefined);
+	protected getDependentLeafTasks() {
+		assert.notStrictEqual(this.dependentLeafTasks, undefined);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.dependentTasks!.values();
+		return this.dependentLeafTasks!.values();
 	}
 
 	private async buildDependentTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		const p = new Array<Promise<BuildResult>>();
-		for (const dependentTask of this.getDependentTasks()) {
-			p.push(dependentTask.run(q));
+		for (const dependentLeafTask of this.getDependentLeafTasks()) {
+			p.push(dependentLeafTask.run(q));
 		}
 
 		return summarizeBuildResult(await Promise.all(p));
@@ -304,9 +302,9 @@ export abstract class LeafTask extends Task {
 				}
 				seen.add(leafTask);
 				yield leafTask;
-				pending.push(...leafTask.getDependentTasks());
+				pending.push(...leafTask.getDependentLeafTasks());
 			}
-		})(this.getDependentTasks());
+		})(this.getDependentLeafTasks());
 	}
 
 	/**

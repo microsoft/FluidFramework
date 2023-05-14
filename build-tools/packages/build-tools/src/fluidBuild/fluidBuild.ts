@@ -106,7 +106,7 @@ async function main() {
 		);
 
 		// build the graph
-		const buildGraph = repo.createBuildGraph(options, options.buildTargetNames);
+		const buildGraph = repo.createBuildGraph(options, options.buildTaskNames);
 		timer.time("Build graph creation completed");
 
 		// Check install

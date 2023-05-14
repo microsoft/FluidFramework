@@ -23,7 +23,7 @@ import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
  */
 export interface IFluidBuildConfig {
 	/**
-	 * Build target and dependency definitions
+	 * Build tasks and dependencies definitions
 	 */
 	tasks?: TaskDefinitionsOnDisk;
 

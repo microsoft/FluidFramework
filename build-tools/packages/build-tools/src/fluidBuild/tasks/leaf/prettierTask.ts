@@ -14,8 +14,8 @@ export class PrettierTask extends LeafWithDoneFileTask {
 	private parsed: boolean = false;
 	private entries: string[] = [];
 	private ignorePath: string | undefined;
-	constructor(node: BuildPackage, command: string, target: string | undefined) {
-		super(node, command, target);
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
 
 		// TODO: something better
 		const args = this.command.split(" ");

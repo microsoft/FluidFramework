@@ -14,25 +14,35 @@ const { verbose } = defaultLogger;
 
 const traceTaskExec = registerDebug("fluid-build:task:exec");
 
-export class NPMTask extends Task {
+export class GroupTask extends Task {
 	constructor(
 		node: BuildPackage,
 		command: string,
 		protected readonly subTasks: Task[],
-		target: string | undefined,
+		taskName: string | undefined,
+		private readonly sequential: boolean = false,
 	) {
-		super(node, command, target);
+		super(node, command, taskName);
 	}
 
-	public get isLeaf() {
-		return false;
-	}
-
-	public initializeDependentTasks() {
+	public initializeDependentLeafTasks() {
 		// Push this task's dependencies to the leaves
-		const dependentTasks = new Set<LeafTask>();
-		this.collectDependentTasks(dependentTasks);
-		this.addDependentTasks(dependentTasks);
+		const dependentLeafTasks = new Set<LeafTask>();
+		this.collectDependentLeafTasks(dependentLeafTasks);
+		this.addDependentLeafTasks(dependentLeafTasks);
+
+		// Make sure each subtask depends on previous subtask to ensure sequential execution
+		if (this.sequential) {
+			let prevTask: Task | undefined;
+			for (const task of this.subTasks) {
+				if (prevTask !== undefined) {
+					const leafTasks = new Set<LeafTask>();
+					prevTask.collectLeafTasks(leafTasks);
+					task.addDependentLeafTasks(leafTasks);
+				}
+				prevTask = task;
+			}
+		}
 	}
 
 	public collectLeafTasks(leafTasks: Set<LeafTask>) {
@@ -41,9 +51,9 @@ export class NPMTask extends Task {
 		}
 	}
 
-	public addDependentTasks(dependentTasks: Set<LeafTask>): void {
+	public addDependentLeafTasks(dependentLeafTasks: Set<LeafTask>): void {
 		for (const task of this.subTasks) {
-			task.addDependentTasks(dependentTasks);
+			task.addDependentLeafTasks(dependentLeafTasks);
 		}
 	}
 
@@ -60,11 +70,16 @@ export class NPMTask extends Task {
 		}
 		return true;
 	}
+
 	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		this.logVerboseTask(`Begin Child Tasks`);
-		let retResult = BuildResult.UpToDate;
+		const taskP = new Array<Promise<BuildResult>>();
 		for (const task of this.subTasks) {
-			const result = await task.run(q);
+			taskP.push(task.run(q));
+		}
+		const results = await Promise.all(taskP);
+		let retResult = BuildResult.UpToDate;
+		for (const result of results) {
 			if (result === BuildResult.Failed) {
 				return BuildResult.Failed;
 			}

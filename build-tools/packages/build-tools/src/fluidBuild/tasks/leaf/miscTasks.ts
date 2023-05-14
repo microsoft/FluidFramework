@@ -51,8 +51,8 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private readonly copySrcArg: string = "";
 	private readonly copyDstArg: string = "";
 
-	constructor(node: BuildPackage, command: string, target: string | undefined) {
-		super(node, command, target);
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
 
 		// TODO: something better
 		const args = this.command.split(" ");

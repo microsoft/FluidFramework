@@ -18,8 +18,8 @@ export interface TaskExec {
 }
 
 export abstract class Task {
-	private dependentTargets?: Task[];
-	private collectedDependentTaskSet?: Set<LeafTask>;
+	private dependentTasks?: Task[];
+	private collectedDependentLeafTaskSet?: Set<LeafTask>;
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {
 			taskExec.resolve(await taskExec.task.exec());
@@ -30,15 +30,15 @@ export abstract class Task {
 	private isUpToDateP?: Promise<boolean>;
 
 	public get name() {
-		return `${this.node.pkg.name}#${this.target ?? `<${this.command}>`}`;
+		return `${this.node.pkg.name}#${this.taskName ?? `<${this.command}>`}`;
 	}
 	public get nameColored() {
-		return `${this.node.pkg.nameColored}#${this.target ?? `<${this.command}>`}`;
+		return `${this.node.pkg.nameColored}#${this.taskName ?? `<${this.command}>`}`;
 	}
 	protected constructor(
 		protected readonly node: BuildPackage,
 		public readonly command: string,
-		public readonly target: string | undefined,
+		public readonly taskName: string | undefined,
 	) {
 		traceTaskCreate(`${this.nameColored}`);
 	}
@@ -47,29 +47,29 @@ export abstract class Task {
 		return this.node.pkg;
 	}
 
-	// Initialize dependent targets and collect new targets to be initialized iteratively
+	// Initialize dependent tasks and collect newly created tasks to be initialized iteratively
 	// See `BuildPackage.createTasks`
-	public initializeDependentTarget(pendingInitDep: Task[]) {
+	public initializeDependentTasks(pendingInitDep: Task[]) {
 		// This function should only be called once
-		assert.strictEqual(this.dependentTargets, undefined);
-		// This function should only be called by task with target names
-		assert.notStrictEqual(this.target, undefined);
-		this.dependentTargets = this.node.getDependentTargets(this, this.target!, pendingInitDep);
+		assert.strictEqual(this.dependentTasks, undefined);
+		// This function should only be called by task with task names
+		assert.notStrictEqual(this.taskName, undefined);
+		this.dependentTasks = this.node.getDependentTasks(this, this.taskName!, pendingInitDep);
 	}
 
-	public collectDependentTasks(dependentTasks: Set<LeafTask>) {
-		const dependentTargets = this.dependentTargets;
-		if (dependentTargets) {
-			if (this.collectedDependentTaskSet === undefined) {
-				this.collectedDependentTaskSet = new Set();
-				for (const dependentTarget of dependentTargets) {
-					dependentTarget.collectDependentTasks(this.collectedDependentTaskSet);
-					dependentTarget.collectLeafTasks(this.collectedDependentTaskSet);
+	public collectDependentLeafTasks(dependentLeafTasks: Set<LeafTask>) {
+		const dependentTasks = this.dependentTasks;
+		if (dependentTasks) {
+			if (this.collectedDependentLeafTaskSet === undefined) {
+				this.collectedDependentLeafTaskSet = new Set();
+				for (const dependentTask of dependentTasks) {
+					dependentTask.collectDependentLeafTasks(this.collectedDependentLeafTaskSet);
+					dependentTask.collectLeafTasks(this.collectedDependentLeafTaskSet);
 				}
 			}
-			this.collectedDependentTaskSet.forEach((value) => dependentTasks.add(value));
+			this.collectedDependentLeafTaskSet.forEach((value) => dependentLeafTasks.add(value));
 		} else {
-			assert.strictEqual(this.target, undefined);
+			assert.strictEqual(this.taskName, undefined);
 		}
 	}
 
@@ -98,10 +98,9 @@ export abstract class Task {
 		return `"${this.command}" in ${this.node.pkg.nameColored}`;
 	}
 
-	public abstract initializeDependentTasks(): void;
+	public abstract initializeDependentLeafTasks(): void;
 	public abstract collectLeafTasks(leafTasks: Set<LeafTask>);
-	public abstract addDependentTasks(dependentTasks: Set<LeafTask>): void;
-	public abstract get isLeaf(): boolean;
+	public abstract addDependentLeafTasks(dependentTasks: Set<LeafTask>): void;
 	protected abstract checkIsUpToDate(): Promise<boolean>;
 	protected abstract runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult>;
 

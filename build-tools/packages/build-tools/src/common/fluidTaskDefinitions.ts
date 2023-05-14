@@ -78,7 +78,7 @@ export function getTaskDefinitions(
 	const packageTaskDefinitions = json.fluidBuild?.tasks;
 	const taskConfig: TaskDefinitions = {};
 
-	// Initialize from global TaskDefinition, taking non-script targets and script target that exist in the package.json
+	// Initialize from global TaskDefinition, taking targets and scripts that exist in the package.json
 	if (globalTaskDefinitions) {
 		for (const name in globalTaskDefinitions) {
 			const config = globalTaskDefinitions[name];

@@ -99,9 +99,9 @@ function findScript(json: PackageJson, command: string) {
  *
  * @param root - location of the Fluid Repo root
  * @param json - packages build dependencies to get.
- * @returns an array of build target dependencies name expected
+ * @returns an array of build task dependencies name expected
  */
-function getDefaultBuildTargetDependencies(root: string, json: PackageJson) {
+function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
 	const packageMap = getFluidPackageMap(root);
 	const pkg = packageMap.get(json.name);
 	if (pkg === undefined) {
@@ -187,8 +187,8 @@ function eslintGetScriptDependencies(
 
 	let projects = config.parserOptions?.project;
 	if (projects === undefined) {
-		// If we don't have projects, our target needs to have dependent build scripts
-		return getDefaultBuildTargetDependencies(root, json);
+		// If we don't have projects, our task needs to have dependent build scripts
+		return getDefaultTscTaskDependencies(root, json);
 	}
 
 	projects = Array.isArray(projects) ? projects : [projects];
@@ -220,20 +220,20 @@ function isFluidBuildEnabled(root: string, json: PackageJson) {
 }
 
 /**
- * Check if a target has a specific dependency
+ * Check if a task has a specific dependency
  * @param root - directory of the Fluid repo root
  * @param json - package.json content for the package
- * @param target - name of the target to check
+ * @param taskName - name of the task to check
  * @param searchDep - the dependent to find.
- * @returns true if searchDep is found for target, false otherwise
+ * @returns true if searchDep is found for task, false otherwise
  */
-function hasTargetDependencies(root: string, json: PackageJson, target: string, searchDep: string) {
+function hasTaskDependency(root: string, json: PackageJson, taskName: string, searchDep: string) {
 	const rootConfig = getFluidBuildConfig(root);
 	const taskDefinitions = getTaskDefinitions(json, rootConfig?.tasks);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
-	if (taskDefinitions[target]) {
-		pending.push(...taskDefinitions[target].dependsOn);
+	if (taskDefinitions[taskName]) {
+		pending.push(...taskDefinitions[taskName].dependsOn);
 	}
 
 	while (pending.length !== 0) {
@@ -257,40 +257,40 @@ function hasTargetDependencies(root: string, json: PackageJson, target: string, 
 }
 
 /**
- * Check the actual dependencies of a target against an expected set of dependent targets
+ * Check the actual dependencies of a task against an expected set of dependent tasks
  * @param root - directory of the Fluid repo root
  * @param json - package.json content for the package
- * @param target - target name to check the actual dependent targets for
- * @param targetDeps - array of expected dependent targets
+ * @param taskName - task name to check the actual dependent tasks for
+ * @param taskDeps - array of expected dependent tasks
  * @returns message describing the missing dependencies
  */
-function checkTargetDeps(root: string, json: PackageJson, target: string, targetDeps: string[]) {
-	const missingTaskDependencies = targetDeps.filter(
-		(targetDep) => !hasTargetDependencies(root, json, target, targetDep),
+function checkTaskDeps(root: string, json: PackageJson, taskName: string, taskDeps: string[]) {
+	const missingTaskDependencies = taskDeps.filter(
+		(taskDep) => !hasTaskDependency(root, json, taskName, taskDep),
 	);
 
 	return missingTaskDependencies.length > 0
-		? `'${target}' target is missing the following dependency: \n\t${missingTaskDependencies.join(
+		? `'${taskName}' task is missing the following dependency: \n\t${missingTaskDependencies.join(
 				"\n\t",
 		  )}`
 		: undefined;
 }
 
 /**
- * Fix up the actual dependencies of a target against an expected set of dependent targets
+ * Fix up the actual dependencies of a task against an expected set of dependent tasks
  * @param root - directory of the Fluid repo root
  * @param json - package.json content for the package
- * @param target - target name to check the actual dependent targets for
- * @param targetDeps - array of expected dependent targets
- * @returns json object is modified to include the expected target dependencies
+ * @param taskName - task name to check the actual dependent tasks for
+ * @param taskDeps - array of expected dependent tasks
+ * @returns json object is modified to include the expected task dependencies
  */
-function patchTargetDeps(root: string, json: PackageJson, target: string, targetDeps: string[]) {
-	const missingTaskDependencies = targetDeps.filter(
-		(targetDep) => !hasTargetDependencies(root, json, target, targetDep),
+function patchTaskDeps(root: string, json: PackageJson, taskName: string, taskDeps: string[]) {
+	const missingTaskDependencies = taskDeps.filter(
+		(taskDep) => !hasTaskDependency(root, json, taskName, taskDep),
 	);
 
 	if (missingTaskDependencies.length > 0) {
-		const fileDep = json.fluidBuild?.tasks?.[target];
+		const fileDep = json.fluidBuild?.tasks?.[taskName];
 		if (fileDep === undefined) {
 			if (json.fluidBuild === undefined) {
 				(json as any).fluidBuild = {};
@@ -298,7 +298,7 @@ function patchTargetDeps(root: string, json: PackageJson, target: string, target
 			if (json.fluidBuild!.tasks === undefined) {
 				json.fluidBuild!.tasks = {};
 			}
-			json.fluidBuild!.tasks[target] = targetDeps;
+			json.fluidBuild!.tasks[taskName] = taskDeps;
 		} else {
 			let depArray: string[];
 			if (Array.isArray(fileDep)) {
@@ -387,7 +387,7 @@ export const handlers: Handler[] = [
 			let scriptDeps: string[];
 			try {
 				scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
-				return checkTargetDeps(root, json, "eslint", scriptDeps);
+				return checkTaskDeps(root, json, "eslint", scriptDeps);
 			} catch (e: any) {
 				return e.message;
 			}
@@ -401,7 +401,7 @@ export const handlers: Handler[] = [
 				let scriptDeps: string[];
 				try {
 					scriptDeps = eslintGetScriptDependencies(path.dirname(file), root, json);
-					patchTargetDeps(root, json, "eslint", scriptDeps);
+					patchTaskDeps(root, json, "eslint", scriptDeps);
 				} catch (e: any) {
 					result = { resolved: false, message: e.message };
 					return;
@@ -429,7 +429,7 @@ export const handlers: Handler[] = [
 			}
 			const packageDir = path.dirname(file);
 			const errors: string[] = [];
-			const deps = getDefaultBuildTargetDependencies(root, json);
+			const deps = getDefaultTscTaskDependencies(root, json);
 			const ignore = getFluidBuildTasksTscIgnore(root);
 			for (const script in json.scripts) {
 				const command = json.scripts[script]!;
@@ -443,7 +443,7 @@ export const handlers: Handler[] = [
 							deps,
 						);
 						// Check the dependencies
-						const error = checkTargetDeps(root, json, script, checkDeps);
+						const error = checkTaskDeps(root, json, script, checkDeps);
 						if (error) {
 							errors.push(error);
 						}
@@ -462,7 +462,7 @@ export const handlers: Handler[] = [
 				}
 
 				const packageDir = path.dirname(file);
-				const deps = getDefaultBuildTargetDependencies(root, json);
+				const deps = getDefaultTscTaskDependencies(root, json);
 				const ignore = getFluidBuildTasksTscIgnore(root);
 				for (const script in json.scripts) {
 					const command = json.scripts[script]!;
@@ -475,7 +475,7 @@ export const handlers: Handler[] = [
 								command,
 								deps,
 							);
-							patchTargetDeps(root, json, script, checkDeps);
+							patchTaskDeps(root, json, script, checkDeps);
 						} catch (e: any) {
 							return e.message;
 						}
