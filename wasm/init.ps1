@@ -2,12 +2,13 @@ Function Add-PathVariable {
     param (
         [string]$addPath
     )
-    if (Test-Path $addPath){
+    if (Test-Path $addPath) {
         $regexAddPath = [regex]::Escape($addPath)
-        $arrPath = $env:Path -split ';' | Where-Object {$_ -notMatch 
-"^$regexAddPath\\?"}
+        $arrPath = $env:Path -split ';' | Where-Object { $_ -notMatch 
+            "^$regexAddPath\\?" }
         $env:Path = ($arrPath + $addPath) -join ';'
-    } else {
+    }
+    else {
         Throw "'$addPath' is not a valid path."
     }
 }
@@ -32,16 +33,10 @@ cargo --version
 rustup --version
 rustc --version
 
-Write-Host "Installing wasm-pack..."
-npm i wasm-pack@0.10.3 -g
-
 Write-Host "Installing wasm-opt..."
 npm i wasm-opt@1.4.0 -g
 
 Write-Host "Installing wasm-snip..."
 cargo install wasm-snip --version 0.4.0
-
-Write-Host "Installing twiggy..."
-cargo install twiggy
 
 Read-Host -Prompt "Press Enter to exit"
