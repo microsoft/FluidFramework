@@ -42,8 +42,8 @@ export function runFuzzBatch(
 		const runSeed = seed + i;
 		const generatorFactory = () => take(opsPerRun, opGenerator(editGeneratorOpWeights));
 		const saveInfo: SaveInfo = {
-			saveOnFailure: true, // Change to true to save failing runs.
-			saveOnSuccess: true, // Change to true to save successful runs.
+			saveOnFailure: false, // Change to true to save failing runs.
+			saveOnSuccess: false, // Change to true to save successful runs.
 			filepath: path.join(__dirname, `fuzz-tests-saved-ops/ops_with_seed_${runSeed}`),
 		};
 		it(`with seed ${runSeed}`, async () => {
