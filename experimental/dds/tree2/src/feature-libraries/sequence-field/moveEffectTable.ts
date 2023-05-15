@@ -235,14 +235,15 @@ function applyMoveEffectsToDest<T>(
 			count: childEffect.count,
 		};
 
-		if (mark.type === "ReturnTo" && mark.detachIndex !== undefined) {
-			assert(
-				effect.count !== undefined,
-				0x568 /* Should define count when splitting a mark */,
-			);
-			(newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
+		if (newMark.type === "ReturnTo" && newMark.detachEvent !== undefined) {
+			assert(effect.count !== undefined, "Should have a count when splitting a mark");
+			newMark.detachEvent = {
+				...newMark.detachEvent,
+				index: newMark.detachEvent.index + effect.count,
+			};
 		}
 
+		// TODO: Split detachEvent if necessary
 		result.push(...applyMoveEffectsToDest(newMark, revision, effects, consumeEffect));
 	}
 
@@ -309,12 +310,12 @@ function applyMoveEffectsToSource<T>(
 			id: effect.child,
 			count: childEffect.count,
 		};
-		if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
-			assert(
-				effect.count !== undefined,
-				0x56c /* Should define count when splitting a mark */,
-			);
-			(newMark as ReturnFrom).detachIndex = mark.detachIndex + effect.count;
+		if (newMark.detachEvent !== undefined) {
+			assert(effect.count !== undefined, "Should specify a count when splitting a mark");
+			newMark.detachEvent = {
+				...newMark.detachEvent,
+				index: newMark.detachEvent.index + effect.count,
+			};
 		}
 		result.push(
 			...applyMoveEffectsToSource(newMark, revision, effects, consumeEffect, composeChildren),

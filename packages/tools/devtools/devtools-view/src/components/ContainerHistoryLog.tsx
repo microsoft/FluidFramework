@@ -14,14 +14,14 @@ import {
 	TableHeaderCell,
 } from "@fluentui/react-components";
 import {
-	Clock20Regular,
-	PlugConnected24Regular,
-	AlertBadge24Regular,
-	PlugDisconnected24Regular,
-	ErrorCircle24Regular,
-	Warning24Regular,
-	Attach24Regular,
-	LockClosed24Filled,
+	Clock12Regular,
+	PlugConnected20Regular,
+	AlertBadgeRegular,
+	PlugDisconnected20Regular,
+	ErrorCircle20Regular,
+	Warning20Regular,
+	Attach20Regular,
+	LockClosed20Filled,
 } from "@fluentui/react-icons";
 import { Stack, StackItem, IStackItemStyles } from "@fluentui/react";
 import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
@@ -82,13 +82,13 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 	};
 
 	return (
-		<Table size="small" aria-label="Audience history table">
+		<Table size="extra-small" aria-label="Audience history table">
 			<TableHeader>
 				<TableRow>
 					{containerHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "state" && <AlertBadge24Regular />}
-							{column.columnKey === "time" && <Clock20Regular />}
+							{column.columnKey === "state" && <AlertBadgeRegular />}
+							{column.columnKey === "time" && <Clock12Regular />}
 							{column.label}
 						</TableHeaderCell>
 					))}
@@ -107,18 +107,18 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 					const getStateIcon = (state: string): React.ReactElement => {
 						switch (state) {
 							case "attached":
-								return <Attach24Regular />;
+								return <Attach20Regular />;
 							case "closed":
-								return <LockClosed24Filled />;
+								return <LockClosed20Filled />;
 							case "connected":
-								return <PlugConnected24Regular />;
+								return <PlugConnected20Regular />;
 							case "disconnected":
-								return <PlugDisconnected24Regular />;
+								return <PlugDisconnected20Regular />;
 							case "disposed":
-								return <ErrorCircle24Regular />;
+								return <ErrorCircle20Regular />;
 							default:
 								console.log("Unknown state type for container!");
-								return <Warning24Regular />;
+								return <Warning20Regular />;
 						}
 					};
 

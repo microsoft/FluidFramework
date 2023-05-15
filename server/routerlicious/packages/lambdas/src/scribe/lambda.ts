@@ -115,6 +115,10 @@ export class ScribeLambda implements IPartitionLambda {
 		// Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
 		// we had already checkpointed at a given offset.
 		if (message.offset <= this.lastOffset) {
+			Lumberjack.info(
+				`Repeating ops: message.offset: ${message.offset} <= this.lastOffset: ${this.lastOffset}`,
+				getLumberBaseProperties(this.documentId, this.tenantId),
+			);
 			this.updateCheckpointMessages(message);
 			this.context.checkpoint(message, this.restartOnCheckpointFailure);
 			return;
