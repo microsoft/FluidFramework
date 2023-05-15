@@ -476,9 +476,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../../../packages/framework/fluid-framework
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
