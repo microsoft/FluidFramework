@@ -18,7 +18,6 @@ jobs:
       - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
         with:
           persist-credentials: false
-          # ref: ${{ github.event.pull_request.head.sha }} # Check out the head commit, not the merge commit
 
       - name: Download results
         uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v2.24.3
