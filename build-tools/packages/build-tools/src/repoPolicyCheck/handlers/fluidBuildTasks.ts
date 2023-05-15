@@ -477,7 +477,8 @@ export const handlers: Handler[] = [
 							);
 							patchTaskDeps(root, json, script, checkDeps);
 						} catch (e: any) {
-							return e.message;
+							result = { resolved: false, message: e.message };
+							return;
 						}
 					}
 				}
