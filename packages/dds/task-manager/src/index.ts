@@ -4,7 +4,8 @@
  */
 
 /**
- * Contains a distributed data structure for queueing and processing tasks that must be completed by a single client.
+ * Contains a distributed data structure, {@link ITaskManager}, to track the queues of clients that want to
+ * exclusively run tasks.
  *
  * @packageDocumentation
  */
