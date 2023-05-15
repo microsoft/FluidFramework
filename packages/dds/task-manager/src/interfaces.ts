@@ -26,14 +26,14 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 	(event: "assigned", listener: TaskEventListener);
 
 	/**
-	 * Notifies when the specified task has been completed.
+	 * Fires when a task the client is queued for is completed.
 	 *
 	 * @eventProperty
 	 */
 	(event: "completed", listener: TaskEventListener);
 
 	/**
-	 * Notifies when the specified task has been abandoned (i.e. it will never be completed).
+	 * Fires when the task assignment is lost by the local client. This could be due to the client disconnecting or by manually calling `abandon()`.
 	 *
 	 * @eventProperty
 	 */
