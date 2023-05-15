@@ -18,7 +18,6 @@ import {
 	mintCommit,
 	rebaseBranch,
 	rebaseChange,
-	RepairDataStore,
 	RevisionTag,
 	SessionId,
 	SimpleDependee,
@@ -404,7 +403,6 @@ export class EditManager<
 		newCommit: Commit<TChangeset>,
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
-		repairData?: Map<RevisionTag, RepairDataStore>,
 	): void {
 		if (newCommit.sessionId === this.localSessionId) {
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
@@ -451,7 +449,7 @@ export class EditManager<
 				newCommit.change,
 				rebasedBranch,
 				this.trunk.getHead(),
-				repairData,
+				this.localBranch.repairStore,
 			);
 
 			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
@@ -462,7 +460,7 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk);
+		this.localBranch.rebaseOnto(this.trunk, this.localBranch.repairStore);
 	}
 
 	public findLocalCommit(

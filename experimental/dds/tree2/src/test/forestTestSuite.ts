@@ -22,7 +22,6 @@ import {
 	UpPath,
 	clonePath,
 	ITreeCursor,
-	mintRevisionTag,
 } from "../core";
 import {
 	cursorToJsonObject,

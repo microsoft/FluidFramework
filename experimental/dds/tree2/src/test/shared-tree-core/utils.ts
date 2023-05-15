@@ -8,7 +8,7 @@ import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tre
 import { AnchorSet, ITreeCursorSynchronous, RepairDataStore } from "../../core";
 import { defaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
 import { TransactionResult } from "../../util";
-import { MockRepairDataStore, MockRepairDataStoreProvider } from "../utils";
+import { MockRepairDataStoreProvider } from "../utils";
 
 /** A `SharedTreeCore` with protected methods exposed but no additional behavior */
 export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
