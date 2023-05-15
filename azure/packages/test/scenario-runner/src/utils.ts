@@ -137,6 +137,10 @@ export async function createContainer(
 	return r.container;
 }
 
+export enum FluidSummarizerTelemetryEventNames {
+	Summarize = "fluid:telemetry:Summarizer:Running:Summarize",
+}
+
 export enum FluidContainerTelemetryEventNames {
 	Request = "fluid:telemetry:Container:Request",
 	ConnectionStateChange = "fluid:telemetry:Container:ConnectionStateChange",
@@ -148,6 +152,7 @@ export enum RouterliciousDriverTelemetryEventNames {
 	CreateNew = "fluid:telemetry:RouterliciousDriver:CreateNew",
 	DocPostCreateCallback = "fluid:telemetry:RouterliciousDriver:DocPostCreateCallback",
 	DiscoverSession = "fluid:telemetry:RouterliciousDriver:DiscoverSession",
+	uploadSummaryWithContext = "fluid:telemetry:RouterliciousDriver:uploadSummaryWithContext",
 	getWholeFlatSummary = "fluid:telemetry:RouterliciousDriver:getWholeFlatSummary",
 	GetDeltas = "fluid:telemetry:RouterliciousDriver:GetDeltas",
 	GetDeltaStreamToken = "fluid:telemetry:RouterliciousDriver:GetDeltaStreamToken",
@@ -199,6 +204,14 @@ export function getScenarioRunnerTelemetryEventMap(scenarioName: string): Map<st
 		[
 			FluidContainerTelemetryEventNames.ConnectionStateChange,
 			`scenario:runner:${scenarioName}:Connection:ConnectionStateChange`,
+		],
+		[
+			RouterliciousDriverTelemetryEventNames.GetDeltas,
+			`scenario:runner:${scenarioName}:Summarize:UploadSummary`,
+		],
+		[
+			FluidSummarizerTelemetryEventNames.Summarize,
+			`scenario:runner:${scenarioName}:Summarize:Summarized`,
 		],
 	]);
 }

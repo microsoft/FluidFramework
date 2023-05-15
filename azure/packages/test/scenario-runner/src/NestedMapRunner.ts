@@ -4,7 +4,7 @@
  */
 import child_process from "child_process";
 
-import { ConnectionState } from "fluid-framework";
+import { ConnectionState, SharedMap } from "fluid-framework";
 import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
@@ -36,7 +36,7 @@ export interface NestedMapRunnerConfig {
 	schema: ContainerFactorySchema;
 	docIds: string[];
 	clientStartDelayMs: number;
-	numMaps?: number;
+	numMaps: number;
 	client?: AzureClient;
 	containers?: IFluidContainer[];
 }
@@ -55,6 +55,7 @@ export interface NestedMapRunnerRunConfig
 	childId: number;
 	schema: ContainerFactorySchema;
 	docId: string;
+	numMaps: number;
 	container?: IFluidContainer;
 	region?: string;
 	client?: AzureClient;
@@ -88,6 +89,8 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 				(i++).toString(),
 				"--docId",
 				docId,
+				"--docId",
+				this.c.numMaps.toString(),
 				"--schema",
 				JSON.stringify(this.c.schema),
 				"--connType",
@@ -126,6 +129,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		const tenantKey = connection.key;
 		const functionUrl = connection.functionUrl;
 		const secureTokenProvider = connection.useSecureTokenProvider;
+		const numMaps = this.c.numMaps;
 		const schema = this.c.schema;
 		const client = this.c.client;
 		const containers = this.c.containers;
@@ -142,6 +146,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 					...config,
 					childId: i,
 					docId,
+					numMaps,
 					connType,
 					connEndpoint,
 					tenantId,
@@ -157,9 +162,9 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		try {
 			await Promise.all(runs);
 			this.status = "success";
-		} catch {
+		} catch (error) {
 			this.status = "error";
-			throw new Error("Not all clients closed succesfully.");
+			throw new Error(`Not all clients closed succesfully.\n${error}`);
 		}
 	}
 
@@ -191,6 +196,18 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 			}));
 
 		const container: IFluidContainer = await NestedMapRunner.loadContainer(runConfig, logger, ac);
+
+		let currentMap = await container.create(SharedMap);
+		for (let i = 0; i < runConfig.numMaps; ++i) {
+			const nextMap = await container.create(SharedMap);
+			currentMap.set("data", i);
+			currentMap.set("next", nextMap.handle);
+			currentMap = nextMap;
+		}
+
+		await (new Promise<void>((resolve) => {
+			setTimeout(() => resolve(), 60_000);
+		}))
 	}
 
 	private static async loadContainer(runConfig: NestedMapRunnerRunConfig, logger: TelemetryLogger, client: AzureClient): Promise<IFluidContainer> {

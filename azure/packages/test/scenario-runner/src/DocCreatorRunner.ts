@@ -146,10 +146,10 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 		try {
 			const ids = await Promise.all(runs);
 			this.status = "success";
-			return ids.length > 1 ? ids : ids[0];
-		} catch {
+			return ids;
+		} catch (error) {
 			this.status = "error";
-			throw new Error("Client did not close successfully.");
+			throw new Error(`Not all clients closed successfully.\n${error}`);
 		}
 	}
 

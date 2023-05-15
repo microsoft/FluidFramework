@@ -27,6 +27,7 @@ stages:
           connectionConfig: ${connectionConfig}
           schema: ${schema}
           numDocs: 1
+          client: ${client}
           clientStartDelayMs: 500
       out: ${docIds}
     - stage-3:
@@ -38,6 +39,7 @@ stages:
           numOfLoads: 1
           schema: ${schema}
           docIds: ${docIds}
+          client: ${client}
           clientStartDelayMs: 500
       out: ${containers}
     - stage-4:
@@ -48,5 +50,6 @@ stages:
           connectionConfig: ${connectionConfig}
           schema: ${schema}
           docIds: ${docIds}
+          client: ${client}
           containers: ${containers}
-          numMaps: 10
+          numMaps: 10000

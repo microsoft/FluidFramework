@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as fs from "node:fs";
+import path from "node:path";
 
 import * as yaml from "js-yaml";
 import { v4 as uuid } from "uuid";
@@ -13,9 +14,9 @@ import { AzureClientRunner, AzureClientRunnerConfig } from "./AzureClientRunner"
 import { DocCreatorRunner, DocCreatorRunnerConfig } from "./DocCreatorRunner";
 import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner";
 import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
+import { NestedMapRunner, NestedMapRunnerConfig } from "./NestedMapRunner";
 import { IRunner } from "./interface";
 import { getLogger } from "./logger";
-import path from "node:path";
 
 export interface IStageParams {
 	[key: string]: unknown;
@@ -196,6 +197,9 @@ export class TestOrchestrator {
 			}
 			case "doc-loader": {
 				return new DocLoaderRunner(stage.params as unknown as DocLoaderRunnerConfig);
+			}
+			case "nested-maps": {
+				return new NestedMapRunner(stage.params as unknown as NestedMapRunnerConfig);
 			}
 			case "shared-map-traffic": {
 				return new MapTrafficRunner(stage.params as unknown as MapTrafficRunnerConfig);
