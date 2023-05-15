@@ -262,7 +262,7 @@ export function create(
 	router.post(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
-        throttle(perTenantThrottler, winston, tenantThrottleOptions),
+		throttle(perTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		async (request, response, next) => {
