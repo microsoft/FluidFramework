@@ -383,7 +383,7 @@ export function makeConnectionOpGenerator(
 				if (!containersExist) {
 					return false;
 				}
-				return containersExist && containersInfo[treeIndex].container.connectionState === 2;
+				return containersExist;
 			},
 		],
 		[
@@ -394,7 +394,10 @@ export function makeConnectionOpGenerator(
 				if (!containersExist) {
 					return false;
 				}
-				return containersInfo[treeIndex].container.connectionState === 0;
+				return (
+					containersInfo[treeIndex].container.connectionState === 0 &&
+					containersInfo[treeIndex].url !== ""
+				);
 			},
 		],
 	]);

@@ -9,7 +9,7 @@ import {
 	performFuzzActionsAsync,
 	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
-import { TestTreeProvider, SummarizeType, initializeTestTree } from "../../utils";
+import { TestTreeProvider, initializeTestTree } from "../../utils";
 import {
 	FuzzTestState,
 	makeOpGenerator,
@@ -31,7 +31,7 @@ export async function performFuzzActions(
 	saveInfo?: SaveInfo,
 ): Promise<FuzzTestState> {
 	const random = makeRandom(seed);
-	const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
+	const provider = await TestTreeProvider.create(1);
 	initializeTestTree(provider.trees[0], initialTreeState, testSchema);
 	await provider.ensureSynchronized();
 

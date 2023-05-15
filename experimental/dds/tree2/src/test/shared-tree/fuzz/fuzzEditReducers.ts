@@ -87,9 +87,10 @@ export const fuzzReducer: {
 		assert(pauseContainer !== undefined);
 		const url = (await pauseContainer.getAbsoluteUrl("")) ?? fail("didn't get url");
 		await state.testTreeProvider?.opProcessingController.pauseProcessing(pauseContainer);
-		// const pendingOps = pauseContainer.closeAndGetPendingLocalState();
-		// state.containersInfo[index].pendingOps = pendingOps;
+		const pendingOps = pauseContainer.closeAndGetPendingLocalState();
+		state.containersInfo[index].pendingOps = pendingOps;
 		state.containersInfo[index].url = url;
+		assert(url !== "");
 	},
 };
 
