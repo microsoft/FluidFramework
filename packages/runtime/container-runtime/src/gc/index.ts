@@ -39,7 +39,6 @@ export {
 	cloneGCData,
 	concatGarbageCollectionStates,
 	getGCDataFromSnapshot,
-	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
@@ -62,4 +61,5 @@ export {
 	closuresMapLocalStorageKey,
 	SweepReadyUsageDetectionHandler,
 } from "./gcSweepReadyUsageDetection";
+export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";

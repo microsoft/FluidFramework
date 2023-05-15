@@ -874,7 +874,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 				{
 					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived",
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
 					category: "generic",
 					clientType: "noninteractive/summarizer",
 				},
@@ -1154,21 +1154,25 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			[
 				{
 					eventName:
-						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived",
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
 					category: "generic",
+					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived",
 					category: "generic",
+					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
 					type: "DataStore",
+					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
 					type: "Blob",
+					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
@@ -1247,11 +1251,13 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				mockLogger.assertMatchNone([
 					{
 						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived",
+							"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
+						clientType: "noninteractive/summarizer",
 					},
 					{
 						eventName:
 							"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived",
+						clientType: "noninteractive/summarizer",
 					},
 				]);
 
@@ -1261,16 +1267,21 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				mainDataStore._root.set("newDataStore", newDataStore.handle);
 				mainDataStore._root.set("blob", blobHandle);
 				await provider.ensureSynchronized();
-				mockLogger.assertMatch([
-					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Datastore_Revived",
-					},
-					{
-						eventName:
-							"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived",
-					},
-				]);
+				mockLogger.assertMatch(
+					[
+						{
+							eventName:
+								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
+							clientType: "noninteractive/summarizer",
+						},
+						{
+							eventName:
+								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived",
+							clientType: "noninteractive/summarizer",
+						},
+					],
+					"Revived events not found as expected",
+				);
 
 				// Summarize. The un-tombstoned data store and attachment blob should not be part of the tombstone blob.
 				const summary3 = await summarizeNow(summarizer);
