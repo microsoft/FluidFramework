@@ -100,7 +100,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				redisParamsForThrottling,
 			);
 
-		const configureThrottler = (throttleConfig: Partial<utils.IThrottleConfig>): core.IThrottler => {
+		const configureThrottler = (
+			throttleConfig: Partial<utils.IThrottleConfig>,
+		): core.IThrottler => {
 			const throttlerHelper = new services.ThrottlerHelper(
 				redisThrottleAndUsageStorageManager,
 				throttleConfig.maxPerMs,
@@ -120,19 +122,19 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Rest API Throttler
 		const restApiTenantGeneralThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerTenant:generalRestCall"),
-        );
+		);
 		const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
 
 		const restApiTenantGetSummaryThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerTenant:getSummary"),
-        );
+		);
 		const restTenantGetSummaryThrottler = configureThrottler(
 			restApiTenantGetSummaryThrottleConfig,
 		);
 
 		const restApiTenantCreateSummaryThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerTenant:createSummary"),
-        );
+		);
 		const restTenantCreateSummaryThrottler = configureThrottler(
 			restApiTenantCreateSummaryThrottleConfig,
 		);
@@ -153,14 +155,14 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		const restApiClusterCreateSummaryThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerCluster:createSummary"),
-        );
+		);
 		const throttlerCreateSummaryPerCluster = configureThrottler(
 			restApiClusterCreateSummaryThrottleConfig,
 		);
 
 		const restApiClusterGetSummaryThrottleConfig = utils.getThrottleConfig(
 			config.get("throttling:restCallsPerCluster:getSummary"),
-        );
+		);
 		const throttlerGetSummaryPerCluster = configureThrottler(
 			restApiClusterGetSummaryThrottleConfig,
 		);
