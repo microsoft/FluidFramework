@@ -684,7 +684,7 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor = false,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
-			enableGroupedBatching = false,
+			enableGroupedBatching = true,
 		} = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
