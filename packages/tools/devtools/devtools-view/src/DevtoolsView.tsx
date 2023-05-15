@@ -373,7 +373,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			<MenuSection header="Telemetry" key="telemetry-menu-section">
 				<MenuItem
 					isActive={currentSelection?.type === "telemetryMenuSelection"}
-					text="See Telemetry"
+					text="Events"
 					onClick={onTelemetryClicked}
 				/>
 			</MenuSection>,

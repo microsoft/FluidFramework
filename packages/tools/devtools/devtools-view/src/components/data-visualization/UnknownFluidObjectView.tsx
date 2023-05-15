@@ -6,18 +6,27 @@ import React from "react";
 
 import { FluidUnknownObjectNode } from "@fluid-experimental/devtools-core";
 
+import { DataVisualizationTreeProps } from "./CommonInterfaces";
+import { TreeHeader } from "./TreeHeader";
+import { TreeItem } from "./TreeItem";
+
 /**
- * {@link UnknownDataView} input props.
+ * {@link UnknownFluidObjectView} input props.
  */
-export interface UnknownFluidObjectViewProps {
-	node: FluidUnknownObjectNode;
-}
+export type UnknownFluidObjectViewProps = DataVisualizationTreeProps<FluidUnknownObjectNode>;
 
 /**
  * Render data with type VisualNodeKind.FluidUnknownObjectNode and render its children.
  */
 export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): React.ReactElement {
-	const { node } = props;
+	const { label, node } = props;
 
-	return <div>{`Encountered an unrecognized kind of Fluid object: ${node.nodeKind}`}</div>;
+	const header = (
+		<TreeHeader
+			label={label}
+			nodeTypeMetadata={node.typeMetadata}
+			inlineValue={<i>Unrecognized kind of Fluid Object.</i>}
+		/>
+	);
+	return <TreeItem header={header} />;
 }

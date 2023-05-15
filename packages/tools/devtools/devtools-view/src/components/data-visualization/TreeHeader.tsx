@@ -3,67 +3,41 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-// eslint-disable-next-line import/no-internal-modules
-import { TreeItemLayout } from "@fluentui/react-components/unstable";
 import { tokens } from "@fluentui/react-components";
 
-import { Primitive } from "@fluid-experimental/devtools-core";
+import { HasLabel } from "./CommonInterfaces";
 
 /**
  * Input props to {@link TreeHeader}
  */
-export interface TreeHeaderProps {
-	/**
-	 * Key of the child node from Record {@link VisauTree}.
-	 */
-	label: string;
-
+export interface TreeHeaderProps extends HasLabel {
 	/**
 	 * Type of the object.
 	 */
 	nodeTypeMetadata?: string | undefined;
 
 	/**
-	 * Nodekinds to filter rendering pattern in {@link TreeDataView}.
+	 * Inline value to display alongside the metadata.
 	 */
-	nodeKind?: string;
+	inlineValue?: React.ReactElement | string;
 
-	/**
-	 * Size of the children inside the data.
-	 */
-	itemSize?: Primitive;
-
-	/**
-	 * Primitive value of the node if node is {@link VisualNodeKind.FluidValueNode} or {@link VisualNodeKind.ValueNode}
-	 */
-	nodeValue?: Primitive;
+	// TODO: metadata
 }
 
 /**
  * Renders the header of the item.
  */
 export function TreeHeader(props: TreeHeaderProps): React.ReactElement {
-	const { label, nodeTypeMetadata, nodeKind, itemSize, nodeValue } = props;
+	const { label, nodeTypeMetadata, inlineValue } = props;
 
-	return nodeValue !== undefined ? (
-		<TreeItemLayout style={{ marginLeft: "25px" }}>
+	return (
+		<div style={{ width: "auto" }}>
 			{`${label}`}
-			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
-				({nodeTypeMetadata})
+			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "10px" }}>
+				{nodeTypeMetadata === undefined ? "" : ` (${nodeTypeMetadata})`}
 			</span>
-			{`: ${String(nodeValue)}`}
-		</TreeItemLayout>
-	) : (
-		<TreeItemLayout>
-			{`${label === undefined ? nodeTypeMetadata : label}`}
-			<span style={{ color: tokens.colorPaletteRedBorderActive, fontSize: "12px" }}>
-				({nodeTypeMetadata === undefined ? nodeKind : nodeTypeMetadata})
-			</span>
-			{`${
-				itemSize === undefined
-					? ""
-					: `${String(itemSize)} ${itemSize === 1 ? "item" : "items"}`
-			}`}
-		</TreeItemLayout>
+			{inlineValue === undefined ? "" : ": "}
+			{inlineValue}
+		</div>
 	);
 }

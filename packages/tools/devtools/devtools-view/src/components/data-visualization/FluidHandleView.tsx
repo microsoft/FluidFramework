@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+import { Spinner } from "@fluentui/react-components";
 
 import {
 	DataVisualization,
@@ -16,9 +17,10 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { useMessageRelay } from "../../MessageRelayContext";
-import { Waiting } from "../Waiting";
 import { HasLabel } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
+import { TreeItem } from "./TreeItem";
+import { TreeHeader } from "./TreeHeader";
 
 const loggingContext = "EXTENSION(HandleView)";
 
@@ -81,7 +83,8 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}, [containerId, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
-		return <Waiting />;
+		const header = <TreeHeader label={label} inlineValue={<Spinner size="tiny" />} />;
+		return <TreeItem header={header} />;
 	}
 
 	return <TreeDataView containerId={containerId} label={label} node={visualTree} />;

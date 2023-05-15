@@ -15,6 +15,10 @@ jobs:
   load_report:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          persist-credentials: false
+
       - name: Download results
         uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v2.24.3
         with:
@@ -26,24 +30,27 @@ jobs:
         run: echo "CHANGESET=$(cat changeset-metadata.json)" >> $GITHUB_ENV
 
       - name: Required but missing
-        if: fromJson(env.CHANGESET).changesetFound == false && contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        if: fromJson(env.CHANGESET).required == true && fromJson(env.CHANGESET).changesetFound == false
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
-          path: ./.github/workflows/data/changeset-missing.md
+          number: ${{ fromJson(env.CHANGESET).pr }}
+          path: ${{ github.workspace }}/.github/workflows/data/changeset-missing.md
 
       - name: Required and present
-        if: fromJson(env.CHANGESET).changesetFound == true && contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        if: fromJson(env.CHANGESET).required == true && fromJson(env.CHANGESET).changesetFound == true
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
+          number: ${{ fromJson(env.CHANGESET).pr }}
           recreate: true
           message: |
             This PR requires a changeset and it has one! Good job!
 
       - name: Changeset not required
-        if: fromJson(env.CHANGESET).changesetFound == true && !contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        if: fromJson(env.CHANGESET).required == false && fromJson(env.CHANGESET).changesetFound == true
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
+          number: ${{ fromJson(env.CHANGESET).pr }}
           delete: true

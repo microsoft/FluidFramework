@@ -492,7 +492,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
 		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
-		const documentDeleteService = new DocumentDeleteService();
+		const documentDeleteService =
+			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
 		// Set up token revocation if enabled
 		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
