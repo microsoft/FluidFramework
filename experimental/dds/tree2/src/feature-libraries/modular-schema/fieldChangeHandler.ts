@@ -180,6 +180,7 @@ export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
 	baseChange: NodeChangeset | undefined,
 	deleted?: boolean,
+	revived?: boolean,
 ) => NodeChangeset | undefined;
 
 /**

@@ -659,7 +659,7 @@ export class ModularChangeFamily
 			const rebasedField = fieldKind.changeHandler.rebaser.rebase(
 				fieldChangeset,
 				taggedBaseChange,
-				(child, baseChild, deleted) =>
+				(child, baseChild, deleted, revived) =>
 					this.rebaseNodeChange(
 						child,
 						baseChild !== undefined ? { revision, change: baseChild } : undefined,
@@ -670,6 +670,7 @@ export class ModularChangeFamily
 						revisionMetadata,
 						constraintState,
 						deleted,
+						revived,
 					),
 				genId,
 				manager,
@@ -752,6 +753,7 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
 		deleted: boolean = false,
+		revived: boolean = false,
 	): NodeChangeset | undefined {
 		if (change === undefined && over?.change?.fieldChanges === undefined) {
 			return undefined;
