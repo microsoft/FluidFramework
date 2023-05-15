@@ -104,11 +104,11 @@ describe("GC Telemetry Tracker", () => {
 	}
 
 	// Mock node loaded and changed activity for the given nodes.
-	function updateNodes(nodeIds: string[]) {
+	function mockNodeChanges(nodeIds: string[]) {
 		nodeIds.forEach((nodeId) => {
 			telemetryTracker.nodeUsed({
 				nodeId,
-				usageType: "Changed",
+				usageType: "Loaded",
 				currentReferenceTimestampMs: Date.now(),
 				packagePath: testPkgPath,
 				completedGCRuns: 0,
@@ -116,7 +116,7 @@ describe("GC Telemetry Tracker", () => {
 			});
 			telemetryTracker.nodeUsed({
 				nodeId,
-				usageType: "Loaded",
+				usageType: "Changed",
 				currentReferenceTimestampMs: Date.now(),
 				packagePath: testPkgPath,
 				completedGCRuns: 0,
@@ -143,7 +143,7 @@ describe("GC Telemetry Tracker", () => {
 	 * For summarizer clients, inactive / sweep ready events are not logged when on node usage. They are logged when GC
 	 * runs next time. This emulates that by calling the functions in the telemetry tracker that are called when GC runs.
 	 */
-	async function generateAllEvents(isSummarizerClient: boolean) {
+	async function simulateGCToTriggerEvents(isSummarizerClient: boolean) {
 		if (!isSummarizerClient) {
 			return;
 		}
@@ -212,15 +212,10 @@ describe("GC Telemetry Tracker", () => {
 
 			// Advance the clock to trigger inactive timeout and validate that inactive events are as expected.
 			clock.tick(inactiveTimeoutMs + 1);
-			updateNodes(nodes);
-			await generateAllEvents(isSummarizerClient);
+			mockNodeChanges(nodes);
+			await simulateGCToTriggerEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
-					{
-						eventName: "GarbageCollector:InactiveObject_Changed",
-						timeout: inactiveTimeoutMs,
-						id: nodes[2],
-					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
@@ -228,11 +223,16 @@ describe("GC Telemetry Tracker", () => {
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
+						timeout: inactiveTimeoutMs,
+						id: nodes[2],
+					},
+					{
+						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
 						id: nodes[3],
 					},
 					{
-						eventName: "GarbageCollector:InactiveObject_Loaded",
+						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
 						id: nodes[3],
 					},
@@ -242,15 +242,10 @@ describe("GC Telemetry Tracker", () => {
 
 			// Advance the clock to trigger sweep timeout and validate that sweep ready events are as expected.
 			clock.tick(sweepTimeoutMs - inactiveTimeoutMs);
-			updateNodes(nodes);
-			await generateAllEvents(isSummarizerClient);
+			mockNodeChanges(nodes);
+			await simulateGCToTriggerEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
-					{
-						eventName: "GarbageCollector:SweepReadyObject_Changed",
-						timeout: sweepTimeoutMs,
-						id: nodes[2],
-					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
@@ -258,11 +253,16 @@ describe("GC Telemetry Tracker", () => {
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
+						timeout: sweepTimeoutMs,
+						id: nodes[2],
+					},
+					{
+						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
 						id: nodes[3],
 					},
 					{
-						eventName: "GarbageCollector:SweepReadyObject_Loaded",
+						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
 						id: nodes[3],
 					},
@@ -302,7 +302,7 @@ describe("GC Telemetry Tracker", () => {
 			const deleteEventName = "GarbageCollector:GCObjectDeleted";
 
 			// Validates that no unexpected event has been fired.
-			function validateNoUnexpectedEvents() {
+			function validateNoEvents() {
 				mockLogger.assertMatchNone(
 					[
 						{ eventName: revivedEventName },
@@ -322,21 +322,21 @@ describe("GC Telemetry Tracker", () => {
 			});
 
 			it("doesn't generate events for referenced nodes", async () => {
-				updateNodes(nodes);
-				await generateAllEvents(isSummarizerClient);
-				validateNoUnexpectedEvents();
+				mockNodeChanges(nodes);
+				await simulateGCToTriggerEvents(isSummarizerClient);
+				validateNoEvents();
 
 				// Advance the clock to just before the timeout expires, update nodes and validate no events.
 				clock.tick(timeout - 1);
-				updateNodes(nodes);
-				await generateAllEvents(isSummarizerClient);
-				validateNoUnexpectedEvents();
+				mockNodeChanges(nodes);
+				await simulateGCToTriggerEvents(isSummarizerClient);
+				validateNoEvents();
 
 				// Advance the clock to expire the timeout, update nodes and validate no events.
 				clock.tick(1);
-				updateNodes(nodes);
-				await generateAllEvents(isSummarizerClient);
-				validateNoUnexpectedEvents();
+				mockNodeChanges(nodes);
+				await simulateGCToTriggerEvents(isSummarizerClient);
+				validateNoEvents();
 			});
 
 			it("generates events for nodes that are used after inactive / sweep ready", async () => {
@@ -345,14 +345,14 @@ describe("GC Telemetry Tracker", () => {
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
-				updateNodes(nodes);
-				await generateAllEvents(isSummarizerClient);
-				validateNoUnexpectedEvents();
+				mockNodeChanges(nodes);
+				await simulateGCToTriggerEvents(isSummarizerClient);
+				validateNoEvents();
 
 				// Expire the timeout, update nodes and validate that all events for node 1 and node 2 are logged.
 				clock.tick(1);
-				updateNodes(nodes);
-				await generateAllEvents(isSummarizerClient);
+				mockNodeChanges(nodes);
+				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs && isSummarizerClient) {
 					expectedEvents.push(
@@ -367,13 +367,6 @@ describe("GC Telemetry Tracker", () => {
 				}
 				expectedEvents.push(
 					{
-						eventName: changedEventName,
-						timeout,
-						id: nodes[1],
-						pkg: eventPkg,
-						createContainerRuntimeVersion: pkgVersion,
-					},
-					{
 						eventName: loadedEventName,
 						timeout,
 						id: nodes[1],
@@ -382,13 +375,20 @@ describe("GC Telemetry Tracker", () => {
 					},
 					{
 						eventName: changedEventName,
+						timeout,
+						id: nodes[1],
+						pkg: eventPkg,
+						createContainerRuntimeVersion: pkgVersion,
+					},
+					{
+						eventName: loadedEventName,
 						timeout,
 						id: nodes[2],
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
-						eventName: loadedEventName,
+						eventName: changedEventName,
 						timeout,
 						id: nodes[2],
 						pkg: eventPkg,
@@ -399,7 +399,7 @@ describe("GC Telemetry Tracker", () => {
 
 				// Revived node 2 and validate that revived event is as expected.
 				reviveNode(nodes[0], nodes[2]);
-				await generateAllEvents(isSummarizerClient);
+				await simulateGCToTriggerEvents(isSummarizerClient);
 				assertMatchEvents(
 					[
 						{
@@ -417,18 +417,18 @@ describe("GC Telemetry Tracker", () => {
 			it("generates events once per node", async () => {
 				// Mark node 2 as unreferenced.
 				markNodesUnreferenced([nodes[2]]);
-				await generateAllEvents(isSummarizerClient);
+				await simulateGCToTriggerEvents(isSummarizerClient);
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
-				updateNodes(nodes);
-				await generateAllEvents(isSummarizerClient);
-				validateNoUnexpectedEvents();
+				mockNodeChanges(nodes);
+				await simulateGCToTriggerEvents(isSummarizerClient);
+				validateNoEvents();
 
 				// Expire the timeout, updated nodes and validate that events are logged as expected.
 				clock.tick(1);
-				updateNodes(nodes);
-				await generateAllEvents(isSummarizerClient);
+				mockNodeChanges(nodes);
+				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs && isSummarizerClient) {
 					expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[2] });
@@ -439,15 +439,15 @@ describe("GC Telemetry Tracker", () => {
 					);
 				}
 				expectedEvents.push(
-					{ eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
 					{ eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg },
+					{ eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
 				);
 				assertMatchEvents(expectedEvents, "all events not as expected");
 
 				// Update all nodes again. There shouldn't be any more events since for each node the event is only once.
-				updateNodes(nodes);
-				await generateAllEvents(isSummarizerClient);
-				validateNoUnexpectedEvents();
+				mockNodeChanges(nodes);
+				await simulateGCToTriggerEvents(isSummarizerClient);
+				validateNoEvents();
 			});
 
 			// This test is only relevant for summarizer client because it does not log changed events if the node is revived.
@@ -458,27 +458,27 @@ describe("GC Telemetry Tracker", () => {
 
 					// Advance the clock just before the timeout and validate no unexpected events are logged.
 					clock.tick(timeout - 1);
-					updateNodes(nodes);
-					await generateAllEvents(isSummarizerClient);
+					mockNodeChanges(nodes);
+					await simulateGCToTriggerEvents(isSummarizerClient);
 
-					validateNoUnexpectedEvents();
+					validateNoEvents();
 
 					// Expire the timeout and validate that only revived event is generated for node 2.
 					clock.tick(1);
-					updateNodes([nodes[2]]);
+					mockNodeChanges([nodes[2]]);
 					reviveNode(nodes[1], nodes[2]);
-					await generateAllEvents(isSummarizerClient);
+					await simulateGCToTriggerEvents(isSummarizerClient);
 
 					for (const event of mockLogger.events) {
 						assert.notStrictEqual(
 							event.eventName,
-							changedEventName,
-							"Unexpected changed event logged",
+							loadedEventName,
+							"Unexpected loaded event logged",
 						);
 						assert.notStrictEqual(
 							event.eventName,
-							loadedEventName,
-							"Unexpected loaded event logged",
+							changedEventName,
+							"Unexpected changed event logged",
 						);
 					}
 					assertMatchEvents(

@@ -23,11 +23,18 @@ import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
-/** The event that is logged when unreferenced node is used after a certain time. */
-interface IUnreferencedEventProps
-	extends ICreateContainerMetadata,
-		Omit<INodeUsageProps, "nodeId" | "currentReferenceTimestampMs" | "packagePath"> {
+/** Properties that are common to IUnreferencedEventProps and INodeUsageProps */
+interface ICommonProps {
 	usageType: NodeUsageType;
+	completedGCRuns: number;
+	isTombstoned: boolean;
+	lastSummaryTime?: number;
+	fromId?: string;
+	viaHandle?: boolean;
+}
+
+/** The event that is logged when unreferenced node is used after a certain time. */
+interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps {
 	state: UnreferencedState;
 	id: string;
 	type: GCNodeType;
@@ -37,16 +44,10 @@ interface IUnreferencedEventProps
 }
 
 /** Properties passed to nodeUsed function when a node is used. */
-interface INodeUsageProps {
+interface INodeUsageProps extends ICommonProps {
 	nodeId: string;
-	usageType: NodeUsageType;
 	currentReferenceTimestampMs: number | undefined;
 	packagePath: readonly string[] | undefined;
-	completedGCRuns: number;
-	isTombstoned: boolean;
-	lastSummaryTime?: number;
-	fromId?: string;
-	viaHandle?: boolean;
 }
 
 /**
@@ -84,7 +85,7 @@ export class GCTelemetryTracker {
 	) {}
 
 	/**
-	 * Returns whether an event should be logged for a not that isn't active anymore. Some scenarios where we won't log:
+	 * Returns whether an event should be logged for a node that isn't active anymore. Some scenarios where we won't log:
 	 * 1. When a DDS is changed or loaded. The corresponding data store's event will be logged instead.
 	 * 2. An event is logged only once per container instance per event per node.
 	 */
