@@ -12,6 +12,7 @@ parameters:
   default: none
   values:
     - none
+    - prerelease
     - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
@@ -24,7 +25,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: latest
+  default: repo
 
 trigger:
   branches:
@@ -37,7 +38,6 @@ trigger:
     include:
     - server/tinylicious
     - tools/pipelines/build-tinylicious.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -57,7 +57,6 @@ pr:
     include:
     - server/tinylicious
     - tools/pipelines/build-tinylicious.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -68,11 +67,12 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     buildDirectory: server/tinylicious
     tagName: tinylicious
     taskBuild: build
     taskBuildDocs: false
     taskLint: true
-    taskTest: false
+    taskTest: [] # no tests
     namespace: false
-    buildNumberInPatch: true

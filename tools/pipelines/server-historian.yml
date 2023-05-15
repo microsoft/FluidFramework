@@ -34,7 +34,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: latest
+  default: repo
 
 trigger:
   branches:
@@ -46,7 +46,6 @@ trigger:
     include:
     - server/historian
     - tools/pipelines/server-historian.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -69,7 +68,6 @@ pr:
     include:
     - server/historian
     - tools/pipelines/server-historian.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -84,6 +82,11 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/historian
     containerName: fluidframework/routerlicious/historian
+    # We need to install only the root dependencies; historian has native deps that don't install in CI since we use
+    # Docker to do the actual build in CI. We need the root dependencies so setting package versions works.
+    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
+    packageManager: pnpm
     test: test
     tagName: historian
     pack: true
+    usesPrettier: false

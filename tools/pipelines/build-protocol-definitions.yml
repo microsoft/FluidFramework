@@ -25,7 +25,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: latest
+  default: repo
 
 trigger:
   branches:
@@ -38,7 +38,6 @@ trigger:
     include:
     - common/lib/protocol-definitions
     - tools/pipelines/build-protocol-definitions.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -58,7 +57,6 @@ pr:
     include:
     - common/lib/protocol-definitions
     - tools/pipelines/build-protocol-definitions.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -70,5 +68,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/lib/protocol-definitions
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     tagName: protocol-definitions
-    taskTest: false
+    taskTest: [] # no tests

@@ -24,7 +24,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: latest
+  default: repo
 
 trigger:
   branches:
@@ -67,3 +67,4 @@ extends:
     containerName: fluidframework/routerlicious/gitssh
     setVersion: false
     tagName: gitssh
+    usesPrettier: false

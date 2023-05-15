@@ -10,7 +10,7 @@ parameters:
 
 - name: testPackage
   type: string
-  default: "@fluidframework/test-end-to-end-tests"
+  default: "@fluid-internal/test-end-to-end-tests"
 
 - name: testWorkspace
   type: string
@@ -40,9 +40,17 @@ parameters:
   type: string
   default: null
 
-- name: extraDependencies
+- name: downloadAzureTestArtifacts
+  type: boolean
+  default: false
+
+# Id of the pipeline run that contains the artifacts to download.
+# Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
+# incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
+# Make sure that the value provided corresponds to a run of the 'Build - azure' pipeline if downloadAzureTestArtifacts=true
+# or a run of the 'Build - client packages' otherwise.
+- name: artifactBuildId
   type: string
-  default: null
 
 # Name of the Secure File that contains the self-signed cert for the R11s deployment.
 # If not blank, the pipeline will try to install it to the local cert store.
@@ -50,13 +58,31 @@ parameters:
   type: string
   default: ""
 
+- name: condition
+  type: string
+  default: true
+
+- name: loggerPackage
+  type: string
+  default: '@ff-internal/aria-logger'
+
+# Custom steps specified by the "caller" of this template, for any additional things that need to be done
+# after the steps in this template complete.
+- name: additionalSteps
+  type: stepList
+  default: []
+
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
       displayName: Run ${{ variant.name }}
       pool: ${{ parameters.poolBuild }}
+      condition: ${{ parameters.condition }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
+      - name: isTestBranch
+        value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+        readonly: true
       # We use 'chalk' to colorize output, which auto-detects color support in the
       # running terminal.  The log output shown in Azure DevOps job runs only has
       # basic ANSI color support though, so force that in the pipeline
@@ -65,17 +91,26 @@ jobs:
       - name: testPackageDir
         value: '${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}'
       - name: testPackageFilePattern
-        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-*.tgz
+        value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
       - name: testPackagePathPattern
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
         value: true
-      - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-        - name: feed
+      - name: feed
+        ${{ if eq(variables.isTestBranch, 'true') }}:
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
-      - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
-        - name: feed
+        ${{ else }}:
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      - name: devFeed
+        ${{ if eq(variables.isTestBranch, 'true') }}:
+          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
+        ${{ else }}:
+          value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
+      - name: artifactPipeline
+        ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
+          value: Build - azure
+        ${{ else }}:
+          value: Build - client packages
 
       steps:
       # Setup
@@ -104,6 +139,8 @@ jobs:
               sudo update-ca-certificates
 
       # Print parameters/Vars
+      # Variables declared outside this template will only work with "macro syntax": $(name).
+      # Variables declared inside this template also work with "template expression syntax": ${{ variables.name }}.
       - task: Bash@3
         displayName: Print Parameters and Variables
         inputs:
@@ -117,21 +154,24 @@ jobs:
               testPackage=${{ parameters.testPackage }}
 
             Pipeline Variables:
+              isTestBranch=${{ variables.isTestBranch }}
               testWorkspace=${{ parameters.testWorkspace }}
               testPackageFilePattern=${{ variables.testPackageFilePattern }}
               feed=${{ variables.feed }}
+              devFeed=${{ variables.devFeed }}
               testCommand=${{ parameters.testCommand }}
               continueOnError=${{ parameters.continueOnError }}
               variant.flag=${{ variant.flags }}
               testFileTarName=${{ parameters.testFileTarName }}
-              extraDependencies=${{ parameters.extraDependencies }}
+              artifactPipeline=${{ variables.artifactPipeline }}
+              artifactBuildId=${{ parameters.artifactBuildId }}
             "
 
       # Install
       - task: UseNode@1
-        displayName: Use Node 14.x
+        displayName: Use Node 16.x
         inputs:
-          version: 14.x
+          version: 16.x
 
       # Download artifact
       - task: DownloadPipelineArtifact@2
@@ -139,14 +179,20 @@ jobs:
         inputs:
           source: specific
           project: internal
-          pipeline: Build - client packages
-          preferTriggeringPipeline: true
-          allowPartiallySucceededBuilds: true
-          runVersion: latestFromBranch
-          runBranch: $(Build.SourceBranch)
+          pipeline: ${{ variables.artifactPipeline }}
+          buildVersionToDownload: specific
+          buildId: ${{ parameters.artifactBuildId }}
           artifact: pack
           patterns: "**/${{ variables.testPackageFilePattern }}"
           path: $(Pipeline.Workspace)/client/pack
+          # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+          # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+          # It seems there's a bug and preferTriggeringPipeline is not respected.
+          # We force the behavior by explicitly specifying:
+          # - buildVersionToDownload: specific
+          # - buildId: <the id of the triggering build>
+          # preferTriggeringPipeline: true
+
 
       - task: Bash@3
         displayName: Create test directory
@@ -171,7 +217,7 @@ jobs:
 
             echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-            echo "@fluid-internal:registry=${{ variables.feed }}" >> ./.npmrc
+            echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
             echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
             echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
             echo "always-auth=true" >> ./.npmrc
@@ -181,7 +227,8 @@ jobs:
               echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
             else
               ls -1 ${{ variables.testPackagePathPattern }}
-              echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more then one found"
+              echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more than one found"
+              exit -1
             fi
 
       # Auth to internal feed
@@ -203,7 +250,7 @@ jobs:
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
-          customCommand: 'install $(Initialize.testPackageTgz) @ff-internal/aria-logger'
+          customCommand: 'install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
           customRegistry: 'useNpmrc'
 
       # Download Test Files & Install Extra Dependencies
@@ -216,13 +263,18 @@ jobs:
           inputs:
             source: specific
             project: internal
-            pipeline: Build - client packages
-            preferTriggeringPipeline: true
-            allowPartiallySucceededBuilds: true
-            runVersion: latestFromBranch
-            runBranch: $(Build.SourceBranch)
+            pipeline: ${{ variables.artifactPipeline }}
+            buildVersionToDownload: specific
+            buildId: ${{ parameters.artifactBuildId }}
             artifact: test-files
             path: $(Pipeline.Workspace)/test-files
+            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+            # It seems there's a bug and preferTriggeringPipeline is not respected.
+            # We force the behavior by explicitly specifying:
+            # - buildVersionToDownload: specific
+            # - buildId: <the id of the triggering build>
+            # preferTriggeringPipeline: true
 
         # Unpack test files
         - task: Bash@3
@@ -233,17 +285,30 @@ jobs:
             script: |
               mkdir ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
               tar -xvf $(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
+              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/dist/test
 
-        - ${{ if ne(parameters.extraDependencies, 'null') }}:
-          # Install extra dependencies for test files
-          - task: Npm@1
-            displayName: 'npm install - extra dependencies for test files'
-            inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.testWorkspace }}
-              customCommand: 'install ${{ parameters.extraDependencies }}'
-              customRegistry: 'useNpmrc'
+        - task: Bash@3
+          displayName: Copy devDependencies
+          inputs:
+            workingDir: ${{ parameters.testWorkspace }}
+            targetType: 'inline'
+            script: |
+              testPkgJsonPath=${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}/package.json
+              pkgJsonPath=${{ parameters.testWorkspace }}/package.json
+              node -e "
+                const { devDependencies } = require('$testPkgJsonPath');
+                const pkg = require('$pkgJsonPath');
+                pkg.devDependencies=devDependencies;
+                require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
+              "
+
+        - task: Npm@1
+          displayName: 'npm install - extra dependencies for test files'
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.testWorkspace }}
+            customCommand: 'install'
+            customRegistry: 'useNpmrc'
 
       # run the test
       - task: Npm@1
@@ -256,6 +321,27 @@ jobs:
           workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
           customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
+      # filter report
+      - task: Bash@3
+        displayName: Filter skipped test from report
+        inputs:
+          workingDir: ${{ variables.testPackageDir }}/nyc
+          targetType: 'inline'
+          script: |
+            if [[ -d ${{ variables.testPackageDir }}/nyc ]]; then
+              echo "directory '${{ variables.testPackageDir }}/nyc' exists."
+              cd ${{ variables.testPackageDir }}/nyc
+              if ! [[ -z "$(ls -A .)" ]]; then
+                curdirfiles=`ls`
+                echo "report file(s) ${curdirfiles} found. Filtering skipped tests..."
+                for i in `ls`; do sed -i '/<skipped/d' $i; done
+              else
+                echo "No report files found in '${{ variables.testPackageDir }}/nyc'"
+              fi
+            else
+              echo "Directory '${{ variables.testPackageDir }}/nyc' not found"
+            fi
+
       # Upload results
       - task: PublishTestResults@2
         displayName: Publish Test Results
@@ -265,3 +351,10 @@ jobs:
           searchFolder: ${{ variables.testPackageDir }}/nyc
           mergeTestResults: false
         condition: succeededOrFailed()
+
+      # Log Test Failures
+      # - template: include-log-test-failures.yml
+      #   parameters:
+      #     buildDirectory: ${{ variables.testPackageDir }}
+
+      - ${{ parameters.additionalSteps }}

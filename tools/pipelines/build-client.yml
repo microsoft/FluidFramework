@@ -25,7 +25,7 @@ parameters:
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
-  default: "^0.6.0-110101"
+  default: repo
 - name: nonScopedPackages
   displayName: Non-scoped packages to publish
   type: object
@@ -44,12 +44,11 @@ trigger:
     - packages
     - examples
     - experimental
-    - package.json
-    - package-lock.json
     - lerna.json
-    - lerna-package-lock.json
+    - package.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -70,13 +69,13 @@ pr:
     - packages
     - examples
     - experimental
-    - package.json
-    - package-lock.json
     - lerna.json
-    - lerna-package-lock.json
+    - package.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
     - tools/pipelines/build-client.yml
-    - tools/pipelines/scripts/build-version.js
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
 
@@ -87,31 +86,23 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     buildDirectory: .
     tagName: client
     poolBuild: Large
-    cgSubDirectory: packages
     checkoutSubmodules: true
     taskBundleAnalysis: true
-
-    preCG:
-    - task: UseNode@1
-      displayName: Use Node 14.x
-      inputs:
-        version: 14.x
-    - task: Npm@1
-      displayName: npm ci
-      inputs:
-        command: 'custom'
-        customCommand: 'ci --ignore-scripts'
-        customRegistry: 'useNpmrc'
-    - task: Bash@3
-      displayName: 'Generate Mono repo package json'
-      inputs:
-        targetType: 'inline'
-        script: |
-          # Generate the package/package lock for the lerna project so we would scan it.
-          node node_modules/@fluidframework/build-tools/dist/genMonoRepoPackageJson/genMonoRepoPackageJson.js
-          cp repo-package.json packages/package.json
-          cp repo-package-lock.json packages/package-lock.json
-
+    taskLint: true
+    taskLintName: ci:lint
+    taskTest:
+    - ci:test:mocha
+    - ci:test:jest
+    - ci:test:realsvc:local
+    - ci:test:realsvc:tinylicious
+    - ci:test:stress:tinylicious
+    - test:copyresults
+    checks:
+    - syncpack:deps
+    - syncpack:versions
+    - prettier
