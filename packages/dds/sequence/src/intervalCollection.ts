@@ -44,6 +44,14 @@ import { IInterval, IntervalConflictResolver, IntervalTree, IntervalNode } from 
 
 const reservedIntervalIdKey = "intervalId";
 
+export const IntervalOpType = {
+	ADD: "add",
+	DELETE: "delete",
+	CHANGE: "change",
+	PROPERTYCHANGE: "propertyChange",
+	POSITIONREMOVE: "positionRemove",
+} as const;
+
 export enum IntervalType {
 	Simple = 0x0,
 	Nest = 0x1,
@@ -1355,7 +1363,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 
 	return new Map<string, IValueOperation<IntervalCollection<T>>>([
 		[
-			"add",
+			IntervalOpType.ADD,
 			{
 				process: (collection, params, local, op, localOpMetadata) => {
 					// if params is undefined, the interval was deleted during
@@ -1370,7 +1378,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 			},
 		],
 		[
-			"delete",
+			IntervalOpType.DELETE,
 			{
 				process: (collection, params, local, op) => {
 					assert(op !== undefined, 0x3fc /* op should exist here */);
@@ -1383,7 +1391,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 			},
 		],
 		[
-			"change",
+			IntervalOpType.CHANGE,
 			{
 				process: (collection, params, local, op, localOpMetadata) => {
 					// if params is undefined, the interval was deleted during
