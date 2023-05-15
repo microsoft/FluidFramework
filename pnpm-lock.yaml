@@ -440,6 +440,9 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../azure-client
+      '@fluidframework/azure-local-service':
+        specifier: workspace:~
+        version: link:../../azure-local-service
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions

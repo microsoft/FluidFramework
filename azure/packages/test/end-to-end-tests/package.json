@@ -57,6 +57,7 @@
 	"dependencies": {
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
+		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
