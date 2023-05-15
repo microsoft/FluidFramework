@@ -262,8 +262,8 @@ export function create(
 	router.post(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
+        throttle(perTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		throttle(perTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
