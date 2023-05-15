@@ -17,7 +17,7 @@ export type TaskEventListener = (taskId: string) => void;
  */
 export interface ITaskManagerEvents extends ISharedObjectEvents {
 	/**
-	 * Notifies when the specified task has been exclusively assigned to the client.
+	 * Fires when a task has been exclusively assigned to the client.
 	 *
 	 * @remarks Does not account for known pending ops, but instead only reflects the current state.
 	 *
