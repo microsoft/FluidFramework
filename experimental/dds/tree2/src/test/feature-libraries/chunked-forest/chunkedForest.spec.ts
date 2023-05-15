@@ -27,7 +27,7 @@ import {
 	Delta,
 	IForestSubscription,
 } from "../../../core";
-import { jsonSchemaData } from "../../../domains";
+import { jsonSchema } from "../../../domains";
 import {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -41,16 +41,14 @@ describe("ChunkedForest", () => {
 	testForest({
 		suiteName: "ChunkedForest forest suite",
 		factory: () =>
-			buildChunkedForest(
-				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
-			),
+			buildChunkedForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema)),
 		skipCursorErrorCheck: true,
 	});
 
 	it("doesn't copy data when capturing and restoring repair data", () => {
 		const initialState: JsonableTree = { type: brand("Node") };
 		const forest = buildChunkedForest(
-			new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
+			new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema),
 		);
 		const chunk = basicChunkTree(singleTextCursor(initialState), basicOnlyChunkPolicy);
 

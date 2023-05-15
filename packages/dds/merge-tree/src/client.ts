@@ -596,14 +596,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param sequencedMessage - The sequencedMessage to get the client sequence args for
 	 */
 	private getClientSequenceArgsForMessage(
-		sequencedMessage: ISequencedDocumentMessage | undefined,
-	): IMergeTreeClientSequenceArgs;
-	private getClientSequenceArgsForMessage(
-		sequencedMessage:
-			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
-			| undefined,
-	): Pick<IMergeTreeClientSequenceArgs, "referenceSequenceNumber" | "clientId">;
-	private getClientSequenceArgsForMessage(
 		sequencedMessage:
 			| ISequencedDocumentMessage
 			| Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">
@@ -621,7 +613,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			};
 		} else {
 			return {
-				clientId: this.getOrAddShortClientId(sequencedMessage.clientId),
+				clientId: this.getOrAddShortClientIdFromMessage(sequencedMessage),
 				referenceSequenceNumber: sequencedMessage.referenceSequenceNumber,
 				// Note: return value satisfies overload signatures despite the cast, as if input argument doesn't contain sequenceNumber,
 				// return value isn't expected to have it either.
@@ -676,6 +668,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		return this.getShortClientId(longClientId);
 	}
+
 	getShortClientId(longClientId: string) {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
@@ -685,6 +678,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	addLongClientId(longClientId: string) {
 		this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
 		this.shortClientIdMap.push(longClientId);
+	}
+	private getOrAddShortClientIdFromMessage(msg: Pick<ISequencedDocumentMessage, "clientId">) {
+		return this.getOrAddShortClientId(msg.clientId ?? "server");
 	}
 
 	/**
@@ -802,7 +798,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private applyRemoteOp(opArgs: IMergeTreeDeltaRemoteOpArgs) {
 		const op = opArgs.op;
 		const msg = opArgs.sequencedMessage;
-		this.getOrAddShortClientId(msg.clientId);
+		this.getOrAddShortClientIdFromMessage(msg);
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
 				this.applyInsertOp(opArgs);
@@ -857,7 +853,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {
 		// Ensure client ID is registered
-		this.getOrAddShortClientId(msg.clientId);
+		this.getOrAddShortClientIdFromMessage(msg);
 		// Apply if an operation message
 		if (msg.type === MessageType.Operation) {
 			const opArgs: IMergeTreeDeltaRemoteOpArgs = {

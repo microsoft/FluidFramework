@@ -25,7 +25,6 @@ export {
 	NodeCount,
 	MoveId,
 	ObjectMark,
-	PriorOp,
 	ProtoNode,
 	RangeType,
 	Reattach,

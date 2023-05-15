@@ -5,17 +5,20 @@
 
 // Used by public types, but not part of the desired API surface
 export {
-	TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
-	TypedTree,
+	AllowedTypesToTypedTrees,
 	CollectOptions,
 	TypedFields,
 	ApplyMultiplicity,
-	ValueFieldTreeFromSchema,
+	ValuePropertyFromSchema,
 	FlexibleObject,
 	EditableSequenceField,
 	TypedField,
+	UnbrandedName,
+	TypeArrayToTypedTreeArray,
+	UntypedApi,
+	EmptyObject,
 } from "./schemaAware";
 
-export { NamesFromSchema, ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";
+export { ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";
 
 export { UntypedSequenceField } from "./partlyTyped";

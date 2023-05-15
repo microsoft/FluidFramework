@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldSchema, ITreeCursor } from "../../core";
+import { FieldKey, FieldStoredSchema, ITreeCursor } from "../../core";
 import { FieldEditor, FieldKind, Multiplicity } from "../modular-schema";
 import { UntypedField, UntypedTree, UntypedTreeContext } from "../untypedTree";
 
@@ -17,9 +17,9 @@ import { UntypedField, UntypedTree, UntypedTreeContext } from "../untypedTree";
  */
 export interface UntypedSequenceField extends UntypedField {
 	/**
-	 * The `FieldSchema` of this field.
+	 * The `FieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldSchema & {
+	readonly fieldSchema: FieldStoredSchema & {
 		readonly kind: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
 	};
 

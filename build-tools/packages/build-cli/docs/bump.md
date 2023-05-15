@@ -13,8 +13,8 @@ Bumps the version of a release group or package to the next minor, major, or pat
 ```
 USAGE
   $ flub bump PACKAGE_OR_RELEASE_GROUP [-v] [-t major|minor|patch | --exact <value>] [--scheme
-    semver|internal|virtualPatch | ] [--exactDepType ^|~|] [-d ^|~||workspace:*|workspace:^|workspace:~] [-x | --install
-    | --commit |  |  | ]
+    semver|internal|virtualPatch | ] [--exactDepType ^|~||workspace:*|workspace:^|workspace:~] [-d
+    ^|~||workspace:*|workspace:^|workspace:~] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -36,7 +36,7 @@ FLAGS
   --exactDepType=<option>              [DEPRECATED - Use interdependencyRange instead.] Controls the type of dependency
                                        that is used between packages within the release group. Use "" to indicate exact
                                        dependencies.
-                                       <options: ^|~|>
+                                       <options: ^|~||workspace:*|workspace:^|workspace:~>
   --[no-]install                       Update lockfiles by running 'npm install' automatically.
   --scheme=<option>                    Override the version scheme used by the release group or package.
                                        <options: semver|internal|virtualPatch>

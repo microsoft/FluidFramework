@@ -7,8 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ICodecFamily } from "../../codec";
 import {
 	ChangeFamily,
-	ProgressiveEditBuilder,
-	ProgressiveEditBuilderBase,
+	EditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
 	AnchorSet,
@@ -65,7 +64,7 @@ import {
 	genericFieldKind,
 	newGenericChangeset,
 } from "./genericFieldKind";
-import { makeModularChangeCodecFamily } from "./modularChangeEncoding";
+import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -1093,10 +1092,7 @@ function makeModularChangeset(
  * @sealed
  * @alpha
  */
-export class ModularEditBuilder
-	extends ProgressiveEditBuilderBase<ModularChangeset>
-	implements ProgressiveEditBuilder<ModularChangeset>
-{
+export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;
 
