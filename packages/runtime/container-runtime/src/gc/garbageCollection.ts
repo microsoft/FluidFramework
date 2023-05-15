@@ -41,7 +41,7 @@ import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
-import { GCTelemetryTracker } from "./gcTelemetryTracker";
+import { GCTelemetryTracker } from "./gcTelemetry";
 
 /**
  * The garbage collector for the container runtime. It consolidates the garbage collection functionality and maintains
