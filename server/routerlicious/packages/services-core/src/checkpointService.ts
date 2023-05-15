@@ -163,6 +163,10 @@ export class CheckpointService implements ICheckpointService {
 					}
 				} else {
 					// If checkpoint does not exist, use document
+					Lumberjack.info(
+						`Local checkpoint not found.`,
+						getLumberBaseProperties(documentId, tenantId),
+					);
 					checkpointSource = "notFoundInLocalCollection";
 					lastCheckpoint = JSON.parse(document[service]);
 				}
