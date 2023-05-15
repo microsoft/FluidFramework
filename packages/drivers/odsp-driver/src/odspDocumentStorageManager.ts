@@ -26,6 +26,7 @@ import {
 } from "./contracts";
 import {
 	downloadSnapshot,
+	evalBlobsAndTrees,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 	SnapshotFormatSupportType,
@@ -339,6 +340,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						...props,
 						method,
 						avoidPrefetchSnapshotCache: this.hostPolicy.avoidPrefetchSnapshotCache,
+						...evalBlobsAndTrees(retrievedSnapshot),
 						prefetchSavedDuration:
 							prefetchStartTime !== undefined && method !== "cache"
 								? prefetchWaitStartTime - prefetchStartTime

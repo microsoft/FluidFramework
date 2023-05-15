@@ -252,11 +252,11 @@ describe("EditManager", () => {
 				);
 			}
 
-			assert.equal(manager.getTrunk().length, 10);
+			assert.equal(manager.getTrunkChanges().length, 10);
 			manager.advanceMinimumSequenceNumber(brand(5));
-			assert.equal(manager.getTrunk().length, 5);
+			assert.equal(manager.getTrunkChanges().length, 5);
 			manager.advanceMinimumSequenceNumber(brand(10));
-			assert.equal(manager.getTrunk().length, 0);
+			assert.equal(manager.getTrunkChanges().length, 0);
 
 			for (let i = 10; i < 20; ++i) {
 				manager.addSequencedChange(
@@ -270,11 +270,11 @@ describe("EditManager", () => {
 				);
 			}
 
-			assert.equal(manager.getTrunk().length, 10);
+			assert.equal(manager.getTrunkChanges().length, 10);
 			manager.advanceMinimumSequenceNumber(brand(15));
-			assert.equal(manager.getTrunk().length, 5);
+			assert.equal(manager.getTrunkChanges().length, 5);
 			manager.advanceMinimumSequenceNumber(brand(20));
-			assert.equal(manager.getTrunk().length, 0);
+			assert.equal(manager.getTrunkChanges().length, 0);
 		});
 
 		it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
@@ -289,7 +289,7 @@ describe("EditManager", () => {
 				brand(0),
 			);
 
-			assert.equal(manager.getTrunk().length, 1);
+			assert.equal(manager.getTrunkChanges().length, 1);
 			manager.addSequencedChange(
 				{
 					change: TestChange.mint([], []),
@@ -300,9 +300,9 @@ describe("EditManager", () => {
 				brand(1),
 			);
 
-			assert.equal(manager.getTrunk().length, 2);
+			assert.equal(manager.getTrunkChanges().length, 2);
 			manager.advanceMinimumSequenceNumber(brand(1));
-			assert.equal(manager.getTrunk().length, 2);
+			assert.equal(manager.getTrunkChanges().length, 2);
 
 			// If a change's sequence number is also the minimum sequence number,
 			// it should not be evicted
@@ -316,9 +316,9 @@ describe("EditManager", () => {
 				brand(3),
 			);
 
-			assert.equal(manager.getTrunk().length, 3);
+			assert.equal(manager.getTrunkChanges().length, 3);
 			manager.advanceMinimumSequenceNumber(brand(3));
-			assert.equal(manager.getTrunk().length, 1);
+			assert.equal(manager.getTrunkChanges().length, 1);
 		});
 
 		it("Rebases anchors over local changes", () => {
@@ -735,10 +735,7 @@ function checkChangeList(manager: TestEditManager, intentions: number[]): void {
 }
 
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
-	return manager
-		.getTrunk()
-		.map((c) => c.change)
-		.concat(manager.getLocalChanges());
+	return manager.getTrunkChanges().concat(manager.getLocalChanges());
 }
 
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
