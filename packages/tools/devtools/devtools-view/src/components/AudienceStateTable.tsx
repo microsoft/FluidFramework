@@ -67,28 +67,20 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 									content={TOOLTIP_FLUIDCLIENTGUID}
 									id={clientIdTooltipId}
 								>
-									<Person12Regular />
-									{column.label}
-									<Info12Regular
-										style={{
-											position: "relative",
-											top: "3px",
-											marginLeft: "5px",
-										}}
-									/>
+									<div style={{ display: "flex", alignItems: "center" }}>
+										<Person12Regular />
+										<span style={{ marginLeft: "5px" }}>{column.label}</span>
+										<Info12Regular style={{ marginLeft: "5px" }} />
+									</div>
 								</TooltipHost>
 							)}
 							{column.columnKey === "userId" && (
 								<TooltipHost content={TOOLTIP_FLUIDUSERGUID} id={userIdTooltipId}>
-									<Person12Regular />
-									{column.label}
-									<Info12Regular
-										style={{
-											position: "relative",
-											top: "3px",
-											marginLeft: "5px",
-										}}
-									/>
+									<div style={{ display: "flex", alignItems: "center" }}>
+										<Person12Regular />
+										<span style={{ marginLeft: "5px" }}>{column.label}</span>
+										<Info12Regular style={{ marginLeft: "5px" }} />
+									</div>
 								</TooltipHost>
 							)}
 							{column.columnKey === "mode" && (
