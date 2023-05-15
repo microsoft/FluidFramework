@@ -371,30 +371,6 @@ describe("Editing", () => {
 
 			expectJsonTree([tree1, tree2], ["43"]);
 		});
-
-		it.skip("node exists constraint", () => {
-			const sequencer = new Sequencer();
-			const tree1 = TestTree.fromJson(["a", "b", "c"]);
-			const tree2 = tree1.fork();
-
-			const e1 = remove(tree1, 1, 1);
-			const e2 = tree2.runTransaction((forest, editor) => {
-				editor.addNodeExistsConstraint({
-					parent: undefined,
-					parentField: rootFieldKeySymbol,
-					parentIndex: 1,
-				});
-				editor
-					.sequenceField({ parent: undefined, field: rootFieldKeySymbol })
-					.insert(0, singleTextCursor({ type: jsonString.name, value: "x" }));
-			});
-
-			const sequenced = sequencer.sequence([e1, e2]);
-
-			tree1.receive(sequenced);
-			tree2.receive(sequenced);
-			expectJsonTree([tree1, tree2], ["a", "c"]);
-		});
 	});
 });
 
