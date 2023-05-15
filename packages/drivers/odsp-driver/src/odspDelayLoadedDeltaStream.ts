@@ -188,7 +188,7 @@ export class OdspDelayLoadedDeltaStream {
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
-				// this.clearJoinSessionTimer();
+				this.clearJoinSessionTimer();
 				this.cache.sessionJoinCache.remove(this.joinSessionKey);
 
 				const normalizedError = this.annotateConnectionError(
