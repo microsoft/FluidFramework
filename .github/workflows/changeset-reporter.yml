@@ -1,0 +1,49 @@
+name: changeset-reporter
+
+# This workflow adds a comment to the PR depending on the results of the pr-check-changeset workflow.
+#
+# The workflows are separated for security reasons. This workflow requires write access to the repo, but the
+# pr-check-changeset workflow does not.
+
+on:
+  workflow_run:
+    workflows: [ "pr-check-changeset" ]
+    types:
+      - completed
+
+jobs:
+  load_report:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download results
+        uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v2.24.3
+        with:
+          workflow: pr-check-changeset.yml
+          run_id: ${{ github.event.workflow_run.id }}
+          name: changeset-metadata
+
+      - name: Load changeset metadata into env variable
+        run: echo "CHANGESET=$(cat changeset-metadata.json)" >> $GITHUB_ENV
+
+      - name: Required but missing
+        if: fromJson(env.CHANGESET).required == true && fromJson(env.CHANGESET).changesetFound == false
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          path: ./.github/workflows/data/changeset-missing.md
+
+      - name: Required and present
+        if: fromJson(env.CHANGESET).required == true && fromJson(env.CHANGESET).changesetFound == true
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          recreate: true
+          message: |
+            This PR requires a changeset and it has one! Good job!
+
+      - name: Changeset not required
+        if: fromJson(env.CHANGESET).required == false && fromJson(env.CHANGESET).changesetFound == true
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          header: changeset
+          delete: true
