@@ -23,7 +23,13 @@ import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
-import { DeltaService } from "./services";
+import {
+	DeltaService,
+	StorageNameAllocator,
+	IDocumentDeleteService,
+	DocumentDeleteService,
+} from "./services";
+import { IAlfredResourcesCustomizations } from ".";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -100,6 +106,7 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public metricClientConfig: any,
 		public documentRepository: core.IDocumentRepository,
+		public documentDeleteService: IDocumentDeleteService,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
@@ -128,7 +135,7 @@ export class AlfredResources implements core.IResources {
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
 	public async create(
 		config: Provider,
-		customizations?: Record<string, any>,
+		customizations?: IAlfredResourcesCustomizations,
 	): Promise<AlfredResources> {
 		// Producer used to publish messages
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -193,6 +200,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Database connection for operations db
 		const operationsDbMongoManager = new core.MongoManager(factory);
 		const documentsCollectionName = config.get("mongo:collectionNames:documents");
+		const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 
 		// Create the index on the documents collection
 		const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
@@ -207,6 +215,33 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 		const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 		const scribeCollectionName = config.get("mongo:collectionNames:scribeDeltas");
+
+		// Setup for checkpoint collection
+		const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled");
+		const operationsDb = await operationsDbMongoManager.getDatabase();
+		const checkpointsCollection =
+			operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
+		await checkpointsCollection.createIndex(
+			{
+				documentId: 1,
+			},
+			true,
+		);
+		await checkpointsCollection.createIndex(
+			{
+				tenantId: 1,
+			},
+			false,
+		);
+
+		// Foreman agent uploader does not run locally.
+		// TODO: Make agent uploader run locally.
+		const foremanConfig = config.get("foreman");
+		const taskMessageSender = services.createMessageSender(
+			config.get("rabbitmq"),
+			foremanConfig,
+		);
+		await taskMessageSender.initialize();
 
 		const nodeCollectionName = config.get("mongo:collectionNames:nodes");
 		const nodeManager = new NodeManager(operationsDbMongoManager, nodeCollectionName);
@@ -350,23 +385,49 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const documentRepository =
 			customizations?.documentRepository ??
 			new core.MongoDocumentRepository(documentsCollection);
+		const deliCheckpointRepository = new core.MongoCheckpointRepository(
+			checkpointsCollection,
+			"deli",
+		);
+		const scribeCheckpointRepository = new core.MongoCheckpointRepository(
+			checkpointsCollection,
+			"scribe",
+		);
+
+		const deliCheckpointService = new core.CheckpointService(
+			deliCheckpointRepository,
+			documentRepository,
+			localCheckpointEnabled,
+		);
+		const scribeCheckpointService = new core.CheckpointService(
+			scribeCheckpointRepository,
+			documentRepository,
+			localCheckpointEnabled,
+		);
+
 		const databaseManager = new core.MongoDatabaseManager(
 			globalDbEnabled,
 			operationsDbMongoManager,
 			globalDbMongoManager,
 			nodeCollectionName,
 			documentsCollectionName,
+			checkpointsCollectionName,
 			deltasCollectionName,
 			scribeCollectionName,
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
 		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
+		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
+		const storageNameAllocator = storagePerDocEnabled
+			? customizations?.storageNameAllocator ?? new StorageNameAllocator(tenantManager)
+			: undefined;
 		const storage = new services.DocumentStorage(
 			documentRepository,
 			tenantManager,
 			enableWholeSummaryUpload,
 			opsCollection,
+			storageNameAllocator,
 		);
 
 		const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
@@ -398,11 +459,16 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			storage,
 			databaseManager,
 			documentRepository,
+			deliCheckpointRepository,
+			scribeCheckpointRepository,
+			deliCheckpointService,
+			scribeCheckpointService,
 			60000,
 			() => new NodeWebSocketServer(4000),
 			maxSendMessageSize,
 			winston,
 		);
+
 		const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
 		const kafkaOrdererFactory = new KafkaOrdererFactory(
 			producer,
@@ -426,6 +492,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
 		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+		const documentDeleteService =
+			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
 		// Set up token revocation if enabled
 		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
@@ -460,6 +528,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentsCollectionName,
 			metricClientConfig,
 			documentRepository,
+			documentDeleteService,
 			redisThrottleAndUsageStorageManager,
 			verifyMaxMessageSize,
 			redisCache,
@@ -491,6 +560,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.producer,
 			resources.metricClientConfig,
 			resources.documentRepository,
+			resources.documentDeleteService,
 			resources.throttleAndUsageStorageManager,
 			resources.verifyMaxMessageSize,
 			resources.redisCache,

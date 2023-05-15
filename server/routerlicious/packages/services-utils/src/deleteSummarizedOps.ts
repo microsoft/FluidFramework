@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDocumentRepository } from "@fluidframework/server-services-core";
+import { CheckpointService, ICollection } from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";
 
 export async function deleteSummarizedOps(
 	opCollection: ICollection<unknown>,
-	documentRepository: IDocumentRepository,
 	softDeleteRetentionPeriodMs: number,
 	offlineWindowMs: number,
 	softDeletionEnabled: boolean,
 	permanentOpsDeletionEnabled: boolean,
+	checkpointService: CheckpointService,
 ): Promise<void> {
 	if (!softDeletionEnabled) {
 		const error = new FluidServiceError(
@@ -37,10 +37,11 @@ export async function deleteSummarizedOps(
 	for (const doc of uniqueDocumentsFromOps) {
 		const lumberjackProperties = getLumberBaseProperties(doc.documentId, doc.tenantId);
 		try {
-			const realDoc = await documentRepository.readOne({
-				documentId: doc.documentId,
-				tenantId: doc.tenantId,
-			});
+			const realDoc = await checkpointService.getLatestCheckpoint(
+				doc.tenantId,
+				doc.documentId,
+			);
+
 			const lastSummarySequenceNumber = JSON.parse(realDoc.scribe).lastSummarySequenceNumber;
 
 			// first "soft delete" operations older than the offline window, which have been summarised
