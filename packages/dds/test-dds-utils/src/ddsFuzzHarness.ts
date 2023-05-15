@@ -572,6 +572,45 @@ function makeFriendlyClientId(random: IRandom, index: number): string {
 	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
 }
 
+async function runTestForSeed<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation>,
+	options: InternalOptions,
+	seed: number,
+	saveInfo: SaveInfo | undefined,
+): Promise<void> {
+	const random = makeRandom(seed);
+	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
+
+	const clients = await Promise.all(
+		Array.from({ length: options.numberOfClients }, async (_, index) =>
+			loadClient(
+				containerRuntimeFactory,
+				summarizerClient,
+				model.factory,
+				makeFriendlyClientId(random, index),
+			),
+		),
+	);
+
+	const initialState: DDSFuzzTestState<TChannelFactory> = {
+		clients,
+		summarizerClient,
+		containerRuntimeFactory,
+		random,
+		// These properties should always be injected into the state by the mixed in reducer/generator
+		// for any user code. We initialize them to proxies which throw errors on any property access
+		// to catch bugs in that setup.
+		channel: makeUnreachableCodepathProxy("channel"),
+		client: makeUnreachableCodepathProxy("client"),
+	};
+
+	await performFuzzActions(model.generatorFactory(), model.reducer, initialState, saveInfo);
+}
+
 function runTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 	model: DDSFuzzModel<TChannelFactory, TOperation>,
 	options: InternalOptions,
@@ -580,34 +619,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 ): void {
 	const itFn = options.only.has(seed) ? it.only : it;
 	itFn(`seed ${seed}`, async () => {
-		const random = makeRandom(seed);
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-		const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
-
-		const clients = await Promise.all(
-			Array.from({ length: options.numberOfClients }, async (_, index) =>
-				loadClient(
-					containerRuntimeFactory,
-					summarizerClient,
-					model.factory,
-					makeFriendlyClientId(random, index),
-				),
-			),
-		);
-
-		const initialState: DDSFuzzTestState<TChannelFactory> = {
-			clients,
-			summarizerClient,
-			containerRuntimeFactory,
-			random,
-			// These properties should always be injected into the state by the mixed in reducer/generator
-			// for any user code. We initialize them to proxies which throw errors on any property access
-			// to catch bugs in that setup.
-			channel: makeUnreachableCodepathProxy("channel"),
-			client: makeUnreachableCodepathProxy("client"),
-		};
-
-		await performFuzzActions(model.generatorFactory(), model.reducer, initialState, saveInfo);
+		await runTestForSeed(model, options, seed, saveInfo);
 	});
 }
 
@@ -615,6 +627,36 @@ type InternalOptions = Omit<DDSFuzzSuiteOptions, "only"> & { only: Set<number> }
 
 function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
 	return options.only instanceof Set;
+}
+
+export async function replayTest<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+>(
+	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+	seed: number,
+	operations: TOperation[],
+	saveInfo?: SaveInfo,
+	providedOptions?: Partial<DDSFuzzSuiteOptions>,
+): Promise<void> {
+	const options = {
+		...defaultDDSFuzzSuiteOptions,
+		...providedOptions,
+		only: new Set(providedOptions?.only ?? []),
+	};
+
+	const _model = mixinSynchronization(
+		mixinNewClient(mixinClientSelection(mixinReconnect(ddsModel, options), options), options),
+		options,
+	);
+
+	const model = {
+		..._model,
+		// We lose some typesafety here because the options interface isn't generic
+		generatorFactory: (): Generator<TOperation, unknown> => generatorFromArray(operations),
+	};
+
+	await runTestForSeed(model, options, seed, saveInfo);
 }
 
 /**

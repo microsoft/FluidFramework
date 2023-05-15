@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import {
 	AnchorSet,
-	mintRevisionTag,
 	IEditableForest,
 	IForestSubscription,
 	initializeForest,
@@ -19,10 +18,8 @@ import {
 	SchemaPolicy,
 	SessionId,
 	RevisionTag,
-	makeAnonChange,
-	UndoRedoManager,
 } from "../../core";
-import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
+import { cursorToJsonObject, jsonSchema, singleJsonCursor } from "../../domains";
 import {
 	buildForest,
 	DefaultChangeFamily,
@@ -30,10 +27,10 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	ForestRepairDataStoreProvider,
 } from "../../feature-libraries";
 import { brand, JsonCompatible } from "../../util";
 import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
+import { MockRepairDataStoreProvider } from "../utils";
 
 export interface TestTreeEdit {
 	sessionId: SessionId;
@@ -79,12 +76,16 @@ export class TestTree {
 		options: TestTreeOptions = {},
 	): TestTree {
 		const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
-		return TestTree.fromCursor(cursors, { schemaData: jsonSchemaData, ...options });
+		return TestTree.fromCursor(cursors, { schemaData: jsonSchema, ...options });
 	}
 
 	public readonly sessionId: string;
 	public readonly forest: IEditableForest;
-	public readonly editManager: EditManager<DefaultChangeset, DefaultChangeFamily>;
+	public readonly editManager: EditManager<
+		DefaultEditBuilder,
+		DefaultChangeset,
+		DefaultChangeFamily
+	>;
 	public readonly schemaPolicy: SchemaPolicy;
 
 	private refNumber: number = -1;
@@ -102,21 +103,16 @@ export class TestTree {
 		this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
 		this.sessionId = options.sessionId ?? uuid();
 		this.forest = forest;
-		const undoRedoManager = new UndoRedoManager(
-			new ForestRepairDataStoreProvider(
-				this.forest,
-				new InMemoryStoredSchemaRepository(defaultSchemaPolicy),
-			),
-			defaultChangeFamily,
-			() => this.editManager.getLocalBranchHead(),
-		);
-		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
-			defaultChangeFamily,
-			this.sessionId,
-			undoRedoManager,
-			undoRedoManager.clone(() => this.editManager.getTrunkHead()),
-			forest.anchors,
-		);
+		this.editManager = new EditManager<
+			DefaultEditBuilder,
+			DefaultChangeset,
+			DefaultChangeFamily
+		>(defaultChangeFamily, this.sessionId, new MockRepairDataStoreProvider(), forest.anchors);
+		this.editManager.localBranch.on("change", ({ change: c }) => {
+			if (c !== undefined) {
+				this.forest.applyDelta(defaultChangeFamily.intoDelta(c));
+			}
+		});
 	}
 
 	public jsonRoots(): JsonCompatible[] {
@@ -147,25 +143,13 @@ export class TestTree {
 	public runTransaction(
 		transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => void,
 	): TestTreeEdit {
-		const editor = defaultChangeFamily.buildEditor((edit) => {
-			const delta = defaultChangeFamily.intoDelta(edit);
-			this.forest.applyDelta(delta);
-		}, this.forest.anchors);
-		transaction(this.forest, editor);
-		const changes = editor.getChanges();
-
-		// Using anonymous changes makes it impossible to chronologically order them during composition.
-		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
-		// not expected to happen in transactions but that could change in the future.
-		const anonChanges = changes.map((c) => makeAnonChange(c));
-
-		const changeset = defaultChangeFamily.rebaser.compose(anonChanges);
-		const revision = mintRevisionTag();
-		// Forest and anchors already reflect the results of this change since they were updated during transaction.
-		this.editManager.addLocalChange(revision, changeset);
+		this.editManager.localBranch.startTransaction();
+		transaction(this.forest, this.editManager.localBranch.editor);
+		this.editManager.localBranch.commitTransaction();
+		const { change, revision } = this.editManager.localBranch.getHead();
 		const resultingEdit: TestTreeEdit = {
 			sessionId: this.sessionId,
-			change: changeset,
+			change,
 			sessionEditNumber: this._localEditsApplied,
 			refNumber: brand(this.refNumber),
 			revision,
@@ -183,8 +167,7 @@ export class TestTree {
 			return;
 		}
 		for (const edit of edits) {
-			const delta = this.editManager.addSequencedChange(edit, edit.seqNumber, edit.refNumber);
-			this.forest.applyDelta(delta);
+			this.editManager.addSequencedChange(edit, edit.seqNumber, edit.refNumber);
 			this._remoteEditsApplied += 1;
 			this.refNumber = edit.seqNumber;
 		}

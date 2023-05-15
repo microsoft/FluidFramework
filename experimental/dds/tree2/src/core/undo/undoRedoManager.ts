@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
-import { GraphCommit, findCommonAncestor, tagChange } from "../rebase";
+import { GraphCommit, RevisionTag, findCommonAncestor, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
@@ -17,16 +17,29 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * @param repairDataStoryFactory - Factory for creating {@link RepairDataStore}s to create and store repair
 	 * data for {@link ReversibleCommit}s.
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
-	 * @param getHead - Function for retrieving the head commit of the branch associated with this undo redo manager.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
 	 * @param headRedoableCommit - Optional commit to set as the initial redoable commit.
 	 */
-	public constructor(
+	public static create<TChange, TEditor extends ChangeFamilyEditor>(
+		repairDataStoreProvider: IRepairDataStoreProvider,
+		changeFamily: ChangeFamily<TEditor, TChange>,
+		headUndoableCommit?: ReversibleCommit<TChange>,
+		headRedoableCommit?: ReversibleCommit<TChange>,
+	): UndoRedoManager<TChange, TEditor> {
+		return new UndoRedoManager(
+			repairDataStoreProvider,
+			changeFamily,
+			headUndoableCommit,
+			headRedoableCommit,
+		);
+	}
+
+	private constructor(
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly getHead?: () => GraphCommit<TChange>,
 		private headUndoableCommit?: ReversibleCommit<TChange>,
 		private headRedoableCommit?: ReversibleCommit<TChange>,
+		private readonly commitTypes = new Map<RevisionTag, UndoRedoManagerCommitType>(),
 	) {}
 
 	public get headUndoable(): ReversibleCommit<TChange> | undefined {
@@ -42,6 +55,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Should be called for all commits on the relevant branch, including undo and redo commits.
 	 */
 	public trackCommit(commit: GraphCommit<TChange>, type: UndoRedoManagerCommitType): void {
+		this.commitTypes.set(commit.revision, type);
 		const repairData = this.repairDataStoreProvider.createRepairData();
 		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
 
@@ -78,10 +92,25 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	}
 
 	/**
+	 * Returns the {@link UndoRedoManagerCommitType} associated with the provided revision.
+	 */
+	public getCommitType(revision: RevisionTag): UndoRedoManagerCommitType | undefined {
+		return this.commitTypes.get(revision);
+	}
+
+	/**
+	 * Removes the {@link UndoRedoManagerCommitType} associated with the provided revision.
+	 */
+	public untrackCommitType(revision: RevisionTag): void {
+		this.commitTypes.delete(revision);
+	}
+
+	/**
 	 * Inverts the head undoable commit and returns the inverted change.
 	 * This change can then be applied and tracked.
+	 * @param headCommit - The head commit of the branch to undo from.
 	 */
-	public undo(): TChange | undefined {
+	public undo(headCommit: GraphCommit<TChange>): TChange | undefined {
 		const undoableCommit = this.headUndoableCommit;
 
 		if (undoableCommit === undefined) {
@@ -89,14 +118,15 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			return undefined;
 		}
 
-		return this.createInvertedChange(undoableCommit);
+		return this.createInvertedChange(undoableCommit, headCommit);
 	}
 
 	/**
 	 * Inverts the head redoable commit and returns the inverted change.
 	 * This change can then be applied and tracked.
+	 * @param headCommit - The head commit of the branch to redo from.
 	 */
-	public redo(): TChange | undefined {
+	public redo(headCommit: GraphCommit<TChange>): TChange | undefined {
 		const redoableCommit = this.headRedoableCommit;
 
 		if (redoableCommit === undefined) {
@@ -104,10 +134,13 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			return undefined;
 		}
 
-		return this.createInvertedChange(redoableCommit);
+		return this.createInvertedChange(redoableCommit, headCommit);
 	}
 
-	private createInvertedChange(undoableOrRedoable: ReversibleCommit<TChange>): TChange {
+	private createInvertedChange(
+		undoableOrRedoable: ReversibleCommit<TChange>,
+		headCommit: GraphCommit<TChange>,
+	): TChange {
 		const { commit, repairData } = undoableOrRedoable;
 
 		let change = this.changeFamily.rebaser.invert(
@@ -116,21 +149,18 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairData,
 		);
 
-		if (this.getHead !== undefined) {
-			// Rebase the inverted change onto any commits that occurred after the undoable commits.
-			const head = this.getHead();
-			if (commit.revision !== head.revision) {
-				const pathAfterUndoable: GraphCommit<TChange>[] = [];
-				const ancestor = findCommonAncestor([commit], [head, pathAfterUndoable]);
-				assert(
-					ancestor === commit,
-					0x677 /* The head commit should be based off the undoable commit. */,
-				);
-				change = pathAfterUndoable.reduce(
-					(a, b) => this.changeFamily.rebaser.rebase(a, b),
-					change,
-				);
-			}
+		// Rebase the inverted change onto any commits that occurred after the undoable commits.
+		if (commit.revision !== headCommit.revision) {
+			const pathAfterUndoable: GraphCommit<TChange>[] = [];
+			const ancestor = findCommonAncestor([commit], [headCommit, pathAfterUndoable]);
+			assert(
+				ancestor === commit,
+				0x677 /* The head commit should be based off the undoable commit. */,
+			);
+			change = pathAfterUndoable.reduce(
+				(a, b) => this.changeFamily.rebaser.rebase(a, b),
+				change,
+			);
 		}
 
 		return change;
@@ -146,7 +176,6 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * of this {@link UndoRedoManager} will be used.
 	 */
 	public clone(
-		getHead?: () => GraphCommit<TChange>,
 		repairDataStoreProvider?: IRepairDataStoreProvider,
 		headUndoableCommit?: ReversibleCommit<TChange>,
 		headRedoableCommit?: ReversibleCommit<TChange>,
@@ -154,44 +183,38 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		return new UndoRedoManager(
 			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
 			this.changeFamily,
-			getHead ?? this.getHead,
 			headUndoableCommit ?? this.headUndoableCommit,
 			headRedoableCommit ?? this.headRedoableCommit,
+			this.commitTypes,
 		);
 	}
 
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased after merging.
-	 * @param newHead - the head commit of the newly rebased branch.
+	 * @param newCommits - all commits which were appended to the source branch.
 	 * @param mergedUndoRedoManager - the {@link UndoRedoManager} of the branch that was merged.
 	 */
 	public updateAfterMerge(
-		newHead: GraphCommit<TChange>,
+		newCommits: GraphCommit<TChange>[],
 		mergedUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
-		if (this.getHead !== undefined) {
-			this.updateBasedOnNewCommits(this.getHead(), newHead, this, mergedUndoRedoManager);
-		}
+		this.updateBasedOnNewCommits(newCommits, this, mergedUndoRedoManager);
 	}
 
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased.
-	 * @param newHead - the head commit of the newly rebased branch.
+	 * @param newCommits - all commits from the original branch that have rebased versions present on the new branch.
 	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
 	 */
 	public updateAfterRebase(
-		newHead: GraphCommit<TChange>,
+		newCommits: GraphCommit<TChange>[],
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
-		if (baseUndoRedoManager.getHead !== undefined) {
-			const baseHead = baseUndoRedoManager.getHead();
-			this.updateBasedOnNewCommits(baseHead, newHead, baseUndoRedoManager, this);
-		}
+		this.updateBasedOnNewCommits(newCommits, baseUndoRedoManager, this);
 	}
 
 	private updateBasedOnNewCommits(
-		baseHead: GraphCommit<TChange>,
-		rebasedHead: GraphCommit<TChange>,
+		newCommits: GraphCommit<TChange>[],
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 		originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
@@ -206,30 +229,19 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			return;
 		}
 
-		const rebasedPath: GraphCommit<TChange>[] = [];
-		const ancestor = findCommonAncestor([baseHead], [rebasedHead, rebasedPath]);
-		assert(
-			ancestor === baseHead,
-			0x678 /* The rebased head should be based off of the base branch. */,
-		);
-
-		if (rebasedPath.length === 0) {
+		if (newCommits.length === 0) {
 			this.headUndoableCommit = baseUndoRedoManager.headUndoable;
 			this.headRedoableCommit = baseUndoRedoManager.headRedoable;
 			return;
 		}
 
-		const markedCommits = markCommits(
-			rebasedPath,
-			originalUndoRedoManager.headUndoable,
-			originalUndoRedoManager.headRedoable,
-		);
 		// Create a complete clone of the base undo redo manager for tracking the rebased path
 		const undoRedoManager = baseUndoRedoManager.clone();
 
-		for (const { commit, undoRedoManagerCommitType } of markedCommits) {
-			if (undoRedoManagerCommitType !== undefined) {
-				undoRedoManager.trackCommit(commit, undoRedoManagerCommitType);
+		for (const commit of newCommits) {
+			const type = originalUndoRedoManager.commitTypes.get(commit.revision);
+			if (type !== undefined) {
+				undoRedoManager.trackCommit(commit, type);
 			}
 			undoRedoManager.repairDataStoreProvider.applyDelta(
 				this.changeFamily.intoDelta(commit.change),
@@ -261,43 +273,4 @@ export enum UndoRedoManagerCommitType {
 	Redoable,
 	Undo,
 	Redo,
-}
-
-/**
- * Marks the commits in the provided path as undoable or redoable.
- * @param path - the path of commits that may or may not be undoable or redoable.
- * @param headUndoableCommit - the head undoable commit of the undo commit tree that may contain the commits in the path.
- * @param headRedoableCommit - the head redoable commit of the redo commit tree that may contain the commits in the path.
- */
-export function markCommits<TChange>(
-	path: GraphCommit<TChange>[],
-	headUndoableCommit?: ReversibleCommit<TChange>,
-	headRedoableCommit?: ReversibleCommit<TChange>,
-): { commit: GraphCommit<TChange>; undoRedoManagerCommitType?: UndoRedoManagerCommitType }[] {
-	let currentUndoable: ReversibleCommit<TChange> | undefined = headUndoableCommit;
-	let currentRedoable: ReversibleCommit<TChange> | undefined = headRedoableCommit;
-
-	if (currentUndoable === undefined && currentRedoable === undefined) {
-		// If there are no undoable or redoable commits, none are marked
-		return path.map((commit) => ({ commit }));
-	}
-
-	// Walk up the commit tree to figure out which commits are undoable or redoable
-	return path
-		.reverse()
-		.map((commit) => {
-			const markedCommit: {
-				commit: GraphCommit<TChange>;
-				undoRedoManagerCommitType?: UndoRedoManagerCommitType;
-			} = { commit };
-			if (commit.revision === currentUndoable?.commit.revision) {
-				markedCommit.undoRedoManagerCommitType = UndoRedoManagerCommitType.Undoable;
-				currentUndoable = currentUndoable?.parent;
-			} else if (commit.revision === currentRedoable?.commit.revision) {
-				markedCommit.undoRedoManagerCommitType = UndoRedoManagerCommitType.Redoable;
-				currentRedoable = currentRedoable?.parent;
-			}
-			return markedCommit;
-		})
-		.reverse();
 }

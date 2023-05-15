@@ -62,7 +62,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
     (event: "dirty" | "disconnected" | "dispose" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
-    // (undocumented)
+    // @deprecated (undocumented)
     (event: "localHelp", listener: (message: IHelpMessage) => void): any;
 }
 

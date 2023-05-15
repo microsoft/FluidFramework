@@ -9,22 +9,44 @@ import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
+ * @remarks
+ * ```text
+ * Consider the commit graph below containing two branches, X and Y, with head commits C and E, respectively.
+ * Branch Y branches off of Branch X at their common ancestor commit A, i.e. "Y is based off of X at commit A".
+ *
+ *   A ─ B ─ C ← Branch X
+ *   └─ D ─ E ← Branch Y
+ *
+ * Branch Y is then rebased onto Branch X. This results in the following commit graph:
+ *
+ *   A ─ B ─ C ← Branch X
+ *           └─ D'─ E'← Branch Y
+ *
+ * Commits D' and E' are the rebased versions of commits D and E, respectively. This results in:
+ * deletedSourceCommits: [D, E],
+ * targetCommits: [B, C],
+ * sourceCommits: [D', E']
+ * ```
  */
 export interface RebasedCommits<TChange> {
 	/**
-	 * The new common ancestor of the two branches, i.e. the commit where the rebased source branch now branches from the target branch.
-	 * This is not always the same as the target commit of a rebase operation; sometimes the rebase will rebase past the target commit
-	 * (see remarks in {@link rebaseBranch}).
-	 */
-	newBase: GraphCommit<TChange>;
-	/**
-	 * All commits that belonged to the source branch before the rebase, but no longer do after the rebase
+	 * The commits on the original source branch that were rebased. These are no longer referenced by the source branch and have
+	 * been replaced with new versions on the new source branch, see {@link sourceCommits}. In the case that the source
+	 * branch was already ahead of the target branch before the rebase, this list will be empty.
 	 */
 	deletedSourceCommits: GraphCommit<TChange>[];
 	/**
-	 * All commits which were not part of the source branch before the rebase, but are after the rebase
+	 * All commits on the target branch that the source branch's commits were rebased over. These are now the direct
+	 * ancestors of {@link sourceCommits}. In the case that the source branch was already ahead of the target branch
+	 * before the rebase, this list will be empty.
 	 */
-	newSourceCommits: GraphCommit<TChange>[];
+	targetCommits: GraphCommit<TChange>[];
+	/**
+	 * All commits on the source branch that are not also on the target branch after the rebase operation. In the case that the
+	 * source branch was already ahead of the target branch before the rebase, these are the same commits that were already on
+	 * the source branch before the rebase, otherwise these are the new, rebased versions of {@link deletedSourceCommits}.
+	 */
+	sourceCommits: GraphCommit<TChange>[];
 }
 
 /**
@@ -61,7 +83,7 @@ export function rebaseBranch<TChange>(
 ): [
 	newSourceHead: GraphCommit<TChange>,
 	sourceChange: TChange | undefined,
-	commits: Omit<RebasedCommits<TChange>, "newBase">,
+	commits: RebasedCommits<TChange>,
 ];
 
 /**
@@ -138,7 +160,7 @@ export function rebaseBranch<TChange>(
 		return [
 			sourceHead,
 			undefined,
-			{ newBase: ancestor, deletedSourceCommits: [], newSourceCommits: [] },
+			{ deletedSourceCommits: [], targetCommits: [], sourceCommits: sourcePath },
 		];
 	}
 
@@ -162,12 +184,12 @@ export function rebaseBranch<TChange>(
 	/** The commit on the target branch that the new source branch branches off of (i.e. the new common ancestor) */
 	const newBase = targetPath[newBaseIndex];
 	// Figure out how much of the trunk to start rebasing over.
-	const targetRebasePath = targetPath.slice(0, newBaseIndex + 1);
+	const targetCommits = targetPath.slice(0, newBaseIndex + 1);
 	const deletedSourceCommits = [...sourcePath];
-	const newSourceCommits = [...targetRebasePath];
 
 	// If the source and target rebase path begin with a range that has all the same revisions, remove it; it is
 	// equivalent on both branches and doesn't need to be rebased.
+	const targetRebasePath = [...targetCommits];
 	const minLength = Math.min(sourcePath.length, targetRebasePath.length);
 	for (let i = 0; i < minLength; i++) {
 		if (sourcePath[0].revision === targetRebasePath[0].revision) {
@@ -176,23 +198,23 @@ export function rebaseBranch<TChange>(
 		}
 	}
 
+	const sourceCommits: GraphCommit<TChange>[] = [];
+
 	// If all commits that are about to be rebased over on the target branch already comprise the start of the source branch,
 	// are in the same order, and have no other commits interleaving them, then no rebasing needs to occur. Those commits can
 	// simply be removed from the source branch, and the remaining commits on the source branch are reparented off of the new
 	// base commit.
 	if (targetRebasePath.length === 0) {
 		for (const c of sourcePath) {
-			newSourceCommits.push(
-				mintCommit(newSourceCommits[newSourceCommits.length - 1] ?? newBase, c),
-			);
+			sourceCommits.push(mintCommit(sourceCommits[sourceCommits.length - 1] ?? newBase, c));
 		}
 		return [
-			newSourceCommits[newSourceCommits.length - 1],
+			sourceCommits[sourceCommits.length - 1] ?? newBase,
 			undefined,
 			{
-				newBase,
 				deletedSourceCommits,
-				newSourceCommits,
+				targetCommits,
+				sourceCommits,
 			},
 		];
 	}
@@ -209,11 +231,10 @@ export function rebaseBranch<TChange>(
 			]);
 			newHead = {
 				revision: c.revision,
-				sessionId: c.sessionId,
 				change,
 				parent: newHead,
 			};
-			newSourceCommits.push(newHead);
+			sourceCommits.push(newHead);
 			targetRebasePath.push({ ...c, change });
 		}
 		inverses.unshift(
@@ -225,9 +246,9 @@ export function rebaseBranch<TChange>(
 		newHead,
 		changeRebaser.compose([...inverses, ...targetRebasePath]),
 		{
-			newBase,
 			deletedSourceCommits,
-			newSourceCommits,
+			targetCommits,
+			sourceCommits,
 		},
 	];
 }
@@ -282,10 +303,31 @@ function inverseFromCommit<TChange>(
 }
 
 /**
+ * Find the furthest ancestor of some descendant.
+ * @param descendant - a descendant. If an empty `path` array is included, it will be populated
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the furthest ancestor,
+ * but otherwise including `descendant`).
+ * @returns the furthest ancestor of `descendant`, or `descendant` itself if `descendant` has no ancestors.
+ */
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T, path?: T[]],
+): T;
+/**
+ * Find the furthest ancestor of some descendant.
+ * @param descendant - a descendant. If an empty `path` array is included, it will be populated
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the furthest ancestor,
+ * but otherwise including `descendant`).
+ * @returns the furthest ancestor of `descendant`, or `descendant` itself if `descendant` has no ancestors. Returns
+ * `undefined` if `descendant` is undefined.
+ */
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
+): T | undefined;
+/**
  * Find an ancestor of some descendant.
  * @param descendant - a descendant. If an empty `path` array is included, it will be populated
- * with the chain of ancestry for `descendant` from most distant to closest (including `descendant`,
- * but not including the ancestor found by `predicate`).
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the ancestor found by `predicate`,
+ * but otherwise including `descendant`).
  * @param predicate - a function which will be evaluated on every ancestor of `descendant` until it returns true.
  * @returns the closest ancestor of `descendant` that satisfies `predicate`, or `undefined` if no such ancestor exists.
  * @example
@@ -304,8 +346,12 @@ function inverseFromCommit<TChange>(
  * ```
  */
 export function findAncestor<T extends { parent?: T }>(
-	descendant: T | [descendant: T, path?: T[]] | undefined,
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
 	predicate: (t: T) => boolean,
+): T | undefined;
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
+	predicate: (t: T) => boolean = (t) => t.parent === undefined,
 ): T | undefined {
 	let d: T | undefined;
 	let path: T[] | undefined;

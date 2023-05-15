@@ -115,9 +115,9 @@ export {
 	TreeSchemaIdentifierSchema,
 	NamedTreeSchema,
 	Named,
-	FieldSchema,
+	FieldStoredSchema,
 	ValueSchema,
-	TreeSchema,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
@@ -138,12 +138,7 @@ export {
 	SchemaEvents,
 } from "./schema-stored";
 
-export {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ProgressiveEditBuilder,
-	ProgressiveEditBuilderBase,
-} from "./change-family";
+export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
 	assertIsRevisionTag,
@@ -180,9 +175,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
 
-export {
-	IRepairDataStoreProvider,
-	UndoRedoManager,
-	UndoRedoManagerCommitType,
-	markCommits,
-} from "./undo";
+export { IRepairDataStoreProvider, UndoRedoManager, UndoRedoManagerCommitType } from "./undo";
