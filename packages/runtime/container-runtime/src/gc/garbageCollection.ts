@@ -635,90 +635,6 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Since GC runs periodically, the GC data that is generated only tells us the state of the world at that point in
-	 * time. There can be nodes that were referenced in between two runs and their unreferenced state needs to be
-	 * updated. For example, in the following scenarios not updating the unreferenced timestamp can lead to deletion of
-	 * these objects while there can be in-memory referenced to it:
-	 * 1. A node transitions from `unreferenced -> referenced -> unreferenced` between two runs. When the reference is
-	 * added, the object may have been accessed and in-memory reference to it added.
-	 * 2. A reference is added from one unreferenced node to one or more unreferenced nodes. Even though the node[s] were
-	 * unreferenced, they could have been accessed and in-memory reference to them added.
-	 *
-	 * This function identifies nodes that were referenced since the last run.
-	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
-	 *
-	 * @returns - a list of all nodes referenced from the last local summary until now.
-	 */
-	private findAllNodesReferencedBetweenGCs(
-		currentGCData: IGarbageCollectionData,
-		previousGCData: IGarbageCollectionData | undefined,
-		logger: ITelemetryLogger,
-	): string[] | undefined {
-		// If we haven't run GC before there is nothing to do.
-		// No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear
-		if (previousGCData === undefined) {
-			return undefined;
-		}
-
-		/**
-		 * If there are references that were not explicitly notified to GC, log an error because this should never happen.
-		 * If it does, this may result in the unreferenced timestamps of these nodes not updated when they were referenced.
-		 */
-		this.telemetryTracker.logIfMissingExplicitReferences(
-			currentGCData,
-			previousGCData,
-			this.newReferencesSinceLastRun,
-			logger,
-		);
-
-		// No references were added since the last run so we don't have to update reference states of any unreferenced
-		// nodes. There is no in between state at this point.
-		if (this.newReferencesSinceLastRun.size === 0) {
-			return undefined;
-		}
-
-		/**
-		 * Generate a super set of the GC data that contains the nodes and edges from last run, plus any new node and
-		 * edges that have been added since then. To do this, combine the GC data from the last run and the current
-		 * run, and then add the references since last run.
-		 *
-		 * Note on why we need to combine the data from previous run, current run and all references in between -
-		 * 1. We need data from last run because some of its references may have been deleted since then. If those
-		 * references added new outbound references before they were deleted, we need to detect them.
-		 *
-		 * 2. We need new outbound references since last run because some of them may have been deleted later. If those
-		 * references added new outbound references before they were deleted, we need to detect them.
-		 *
-		 * 3. We need data from the current run because currently we may not detect when DDSes are referenced:
-		 * - We don't require DDSes handles to be stored in a referenced DDS.
-		 * - A new data store may have "root" DDSes already created and we don't detect them today.
-		 */
-		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
-		const newOutboundRoutesSinceLastRun: string[] = [];
-		this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
-			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
-				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
-			} else {
-				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
-			}
-			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
-		});
-
-		/**
-		 * Run GC on the above reference graph starting with root and all new outbound routes. This will generate a
-		 * list of all nodes that could have been referenced since the last run. If any of these nodes are unreferenced,
-		 * unreferenced, stop tracking them and remove from unreferenced list.
-		 * Note that some of these nodes may be unreferenced now and if so, the current run will mark them as
-		 * unreferenced and add unreferenced state.
-		 */
-		const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, [
-			"/",
-			...newOutboundRoutesSinceLastRun,
-		]);
-		return gcResult.referencedNodeIds;
-	}
-
-	/**
 	 * Runs the GC Sweep phase. It does the following:
 	 * 1. Calls the runtime to delete nodes that are sweep ready.
 	 * 2. Clears tracking for deleted nodes.
@@ -803,6 +719,90 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 		}
 		return { gcNodes };
+	}
+
+	/**
+	 * Since GC runs periodically, the GC data that is generated only tells us the state of the world at that point in
+	 * time. There can be nodes that were referenced in between two runs and their unreferenced state needs to be
+	 * updated. For example, in the following scenarios not updating the unreferenced timestamp can lead to deletion of
+	 * these objects while there can be in-memory referenced to it:
+	 * 1. A node transitions from `unreferenced -> referenced -> unreferenced` between two runs. When the reference is
+	 * added, the object may have been accessed and in-memory reference to it added.
+	 * 2. A reference is added from one unreferenced node to one or more unreferenced nodes. Even though the node[s] were
+	 * unreferenced, they could have been accessed and in-memory reference to them added.
+	 *
+	 * This function identifies nodes that were referenced since the last run.
+	 * If these nodes are currently unreferenced, they will be assigned new unreferenced state by the current run.
+	 *
+	 * @returns - a list of all nodes referenced from the last local summary until now.
+	 */
+	private findAllNodesReferencedBetweenGCs(
+		currentGCData: IGarbageCollectionData,
+		previousGCData: IGarbageCollectionData | undefined,
+		logger: ITelemetryLogger,
+	): string[] | undefined {
+		// If we haven't run GC before there is nothing to do.
+		// No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear
+		if (previousGCData === undefined) {
+			return undefined;
+		}
+
+		/**
+		 * If there are references that were not explicitly notified to GC, log an error because this should never happen.
+		 * If it does, this may result in the unreferenced timestamps of these nodes not updated when they were referenced.
+		 */
+		this.telemetryTracker.logIfMissingExplicitReferences(
+			currentGCData,
+			previousGCData,
+			this.newReferencesSinceLastRun,
+			logger,
+		);
+
+		// No references were added since the last run so we don't have to update reference states of any unreferenced
+		// nodes. There is no in between state at this point.
+		if (this.newReferencesSinceLastRun.size === 0) {
+			return undefined;
+		}
+
+		/**
+		 * Generate a super set of the GC data that contains the nodes and edges from last run, plus any new node and
+		 * edges that have been added since then. To do this, combine the GC data from the last run and the current
+		 * run, and then add the references since last run.
+		 *
+		 * Note on why we need to combine the data from previous run, current run and all references in between -
+		 * 1. We need data from last run because some of its references may have been deleted since then. If those
+		 * references added new outbound references before they were deleted, we need to detect them.
+		 *
+		 * 2. We need new outbound references since last run because some of them may have been deleted later. If those
+		 * references added new outbound references before they were deleted, we need to detect them.
+		 *
+		 * 3. We need data from the current run because currently we may not detect when DDSes are referenced:
+		 * - We don't require DDSes handles to be stored in a referenced DDS.
+		 * - A new data store may have "root" DDSes already created and we don't detect them today.
+		 */
+		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
+		const newOutboundRoutesSinceLastRun: string[] = [];
+		this.newReferencesSinceLastRun.forEach((outboundRoutes: string[], sourceNodeId: string) => {
+			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
+				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
+			} else {
+				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
+			}
+			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
+		});
+
+		/**
+		 * Run GC on the above reference graph starting with root and all new outbound routes. This will generate a
+		 * list of all nodes that could have been referenced since the last run. If any of these nodes are unreferenced,
+		 * unreferenced, stop tracking them and remove from unreferenced list.
+		 * Note that some of these nodes may be unreferenced now and if so, the current run will mark them as
+		 * unreferenced and add unreferenced state.
+		 */
+		const gcResult = runGarbageCollection(gcDataSuperSet.gcNodes, [
+			"/",
+			...newOutboundRoutesSinceLastRun,
+		]);
+		return gcResult.referencedNodeIds;
 	}
 
 	/**
