@@ -10,72 +10,72 @@ import { IValueChanged } from "fluid-framework";
  * IDiceRoller describes the public API surface for our dice roller data object.
  */
 export interface IDiceRollerController extends EventEmitter {
-    /**
-     * Get the dice value as a number.
-     */
-    readonly value: number;
+	/**
+	 * Get the dice value as a number.
+	 */
+	readonly value: number;
 
-    /**
-     * Roll the dice.  Will cause a "diceRolled" event to be emitted.
-     */
-    roll: () => void;
+	/**
+	 * Roll the dice.  Will cause a "diceRolled" event to be emitted.
+	 */
+	roll: () => void;
 
-    /**
-     * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
-     */
-    on(event: "diceRolled", listener: () => void): this;
+	/**
+	 * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
+	 */
+	on(event: "diceRolled", listener: () => void): this;
 }
 
 // The data is stored in a key-value pair data object, so we'll use this key for storing the value.
 const diceValueKey = "diceValue";
 
 export interface DiceRollerControllerProps {
-    get: (key: string) => any;
-    set: (key: string, value: any) => void;
-    on(event: "valueChanged", listener: (args: IValueChanged) => void): this;
-    off(event: "valueChanged", listener: (args: IValueChanged) => void): this;
+	get: (key: string) => any;
+	set: (key: string, value: any) => void;
+	on(event: "valueChanged", listener: (args: IValueChanged) => void): this;
+	off(event: "valueChanged", listener: (args: IValueChanged) => void): this;
 }
 
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 export class DiceRollerController extends EventEmitter implements IDiceRollerController {
-    /**
-     * Initialize a new model for its first use with this controller.
-     * The model must be initialized before trying to use it in a DiceRollerController instance.
-     */
-    public static initializeModel(props: DiceRollerControllerProps) {
-        props.set(diceValueKey, 1);
-    }
+	/**
+	 * Initialize a new model for its first use with this controller.
+	 * The model must be initialized before trying to use it in a DiceRollerController instance.
+	 */
+	public static initializeModel(props: DiceRollerControllerProps) {
+		props.set(diceValueKey, 1);
+	}
 
-    constructor(private readonly props: DiceRollerControllerProps) {
-        super();
-        const value = this.props.get(diceValueKey);
-        if (typeof value !== "number") {
-            throw new TypeError(
-                "Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?",
-            );
-        }
-        this.props.on("valueChanged", (changed) => {
-            if (changed.key === diceValueKey) {
-                // When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
-                this.emit("diceRolled");
-            }
-        });
-    }
+	constructor(private readonly props: DiceRollerControllerProps) {
+		super();
+		const value = this.props.get(diceValueKey);
+		if (typeof value !== "number") {
+			throw new TypeError(
+				"Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?",
+			);
+		}
+		this.props.on("valueChanged", (changed) => {
+			if (changed.key === diceValueKey) {
+				// When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
+				this.emit("diceRolled");
+			}
+		});
+	}
 
-    public get value() {
-        const value = this.props.get(diceValueKey);
-        if (typeof value !== "number") {
-            throw new TypeError(
-                "Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?",
-            );
-        }
-        return value;
-    }
+	public get value() {
+		const value = this.props.get(diceValueKey);
+		if (typeof value !== "number") {
+			throw new TypeError(
+				"Model is incorrect - did you call DiceRollerController.initializeModel() to set it up?",
+			);
+		}
+		return value;
+	}
 
-    public readonly roll = () => {
-        const rollValue = Math.floor(Math.random() * 6) + 1;
-        this.props.set(diceValueKey, rollValue);
-    };
+	public readonly roll = () => {
+		const rollValue = Math.floor(Math.random() * 6) + 1;
+		this.props.set(diceValueKey, rollValue);
+	};
 }

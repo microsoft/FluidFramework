@@ -14,40 +14,40 @@ export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/commo
  * Props for initializing a new AzureClient instance
  */
 export interface AzureClientProps {
-    /**
-     * Configuration for establishing a connection with the Azure Fluid Relay.
-     */
-    readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
-    /**
-     * Optional. A logger instance to receive diagnostic messages.
-     */
-    readonly logger?: ITelemetryBaseLogger;
+	/**
+	 * Configuration for establishing a connection with the Azure Fluid Relay.
+	 */
+	readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
+	/**
+	 * Optional. A logger instance to receive diagnostic messages.
+	 */
+	readonly logger?: ITelemetryBaseLogger;
 }
 
 /**
  * Container version metadata.
  */
 export interface AzureContainerVersion {
-    /**
-     * Version ID
-     */
-    id: string;
+	/**
+	 * Version ID
+	 */
+	id: string;
 
-    /**
-     * Time when version was generated.
-     * ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
-     */
-    date?: string;
+	/**
+	 * Time when version was generated.
+	 * ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ
+	 */
+	date?: string;
 }
 
 /**
  * Options for "Get Container Versions" API.
  */
 export interface AzureGetVersionsOptions {
-    /**
-     * Max number of versions
-     */
-    maxCount: number;
+	/**
+	 * Max number of versions
+	 */
+	maxCount: number;
 }
 
 /**
@@ -61,42 +61,42 @@ export type AzureConnectionConfigType = "local" | "remote";
  * Parameters for establishing a connection with the Azure Fluid Relay.
  */
 export interface AzureConnectionConfig {
-    /**
-     * The type of connection. Whether we're connecting to a remote Fluid relay server or a local instance.
-     */
-    type: AzureConnectionConfigType;
-    /**
-     * URI to the Azure Fluid Relay service discovery endpoint.
-     */
-    endpoint: string;
-    /**
-     * Instance that provides Azure Fluid Relay endpoint tokens.
-     */
-    tokenProvider: ITokenProvider;
+	/**
+	 * The type of connection. Whether we're connecting to a remote Fluid relay server or a local instance.
+	 */
+	type: AzureConnectionConfigType;
+	/**
+	 * URI to the Azure Fluid Relay service discovery endpoint.
+	 */
+	endpoint: string;
+	/**
+	 * Instance that provides Azure Fluid Relay endpoint tokens.
+	 */
+	tokenProvider: ITokenProvider;
 }
 
 /**
  * Parameters for establishing a remote connection with the Azure Fluid Relay.
  */
 export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
-    /**
-     * The type of connection. Set to a remote connection.
-     */
-    type: "remote";
-    /**
-     * Unique tenant identifier.
-     */
-    tenantId: string;
+	/**
+	 * The type of connection. Set to a remote connection.
+	 */
+	type: "remote";
+	/**
+	 * Unique tenant identifier.
+	 */
+	tenantId: string;
 }
 
 /**
  * Parameters for establishing a local connection with a local instance of the Azure Fluid Relay.
  */
 export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
-    /**
-     * The type of connection. Set to a remote connection.
-     */
-    type: "local";
+	/**
+	 * The type of connection. Set to a remote connection.
+	 */
+	type: "local";
 }
 
 /**
@@ -107,11 +107,11 @@ export interface AzureLocalConnectionConfig extends AzureConnectionConfig {
  * will not be included here but rather on the FluidContainer class itself.
  */
 export interface AzureContainerServices {
-    /**
-     * Provides an object that can be used to get the users that are present in this Fluid session and
-     * listeners for when the roster has any changes from users joining/leaving the session
-     */
-    audience: IAzureAudience;
+	/**
+	 * Provides an object that can be used to get the users that are present in this Fluid session and
+	 * listeners for when the roster has any changes from users joining/leaving the session
+	 */
+	audience: IAzureAudience;
 }
 
 /**
@@ -125,15 +125,15 @@ export interface AzureContainerServices {
 // TODO: this should be updated to use something other than `any` (unknown)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface AzureUser<T = any> extends IUser {
-    /**
-     * The user's name
-     */
-    name: string;
+	/**
+	 * The user's name
+	 */
+	name: string;
 
-    /**
-     * Custom, app-specific user information
-     */
-    additionalDetails?: T;
+	/**
+	 * Custom, app-specific user information
+	 */
+	additionalDetails?: T;
 }
 
 /**
@@ -148,15 +148,15 @@ export interface AzureUser<T = any> extends IUser {
 // TODO: this should be updated to use something other than `any` (unknown)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface AzureMember<T = any> extends IMember {
-    /**
-     * {@inheritDoc AzureUser.name}
-     */
-    userName: string;
+	/**
+	 * {@inheritDoc AzureUser.name}
+	 */
+	userName: string;
 
-    /**
-     * {@inheritDoc AzureUser.additionalDetails}
-     */
-    additionalDetails?: T;
+	/**
+	 * {@inheritDoc AzureUser.additionalDetails}
+	 */
+	additionalDetails?: T;
 }
 
 /**
