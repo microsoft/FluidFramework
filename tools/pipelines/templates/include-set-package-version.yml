@@ -14,7 +14,12 @@ parameters:
   default: false
 - name: buildToolsVersionToInstall
   type: string
-  default: latest
+  default: repo
+
+# If true, then this pipeline will check and format package.json files according to prettier settings.
+- name: usesPrettier
+  type: boolean
+  default: true
 
 # Set version
 steps:
@@ -22,7 +27,6 @@ steps:
   - task: Bash@3
     name: PrependPath
     displayName: Prepend build-tools CLI to path
-    condition: eq(parameters.installBuildToolsFromRepo, true)
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
@@ -40,10 +44,11 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
-        npm ci
-        popd
-        pushd "$(Build.SourcesDirectory)/build-tools/packages/build-tools"
-        npm link
+        corepack enable
+        pnpm -v
+        pnpm config set store-dir $(pnpmStorePath)
+        pnpm i
+        pnpm build:compile
         popd
 
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
@@ -54,12 +59,8 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
-        echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
-
+        echo "${{ parameters.buildToolsVersionToInstall }}"
         npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
-
-        # This can be removed once all builds tools are moved to the build-cli library
-        npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
 
 - task: Bash@3
   name: BuildToolsInstallCheck
@@ -69,8 +70,19 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       # Output the help and full command list for debugging purposes
+      which flub
       flub --help
       flub commands
+
+- ${{ if eq(parameters.usesPrettier, true) }}:
+  # package.json files are reformatted by upcoming update version steps, then will be reformatted by prettier. We check
+  # them here because otherwise legitimate formatting problems would be hidden by the forced reformatting in CI.
+  - task: Bash@3
+    displayName: Check package.json formatting
+    inputs:
+      targetType: 'filePath'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      filePath: $(Build.SourcesDirectory)/scripts/check-pkg-json-formatting.sh
 
 - task: Bash@3
   name: SetVersion
@@ -94,26 +106,101 @@ steps:
       echo VERSION_PATCH=$VERSION_PATCH
       echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
 
-      # Generate the build version
+      # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
+      # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
 
+# TODO: AB#2415
+# Only use `flub` for the client build, because there are issues with `flub` in the other cases and only the client
+# build uses a version scheme that lerna and npm don't handle correctly.
+- ${{ if eq(parameters.tagName, 'client') }}:
+  - task: Bash@3
+    displayName: Update Package Version (flub)
+    env:
+      VERSION_RELEASE: $(release)
+      RELEASE_GROUP: ${{ parameters.tagName }}
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        echo SETVERSION_VERSION=$SETVERSION_VERSION
+        echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
+        echo RELEASE_GROUP=$RELEASE_GROUP
+
+        if [ -f "lerna.json" ]; then
+          if [ "$VERSION_RELEASE" = "release" ]; then
+            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"^\" -xv"
+            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="^" -xv
+          else
+            echo command="flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType=\"\" -xv"
+            flub bump $RELEASE_GROUP --exact $(SetVersion.version) --exactDepType="" -xv
+          fi
+        else
+          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
+        fi
+
+- ${{ if ne(parameters.tagName, 'client') }}:
+  - task: Bash@3
+    displayName: Update Package Version (lerna)
+    env:
+      VERSION_RELEASE: $(release)
+      RELEASE_GROUP: ${{ parameters.tagName }}
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        echo SETVERSION_VERSION=$SETVERSION_VERSION
+        if [ -f "lerna.json" ]; then
+          if [ "$VERSION_RELEASE" = "release" ]; then
+            # no need to run anything here, as the version in the package should be correct
+            npx lerna exec -- node $(Build.SourcesDirectory)/scripts/check-package-version.cjs
+            exit $?
+          fi
+          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
+        else
+          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
+        fi
+
+- ${{ if eq(parameters.usesPrettier, true) }}:
+  # package.json files are reformatted by the prior set version steps, so reformat them (and only them) with prettier
+  - task: Bash@3
+    displayName: Reformat package.json files
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        if [ -f "lerna.json" ]; then
+          # Run on all the release group packages, if in a release group
+          npx --no-install lerna exec prettier -- --write package.json
+        fi
+
+        # Format the package.json at the root of the release group/package
+        npx --no-install prettier --write package.json
+
+# This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
+# help find and prevent bugs in the version bumping tools.
 - task: Bash@3
-  displayName: Update Package Version
-  env:
-    VERSION_RELEASE: $(release)
+  displayName: Check for caret dependencies on internal versions
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      echo SETVERSION_VERSION=$SETVERSION_VERSION
-      echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
+      grep -r -e "\^2.0.0-internal.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
+      if [[ $? == 0 ]]; then
+        echo "##vso[task.logissue type=error]Fluid internal versions shouldn't use caret dependencies"
+        exit -1;
+      fi
 
-      if [ -f "lerna.json" ]; then
-        if [ "$VERSION_RELEASE" = "release" ]; then
-          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes
-        else
-          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
-        fi
-      else
-        npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
+# This task is a last-minute verification that no Fluid internal dev versions show up with caret dependencies. This is
+# to help find and prevent bugs in the version bumping tools.
+- task: Bash@3
+  displayName: Check for caret dependencies on dev versions
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      grep -r -e "\^2.0.0-dev.\d*.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
+      if [[ $? == 0 ]]; then
+        echo "##vso[task.logissue type=error]Fluid internal dev versions shouldn't use caret dependencies"
+        exit -1;
       fi
