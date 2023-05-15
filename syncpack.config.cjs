@@ -115,7 +115,7 @@ module.exports = {
 				"webpack-dev-server",
 
 				// Required due to use of "unstable" tree component APIs
-				"@fluent-ui/react-components",
+				"@fluentui/react-components",
 			],
 			packages: ["**"],
 			range: "~",
