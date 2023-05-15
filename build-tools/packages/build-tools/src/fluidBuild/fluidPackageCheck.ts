@@ -54,8 +54,6 @@ export class FluidPackageCheck {
 
 	public static checkScripts(pkg: Package, fix: boolean) {
 		const fixed = [
-			FluidPackageCheck.checkSort(pkg, fix),
-			FluidPackageCheck.checkBuildScripts(pkg, fix),
 			FluidPackageCheck.checkCleanScript(pkg, fix),
 			FluidPackageCheck.checkTestCoverageScripts(pkg, fix),
 			FluidPackageCheck.checkTestScripts(pkg, fix),
@@ -146,21 +144,6 @@ export class FluidPackageCheck {
 			}
 		}
 		return fixed;
-	}
-
-	private static checkChildrenScripts(
-		pkg: Package,
-		name: string,
-		expected: string[] | undefined,
-		concurrent: boolean,
-		fix: boolean,
-	) {
-		const expectedScript = expected
-			? concurrent
-				? `concurrently ${expected.map((value) => `npm:${value}`).join(" ")}`
-				: expected.map((value) => `npm run ${value}`).join(" && ")
-			: undefined;
-		return this.checkScript(pkg, name, expectedScript, fix);
 	}
 
 	/**
@@ -258,196 +241,6 @@ export class FluidPackageCheck {
 		return fixed;
 	}
 
-	private static checkBuildScripts(pkg: Package, fix: boolean) {
-		// Fluid specific
-		let fixed = false;
-		const buildScript = pkg.getScript("build");
-		if (buildScript) {
-			if (buildScript.startsWith("echo ") || buildScript === "npm run noop") {
-				return;
-			}
-			// These are script rules in the FluidFramework repo
-
-			// Default build script, tsc + eslint (with optional build:webpack)
-			const build: string[] = ["build:compile"];
-
-			// all build tasks, but optional build:webpack
-			const buildCompile: string[] = [];
-			const buildCommonJs: string[] = [];
-
-			const hasFull = pkg.getScript("build:full") !== undefined;
-
-			// all build and lint steps (build + webpack) (if it is private, webpack would just be included in the main build:compile)
-			const buildFull: string[] = pkg.packageJson.private && !hasFull ? [] : ["build"];
-
-			// all build steps (build:compile + webpack) (if it is private, webpack would just be included in the main build:compile)
-			const buildFullCompile: string[] =
-				pkg.packageJson.private && !hasFull ? [] : ["build:compile"];
-
-			// prepack scripts
-			const prepack: string[] = [];
-
-			let concurrentBuildCompile = true;
-
-			const buildPrefix = pkg.getScript("build:gen")
-				? "npm run build:gen && "
-				: pkg.getScript("build:genver")
-				? "npm run build:genver && "
-				: "";
-
-			// if build:docs script exist, we require it in to be called in the build script for @fluidframework packages
-			// otherwise, it is optional
-			const buildSuffix =
-				pkg.getScript("build:docs") &&
-				(pkg.name.startsWith("@fluidframework") ||
-					pkg.getScript("build")?.endsWith(" && npm run build:docs"))
-					? " && npm run build:docs"
-					: "";
-			// tsc should be in build:commonjs if it exists, otherwise, it should be in build:compile
-			if (pkg.getScript("tsc")) {
-				if (pkg.getScript("build:commonjs")) {
-					buildCommonJs.push("tsc");
-				} else {
-					buildCompile.push("tsc");
-				}
-			}
-
-			if (pkg.getScript("typetests:gen")) {
-				// typetests:gen should be in build:commonjs if it exists, otherwise, it should be in build:compile
-				const buildTargetScripts = pkg.getScript("build:commonjs")
-					? buildCommonJs
-					: buildCompile;
-				if (pkg.getScript("build:test")) {
-					// if there is a test target put test type gen after tsc
-					// as the type test will build with the tests
-					buildTargetScripts.push("typetests:gen");
-				} else {
-					// if there is no test target put it before tsc
-					// so type test build with tsc
-					buildTargetScripts.unshift("typetests:gen");
-				}
-			}
-
-			const splitTestBuild = this.splitTestBuild(pkg, true);
-			// build:test should be in build:commonjs if it exists, otherwise, it should be in build:compile
-			if (pkg.getScript("build:test") || splitTestBuild) {
-				if (pkg.getScript("build:commonjs")) {
-					buildCommonJs.push("build:test");
-					// build common js is not concurrent by default
-				} else {
-					buildCompile.push("build:test");
-					// test is depended on tsc, so we can't do it concurrently for build:compile
-					concurrentBuildCompile = !splitTestBuild;
-				}
-			}
-
-			if (pkg.getScript("build:realsvctest")) {
-				buildCompile.push("build:realsvctest");
-			}
-
-			// build:commonjs and build:esnext should be in build:compile if they exist
-			if (pkg.getScript("build:commonjs")) {
-				buildCompile.push("build:commonjs");
-			}
-
-			if (pkg.getScript("build:esnext")) {
-				buildCompile.push("build:esnext");
-			}
-
-			if (pkg.getScript("build:copy")) {
-				buildCompile.push("build:copy");
-			}
-
-			if (pkg.getScript("build:copy-resources")) {
-				buildCompile.push("build:copy-resources");
-			}
-
-			if (pkg.getScript("lint")) {
-				build.push("lint");
-			}
-
-			if (pkg.getScript("less")) {
-				buildCompile.push("less");
-			}
-
-			let implicitWebpack = true;
-
-			if (pkg.getScript("build:webpack")) {
-				// Having script build:webpack means that we want to do it in build script
-				buildCompile.push("build:webpack");
-				implicitWebpack = false;
-			}
-
-			if (pkg.getScript("webpack")) {
-				if (implicitWebpack) {
-					// not having build:webpack means we only want to do webpack on build:full
-					buildFull.push("webpack");
-					buildFullCompile.push("webpack");
-				}
-				if (!pkg.packageJson.private) {
-					prepack.push("webpack");
-				}
-			}
-
-			const check = (
-				scriptName: string,
-				parts: string[],
-				concurrently = true,
-				prefix = "",
-				suffix = "",
-			) => {
-				const expected =
-					parts.length === 0
-						? undefined
-						: prefix +
-						  (parts.length > 1 && concurrently
-								? `concurrently npm:${parts.join(" npm:")}`
-								: `npm run ${parts.join(" && npm run ")}`) +
-						  suffix;
-				if (this.checkScript(pkg, scriptName, expected, fix)) {
-					fixed = true;
-				}
-			};
-			check("build", build, true, buildPrefix, buildSuffix);
-			if (buildCompile.length === 0) {
-				if (this.checkScript(pkg, "build:compile", "tsc", fix)) {
-					fixed = true;
-				}
-			} else {
-				check("build:compile", buildCompile, concurrentBuildCompile);
-			}
-			check("build:commonjs", buildCommonJs, false);
-			check("build:full", buildFull);
-			check("build:full:compile", buildFullCompile);
-			if (!pkg.packageJson.private) {
-				check("prepack", prepack);
-			}
-
-			const testDirs = this.getTestDirs(pkg);
-			if (testDirs.length === 1) {
-				const expectedBuildTest = `tsc --project ./src/test/${
-					testDirs[0] ? testDirs[0] + "/" : ""
-				}tsconfig.json`;
-				if (this.checkScript(pkg, "build:test", expectedBuildTest, fix)) {
-					fixed = true;
-				}
-			} else if (testDirs.length !== 0) {
-				check(
-					"build:test",
-					testDirs.map((dir) => {
-						const script = `build:test:${dir}`;
-						const expectedBuildTest = `tsc --project ./src/test/${dir}/tsconfig.json`;
-						if (this.checkScript(pkg, script, expectedBuildTest, fix)) {
-							fixed = true;
-						}
-						return script;
-					}),
-				);
-			}
-		}
-		return fixed;
-	}
-
 	private static checkCleanScript(pkg: Package, fix: boolean) {
 		const cleanScript = pkg.getScript("clean");
 		if (!cleanScript) {
@@ -459,15 +252,6 @@ export class FluidPackageCheck {
 
 		if (cleanScript.startsWith("rimraf")) {
 			return this.ensureDevDependency(pkg, fix, "rimraf");
-		}
-		return false;
-	}
-	private static checkSort(pkg: Package, fix: boolean) {
-		// Note that package.json is sorted when we save, so this is just for the warning
-		const result = sortPackageJson(pkg.packageJson);
-		if (JSON.stringify(result) !== JSON.stringify(pkg.packageJson)) {
-			this.logWarn(pkg, `package.json not sorted`, fix);
-			return fix;
 		}
 		return false;
 	}
