@@ -10,8 +10,8 @@ import React from "react";
  */
 export function LandingView(): React.ReactElement {
 	return (
-		<>
-			<h3>Welcome to the Fluid Framework Debugger!</h3>
+		<div style={{ marginLeft: "5px" }}>
+			<h3>Welcome to the Fluid Framework Developer Tools!</h3>
 			<p>To start, select an option from the menu on the left.</p>
 			<p>
 				The <b>Containers</b> section shows a list of the Fluid containers that have been
@@ -24,6 +24,6 @@ export function LandingView(): React.ReactElement {
 				messages coming from sources outside the context of any given container.
 			</p>
 			{/* <p>For more information, go to [TBD: docs page].</p> */}
-		</>
+		</div>
 	);
 }

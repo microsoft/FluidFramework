@@ -26,13 +26,13 @@ describe("ContainerDevtools unit tests", () => {
 		expect(container?.audience.getMembers().size).to.equal(1);
 		expect(devtools?.getAudienceHistory().length).to.equal(1);
 		expect(devtools?.getAudienceHistory()[0].clientId).to.equal(clientId);
-		expect(devtools?.getAudienceHistory()[0].changeKind).to.equal("added");
+		expect(devtools?.getAudienceHistory()[0].changeKind).to.equal("joined");
 
 		removeAudienceMember(container, clientId);
 		expect(container.audience.getMembers().size).to.equal(0);
 		expect(devtools?.getAudienceHistory().length).to.equal(2);
 		expect(devtools?.getAudienceHistory()[1].clientId).to.equal(clientId);
-		expect(devtools?.getAudienceHistory()[1].changeKind).to.equal("removed");
+		expect(devtools?.getAudienceHistory()[1].changeKind).to.equal("left");
 	});
 
 	it("Container State History", async () => {

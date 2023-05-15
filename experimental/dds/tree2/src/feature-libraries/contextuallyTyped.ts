@@ -38,7 +38,7 @@ import {
 } from "./modular-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
 import { isPrimitive } from "./editable-tree";
-import { AllowedTypesToTypedTrees, ApiMode, NodeDataFor, TypedField } from "./schema-aware";
+import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -353,7 +353,7 @@ export function cursorFromContextualData(
 export function cursorForTypedTreeData<T extends TreeSchema>(
 	schemaData: SchemaDataAndPolicy,
 	schema: T,
-	data: NodeDataFor<ApiMode.Simple, T>,
+	data: TypedNode<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
 		schemaData,

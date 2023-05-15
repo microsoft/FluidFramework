@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 import React from "react";
+import { Tree as FluentTree } from "@fluentui/react-components/unstable";
+
 import {
 	RootDataVisualizations,
 	GetRootDataVisualizations,
@@ -14,8 +16,8 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { useMessageRelay } from "../MessageRelayContext";
+import { TreeDataView } from "./data-visualization";
 import { Waiting } from "./Waiting";
-import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "INLINE(VIEW)";
 
@@ -80,7 +82,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	}
 
 	return (
-		<>
+		<FluentTree aria-label="Data tree view">
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
 				return (
 					<TreeDataView
@@ -91,6 +93,6 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 					/>
 				);
 			})}
-		</>
+		</FluentTree>
 	);
 }

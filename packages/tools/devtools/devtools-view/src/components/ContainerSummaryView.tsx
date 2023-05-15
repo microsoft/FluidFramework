@@ -19,9 +19,9 @@ import {
 	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
 import {
-	PlugConnected24Regular,
-	PlugDisconnected24Regular,
-	Delete24Regular,
+	PlugConnected20Regular,
+	PlugDisconnected20Regular,
+	Delete20Regular,
 } from "@fluentui/react-icons";
 import React from "react";
 
@@ -155,11 +155,12 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	const [containerState, setContainerState] = React.useState<
 		ContainerStateMetadata | undefined
 	>();
+
 	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
 	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
 		containerProperty: {
-			idealWidth: 80,
-			minWidth: 80,
+			idealWidth: 70,
+			minWidth: 70,
 		},
 	});
 
@@ -258,7 +259,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					{DataRow("Audience ID", containerState.audienceId, columnSizing_unstable)}
 				</Table>
 			</StackItem>
-			<StackItem align="end">
+			<StackItem align="start">
 				<ActionsBar
 					isContainerConnected={
 						containerState.connectionState === ConnectionState.Connected
@@ -315,7 +316,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const changeConnectionStateButton = isContainerConnected ? (
 		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
 			<Button
-				icon={<PlugDisconnected24Regular />}
+				size="small"
+				icon={<PlugDisconnected20Regular />}
 				onClick={forceDisconnect}
 				disabled={forceDisconnect === undefined || isContainerClosed}
 			>
@@ -325,7 +327,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	) : (
 		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
 			<Button
-				icon={<PlugConnected24Regular />}
+				size="small"
+				icon={<PlugConnected20Regular />}
 				onClick={tryConnect}
 				disabled={tryConnect === undefined || isContainerClosed}
 			>
@@ -337,7 +340,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const disposeContainerButton = (
 		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
 			<Button
-				icon={<Delete24Regular />}
+				size="small"
+				icon={<Delete20Regular />}
 				onClick={closeContainer}
 				disabled={closeContainer === undefined || isContainerClosed}
 			>

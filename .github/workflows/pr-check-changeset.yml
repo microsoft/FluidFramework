@@ -45,17 +45,33 @@ jobs:
         if: github.repository_owner != 'microsoft'
 
       # Check whether a changeset was added. This step will have the outcome '1' if there is no changeset.
-      - id: changeset-status
-        name: Changeset status
+      - name: Changeset metadata
         run: |
           # JSON output is piped through jq to compact it to a single line
           pnpm exec flub check changeset --branch=${{ github.base_ref }} --json | jq -c > changeset-metadata.json
 
-      - name: Upload changeset status
+      # We save the PR number because downstream pipelines are triggered by workflow_run, and the PR number is not easily
+      # retrievable in such workflows
+      - name: Add PR number to metadata
+        run: |
+          echo $(jq -c '. += { pr: "${{ github.event.number }}" }' changeset-metadata.json) > changeset-metadata.json
+
+      # Sets required = true/false based on the changeset-required label on the PR
+      - name: Changeset required
+        if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
+        run: |
+          echo $(jq -c '. += {required: true}' changeset-metadata.json) > changeset-metadata.json
+
+      - name: Changeset not required
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-required') }}
+        run: |
+          echo $(jq -c '. += {required: false}' changeset-metadata.json) > changeset-metadata.json
+
+      - name: Upload changeset metadata
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
         with:
-          name: changeset-metadata.json
-          path: ./changeset-metadata
+          name: changeset-metadata
+          path: ./changeset-metadata.json
           retention-days: 3
 
   # Any PR without the changeset-required label will be ignored.
@@ -64,15 +80,21 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-required') }}
     steps:
-      - id: changeset-status
-        name: Changeset disabled
+      # Always output changesetFound = true and required = false to signal that changesets aren't needed. changesetFound
+      # must be set because it's not nullable.
+      - name: Changeset metadata
         run: |
-          # Always output changesetFound=true to signal that changesets aren't needed
-          echo "{'branch': '${{ github.base_ref }}','changesetFound': true}" > ./changeset-metadata.json
+          echo "{\"branch\": \"${{ github.base_ref }}\", \"required\": false, \"changesetFound\": true}" > ./changeset-metadata.json
 
-      - name: Upload changeset status
+      # We save the PR number because downstream pipelines are triggered by workflow_run, and the PR number is not easily
+      # retrievable in such workflows
+      - name: Add PR number to metadata
+        run: |
+          echo $(jq -c '. += { pr: "${{ github.event.number }}" }' changeset-metadata.json) > changeset-metadata.json
+
+      - name: Upload changeset metadata
         uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # ratchet:actions/upload-artifact@v3
         with:
-          name: changeset-metadata.json
-          path: ./changeset-metadata
+          name: changeset-metadata
+          path: ./changeset-metadata.json
           retention-days: 3
