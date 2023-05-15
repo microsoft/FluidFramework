@@ -251,6 +251,7 @@ export {
 	GlobalFieldSchema,
 	Any,
 	Sourced,
+	NodeExistsConstraint,
 } from "./feature-libraries";
 
 export {

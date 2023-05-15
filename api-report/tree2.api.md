@@ -1300,6 +1300,12 @@ export interface NodeData {
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
 
 // @alpha (undocumented)
+export interface NodeExistsConstraint {
+    // (undocumented)
+    violated: boolean;
+}
+
+// @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
 // @alpha
