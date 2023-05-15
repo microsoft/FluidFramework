@@ -27,7 +27,7 @@ import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "@fluidframework/server-services-utils";
 import { TestCache } from "@fluidframework/server-test-utils";
-import { DeltaService } from "../../alfred/services";
+import { DeltaService, DocumentDeleteService } from "../../alfred/services";
 import * as SessionHelper from "../../utils/sessionHelper";
 import Sinon from "sinon";
 import { Constants } from "../../utils";
@@ -117,6 +117,7 @@ describe("Routerlicious", () => {
 			const defaultProducer = new TestProducer(new TestKafka());
 			const defaultDeltaService = new DeltaService(defaultMongoManager, defaultTenantManager);
 			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
+			const defaultDocumentDeleteService = new DocumentDeleteService();
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			describe("throttling", () => {
@@ -243,6 +244,7 @@ describe("Routerlicious", () => {
 						defaultDeltaService,
 						defaultProducer,
 						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -509,6 +511,7 @@ describe("Routerlicious", () => {
 						defaultDeltaService,
 						defaultProducer,
 						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -692,6 +695,7 @@ describe("Routerlicious", () => {
 						defaultDeltaService,
 						defaultProducer,
 						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -871,6 +875,7 @@ describe("Routerlicious", () => {
 						defaultDeltaService,
 						defaultProducer,
 						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});
@@ -1021,6 +1026,7 @@ describe("Routerlicious", () => {
 						defaultDeltaService,
 						defaultProducer,
 						defaultDocumentRepository,
+						defaultDocumentDeleteService,
 					);
 					supertest = request(app);
 				});

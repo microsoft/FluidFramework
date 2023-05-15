@@ -23,7 +23,12 @@ import * as ws from "ws";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Constants } from "../utils";
 import { AlfredRunner } from "./runner";
-import { DeltaService, StorageNameAllocator } from "./services";
+import {
+	DeltaService,
+	StorageNameAllocator,
+	IDocumentDeleteService,
+	DocumentDeleteService,
+} from "./services";
 import { IAlfredResourcesCustomizations } from ".";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
@@ -97,6 +102,7 @@ export class AlfredResources implements core.IResources {
 		public documentsCollectionName: string,
 		public metricClientConfig: any,
 		public documentRepository: core.IDocumentRepository,
+		public documentDeleteService: IDocumentDeleteService,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
@@ -560,6 +566,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
 		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
+		const documentDeleteService =
+			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
 		// Set up token revocation if enabled
 		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
@@ -590,6 +598,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			documentsCollectionName,
 			metricClientConfig,
 			documentRepository,
+			documentDeleteService,
 			redisThrottleAndUsageStorageManager,
 			verifyMaxMessageSize,
 			redisCache,
@@ -617,6 +626,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.producer,
 			resources.metricClientConfig,
 			resources.documentRepository,
+			resources.documentDeleteService,
 			resources.throttleAndUsageStorageManager,
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
