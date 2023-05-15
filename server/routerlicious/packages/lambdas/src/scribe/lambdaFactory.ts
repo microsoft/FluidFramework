@@ -78,6 +78,7 @@ export class ScribeLambdaFactory
 		private readonly getDeltasViaAlfred: boolean,
 		private readonly transientTenants: string[],
 		private readonly checkpointService: ICheckpointService,
+		private readonly restartOnCheckpointFailure: boolean,
 	) {
 		super();
 	}
@@ -273,6 +274,7 @@ export class ScribeLambdaFactory
 			opsSinceLastSummary,
 			scribeSessionMetric,
 			new Set(this.transientTenants),
+			this.restartOnCheckpointFailure,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

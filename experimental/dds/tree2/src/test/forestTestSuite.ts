@@ -10,7 +10,6 @@ import {
 	initializeForest,
 	moveToDetachedField,
 	TreeNavigationResult,
-	fieldSchema,
 	InMemoryStoredSchemaRepository,
 	StoredSchemaRepository,
 	recordDependency,
@@ -29,7 +28,7 @@ import {
 	cursorToJsonObject,
 	jsonNumber,
 	jsonObject,
-	jsonSchemaData,
+	jsonSchema,
 	jsonRoot,
 	singleJsonCursor,
 	jsonBoolean,
@@ -42,7 +41,7 @@ import {
 	singleTextCursor,
 	defaultSchemaPolicy,
 	isNeverField,
-	ForestRepairDataStore,
+	SchemaBuilder,
 } from "../feature-libraries";
 import { MockDependent } from "./utils";
 import { testGeneralPurposeTreeCursor } from "./cursorTestSuite";
@@ -108,9 +107,9 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 					const forest = factory(schema);
 
-					const rootFieldSchema = fieldSchema(FieldKinds.optional, jsonRoot.types);
+					const rootFieldSchema = SchemaBuilder.field(FieldKinds.optional, ...jsonRoot);
 					schema.update({
-						...jsonSchemaData,
+						...jsonSchema,
 						globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
 					});
 
@@ -710,7 +709,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
 				const dependent = new MockDependent("dependent");
 				recordDependency(dependent, forest);
-				forest.schema.update(jsonSchemaData);
+				forest.schema.update(jsonSchema);
 
 				assert.deepEqual(dependent.tokens.length, 1);
 			});
@@ -814,7 +813,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		"forest cursor",
 		(data): ITreeCursor => {
 			const forest = factory(
-				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema),
 			);
 			initializeForest(forest, [singleTextCursor(data)]);
 			const cursor = forest.allocateCursor();

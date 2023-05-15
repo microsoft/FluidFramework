@@ -6,7 +6,6 @@
 import { Value, ValueSchema } from "../../core";
 import { areSafelyAssignable, isAssignableTo, requireTrue } from "../../util";
 import { PrimitiveValue } from "../contextuallyTyped";
-import { TypedSchema } from "../modular-schema";
 
 /**
  * {@link ValueSchema} to allowed types for that schema.
@@ -36,23 +35,6 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
 	type _check2 = isAssignableTo<Value, Value2>;
 	type _check3 = isAssignableTo<Value2, Value>;
 }
-
-/**
- * Extract names from a list of `LabeledTreeSchema`.
- *
- * @remarks
- * This uses the inner name from `typeInfo` to avoid the unneeded branding that `T["name"]` has.
- * @alpha
- */
-export type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema[]> = T extends [
-	infer Head,
-	...infer Tail,
-]
-	? [
-			TypedSchema.Assume<Head, TypedSchema.LabeledTreeSchema>["typeInfo"]["name"],
-			...NamesFromSchema<TypedSchema.Assume<Tail, TypedSchema.LabeledTreeSchema[]>>,
-	  ]
-	: [];
 
 /**
  * @alpha
