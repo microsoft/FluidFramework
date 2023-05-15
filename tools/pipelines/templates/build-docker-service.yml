@@ -80,11 +80,6 @@ parameters:
   type: string
   default: "^"
 
-# If true, then this pipeline will check and format package.json files according to prettier settings.
-- name: usesPrettier
-  type: boolean
-  default: true
-
 trigger: none
 
 variables:
@@ -254,7 +249,6 @@ stages:
           buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
           interdependencyRange: ${{ parameters.interdependencyRange }}
           tagName: ${{ parameters.tagName }}
-          usesPrettier: ${{ parameters.usesPrettier }}
     - ${{ if eq(parameters.setVersion, false) }}:
       - task: Bash@3
         name: SetVersion
