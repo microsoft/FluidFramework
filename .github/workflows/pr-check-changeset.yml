@@ -80,9 +80,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-required') }}
     steps:
-      # Always output changesetFound=true and required = false to signal that changesets aren't needed. changesetFound
+      # Always output changesetFound = true and required = false to signal that changesets aren't needed. changesetFound
       # must be set because it's not nullable.
-      - name: Set required=false,
+      - name: Changeset metadata
         run: |
           echo "{'branch': '${{ github.base_ref }}', 'required': false, 'changesetFound': true}" > ./changeset-metadata.json
 

@@ -30,10 +30,6 @@ jobs:
       - name: Load changeset metadata into env variable
         run: echo "CHANGESET=$(cat changeset-metadata.json)" >> $GITHUB_ENV
 
-      - name: Load PR number
-        id: load_pr
-        run: echo "pr=$(jq '.pr' changeset-metadata.json)" >> $GITHUB_OUTPUT
-
       - name: Required but missing
         if: fromJson(env.CHANGESET).required == true && fromJson(env.CHANGESET).changesetFound == false
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
