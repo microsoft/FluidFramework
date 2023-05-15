@@ -7,10 +7,10 @@ import { getFluidBuildConfig } from "./fluidUtils";
 import { PackageJson } from "./npmPackage";
 
 /**
- * Task definitions (type `TypeDefinitions`) is an object describing build tasks for fluid-build.
+ * Task definitions (type `TaskDefinitions`) is an object describing build tasks for fluid-build.
  * Task names are represented as property name on the object and the value the task configuration
- * (type `TypeConfig`). Task configuration can a plain array of string, presenting the task's
- * dependencies or a full description (type `TypeConfigFull`).
+ * (type `TaskConfig`). Task configuration can a plain array of string, presenting the task's
+ * dependencies or a full description (type `TaskConfigFull`).
  */
 
 export type TaskDependencies = string[];
