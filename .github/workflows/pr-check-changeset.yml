@@ -84,7 +84,7 @@ jobs:
       # must be set because it's not nullable.
       - name: Changeset metadata
         run: |
-          echo "{'branch': '${{ github.base_ref }}', 'required': false, 'changesetFound': true}" > ./changeset-metadata.json
+          echo "{\"branch\": \"${{ github.base_ref }}\", \"required\": false, \"changesetFound\": true}" > ./changeset-metadata.json
 
       # We save the PR number because downstream pipelines are triggered by workflow_run, and the PR number is not easily
       # retrievable in such workflows
