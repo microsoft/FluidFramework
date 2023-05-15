@@ -40,7 +40,7 @@ stages:
         testPackage: ${{ variables.testPackage }}
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:azure
-        artifactBuildId: 159959
+        artifactBuildId: $(resources.pipeline.client.runID)
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
