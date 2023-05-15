@@ -7,8 +7,8 @@ import child_process from "child_process";
 import { ConnectionState } from "fluid-framework";
 import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidContainer } from "@fluidframework/fluid-static";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
 import {
@@ -29,18 +29,19 @@ import {
 } from "./utils";
 import { getLogger } from "./logger";
 
-const eventMap = getScenarioRunnerTelemetryEventMap("DocLoader");
+const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 
-export interface DocLoaderRunnerConfig {
+export interface NestedMapRunnerConfig {
 	connectionConfig: AzureClientConnectionConfig;
 	schema: ContainerFactorySchema;
 	docIds: string[];
 	clientStartDelayMs: number;
-	numOfLoads?: number;
+	numMaps?: number;
 	client?: AzureClient;
+	containers?: IFluidContainer[];
 }
 
-export interface DocLoaderRunnerRunConfig
+export interface NestedMapRunnerRunConfig
 	extends IRunConfig,
 		Pick<
 			AzureClientConfig,
@@ -54,13 +55,14 @@ export interface DocLoaderRunnerRunConfig
 	childId: number;
 	schema: ContainerFactorySchema;
 	docId: string;
+	container?: IFluidContainer;
 	region?: string;
 	client?: AzureClient;
 }
 
-export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
+export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
 	private status: RunnnerStatus = "notStarted";
-	constructor(public readonly c: DocLoaderRunnerConfig) {
+	constructor(public readonly c: NestedMapRunnerConfig) {
 		super();
 	}
 
@@ -99,16 +101,13 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		}
 
 		const children: Promise<boolean>[] = [];
-		const numOfLoads = this.c.numOfLoads ?? 1;
-		for (let j = 0; j < numOfLoads; j++) {
-			for (const runnerArg of runnerArgs) {
-				try {
-					children.push(this.createChild(runnerArg));
-				} catch {
-					throw new Error("Failed to spawn child");
-				}
-				await delay(this.c.clientStartDelayMs);
+		for (const runnerArg of runnerArgs) {
+			try {
+				children.push(this.createChild(runnerArg));
+			} catch {
+				throw new Error("Failed to spawn child");
 			}
+			await delay(this.c.clientStartDelayMs);
 		}
 
 		try {
@@ -118,7 +117,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		}
 	}
 
-	public async runSync(config: IRunConfig): Promise<IFluidContainer[]> {
+	public async runSync(config: IRunConfig): Promise<void> {
 		this.status = "running";
 		const connection = this.c.connectionConfig;
 		const connType = connection.type;
@@ -129,45 +128,47 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		const secureTokenProvider = connection.useSecureTokenProvider;
 		const schema = this.c.schema;
 		const client = this.c.client;
-		let i = 0;
-		const runs: Promise<IFluidContainer>[] = [];
-		const numOfLoads = this.c.numOfLoads ?? 1;
-		for (let j = 0; j < numOfLoads; j++) {
-			for (const docId of this.c.docIds) {
-				runs.push(
-					DocLoaderRunner.execRun({
-						...config,
-						childId: i++,
-						docId,
-						connType,
-						connEndpoint,
-						tenantId,
-						tenantKey,
-						functionUrl,
-						secureTokenProvider,
-						schema,
-						client,
-					}),
-				);
-			}
+		const containers = this.c.containers;
+		const docIds = this.c.docIds;
+		if (containers !== undefined && containers.length !== docIds.length) {
+			throw new Error("Number of containers not equal to number of docIds");
+		}
+		const runs: Promise<void>[] = [];
+		for (let i = 0; i < docIds.length; i++) {
+			const docId = docIds[i];
+			const container = containers ? containers[i] : undefined;
+			runs.push(
+				NestedMapRunner.execRun({
+					...config,
+					childId: i,
+					docId,
+					connType,
+					connEndpoint,
+					tenantId,
+					tenantKey,
+					functionUrl,
+					secureTokenProvider,
+					schema,
+					client,
+					container,
+				}),
+			);
 		}
 		try {
-			const containers = await Promise.all(runs);
+			await Promise.all(runs);
 			this.status = "success";
-			return containers;
 		} catch {
 			this.status = "error";
 			throw new Error("Not all clients closed succesfully.");
 		}
 	}
 
-	public static async execRun(runConfig: DocLoaderRunnerRunConfig): Promise<IFluidContainer> {
-		let schema;
+	public static async execRun(runConfig: NestedMapRunnerRunConfig): Promise<void> {
 		const logger = await getLogger(
 			{
 				runId: runConfig.runId,
 				scenarioName: runConfig.scenarioName,
-				namespace: "scenario:runner:DocLoader",
+				namespace: "scenario:runner:NestedMap",
 				endpoint: runConfig.connEndpoint,
 				region: runConfig.region,
 			},
@@ -189,6 +190,15 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 				logger,
 			}));
 
+		const container: IFluidContainer = await NestedMapRunner.loadContainer(runConfig, logger, ac);
+	}
+
+	private static async loadContainer(runConfig: NestedMapRunnerRunConfig, logger: TelemetryLogger, client: AzureClient): Promise<IFluidContainer> {
+		if (runConfig.container !== undefined) {
+			return runConfig.container;
+		}
+
+		let schema: ContainerSchema;
 		try {
 			schema = loadInitialObjSchema(runConfig.schema);
 		} catch {
@@ -201,7 +211,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 				logger,
 				{ eventName: "load" },
 				async () => {
-					return ac.getContainer(runConfig.docId, schema);
+					return client.getContainer(runConfig.docId, schema);
 				},
 				{ start: true, end: true, cancel: "generic" },
 			));

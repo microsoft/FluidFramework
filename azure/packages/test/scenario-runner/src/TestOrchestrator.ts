@@ -15,6 +15,7 @@ import { DocLoaderRunner, DocLoaderRunnerConfig } from "./DocLoaderRunner";
 import { MapTrafficRunner, MapTrafficRunnerConfig } from "./MapTrafficRunner";
 import { IRunner } from "./interface";
 import { getLogger } from "./logger";
+import path from "node:path";
 
 export interface IStageParams {
 	[key: string]: unknown;
@@ -251,7 +252,7 @@ export class TestOrchestrator {
 				return "./testConfig_v1.yml";
 			}
 			default: {
-				return "";
+				return path.join(process.cwd(), version);
 			}
 		}
 	}
