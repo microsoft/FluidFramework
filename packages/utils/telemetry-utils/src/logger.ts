@@ -263,7 +263,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 					newEvent[key] = value;
 					break;
 				case TelemetryDataTag.UserData:
-					// Strip out anything tagged explicitly as PII.
+					// Strip out anything tagged explicitly as UserData.
 					// Alternate strategy would be to hash these props
 					newEvent[key] = "REDACTED (UserData)";
 					break;
@@ -344,7 +344,7 @@ export class ChildLogger extends TelemetryLogger {
 
 		// propagate the monitoring context
 		if (loggerIsMonitoringContext(baseLogger)) {
-			mixinMonitoringContext(this, new CachedConfigProvider(baseLogger.config));
+			mixinMonitoringContext(this, new CachedConfigProvider(this, baseLogger.config));
 		}
 	}
 

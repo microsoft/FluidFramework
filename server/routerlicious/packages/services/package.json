@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services",
-	"version": "0.1040.1000",
+	"version": "1.0.0",
 	"description": "Fluid server services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,7 +14,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
+		"build:compile": "npm run tsc && npm run typetests:gen",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
@@ -22,13 +22,15 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run eslint",
-		"lint:fix": "npm run eslint:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-		"test": "mocha --recursive dist/test --unhandled-rejections=strict",
+		"test": "mocha --recursive dist/test/*.spec.js --unhandled-rejections=strict",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"nyc": {
 		"all": true,
@@ -53,13 +55,13 @@
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/server-services-client": "^0.1040.1000",
-		"@fluidframework/server-services-core": "^0.1040.1000",
-		"@fluidframework/server-services-ordering-kafkanode": "^0.1040.1000",
-		"@fluidframework/server-services-ordering-rdkafka": "^0.1040.1000",
-		"@fluidframework/server-services-shared": "^0.1040.1000",
-		"@fluidframework/server-services-telemetry": "^0.1040.1000",
-		"@fluidframework/server-services-utils": "^0.1040.1000",
+		"@fluidframework/server-services-client": "workspace:*",
+		"@fluidframework/server-services-core": "workspace:*",
+		"@fluidframework/server-services-ordering-kafkanode": "workspace:*",
+		"@fluidframework/server-services-ordering-rdkafka": "workspace:*",
+		"@fluidframework/server-services-shared": "workspace:*",
+		"@fluidframework/server-services-telemetry": "workspace:*",
+		"@fluidframework/server-services-utils": "workspace:*",
 		"@socket.io/redis-emitter": "^4.1.1",
 		"amqplib": "^0.10.2",
 		"axios": "^0.26.0",
@@ -75,11 +77,12 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.13.1",
+		"@fluid-tools/build-cli": "^0.16.1",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.13.1",
+		"@fluidframework/build-tools": "^0.16.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/server-test-utils": "^0.1040.1000",
+		"@fluidframework/server-services-previous": "npm:@fluidframework/server-services@0.1040.1000",
+		"@fluidframework/server-test-utils": "workspace:*",
 		"@types/amqplib": "^0.5.17",
 		"@types/debug": "^4.1.5",
 		"@types/ioredis": "^4.22.0",
@@ -99,5 +102,12 @@
 		"rimraf": "^4.4.0",
 		"sinon": "^9.2.3",
 		"typescript": "~4.5.5"
+	},
+	"typeValidation": {
+		"broken": {
+			"ClassDeclaration_TenantManager": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

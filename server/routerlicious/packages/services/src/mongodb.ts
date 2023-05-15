@@ -5,7 +5,13 @@
 
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
-import { AggregationCursor, Collection, FindOneOptions, MongoClient, MongoClientOptions } from "mongodb";
+import {
+	AggregationCursor,
+	Collection,
+	FindOneOptions,
+	MongoClient,
+	MongoClientOptions,
+} from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -186,6 +192,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			try {
 				const result = await this.collection.insertOne(value);
 				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return result.insertedId;
 			} catch (error) {
 				this.sanitizeError(error);
@@ -326,7 +333,12 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.collection.updateOne(filter, update, options);
 	}
 
-	private async updateManyCore(filter: any, set: any, addToSet: any, options: any): Promise<void> {
+	private async updateManyCore(
+		filter: any,
+		set: any,
+		addToSet: any,
+		options: any,
+	): Promise<void> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -387,7 +399,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		if (error) {
 			try {
 				Object.keys(error).forEach((key) => {
-					if (key === "_id" || /^\d+$/.test(key)) { // skip mongodb's ObjectId and array indexes
+					if (key === "_id" || /^\d+$/.test(key)) {
+						// skip mongodb's ObjectId and array indexes
 						return;
 					} else if (typeof error[key] === "object") {
 						this.sanitizeError(error[key]);
@@ -435,6 +448,8 @@ export class MongoDb implements core.IDb {
 	}
 }
 
+export type ConnectionNotAvailableMode = "ruleBehavior" | "stop"; // Ideally we should have 'delayRetry' options, but that requires more refactor on our retry engine so hold for this mode;
+
 interface IMongoDBConfig {
 	operationsDbEndpoint: string;
 	bufferMaxEntries: number | undefined;
@@ -445,6 +460,7 @@ interface IMongoDBConfig {
 	facadeLevelRetry?: boolean;
 	facadeLevelTelemetry?: boolean;
 	facadeLevelRetryRuleOverride?: any;
+	connectionNotAvailableMode?: ConnectionNotAvailableMode;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
@@ -455,6 +471,7 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly connectionPoolMaxSize?: number;
 	private readonly retryEnabled: boolean = false;
 	private readonly telemetryEnabled: boolean = false;
+	private readonly connectionNotAvailableMode: ConnectionNotAvailableMode = "ruleBehavior";
 	private readonly retryRuleOverride: Map<string, boolean>;
 	constructor(config: IMongoDBConfig) {
 		const {
@@ -464,6 +481,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			globalDbEndpoint,
 			connectionPoolMinSize,
 			connectionPoolMaxSize,
+			connectionNotAvailableMode,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
@@ -473,6 +491,7 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.bufferMaxEntries = bufferMaxEntries;
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
+		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
 		this.retryEnabled = config.facadeLevelRetry || false;
 		this.telemetryEnabled = config.facadeLevelTelemetry || false;
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
@@ -510,7 +529,10 @@ export class MongoDbFactory implements core.IDbFactory {
 			options,
 		);
 
-		const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(this.retryRuleOverride);
+		const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(
+			this.retryRuleOverride,
+			this.connectionNotAvailableMode,
+		);
 
 		return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer);
 	}

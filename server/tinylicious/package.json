@@ -39,18 +39,18 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/gitresources": "^0.1039.1000",
-		"@fluidframework/protocol-base": "^0.1039.1000",
+		"@fluidframework/gitresources": "^0.1040.1000",
+		"@fluidframework/protocol-base": "^0.1040.1000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/server-lambdas": "^0.1039.1000",
-		"@fluidframework/server-local-server": "^0.1039.1000",
-		"@fluidframework/server-memory-orderer": "^0.1039.1000",
-		"@fluidframework/server-services-client": "^0.1039.1000",
-		"@fluidframework/server-services-core": "^0.1039.1000",
-		"@fluidframework/server-services-shared": "^0.1039.1000",
-		"@fluidframework/server-services-telemetry": "^0.1039.1000",
-		"@fluidframework/server-services-utils": "^0.1039.1000",
-		"@fluidframework/server-test-utils": "^0.1039.1000",
+		"@fluidframework/server-lambdas": "^0.1040.1000",
+		"@fluidframework/server-local-server": "^0.1040.1000",
+		"@fluidframework/server-memory-orderer": "^0.1040.1000",
+		"@fluidframework/server-services-client": "^0.1040.1000",
+		"@fluidframework/server-services-core": "^0.1040.1000",
+		"@fluidframework/server-services-shared": "^0.1040.1000",
+		"@fluidframework/server-services-telemetry": "^0.1040.1000",
+		"@fluidframework/server-services-utils": "^0.1040.1000",
+		"@fluidframework/server-test-utils": "^0.1040.1000",
 		"agentkeepalive": "^4.2.1",
 		"axios": "^0.26.0",
 		"body-parser": "^1.17.1",
@@ -105,10 +105,10 @@
 		"ts-node": "^8.6.2",
 		"typescript": "~4.5.5"
 	},
+	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"engines": {
 		"node": ">=14.0.0"
 	},
-	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
 	"pnpm": {
 		"overrides": {
 			"qs": "^6.11.0",

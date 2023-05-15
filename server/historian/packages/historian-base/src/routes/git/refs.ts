@@ -9,7 +9,11 @@ import {
 	ICreateRefParamsExternal,
 	IPatchRefParamsExternal,
 } from "@fluidframework/server-services-client";
-import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IStorageNameRetriever,
+	IThrottler,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -25,6 +29,7 @@ import { Constants } from "../../utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
+	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
@@ -41,26 +46,28 @@ export function create(
 	);
 
 	async function getRefs(tenantId: string, authorization: string): Promise<git.IRef[]> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getRefs();
 	}
 
 	async function getRef(tenantId: string, authorization: string, ref: string): Promise<git.IRef> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.getRef(ref);
 	}
 
@@ -69,14 +76,15 @@ export function create(
 		authorization: string,
 		params: ICreateRefParamsExternal,
 	): Promise<git.IRef> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.createRef(params);
 	}
 
@@ -86,26 +94,28 @@ export function create(
 		ref: string,
 		params: IPatchRefParamsExternal,
 	): Promise<git.IRef> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.updateRef(ref, params);
 	}
 
 	async function deleteRef(tenantId: string, authorization: string, ref: string): Promise<void> {
-		const service = await utils.createGitService(
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
 			tenantService,
+			storageNameRetriever,
 			cache,
 			asyncLocalStorage,
-		);
+		});
 		return service.deleteRef(ref);
 	}
 

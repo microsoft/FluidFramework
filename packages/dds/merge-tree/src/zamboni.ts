@@ -8,7 +8,14 @@
 import { UnassignedSequenceNumber } from "./constants";
 import { MergeTree } from "./mergeTree";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback";
-import { IMergeBlock, IMergeNode, ISegment, MaxNodesInBlock } from "./mergeTreeNodes";
+import {
+	IMergeBlock,
+	IMergeNode,
+	ISegment,
+	MaxNodesInBlock,
+	seqLTE,
+	toRemovalInfo,
+} from "./mergeTreeNodes";
 import { matchProperties } from "./properties";
 
 export const zamboniSegmentsMax = 2;
@@ -25,11 +32,11 @@ export function zamboniSegments(
 	}
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
-		let segmentToScour = mergeTree.getSegmentsToScour!.peek();
+		let segmentToScour = mergeTree.segmentsToScour.peek();
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}
-		segmentToScour = mergeTree.getSegmentsToScour!.get();
+		segmentToScour = mergeTree.segmentsToScour.get();
 		// Only skip scouring if needs scour is explicitly false, not true or undefined
 		if (segmentToScour.segment!.parent && segmentToScour.segment!.parent.needsScour !== false) {
 			const block = segmentToScour.segment!.parent;
@@ -126,8 +133,9 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 		if (childNode.isLeaf()) {
 			const segment = childNode;
 			if (segment.segmentGroups.empty) {
-				if (segment.removedSeq !== undefined) {
-					if (segment.removedSeq > mergeTree.collabWindow.minSeq) {
+				const removalInfo = toRemovalInfo(segment);
+				if (removalInfo !== undefined) {
+					if (!seqLTE(removalInfo.removedSeq, mergeTree.collabWindow.minSeq)) {
 						holdNodes.push(segment);
 					} else if (!segment.trackingCollection.empty) {
 						holdNodes.push(segment);

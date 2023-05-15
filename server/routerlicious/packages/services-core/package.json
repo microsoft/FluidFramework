@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-core",
-	"version": "0.1040.1000",
+	"version": "1.0.0",
 	"description": "Fluid server services core definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,7 +14,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
+		"build:compile": "npm run tsc && npm run typetests:gen",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
@@ -22,18 +22,20 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
-		"lint": "npm run eslint",
-		"lint:fix": "npm run eslint:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/gitresources": "^0.1040.1000",
+		"@fluidframework/gitresources": "workspace:*",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/server-services-client": "^0.1040.1000",
-		"@fluidframework/server-services-telemetry": "^0.1040.1000",
+		"@fluidframework/server-services-client": "workspace:*",
+		"@fluidframework/server-services-telemetry": "workspace:*",
 		"@types/nconf": "^0.10.2",
 		"@types/node": "^16.18.16",
 		"debug": "^4.1.1",
@@ -41,14 +43,39 @@
 		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.13.1",
+		"@fluid-tools/build-cli": "^0.16.1",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.13.1",
+		"@fluidframework/build-tools": "^0.16.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@0.1040.1000",
 		"concurrently": "^7.6.0",
 		"eslint": "~8.27.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
+	},
+	"typeValidation": {
+		"broken": {
+			"InterfaceDeclaration_IDeliState": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPartitionConfig": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IPartitionLambdaConfig": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPartitionWithEpoch": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IDatabaseManager": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MongoDatabaseManager": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

@@ -22,6 +22,17 @@ parameters:
     - default
     - skip
     - force
+- name: interdependencyRange
+  displayName: Range to use for interdependencies (only affects releases) (default = ~)
+  type: string
+  default: "~"
+  # The " " value (a space) is a hacky workaround. ADO doesn't support empty string, but we ultimately use this value as
+  # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
+  # empty string.
+  values:
+    - "^"
+    - "~"
+    - " "
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
@@ -54,6 +65,7 @@ trigger:
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
@@ -82,6 +94,7 @@ pr:
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
 
 extends:
   template: templates/build-npm-package.yml
@@ -90,6 +103,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    interdependencyRange: ${{ parameters.interdependencyRange }}
     packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
     packageManager: pnpm
     buildDirectory: .
@@ -98,8 +112,9 @@ extends:
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: true
-    taskLintName: ci:lint
+    taskLintName: ci:eslint
     taskTest:
+    - webpack
     - ci:test:mocha
     - ci:test:jest
     - ci:test:realsvc:local
@@ -110,3 +125,4 @@ extends:
     - syncpack:deps
     - syncpack:versions
     - prettier
+    - check:versions

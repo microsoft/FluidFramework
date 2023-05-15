@@ -16,28 +16,45 @@ Hello World repo can be found at <https://github.com/microsoft/FluidHelloWorld>.
 
 Core Examples repo can be found at <https://github.com/microsoft/FluidExamples>.
 
-Have questions? Engage with other Fluid Framework users and developers in the [Discussions] section of our GitHub repo.
+Have questions? Engage with other Fluid Framework users and developers in the [Discussions](https://github.com/microsoft/FluidFramework/discussions) section of our GitHub repo.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+Note that when depending on a library version of the form 2.0.0-internal.x.y.z, called the Fluid internal version
+scheme, you must use a `>= <` dependency range. Standard `^` and `~` ranges will not work as expected. See the
+[@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+package for more information including tools to convert between version schemes.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Code structure
 
 The core code for both the Fluid client packages _and_ the reference ordering service is contained within this repo.
 
-The repo structure is somewhat unique because it contains five monorepos as well as several standalone packages. The
-monorepos are managed using [Lerna](https://lerna.js.org/) and are versioned separately from one another, but internally
-all packages in a monorepo are versioned together. Outside the monorepos there are plenty of packages which are
-versioned independently.
+The repo structure is somewhat unique because it contains several [pnpm workspaces](https://pnpm.io/workspaces):
+some for individual packages and some for larger collections which we call "release groups".
+The workspaces are versioned separately from one another, but internally all packages in a workspaces are versioned together.
 
-These monorepos (which also serve as "release groups") do not necessary align with package namespaces,
-and also don't necessary correspond to a single directory of this repo.
+These workspaces do not align with package namespaces, and also don't always correspond to a single directory of this repo.
 
-Here's the list of Lerna managed release groups:
+Here's the list of release group workspaces:
 
--   core (previously known as "Fluid Framework Client" or "Client") (Rooted in [./](./). Configured by [./lerna.json](./lerna.json))
+-   client (previously known as "Fluid Framework Client" or "core") (Rooted in [./](./). Configured by [./pnpm-workspace.yaml](./pnpm-workspace.yaml))
     -   [./packages](./packages) (Published in the `@fluidframework/` namespace, but some in `@fluid-tools` and unpublished packages in `@fluid-internal/`)
     -   [./experimental](./experimental) (Published in the `@fluid-experimental/` namespace)
     -   [./examples](./examples) (Not published, live in the `@fluid-example/` namespace)
--   azure (Rooted in [./azure](./azure). Configured by [azure/lerna.json](azure/lerna.json))
-    -   [Packages](./azure/packages) (Published in the `@fluidframework/` namespace)
+    -   [./azure](./azure). (Published in the `@fluidframework/` namespace)
 -   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
     -   [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
 -   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
@@ -62,16 +79,44 @@ Dependencies between packages in various layers of the system are enforced via a
 [layer-check](./build-tools/packages/build-tools/src/layerCheck). You can view the full list of packages and layers in
 [PACKAGES.md](./PACKAGES.md).
 
-## Building
+## Setup and Building
 
-In order to build the Fluid Framework, ensure that you have installed [Git](https://git-scm.com/downloads) and the version of
-[Node.js](https://nodejs.org/) noted in the [.nvmrc file](https://raw.githubusercontent.com/microsoft/FluidFramework/main/.nvmrc).
+Install the required tools:
 
-Note: we recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
-[MacOS/Linux](https://github.com/nvm-sh/nvm)) or [fnm](https://github.com/Schniz/fnm) to install Node.js, in case you find yourself needing to install different
-versions of Node.js side-by-side.
+-   [Git](https://git-scm.com/downloads).
+-   [Node.js](https://nodejs.org/): install the version noted in in the [.nvmrc file](./.nvmrc).
+    See [NodeJs Installation](#NodeJs-Installation) for details.
 
-Because of a transitive dependency on a native addon module, you'll also need to ensure that you have the prerequisites for `node-gyp`. Depending on your operating system, you'll have slightly different installation requirements (these are largely copied from `node-gyp`'s [documentation](https://github.com/nodejs/node-gyp#readme)):
+Clone a copy of the repo and change to the repo root directory:
+
+```shell
+git clone https://github.com/microsoft/FluidFramework.git
+cd FluidFramework
+```
+
+Enable NodeJs's [corepack](https://github.com/nodejs/corepack/blob/main/README.md):
+
+```shell
+corepack enable
+```
+
+Run the following to build the client packages:
+
+```shell
+pnpm install
+npm run build:fast
+```
+
+See also: [Contributing](#Contributing)
+
+## NodeJs Installation
+
+We recommend using nvm (for [Windows](https://github.com/coreybutler/nvm-windows) or
+[MacOS/Linux](https://github.com/nvm-sh/nvm)) or [fnm](https://github.com/Schniz/fnm) to install Node.js.
+This ensures you stay at the correct version while allowing other uses of NodeJS to use the (possibly different) versions they need side-by-side.
+
+Because of a transitive dependency on a native addon module, you'll also need to ensure that you have the prerequisites for `node-gyp`.
+Depending on your operating system, you'll have slightly different installation requirements (these are largely copied from `node-gyp`'s [documentation](https://github.com/nodejs/node-gyp#readme)):
 
 ### On Windows
 
@@ -90,23 +135,6 @@ If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [the
 1. Python v3.7, v3.8, v3.9, or v3.10
 2. `XCode Command Line Tools`, which will install `make`, `clang`, and `clang++`
     - You can install these by running `xcode-select --install` from a command line.
-
-Clone a copy of the repo and change to the repo root directory:
-
-```shell
-git clone https://github.com/microsoft/FluidFramework.git
-cd FluidFramework
-```
-
-Run the following to build the client packages:
-
-```shell
-corepack enable
-pnpm install
-npm run build:fast
-```
-
-See also: [Contributing](#Contributing)
 
 ### Other Build Requirements
 
@@ -150,7 +178,7 @@ npm run test:coverage
 ### Mimic the official CI build
 
 Our CI pipelines run on Linux machines, and the npm scripts all have the `ci` prefix.
-To replicate the test steps from the CI pipeline locally, run the following commands for the packages or Lerna monorepos:
+To replicate the test steps from the CI pipeline locally, run the following commands for the packages or pnpm workspaces:
 
 | Run      | Non-Windows                | Windows                                             |
 | -------- | -------------------------- | --------------------------------------------------- |

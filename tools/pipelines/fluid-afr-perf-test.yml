@@ -41,7 +41,6 @@ stages:
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
-          downloadAzureTestArtifacts: true
           artifactBuildId: $(resources.pipeline.azure.runID)
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -61,7 +60,6 @@ stages:
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
-          downloadAzureTestArtifacts: true
           artifactBuildId: $(resources.pipeline.azure.runID)
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -81,7 +79,6 @@ stages:
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
-          downloadAzureTestArtifacts: true
           artifactBuildId: $(resources.pipeline.azure.runID)
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
@@ -101,7 +98,6 @@ stages:
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
-          downloadAzureTestArtifacts: true
           artifactBuildId: $(resources.pipeline.azure.runID)
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

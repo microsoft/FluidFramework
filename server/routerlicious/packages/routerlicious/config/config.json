@@ -23,6 +23,7 @@
 			"deltas": "deltas",
 			"rawdeltas": "rawdeltas",
 			"documents": "documents",
+			"checkpoints": "checkpoints",
 			"partitions": "partitions",
 			"tenants": "tenants",
 			"nodes": "nodes",
@@ -50,6 +51,9 @@
 		"enableWholeSummaryUpload": false,
 		"storageUrl": "http://gitrest:3000"
 	},
+	"checkpoints": {
+		"localCheckpointEnabled": true
+	},
 	"alfred": {
 		"kafkaClientId": "alfred",
 		"maxMessageSize": "16KB",
@@ -60,108 +64,20 @@
 		"enableConnectionCountLogging": false,
 		"throttling": {
 			"restCallsPerTenant": {
-				"generalRestCall": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"createDoc": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"getDeltas": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"getSession": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				}
+				"generalRestCall": "disabled",
+				"createDoc": "disabled",
+				"getDeltas": "disabled",
+				"getSession": "disabled"
 			},
 			"restCallsPerCluster": {
-				"createDoc": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"getDeltas": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				},
-				"getSession": {
-					"maxPerMs": 1000000,
-					"maxBurst": 1000000,
-					"minCooldownIntervalInMs": 1000000,
-					"minThrottleIntervalInMs": 1000000,
-					"maxInMemoryCacheSize": 1000,
-					"maxInMemoryCacheAgeInMs": 60000,
-					"enableEnhancedTelemetry": false
-				}
+				"createDoc": "disabled",
+				"getDeltas": "disabled",
+				"getSession": "disabled"
 			},
-			"socketConnectionsPerTenant": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
-			},
-			"socketConnectionsPerCluster": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
-			},
-			"submitOps": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
-			},
-			"submitSignal": {
-				"maxPerMs": 1000000,
-				"maxBurst": 1000000,
-				"minCooldownIntervalInMs": 1000000,
-				"minThrottleIntervalInMs": 1000000,
-				"maxInMemoryCacheSize": 1000,
-				"maxInMemoryCacheAgeInMs": 60000,
-				"enableEnhancedTelemetry": false
-			}
+			"socketConnectionsPerTenant": "disabled",
+			"socketConnectionsPerCluster": "disabled",
+			"submitOps": "disabled",
+			"submitSignal": "disabled"
 		},
 		"topic": "rawdeltas",
 		"bucket": "snapshots",
@@ -208,7 +124,8 @@
 			"idleTime": 10000,
 			"maxTime": 60000,
 			"maxMessages": 500
-		}
+		},
+		"restartOnCheckpointFailure": true
 	},
 	"scribe": {
 		"kafkaClientId": "scribe",
@@ -218,7 +135,8 @@
 			"maxTime": 60000,
 			"maxMessages": 500
 		},
-		"getDeltasViaAlfred": true
+		"getDeltasViaAlfred": true,
+		"restartOnCheckpointFailure": true
 	},
 	"system": {
 		"httpServer": {
@@ -231,6 +149,9 @@
 	"usage": {
 		"clientConnectivityCountingEnabled": false,
 		"signalUsageCountingEnabled": false
+	},
+	"shared": {
+		"transientTenants": []
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",
@@ -269,7 +190,9 @@
 		"groupId": "scriptorium",
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
-		"enableTelemetry": true
+		"enableTelemetry": true,
+		"maxDbBatchSize": 1000,
+		"restartOnCheckpointFailure": true
 	},
 	"copier": {
 		"topic": "rawdeltas",

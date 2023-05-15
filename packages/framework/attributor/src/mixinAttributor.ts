@@ -22,7 +22,11 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	PerformanceEvent,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { Attributor, IAttributor, OpStreamAttributor } from "./attributor";
 import { AttributorSerializer, chain, deltaEncoder, Encoder } from "./encoders";
 import { makeLZ4Encoder } from "./lz4Encoder";
@@ -131,6 +135,7 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			);
 
 			const mc = loggerToMonitoringContext(context.taggedLogger);
+
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
 				(context.options.attribution ??= {}).track = true;
@@ -147,17 +152,34 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			)) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
+			const logger = ChildLogger.create(runtime.logger, "Attributor");
+
 			// Note: this fetches attribution blobs relatively eagerly in the load flow; we may want to optimize
 			// this to avoid blocking on such information until application actually requests some op-based attribution
 			// info or we need to summarize. All that really needs to happen immediately is to start recording
 			// op seq# -> attributionInfo for new ops.
-			await runtime.runtimeAttributor.initialize(
-				deltaManager,
-				audience,
-				baseSnapshot,
-				async (id) => runtime.storage.readBlob(id),
-				shouldTrackAttribution,
+			await PerformanceEvent.timedExecAsync(
+				logger,
+				{
+					eventName: "initialize",
+				},
+				async (event) => {
+					await runtime.runtimeAttributor?.initialize(
+						deltaManager,
+						audience,
+						baseSnapshot,
+						async (id) => runtime.storage.readBlob(id),
+						shouldTrackAttribution,
+					);
+					event.end({
+						attributionEnabledInConfig: shouldTrackAttribution,
+						attributionEnabledInDoc: runtime.runtimeAttributor
+							? runtime.runtimeAttributor.isEnabled
+							: false,
+					});
+				},
 			);
+
 			return runtime;
 		}
 

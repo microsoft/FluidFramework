@@ -23,10 +23,10 @@ import {
 	MonitoringContext,
 	TelemetryNullLogger,
 } from "@fluidframework/telemetry-utils";
-
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
 import { sweepAttachmentBlobsKey } from "../gc";
 
+const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
 	implements Pick<IDocumentStorageService, "readBlob" | "createBlob">
 {
@@ -40,10 +40,12 @@ abstract class BaseMockBlobStorage
 }
 
 class DedupeStorage extends BaseMockBlobStorage {
+	public minTTL: number = MIN_TTL;
+
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = await gitHashFile(blob as any);
 		this.blobs.set(id, blob);
-		return { id };
+		return { id, minTTLInSeconds: this.minTTL };
 	}
 }
 
@@ -51,7 +53,7 @@ class NonDedupeStorage extends BaseMockBlobStorage {
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = this.blobs.size.toString();
 		this.blobs.set(id, blob);
-		return { id };
+		return { id, minTTLInSeconds: MIN_TTL };
 	}
 }
 
@@ -76,7 +78,7 @@ class MockRuntime
 			(blobPath: string) => this.isBlobDeleted(blobPath),
 			this,
 			undefined,
-			() => undefined,
+			() => (this.closed = true),
 		);
 	}
 
@@ -135,6 +137,7 @@ class MockRuntime
 
 	public blobManager: BlobManager;
 	public connected = false;
+	public closed = false;
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
@@ -193,7 +196,7 @@ class MockRuntime
 		return summary;
 	}
 
-	public async connect() {
+	public async connect(delay?: number) {
 		assert(!this.connected);
 		await new Promise<void>((resolve) => setTimeout(resolve, 0));
 		if (this.blobManager.hasPendingOfflineUploads) {
@@ -203,6 +206,7 @@ class MockRuntime
 			await uploadP;
 			this.processing = false;
 		}
+		await new Promise<void>((resolve) => setTimeout(resolve, delay));
 		this.connected = true;
 		this.emit("connected", "client ID");
 		const ops = this.ops;
@@ -373,7 +377,6 @@ describe("BlobManager", () => {
 
 	it("uploads while disconnected", async () => {
 		await runtime.attach();
-
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processBlobs();
 		await handle;
@@ -383,6 +386,30 @@ describe("BlobManager", () => {
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
 		assert.strictEqual(summaryData.redirectTable.size, 1);
+	});
+
+	it("close container if blob expired", async () => {
+		await runtime.attach();
+		await runtime.connect();
+		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
+		await createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs();
+		runtime.disconnect();
+		await new Promise<void>((resolve) => setTimeout(resolve, 50));
+		await runtime.connect();
+		assert.strictEqual(runtime.closed, true);
+		await runtime.processAll();
+	});
+
+	it("close container if expired while connect", async () => {
+		await runtime.attach();
+		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs();
+		await handle;
+		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
+		await runtime.connect(50);
+		assert.strictEqual(runtime.closed, true);
+		await runtime.processAll();
 	});
 
 	it("transition to offline while upload pending", async () => {

@@ -233,7 +233,7 @@
 			"port": 5859,
 			"restart": true,
 			"sourceMaps": true,
-			"localRoot": "${workspaceFolder}",
+			"localRoot": "${workspaceFolder}/server/routerlicious",
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
@@ -258,10 +258,10 @@
 			"request": "attach",
 			"name": "Attach to scriptorium",
 			"address": "localhost",
-			"port": 5861,
+			"port": 5860,
 			"restart": true,
 			"sourceMaps": true,
-			"localRoot": "${workspaceFolder}",
+			"localRoot": "${workspaceFolder}/server/routerlicious",
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
@@ -272,24 +272,10 @@
 			"request": "attach",
 			"name": "Attach to copier",
 			"address": "localhost",
-			"port": 5867,
+			"port": 5861,
 			"restart": true,
 			"sourceMaps": true,
-			"localRoot": "${workspaceFolder}",
-			"remoteRoot": "/usr/src/server",
-			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
-			"protocol": "inspector",
-			"trace": "sm"
-		},
-		{
-			"type": "node",
-			"request": "attach",
-			"name": "Attach to foreman",
-			"address": "localhost",
-			"port": 5862,
-			"restart": true,
-			"sourceMaps": true,
-			"localRoot": "${workspaceFolder}",
+			"localRoot": "${workspaceFolder}/server/routerlicious",
 			"remoteRoot": "/usr/src/server",
 			"outFiles": ["${workspaceFolder}/dist/**/*.js"],
 			"protocol": "inspector",
@@ -301,6 +287,7 @@
 			"name": "Debug Current Mocha Test",
 			"env": {
 				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeFullCompat tests
 				// "FLUID_TEST_VERBOSE": "1"
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
@@ -317,7 +304,17 @@
 			],
 			"cwd": "${fileDirname}",
 			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
-			"outFiles": ["${workspaceFolder}/**/dist/**/*.js"],
+			"outFiles": [
+				// This config avoids loading dependent packages' test files, while using the same technique
+				// as the "Debug Current Test (JS)" config to load source maps for test files in the current
+				// package.
+				// This reduces the number of source files VSCode needs to load to debug the e2e tests
+				// considerably, which decreases the time it takes to start debugging.
+				"${workspaceFolder}/**/dist/**/!(*.spec,*.test,*.tests).js",
+				"${fileDirname}/../../dist/**/*.js",
+				"${fileDirname}/../../../dist/**/*.js",
+				"${fileDirname}/../../../../dist/**/*.js"
+			],
 			"preLaunchTask": "Build Current Tests",
 			"internalConsoleOptions": "openOnSessionStart"
 		},
@@ -325,7 +322,11 @@
 			"type": "node",
 			"request": "launch",
 			"name": "Debug Current Test (JS)",
-			// "env": { "FLUID_TEST_VERBOSE": "1" },
+			"env": {
+				// "fluid__test__driver": "odsp" //values: local, tinylicious, routerlicious, odsp,
+				// "fluid__test__backCompat": "FULL" //values: FULL This tests loader-driver compatibility for describeFullCompat tests
+				// "FLUID_TEST_VERBOSE": "1"
+			},
 			"program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
 			"stopOnEntry": false,
 			"sourceMaps": true,
@@ -333,10 +334,15 @@
 				"--no-timeouts",
 				"--exit",
 				"../../dist/test/${fileBasenameNoExtension}.js",
-				"../../../dist/test/**/${fileBasenameNoExtension}.js"
+				"../../../dist/test/**/${fileBasenameNoExtension}.js",
+				"../../../../dist/test/**/${fileBasenameNoExtension}.js"
 			],
 			"cwd": "${fileDirname}",
-			"outFiles": ["${fileDirname}/../../dist/**/*.js", "${fileDirname}/../../../dist/**/*.js"]
+			"outFiles": [
+				"${fileDirname}/../../dist/**/*.js",
+				"${fileDirname}/../../../dist/**/*.js",
+				"${fileDirname}/../../../../dist/**/*.js"
+			]
 		},
 		{
 			"type": "node",
