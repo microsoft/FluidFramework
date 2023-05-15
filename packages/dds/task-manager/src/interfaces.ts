@@ -33,7 +33,9 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
 	(event: "completed", listener: TaskEventListener);
 
 	/**
-	 * Fires when the task assignment is lost by the local client. This could be due to the client disconnecting or by manually calling `abandon()`.
+	 * Fires when the task assignment is lost by the local client.
+	 *
+	 * @remarks This could be due to the client disconnecting or by manually calling {@link ITaskManager.abandon}.
 	 *
 	 * @eventProperty
 	 */
