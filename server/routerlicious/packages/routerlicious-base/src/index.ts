@@ -10,9 +10,9 @@ export {
 	AlfredRunnerFactory,
 	DeltaService,
 	DocumentDeleteService,
-	OrdererManager,
 	IAlfredResourcesCustomizations,
 	IDocumentDeleteService,
+	OrdererManager,
 } from "./alfred";
 export { OrderingResourcesFactory } from "./ordering";
 export {
