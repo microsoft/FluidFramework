@@ -112,7 +112,7 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 			throw new Error(`Not all clients closed successfully.\n${error}`);
 		}
 
-		return this.docIds.length > 1 ? this.docIds : this.docIds[0];
+		return this.docIds;
 	}
 
 	public async runSync(config: IRunConfig): Promise<string | string[] | undefined> {
