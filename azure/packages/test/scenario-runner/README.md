@@ -1,4 +1,4 @@
-# @fluidframework/azure-scenario-runner
+# @fluid-experimental/azure-scenario-runner
 
 ## Azure Scenario Runner
 
