@@ -18,7 +18,7 @@ import { IUser } from '@fluidframework/protocol-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
-// @public (undocumented)
+// @public
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
     // @internal
     protected createServiceMember(audienceMember: IClient): AzureMember;
@@ -69,7 +69,7 @@ export interface AzureContainerVersion {
     id: string;
 }
 
-// @public
+// @public @deprecated
 export class AzureFunctionTokenProvider implements ITokenProvider {
     constructor(azFunctionUrl: string, user?: Pick<AzureMember<any>, "userId" | "userName" | "additionalDetails"> | undefined);
     // (undocumented)
