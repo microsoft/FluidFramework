@@ -131,22 +131,25 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		const client = this.c.client;
 		let i = 0;
 		const runs: Promise<void>[] = [];
-		for (const docId of this.c.docIds) {
-			runs.push(
-				DocLoaderRunner.execRun({
-					...config,
-					childId: i++,
-					docId,
-					connType,
-					connEndpoint,
-					tenantId,
-					tenantKey,
-					functionUrl,
-					secureTokenProvider,
-					schema,
-					client,
-				}),
-			);
+		const numOfLoads = this.c.numOfLoads ?? 1;
+		for (let j = 0; j < numOfLoads; j++) {
+			for (const docId of this.c.docIds) {
+				runs.push(
+					DocLoaderRunner.execRun({
+						...config,
+						childId: i++,
+						docId,
+						connType,
+						connEndpoint,
+						tenantId,
+						tenantKey,
+						functionUrl,
+						secureTokenProvider,
+						schema,
+						client,
+					}),
+				);
+			}
 		}
 		try {
 			await Promise.all(runs);
