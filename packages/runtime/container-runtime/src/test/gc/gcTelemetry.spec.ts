@@ -148,7 +148,7 @@ describe("GC Telemetry Tracker", () => {
 			return;
 		}
 		telemetryTracker.logSweepEvents(mc.logger, Date.now(), unreferencedNodesState, 0);
-		await telemetryTracker.logUnreferencedEvents(mc.logger);
+		await telemetryTracker.logPendingEvents(mc.logger);
 	}
 
 	before(() => {

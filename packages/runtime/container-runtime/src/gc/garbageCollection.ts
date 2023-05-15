@@ -528,8 +528,7 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 		this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
-		// Log events for objects that are ready to be deleted by sweep. When we have sweep enabled, we will
-		// delete these objects here instead.
+		// Log events for objects that are ready to be deleted by sweep.
 		this.telemetryTracker.logSweepEvents(
 			logger,
 			currentReferenceTimestampMs,
@@ -559,7 +558,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
 		// updates its state so that we don't send false positives based on intermediate state. For example, we may get
 		// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
-		await this.telemetryTracker.logUnreferencedEvents(logger);
+		await this.telemetryTracker.logPendingEvents(logger);
 
 		return gcStats;
 	}

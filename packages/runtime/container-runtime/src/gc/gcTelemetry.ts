@@ -270,7 +270,11 @@ export class GCTelemetryTracker {
 		}
 	}
 
-	public async logUnreferencedEvents(logger: ITelemetryLogger) {
+	/**
+	 * Log events that are pending in pendingEventsQueue. This is called after GC runs in the summarizer client
+	 * so that the state of an unreferenced node is updated.
+	 */
+	public async logPendingEvents(logger: ITelemetryLogger) {
 		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
 		// summary time they are then logged.
 		// Events generated:
