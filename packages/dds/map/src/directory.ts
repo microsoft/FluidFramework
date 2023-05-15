@@ -1070,6 +1070,10 @@ function isDirectoryLocalOpMetadata(metadata: any): metadata is DirectoryLocalOp
 
 /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
+function assertNonNullClientId(clientId: string | null): asserts clientId is string {
+	assert(clientId !== null, "client id should never be null");
+}
+
 /**
  * Node of the directory tree.
  * @sealed
@@ -1636,6 +1640,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.needProcessSubDirectoryOperation(msg, op, local, localOpMetadata)) {
 			return;
 		}
+		assertNonNullClientId(msg.clientId);
 		this.createSubDirectoryCore(op.subdirName, local, msg.sequenceNumber, msg.clientId);
 	}
 
@@ -2125,7 +2130,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// container was detached or in case this directory is already live(known to other clients)
 		// and the op was created after the directory was created then apply this op.
 		return (
-			this.clientIds.has(msg.clientId) ||
+			(msg.clientId !== null && this.clientIds.has(msg.clientId)) ||
 			this.clientIds.has("detached") ||
 			(this.sequenceNumber !== -1 && this.sequenceNumber <= msg.referenceSequenceNumber)
 		);
@@ -2148,6 +2153,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		localOpMetadata: unknown,
 	): boolean {
 		const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
+		assertNonNullClientId(msg.clientId);
 		if (pendingSubDirectoryMessageId !== undefined) {
 			if (local) {
 				assert(

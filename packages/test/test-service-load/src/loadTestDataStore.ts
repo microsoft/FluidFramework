@@ -20,6 +20,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { LeaderElection } from "./leaderElection";
 
@@ -30,6 +31,7 @@ export interface IRunConfig {
 	verbose: boolean;
 	random: IRandom;
 	logger: ITelemetryLogger;
+	loaderConfig?: ILoaderOptions;
 }
 
 export interface ILoadTest {
