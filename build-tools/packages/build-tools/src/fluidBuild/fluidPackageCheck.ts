@@ -346,13 +346,9 @@ export class FluidPackageCheck {
 				buildCompile.push("build:realsvctest");
 			}
 
-			// build:commonjs build:es5 and build:esnext should be in build:compile if they exist
+			// build:commonjs and build:esnext should be in build:compile if they exist
 			if (pkg.getScript("build:commonjs")) {
 				buildCompile.push("build:commonjs");
-			}
-
-			if (pkg.getScript("build:es5")) {
-				buildCompile.push("build:es5");
 			}
 
 			if (pkg.getScript("build:esnext")) {
@@ -361,6 +357,10 @@ export class FluidPackageCheck {
 
 			if (pkg.getScript("build:copy")) {
 				buildCompile.push("build:copy");
+			}
+
+			if (pkg.getScript("build:copy-resources")) {
+				buildCompile.push("build:copy-resources");
 			}
 
 			if (pkg.getScript("lint")) {
@@ -816,7 +816,10 @@ export class FluidPackageCheck {
 		if (this.hasMainBuild(pkg)) {
 			// We should only have references if we have a main build.
 			const references = [{ path: referencePath }];
-			if (!isEqual(configJson.references, references)) {
+			if (
+				configJson.references !== undefined &&
+				!isEqual(configJson.references, references)
+			) {
 				this.logWarn(pkg, `Unexpected references in ${configFile}`, fix);
 				if (fix) {
 					configJson.references = references;

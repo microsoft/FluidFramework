@@ -4,12 +4,11 @@
  */
 import commander from "commander";
 
-import { ConnectionState } from "fluid-framework";
-
 import { AzureClient } from "@fluidframework/azure-client";
 import { IFluidContainer } from "@fluidframework/fluid-static";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 import { ContainerFactorySchema } from "./interface";
 import { getLogger, loggerP } from "./logger";
