@@ -40,7 +40,7 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-	const perTenantThrottler = throttlersMap
+	const perTenantGeneralThrottler = throttlersMap
 		.get(Constants.perTenantThrottler)
 		.get(Constants.generalRestCallThrottleIdPrefix);
 
@@ -67,7 +67,7 @@ export function create(
 	router.get(
 		["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
 		validateRequestParams("tenantId", "id"),
-		throttle(perTenantThrottler, winston, tenantThrottleOptions),
+		throttle(perTenantGeneralThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
@@ -93,7 +93,7 @@ export function create(
 	router.get(
 		"/raw/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		throttle(perTenantThrottler, winston, tenantThrottleOptions),
+		throttle(perTenantGeneralThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		(request, response, next) => {
 			const tenantId = getParam(request.params, "tenantId") || appTenants[0].id;
