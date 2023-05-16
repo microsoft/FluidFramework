@@ -118,8 +118,6 @@ resources:
 stages:
 - stage: build
   displayName: 'Build website'
-  env:
-    COREPACK_DEFAULT_TO_LATEST: 0
   dependsOn: [] # run in parallel
   jobs:
     - job: debug_variables
@@ -193,9 +191,9 @@ stages:
           inputs:
             version: 16.x
 
-        - template: include-install-pnpm.yml
+        - template: templates/include-install-pnpm.yml
           parameters:
-            buildDirectory: ${{ parameters.buildDirectory }}
+            buildDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies

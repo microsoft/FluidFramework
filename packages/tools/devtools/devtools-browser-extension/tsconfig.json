@@ -2,7 +2,7 @@
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"compilerOptions": {
 		"rootDir": "src",
-		"outDir": "dist",
+		"outDir": "dist/tsc",
 		"composite": true,
 		"types": ["chai", "chrome", "mocha", "node"],
 		"jsx": "react-jsx",
