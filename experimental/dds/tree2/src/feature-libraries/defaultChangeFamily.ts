@@ -201,7 +201,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
 		return {
-			insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
+			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(
 						index,
@@ -299,7 +299,7 @@ export interface SequenceFieldEditBuilder {
 	 * @param index - the index at which to insert the `newContent`.
 	 * @param newContent - the new content to be inserted in the field
 	 */
-	insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+	insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
 
 	/**
 	 * Issues a change which deletes `count` elements starting at the given `index`.

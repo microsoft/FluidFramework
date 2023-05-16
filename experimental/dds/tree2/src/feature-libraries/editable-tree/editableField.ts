@@ -17,9 +17,9 @@ import {
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
-	ITreeCursor,
 	inCursorNode,
 	FieldUpPath,
+	ITreeCursor,
 } from "../../core";
 import { Multiplicity } from "../modular-schema";
 import {
@@ -29,6 +29,7 @@ import {
 	ContextuallyTypedNodeData,
 	arrayLikeMarkerSymbol,
 	cursorFromContextualData,
+	cursorsFromContextualData,
 } from "../contextuallyTyped";
 import { sequence } from "../defaultFieldKinds";
 import { assertValidIndex } from "../../util";
@@ -43,8 +44,10 @@ import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
+	NewFieldContent,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
+	areCursors,
 	proxyTargetSymbol,
 } from "./editableTreeTypes";
 import { makeTree } from "./editableTree";
@@ -99,6 +102,14 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		this.fieldKey = cursor.getFieldKey();
 		this[arrayLikeMarkerSymbol] = true;
+	}
+
+	public normalizeNewContent(content: NewFieldContent): ITreeCursor | readonly ITreeCursor[] {
+		if (areCursors(content)) {
+			return content;
+		}
+
+		return cursorsFromContextualData(this.context.schema, this.fieldSchema, content);
 	}
 
 	public get [proxyTargetSymbol](): FieldProxyTarget {
@@ -168,14 +179,15 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return this.asArray().values();
 	}
 
-	public insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void {
+	public insertNodes(index: number, newContent: NewFieldContent): void {
+		const content = this.normalizeNewContent(newContent);
 		const fieldKind = getFieldKind(this.fieldSchema);
 		// TODO: currently for all field kinds the nodes can be created by editor using `sequenceField.insert()`.
 		// Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
 		// assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
 		if (fieldKind.multiplicity !== Multiplicity.Sequence) {
 			assert(
-				this.length === 0 && (!Array.isArray(newContent) || newContent.length <= 1),
+				this.length === 0 && (!Array.isArray(content) || content.length <= 1),
 				0x455 /* A non-sequence field cannot have more than one node. */,
 			);
 		}
@@ -184,7 +196,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			0x456 /* Index must be less than or equal to length. */,
 		);
 		const fieldPath = this.cursor.getFieldPath();
-		this.context.insertNodes(fieldPath, index, newContent);
+		this.context.insertNodes(fieldPath, index, content);
 	}
 
 	public moveNodes(
@@ -246,18 +258,15 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		this.context.deleteNodes(fieldPath, index, _count);
 	}
 
-	public replaceNodes(
-		index: number,
-		newContent: ITreeCursor | ITreeCursor[],
-		count?: number,
-	): void {
+	public replaceNodes(index: number, newContent: NewFieldContent, count?: number): void {
+		const content = this.normalizeNewContent(newContent);
 		const fieldKind = getFieldKind(this.fieldSchema);
 		// TODO: currently for all field kinds the nodes can be created by editor using `sequenceField.insert()`.
 		// Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
 		// assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
 		if (fieldKind.multiplicity !== Multiplicity.Sequence) {
 			assert(
-				this.length <= 1 && (!Array.isArray(newContent) || newContent.length <= 1),
+				this.length <= 1 && (!Array.isArray(content) || content.length <= 1),
 				0x4d0 /* A non-sequence field cannot have more than one node. */,
 			);
 		}
@@ -269,7 +278,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		const maxCount = this.length - index;
 		const _count = count === undefined || count > maxCount ? maxCount : count;
 		const fieldPath = this.cursor.getFieldPath();
-		this.context.replaceNodes(fieldPath, index, _count, newContent);
+		this.context.replaceNodes(fieldPath, index, _count, content);
 	}
 }
 

@@ -191,8 +191,6 @@ export {
 	valueSymbol,
 	proxyTargetSymbol,
 	getField,
-	createField,
-	replaceField,
 	contextSymbol,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
@@ -251,6 +249,7 @@ export {
 	GlobalFieldSchema,
 	Any,
 	Sourced,
+	NewFieldContent,
 } from "./feature-libraries";
 
 export {

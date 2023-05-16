@@ -40,6 +40,9 @@ export function fail(message: string): never {
 
 /**
  * Checks whether or not the given object is a `readonly` array.
+ *
+ * Note that this does NOT indicate if a given array should be treated as readonly.
+ * This instead indicates if an object is an Array, and is typed to tolerate the readonly case.
  */
 export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
 	// `Array.isArray()` does not properly narrow `readonly` array types by itself,

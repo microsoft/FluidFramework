@@ -26,12 +26,11 @@ export {
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	getField,
-	createField,
-	replaceField,
 	parentField,
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	NewFieldContent,
 } from "./editable-tree";
 
 export {

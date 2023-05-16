@@ -12,12 +12,11 @@ export {
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
 	getField,
-	createField,
-	replaceField,
 	parentField,
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	NewFieldContent,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";

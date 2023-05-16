@@ -19,7 +19,6 @@ import {
 import { brand, compareSets } from "../../util";
 import { TestTreeProviderLite, initializeTestTree } from "../utils";
 import {
-	createField,
 	FieldKinds,
 	Identifier,
 	identifierFieldSchema,
@@ -28,6 +27,7 @@ import {
 	SchemaBuilder,
 	singleTextCursor,
 	identifierFieldSchemaLibrary,
+	getField,
 } from "../../feature-libraries";
 
 const builder = new SchemaBuilder("identifier index tests", identifierFieldSchemaLibrary);
@@ -166,8 +166,8 @@ describe("Node Identifier Index", () => {
 		const node = tree.identifiedNodes.get(idA);
 		assert(node !== undefined);
 		const idB = makeId();
-		node[createField](
-			brand("child"),
+		node[getField](brand("child")).replaceNodes(
+			0,
 			singleTextCursor({
 				type: nodeSchema.name,
 				globalFields: {

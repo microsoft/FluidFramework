@@ -376,10 +376,10 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldStoredSchema;
     getNode(index: number): EditableTree;
-    insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    insertNodes(index: number, newContent: NewFieldContent): void;
     moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: EditableField): void;
     readonly parent?: EditableTree;
-    replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+    replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
 }
 
 // @alpha (undocumented)
@@ -388,7 +388,7 @@ type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     readonly [contextSymbol]: EditableTreeContext;
-    [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
+    [createField](fieldKey: FieldKey, newContent: NewFieldContent): void;
     [getField](fieldKey: FieldKey): EditableField;
     // (undocumented)
     [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
@@ -397,7 +397,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
         readonly index: number;
     };
     readonly [proxyTargetSymbol]: object;
-    [replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
+    [replaceField](fieldKey: FieldKey, newContent: NewFieldContent): void;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: NamedTreeSchema;
     [valueSymbol]: Value;
@@ -975,6 +975,7 @@ export function isWritableArrayLike(data: ContextuallyTypedFieldData): data is M
 
 // @alpha
 export interface ITreeCursor {
+    readonly [CursorMarker]: true;
     readonly chunkLength: number;
     readonly chunkStart: number;
     enterField(key: FieldKey): void;
@@ -1561,7 +1562,7 @@ export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequ
 // @alpha (undocumented)
 export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
-    insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+    insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
     revive(index: number, count: number, detachedBy: RevisionTag, reviver: NodeReviver, detachIndex: number, isIntention?: true): void;
 }

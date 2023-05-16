@@ -20,12 +20,10 @@ import { brand, clone } from "../../../util";
 import {
 	singleTextCursor,
 	isUnwrappedNode,
-	createField,
 	getField,
 	isEditableField,
 	FieldKinds,
 	valueSymbol,
-	replaceField,
 	typeNameSymbol,
 	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
@@ -388,7 +386,7 @@ describe("editable-tree: editing", () => {
 			]);
 			assert(isUnwrappedNode(trees[0].root));
 			// create using `createFieldSymbol`
-			trees[0].root[createField](localFieldKey, [
+			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
 			]);
@@ -408,7 +406,7 @@ describe("editable-tree: editing", () => {
 			]);
 			assert(isUnwrappedNode(trees[0].root));
 			// create using `createFieldSymbol`
-			trees[0].root[createField](localFieldKey, [
+			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
 			]);
@@ -428,11 +426,11 @@ describe("editable-tree: editing", () => {
 			]);
 			assert(isUnwrappedNode(trees[0].root));
 			// create using `createFieldSymbol`
-			trees[0].root[createField](localFieldKey, [
+			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
 			]);
-			trees[0].root[createField](globalFieldSymbol, [
+			trees[0].root[getField](globalFieldSymbol).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
 			]);
@@ -466,7 +464,7 @@ describe("editable-tree: editing", () => {
 				assert(isUnwrappedNode(trees[0].root));
 				assert(isUnwrappedNode(trees[1].root));
 				// create using `createFieldSymbol`
-				trees[0].root[createField](fieldKey, [
+				trees[0].root[getField](fieldKey).insertNodes(0, [
 					singleTextCursor({ type: stringSchema.name, value: "foo" }),
 					singleTextCursor({ type: stringSchema.name, value: "bar" }),
 				]);
@@ -603,7 +601,7 @@ describe("editable-tree: editing", () => {
 				assert.throws(
 					() => {
 						assert(isUnwrappedNode(trees[0].root));
-						trees[0].root[createField](fieldKey, [
+						trees[0].root[getField](fieldKey).insertNodes(0, [
 							singleTextCursor({ type: stringSchema.name, value: "foo" }),
 							singleTextCursor({ type: stringSchema.name, value: "foo" }),
 						]);
@@ -612,8 +610,8 @@ describe("editable-tree: editing", () => {
 						validateAssertionError(e, "Use single cursor to create the optional field"),
 					"Expected exception was not thrown",
 				);
-				trees[0].root[createField](
-					fieldKey,
+				trees[0].root[getField](fieldKey).insertNodes(
+					0,
 					singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				);
 				provider.processMessages();
@@ -630,8 +628,8 @@ describe("editable-tree: editing", () => {
 				assert.equal(trees[1].root[fieldKey], "via symbol");
 
 				// edit using `replaceField()`
-				trees[0].root[replaceField](
-					fieldKey,
+				trees[0].root[getField](fieldKey).replaceNodes(
+					0,
 					singleTextCursor({ type: stringSchema.name, value: "replaced" }),
 				);
 				provider.processMessages();
@@ -665,7 +663,7 @@ describe("editable-tree: editing", () => {
 				assert.throws(
 					() => {
 						assert(isUnwrappedNode(trees[0].root));
-						trees[0].root[createField](fieldKey, fieldContent);
+						trees[0].root[getField](fieldKey).insertNodes(0, fieldContent);
 					},
 					(e) =>
 						validateAssertionError(
@@ -690,9 +688,9 @@ describe("editable-tree: editing", () => {
 				provider.processMessages();
 				assert.equal(trees[1].root[fieldKey], "via symbol");
 
-				// edit using `replaceField()`
-				trees[0].root[replaceField](
-					fieldKey,
+				// edit using `replaceNodes()`
+				trees[0].root[getField](fieldKey).replaceNodes(
+					0,
 					singleTextCursor({ type: stringSchema.name, value: "replaced" }),
 				);
 				provider.processMessages();

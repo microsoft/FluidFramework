@@ -12,6 +12,7 @@ import {
 	UpPath,
 	PathVisitor,
 	NamedTreeSchema,
+	isCursor,
 } from "../../core";
 import {
 	PrimitiveValue,
@@ -19,6 +20,7 @@ import {
 	ContextuallyTypedNodeDataObject,
 	typeNameSymbol,
 	valueSymbol,
+	ContextuallyTypedFieldData,
 } from "../contextuallyTyped";
 import { EditableTreeContext } from "./editableTreeContext";
 
@@ -41,20 +43,6 @@ export const typeSymbol: unique symbol = Symbol("editable-tree:type");
  * @alpha
  */
 export const getField: unique symbol = Symbol("editable-tree:getField()");
-
-/**
- * A symbol to get the function, which creates a new field of {@link EditableTree},
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const createField: unique symbol = Symbol("editable-tree:createField()");
-
-/**
- * A symbol to get the function, which replaces a field of {@link EditableTree},
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const replaceField: unique symbol = Symbol("editable-tree:replaceField()");
 
 /**
  * A symbol to get information about where an {@link EditableTree} is parented in contexts where string keys are already in use for fields.
@@ -191,40 +179,6 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	[key: FieldKey]: UnwrappedEditableField;
 
 	/**
-	 * Creates a new field at this node.
-	 *
-	 * The content of the new field must follow the {@link Multiplicity} of the {@link FieldKind}:
-	 * - use a single cursor when creating an `optional` field;
-	 * - use array of cursors when creating a `sequence` field;
-	 * - use {@link EditableField.insertNodes} instead to create fields of kind `value` as currently
-	 * it is not possible to have trees with already populated fields of this kind.
-	 *
-	 * When creating a field in a concurrent environment,
-	 * `optional` fields will be created following the "last-write-wins" semantics,
-	 * and for `sequence` fields the content ends up in order of "sequenced-last" to "sequenced-first".
-	 */
-	[createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
-
-	/**
-	 * Replaces the field of this node.
-	 *
-	 * The content of the field must follow the {@link Multiplicity} of the {@link FieldKind}:
-	 * - use a single cursor when replacing an `optional` or a `value` field;
-	 * - use array of cursors when replacing a `sequence` field.
-	 *
-	 * Use `delete` operator to delete `optional` or `sequence` fields of this node, if any.
-	 *
-	 * When replacing a field in a concurrent environment,
-	 * the following merge semantics will be applied depending on the field multiplicity:
-	 * - optional and value fields will be overwritten in a "last-write-wins" fashion,
-	 * - for sequence fields, the nodes present in the field on the issuing client will be
-	 * deleted and the newContent will be inserted. This means concurrent inserts (including
-	 * calls to `replaceField`) can all contribute content. In the future this will likely be
-	 * replaced with merge semantics that is more consistent with that of optional and value fields.
-	 */
-	[replaceField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
-
-	/**
 	 * The field this tree is in, and the index within that field.
 	 */
 	readonly [parentField]: { readonly parent: EditableField; readonly index: number };
@@ -238,6 +192,36 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	): () => void;
 }
 
+/**
+ * Content to use for a field.
+ *
+ * When used, this content will be deeply copied into the tree, and must comply with the schema.
+ *
+ * The content must follow the {@link Multiplicity} of the {@link FieldKind}:
+ * - use a single cursor for an `optional` or `value` field;
+ * - use array of cursors for a `sequence` field;
+ *
+ * TODO: this should allow a field cursor instead of an array of cursors.
+ * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
+ */
+export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
+
+/**
+ * Check if NewFieldContent is made of {@link ITreeCursor}s.
+ *
+ * Useful when APIs want to take in tree data in multiple formats, including cursors.
+ */
+export function areCursors(data: NewFieldContent): data is ITreeCursor | readonly ITreeCursor[] {
+	if (isCursor(data)) {
+		return true;
+	}
+
+	if (Array.isArray(data) && data.length >= 0 && Array.isArray(data[0])) {
+		return true;
+	}
+
+	return false;
+}
 /**
  * EditableTree,
  * but with any type that `isPrimitive` unwrapped into the value if that value is a {@link PrimitiveValue}.
@@ -276,6 +260,8 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
  * children of the tree starting from its root.
  *
  * It is forbidden to delete the node using the `delete` operator, use the `deleteNodes()` method instead.
+ *
+ * TODO: split this interface by field kind.
  * @alpha
  */
 export interface EditableField
@@ -327,7 +313,7 @@ export interface EditableField
 	/**
 	 * Inserts new nodes into this field.
 	 */
-	insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+	insertNodes(index: number, newContent: NewFieldContent): void;
 
 	/**
 	 * Moves nodes from this field to destination iff both source and destination are sequence fields.
@@ -359,5 +345,5 @@ export interface EditableField
 	 * Note that, if multiple clients concurrently call replace on a sequence field,
 	 * all the insertions will be preserved.
 	 */
-	replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+	replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
 }

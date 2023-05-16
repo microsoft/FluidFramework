@@ -6,14 +6,14 @@
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
 import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
-import { brand } from "../../util";
+import { brand, isReadonlyArray } from "../../util";
 import { Changeset, Mark, MoveId, NodeChangeType, Reattach, ReturnFrom, ReturnTo } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(
 		index: number,
-		cursor: ITreeCursor | ITreeCursor[],
+		cursor: ITreeCursor | readonly ITreeCursor[],
 		id: ChangesetLocalId,
 	): Changeset<never>;
 	delete(index: number, count: number): Changeset<never>;
@@ -55,12 +55,12 @@ export const sequenceFieldEditor = {
 	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", changes: change }),
 	insert: (
 		index: number,
-		cursors: ITreeCursor | ITreeCursor[],
+		cursors: ITreeCursor | readonly ITreeCursor[],
 		id: ChangesetLocalId,
 	): Changeset<never> =>
 		markAtIndex(index, {
 			type: "Insert",
-			content: Array.isArray(cursors)
+			content: isReadonlyArray(cursors)
 				? cursors.map(jsonableTreeFromCursor)
 				: [jsonableTreeFromCursor(cursors)],
 			id,

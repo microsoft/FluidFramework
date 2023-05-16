@@ -229,7 +229,7 @@ export class ProxyContext implements EditableTreeContext {
 	public insertNodes(
 		field: FieldUpPath,
 		index: number,
-		newContent: ITreeCursor | ITreeCursor[],
+		newContent: ITreeCursor | readonly ITreeCursor[],
 	): void {
 		const fieldEditor = this.editor.sequenceField(field);
 		fieldEditor.insert(index, newContent);
@@ -254,7 +254,7 @@ export class ProxyContext implements EditableTreeContext {
 		field: FieldUpPath,
 		index: number,
 		count: number,
-		newContent: ITreeCursor | ITreeCursor[],
+		newContent: ITreeCursor | readonly ITreeCursor[],
 	): void {
 		const fieldEditor = this.editor.sequenceField(field);
 		fieldEditor.delete(index, count);

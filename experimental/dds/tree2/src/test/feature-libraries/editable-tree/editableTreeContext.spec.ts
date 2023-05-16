@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 import { FieldKey, SchemaData, lookupGlobalFieldSchema, rootFieldKey } from "../../../core";
 import {
 	ContextuallyTypedNodeData,
-	createField,
 	cursorsFromContextualData,
+	getField,
 	isUnwrappedNode,
 	singleTextCursor,
 } from "../../../feature-libraries";
@@ -85,8 +85,8 @@ describe("editable-tree context", () => {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete tree.root[ageField];
 			assert.equal(tree.root[ageField], undefined);
-			tree.root[createField](
-				ageField,
+			tree.root[getField](ageField).insertNodes(
+				0,
 				singleTextCursor({ type: int32Schema.name, value: 55 }),
 			);
 			assert.equal(tree.root[ageField], 55);
