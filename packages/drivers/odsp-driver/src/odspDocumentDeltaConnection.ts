@@ -12,6 +12,7 @@ import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/tele
 import {
 	IClient,
 	IConnect,
+	IDocumentMessage,
 	INack,
 	ISequencedDocumentMessage,
 	ISignalMessage,
@@ -308,6 +309,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		new Map();
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
+	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -470,9 +472,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			this.logger.sendTelemetryEvent(
 				{
 					eventName: "ServerDisconnect",
-					clientId: this.hasDetails ? this.clientId : undefined,
+					driverVersion: pkgVersion,
 					details: JSON.stringify({
-						connection: this.connectionId,
+						...this.getConnectionDetailsProps(),
 					}),
 				},
 				error,
@@ -627,6 +629,59 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				super.addTrackedListener(event, listener);
 				break;
 		}
+	}
+
+	public get disposed() {
+		if (!(this._disposed || this.socket.connected)) {
+			// Send error event if this connection is not yet disposed after socket is disconnected for 15s.
+			if (this.connectionNotYetDisposedTimeout === undefined) {
+				this.connectionNotYetDisposedTimeout = setTimeout(() => {
+					if (!this._disposed) {
+						this.logger.sendErrorEvent({
+							eventName: "ConnectionNotYetDisposed",
+							driverVersion: pkgVersion,
+							details: JSON.stringify({
+								...this.getConnectionDetailsProps(),
+							}),
+						});
+					}
+				}, 15000);
+			}
+		}
+		return this._disposed;
+	}
+
+	/**
+	 * Returns true in case the connection is not yet disposed and the socket is also connected. The expectation is
+	 * that it will be called only after connection is fully established. i.e. there should no way to submit an op
+	 * while we are connecting, as connection object is not exposed to Loader layer until connection is established.
+	 */
+	private get connected(): boolean {
+		return !this.disposed && this.socket.connected;
+	}
+
+	protected emitMessages(type: string, messages: IDocumentMessage[][]) {
+		// Only submit the op/signals if we are connected.
+		if (this.connected) {
+			this.socket.emit(type, this.clientId, messages);
+		}
+	}
+
+	/**
+	 * Submits a new delta operation to the server
+	 * @param message - delta operation to submit
+	 */
+	public submit(messages: IDocumentMessage[]): void {
+		this.emitMessages("submitOp", [messages]);
+	}
+
+	/**
+	 * Submits a new signal to the server
+	 *
+	 * @param message - signal to submit
+	 */
+	public submitSignal(message: IDocumentMessage): void {
+		this.emitMessages("submitSignal", [[message]]);
 	}
 
 	/**

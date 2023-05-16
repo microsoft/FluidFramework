@@ -19,10 +19,22 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
 	 * @param headUndoableCommit - Optional commit to set as the initial undoable commit.
 	 * @param headRedoableCommit - Optional commit to set as the initial redoable commit.
-	 * @param commitTypes - Optional map from revision to commit types for commits tracked by this undo redo manager.
-	 * If one is not provided, it will be created. This map is shared between this undo redo manager and all of its clones.
 	 */
-	public constructor(
+	public static create<TChange, TEditor extends ChangeFamilyEditor>(
+		repairDataStoreProvider: IRepairDataStoreProvider,
+		changeFamily: ChangeFamily<TEditor, TChange>,
+		headUndoableCommit?: ReversibleCommit<TChange>,
+		headRedoableCommit?: ReversibleCommit<TChange>,
+	): UndoRedoManager<TChange, TEditor> {
+		return new UndoRedoManager(
+			repairDataStoreProvider,
+			changeFamily,
+			headUndoableCommit,
+			headRedoableCommit,
+		);
+	}
+
+	private constructor(
 		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private headUndoableCommit?: ReversibleCommit<TChange>,

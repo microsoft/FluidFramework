@@ -69,6 +69,8 @@ import {
 	UndoRedoManager,
 	TreeValue,
 	ValueSchema,
+	ChangeFamilyEditor,
+	ChangeFamily,
 } from "../core";
 import { brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
@@ -594,7 +596,7 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 }
 
 export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-	return new UndoRedoManager(new MockRepairDataStoreProvider(), defaultChangeFamily);
+	return UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily);
 }
 
 /**
@@ -655,4 +657,22 @@ export function insert(tree: ISharedTreeView, index: number, ...values: TreeValu
 		);
 		field.insert(index, nodes);
 	});
+}
+
+/**
+ * Creates a change receiver function for passing to an `EditBuilder` which records the changes
+ * applied via that editor and allows them to be queried via a function.
+ * @param _changeFamily - this optional change family allows for type inference of `TChange` for
+ * convenience, but is otherwise unused.
+ * @returns a change receiver function and a function that will return all changes received
+ */
+export function testChangeReceiver<TChange>(
+	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange>,
+): [
+	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[0],
+	getChanges: () => readonly TChange[],
+] {
+	const changes: TChange[] = [];
+	const changeReceiver = (change: TChange) => changes.push(change);
+	return [changeReceiver, () => [...changes]];
 }

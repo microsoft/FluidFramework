@@ -17,13 +17,12 @@
 		"index.d.ts"
 	],
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
-		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
@@ -63,7 +62,7 @@
 		"ts-jest": "^26.4.4",
 		"ts-loader": "^9.3.0",
 		"typescript": "~4.5.5",
-		"webpack": "^5.76.2"
+		"webpack": "^5.82.0"
 	},
 	"jest-junit": {
 		"outputDirectory": "nyc",

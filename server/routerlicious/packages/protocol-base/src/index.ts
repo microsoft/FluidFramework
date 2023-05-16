@@ -32,4 +32,3 @@ export {
 	getQuorumTreeEntries,
 	mergeAppAndProtocolTree,
 } from "./scribeHelper";
-export { isServiceMessageType } from "./utils";

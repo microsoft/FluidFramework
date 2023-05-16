@@ -426,6 +426,19 @@ export interface EditableTreeEvents {
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
 
 // @alpha (undocumented)
+export abstract class EditBuilder<TChange> implements ChangeFamilyEditor {
+    constructor(changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
+    // @sealed
+    protected applyChange(change: TChange): void;
+    // (undocumented)
+    protected readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
+    // (undocumented)
+    enterTransaction(): void;
+    // (undocumented)
+    exitTransaction(): void;
+}
+
+// @alpha (undocumented)
 export interface EditDescription {
     // (undocumented)
     change: FieldChangeset;
@@ -1178,7 +1191,7 @@ export interface ModularChangeset extends HasFieldChanges {
 }
 
 // @alpha @sealed (undocumented)
-export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChangeset> implements ProgressiveEditBuilder<ModularChangeset> {
+export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
     constructor(family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>, changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet);
     // (undocumented)
     addValueConstraint(path: UpPath, currentValue: Value): void;
@@ -1277,7 +1290,7 @@ export interface NodeData {
     value?: TreeValue;
 }
 
-// @alpha
+// @alpha @deprecated
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
 
 // @alpha (undocumented)
@@ -1363,27 +1376,6 @@ export type PrimitiveValue = string | boolean | number;
 
 // @alpha
 type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
-
-// @alpha (undocumented)
-export interface ProgressiveEditBuilder<TChange> {
-    // (undocumented)
-    getChanges(): TChange[];
-}
-
-// @alpha (undocumented)
-export abstract class ProgressiveEditBuilderBase<TChange> implements ProgressiveEditBuilder<TChange>, ChangeFamilyEditor {
-    constructor(changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
-    // @sealed
-    protected applyChange(change: TChange): void;
-    // (undocumented)
-    protected readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
-    // (undocumented)
-    enterTransaction(): void;
-    // (undocumented)
-    exitTransaction(): void;
-    // @sealed (undocumented)
-    getChanges(): TChange[];
-}
 
 // @alpha
 type ProtoNode = ITreeCursorSynchronous;
@@ -1772,7 +1764,7 @@ TFields extends {
 ][InternalTypedSchemaTypes._dummy];
 
 // @alpha
-type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>;
+type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = InternalTypedSchemaTypes.FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
 
 // @alpha (undocumented)
 export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {

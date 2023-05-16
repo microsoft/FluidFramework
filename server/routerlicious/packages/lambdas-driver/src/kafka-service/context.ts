@@ -25,7 +25,7 @@ export class Context extends EventEmitter implements IContext {
 	/**
 	 * Updates the checkpoint for the partition
 	 */
-	public checkpoint(queuedMessage: IQueuedMessage) {
+	public checkpoint(queuedMessage: IQueuedMessage, restartFlag?: boolean) {
 		if (this.closed) {
 			return;
 		}
@@ -38,7 +38,7 @@ export class Context extends EventEmitter implements IContext {
 
 			// Close context on error. Once the checkpointManager enters an error state it will stay there.
 			// We will look to restart on checkpointing given it likely indicates a Kafka connection issue.
-			this.error(error, { restart: true });
+			this.error(error, { restart: restartFlag ?? true });
 		});
 	}
 

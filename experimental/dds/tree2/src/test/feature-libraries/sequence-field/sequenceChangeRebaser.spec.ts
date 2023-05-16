@@ -39,7 +39,7 @@ const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
 	["Insert", (i) => Change.insert(i, 2, 42)],
 	["Delete", (i) => Change.delete(i, 2)],
 	["Revive", (i) => Change.revive(2, 2, tag1, i)],
-	["ConflictedRevive", (i) => Change.revive(2, 2, tag2, i, undefined, tag3)],
+	["ConflictedRevive", (i) => Change.redundantRevive(2, 2, tag2, i, undefined)],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
 	["MoveIn", (i) => Change.move(1, 2, i)],
 	["ReturnFrom", (i) => Change.return(i, 2, 1, tag4)],
@@ -55,47 +55,32 @@ describe("SequenceField - Rebaser Axioms", () => {
 	describe("A ↷ [B, B⁻¹] === A", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
-				if (
-					name2 === "Delete" &&
-					["SetValue", "Delete", "MoveOut", "MoveIn", "ReturnFrom", "ReturnTo"].includes(
-						name1,
-					)
-				) {
-					it.skip(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
-						/**
-						 * These cases are currently disabled because marks that affect existing content are removed
-						 * instead of muted when rebased over the deletion of that content.
-						 * This prevents us from then reinstating the mark when rebasing over the revive.
-						 */
-					});
-				} else {
-					it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
-						for (let offset1 = 1; offset1 <= 4; ++offset1) {
-							for (let offset2 = 1; offset2 <= 4; ++offset2) {
-								const tracker = new SF.DetachedNodeTracker();
-								const change1 = tagChange(makeChange1(offset1), tag7);
-								const change2 = tagChange(makeChange2(offset2), tag5);
-								if (!SF.areRebasable(change1.change, change2.change)) {
-									continue;
-								}
-								// TODO: test with a non-rollback inverse once lineage offsets are comparable to
-								// revive indices (TASK:3167)
-								const inv = tagRollbackInverse(invert(change2), tag6, tag5);
-								const r1 = rebaseTagged(change1, change2);
-								tracker.apply(change2);
-								const r2 = rebaseTagged(r1, inv);
-								tracker.apply(inv);
-								const change1Updated = tracker.update(
-									change1,
-									continuingAllocator([change1]),
-								);
-								normalizeMoveIds(r2.change);
-								normalizeMoveIds(change1Updated.change);
-								checkDeltaEquality(r2.change, change1Updated.change);
+				it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
+					for (let offset1 = 1; offset1 <= 4; ++offset1) {
+						for (let offset2 = 1; offset2 <= 4; ++offset2) {
+							const tracker = new SF.DetachedNodeTracker();
+							const change1 = tagChange(makeChange1(offset1), tag7);
+							const change2 = tagChange(makeChange2(offset2), tag5);
+							if (!SF.areRebasable(change1.change, change2.change)) {
+								continue;
 							}
+							// TODO: test with a non-rollback inverse once lineage offsets are comparable to
+							// revive indices (TASK:3167)
+							const inv = tagRollbackInverse(invert(change2), tag6, tag5);
+							const r1 = rebaseTagged(change1, change2);
+							tracker.apply(change2);
+							const r2 = rebaseTagged(r1, inv);
+							tracker.apply(inv);
+							const change1Updated = tracker.update(
+								change1,
+								continuingAllocator([change1]),
+							);
+							normalizeMoveIds(r2.change);
+							normalizeMoveIds(change1Updated.change);
+							checkDeltaEquality(r2.change, change1Updated.change);
 						}
-					});
-				}
+					}
+				});
 			}
 		}
 	});
@@ -111,45 +96,30 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				const title = `${name1} ↷ [${name2}), undo(${name2}] => ${name1}`;
-				if (
-					name2 === "Delete" &&
-					["SetValue", "Delete", "MoveOut", "MoveIn", "ReturnFrom", "ReturnTo"].includes(
-						name1,
-					)
-				) {
-					it.skip(title, () => {
-						/**
-						 * These cases are currently disabled because marks that affect existing content are removed
-						 * instead of muted when rebased over the deletion of that content.
-						 * This prevents us from then reinstating the mark when rebasing over the revive.
-						 */
-					});
-				} else {
-					it(title, () => {
-						for (let offset1 = 1; offset1 <= 4; ++offset1) {
-							for (let offset2 = 1; offset2 <= 4; ++offset2) {
-								const tracker = new SF.DetachedNodeTracker();
-								const change1 = tagChange(makeChange1(offset1), tag7);
-								const change2 = tagChange(makeChange2(offset2), tag5);
-								if (!SF.areRebasable(change1.change, change2.change)) {
-									continue;
-								}
-								const inv = tagChange(invert(change2), tag6);
-								const r1 = rebaseTagged(change1, change2);
-								tracker.apply(change2);
-								const r2 = rebaseTagged(r1, inv);
-								tracker.apply(inv);
-								const change1Updated = tracker.update(
-									change1,
-									continuingAllocator([change1]),
-								);
-								normalizeMoveIds(r2.change);
-								normalizeMoveIds(change1Updated.change);
-								checkDeltaEquality(r2.change, change1Updated.change);
+				it(title, () => {
+					for (let offset1 = 1; offset1 <= 4; ++offset1) {
+						for (let offset2 = 1; offset2 <= 4; ++offset2) {
+							const tracker = new SF.DetachedNodeTracker();
+							const change1 = tagChange(makeChange1(offset1), tag7);
+							const change2 = tagChange(makeChange2(offset2), tag5);
+							if (!SF.areRebasable(change1.change, change2.change)) {
+								continue;
 							}
+							const inv = tagChange(invert(change2), tag6);
+							const r1 = rebaseTagged(change1, change2);
+							tracker.apply(change2);
+							const r2 = rebaseTagged(r1, inv);
+							tracker.apply(inv);
+							const change1Updated = tracker.update(
+								change1,
+								continuingAllocator([change1]),
+							);
+							normalizeMoveIds(r2.change);
+							normalizeMoveIds(change1Updated.change);
+							checkDeltaEquality(r2.change, change1Updated.change);
 						}
-					});
-				}
+					}
+				});
 			}
 		}
 	});
@@ -165,42 +135,55 @@ describe("SequenceField - Rebaser Axioms", () => {
 	describe("(A ↷ B) ↷ [B⁻¹, B] === A ↷ B", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
-				it(`${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`, () => {
-					for (let offset1 = 1; offset1 <= 4; ++offset1) {
-						for (let offset2 = 1; offset2 <= 4; ++offset2) {
-							const tracker = new SF.DetachedNodeTracker();
-							const change1 = tagChange(makeChange1(offset1), tag8);
-							const change2 = tagChange(makeChange2(offset2), tag5);
-							if (!SF.areRebasable(change1.change, change2.change)) {
-								continue;
+				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
+				if (name2 === "Revive") {
+					it.skip(title, () => {
+						/**
+						 * These cases are currently disabled because `change2Updated` will be a conflicted revive,
+						 * as the nodes it is targeting have been last detached by `inverse2`.
+						 * Since `change2Updated` will does have the same effect as `change2`, rebasing over it will not take `r3` back to `r1`.
+						 * This will be fixed by restoring the previous detach ID when "unreviving" a node.
+						 */
+					});
+				} else {
+					it(title, () => {
+						for (let offset1 = 1; offset1 <= 4; ++offset1) {
+							for (let offset2 = 1; offset2 <= 4; ++offset2) {
+								const tracker = new SF.DetachedNodeTracker();
+								const change1 = tagChange(makeChange1(offset1), tag8);
+								const change2 = tagChange(makeChange2(offset2), tag5);
+								if (!SF.areRebasable(change1.change, change2.change)) {
+									continue;
+								}
+								const inverse2 = tagRollbackInverse(
+									invert(change2),
+									tag6,
+									change2.revision,
+								);
+								const r1 = rebaseTagged(change1, change2);
+								tracker.apply(change2);
+								normalizeMoveIds(r1.change);
+								const r2 = rebaseTagged(r1, inverse2);
+								tracker.apply(inverse2);
+								// We need to update change2 to ensure it refers to detached nodes by the detach
+								// that last affected them.
+								const change2Updated = tracker.update(
+									change2,
+									continuingAllocator([change2]),
+								);
+								const r3 = rebaseTagged(r2, change2Updated);
+								tracker.apply(change2Updated);
+								normalizeMoveIds(r3.change);
+								// We need to update r1 to ensure it refers to detached nodes by the detach
+								// that last affected them. This is for comparison only.
+								const r1Updated = tracker.update(r1, continuingAllocator([r1]));
+								normalizeMoveIds(r1Updated.change);
+								assert.deepEqual(r3, r1Updated);
+								// assert.deepEqual(r3, r1);
 							}
-							const inverse2 = tagRollbackInverse(
-								invert(change2),
-								tag6,
-								change2.revision,
-							);
-							const r1 = rebaseTagged(change1, change2);
-							tracker.apply(change2);
-							normalizeMoveIds(r1.change);
-							const r2 = rebaseTagged(r1, inverse2);
-							tracker.apply(inverse2);
-							// We need to update change2 to ensure it refers to detached nodes by the detach
-							// that last affected them.
-							const change2Updated = tracker.update(
-								change2,
-								continuingAllocator([change2]),
-							);
-							const r3 = rebaseTagged(r2, change2Updated);
-							tracker.apply(change2Updated);
-							normalizeMoveIds(r3.change);
-							// We need to update r1 to ensure it refers to detached nodes by the detach
-							// that last affected them. This is for comparison only.
-							const r1Updated = tracker.update(r1, continuingAllocator([r1]));
-							normalizeMoveIds(r1Updated.change);
-							assert.deepEqual(r3, r1Updated);
 						}
-					}
-				});
+					});
+				}
 			}
 		}
 	});
