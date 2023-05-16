@@ -36,8 +36,6 @@ steps:
 
 - task: Bash@3
   displayName: Install and configure pnpm
-  env:
-    COREPACK_DEFAULT_TO_LATEST: 0
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
