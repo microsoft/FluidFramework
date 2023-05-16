@@ -362,7 +362,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [newHead, change, { deletedSourceCommits, targetCommits, sourceCommits }] =
 			rebaseResult;
 
-		this.undoRedoManager.updateAfterRebase(sourceCommits, undoRedoManager);
+		this.undoRedoManager.updateAfterRebase(sourceCommits, change, undoRedoManager);
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
 		this.emitAndRebaseAnchors({
@@ -395,8 +395,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		// Compute the net change to this branch
-		const [newHead, _, { sourceCommits }] = rebaseResult;
-		this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
+		const [newHead, netChange, { sourceCommits }] = rebaseResult;
+		this.undoRedoManager.updateAfterMerge(sourceCommits, netChange, branch.undoRedoManager);
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		this.emitAndRebaseAnchors({

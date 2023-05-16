@@ -423,12 +423,7 @@ export class EditManager<
 					"Received a sequenced change from the local session despite having no local changes",
 				);
 			this.pushToTrunk(sequenceNumber, { ...newCommit, change }, true);
-
-			{
-				// TODO: Replace the line below with this line when UndoRedoManager is better optimized.
-				// this.localBranch.rebaseOnto(this.trunk, this.trunkUndoRedoManager);
-				this.localBranch.setHead(localPath.reduce(mintCommit, this.trunk));
-			}
+			this.localBranch.rebaseOnto(this.trunk, this.trunkUndoRedoManager);
 
 			return;
 		}
