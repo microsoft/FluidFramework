@@ -1092,7 +1092,7 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
-				enableGroupedBatching: false,
+				enableGroupedBatching: true,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
