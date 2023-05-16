@@ -282,7 +282,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * is supplied via config.
 	 *
 	 * @param input - The SummaryObject to be traversed
-	 * @param replacer - The function to be used for replacing the SummaryBlob type
+	 * @param encoder - The encoder function to be used for compression
+	 * @param decoder - The decoder function to be used for decompression
 	 * @param config - The configuration of the compression
 	 * @param isUseB64OnCompressed - If true, the compressed blob will be encoded to base64 string
 	 * @param context - The context of the summary
