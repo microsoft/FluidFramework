@@ -40,6 +40,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private readonly telemetryEnabled: boolean;
 	private pendingMetric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined;
 	private readonly maxDbBatchSize: number;
+	private readonly restartOnCheckpointFailure: boolean;
 
 	constructor(
 		private readonly opCollection: ICollection<any>,
@@ -49,6 +50,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 		this.telemetryEnabled = this.providerConfig?.enableTelemetry;
 		this.maxDbBatchSize = this.providerConfig?.maxDbBatchSize ?? 1000;
+		this.restartOnCheckpointFailure = this.providerConfig?.restartOnCheckpointFailure;
 	}
 
 	public handler(message: IQueuedMessage) {
@@ -172,7 +174,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				// checkpoint batch offset
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					this.context.checkpoint(batchOffset!);
+					this.context.checkpoint(batchOffset!, this.restartOnCheckpointFailure);
 					status = ScriptoriumStatus.CheckpointComplete;
 					metric?.setProperty("timestampCheckpointComplete", new Date().toISOString());
 				} catch (error) {

@@ -7,7 +7,7 @@ import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
 import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
-import { Changeset, Mark, MoveId, NodeChangeType, Reattach } from "./format";
+import { Changeset, Mark, MoveId, NodeChangeType, Reattach, ReturnFrom, ReturnTo } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
@@ -73,20 +73,20 @@ export const sequenceFieldEditor = {
 		detachedBy: RevisionTag,
 		reviver: NodeReviver,
 		detachIndex?: number,
-		isIntention?: true,
+		isIntention: boolean = false,
 	): Changeset<never> => {
 		// Revives are typically created to undo a delete from the prior revision.
 		// When that's the case, we know the content used to be at the index at which it is being revived.
 		const computedDetachIndex = detachIndex ?? index;
+		const detachEvent = { revision: detachedBy, index: computedDetachIndex };
 		const mark: Reattach<never> = {
 			type: "Revive",
 			content: reviver(detachedBy, computedDetachIndex, count),
 			count,
-			detachedBy,
-			detachIndex: computedDetachIndex,
+			detachEvent,
 		};
-		if (isIntention) {
-			mark.isIntention = true;
+		if (!isIntention) {
+			mark.inverseOf = detachedBy;
 		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
@@ -123,22 +123,22 @@ export const sequenceFieldEditor = {
 			return [];
 		}
 
+		// Returns are typically created to undo a move from the prior revision.
+		// When that's the case, we know the content used to be at the index to which it is being returned.
+		const computedDetachIndex = detachIndex ?? destIndex;
+		const detachEvent = { revision: detachedBy, index: computedDetachIndex };
 		const id = brand<MoveId>(0);
-		const returnFrom: Mark<never> = {
+		const returnFrom: ReturnFrom<never> = {
 			type: "ReturnFrom",
 			id,
 			count,
-			detachedBy,
 		};
 
-		const returnTo: Mark<never> = {
+		const returnTo: ReturnTo = {
 			type: "ReturnTo",
 			id,
 			count,
-			detachedBy,
-			// Returns are typically created to undo a move from the prior revision.
-			// When that's the case, we know the content used to be at the index to which it is being returned.
-			detachIndex: detachIndex ?? destIndex,
+			detachEvent,
 		};
 
 		const factory = new MarkListFactory<never>();

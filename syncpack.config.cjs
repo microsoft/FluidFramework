@@ -113,6 +113,9 @@ module.exports = {
 				"typescript",
 				"vue",
 				"webpack-dev-server",
+
+				// Required due to use of "unstable" tree component APIs
+				"@fluentui/react-components",
 			],
 			packages: ["**"],
 			range: "~",

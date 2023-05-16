@@ -275,6 +275,9 @@ export class SummaryGenerator {
 		// Use record type to prevent unexpected value types
 		let summaryData: SubmitSummaryResult | undefined;
 		try {
+			// Need to save refSeqNum before we record new attempt (happens as part of submitSummaryCallback)
+			const lastAttemptRefSeqNum = this.heuristicData.lastAttempt.refSequenceNumber;
+
 			summaryData = await this.submitSummaryCallback({
 				fullTree,
 				refreshLatestAck,
@@ -282,16 +285,13 @@ export class SummaryGenerator {
 				cancellationToken,
 			});
 
-			this.heuristicData.recordAttempt(summaryData.referenceSequenceNumber);
-
 			// Cumulatively add telemetry properties based on how far generateSummary went.
 			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
 			summarizeTelemetryProps = {
 				...summarizeTelemetryProps,
 				referenceSequenceNumber,
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
-				opsSinceLastAttempt:
-					referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
+				opsSinceLastAttempt: referenceSequenceNumber - lastAttemptRefSeqNum,
 				opsSinceLastSummary:
 					referenceSequenceNumber -
 					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
@@ -481,6 +481,7 @@ export class SummaryGenerator {
 					hasMissingOpData: this.heuristicData.hasMissingOpData,
 					opsSizesSinceLastSummary: this.heuristicData.totalOpsSize,
 					nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
+					runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 				};
 
 			default:

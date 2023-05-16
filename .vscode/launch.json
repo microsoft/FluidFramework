@@ -304,7 +304,17 @@
 			],
 			"cwd": "${fileDirname}",
 			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
-			"outFiles": ["${workspaceFolder}/**/dist/**/*.js"],
+			"outFiles": [
+				// This config avoids loading dependent packages' test files, while using the same technique
+				// as the "Debug Current Test (JS)" config to load source maps for test files in the current
+				// package.
+				// This reduces the number of source files VSCode needs to load to debug the e2e tests
+				// considerably, which decreases the time it takes to start debugging.
+				"${workspaceFolder}/**/dist/**/!(*.spec,*.test,*.tests).js",
+				"${fileDirname}/../../dist/**/*.js",
+				"${fileDirname}/../../../dist/**/*.js",
+				"${fileDirname}/../../../../dist/**/*.js"
+			],
 			"preLaunchTask": "Build Current Tests",
 			"internalConsoleOptions": "openOnSessionStart"
 		},
@@ -324,10 +334,15 @@
 				"--no-timeouts",
 				"--exit",
 				"../../dist/test/${fileBasenameNoExtension}.js",
-				"../../../dist/test/**/${fileBasenameNoExtension}.js"
+				"../../../dist/test/**/${fileBasenameNoExtension}.js",
+				"../../../../dist/test/**/${fileBasenameNoExtension}.js"
 			],
 			"cwd": "${fileDirname}",
-			"outFiles": ["${fileDirname}/../../dist/**/*.js", "${fileDirname}/../../../dist/**/*.js"]
+			"outFiles": [
+				"${fileDirname}/../../dist/**/*.js",
+				"${fileDirname}/../../../dist/**/*.js",
+				"${fileDirname}/../../../../dist/**/*.js"
+			]
 		},
 		{
 			"type": "node",
