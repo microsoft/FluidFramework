@@ -59,13 +59,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 			{
 				// creating client
 				const codeDetails = { package: "no-dynamic-pkg" };
-				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {
-					summaryOptions: {
-						summaryConfigOverrides: {
-							state: "disabled",
-						},
-					},
-				});
+				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
 				const loader = new Loader({
 					urlResolver: provider.urlResolver,
@@ -88,13 +82,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 			{
 				// normal load client
 				const codeDetails = { package: "no-dynamic-pkg" };
-				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {
-					summaryOptions: {
-						summaryConfigOverrides: {
-							state: "disabled",
-						},
-					},
-				});
+				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
 				const loader = new Loader({
 					urlResolver: provider.urlResolver,
@@ -185,13 +173,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 		{
 			// creating client
 			const codeDetails = { package: "no-dynamic-pkg" };
-			const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
-				},
-			});
+			const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
 			const loader = new Loader({
 				urlResolver: provider.urlResolver,
@@ -235,13 +217,7 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 		{
 			// normal load client
 			const codeDetails = { package: "no-dynamic-pkg" };
-			const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {
-				summaryOptions: {
-					summaryConfigOverrides: {
-						state: "disabled",
-					},
-				},
-			});
+			const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]]);
 
 			const loader = new Loader({
 				urlResolver: provider.urlResolver,
