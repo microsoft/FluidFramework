@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -18,10 +17,11 @@ import {
 	Anchor,
 	AnchorSet,
 	AnchorNode,
-	IEditableForest,
 	AnchorSetRootEvents,
 	symbolFromKey,
 	GlobalFieldKey,
+	StoredSchemaRepository,
+	IForestSubscription,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -32,25 +32,24 @@ import {
 	defaultChangeFamily,
 	DefaultEditBuilder,
 	UnwrappedEditableField,
-	getEditableTreeContext,
-	SchemaEditor,
 	DefaultChangeset,
 	buildForest,
 	ContextuallyTypedNodeData,
-	IdentifierIndex,
 	ForestRepairDataStoreProvider,
-	repairDataStoreFromForest,
 	GlobalFieldSchema,
+	EditableTree,
+	Identifier,
+	SchemaEditor,
+	IdentifierIndex,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, JsonCompatibleReadOnly } from "../util";
-import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+import { SchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeView,
 	SharedTreeView,
 	ViewEvents,
-	branchKey,
-	hasBranch,
+	createSharedTreeView,
 } from "./sharedTreeView";
 
 /**
@@ -85,16 +84,10 @@ export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
-	public readonly context: EditableTreeContext;
-	public readonly forest: IEditableForest;
-	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>;
-	public readonly transaction: ISharedTreeView["transaction"];
-
 	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
-	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
-		return this.forest.anchors;
-	}
+	private readonly view: SharedTreeView;
+	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
+	private readonly identifierIndex: IdentifierIndex<typeof identifierKey>;
 
 	public constructor(
 		id: string,
@@ -102,81 +95,86 @@ export class SharedTree
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
 	) {
-		const anchors = new AnchorSet();
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-		const forest = buildForest(schema, anchors);
+		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema);
 		const forestSummarizer = new ForestSummarizer(runtime, forest);
+		const repairProvider = new ForestRepairDataStoreProvider(forest, schema);
 		super(
 			[schemaSummarizer, forestSummarizer],
 			defaultChangeFamily,
-			anchors,
-			new ForestRepairDataStoreProvider(forest, schema),
+			forest.anchors,
+			repairProvider,
 			id,
 			runtime,
 			attributes,
 			telemetryContextPrefix,
 		);
-
-		this.events = createEmitter<ViewEvents>();
-		this.forest = forest;
-		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
-
-		this.transaction = {
-			start: () => this.startTransaction(repairDataStoreFromForest(this.forest)),
-			commit: () => this.commitTransaction(),
-			abort: () => this.abortTransaction(),
-			inProgress: () => this.isTransacting(),
-		};
-
-		this.context = getEditableTreeContext(forest, this.editor);
-		this.identifiedNodes = new IdentifierIndex(identifierKey);
-		this.changeEvents.on("newLocalState", (changeDelta) => {
-			this.forest.applyDelta(changeDelta);
-			this.finishBatch();
+		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
+		this.identifierIndex = new IdentifierIndex(identifierKey);
+		this.view = createSharedTreeView({
+			branch: this.getLocalBranch(),
+			schema,
+			forest,
+			repairProvider,
+			identifierIndex: this.identifierIndex,
 		});
+		this.events = createEmitter<ViewEvents>();
+		this.getLocalBranch().on("change", () => this.finishBatch());
+	}
+
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		return this.view.rootEvents;
+	}
+
+	public get storedSchema(): StoredSchemaRepository {
+		return this.schema;
+	}
+
+	public get forest(): IForestSubscription {
+		return this.view.forest;
+	}
+
+	public get identifiedNodes(): ReadonlyMap<Identifier, EditableTree> {
+		return this.view.identifiedNodes;
+	}
+
+	public get root(): UnwrappedEditableField {
+		return this.view.root;
+	}
+
+	public set root(data: ContextuallyTypedNodeData | undefined) {
+		this.view.root = data;
+	}
+
+	public get context(): EditableTreeContext {
+		return this.view.context;
+	}
+
+	public locate(anchor: Anchor): AnchorNode | undefined {
+		return this.view.locate(anchor);
 	}
 
 	public schematize<TRoot extends GlobalFieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
-		return schematizeView(this, config);
+		return this.view.schematize(config);
 	}
 
-	public locate(anchor: Anchor): AnchorNode | undefined {
-		return this.forest.anchors.locate(anchor);
-	}
-
-	public get root(): UnwrappedEditableField {
-		return this.context.unwrappedRoot;
-	}
-
-	public set root(data: ContextuallyTypedNodeData | undefined) {
-		this.context.unwrappedRoot = data;
-	}
-
-	private get [branchKey](): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
-		return this.getLocalBranch();
+	public get transaction(): SharedTreeView["transaction"] {
+		return this.view.transaction;
 	}
 
 	public fork(): SharedTreeView {
-		const anchors = new AnchorSet();
-		const schema = this.storedSchema.inner.clone();
-		const forest = this.forest.clone(schema, anchors);
-		const branch = this.forkBranch(new ForestRepairDataStoreProvider(forest, schema), anchors);
-		const context = getEditableTreeContext(forest, branch.editor);
-		return new SharedTreeView(
-			branch,
-			schema,
-			forest,
-			context,
-			this.identifiedNodes.clone(context),
-		);
+		return this.view.fork();
 	}
 
 	public merge(fork: SharedTreeView): void {
-		assert(hasBranch(fork), "Expected SharedTreeView to expose branch via internal branch key");
-		this.mergeBranch(fork[branchKey]);
+		this.view.merge(fork);
+	}
+
+	public rebase(fork: SharedTreeView): void {
+		fork.rebaseOnto(this.view);
 	}
 
 	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
@@ -197,7 +195,7 @@ export class SharedTree
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		if (!this.storedSchema.tryHandleOp(message)) {
+		if (!this.schema.tryHandleOp(message)) {
 			super.processCore(message, local, localOpMetadata);
 		}
 	}
@@ -206,7 +204,7 @@ export class SharedTree
 		content: JsonCompatibleReadOnly,
 		localOpMetadata: unknown,
 	): void {
-		if (!this.storedSchema.tryResubmitOp(content)) {
+		if (!this.schema.tryResubmitOp(content)) {
 			super.reSubmitCore(content, localOpMetadata);
 		}
 	}
@@ -218,7 +216,7 @@ export class SharedTree
 
 	/** Finish a batch (see {@link ViewEvents}) */
 	private finishBatch(): void {
-		this.identifiedNodes.scanIdentifiers(this.context);
+		this.identifierIndex.scanIdentifiers(this.context);
 		this.events.emit("afterBatch");
 	}
 }

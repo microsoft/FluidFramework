@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -14,7 +13,6 @@ import {
 	AnchorSet,
 	IEditableForest,
 	InMemoryStoredSchemaRepository,
-	GraphCommit,
 	assertIsRevisionTag,
 	UndoRedoManager,
 } from "../core";
@@ -41,21 +39,6 @@ import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult } from "../util";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 import { identifierKey } from "./sharedTree";
-
-/**
- * An internal symbol which allows access to the branch of an {@link ISharedTreeView}.
- * This must be implemented by a {@link ISharedTreeView} to support branch rebasing.
- * The value of the associated property must be of type `SharedTreeBranch<DefaultEditBuilder, DefaultChangeSet>`.
- */
-export const branchKey = Symbol("ISharedTreeView branch");
-/**
- * True iff the given {@link ISharedTreeView} implements the {@link branchKey} property and satisfies its requirements.
- */
-export function hasBranch(
-	view: ISharedTreeView,
-): view is typeof view & { [branchKey]: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> } {
-	return (view as typeof view & { [branchKey]: unknown })[branchKey] !== undefined;
-}
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -190,6 +173,12 @@ export interface ISharedTreeView extends AnchorLocator {
 	merge(view: SharedTreeView): void;
 
 	/**
+	 * Rebase the given view onto this view.
+	 * @param view - a view which was created by a call to `fork()`. It is modified by this operation.
+	 */
+	rebase(view: SharedTreeView): void;
+
+	/**
 	 * Events about this view.
 	 */
 	readonly events: ISubscribable<ViewEvents>;
@@ -236,29 +225,43 @@ export interface ISharedTreeView extends AnchorLocator {
 }
 
 /**
- * Creates an {@link ISharedTreeView}.
+ * Used as a static property to access the creation function for a {@link SharedTreeView}.
+ */
+export const create = Symbol("Create SharedTreeView");
+
+/**
+ * Creates a {@link SharedTreeView}.
+ * @param args - an object containing optional components that will be used to build the view.
+ * Any components not provided will be created by default.
  * @remarks This does not create a {@link SharedTree}, but rather a view with the minimal state
  * and functionality required to implement {@link ISharedTreeView}.
  */
-export function createSharedTreeView(): ISharedTreeView {
-	const anchors = new AnchorSet();
-	const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
-	const forest = buildForest(schema, anchors);
-	const repairDataStoreProvider = new ForestRepairDataStoreProvider(forest, schema);
+export function createSharedTreeView(args?: {
+	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+	schema?: InMemoryStoredSchemaRepository;
+	forest?: IEditableForest;
+	repairProvider?: ForestRepairDataStoreProvider;
+	identifierIndex?: IdentifierIndex<typeof identifierKey>;
+}): SharedTreeView {
+	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
+	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
+	const repairDataStoreProvider =
+		args?.repairProvider ?? new ForestRepairDataStoreProvider(forest, schema);
 	const undoRedoManager = UndoRedoManager.create(repairDataStoreProvider, defaultChangeFamily);
-	const originCommit: GraphCommit<DefaultChangeset> = {
-		change: defaultChangeFamily.rebaser.compose([]),
-		revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
-	};
-	const branch = new SharedTreeBranch(
-		originCommit,
-		defaultChangeFamily,
-		undoRedoManager,
-		anchors,
-	);
+	const branch =
+		args?.branch ??
+		new SharedTreeBranch(
+			{
+				change: defaultChangeFamily.rebaser.compose([]),
+				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
+			},
+			defaultChangeFamily,
+			undoRedoManager,
+			forest.anchors,
+		);
 	const context = getEditableTreeContext(forest, branch.editor);
-	const identifierIndex = new IdentifierIndex(identifierKey);
-	return new SharedTreeView(branch, schema, forest, context, identifierIndex);
+	const identifierIndex = args?.identifierIndex ?? new IdentifierIndex(identifierKey);
+	return SharedTreeView[create](branch, schema, forest, context, identifierIndex);
 }
 
 /**
@@ -267,6 +270,34 @@ export function createSharedTreeView(): ISharedTreeView {
  */
 export class SharedTreeView implements ISharedTreeView {
 	public readonly events = createEmitter<ViewEvents>();
+
+	private constructor(
+		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		private readonly _storedSchema: InMemoryStoredSchemaRepository,
+		private readonly _forest: IEditableForest,
+		public readonly context: EditableTreeContext,
+		private readonly _identifiedIndex: IdentifierIndex<typeof identifierKey>,
+	) {
+		branch.on("change", ({ change }) => {
+			if (change !== undefined) {
+				const delta = defaultChangeFamily.intoDelta(change);
+				this._forest.applyDelta(delta);
+				this._identifiedIndex.scanIdentifiers(this.context);
+				this.events.emit("afterBatch");
+			}
+		});
+	}
+
+	// SharedTreeView is a public type, but its instantiation is internal
+	private static [create](
+		branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		storedSchema: InMemoryStoredSchemaRepository,
+		forest: IEditableForest,
+		context: EditableTreeContext,
+		identifiedIndex: IdentifierIndex<typeof identifierKey>,
+	): SharedTreeView {
+		return new SharedTreeView(branch, storedSchema, forest, context, identifiedIndex);
+	}
 
 	public get storedSchema(): StoredSchemaRepository {
 		return this._storedSchema;
@@ -284,39 +315,23 @@ export class SharedTreeView implements ISharedTreeView {
 		return this._forest.anchors;
 	}
 
-	public get editor() {
+	public get editor(): IDefaultEditBuilder {
 		return this.branch.editor;
 	}
 
-	private get [branchKey](): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
-		return this.branch;
-	}
-
-	public constructor(
-		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly _storedSchema: InMemoryStoredSchemaRepository,
-		private readonly _forest: IEditableForest,
-		public readonly context: EditableTreeContext,
-		public readonly _identifiedIndex: IdentifierIndex<typeof identifierKey>,
-	) {
-		branch.on("change", ({ change }) => {
-			if (change !== undefined) {
-				const delta = defaultChangeFamily.intoDelta(change);
-				this._forest.applyDelta(delta);
-				this._identifiedIndex.scanIdentifiers(this.context);
-				this.events.emit("afterBatch");
-			}
-		});
-	}
-
 	public readonly transaction: ISharedTreeView["transaction"] = {
-		start: () => this.branch.startTransaction(repairDataStoreFromForest(this.forest)),
+		start: () => {
+			this.branch.startTransaction(repairDataStoreFromForest(this.forest));
+			this.branch.editor.enterTransaction();
+		},
 		commit: () => {
 			this.branch.commitTransaction();
+			this.branch.editor.exitTransaction();
 			return TransactionResult.Commit;
 		},
 		abort: () => {
 			this.branch.abortTransaction();
+			this.branch.editor.exitTransaction();
 			return TransactionResult.Abort;
 		},
 		inProgress: () => this.branch.isTransacting(),
@@ -361,12 +376,15 @@ export class SharedTreeView implements ISharedTreeView {
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
 	 */
 	public rebaseOnto(view: ISharedTreeView): void {
-		assert(hasBranch(view), "Rebase target must support branching");
-		this.branch.rebaseOnto(view[branchKey]);
+		view.rebase(this);
 	}
 
 	public merge(fork: SharedTreeView): void {
 		this.branch.merge(fork.branch);
+	}
+
+	public rebase(fork: SharedTreeView): void {
+		fork.branch.rebaseOnto(this.branch);
 	}
 
 	public get root(): UnwrappedEditableField {
