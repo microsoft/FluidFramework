@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
 import { MarkList } from "./format";
-import { isSkipMark } from "./utils";
+import {
+	areInputCellsEmpty,
+	areOutputCellsEmpty,
+	getMarkLength,
+	getNodeChange,
+	isObjMark,
+} from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
@@ -19,9 +25,11 @@ export function sequenceFieldToDelta<TNodeChange>(
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
-		if (isSkipMark(mark)) {
-			out.pushOffset(mark);
+		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
+			out.push(deltaFromNodeChange(getNodeChange(mark), getMarkLength(mark), deltaFromChild));
+		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
 		} else {
+			assert(isObjMark(mark), "Cell changing mark must be an ObjMark");
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
@@ -78,16 +86,12 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Revive": {
-					if (mark.conflictsWith === undefined) {
-						const insertMark: Mutable<Delta.Insert> = {
-							type: Delta.MarkType.Insert,
-							content: mark.content,
-						};
-						populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
-						out.pushContent(insertMark);
-					} else if (mark.lastDetachedBy === undefined) {
-						out.pushOffset(mark.count);
-					}
+					const insertMark: Mutable<Delta.Insert> = {
+						type: Delta.MarkType.Insert,
+						content: mark.content,
+					};
+					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
+					out.pushContent(insertMark);
 					break;
 				}
 				default:
@@ -107,4 +111,21 @@ function populateChildModificationsIfAny<TNodeChange>(
 		const modify = deltaFromChild(changes);
 		populateChildModifications(modify, deltaMark);
 	}
+}
+
+function deltaFromNodeChange<TNodeChange>(
+	change: TNodeChange | undefined,
+	length: number,
+	deltaFromChild: ToDelta<TNodeChange>,
+): Delta.Mark {
+	if (change === undefined) {
+		return length;
+	}
+	assert(length === 1, "Modifying mark must be length one");
+	const modify = deltaFromChild(change);
+	return isEmptyModify(modify) ? 1 : modify;
+}
+
+function isEmptyModify(modify: Delta.Modify): boolean {
+	return modify.fields === undefined && modify.setValue === undefined;
 }

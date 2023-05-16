@@ -31,6 +31,7 @@
 			"content": "content",
 			"deltas": "deltas",
 			"documents": "documents",
+			"checkpoints": "checkpoints",
 			"partitions": "partitions",
 			"tenants": "tenants",
 			"nodes": "nodes",

@@ -5,7 +5,12 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IChannel } from "@fluidframework/datastore-definitions";
+import {
+	IChannel,
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -14,10 +19,15 @@ import {
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
-import { ChannelDeltaConnection } from "./channelDeltaConnection";
+import { DataCorruptionError } from "@fluidframework/container-utils";
+import { readAndParse } from "@fluidframework/driver-utils";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ChannelStorageService } from "./channelStorageService";
+import { ChannelDeltaConnection } from "./channelDeltaConnection";
+import { ISharedObjectRegistry } from "./dataStoreRuntime";
 
 export const attributesBlobKey = ".attributes";
 
@@ -56,8 +66,12 @@ export interface IChannelContext {
 	updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-export function createServiceEndpoints(
-	id: string,
+export interface ChannelServiceEndpoints {
+	deltaConnection: ChannelDeltaConnection;
+	objectStorage: ChannelStorageService;
+}
+
+export function createChannelServiceEndpoints(
 	connected: boolean,
 	submitFn: (content: any, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
@@ -66,9 +80,8 @@ export function createServiceEndpoints(
 	logger: ITelemetryLogger,
 	tree?: ISnapshotTree,
 	extraBlobs?: Map<string, ArrayBufferLike>,
-) {
+): ChannelServiceEndpoints {
 	const deltaConnection = new ChannelDeltaConnection(
-		id,
 		connected,
 		(message, localOpMetadata) => submitFn(message, localOpMetadata),
 		dirtyFn,
@@ -112,4 +125,90 @@ export async function summarizeChannelAsync(
 	// Add the channel attributes to the returned result.
 	addBlobToSummary(summarizeResult, attributesBlobKey, JSON.stringify(channel.attributes));
 	return summarizeResult;
+}
+
+export async function loadChannelFactoryAndAttributes(
+	dataStoreContext: IFluidDataStoreContext,
+	services: ChannelServiceEndpoints,
+	channelId: string,
+	registry: ISharedObjectRegistry,
+	attachMessageType?: string,
+): Promise<{ factory: IChannelFactory; attributes: IChannelAttributes }> {
+	let attributes: IChannelAttributes | undefined;
+	if (await services.objectStorage.contains(attributesBlobKey)) {
+		attributes = await readAndParse<IChannelAttributes | undefined>(
+			services.objectStorage,
+			attributesBlobKey,
+		);
+	}
+
+	// This is a backward compatibility case where the attach message doesn't include attributes. They must
+	// include attach message type.
+	// Since old attach messages will not have attributes, we need to keep this as long as we support old attach
+	// messages.
+	const channelFactoryType = attributes ? attributes.type : attachMessageType;
+	if (channelFactoryType === undefined) {
+		throw new DataCorruptionError("channelTypeNotAvailable", {
+			channelId: {
+				value: channelId,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			dataStoreId: {
+				value: dataStoreContext.id,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			dataStorePackagePath: dataStoreContext.packagePath.join("/"),
+			channelFactoryType: attachMessageType,
+		});
+	}
+	const factory = registry.get(channelFactoryType);
+	if (factory === undefined) {
+		// TODO: dataStoreId may require a different tag from PackageData #7488
+		throw new DataCorruptionError("channelFactoryNotRegisteredForGivenType", {
+			channelId: {
+				value: channelId,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			dataStoreId: {
+				value: dataStoreContext.id,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			dataStorePackagePath: dataStoreContext.packagePath.join("/"),
+			channelFactoryType,
+		});
+	}
+	// This is a backward compatibility case where the attach message doesn't include attributes. Get the attributes
+	// from the factory.
+	attributes = attributes ?? factory.attributes;
+	return { factory, attributes };
+}
+
+export async function loadChannel(
+	dataStoreRuntime: IFluidDataStoreRuntime,
+	attributes: IChannelAttributes,
+	factory: IChannelFactory,
+	services: ChannelServiceEndpoints,
+	logger: ITelemetryLogger,
+	channelId: string,
+): Promise<IChannel> {
+	// Compare snapshot version to collaborative object version
+	if (
+		attributes.snapshotFormatVersion !== undefined &&
+		attributes.snapshotFormatVersion !== factory.attributes.snapshotFormatVersion
+	) {
+		logger.sendTelemetryEvent({
+			eventName: "ChannelAttributesVersionMismatch",
+			channelType: { value: attributes.type, tag: TelemetryDataTag.CodeArtifact },
+			channelSnapshotVersion: {
+				value: `${attributes.snapshotFormatVersion}@${attributes.packageVersion}`,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+			channelCodeVersion: {
+				value: `${factory.attributes.snapshotFormatVersion}@${factory.attributes.packageVersion}`,
+				tag: TelemetryDataTag.CodeArtifact,
+			},
+		});
+	}
+
+	return factory.load(dataStoreRuntime, channelId, services, attributes);
 }

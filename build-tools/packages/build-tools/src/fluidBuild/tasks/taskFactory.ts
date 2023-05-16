@@ -8,7 +8,7 @@ import { BuildPackage } from "../buildGraph";
 import { ConcurrentNPMTask } from "./concurrentNpmTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { LeafTask, UnknownLeafTask } from "./leaf/leafTask";
-import { EsLintTask, TsFormatTask, TsLintTask } from "./leaf/lintTasks";
+import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
 	EchoTask,
@@ -47,7 +47,6 @@ const executableToLeafTask: {
 	"tsc": TscTask,
 	"tslint": TsLintTask,
 	"eslint": EsLintTask,
-	"tsfmt": TsFormatTask,
 	"webpack": WebpackTask,
 	"parallel-webpack": WebpackTask,
 	"lessc": LesscTask,
