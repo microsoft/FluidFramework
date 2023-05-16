@@ -154,17 +154,13 @@ export async function verifyToken(
 	tenantManager: ITenantManager,
 	options: IVerifyTokenOptions,
 ): Promise<void> {
-	if (!tenantId) {
-		throw new NetworkError(403, "Missing tenantId in request.");
+	if (options.requireDocumentId && !documentId) {
+		throw new NetworkError(403, "Missing documentId.");
 	}
 
-	if (options.requireDocumentId && !documentId) {
-		throw new NetworkError(403, "Missing documentId in request");
-	}
-	let claims: ITokenClaims | undefined;
 	let tokenLifetimeMs: number | undefined;
 	try {
-		claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
+		const claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
 		if (options.requireTokenExpiryCheck) {
 			if (!options.maxTokenLifetimeSec) {
 				const errorMessage = "Missing maxTokenLifetimeSec in options";
@@ -174,8 +170,8 @@ export async function verifyToken(
 			tokenLifetimeMs = validateTokenClaimsExpiration(claims, options.maxTokenLifetimeSec);
 		}
 
-		// TODO: what about token revocation check?
-		if (options.enableTokenCache && options.tokenCache) {
+		// Check token cache first
+		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			const tokenCacheKey = token;
 			const cachedToken = await options.tokenCache.get(tokenCacheKey).catch((error) => {
 				Lumberjack.error(
@@ -210,7 +206,7 @@ export async function verifyToken(
 		);
 
 		// Update token cache
-		if (options.enableTokenCache && options.tokenCache) {
+		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			const tokenCacheKey = token;
 			options.tokenCache
 				.set(

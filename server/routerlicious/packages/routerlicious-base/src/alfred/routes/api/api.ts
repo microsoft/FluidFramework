@@ -239,10 +239,16 @@ async function verifyTokenWrapper(
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
-		return Promise.reject(new Error("Missing access token"));
+		return Promise.reject(new Error("Missing access token in request header."));
 	}
 	const tenantId = getParam(request.params, "tenantId");
+	if (!tenantId) {
+		return Promise.reject(new Error("Missing tenantId in request."));
+	}
 	const documentId = getParam(request.params, "id");
+	if (!documentId) {
+		return Promise.reject(new Error("Missing documentId in request."));
+	}
 	const claims = validateTokenClaims(token, documentId, tenantId);
 	if (isTokenExpiryEnabled) {
 		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
