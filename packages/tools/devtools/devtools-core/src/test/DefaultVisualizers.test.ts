@@ -288,67 +288,51 @@ describe("DefaultVisualizers unit tests", () => {
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: "test-matrix",
 			children: {
-				0: {
+				"[0,0]": {
+					value: "Hello",
+					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "string",
+				},
+				"[0,1]": {
+					value: "World",
+					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "string",
+				},
+				"[0,2]": {
+					value: undefined,
+					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "undefined",
+				},
+				"[1,0]": {
+					value: 1,
+					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "number",
+				},
+				"[1,1]": {
+					value: true,
+					nodeKind: VisualNodeKind.ValueNode,
+					typeMetadata: "boolean",
+				},
+				"[1,2]": {
 					children: {
-						0: {
-							value: "Hello",
+						a: {
+							value: null,
 							nodeKind: VisualNodeKind.ValueNode,
-							typeMetadata: "string",
+							typeMetadata: "null",
 						},
-						1: {
-							value: "World",
-							nodeKind: VisualNodeKind.ValueNode,
-							typeMetadata: "string",
-						},
-						2: {
+						b: {
 							value: undefined,
 							nodeKind: VisualNodeKind.ValueNode,
 							typeMetadata: "undefined",
 						},
-					},
-					nodeKind: VisualNodeKind.TreeNode,
-					metadata: {
-						cells: 3,
-					},
-				},
-				1: {
-					children: {
-						0: {
-							value: 1,
-							nodeKind: VisualNodeKind.ValueNode,
-							typeMetadata: "number",
-						},
-						1: {
-							value: true,
+						c: {
+							value: false,
 							nodeKind: VisualNodeKind.ValueNode,
 							typeMetadata: "boolean",
 						},
-						2: {
-							children: {
-								a: {
-									value: null,
-									nodeKind: VisualNodeKind.ValueNode,
-									typeMetadata: "null",
-								},
-								b: {
-									value: undefined,
-									nodeKind: VisualNodeKind.ValueNode,
-									typeMetadata: "undefined",
-								},
-								c: {
-									value: false,
-									nodeKind: VisualNodeKind.ValueNode,
-									typeMetadata: "boolean",
-								},
-							},
-							typeMetadata: "object",
-							nodeKind: VisualNodeKind.TreeNode,
-						},
 					},
+					typeMetadata: "object",
 					nodeKind: VisualNodeKind.TreeNode,
-					metadata: {
-						cells: 3,
-					},
 				},
 			},
 			metadata: {

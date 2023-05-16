@@ -12,6 +12,8 @@ import {
 } from "@fluentui/react";
 import React from "react";
 
+import { DevtoolsLogger, IDevtools, initializeDevtools } from "@fluid-experimental/devtools";
+import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
@@ -19,9 +21,7 @@ import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-
-import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { DevtoolsLogger, IDevtools, initializeDevtools } from "@fluid-experimental/devtools";
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 
 import {
 	ContainerInfo,
@@ -30,6 +30,7 @@ import {
 } from "../ClientUtilities";
 import { CounterWidget, EmojiGrid } from "../widgets";
 import { initializeFluentUiIcons } from "../../InitializeIcons";
+import { createMockSharedObject } from "../MockSharedObject";
 
 // Ensure FluentUI icons are initialized.
 initializeFluentUiIcons();
@@ -48,6 +49,16 @@ const sharedCounterKey = "shared-counter";
  * Key in the app's `rootMap` under which the SharedCell object is stored.
  */
 const emojiMatrixKey = "emoji-matrix";
+
+/**
+ * Key in the app's `rootMap` under which an unknown (to the devtools) kind of data will be recorded for testing purposes.
+ */
+const unknownDataKey = "unknown-data";
+
+/**
+ * Key in the app's `rootMap` under which an unknown (to the devtools) kind of Shared Object will be recorded for testing purposes.
+ */
+const unknownSharedObjectKey = "unknown-shared-object";
 
 /**
  * Schema used by the app.
@@ -109,6 +120,12 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 			b: "b",
 		},
 	});
+
+	// Add some unrecognizable data to test devtools handling
+	rootMap.set(unknownDataKey, new MockHandle("Unknown data"));
+
+	const unknownSharedObject = createMockSharedObject("unknown-shared-object-id");
+	rootMap.set(unknownSharedObjectKey, unknownSharedObject.handle);
 }
 
 /**
