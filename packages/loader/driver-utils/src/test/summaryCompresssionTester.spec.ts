@@ -300,12 +300,12 @@ function getCompressedHeaderContent(summary: ISummaryTree) {
 }
 
 function getHeader(summary: ISummaryTree) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	 
 	return getHeaderHolder(summary).tree.header;
 }
 
 function getCompressedHeader(summary: ISummaryTree) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	 
 	return getHeaderHolder(summary).tree.compressed_2_header;
 }
 
