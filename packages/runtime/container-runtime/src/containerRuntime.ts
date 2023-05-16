@@ -584,9 +584,6 @@ export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
 	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
-	public get IContainerRuntime() {
-		return this;
-	}
 	public get IFluidRouter() {
 		return this;
 	}
