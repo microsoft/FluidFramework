@@ -6,25 +6,24 @@ import { strict as assert } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
-	ContextuallyTypedNodeData,
-	cursorFromContextualData,
 	FieldKinds,
 	isEditableField,
 	isUnwrappedNode,
 	jsonableTreeFromCursor,
 	SchemaAware,
-	TypedSchema,
+	SchemaBuilder,
 	UnwrappedEditableField,
+	cursorForTypedData,
+	cursorForTypedTreeData,
 } from "../../feature-libraries";
-import { jsonNumber } from "../../domains";
-import { brand } from "../../util";
+import { jsonNumber, jsonSchema } from "../../domains";
+import { brand, requireAssignableTo } from "../../util";
 import { toJsonableTree } from "../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
 	LocalFieldKey,
 	moveToDetachedField,
-	rootFieldKey,
 	rootFieldKeySymbol,
 	UpPath,
 } from "../../core";
@@ -44,29 +43,29 @@ const nodesCountDeep = [
 	[100, BenchmarkType.Measurement],
 ];
 
+const deepBuilder = new SchemaBuilder("sharedTree.bench: deep", jsonSchema);
+
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = TypedSchema.tree("linkedList", {
+const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
 	local: {
-		foo: TypedSchema.field(FieldKinds.value, "linkedList", jsonNumber),
+		foo: SchemaBuilder.fieldRecursive(FieldKinds.value, () => linkedListSchema, jsonNumber),
 	},
 });
 
-const wideRootSchema = TypedSchema.tree("WideRoot", {
+const wideBuilder = new SchemaBuilder("sharedTree.bench: wide", jsonSchema);
+
+const wideRootSchema = wideBuilder.object("WideRoot", {
 	local: {
-		foo: TypedSchema.field(FieldKinds.sequence, jsonNumber),
+		foo: SchemaBuilder.field(FieldKinds.sequence, jsonNumber),
 	},
 });
 
-const wideSchema = SchemaAware.typedSchemaData(
-	[[rootFieldKey, TypedSchema.field(FieldKinds.value, wideRootSchema)]],
-	wideRootSchema,
-	jsonNumber,
+const wideSchema = wideBuilder.intoDocumentSchema(
+	SchemaBuilder.field(FieldKinds.value, wideRootSchema),
 );
 
-const deepSchema = SchemaAware.typedSchemaData(
-	[[rootFieldKey, TypedSchema.field(FieldKinds.value, linkedListSchema)]],
-	linkedListSchema,
-	jsonNumber,
+const deepSchema = deepBuilder.intoDocumentSchema(
+	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
 );
 
 const factory = new SharedTreeFactory();
@@ -78,6 +77,13 @@ const factory = new SharedTreeFactory();
 interface JSDeepTree {
 	foo: JSDeepTree | number;
 }
+
+type JSDeepTree2 = SchemaAware.TypedNode<typeof linkedListSchema, SchemaAware.ApiMode.Simple>;
+
+{
+	type _check = requireAssignableTo<JSDeepTree, JSDeepTree2>;
+}
+
 /**
  * JS object like a wide tree.
  * Comparible with ContextuallyTypedNodeData
@@ -86,10 +92,7 @@ interface JSWideTree {
 	foo: number[];
 }
 
-function makeJsDeepTree(
-	depth: number,
-	leafValue: number,
-): (JSDeepTree | number) & ContextuallyTypedNodeData {
+function makeJsDeepTree(depth: number, leafValue: number): JSDeepTree | number {
 	return depth === 0 ? leafValue : { foo: makeJsDeepTree(depth - 1, leafValue) };
 }
 
@@ -99,10 +102,7 @@ function makeJsDeepTree(
  * @param endLeafValue - the value of the end leaf of the tree
  * @returns a tree with specified number of nodes, with the end leaf node set to the endLeafValue
  */
-function makeJsWideTreeWithEndValue(
-	numberOfNodes: number,
-	endLeafValue: number,
-): JSWideTree & ContextuallyTypedNodeData {
+function makeJsWideTreeWithEndValue(numberOfNodes: number, endLeafValue: number): JSWideTree {
 	const numbers = [];
 	for (let index = 0; index < numberOfNodes - 1; index++) {
 		numbers.push(index);
@@ -321,9 +321,9 @@ describe("SharedTree benchmarks", () => {
 
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
-							cursorFromContextualData(
+							cursorForTypedData(
 								tree.storedSchema,
-								TypedSchema.nameSet(linkedListSchema),
+								deepSchema.root.schema.allowedTypes,
 								makeJsDeepTree(numberOfNodes, setCount),
 							),
 						);
@@ -371,9 +371,9 @@ describe("SharedTree benchmarks", () => {
 
 						// Cleanup + validation
 						const expected = jsonableTreeFromCursor(
-							cursorFromContextualData(
+							cursorForTypedTreeData(
 								tree.storedSchema,
-								TypedSchema.nameSet(wideRootSchema),
+								wideRootSchema,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),
 						);

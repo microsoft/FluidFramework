@@ -606,9 +606,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 						// This is not supported by the local server due to chunking. See ADO:2690
 						// This test is flaky on tinylicious. See ADO:2964
 						if (
-							config.payloadGenerator === generateRandomStringOfSize &&
-							(provider.driver.type === "local" ||
-								provider.driver.type === "tinylicious")
+							provider.driver.type === "local" ||
+							provider.driver.type === "tinylicious"
 						) {
 							this.skip();
 						}

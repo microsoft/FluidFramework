@@ -14,8 +14,12 @@ module.exports = {
 		"client": {
 			directory: "",
 			ignoredDirs: [],
+			defaultInterdependencyRange: "workspace:~",
 		},
-		"build-tools": "build-tools",
+		"build-tools": {
+			directory: "build-tools",
+			defaultInterdependencyRange: "workspace:*",
+		},
 		"server": "server/routerlicious",
 		"gitrest": "server/gitrest",
 		"historian": "server/historian",

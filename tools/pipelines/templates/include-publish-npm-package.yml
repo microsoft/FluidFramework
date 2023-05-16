@@ -23,12 +23,14 @@ stages:
   dependsOn: build
   displayName: Publish Internal Test Packages
   condition: and(succeeded(), eq(variables['testBuild'], true))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
-      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/test/npm/registry/
+      devFeedName: $(ado-feeds-test) # Comes from the ado-feeds variable group
+      feedName: $(ado-feeds-test) # Comes from the ado-feeds variable group
       official: false
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}
@@ -38,12 +40,14 @@ stages:
   dependsOn: build
   displayName: Publish Internal Packages
   condition: and(succeeded(), eq(variables['testBuild'], false))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
-      feedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
+      devFeedName: $(ado-feeds-dev) # Comes from the ado-feeds variable group
+      feedName: $(ado-feeds-build) # Comes from the ado-feeds variable group
       official: false
       environment: package-build-feed
       pool: ${{ parameters.pool }}
@@ -53,13 +57,15 @@ stages:
   dependsOn: build
   displayName: Publish Official Packages
   condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  variables:
+  - group: ado-feeds
   jobs:
   - template: include-publish-npm-package-deployment.yml
     parameters:
       namespace: ${{ parameters.namespace }}
       # internal/msinternal/example packages are deleted for official releases, but in case something goes wrong with that,
       # using the `dev` registry is safe.
-      devFeedName: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
+      devFeedName: $(ado-feeds-dev) # Comes from the ado-feeds variable group
       feedName: https://registry.npmjs.org
       official: true
       environment: package-npmjs-feed

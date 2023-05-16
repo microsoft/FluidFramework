@@ -11,9 +11,9 @@ import {
 	isGlobalFieldKey,
 	keyFromSymbol,
 	Value,
-	TreeSchema,
+	TreeStoredSchema,
 	ValueSchema,
-	FieldSchema,
+	FieldStoredSchema,
 	LocalFieldKey,
 	SchemaDataAndPolicy,
 	lookupGlobalFieldSchema,
@@ -28,9 +28,17 @@ import {
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./defaultFieldKinds";
-import { FieldKind, Multiplicity } from "./modular-schema";
+import {
+	AllowedTypes,
+	FieldKind,
+	FieldSchema,
+	Multiplicity,
+	TreeSchema,
+	allowedTypesToTypeSet,
+} from "./modular-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
 import { isPrimitive } from "./editable-tree";
+import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -100,8 +108,8 @@ export function allowsValue(schema: ValueSchema, nodeValue: Value): boolean {
  * @alpha
  */
 export function getPrimaryField(
-	schema: TreeSchema,
-): { key: LocalFieldKey; schema: FieldSchema } | undefined {
+	schema: TreeStoredSchema,
+): { key: LocalFieldKey; schema: FieldStoredSchema } | undefined {
 	// TODO: have a better mechanism for this. See note on EmptyKey.
 	const field = schema.localFields.get(EmptyKey);
 	if (field === undefined) {
@@ -114,8 +122,8 @@ export function getPrimaryField(
 export function getFieldSchema(
 	field: FieldKey,
 	schemaData: SchemaDataAndPolicy,
-	schema?: TreeSchema,
-): FieldSchema {
+	schema?: TreeStoredSchema,
+): FieldStoredSchema {
 	if (isGlobalFieldKey(field)) {
 		return lookupGlobalFieldSchema(schemaData, keyFromSymbol(field));
 	}
@@ -126,7 +134,7 @@ export function getFieldSchema(
 	return schema.localFields.get(field) ?? schema.extraLocalFields;
 }
 
-export function getFieldKind(fieldSchema: FieldSchema): FieldKind {
+export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
 	// TODO:
 	// This module currently is assuming use of defaultFieldKinds.
 	// The field kinds should instead come from a view schema registry thats provided somewhere.
@@ -339,6 +347,38 @@ export function cursorFromContextualData(
 }
 
 /**
+ * Strongly typed {@link cursorFromContextualData} for a TreeSchema
+ * @alpha
+ */
+export function cursorForTypedTreeData<T extends TreeSchema>(
+	schemaData: SchemaDataAndPolicy,
+	schema: T,
+	data: TypedNode<T, ApiMode.Simple>,
+): ITreeCursorSynchronous {
+	return cursorFromContextualData(
+		schemaData,
+		new Set([schema.name]),
+		data as ContextuallyTypedNodeData,
+	);
+}
+
+/**
+ * Strongly typed {@link cursorFromContextualData} for AllowedTypes.
+ * @alpha
+ */
+export function cursorForTypedData<T extends AllowedTypes>(
+	schemaData: SchemaDataAndPolicy,
+	schema: T,
+	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
+): ITreeCursorSynchronous {
+	return cursorFromContextualData(
+		schemaData,
+		allowedTypesToTypeSet(schema),
+		data as unknown as ContextuallyTypedNodeData,
+	);
+}
+
+/**
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
@@ -346,11 +386,23 @@ export function cursorFromContextualData(
  */
 export function cursorsFromContextualData(
 	schemaData: SchemaDataAndPolicy,
-	field: FieldSchema,
+	field: FieldStoredSchema,
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous[] {
 	const mapTrees = applyFieldTypesFromContext(schemaData, field, data);
 	return mapTrees.map(singleMapTreeCursor);
+}
+
+/**
+ * Strongly typed {@link cursorsFromContextualData} for a FieldSchema
+ * @alpha
+ */
+export function cursorsForTypedFieldData<T extends FieldSchema>(
+	schemaData: SchemaDataAndPolicy,
+	schema: T,
+	data: TypedField<ApiMode.Simple, T>,
+): ITreeCursorSynchronous {
+	return cursorFromContextualData(schemaData, schema.types, data as ContextuallyTypedNodeData);
 }
 
 /**
@@ -440,7 +492,7 @@ function fieldKeysFromData(data: ContextuallyTypedNodeDataObject): FieldKey[] {
  */
 export function applyFieldTypesFromContext(
 	schemaData: SchemaDataAndPolicy,
-	field: FieldSchema,
+	field: FieldStoredSchema,
 	data: ContextuallyTypedFieldData,
 ): MapTree[] {
 	const multiplicity = getFieldKind(field).multiplicity;
