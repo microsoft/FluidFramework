@@ -48,7 +48,7 @@ export type SharedTreeBranchChange<TChange> =
 	  }
 	| {
 			type: "replace";
-			change?: TChange | undefined;
+			change: TChange | undefined;
 			removedCommits: GraphCommit<TChange>[];
 			newCommits: GraphCommit<TChange>[];
 	  };
@@ -250,6 +250,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 		this.emitAndRebaseAnchors({
 			type: "replace",
+			change: undefined,
 			removedCommits: commits,
 			newCommits: [this.head],
 		});
