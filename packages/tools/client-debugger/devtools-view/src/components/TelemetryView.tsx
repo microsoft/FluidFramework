@@ -5,8 +5,10 @@
 import { IStackTokens, Stack, StackItem } from "@fluentui/react";
 import {
 	tokens,
+	Button,
 	Combobox,
 	ComboboxProps,
+	CounterBadge,
 	DataGridBody,
 	DataGridRow,
 	DataGrid,
@@ -61,6 +63,7 @@ export function TelemetryView(): React.ReactElement {
 	>();
 	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
+	const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
 
 	React.useEffect(() => {
 		/**
@@ -108,12 +111,13 @@ export function TelemetryView(): React.ReactElement {
 				maxEventsToDisplay - telemetryEvents.length,
 			);
 			setTelemetryEvents([...newEvents, ...telemetryEvents]);
+			setSelectedIndex(selectedIndex + newEvents.length);
 			setBufferedEvents(remainingBuffer);
 		}
-	}, [telemetryEvents, bufferedEvents, maxEventsToDisplay]);
+	}, [telemetryEvents, bufferedEvents, maxEventsToDisplay, selectedIndex]);
 
-	const handleLoadMore = ():void => {
-		setMaxEventsToDisplay(prevMaxEvents => prevMaxEvents + bufferedEvents.length);
+	const handleLoadMore = (): void => {
+		setMaxEventsToDisplay((prevMaxEvents) => prevMaxEvents + bufferedEvents.length);
 	};
 
 	return (
@@ -125,14 +129,26 @@ export function TelemetryView(): React.ReactElement {
 				/>
 			</StackItem>
 			<StackItem>
-				<p style={{ marginLeft: "6px" }}>
-					Note: {bufferedEvents.length} newer telemetry events have been
-					received/buffered.
-				</p>
-				<button onClick={handleLoadMore}>Load More</button>
-
+				<div style={{ width: "100%", flexDirection: "row" }}>
+					{bufferedEvents.length > 0 ? (
+						<div style={{ marginLeft: "6px" }}>
+							<CounterBadge size="large" color="brand">
+								{" "}
+								{bufferedEvents.length}+
+							</CounterBadge>
+							&nbsp; Newer telemetry events received.
+						</div>
+					) : (
+						<> You &apos;re up to date! </>
+					)}
+				</div>
+				<Button onClick={handleLoadMore}>Load More</Button>
 				{telemetryEvents !== undefined ? (
-					<FilteredTelemetryView telemetryEvents={telemetryEvents} />
+					<FilteredTelemetryView
+						telemetryEvents={telemetryEvents}
+						setIndex={setSelectedIndex}
+						index={selectedIndex}
+					/>
 				) : (
 					<Waiting label={"Waiting for Telemetry events"} />
 				)}
@@ -209,10 +225,12 @@ interface FilteredTelemetryViewProps {
 	 *
 	 */
 	telemetryEvents: ITimestampedTelemetryEvent[];
+	setIndex: React.Dispatch<React.SetStateAction<number>>;
+	index: number;
 }
 
 function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
-	const { telemetryEvents } = props;
+	const { telemetryEvents, setIndex, index } = props;
 	const [selectedCategory, setSelectedCategory] = useState("");
 	const [filteredTelemetryEvents, setFilteredTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
@@ -274,11 +292,15 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		]);
 		// Initially matching options are all options
 		setMatchingOptions(eventNameOptionsRef.current);
-
 		const filtered = getFilteredEvents();
 		setFilteredTelemetryEvents(filtered);
+		if (filtered !== undefined) {
+			setIndex(index + (telemetryEvents.length - filtered?.length));
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [telemetryEvents, selectedCategory, customSearch]);
 
+	React.useEffect(() => {}, [index]);
 	/**
 	 * Gets list of valid categories for displayed telemetry events.
 	 * @returns list of option
@@ -441,7 +463,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 			<h3 style={{ marginLeft: "6px" }}>Telemetry events (newest first):</h3>
 			<SplitPane
 				split="vertical"
-				minSize={580}
+				minSize={600}
 				style={{
 					position: "relative",
 					borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
@@ -459,6 +481,11 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					columns={columns}
 					resizableColumns
 					selectionMode="single"
+					onSelectionChange={(e, data): void => {
+						// Set the index to the appropriate row index in the table.
+						setIndex(Number([...data.selectedItems][0]));
+					}}
+					selectedItems={index > 0 ? [index] : [0]}
 					columnSizingOptions={{
 						category: {
 							minWidth: 120,
