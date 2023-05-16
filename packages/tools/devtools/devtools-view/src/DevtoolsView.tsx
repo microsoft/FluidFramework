@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-
+import { useId } from "@fluentui/react-hooks";
 import {
 	ContainerList,
 	ContainerMetadata,
@@ -17,8 +17,9 @@ import {
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
-import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { FluentProvider } from "@fluentui/react-components";
+import { IStackItemStyles, IStackStyles, Stack, TooltipHost } from "@fluentui/react";
+import { FluentProvider, Button } from "@fluentui/react-components";
+import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
@@ -440,10 +441,44 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		);
 	}
 
-	// TODO: add button to refresh list of containers
 	return (
-		<MenuSection header="Containers" key="container-selection-menu-section">
-			{containerSectionInnerView}
-		</MenuSection>
+		<div>
+			<MenuSection
+				header="Containers"
+				key="container-selection-menu-section"
+				refreshIcon={<RefreshButton />}
+			>
+				{containerSectionInnerView}
+			</MenuSection>
+		</div>
+	);
+}
+
+/**
+ * A refresh button to retrive the latest list of containers.
+ */
+function RefreshButton(): React.ReactElement {
+	const messageRelay = useMessageRelay();
+	const refreshButtonTooltipId = useId("connect-button-tooltip");
+	const transparentButtonStyle = {
+		backgroundColor: "transparent",
+		border: "none",
+		cursor: "pointer",
+	};
+
+	function handleRefreshClick(): void {
+		// Query for list of Containers
+		messageRelay.postMessage(getContainerListMessage);
+	}
+
+	return (
+		<TooltipHost content="Refresh Containers list" id={refreshButtonTooltipId}>
+			<Button
+				icon={<ArrowSync24Regular />}
+				style={transparentButtonStyle}
+				onClick={handleRefreshClick}
+				aria-label="Refresh Containers list"
+			></Button>
+		</TooltipHost>
 	);
 }
