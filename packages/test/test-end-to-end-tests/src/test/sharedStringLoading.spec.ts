@@ -135,6 +135,8 @@ describeNoCompat("SharedString", (getTestObjectProvider) => {
 				const codeLoader = new LocalCodeLoader([[codeDetails, fluidExport]], {
 					summaryOptions: {
 						summaryConfigOverrides: {
+							// disable the summarizer to prevent the above fault injection from happening
+							// happening in the summarizer client
 							state: "disabled",
 						},
 					},
