@@ -108,7 +108,6 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
-		"@octokit/core": "^4.0.5",
 		"@types/async": "^3.2.18",
 		"@types/chai": "^4",
 		"@types/chai-arrays": "^2.0.0",
