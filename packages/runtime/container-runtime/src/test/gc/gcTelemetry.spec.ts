@@ -585,9 +585,9 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("logs gcUnknownOutboundReferences when there are unknown data store references", async () => {
-			const gcNodeId = nodes[0];
-			const gcRoutes = [nodes[2], nodes[3]];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const id = nodes[0];
+			const routes = [nodes[2], nodes[3]];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -600,8 +600,11 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						gcNodeId,
-						gcRoutes: JSON.stringify(gcRoutes),
+						id: { value: id, tag: TelemetryDataTag.CodeArtifact },
+						routes: {
+							value: JSON.stringify(routes),
+							tag: TelemetryDataTag.CodeArtifact,
+						},
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected",
@@ -609,12 +612,12 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("logs gcUnknownOutboundReferences when there are multiple unknown data store references", async () => {
-			const gcNodeId1 = nodes[0];
-			const gcRoutes1 = [nodes[2], nodes[3]];
-			const gcNodeId2 = nodes[3];
-			const gcRoutes2 = [nodes[1], nodes[2]];
-			currentGCData.gcNodes[gcNodeId1] = gcRoutes1;
-			currentGCData.gcNodes[gcNodeId2] = gcRoutes2;
+			const id1 = nodes[0];
+			const routes1 = [nodes[2], nodes[3]];
+			const id2 = nodes[3];
+			const routes2 = [nodes[1], nodes[2]];
+			currentGCData.gcNodes[id1] = routes1;
+			currentGCData.gcNodes[id2] = routes2;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -627,13 +630,19 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						gcNodeId: gcNodeId1,
-						gcRoutes: JSON.stringify(gcRoutes1),
+						id: { value: id1, tag: TelemetryDataTag.CodeArtifact },
+						routes: {
+							value: JSON.stringify(routes1),
+							tag: TelemetryDataTag.CodeArtifact,
+						},
 					},
 					{
 						eventName: unknownReferenceEventName,
-						gcNodeId: gcNodeId2,
-						gcRoutes: JSON.stringify(gcRoutes2),
+						id: { value: id2, tag: TelemetryDataTag.CodeArtifact },
+						routes: {
+							value: JSON.stringify(routes2),
+							tag: TelemetryDataTag.CodeArtifact,
+						},
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected",
@@ -641,10 +650,10 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("logs gcUnknownOutboundReferences when there are unknown blob references", async () => {
-			const gcNodeId = nodes[0];
+			const id = nodes[0];
 			// Id of type `/_blobs/id1 is treated as a blob node.
-			const gcRoutes = ["/_blobs/id1"];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const routes = ["/_blobs/id1"];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -657,8 +666,11 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						gcNodeId,
-						gcRoutes: JSON.stringify(gcRoutes),
+						id: { value: id, tag: TelemetryDataTag.CodeArtifact },
+						routes: {
+							value: JSON.stringify(routes),
+							tag: TelemetryDataTag.CodeArtifact,
+						},
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected for blob nodes",
@@ -667,9 +679,9 @@ describe("GC Telemetry Tracker", () => {
 
 		it("does not log gcUnknownOutboundReferences for back-routes (ex: DDS to data store)", async () => {
 			// Id of type `/id1/id2 is treated as a sub-data store (DDS) node.
-			const gcNodeId = `${nodes[1]}/dds`;
-			const gcRoutes = [nodes[1]];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const id = `${nodes[1]}/dds`;
+			const routes = [nodes[1]];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -689,10 +701,10 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("does not log gcUnknownOutboundReferences for sub-dataStore routes (ex: to DDS)", async () => {
-			const gcNodeId = nodes[1];
+			const id = nodes[1];
 			// Id of type `/id1/id2 is treated as a sub-data store (DDS) node.
-			const gcRoutes = [`${nodes[1]}/dds`];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const routes = [`${nodes[1]}/dds`];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -712,10 +724,10 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("does not log gcUnknownOutboundReferences for other routes (ex: unknown routes)", async () => {
-			const gcNodeId = nodes[1];
+			const id = nodes[1];
 			// Id of type `/id1/id2/ids31` is treated as a other node type.
-			const gcRoutes = [`${nodes[1]}/ids2/ids3`];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const routes = [`${nodes[1]}/ids2/ids3`];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,

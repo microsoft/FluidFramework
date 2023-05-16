@@ -263,8 +263,14 @@ export class GCTelemetryTracker {
 			if (missingExplicitRoutes.length > 0) {
 				logger.sendErrorEvent({
 					eventName: "gcUnknownOutboundReferences",
-					gcNodeId: nodeId,
-					gcRoutes: JSON.stringify(missingExplicitRoutes),
+					id: {
+						value: nodeId,
+						tag: TelemetryDataTag.CodeArtifact,
+					},
+					routes: {
+						value: JSON.stringify(missingExplicitRoutes),
+						tag: TelemetryDataTag.CodeArtifact,
+					},
 				});
 			}
 		}
@@ -298,8 +304,10 @@ export class GCTelemetryTracker {
 					? await this.getNodePackagePath(eventProps.fromId)
 					: undefined;
 				const event = {
-					...propsToLog,
 					eventName: `${state}Object_${usageType}`,
+					details: JSON.stringify({
+						...propsToLog,
+					}),
 					pkg: pkg
 						? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
 						: undefined,
@@ -354,13 +362,15 @@ export class GCTelemetryTracker {
 			this.loggedUnreferencedEvents.add(uniqueEventId);
 			logger.sendTelemetryEvent({
 				eventName: "GCObjectDeleted",
-				id: nodeId,
-				type: nodeType,
-				age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
-				timeout: this.configs.sweepTimeoutMs,
-				completedGCRuns,
-				lastSummaryTime,
-				...this.createContainerMetadata,
+				details: JSON.stringify({
+					id: nodeId,
+					type: nodeType,
+					age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+					timeout: this.configs.sweepTimeoutMs,
+					completedGCRuns,
+					lastSummaryTime,
+					...this.createContainerMetadata,
+				}),
 			});
 		}
 	}

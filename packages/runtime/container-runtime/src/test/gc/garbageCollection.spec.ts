@@ -1519,13 +1519,19 @@ describe("Garbage Collection Tests", () => {
 				const eventsFound = mockLogger.matchEvents([
 					{
 						eventName: unknownReferencesEvent,
-						gcNodeId: "/A",
-						gcRoutes: JSON.stringify(["/B", "/C"]),
+						id: { value: "/A", tag: TelemetryDataTag.CodeArtifact },
+						routes: {
+							value: JSON.stringify(["/B", "/C"]),
+							tag: TelemetryDataTag.CodeArtifact,
+						},
 					},
 					{
 						eventName: unknownReferencesEvent,
-						gcNodeId: "/D",
-						gcRoutes: JSON.stringify(["/C"]),
+						id: { value: "/D", tag: TelemetryDataTag.CodeArtifact },
+						routes: {
+							value: JSON.stringify(["/C"]),
+							tag: TelemetryDataTag.CodeArtifact,
+						},
 					},
 				]);
 				assert(eventsFound, `Expected unknownReferenceEvent event!`);

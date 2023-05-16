@@ -119,11 +119,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 		itExpects(
 			"can generate events when unreferenced data store is accessed after it's inactive",
-			[
-				{ eventName: changedEvent, timeout: inactiveTimeoutMs },
-				{ eventName: loadedEvent, timeout: inactiveTimeoutMs },
-				{ eventName: revivedEvent, timeout: inactiveTimeoutMs },
-			],
+			[{ eventName: changedEvent }, { eventName: loadedEvent }, { eventName: revivedEvent }],
 			async () => {
 				const summarizerRuntime = await createSummarizerClient({
 					...testContainerConfig,
@@ -199,10 +195,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 
 		itExpects(
 			"can generate events when unreferenced attachment blob is accessed after it's inactive",
-			[
-				{ eventName: loadedEvent, timeout: inactiveTimeoutMs },
-				{ eventName: revivedEvent, timeout: inactiveTimeoutMs },
-			],
+			[{ eventName: loadedEvent }, { eventName: revivedEvent }],
 			async () => {
 				const summarizerRuntime = await createSummarizerClient({
 					...testContainerConfig,
@@ -359,7 +352,6 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			[
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:InactiveObject_Revived",
-					timeout: inactiveTimeoutMs,
 				},
 			],
 			async () => {

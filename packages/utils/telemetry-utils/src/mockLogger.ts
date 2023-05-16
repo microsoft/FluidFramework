@@ -141,7 +141,22 @@ ${JSON.stringify(actualEvents)}`);
 		actual: ITelemetryBaseEvent,
 		expected: Omit<ITelemetryBaseEvent, "category">,
 	): boolean {
-		const masked = { ...actual, ...expected };
-		return JSON.stringify(masked) === JSON.stringify(actual);
+		// "details" is used in a lot of telemetry logs to group a bunch of properties together and stringify them.
+		// Some of the properties in the expected event may be inside "details". So, if the expected event does not have
+		// "details", extract the properties from "details" in the actual event and inline them in the actual event.
+		const { details, ...actualForMatching } = actual;
+		let detailsExpanded = { details };
+		if (
+			expected.details === undefined &&
+			details !== undefined &&
+			typeof details === "string"
+		) {
+			try {
+				detailsExpanded = JSON.parse(details);
+			} catch {}
+		}
+		const actualExpanded: ITelemetryBaseEvent = { ...actualForMatching, ...detailsExpanded };
+		const masked = { ...actualExpanded, ...expected };
+		return JSON.stringify(masked) === JSON.stringify(actualExpanded);
 	}
 }
