@@ -17,6 +17,7 @@ export {
 	validateTokenClaims,
 	verifyStorageToken,
 	validateTokenScopeClaims,
+	verifyToken,
 } from "./auth";
 export { parseBoolean } from "./conversion";
 export { deleteSummarizedOps } from "./deleteSummarizedOps";

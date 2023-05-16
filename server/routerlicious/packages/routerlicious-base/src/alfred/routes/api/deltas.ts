@@ -31,8 +31,8 @@ export function create(
 	appTenants: IAlfredTenant[],
 	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
-	tokenManager?: ITokenRevocationManager,
 	jwtTokenCache?: ICache,
+	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");

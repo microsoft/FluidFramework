@@ -174,7 +174,7 @@ export async function verifyToken(
 			tokenLifetimeMs = validateTokenClaimsExpiration(claims, options.maxTokenLifetimeSec);
 		}
 
-		// Check token cache first
+		// TODO: what about token revocation check?
 		if (options.enableTokenCache && options.tokenCache) {
 			const tokenCacheKey = token;
 			const cachedToken = await options.tokenCache.get(tokenCacheKey).catch((error) => {
@@ -273,7 +273,7 @@ export function verifyStorageToken(
 			);
 		}
 
-		// TODO: remove this check and code after this block after testing
+		// TODO: remove this check and code after this block after validation
 		if (options.enableTokenCache) {
 			const moreOptions: IVerifyTokenOptions = options;
 			moreOptions.maxTokenLifetimeSec = maxTokenLifetimeSec;
