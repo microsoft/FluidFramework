@@ -14,8 +14,7 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build-and-test": "npm run build && npm run test",
-		"build:compile": "concurrently npm:tsc npm:build:copy-resources npm:build:webpack",
-		"build:copy-resources": "copyfiles -u 1 \"src/**/*.{css,json,html}\" dist",
+		"build:compile": "concurrently npm:tsc npm:build:webpack",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"build:webpack": "npm run webpack",
