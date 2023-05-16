@@ -7,6 +7,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { IUrlResolver, IResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	IOdspAuthRequestInfo,
+	getDriveId,
 	getDriveItemByRootFileName,
 } from "@fluidframework/odsp-doclib-utils";
 import {
@@ -38,7 +39,7 @@ export class OdspUrlResolver implements IUrlResolver {
 
 		const { driveId, itemId } = await getDriveItemByRootFileName(
 			this.server,
-			"",
+			undefined,
 			filePath,
 			this.authRequestInfo,
 			true,
@@ -55,7 +56,8 @@ export class OdspUrlResolver implements IUrlResolver {
 	}
 
 	private formFilePath(documentId: string): string {
-		const encoded = encodeURIComponent(`${documentId}.fluid`);
+		// Using .fluid will make ODSP think that it's a Loop document
+		const encoded = encodeURIComponent(`${documentId}.testFluid`);
 		return `/r11s/${encoded}`;
 	}
 
@@ -65,18 +67,13 @@ export class OdspUrlResolver implements IUrlResolver {
 
 	public async createCreateNewRequest(fileName: string): Promise<IRequest> {
 		const filePath = "/r11s/";
-		const driveItem = await getDriveItemByRootFileName(
-			this.server,
-			"",
-			filePath,
-			this.authRequestInfo,
-			false,
-		);
+		const driveId = await getDriveId(this.server, "", undefined, this.authRequestInfo);
+
 		return createOdspCreateContainerRequest(
 			`https://${this.server}`,
-			driveItem.driveId,
+			driveId,
 			filePath,
-			`${fileName}.fluid`,
+			`${fileName}.testFluid`,
 		);
 	}
 }
