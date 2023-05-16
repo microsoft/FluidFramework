@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import {
+	ICheckpointService,
 	IClientManager,
 	IContext,
 	IDeliState,
@@ -48,16 +49,21 @@ const getDefaultCheckpoint = (): IDeliState => {
 	};
 };
 
-export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionLambdaConfig> {
+export class DeliLambdaFactory
+	extends EventEmitter
+	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
+{
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly checkpointService: ICheckpointService,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
 		private readonly forwardProducer: IProducer,
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
+		private readonly restartOnCheckpointFailure: boolean,
 	) {
 		super();
 	}
@@ -127,7 +133,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			throw error;
 		}
 
-		let lastCheckpoint: IDeliState;
+		let lastCheckpoint;
 
 		// Restore deli state if not present in the cache. Mongodb casts undefined as null so we are checking
 		// both to be safe. Empty sring denotes a cache that was cleared due to a service summary or the document
@@ -170,7 +176,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
 			} else {
-				lastCheckpoint = JSON.parse(document.deli);
+				lastCheckpoint = await this.checkpointService.restoreFromCheckpoint(
+					documentId,
+					tenantId,
+					"deli",
+					document,
+				);
 			}
 		}
 
@@ -185,7 +196,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		const checkpointManager = createDeliCheckpointManagerFromCollection(
 			tenantId,
 			documentId,
-			this.documentRepository,
+			this.checkpointService,
 		);
 
 		const deliLambda = new DeliLambda(
@@ -202,6 +213,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			this.serviceConfiguration,
 			sessionMetric,
 			sessionStartMetric,
+			this.checkpointService,
+			this.restartOnCheckpointFailure,
 		);
 
 		deliLambda.on("close", (closeType) => {

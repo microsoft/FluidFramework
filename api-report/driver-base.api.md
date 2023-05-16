@@ -57,6 +57,13 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     static readonly eventsToForward: string[];
     get existing(): boolean;
     // (undocumented)
+    protected getConnectionDetailsProps(): {
+        disposed: boolean;
+        socketConnected: boolean;
+        clientId: string | undefined;
+        connectionId: string | undefined;
+    };
+    // (undocumented)
     protected get hasDetails(): boolean;
     get initialClients(): ISignalClient[];
     // (undocumented)
@@ -75,8 +82,6 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     protected readonly socket: Socket;
     submit(messages: IDocumentMessage[]): void;
-    // (undocumented)
-    protected submitCore(type: string, messages: IDocumentMessage[]): void;
     submitSignal(message: IDocumentMessage): void;
     get version(): string;
 }
@@ -92,6 +97,12 @@ export function getW3CData(url: string, initiatorType: string): {
     fetchStartToResponseEndTime: number | undefined;
     reqStartToResponseEndTime: number | undefined;
 };
+
+// @public (undocumented)
+export function promiseRaceWithWinner<T>(promises: Promise<T>[]): Promise<{
+    index: number;
+    value: T;
+}>;
 
 // (No @packageDocumentation comment for this package)
 

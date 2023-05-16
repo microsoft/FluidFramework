@@ -20,20 +20,19 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"bench": "ts-node bench/src/index.ts",
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
-		"build:genver": "gen-version",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
 		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
 		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
 		"bump-version": "npm version minor --no-push --no-git-tag-version && npm run build:gen:bump",
-		"ci:build": "npm run build:genver && npm run build:compile",
+		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"ci:test": "npm run test:report",
 		"ci:test:coverage": "npm run test:coverage",
@@ -87,9 +86,9 @@
 		"sha.js": "^2.4.11"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.13.1",
+		"@fluid-tools/build-cli": "^0.16.1",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.13.1",
+		"@fluidframework/build-tools": "^0.16.1",
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
@@ -124,6 +123,7 @@
 		"ts-node": "^10.9.1",
 		"typescript": "~4.5.5"
 	},
+	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"fluidBuild": {
 		"branchReleaseTypes": {
 			"main": "minor",
@@ -134,7 +134,6 @@
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"
 	},
-	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
 	"typeValidation": {
 		"broken": {}
 	}

@@ -132,12 +132,14 @@ describe("Runtime", () => {
 			}
 
 			function emitBroadcast(timestamp = Date.now()) {
+				const referenceSequenceNumber = lastRefSeq;
+				lastSummarySeq = ++lastRefSeq;
 				const op = {
 					type: MessageType.Summarize,
 					clientId: summarizerClientId,
-					referenceSequenceNumber: lastRefSeq,
-					clientSequenceNumber: --lastClientSeq,
-					sequenceNumber: --lastSummarySeq,
+					referenceSequenceNumber,
+					clientSequenceNumber: ++lastClientSeq,
+					sequenceNumber: lastSummarySeq,
 					contents: {
 						handle: "test-broadcast-handle",
 					},
@@ -228,6 +230,8 @@ describe("Runtime", () => {
 					async (options) => {
 						runCount++;
 
+						heuristicData.recordAttempt(lastRefSeq);
+
 						const { fullTree = false, refreshLatestAck = false } = options;
 						if (fullTree) {
 							fullTreeRunCount++;
@@ -235,6 +239,9 @@ describe("Runtime", () => {
 						if (refreshLatestAck) {
 							refreshLatestAckRunCount++;
 						}
+
+						// emitBroadcast will increment this number
+						const lastRefSeqBefore = lastRefSeq;
 
 						// immediate broadcast
 						emitBroadcast();
@@ -246,7 +253,7 @@ describe("Runtime", () => {
 						}
 						return {
 							stage: "submit",
-							referenceSequenceNumber: lastRefSeq,
+							referenceSequenceNumber: lastRefSeqBefore,
 							minimumSequenceNumber: 0,
 							generateDuration: 0,
 							uploadDuration: 0,
@@ -534,7 +541,7 @@ describe("Runtime", () => {
 						"Expect nonRuntimeHeuristicThreshold to be provided",
 					);
 
-					await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 2); // SummaryAck is included
+					await emitNoOp(summaryConfig.nonRuntimeHeuristicThreshold - 3); // Summarize and SummaryAck are included
 					await tickAndFlushPromises(summaryConfig.minIdleTime);
 
 					assertRunCounts(1, 0, 0, "should not perform summary");
@@ -667,61 +674,6 @@ describe("Runtime", () => {
 					assert.strictEqual(stopCall, 0);
 					await emitNack();
 					assert.strictEqual(stopCall, 1);
-				});
-
-				it("Should not retry on failure when stopping instead of restarting", async () => {
-					settings["Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod"] = "restart";
-					await startRunningSummarizer();
-					await emitNextOp();
-
-					// too early, should not run yet
-					await emitNextOp(summaryConfig.maxOps - 1);
-					assertRunCounts(0, 0, 0);
-
-					// now should run a normal run
-					await emitNextOp(1);
-					assertRunCounts(1, 0, 0);
-					const retryProps1 = {
-						summarizeCount: 1,
-						summaryAttemptsPerPhase: 1,
-						summaryAttempts: 1,
-						summaryAttemptPhase: 1,
-					};
-					assert(
-						mockLogger.matchEvents([
-							{ eventName: "Running:Summarize_generate", ...retryProps1 },
-							{ eventName: "Running:Summarize_Op", ...retryProps1 },
-						]),
-						"unexpected log sequence",
-					);
-
-					// should not run, because our summary hasn't been acked/nacked yet
-					await emitNextOp(summaryConfig.maxOps + 1);
-					assertRunCounts(1, 0, 0);
-
-					// should run with refresh after first nack
-					await emitNack();
-					assertRunCounts(2, 0, 0, "retry1 should be refreshLatestAck");
-					const retryProps2 = {
-						summarizeCount: 1,
-						summarizerSuccessfulAttempts: 0,
-					};
-					assert(
-						mockLogger.matchEvents([
-							{
-								eventName: "Running:Summarize_cancel",
-								...retryProps1,
-								reason: getFailMessage("summaryNack"),
-							},
-							{
-								eventName: "Running:ClosingSummarizerOnSummaryStale",
-								...retryProps2,
-							},
-						]),
-						"unexpected log sequence",
-					);
-					assert.strictEqual(stopCall, 1);
-					assert(mockRuntime.disposed, "runtime should be disposed!");
 				});
 
 				it("Should retry after delay on failures with retryAfter", async () => {
@@ -905,8 +857,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.sequenceNumber,
-						-1,
-						"summarize op seq number should match test negative counter",
+						3,
+						"unexpected summary sequence number",
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
@@ -982,8 +934,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.sequenceNumber,
-						-1,
-						"summarize op seq number should match test negative counter",
+						3,
+						"unexpected summary sequence number",
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
@@ -1144,8 +1096,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.sequenceNumber,
-						-1,
-						"summarize op seq number should match test negative counter",
+						10,
+						"unexpected summary sequence number",
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
@@ -1222,8 +1174,8 @@ describe("Runtime", () => {
 						"enqueued summary submitted data stage should be submit",
 					);
 
-					// 24 = 22 regular runtime ops + 2 summary ack ops
-					const expectedRefSeqNum = summaryConfig.maxOps * 2 + 24;
+					// 26 = 22 regular runtime ops + 2 summary ack ops + 2 summarize ops
+					const expectedRefSeqNum = summaryConfig.maxOps * 2 + 26;
 					assert.strictEqual(
 						submitResult.data.referenceSequenceNumber,
 						expectedRefSeqNum,
@@ -1243,8 +1195,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.sequenceNumber,
-						-3,
-						"summarize op seq number should match test negative counter",
+						expectedRefSeqNum + 1,
+						"unexpected summary sequence number",
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,

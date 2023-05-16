@@ -29,6 +29,9 @@ export class BasicRestWrapper extends RestWrapper {
 // @public
 export const buildTreePath: (...nodeNames: string[]) => string;
 
+// @public
+export const canDeleteDoc: (scopes: string[]) => boolean;
+
 // @public (undocumented)
 export const canRead: (scopes: string[]) => boolean;
 
@@ -61,6 +64,9 @@ export function createFluidServiceNetworkError(statusCode: number, errorData?: I
 
 // @public (undocumented)
 export const defaultHash = "00000000";
+
+// @public
+export const DocDeleteScopeType = "doc:delete";
 
 // @public (undocumented)
 export const DriverVersionHeaderName = "x-driver-version";
@@ -564,6 +570,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 
 // @public
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;
+
+// @public
+export const TokenRevokeScopeType = "token:revoke";
 
 // @public
 export function validateTokenClaims(token: string, documentId: string, tenantId: string): ITokenClaims;

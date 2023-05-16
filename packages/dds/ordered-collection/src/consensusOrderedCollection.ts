@@ -287,7 +287,7 @@ export class ConsensusOrderedCollection<T = any>
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			const op: IConsensusOrderedCollectionOperation = message.contents;
+			const op = message.contents as IConsensusOrderedCollectionOperation;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add":
@@ -295,7 +295,7 @@ export class ConsensusOrderedCollection<T = any>
 					break;
 
 				case "acquire":
-					value = this.acquireCore(op.acquireId, message.clientId);
+					value = this.acquireCore(op.acquireId, message.clientId ?? undefined);
 					break;
 
 				case "complete":

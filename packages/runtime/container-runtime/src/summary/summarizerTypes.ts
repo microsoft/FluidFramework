@@ -489,6 +489,8 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	| "opsSizesSinceLastSummary"
 	/** Delta between the number of non-runtime ops since the last summary */
 	| "nonRuntimeOpsSinceLastSummary"
+	/** Delta between the number of runtime ops since the last summary */
+	| "runtimeOpsSinceLastSummary"
 	/** Wether or not this instance contains adjusted metrics due to missing op data */
 	| "hasMissingOpData"
 	/** Time it took to generate the summary tree and stats. */
@@ -506,7 +508,9 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	/** Actual sequence number of the summary op proposal. */
 	| "summarySequenceNumber"
 	/** Optional Retry-After time in seconds. If specified, the client should wait this many seconds before retrying. */
-	| "nackRetryAfter";
+	| "nackRetryAfter"
+	/** The stage at which the submit summary method failed at. This can help determine what type of failure we have */
+	| "stage";
 
 export type SummaryGeneratorTelemetry = Pick<
 	ITelemetryProperties,

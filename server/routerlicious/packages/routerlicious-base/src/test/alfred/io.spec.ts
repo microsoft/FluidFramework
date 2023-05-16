@@ -101,12 +101,14 @@ describe("Routerlicious", () => {
 						collectionNames,
 						collectionNames,
 						collectionNames,
+						collectionNames,
 					);
 					const testStorage = new services.DocumentStorage(
 						testDocumentRepository,
 						testTenantManager,
 						false,
 						await databaseManager.getDeltaCollection(undefined, undefined),
+						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
 						producer,
@@ -559,6 +561,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						collectionNames,
 						collectionNames,
 						collectionNames,
+						collectionNames,
 					);
 					const testDocumentRepository = new TestNotImplementedDocumentRepository();
 					const testStorage = new services.DocumentStorage(
@@ -566,6 +569,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						testTenantManager,
 						false,
 						await databaseManager.getDeltaCollection(undefined, undefined),
+						undefined,
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
 						producer,
@@ -787,12 +791,14 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				collectionNames,
 				collectionNames,
 				collectionNames,
+				collectionNames,
 			);
 			testStorage = new services.DocumentStorage(
 				testDocumentRepository,
 				testTenantManager,
 				false,
 				await databaseManager.getDeltaCollection(undefined, undefined),
+				undefined,
 			);
 		});
 

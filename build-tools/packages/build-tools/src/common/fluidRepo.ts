@@ -4,7 +4,12 @@
  */
 import * as path from "path";
 
-import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
+import {
+	DEFAULT_INTERDEPENDENCY_RANGE,
+	InterdependencyRange,
+	ReleaseVersion,
+	VersionBumpType,
+} from "@fluid-tools/version-tools";
 
 import { getFluidBuildConfig } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
@@ -182,6 +187,13 @@ export interface IFluidRepoPackage {
 	 * An array of paths under `directory` that should be ignored.
 	 */
 	ignoredDirs?: string[];
+
+	/**
+	 * The interdependencyRange controls the type of semver range to use between packages in the same release group. This
+	 * setting controls the default range that will be used when updating the version of a release group. The default can
+	 * be overridden using the `--interdependencyRange` flag in the `flub bump` command.
+	 */
+	defaultInterdependencyRange: InterdependencyRange;
 }
 
 export type IFluidRepoPackageEntry = string | IFluidRepoPackage | (string | IFluidRepoPackage)[];
@@ -222,7 +234,7 @@ export class FluidRepo {
 	constructor(
 		public readonly resolvedRoot: string,
 		services: boolean,
-		private readonly logger: Logger = defaultLogger,
+		private readonly log: Logger = defaultLogger,
 	) {
 		const packageManifest = getFluidBuildConfig(resolvedRoot);
 
@@ -234,12 +246,20 @@ export class FluidRepo {
 				return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
 			}
 			if (typeof item === "string") {
-				return { directory: path.join(resolvedRoot, item), ignoredDirs: undefined };
+				log?.verbose(
+					`No defaultinterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
+				);
+				return {
+					directory: path.join(resolvedRoot, item),
+					ignoredDirs: undefined,
+					defaultInterdependencyRange: DEFAULT_INTERDEPENDENCY_RANGE,
+				};
 			}
 			const directory = path.join(resolvedRoot, item.directory);
 			return {
 				directory,
 				ignoredDirs: item.ignoredDirs?.map((dir) => path.join(directory, dir)),
+				defaultInterdependencyRange: item.defaultInterdependencyRange,
 			};
 		};
 		const loadOneEntry = (item: IFluidRepoPackage, group: string) => {
@@ -250,8 +270,20 @@ export class FluidRepo {
 		for (const group in packageManifest.repoPackages) {
 			const item = normalizeEntry(packageManifest.repoPackages[group]);
 			if (isMonoRepoKind(group)) {
-				const { directory, ignoredDirs } = item as IFluidRepoPackage;
-				const monorepo = new MonoRepo(group, directory, ignoredDirs, logger);
+				const { directory, ignoredDirs, defaultInterdependencyRange } =
+					item as IFluidRepoPackage;
+				if (defaultInterdependencyRange === undefined) {
+					log?.warning(
+						`No defaultinterdependencyRange specified for ${group} release group. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
+					);
+				}
+				const monorepo = new MonoRepo(
+					group,
+					directory,
+					defaultInterdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE,
+					ignoredDirs,
+					log,
+				);
 				this.releaseGroups.set(group, monorepo);
 				loadedPackages.push(...monorepo.packages);
 			} else if (group !== "services" || services) {

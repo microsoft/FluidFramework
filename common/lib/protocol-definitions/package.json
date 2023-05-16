@@ -35,8 +35,6 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
-		"tsfmt": "tsfmt --verify",
-		"tsfmt:fix": "tsfmt --replace",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
@@ -44,9 +42,9 @@
 		"@fluidframework/common-definitions": "^0.20.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.13.1",
+		"@fluid-tools/build-cli": "^0.16.1",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.13.1",
+		"@fluidframework/build-tools": "^0.16.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/protocol-definitions-previous": "npm:@fluidframework/protocol-definitions@1.1.0",
 		"@microsoft/api-extractor": "^7.22.2",
@@ -60,13 +58,13 @@
 		"typescript": "~4.5.5",
 		"typescript-formatter": "7.1.0"
 	},
+	"packageManager": "pnpm@7.32.3+sha512.c28d73f0d82a6c4712a40b91aa43d7397e119b16f35e5e75fe9b7e8fd4f2fc6dfbb68bb3ffac3473a958bbafa7888b79ec384ad122537378089a3a2a19b9900e",
 	"fluidBuild": {
 		"branchReleaseTypes": {
 			"main": "minor",
 			"release/**": "patch"
 		}
 	},
-	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
 	"typeValidation": {
 		"broken": {
 			"InterfaceDeclaration_IDocumentAttributes": {
@@ -83,6 +81,17 @@
 			},
 			"InterfaceDeclaration_ISequencedDocumentSystemMessage": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IHelpMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IQueueMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"EnumDeclaration_MessageType": {
+				"forwardCompat": false
 			}
 		}
 	}

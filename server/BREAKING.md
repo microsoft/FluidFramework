@@ -1,5 +1,38 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
+## 1.0.0 Breaking Changes
+- [auth.ts Refactor function validateTokenRevocationClaims to validateTokenScopeClaims]
+#### `auth.ts` Refactor function validateTokenRevocationClaims to validateTokenScopeClaims 
+Before: `validateTokenRevocationClaims()`
+Now: `validateTokenScopeClaims(expectedScopes: string)`
+Valid expectedScopes are either DocDeleteScopeType or TokenRevokeScopeType
+- [IDocumentDeleteService class take one additional IDocumentDeleteService parameter]
+#### `IDocumentDeleteService` added to alfred `runnerFactory` and `resource`
+```ts
+export class AlfredResources implements core.IResources {
+...
+	constructor(
+    ...
+		public documentRepository: core.IDocumentRepository,
+		public documentDeleteService: IDocumentDeleteService,
+		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+    ...
+  )
+...
+}
+
+```
+- [DocumentStorage class take one additional IStorageNameAllocator parameter](#DocumentStorage-class-take-one-additional-IStorageNameAllocator-parameter)
+
+#### `DocumentStorage` class take one additional `IStorageNameAllocator` parameter
+One more `IStorageNameAllocator` parameter need for DocumentStorage class to assign a storage name while initial upload
+
+-  [The foreman lambda was removed](#the-foreman-lambda-was-removed)
+
+### The foreman lambda was removed
+
+The foreman lambda in `server` has not been in use for a while so we are removing it.
+
 ## 0.1038 Breaking Changes
 - [aggregate function from `MongoCollection` became async](#aggregate-function-from-MongoCollection-became-async)
 #### `aggregate` function from `MongoCollection` became async
