@@ -155,17 +155,19 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 
 	public static async execRun(runConfig: DocCreatorRunnerRunConfig): Promise<string> {
 		let schema;
-		const logger = await getLogger(
-			{
-				runId: runConfig.runId,
-				scenarioName: runConfig.scenarioName,
-				namespace: "scenario:runner:DocCreator",
-				endpoint: runConfig.connEndpoint,
-				region: runConfig.region,
-			},
-			["scenario:runner"],
-			eventMap,
-		);
+		const logger =
+			runConfig.logger ??
+			(await getLogger(
+				{
+					runId: runConfig.runId,
+					scenarioName: runConfig.scenarioName,
+					namespace: "scenario:runner:DocCreator",
+					endpoint: runConfig.connEndpoint,
+					region: runConfig.region,
+				},
+				["scenario:runner"],
+				eventMap,
+			));
 
 		const ac =
 			runConfig.client ??

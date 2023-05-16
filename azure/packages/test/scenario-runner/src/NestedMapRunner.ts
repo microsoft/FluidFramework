@@ -22,12 +22,13 @@ import {
 } from "./interface";
 import {
 	AzureClientConfig,
+	FluidSummarizerTelemetryEventNames,
 	createAzureClient,
 	delay,
 	getScenarioRunnerTelemetryEventMap,
 	loadInitialObjSchema,
 } from "./utils";
-import { getLogger } from "./logger";
+import { getLogger, loggerP } from "./logger";
 
 const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 
@@ -37,6 +38,7 @@ export interface NestedMapRunnerConfig {
 	docIds: string[];
 	clientStartDelayMs: number;
 	numMaps: number;
+	initialMapKey: string;
 	client?: AzureClient;
 	containers?: IFluidContainer[];
 }
@@ -56,6 +58,7 @@ export interface NestedMapRunnerRunConfig
 	schema: ContainerFactorySchema;
 	docId: string;
 	numMaps: number;
+	initialMapKey: string;
 	container?: IFluidContainer;
 	region?: string;
 	client?: AzureClient;
@@ -89,8 +92,10 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 				(i++).toString(),
 				"--docId",
 				docId,
-				"--docId",
+				"--numMaps",
 				this.c.numMaps.toString(),
+				"--initialMapKey",
+				this.c.initialMapKey,
 				"--schema",
 				JSON.stringify(this.c.schema),
 				"--connType",
@@ -134,6 +139,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		const client = this.c.client;
 		const containers = this.c.containers;
 		const docIds = this.c.docIds;
+		const initialMapKey = this.c.initialMapKey;
 		if (containers !== undefined && containers.length !== docIds.length) {
 			throw new Error("Number of containers not equal to number of docIds");
 		}
@@ -147,6 +153,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 					childId: i,
 					docId,
 					numMaps,
+					initialMapKey,
 					connType,
 					connEndpoint,
 					tenantId,
@@ -169,17 +176,19 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 	}
 
 	public static async execRun(runConfig: NestedMapRunnerRunConfig): Promise<void> {
-		const logger = await getLogger(
-			{
-				runId: runConfig.runId,
-				scenarioName: runConfig.scenarioName,
-				namespace: "scenario:runner:NestedMap",
-				endpoint: runConfig.connEndpoint,
-				region: runConfig.region,
-			},
-			["scenario:runner"],
-			eventMap,
-		);
+		const logger =
+			runConfig.logger ??
+			(await getLogger(
+				{
+					runId: runConfig.runId,
+					scenarioName: runConfig.scenarioName,
+					namespace: "scenario:runner:NestedMap",
+					endpoint: runConfig.connEndpoint,
+					region: runConfig.region,
+				},
+				["scenario:runner"],
+				eventMap,
+			));
 
 		const ac =
 			runConfig.client ??
@@ -195,9 +204,13 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 				logger,
 			}));
 
-		const container: IFluidContainer = await NestedMapRunner.loadContainer(runConfig, logger, ac);
+		const container: IFluidContainer = await NestedMapRunner.loadContainer(
+			runConfig,
+			logger,
+			ac,
+		);
 
-		let currentMap = await container.create(SharedMap);
+		let currentMap: SharedMap = container.initialObjects[runConfig.initialMapKey] as SharedMap;
 		for (let i = 0; i < runConfig.numMaps; ++i) {
 			const nextMap = await container.create(SharedMap);
 			currentMap.set("data", i);
@@ -205,12 +218,44 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 			currentMap = nextMap;
 		}
 
-		await (new Promise<void>((resolve) => {
-			setTimeout(() => resolve(), 60_000);
-		}))
+		// await PerformanceEvent.timedExecAsync(
+		// 	logger,
+		// 	{ eventName: "Catchup", clientId: runConfig.childId },
+		// 	async (_event) => {
+		// 		await timeoutPromise((resolve) => container.once("saved", () => resolve()), {
+		// 			durationMs: 20000,
+		// 			errorMsg: "datastoreSaveAfterAttach timeout",
+		// 		});
+		// 	},
+		// 	{ start: true, end: true, cancel: "generic" },
+		// );
+
+		await PerformanceEvent.timedExecAsync(
+			logger,
+			{ eventName: "Summarize", clientId: runConfig.childId },
+			async (_event) => {
+				const scenarioLogger = await loggerP;
+				await timeoutPromise(
+					(resolve) =>
+						scenarioLogger.events.once(
+							FluidSummarizerTelemetryEventNames.Summarize,
+							() => resolve(),
+						),
+					{
+						durationMs: 60000,
+						errorMsg: "summarize timeout",
+					},
+				);
+			},
+			{ start: true, end: true, cancel: "generic" },
+		);
 	}
 
-	private static async loadContainer(runConfig: NestedMapRunnerRunConfig, logger: TelemetryLogger, client: AzureClient): Promise<IFluidContainer> {
+	private static async loadContainer(
+		runConfig: NestedMapRunnerRunConfig,
+		logger: TelemetryLogger,
+		client: AzureClient,
+	): Promise<IFluidContainer> {
 		if (runConfig.container !== undefined) {
 			return runConfig.container;
 		}

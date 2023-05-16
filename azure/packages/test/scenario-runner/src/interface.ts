@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 export type RunnnerStatus = "notStarted" | "running" | "success" | "error";
 export interface IRunnerStatus {
@@ -18,6 +19,7 @@ export interface IRunnerEvents extends IEvent {
 export interface IRunConfig {
 	runId: string;
 	scenarioName: string;
+	logger?: TelemetryLogger;
 }
 
 export interface IRunner extends IEventProvider<IRunnerEvents> {

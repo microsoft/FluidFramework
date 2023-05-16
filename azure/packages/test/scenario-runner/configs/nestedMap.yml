@@ -51,5 +51,6 @@ stages:
           schema: ${schema}
           docIds: ${docIds}
           client: ${client}
+          initialMapKey: key1
           containers: ${containers}
           numMaps: 10000

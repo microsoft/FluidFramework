@@ -6,7 +6,10 @@ import { AzureClient } from "@fluidframework/azure-client";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 
 import { IRunConfig, IRunner, IRunnerEvents, IRunnerStatus, RunnnerStatus } from "./interface";
-import { createAzureClient } from "./utils";
+import { createAzureClient, getScenarioRunnerTelemetryEventMap } from "./utils";
+import { getLogger } from "./logger";
+
+const eventMap = getScenarioRunnerTelemetryEventMap("AzureClient");
 
 export interface ICustomUserDetails {
 	gender: string;
@@ -23,6 +26,7 @@ export interface AzureClientRunnerConfig {
 	connectionConfig: AzureClientRunnerConnectionConfig;
 	userId?: string;
 	userName?: string;
+	region?: string;
 }
 export type AzureClientRunnerRunConfig = AzureClientRunnerConfig & IRunConfig;
 
@@ -54,17 +58,33 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
 	}
 
 	public static async execRun(runConfig: AzureClientRunnerRunConfig): Promise<AzureClient> {
+		const connEndpoint =
+			runConfig.connectionConfig.endpoint ??
+			process.env.azure__fluid__relay__service__endpoint;
+		const region = runConfig.region;
+		const logger =
+			runConfig.logger ??
+			(await getLogger(
+				{
+					runId: runConfig.runId,
+					scenarioName: runConfig.scenarioName,
+					namespace: "scenario:runner:AzureClient",
+					endpoint: connEndpoint,
+					region,
+				},
+				["scenario:runner"],
+				eventMap,
+			));
 		const ac = await createAzureClient({
 			connType: runConfig.connectionConfig.type,
-			connEndpoint:
-				runConfig.connectionConfig.endpoint ??
-				process.env.azure__fluid__relay__service__endpoint,
+			connEndpoint,
 			userId: runConfig.userId ?? "testUserId",
 			userName: runConfig.userName ?? "testUserId",
 			tenantId: process.env.azure__fluid__relay__service__tenantId,
 			tenantKey: process.env.azure__fluid__relay__service__tenantKey,
 			functionUrl: process.env.azure__fluid__relay__service__function__url,
 			secureTokenProvider: runConfig.connectionConfig.useSecureTokenProvider,
+			logger,
 		});
 		return ac;
 	}

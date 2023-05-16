@@ -163,17 +163,19 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 
 	public static async execRun(runConfig: DocLoaderRunnerRunConfig): Promise<IFluidContainer> {
 		let schema;
-		const logger = await getLogger(
-			{
-				runId: runConfig.runId,
-				scenarioName: runConfig.scenarioName,
-				namespace: "scenario:runner:DocLoader",
-				endpoint: runConfig.connEndpoint,
-				region: runConfig.region,
-			},
-			["scenario:runner"],
-			eventMap,
-		);
+		const logger =
+			runConfig.logger ??
+			(await getLogger(
+				{
+					runId: runConfig.runId,
+					scenarioName: runConfig.scenarioName,
+					namespace: "scenario:runner:DocLoader",
+					endpoint: runConfig.connEndpoint,
+					region: runConfig.region,
+				},
+				["scenario:runner"],
+				eventMap,
+			));
 
 		const ac =
 			runConfig.client ??
