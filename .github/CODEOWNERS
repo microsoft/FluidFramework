@@ -38,7 +38,7 @@
 /packages/runtime/                                                        @microsoft/fluid-cr-runtime
 /packages/test/                                                           @microsoft/fluid-cr-test
 /packages/tools/                                                          @microsoft/fluid-cr-tools
-/packages/tools/client-debugger/                                          @microsoft/team-rohan
+/packages/tools/devtools/                                                 @microsoft/team-rohan
 /packages/utils/                                                          @microsoft/fluid-cr-infra
 /packages/utils/odsp-doclib-utils/                                        @microsoft/fluid-cr-odsp
 /packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
