@@ -552,6 +552,9 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../../packages/loader/container-loader
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
@@ -591,9 +594,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../../../packages/framework/fluid-framework
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
