@@ -696,7 +696,7 @@ export class ModularChangeFamily
 				const manager = newCrossFieldManager(crossFieldTable);
 				const rebasedChangeset = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
-					makeAnonChange(baseChangeset),
+					tagChange(baseChangeset, over.revision),
 					(child, baseChild) => {
 						assert(
 							baseChild === undefined,

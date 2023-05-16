@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# test-real-service-e2e pipeline
+# test-azure-frs pipeline
 
 name: $(Build.BuildId)
 
@@ -44,7 +44,8 @@ stages:
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
           azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
-          azure__fluid__relay__service__function__url: $(azure-fluid-relay-service-function-url)
+          azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
+          azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
 
   - stage:
     displayName: e2e - azure client with azure local service
