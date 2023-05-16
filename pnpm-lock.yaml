@@ -6993,43 +6993,6 @@ importers:
         specifier: ^7.4.2
         version: 7.5.0
 
-  experimental/PropertyDDS/packages/property-shared-tree-interop:
-    specifiers:
-      '@fluid-experimental/property-changeset': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluid-experimental/property-properties': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluid-internal/tree': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@types/jest': 22.2.3
-      '@types/node': ^14.18.38
-      concurrently: ^7.6.0
-      eslint: ~8.6.0
-      eslint-config-prettier: ~8.5.0
-      jest: ^26.6.3
-      jest-junit: ^10.0.0
-      prettier: ~2.6.2
-      rimraf: ^4.4.0
-      ts-jest: ^26.4.4
-      typescript: ~4.5.5
-    dependencies:
-      '@fluid-experimental/property-changeset': link:../property-changeset
-      '@fluid-experimental/property-properties': link:../property-properties
-      '@fluid-internal/tree': link:../../../../packages/dds/tree
-      '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
-    devDependencies:
-      '@fluidframework/build-common': 1.1.0
-      '@types/jest': 22.2.3
-      '@types/node': 14.18.38
-      concurrently: 7.6.0
-      eslint: 8.6.0
-      eslint-config-prettier: 8.5.0_eslint@8.6.0
-      jest: 26.6.3
-      jest-junit: 10.0.0
-      prettier: 2.6.2
-      rimraf: 4.4.0
-      ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
-      typescript: 4.5.5
-
   experimental/PropertyDDS/services/property-query-service:
     dependencies:
       '@fluid-experimental/property-changeset':
@@ -20248,6 +20211,7 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
+    dev: true
 
   /@fluidframework/azure-service-utils@2.0.0-internal.4.1.0:
     resolution: {integrity: sha512-txxEdn8y3Wek+PAvRrLWVCmRuFpkLp1wIwEPVbFks9L8gbk/4PZ8fxdmN0zqaqDA714LqOPqmivhRM2CLwUWag==}
@@ -21464,6 +21428,7 @@ packages:
       - encoding
       - supports-color
       - utf-8-validate
+    dev: true
 
   /@fluidframework/routerlicious-driver@2.0.0-internal.4.1.0(debug@4.3.4):
     resolution: {integrity: sha512-OK2YZ7ZTxsMhubGm+aH2Kte90qpI5T0GqgDmr1ptcWBsK6jU8kfrkZ97faUomCQLpAQOqv2JrlAx33IcOcSKnQ==}
@@ -32376,6 +32341,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: true
 
   /engine.io-parser@5.0.6:
     resolution: {integrity: sha512-tjuoZDMAdEhVnSFleYPCtdL2GXwVTGtNjoeJd9IhIG3C1xs9uwxqRNEu5WpnDZCaozwVlK/nuQhpodhXSIMaxw==}
@@ -44268,6 +44234,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    dev: true
 
   /socket.io-parser@4.2.1:
     resolution: {integrity: sha512-V4GrkLy+HeF1F/en3SpUaM+7XxYXpuMUWLGde1kSSh5nQMN4hLrbPIkD+otwh6q9R6NOQBN4AMaOZ2zVjui82g==}
