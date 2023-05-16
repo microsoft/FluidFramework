@@ -40,7 +40,7 @@ import { IDocumentDeleteService } from "../../services";
 export function create(
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
-	tenantThrottlersMap: Map<string, string>,
+	tenantGroupMap: Map<string, string>,
 	throttlersMap: Map<string, Map<string, IThrottler>>,
 	singleUseTokenCache: ICache,
 	config: Provider,
@@ -119,7 +119,7 @@ export function create(
 		),
 		tenantThrottle(
 			Constants.createDocThrottleIdPrefix,
-			tenantThrottlersMap,
+			tenantGroupMap,
 			throttlersMap,
 			appTenants[0].id,
 		),
@@ -216,7 +216,7 @@ export function create(
 		),
 		tenantThrottle(
 			Constants.getSessionThrottleIdPrefix,
-			tenantThrottlersMap,
+			tenantGroupMap,
 			throttlersMap,
 			appTenants[0].id,
 		),

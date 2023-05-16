@@ -63,7 +63,7 @@
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
 		"throttling": {
-			"tenantsGroup1PerTenant": {
+			"perTenantGroup1": {
 				"createDoc": "disabled",
 				"getDeltas": "disabled",
 				"getSession": "disabled",
@@ -160,7 +160,7 @@
 	},
 	"shared": {
 		"transientTenants": [],
-		"tenantsGroup1PerTenant": []
+		"perTenantGroup1": []
 	},
 	"auth": {
 		"endpoint": "http://riddler:5000",

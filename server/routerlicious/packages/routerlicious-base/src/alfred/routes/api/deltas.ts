@@ -28,7 +28,7 @@ export function create(
 	tenantManager: ITenantManager,
 	deltaService: IDeltaService,
 	appTenants: IAlfredTenant[],
-	tenantThrottlersMap: Map<string, string>,
+	tenantGroupMap: Map<string, string>,
 	throttlersMap: Map<string, Map<string, IThrottler>>,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
@@ -118,7 +118,7 @@ export function create(
 		throttle(getDeltasClusterThrottler, winston, getDeltasClusterThrottleOptions),
 		tenantThrottle(
 			Constants.getDeltasThrottleIdPrefix,
-			tenantThrottlersMap,
+			tenantGroupMap,
 			throttlersMap,
 			appTenants[0].id,
 		),

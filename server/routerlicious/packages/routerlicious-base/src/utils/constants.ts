@@ -14,5 +14,5 @@ export const Constants = Object.freeze({
 	generalRestCallThrottleIdPrefix: "generalRestCall",
 	perTenantThrottler: "perTenant",
 	perClusterThrottler: "perCluster",
-	tenantsGroup1PerTenantThrottler: "tenantsGroup1PerTenant",
+	perTenantGroup1Throttler: "perTenantGroup1",
 });

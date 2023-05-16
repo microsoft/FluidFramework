@@ -73,22 +73,22 @@ data:
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
-                "tenantsGroup1PerTenant" : {{ toJson .Values.alfred.throttling.tenantsGroup1PerTenant }},
+                "perTenantGroup1" : {{ toJson .Values.alfred.throttling.perTenantGroup1 }},
                 "perTenant" : {
                     "generalRestCall": {{ toJson .Values.alfred.throttling.perTenant.generalRestCall }},
                     "createDoc": {{ toJson .Values.alfred.throttling.perTenant.createDoc }},
                     "getDeltas": {{ toJson .Values.alfred.throttling.perTenant.getDeltas }},
                     "getSession": {{ toJson .Values.alfred.throttling.perTenant.getSession }},
                     "socketConnections": {{ toJson .Values.alfred.throttling.perTenant.socketConnections }},
-                    "submitOps": {{ toJson .Values.alfred.throttling.perTenant.submitOps }}
+                    "submitOps": {{ toJson .Values.alfred.throttling.perTenant.submitOps }},
+                    "submitSignal": {{ toJson .Values.alfred.throttling.perTenant.submitSignal }}
                 },
                 "perCluster" : {
                     "createDoc": {{ toJson .Values.alfred.throttling.perCluster.createDoc }},
                     "getDeltas": {{ toJson .Values.alfred.throttling.perCluster.getDeltas }},
                     "getSession": {{ toJson .Values.alfred.throttling.perCluster.getSession }},
                     "socketConnections": {{ toJson .Values.alfred.throttling.perCluster.socketConnections }},
-                    "submitOps": {{ toJson .Values.alfred.throttling.perCluster.submitOps }},
-                    "submitSignal": {{ toJson .Values.alfred.throttling.perCluster.submitSignal }}
+                    "submitOps": {{ toJson .Values.alfred.throttling.perCluster.submitOps }}
                 }
             },
             "topic": "{{ .Values.kafka.topics.rawdeltas }}",
@@ -156,7 +156,7 @@ data:
         },
         "shared": {
             "transientTenants": {{ toJson .Values.shared.transientTenants }},
-            "tenantsGroup1PerTenant": {{ toJson .Values.shared.tenantsGroup1PerTenant }}
+            "perTenantGroup1": {{ toJson .Values.shared.perTenantGroup1 }}
         },
         "auth": {
             "endpoint": "http://{{ template "riddler.fullname" . }}",

@@ -129,7 +129,7 @@ describe("Routerlicious", () => {
 
 					const throttlersMap = new Map<string, Map<string, TestThrottler | Throttler>>();
 					const tenantThrottlers = new Map<string, TestThrottler>();
-					const tenantsGroup1PerTenantThrottlers = new Map<string, TestThrottler>();
+					const perTenantGroup1Throttlers = new Map<string, TestThrottler>();
 					const clusterThrottlers = new Map<string, TestThrottler | Throttler>();
 					const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
 					const testConnectionThrottlerPerCluster = new TestThrottler(
@@ -141,7 +141,7 @@ describe("Routerlicious", () => {
 					const testSubmitOpThrottlerPerCluster = new TestThrottler(throttleLimitTenant);
 					const testGroup1SubmitOpThrottler = new TestThrottler(throttleLimitTenant);
 
-					const testSubmitSignalThrottlerPerCluster = new TestThrottler(
+					const testSubmitSignalThrottlerPerTenant = new TestThrottler(
 						throttleLimitTenant,
 					);
 
@@ -153,7 +153,7 @@ describe("Routerlicious", () => {
 						Constants.socketConnectionsThrottleIdPrefix,
 						testConnectionThrottlerPerCluster,
 					);
-					tenantsGroup1PerTenantThrottlers.set(
+					perTenantGroup1Throttlers.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						testGroup1ConnectionThrottler,
 					);
@@ -166,24 +166,24 @@ describe("Routerlicious", () => {
 						Constants.submitOpsThrottleIdPrefix,
 						testSubmitOpThrottlerPerCluster,
 					);
-					tenantsGroup1PerTenantThrottlers.set(
+					perTenantGroup1Throttlers.set(
 						Constants.submitOpsThrottleIdPrefix,
 						testGroup1SubmitOpThrottler,
 					);
 
-					clusterThrottlers.set(
+					tenantThrottlers.set(
 						Constants.submitSignalThrottleIdPrefix,
-						testSubmitSignalThrottlerPerCluster,
+						testSubmitSignalThrottlerPerTenant,
 					);
 
 					throttlersMap.set(Constants.perTenantThrottler, tenantThrottlers);
 					throttlersMap.set(Constants.perClusterThrottler, clusterThrottlers);
 					throttlersMap.set(
-						Constants.tenantsGroup1PerTenantThrottler,
-						tenantsGroup1PerTenantThrottlers,
+						Constants.perTenantGroup1Throttler,
+						perTenantGroup1Throttlers,
 					);
 
-					const tenantThrottlersMap = new Map<string, string>();
+					const tenantGroupMap = new Map<string, string>();
 
 					configureWebSocketServices(
 						webSocketServer,
@@ -200,7 +200,7 @@ describe("Routerlicious", () => {
 						false,
 						false,
 						undefined,
-						tenantThrottlersMap,
+						tenantGroupMap,
 						throttlersMap,
 						undefined,
 						undefined,
@@ -640,8 +640,8 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					webSocketServer = new LocalWebSocketServer(pubsub);
 
 					const throttlersMap = new Map<string, Map<string, TestThrottler | Throttler>>();
-					const tenantThrottlers = new Map<string, TestThrottler>();
-					const tenantsGroup1PerTenantThrottlers = new Map<string, TestThrottler>();
+					const tenantThrottlers = new Map<string, TestThrottler | Throttler>();
+					const perTenantGroup1Throttlers = new Map<string, TestThrottler>();
 					const clusterThrottlers = new Map<string, TestThrottler | Throttler>();
 					const testConnectionThrottlerPerTenant = new TestThrottler(throttleLimitTenant);
 					const testConnectionThrottlerPerCluster = new TestThrottler(
@@ -656,7 +656,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					const testGroup1SubmitOpThrottler = new TestThrottler(throttleLimitConnectDoc);
 
 					const throttlerHelper = new ThrottlerHelper(testThrottleAndUsageStorageManager);
-					const testSubmitSignalThrottlerPerCluster = new Throttler(
+					const testSubmitSignalThrottlerPerTenant = new Throttler(
 						throttlerHelper,
 						minThrottleCheckInterval,
 					);
@@ -669,7 +669,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						Constants.socketConnectionsThrottleIdPrefix,
 						testConnectionThrottlerPerCluster,
 					);
-					tenantsGroup1PerTenantThrottlers.set(
+					perTenantGroup1Throttlers.set(
 						Constants.socketConnectionsThrottleIdPrefix,
 						testGroup1ConnectionThrottler,
 					);
@@ -682,24 +682,24 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						Constants.submitOpsThrottleIdPrefix,
 						testSubmitOpThrottlerPerCluster,
 					);
-					tenantsGroup1PerTenantThrottlers.set(
+					perTenantGroup1Throttlers.set(
 						Constants.submitOpsThrottleIdPrefix,
 						testGroup1SubmitOpThrottler,
 					);
 
-					clusterThrottlers.set(
+					tenantThrottlers.set(
 						Constants.submitSignalThrottleIdPrefix,
-						testSubmitSignalThrottlerPerCluster,
+						testSubmitSignalThrottlerPerTenant,
 					);
 
 					throttlersMap.set(Constants.perTenantThrottler, tenantThrottlers);
 					throttlersMap.set(Constants.perClusterThrottler, clusterThrottlers);
 					throttlersMap.set(
-						Constants.tenantsGroup1PerTenantThrottler,
-						tenantsGroup1PerTenantThrottlers,
+						Constants.perTenantGroup1Throttler,
+						perTenantGroup1Throttlers,
 					);
 
-					const tenantThrottlersMap = new Map<string, string>();
+					const tenantGroupMap = new Map<string, string>();
 
 					configureWebSocketServices(
 						webSocketServer,
@@ -716,7 +716,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						true,
 						true,
 						undefined,
-						tenantThrottlersMap,
+						tenantGroupMap,
 						throttlersMap,
 						testThrottleAndUsageStorageManager,
 					);

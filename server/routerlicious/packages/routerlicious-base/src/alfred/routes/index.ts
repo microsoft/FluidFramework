@@ -27,7 +27,7 @@ export interface IRoutes {
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottlersMap: Map<string, string>,
+	tenantGroupMap: Map<string, string>,
 	throttlersMap: Map<string, Map<string, IThrottler>>,
 	singleUseTokenCache: ICache,
 	deltaService: IDeltaService,
@@ -42,7 +42,7 @@ export function create(
 		api: api.create(
 			config,
 			tenantManager,
-			tenantThrottlersMap,
+			tenantGroupMap,
 			throttlersMap,
 			singleUseTokenCache,
 			storage,

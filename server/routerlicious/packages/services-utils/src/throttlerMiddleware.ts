@@ -62,14 +62,14 @@ function noopMiddleware(req: Request, res: Response, next: NextFunction) {
  */
 export function tenantThrottle(
 	throttleApi: string,
-	tenantThrottlersMap: Map<string, string>,
+	tenantGroupMap: Map<string, string>,
 	throttlersMap: Map<string, Map<string, IThrottler>>,
 	appTenantId?: string,
 ): RequestHandler {
 	return (req, rest, next) => {
 		const tenantId = getParam(req.params, "tenantId") ?? appTenantId;
 		const tenantGroup: string | undefined = tenantId
-			? tenantThrottlersMap?.get(tenantId)
+			? tenantGroupMap?.get(tenantId)
 			: undefined;
 		// If the tenant is found in tenant group list, apply specific tenant group's throttling options and limits. Else, apply perTenant's.
 		const throttleOptions: Partial<IThrottleMiddlewareOptions> = {

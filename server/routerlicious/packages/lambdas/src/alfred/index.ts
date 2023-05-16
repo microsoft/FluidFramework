@@ -223,7 +223,7 @@ export function configureWebSocketServices(
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
 	cache?: core.ICache,
-	tenantThrottlersMap?: Map<string, string>,
+	tenantGroupMap?: Map<string, string>,
 	throttlersMap?: Map<string, Map<string, core.IThrottler>>,
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
@@ -277,7 +277,7 @@ export function configureWebSocketServices(
 			}
 
 			const tenantGroup: string | undefined = message.tenantId
-				? tenantThrottlersMap?.get(message.tenantId) ?? undefined
+				? tenantGroupMap?.get(message.tenantId) ?? undefined
 				: undefined;
 			// If the tenant is found in tenant group list, apply specific tenant group's throttling limits. Else, apply perTenant's.
 			const connectThrottlerPerTenant = tenantGroup
@@ -710,7 +710,7 @@ export function configureWebSocketServices(
 					}
 
 					const tenantGroup: string | undefined = connection.tenantId
-						? tenantThrottlersMap?.get(connection.tenantId) ?? undefined
+						? tenantGroupMap?.get(connection.tenantId) ?? undefined
 						: undefined;
 					// If the tenant is found in tenant group list, apply specific tenant group's throttling limits. Else, apply perTenant's.
 					const submitOpsThrottlerPerTenant = tenantGroup
@@ -840,7 +840,7 @@ export function configureWebSocketServices(
 						clientId,
 					};
 					const throttleError = checkThrottleAndUsage(
-						throttlersMap?.get("perCluster")?.get("submitSignal"),
+						throttlersMap?.get("perTenant")?.get("submitSignal"),
 						getSubmitSignalThrottleId(clientId, room.tenantId),
 						room.tenantId,
 						logger,
