@@ -15,7 +15,7 @@ import {
 	rootFieldKey,
 	TreeSchemaIdentifier,
 	EmptyKey,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	addComplexTypeToSchema,

@@ -6,7 +6,7 @@
 import { AzureClient } from "@fluidframework/azure-client";
 import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-driver";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { ISharedTree, SharedTreeFactory, FieldKinds } from "@fluid-internal/tree";
+import { ISharedTree, SharedTreeFactory, FieldKinds } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { registerSchemas } from "@fluid-example/schemas";
 import { convertPropertyToSharedTreeStorageSchema as convertPSetSchema } from "@fluid-experimental/property-shared-tree-interop";

@@ -15,7 +15,7 @@ import {
 	typeNameSymbol,
 	fieldSchema,
 	FieldKindSpecifier,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 
 export const personPropertyDDSSchemas = {
 	geodesicLocation: {

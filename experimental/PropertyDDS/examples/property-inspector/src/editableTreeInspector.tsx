@@ -25,7 +25,7 @@ import {
 	getPrimaryField,
 	forEachField,
 	cursorFromContextualData,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 import {
 	IDataCreationOptions,
 	IInspectorTableProps,

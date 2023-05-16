@@ -49,10 +49,10 @@
 		"typescript": "~4.5.5"
 	},
 	"dependencies": {
-		"@fluid-experimental/property-properties": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/property-changeset": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-internal/tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0"
+		"@fluid-experimental/property-properties": "workspace:~",
+		"@fluid-experimental/property-changeset": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~"
 	},
 	"jest-junit": {
 		"outputDirectory": "nyc",

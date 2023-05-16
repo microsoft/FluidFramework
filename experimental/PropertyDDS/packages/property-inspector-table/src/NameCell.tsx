@@ -4,7 +4,12 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { isUnwrappedNode, isEditableField, parentField, FieldKinds } from "@fluid-internal/tree";
+import {
+	isUnwrappedNode,
+	isEditableField,
+	parentField,
+	FieldKinds,
+} from "@fluid-experimental/tree2";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
 import {
 	BaseProperty,

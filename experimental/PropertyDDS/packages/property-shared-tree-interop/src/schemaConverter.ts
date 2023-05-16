@@ -24,7 +24,7 @@ import {
 	defaultSchemaPolicy,
 	GlobalFieldKey,
 	TreeSchema,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 import { PropertyFactory, PropertyTemplate } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 

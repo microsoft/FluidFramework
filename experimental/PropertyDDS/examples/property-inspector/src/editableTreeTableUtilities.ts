@@ -26,7 +26,7 @@ import {
 	valueSymbol,
 	FieldKinds,
 	FieldSchema,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 import { addComplexTypeToSchema } from "@fluid-experimental/property-shared-tree-interop";
 
 const { sequence, value } = FieldKinds;

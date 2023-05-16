@@ -10,7 +10,7 @@ import {
 	isUnwrappedNode,
 	typeNameSymbol,
 	typeSymbol,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 import { ContainerProperty, PropertyFactory } from "@fluid-experimental/property-properties";
 import Button from "@material-ui/core/Button";
 import InputAdornment from "@material-ui/core/InputAdornment";

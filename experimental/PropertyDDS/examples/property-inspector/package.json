@@ -49,7 +49,7 @@
 		"@fluid-experimental/property-properties": "workspace:~",
 		"@fluid-experimental/property-proxy": "workspace:~",
 		"@fluid-experimental/property-shared-tree-interop": "workspace:~",
-		"@fluid-internal/tree": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "^1.1.1",
 		"@fluidframework/common-utils": "^1.1.1",

@@ -13,7 +13,7 @@ import {
 	fieldSchema,
 	FieldKinds,
 	TreeSchemaIdentifier,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
 
 const tableTypeName: TreeSchemaIdentifier = brand("Test:Table-1.0.0");

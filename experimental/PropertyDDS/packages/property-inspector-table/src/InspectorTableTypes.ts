@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EditableField, EditableTree, ISharedTree, Value } from "@fluid-internal/tree";
+import { EditableField, EditableTree, ISharedTree, Value } from "@fluid-experimental/tree2";
 
 import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseProperty } from "@fluid-experimental/property-properties";

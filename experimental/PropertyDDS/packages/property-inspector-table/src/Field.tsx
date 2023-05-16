@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { isUnwrappedNode, valueSymbol } from "@fluid-internal/tree";
+import { isUnwrappedNode, valueSymbol } from "@fluid-experimental/tree2";
 import { PropertyProxy, ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
 import { SetProperty, ContainerProperty } from "@fluid-experimental/property-properties";
 import * as React from "react";
