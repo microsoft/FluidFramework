@@ -2685,13 +2685,16 @@ export class ContainerRuntime
 			this.mc.config.getBoolean(
 				"Fluid.ContainerRuntime.SubmitSummary.disableInboundSignalPause",
 			) !== true;
+
+		let summaryRefSeqNum: number | undefined;
+
 		try {
 			await this.deltaManager.inbound.pause();
 			if (shouldPauseInboundSignal) {
 				await this.deltaManager.inboundSignal.pause();
 			}
 
-			const summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
+			summaryRefSeqNum = this.deltaManager.lastSequenceNumber;
 			const minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
 			const message = `Summary @${summaryRefSeqNum}:${this.deltaManager.minimumSequenceNumber}`;
 			const lastAck = this.summaryCollection.latestAck;
@@ -2885,6 +2888,9 @@ export class ContainerRuntime
 		} finally {
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
+
+			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
+			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
 
 			// Restart the delta manager
 			this.deltaManager.inbound.resume();

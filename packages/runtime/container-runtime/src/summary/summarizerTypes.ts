@@ -489,6 +489,8 @@ type SummaryGeneratorOptionalTelemetryProperties =
 	| "opsSizesSinceLastSummary"
 	/** Delta between the number of non-runtime ops since the last summary */
 	| "nonRuntimeOpsSinceLastSummary"
+	/** Delta between the number of runtime ops since the last summary */
+	| "runtimeOpsSinceLastSummary"
 	/** Wether or not this instance contains adjusted metrics due to missing op data */
 	| "hasMissingOpData"
 	/** Time it took to generate the summary tree and stats. */
