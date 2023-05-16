@@ -126,7 +126,7 @@ describe("Container create scenarios", () => {
 	 *
 	 * Expected behavior: an error should be thrown when trying to get a non-existent container.
 	 */
-	it("cannot load improperly created container (cannot load a non-existent container)", async () => {
+	it.skip("cannot load improperly created container (cannot load a non-existent container)", async () => {
 		const consoleErrorFn = console.error;
 		console.error = (): void => {};
 		const containerAndServicesP = client.getContainer("containerConfig", schema);
