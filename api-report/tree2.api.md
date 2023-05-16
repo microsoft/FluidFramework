@@ -923,26 +923,38 @@ export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
 export interface ISharedTree extends ISharedObject, ISharedTreeView {
 }
 
-// @alpha
-export interface ISharedTreeFork extends ISharedTreeView {
-    dispose(): void;
-    rebaseOnto(view: ISharedTreeView): void;
-}
-
-// @alpha
+// Warning: (ae-incompatible-release-tags) The symbol "ISharedTreeView" is marked as @public, but its signature references "AnchorLocator" which is marked as @alpha
+//
+// @public
 export interface ISharedTreeView extends AnchorLocator {
+    // Warning: (ae-incompatible-release-tags) The symbol "context" is marked as @public, but its signature references "EditableTreeContext" which is marked as @alpha
     readonly context: EditableTreeContext;
+    // Warning: (ae-incompatible-release-tags) The symbol "editor" is marked as @public, but its signature references "IDefaultEditBuilder" which is marked as @alpha
     readonly editor: IDefaultEditBuilder;
+    // Warning: (ae-incompatible-release-tags) The symbol "events" is marked as @public, but its signature references "ISubscribable" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "events" is marked as @public, but its signature references "ViewEvents" which is marked as @alpha
     readonly events: ISubscribable<ViewEvents>;
+    // Warning: (ae-incompatible-release-tags) The symbol "forest" is marked as @public, but its signature references "IForestSubscription" which is marked as @alpha
     readonly forest: IForestSubscription;
-    fork(): ISharedTreeFork;
+    // Warning: (ae-incompatible-release-tags) The symbol "fork" is marked as @public, but its signature references "SharedTreeView" which is marked as @alpha
+    fork(): SharedTreeView;
+    // Warning: (ae-incompatible-release-tags) The symbol "identifiedNodes" is marked as @public, but its signature references "Identifier" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "identifiedNodes" is marked as @public, but its signature references "EditableTree" which is marked as @alpha
     readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
-    merge(view: ISharedTreeFork): void;
+    // Warning: (ae-incompatible-release-tags) The symbol "merge" is marked as @public, but its signature references "SharedTreeView" which is marked as @alpha
+    merge(view: SharedTreeView): void;
     redo(): void;
+    // Warning: (ae-incompatible-release-tags) The symbol "root" is marked as @public, but its signature references "UnwrappedEditableField" which is marked as @alpha
     get root(): UnwrappedEditableField;
+    // Warning: (ae-incompatible-release-tags) The symbol "root" is marked as @public, but its signature references "ContextuallyTypedNodeData" which is marked as @alpha
     set root(data: ContextuallyTypedNodeData | undefined);
+    // Warning: (ae-incompatible-release-tags) The symbol "rootEvents" is marked as @public, but its signature references "ISubscribable" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "rootEvents" is marked as @public, but its signature references "AnchorSetRootEvents" which is marked as @alpha
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    // Warning: (ae-incompatible-release-tags) The symbol "schematize" is marked as @public, but its signature references "GlobalFieldSchema" which is marked as @alpha
+    // Warning: (ae-incompatible-release-tags) The symbol "schematize" is marked as @public, but its signature references "SchematizeConfiguration" which is marked as @alpha
     schematize<TRoot extends GlobalFieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    // Warning: (ae-incompatible-release-tags) The symbol "storedSchema" is marked as @public, but its signature references "StoredSchemaRepository" which is marked as @alpha
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start(): void;
@@ -1579,6 +1591,46 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @alpha
+export class SharedTreeView implements ISharedTreeView {
+    constructor(branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>, _storedSchema: InMemoryStoredSchemaRepository, _forest: IEditableForest, context: EditableTreeContext, _identifiedIndex: IdentifierIndex<typeof identifierKey>);
+    // (undocumented)
+    readonly context: EditableTreeContext;
+    dispose(): void;
+    // (undocumented)
+    get editor(): DefaultEditBuilder;
+    // (undocumented)
+    readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+    // (undocumented)
+    get forest(): IForestSubscription;
+    // (undocumented)
+    fork(): SharedTreeView;
+    // (undocumented)
+    readonly _identifiedIndex: IdentifierIndex<typeof identifierKey>;
+    // (undocumented)
+    get identifiedNodes(): ReadonlyMap<Identifier, EditableTree>;
+    // (undocumented)
+    locate(anchor: Anchor): AnchorNode | undefined;
+    // (undocumented)
+    merge(fork: SharedTreeView): void;
+    rebaseOnto(view: ISharedTreeView): void;
+    // (undocumented)
+    redo(): void;
+    // (undocumented)
+    get root(): UnwrappedEditableField;
+    set root(data: ContextuallyTypedNodeData | undefined);
+    // (undocumented)
+    get rootEvents(): ISubscribable<AnchorSetRootEvents>;
+    // (undocumented)
+    schematize<TRoot extends GlobalFieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    // (undocumented)
+    get storedSchema(): StoredSchemaRepository;
+    // (undocumented)
+    readonly transaction: ISharedTreeView["transaction"];
+    // (undocumented)
+    undo(): void;
+}
+
+// @alpha
 export class SimpleDependee implements Dependee {
     constructor(computationName?: string);
     // (undocumented)
@@ -1946,6 +1998,11 @@ export interface ViewEvents {
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
+
+// Warnings were encountered during analysis:
+//
+// src/shared-tree/sharedTreeView.ts:168:3 - (ae-incompatible-release-tags) The symbol "commit" is marked as @public, but its signature references "TransactionResult" which is marked as @alpha
+// src/shared-tree/sharedTreeView.ts:172:3 - (ae-incompatible-release-tags) The symbol "abort" is marked as @public, but its signature references "TransactionResult" which is marked as @alpha
 
 // (No @packageDocumentation comment for this package)
 

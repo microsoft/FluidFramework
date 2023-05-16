@@ -14,11 +14,8 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import {
-	IForestSubscription,
-	StoredSchemaRepository,
 	InMemoryStoredSchemaRepository,
 	Anchor,
-	AnchorLocator,
 	AnchorSet,
 	AnchorNode,
 	IEditableForest,
@@ -32,7 +29,6 @@ import {
 	EditableTreeContext,
 	ForestSummarizer,
 	SchemaSummarizer as SchemaSummarizer,
-	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultEditBuilder,
 	UnwrappedEditableField,
@@ -41,212 +37,21 @@ import {
 	DefaultChangeset,
 	buildForest,
 	ContextuallyTypedNodeData,
-	IDefaultEditBuilder,
 	IdentifierIndex,
-	EditableTree,
-	Identifier,
 	ForestRepairDataStoreProvider,
 	repairDataStoreFromForest,
 	GlobalFieldSchema,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
+import { brand, JsonCompatibleReadOnly } from "../util";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
-
-/**
- * Events for {@link ISharedTreeView}.
- * @alpha
- */
-export interface ViewEvents {
-	/**
-	 * A batch of changes has finished processing and the view is in a consistent state.
-	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
-	 *
-	 * @remarks
-	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
-	 */
-	afterBatch(): void;
-}
-
-/**
- * Provides a means for interacting with a SharedTree.
- * This includes reading data from the tree and running transactions to mutate the tree.
- * @alpha
- */
-export interface ISharedTreeView extends AnchorLocator {
-	/**
-	 * Gets or sets the root field of the tree.
-	 *
-	 * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
-	 *
-	 * Currently this editable tree's fields do not update on edits,
-	 * so holding onto this root object across edits will only work if its an unwrapped node.
-	 * TODO: Fix this issue.
-	 *
-	 * Currently any access to this view of the tree may allocate cursors and thus require
-	 * `context.prepareForEdit()` before editing can occur.
-	 */
-	// TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
-	get root(): UnwrappedEditableField;
-
-	set root(data: ContextuallyTypedNodeData | undefined);
-
-	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
-	 *
-	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
-	 */
-	readonly context: EditableTreeContext;
-
-	/**
-	 * Read and Write access for schema stored in the document.
-	 *
-	 * These APIs are temporary and will be replaced with different abstractions (View Schema based) in a different place later.
-	 *
-	 * TODO:
-	 * Editing of this should be moved into transactions with the rest of tree editing to they can be intermixed.
-	 * This will be done after the relations between views, branches and Indexes are figured out.
-	 *
-	 * TODO:
-	 * Public APIs for dealing with schema should be in terms of View Schema, and schema update policies.
-	 * The actual stored schema should be hidden (or ar least not be the most prominent way to interact with schema).
-	 *
-	 * TODO:
-	 * Something should ensure the document contents are always in schema.
-	 */
-	readonly storedSchema: StoredSchemaRepository;
-	/**
-	 * Current contents.
-	 * Updated by edits (local and remote).
-	 * Use `editor` to create a local edit.
-	 */
-	readonly forest: IForestSubscription;
-
-	/**
-	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
-	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
-	 */
-	readonly editor: IDefaultEditBuilder;
-
-	/**
-	 * Undoes the last completed transaction made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	undo(): void;
-
-	/**
-	 * Redoes the last completed undo made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	redo(): void;
-
-	/**
-	 * An collection of functions for managing transactions.
-	 * Transactions allow edits to be batched into atomic units.
-	 * Edits made during a transaction will update the local state of the tree immediately, but will be squashed into a single edit when the transaction is committed.
-	 * If the transaction is aborted, the local state will be reset to what it was before the transaction began.
-	 * Transactions may nest, meaning that a transaction may be started while a transaction is already ongoing.
-	 *
-	 * To avoid updating observers of the view state with intermediate results during a transaction,
-	 * use {@link ISharedTreeView#fork} and {@link ISharedTreeFork#merge}.
-	 */
-	readonly transaction: {
-		/**
-		 * Start a new transaction.
-		 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
-		 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
-		 */
-		start(): void;
-		/**
-		 * Close this transaction by squashing its edits and committing them as a single edit.
-		 * If this is the root view and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
-		 */
-		commit(): TransactionResult.Commit;
-		/**
-		 * Close this transaction and revert the state of the tree to what it was before this transaction began.
-		 */
-		abort(): TransactionResult.Abort;
-		/**
-		 * True if there is at least one transaction currently in progress on this view, otherwise false.
-		 */
-		inProgress(): boolean;
-	};
-
-	/**
-	 * Spawn a new view which is based off of the current state of this view.
-	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
-	 */
-	fork(): ISharedTreeFork;
-
-	/**
-	 * Apply all the new changes on the given view to this view.
-	 * @param view - a view which was created by a call to `fork()`. It is not modified by this operation.
-	 */
-	merge(view: ISharedTreeFork): void;
-
-	/**
-	 * Events about this view.
-	 */
-	readonly events: ISubscribable<ViewEvents>;
-
-	/**
-	 * Events about the root of the tree in this view.
-	 */
-	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-
-	/**
-	 * A map of nodes that have been recorded by the identifier index.
-	 */
-	readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
-
-	/**
-	 * Takes in a tree and returns a view of it that conforms to the view schema.
-	 * The returned view referees to and can edit the provided one: it is not a fork of it.
-	 * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
-	 *
-	 * If the tree is uninitialized (has no nodes or schema at all),
-	 * it is initialized to the config's initial tree and the provided schema are stored.
-	 * This is done even if `AllowedUpdateType.None`.
-	 *
-	 * @remarks
-	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
-	 * Other approach tend to have leave easy to make mistakes.
-	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
-	 * or call it unconditionally leaving an app that can only create new documents.
-	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
-	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
-	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
-	 * on the create code-path (for example how a schematized factory might do it),
-	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
-	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
-	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
-	 *
-	 * TODO:
-	 * - Implement schema-aware API for return type.
-	 * - Support adapters for handling out of schema data.
-	 */
-	schematize<TRoot extends GlobalFieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
-	): ISharedTreeView;
-}
-
-/**
- * An `ISharedTreeView` which has been forked from a pre-existing view.
- * @alpha
- */
-export interface ISharedTreeFork extends ISharedTreeView {
-	/**
-	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
-	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
-	 */
-	rebaseOnto(view: ISharedTreeView): void;
-
-	/**
-	 * Dispose this fork, freezing its state and allowing the SharedTree to release resources required by it.
-	 * Attempts to further mutate or dispose this view will error.
-	 */
-	dispose(): void;
-}
+import {
+	ISharedTreeView,
+	SharedTreeView,
+	ViewEvents,
+	branchKey,
+	hasBranch,
+} from "./sharedTreeView";
 
 /**
  * Collaboratively editable tree distributed data-structure,
@@ -350,15 +155,18 @@ export class SharedTree
 		this.context.unwrappedRoot = data;
 	}
 
-	public fork(): ISharedTreeFork {
+	private get [branchKey](): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+		return this.getLocalBranch();
+	}
+
+	public fork(): SharedTreeView {
 		const anchors = new AnchorSet();
 		const schema = this.storedSchema.inner.clone();
 		const forest = this.forest.clone(schema, anchors);
 		const branch = this.forkBranch(new ForestRepairDataStoreProvider(forest, schema), anchors);
 		const context = getEditableTreeContext(forest, branch.editor);
-		return new SharedTreeFork(
+		return new SharedTreeView(
 			branch,
-			defaultChangeFamily,
 			schema,
 			forest,
 			context,
@@ -366,8 +174,9 @@ export class SharedTree
 		);
 	}
 
-	public merge(view: ISharedTreeFork): void {
-		this.mergeBranch(getForkBranch(view));
+	public merge(fork: SharedTreeView): void {
+		assert(hasBranch(fork), "Expected SharedTreeView to expose branch via internal branch key");
+		this.mergeBranch(fork[branchKey]);
 	}
 
 	public override getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
@@ -444,145 +253,3 @@ export class SharedTreeFactory implements IChannelFactory {
 		return tree;
 	}
 }
-
-export class SharedTreeFork implements ISharedTreeFork {
-	public readonly events = createEmitter<ViewEvents>();
-
-	public constructor(
-		public readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		public readonly changeFamily: DefaultChangeFamily,
-		public readonly storedSchema: InMemoryStoredSchemaRepository,
-		public readonly forest: IEditableForest,
-		public readonly context: EditableTreeContext,
-		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
-	) {
-		branch.on("change", ({ change }) => {
-			if (change !== undefined) {
-				const delta = this.changeFamily.intoDelta(change);
-				this.forest.applyDelta(delta);
-				this.identifiedNodes.scanIdentifiers(this.context);
-				this.events.emit("afterBatch");
-			}
-		});
-	}
-
-	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
-		return this.forest.anchors;
-	}
-
-	public get editor() {
-		return this.branch.editor;
-	}
-
-	public readonly transaction: ISharedTreeView["transaction"] = {
-		start: () => this.branch.startTransaction(repairDataStoreFromForest(this.forest)),
-		commit: () => {
-			this.branch.commitTransaction();
-			return TransactionResult.Commit;
-		},
-		abort: () => {
-			this.branch.abortTransaction();
-			return TransactionResult.Abort;
-		},
-		inProgress: () => this.branch.isTransacting(),
-	};
-
-	public undo() {
-		this.branch.undo();
-	}
-	public redo() {
-		this.branch.redo();
-	}
-
-	public schematize<TRoot extends GlobalFieldSchema>(
-		config: SchematizeConfiguration<TRoot>,
-	): ISharedTreeView {
-		return schematizeView(this, config);
-	}
-
-	public locate(anchor: Anchor): AnchorNode | undefined {
-		return this.forest.anchors.locate(anchor);
-	}
-
-	public fork(): ISharedTreeFork {
-		const anchors = new AnchorSet();
-		const storedSchema = this.storedSchema.clone();
-		const forest = this.forest.clone(storedSchema, anchors);
-		const repairDataStoreProvider = new ForestRepairDataStoreProvider(forest, storedSchema);
-		const branch = this.branch.fork(repairDataStoreProvider, anchors);
-		const context = getEditableTreeContext(forest, branch.editor);
-		return new SharedTreeFork(
-			branch,
-			this.changeFamily,
-			storedSchema,
-			forest,
-			context,
-			this.identifiedNodes.clone(context),
-		);
-	}
-
-	public rebaseOnto(view: ISharedTreeView): void {
-		this.branch.rebaseOnto(getBranch(view));
-	}
-
-	public merge(view: ISharedTreeFork): void {
-		this.branch.merge(getForkBranch(view));
-	}
-
-	public get root(): UnwrappedEditableField {
-		return this.context.unwrappedRoot;
-	}
-
-	public set root(data: ContextuallyTypedNodeData | undefined) {
-		this.context.unwrappedRoot = data;
-	}
-
-	public dispose(): void {
-		this.branch.dispose();
-	}
-}
-
-/**
- * Run a synchronous transaction on the given shared tree view.
- * This is a convenience helper around the {@link SharedTreeFork#transaction} APIs.
- * @param view - the view on which to run the transaction
- * @param transaction - the transaction function. This will be executed immediately. It is passed `view` as an argument for convenience.
- * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
- * @returns whether or not the transaction was committed or aborted
- * @alpha
- */
-export function runSynchronous(
-	view: ISharedTreeView,
-	transaction: (view: ISharedTreeView) => TransactionResult | void,
-): TransactionResult {
-	view.transaction.start();
-	const result = transaction(view);
-	return result === TransactionResult.Abort
-		? view.transaction.abort()
-		: view.transaction.commit();
-}
-
-// #region Extraction functions
-// The following two functions assume the underlying classes/implementations of `ISharedTreeView` and `ISharedTreeFork`.
-// While `instanceof` checks are in general bad practice or code smell, these are justifiable because:
-// 1. `SharedTree` and `SharedTreeFork` are private and meant to be the only implementations of `ISharedTreeView` and `ISharedTreeFork`.
-// 2. The `ISharedTreeView` and `ISharedTreeFork` interfaces are not meant to specify input contracts, but exist solely to reduce the API provided by the underlying classes.
-//    It is never expected that a user would create their own object or class which satisfies `ISharedTreeView` or `ISharedTreeFork`.
-function getBranch(view: ISharedTreeView): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
-	if (view instanceof SharedTree) {
-		return view.getLocalBranch();
-	} else if (view instanceof SharedTreeFork) {
-		return view.branch;
-	}
-
-	fail("Unsupported ISharedTreeView implementation");
-}
-
-function getForkBranch(
-	fork: ISharedTreeFork,
-): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
-	assert(fork instanceof SharedTreeFork, 0x5ca /* Unsupported ISharedTreeFork implementation */);
-	return fork.branch;
-}
-
-// #endregion Extraction functions
