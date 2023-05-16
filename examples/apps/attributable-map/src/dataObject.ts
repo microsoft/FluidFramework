@@ -78,14 +78,14 @@ export class HitCounter extends DataObject implements IHitCounter {
 	protected async hasInitialized() {
 		// Store the content if we are loading the first time or loading from existing
 		this._map = await this.root.get<IFluidHandle<AttributableMap>>(this.mapKey)?.get();
-		this._map?.on("valueChanged", () => {
+		this.map.on("valueChanged", () => {
 			this.emit("hit");
 		});
 	}
 
 	public readonly hit = (color) => {
-		const oldValue = this._map?.get(color);
+		const oldValue = this.map.get(color);
 		const newValue = Number(oldValue) + 1;
-		this._map?.set(color, newValue);
+		this.map?.set(color, newValue);
 	};
 }

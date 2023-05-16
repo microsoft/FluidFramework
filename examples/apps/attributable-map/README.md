@@ -1,10 +1,9 @@
 # @fluid-example/attributable-map
 
+Note:
 
-Note: 
 1. This is an experimental demo for the experimental DDS [AttributableMap](../../../experimental/dds/attributable-map/README.md)
 2. The current behavior displays a potential bug where there is a slight delay in showing the attribution. It is probable that this bug is caused by a lack of synchronization between the `setCore` and `setAttribution` functions. We are addressing the bug right now.
-
 
 **Hit Counter** is a simple demonstration that showcases how to use the `mixinAttributor` and the experimental DDS `AttributableMap`.
 The user can click on the button to increment the count value by one. Upon updating the count value, the corresponding attribution key will also be updated.
