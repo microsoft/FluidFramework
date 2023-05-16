@@ -205,11 +205,6 @@ describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 				error: "RollbackError: rollback not supported",
 				errorType: ContainerErrorType.dataProcessingError,
 			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				error: "RollbackError: rollback not supported",
-				errorType: ContainerErrorType.dataProcessingError,
-			},
 		],
 		async () => {
 			let error: Error | undefined;
