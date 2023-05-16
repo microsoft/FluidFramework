@@ -361,31 +361,32 @@ export const makeTransactionEditGenerator = (
 	};
 };
 
+export const makeDisconnectGenerator = (): Generator<DisconnectOp, EditState> => {
+	return (state) => ({
+		type: "disconnect",
+		index: state.treeIndex,
+		isObserver: state.treeIndex < 3,
+	});
+};
+
+export const makeReconnectGenerator = (): Generator<ReconnectOp, EditState> => {
+	return (state) => ({
+		type: "reconnect",
+		index: state.treeIndex,
+		isObserver: state.treeIndex < 3,
+	});
+};
+
 export function makeConnectionOpGenerator(
 	opWeights: Partial<EditGeneratorOpWeights>,
-): AsyncGenerator<ConnectionOps, FuzzTestState> {
-	type EditState = FuzzTestState & TreeContext;
+): Generator<ConnectionOps, EditState> {
 	const passedOpWeights = {
 		...defaultEditGeneratorOpWeights,
 		...opWeights,
 	};
-	async function disconnectOpGenerator(state: EditState): Promise<DisconnectOp> {
-		return {
-			type: "disconnect",
-			index: state.treeIndex,
-			isObserver: state.treeIndex < 3,
-		};
-	}
-	async function reconnectOpGenerator(state: EditState): Promise<ReconnectOp> {
-		return {
-			type: "reconnect",
-			index: state.treeIndex,
-			isObserver: state.treeIndex < 3,
-		};
-	}
-	const baseTransactionEditGenerator = createWeightedAsyncGenerator<ConnectionOps, EditState>([
+	const connectionOpGenerator = createWeightedGenerator<ConnectionOps, EditState>([
 		[
-			disconnectOpGenerator,
+			makeDisconnectGenerator(),
 			passedOpWeights.disconnect,
 			({ containersInfo, treeIndex }) => {
 				const containersExist = containersInfo !== undefined;
@@ -396,7 +397,7 @@ export function makeConnectionOpGenerator(
 			},
 		],
 		[
-			reconnectOpGenerator,
+			makeReconnectGenerator(),
 			passedOpWeights.reconnect,
 			({ containersInfo, treeIndex }) => {
 				const containersExist = containersInfo !== undefined;
@@ -411,33 +412,9 @@ export function makeConnectionOpGenerator(
 		],
 	]);
 
-	const buildOperation = (contents: ConnectionOps) => {
-		return contents;
-	};
-	return createAsyncGenerator<ConnectionOps, ConnectionOps>(
-		baseTransactionEditGenerator,
-		buildOperation,
-	);
-}
-
-function createAsyncGenerator<Op, OpOut>(
-	baseGenerator: (state: FuzzTestState & TreeContext) => Promise<Op | typeof done>,
-	buildOperation: (contents: Op, treeIndex: number) => OpOut,
-): AsyncGenerator<OpOut, FuzzTestState> {
-	return async (state: FuzzTestState): Promise<OpOut | typeof done> => {
-		const trees = state.trees;
-		// does not include last tree, as we want a passive client
-		const treeIndex = trees.length === 1 ? 0 : state.random.integer(0, trees.length - 2);
-
-		const contents = await baseGenerator({
-			...state,
-			treeIndex,
-		});
-		state.numberOfEdits += 1;
-		if (contents === done) {
-			return done;
-		}
-		return buildOperation(contents, treeIndex);
+	return (state) => {
+		const contents = connectionOpGenerator(state);
+		return contents === done ? done : contents;
 	};
 }
 
