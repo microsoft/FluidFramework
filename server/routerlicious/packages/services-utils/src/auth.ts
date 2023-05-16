@@ -122,8 +122,12 @@ export function generateUser(): IUser {
 
 interface IVerifyTokenOptions {
 	requireDocumentId: boolean;
+	requireTokenExpiryCheck?: boolean;
+	maxTokenLifetimeSec?: number;
 	ensureSingleUseToken: boolean;
 	singleUseTokenCache: ICache | undefined;
+	enableTokenCache: boolean;
+	tokenCache: ICache | undefined;
 }
 
 export function respondWithNetworkError(response: Response, error: NetworkError): Response {
@@ -143,6 +147,99 @@ function getTokenFromRequest(request: Request): string {
 	return tokenMatch[1];
 }
 
+export async function verifyToken(
+	tenantId: string,
+	documentId: string,
+	token: string,
+	tenantManager: ITenantManager,
+	options: IVerifyTokenOptions,
+): Promise<void> {
+	if (!tenantId) {
+		throw new NetworkError(403, "Missing tenantId in request.");
+	}
+
+	if (options.requireDocumentId && !documentId) {
+		throw new NetworkError(403, "Missing documentId in request");
+	}
+	let claims: ITokenClaims | undefined;
+	let tokenLifetimeMs: number | undefined;
+	try {
+		claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
+		if (options.requireTokenExpiryCheck) {
+			if (!options.maxTokenLifetimeSec) {
+				const errorMessage = "Missing maxTokenLifetimeSec in options";
+				Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
+				throw new Error(errorMessage);
+			}
+			tokenLifetimeMs = validateTokenClaimsExpiration(claims, options.maxTokenLifetimeSec);
+		}
+
+		// Check token cache first
+		if (options.enableTokenCache && options.tokenCache) {
+			const tokenCacheKey = token;
+			const cachedToken = await options.tokenCache.get(tokenCacheKey).catch((error) => {
+				Lumberjack.error(
+					"Unable to retrieve cached JWT",
+					claims
+						? getLumberBaseProperties(claims.documentId, claims.tenantId)
+						: undefined,
+					error,
+				);
+				return false;
+			});
+
+			if (cachedToken) {
+				Lumberjack.info(
+					"Token cache hit",
+					claims
+						? getLumberBaseProperties(claims.documentId, claims.tenantId)
+						: undefined,
+				);
+				if (options.ensureSingleUseToken) {
+					throw new NetworkError(403, "Access token has already been used.");
+				}
+				return;
+			}
+		}
+
+		await tenantManager.verifyToken(claims.tenantId, token);
+
+		Lumberjack.info(
+			"Token cache miss",
+			claims ? getLumberBaseProperties(claims.documentId, claims.tenantId) : undefined,
+		);
+
+		// Update token cache
+		if (options.enableTokenCache && options.tokenCache) {
+			const tokenCacheKey = token;
+			options.tokenCache
+				.set(
+					tokenCacheKey,
+					"used",
+					tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
+				)
+				.catch((error) => {
+					Lumberjack.error(
+						"Unable to cache JWT",
+						getLumberBaseProperties(documentId, tenantId),
+						error,
+					);
+				});
+		}
+	} catch (error) {
+		if (isNetworkError(error)) {
+			throw error;
+		}
+		// We don't understand the error, so it is likely an internal service error.
+		Lumberjack.error(
+			"Unrecognized error when validating/verifying request token",
+			getLumberBaseProperties(documentId, tenantId),
+			error,
+		);
+		throw new NetworkError(500, "Internal server error.");
+	}
+}
+
 /**
  * Verifies the storage token claims and calls riddler to validate the token.
  */
@@ -154,6 +251,8 @@ export function verifyStorageToken(
 		requireDocumentId: true,
 		ensureSingleUseToken: false,
 		singleUseTokenCache: undefined,
+		enableTokenCache: false,
+		tokenCache: undefined,
 	},
 ): RequestHandler {
 	return async (request, res, next) => {
@@ -173,6 +272,38 @@ export function verifyStorageToken(
 				new NetworkError(403, "Missing documentId in request"),
 			);
 		}
+
+		// TODO: remove this check and code after this block after testing
+		if (options.enableTokenCache) {
+			const moreOptions: IVerifyTokenOptions = options;
+			moreOptions.maxTokenLifetimeSec = maxTokenLifetimeSec;
+			moreOptions.requireTokenExpiryCheck = isTokenExpiryEnabled;
+			try {
+				await verifyToken(
+					tenantId,
+					documentId,
+					getTokenFromRequest(request),
+					tenantManager,
+					moreOptions,
+				);
+				return next();
+			} catch (error) {
+				if (isNetworkError(error)) {
+					return respondWithNetworkError(res, error);
+				}
+				// We don't understand the error, so it is likely an internal service error.
+				Lumberjack.error(
+					"Unrecognized error when validating/verifying request token",
+					getLumberBaseProperties(documentId, tenantId),
+					error,
+				);
+				return respondWithNetworkError(
+					res,
+					new NetworkError(500, "Internal server error."),
+				);
+			}
+		}
+
 		let claims: ITokenClaims | undefined;
 		let tokenLifetimeMs: number | undefined;
 		let token: string = "";
@@ -209,6 +340,7 @@ export function verifyStorageToken(
 			return respondWithNetworkError(res, new NetworkError(500, "Internal server error."));
 		}
 
+		// Only need when token cache is disabled
 		if (options.ensureSingleUseToken) {
 			// Use token as key for minimum chance of collision.
 			const singleUseKey = token;

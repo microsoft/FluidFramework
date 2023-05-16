@@ -19,6 +19,7 @@ import {
 	IThrottleMiddlewareOptions,
 	getParam,
 	validateTokenScopeClaims,
+	getBooleanFromConfig,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -86,10 +87,22 @@ export function create(
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 
+	// Jwt token cache
+	const enableJwtTokenCache: boolean = getBooleanFromConfig(
+		"alfred:jwtTokenCache:enable",
+		config,
+	);
+
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager),
+		verifyStorageToken(tenantManager, config, tokenManager, {
+			requireDocumentId: true,
+			ensureSingleUseToken: false,
+			singleUseTokenCache: undefined,
+			enableTokenCache: enableJwtTokenCache,
+			tokenCache: singleUseTokenCache,
+		}),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
@@ -120,6 +133,8 @@ export function create(
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
+			enableTokenCache: enableJwtTokenCache,
+			tokenCache: singleUseTokenCache,
 		}),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
@@ -210,7 +225,13 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		verifyStorageToken(tenantManager, config, tokenManager),
+		verifyStorageToken(tenantManager, config, tokenManager, {
+			requireDocumentId: true,
+			ensureSingleUseToken: false,
+			singleUseTokenCache: undefined,
+			enableTokenCache: enableJwtTokenCache,
+			tokenCache: singleUseTokenCache,
+		}),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
@@ -244,7 +265,13 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager),
+		verifyStorageToken(tenantManager, config, tokenManager, {
+			requireDocumentId: true,
+			ensureSingleUseToken: false,
+			singleUseTokenCache: undefined,
+			enableTokenCache: enableJwtTokenCache,
+			tokenCache: singleUseTokenCache,
+		}),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -263,7 +290,13 @@ export function create(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager),
+		verifyStorageToken(tenantManager, config, tokenManager, {
+			requireDocumentId: true,
+			ensureSingleUseToken: false,
+			singleUseTokenCache: undefined,
+			enableTokenCache: enableJwtTokenCache,
+			tokenCache: singleUseTokenCache,
+		}),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
