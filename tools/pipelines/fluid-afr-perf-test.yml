@@ -21,7 +21,6 @@ resources:
   pipelines:
     - pipeline: client
       source: Build - client packages
-      branch: test/fixFrsPipeline
 
 variables:
   - group: fluid-afr-perf-test-keys
