@@ -34,7 +34,8 @@ export class RemoteMessageProcessor {
 			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
 				unpackRuntimeMessage(ungroupedMessage2);
 
-				const chunkProcessingResult = this.opSplitter.processRemoteMessage(ungroupedMessage2);
+				const chunkProcessingResult =
+					this.opSplitter.processRemoteMessage(ungroupedMessage2);
 				ungroupedMessage2 = chunkProcessingResult.message;
 				if (chunkProcessingResult.state !== "Processed") {
 					// If the message is not chunked or if the splitter is still rebuilding the original message,
@@ -44,8 +45,12 @@ export class RemoteMessageProcessor {
 				}
 
 				// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
-				for (const ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(ungroupedMessage2)) {
-					const decompressionAfterChunking = this.opDecompressor.processMessage(ungroupedMessageAfterChunking);
+				for (const ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
+					ungroupedMessage2,
+				)) {
+					const decompressionAfterChunking = this.opDecompressor.processMessage(
+						ungroupedMessageAfterChunking,
+					);
 
 					for (const ungroupedMessageAfterChunking2 of this.opGroupingManager.ungroupOp(
 						decompressionAfterChunking.message,
