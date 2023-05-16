@@ -579,8 +579,7 @@ export class ContainerDevtools implements IContainerDevtools {
 			connectionState: this.container.connectionState,
 			closed: this.container.closed,
 			clientId: this.container.clientId,
-			audienceId:
-				clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
+			userId: clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
 	}
 
