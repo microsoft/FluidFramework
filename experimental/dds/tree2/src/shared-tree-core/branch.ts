@@ -223,7 +223,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		if (commits.length === 0) {
 			return undefined;
 		}
-		
+
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
@@ -238,10 +238,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 			// If this transaction is not nested, add it to the undo commit tree
 			if (!this.isTransacting()) {
-				this.undoRedoManager?.trackCommit(
-					this.head,
-					UndoRedoManagerCommitType.Undoable,
-				);
+				this.undoRedoManager?.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
 			}
 
 			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)

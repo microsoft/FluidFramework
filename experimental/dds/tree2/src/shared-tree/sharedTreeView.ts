@@ -242,7 +242,7 @@ export function createSharedTreeView(args?: {
 	forest?: IEditableForest;
 	repairProvider?: ForestRepairDataStoreProvider;
 	identifierIndex?: IdentifierIndex<typeof identifierKey>;
-}): SharedTreeView {
+}): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
 	const repairDataStoreProvider =

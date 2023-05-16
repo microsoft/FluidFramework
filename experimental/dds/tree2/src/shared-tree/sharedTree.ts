@@ -85,7 +85,7 @@ export class SharedTree
 	implements ISharedTree
 {
 	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
-	private readonly view: SharedTreeView;
+	private readonly view: ISharedTreeView;
 	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
 	private readonly identifierIndex: IdentifierIndex<typeof identifierKey>;
 
