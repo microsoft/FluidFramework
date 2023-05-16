@@ -40,7 +40,7 @@ export interface AudienceHistoryTableProps {
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
 
-	const TOOLTIP_FLUIDCLIENTGUID =
+	const clientIdTooltipText =
 		"ID assigned by the Fluid (sequencing) service to the current connection. Subject to change if the client disconnects or reconnects.";
 	const clientIdTooltipId = useId("client-id-tooltip");
 
@@ -66,7 +66,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 
 							{column.columnKey === "clientId" && (
 								<TooltipHost
-									content={TOOLTIP_FLUIDCLIENTGUID}
+									content={clientIdTooltipText}
 									id={clientIdTooltipId}
 								>
 									<div style={{ display: "flex", alignItems: "center" }}>
