@@ -272,9 +272,6 @@ export interface Covariant<T> {
 export function createEmitter<E extends Events<E>>(noListeners?: NoListenersCallback<E>): ISubscribable<E> & IEmitter<E> & HasListeners<E>;
 
 // @alpha
-export const createField: unique symbol;
-
-// @alpha
 export interface CrossFieldManager<T = unknown> {
     get(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, addDependency: boolean): T | undefined;
     getOrCreate(target: CrossFieldTarget, revision: RevisionTag | undefined, id: ChangesetLocalId, newValue: T, invalidateDependents: boolean): T;
@@ -388,7 +385,6 @@ type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     readonly [contextSymbol]: EditableTreeContext;
-    [createField](fieldKey: FieldKey, newContent: NewFieldContent): void;
     [getField](fieldKey: FieldKey): EditableField;
     // (undocumented)
     [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
@@ -397,7 +393,6 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
         readonly index: number;
     };
     readonly [proxyTargetSymbol]: object;
-    [replaceField](fieldKey: FieldKey, newContent: NewFieldContent): void;
     readonly [typeNameSymbol]: TreeSchemaIdentifier;
     readonly [typeSymbol]: NamedTreeSchema;
     [valueSymbol]: Value;
@@ -1268,6 +1263,12 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 // @alpha
 export const neverTree: TreeStoredSchema;
 
+// Warning: (ae-incompatible-release-tags) The symbol "NewFieldContent" is marked as @public, but its signature references "ITreeCursor" which is marked as @alpha
+// Warning: (ae-incompatible-release-tags) The symbol "NewFieldContent" is marked as @public, but its signature references "ContextuallyTypedFieldData" which is marked as @alpha
+//
+// @public
+export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
+
 // @alpha (undocumented)
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
@@ -1408,9 +1409,6 @@ type RecursiveTreeSchemaSpecification = unknown;
 export interface RepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
     capture(change: Delta.Root, revision: TRevisionTag): void;
 }
-
-// @alpha
-export const replaceField: unique symbol;
 
 // @alpha
 type RequiredFields<T> = [
