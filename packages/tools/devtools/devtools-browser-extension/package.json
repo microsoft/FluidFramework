@@ -116,13 +116,13 @@
 			"compile": {
 				"dependsOn": [
 					"...",
-					"webpack",
-					"build:copy-resources"
+					"webpack"
 				],
 				"script": false
 			},
 			"webpack": [
-				"@fluid-tools/client-debugger-view#tsc"
+				"@fluid-experimental/devtools-core#tsc",
+				"@fluid-experimental/devtools-view#tsc"
 			]
 		}
 	},
