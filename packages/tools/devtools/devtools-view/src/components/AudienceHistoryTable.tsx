@@ -21,6 +21,7 @@ import {
 	Person12Regular,
 	Info12Regular,
 } from "@fluentui/react-icons";
+import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 
 /**
@@ -40,8 +41,6 @@ export interface AudienceHistoryTableProps {
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
 
-	const clientIdTooltipText =
-		"ID assigned by the Fluid (sequencing) service to the current connection. Subject to change if the client disconnects or reconnects.";
 	const clientIdTooltipId = useId("client-id-tooltip");
 
 	// Columns for rendering audience history
@@ -65,10 +64,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 							)}
 
 							{column.columnKey === "clientId" && (
-								<TooltipHost
-									content={clientIdTooltipText}
-									id={clientIdTooltipId}
-								>
+								<TooltipHost content={clientIdTooltipText} id={clientIdTooltipId}>
 									<div style={{ display: "flex", alignItems: "center" }}>
 										<Person12Regular />
 										<span style={{ marginLeft: "5px" }}>{column.label}</span>
