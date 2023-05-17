@@ -257,12 +257,25 @@ export class BuildGraph {
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
 	) {
-		packages.forEach((value) =>
-			this.buildPackages.set(
-				value.name,
-				new BuildPackage(this.buildContext, value, buildTaskNames, globalTaskDefinitions),
-			),
-		);
+		packages.forEach((value) => {
+			try {
+				this.buildPackages.set(
+					value.name,
+					new BuildPackage(
+						this.buildContext,
+						value,
+						buildTaskNames,
+						globalTaskDefinitions,
+					),
+				);
+			} catch (e: unknown) {
+				throw new Error(
+					`${value.nameColored}: Failed to load build package in ${value.directory}\n\t${
+						(e as Error).message
+					}`,
+				);
+			}
+		});
 
 		traceGraph("package initialized");
 

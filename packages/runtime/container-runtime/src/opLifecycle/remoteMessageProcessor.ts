@@ -27,40 +27,49 @@ export class RemoteMessageProcessor {
 	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		const result: ISequencedDocumentMessage[] = [];
 
-		// Ungroup before processing chunks
-		for (let ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
-			ungroupedMessage = this.opDecompressor.processMessage(ungroupedMessage).message;
-			unpackRuntimeMessage(ungroupedMessage);
+		// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
+		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
+			const message = this.opDecompressor.processMessage(ungroupedMessage).message;
 
-			const chunkProcessingResult = this.opSplitter.processRemoteMessage(ungroupedMessage);
-			ungroupedMessage = chunkProcessingResult.message;
-			if (chunkProcessingResult.state !== "Processed") {
-				// If the message is not chunked or if the splitter is still rebuilding the original message,
-				// there is no need to continue processing
-				result.push(ungroupedMessage);
-				continue;
-			}
+			for (let ungroupedMessage2 of this.opGroupingManager.ungroupOp(message)) {
+				unpackRuntimeMessage(ungroupedMessage2);
 
-			// Ungroup the chunked message before decompressing
-			for (let ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
-				ungroupedMessage,
-			)) {
-				const decompressionAfterChunking = this.opDecompressor.processMessage(
-					ungroupedMessageAfterChunking,
-				);
-				ungroupedMessageAfterChunking = decompressionAfterChunking.message;
-				if (decompressionAfterChunking.state === "Skipped") {
-					// After chunking, if the original message was not compressed,
+				const chunkProcessingResult =
+					this.opSplitter.processRemoteMessage(ungroupedMessage2);
+				ungroupedMessage2 = chunkProcessingResult.message;
+				if (chunkProcessingResult.state !== "Processed") {
+					// If the message is not chunked or if the splitter is still rebuilding the original message,
 					// there is no need to continue processing
-					result.push(ungroupedMessageAfterChunking);
+					result.push(ungroupedMessage2);
 					continue;
 				}
 
-				// The message needs to be unpacked after chunking + decompression
-				unpack(ungroupedMessageAfterChunking);
-				result.push(ungroupedMessageAfterChunking);
+				// Ungroup before and after decompression for back-compat (cleanup tracked by AB#4371)
+				for (const ungroupedMessageAfterChunking of this.opGroupingManager.ungroupOp(
+					ungroupedMessage2,
+				)) {
+					const decompressionAfterChunking = this.opDecompressor.processMessage(
+						ungroupedMessageAfterChunking,
+					);
+
+					for (const ungroupedMessageAfterChunking2 of this.opGroupingManager.ungroupOp(
+						decompressionAfterChunking.message,
+					)) {
+						if (decompressionAfterChunking.state === "Skipped") {
+							// After chunking, if the original message was not compressed,
+							// there is no need to continue processing
+							result.push(ungroupedMessageAfterChunking2);
+							continue;
+						}
+
+						// The message needs to be unpacked after chunking + decompression
+						unpack(ungroupedMessageAfterChunking2);
+						result.push(ungroupedMessageAfterChunking2);
+					}
+				}
 			}
 		}
+
 		return result;
 	}
 }
