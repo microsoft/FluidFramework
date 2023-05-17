@@ -934,23 +934,22 @@ export class MergeTree {
 			return refs;
 		}
 
+		let currentSlideGroup: LocalReferenceCollection[] = [];
+
 		// References are slid in groups to preserve their order.
 		let currentRightSlideDestination: ISegment | undefined;
 		let currentRightSlideIsForward: boolean | undefined;
-		let currentRightSlideGroup: LocalReferenceCollection[] = [];
 		const rightPred = (ref: LocalReferencePosition) =>
 			ref.slidingPreference !== SlidingPreference.BACKWARD;
 
 		let currentLeftSlideDestination: ISegment | undefined;
 		let currentLeftSlideIsForward: boolean | undefined;
-		let currentLeftSlideGroup: LocalReferenceCollection[] = [];
 		const leftPred = (ref: LocalReferencePosition) =>
 			ref.slidingPreference === SlidingPreference.BACKWARD;
 
 		const slideGroup = (
 			currentSlideDestination: ISegment | undefined,
 			currentSlideIsForward: boolean | undefined,
-			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
 		) => {
 			if (currentSlideIsForward === undefined) {
@@ -996,7 +995,6 @@ export class MergeTree {
 			segment: ISegment,
 			currentSlideDestination: ISegment | undefined,
 			currentSlideIsForward: boolean | undefined,
-			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
 			slidingPreference: SlidingPreference,
 			reassign: (
@@ -1023,7 +1021,7 @@ export class MergeTree {
 				slideToSegment !== currentSlideDestination ||
 				slideIsForward !== currentSlideIsForward
 			) {
-				slideGroup(currentSlideDestination, currentSlideIsForward, currentSlideGroup, pred);
+				slideGroup(currentSlideDestination, currentSlideIsForward, pred);
 				reassign(segment.localRefs, slideToSegment, slideIsForward);
 			} else {
 				currentSlideGroup.push(segment.localRefs);
@@ -1044,11 +1042,10 @@ export class MergeTree {
 				segment,
 				currentRightSlideDestination,
 				currentRightSlideIsForward,
-				currentRightSlideGroup,
 				rightPred,
 				SlidingPreference.FORWARD,
 				(localRefs, slideToSegment, slideIsForward) => {
-					currentRightSlideGroup = [localRefs];
+					currentSlideGroup = [localRefs];
 					currentRightSlideDestination = slideToSegment;
 					currentRightSlideIsForward = slideIsForward;
 				},
@@ -1058,29 +1055,18 @@ export class MergeTree {
 				segment,
 				currentLeftSlideDestination,
 				currentLeftSlideIsForward,
-				currentLeftSlideGroup,
 				leftPred,
 				SlidingPreference.BACKWARD,
 				(localRefs, slideToSegment, slideIsForward) => {
-					currentLeftSlideGroup = [localRefs];
+					currentSlideGroup = [localRefs];
 					currentLeftSlideDestination = slideToSegment;
 					currentLeftSlideIsForward = slideIsForward;
 				},
 			);
 		}
 
-		slideGroup(
-			currentRightSlideDestination,
-			currentRightSlideIsForward,
-			currentRightSlideGroup,
-			rightPred,
-		);
-		slideGroup(
-			currentLeftSlideDestination,
-			currentLeftSlideIsForward,
-			currentLeftSlideGroup,
-			leftPred,
-		);
+		slideGroup(currentRightSlideDestination, currentRightSlideIsForward, rightPred);
+		slideGroup(currentLeftSlideDestination, currentLeftSlideIsForward, leftPred);
 	}
 
 	private blockLength(node: IMergeBlock, refSeq: number, clientId: number) {
