@@ -4,21 +4,14 @@
  */
 
 export {
-	addBlobToTree,
 	AttachmentTreeEntry,
 	BlobTreeEntry,
-	buildHierarchy,
+	buildGitTreeHeirarchy,
 	getGitMode,
 	getGitType,
 	TreeTreeEntry,
 } from "./blobs";
-export {
-	ILocalSequencedClient,
-	IProtocolHandler,
-	IScribeProtocolState,
-	isSystemMessage,
-	ProtocolOpHandler,
-} from "./protocol";
+export { IProtocolHandler, IScribeProtocolState, ProtocolOpHandler } from "./protocol";
 export {
 	IQuorumSnapshot,
 	Quorum,
@@ -27,8 +20,3 @@ export {
 	QuorumProposals,
 	QuorumProposalsSnapshot,
 } from "./quorum";
-export {
-	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-} from "./scribeHelper";

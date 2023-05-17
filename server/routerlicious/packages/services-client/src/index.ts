@@ -36,6 +36,11 @@ export {
 	DocDeleteScopeType,
 } from "./scopes";
 export {
+	getQuorumTreeEntries,
+	mergeAppAndProtocolTree,
+	generateServiceProtocolEntries,
+} from "./scribeHelper";
+export {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,
 	IGitCache,

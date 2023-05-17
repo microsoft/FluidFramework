@@ -10,8 +10,10 @@ import {
 	FileMode,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { OnlyValidTermValue } from "./protocol";
-import { IQuorumSnapshot } from "./quorum";
+import { IQuorumSnapshot } from "@fluidframework/protocol-base";
+
+// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
+export const OnlyValidTermValue = 1 as const;
 
 export function getQuorumTreeEntries(
 	minimumSequenceNumber: number,

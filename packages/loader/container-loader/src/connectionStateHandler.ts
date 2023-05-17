@@ -10,12 +10,11 @@ import {
 } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
-import { ILocalSequencedClient } from "@fluidframework/protocol-base";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
-import { IProtocolHandler } from "./protocol";
+import { ILocalSequencedClient, IProtocolHandler } from "./protocol";
 
 // Based on recent data, it looks like majority of cases where we get stuck are due to really slow or
 // timing out ops fetches. So attempt recovery infrequently. Also fetch uses 30 second timeout, so

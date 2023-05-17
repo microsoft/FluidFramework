@@ -128,6 +128,23 @@
 		"branchReleaseTypes": {
 			"main": "minor",
 			"release/**": "patch"
+		},
+		"tasks": {
+			"eslint": [
+				"tsc",
+				"build:test:mocha",
+				"build:test:jest",
+				"build:test:types"
+			],
+			"build:test:jest": [
+				"tsc"
+			],
+			"build:test:mocha": [
+				"tsc"
+			],
+			"build:test:types": [
+				"tsc"
+			]
 		}
 	},
 	"jest-junit": {
