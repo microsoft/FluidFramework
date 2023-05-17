@@ -36,6 +36,9 @@ parameters:
   type: string
   default: client
 
+- name: stageName
+  type: string
+
 jobs:
   # Job - Build
   - job: build
@@ -136,6 +139,27 @@ jobs:
                 workingDir: ${{ parameters.buildDirectory }}
                 customCommand: 'run ${{ taskTestStep }}'
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+        # Rename the failed tinylicious log
+        - task: Bash@3
+          displayName: Rename tinylicious log
+          inputs: 
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              oldname=${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log
+              stageName=${{ parameters.stageName }}
+              newname=$(echo $oldname | sed 's/\.log$/'"_$stageName.log"/)
+              mv $oldname $newname
+          condition: and(failed(), contains('${{ taskTestStep }}', 'tinylicious'))
+        # Publish tinylicious log for troubleshooting
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Tinylicious Log
+          inputs:
+            targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious_${{ parameters.stageName }}.log'
+            artifactName: 'tinyliciousLog_${{ parameters.stageName }}'
+            publishLocation: 'pipeline'
+          condition: and(failed(), contains('${{ taskTestStep }}', 'tinylicious'))
+          continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
       # Test - Upload results
       - task: PublishTestResults@2
