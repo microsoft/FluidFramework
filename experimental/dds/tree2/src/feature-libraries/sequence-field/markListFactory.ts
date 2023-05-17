@@ -4,9 +4,9 @@
  */
 
 import { RevisionTag } from "../../core";
-import { Mark, MarkList, Skip } from "./format";
+import { Mark, MarkList, NoopMark } from "./format";
 import { MoveEffectTable } from "./moveEffectTable";
-import { isSkipMark, tryExtendMark } from "./utils";
+import { isNoopMark, tryExtendMark } from "./utils";
 
 /**
  * Helper class for constructing an offset list of marks that...
@@ -28,7 +28,7 @@ export class MarkListFactory<TNodeChange> {
 
 	public push(...marks: Mark<TNodeChange>[]): void {
 		for (const item of marks) {
-			if (isSkipMark(item)) {
+			if (isNoopMark(item)) {
 				this.pushOffset(item.count);
 			} else {
 				this.pushContent(item);
@@ -40,7 +40,7 @@ export class MarkListFactory<TNodeChange> {
 		this.offset += offset;
 	}
 
-	public pushContent(mark: Exclude<Mark<TNodeChange>, Skip>): void {
+	public pushContent(mark: Exclude<Mark<TNodeChange>, NoopMark>): void {
 		if (this.offset > 0) {
 			this.list.push({ count: this.offset });
 			this.offset = 0;

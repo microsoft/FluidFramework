@@ -37,7 +37,7 @@ import {
 	Reattach,
 	ReturnFrom,
 	ReturnTo,
-	Skip,
+	NoopMark,
 	Changeset,
 	MoveId,
 	Revive,
@@ -45,7 +45,7 @@ import {
 	DetachEvent,
 	EmptyInputCellMark,
 	ExistingCellMark,
-	SkipType,
+	NoopMarkType,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -194,7 +194,7 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 export function isExistingCellMark<T>(mark: Mark<T>): mark is ExistingCellMark<T> {
 	const type = mark.type;
 	switch (type) {
-		case SkipType:
+		case NoopMarkType:
 		case "Delete":
 		case "Modify":
 		case "MoveOut":
@@ -221,7 +221,7 @@ export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark
 export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 	const type = mark.type;
 	switch (type) {
-		case SkipType:
+		case NoopMarkType:
 		case "Insert":
 			return false;
 		case "MoveIn":
@@ -252,7 +252,7 @@ export function getMarkLength(mark: Mark<unknown>): number {
 			return mark.content.length;
 		case "Modify":
 			return 1;
-		case SkipType:
+		case NoopMarkType:
 		case "Delete":
 		case "MoveIn":
 		case "MoveOut":
@@ -265,8 +265,8 @@ export function getMarkLength(mark: Mark<unknown>): number {
 	}
 }
 
-export function isSkipMark(mark: Mark<unknown>): mark is Skip {
-	return mark.type === SkipType;
+export function isNoopMark(mark: Mark<unknown>): mark is NoopMark {
+	return mark.type === NoopMarkType;
 }
 
 export function getOffsetAtRevision(
@@ -317,8 +317,8 @@ export function tryExtendMark<T>(
 		return false;
 	}
 	const type = rhs.type;
-	if (type === SkipType) {
-		(lhs as Skip).count += rhs.count;
+	if (type === NoopMarkType) {
+		(lhs as NoopMark).count += rhs.count;
 		return true;
 	}
 	if (type !== "Modify" && rhs.revision !== (lhs as HasRevisionTag).revision) {
@@ -877,7 +877,7 @@ export function splitMark<T, TMark extends Mark<T>>(
 	}
 	const type = mark.type;
 	switch (type) {
-		case SkipType:
+		case NoopMarkType:
 			return [{ count: length }, { count: remainder }] as [TMark, TMark];
 		case "Modify":
 			fail("Unable to split Modify mark of length 1");
@@ -1026,7 +1026,7 @@ export function compareLineages(
 export function getNodeChange<TNodeChange>(mark: Mark<TNodeChange>): TNodeChange | undefined {
 	const type = mark.type;
 	switch (type) {
-		case SkipType:
+		case NoopMarkType:
 		case "MoveIn":
 		case "ReturnTo":
 			return undefined;
@@ -1048,7 +1048,7 @@ export function withNodeChange<TNodeChange>(
 ): Mark<TNodeChange> {
 	const type = mark.type;
 	switch (type) {
-		case SkipType:
+		case NoopMarkType:
 			return changes !== undefined ? { type: "Modify", changes } : mark;
 		case "MoveIn":
 		case "ReturnTo":
@@ -1081,7 +1081,7 @@ export function withRevision<TMark extends Mark<unknown>>(
 		return mark;
 	}
 
-	if (isSkipMark(mark)) {
+	if (isNoopMark(mark)) {
 		return mark;
 	}
 
@@ -1090,7 +1090,7 @@ export function withRevision<TMark extends Mark<unknown>>(
 	}
 
 	const cloned = cloneMark(mark);
-	(cloned as Exclude<Mark<unknown>, Skip | Modify<unknown>>).revision = revision;
+	(cloned as Exclude<Mark<unknown>, NoopMark | Modify<unknown>>).revision = revision;
 	return cloned;
 }
 

@@ -31,7 +31,7 @@ import {
 	getNodeChange,
 	withNodeChange,
 	getMarkMoveId,
-	isSkipMark,
+	isNoopMark,
 } from "./utils";
 import {
 	Attach,
@@ -40,11 +40,11 @@ import {
 	MarkList,
 	CellSpanningMark,
 	ExistingCellMark,
-	Skip,
+	NoopMark,
 	MoveId,
 	Modify,
 	EmptyInputCellMark,
-	SkipType,
+	NoopMarkType,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -415,7 +415,7 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 		case "MoveOut":
 		case "Revive":
 			return true;
-		case SkipType:
+		case NoopMarkType:
 		case "ReturnFrom":
 		case "Insert":
 		case "MoveIn":
@@ -453,11 +453,11 @@ function rebaseNodeChange<TNodeChange>(
 }
 
 function makeDetachedMark<T>(
-	mark: Skip | ExistingCellMark<T>,
+	mark: NoopMark | ExistingCellMark<T>,
 	detachIntention: RevisionTag,
 	offset: number,
 ): Mark<T> {
-	if (isSkipMark(mark)) {
+	if (isNoopMark(mark)) {
 		return { count: 0 };
 	}
 
@@ -536,7 +536,7 @@ function amendRebaseI<TNodeChange>(
 			// TODO: Handle all pairings of base and new mark types.
 			if (baseMark !== undefined && isModify(baseMark)) {
 				switch (newMark.type) {
-					case SkipType: {
+					case NoopMarkType: {
 						const childChange = rebaseChild(undefined, baseMark.changes);
 						if (childChange !== undefined) {
 							rebasedMark = { type: "Modify", changes: childChange };

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
-import { Changeset, DetachEvent, Mark, MarkList, Modify, ReturnFrom, SkipType } from "./format";
+import { Changeset, DetachEvent, Mark, MarkList, Modify, ReturnFrom, NoopMarkType } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
@@ -96,7 +96,7 @@ function invertMark<TNodeChange>(
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {
 	switch (mark.type) {
-		case SkipType: {
+		case NoopMarkType: {
 			return [mark];
 		}
 		case "Insert": {

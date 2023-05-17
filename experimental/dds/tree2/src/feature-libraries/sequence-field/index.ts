@@ -31,7 +31,7 @@ export {
 	ReturnTo,
 	Revive,
 	Tiebreak,
-	Skip,
+	NoopMark,
 	LineageEvent,
 	HasReattachFields,
 	CellSpanningMark,

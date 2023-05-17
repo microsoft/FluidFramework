@@ -16,14 +16,14 @@ export type NodeCount = number;
 /**
  * Left undefined for terseness.
  */
-export const SkipType = undefined;
+export const NoopMarkType = undefined;
 
-export interface Skip extends CellTargetingMark {
+export interface NoopMark extends CellTargetingMark {
 	/**
 	 * Declared for consistency with other marks.
 	 * Left undefined for terseness.
 	 */
-	type?: typeof SkipType;
+	type?: typeof NoopMarkType;
 
 	/**
 	 * The number of nodes being skipped.
@@ -271,7 +271,7 @@ export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark 
  * A mark which extends `CellTargetingMark`.
  */
 export type ExistingCellMark<TNodeChange> =
-	| Skip
+	| NoopMark
 	| Delete<TNodeChange>
 	| MoveOut<TNodeChange>
 	| ReturnFrom<TNodeChange>
@@ -284,7 +284,7 @@ export type EmptyInputCellMark<TNodeChange> =
 	| (DetachedCellMark & ExistingCellMark<TNodeChange>);
 
 export type Mark<TNodeChange = NodeChangeType> =
-	| Skip
+	| NoopMark
 	| Modify<TNodeChange>
 	| Attach<TNodeChange>
 	| Detach<TNodeChange>;

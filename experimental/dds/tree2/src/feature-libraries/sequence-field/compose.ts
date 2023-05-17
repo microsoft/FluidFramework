@@ -34,7 +34,7 @@ import {
 import {
 	getInputLength,
 	getOutputLength,
-	isSkipMark,
+	isNoopMark,
 	getOffsetAtRevision,
 	cloneMark,
 	isDeleteMark,
@@ -169,9 +169,9 @@ function composeMarks<TNodeChange>(
 	);
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
-		if (isSkipMark(baseMark)) {
+		if (isNoopMark(baseMark)) {
 			return withNodeChange(newMark, nodeChange);
-		} else if (isSkipMark(newMark)) {
+		} else if (isNoopMark(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
 		return createModifyMark(getMarkLength(newMark), nodeChange, getCellId(baseMark, undefined));
@@ -298,12 +298,12 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
 ): TMark {
-	if (isSkipMark(mark)) {
+	if (isNoopMark(mark)) {
 		return mark;
 	}
 
 	const cloned = cloneMark(mark);
-	assert(!isSkipMark(cloned), 0x4de /* Cloned should be same type as input mark */);
+	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
 	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
 		cloned.revision = revision;
 	}

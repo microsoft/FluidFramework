@@ -7,7 +7,7 @@ import { unreachableCase } from "@fluidframework/common-utils";
 import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
-import { Changeset, Mark, SkipType } from "./format";
+import { Changeset, Mark, NoopMarkType } from "./format";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([
@@ -64,7 +64,7 @@ function encodeForJson<TNodeChange>(
 					changes: childCodec.encode(mark.changes),
 				} as unknown as JsonCompatible);
 				break;
-			case SkipType:
+			case NoopMarkType:
 			case "MoveIn":
 			case "ReturnTo":
 				jsonMarks.push(mark as unknown as JsonCompatible);
@@ -122,7 +122,7 @@ function decodeJson<TNodeChange>(
 				}
 				break;
 			}
-			case SkipType:
+			case NoopMarkType:
 			case "MoveIn":
 			case "ReturnTo":
 				marks.push(mark);
