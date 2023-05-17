@@ -119,7 +119,7 @@ extends:
     - ci:test:jest
     - ci:test:realsvc:local
     - ci:test:realsvc:tinylicious
-    ${{ if ne(variables['System.TeamProject'], 'public') }}:
+    - ${{ if ne(variables['System.TeamProject'], 'public') }}:
       - ci:test:realsvc:local:full
       - ci:test:realsvc:tinylicious:full
     - ci:test:stress:tinylicious
