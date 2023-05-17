@@ -58,13 +58,11 @@ export class PartitionManager extends EventEmitter {
 			});
 
 			this.consumer.on("checkpoint_success", (partitionId, queuedMessage) => {
-				if (this.sampleMessages(100)) {
-					Lumberjack.info(`Kafka checkpoint successful`, {
-						msgOffset: queuedMessage.offset,
-						topic: queuedMessage.topic,
-						msgPartition: queuedMessage.partition,
-					});
-				}
+				Lumberjack.info(`Kafka checkpoint successful`, {
+					msgOffset: queuedMessage.offset,
+					topic: queuedMessage.topic,
+					msgPartition: queuedMessage.partition,
+				});
 			});
 
 			this.consumer.on("checkpoint_error", (partitionId, queuedMessage) => {
@@ -208,13 +206,5 @@ export class PartitionManager extends EventEmitter {
 
 			this.partitions.set(partition.partition, newPartition);
 		}
-	}
-
-	private sampleMessages(numberOfMessagesPerTrace: number): boolean {
-		return this.getRandomInt(numberOfMessagesPerTrace) === 0;
-	}
-
-	private getRandomInt(range: number) {
-		return Math.floor(Math.random() * range);
 	}
 }
