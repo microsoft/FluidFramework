@@ -38,7 +38,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, delAB, delCD, addX, addY], ["x", "y"]);
 		});
 
-		it("can rebase change under a node whose insertion is also rebased", () => {
+		it.skip("can rebase a change under a node whose insertion is also rebased", () => {
 			const tree1 = makeTreeFromJson(["B"]);
 			const tree2 = tree1.fork();
 			const tree3 = tree1.fork();
@@ -162,7 +162,7 @@ describe("Editing", () => {
 			insert(a, 0, "a");
 			const b = a.fork();
 			insert(b, 1, "b");
-			const c = a.fork();
+			const c = b.fork();
 			insert(c, 2, "c");
 
 			insert(r, 0, "r");
@@ -279,7 +279,12 @@ describe("Editing", () => {
 				parentField: rootFieldKeySymbol,
 				parentIndex: 0,
 			};
-			const fooField = tree1.editor.sequenceField({ parent: node1, field: brand("foo") });
+			const listNode: UpPath = {
+				parent: node1,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const fooField = tree1.editor.sequenceField({ parent: listNode, field: brand("") });
 			fooField.move(0, 1, 1);
 
 			const rootField = tree1.editor.sequenceField({

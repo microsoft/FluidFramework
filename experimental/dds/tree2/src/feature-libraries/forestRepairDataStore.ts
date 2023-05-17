@@ -74,8 +74,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 					switch (type) {
 						case Delta.MarkType.MoveOut:
 						case Delta.MarkType.Delete: {
+							cursor.enterNode(index);
 							const child = parent.getOrCreateChild(key, index, repairDataFactory);
 							visitModify(mark, child);
+							cursor.exitNode();
 							onDelete(parent, key, index, mark.count);
 							index += mark.count;
 							break;
