@@ -443,7 +443,7 @@ describe("editable-tree: data binder", () => {
 			assert.deepEqual(log, []);
 		});
 
-		it("registers to root, matches paths with subtree policy and any index, stable sorting on a compare pipeline", () => {
+		it("registers to root, matches paths with subtree policy and any index, stable sorting assumed on the compare pipeline", () => {
 			const { tree, root, address } = retrieveNodes();
 			const syntaxTree: BindSyntaxTree[] = [{ field: fieldAddress }];
 			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
@@ -462,7 +462,6 @@ describe("editable-tree: data binder", () => {
 				matchPolicy: "subtree",
 				autoFlush: false,
 				autoFlushPolicy: "afterBatch",
-				sortPolicy: "merge",
 				sortFn: sortPipeline,
 			});
 			const dataBinder: FlushableDataBinder<OperationBinderEvents> =
@@ -966,7 +965,6 @@ describe("editable-tree: data binder", () => {
 			const bindTree: BindTree = compileSyntaxTree(syntaxTree);
 			const options: BinderOptions = createBinderOptions({
 				matchPolicy: "subtree",
-				sortPolicy: "none",
 			});
 			const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
 				tree.events,

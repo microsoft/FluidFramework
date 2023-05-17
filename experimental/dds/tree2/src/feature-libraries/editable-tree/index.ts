@@ -33,7 +33,6 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
-	SortPolicy,
 	BindSyntaxTree,
 	BindTree,
 	DownPath,

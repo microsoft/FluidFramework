@@ -56,7 +56,6 @@ export type AnchorsCompare = CompareFunction<UpPath>;
  * @alpha
  */
 export interface BinderOptions {
-	sortPolicy: SortPolicy;
 	sortFn?: BinderEventsCompare;
 	matchPolicy: MatchPolicy;
 }
@@ -69,7 +68,6 @@ export interface BinderOptions {
 export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptions {
 	autoFlush: boolean;
 	autoFlushPolicy: keyof Events<E>;
-	sortAnchorsPolicy: SortPolicy;
 	sortAnchorsFn?: AnchorsCompare;
 }
 
@@ -79,13 +77,6 @@ export interface FlushableBinderOptions<E extends Events<E>> extends BinderOptio
  * @alpha
  */
 export type MatchPolicy = "subtree" | "path";
-
-/**
- * Possible sort policies.
- *
- * @alpha
- */
-export type SortPolicy = "merge" | "native" | "none";
 
 /**
  * The data binder interface
@@ -433,26 +424,10 @@ class BufferingPathVisitor
 	}
 
 	public flush(): BufferingPathVisitor {
-		let sortedQueue: BindingContext[];
-		switch (this.options.sortPolicy) {
-			case "merge":
-				sortedQueue = mergeSort(
-					this.eventQueue,
-					this.options.sortFn ?? compareBinderEventsDeleteFirst,
-				);
-				break;
-			case "native":
-				sortedQueue = nativeSort(
-					this.eventQueue,
-					this.options.sortFn ?? compareBinderEventsDeleteFirst,
-				);
-				break;
-			case "none":
-				sortedQueue = this.eventQueue;
-				break;
-			default:
-				unreachableCase(this.options.sortPolicy);
-		}
+		const sortedQueue: BindingContext[] = nativeSort(
+			this.eventQueue,
+			this.options.sortFn ?? compareBinderEventsDeleteFirst,
+		);
 		if (this.hasRegisteredContextType(BindingType.Batch)) {
 			const batchPaths = this.getRegisteredPaths(BindingType.Batch);
 			assert(batchPaths !== undefined, "batch paths confirmed registered");
@@ -597,20 +572,7 @@ class BufferingDataBinder<E extends Events<E>>
 			assert(pathB !== undefined, "pathB expected to be defined");
 			return sortFn(pathA, pathB);
 		};
-		let sortedVisitors: BufferingPathVisitor[];
-		switch (this.options.sortAnchorsPolicy) {
-			case "merge":
-				sortedVisitors = mergeSort(unsortedVisitors, compareFn);
-				break;
-			case "native":
-				sortedVisitors = nativeSort(unsortedVisitors, compareFn);
-				break;
-			case "none":
-				sortedVisitors = unsortedVisitors;
-				break;
-			default:
-				unreachableCase(this.options.sortAnchorsPolicy);
-		}
+		const sortedVisitors: BufferingPathVisitor[] = nativeSort(unsortedVisitors, compareFn);
 		for (const visitor of sortedVisitors) {
 			visitor.flush();
 		}
@@ -724,14 +686,12 @@ export function createDataBinderInvalidate<E extends Events<E>>(
  */
 export function createBinderOptions({
 	matchPolicy = "path",
-	sortPolicy = "native",
 	sortFn,
 }: {
 	matchPolicy?: MatchPolicy;
-	sortPolicy?: SortPolicy;
 	sortFn?: BinderEventsCompare;
 }): BinderOptions {
-	return { matchPolicy, sortPolicy, sortFn };
+	return { matchPolicy, sortFn };
 }
 
 /**
@@ -739,26 +699,20 @@ export function createBinderOptions({
  */
 export function createFlushableBinderOptions<E extends Events<E>>({
 	matchPolicy = "path",
-	sortPolicy = "native",
 	sortFn,
-	sortAnchorsPolicy = "native",
 	sortAnchorsFn,
 	autoFlush = true,
 	autoFlushPolicy,
 }: {
 	matchPolicy?: MatchPolicy;
-	sortPolicy?: SortPolicy;
 	sortFn?: BinderEventsCompare;
-	sortAnchorsPolicy?: SortPolicy;
 	sortAnchorsFn?: AnchorsCompare;
 	autoFlush?: boolean;
 	autoFlushPolicy: keyof Events<E>;
 }): FlushableBinderOptions<E> {
 	return {
 		matchPolicy,
-		sortPolicy,
 		sortFn,
-		sortAnchorsPolicy,
 		sortAnchorsFn,
 		autoFlush,
 		autoFlushPolicy,
@@ -796,32 +750,6 @@ export function comparePipeline<T>(...fns: CompareFunction<T>[]): CompareFunctio
 
 export function nativeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
 	return [...arr].sort(compareFn);
-}
-
-export function mergeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
-	if (arr.length <= 1) {
-		return arr;
-	}
-	const middle = Math.floor(arr.length / 2);
-	const left = arr.slice(0, middle);
-	const right = arr.slice(middle);
-	return merge(mergeSort(right, compareFn), mergeSort(left, compareFn), compareFn);
-}
-
-export function merge<T>(left: T[], right: T[], compareFn: CompareFunction<T>): T[] {
-	const result = [];
-	let i = 0;
-	let j = 0;
-	while (i < left.length && j < right.length) {
-		if (compareFn(left[i], right[j]) <= 0) {
-			result.push(left[i]);
-			i++;
-		} else {
-			result.push(right[j]);
-			j++;
-		}
-	}
-	return result.concat(left.slice(i)).concat(right.slice(j));
 }
 
 export function compileSyntaxTree(flatNodes: BindSyntaxTree[]): BindTree {
