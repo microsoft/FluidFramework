@@ -24,7 +24,7 @@ import {
 	UndoRedoManager,
 } from "../core";
 import { createEmitter, ISubscribable } from "../events";
-import { SharedTreeBranch } from "./branch";
+import { isRebaseChange, SharedTreeBranch } from "./branch";
 
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 /**
@@ -200,8 +200,8 @@ export class EditManager<
 		// Whenever the branch forks, register the new fork
 		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offRebase = branch.on("change", ({ type }) => {
-			if (type === "rebase") {
+		const offRebase = branch.on("change", (args) => {
+			if (args.type === "replace" && isRebaseChange(args)) {
 				untrackBranch(branch, trunkBase.sequenceNumber);
 				trunkBase.sequenceNumber = trackBranch(branch);
 			}

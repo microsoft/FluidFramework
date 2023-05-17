@@ -33,24 +33,57 @@ import { TransactionStack } from "./transactionStack";
  * (or is undefined if there was no net change):
  * * Append - when one or more commits are appended to the head of the branch, for example via
  * a change applied by the branch's editor, or as a result of merging another branch into this one
- * * Rollback - when one or more commits are removed from the head of the branch. This occurs
- * when a transaction is aborted, and all commits in that transaction are removed.
- * * Rebase - when this branch is rebased over another branch. In this case, commits on the source
- * branch are removed and replaced with new, rebased versions
+ * * Remove - when one or more commits are removed from the head of the branch. This occurs
+ * when a transaction is aborted and all commits pending in that transaction are removed.
+ * * Replace - when an operation simultaneously removes and appends commits. For example, when this
+ * branch is rebased and some commits are removed and replaced with rebased versions, or when a
+ * transaction completes and all pending commits are replaced with a single squash commit.
  */
 export type SharedTreeBranchChange<TChange> =
 	| { type: "append"; change: TChange; newCommits: GraphCommit<TChange>[] }
 	| {
-			type: "rollback";
+			type: "remove";
 			change: TChange | undefined;
 			removedCommits: GraphCommit<TChange>[];
 	  }
 	| {
-			type: "rebase";
+			type: "replace";
 			change: TChange | undefined;
 			removedCommits: GraphCommit<TChange>[];
 			newCommits: GraphCommit<TChange>[];
 	  };
+
+/**
+ * Returns true iff the given {@link SharedTreeBranchChange} is the result of a rebase operation.
+ */
+export function isRebaseChange(
+	change: SharedTreeBranchChange<unknown> & { type: "replace" },
+): boolean {
+	return !isTransactionCommitChange(change);
+}
+
+/**
+ * Returns true iff the given {@link SharedTreeBranchChange} is the result of a transaction being committed.
+ */
+export function isTransactionCommitChange(
+	change: SharedTreeBranchChange<unknown> & { type: "replace" },
+): boolean {
+	// "replace" is emitted by transaction commits and by rebase operations. A commit operation will
+	// always result in exactly one new commit. When a rebase results in exactly one new commit, we know
+	// that there will also be no removed commits:
+	//
+	// A ─ B (branch X)
+	// └─ (branch Y)
+	//
+	// Rebasing branch Y onto branch X results in:
+	//
+	// A ─ B (branch X)
+	//     └─ (branch Y)
+	//
+	// newCommits: [B]
+	// removedCommits: []
+	return change.newCommits.length === 1 && change.removedCommits.length !== 0;
+}
 
 /**
  * The events emitted by a `SharedTreeBranch`
@@ -180,13 +213,16 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * single head commit.
 	 * @returns the commits that were squashed, and the new squash commit
 	 */
-	public commitTransaction(): [
-		squashedCommits: GraphCommit<TChange>[],
-		newCommit: GraphCommit<TChange>,
-	] {
+	public commitTransaction():
+		| [squashedCommits: GraphCommit<TChange>[], newCommit: GraphCommit<TChange>]
+		| undefined {
 		this.assertNotDisposed();
 		const [startCommit, commits] = this.popTransaction();
 		this.editor.exitTransaction();
+
+		if (commits.length === 0) {
+			return undefined;
+		}
 
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
@@ -212,6 +248,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				this.head.revision,
 			);
 		}
+		this.emitAndRebaseAnchors({
+			type: "replace",
+			change: undefined,
+			removedCommits: commits,
+			newCommits: [this.head],
+		});
 		return [commits, this.head];
 	}
 
@@ -242,7 +284,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
 
 		this.emitAndRebaseAnchors({
-			type: "rollback",
+			type: "remove",
 			change,
 			removedCommits: commits,
 		});
@@ -375,7 +417,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
 		this.emitAndRebaseAnchors({
-			type: "rebase",
+			type: "replace",
 			change,
 			removedCommits: deletedSourceCommits,
 			newCommits,
