@@ -1304,7 +1304,6 @@ export const shortCodeMap = {
 	"0x69f": "Expected mark to be attached",
 	"0x6a0": "baseMark should have cell ID",
 	"0x6a1": "Lineage should determine order of marks unless one is a new attach",
-	"0x6a2": "Cell changing mark must be an ObjMark",
 	"0x6a3": "Modifying mark must be length one",
 	"0x6a4": "These marks have no cell effects",
 	"0x6a5": "These marks have no cell effects",
@@ -1317,5 +1316,6 @@ export const shortCodeMap = {
 	"0x6ac": "Conflicting global field keys",
 	"0x6ad": "SchemaBuilder can only be finalized once.",
 	"0x6ae": "invalid FieldSchema",
-	"0x6af": "client id should never be null"
+	"0x6af": "client id should never be null",
+	"0x6b0": "Cell changing mark must no be a NoopMark"
 };
