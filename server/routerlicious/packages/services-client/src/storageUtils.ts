@@ -149,7 +149,7 @@ export function convertSummaryTreeToWholeSummaryTree(
  * @param treePrefixToRemove - tree prefix to strip
  * @returns the heirarchical tree
  */
-function buildHierarchy(
+function buildSummaryTreeHeirarchy(
 	flatTree: IWholeFlatSummaryTree,
 	treePrefixToRemove: string,
 ): ISnapshotTree {
@@ -206,7 +206,7 @@ export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(
 	}
 	const flatSummaryTree = flatSummary.trees?.[0];
 	const sequenceNumber = flatSummaryTree?.sequenceNumber;
-	const snapshotTree = buildHierarchy(flatSummaryTree, treePrefixToRemove);
+	const snapshotTree = buildSummaryTreeHeirarchy(flatSummaryTree, treePrefixToRemove);
 
 	return {
 		blobs,

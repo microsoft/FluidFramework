@@ -90,6 +90,14 @@
 		"broken": {
 			"ClassDeclaration_ProtocolOpHandler": {
 				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_addBlobToTree": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_buildHierarchy": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
