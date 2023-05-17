@@ -192,34 +192,34 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased after merging.
 	 * @param newCommits - all commits which were appended to the source branch.
-	 * @param change - the change to the forest caused by the rebasing.
+	 * @param forestChanged - true iff the known forest has changed at any point due to the commits being rebased.
 	 * @param mergedUndoRedoManager - the {@link UndoRedoManager} of the branch that was merged.
 	 */
 	public updateAfterMerge(
 		newCommits: GraphCommit<TChange>[],
-		change: TChange | undefined,
+		forestChanged: boolean,
 		mergedUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
-		this.updateBasedOnNewCommits(newCommits, change, this, mergedUndoRedoManager);
+		this.updateBasedOnNewCommits(newCommits, forestChanged, this, mergedUndoRedoManager);
 	}
 
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased.
 	 * @param newCommits - all commits from the original branch that have rebased versions present on the new branch.
-	 * @param change - the change to the forest caused by the rebasing.
+	 * @param forestChanged - true iff the known forest has changed at any point due to the commits being rebased.
 	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
 	 */
 	public updateAfterRebase(
 		newCommits: GraphCommit<TChange>[],
-		change: TChange | undefined,
+		forestChanged: boolean,
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
-		this.updateBasedOnNewCommits(newCommits, change, baseUndoRedoManager, this);
+		this.updateBasedOnNewCommits(newCommits, forestChanged, baseUndoRedoManager, this);
 	}
 
 	private updateBasedOnNewCommits(
 		newCommits: GraphCommit<TChange>[],
-		change: TChange | undefined,
+		forestChanged: boolean,
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 		originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
@@ -242,7 +242,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 		// If the rebase did not produce any type of change to the tree, the new commits
 		// can be replaced directly without updating repair data
-		if (change === undefined) {
+		if (forestChanged === false) {
 			const undoables = new Map<RevisionTag, GraphCommit<TChange>>();
 			const redoables = new Map<RevisionTag, GraphCommit<TChange>>();
 
