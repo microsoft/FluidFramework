@@ -62,11 +62,6 @@ export function getGitMode(value: SummaryObject): string;
 export function getGitType(value: SummaryObject): "blob" | "tree";
 
 // @public (undocumented)
-export interface ILocalSequencedClient extends ISequencedClient {
-    shouldHaveLeft?: boolean;
-}
-
-// @public (undocumented)
 export interface IProtocolHandler {
     // (undocumented)
     readonly attributes: IDocumentAttributes;
@@ -107,9 +102,6 @@ export interface IScribeProtocolState {
     // (undocumented)
     values: [string, ICommittedProposal][];
 }
-
-// @public (undocumented)
-export function isSystemMessage(message: ISequencedDocumentMessage): boolean;
 
 // @public
 export class ProtocolOpHandler implements IProtocolHandler {
