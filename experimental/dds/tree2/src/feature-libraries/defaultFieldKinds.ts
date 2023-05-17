@@ -615,6 +615,8 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 						childChange: rebaseChild(
 							change.childChange,
 							over.fieldChange.newContent.changes,
+							false,
+							true,
 						),
 					};
 				}

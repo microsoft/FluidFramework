@@ -821,13 +821,21 @@ export class ModularChangeFamily
 			}
 		}
 
-		// If there's a node exists constraint and we deleted the node, increment the violation count
-		if (rebasedChange.nodeExistsConstraint !== undefined && deleted === true) {
+		// If there's a node exists constraint and we deleted or revived the node, update constraint state
+		if (
+			rebasedChange.nodeExistsConstraint !== undefined &&
+			(deleted === true || revived === true)
+		) {
 			// Only increment the violation count if the constraint wasn't already violated
-			// TODO: Decrement if constraint is fixed by rebasing (node is revived)
-			if (rebasedChange.nodeExistsConstraint.violated !== true) {
+			if (deleted === true && rebasedChange.nodeExistsConstraint.violated !== true) {
 				rebasedChange.nodeExistsConstraint.violated = true;
 				constraintState.violationCount += 1;
+			}
+
+			// Only decrement the violation count if the constraint has been violated
+			if (revived === true && rebasedChange.nodeExistsConstraint.violated === true) {
+				rebasedChange.nodeExistsConstraint.violated = false;
+				constraintState.violationCount -= 1;
 			}
 		}
 
