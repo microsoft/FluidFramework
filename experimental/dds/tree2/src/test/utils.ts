@@ -499,9 +499,6 @@ export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): v
 	assert.deepEqual(actual, expected);
 }
 
-const factory = new SharedTreeFactory();
-const runtime = new MockFluidDataStoreRuntime();
-
 export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTree {
 	const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
 	return makeTreeFromCursor(cursors, jsonSchema);
@@ -512,6 +509,8 @@ export function makeTreeFromCursor(
 	schemaData?: SchemaData,
 ): ISharedTree {
 	const schemaPolicy = defaultSchemaPolicy;
+	const factory = new SharedTreeFactory();
+	const runtime = new MockFluidDataStoreRuntime();
 	const tree = factory.create(runtime, "TestSharedTree");
 	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
 	const field = tree.editor.sequenceField({
