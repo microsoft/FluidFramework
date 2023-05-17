@@ -301,7 +301,7 @@ stages:
                 inputs:
                   command: 'custom'
                   workingDir: ${{ parameters.buildDirectory }}
-                  customCommand: 'exit 2' # deliberately fail the test 
+                  customCommand: 'run ${{ taskTestStep }}:coverage'
                 condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
             # Test - No coverage
             - ${{ if or(eq(variables['testCoverage'], false), eq(startsWith(taskTestStep, 'ci:test'), false)) }}:
@@ -310,7 +310,7 @@ stages:
                   inputs:
                     command: 'custom'
                     workingDir: ${{ parameters.buildDirectory }}
-                    customCommand: 'exit 2' # deliberately fail the test 
+                    customCommand: 'run ${{ taskTestStep }}'
                   condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
           # Test - Upload coverage results
