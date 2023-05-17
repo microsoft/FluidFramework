@@ -29,7 +29,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 			out.push(deltaFromNodeChange(getNodeChange(mark), getMarkLength(mark), deltaFromChild));
 		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
 		} else {
-			assert(isObjMark(mark), "Cell changing mark must be an ObjMark");
+			assert(isObjMark(mark), 0x6a2 /* Cell changing mark must be an ObjMark */);
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
@@ -121,7 +121,7 @@ function deltaFromNodeChange<TNodeChange>(
 	if (change === undefined) {
 		return length;
 	}
-	assert(length === 1, "Modifying mark must be length one");
+	assert(length === 1, 0x6a3 /* Modifying mark must be length one */);
 	const modify = deltaFromChild(change);
 	return isEmptyModify(modify) ? 1 : modify;
 }

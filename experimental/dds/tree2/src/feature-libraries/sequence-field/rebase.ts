@@ -81,7 +81,7 @@ export function rebase<TNodeChange>(
 	manager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
 ): Changeset<TNodeChange> {
-	assert(base.revision !== undefined, "Cannot rebase over changeset with no revision");
+	assert(base.revision !== undefined, 0x69b /* Cannot rebase over changeset with no revision */);
 	const baseInfo =
 		base.revision === undefined ? undefined : revisionMetadata.getInfo(base.revision);
 	const baseIntention = baseInfo?.rollbackOf ?? base.revision;
@@ -311,7 +311,7 @@ class RebaseQueue<T> {
 		const newMark = this.newMarks.peek();
 		assert(
 			baseMark !== undefined && newMark !== undefined,
-			"Cannot dequeue both unless both mark queues are non-empty",
+			0x69c /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
 		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
 		return {
@@ -359,7 +359,7 @@ function rebaseMark<TNodeChange>(
 
 		assert(
 			!isNewAttach(rebasedMark),
-			"A new attach should not be rebased over its cell being emptied",
+			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
 
 		if (isMoveMark(rebasedMark)) {
@@ -383,7 +383,7 @@ function rebaseMark<TNodeChange>(
 	} else if (markFillsCells(baseMark)) {
 		assert(
 			isExistingCellMark(rebasedMark),
-			"Only an ExistingCellMark can target an empty cell",
+			0x69e /* Only an ExistingCellMark can target an empty cell */,
 		);
 		if (isMoveMark(rebasedMark)) {
 			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
@@ -464,7 +464,7 @@ function makeDetachedMark<T>(
 		return 0;
 	}
 
-	assert(mark.detachEvent === undefined, "Expected mark to be attached");
+	assert(mark.detachEvent === undefined, 0x69f /* Expected mark to be attached */);
 	return { ...mark, detachEvent: { revision: detachIntention, index: offset } };
 }
 
@@ -633,7 +633,7 @@ function compareCellPositions(
 	gapOffsetInBase: number,
 ): number {
 	const baseId = getCellId(baseMark, baseIntention);
-	assert(baseId !== undefined, "baseMark should have cell ID");
+	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
 	const newId = getCellId(newMark, undefined);
 	if (baseId.revision === newId?.revision) {
 		return baseId.index - newId.index;
@@ -674,7 +674,7 @@ function compareCellPositions(
 
 	assert(
 		isNewAttach(baseMark),
-		"Lineage should determine order of marks unless one is a new attach",
+		0x6a1 /* Lineage should determine order of marks unless one is a new attach */,
 	);
 
 	// `newMark` points to cells which were emptied before `baseMark` was created.

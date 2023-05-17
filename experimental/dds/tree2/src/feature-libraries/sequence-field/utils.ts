@@ -358,7 +358,7 @@ export function tryExtendMark<T>(
 	}
 
 	if (isExistingCellMark(lhs)) {
-		assert(isExistingCellMark(rhs), "Should be existing cell mark");
+		assert(isExistingCellMark(rhs), 0x6a6 /* Should be existing cell mark */);
 		if (lhs.detachEvent?.revision !== rhs.detachEvent?.revision) {
 			return false;
 		}
@@ -1084,7 +1084,7 @@ export function withNodeChange<TNodeChange>(
 	switch (type) {
 		case "MoveIn":
 		case "ReturnTo":
-			assert(changes === undefined, "Cannot have a node change on a MoveIn or ReturnTo mark");
+			assert(changes === undefined, 0x6a7 /* Cannot have a node change on a MoveIn or ReturnTo mark */);
 			return mark;
 		case "Delete":
 		case "Insert":
