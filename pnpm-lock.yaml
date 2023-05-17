@@ -385,7 +385,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -421,7 +421,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -482,9 +482,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../../../packages/framework/fluid-framework
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
@@ -504,6 +501,9 @@ importers:
         specifier: ^8.3.1
         version: 8.3.2
     devDependencies:
+      '@fluidframework/azure-local-service':
+        specifier: workspace:~
+        version: link:../../azure-local-service
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
@@ -558,6 +558,9 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../../packages/loader/container-loader
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
@@ -597,9 +600,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../../../packages/framework/fluid-framework
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.0
@@ -667,6 +667,124 @@ importers:
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
+
+  examples/apps/attributable-map:
+    dependencies:
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../utils/example-utils
+      '@fluid-experimental/attributable-map':
+        specifier: workspace:~
+        version: link:../../../experimental/dds/attributable-map
+      '@fluid-experimental/attributor':
+        specifier: workspace:~
+        version: link:../../../packages/framework/attributor
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../packages/framework/aqueduct
+      '@fluidframework/common-definitions':
+        specifier: ^0.20.1
+        version: 0.20.1
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-utils
+    devDependencies:
+      '@fluid-tools/build-cli':
+        specifier: ^0.17.0
+        version: 0.17.0(@types/node@14.18.46)(webpack-cli@4.10.0)
+      '@fluidframework/build-common':
+        specifier: ^1.1.0
+        version: 1.1.0
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^2.0.0
+        version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
+      '@fluidframework/test-tools':
+        specifier: ^0.2.3074
+        version: 0.2.3074
+      '@types/expect-puppeteer':
+        specifier: 2.2.1
+        version: 2.2.1
+      '@types/jest':
+        specifier: 22.2.3
+        version: 22.2.3
+      '@types/jest-environment-puppeteer':
+        specifier: 2.2.0
+        version: 2.2.0
+      '@types/node':
+        specifier: ^14.18.38
+        version: 14.18.46
+      '@types/puppeteer':
+        specifier: 1.3.0
+        version: 1.3.0
+      concurrently:
+        specifier: ^7.6.0
+        version: 7.6.0
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.6.0
+        version: 8.6.0
+      html-webpack-plugin:
+        specifier: ^5.5.0
+        version: 5.5.0(webpack@5.82.1)
+      jest:
+        specifier: ^26.6.3
+        version: 26.6.3
+      jest-junit:
+        specifier: ^10.0.0
+        version: 10.0.0
+      jest-puppeteer:
+        specifier: ^4.3.0
+        version: 4.4.0(puppeteer@1.20.0)
+      prettier:
+        specifier: ~2.6.2
+        version: 2.6.2
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
+      puppeteer:
+        specifier: ^1.20.0
+        version: 1.20.0
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      ts-jest:
+        specifier: ^26.4.4
+        version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
+      ts-loader:
+        specifier: ^9.3.0
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
+      typescript:
+        specifier: ~4.5.5
+        version: 4.5.5
+      webpack:
+        specifier: ^5.82.0
+        version: 5.82.1(webpack-cli@4.10.0)
+      webpack-cli:
+        specifier: ^4.9.2
+        version: 4.10.0(webpack-dev-server@4.6.0)(webpack@5.82.1)
+      webpack-dev-server:
+        specifier: ~4.6.0
+        version: 4.6.0(webpack-cli@4.10.0)(webpack@5.82.1)
+      webpack-merge:
+        specifier: ^5.8.0
+        version: 5.8.0
 
   examples/apps/collaborative-textarea:
     dependencies:
@@ -760,7 +878,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -787,7 +905,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -884,7 +1002,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -911,7 +1029,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -1059,7 +1177,7 @@ importers:
         version: 3.1.2(webpack@5.82.1)
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -1092,7 +1210,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -1168,7 +1286,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -1192,7 +1310,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -1292,7 +1410,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -1319,7 +1437,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -1431,7 +1549,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -1646,7 +1764,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -1767,7 +1885,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -1882,7 +2000,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -1985,7 +2103,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -2106,7 +2224,7 @@ importers:
         version: 4.6.0(eslint@8.6.0)
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -2130,7 +2248,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       tslib:
         specifier: ^1.10.0
         version: 1.14.1
@@ -2245,7 +2363,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -2360,7 +2478,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -2475,7 +2593,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -2578,7 +2696,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -2684,7 +2802,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -2784,7 +2902,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -2884,7 +3002,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -2987,7 +3105,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -3123,7 +3241,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -3214,7 +3332,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -3274,7 +3392,7 @@ importers:
         version: 4.4.1
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -3374,7 +3492,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -3474,7 +3592,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -3574,7 +3692,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -3728,7 +3846,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -3894,7 +4012,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -4009,7 +4127,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -4212,7 +4330,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -4342,7 +4460,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -4508,7 +4626,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       ts-node:
         specifier: ^8.6.2
         version: 8.10.2(typescript@4.5.5)
@@ -4719,7 +4837,7 @@ importers:
         version: 1.2.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -4758,7 +4876,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -4843,7 +4961,7 @@ importers:
         version: 4.4.1
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -5049,7 +5167,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -5076,7 +5194,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -5245,7 +5363,7 @@ importers:
         version: 2.0.0(eslint@8.6.0)
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -5275,7 +5393,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -5381,7 +5499,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -5405,7 +5523,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -5490,7 +5608,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -5517,7 +5635,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -5617,7 +5735,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -5644,7 +5762,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -5807,7 +5925,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -5837,7 +5955,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -6006,7 +6124,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -6039,7 +6157,7 @@ importers:
         version: 1.3.0(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -6631,7 +6749,7 @@ importers:
         version: 6.5.16(react-dom@17.0.2)(react@17.0.2)
       '@storybook/addon-essentials':
         specifier: ^6.4.22
-        version: 6.5.16(@babel/core@7.21.8)(@storybook/builder-webpack5@6.5.16)(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)(webpack@5.82.1)
+        version: 6.5.13(@babel/core@7.21.8)(@storybook/builder-webpack5@6.5.16)(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)(webpack@5.82.1)
       '@storybook/addon-links':
         specifier: ^6.4.22
         version: 6.5.16(react-dom@17.0.2)(react@17.0.2)
@@ -6691,7 +6809,7 @@ importers:
         version: 8.6.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       identity-obj-proxy:
         specifier: ^3.0.0
         version: 3.0.0
@@ -6742,7 +6860,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       tsconfig-paths-webpack-plugin:
         specifier: ^3.5.2
         version: 3.5.2
@@ -6912,7 +7030,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -13646,7 +13764,7 @@ importers:
         version: 4.4.1
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -13823,7 +13941,7 @@ importers:
         version: 4.4.1
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -15143,7 +15261,7 @@ importers:
         version: 4.4.1
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -15349,7 +15467,7 @@ importers:
         version: 1.2.0
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jsdom:
         specifier: ^16.7.0
         version: 16.7.0
@@ -15382,7 +15500,7 @@ importers:
         version: 1.15.5
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -15666,7 +15784,7 @@ importers:
         version: 4.6.0(eslint@8.6.0)
       html-webpack-plugin:
         specifier: ^5.5.0
-        version: 5.5.1(webpack@5.82.1)
+        version: 5.5.0(webpack@5.82.1)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -15693,7 +15811,7 @@ importers:
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -16168,7 +16286,7 @@ importers:
         version: 2.0.2(webpack@5.82.1)
       ts-loader:
         specifier: ^9.3.0
-        version: 9.4.2(typescript@4.5.5)(webpack@5.82.1)
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.1)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
@@ -16920,7 +17038,7 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
     dependencies:
-      '@babel/types': 7.12.13
+      '@babel/types': 7.21.5
 
   /@babel/parser@7.21.8:
     resolution: {integrity: sha512-6zavDGdzG3gUqAdWvlLFfk+36RilI+Pwyuuh7HItyeScCWP3k6i8vKclAQ0bM/0y/Kz/xiwvxhMv9MgTJP5gmA==}
@@ -17091,7 +17209,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.12.9
-      '@babel/helper-plugin-utils': 7.10.4
+      '@babel/helper-plugin-utils': 7.21.5
       '@babel/plugin-syntax-object-rest-spread': 7.8.3(@babel/core@7.12.9)
       '@babel/plugin-transform-parameters': 7.21.3(@babel/core@7.12.9)
     dev: true
@@ -18021,8 +18139,8 @@ packages:
       '@babel/generator': 7.21.5
       '@babel/helper-function-name': 7.21.0
       '@babel/helper-split-export-declaration': 7.18.6
-      '@babel/parser': 7.12.16
-      '@babel/types': 7.12.13
+      '@babel/parser': 7.21.8
+      '@babel/types': 7.21.5
       debug: 4.3.4
       globals: 11.12.0
       lodash: 4.17.21
@@ -18078,7 +18196,7 @@ packages:
       chalk: 4.1.2
       find-root: 1.1.0
       lodash.groupby: 4.6.0
-      semver: 7.5.1
+      semver: 7.3.8
       webpack: 5.82.1(webpack-cli@4.10.0)
     dev: true
 
@@ -19819,7 +19937,7 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
@@ -20032,7 +20150,7 @@ packages:
       '@fluid-tools/fluidapp-odsp-urlresolver': 2.0.0-internal.4.1.2
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore': 2.0.0-internal.4.1.2
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/odsp-doclib-utils': 2.0.0-internal.4.1.2
@@ -20057,7 +20175,7 @@ packages:
     resolution: {integrity: sha512-tDyqDC2e97y2m5uw7GpuYAZvfrHgIm1S2/mAB0VG8zzwnrm8LpiKd/GldDj8ABXa1CbEn9ZS+7lzyhQ0c1LAzw==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/odsp-driver': 2.0.0-internal.4.1.2
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.4.1.2
@@ -20109,7 +20227,7 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-loader': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/local-driver': 2.0.0-internal.4.1.2
@@ -20121,7 +20239,7 @@ packages:
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
       '@fluidframework/server-local-server': 0.1039.1000
       '@fluidframework/server-services-client': 0.1039.1000
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       '@fluidframework/test-runtime-utils': 2.0.0-internal.4.1.2
       '@fluidframework/tool-utils': 2.0.0-internal.4.1.2
       '@fluidframework/view-interfaces': 2.0.0-internal.4.1.2
@@ -20151,14 +20269,14 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore': 2.0.0-internal.4.1.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/map': 2.0.0-internal.4.1.2
       '@fluidframework/register-collection': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -20174,7 +20292,7 @@ packages:
       '@fluidframework/container-loader': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore': 2.0.0-internal.4.1.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/map': 2.0.0-internal.4.1.2
@@ -20249,7 +20367,7 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-loader': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/fluid-static': 2.0.0-internal.4.1.2
@@ -20258,7 +20376,7 @@ packages:
       '@fluidframework/routerlicious-driver': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
       '@fluidframework/server-services-client': 0.1038.4001
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       axios: 0.26.1
     transitivePeerDependencies:
       - bufferutil
@@ -20505,7 +20623,7 @@ packages:
     resolution: {integrity: sha512-HK7Flkrctebaee/xKTfqy/nFiHuq7vwWf92ItBKLkr6emkBfCI/4N/52/x/SOPDJNpDSw3GT8rjeibrNhhsq7A==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
@@ -20544,7 +20662,7 @@ packages:
     resolution: {integrity: sha512-9osJHyP4JU5WNZpE2/hcQrprZsfRuYSYi3rhl6lXkev/3OJMVCBIh3uPmSfBwjy0J6MLtaf5kNf8Qq3CF5mi1Q==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       events: 3.3.0
@@ -20577,12 +20695,12 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       abort-controller: 3.0.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -20658,7 +20776,7 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
@@ -20721,16 +20839,16 @@ packages:
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore': 2.0.0-internal.4.1.2
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/garbage-collector': 2.0.0-internal.4.1.2
+      '@fluidframework/garbage-collector': 2.0.0-internal.4.1.0
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lz4js: 0.2.0
@@ -20841,7 +20959,7 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -20882,6 +21000,10 @@ packages:
     resolution: {integrity: sha512-Ylhf1yRGlhD+z1M8OUkXsD9lbFatQgNtGtAQJ1+x06Z6w+Naj+i5Erzwrm5rWlx7DQWWZm+YPDdtkGky5xZioA==}
     dev: true
 
+  /@fluidframework/core-interfaces@2.0.0-internal.4.2.0:
+    resolution: {integrity: sha512-YVD7+k2IwxFfI16nDZagY4n7zwZ0XkNAAd/b7323j2x5+oIyvX0EBEiGQkg7E4QNbMkKPbIjy/2BEhTp1skELg==}
+    dev: true
+
   /@fluidframework/core-interfaces@2.0.0-internal.4.2.1:
     resolution: {integrity: sha512-DrAqghFzN+1HKlQsiO025stCrhcgrCnIQdkXXBZ1NMGiRl/D4e5oEUFYbFA+y2h29Co7zmtR7Qk4FFRnmwc5WA==}
     dev: true
@@ -20890,7 +21012,7 @@ packages:
     resolution: {integrity: sha512-m8pnImMj99/kEIoZhXeXWk8hA+g0oxfXlxp1FPRmeIck3jRi13nlIxr9hqaO776GbConnIjdN6TY9sA3V+vTRw==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
@@ -20909,7 +21031,7 @@ packages:
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore': 2.0.0-internal.4.1.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/request-handler': 2.0.0-internal.4.1.2
@@ -20938,7 +21060,7 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
     dev: true
@@ -20996,16 +21118,16 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/garbage-collector': 2.0.0-internal.4.1.2
+      '@fluidframework/garbage-collector': 2.0.0-internal.4.1.0
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       lodash: 4.17.21
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -21120,7 +21242,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -21166,7 +21288,7 @@ packages:
     resolution: {integrity: sha512-r9N2PMj4CjS+XFfpxBG0fKVQUqT5LELX8rueEmMi67N4W5GymbJvHMCSTIdAMCLgbNTbgkRR/5VFOP4CjLfJpw==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/protocol-definitions': 1.2.0
     dev: true
 
@@ -21210,12 +21332,12 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/gitresources': 0.1039.1000
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       axios: 0.26.1
       url: 0.11.0
       uuid: 8.3.2
@@ -21262,6 +21384,25 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/driver-utils@2.0.0-internal.4.2.0:
+    resolution: {integrity: sha512-ZOmt5RLtqYYpMtZqp2XMbN8oh2Aa1AO9tC3ORHpTl2Tu7sm18WlRDzjeKgq+HyNbDIkCz7DRzkv75ScW6UMh7w==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.2.0
+      '@fluidframework/driver-definitions': 2.0.0-internal.4.2.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-base': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.2.0
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.2.1
+      axios: 0.26.1
+      url: 0.11.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: true
+
   /@fluidframework/driver-utils@2.0.0-internal.4.2.1:
     resolution: {integrity: sha512-Axs3j88u6dUJrN/Av96ukjWCbTSI/9/dBUdUFkLk31byFmYdjJbtvcRa0X3Xuydfl1birruhIRDtUDsxMNybXw==}
     dependencies:
@@ -21286,7 +21427,7 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       idb: 6.1.5
     transitivePeerDependencies:
       - supports-color
@@ -21340,11 +21481,11 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-loader': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/odsp-driver': 2.0.0-internal.4.1.2
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       json2csv: 5.0.7
       yargs: 13.2.2
     transitivePeerDependencies:
@@ -21364,7 +21505,7 @@ packages:
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-loader': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/request-handler': 2.0.0-internal.4.1.2
@@ -21431,6 +21572,9 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.2.1
     dev: true
 
+  /@fluidframework/gitresources@0.1038.4000:
+    resolution: {integrity: sha512-YYHauGScTKafXUTqRvpJyYLF0T5wGYXRagZz/ymZFYmG/3AzSj0XKCv1QmkKyAw6wgHWSk/IZyKQ9bukHpPB2w==}
+
   /@fluidframework/gitresources@0.1038.4001:
     resolution: {integrity: sha512-6AWxkiTpXy4JbDKAAOyG0CzLb0h+N2+Z05U/ap9UzuFuoLPMGM4XRewQhfrhXQx/cbEi0gXC6yWY2SIOrp94hQ==}
 
@@ -21441,7 +21585,7 @@ packages:
     resolution: {integrity: sha512-xYvBSV9ZZxnB4y+KteMG9YcqIIXKtFaLF+HK1AqQy72hwA3/NNvVm60xee49cA5gJPsDkcrQt+yjHVi1EXUr3Q==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
@@ -21458,7 +21602,7 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-base': 2.0.0-internal.4.1.2
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
@@ -21469,7 +21613,7 @@ packages:
       '@fluidframework/server-services-client': 0.1039.1000
       '@fluidframework/server-services-core': 0.1039.1000
       '@fluidframework/server-test-utils': 0.1039.1000
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       events: 3.3.0
       jsrsasign: 10.8.6
       url: 0.11.0
@@ -21544,9 +21688,9 @@ packages:
     resolution: {integrity: sha512-Mg7FTo3+gpFAMN9HPTKHIr5xH0wxT07eewvcFcQu+5sAABWxuOZukScjG6vYoxk/2Ndp2Xm1Tn3rHiZHo257/Q==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -21557,9 +21701,9 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.4.2.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.2.1
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.2.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.2.1
-      '@fluidframework/driver-utils': 2.0.0-internal.4.2.1
+      '@fluidframework/driver-utils': 2.0.0-internal.4.2.0
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.2.1
       '@fluidframework/runtime-utils': 2.0.0-internal.4.2.1
@@ -21576,7 +21720,7 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
@@ -21632,7 +21776,7 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/merge-tree': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-base': 0.1039.1000
@@ -21640,7 +21784,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
       '@fluidframework/shared-object-base': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       '@tiny-calc/nano': 0.0.0-alpha.5
       events: 3.3.0
       tslib: 1.14.1
@@ -21678,13 +21822,13 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
       '@fluidframework/shared-object-base': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -21725,7 +21869,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       node-fetch: 2.6.11
     transitivePeerDependencies:
       - debug
@@ -21782,7 +21926,7 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-base': 2.0.0-internal.4.1.2
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
@@ -21791,7 +21935,7 @@ packages:
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       abort-controller: 3.0.0
       node-fetch: 2.6.11
       socket.io-client: 4.6.1
@@ -21834,7 +21978,7 @@ packages:
   /@fluidframework/odsp-urlresolver@2.0.0-internal.4.1.0:
     resolution: {integrity: sha512-jfokAvHm9kL6bWk0rEBiAOg313I8Tw+rrmdcbPwHVuFxP/y9h1Pr3MZ2ZBVLQIlHh/39q6vm8KGzkPYzKHBgQw==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/odsp-driver': 2.0.0-internal.4.1.2
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.4.1.2
@@ -21865,7 +22009,7 @@ packages:
     resolution: {integrity: sha512-CCeE3vhJi9tQer3YQMPqw5LpIn0edj9+6KBtRUhpcutskvQsWnz+9XIKTHSkenL0VgzgcUc9f7E55U0H93wYHQ==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
@@ -21904,7 +22048,7 @@ packages:
     resolution: {integrity: sha512-lnFKsxe3caNoQN41fqaiZvRxfzZNaDeEcRzeK8WtaTJs4ILI2b+bz7ZssbfWfavgLPmCbl0P57dn0h6w0m3xMw==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
@@ -21938,7 +22082,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -21963,7 +22107,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
     transitivePeerDependencies:
@@ -21994,7 +22138,7 @@ packages:
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/server-services-client': 0.1039.1000
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       cross-fetch: 3.1.5
       json-stringify-safe: 5.0.1
       socket.io-client: 4.6.1
@@ -22064,7 +22208,7 @@ packages:
     resolution: {integrity: sha512-MaiLqkb+5P78FDNkK4LJGIHXp8PeNuw+qW6BIpEh84Dr7LBU+xW3ldNopEUA0coWdg8C7wyV8bEfOW+ubuTfHg==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       nconf: 0.12.0
@@ -22099,7 +22243,7 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
     dev: true
@@ -22151,12 +22295,12 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -22201,14 +22345,14 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/merge-tree': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
       '@fluidframework/shared-object-base': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -22653,13 +22797,13 @@ packages:
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime': 2.0.0-internal.4.1.2
       '@fluidframework/container-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore': 2.0.0-internal.4.1.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -22733,7 +22877,7 @@ packages:
     resolution: {integrity: sha512-+qZ788h2aTRoCHM5VGQ/3/nmwIq1vvVnZYEt9BrtLm4PczXVn9BXkoSTiqiLRPIKXjG7eGGmr+iyPCBikarwEA==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
@@ -22759,7 +22903,7 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
@@ -22853,7 +22997,7 @@ packages:
     resolution: {integrity: sha512-ctmood1abwSAB0DFwXMgM2LbliNs+TDokCM3mX7uoGPDJnxvV90Ei9Mcein+xpyjjhr71OW8kLwHqIkjci/D3Q==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
       uuid: 8.3.2
@@ -22875,7 +23019,7 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
@@ -22883,7 +23027,7 @@ packages:
       '@fluidframework/routerlicious-driver': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       axios: 0.26.1
       events: 3.3.0
       jsrsasign: 10.8.6
@@ -22955,6 +23099,11 @@ packages:
     hasBin: true
     dev: true
 
+  /@fluidframework/test-tools@0.2.3074:
+    resolution: {integrity: sha512-ZRSSKPXMm/ni/hDztf38GMBtzFez0Q9XXaY5abd2rQz76A3wIK+yzQerTqnZYBnwrzGwZi22Ne1FXND1JeFMZA==}
+    hasBin: true
+    dev: true
+
   /@fluidframework/test-utils@2.0.0-internal.4.1.0:
     resolution: {integrity: sha512-Z+BaNtVN+A3U3UFrjD73+UdLkN1G5KbhKbfPE6FIBQRzNg6sWmR2tcrQhNas7JORIaHLg3VbY1exV08pCtMszQ==}
     dependencies:
@@ -22965,7 +23114,7 @@ packages:
       '@fluidframework/container-loader': 2.0.0-internal.4.1.2(debug@4.3.4)
       '@fluidframework/container-runtime': 2.0.0-internal.4.1.2(debug@4.3.4)
       '@fluidframework/container-runtime-definitions': 2.0.0-internal.4.1.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/datastore': 2.0.0-internal.4.1.2(debug@4.3.4)
       '@fluidframework/datastore-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
@@ -22977,7 +23126,7 @@ packages:
       '@fluidframework/routerlicious-driver': 2.0.0-internal.4.1.2(debug@4.3.4)
       '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/runtime-utils': 2.0.0-internal.4.1.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.2
+      '@fluidframework/telemetry-utils': 2.0.0-internal.4.1.0
       '@fluidframework/test-driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/test-runtime-utils': 2.0.0-internal.4.1.2(debug@4.3.4)
       best-random: 1.0.3
@@ -23022,7 +23171,7 @@ packages:
   /@fluidframework/tinylicious-driver@2.0.0-internal.4.1.0:
     resolution: {integrity: sha512-xVWfu0Yj5JK+OFKyS6kSAphLLTJVZ8qqgbp1kg2FZ5jkSDIoLSGL+zqXEa2JED6Hshv/LDxpaFVVVvvF/rBr7A==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/driver-definitions': 2.0.0-internal.4.1.2
       '@fluidframework/driver-utils': 2.0.0-internal.4.1.2
       '@fluidframework/protocol-definitions': 1.2.0
@@ -23105,7 +23254,7 @@ packages:
   /@fluidframework/view-adapters@2.0.0-internal.4.1.0:
     resolution: {integrity: sha512-z/KdD1nf5UbIUEjWEmSwLcMbHHTNn3Hs4L5fPEsAotJ64QxYXFXHq2TSg7X8W4464qsRxbkvYJQJy383XHINmA==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
       '@fluidframework/view-interfaces': 2.0.0-internal.4.1.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
@@ -23114,7 +23263,7 @@ packages:
   /@fluidframework/view-interfaces@2.0.0-internal.4.1.0:
     resolution: {integrity: sha512-6cbECU1KhO6RdRguIt1It7BwhBOdu9Bwcf5i9SCtw8F/gUm+sBzLIm0a3HeKaVh6S7IU64PXdiNrur2C+Sq1vw==}
     dependencies:
-      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.2
+      '@fluidframework/core-interfaces': 2.0.0-internal.4.1.0
     dev: true
 
   /@fluidframework/view-interfaces@2.0.0-internal.4.1.2:
@@ -25319,8 +25468,8 @@ packages:
     dev: true
     optional: true
 
-  /@pmmmwh/react-refresh-webpack-plugin@0.5.10(react-refresh@0.11.0)(webpack-dev-server@4.6.0)(webpack@5.82.1):
-    resolution: {integrity: sha512-j0Ya0hCFZPd4x40qLzbhGsh9TMtdb+CJQiso+WxLOPNasohq9cc5SNUcwsZaRH6++Xh91Xkm/xHCkuIiIu0LUA==}
+  /@pmmmwh/react-refresh-webpack-plugin@0.5.9(react-refresh@0.11.0)(webpack-dev-server@4.6.0)(webpack@5.82.1):
+    resolution: {integrity: sha512-7QV4cqUwhkDIHpMAZ9mestSJ2DMIotVTbOUwbiudhjCRTAWWKIaBecELiEM2LT3AHFeOAaHIcFu4dbXjX+9GBA==}
     engines: {node: '>= 10.13'}
     peerDependencies:
       '@types/webpack': 4.x || 5.x
@@ -25631,6 +25780,40 @@ packages:
       - supports-color
       - utf-8-validate
 
+  /@storybook/addon-actions@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-3Tji0gIy95havhTpSc6CsFl5lNxGn4O5Y1U9fyji+GRkKqDFOrvVLYAHPtLOpYdEI5tF0bDo+akiqfDouY8+eA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-dom:
+        optional: true
+    dependencies:
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
+      '@storybook/components': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/core-events': 6.5.13
+      '@storybook/csf': 0.0.2--canary.4566f4d.1
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      core-js: 3.30.2
+      fast-deep-equal: 3.1.3
+      global: 4.4.0
+      lodash: 4.17.21
+      polished: 4.2.2
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      react-inspector: 5.1.1(react@17.0.2)
+      regenerator-runtime: 0.13.11
+      telejson: 6.0.8
+      ts-dedent: 2.2.0
+      util-deprecate: 1.0.2
+      uuid-browser: 3.1.0
+    dev: true
+
   /@storybook/addon-actions@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-aADjilFmuD6TNGz2CRPSupnyiA/IGkPJHDBTqMpsDXTUr8xnuD122xkIhg6UxmCM2y1c+ncwYXy3WPK2xXK57g==}
     peerDependencies:
@@ -25665,8 +25848,8 @@ packages:
       uuid-browser: 3.1.0
     dev: true
 
-  /@storybook/addon-backgrounds@6.5.16(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-t7qooZ892BruhilFmzYPbysFwpULt/q4zYXNSmKVbAYta8UVvitjcU4F18p8FpWd9WvhiTr0SDlyhNZuzvDfug==}
+  /@storybook/addon-backgrounds@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-b4JX7JMY7e50y1l6g71D+2XWV3GO0TO2z1ta8J6W4OQt8f44V7sSkRQaJUzXdLjQMrA+Anojuy1ZwPjVeLC6vg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
@@ -25676,13 +25859,13 @@ packages:
       react-dom:
         optional: true
     dependencies:
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/api': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.16
-      '@storybook/components': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/core-events': 6.5.16
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
+      '@storybook/components': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/core-events': 6.5.13
       '@storybook/csf': 0.0.2--canary.4566f4d.1
-      '@storybook/theming': 6.5.16(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
       core-js: 3.30.2
       global: 4.4.0
       memoizerific: 1.11.3
@@ -25693,8 +25876,8 @@ packages:
       util-deprecate: 1.0.2
     dev: true
 
-  /@storybook/addon-controls@6.5.16(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0):
-    resolution: {integrity: sha512-kShSGjq1MjmmyL3l8i+uPz6yddtf82mzys0l82VKtcuyjrr5944wYFJ5NTXMfZxrO/U6FeFsfuFZE/k6ex3EMg==}
+  /@storybook/addon-controls@6.5.13(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-lYq3uf2mlVevm0bi6ueL3H6TpUMRYW9s/pTNTVJT225l27kLdFR9wEKxAkCBrlKaTgDLJmzzDRsJE3NLZlR/5Q==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
@@ -25704,15 +25887,15 @@ packages:
       react-dom:
         optional: true
     dependencies:
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/api': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.16
-      '@storybook/components': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/core-common': 6.5.16(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
+      '@storybook/components': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/core-common': 6.5.13(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
       '@storybook/csf': 0.0.2--canary.4566f4d.1
-      '@storybook/node-logger': 6.5.16
-      '@storybook/store': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/theming': 6.5.16(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/node-logger': 6.5.13
+      '@storybook/store': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
       core-js: 3.30.2
       lodash: 4.17.21
       react: 17.0.2
@@ -25727,8 +25910,8 @@ packages:
       - webpack-command
     dev: true
 
-  /@storybook/addon-docs@6.5.16(@babel/core@7.21.8)(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)(webpack@5.82.1):
-    resolution: {integrity: sha512-QM9WDZG9P02UvbzLu947a8ZngOrQeAKAT8jCibQFM/+RJ39xBlfm8rm+cQy3dm94wgtjmVkA3mKGOV/yrrsddg==}
+  /@storybook/addon-docs@6.5.13(@babel/core@7.21.8)(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)(webpack@5.82.1):
+    resolution: {integrity: sha512-RG/NjsheD9FixZ789RJlNyNccaR2Cuy7CtAwph4oUNi3aDFjtOI8Oe9L+FOT7qtVnZLw/YMjF+pZxoDqJNKLPw==}
     peerDependencies:
       '@storybook/mdx2-csf': ^0.0.3
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
@@ -25745,20 +25928,20 @@ packages:
       '@babel/preset-env': 7.21.5(@babel/core@7.21.8)
       '@jest/transform': 26.6.2
       '@mdx-js/react': 1.6.22(react@17.0.2)
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/api': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/components': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/core-common': 6.5.16(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
-      '@storybook/core-events': 6.5.16
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/components': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/core-common': 6.5.13(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
+      '@storybook/core-events': 6.5.13
       '@storybook/csf': 0.0.2--canary.4566f4d.1
-      '@storybook/docs-tools': 6.5.16(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/docs-tools': 6.5.13(react-dom@17.0.2)(react@17.0.2)
       '@storybook/mdx1-csf': 0.0.1(@babel/core@7.21.8)
-      '@storybook/node-logger': 6.5.16
-      '@storybook/postinstall': 6.5.16
-      '@storybook/preview-web': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/source-loader': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/store': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/theming': 6.5.16(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/node-logger': 6.5.13
+      '@storybook/postinstall': 6.5.13
+      '@storybook/preview-web': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/source-loader': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/store': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
       babel-loader: 8.3.0(@babel/core@7.21.8)(webpack@5.82.1)
       core-js: 3.30.2
       fast-deep-equal: 3.1.3
@@ -25782,8 +25965,8 @@ packages:
       - webpack-command
     dev: true
 
-  /@storybook/addon-essentials@6.5.16(@babel/core@7.21.8)(@storybook/builder-webpack5@6.5.16)(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)(webpack@5.82.1):
-    resolution: {integrity: sha512-TeoMr6tEit4Pe91GH6f8g/oar1P4M0JL9S6oMcFxxrhhtOGO7XkWD5EnfyCx272Ok2VYfE58FNBTGPNBVIqYKQ==}
+  /@storybook/addon-essentials@6.5.13(@babel/core@7.21.8)(@storybook/builder-webpack5@6.5.16)(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)(webpack@5.82.1):
+    resolution: {integrity: sha512-G9FVAWV7ixjVLWeLgIX+VT90tcAk6yQxfZQegfg5ucRilGysJCDaNnoab4xuuvm1R40TfFhba3iAGZtQYsddmw==}
     peerDependencies:
       '@babel/core': ^7.9.6
       '@storybook/angular': '*'
@@ -25840,19 +26023,19 @@ packages:
         optional: true
     dependencies:
       '@babel/core': 7.21.8
-      '@storybook/addon-actions': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/addon-backgrounds': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/addon-controls': 6.5.16(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
-      '@storybook/addon-docs': 6.5.16(@babel/core@7.21.8)(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)(webpack@5.82.1)
-      '@storybook/addon-measure': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/addon-outline': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/addon-toolbars': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/addon-viewport': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/api': 6.5.16(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addon-actions': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addon-backgrounds': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addon-controls': 6.5.13(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
+      '@storybook/addon-docs': 6.5.13(@babel/core@7.21.8)(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)(webpack@5.82.1)
+      '@storybook/addon-measure': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addon-outline': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addon-toolbars': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addon-viewport': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
       '@storybook/builder-webpack5': 6.5.16(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
-      '@storybook/core-common': 6.5.16(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
-      '@storybook/node-logger': 6.5.16
+      '@storybook/core-common': 6.5.13(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
+      '@storybook/node-logger': 6.5.13
       core-js: 3.30.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
@@ -25896,8 +26079,8 @@ packages:
       ts-dedent: 2.2.0
     dev: true
 
-  /@storybook/addon-measure@6.5.16(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-DMwnXkmM2L6POTh4KaOWvOAtQ2p9Tr1UUNxz6VXiN5cKFohpCs6x0txdLU5WN8eWIq0VFsO7u5ZX34CGCc6gCg==}
+  /@storybook/addon-measure@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-pi5RFB9YTnESRFtYHAVRUrgEI5to0TFc4KndtwcCKt1fMJ8OFjXQeznEfdj95PFeUvW5TNUwjL38vK4LhicB+g==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
@@ -25907,11 +26090,11 @@ packages:
       react-dom:
         optional: true
     dependencies:
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/api': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.16
-      '@storybook/components': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/core-events': 6.5.16
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
+      '@storybook/components': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/core-events': 6.5.13
       '@storybook/csf': 0.0.2--canary.4566f4d.1
       core-js: 3.30.2
       global: 4.4.0
@@ -25919,8 +26102,8 @@ packages:
       react-dom: 17.0.2(react@17.0.2)
     dev: true
 
-  /@storybook/addon-outline@6.5.16(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-0du96nha4qltexO0Xq1xB7LeRSbqjC9XqtZLflXG7/X3ABoPD2cXgOV97eeaXUodIyb2qYBbHUfftBeA75x0+w==}
+  /@storybook/addon-outline@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-8d8taPheO/tryflzXbj2QRuxHOIS8CtzRzcaglCcioqHEMhOIDOx9BdXKdheq54gdk/UN94HdGJUoVxYyXwZ4Q==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
@@ -25930,11 +26113,11 @@ packages:
       react-dom:
         optional: true
     dependencies:
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/api': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.16
-      '@storybook/components': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/core-events': 6.5.16
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
+      '@storybook/components': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/core-events': 6.5.13
       '@storybook/csf': 0.0.2--canary.4566f4d.1
       core-js: 3.30.2
       global: 4.4.0
@@ -25944,8 +26127,8 @@ packages:
       ts-dedent: 2.2.0
     dev: true
 
-  /@storybook/addon-toolbars@6.5.16(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-y3PuUKiwOWrAvqx1YdUvArg0UaAwmboXFeR2bkrowk1xcT+xnRO3rML4npFeUl26OQ1FzwxX/cw6nknREBBLEA==}
+  /@storybook/addon-toolbars@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-Qgr4wKRSP+gY1VaN7PYT4TM1um7KY341X3GHTglXLFHd8nDsCweawfV2shaX3WxCfZmVro8g4G+Oest30kLLCw==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
@@ -25955,19 +26138,19 @@ packages:
       react-dom:
         optional: true
     dependencies:
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/api': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.16
-      '@storybook/components': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/theming': 6.5.16(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
+      '@storybook/components': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
       core-js: 3.30.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       regenerator-runtime: 0.13.11
     dev: true
 
-  /@storybook/addon-viewport@6.5.16(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-1Vyqf1U6Qng6TXlf4SdqUKyizlw1Wn6+qW8YeA2q1lbkJqn3UlnHXIp8Q0t/5q1dK5BFtREox3+jkGwbJrzkmA==}
+  /@storybook/addon-viewport@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-KSfeuCSIjncwWGnUu6cZBx8WNqYvm5gHyFvkSPKEu0+MJtgncbUy7pl53lrEEr6QmIq0GRXvS3A0XzV8RCnrSA==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
@@ -25977,16 +26160,37 @@ packages:
       react-dom:
         optional: true
     dependencies:
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/api': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.16
-      '@storybook/components': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/core-events': 6.5.16
-      '@storybook/theming': 6.5.16(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
+      '@storybook/components': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/core-events': 6.5.13
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
       core-js: 3.30.2
       global: 4.4.0
       memoizerific: 1.11.3
       prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      regenerator-runtime: 0.13.11
+    dev: true
+
+  /@storybook/addons@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-18CqzNnrGMfeZtiKz+R/3rHtSNnfNwz6y6prIQIbWseK16jY8ELTfIFGviwO5V2OqpbHDQi5+xQQ63QAIb89YA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+    dependencies:
+      '@storybook/api': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/channels': 6.5.13
+      '@storybook/client-logger': 6.5.13
+      '@storybook/core-events': 6.5.13
+      '@storybook/csf': 0.0.2--canary.4566f4d.1
+      '@storybook/router': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@types/webpack-env': 1.18.0
+      core-js: 3.30.2
+      global: 4.4.0
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       regenerator-runtime: 0.13.11
@@ -26011,6 +26215,33 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       regenerator-runtime: 0.13.11
+    dev: true
+
+  /@storybook/api@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-xVSmB7/IuFd6G7eiJjbI2MuS7SZunoUM6d+YCWpjiehfMeX47MXt1gZtOwFrgJC1ShZlefXFahq/dvxwtmWs+w==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+    dependencies:
+      '@storybook/channels': 6.5.13
+      '@storybook/client-logger': 6.5.13
+      '@storybook/core-events': 6.5.13
+      '@storybook/csf': 0.0.2--canary.4566f4d.1
+      '@storybook/router': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/semver': 7.3.2
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      core-js: 3.30.2
+      fast-deep-equal: 3.1.3
+      global: 4.4.0
+      lodash: 4.17.21
+      memoizerific: 1.11.3
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      regenerator-runtime: 0.13.11
+      store2: 2.14.2
+      telejson: 6.0.8
+      ts-dedent: 2.2.0
+      util-deprecate: 1.0.2
     dev: true
 
   /@storybook/api@6.5.16(react-dom@17.0.2)(react@17.0.2):
@@ -26142,17 +26373,17 @@ packages:
       case-sensitive-paths-webpack-plugin: 2.4.0
       core-js: 3.30.2
       css-loader: 5.2.7(webpack@5.82.1)
-      fork-ts-checker-webpack-plugin: 6.5.3(eslint@8.6.0)(typescript@4.5.5)(webpack@5.82.1)
+      fork-ts-checker-webpack-plugin: 6.5.2(eslint@8.6.0)(typescript@4.5.5)(webpack@5.82.1)
       glob: 7.2.3
       glob-promise: 3.4.0(glob@7.2.3)
-      html-webpack-plugin: 5.5.1(webpack@5.82.1)
+      html-webpack-plugin: 5.5.0(webpack@5.82.1)
       path-browserify: 1.0.1
       process: 0.11.10
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       stable: 0.1.8
       style-loader: 2.0.0(webpack@5.82.1)
-      terser-webpack-plugin: 5.3.8(webpack@5.82.1)
+      terser-webpack-plugin: 5.3.6(webpack@5.82.1)
       ts-dedent: 2.2.0
       typescript: 4.5.5
       util-deprecate: 1.0.2
@@ -26169,6 +26400,18 @@ packages:
       - vue-template-compiler
       - webpack-cli
       - webpack-command
+    dev: true
+
+  /@storybook/channel-postmessage@6.5.13:
+    resolution: {integrity: sha512-R79MBs0mQ7TV8M/a6x/SiTRyvZBidDfMEEthG7Cyo9p35JYiKOhj2535zhW4qlVMESBu95pwKYBibTjASoStPw==}
+    dependencies:
+      '@storybook/channels': 6.5.13
+      '@storybook/client-logger': 6.5.13
+      '@storybook/core-events': 6.5.13
+      core-js: 3.30.2
+      global: 4.4.0
+      qs: 6.11.1
+      telejson: 6.0.8
     dev: true
 
   /@storybook/channel-postmessage@6.5.16:
@@ -26191,6 +26434,14 @@ packages:
       core-js: 3.30.2
       global: 4.4.0
       telejson: 6.0.8
+    dev: true
+
+  /@storybook/channels@6.5.13:
+    resolution: {integrity: sha512-sGYSilE30bz0jG+HdHnkv0B4XkAv2hP+KRZr4xmnv+MOOQpRnZpJ5Z3HVU16s17cj/83NWihKj6BuKcEVzyilg==}
+    dependencies:
+      core-js: 3.30.2
+      ts-dedent: 2.2.0
+      util-deprecate: 1.0.2
     dev: true
 
   /@storybook/channels@6.5.16:
@@ -26231,11 +26482,36 @@ packages:
       util-deprecate: 1.0.2
     dev: true
 
+  /@storybook/client-logger@6.5.13:
+    resolution: {integrity: sha512-F2SMW3LWFGXLm2ENTwTitrLWJgmMXRf3CWQXdN2EbkNCIBHy5Zcbt+91K4OX8e2e5h9gjGfrdYbyYDYOoUCEfA==}
+    dependencies:
+      core-js: 3.30.2
+      global: 4.4.0
+    dev: true
+
   /@storybook/client-logger@6.5.16:
     resolution: {integrity: sha512-pxcNaCj3ItDdicPTXTtmYJE3YC1SjxFrBmHcyrN+nffeNyiMuViJdOOZzzzucTUG0wcOOX8jaSyak+nnHg5H1Q==}
     dependencies:
       core-js: 3.30.2
       global: 4.4.0
+    dev: true
+
+  /@storybook/components@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-6Hhx70JK5pGfKCkqMU4yq/BBH+vRTmzj7tZKfPwba+f8VmTMoOr/2ysTQFRtXryiHB6Z15xBYgfq5x2pIwQzLQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+    dependencies:
+      '@storybook/client-logger': 6.5.13
+      '@storybook/csf': 0.0.2--canary.4566f4d.1
+      '@storybook/theming': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      core-js: 3.30.2
+      memoizerific: 1.11.3
+      qs: 6.11.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      regenerator-runtime: 0.13.11
+      util-deprecate: 1.0.2
     dev: true
 
   /@storybook/components@6.5.16(react-dom@17.0.2)(react@17.0.2):
@@ -26330,6 +26606,77 @@ packages:
       webpack: 5.82.1(webpack-cli@4.10.0)
     dev: true
 
+  /@storybook/core-common@6.5.13(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0):
+    resolution: {integrity: sha512-+DVZrRsteE9pw0X5MNffkdBgejQnbnL+UOG3qXkE9xxUamQALnuqS/w1BzpHE9WmOHuf7RWMKflyQEW3OLKAJg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      typescript: '*'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      '@babel/core': 7.21.8
+      '@babel/plugin-proposal-class-properties': 7.18.6(@babel/core@7.21.8)
+      '@babel/plugin-proposal-decorators': 7.21.0(@babel/core@7.21.8)
+      '@babel/plugin-proposal-export-default-from': 7.18.10(@babel/core@7.21.8)
+      '@babel/plugin-proposal-nullish-coalescing-operator': 7.18.6(@babel/core@7.21.8)
+      '@babel/plugin-proposal-object-rest-spread': 7.20.7(@babel/core@7.21.8)
+      '@babel/plugin-proposal-optional-chaining': 7.21.0(@babel/core@7.21.8)
+      '@babel/plugin-proposal-private-methods': 7.18.6(@babel/core@7.21.8)
+      '@babel/plugin-proposal-private-property-in-object': 7.21.0(@babel/core@7.21.8)
+      '@babel/plugin-syntax-dynamic-import': 7.8.3(@babel/core@7.21.8)
+      '@babel/plugin-transform-arrow-functions': 7.21.5(@babel/core@7.21.8)
+      '@babel/plugin-transform-block-scoping': 7.21.0(@babel/core@7.21.8)
+      '@babel/plugin-transform-classes': 7.21.0(@babel/core@7.21.8)
+      '@babel/plugin-transform-destructuring': 7.21.3(@babel/core@7.21.8)
+      '@babel/plugin-transform-for-of': 7.21.5(@babel/core@7.21.8)
+      '@babel/plugin-transform-parameters': 7.21.3(@babel/core@7.21.8)
+      '@babel/plugin-transform-shorthand-properties': 7.18.6(@babel/core@7.21.8)
+      '@babel/plugin-transform-spread': 7.20.7(@babel/core@7.21.8)
+      '@babel/preset-env': 7.21.5(@babel/core@7.21.8)
+      '@babel/preset-react': 7.18.6(@babel/core@7.21.8)
+      '@babel/preset-typescript': 7.21.5(@babel/core@7.21.8)
+      '@babel/register': 7.21.0(@babel/core@7.21.8)
+      '@storybook/node-logger': 6.5.13
+      '@storybook/semver': 7.3.2
+      '@types/node': 14.18.46
+      '@types/pretty-hrtime': 1.0.1
+      babel-loader: 8.3.0(@babel/core@7.21.8)(webpack@4.46.0)
+      babel-plugin-macros: 3.1.0
+      babel-plugin-polyfill-corejs3: 0.1.7(@babel/core@7.21.8)
+      chalk: 4.1.2
+      core-js: 3.30.2
+      express: 4.18.2
+      file-system-cache: 1.1.0
+      find-up: 5.0.0
+      fork-ts-checker-webpack-plugin: 6.5.3(eslint@8.6.0)(typescript@4.5.5)(webpack@4.46.0)
+      fs-extra: 9.1.0
+      glob: 7.2.3
+      handlebars: 4.7.7
+      interpret: 2.2.0
+      json5: 2.2.3
+      lazy-universal-dotenv: 3.0.1
+      picomatch: 2.3.1
+      pkg-dir: 5.0.0
+      pretty-hrtime: 1.0.3
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      resolve-from: 5.0.0
+      slash: 3.0.0
+      telejson: 6.0.8
+      ts-dedent: 2.2.0
+      typescript: 4.5.5
+      util-deprecate: 1.0.2
+      webpack: 4.46.0(webpack-cli@4.10.0)
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - vue-template-compiler
+      - webpack-cli
+      - webpack-command
+    dev: true
+
   /@storybook/core-common@6.5.16(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0):
     resolution: {integrity: sha512-2qtnKP3TTOzt2cp6LXKRTh7XrI9z5VanMnMTgeoFcA5ebnndD4V6BExQUdYPClE/QooLx6blUWNgS9dFEpjSqQ==}
     peerDependencies:
@@ -26399,6 +26746,12 @@ packages:
       - vue-template-compiler
       - webpack-cli
       - webpack-command
+    dev: true
+
+  /@storybook/core-events@6.5.13:
+    resolution: {integrity: sha512-kL745tPpRKejzHToA3/CoBNbI+NPRVk186vGxXBmk95OEg0TlwgQExP8BnqEtLlRZMbW08e4+6kilc1M1M4N5w==}
+    dependencies:
+      core-js: 3.30.2
     dev: true
 
   /@storybook/core-events@6.5.16:
@@ -26556,6 +26909,22 @@ packages:
       lodash: 4.17.21
     dev: true
 
+  /@storybook/docs-tools@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-hB+hk+895ny4SW84j3X5iV55DHs3bCfTOp7cDdcZJdQrlm0wuDb4A6d4ffNC7ZLh9VkUjU6ST4VEV5Bb0Cptow==}
+    dependencies:
+      '@babel/core': 7.21.8
+      '@storybook/csf': 0.0.2--canary.4566f4d.1
+      '@storybook/store': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      core-js: 3.30.2
+      doctrine: 3.0.0
+      lodash: 4.17.21
+      regenerator-runtime: 0.13.11
+    transitivePeerDependencies:
+      - react
+      - react-dom
+      - supports-color
+    dev: true
+
   /@storybook/docs-tools@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-o+rAWPRGifjBF5xZzTKOqnHN3XQWkl0QFJYVDIiJYJrVll7ExCkpEq/PahOGzIBBV+tpMstJgmKM3lr/lu/jmg==}
     dependencies:
@@ -26658,7 +27027,7 @@ packages:
       express: 4.18.2
       find-up: 5.0.0
       fs-extra: 9.1.0
-      html-webpack-plugin: 5.5.1(webpack@5.82.1)
+      html-webpack-plugin: 5.5.0(webpack@5.82.1)
       node-fetch: 2.6.11
       process: 0.11.10
       react: 17.0.2
@@ -26668,7 +27037,7 @@ packages:
       resolve-from: 5.0.0
       style-loader: 2.0.0(webpack@5.82.1)
       telejson: 6.0.8
-      terser-webpack-plugin: 5.3.8(webpack@5.82.1)
+      terser-webpack-plugin: 5.3.6(webpack@5.82.1)
       ts-dedent: 2.2.0
       typescript: 4.5.5
       util-deprecate: 1.0.2
@@ -26706,6 +27075,16 @@ packages:
       - supports-color
     dev: true
 
+  /@storybook/node-logger@6.5.13:
+    resolution: {integrity: sha512-/r5aVZAqZRoy5FyNk/G4pj7yKJd3lJfPbAaOHVROv2IF7PJP/vtRaDkcfh0g2U6zwuDxGIqSn80j+qoEli9m5A==}
+    dependencies:
+      '@types/npmlog': 4.1.4
+      chalk: 4.1.2
+      core-js: 3.30.2
+      npmlog: 5.0.1
+      pretty-hrtime: 1.0.3
+    dev: true
+
   /@storybook/node-logger@6.5.16:
     resolution: {integrity: sha512-YjhBKrclQtjhqFNSO+BZK+RXOx6EQypAELJKoLFaawg331e8VUfvUuRCNB3fcEWp8G9oH13PQQte0OTjLyyOYg==}
     dependencies:
@@ -26716,10 +27095,36 @@ packages:
       pretty-hrtime: 1.0.3
     dev: true
 
-  /@storybook/postinstall@6.5.16:
-    resolution: {integrity: sha512-08K2q+qN6pqyPW7PHLCZ5G5Xa6Wosd6t0F16PQ4abX2ItlJLabVoJN5mZ0gm/aeLTjD8QYr8IDvacu4eXh0SVA==}
+  /@storybook/postinstall@6.5.13:
+    resolution: {integrity: sha512-qmqP39FGIP5NdhXC5IpAs9cFoYx9fg1psoQKwb9snYb98eVQU31uHc1W2MBUh3lG4AjAm7pQaXJci7ti4jOh3g==}
     dependencies:
       core-js: 3.30.2
+    dev: true
+
+  /@storybook/preview-web@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-GNNYVzw4SmRua3dOc52Ye6Us4iQbq5GKQ56U3iwnzZM3TBdJB+Rft94Fn1/pypHujEHS8hl5Xgp9td6C1lLCow==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+    dependencies:
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/channel-postmessage': 6.5.13
+      '@storybook/client-logger': 6.5.13
+      '@storybook/core-events': 6.5.13
+      '@storybook/csf': 0.0.2--canary.4566f4d.1
+      '@storybook/store': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      ansi-to-html: 0.6.15
+      core-js: 3.30.2
+      global: 4.4.0
+      lodash: 4.17.21
+      qs: 6.11.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      regenerator-runtime: 0.13.11
+      synchronous-promise: 2.0.17
+      ts-dedent: 2.2.0
+      unfetch: 4.2.0
+      util-deprecate: 1.0.2
     dev: true
 
   /@storybook/preview-web@6.5.16(react-dom@17.0.2)(react@17.0.2):
@@ -26798,7 +27203,7 @@ packages:
       '@babel/core': 7.21.8
       '@babel/preset-flow': 7.21.4(@babel/core@7.21.8)
       '@babel/preset-react': 7.18.6(@babel/core@7.21.8)
-      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(react-refresh@0.11.0)(webpack-dev-server@4.6.0)(webpack@5.82.1)
+      '@pmmmwh/react-refresh-webpack-plugin': 0.5.9(react-refresh@0.11.0)(webpack-dev-server@4.6.0)(webpack@5.82.1)
       '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
       '@storybook/builder-webpack5': 6.5.16(eslint@8.6.0)(react-dom@17.0.2)(react@17.0.2)(typescript@4.5.5)(webpack-cli@4.10.0)
       '@storybook/client-logger': 6.5.16
@@ -26859,6 +27264,21 @@ packages:
       - webpack-plugin-serve
     dev: true
 
+  /@storybook/router@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-sf5aogfirH5ucD0d0hc2mKf2iyWsZsvXhr5kjxUQmgkcoflkGUWhc34sbSQVRQ1i8K5lkLIDH/q2s1Zr2SbzhQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+    dependencies:
+      '@storybook/client-logger': 6.5.13
+      core-js: 3.30.2
+      memoizerific: 1.11.3
+      qs: 6.11.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      regenerator-runtime: 0.13.11
+    dev: true
+
   /@storybook/router@6.5.16(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-ZgeP8a5YV/iuKbv31V8DjPxlV4AzorRiR8OuSt/KqaiYXNXlOoQDz/qMmiNcrshrfLpmkzoq7fSo4T8lWo2UwQ==}
     peerDependencies:
@@ -26883,14 +27303,14 @@ packages:
       find-up: 4.1.0
     dev: true
 
-  /@storybook/source-loader@6.5.16(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-fyVl4jrM/5JLrb48aqXPu7sTsmySQaVGFp1zfeqvPPlJRFMastDrePm5XGPN7Qjv1wsKmpuBvuweFKOT1pru3g==}
+  /@storybook/source-loader@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-tHuM8PfeB/0m+JigbaFp+Ld0euFH+fgOObH2W9rjEXy5vnwmaeex/JAdCprv4oL+LcDQEERqNULUUNIvbcTPAg==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
-      '@storybook/addons': 6.5.16(react-dom@17.0.2)(react@17.0.2)
-      '@storybook/client-logger': 6.5.16
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
       '@storybook/csf': 0.0.2--canary.4566f4d.1
       core-js: 3.30.2
       estraverse: 5.3.0
@@ -26901,6 +27321,31 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       regenerator-runtime: 0.13.11
+    dev: true
+
+  /@storybook/store@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-GG6lm+8fBX1tNUnX7x3raBOjYhhf14bPWLtYiPlxDTFEMs3sJte7zWKZq6NQ79MoBLL6jjzTeolBfDCBw6fiWQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+    dependencies:
+      '@storybook/addons': 6.5.13(react-dom@17.0.2)(react@17.0.2)
+      '@storybook/client-logger': 6.5.13
+      '@storybook/core-events': 6.5.13
+      '@storybook/csf': 0.0.2--canary.4566f4d.1
+      core-js: 3.30.2
+      fast-deep-equal: 3.1.3
+      global: 4.4.0
+      lodash: 4.17.21
+      memoizerific: 1.11.3
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      regenerator-runtime: 0.13.11
+      slash: 3.0.0
+      stable: 0.1.8
+      synchronous-promise: 2.0.17
+      ts-dedent: 2.2.0
+      util-deprecate: 1.0.2
     dev: true
 
   /@storybook/store@6.5.16(react-dom@17.0.2)(react@17.0.2):
@@ -26953,6 +27398,20 @@ packages:
       - vue-template-compiler
       - webpack-cli
       - webpack-command
+    dev: true
+
+  /@storybook/theming@6.5.13(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-oif5NGFAUQhizo50r+ctw2hZNLWV4dPHai+L/gFvbaSeRBeHSNkIcMoZ2FlrO566HdGZTDutYXcR+xus8rI28g==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
+    dependencies:
+      '@storybook/client-logger': 6.5.13
+      core-js: 3.30.2
+      memoizerific: 1.11.3
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      regenerator-runtime: 0.13.11
     dev: true
 
   /@storybook/theming@6.5.16(react-dom@17.0.2)(react@17.0.2):
@@ -30372,7 +30831,7 @@ packages:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
       base64-js: 1.3.0
-      ieee754: 1.1.13
+      ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
 
@@ -31712,7 +32171,7 @@ packages:
       globby: 13.1.4
       normalize-path: 3.0.0
       schema-utils: 4.0.1
-      serialize-javascript: 6.0.1
+      serialize-javascript: 6.0.0
       webpack: 5.82.1(webpack-cli@4.10.0)
     dev: true
 
@@ -32059,7 +32518,7 @@ packages:
       postcss-modules-values: 4.0.0(postcss@8.4.23)
       postcss-value-parser: 4.2.0
       schema-utils: 3.1.2
-      semver: 7.5.1
+      semver: 7.3.8
       webpack: 5.82.1(webpack-cli@4.10.0)
     dev: true
 
@@ -34897,6 +35356,38 @@ packages:
       - supports-color
     dev: true
 
+  /fork-ts-checker-webpack-plugin@6.5.2(eslint@8.6.0)(typescript@4.5.5)(webpack@5.82.1):
+    resolution: {integrity: sha512-m5cUmF30xkZ7h4tWUgTAcEaKmUW7tfyUyTqNNOz7OxWJ0v1VWKTcOvH8FWHUwSjlW/356Ijc9vi3XfcPstpQKA==}
+    engines: {node: '>=10', yarn: '>=1.0.0'}
+    peerDependencies:
+      eslint: '>= 6'
+      typescript: '>= 2.7'
+      vue-template-compiler: '*'
+      webpack: '>= 4 || 5.82.1'
+    peerDependenciesMeta:
+      eslint:
+        optional: true
+      vue-template-compiler:
+        optional: true
+    dependencies:
+      '@babel/code-frame': 7.21.4
+      '@types/json-schema': 7.0.11
+      chalk: 4.1.2
+      chokidar: 3.5.3
+      cosmiconfig: 6.0.0
+      deepmerge: 4.3.1
+      eslint: 8.6.0
+      fs-extra: 9.1.0
+      glob: 7.2.3
+      memfs: 3.5.1
+      minimatch: 3.1.2
+      schema-utils: 2.7.0
+      semver: 7.5.1
+      tapable: 1.1.3
+      typescript: 4.5.5
+      webpack: 5.82.1(webpack-cli@4.10.0)
+    dev: true
+
   /fork-ts-checker-webpack-plugin@6.5.3(eslint@8.6.0)(typescript@4.5.5)(webpack@4.46.0):
     resolution: {integrity: sha512-SbH/l9ikmMWycd5puHJKTkZJKddF4iRLyW3DeZ08HTI7NGyLS38MXd/KGgeWumQO7YNQbW2u/NtPT2YowbPaGQ==}
     engines: {node: '>=10', yarn: '>=1.0.0'}
@@ -34927,38 +35418,6 @@ packages:
       tapable: 1.1.3
       typescript: 4.5.5
       webpack: 4.46.0(webpack-cli@4.10.0)
-    dev: true
-
-  /fork-ts-checker-webpack-plugin@6.5.3(eslint@8.6.0)(typescript@4.5.5)(webpack@5.82.1):
-    resolution: {integrity: sha512-SbH/l9ikmMWycd5puHJKTkZJKddF4iRLyW3DeZ08HTI7NGyLS38MXd/KGgeWumQO7YNQbW2u/NtPT2YowbPaGQ==}
-    engines: {node: '>=10', yarn: '>=1.0.0'}
-    peerDependencies:
-      eslint: '>= 6'
-      typescript: '>= 2.7'
-      vue-template-compiler: '*'
-      webpack: '>= 4 || 5.82.1'
-    peerDependenciesMeta:
-      eslint:
-        optional: true
-      vue-template-compiler:
-        optional: true
-    dependencies:
-      '@babel/code-frame': 7.21.4
-      '@types/json-schema': 7.0.11
-      chalk: 4.1.2
-      chokidar: 3.5.3
-      cosmiconfig: 6.0.0
-      deepmerge: 4.3.1
-      eslint: 8.6.0
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      memfs: 3.5.1
-      minimatch: 3.1.2
-      schema-utils: 2.7.0
-      semver: 7.5.1
-      tapable: 1.1.3
-      typescript: 4.5.5
-      webpack: 5.82.1(webpack-cli@4.10.0)
     dev: true
 
   /form-data-encoder@2.1.4:
@@ -36206,8 +36665,8 @@ packages:
       webpack: 4.46.0(webpack-cli@4.10.0)
     dev: true
 
-  /html-webpack-plugin@5.5.1(webpack@5.82.1):
-    resolution: {integrity: sha512-cTUzZ1+NqjGEKjmVgZKLMdiFg3m9MdRXkZW2OEe69WYVi5ONLMmlnSZdXzGGMOq0C8jGDrL6EWyEDDUioHO/pA==}
+  /html-webpack-plugin@5.5.0(webpack@5.82.1):
+    resolution: {integrity: sha512-sy88PC2cRTVxvETRgUHFrL4No3UxvcH8G1NepGhqaTT+GXN2kTamqasot0inS5hXeg1cMbFDt27zzo9p35lZVw==}
     engines: {node: '>=10.13.0'}
     peerDependencies:
       webpack: ^5.20.0 || 5.82.1
@@ -46260,6 +46719,30 @@ packages:
       - bluebird
     dev: true
 
+  /terser-webpack-plugin@5.3.6(webpack@5.82.1):
+    resolution: {integrity: sha512-kfLFk+PoLUQIbLmB1+PZDMRSZS99Mp+/MHqDNmMA6tOItzRt+Npe3E+fsMs5mfcM0wCtrrdU387UnV+vnSffXQ==}
+    engines: {node: '>= 10.13.0'}
+    peerDependencies:
+      '@swc/core': '*'
+      esbuild: '*'
+      uglify-js: '*'
+      webpack: ^5.1.0 || 5.82.1
+    peerDependenciesMeta:
+      '@swc/core':
+        optional: true
+      esbuild:
+        optional: true
+      uglify-js:
+        optional: true
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.18
+      jest-worker: 27.5.1
+      schema-utils: 3.1.2
+      serialize-javascript: 6.0.1
+      terser: 5.17.3
+      webpack: 5.82.1(webpack-cli@4.10.0)
+    dev: true
+
   /terser-webpack-plugin@5.3.8(webpack@5.82.1):
     resolution: {integrity: sha512-WiHL3ElchZMsK27P8uIUh4604IgJyAW47LVXGbEoB21DbQcZ+OuMpGjVYnEUaqcWM6dO8uS2qUbA7LSCWqvsbg==}
     engines: {node: '>= 10.13.0'}
@@ -46408,7 +46891,7 @@ packages:
     hasBin: true
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.4001
+      '@fluidframework/gitresources': 0.1038.4000
       '@fluidframework/protocol-base': 0.1038.4001
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/server-lambdas': 0.1038.4001
@@ -46650,8 +47133,8 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
-  /ts-loader@9.4.2(typescript@4.5.5)(webpack@5.82.1):
-    resolution: {integrity: sha512-OmlC4WVmFv5I0PpaxYb+qGeGOdm5giHU7HwDDUjw59emP2UYMHy9fFSDcYgSNoH8sXcj4hGCSEhlDZ9ULeDraA==}
+  /ts-loader@9.4.1(typescript@4.5.5)(webpack@5.82.1):
+    resolution: {integrity: sha512-384TYAqGs70rn9F0VBnh6BPTfhga7yFNdC5gXbQpDrBj9/KsT4iRkGqKXhziofHOlE2j6YEaiTYVGKKvPhGWvw==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
       typescript: '*'
@@ -47541,6 +48024,7 @@ packages:
 
   /uuid-browser@3.1.0:
     resolution: {integrity: sha512-dsNgbLaTrd6l3MMxTtouOCFw4CBFc/3a+GgYA2YyrJvyQ1u6q4pcu3ktLoUZ/VN/Aw9WsauazbgsgdfVWgAKQg==}
+    deprecated: Package no longer supported and required. Use the uuid package or crypto.randomUUID instead
     dev: true
 
   /uuid@3.3.2:

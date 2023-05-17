@@ -4,7 +4,6 @@
  */
 import React from "react";
 import { Divider } from "@fluentui/react-components";
-
 import {
 	AudienceSummary,
 	GetAudienceSummary,
