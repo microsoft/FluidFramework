@@ -410,9 +410,7 @@ describe("SharedTree benchmarks", () => {
 
 						// Measure
 						const before = state.timer.now();
-						for (let i = 0; i < size; i++) {
-							provider.processMessages(1);
-						}
+						provider.processMessages();
 						const after = state.timer.now();
 						duration = state.timer.toSeconds(before, after);
 						// Collect data
