@@ -432,20 +432,23 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			});
 
 			this.updateCheckpointMessages(rawMessage);
-
-			if (
-				this.checkpointInfo.currentKafkaCheckpointMessage &&
-				this.kafkaCheckpointOnReprocessingOp
-			) {
-				this.context.checkpoint(
-					this.checkpointInfo.currentKafkaCheckpointMessage,
-					this.restartOnCheckpointFailure,
+			try {
+				if (
+					this.checkpointInfo.currentKafkaCheckpointMessage &&
+					this.kafkaCheckpointOnReprocessingOp
+				) {
+					this.context.checkpoint(
+						this.checkpointInfo.currentKafkaCheckpointMessage,
+						this.restartOnCheckpointFailure,
+					);
+					reprocessOpsMetric.setProperty("kafkaCheckpointOnReprocessingOp", true);
+				}
+				reprocessOpsMetric.success(
+					`Repeating ops: rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`,
 				);
-				reprocessOpsMetric.setProperty("kafkaCheckpointOnReprocessingOp", true);
+			} catch (error) {
+				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
-			reprocessOpsMetric.success(
-				`Repeating ops: rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`,
-			);
 			return undefined;
 		}
 
