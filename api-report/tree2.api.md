@@ -924,20 +924,15 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 }
 
 // @alpha
-export interface ISharedTreeFork extends ISharedTreeView {
-    dispose(): void;
-    rebaseOnto(view: ISharedTreeView): void;
-}
-
-// @alpha
 export interface ISharedTreeView extends AnchorLocator {
     readonly context: EditableTreeContext;
     readonly editor: IDefaultEditBuilder;
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
-    fork(): ISharedTreeFork;
+    fork(): SharedTreeView;
     readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
-    merge(view: ISharedTreeFork): void;
+    merge(view: SharedTreeView): void;
+    rebase(view: SharedTreeView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
@@ -1576,6 +1571,45 @@ export class SharedTreeFactory implements IChannelFactory {
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     // (undocumented)
     type: string;
+}
+
+// @alpha
+export class SharedTreeView implements ISharedTreeView {
+    // (undocumented)
+    readonly context: EditableTreeContext;
+    dispose(): void;
+    // (undocumented)
+    get editor(): IDefaultEditBuilder;
+    // (undocumented)
+    readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+    // (undocumented)
+    get forest(): IForestSubscription;
+    // (undocumented)
+    fork(): SharedTreeView;
+    // (undocumented)
+    get identifiedNodes(): ReadonlyMap<Identifier, EditableTree>;
+    // (undocumented)
+    locate(anchor: Anchor): AnchorNode | undefined;
+    // (undocumented)
+    merge(fork: SharedTreeView): void;
+    // (undocumented)
+    rebase(fork: SharedTreeView): void;
+    rebaseOnto(view: ISharedTreeView): void;
+    // (undocumented)
+    redo(): void;
+    // (undocumented)
+    get root(): UnwrappedEditableField;
+    set root(data: ContextuallyTypedNodeData | undefined);
+    // (undocumented)
+    get rootEvents(): ISubscribable<AnchorSetRootEvents>;
+    // (undocumented)
+    schematize<TRoot extends GlobalFieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    // (undocumented)
+    get storedSchema(): StoredSchemaRepository;
+    // (undocumented)
+    readonly transaction: ISharedTreeView["transaction"];
+    // (undocumented)
+    undo(): void;
 }
 
 // @alpha
