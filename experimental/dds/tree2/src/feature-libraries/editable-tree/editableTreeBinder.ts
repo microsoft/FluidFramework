@@ -14,6 +14,7 @@ import {
 	topDownPath,
 } from "../../core";
 import { Events, IEmitter, ISubscribable, createEmitter } from "../../events";
+import { brand } from "../../util";
 import { EditableTree, on } from "./editableTreeTypes";
 
 /**
@@ -141,8 +142,9 @@ export interface BindTree extends PathStep {
  *
  * @alpha
  */
-export interface BindSyntaxTree extends PathStep {
-	readonly parent?: FieldKey | undefined;
+export interface BindSyntaxTree {
+	readonly _index?: number;
+	readonly [key: string]: boolean | BindSyntaxTree | number | undefined;
 }
 
 /**
@@ -752,22 +754,36 @@ export function nativeSort<T>(arr: T[], compareFn: CompareFunction<T>): T[] {
 	return [...arr].sort(compareFn);
 }
 
-export function compileSyntaxTree(flatNodes: BindSyntaxTree[]): BindTree {
-	const nodes = new Map<FieldKey, BindTree>();
-	let rootNode: BindTree | undefined;
-	for (const node of flatNodes) {
-		const currentNode = { field: node.field, index: node.index, children: new Map() };
-		nodes.set(node.field, currentNode);
-		if (node.parent !== undefined) {
-			const parentNode = nodes.get(node.parent);
-			if (parentNode) {
-				parentNode.children.set(node.field, currentNode);
+export function compileSyntaxTree(syntaxTree: BindSyntaxTree): BindTree {
+	const entries = Object.entries(syntaxTree);
+	if (entries.length === 1) {
+		const [fieldName, childNode] = entries[0];
+		const fieldKey: FieldKey = brand(fieldName);
+		return compileSyntaxTreeNode(childNode as BindSyntaxTree, fieldKey);
+	} else throw new Error("Invalid BindSyntaxTree structure");
+}
+
+function compileSyntaxTreeNode(node: BindSyntaxTree, parentField: FieldKey): BindTree {
+	const pathStep: PathStep = {
+		field: parentField,
+		index: node._index,
+	};
+	const children = new Map<FieldKey, BindTree>();
+	for (const [key, value] of Object.entries(node)) {
+		if (key !== "_index") {
+			const fieldKey: FieldKey = brand(key);
+			if (typeof value === "object") {
+				const childTree = compileSyntaxTreeNode(value, fieldKey);
+				if (childTree !== undefined) {
+					children.set(fieldKey, childTree);
+				}
+			} else if (value === true) {
+				children.set(fieldKey, { field: fieldKey, children: new Map() });
 			}
-		} else {
-			rootNode = currentNode;
 		}
 	}
-	if (rootNode === undefined) {
-		throw new Error("Invalid bind syntax tree. Root is undefined.");
-	} else return rootNode;
+	return {
+		...pathStep,
+		children,
+	};
 }
