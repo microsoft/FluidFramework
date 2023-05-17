@@ -167,7 +167,7 @@ export async function verifyToken(
 		const claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
 		if (options.requireTokenExpiryCheck) {
 			let maxTokenLifetimeSec = options.maxTokenLifetimeSec;
-			if (!maxTokenLifetimeSec || isNaN(maxTokenLifetimeSec)) {
+			if (!maxTokenLifetimeSec) {
 				Lumberjack.error(
 					`Missing/Invalid maxTokenLifetimeSec=${maxTokenLifetimeSec} in options. Set to default=${defaultMaxTokenLifetimeSec}`,
 					logProperties,
@@ -239,9 +239,16 @@ export function verifyStorageToken(
 		tokenCache: undefined,
 	},
 ): RequestHandler {
+	const maxTokenLifetimeSec = getNumberFromConfig("auth:maxTokenLifetimeSec", config);
+	const isTokenExpiryEnabled = getBooleanFromConfig("auth:enableTokenExpiration", config);
+	// Prevent service from starting with invalid configs
+	if (isTokenExpiryEnabled && isNaN(maxTokenLifetimeSec)) {
+		throw new Error(
+			"Invalid configuration: no maxTokenLifetimeSec when token expiry is enabled",
+		);
+	}
+
 	return async (request, res, next) => {
-		const maxTokenLifetimeSec = getNumberFromConfig("auth:maxTokenLifetimeSec", config);
-		const isTokenExpiryEnabled = getBooleanFromConfig("auth:enableTokenExpiration", config);
 		const tenantId = getParam(request.params, "tenantId");
 		if (!tenantId) {
 			return respondWithNetworkError(
