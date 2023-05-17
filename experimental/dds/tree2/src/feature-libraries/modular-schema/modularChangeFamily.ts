@@ -759,7 +759,7 @@ export class ModularChangeFamily
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
-		deleted: boolean = false,
+		deletedByBase: boolean = false,
 	): NodeChangeset | undefined {
 		if (change === undefined && over?.change?.fieldChanges === undefined) {
 			return undefined;
@@ -820,7 +820,7 @@ export class ModularChangeFamily
 		}
 
 		// If there's a node exists constraint and we deleted the node, increment the violation count
-		if (rebasedChange.nodeExistsConstraint !== undefined && deleted === true) {
+		if (rebasedChange.nodeExistsConstraint !== undefined && deletedByBase) {
 			// Only increment the violation count if the constraint wasn't already violated
 			// TODO: Decrement if constraint is fixed by rebasing (node is revived)
 			if (rebasedChange.nodeExistsConstraint.violated !== true) {
