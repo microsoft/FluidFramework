@@ -6,9 +6,9 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
+import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 
-import { DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject";
+import { DiceRollerFactory, IDiceRoller } from "./dataObject";
 
 /**
  * The data model for our application.
@@ -24,6 +24,8 @@ class DiceRollerAppModel implements IDiceRollerAppModel {
 	public constructor(public readonly diceRoller: IDiceRoller) {}
 }
 
+const diceRollerRegistryKey = "dice-roller";
+const diceRollerFactory = new DiceRollerFactory();
 const diceRollerId = "dice-roller";
 
 /**
@@ -32,7 +34,7 @@ const diceRollerId = "dice-roller";
 export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFactory<IDiceRollerAppModel> {
 	constructor() {
 		super(
-			new Map([DiceRollerInstantiationFactory.registryEntry]), // registryEntries
+			new Map([[diceRollerRegistryKey, Promise.resolve(diceRollerFactory)]]), // registryEntries
 		);
 	}
 
@@ -40,7 +42,7 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+		const diceRoller = await runtime.createDataStore(diceRollerRegistryKey);
 		await diceRoller.trySetAlias(diceRollerId);
 	}
 
@@ -48,10 +50,15 @@ export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const diceRoller = await requestFluidObject<IDiceRoller>(
-			await runtime.getRootDataStore(diceRollerId),
-			"",
-		);
+		// If runtime.getRootDataStoreChannel was public we could just call that.
+		const diceRollerRuntime = (await runtime.getRootDataStore(
+			diceRollerId,
+		)) as IFluidDataStoreChannel;
+		const diceRollerEntryPoint = diceRollerRuntime.entryPoint;
+		if (diceRollerEntryPoint === undefined) {
+			throw new Error("EntryPoint was not defined");
+		}
+		const diceRoller = (await diceRollerEntryPoint.get()) as IDiceRoller;
 		return new DiceRollerAppModel(diceRoller);
 	}
 }

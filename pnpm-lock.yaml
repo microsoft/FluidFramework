@@ -5753,21 +5753,33 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluidframework/aqueduct':
+      '@fluidframework/cell':
         specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
+        version: link:../../../packages/dds/cell
       '@fluidframework/common-definitions':
         specifier: ^0.20.1
         version: 0.20.1
+      '@fluidframework/common-utils':
+        specifier: ^1.1.1
+        version: 1.1.1
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
-      '@fluidframework/runtime-utils':
+      '@fluidframework/core-interfaces':
         specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-definitions
       css-loader:
         specifier: ^1.0.0
         version: 1.0.1(webpack@5.83.0)
