@@ -179,6 +179,9 @@ export type NodeChangeInverter = (
 export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
 	baseChange: NodeChangeset | undefined,
+	/**
+	 * True when the baseChange deletes the node. Defaults to false if not specified.
+	 */
 	deleted?: boolean,
 ) => NodeChangeset | undefined;
 
