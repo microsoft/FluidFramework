@@ -15,16 +15,8 @@ import {
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import { compress, decompress } from "lz4js";
-import { DocumentStorageServiceProxy } from "../../documentStorageServiceProxy";
-
-export enum SummaryCompressionAlgorithm {
-	None = 1,
-	LZ4 = 2,
-}
-export interface ICompressionStorageConfig {
-	algorithm: SummaryCompressionAlgorithm;
-	minSizeToCompress: number;
-}
+import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy";
+import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
 
 /**
  * This class extends the DocumentStorageServiceProxy so that it can apply various kinds of compressions

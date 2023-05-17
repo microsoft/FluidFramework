@@ -6,5 +6,7 @@
 export {
 	SummaryCompressionAlgorithm,
 	ICompressionStorageConfig,
-} from "./documentStorageServiceCompressionAdapter";
-export { DocumentServiceFactoryCompressionAdapter } from "./documentServiceFactoryCompressionAdapter";
+	SummaryCompressionProcessor,
+} from "./compressionTypes";
+export { DocumentServiceFactoryCompressionAdapter as DocumentServiceFactorySummaryKeyCompressionAdapter } from "./summarykey";
+export { DocumentServiceFactoryCompressionAdapter as DocumentServiceFactorySummaryBlobCompressionAdapter } from "./summaryblob";

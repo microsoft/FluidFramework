@@ -7,8 +7,10 @@ import { assert } from "@fluidframework/common-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	SummaryCompressionAlgorithm,
-	DocumentServiceFactoryCompressionAdapter,
+	DocumentServiceFactorySummaryKeyCompressionAdapter,
+//	DocumentServiceFactorySummaryBlobCompressionAdapter,
 	ICompressionStorageConfig,
+	SummaryCompressionProcessor,
 } from "./compression";
 
 /**
@@ -25,10 +27,10 @@ export function applyStorageCompression(
 	if (config === undefined || config === false) {
 		return documentServiceFactory;
 	} else if (config === true) {
-		return applyStorageCompressionInternal(documentServiceFactory);
+		return applyStorageCompressionInternal(DocumentServiceFactorySummaryKeyCompressionAdapter, documentServiceFactory);
 	} else {
 		assert(isCompressionConfig(config), "Invalid compression config");
-		return applyStorageCompressionInternal(documentServiceFactory, config);
+		return applyStorageCompressionInternal(DocumentServiceFactorySummaryKeyCompressionAdapter, documentServiceFactory, config);
 	}
 }
 
@@ -39,16 +41,19 @@ export function applyStorageCompression(
  * @returns - The document service factory with compression applied.
  */
 function applyStorageCompressionInternal(
+	constructor: new (documentServiceFactory: IDocumentServiceFactory, config: ICompressionStorageConfig) => IDocumentServiceFactory,
 	documentServiceFactory: IDocumentServiceFactory,
 	config: ICompressionStorageConfig = {
 		algorithm: SummaryCompressionAlgorithm.LZ4,
 		minSizeToCompress: 500,
+		processor: SummaryCompressionProcessor.SummaryKey,
+
 	},
 ): IDocumentServiceFactory {
 	if (config.algorithm === undefined) {
 		return documentServiceFactory;
 	}
-	return new DocumentServiceFactoryCompressionAdapter(documentServiceFactory, config);
+	return new constructor(documentServiceFactory, config);
 }
 
 /**
@@ -61,3 +66,5 @@ export function isCompressionConfig(config: any): config is ICompressionStorageC
 		(config.algorithm !== undefined || config.minSizeToCompress !== undefined)
 	);
 }
+
+

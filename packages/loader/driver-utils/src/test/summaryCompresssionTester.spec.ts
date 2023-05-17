@@ -32,10 +32,10 @@ import {
 	applyStorageCompression,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
+	SummaryCompressionProcessor,
 } from "../adapters";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
 import { snapshotTree, summaryTemplate } from "./summaryCompresssionUtils";
-
 /**
  * This function clones the imported summary and returns a new summary with the same content.
  */
@@ -209,6 +209,7 @@ describe("Summary Compression Test", () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.None,
 			minSizeToCompress: 763,
+			processor: SummaryCompressionProcessor.SummaryKey
 		};
 		const storage = await buildCompressionStorage(config);
 		checkCompressionConfig(storage, 763, SummaryCompressionAlgorithm.None);
