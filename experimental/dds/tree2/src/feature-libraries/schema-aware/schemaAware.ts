@@ -134,7 +134,7 @@ export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
 			ValuePropertyFromSchema<TValueSchema>
 		>
 	>,
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * Remove type brand from name.
@@ -142,7 +142,7 @@ export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
  */
 export type UnbrandedName<TName> = [
 	TName extends infer S & TreeSchemaIdentifier ? S : string,
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
@@ -160,7 +160,7 @@ export type TypedFields<
 				[key in keyof TFields]: TypedField<Mode, TFields[key]>;
 		  }
 		: EmptyObject,
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * `FieldSchemaTypeInfo` to `TypedTree`
@@ -172,7 +172,7 @@ export type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
 		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
 		Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
 	>,
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -216,7 +216,7 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 				>
 		  >
 		: UntypedApi<Mode>,
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
@@ -229,7 +229,7 @@ export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly T
 				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>,
 		  ]
 		: [],
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 // TODO: make these more accurate
 /**
