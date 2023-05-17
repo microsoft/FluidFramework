@@ -76,7 +76,6 @@ import {
 	ChangeFamilyEditor,
 	ChangeFamily,
 	InMemoryStoredSchemaRepository,
-	AllowedUpdateType,
 } from "../core";
 import { JsonCompatible, brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
