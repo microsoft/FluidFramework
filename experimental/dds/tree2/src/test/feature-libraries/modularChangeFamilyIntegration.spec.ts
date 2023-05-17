@@ -11,6 +11,8 @@ import {
 	FieldKindIdentifier,
 	isSkipMark,
 	makeAnonChange,
+	mintRevisionTag,
+	tagChange,
 } from "../../core";
 import { DefaultEditBuilder, FieldKind, ModularChangeFamily } from "../../feature-libraries";
 
@@ -43,7 +45,7 @@ describe("rebase", () => {
 		editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
 		editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
 		const [move, remove, expected] = getChanges();
-		const rebased = family.rebase(remove, makeAnonChange(move));
+		const rebased = family.rebase(remove, tagChange(move, mintRevisionTag()));
 		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
 		const expectedDelta = normalizeDelta(family.intoDelta(expected));
 		assert.deepEqual(rebasedDelta, expectedDelta);
@@ -68,7 +70,7 @@ describe("rebase", () => {
 			2,
 		);
 		const [remove, move, expected] = getChanges();
-		const rebased = family.rebase(move, makeAnonChange(remove));
+		const rebased = family.rebase(move, tagChange(remove, mintRevisionTag()));
 		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
 		const expectedDelta = normalizeDelta(family.intoDelta(expected));
 		assert.deepEqual(rebasedDelta, expectedDelta);

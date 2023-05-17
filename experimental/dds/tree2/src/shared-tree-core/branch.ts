@@ -83,21 +83,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	private disposed = false;
-
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
-	 * @param sessionId - the session ID used to author commits made by this branch
 	 * @param rebaser - the rebaser used for rebasing and merging commits across branches
 	 * @param changeFamily - determines the set of changes that this branch can commit
-	 * @param undoRedoManager - the undo/redo manager used to track undoable commits
+	 * @param undoRedoManager - an optional {@link UndoRedoManager} to manage the undo/redo operations of this
+	 * branch. This must be provided in order to use the `undo` and `redo` methods of this branch.
 	 * @param anchors - an optional set of anchors that this branch will rebase whenever the branch head changes
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
-		public readonly sessionId: string,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		public undoRedoManager: UndoRedoManager<TChange, TEditor>,
+		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
 	) {
 		super();
@@ -137,7 +135,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.assertNotDisposed();
 		this.head = mintCommit(this.head, {
 			revision,
-			sessionId: this.sessionId,
 			change,
 		});
 
@@ -146,7 +143,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (undoRedoType !== undefined && !this.isTransacting()) {
-			this.undoRedoManager.trackCommit(this.head, undoRedoType);
+			this.undoRedoManager?.trackCommit(this.head, undoRedoType);
 		}
 
 		this.emitAndRebaseAnchors({ type: "append", change, newCommits: [this.head] });
@@ -171,7 +168,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// If this is the start of a transaction stack, freeze the undo redo manager's
 			// repair data store provider so that repair data can be captured based on the
 			// state of the branch at the start of the transaction.
-			this.undoRedoManager.repairDataStoreProvider.freeze();
+			this.undoRedoManager?.repairDataStoreProvider.freeze();
 		}
 		this.transactions.push(this.head.revision, repairStore);
 		this.editor.enterTransaction();
@@ -200,13 +197,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			const change = this.changeFamily.rebaser.compose(anonymousCommits);
 			this.head = mintCommit(startCommit, {
 				revision: mintRevisionTag(),
-				sessionId: this.sessionId,
 				change,
 			});
 
 			// If this transaction is not nested, add it to the undo commit tree
 			if (!this.isTransacting()) {
-				this.undoRedoManager.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
+				this.undoRedoManager?.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
 			}
 
 			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
@@ -276,16 +272,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Undoes the last completed transaction made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 * Undoes the last change made by the client. If there is no change to undo then this method has no effect.
+	 * This method will error if no {@link UndoRedoManager} was provided when this branch was constructed.
+	 * It is invalid to call this method while a transaction is open (this will be supported in the future).
 	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to undo
 	 */
 	public undo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+		assert(
+			this.undoRedoManager !== undefined,
+			"Must construct branch with an `UndoRedoManager` in order to undo.",
+		);
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x66a /* Undo is not yet supported during transactions */);
 
-		const undoChange = this.undoRedoManager.undo(this.getHead());
+		const undoChange = this.undoRedoManager?.undo(this.getHead());
 		if (undoChange !== undefined) {
 			return this.applyChange(undoChange, mintRevisionTag(), UndoRedoManagerCommitType.Undo);
 		}
@@ -294,16 +295,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Redoes the last completed undo made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
+	 * Redoes the last change made by the client. If there is no change to redo then this method has no effect.
+	 * This method will error if no {@link UndoRedoManager} was provided when this branch was constructed.
+	 * It is invalid to call this method while a transaction is open (this will be supported in the future).
 	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to redo
 	 */
 	public redo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
+		assert(
+			this.undoRedoManager !== undefined,
+			"Must construct branch with an `UndoRedoManager` in order to redo.",
+		);
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
 		assert(!this.isTransacting(), 0x67e /* Redo is not yet supported during transactions */);
 
-		const redoChange = this.undoRedoManager.redo(this.getHead());
+		const redoChange = this.undoRedoManager?.redo(this.getHead());
 		if (redoChange !== undefined) {
 			return this.applyChange(redoChange, mintRevisionTag(), UndoRedoManagerCommitType.Redo);
 		}
@@ -323,9 +329,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			this.head,
-			this.sessionId,
 			this.changeFamily,
-			this.undoRedoManager.clone(repairDataStoreProvider),
+			this.undoRedoManager?.clone(repairDataStoreProvider),
 			anchors,
 		);
 		this.emit("fork", fork);
@@ -335,15 +340,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Rebase the changes that have been applied to this branch over all the divergent changes in the given branch.
 	 * After this operation completes, this branch will be based off of `branch`.
-	 * @param branch - the head of the branch to rebase onto
-	 * @param undoRedoManager - the undo redo manager of the branch to rebase onto. This is necessary for updating the
-	 * undo redo manager of this branch.
+	 * @param branch - the branch to rebase onto
 	 * @returns the net change to this branch and the commits that were removed and added to this branch by the rebase,
 	 * or undefined if nothing changed
 	 */
 	public rebaseOnto(
-		branch: GraphCommit<TChange>,
-		undoRedoManager: UndoRedoManager<TChange, TEditor>,
+		branch: SharedTreeBranch<TEditor, TChange>,
 	):
 		| [
 				change: TChange | undefined,
@@ -353,7 +355,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| undefined {
 		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(this.head, branch);
+		const rebaseResult = this.rebaseBranch(this.head, branch.getHead());
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -362,7 +364,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const [newHead, change, { deletedSourceCommits, targetCommits, sourceCommits }] =
 			rebaseResult;
 
-		this.undoRedoManager.updateAfterRebase(sourceCommits, undoRedoManager);
+		if (this.undoRedoManager !== undefined) {
+			// TODO: We probably can rebase a revertible branch onto a non-revertible branch.
+			assert(
+				branch.undoRedoManager !== undefined,
+				"Cannot rebase a revertible branch onto a non-revertible branch",
+			);
+			this.undoRedoManager.updateAfterRebase(sourceCommits, branch.undoRedoManager);
+		}
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
 		this.emitAndRebaseAnchors({
@@ -396,7 +405,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// Compute the net change to this branch
 		const [newHead, _, { sourceCommits }] = rebaseResult;
-		this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
+
+		if (this.undoRedoManager !== undefined) {
+			// TODO: We probably can merge a non-revertible branch into a revertible branch.
+			assert(
+				branch.undoRedoManager !== undefined,
+				"Cannot merge a non-revertible branch into a revertible branch",
+			);
+			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
+		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
 		this.emitAndRebaseAnchors({

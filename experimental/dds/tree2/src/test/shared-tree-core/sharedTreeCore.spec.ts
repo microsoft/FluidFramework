@@ -280,13 +280,13 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 3);
 		branch3.dispose(); //                     [x, 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
-		const branch4 = tree.forkBranch(); //   [x, 2, 3 (b4)]
+		const branch4 = tree.forkBranch(); //     [x, 2, 3 (b4)]
 		changeTree(tree);
 		changeTree(tree);
 		factory.processAllMessages(); //          [x, x, 3 (b4), 4, 5]
 		assert.equal(getTrunkLength(tree), 3);
-		const branch5 = tree.forkBranch(); //   [x, x, 3 (b4), 4, 5 (b5)]
-		branch4.rebaseOnto(branch5.getHead(), branch5.undoRedoManager); // [x, x, 3, 4, 5 (b4, b5)]
+		const branch5 = tree.forkBranch(); //     [x, x, 3 (b4), 4, 5 (b5)]
+		branch4.rebaseOnto(branch5); //           [x, x, 3, 4, 5 (b4, b5)]
 		branch4.dispose(); //                     [x, x, 3, 4, 5 (b5)]
 		assert.equal(getTrunkLength(tree), 3);
 		changeTree(tree);
@@ -389,5 +389,5 @@ function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
 		editManager !== undefined,
 		"EditManager in SharedTreeCore has been moved/deleted. Please update glass box tests.",
 	);
-	return editManager.getTrunk().length;
+	return editManager.getTrunkChanges().length;
 }

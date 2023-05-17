@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IMember } from "fluid-framework";
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
+import { IMember } from "@fluidframework/fluid-static";
 import { ISharedMap, IValueChanged } from "@fluidframework/map";
 
 export const waitForMember = async (
