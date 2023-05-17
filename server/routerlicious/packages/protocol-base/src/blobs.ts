@@ -151,15 +151,3 @@ export class AttachmentTreeEntry {
 		this.value = { id };
 	}
 }
-
-export function addBlobToTree(tree: ITree, blobName: string, content: object) {
-	tree.entries.push({
-		mode: FileMode.File,
-		path: blobName,
-		type: TreeEntry.Blob,
-		value: {
-			contents: JSON.stringify(content),
-			encoding: "utf-8",
-		},
-	});
-}
