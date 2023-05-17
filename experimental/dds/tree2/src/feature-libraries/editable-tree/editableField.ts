@@ -43,7 +43,6 @@ import {
 } from "./editableTreeTypes";
 import { makeTree } from "./editableTree";
 import { ProxyTarget } from "./ProxyTarget";
-import { propertiesMap } from "./arrayLike";
 
 export function makeField(
 	context: ProxyContext,
@@ -54,7 +53,9 @@ export function makeField(
 	return adaptWithProxy(targetSequence, fieldProxyHandler);
 }
 
-function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target is FieldProxyTarget {
+export function isFieldProxyTarget(
+	target: ProxyTarget<Anchor | FieldAnchor>,
+): target is FieldProxyTarget {
 	return target instanceof FieldProxyTarget;
 }
 
@@ -184,8 +185,8 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return mapCursorField(this.cursor, (cursor) => unwrappedTree(this.context, cursor));
 	}
 
-	public [Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
-		return this.asArray().values();
+	public get [Symbol.iterator](): () => IterableIterator<UnwrappedEditableTree> {
+		return () => this.asArray().values();
 	}
 
 	public insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void {
@@ -293,27 +294,141 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	}
 }
 
-/**
- * The set of `EditableField` properties exposed by `fieldProxyHandler`.
- * Any other properties are considered to be non-existing.
- */
-const editableFieldPropertySet = new Set<string>([
-	"length",
-	"fieldKey",
-	"fieldSchema",
-	"parent",
-	"context",
-]);
-
-const propertySetDispatch: Record<string | symbol, (target: FieldProxyTarget, value: any) => void> =
+const properties = [
 	{
-		length: (target, value) => {
-			target.length = value;
-		},
-		[Symbol.isConcatSpreadable]: (target, value) => {
-			target[Symbol.isConcatSpreadable] = value;
-		},
-	};
+		key: arrayLikeMarkerSymbol,
+		enumerable: false,
+		value: true,
+		writable: false,
+	},
+	{ key: proxyTargetSymbol, enumerable: false, writable: false },
+	{ key: Symbol.iterator, enumerable: false, writable: false },
+	{ key: Symbol.isConcatSpreadable, enumerable: false, writable: true },
+	{ key: "length", enumerable: false, writable: true },
+	{ key: "fieldKey", enumerable: false, writable: false },
+	{ key: "fieldSchema", enumerable: false, writable: false },
+	{ key: "parent", enumerable: false, writable: false },
+	{ key: "context", enumerable: false, writable: false },
+];
+
+function createPropMap(props: typeof properties) {
+	const map: PropertyDescriptorMap = {};
+
+	for (const { key, enumerable, value, writable } of props) {
+		const desc: PropertyDescriptor = (map[key as string] = {
+			enumerable,
+			configurable: true,
+		});
+
+		if (value !== undefined) {
+			assert(!writable, "'value' must be constant.");
+			desc.value = value;
+			desc.writable = false;
+		} else {
+			desc.get = function (this: Record<string | symbol, any>) {
+				return this[key] as unknown;
+			};
+
+			if (writable) {
+				desc.set = function (
+					this: { [proxyTargetSymbol]: FieldProxyTarget },
+					newValue: unknown,
+				) {
+					return Reflect.set(this[proxyTargetSymbol], key, newValue) as unknown;
+				};
+			}
+		}
+	}
+
+	return map;
+}
+
+export const ownPropertyMap = createPropMap(properties);
+export const ownPropertyKeys = Object.keys(ownPropertyMap);
+
+/* eslint-disable @typescript-eslint/unbound-method -- Intentionally forwarding proxy instance to unbound Array methods */
+
+const arrayFns = [
+	Array.prototype.forEach,
+	Array.prototype.concat,
+	Array.prototype.every,
+	Array.prototype.filter,
+	Array.prototype.find,
+	Array.prototype.findIndex,
+	// Array.prototype.findLast,   				// TODO: Requires newer ES lib
+	// Array.prototype.findLastIndex,			// TODO: Requires newer ES lib
+	// Array.prototype.flat, 					// TODO: Requires newer ES lib
+	// Array.prototype.flatMap, 				// TODO: Requires newer ES lib
+	Array.prototype.includes,
+	Array.prototype.indexOf,
+	Array.prototype.join,
+	Array.prototype.keys,
+	Array.prototype.lastIndexOf,
+	Array.prototype.map,
+	Array.prototype.push,
+	Array.prototype.slice,
+	Array.prototype.reduce,
+	Array.prototype.reduceRight,
+	Array.prototype.some,
+	// Array.prototype.splice,					// TODO: Needs custom implementation (increases length to resize)
+	Array.prototype.toLocaleString,
+	Array.prototype.toString,
+	// Array.prototype.toReversed,				// TODO: Requires newer ES lib
+	// Array.prototype.toSorted,				// TODO: Requires newer ES lib
+	// Array.prototype.toSpliced,				// TODO: Requires newer ES lib
+	// Array.prototype.unshift,					// TODO: Needs custom implementation (sets indices > length)
+	Array.prototype.values,
+	// Array.prototype.with,					// TODO: Requires newer ES lib
+	// Array.prototype[Symbol.iterator],		// (Use implementation from FieldProxyTarget)
+	// Array.prototype[Symbol.unscopables],		// TODO: Requires newer ES lib (used by 'with()')
+];
+
+const targetFns = [
+	FieldProxyTarget.prototype.deleteNodes,
+	FieldProxyTarget.prototype.getNode,
+	FieldProxyTarget.prototype.insertNodes,
+	FieldProxyTarget.prototype.moveNodes,
+	FieldProxyTarget.prototype.replaceNodes,
+];
+
+/* eslint-enable @typescript-eslint/unbound-method -- Intentionally forwarding proxy instance to unbound Array methods */
+
+function createFnMap(
+	owner: any,
+	fns: ((...args2: any[]) => unknown)[],
+	dispatch?: (...args1: any[]) => (...args2: any[]) => unknown,
+) {
+	const map: PropertyDescriptorMap = {};
+	const ownerDescs = Object.getOwnPropertyDescriptors(owner);
+
+	for (const fn of fns) {
+		const name = fn.name;
+		const desc = (map[name] = ownerDescs[name]);
+
+		assert(desc !== undefined, "'fn' must be own member of 'owner'");
+
+		if (dispatch !== undefined) {
+			desc.value = dispatch(desc.value);
+		}
+	}
+
+	return map;
+}
+
+export const fullPropertyMap = Object.assign(
+	createFnMap(Array.prototype, arrayFns),
+	createFnMap(
+		FieldProxyTarget.prototype,
+		targetFns,
+		/* dispatch: */ (targetFn: (...args: any) => unknown) =>
+			function (this: { [proxyTargetSymbol]: FieldProxyTarget }, ...args: any[]) {
+				// The 'this' argument is our Proxy.
+				// Use '[proxyTargetSymbol]' to get a reference to the underlying FieldProxyTarget.
+				return Reflect.apply(targetFn, this[proxyTargetSymbol], args) as unknown;
+			},
+	),
+	ownPropertyMap,
+);
 
 /**
  * Returns a Proxy handler, which together with a {@link FieldProxyTarget} implements a basic read/write access to
@@ -321,9 +436,14 @@ const propertySetDispatch: Record<string | symbol, (target: FieldProxyTarget, va
  */
 const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> = {
 	get: (target: FieldProxyTarget, key: string | symbol, receiver: object): unknown => {
-		const desc = propertiesMap[key as string];
+		if (key === proxyTargetSymbol) {
+			return target;
+		}
+
+		const desc = fullPropertyMap[key as string];
 		if (desc !== undefined) {
-			return desc.get ? desc.get() : desc.value;
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			return desc.get !== undefined ? Reflect.apply(desc.get, target, []) : desc.value;
 		}
 
 		if (typeof key === "string") {
@@ -340,9 +460,10 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		value: ContextuallyTypedNodeData,
 		receiver: unknown,
 	): boolean => {
-		const fn = propertySetDispatch[key];
-		if (fn !== undefined) {
-			fn(target, value);
+		const desc = fullPropertyMap[key];
+		if (desc?.set) {
+			// eslint-disable-next-line @typescript-eslint/unbound-method
+			Reflect.apply(desc.set, target, [value]);
 			return true;
 		}
 
@@ -372,63 +493,29 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		}
 
 		return (
-			Reflect.has(propertiesMap, key) ||
+			Reflect.has(fullPropertyMap, key) ||
 			(typeof key === "string" && keyIsValidIndex(key, target.length))
 		);
 	},
 	ownKeys: (target: FieldProxyTarget): ArrayLike<keyof EditableField> => {
 		const keys: string[] = Array.from({ length: target.length }, (_, index) => `${index}`);
-		keys.push(...editableFieldPropertySet);
+		keys.push(...ownPropertyKeys);
 		return keys as ArrayLike<keyof EditableField>;
 	},
 	getOwnPropertyDescriptor: (
 		target: FieldProxyTarget,
 		key: string | symbol,
 	): PropertyDescriptor | undefined => {
-		// We generally don't want to allow users of the proxy to reconfigure all the properties,
-		// but it is a TypeError to return non-configurable for properties that do not exist on target,
-		// so they must return true.
-		if (typeof key === "symbol") {
-			switch (key) {
-				case proxyTargetSymbol:
-					return {
-						configurable: true,
-						enumerable: false,
-						value: target,
-						writable: false,
-					};
-				case Symbol.iterator:
-					return {
-						configurable: true,
-						enumerable: false,
-						value: target[Symbol.iterator].bind(target),
-						writable: false,
-					};
-				case Symbol.isConcatSpreadable:
-					return {
-						configurable: true,
-						enumerable: false,
-						value: target[Symbol.isConcatSpreadable],
-						writable: false,
-					};
-				default:
-			}
-		} else {
-			if (editableFieldPropertySet.has(key)) {
-				return {
-					configurable: true,
-					enumerable: false,
-					value: Reflect.get(target, key),
-					writable: false,
-				};
-			} else if (keyIsValidIndex(key, target.length)) {
-				return {
-					configurable: true,
-					enumerable: true,
-					value: target.unwrappedTree(Number(key)),
-					writable: true,
-				};
-			}
+		const maybeDesc = ownPropertyMap[key as string];
+		if (maybeDesc !== undefined) {
+			return maybeDesc;
+		} else if (typeof key === "string" && keyIsValidIndex(key, target.length)) {
+			return {
+				configurable: true,
+				enumerable: true,
+				value: target.unwrappedTree(Number(key)),
+				writable: true,
+			};
 		}
 		return undefined;
 	},

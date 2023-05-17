@@ -22,27 +22,38 @@ describe("editableField", () => {
 		const nameField = proxy[getField](brand("name"));
 
 		{
-			const descriptor = Object.getOwnPropertyDescriptor(nameField, proxyTargetSymbol);
-			assert(descriptor?.value instanceof FieldProxyTarget);
-			const expected = {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const descriptor = Object.getOwnPropertyDescriptor(nameField, proxyTargetSymbol)!;
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const actualValue = Reflect.apply(descriptor.get!, nameField, []);
+			assert(actualValue instanceof FieldProxyTarget);
+
+			delete descriptor.get;
+
+			assert.deepEqual(descriptor, {
+				set: undefined,
 				configurable: true,
 				enumerable: false,
-				value: Reflect.get(nameField, proxyTargetSymbol),
-				writable: false,
-			};
-			assert.deepEqual(descriptor, expected);
+			});
 		}
 
 		{
-			const descriptor = Object.getOwnPropertyDescriptor(nameField, Symbol.iterator);
-			assert(typeof descriptor?.value === "function");
-			delete descriptor.value;
-			const expected = {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const descriptor = Object.getOwnPropertyDescriptor(nameField, Symbol.iterator)!;
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const actualValue = [...Reflect.apply(descriptor.get!, nameField, [])()];
+			const expectedValue = [...nameField[Symbol.iterator]()];
+			assert.deepEqual(actualValue, expectedValue);
+
+			delete descriptor.get;
+
+			assert.deepEqual(descriptor, {
+				set: undefined,
 				configurable: true,
 				enumerable: false,
-				writable: false,
-			};
-			assert.deepEqual(descriptor, expected);
+			});
 		}
 	});
 });
