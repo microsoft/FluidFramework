@@ -356,7 +356,7 @@ export class EditManager<
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
 		assert(
 			this.isEmpty(),
-			"Attempted to load from summary after edit manager was already mutated",
+			0x68a /* Attempted to load from summary after edit manager was already mutated */,
 		);
 		this.sequenceMap.clear();
 		this.trunk.setHead(

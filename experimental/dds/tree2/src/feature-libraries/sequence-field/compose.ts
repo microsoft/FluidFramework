@@ -180,7 +180,7 @@ function composeMarks<TNodeChange>(
 	} else if (!markHasCellEffect(newMark)) {
 		const moveInId = getMarkMoveId(baseMark);
 		if (nodeChange !== undefined && moveInId !== undefined) {
-			assert(isMoveMark(baseMark), "Only move marks have move IDs");
+			assert(isMoveMark(baseMark), 0x68e /* Only move marks have move IDs */);
 			getOrAddEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -196,7 +196,10 @@ function composeMarks<TNodeChange>(
 		const moveOutId = getMarkMoveId(newMark);
 
 		if (moveInId !== undefined && moveOutId !== undefined) {
-			assert(isMoveMark(baseMark) && isMoveMark(newMark), "Only move marks have move IDs");
+			assert(
+				isMoveMark(baseMark) && isMoveMark(newMark),
+				0x68f /* Only move marks have move IDs */,
+			);
 			const srcEffect = getOrAddEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -228,7 +231,7 @@ function composeMarks<TNodeChange>(
 		}
 
 		if (moveInId !== undefined) {
-			assert(isMoveMark(baseMark), "Only move marks have move IDs");
+			assert(isMoveMark(baseMark), 0x690 /* Only move marks have move IDs */);
 			getOrAddEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -240,7 +243,7 @@ function composeMarks<TNodeChange>(
 		}
 
 		if (moveOutId !== undefined) {
-			assert(isMoveMark(newMark), "Only move marks have move IDs");
+			assert(isMoveMark(newMark), 0x691 /* Only move marks have move IDs */);
 
 			// The nodes attached by `baseMark` have been moved by `newMark`.
 			// We can represent net effect of the two marks by moving `baseMark` to the destination of `newMark`.
@@ -270,7 +273,7 @@ function createModifyMark<TNodeChange>(
 		return { count: cellId === undefined ? length : 0 };
 	}
 
-	assert(length === 1, "A mark with a node change must have length one");
+	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
 	const mark: Modify<TNodeChange> = { type: "Modify", changes: nodeChange };
 	if (cellId !== undefined) {
 		mark.detachEvent = cellId;
@@ -463,10 +466,13 @@ export class ComposeQueue<T> {
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			// TODO: `baseMark` might be a MoveIn, which is not an ExistingCellMark.
 			// See test "[Move ABC, Return ABC] ↷ Delete B" in sequenceChangeRebaser.spec.ts
-			assert(isExistingCellMark(baseMark), "Only existing cell mark can have empty output");
+			assert(
+				isExistingCellMark(baseMark),
+				0x693 /* Only existing cell mark can have empty output */,
+			);
 			let baseCellId: DetachEvent;
 			if (markEmptiesCells(baseMark)) {
-				assert(isDetachMark(baseMark), "Only detach marks can empty cells");
+				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
 				if (baseRevision === undefined || baseIntention === undefined) {
@@ -477,7 +483,7 @@ export class ComposeQueue<T> {
 					// (which requires the local changes to have a revision tag))
 					assert(
 						isNewAttach(newMark),
-						"TODO: Assign revision tags to each change in a transaction",
+						0x695 /* TODO: Assign revision tags to each change in a transaction */,
 					);
 					return this.dequeueNew();
 				}
@@ -488,7 +494,7 @@ export class ComposeQueue<T> {
 			} else {
 				assert(
 					areInputCellsEmpty(baseMark),
-					"Mark with empty output must either be a detach or also have input empty",
+					0x696 /* Mark with empty output must either be a detach or also have input empty */,
 				);
 				baseCellId = baseMark.detachEvent;
 			}
@@ -584,7 +590,7 @@ export class ComposeQueue<T> {
 		const newMark = this.newMarks.peek();
 		assert(
 			baseMark !== undefined && newMark !== undefined,
-			"Cannot dequeue both unless both mark queues are non-empty",
+			0x697 /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
 		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
 		return {
@@ -611,7 +617,7 @@ function areInverseMoves(
 ): boolean {
 	assert(
 		baseMark.type === "MoveIn" || baseMark.type === "ReturnTo",
-		"TODO: Handle case where `baseMark` is a detach",
+		0x698 /* TODO: Handle case where `baseMark` is a detach */,
 	);
 	if (baseMark.type === "ReturnTo" && baseMark.detachEvent?.revision === newIntention) {
 		return true;
