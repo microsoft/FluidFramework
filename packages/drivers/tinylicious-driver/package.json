@@ -52,7 +52,7 @@
 		"@fluidframework/build-tools": "^0.17.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/test-tools": "^0.2.3074",
+		"@fluidframework/test-tools": "^0.2.158186",
 		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.4.1.0",
 		"@types/jsrsasign": "^8.0.8",
 		"@types/mocha": "^9.1.1",

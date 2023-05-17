@@ -231,7 +231,6 @@ export function rebaseBranch<TChange>(
 			]);
 			newHead = {
 				revision: c.revision,
-				sessionId: c.sessionId,
 				change,
 				parent: newHead,
 			};
@@ -304,10 +303,31 @@ function inverseFromCommit<TChange>(
 }
 
 /**
+ * Find the furthest ancestor of some descendant.
+ * @param descendant - a descendant. If an empty `path` array is included, it will be populated
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the furthest ancestor,
+ * but otherwise including `descendant`).
+ * @returns the furthest ancestor of `descendant`, or `descendant` itself if `descendant` has no ancestors.
+ */
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T, path?: T[]],
+): T;
+/**
+ * Find the furthest ancestor of some descendant.
+ * @param descendant - a descendant. If an empty `path` array is included, it will be populated
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the furthest ancestor,
+ * but otherwise including `descendant`).
+ * @returns the furthest ancestor of `descendant`, or `descendant` itself if `descendant` has no ancestors. Returns
+ * `undefined` if `descendant` is undefined.
+ */
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
+): T | undefined;
+/**
  * Find an ancestor of some descendant.
  * @param descendant - a descendant. If an empty `path` array is included, it will be populated
- * with the chain of ancestry for `descendant` from most distant to closest (including `descendant`,
- * but not including the ancestor found by `predicate`).
+ * with the chain of ancestry for `descendant` from most distant to closest (not including the ancestor found by `predicate`,
+ * but otherwise including `descendant`).
  * @param predicate - a function which will be evaluated on every ancestor of `descendant` until it returns true.
  * @returns the closest ancestor of `descendant` that satisfies `predicate`, or `undefined` if no such ancestor exists.
  * @example
@@ -326,8 +346,12 @@ function inverseFromCommit<TChange>(
  * ```
  */
 export function findAncestor<T extends { parent?: T }>(
-	descendant: T | [descendant: T, path?: T[]] | undefined,
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
 	predicate: (t: T) => boolean,
+): T | undefined;
+export function findAncestor<T extends { parent?: T }>(
+	descendant: T | [descendant: T | undefined, path?: T[]] | undefined,
+	predicate: (t: T) => boolean = (t) => t.parent === undefined,
 ): T | undefined {
 	let d: T | undefined;
 	let path: T[] | undefined;
