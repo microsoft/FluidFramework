@@ -179,8 +179,7 @@ export async function verifyToken(
 
 		// Check token cache first
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
-			const tokenCacheKey = token;
-			const cachedToken = await options.tokenCache.get(tokenCacheKey).catch((error) => {
+			const cachedToken = await options.tokenCache.get(token).catch((error) => {
 				Lumberjack.error("Unable to retrieve cached JWT", logProperties, error);
 				return false;
 			});
