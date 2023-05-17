@@ -24,7 +24,6 @@ export {
 	NodeChangeType,
 	NodeCount,
 	MoveId,
-	ObjectMark,
 	ProtoNode,
 	RangeType,
 	Reattach,

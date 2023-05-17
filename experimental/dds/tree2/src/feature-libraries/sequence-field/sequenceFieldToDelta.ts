@@ -8,14 +8,8 @@ import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
 import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
-import { MarkList } from "./format";
-import {
-	areInputCellsEmpty,
-	areOutputCellsEmpty,
-	getMarkLength,
-	getNodeChange,
-	isObjMark,
-} from "./utils";
+import { MarkList, SkipType } from "./format";
+import { areInputCellsEmpty, areOutputCellsEmpty, getMarkLength, getNodeChange } from "./utils";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
@@ -29,9 +23,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 			out.push(deltaFromNodeChange(getNodeChange(mark), getMarkLength(mark), deltaFromChild));
 		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
 		} else {
-			assert(isObjMark(mark), "Cell changing mark must be an ObjMark");
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
+			assert(type !== SkipType, "Cell changing mark must be an ObjMark");
 			switch (type) {
 				case "Insert": {
 					const cursors = mark.content.map(singleTextCursor);
