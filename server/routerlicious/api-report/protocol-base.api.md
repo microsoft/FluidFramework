@@ -24,9 +24,6 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public (undocumented)
-export function addBlobToTree(tree: ITree, blobName: string, content: object): void;
-
 // @public
 export class AttachmentTreeEntry {
     constructor(path: string, id: string);
@@ -56,7 +53,7 @@ export class BlobTreeEntry {
 }
 
 // @public
-export function buildHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
+export function buildGitTreeHeirarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
 // @public
 export function getGitMode(value: SummaryObject): string;

@@ -329,50 +329,26 @@ use_old_ClassDeclaration_TreeTreeEntry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_addBlobToTree": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_addBlobToTree": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_addBlobToTree():
-    TypeOnly<typeof old.addBlobToTree>;
-declare function use_current_FunctionDeclaration_addBlobToTree(
-    use: TypeOnly<typeof current.addBlobToTree>);
-use_current_FunctionDeclaration_addBlobToTree(
-    get_old_FunctionDeclaration_addBlobToTree());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_addBlobToTree": {"backCompat": false}
+* "RemovedFunctionDeclaration_addBlobToTree": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_addBlobToTree():
-    TypeOnly<typeof current.addBlobToTree>;
-declare function use_old_FunctionDeclaration_addBlobToTree(
-    use: TypeOnly<typeof old.addBlobToTree>);
-use_old_FunctionDeclaration_addBlobToTree(
-    get_current_FunctionDeclaration_addBlobToTree());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_buildHierarchy": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_buildHierarchy": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_buildHierarchy():
-    TypeOnly<typeof old.buildHierarchy>;
-declare function use_current_FunctionDeclaration_buildHierarchy(
-    use: TypeOnly<typeof current.buildHierarchy>);
-use_current_FunctionDeclaration_buildHierarchy(
-    get_old_FunctionDeclaration_buildHierarchy());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_buildHierarchy": {"backCompat": false}
+* "RemovedFunctionDeclaration_buildHierarchy": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_buildHierarchy():
-    TypeOnly<typeof current.buildHierarchy>;
-declare function use_old_FunctionDeclaration_buildHierarchy(
-    use: TypeOnly<typeof old.buildHierarchy>);
-use_old_FunctionDeclaration_buildHierarchy(
-    get_current_FunctionDeclaration_buildHierarchy());
 
 /*
 * Validate forward compat by using old type in place of current type

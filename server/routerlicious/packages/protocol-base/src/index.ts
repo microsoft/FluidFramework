@@ -4,10 +4,9 @@
  */
 
 export {
-	addBlobToTree,
 	AttachmentTreeEntry,
 	BlobTreeEntry,
-	buildHierarchy,
+	buildGitTreeHeirarchy,
 	getGitMode,
 	getGitType,
 	TreeTreeEntry,
