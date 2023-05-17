@@ -25,7 +25,7 @@ import {
 	cursorsForTypedFieldData,
 } from "../feature-libraries";
 import { fail } from "../util";
-import { ISharedTreeView } from "./sharedTree";
+import { ISharedTreeView } from "./sharedTreeView";
 
 /**
  * See {@link ISharedTreeView.schematize} for more details.
