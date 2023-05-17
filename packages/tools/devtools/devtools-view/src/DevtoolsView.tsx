@@ -457,7 +457,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
  */
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
-	const refreshButtonTooltipId = useId("connect-button-tooltip");
+	const refreshButtonTooltipId = useId("refresh-container-list-button-tooltip");
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
 		border: "none",
