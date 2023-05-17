@@ -441,11 +441,12 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						this.checkpointInfo.currentKafkaCheckpointMessage,
 						this.restartOnCheckpointFailure,
 					);
-					reprocessOpsMetric.setProperty("kafkaCheckpointOnReprocessingOp", true);
 				}
-				reprocessOpsMetric.success(
-					`Repeating ops: rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`,
+				reprocessOpsMetric.setProperty(
+					"kafkaCheckpointOnReprocessingOp",
+					this.kafkaCheckpointOnReprocessingOp,
 				);
+				reprocessOpsMetric.success(`Successfully reprocessed repeating ops.`);
 			} catch (error) {
 				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
