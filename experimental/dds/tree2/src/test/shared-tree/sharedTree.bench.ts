@@ -395,17 +395,31 @@ describe("SharedTree benchmarks", () => {
 			benchmark({
 				type: BenchmarkType.Measurement,
 				title: `for ${size} local commit${size === 1 ? "" : "s"}`,
-				benchmarkFn: () => {
-					const provider = new TestTreeProviderLite();
-					const [tree] = provider.trees;
-					for (let i = 0; i < size; i++) {
-						insert(tree, i, i);
-					}
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
 
-					for (let i = 0; i < size; i++) {
-						provider.processMessages(1);
-					}
+						// Setup
+						const provider = new TestTreeProviderLite();
+						const [tree] = provider.trees;
+						for (let i = 0; i < size; i++) {
+							insert(tree, i, i);
+						}
+
+						// Measure
+						const before = state.timer.now();
+						for (let i = 0; i < size; i++) {
+							provider.processMessages(1);
+						}
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+						// Collect data
+					} while (state.recordBatch(duration));
 				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
 			});
 		}
 	});
