@@ -442,15 +442,13 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	}
 
 	return (
-		<div>
-			<MenuSection
-				header="Containers"
-				key="container-selection-menu-section"
-				refreshIcon={<RefreshButton />}
-			>
-				{containerSectionInnerView}
-			</MenuSection>
-		</div>
+		<MenuSection
+			header="Containers"
+			key="container-selection-menu-section"
+			icon={<RefreshButton />}
+		>
+			{containerSectionInnerView}
+		</MenuSection>
 	);
 }
 

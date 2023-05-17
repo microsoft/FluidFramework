@@ -18,7 +18,7 @@ export type MenuSectionProps = React.PropsWithChildren<{
 	/**
 	 * The refresh icon to display in the header of the menu section.
 	 */
-	refreshIcon?: React.ReactElement;
+	icon?: React.ReactElement;
 }>;
 
 /**
@@ -27,13 +27,13 @@ export type MenuSectionProps = React.PropsWithChildren<{
  * @internal
  */
 export function MenuSection(props: MenuSectionProps): React.ReactElement {
-	const { header, refreshIcon, children } = props;
+	const { header, icon, children } = props;
 
 	return (
 		<Stack>
 			<Stack.Item styles={menuSectionHeaderStyles}>
 				{header}
-				{refreshIcon}
+				{icon}
 			</Stack.Item>
 			{children}
 		</Stack>
