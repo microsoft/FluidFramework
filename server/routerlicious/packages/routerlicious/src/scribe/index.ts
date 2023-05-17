@@ -55,8 +55,8 @@ export async function scribeCreate(
 	const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled") as boolean;
 	const restartOnCheckpointFailure =
 		(config.get("scribe:restartOnCheckpointFailure") as boolean) ?? true;
-	const kafkaCheckpointOnRestart =
-		(config.get("checkpoints:kafkaCheckpointOnRestart") as boolean) ?? true;
+	const kafkaCheckpointOnReprocessingOp =
+		(config.get("checkpoints:kafkaCheckpointOnReprocessingOp") as boolean) ?? true;
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -158,7 +158,7 @@ export async function scribeCreate(
 		transientTenants,
 		checkpointService,
 		restartOnCheckpointFailure,
-		kafkaCheckpointOnRestart,
+		kafkaCheckpointOnReprocessingOp,
 	);
 }
 

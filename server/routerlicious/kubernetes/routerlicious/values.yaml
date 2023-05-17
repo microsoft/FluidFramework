@@ -55,7 +55,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
-  kafkaCheckpointOnRestart: false
+  kafkaCheckpointOnReprocessingOp: false
 
 session:
   enforceDiscoveryFlow: false

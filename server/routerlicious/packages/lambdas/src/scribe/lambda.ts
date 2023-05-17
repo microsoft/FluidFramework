@@ -105,7 +105,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
 		private readonly transientTenants: Set<string>,
 		private readonly restartOnCheckpointFailure: boolean,
-		private readonly kafkaCheckpointOnRestart: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -124,8 +124,8 @@ export class ScribeLambda implements IPartitionLambda {
 			});
 
 			this.updateCheckpointMessages(message);
-			if (this.kafkaCheckpointOnRestart) {
-				reprocessOpsMetric.setProperty("kafkaCheckpointOnRestart", true);
+			if (this.kafkaCheckpointOnReprocessingOp) {
+				reprocessOpsMetric.setProperty("kafkaCheckpointOnReprocessingOp", true);
 				this.context.checkpoint(message, this.restartOnCheckpointFailure);
 			}
 			reprocessOpsMetric.success(

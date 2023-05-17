@@ -64,7 +64,7 @@ data:
         },
         "checkpoints": {
             "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
-            "kafkaCheckpointOnRestart": {{ .Values.checkpoints.kafkaCheckpointOnRestart }},
+            "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }},
             },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",

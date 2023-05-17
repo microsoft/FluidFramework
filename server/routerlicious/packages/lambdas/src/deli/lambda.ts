@@ -291,7 +291,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
-		private readonly kafkaCheckpointOnRestart: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -435,13 +435,13 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 			if (
 				this.checkpointInfo.currentKafkaCheckpointMessage &&
-				this.kafkaCheckpointOnRestart
+				this.kafkaCheckpointOnReprocessingOp
 			) {
 				this.context.checkpoint(
 					this.checkpointInfo.currentKafkaCheckpointMessage,
 					this.restartOnCheckpointFailure,
 				);
-				reprocessOpsMetric.setProperty("kafkaCheckpointOnRestart", true);
+				reprocessOpsMetric.setProperty("kafkaCheckpointOnReprocessingOp", true);
 			}
 			reprocessOpsMetric.success(
 				`Repeating ops: rawMessage.offset: ${rawMessage.offset} <= this.logOffset: ${this.logOffset}`,
