@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.5.0.0",
 	"private": true,
 	"description": "Contains an extensible debug visualizer / editor for the Fluid client",
 	"homepage": "https://fluidframework.com",
@@ -45,7 +45,7 @@
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.3",
-		"@fluentui/react-components": "^9.19.1",
+		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-hooks": "^8.6.24",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-experimental/devtools-core": "workspace:~",
