@@ -30,6 +30,10 @@ export enum SignalType {
 	Clear = "clear", // used only by client for synthetic signals
 }
 
+/**
+ * ADO: #4277: ConnectionStateHandler can mutate Quorum members, but shouldn't
+ * This interface might go away after the above ADO item is done
+ */
 export interface ILocalSequencedClient extends ISequencedClient {
 	/**
 	 * True if the client should have left the quorum, false otherwise

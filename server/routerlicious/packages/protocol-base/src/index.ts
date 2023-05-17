@@ -4,10 +4,9 @@
  */
 
 export {
-	addBlobToTree,
 	AttachmentTreeEntry,
 	BlobTreeEntry,
-	buildHierarchy,
+	buildGitTreeHeirarchy,
 	getGitMode,
 	getGitType,
 	TreeTreeEntry,
@@ -21,8 +20,3 @@ export {
 	QuorumProposals,
 	QuorumProposalsSnapshot,
 } from "./quorum";
-export {
-	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-} from "./scribeHelper";

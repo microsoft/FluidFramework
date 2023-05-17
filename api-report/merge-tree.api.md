@@ -93,7 +93,7 @@ export interface BlockAction<TClientData> {
     (block: IMergeBlock, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, accum: TClientData): boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface BlockUpdateActions {
     // (undocumented)
     child: (block: IMergeBlock, index: number) => void;

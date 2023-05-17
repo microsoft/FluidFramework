@@ -21,8 +21,6 @@ resources:
   pipelines:
     - pipeline: client
       source: Build - client packages
-    - pipeline: azure
-      source: Build - azure
 
 variables:
   - group: fluid-afr-perf-test-keys
@@ -41,8 +39,7 @@ stages:
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
-          downloadAzureTestArtifacts: true
-          artifactBuildId: $(resources.pipeline.azure.runID)
+          artifactBuildId: $(resources.pipeline.client.runID)
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             azure__fluid__relay__service__region: westus2
@@ -61,8 +58,7 @@ stages:
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
-          downloadAzureTestArtifacts: true
-          artifactBuildId: $(resources.pipeline.azure.runID)
+          artifactBuildId: $(resources.pipeline.client.runID)
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             azure__fluid__relay__service__region: westus3
@@ -81,8 +77,7 @@ stages:
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
-          downloadAzureTestArtifacts: true
-          artifactBuildId: $(resources.pipeline.azure.runID)
+          artifactBuildId: $(resources.pipeline.client.runID)
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             azure__fluid__relay__service__region: eastus
@@ -101,8 +96,7 @@ stages:
           testPackage: "@fluidframework/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
-          downloadAzureTestArtifacts: true
-          artifactBuildId: $(resources.pipeline.azure.runID)
+          artifactBuildId: $(resources.pipeline.client.runID)
           env:
             FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
             azure__fluid__relay__service__region: westeurope

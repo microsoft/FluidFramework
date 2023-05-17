@@ -591,11 +591,11 @@ export class Container
 	}
 
 	private get offlineLoadEnabled(): boolean {
+		const enabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+			this.options?.enableOfflineLoad === true;
 		// summarizer will not have any pending state we want to save
-		return (
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false) &&
-			this.clientDetails.capabilities.interactive
-		);
+		return enabled && this.clientDetails.capabilities.interactive;
 	}
 
 	/**

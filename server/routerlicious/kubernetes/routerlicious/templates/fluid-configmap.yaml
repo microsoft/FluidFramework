@@ -127,6 +127,7 @@ data:
             "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000,
+            "restartOnCheckpointFailure": {{ .Values.deli.restartOnCheckpointFailure }}
         },
         "scribe": {
             "kafkaClientId": "{{ template "scribe.fullname" . }}",
@@ -136,7 +137,8 @@ data:
                 "maxTime": {{ .Values.scribe.checkpointHeuristics.maxTime }},
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
             },
-            "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }}
+            "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
+            "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }}
         },
         "system": {
             "httpServer": {
@@ -177,7 +179,8 @@ data:
             "kafkaClientId": "{{ template "scriptorium.fullname" . }}",
             "groupId": "{{ template "scriptorium.fullname" . }}",
             "checkpointBatchSize": 1,
-            "checkpointTimeIntervalMsec": 1000
+            "checkpointTimeIntervalMsec": 1000,
+            "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
         },
         "paparazzi": {
             "queue": "paparazziQueue"

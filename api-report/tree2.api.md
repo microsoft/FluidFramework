@@ -924,20 +924,15 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 }
 
 // @alpha
-export interface ISharedTreeFork extends ISharedTreeView {
-    dispose(): void;
-    rebaseOnto(view: ISharedTreeView): void;
-}
-
-// @alpha
 export interface ISharedTreeView extends AnchorLocator {
     readonly context: EditableTreeContext;
     readonly editor: IDefaultEditBuilder;
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
-    fork(): ISharedTreeFork;
+    fork(): SharedTreeView;
     readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
-    merge(view: ISharedTreeFork): void;
+    merge(view: SharedTreeView): void;
+    rebase(view: SharedTreeView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
@@ -1290,7 +1285,7 @@ export interface NodeData {
     value?: TreeValue;
 }
 
-// @alpha
+// @alpha @deprecated
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
 
 // @alpha (undocumented)
@@ -1579,6 +1574,45 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @alpha
+export class SharedTreeView implements ISharedTreeView {
+    // (undocumented)
+    readonly context: EditableTreeContext;
+    dispose(): void;
+    // (undocumented)
+    get editor(): IDefaultEditBuilder;
+    // (undocumented)
+    readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+    // (undocumented)
+    get forest(): IForestSubscription;
+    // (undocumented)
+    fork(): SharedTreeView;
+    // (undocumented)
+    get identifiedNodes(): ReadonlyMap<Identifier, EditableTree>;
+    // (undocumented)
+    locate(anchor: Anchor): AnchorNode | undefined;
+    // (undocumented)
+    merge(fork: SharedTreeView): void;
+    // (undocumented)
+    rebase(fork: SharedTreeView): void;
+    rebaseOnto(view: ISharedTreeView): void;
+    // (undocumented)
+    redo(): void;
+    // (undocumented)
+    get root(): UnwrappedEditableField;
+    set root(data: ContextuallyTypedNodeData | undefined);
+    // (undocumented)
+    get rootEvents(): ISubscribable<AnchorSetRootEvents>;
+    // (undocumented)
+    schematize<TRoot extends GlobalFieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
+    // (undocumented)
+    get storedSchema(): StoredSchemaRepository;
+    // (undocumented)
+    readonly transaction: ISharedTreeView["transaction"];
+    // (undocumented)
+    undo(): void;
+}
+
+// @alpha
 export class SimpleDependee implements Dependee {
     constructor(computationName?: string);
     // (undocumented)
@@ -1764,7 +1798,7 @@ TFields extends {
 ][InternalTypedSchemaTypes._dummy];
 
 // @alpha
-type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode> = CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>;
+type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = InternalTypedSchemaTypes.FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
 
 // @alpha (undocumented)
 export interface TypedSchemaCollection<T extends GlobalFieldSchema> extends SchemaCollection {

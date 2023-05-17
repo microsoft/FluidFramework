@@ -26,4 +26,4 @@ export const rootField = SchemaBuilder.field(FieldKinds.value, inventory);
 
 export const schema = builder.intoDocumentSchema(rootField);
 
-export type Inventory = SchemaAware.NodeDataFor<SchemaAware.ApiMode.Editable, typeof inventory>;
+export type Inventory = SchemaAware.TypedNode<typeof inventory>;
