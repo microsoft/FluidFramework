@@ -823,7 +823,7 @@ export class ModularChangeFamily
 		if (rebasedChange.nodeExistsConstraint !== undefined && deletedByBase) {
 			// Only increment the violation count if the constraint wasn't already violated
 			// TODO: Decrement if constraint is fixed by rebasing (node is revived)
-			if (rebasedChange.nodeExistsConstraint.violated !== true) {
+			if (!rebasedChange.nodeExistsConstraint.violated) {
 				rebasedChange.nodeExistsConstraint.violated = true;
 				constraintState.violationCount += 1;
 			}
