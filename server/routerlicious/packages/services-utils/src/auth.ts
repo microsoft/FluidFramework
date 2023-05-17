@@ -195,10 +195,9 @@ export async function verifyToken(
 
 		await tenantManager.verifyToken(claims.tenantId, token);
 
-		Lumberjack.info("Token cache miss", logProperties);
-
 		// Update token cache
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
+			Lumberjack.info("Token cache miss", logProperties);
 			const tokenCacheKey = token;
 			options.tokenCache
 				.set(

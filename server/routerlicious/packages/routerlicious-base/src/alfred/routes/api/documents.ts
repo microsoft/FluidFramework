@@ -93,16 +93,18 @@ export function create(
 		config,
 	);
 
+	const defaultTokenValidationOptions = {
+		requireDocumentId: true,
+		ensureSingleUseToken: false,
+		singleUseTokenCache: undefined,
+		enableTokenCache: enableJwtTokenCache,
+		tokenCache: singleUseTokenCache,
+	};
+
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config, tokenManager, {
-			requireDocumentId: true,
-			ensureSingleUseToken: false,
-			singleUseTokenCache: undefined,
-			enableTokenCache: enableJwtTokenCache,
-			tokenCache: singleUseTokenCache,
-		}),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
@@ -225,13 +227,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		verifyStorageToken(tenantManager, config, tokenManager, {
-			requireDocumentId: true,
-			ensureSingleUseToken: false,
-			singleUseTokenCache: undefined,
-			enableTokenCache: enableJwtTokenCache,
-			tokenCache: singleUseTokenCache,
-		}),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
@@ -265,13 +261,7 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager, {
-			requireDocumentId: true,
-			ensureSingleUseToken: false,
-			singleUseTokenCache: undefined,
-			enableTokenCache: enableJwtTokenCache,
-			tokenCache: singleUseTokenCache,
-		}),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -290,13 +280,7 @@ export function create(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager, {
-			requireDocumentId: true,
-			ensureSingleUseToken: false,
-			singleUseTokenCache: undefined,
-			enableTokenCache: enableJwtTokenCache,
-			tokenCache: singleUseTokenCache,
-		}),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
