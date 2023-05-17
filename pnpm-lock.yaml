@@ -301,9 +301,6 @@ importers:
 
   azure/packages/external-controller:
     dependencies:
-      '@fluid-experimental/devtools':
-        specifier: workspace:~
-        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../azure-client
@@ -329,6 +326,9 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
     devDependencies:
+      '@fluid-experimental/devtools':
+        specifier: workspace:~
+        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0

@@ -44,7 +44,6 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-experimental/devtools": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/routerlicious-driver": "workspace:~",
@@ -55,6 +54,7 @@
 		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {
+		"@fluid-experimental/devtools": "workspace:~",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
