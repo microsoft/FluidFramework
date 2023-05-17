@@ -650,6 +650,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 							assertPayloadSize(config.expectedSize);
 							assert.ok(
 								!enableGroupedBatching ||
+									// In case of chunking, we will have more independent messages (chunks) on the wire than in the original batch
 									config.payloadGenerator === generateRandomStringOfSize ||
 									totalOps === 1,
 							);
