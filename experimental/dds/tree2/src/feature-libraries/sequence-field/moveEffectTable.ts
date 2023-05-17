@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { Mark, MoveId, MoveIn, MoveOut, ReturnFrom, ReturnTo } from "./format";
-import { cloneMark, isSkipMark } from "./utils";
+import { cloneMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -175,9 +175,6 @@ export function makeMergeable<T>(
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
 
 export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
-	if (isSkipMark(mark)) {
-		return false;
-	}
 	switch (mark.type) {
 		case "MoveIn":
 		case "MoveOut":

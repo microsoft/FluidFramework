@@ -34,9 +34,8 @@ import {
 import {
 	getInputLength,
 	getOutputLength,
-	isSkipMark,
+	isNoopMark,
 	getOffsetAtRevision,
-	isObjMark,
 	cloneMark,
 	isDeleteMark,
 	areOutputCellsEmpty,
@@ -170,9 +169,9 @@ function composeMarks<TNodeChange>(
 	);
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
-		if (isSkipMark(baseMark)) {
+		if (isNoopMark(baseMark)) {
 			return withNodeChange(newMark, nodeChange);
-		} else if (isSkipMark(newMark)) {
+		} else if (isNoopMark(newMark)) {
 			return withNodeChange(baseMark, nodeChange);
 		}
 		return createModifyMark(getMarkLength(newMark), nodeChange, getCellId(baseMark, undefined));
@@ -225,7 +224,7 @@ function composeMarks<TNodeChange>(
 				srcEffect.mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
 			}
 
-			return 0;
+			return { count: 0 };
 		}
 
 		if (moveInId !== undefined) {
@@ -237,7 +236,7 @@ function composeMarks<TNodeChange>(
 				baseMark.id,
 				true,
 			).mark = withRevision(withNodeChange(newMark, nodeChange), newRev);
-			return 0;
+			return { count: 0 };
 		}
 
 		if (moveOutId !== undefined) {
@@ -252,10 +251,10 @@ function composeMarks<TNodeChange>(
 				newMark.id,
 				true,
 			).mark = withNodeChange(baseMark, nodeChange);
-			return 0;
+			return { count: 0 };
 		}
 		// TODO: Create modify mark for transient node.
-		return 0;
+		return { count: 0 };
 	} else {
 		const length = getMarkLength(baseMark);
 		return createModifyMark(length, nodeChange);
@@ -268,7 +267,7 @@ function createModifyMark<TNodeChange>(
 	cellId?: DetachEvent,
 ): Mark<TNodeChange> {
 	if (nodeChange === undefined) {
-		return cellId === undefined ? length : 0;
+		return { count: cellId === undefined ? length : 0 };
 	}
 
 	assert(length === 1, 0x692 /* A mark with a node change must have length one */);
@@ -299,12 +298,12 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
 ): TMark {
-	if (isSkipMark(mark)) {
+	if (isNoopMark(mark)) {
 		return mark;
 	}
 
 	const cloned = cloneMark(mark);
-	assert(!isSkipMark(cloned), 0x4de /* Cloned should be same type as input mark */);
+	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
 	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
 		cloned.revision = revision;
 	}
@@ -344,35 +343,33 @@ function amendComposeI<TNodeChange>(
 
 	while (!queue.isEmpty()) {
 		let mark = queue.dequeue();
-		if (isObjMark(mark)) {
-			switch (mark.type) {
-				case "MoveOut":
-				case "ReturnFrom": {
-					const effect = getMoveEffect(
-						moveEffects,
-						CrossFieldTarget.Source,
-						mark.revision,
-						mark.id,
-					);
-					mark = effect.mark ?? mark;
-					delete effect.mark;
-					break;
-				}
-				case "MoveIn":
-				case "ReturnTo": {
-					const effect = getMoveEffect(
-						moveEffects,
-						CrossFieldTarget.Destination,
-						mark.revision,
-						mark.id,
-					);
-					mark = effect.mark ?? mark;
-					delete effect.mark;
-					break;
-				}
-				default:
-					break;
+		switch (mark.type) {
+			case "MoveOut":
+			case "ReturnFrom": {
+				const effect = getMoveEffect(
+					moveEffects,
+					CrossFieldTarget.Source,
+					mark.revision,
+					mark.id,
+				);
+				mark = effect.mark ?? mark;
+				delete effect.mark;
+				break;
 			}
+			case "MoveIn":
+			case "ReturnTo": {
+				const effect = getMoveEffect(
+					moveEffects,
+					CrossFieldTarget.Destination,
+					mark.revision,
+					mark.id,
+				);
+				mark = effect.mark ?? mark;
+				delete effect.mark;
+				break;
+			}
+			default:
+				break;
 		}
 		factory.push(mark);
 	}
@@ -427,7 +424,7 @@ export class ComposeQueue<T> {
 			}
 		}
 		for (const mark of newMarks) {
-			if (isObjMark(mark) && mark.type === "Insert") {
+			if (mark.type === "Insert") {
 				const newRev = mark.revision ?? this.newRevision;
 				const newIntention = getIntention(newRev, revisionMetadata);
 				if (newIntention !== undefined && deletes.has(newIntention)) {
@@ -522,7 +519,7 @@ export class ComposeQueue<T> {
 	private dequeueBase(length: number = 0): ComposeMarks<T> {
 		const baseMark = this.baseMarks.dequeue();
 
-		if (baseMark !== undefined && isObjMark(baseMark)) {
+		if (baseMark !== undefined) {
 			switch (baseMark.type) {
 				case "MoveOut":
 				case "ReturnFrom":
@@ -546,13 +543,13 @@ export class ComposeQueue<T> {
 			}
 		}
 
-		return { baseMark, newMark: length > 0 ? length : undefined };
+		return { baseMark, newMark: length > 0 ? { count: length } : undefined };
 	}
 
 	private dequeueNew(length: number = 0): ComposeMarks<T> {
 		const newMark = this.newMarks.dequeue();
 
-		if (newMark !== undefined && isObjMark(newMark)) {
+		if (newMark !== undefined) {
 			switch (newMark.type) {
 				case "MoveIn":
 				case "ReturnTo":
@@ -577,7 +574,7 @@ export class ComposeQueue<T> {
 		}
 
 		return {
-			baseMark: length > 0 ? length : undefined,
+			baseMark: length > 0 ? { count: length } : undefined,
 			newMark,
 		};
 	}

@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/index.js",
+	"module": "lib/index.js",
 	"browser": {
 		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
 	},
