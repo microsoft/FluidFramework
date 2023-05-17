@@ -158,5 +158,5 @@ export const sequenceFieldEditor = {
 };
 
 function markAtIndex<TNodeChange>(index: number, mark: Mark<TNodeChange>): Changeset<TNodeChange> {
-	return index === 0 ? [mark] : [index, mark];
+	return index === 0 ? [mark] : [{ count: index }, mark];
 }

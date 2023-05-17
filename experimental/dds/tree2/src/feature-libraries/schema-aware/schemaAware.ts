@@ -288,13 +288,13 @@ export function downCast<TSchema extends TreeSchema>(
 	const contextSchema = tree[contextSymbol].schema;
 	const lookedUp = contextSchema.treeSchema.get(schema.name);
 	// TODO: for this to pass, schematized view must have the view schema, not just stored schema.
-	assert(lookedUp === schema, "cannot downcast to a schema the tree is not using");
+	assert(lookedUp === schema, 0x68c /* cannot downcast to a schema the tree is not using */);
 
 	// TODO: make this actually work
 	const matches = tree[typeSymbol] === schema;
 	assert(
 		matches === (tree[typeSymbol].name === schema.name),
-		"schema object identity comparison should match identifier comparison",
+		0x68d /* schema object identity comparison should match identifier comparison */,
 	);
 	return matches;
 }

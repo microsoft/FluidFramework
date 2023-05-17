@@ -5,7 +5,7 @@
 import * as path from "path";
 
 import { globFn, toPosixPath } from "../../../common/utils";
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import { LeafWithDoneFileTask } from "./leafTask";
 import { TscTask } from "./tscTask";
 
 interface DoneFileContent {
@@ -55,25 +55,6 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			return JSON.stringify(content);
 		} catch {
 			return undefined;
-		}
-	}
-
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		for (const child of this.node.dependentPackages) {
-			// TODO: Need to look at the output from tsconfig
-			if (this.addChildCompileAndCopyScripts(dependentTasks, child, "build:esnext")) {
-				continue;
-			}
-			if (this.addChildCompileAndCopyScripts(dependentTasks, child, "webpack")) {
-				continue;
-			}
-			if (this.addChildCompileAndCopyScripts(dependentTasks, child, "tsc")) {
-				continue;
-			}
-			if (child.task) {
-				child.task.collectLeafTasks(dependentTasks);
-				this.logVerboseDependency(child, "*");
-			}
 		}
 	}
 
