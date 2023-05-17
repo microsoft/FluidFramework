@@ -16,3 +16,14 @@ export function getBooleanFromConfig(name: string, config: nconf.Provider): bool
 		return false;
 	}
 }
+
+export function getNumberFromConfig(name: string, config: nconf.Provider): number {
+	const rawValue = config.get(name);
+	if (typeof rawValue === "number") {
+		return rawValue;
+	} else if (typeof rawValue === "string") {
+		return Number(rawValue);
+	} else {
+		return NaN;
+	}
+}

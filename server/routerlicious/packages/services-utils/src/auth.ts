@@ -26,6 +26,7 @@ import type {
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 
 /**
  * Validates a JWT token to authorize routerlicious.
@@ -147,6 +148,8 @@ function getTokenFromRequest(request: Request): string {
 	return tokenMatch[1];
 }
 
+const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
+
 export async function verifyToken(
 	tenantId: string,
 	documentId: string,
@@ -159,38 +162,31 @@ export async function verifyToken(
 	}
 
 	let tokenLifetimeMs: number | undefined;
+	const logProperties = getLumberBaseProperties(documentId, tenantId);
 	try {
 		const claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
 		if (options.requireTokenExpiryCheck) {
-			if (!options.maxTokenLifetimeSec) {
-				const errorMessage = "Missing maxTokenLifetimeSec in options";
-				Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
-				throw new Error(errorMessage);
+			let maxTokenLifetimeSec = options.maxTokenLifetimeSec;
+			if (!maxTokenLifetimeSec || isNaN(maxTokenLifetimeSec)) {
+				Lumberjack.error(
+					`Missing/Invalid maxTokenLifetimeSec=${maxTokenLifetimeSec} in options. Set to default=${defaultMaxTokenLifetimeSec}`,
+					logProperties,
+				);
+				maxTokenLifetimeSec = defaultMaxTokenLifetimeSec;
 			}
-			tokenLifetimeMs = validateTokenClaimsExpiration(claims, options.maxTokenLifetimeSec);
+			tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 		}
 
 		// Check token cache first
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			const tokenCacheKey = token;
 			const cachedToken = await options.tokenCache.get(tokenCacheKey).catch((error) => {
-				Lumberjack.error(
-					"Unable to retrieve cached JWT",
-					claims
-						? getLumberBaseProperties(claims.documentId, claims.tenantId)
-						: undefined,
-					error,
-				);
+				Lumberjack.error("Unable to retrieve cached JWT", logProperties, error);
 				return false;
 			});
 
 			if (cachedToken) {
-				Lumberjack.info(
-					"Token cache hit",
-					claims
-						? getLumberBaseProperties(claims.documentId, claims.tenantId)
-						: undefined,
-				);
+				Lumberjack.info("Token cache hit", logProperties);
 				if (options.ensureSingleUseToken) {
 					throw new NetworkError(403, "Access token has already been used.");
 				}
@@ -200,10 +196,7 @@ export async function verifyToken(
 
 		await tenantManager.verifyToken(claims.tenantId, token);
 
-		Lumberjack.info(
-			"Token cache miss",
-			claims ? getLumberBaseProperties(claims.documentId, claims.tenantId) : undefined,
-		);
+		Lumberjack.info("Token cache miss", logProperties);
 
 		// Update token cache
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
@@ -215,11 +208,7 @@ export async function verifyToken(
 					tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
 				)
 				.catch((error) => {
-					Lumberjack.error(
-						"Unable to cache JWT",
-						getLumberBaseProperties(documentId, tenantId),
-						error,
-					);
+					Lumberjack.error("Unable to cache JWT", logProperties, error);
 				});
 		}
 	} catch (error) {
@@ -229,7 +218,7 @@ export async function verifyToken(
 		// We don't understand the error, so it is likely an internal service error.
 		Lumberjack.error(
 			"Unrecognized error when validating/verifying request token",
-			getLumberBaseProperties(documentId, tenantId),
+			logProperties,
 			error,
 		);
 		throw new NetworkError(500, "Internal server error.");
@@ -252,8 +241,8 @@ export function verifyStorageToken(
 	},
 ): RequestHandler {
 	return async (request, res, next) => {
-		const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
-		const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
+		const maxTokenLifetimeSec = getNumberFromConfig("auth:maxTokenLifetimeSec", config);
+		const isTokenExpiryEnabled = getBooleanFromConfig("auth:enableTokenExpiration", config);
 		const tenantId = getParam(request.params, "tenantId");
 		if (!tenantId) {
 			return respondWithNetworkError(
@@ -336,7 +325,6 @@ export function verifyStorageToken(
 			return respondWithNetworkError(res, new NetworkError(500, "Internal server error."));
 		}
 
-		// Only need when token cache is disabled
 		if (options.ensureSingleUseToken) {
 			// Use token as key for minimum chance of collision.
 			const singleUseKey = token;
