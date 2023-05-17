@@ -29,8 +29,6 @@ export interface ITaskManager extends ISharedObject<ITaskManagerEvents> {
 
 // @public
 export interface ITaskManagerEvents extends ISharedObjectEvents {
-    // Warning: (ae-forgotten-export) The symbol "TaskEventListener" needs to be exported by the entry point index.d.ts
-    //
     // @eventProperty
     (event: "assigned", listener: TaskEventListener): any;
     // @eventProperty
@@ -38,6 +36,9 @@ export interface ITaskManagerEvents extends ISharedObjectEvents {
     // @eventProperty
     (event: "lost", listener: TaskEventListener): any;
 }
+
+// @public
+export type TaskEventListener = (taskId: string) => void;
 
 // @public @sealed
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
