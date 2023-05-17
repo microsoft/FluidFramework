@@ -25,6 +25,7 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	summarizeProtocolTree: [undefined],
+	enableOfflineLoad: booleanCases,
 };
 
 export function applyOverrides<T>(
@@ -98,6 +99,7 @@ export function generateRuntimeOptions(
 		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
+		enableRuntimeIdCompressor: [undefined, true],
 		enableGroupedBatching: [true, false],
 	};
 

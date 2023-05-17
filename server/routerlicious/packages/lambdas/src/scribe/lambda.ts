@@ -104,6 +104,7 @@ export class ScribeLambda implements IPartitionLambda {
 		messages: ISequencedDocumentMessage[],
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
 		private readonly transientTenants: Set<string>,
+		private readonly restartOnCheckpointFailure: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -114,8 +115,12 @@ export class ScribeLambda implements IPartitionLambda {
 		// Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
 		// we had already checkpointed at a given offset.
 		if (message.offset <= this.lastOffset) {
+			Lumberjack.info(
+				`Repeating ops: message.offset: ${message.offset} <= this.lastOffset: ${this.lastOffset}`,
+				getLumberBaseProperties(this.documentId, this.tenantId),
+			);
 			this.updateCheckpointMessages(message);
-			this.context.checkpoint(message);
+			this.context.checkpoint(message, this.restartOnCheckpointFailure);
 			return;
 		}
 
@@ -551,7 +556,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.pendingP.then(
 			() => {
 				this.pendingP = undefined;
-				this.context.checkpoint(queuedMessage);
+				this.context.checkpoint(queuedMessage, this.restartOnCheckpointFailure);
 
 				const pendingScribe = this.pendingCheckpointScribe;
 				const pendingOffset = this.pendingCheckpointOffset;
@@ -574,7 +579,12 @@ export class ScribeLambda implements IPartitionLambda {
 
 	private async writeCheckpoint(checkpoint: IScribe) {
 		const inserts = this.pendingCheckpointMessages.toArray();
-		await this.checkpointManager.write(checkpoint, this.protocolHead, inserts);
+		await this.checkpointManager.write(
+			checkpoint,
+			this.protocolHead,
+			inserts,
+			this.noActiveClients,
+		);
 		if (inserts.length > 0) {
 			// Since we are storing logTails with every summary, we need to make sure that messages are either in DB
 			// or in memory. In other words, we can only remove messages from memory once there is a copy in the DB

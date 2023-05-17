@@ -5,8 +5,6 @@
 
 // eslint-disable-next-line import/no-internal-modules
 import merge from "lodash/merge";
-// eslint-disable-next-line import/no-internal-modules
-import cloneDeep from "lodash/cloneDeep";
 
 import { v4 as uuid } from "uuid";
 import {
@@ -307,7 +305,7 @@ const summarizerClientType = "summarizer";
  */
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer
+	implements IContainer, IContainerExperimental
 {
 	public static version = "^0.1.0";
 
@@ -593,11 +591,11 @@ export class Container
 	}
 
 	private get offlineLoadEnabled(): boolean {
+		const enabled =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+			this.options?.enableOfflineLoad === true;
 		// summarizer will not have any pending state we want to save
-		return (
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false) &&
-			this.clientDetails.capabilities.interactive
-		);
+		return enabled && this.clientDetails.capabilities.interactive;
 	}
 
 	/**
@@ -748,7 +746,12 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		this.options = cloneDeep(this.loader.services.options);
+		// Warning: this is only a shallow clone. Mutation of any individual loader option will mutate it for
+		// all clients that were loaded from the same loader (including summarizer clients).
+		// Tracking alternative ways to handle this in AB#4129.
+		this.options = {
+			...this.loader.services.options,
+		};
 
 		this._deltaManager = this.createDeltaManager();
 
@@ -997,6 +1000,12 @@ export class Container
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
+		const pendingState = this.getPendingLocalState();
+		this.close();
+		return pendingState;
+	}
+
+	public getPendingLocalState(): string {
 		if (!this.offlineLoadEnabled) {
 			throw new UsageError("Can't get pending local state unless offline load is enabled");
 		}
@@ -1008,7 +1017,6 @@ export class Container
 			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
-		assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
 		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
 		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
 		const pendingState: IPendingContainerState = {
@@ -1021,10 +1029,7 @@ export class Container
 			clientId: this.clientId,
 		};
 
-		this.mc.logger.sendTelemetryEvent({ eventName: "CloseAndGetPendingLocalState" });
-
-		// Only close here as method name suggests
-		this.close();
+		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });
 
 		return JSON.stringify(pendingState);
 	}
@@ -2224,4 +2229,20 @@ export class Container
 			this.context.setConnectionState(state && !readonly, this.clientId);
 		}
 	}
+}
+
+/**
+ * IContainer interface that includes experimental features still under development.
+ * @internal
+ */
+export interface IContainerExperimental extends IContainer {
+	/**
+	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
+	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
+	 * container emits a "connected" event.
+	 * @returns serialized blob that can be passed to Loader.resolve()
+	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
+	 */
+	getPendingLocalState(): string;
 }

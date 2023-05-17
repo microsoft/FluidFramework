@@ -5,6 +5,7 @@
 import * as path from "path";
 
 import { FluidRepo } from "../common/fluidRepo";
+import { getFluidBuildConfig } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { MonoRepoKind } from "../common/monoRepo";
 import { MonoRepo } from "../common/monoRepo";
@@ -191,12 +192,17 @@ export class FluidRepoBuild extends FluidRepo {
 		);
 	}
 
-	public createBuildGraph(options: ISymlinkOptions, buildScriptNames: string[]) {
-		return new BuildGraph(this.packages.packages, buildScriptNames, (pkg: Package) => {
-			return (dep: Package) => {
-				return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
-			};
-		});
+	public createBuildGraph(options: ISymlinkOptions, buildTargetNames: string[]) {
+		return new BuildGraph(
+			this.packages.packages,
+			buildTargetNames,
+			getFluidBuildConfig(this.resolvedRoot)?.tasks,
+			(pkg: Package) => {
+				return (dep: Package) => {
+					return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
+				};
+			},
+		);
 	}
 
 	private matchWithFilter(callback: (pkg: Package) => boolean) {

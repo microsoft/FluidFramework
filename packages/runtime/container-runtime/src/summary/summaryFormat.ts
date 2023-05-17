@@ -91,6 +91,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	readonly summaryNumber?: number;
 	/** GUID to identify a document in telemetry */
 	readonly telemetryDocumentId?: string;
+	/** True if the runtime IdCompressor is enabled */
+	readonly idCompressorEnabled?: boolean;
 }
 
 export interface ICreateContainerMetadata {
@@ -150,6 +152,7 @@ export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const blobsTreeName = ".blobs";
+export const idCompressorBlobName = ".idCompressor";
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
@@ -169,6 +172,7 @@ export const nonDataStorePaths = [
 	".serviceProtocol",
 	blobsTreeName,
 	gcTreeKey,
+	idCompressorBlobName,
 ];
 
 export const dataStoreAttributesBlobName = ".component";
