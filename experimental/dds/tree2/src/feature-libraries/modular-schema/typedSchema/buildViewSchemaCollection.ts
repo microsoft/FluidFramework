@@ -47,7 +47,10 @@ export function buildViewSchemaCollection(
 
 		for (const [key, field] of library.globalFieldSchema) {
 			// This check is an assert since if it fails, the other error messages would be incorrect.
-			assert(field.builder.name === library.name, 0x6a8 /* field must be part by the library its in */);
+			assert(
+				field.builder.name === library.name,
+				0x6a8 /* field must be part by the library its in */,
+			);
 			const existing = globalFieldSchema.get(key);
 			if (existing !== undefined) {
 				errors.push(
@@ -59,7 +62,10 @@ export function buildViewSchemaCollection(
 		}
 		for (const [key, tree] of library.treeSchema) {
 			// This check is an assert since if it fails, the other error messages would be incorrect.
-			assert(tree.builder.name === library.name, 0x6a9 /* tree must be part by the library its in */);
+			assert(
+				tree.builder.name === library.name,
+				0x6a9 /* tree must be part by the library its in */,
+			);
 			const existing = treeSchema.get(key);
 			if (existing !== undefined) {
 				errors.push(

@@ -196,7 +196,10 @@ function composeMarks<TNodeChange>(
 		const moveOutId = getMarkMoveId(newMark);
 
 		if (moveInId !== undefined && moveOutId !== undefined) {
-			assert(isMoveMark(baseMark) && isMoveMark(newMark), 0x68f /* Only move marks have move IDs */);
+			assert(
+				isMoveMark(baseMark) && isMoveMark(newMark),
+				0x68f /* Only move marks have move IDs */,
+			);
 			const srcEffect = getOrAddEffect(
 				moveEffects,
 				CrossFieldTarget.Source,
@@ -463,7 +466,10 @@ export class ComposeQueue<T> {
 		} else if (areOutputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			// TODO: `baseMark` might be a MoveIn, which is not an ExistingCellMark.
 			// See test "[Move ABC, Return ABC] ↷ Delete B" in sequenceChangeRebaser.spec.ts
-			assert(isExistingCellMark(baseMark), 0x693 /* Only existing cell mark can have empty output */);
+			assert(
+				isExistingCellMark(baseMark),
+				0x693 /* Only existing cell mark can have empty output */,
+			);
 			let baseCellId: DetachEvent;
 			if (markEmptiesCells(baseMark)) {
 				assert(isDetachMark(baseMark), 0x694 /* Only detach marks can empty cells */);

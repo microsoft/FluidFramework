@@ -1052,7 +1052,10 @@ export function withNodeChange<TNodeChange>(
 			return changes !== undefined ? { type: "Modify", changes } : mark;
 		case "MoveIn":
 		case "ReturnTo":
-			assert(changes === undefined, 0x6a7 /* Cannot have a node change on a MoveIn or ReturnTo mark */);
+			assert(
+				changes === undefined,
+				0x6a7 /* Cannot have a node change on a MoveIn or ReturnTo mark */,
+			);
 			return mark;
 		case "Delete":
 		case "Insert":

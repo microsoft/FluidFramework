@@ -87,7 +87,10 @@ export class GapTracker {
 		if (!markHasCellEffect(mark)) {
 			this.map.clear();
 		} else {
-			assert(!isNoopMark(mark) && !isModify(mark), 0x6a5 /* These marks have no cell effects */);
+			assert(
+				!isNoopMark(mark) && !isModify(mark),
+				0x6a5 /* These marks have no cell effects */,
+			);
 			const revision = mark.revision;
 			// TODO: Remove this early return. It is only needed because some tests use anonymous changes.
 			// These tests will fail (i.e., produce the wrong result) if they rely the index tracking performed here.
