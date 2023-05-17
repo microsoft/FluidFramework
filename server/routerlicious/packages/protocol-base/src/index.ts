@@ -27,8 +27,3 @@ export {
 	QuorumProposals,
 	QuorumProposalsSnapshot,
 } from "./quorum";
-export {
-	generateServiceProtocolEntries,
-	getQuorumTreeEntries,
-	mergeAppAndProtocolTree,
-} from "./scribeHelper";
