@@ -34,7 +34,7 @@ export {
 	contextSymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
-	createDataBinderInvalidate,
+	createDataBinderInvalidating,
 	createBinderOptions,
 	createFlushableBinderOptions,
 	DataBinder,

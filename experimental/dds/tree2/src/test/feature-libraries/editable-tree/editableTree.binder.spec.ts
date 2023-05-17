@@ -20,7 +20,7 @@ import {
 	FlushableBinderOptions,
 	createDataBinderBuffering,
 	createFlushableBinderOptions,
-	createDataBinderInvalidate,
+	createDataBinderInvalidating,
 	createDataBinderDirect,
 	InvalidStateBindingContext,
 	DataBinder,
@@ -932,7 +932,7 @@ describe("editable-tree: data binder", () => {
 		});
 	});
 
-	describe("invalidating state data binder", () => {
+	describe("invalidation data binder", () => {
 		it("registers to root, enables autoFlush, matches paths with subtree policy and any index.", () => {
 			const { tree, root, address } = retrieveNodes();
 			const syntaxTree: BindSyntaxTree = { address: true };
@@ -942,11 +942,11 @@ describe("editable-tree: data binder", () => {
 				matchPolicy: "subtree",
 			});
 			const dataBinder: FlushableDataBinder<InvalidationBinderEvents> =
-				createDataBinderInvalidate(tree.events, options);
+				createDataBinderInvalidating(tree.events, options);
 			let invalidationCount = 0;
 			dataBinder.register(
 				root,
-				BindingType.InvalidState,
+				BindingType.Invalidation,
 				[bindTree],
 				(invalidStateContext: InvalidStateBindingContext) => {
 					invalidationCount++;

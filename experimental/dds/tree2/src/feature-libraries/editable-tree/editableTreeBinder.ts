@@ -39,7 +39,7 @@ export interface OperationBinderEvents extends BinderEvents {
  * @alpha
  */
 export interface InvalidationBinderEvents extends BinderEvents {
-	invalidState(context: InvalidStateBindingContext): void;
+	invalidation(context: InvalidationBindingContext): void;
 }
 
 export type CompareFunction<T> = (a: T, b: T) => number;
@@ -178,7 +178,7 @@ export const BindingType = {
 	Delete: "delete",
 	Insert: "insert",
 	SetValue: "setValue",
-	InvalidState: "invalidState",
+	Invalidation: "invalidation",
 	Batch: "batch",
 } as const;
 
@@ -224,8 +224,8 @@ export interface SetValueBindingContext extends AbstractBindingContext {
 /**
  * @alpha
  */
-export interface InvalidStateBindingContext extends AbstractBindingContext {
-	readonly type: typeof BindingType.InvalidState;
+export interface InvalidationBindingContext extends AbstractBindingContext {
+	readonly type: typeof BindingType.Invalidation;
 }
 
 /**
@@ -349,45 +349,45 @@ class DirectPathVisitor extends AbstractPathVisitor<OperationBinderEvents> {
 	}
 }
 
-class InvalidatePathVisitor
+class InvalidatingPathVisitor
 	extends AbstractPathVisitor<InvalidationBinderEvents>
-	implements Flushable<InvalidatePathVisitor>
+	implements Flushable<InvalidatingPathVisitor>
 {
-	protected invalidState = false;
+	protected invalidation = false;
 	public constructor(emitter: IEmitter<InvalidationBinderEvents>, options: BinderOptions) {
 		super(emitter, options);
 	}
 	public onDelete(path: UpPath, count: number): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.InvalidState);
+		const visitPaths = this.registeredPaths.get(BindingType.Invalidation);
 		if (this.matchesAny(visitPaths, current)) {
-			this.invalidState = true;
+			this.invalidation = true;
 		}
 	}
 
 	public onInsert(path: UpPath, content: ProtoNodes): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.InvalidState);
+		const visitPaths = this.registeredPaths.get(BindingType.Invalidation);
 		if (this.matchesAny(visitPaths, current)) {
-			this.invalidState = true;
+			this.invalidation = true;
 		}
 	}
 
 	public onSetValue(path: UpPath, value: TreeValue): void {
 		const current = toDownPath<BindPath>(path);
-		const visitPaths = this.registeredPaths.get(BindingType.InvalidState);
+		const visitPaths = this.registeredPaths.get(BindingType.Invalidation);
 		if (this.matchesAny(visitPaths, current)) {
-			this.invalidState = true;
+			this.invalidation = true;
 		}
 	}
 
-	public flush(): InvalidatePathVisitor {
-		if (this.invalidState) {
-			this.emitter.emit(BindingType.InvalidState, {
-				type: BindingType.InvalidState,
+	public flush(): InvalidatingPathVisitor {
+		if (this.invalidation) {
+			this.emitter.emit(BindingType.Invalidation, {
+				type: BindingType.Invalidation,
 			});
 		}
-		this.invalidState = false;
+		this.invalidation = false;
 		return this;
 	}
 }
@@ -605,7 +605,7 @@ class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
 class InvalidateDataBinder<E extends Events<E>>
 	extends AbstractDataBinder<
 		InvalidationBinderEvents,
-		InvalidatePathVisitor,
+		InvalidatingPathVisitor,
 		FlushableBinderOptions<E>
 	>
 	implements FlushableDataBinder<InvalidationBinderEvents>
@@ -617,7 +617,7 @@ class InvalidateDataBinder<E extends Events<E>>
 		super(
 			events,
 			options,
-			(anchor: EditableTree) => new InvalidatePathVisitor(events, options),
+			(anchor: EditableTree) => new InvalidatingPathVisitor(events, options),
 		);
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
@@ -676,7 +676,7 @@ export function createDataBinderDirect<E extends Events<E>>(
 /**
  * @alpha
  */
-export function createDataBinderInvalidate<E extends Events<E>>(
+export function createDataBinderInvalidating<E extends Events<E>>(
 	view: ISubscribable<E>,
 	options: FlushableBinderOptions<E>,
 ): FlushableDataBinder<InvalidationBinderEvents> {

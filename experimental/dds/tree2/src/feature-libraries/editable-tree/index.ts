@@ -25,7 +25,7 @@ export { isUnwrappedNode } from "./editableTree";
 export {
 	createDataBinderBuffering,
 	createDataBinderDirect,
-	createDataBinderInvalidate,
+	createDataBinderInvalidating,
 	createBinderOptions,
 	createFlushableBinderOptions,
 	DataBinder,
@@ -46,7 +46,7 @@ export {
 	InsertBindingContext,
 	SetValueBindingContext,
 	BatchBindingContext,
-	InvalidStateBindingContext,
+	InvalidationBindingContext as InvalidStateBindingContext,
 	BinderEvents,
 	OperationBinderEvents,
 	InvalidationBinderEvents,
