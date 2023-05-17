@@ -105,6 +105,7 @@ export class ScribeLambda implements IPartitionLambda {
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
 		private readonly transientTenants: Set<string>,
 		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnRestart: boolean,
 	) {
 		this.lastOffset = scribe.logOffset;
 		this.setStateFromCheckpoint(scribe);
@@ -115,12 +116,21 @@ export class ScribeLambda implements IPartitionLambda {
 		// Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
 		// we had already checkpointed at a given offset.
 		if (message.offset <= this.lastOffset) {
-			Lumberjack.info(
-				`Repeating ops: message.offset: ${message.offset} <= this.lastOffset: ${this.lastOffset}`,
-				getLumberBaseProperties(this.documentId, this.tenantId),
-			);
+			const reprocessOpsMetric = Lumberjack.newLumberMetric(LumberEventName.ReprocessOps);
+			reprocessOpsMetric.setProperties({
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				kafkaMessageOffset: message.offset,
+				databaseLastOffset: this.lastOffset,
+			});
+
 			this.updateCheckpointMessages(message);
-			this.context.checkpoint(message, this.restartOnCheckpointFailure);
+			if (this.kafkaCheckpointOnRestart) {
+				reprocessOpsMetric.setProperty("kafkaCheckpointOnRestart", true);
+				this.context.checkpoint(message, this.restartOnCheckpointFailure);
+			}
+			reprocessOpsMetric.success(
+				`Repeating ops: message.offset: ${message.offset} <= this.lastOffset: ${this.lastOffset}`,
+			);
 			return;
 		}
 
