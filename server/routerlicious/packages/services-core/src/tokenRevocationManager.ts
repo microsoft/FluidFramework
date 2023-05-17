@@ -146,6 +146,11 @@ export interface IRevokeTokenOptions {
 	correlationId: string;
 }
 
+export interface ITokenRevocationChecker {
+	// Check if a given token id is revoked
+	isTokenRevoked(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;
+}
+
 /**
  * Interface of Json Web Token(JWT) manager
  * It is mainly used to manage token revocation
@@ -168,7 +173,9 @@ export interface ITokenRevocationManager {
 		options?: IRevokeTokenOptions,
 	): Promise<ITokenRevocationResponse>;
 
-	// Check if a given token id is revoked
+	/**
+	 * @deprecated move this function to ITokenRevocationChecker
+	 */
 	isTokenRevoked(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;
 }
 
