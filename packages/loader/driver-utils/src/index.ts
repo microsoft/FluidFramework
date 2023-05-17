@@ -49,4 +49,8 @@ export {
 	isCombinedAppAndProtocolSummary,
 } from "./summaryForCreateNew";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
-export { applyStorageCompression, ICompressionStorageConfig, SummaryCompressionProcessor } from "./adapters";
+export {
+	applyStorageCompression,
+	ICompressionStorageConfig,
+	SummaryCompressionProcessor,
+} from "./adapters";

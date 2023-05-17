@@ -30,10 +30,11 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		if (createNewSummary !== undefined) {
-			DocumentStorageServiceCompressionAdapter.compressSummary(
+			const newAppSumary = DocumentStorageServiceCompressionAdapter.compressSummary(
 				createNewSummary.tree[".app"] as ISummaryTree,
 				this._config,
 			);
+			createNewSummary.tree[".app"] = newAppSumary;
 		}
 		const service = await this.serviceFactory.createContainer(
 			createNewSummary,

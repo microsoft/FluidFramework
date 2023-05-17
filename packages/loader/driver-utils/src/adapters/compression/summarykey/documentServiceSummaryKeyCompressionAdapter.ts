@@ -6,10 +6,7 @@
 import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { DocumentServiceProxy } from "../../../documentServiceProxy";
 import { ICompressionStorageConfig } from "../";
-import {
-	DocumentStorageServiceCompressionAdapter,
-} from "./documentStorageServiceSummaryKeyCompressionAdapter";
-
+import { DocumentStorageServiceCompressionAdapter } from "./documentStorageServiceSummaryKeyCompressionAdapter";
 
 export class DocumentServiceCompressionAdapter extends DocumentServiceProxy {
 	constructor(service: IDocumentService, private readonly _config: ICompressionStorageConfig) {

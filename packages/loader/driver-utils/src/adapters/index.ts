@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { SummaryCompressionAlgorithm, ICompressionStorageConfig, SummaryCompressionProcessor } from "./compression";
+export {
+	SummaryCompressionAlgorithm,
+	ICompressionStorageConfig,
+	SummaryCompressionProcessor,
+} from "./compression";
 
 export { applyStorageCompression } from "./predefinedAdapters";

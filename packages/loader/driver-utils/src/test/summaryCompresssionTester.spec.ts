@@ -35,7 +35,7 @@ import {
 	SummaryCompressionProcessor,
 } from "../adapters";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
-import { snapshotTree, summaryTemplate } from "./summaryCompresssionUtils";
+import { snapshotTree, summaryTemplate } from "./summaryCompressionData";
 /**
  * This function clones the imported summary and returns a new summary with the same content.
  */
@@ -209,7 +209,7 @@ describe("Summary Compression Test", () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.None,
 			minSizeToCompress: 763,
-			processor: SummaryCompressionProcessor.SummaryKey
+			processor: SummaryCompressionProcessor.SummaryKey,
 		};
 		const storage = await buildCompressionStorage(config);
 		checkCompressionConfig(storage, 763, SummaryCompressionAlgorithm.None);
@@ -301,12 +301,10 @@ function getCompressedHeaderContent(summary: ISummaryTree) {
 }
 
 function getHeader(summary: ISummaryTree) {
-	 
 	return getHeaderHolder(summary).tree.header;
 }
 
 function getCompressedHeader(summary: ISummaryTree) {
-	 
 	return getHeaderHolder(summary).tree.compressed_2_header;
 }
 
