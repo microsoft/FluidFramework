@@ -188,6 +188,7 @@ class ScheduleManagerCore {
 						contentType: typeof message.contents,
 						batch: message.metadata?.batch,
 						compression: message.compression,
+						pauseSeqNum: this.pauseSequenceNumber,
 					},
 				);
 			}
