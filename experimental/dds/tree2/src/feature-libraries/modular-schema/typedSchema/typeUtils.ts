@@ -168,7 +168,7 @@ export type _InlineTrick = 0;
  * 	}
  * >;
  *
- * // Adding `K extends _dummy2 ? _dummy2 :` makes it compile, and has no effect on the type produced.
+ * // Adding `K extends _RecursiveTrick ? _RecursiveTrick :` makes it compile, and has no effect on the type produced.
  * type Works<T> = FlattenKeys<
  * 	{
  * 		[K in keyof T]: 0;
@@ -197,12 +197,12 @@ export type _RecursiveTrick = never;
 		{
 			[K in keyof T]: 0;
 		} & {
-			// @ts-expect-error SAme error as above.
+			// @ts-expect-error Same error as above.
 			[K in keyof T]: Broken<T[K]>;
 		}
 	>;
 
-	// Adding `K extends _dummy2 ? _dummy2 :` OR `T extends _dummy2 ? _dummy2 :` makes it compile, and has no effect on the type produced.
+	// Adding `K extends _RecursiveTrick ? _RecursiveTrick:` OR `T extends _RecursiveTrick ? _RecursiveTrick :` makes it compile and has no effect on the type produced.
 	type Works<T> = FlattenKeys<
 		{
 			[K in keyof T]: 0;
