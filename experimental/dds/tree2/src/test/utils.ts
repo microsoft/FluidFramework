@@ -31,7 +31,12 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
+import {
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+	createSharedTreeView,
+} from "../shared-tree";
 import {
 	defaultChangeFamily,
 	DefaultChangeset,
@@ -71,6 +76,7 @@ import {
 	ChangeFamilyEditor,
 	ChangeFamily,
 	InMemoryStoredSchemaRepository,
+	AllowedUpdateType,
 } from "../core";
 import { JsonCompatible, brand, makeArray } from "../util";
 import { ICodecFamily } from "../codec";
@@ -499,19 +505,21 @@ export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): v
 	assert.deepEqual(actual, expected);
 }
 
-export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTree {
+export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
 	const cursors = Array.isArray(json) ? json.map(singleJsonCursor) : singleJsonCursor(json);
 	return makeTreeFromCursor(cursors, jsonSchema);
 }
 
+/**
+ * @remarks Remove this once schematize can do the work.
+ */
 export function makeTreeFromCursor(
 	cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
-	schemaData?: SchemaData,
-): ISharedTree {
+	schemaData: SchemaData,
+): ISharedTreeView {
 	const schemaPolicy = defaultSchemaPolicy;
-	const factory = new SharedTreeFactory();
-	const runtime = new MockFluidDataStoreRuntime();
-	const tree = factory.create(runtime, "TestSharedTree");
+	const tree: ISharedTreeView = createSharedTreeView();
+	// TODO: use ISharedTreeView.schematize once it supports cursors
 	tree.storedSchema.update(new InMemoryStoredSchemaRepository(schemaPolicy, schemaData));
 	const field = tree.editor.sequenceField({
 		parent: undefined,
