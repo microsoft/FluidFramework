@@ -286,7 +286,11 @@ export function rebaseChange<TChange>(
 		(newChange, branchCommit) =>
 			changeRebaser.rebase(
 				newChange,
-				inverseFromCommit(changeRebaser, branchCommit, repairData),
+				inverseFromCommit(
+					changeRebaser,
+					branchCommit,
+					repairData?.get(branchCommit.revision),
+				),
 			),
 		change,
 	);
@@ -305,10 +309,10 @@ function rebaseChangeOverChanges<TChange>(
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
-	repairData?: Map<RevisionTag, ReadonlyRepairDataStore>,
+	repairData?: ReadonlyRepairDataStore,
 ): TaggedChange<TChange> {
 	return tagRollbackInverse(
-		changeRebaser.invert(commit, true, repairData?.get(commit.revision)),
+		changeRebaser.invert(commit, true, repairData),
 		mintRevisionTag(),
 		commit.revision,
 	);

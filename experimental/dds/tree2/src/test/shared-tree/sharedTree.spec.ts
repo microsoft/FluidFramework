@@ -1268,10 +1268,7 @@ describe("SharedTree", () => {
 				optional.set(undefined, false);
 			});
 
-			runSynchronous(tree1, () => {
-				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
-				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
-			});
+			tree1.undo();
 
 			runSynchronous(tree2, () => {
 				tree2.editor.addNodeExistsConstraint({

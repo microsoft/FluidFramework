@@ -203,12 +203,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 			// If this transaction is not nested, add it to the undo commit tree
 			if (!this.isTransacting()) {
-				const repairData = this.undoRedoManager?.trackCommit(
-					this.head,
-					UndoRedoManagerCommitType.Undoable,
-				);
-
-				if (repairData !== undefined) {
+				if (this.undoRedoManager !== undefined) {
+					const repairData = this.undoRedoManager.trackCommit(
+						this.head,
+						UndoRedoManagerCommitType.Undoable,
+					);
 					this.repairStore.set(this.head.revision, repairData);
 				}
 			}

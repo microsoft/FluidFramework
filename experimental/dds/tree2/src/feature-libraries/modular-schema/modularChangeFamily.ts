@@ -269,6 +269,14 @@ export class ModularChangeFamily
 				valueConstraint = { ...change.change.valueConstraint };
 			}
 
+			// Composition is part of two codepaths:
+			//   1. Combining multiple changesets into a transaction
+			//   2. Generating a state update after rebasing a branch that has
+			//        more than one changeset
+			// In the first codepath, none of the constraints will be violated and
+			// we need the constraint to be stored on the given node in the transaction.
+			// In the second path, the constraint may have been violated, but the state is tracked
+			// as part of `constraintViolationCount` and the change won't be rebased further.
 			if (change.change.nodeExistsConstraint !== undefined) {
 				nodeExistsConstraint = { ...change.change.nodeExistsConstraint };
 			}
