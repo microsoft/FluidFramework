@@ -48,7 +48,7 @@
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run ci:eslint",
-		"lint:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream lint:fix",
+		"lint:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream lint:fix && pnpm recursive --no-sort --include-workspace-root --stream exec sort-package-json",
 		"policy-check": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json",
 		"policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
 		"policy-check:fix": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --excludeHandler assert-short-codes --fix",
@@ -145,6 +145,7 @@
 		"pretty-quick": "^3.1.3",
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
+		"sort-package-json": "1.57.0",
 		"syncpack": "^9.8.4",
 		"typescript": "~4.5.5"
 	},
