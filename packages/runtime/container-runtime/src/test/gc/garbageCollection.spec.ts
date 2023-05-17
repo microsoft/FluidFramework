@@ -224,10 +224,10 @@ describe("Garbage Collection Tests", () => {
 
 	describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
 		// Mock node loaded and changed activity for all the nodes in the graph.
-		async function updateAllNodesAndRunGC(garbageCollector: IGarbageCollector) {
+		async function mockNodeChangesAndRunGC(garbageCollector: IGarbageCollector) {
 			nodes.forEach((nodeId) => {
-				garbageCollector.nodeUpdated(nodeId, "Changed", Date.now(), testPkgPath);
 				garbageCollector.nodeUpdated(nodeId, "Loaded", Date.now(), testPkgPath);
+				garbageCollector.nodeUpdated(nodeId, "Changed", Date.now(), testPkgPath);
 			});
 			await garbageCollector.collectGarbage({});
 		}
@@ -255,7 +255,7 @@ describe("Garbage Collection Tests", () => {
 		) => {
 			const deleteEventName = "GarbageCollector:GCObjectDeleted";
 			// Validates that no unexpected event has been fired.
-			function validateNoUnexpectedEvents() {
+			function validateNoEvents() {
 				mockLogger.assertMatchNone(
 					[
 						{ eventName: revivedEventName },
@@ -284,15 +284,15 @@ describe("Garbage Collection Tests", () => {
 
 				// Advance the clock just before the timeout and validate no events are generated.
 				clock.tick(timeout - 1);
-				await updateAllNodesAndRunGC(garbageCollector);
-				validateNoUnexpectedEvents();
+				await mockNodeChangesAndRunGC(garbageCollector);
+				validateNoEvents();
 
 				// Advance the clock to expire the timeout.
 				clock.tick(1);
 
 				// Update all nodes again. Validate that no unexpected events are generated since everything is referenced.
-				await updateAllNodesAndRunGC(garbageCollector);
-				validateNoUnexpectedEvents();
+				await mockNodeChangesAndRunGC(garbageCollector);
+				validateNoEvents();
 			});
 
 			it("generates events for nodes that are used after time out", async () => {
@@ -305,12 +305,12 @@ describe("Garbage Collection Tests", () => {
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
-				await updateAllNodesAndRunGC(garbageCollector);
-				validateNoUnexpectedEvents();
+				await mockNodeChangesAndRunGC(garbageCollector);
+				validateNoEvents();
 
 				// Expire the timeout and validate that all events for node 2 and node 3 are logged.
 				clock.tick(1);
-				await updateAllNodesAndRunGC(garbageCollector);
+				await mockNodeChangesAndRunGC(garbageCollector);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 
 				if (expectDeleteLogs) {
@@ -326,13 +326,6 @@ describe("Garbage Collection Tests", () => {
 				}
 				expectedEvents.push(
 					{
-						eventName: changedEventName,
-						timeout,
-						id: nodes[2],
-						pkg: eventPkg,
-						createContainerRuntimeVersion: pkgVersion,
-					},
-					{
 						eventName: loadedEventName,
 						timeout,
 						id: nodes[2],
@@ -341,13 +334,20 @@ describe("Garbage Collection Tests", () => {
 					},
 					{
 						eventName: changedEventName,
+						timeout,
+						id: nodes[2],
+						pkg: eventPkg,
+						createContainerRuntimeVersion: pkgVersion,
+					},
+					{
+						eventName: loadedEventName,
 						timeout,
 						id: nodes[3],
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
-						eventName: loadedEventName,
+						eventName: changedEventName,
 						timeout,
 						id: nodes[3],
 						pkg: eventPkg,
@@ -383,8 +383,8 @@ describe("Garbage Collection Tests", () => {
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
-				await updateAllNodesAndRunGC(garbageCollector);
-				validateNoUnexpectedEvents();
+				await mockNodeChangesAndRunGC(garbageCollector);
+				validateNoEvents();
 
 				// Expire the timeout and validate that only revived event is generated for node 2.
 				clock.tick(1);
@@ -396,13 +396,13 @@ describe("Garbage Collection Tests", () => {
 				for (const event of mockLogger.events) {
 					assert.notStrictEqual(
 						event.eventName,
-						changedEventName,
-						"Unexpected changed event logged",
+						loadedEventName,
+						"Unexpected loaded event logged",
 					);
 					assert.notStrictEqual(
 						event.eventName,
-						loadedEventName,
-						"Unexpected loaded event logged",
+						changedEventName,
+						"Unexpected changed event logged",
 					);
 				}
 				mockLogger.assertMatch(
@@ -429,12 +429,12 @@ describe("Garbage Collection Tests", () => {
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
-				await updateAllNodesAndRunGC(garbageCollector);
-				validateNoUnexpectedEvents();
+				await mockNodeChangesAndRunGC(garbageCollector);
+				validateNoEvents();
 
 				// Expire the timeout and validate that all events for node 2 and node 3 are logged.
 				clock.tick(1);
-				await updateAllNodesAndRunGC(garbageCollector);
+				await mockNodeChangesAndRunGC(garbageCollector);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs) {
 					expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[3] });
@@ -445,14 +445,14 @@ describe("Garbage Collection Tests", () => {
 					);
 				}
 				expectedEvents.push(
-					{ eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
 					{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
+					{ eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
 				);
 				mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
 
 				// Update all nodes again. There shouldn't be any more events since for each node the event is only once.
-				await updateAllNodesAndRunGC(garbageCollector);
-				validateNoUnexpectedEvents();
+				await mockNodeChangesAndRunGC(garbageCollector);
+				validateNoEvents();
 			});
 
 			/**
@@ -507,13 +507,13 @@ describe("Garbage Collection Tests", () => {
 				}
 
 				// Validate that all events are logged as expected.
-				garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
 				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
+				garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatch(
 					[
-						{ eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
 						{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
+						{ eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
 					],
 					"all events not generated as expected",
 				);
@@ -577,13 +577,13 @@ describe("Garbage Collection Tests", () => {
 				);
 
 				// Validate that no events are generated since none of the timeouts have passed
-				garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
 				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
+				garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatchNone(
 					[
-						{ eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
 						{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
+						{ eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
 					],
 					"all events not generated as expected",
 				);
@@ -675,15 +675,15 @@ describe("Garbage Collection Tests", () => {
 				}
 
 				// Validate that all events are logged as expected.
+				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
 				garbageCollector.nodeUpdated(nodes[1], "Changed", Date.now(), testPkgPath);
 				garbageCollector.nodeUpdated(nodes[2], "Changed", Date.now(), testPkgPath);
-				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
 				await garbageCollector.collectGarbage({});
 				mockLogger.assertMatch(
 					[
+						{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
 						{ eventName: changedEventName, timeout, id: nodes[1], pkg: eventPkg },
 						{ eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
-						{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
 					],
 					"all events not generated as expected",
 				);
@@ -963,14 +963,9 @@ describe("Garbage Collection Tests", () => {
 
 			// Advance the clock to trigger inactive timeout and validate that we get inactive events.
 			clock.tick(inactiveTimeoutMs + 1);
-			await updateAllNodesAndRunGC(garbageCollector);
+			await mockNodeChangesAndRunGC(garbageCollector);
 			mockLogger.assertMatch(
 				[
-					{
-						eventName: "GarbageCollector:InactiveObject_Changed",
-						timeout: inactiveTimeoutMs,
-						id: nodes[2],
-					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
@@ -978,11 +973,16 @@ describe("Garbage Collection Tests", () => {
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
+						timeout: inactiveTimeoutMs,
+						id: nodes[2],
+					},
+					{
+						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
 						id: nodes[3],
 					},
 					{
-						eventName: "GarbageCollector:InactiveObject_Loaded",
+						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
 						id: nodes[3],
 					},
@@ -992,14 +992,9 @@ describe("Garbage Collection Tests", () => {
 
 			// Advance the clock to trigger sweep timeout and validate that we get sweep ready events.
 			clock.tick(sweepTimeoutMs - inactiveTimeoutMs);
-			await updateAllNodesAndRunGC(garbageCollector);
+			await mockNodeChangesAndRunGC(garbageCollector);
 			mockLogger.assertMatch(
 				[
-					{
-						eventName: "GarbageCollector:SweepReadyObject_Changed",
-						timeout: sweepTimeoutMs,
-						id: nodes[2],
-					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
@@ -1007,11 +1002,16 @@ describe("Garbage Collection Tests", () => {
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
+						timeout: sweepTimeoutMs,
+						id: nodes[2],
+					},
+					{
+						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
 						id: nodes[3],
 					},
 					{
-						eventName: "GarbageCollector:SweepReadyObject_Loaded",
+						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
 						id: nodes[3],
 					},

@@ -62,7 +62,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
  * @param removeAppTreePrefix - Remove `.app/` from beginning of paths when present
  * @returns the hierarchical tree
  */
-export function buildHierarchy(
+export function buildGitTreeHeirarchy(
 	flatTree: git.ITree,
 	blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
 	removeAppTreePrefix = false,
@@ -150,16 +150,4 @@ export class AttachmentTreeEntry {
 	constructor(public readonly path: string, public readonly id: string) {
 		this.value = { id };
 	}
-}
-
-export function addBlobToTree(tree: ITree, blobName: string, content: object) {
-	tree.entries.push({
-		mode: FileMode.File,
-		path: blobName,
-		type: TreeEntry.Blob,
-		value: {
-			contents: JSON.stringify(content),
-			encoding: "utf-8",
-		},
-	});
 }
