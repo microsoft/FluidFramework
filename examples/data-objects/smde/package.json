@@ -89,15 +89,6 @@
 			}
 		}
 	},
-	"pnpm": {
-		"packageExtensions": {
-			"simplemde": {
-				"dependencies": {
-					"codemirror": "^5.65.11"
-				}
-			}
-		}
-	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}

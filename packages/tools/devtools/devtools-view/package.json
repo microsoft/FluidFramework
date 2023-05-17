@@ -131,7 +131,6 @@
 			},
 			"tsc": [
 				"^tsc",
-				"build:genver",
 				"@fluid-example/collaborative-textarea#build:esnext"
 			]
 		}
