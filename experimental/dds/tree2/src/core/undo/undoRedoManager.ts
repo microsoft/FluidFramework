@@ -294,7 +294,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		headReversibleCommit?: ReversibleCommit<TChange>,
 	) {
 		let currentReversible = headReversibleCommit;
-		while (currentReversible !== undefined && newCommits.values.length !== 0) {
+		while (currentReversible !== undefined && newCommits.size !== 0) {
 			const { revision } = currentReversible.commit;
 			const commit = newCommits.get(revision);
 
