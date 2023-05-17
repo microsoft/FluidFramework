@@ -183,6 +183,9 @@ export type NodeChangeRebaser = (
 	 * True when the baseChange deletes the node. Defaults to false if not specified.
 	 */
 	deleted?: boolean,
+	/**
+	 * True when the baseChange revives the node. Defaults to false if not specified.
+	 */
 	revived?: boolean,
 ) => NodeChangeset | undefined;
 
