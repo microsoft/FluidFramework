@@ -310,12 +310,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			const multiplicity = target.lookupFieldKind(fieldKey).multiplicity;
 			const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
 			const cursors = content.map(singleMapTreeCursor);
-			// This unconditionally uses `replaceField`, which differs from `createField`
-			// only for sequence fields while using `insertNodes` instead of `replaceNodes`
-			// (plus some difference in assertions, which is ignored here for a sake of a better
-			// consistency with the low-level editing API).
-			// Since `insertNodes` and `replaceNodes` have same merge semantics with `replaceNodes`
-			// being a bit more general purpose function, it's ok to just use that.
+			// This unconditionally uses `replaceNodes`, which only differs in merge semantics from `insertNodes` for sequence fields.
 			if (multiplicity !== Multiplicity.Sequence) {
 				assert(
 					cursors.length <= 1,

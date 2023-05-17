@@ -1258,10 +1258,7 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 // @alpha
 export const neverTree: TreeStoredSchema;
 
-// Warning: (ae-incompatible-release-tags) The symbol "NewFieldContent" is marked as @public, but its signature references "ITreeCursor" which is marked as @alpha
-// Warning: (ae-incompatible-release-tags) The symbol "NewFieldContent" is marked as @public, but its signature references "ContextuallyTypedFieldData" which is marked as @alpha
-//
-// @public
+// @alpha
 export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
 
 // @alpha (undocumented)

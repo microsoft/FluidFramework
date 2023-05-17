@@ -385,7 +385,7 @@ describe("editable-tree: editing", () => {
 				{ type: rootSchemaName },
 			]);
 			assert(isUnwrappedNode(trees[0].root));
-			// create using `createFieldSymbol`
+			// create using `insertNodes`
 			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
@@ -405,7 +405,7 @@ describe("editable-tree: editing", () => {
 				{ type: rootSchemaName },
 			]);
 			assert(isUnwrappedNode(trees[0].root));
-			// create using `createFieldSymbol`
+			// create using `insertNodes`
 			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
@@ -425,7 +425,7 @@ describe("editable-tree: editing", () => {
 				{ type: rootSchemaName },
 			]);
 			assert(isUnwrappedNode(trees[0].root));
-			// create using `createFieldSymbol`
+			// create using `insertNodes`
 			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
 				singleTextCursor({ type: stringSchema.name, value: "bar" }),
@@ -463,7 +463,7 @@ describe("editable-tree: editing", () => {
 				);
 				assert(isUnwrappedNode(trees[0].root));
 				assert(isUnwrappedNode(trees[1].root));
-				// create using `createFieldSymbol`
+				// create using `insertNodes`
 				trees[0].root[getField](fieldKey).insertNodes(0, [
 					singleTextCursor({ type: stringSchema.name, value: "foo" }),
 					singleTextCursor({ type: stringSchema.name, value: "bar" }),

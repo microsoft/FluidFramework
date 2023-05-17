@@ -112,8 +112,9 @@ export interface EditableTreeEvents {
  * ```
  * where `context` is a common `EditableTreeContext`.
  *
- * The tree can be edited either by using its symbol-based "toolbox" (e.g. {@link createField})
- * or using a simple assignment operator (see `EditableTreeContext.unwrappedRoot` for more details).
+ * The tree can be edited either by using its symbol-based "toolbox" (e.g. {@link valueSymbol}),
+ * using a simple assignment operator (see `EditableTreeContext.unwrappedRoot` for more details)
+ * or by getting a field (via {@link getField} or optionally property access for sequence fields) and modifying that.
  *
  * When iterating, reads all fields at once before the iteration starts to get a "snapshot" of this node.
  * It might be inefficient regarding resources, but avoids situations
@@ -203,6 +204,7 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
  *
  * TODO: this should allow a field cursor instead of an array of cursors.
  * TODO: Make this generic so a variant of this type that allows placeholders for detached sequences to consume.
+ * @alpha
  */
 export type NewFieldContent = ITreeCursor | readonly ITreeCursor[] | ContextuallyTypedFieldData;
 
