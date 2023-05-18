@@ -93,7 +93,6 @@ export async function createPullRequest(
 ): Promise<any> {
 	log.verbose(`Creating a pull request---------------`);
 	const octokit = new Octokit({ auth: token });
-	const author = assignee === undefined || assignee === "" ? "sonalivdeshpande" : assignee;
 	const newPr = await octokit.request(PULL_REQUEST, {
 		owner: OWNER,
 		repo: REPO_NAME,
@@ -103,12 +102,12 @@ export async function createPullRequest(
 		base: target,
 	});
 
-	log.verbose(`Assigning ${author} to pull request ${newPr.data.number}`);
+	log.verbose(`Assigning ${assignee} to pull request ${newPr.data.number}`);
 	await octokit.request(ASSIGNEE, {
 		owner: OWNER,
 		repo: REPO_NAME,
 		issue_number: newPr.data.number,
-		assignees: [author],
+		assignees: [assignee],
 	});
 
 	log.verbose(`Adding reviewer to pull request ${newPr.data.number}`);

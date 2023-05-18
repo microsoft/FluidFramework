@@ -5,7 +5,7 @@
 import { Flags } from "@oclif/core";
 
 import { BaseCommand } from "../../base";
-import { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "../../lib"; 
+import { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } from "../../lib";
 
 /**
  * This command class is used to merge two branches based on the batch size provided.
@@ -54,6 +54,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		if (prExists) {
 			this.exit(-1);
 			this.error(`Open pull request exists`);
+			// notify the author
 		}
 
 		const lastMergedCommit = await gitRepo.mergeBase(flags.source, flags.target);
@@ -93,43 +94,50 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			this.exit(-1);
 		}
 
-	
+		const findConflictCommit = async (commitIds: string[], size: number): Promise<string> => {
+			for (let i = 0; i < size; i++) {
+				const commit = commitIds[i];
+				// eslint-disable-next-line no-await-in-loop
+				const response = await gitRepo.merge(commit);
+
+				if (response === "Abort merge") {
+					return commit;
+				}
+			}
+
+			return commitIds[size - 1];
+		};
 
 		const commitSize =
 			flags.batchSize <= unmergedCommitList.length
 				? flags.batchSize
 				: unmergedCommitList.length;
-		const commitToReset = unmergedCommitList[commitSize - 1];
-		
-		// this.info(`Branch name: ${branchName} ${commitSize}`);
 
-		// TODO: write a function that returns the commit id that has merge conflict with next branch
-		// check only flags.batchSize number of commits
+		const commitId = await findConflictCommit(unmergedCommitList, commitSize);
 
-		// await gitRepo.switchBranch(flags.source);
+		const branchName = `${flags.source}-${flags.target}-${commitId}`;
 
-		// const branchName = `${flags.source}-${flags.target}-${commitToReset}`;
+		await gitRepo.switchBranch(flags.source);
+		await gitRepo.createBranch(branchName);
+		await gitRepo.setUpstream(branchName);
+		await gitRepo.resetBranch(commitId);
 
-		// await gitRepo.createBranch(branchName);
-		// await gitRepo.setUpstream(branchName); 
-		// await gitRepo.resetBranch(unmergedCommitList[0]);
-		// 	// fetch name of owner associated to the pull request
-		// 	const prInfo = await pullRequestInfo(flags.auth, unmergedCommitList[0], this.logger);
-		// 	this.info(
-		// 		`Fetch pull request info for single commit id ${unmergedCommitList[0]} and assignee ${prInfo.data[0].assignee.login}`,
-		// 	);
-		// 	const user = await getUserAccess(flags.auth, this.logger);
-		// 	this.info(`List users with push access to main branch ${user}`);
-		// 	prNumber = await createPullRequest(
-		// 		flags.auth,
-		// 		`${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
-		// 		flags.target,
-		// 		prInfo.data[0].assignee.login,
-		// 		this.logger,
-		// 	);
-		// 	this.log(
-		// 		`Open pull request for commit id ${unmergedCommitList[0]}. Please resolve the merge conflicts.`,
-		// 	);
-
+		// fetch name of owner associated to the pull request
+		const prInfo = await pullRequestInfo(flags.auth, unmergedCommitList[0], this.logger);
+		this.info(
+			`Fetch pull request info for single commit id ${unmergedCommitList[0]} and assignee ${prInfo.data[0].assignee.login}`,
+		);
+		const user = await getUserAccess(flags.auth, this.logger);
+		this.info(`List users with push access to main branch ${user}`);
+		const prNumber = await createPullRequest(
+			flags.auth,
+			`${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
+			flags.target,
+			prInfo.data[0].assignee.login,
+			this.logger,
+		);
+		this.log(
+			`Open pull request ${prNumber} for commit id ${commitId}. Please resolve the merge conflicts.`,
+		);
 	}
 }
