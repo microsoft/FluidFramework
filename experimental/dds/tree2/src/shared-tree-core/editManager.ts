@@ -356,7 +356,7 @@ export class EditManager<
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
 		assert(
 			this.isEmpty(),
-			"Attempted to load from summary after edit manager was already mutated",
+			0x68a /* Attempted to load from summary after edit manager was already mutated */,
 		);
 		this.sequenceMap.clear();
 		this.trunk.setHead(
@@ -449,6 +449,7 @@ export class EditManager<
 				newCommit.change,
 				rebasedBranch,
 				this.trunk.getHead(),
+				this.localBranch.repairStore,
 			);
 
 			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
@@ -459,7 +460,7 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk);
+		this.localBranch.rebaseOnto(this.trunk, this.localBranch.repairStore);
 	}
 
 	public findLocalCommit(

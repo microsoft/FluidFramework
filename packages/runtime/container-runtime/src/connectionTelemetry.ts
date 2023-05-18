@@ -285,6 +285,7 @@ class OpPerfTelemetry {
 			});
 			this.clientSequenceNumberForLatencyStatistics = undefined;
 			this.opPerfData = {};
+			this.opProcessingTimes = {};
 		}
 	}
 }
