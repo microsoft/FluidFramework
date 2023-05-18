@@ -151,13 +151,13 @@ describe("SequenceField - toDelta", () => {
 
 	it("move", () => {
 		const changeset: TestChangeset = [
-			42,
+			{ count: 42 },
 			{
 				type: "MoveOut",
 				id: moveId,
 				count: 10,
 			},
-			8,
+			{ count: 8 },
 			{
 				type: "MoveIn",
 				id: moveId,
@@ -307,7 +307,7 @@ describe("SequenceField - toDelta", () => {
 		it("move", () => {
 			const move: TestChangeset = [
 				{ type: "MoveIn", id: brand(0), count: 1, isSrcConflicted: true },
-				1,
+				{ count: 1 },
 				{ type: "MoveOut", id: brand(0), count: 1, detachEvent },
 			];
 

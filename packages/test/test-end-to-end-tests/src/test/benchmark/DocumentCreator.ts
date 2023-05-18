@@ -12,6 +12,7 @@ import {
 	benchmark,
 	BenchmarkArguments,
 	benchmarkMemory,
+	BenchmarkTimer,
 	IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
@@ -102,14 +103,26 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 		};
 		benchmarkMemory(t);
 	} else {
+		const runMethod = obj.run.bind(obj);
 		const t1: BenchmarkArguments = {
 			title,
 			...obj,
-			benchmarkFnAsync: obj.run.bind(obj),
+			benchmarkFnCustom: async <T1>(state: BenchmarkTimer<T1>) => {
+				let duration: number;
+				do {
+					const before = state.timer.now();
+					await runMethod();
+					const after = state.timer.now();
+					duration = state.timer.toSeconds(before, after);
+					// Collect data
+				} while (state.recordBatch(duration));
+			},
 			before: obj.before?.bind(obj),
 			after: obj.after?.bind(obj),
 			beforeEachBatch: obj.beforeEachBatch?.bind(obj),
 		};
+		// Force batch size to be always 1
+		t1.minBatchDurationSeconds = 0;
 		if (obj.minSampleCount !== undefined) {
 			t1.minBatchCount = obj.minSampleCount;
 		}

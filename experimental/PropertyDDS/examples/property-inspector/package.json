@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/property-inspector",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
@@ -109,6 +109,19 @@
 		"webpack-dev-server": "~4.6.0"
 	},
 	"fluidBuild": {
+		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"webpack"
+				],
+				"script": false
+			},
+			"tsc": [
+				"...",
+				"@fluid-experimental/property-inspector-table#build:copy-resources"
+			]
+		},
 		"buildDependencies": {
 			"merge": {
 				"tsc": {

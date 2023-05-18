@@ -256,7 +256,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					{DataRow("Container", containerState.id, columnSizing_unstable)}
 					{ContainerStatusRow(statusComponents)}
 					{DataRow("Client ID", containerState.clientId, columnSizing_unstable)}
-					{DataRow("Audience ID", containerState.audienceId, columnSizing_unstable)}
+					{DataRow("User ID", containerState.userId, columnSizing_unstable)}
 				</Table>
 			</StackItem>
 			<StackItem align="start">

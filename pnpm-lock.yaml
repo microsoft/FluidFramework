@@ -3,8 +3,14 @@ lockfileVersion: '6.0'
 overrides:
   '@types/node': ^14.18.38
   node-fetch: ^2.6.9
-  nodegit: npm:empty-npm-package@1.0.0
+  good-fences>nodegit: npm:empty-npm-package@1.0.0
   qs: ^6.11.0
+  simplemde>codemirror: ^5.65.11
+  simplemde>marked: ^4.3.0
+  '@fluidframework/build-tools>npm-package-json-lint@^6.0.0': ~6.3.0
+  '@types/react': 17.0.52
+  '@types/react-dom': 17.0.18
+  '@oclif/core': ~2.4.0
 
 importers:
 
@@ -856,10 +862,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -1091,7 +1097,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/framework/view-adapters
       office-ui-fabric-react:
-        specifier: ^7.189.0
+        specifier: 7.199.6
         version: 7.199.6(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)
       prop-types:
         specifier: ^15.7.2
@@ -1143,10 +1149,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       '@types/uuid':
         specifier: ^8.3.0
@@ -1506,10 +1512,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -1618,10 +1624,10 @@ importers:
         specifier: ^14.18.38
         version: 14.18.38
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -1721,10 +1727,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -1842,10 +1848,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -1957,10 +1963,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -2184,10 +2190,10 @@ importers:
         specifier: 22.2.3
         version: 22.2.3
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       '@types/testing-library__jest-dom':
         specifier: ^5.14.5
@@ -2311,10 +2317,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -2435,10 +2441,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -2562,7 +2568,7 @@ importers:
         specifier: ^14.18.38
         version: 14.18.38
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       concurrently:
         specifier: ^7.6.0
@@ -2653,10 +2659,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -2759,10 +2765,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -2856,7 +2862,7 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       concurrently:
         specifier: ^7.6.0
@@ -3053,10 +3059,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -3189,10 +3195,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -3364,10 +3370,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -3440,10 +3446,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -3540,10 +3546,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -3640,10 +3646,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -3814,11 +3820,8 @@ importers:
       '@types/prosemirror-state':
         specifier: ^1.4.0
         version: 1.4.0
-      '@types/prosemirror-view':
-        specifier: ^1.24.0
-        version: 1.24.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       concurrently:
         specifier: ^7.6.0
@@ -3960,10 +3963,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -4099,7 +4102,7 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/simplemde':
         specifier: ^1.11.7
@@ -4299,7 +4302,7 @@ importers:
         specifier: ^14.18.38
         version: 14.18.38
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       concurrently:
         specifier: ^7.6.0
@@ -4414,10 +4417,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -4556,10 +4559,10 @@ importers:
         specifier: ^14.18.38
         version: 14.18.38
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -4785,10 +4788,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       '@types/valid-url':
         specifier: ^1.0.3
@@ -5314,10 +5317,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       '@types/uuid':
         specifier: ^8.3.0
@@ -5477,10 +5480,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       clean-webpack-plugin:
         specifier: ^4.0.0
@@ -5713,10 +5716,10 @@ importers:
         specifier: 1.3.0
         version: 1.3.0
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       clean-webpack-plugin:
         specifier: ^4.0.0
@@ -6711,7 +6714,7 @@ importers:
         specifier: ^2.4.3
         version: 2.4.4(react-dom@17.0.2)(react@17.0.2)
       react-virtualized-auto-sizer:
-        specifier: ^1.0.6
+        specifier: 1.0.7
         version: 1.0.7(react-dom@17.0.2)(react@17.0.2)
       require-from-string:
         specifier: ^2.0.2
@@ -6772,10 +6775,10 @@ importers:
         specifier: ^14.18.38
         version: 14.18.38
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       '@types/sinon':
         specifier: ^7.0.13
@@ -8253,7 +8256,7 @@ importers:
         specifier: ^14.18.38
         version: 14.18.38
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       concurrently:
         specifier: ^7.6.0
@@ -8320,7 +8323,7 @@ importers:
         specifier: ^14.18.38
         version: 14.18.38
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/sinon':
         specifier: ^7.0.13
@@ -12401,10 +12404,10 @@ importers:
         specifier: ^7.34.4
         version: 7.34.4
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -12450,10 +12453,10 @@ importers:
         specifier: ^7.34.4
         version: 7.34.4
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       concurrently:
         specifier: ^7.6.0
@@ -15424,10 +15427,10 @@ importers:
         specifier: ^1.3.28
         version: 1.3.28
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       '@types/sinon':
         specifier: ^7.0.13
@@ -15747,10 +15750,10 @@ importers:
         specifier: 22.2.3
         version: 22.2.3
       '@types/react':
-        specifier: ^17.0.44
+        specifier: 17.0.52
         version: 17.0.52
       '@types/react-dom':
-        specifier: ^17.0.18
+        specifier: 17.0.18
         version: 17.0.18
       '@types/testing-library__jest-dom':
         specifier: ^5.14.5
@@ -18230,7 +18233,7 @@ packages:
     resolution: {integrity: sha512-2FdUL/10qOjXzPTt/2dcjQPHDcsI+svvdU3KERGZaUvH5IwDdzE+nGLAx1+ICxhr6cqU29zvWR6GHGOFp+fbWA==}
     engines: {node: '>=10'}
     peerDependencies:
-      webpack: ^4.30.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.30.0 || ^5.0.0 || 5.83.0
     dependencies:
       chalk: 4.1.2
       find-root: 1.1.0
@@ -24157,40 +24160,6 @@ packages:
       tslib: 2.5.0
     dev: true
 
-  /@oclif/core@1.20.4:
-    resolution: {integrity: sha512-giug32M4YhSYNYKQwE1L57/+k5gp1+Bq3/0vKNQmzAY1tizFGhvBJc6GIRZasHjU+xtZLutQvrVrJo7chX3hxg==}
-    engines: {node: '>=14.0.0'}
-    dependencies:
-      '@oclif/linewrap': 1.0.0
-      '@oclif/screen': 3.0.3
-      ansi-escapes: 4.3.2
-      ansi-styles: 4.3.0
-      cardinal: 2.1.1
-      chalk: 4.1.2
-      clean-stack: 3.0.1
-      cli-progress: 3.12.0
-      debug: 4.3.4(supports-color@8.1.1)
-      ejs: 3.1.8
-      fs-extra: 9.1.0
-      get-package-type: 0.1.0
-      globby: 11.1.0
-      hyperlinker: 1.0.0
-      indent-string: 4.0.0
-      is-wsl: 2.2.0
-      js-yaml: 3.14.1
-      natural-orderby: 2.0.3
-      object-treeify: 1.1.33
-      password-prompt: 1.1.2
-      semver: 7.3.8
-      string-width: 4.2.3
-      strip-ansi: 6.0.1
-      supports-color: 8.1.1
-      supports-hyperlinks: 2.3.0
-      tslib: 2.5.0
-      widest-line: 3.1.0
-      wrap-ansi: 7.0.0
-    dev: true
-
   /@oclif/core@2.4.0:
     resolution: {integrity: sha512-wWUnOOfQQty0k1Cstm/iWW6pbG0mHzU7rcUtab2Sni9kjBPCcy6ENTgpsWbb/WdITopqtXmvpYII2fgcjKdzUA==}
     engines: {node: '>=14.0.0'}
@@ -24223,10 +24192,6 @@ packages:
       widest-line: 3.1.0
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
-    dev: true
-
-  /@oclif/linewrap@1.0.0:
-    resolution: {integrity: sha512-Ups2dShK52xXa8w6iBWLgcjPJWjais6KPJQq3gQ/88AY6BXoTX+MIGFPrWQO1KLMiQfoTpcLnUwloN4brrVUHw==}
     dev: true
 
   /@oclif/plugin-autocomplete@2.1.3:
@@ -24289,7 +24254,7 @@ packages:
     resolution: {integrity: sha512-gEgFZuNtFx3yPfSuxhAm9F8nLZ4+UnBJhbjTywY0Cvrqvd+OvKvo6PfwRm0lWmH4EgWwQEq39pfaks1fg+y1gw==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 1.20.4
+      '@oclif/core': 2.4.0
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -24298,12 +24263,6 @@ packages:
       semver: 7.3.8
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /@oclif/screen@3.0.3:
-    resolution: {integrity: sha512-KX8gMYA9ujBPOd1HFsV9e0iEx7Uoj8AG/3YsW4TtWQTg4lJvr82qNm7o/cFQfYRIt+jw7Ew/4oL4A22zOT+IRA==}
-    engines: {node: '>=12.0.0'}
-    deprecated: Deprecated in favor of @oclif/core
     dev: true
 
   /@oclif/test@2.3.8:
@@ -24608,7 +24567,7 @@ packages:
       react-refresh: '>=0.10.0 <1.0.0'
       sockjs-client: ^1.4.0
       type-fest: '>=0.17.0 <4.0.0'
-      webpack: '>=4.43.0 <6.0.0 || 5.82.0'
+      webpack: '>=4.43.0 <6.0.0 || 5.83.0'
       webpack-dev-server: 3.x || 4.x
       webpack-hot-middleware: 2.x
       webpack-plugin-serve: 0.x || 1.x
@@ -26022,7 +25981,7 @@ packages:
     resolution: {integrity: sha512-eVg3BxlOm2P+chijHBTByr90IZVUtgRW56qEOLX7xlww2NBuKrcavBlcmn+HH7GIUktquWkMPtvy6e0W0NgA5w==}
     peerDependencies:
       typescript: '>= 3.x'
-      webpack: '>= 4 || 5.82.0'
+      webpack: '>= 4 || 5.83.0'
     dependencies:
       debug: 4.3.4
       endent: 2.1.0
@@ -26848,13 +26807,6 @@ packages:
     deprecated: This is a stub types definition. prosemirror-state provides its own type definitions, so you do not need this installed.
     dependencies:
       prosemirror-state: 1.4.2
-    dev: true
-
-  /@types/prosemirror-view@1.24.0:
-    resolution: {integrity: sha512-Swn08/O+QIOKOSfFFa+KKF19eeHetwA+pBMAHZ7wbF0wPrMS3zJ+G9wbOGqSkUv6JOVpuhlOP8Xg5nA3MyIXgQ==}
-    deprecated: This is a stub types definition. prosemirror-view provides its own type definitions, so you do not need this installed.
-    dependencies:
-      prosemirror-view: 1.30.0
     dev: true
 
   /@types/proxyquire@1.3.28:
@@ -27837,7 +27789,7 @@ packages:
   /@webpack-cli/configtest@1.2.0(webpack-cli@4.10.0)(webpack@5.82.0):
     resolution: {integrity: sha512-4FB8Tj6xyVkyqjj1OaTqCjXYULB9FMkqQ8yGrZjRDrYh0nOE+7Lhs45WioWQQMV+ceFlE368Ukhe6xdvJM9Egg==}
     peerDependencies:
-      webpack: 4.x.x || 5.x.x || 5.82.0
+      webpack: 4.x.x || 5.x.x || 5.83.0
       webpack-cli: 4.x.x
     dependencies:
       webpack: 5.82.0(webpack-cli@4.10.0)
@@ -28867,7 +28819,7 @@ packages:
     engines: {node: '>= 8.9'}
     peerDependencies:
       '@babel/core': ^7.0.0
-      webpack: '>=2 || 5.82.0'
+      webpack: '>=2 || 5.83.0'
     dependencies:
       '@babel/core': 7.20.2
       find-cache-dir: 3.3.2
@@ -28882,7 +28834,7 @@ packages:
     engines: {node: '>= 8.9'}
     peerDependencies:
       '@babel/core': ^7.0.0
-      webpack: '>=2 || 5.82.0'
+      webpack: '>=2 || 5.83.0'
     dependencies:
       '@babel/core': 7.20.2
       find-cache-dir: 3.3.2
@@ -30383,7 +30335,7 @@ packages:
     resolution: {integrity: sha512-WuWE1nyTNAyW5T7oNyys2EN0cfP2fdRxhxnIQWiAp0bMabPdHhoGxM8A6YL2GhqwgrPnnaemVE7nv5XJ2Fhh2w==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
-      webpack: '>=4.0.0 <6.0.0 || 5.82.0'
+      webpack: '>=4.0.0 <6.0.0 || 5.83.0'
     dependencies:
       del: 4.1.1
       webpack: 5.82.0(webpack-cli@4.10.0)
@@ -31021,7 +30973,7 @@ packages:
     resolution: {integrity: sha512-fX2MWpamkW0hZxMEg0+mYnA40LTosOSa5TqZ9GYIBzyJa9C3QUaMPSE2xAi/buNr8u89SfD9wHSQVBzrRa/SOQ==}
     engines: {node: '>= 14.15.0'}
     peerDependencies:
-      webpack: ^5.1.0 || 5.82.0
+      webpack: ^5.1.0 || 5.83.0
     dependencies:
       fast-glob: 3.2.12
       glob-parent: 6.0.2
@@ -31322,7 +31274,7 @@ packages:
     resolution: {integrity: sha512-+ZHAZm/yqvJ2kDtPne3uX0C+Vr3Zn5jFn2N4HywtS5ujwvsVkyg0VArEXpl3BgczDA8anieki1FIzhchX4yrDw==}
     engines: {node: '>= 6.9.0 <7.0.0 || >= 8.9.0'}
     peerDependencies:
-      webpack: ^4.0.0 || 5.82.0
+      webpack: ^4.0.0 || 5.83.0
     dependencies:
       babel-code-frame: 6.26.0
       css-selector-tokenizer: 0.7.3
@@ -31342,7 +31294,7 @@ packages:
     resolution: {integrity: sha512-M5lSukoWi1If8dhQAUCvj4H8vUt3vOnwbQBH9DdTm/s4Ym2B/3dPMtYZeJmq7Q3S3Pa+I94DcZ7pc9bP14cWIQ==}
     engines: {node: '>= 8.9.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       camelcase: 5.3.1
       cssesc: 3.0.0
@@ -31364,7 +31316,7 @@ packages:
     resolution: {integrity: sha512-Q7mOvpBNBG7YrVGMxRxcBJZFL75o+cH2abNASdibkj/fffYD8qWbInZrD0S9ccI6vZclF3DsHE7njGlLtaHbhg==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
-      webpack: ^4.27.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.27.0 || ^5.0.0 || 5.83.0
     dependencies:
       icss-utils: 5.1.0(postcss@8.4.19)
       loader-utils: 2.0.4
@@ -33875,7 +33827,7 @@ packages:
     resolution: {integrity: sha512-4sNIOXgtH/9WZq4NvlfU3Opn5ynUsqBwSLyM+I7UOwdGigTBYfVVQEwe/msZNX/j4pCJTIM14Fsw66Svo1oVrw==}
     engines: {node: '>= 6.9.0'}
     peerDependencies:
-      webpack: ^4.0.0 || 5.82.0
+      webpack: ^4.0.0 || 5.83.0
     dependencies:
       loader-utils: 1.4.2
       schema-utils: 1.0.0
@@ -33886,7 +33838,7 @@ packages:
     resolution: {integrity: sha512-qo3glqyTa61Ytg4u73GultjHGjdRyig3tG6lPtyX/jOEJvHif9uB0/OCI2Kif6ctF3caQTW2G5gym21oAsI4pw==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.1.2
@@ -34223,7 +34175,7 @@ packages:
       eslint: '>= 6'
       typescript: '>= 2.7'
       vue-template-compiler: '*'
-      webpack: '>= 4 || 5.82.0'
+      webpack: '>= 4 || 5.83.0'
     peerDependenciesMeta:
       eslint:
         optional: true
@@ -34251,7 +34203,7 @@ packages:
       eslint: '>= 6'
       typescript: '>= 2.7'
       vue-template-compiler: '*'
-      webpack: '>= 4 || 5.82.0'
+      webpack: '>= 4 || 5.83.0'
     peerDependenciesMeta:
       eslint:
         optional: true
@@ -34283,7 +34235,7 @@ packages:
       eslint: '>= 6'
       typescript: '>= 2.7'
       vue-template-compiler: '*'
-      webpack: '>= 4 || 5.82.0'
+      webpack: '>= 4 || 5.83.0'
     peerDependenciesMeta:
       eslint:
         optional: true
@@ -35481,7 +35433,7 @@ packages:
     resolution: {integrity: sha512-9WQlLiAV5N9fCna4MUmBW/ifaUbuFZ2r7IZmtXzhyfyi4zgPEjXsmsYCKs+yT873MzRj+f1WMjuAiPNA7C6Tcw==}
     engines: {node: '>= 12.13.0'}
     peerDependencies:
-      webpack: ^5.0.0 || 5.82.0
+      webpack: ^5.0.0 || 5.83.0
     dependencies:
       html-minifier-terser: 6.1.0
       parse5: 6.0.1
@@ -35529,7 +35481,7 @@ packages:
     resolution: {integrity: sha512-q5oYdzjKUIPQVjOosjgvCHQOv9Ett9CYYHlgvJeXG0qQvdSojnBq4vAdQBwn1+yGveAwHCoe/rMR86ozX3+c2A==}
     engines: {node: '>=6.9'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       '@types/html-minifier-terser': 5.1.2
       '@types/tapable': 1.0.8
@@ -35547,7 +35499,7 @@ packages:
     resolution: {integrity: sha512-sy88PC2cRTVxvETRgUHFrL4No3UxvcH8G1NepGhqaTT+GXN2kTamqasot0inS5hXeg1cMbFDt27zzo9p35lZVw==}
     engines: {node: '>=10.13.0'}
     peerDependencies:
-      webpack: ^5.20.0 || 5.82.0
+      webpack: ^5.20.0 || 5.83.0
     dependencies:
       '@types/html-minifier-terser': 6.1.0
       html-minifier-terser: 6.1.0
@@ -36888,7 +36840,7 @@ packages:
     resolution: {integrity: sha512-a5SPObZgS0jB/ixaKSMdn6n/gXSrK2S6q/UfRJBT3e6gQmVjwZROTODQsYW5ZNwOu78hG62Y3fWlebaVOL0C+w==}
     engines: {node: '>= 4.8 < 5.0.0 || >= 5.10'}
     peerDependencies:
-      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0 || 5.82.0
+      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0 || 5.83.0
     dependencies:
       convert-source-map: 1.7.0
       istanbul-lib-instrument: 1.10.2
@@ -38249,7 +38201,7 @@ packages:
     engines: {node: '>= 4.8 < 5.0.0 || >= 5.10'}
     peerDependencies:
       less: ^2.3.1 || ^3.0.0
-      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0 || 5.82.0
+      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0 || 5.83.0
     dependencies:
       clone: 2.1.2
       less: 3.9.0
@@ -39010,6 +38962,13 @@ packages:
     resolution: {integrity: sha512-/Q+7MGzaETqifOMWYEA7HVMaZb4XbcRfaOzcSsHZEith83KGlvaSG33u0SKu89Mj5h+T8V2hM+8O45Qc5XTgwA==}
     engines: {node: '>= 10'}
     hasBin: true
+    dev: true
+
+  /marked@4.3.0:
+    resolution: {integrity: sha512-PRsaiG84bK+AMvxziE/lCFss8juXjNaWzVbN5tXAm4XjeaS9NAHhop+PjQxz2A9h8Q4M/xGmzP8vqNwy6JeK0A==}
+    engines: {node: '>= 12'}
+    hasBin: true
+    dev: false
 
   /marky@1.2.5:
     resolution: {integrity: sha512-q9JtQJKjpsVxCRVgQ+WapguSbKC3SQ5HEzFGPAJMStgh3QjCawp00UKv3MTTAArTmGmmPUvllHZoNbZ3gs0I+Q==}
@@ -39764,7 +39723,7 @@ packages:
     resolution: {integrity: sha512-vC886Mzpd2AkSM35XLkfQMjH+Ohz6RISVwhAejDUzZDheJAiz6G34lky1vyO8fZ702v7IrcKmsGwL1rRFnwvUA==}
     peerDependencies:
       monaco-editor: 0.30.x
-      webpack: ^4.5.0 || 5.x || 5.82.0
+      webpack: ^4.5.0 || 5.x || 5.83.0
     dependencies:
       loader-utils: 2.0.4
       monaco-editor: 0.30.1
@@ -41655,7 +41614,7 @@ packages:
     engines: {node: '>= 10.13.0'}
     peerDependencies:
       postcss: ^7.0.0 || ^8.0.1
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       cosmiconfig: 7.1.0
       klona: 2.0.5
@@ -42552,7 +42511,7 @@ packages:
     resolution: {integrity: sha512-ZnScIV3ag9A4wPX/ZayxL/jZH+euYb6FcUinPcgiQW0+UBtEv0O6Q3lGd3cqJ+GHH+rksEv3Pj99oxJ3u3VIKA==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.1.2
@@ -43781,7 +43740,7 @@ packages:
     resolution: {integrity: sha512-tuU7+zm0pTCynKYHpdqaPpe+MMTQ76I9TPZ7i4/5dZsigE350shQWe5EZNl5dBidM49TPET75tNqRbcsUZWeNA==}
     engines: {node: '>= 6.9.0'}
     peerDependencies:
-      webpack: ^3.0.0 || ^4.0.0 || 5.82.0
+      webpack: ^3.0.0 || ^4.0.0 || 5.83.0
     dependencies:
       clone-deep: 4.0.1
       loader-utils: 1.4.2
@@ -44186,7 +44145,7 @@ packages:
     dependencies:
       codemirror: 5.65.11
       codemirror-spell-checker: 1.1.2
-      marked: 2.1.3
+      marked: 4.3.0
     dev: false
 
   /sinon-chai@3.3.0(chai@4.3.7)(sinon@7.5.0):
@@ -44476,7 +44435,7 @@ packages:
     resolution: {integrity: sha512-yIYkFOsKn+OdOirRJUPQpnZiMkF74raDVQjj5ni3SzbOiA57SabeX80R5zyMQAKpvKySA3Z4a85vFX3bvpC6KQ==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
-      webpack: ^5.0.0 || 5.82.0
+      webpack: ^5.0.0 || 5.83.0
     dependencies:
       abab: 2.0.6
       iconv-lite: 0.6.3
@@ -45071,7 +45030,7 @@ packages:
     resolution: {integrity: sha512-V7TCORko8rs9rIqkSrlMfkqA63DfoGBBJmK1kKGCcSi+BWb4cqz0SRsnp4l6rU5iwOEd0/2ePv68SV22VXon4Q==}
     engines: {node: '>= 8.9.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 2.7.1
@@ -45082,7 +45041,7 @@ packages:
     resolution: {integrity: sha512-V7TCORko8rs9rIqkSrlMfkqA63DfoGBBJmK1kKGCcSi+BWb4cqz0SRsnp4l6rU5iwOEd0/2ePv68SV22VXon4Q==}
     engines: {node: '>= 8.9.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 2.7.1
@@ -45092,7 +45051,7 @@ packages:
     resolution: {integrity: sha512-Z0gYUJmzZ6ZdRUqpg1r8GsaFKypE+3xAzuFeMuoHgjc9KZv3wMyCRjQIWEbhoFSq7+7yoHXySDJyyWQaPajeiQ==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.1.2
@@ -45474,7 +45433,7 @@ packages:
     resolution: {integrity: sha512-04Rfe496lN8EYruwi6oPQkG0vo8C+HT49X687FZnpPF0qMAIHONI6HEXYPKDOE8e5HjXTyKfqRd/agHtH0kOtw==}
     engines: {node: '>= 6.9.0'}
     peerDependencies:
-      webpack: ^4.0.0 || 5.82.0
+      webpack: ^4.0.0 || 5.83.0
     dependencies:
       cacache: 12.0.4
       find-cache-dir: 2.1.0
@@ -45492,7 +45451,7 @@ packages:
     resolution: {integrity: sha512-jTgXh40RnvOrLQNgIkwEKnQ8rmHjHK4u+6UBEi+W+FPmvb+uo+chJXntKe7/3lW5mNysgSWD60KyesnhW8D6MQ==}
     engines: {node: '>= 10.13.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       cacache: 15.3.0
       find-cache-dir: 3.3.2
@@ -45515,7 +45474,7 @@ packages:
       '@swc/core': '*'
       esbuild: '*'
       uglify-js: '*'
-      webpack: ^5.1.0 || 5.82.0
+      webpack: ^5.1.0 || 5.83.0
     peerDependenciesMeta:
       '@swc/core':
         optional: true
@@ -45539,7 +45498,7 @@ packages:
       '@swc/core': '*'
       esbuild: '*'
       uglify-js: '*'
-      webpack: ^5.1.0 || 5.82.0
+      webpack: ^5.1.0 || 5.83.0
     peerDependenciesMeta:
       '@swc/core':
         optional: true
@@ -45932,7 +45891,7 @@ packages:
     engines: {node: '>=12.0.0'}
     peerDependencies:
       typescript: '*'
-      webpack: ^5.0.0 || 5.82.0
+      webpack: ^5.0.0 || 5.83.0
     dependencies:
       chalk: 4.1.2
       enhanced-resolve: 5.11.0
@@ -46621,7 +46580,7 @@ packages:
     engines: {node: '>= 8.9.0'}
     peerDependencies:
       file-loader: '*'
-      webpack: ^4.0.0 || 5.82.0
+      webpack: ^4.0.0 || 5.83.0
     peerDependenciesMeta:
       file-loader:
         optional: true
@@ -46638,7 +46597,7 @@ packages:
     engines: {node: '>= 8.9.0'}
     peerDependencies:
       file-loader: '*'
-      webpack: ^4.0.0 || 5.82.0
+      webpack: ^4.0.0 || 5.83.0
     peerDependenciesMeta:
       file-loader:
         optional: true
@@ -46654,7 +46613,7 @@ packages:
     engines: {node: '>= 10.13.0'}
     peerDependencies:
       file-loader: '*'
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     peerDependenciesMeta:
       file-loader:
         optional: true
@@ -47141,7 +47100,7 @@ packages:
     peerDependencies:
       '@webpack-cli/generators': '*'
       '@webpack-cli/migrate': '*'
-      webpack: 4.x.x || 5.x.x || 5.82.0
+      webpack: 4.x.x || 5.x.x || 5.83.0
       webpack-bundle-analyzer: '*'
       webpack-dev-server: '*'
     peerDependenciesMeta:
@@ -47178,7 +47137,7 @@ packages:
     peerDependencies:
       '@webpack-cli/generators': '*'
       '@webpack-cli/migrate': '*'
-      webpack: 4.x.x || 5.x.x || 5.82.0
+      webpack: 4.x.x || 5.x.x || 5.83.0
       webpack-bundle-analyzer: '*'
       webpack-dev-server: '*'
     peerDependenciesMeta:
@@ -47214,7 +47173,7 @@ packages:
     peerDependencies:
       '@webpack-cli/generators': '*'
       '@webpack-cli/migrate': '*'
-      webpack: 4.x.x || 5.x.x || 5.82.0
+      webpack: 4.x.x || 5.x.x || 5.83.0
       webpack-bundle-analyzer: '*'
       webpack-dev-server: '*'
     peerDependenciesMeta:
@@ -47249,7 +47208,7 @@ packages:
     peerDependencies:
       '@webpack-cli/generators': '*'
       '@webpack-cli/migrate': '*'
-      webpack: 4.x.x || 5.x.x || 5.82.0
+      webpack: 4.x.x || 5.x.x || 5.83.0
       webpack-bundle-analyzer: '*'
       webpack-dev-server: '*'
     peerDependenciesMeta:
@@ -47281,7 +47240,7 @@ packages:
     resolution: {integrity: sha512-djelc/zGiz9nZj/U7PTBi2ViorGJXEWo/3ltkPbDyxCXhhEXkW0ce99falaok4TPj+AsxLiXJR0EBOb0zh9fKQ==}
     engines: {node: '>= 6'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       memory-fs: 0.4.1
       mime: 2.6.0
@@ -47295,7 +47254,7 @@ packages:
     resolution: {integrity: sha512-PjwyVY95/bhBh6VUqt6z4THplYcsvQ8YNNBTBM873xLVmw8FLeALn0qurHbs9EmcfhzQis/eoqypSnZeuUz26w==}
     engines: {node: '>= v10.23.3'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       colorette: 1.4.0
       mem: 8.1.1
@@ -47310,7 +47269,7 @@ packages:
     resolution: {integrity: sha512-hj5CYrY0bZLB+eTO+x/j67Pkrquiy7kWepMHmUMoPsmcUaeEnQJqFzHJOyxgWlq746/wUuA64p9ta34Kyb01pA==}
     engines: {node: '>= 12.13.0'}
     peerDependencies:
-      webpack: ^4.0.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.0.0 || ^5.0.0 || 5.83.0
     dependencies:
       colorette: 2.0.19
       memfs: 3.4.11
@@ -47324,7 +47283,7 @@ packages:
     engines: {node: '>= 12.13.0'}
     hasBin: true
     peerDependencies:
-      webpack: ^4.37.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.37.0 || ^5.0.0 || 5.83.0
       webpack-cli: '*'
     peerDependenciesMeta:
       webpack-cli:
@@ -47369,7 +47328,7 @@ packages:
     engines: {node: '>= 12.13.0'}
     hasBin: true
     peerDependencies:
-      webpack: ^4.37.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.37.0 || ^5.0.0 || 5.83.0
       webpack-cli: '*'
     peerDependenciesMeta:
       webpack-cli:
@@ -47415,7 +47374,7 @@ packages:
     engines: {node: '>= 12.13.0'}
     hasBin: true
     peerDependencies:
-      webpack: ^4.37.0 || ^5.0.0 || 5.82.0
+      webpack: ^4.37.0 || ^5.0.0 || 5.83.0
       webpack-cli: '*'
     peerDependenciesMeta:
       webpack-cli:
@@ -47459,7 +47418,7 @@ packages:
     resolution: {integrity: sha512-Ez6ytc9IseDMLPo0qCuNNYzgtUl8NovOqjIq4uAU8LTD4uoa1w1KpZyyzFtLTEMZpkkOkLfL9eN+KGYdk1Qtwg==}
     engines: {node: '>= 4.3 < 5.0.0 || >= 5.10'}
     peerDependencies:
-      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0 || 5.82.0
+      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0 || 5.83.0
     dependencies:
       webpack: 4.46.0(webpack-cli@4.10.0)
     dev: true
