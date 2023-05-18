@@ -260,7 +260,7 @@ export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 
 	/**
 	 * When set, indicates that the inserted content should be deleted.
-	 * This is used in scenarios where content is move out from under an inserted subtree that is then deleted.
+	 * This is used in scenarios where content is moved out from under an inserted subtree that is then deleted.
 	 */
 	readonly isTransient?: true;
 }
