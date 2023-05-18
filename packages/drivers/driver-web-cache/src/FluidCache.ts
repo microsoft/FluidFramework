@@ -20,6 +20,7 @@ import {
 	FluidCacheEventSubCategories,
 	FluidCacheGenericEvent,
 } from "./fluidCacheTelemetry";
+import { pkgVersion } from "./packageVersion";
 
 // Some browsers have a usageDetails property that will tell you more detailed information
 // on how the storage is being used
@@ -102,6 +103,7 @@ export class FluidCache implements IPersistedCache {
 					quota: estimate.quota,
 					usage: estimate.usage,
 					indexedDBSize,
+					pkgVersion,
 				});
 			}
 		});
@@ -126,6 +128,7 @@ export class FluidCache implements IPersistedCache {
 				this.logger.sendErrorEvent(
 					{
 						eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+						pkgVersion,
 					},
 					error,
 				);
@@ -194,6 +197,7 @@ export class FluidCache implements IPersistedCache {
 			this.logger.sendErrorEvent(
 				{
 					eventName: FluidCacheErrorEvent.FluidCacheDeleteOldEntriesError,
+					pkgVersion,
 				},
 				error,
 			);
@@ -213,6 +217,7 @@ export class FluidCache implements IPersistedCache {
 			type: cacheEntry.type,
 			duration: performance.now() - startTime,
 			dbOpenPerf: cachedItem?.dbOpenPerf,
+			pkgVersion,
 		});
 
 		// Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
@@ -240,6 +245,7 @@ export class FluidCache implements IPersistedCache {
 				this.logger.sendTelemetryEvent({
 					eventName: FluidCacheGenericEvent.FluidCachePartitionKeyMismatch,
 					subCategory: FluidCacheEventSubCategories.FluidCache,
+					pkgVersion,
 				});
 
 				this.closeDb(db);
@@ -260,7 +266,7 @@ export class FluidCache implements IPersistedCache {
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us. Return undefined in this case
 			this.logger.sendErrorEvent(
-				{ eventName: FluidCacheErrorEvent.FluidCacheGetError },
+				{ eventName: FluidCacheErrorEvent.FluidCacheGetError, pkgVersion },
 				error,
 			);
 			this.closeDb(db);
@@ -293,7 +299,7 @@ export class FluidCache implements IPersistedCache {
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us
 			this.logger.sendErrorEvent(
-				{ eventName: FluidCacheErrorEvent.FluidCachePutError },
+				{ eventName: FluidCacheErrorEvent.FluidCachePutError, pkgVersion },
 				error,
 			);
 		} finally {

@@ -10,7 +10,6 @@ import {
 	initializeForest,
 	moveToDetachedField,
 	TreeNavigationResult,
-	fieldSchema,
 	InMemoryStoredSchemaRepository,
 	StoredSchemaRepository,
 	recordDependency,
@@ -28,7 +27,7 @@ import {
 	cursorToJsonObject,
 	jsonNumber,
 	jsonObject,
-	jsonSchemaData,
+	jsonSchema,
 	jsonRoot,
 	singleJsonCursor,
 	jsonBoolean,
@@ -41,6 +40,7 @@ import {
 	singleTextCursor,
 	defaultSchemaPolicy,
 	isNeverField,
+	SchemaBuilder,
 } from "../feature-libraries";
 import { MockDependent } from "./utils";
 import { testGeneralPurposeTreeCursor } from "./cursorTestSuite";
@@ -106,9 +106,9 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 					const forest = factory(schema);
 
-					const rootFieldSchema = fieldSchema(FieldKinds.optional, jsonRoot.types);
+					const rootFieldSchema = SchemaBuilder.field(FieldKinds.optional, ...jsonRoot);
 					schema.update({
-						...jsonSchemaData,
+						...jsonSchema,
 						globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
 					});
 
@@ -538,6 +538,49 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.equal(reader.nextNode(), false);
 			});
 
+			it("move-out under transient node", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+
+				const moveId: Delta.MoveId = brand(1);
+				const moveOut: Delta.MoveOut = {
+					type: Delta.MarkType.MoveOut,
+					count: 1,
+					moveId,
+				};
+
+				const moveIn: Delta.MoveIn = {
+					type: Delta.MarkType.MoveIn,
+					count: 1,
+					moveId,
+				};
+				const mark: Delta.Insert = {
+					type: Delta.MarkType.Insert,
+					content: [
+						singleTextCursor({
+							type: jsonObject.name,
+							fields: {
+								x: [
+									{
+										type: jsonNumber.name,
+										value: 0,
+									},
+								],
+							},
+						}),
+					],
+					isTransient: true,
+					fields: new Map([[xField, [moveOut]]]),
+				};
+				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark, moveIn]]]);
+				forest.applyDelta(delta);
+
+				const reader = forest.allocateCursor();
+				moveToDetachedField(forest, reader);
+				assert(reader.firstNode());
+				assert.equal(reader.value, 0);
+				assert.equal(reader.nextNode(), false);
+			});
+
 			it("move out and move in", () => {
 				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
 				initializeForest(forest, nestedContent.map(singleTextCursor));
@@ -708,7 +751,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
 				const dependent = new MockDependent("dependent");
 				recordDependency(dependent, forest);
-				forest.schema.update(jsonSchemaData);
+				forest.schema.update(jsonSchema);
 
 				assert.deepEqual(dependent.tokens.length, 1);
 			});
@@ -812,7 +855,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		"forest cursor",
 		(data): ITreeCursor => {
 			const forest = factory(
-				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
+				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchema),
 			);
 			initializeForest(forest, [singleTextCursor(data)]);
 			const cursor = forest.allocateCursor();

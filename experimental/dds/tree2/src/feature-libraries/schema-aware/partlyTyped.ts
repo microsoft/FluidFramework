@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldSchema, ITreeCursor } from "../../core";
-import { FieldEditor, FieldKind, Multiplicity } from "../modular-schema";
-import { UntypedField, UntypedTree, UntypedTreeContext } from "../untypedTree";
+import { FieldStoredSchema, ITreeCursor } from "../../core";
+import { Optional, Sequence, ValueFieldKind } from "../defaultFieldKinds";
+import { UntypedField } from "../untypedTree";
 
 /**
  * A sequence field in an {@link UntypedTree}.
@@ -17,33 +17,11 @@ import { UntypedField, UntypedTree, UntypedTreeContext } from "../untypedTree";
  */
 export interface UntypedSequenceField extends UntypedField {
 	/**
-	 * The `FieldSchema` of this field.
+	 * The `FieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldSchema & {
-		readonly kind: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
+	readonly fieldSchema: FieldStoredSchema & {
+		readonly kind: Sequence;
 	};
-
-	/**
-	 * The `FieldKey` of this field.
-	 */
-	readonly fieldKey: FieldKey;
-
-	/**
-	 * The node which has this field on it under `fieldKey`.
-	 * `undefined` iff this field is a detached field.
-	 */
-	readonly parent?: UntypedTree;
-
-	/**
-	 * A common context of a "forest" of EditableTrees.
-	 */
-	readonly context: UntypedTreeContext;
-
-	/**
-	 * Gets a node of this field by its index without unwrapping.
-	 * Note that the node must exists at the given index.
-	 */
-	getNode(index: number): UntypedTree;
 
 	/**
 	 * Inserts new nodes into this field.
@@ -70,4 +48,36 @@ export interface UntypedSequenceField extends UntypedField {
 	 * all the insertions will be preserved.
 	 */
 	replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+}
+
+/**
+ * A value field in an {@link UntypedTree}.
+ * @alpha
+ */
+export interface UntypedValueField extends UntypedField {
+	/**
+	 * The `FieldStoredSchema` of this field.
+	 */
+	readonly fieldSchema: FieldStoredSchema & {
+		readonly kind: ValueFieldKind;
+	};
+
+	// TODO: add editing APIs
+	// TODO: add friendly .child getter
+}
+
+/**
+ * A value field in an {@link UntypedTree}.
+ * @alpha
+ */
+export interface UntypedOptionalField extends UntypedField {
+	/**
+	 * The `FieldStoredSchema` of this field.
+	 */
+	readonly fieldSchema: FieldStoredSchema & {
+		readonly kind: Optional;
+	};
+
+	// TODO: add editing APIs
+	// TODO: add friendly .child getter
 }
