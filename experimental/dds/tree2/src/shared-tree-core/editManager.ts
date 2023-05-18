@@ -396,8 +396,13 @@ export class EditManager<
 		);
 	}
 
+	/**
+	 * Needs to be called after a summary is loaded.
+	 * @remarks This is a temporary workaround until UndoRedoManager is better managed.
+	 */
 	public afterSummaryLoad(): void {
-		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
+		this.trunkUndoRedoManager.repairDataStoreProvider =
+			this.localBranchUndoRedoManager.clone().repairDataStoreProvider;
 	}
 
 	public addSequencedChange(

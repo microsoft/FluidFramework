@@ -238,7 +238,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
-		// this.editManager.afterSummaryLoad();
+		this.editManager.afterSummaryLoad();
 	}
 
 	/**
