@@ -89,9 +89,6 @@ export class BaseContainerRuntimeFactory
 			initializeEntryPoint: this.initializeEntryPoint,
 		});
 
-		// we register the runtime so developers of providers can use it in the factory pattern.
-		dc.register(IContainerRuntime, runtime);
-
 		return runtime;
 	}
 
