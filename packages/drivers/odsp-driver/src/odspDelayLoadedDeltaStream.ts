@@ -181,13 +181,14 @@ export class OdspDelayLoadedDeltaStream {
 						this.cache.sessionJoinCache.remove(this.joinSessionKey);
 					}
 					// If we hit this assert, it means that "disconnect" event is emitted before the connection went through
-					// dispose flow which is not correct and could lead to a bunch of erros.
+					// dispose flow which is not correct and could lead to a bunch of errors.
 					assert(connection.disposed, 0x4ae /* Connection should be disposed by now */);
 					this.currentConnection = undefined;
 				});
 				this.currentConnection = connection;
 				return connection;
 			} catch (error) {
+				this.clearJoinSessionTimer();
 				this.cache.sessionJoinCache.remove(this.joinSessionKey);
 
 				const normalizedError = this.annotateConnectionError(
@@ -217,6 +218,19 @@ export class OdspDelayLoadedDeltaStream {
 		requestSocketToken: boolean,
 		clientId: string | undefined,
 	) {
+		if (this.joinSessionRefreshTimer !== undefined) {
+			this.clearJoinSessionTimer();
+			const originalStackTraceLimit = (Error as any).stackTraceLimit;
+			(Error as any).stackTraceLimit = 50;
+			this.mc.logger.sendTelemetryEvent(
+				{
+					eventName: "DuplicateJoinSessionRefresh",
+				},
+				new Error("DuplicateJoinSessionRefresh"),
+			);
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
+		}
+
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
 				getWithRetryForTokenRefresh(async (options) => {
@@ -383,7 +397,7 @@ export class OdspDelayLoadedDeltaStream {
 	}
 
 	/**
-	 * Creats a connection to the given delta stream endpoint
+	 * Creates a connection to the given delta stream endpoint
 	 *
 	 * @param tenantId - the ID of the tenant
 	 * @param documentId - document ID

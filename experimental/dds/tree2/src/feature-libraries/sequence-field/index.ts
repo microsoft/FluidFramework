@@ -24,8 +24,6 @@ export {
 	NodeChangeType,
 	NodeCount,
 	MoveId,
-	ObjectMark,
-	PriorOp,
 	ProtoNode,
 	RangeType,
 	Reattach,
@@ -33,15 +31,10 @@ export {
 	ReturnTo,
 	Revive,
 	Tiebreak,
-	Skip,
+	NoopMark,
 	LineageEvent,
 	HasReattachFields,
 	CellSpanningMark,
-	InputSpanningMark,
-	OutputSpanningMark,
-	SkipLikeReattach,
-	Conflicted,
-	CanConflict,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
@@ -58,7 +51,6 @@ export { amendCompose, compose, NodeChangeComposer } from "./compose";
 export {
 	areComposable,
 	areRebasable,
-	isActiveReattach,
 	getInputLength,
 	isDetachMark,
 	isReattach,

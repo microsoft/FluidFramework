@@ -25,7 +25,7 @@ import {
 	cursorsForTypedFieldData,
 } from "../feature-libraries";
 import { fail } from "../util";
-import { ISharedTreeView } from "./sharedTree";
+import { ISharedTreeView } from "./sharedTreeView";
 
 /**
  * See {@link ISharedTreeView.schematize} for more details.
@@ -176,5 +176,5 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree: SchemaAware.TypedField<SchemaAware.ApiMode.Simple, TRoot["schema"]>;
+	readonly initialTree: SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple>;
 }

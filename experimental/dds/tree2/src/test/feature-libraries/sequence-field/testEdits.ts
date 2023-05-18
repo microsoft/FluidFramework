@@ -12,6 +12,8 @@ import { brand } from "../../../util";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
+// eslint-disable-next-line import/no-internal-modules
+import { DetachEvent } from "../../../feature-libraries/sequence-field/format";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -63,15 +65,24 @@ function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<n
 	return SF.sequenceFieldEditor.delete(startIndex, size);
 }
 
+function createRedundantRemoveChangeset(
+	index: number,
+	size: number,
+	detachEvent: DetachEvent,
+): SF.Changeset<never> {
+	const changeset = createDeleteChangeset(index, size);
+	(changeset[changeset.length - 1] as SF.Delete).detachEvent = detachEvent;
+	return changeset;
+}
+
 function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachedBy: RevisionTag,
 	detachIndex?: number,
 	reviver = fakeRepair,
-	conflictsWith?: RevisionTag,
-	linage?: SF.LineageEvent[],
-	lastDetachedBy?: RevisionTag,
+	lineage?: SF.LineageEvent[],
+	lastDetach?: DetachEvent,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
 		startIndex,
@@ -81,14 +92,56 @@ function createReviveChangeset(
 		detachIndex,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
-	if (conflictsWith !== undefined) {
-		mark.conflictsWith = conflictsWith;
+	if (lastDetach !== undefined) {
+		mark.detachEvent = lastDetach;
 	}
-	if (lastDetachedBy !== undefined) {
-		mark.lastDetachedBy = lastDetachedBy;
+	if (lineage !== undefined) {
+		mark.lineage = lineage;
 	}
-	if (linage !== undefined) {
-		mark.lineage = linage;
+	return markList;
+}
+
+function createRedundantReviveChangeset(
+	startIndex: number,
+	count: number,
+	detachedBy: RevisionTag,
+	detachIndex?: number,
+	reviver = fakeRepair,
+	isIntention?: boolean,
+): SF.Changeset<never> {
+	const markList = SF.sequenceFieldEditor.revive(
+		startIndex,
+		count,
+		detachedBy,
+		reviver,
+		detachIndex,
+		isIntention,
+	);
+	const mark = markList[markList.length - 1] as SF.Reattach;
+	delete mark.detachEvent;
+	return markList;
+}
+
+function createBlockedReviveChangeset(
+	startIndex: number,
+	count: number,
+	inverseOf: RevisionTag,
+	lastDetachedBy: RevisionTag,
+	lastDetachIndex?: number,
+	reviver = fakeRepair,
+	lineage?: SF.LineageEvent[],
+): SF.Changeset<never> {
+	const markList = SF.sequenceFieldEditor.revive(
+		startIndex,
+		count,
+		inverseOf,
+		reviver,
+		lastDetachIndex,
+	);
+	const mark = markList[markList.length - 1] as SF.Reattach;
+	mark.detachEvent = { revision: lastDetachedBy, index: lastDetachIndex ?? startIndex };
+	if (lineage !== undefined) {
+		mark.lineage = lineage;
 	}
 	return markList;
 }
@@ -99,8 +152,8 @@ function createIntentionalReviveChangeset(
 	detachedBy: RevisionTag,
 	detachIndex?: number,
 	reviver = fakeRepair,
-	conflictsWith?: RevisionTag,
-	linage?: SF.LineageEvent[],
+	lineage?: SF.LineageEvent[],
+	lastDetach?: DetachEvent,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(
 		startIndex,
@@ -111,11 +164,13 @@ function createIntentionalReviveChangeset(
 		true,
 	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
-	if (conflictsWith !== undefined) {
-		mark.conflictsWith = conflictsWith;
+
+	if (lastDetach !== undefined) {
+		mark.detachEvent = lastDetach;
 	}
-	if (linage !== undefined) {
-		mark.lineage = linage;
+
+	if (lineage !== undefined) {
+		mark.lineage = lineage;
 	}
 	return markList;
 }
@@ -148,12 +203,31 @@ function createModifyChangeset<TNodeChange>(
 	return SF.sequenceFieldEditor.buildChildChange(index, change);
 }
 
+function createModifyDetachedChangeset<TNodeChange>(
+	index: number,
+	change: TNodeChange,
+	detachEvent: DetachEvent,
+	lineage?: SF.LineageEvent[],
+): SF.Changeset<TNodeChange> {
+	const changeset = createModifyChangeset(index, change);
+	const modify = changeset[changeset.length - 1] as SF.Modify;
+	modify.detachEvent = detachEvent;
+	if (lineage !== undefined) {
+		modify.lineage = lineage;
+	}
+	return changeset;
+}
+
 export const ChangeMaker = {
 	insert: createInsertChangeset,
 	delete: createDeleteChangeset,
+	redundantRemove: createRedundantRemoveChangeset,
 	revive: createReviveChangeset,
 	intentionalRevive: createIntentionalReviveChangeset,
+	redundantRevive: createRedundantReviveChangeset,
+	blockedRevive: createBlockedReviveChangeset,
 	move: createMoveChangeset,
 	return: createReturnChangeset,
 	modify: createModifyChangeset,
+	modifyDetached: createModifyDetachedChangeset,
 };

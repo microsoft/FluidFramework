@@ -98,6 +98,14 @@ async function main() {
 		profile: profileName,
 	});
 
+	// this will enabling capturing the full stack for errors
+	// since this is test capturing the full stack is worth it
+	// in non-test environment we need to be more cautious
+	// as this will incur a perf impact when errors are
+	// thrown and will take more storage in any logging sink
+	// https://v8.dev/docs/stack-trace-api
+	Error.stackTraceLimit = Infinity;
+
 	process.on("uncaughtExceptionMonitor", (error, origin) => {
 		try {
 			logger.sendErrorEvent({ eventName: "uncaughtExceptionMonitor", origin }, error);

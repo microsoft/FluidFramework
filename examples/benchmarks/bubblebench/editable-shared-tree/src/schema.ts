@@ -41,5 +41,4 @@ export type FlexClient = SchemaAware.TypedNode<typeof clientSchema, SchemaAware.
 
 // TODO: experiment with this interface pattern. Maybe it makes better intellisense and errors?
 // TODO: Intellisense is pretty bad here if not using interface.
-export interface ClientsField
-	extends SchemaAware.TypedField<SchemaAware.ApiMode.Editable, typeof rootAppStateSchema> {}
+export interface ClientsField extends SchemaAware.TypedField<typeof rootAppStateSchema> {}

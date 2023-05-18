@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-slider-coordinate-view",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"private": true,
 	"description": "View for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -86,6 +86,16 @@
 				],
 				"library": "main"
 			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"@fluid-example/multiview-coordinate-interface#build:esnext"
+			],
+			"build:esnext": [
+				"@fluid-example/multiview-coordinate-interface#build:esnext"
+			]
 		}
 	},
 	"jest-junit": {

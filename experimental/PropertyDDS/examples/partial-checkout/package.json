@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/partial-checkout",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"private": true,
 	"description": "A sample using property-dds and property-binder to create a reactive application.",
 	"homepage": "https://fluidframework.com",
@@ -105,6 +105,19 @@
 		"webpack-dev-server": "~4.6.0"
 	},
 	"fluidBuild": {
+		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"webpack"
+				],
+				"script": false
+			},
+			"tsc": [
+				"...",
+				"@fluid-experimental/property-inspector-table#build:copy-resources"
+			]
+		},
 		"buildDependencies": {
 			"merge": {
 				"tsc": {
