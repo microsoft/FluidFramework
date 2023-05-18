@@ -451,9 +451,9 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
 			return undefined;
-		} else if (this.logOffset === undefined) {
+		} else if (!this.logOffset) {
 			Lumberjack.error(
-				`Deli logOffset is undefined`,
+				`No value for logOffset`,
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
 		}

@@ -137,9 +137,9 @@ export class ScribeLambda implements IPartitionLambda {
 				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
 			return;
-		} else if (this.lastOffset === undefined) {
+		} else if (!this.lastOffset) {
 			Lumberjack.error(
-				`Scribe logOffset is undefined`,
+				`No value for lastOffset`,
 				getLumberBaseProperties(this.documentId, this.tenantId),
 			);
 		}
