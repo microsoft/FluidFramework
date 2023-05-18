@@ -76,7 +76,7 @@ export class EditManager<
 	private readonly sequenceMap = new BTree<SeqNumber, GraphCommit<TChangeset>>();
 
 	/** The {@link UndoRedoManager} associated with the trunk */
-	private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
+	private trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
 
 	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
@@ -362,9 +362,6 @@ export class EditManager<
 		this.trunk.setHead(
 			data.trunk.reduce((base, c) => {
 				const commit = mintCommit(base, c);
-				this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
-					this.changeFamily.intoDelta(commit.change),
-				);
 				this.sequenceMap.set(c.sequenceNumber, commit);
 				this.trunkMetadata.set(c.revision, {
 					sequenceNumber: c.sequenceNumber,
@@ -397,6 +394,10 @@ export class EditManager<
 		return getPathFromBase(this.localBranch.getHead(), this.trunk.getHead()).map(
 			(c) => c.change,
 		);
+	}
+
+	public afterSummaryLoad(): void {
+		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
 	}
 
 	public addSequencedChange(
