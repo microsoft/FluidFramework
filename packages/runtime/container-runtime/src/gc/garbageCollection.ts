@@ -490,17 +490,17 @@ export class GarbageCollector implements IGarbageCollector {
 			logger,
 			{ eventName: "GarbageCollection" },
 			async (event) => {
-				// Pre-GC step.
+				/** Pre-GC steps */
 				// Ensure that state has been initialized from the base snapshot data.
 				await this.initializeGCStateFromBaseSnapshotP;
 				// Let the runtime update its pending state before GC runs.
 				await this.runtime.updateStateBeforeGC();
 
-				// GC step. Includes running GC algorithm on the reference graph, running Mark and Sweep phases.
+				/** GC step */
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({ ...gcStats, timestamp: currentReferenceTimestampMs });
 
-				// Post-GC step.
+				/** Post-GC steps */
 				// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
 				// updates its state so that we don't send false positives based on intermediate state. For example, we may get
 				// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
