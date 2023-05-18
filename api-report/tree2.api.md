@@ -110,9 +110,9 @@ const enum ApiMode {
 // @alpha
 type ApplyMultiplicity<TMultiplicity extends Multiplicity, TypedChild, Mode extends ApiMode> = {
     [Multiplicity.Forbidden]: undefined;
-    [Multiplicity.Optional]: undefined | TypedChild;
+    [Multiplicity.Optional]: Mode extends ApiMode.Editable ? EditableOptionalField<TypedChild> : undefined | TypedChild;
     [Multiplicity.Sequence]: Mode extends ApiMode.Editable | ApiMode.EditableUnwrapped ? EditableSequenceField<TypedChild> : TypedChild[];
-    [Multiplicity.Value]: TypedChild;
+    [Multiplicity.Value]: Mode extends ApiMode.Editable ? EditableValueField<TypedChild> : TypedChild;
 }[TMultiplicity];
 
 // @alpha
@@ -301,6 +301,9 @@ export interface CursorAdapter<TNode> {
 }
 
 // @alpha
+export function cursorForTypedTreeData<T extends TreeSchema>(schemaData: SchemaDataAndPolicy, schema: T, data: TypedNode<T, ApiMode.Simple>): ITreeCursorSynchronous;
+
+// @alpha
 export function cursorFromContextualData(schemaData: SchemaDataAndPolicy, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
 
 // @alpha (undocumented)
@@ -380,7 +383,14 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
 }
 
 // @alpha (undocumented)
-type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<TypedChild>;
+type EditableOptionalField<TypedChild> = [
+UntypedOptionalField & MarkedArrayLike<TypedChild>
+][InternalTypedSchemaTypes._InlineTrick];
+
+// @alpha (undocumented)
+type EditableSequenceField<TypedChild> = [
+UntypedSequenceField & MarkedArrayLike<TypedChild>
+][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
@@ -421,6 +431,11 @@ export interface EditableTreeEvents {
 
 // @alpha
 export type EditableTreeOrPrimitive = EditableTree | PrimitiveValue;
+
+// @alpha (undocumented)
+type EditableValueField<TypedChild> = [
+UntypedValueField & MarkedArrayLike<TypedChild>
+][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha (undocumented)
 export abstract class EditBuilder<TChange> implements ChangeFamilyEditor {
@@ -878,6 +893,8 @@ declare namespace InternalTypes {
         ValuePropertyFromSchema,
         FlexibleObject,
         EditableSequenceField,
+        EditableValueField,
+        EditableOptionalField,
         TypedField,
         UnbrandedName,
         TypeArrayToTypedTreeArray,
@@ -886,7 +903,9 @@ declare namespace InternalTypes {
         ValuesOf,
         TypedValue,
         PrimitiveValueSchema,
-        UntypedSequenceField
+        UntypedSequenceField,
+        UntypedOptionalField,
+        UntypedValueField
     }
 }
 
@@ -1549,7 +1568,7 @@ export interface SchemaPolicy {
 // @alpha
 export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = GlobalFieldSchema> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<SchemaAware.ApiMode.Simple, TRoot["schema"]>;
+    readonly initialTree: SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple>;
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 
@@ -1786,8 +1805,8 @@ TypedNode<Assume<Head, TreeSchema>, Mode>,
 ][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
-type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
-ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>, Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode>
+type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
+ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>, Mode>
 ][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
@@ -1797,7 +1816,7 @@ type TypedFields<Mode extends ApiMode, TFields extends undefined | {
 TFields extends {
     [key: string]: FieldSchema;
 } ? {
-    [key in keyof TFields]: TypedField<Mode, TFields[key]>;
+    [key in keyof TFields]: TypedField<TFields[key], Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode>;
 } : EmptyObject
 ][InternalTypedSchemaTypes._InlineTrick];
 
@@ -1854,16 +1873,19 @@ export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
 }
 
 // @alpha
-interface UntypedSequenceField extends UntypedField {
-    readonly context: UntypedTreeContext;
-    deleteNodes(index: number, count?: number): void;
-    readonly fieldKey: FieldKey;
+interface UntypedOptionalField extends UntypedField {
     readonly fieldSchema: FieldStoredSchema & {
-        readonly kind: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
+        readonly kind: Optional;
     };
-    getNode(index: number): UntypedTree;
+}
+
+// @alpha
+interface UntypedSequenceField extends UntypedField {
+    deleteNodes(index: number, count?: number): void;
+    readonly fieldSchema: FieldStoredSchema & {
+        readonly kind: Sequence;
+    };
     insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
-    readonly parent?: UntypedTree;
     replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
 
@@ -1899,6 +1921,13 @@ export interface UntypedTreeCore extends Iterable<UntypedField> {
 
 // @alpha
 export type UntypedTreeOrPrimitive = UntypedTree | PrimitiveValue;
+
+// @alpha
+interface UntypedValueField extends UntypedField {
+    readonly fieldSchema: FieldStoredSchema & {
+        readonly kind: ValueFieldKind;
+    };
+}
 
 // @alpha
 export type UnwrappedEditableField = UnwrappedEditableTree | undefined | EditableField;
