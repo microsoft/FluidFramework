@@ -832,6 +832,7 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatible
 // @alpha
 interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly content: readonly TTree[];
+    readonly isTransient?: true;
     // (undocumented)
     readonly type: typeof MarkType.Insert;
 }
