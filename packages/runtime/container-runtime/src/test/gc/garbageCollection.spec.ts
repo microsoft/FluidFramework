@@ -253,7 +253,7 @@ describe("Garbage Collection Tests", () => {
 			loadedEventName: string,
 			expectDeleteLogs?: boolean,
 		) => {
-			const deleteEventName = "GarbageCollector:GCObjectDeleted";
+			const deleteEventName = "GarbageCollector:GC_SweepReadyObjects_Delete";
 			// Validates that no unexpected event has been fired.
 			function validateNoEvents() {
 				mockLogger.assertMatchNone(
@@ -314,10 +314,11 @@ describe("Garbage Collection Tests", () => {
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 
 				if (expectDeleteLogs) {
-					expectedEvents.push(
-						{ eventName: deleteEventName, timeout, id: nodes[2] },
-						{ eventName: deleteEventName, timeout, id: nodes[3] },
-					);
+					expectedEvents.push({
+						eventName: deleteEventName,
+						timeout,
+						id: JSON.stringify([nodes[2], nodes[3]]),
+					});
 				} else {
 					assert(
 						!mockLogger.events.some((event) => event.eventName === deleteEventName),
@@ -437,7 +438,11 @@ describe("Garbage Collection Tests", () => {
 				await mockNodeChangesAndRunGC(garbageCollector);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs) {
-					expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[3] });
+					expectedEvents.push({
+						eventName: deleteEventName,
+						timeout,
+						id: JSON.stringify([nodes[3]]),
+					});
 				} else {
 					assert(
 						!mockLogger.events.some((event) => event.eventName === deleteEventName),
@@ -496,7 +501,7 @@ describe("Garbage Collection Tests", () => {
 				// Validate that the sweep ready event is logged when GC runs after load.
 				if (expectDeleteLogs) {
 					mockLogger.assertMatch(
-						[{ eventName: deleteEventName, timeout, id: nodes[3] }],
+						[{ eventName: deleteEventName, timeout, id: JSON.stringify([nodes[3]]) }],
 						"sweep ready event not generated as expected",
 					);
 				} else {
@@ -661,9 +666,11 @@ describe("Garbage Collection Tests", () => {
 				if (expectDeleteLogs) {
 					mockLogger.assertMatch(
 						[
-							{ eventName: deleteEventName, timeout, id: nodes[1] },
-							{ eventName: deleteEventName, timeout, id: nodes[2] },
-							{ eventName: deleteEventName, timeout, id: nodes[3] },
+							{
+								eventName: deleteEventName,
+								timeout,
+								id: JSON.stringify([nodes[1], nodes[2], nodes[3]]),
+							},
 						],
 						"sweep ready event not generated as expected",
 					);

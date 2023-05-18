@@ -299,7 +299,7 @@ describe("GC Telemetry Tracker", () => {
 			loadedEventName: string,
 			expectDeleteLogs?: boolean,
 		) => {
-			const deleteEventName = "GarbageCollector:GCObjectDeleted";
+			const deleteEventName = "GarbageCollector:GC_SweepReadyObjects_Delete";
 
 			// Validates that no unexpected event has been fired.
 			function validateNoEvents() {
@@ -355,10 +355,11 @@ describe("GC Telemetry Tracker", () => {
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs && isSummarizerClient) {
-					expectedEvents.push(
-						{ eventName: deleteEventName, timeout, id: nodes[1] },
-						{ eventName: deleteEventName, timeout, id: nodes[2] },
-					);
+					expectedEvents.push({
+						eventName: deleteEventName,
+						timeout,
+						id: JSON.stringify([nodes[1], nodes[2]]),
+					});
 				} else {
 					assert(
 						!mockLogger.events.some((event) => event.eventName === deleteEventName),
@@ -431,7 +432,11 @@ describe("GC Telemetry Tracker", () => {
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs && isSummarizerClient) {
-					expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[2] });
+					expectedEvents.push({
+						eventName: deleteEventName,
+						timeout,
+						id: JSON.stringify([nodes[2]]),
+					});
 				} else {
 					assert(
 						!mockLogger.events.some((event) => event.eventName === deleteEventName),
