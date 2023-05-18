@@ -214,8 +214,13 @@ describe("Summary Compression Test", () => {
 		const storage = await buildCompressionStorage(config);
 		checkCompressionConfig(storage, 763, SummaryCompressionAlgorithm.None);
 	});
-	it("Verify Compressed Markup at Summary", async () => {
-		const storage = (await buildCompressionStorage(true)) as DocumentStorageServiceProxy;
+	it("Verify Compressed Markup at Summary (summary-key markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+			processor: SummaryCompressionProcessor.SummaryKey,
+		};
+		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 		const summary = generateSummaryWithContent(1000);
 		await storage.uploadSummaryWithContext(summary, {
 			referenceSequenceNumber: 0,
@@ -229,8 +234,13 @@ describe("Summary Compression Test", () => {
 		const keyName = "compressed_2_header";
 		assert(headerHolder.tree[keyName] !== undefined, `The header is not compressed ${keyName}`);
 	});
-	it("Verify Blob Enc/Dec Symetry", async () => {
-		const storage = (await buildCompressionStorage(true)) as DocumentStorageServiceProxy;
+	it("Verify Blob Enc/Dec Symetry (summary-key markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+			processor: SummaryCompressionProcessor.SummaryKey,
+		};
+		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 		const summary = generateSummaryWithContent(1000);
 		const originHeaderHolder: ISummaryTree = getHeaderHolder(summary);
 		const originBlob = (originHeaderHolder.tree.header as ISummaryBlob).content;
@@ -246,8 +256,13 @@ describe("Summary Compression Test", () => {
 		const blobStr = new TextDecoder().decode(blob);
 		assert(blobStr === originBlob, "The origin and the downloaded blob are not the same");
 	});
-	it("Verify Upload / Download Summary", async () => {
-		const storage = (await buildCompressionStorage(true)) as DocumentStorageServiceProxy;
+	it("Verify Upload / Download Summary (summary-key markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+			processor: SummaryCompressionProcessor.SummaryKey,
+		};
+		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 		const summary = generateSummaryWithContent(1000);
 		const originBlobContent = getHeaderContent(summary);
 		await storage.uploadSummaryWithContext(summary, {

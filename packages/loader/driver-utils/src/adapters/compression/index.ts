@@ -8,5 +8,4 @@ export {
 	ICompressionStorageConfig,
 	SummaryCompressionProcessor,
 } from "./compressionTypes";
-export { DocumentServiceFactoryCompressionAdapter as DocumentServiceFactorySummaryKeyCompressionAdapter } from "./summarykey";
-export { DocumentServiceFactoryCompressionAdapter as DocumentServiceFactorySummaryBlobCompressionAdapter } from "./summaryblob";
+export { DocumentServiceFactoryCompressionAdapter } from "./documentServiceFactoryCompressionAdapter";

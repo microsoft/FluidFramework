@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { DocumentServiceFactoryCompressionAdapter } from "./documentServiceFactorySummaryBlobCompressionAdapter";
+export { DocumentStorageServiceCompressionAdapter } from "./documentStorageServiceSummaryBlobCompressionAdapter";

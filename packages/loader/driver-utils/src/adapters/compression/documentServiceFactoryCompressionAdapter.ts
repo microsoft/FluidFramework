@@ -10,10 +10,10 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ICompressionStorageConfig } from "../";
-import { DocumentServiceFactoryProxy } from "../../../documentServiceFactoryProxy";
-import { DocumentStorageServiceCompressionAdapter } from "./documentStorageServiceSummaryKeyCompressionAdapter";
-import { DocumentServiceCompressionAdapter } from "./documentServiceSummaryKeyCompressionAdapter";
+import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy";
+import { ICompressionStorageConfig } from "..";
+import { DocumentStorageServiceCompressionAdapter } from "./summaryblob";
+import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter";
 
 export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFactoryProxy {
 	constructor(

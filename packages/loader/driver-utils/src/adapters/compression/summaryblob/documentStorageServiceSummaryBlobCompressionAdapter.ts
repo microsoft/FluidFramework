@@ -63,13 +63,17 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		return typeof input === "string" ? new TextEncoder().encode(input) : input;
 	}
 
+	private static isKeyUncompressed(key: string): boolean {
+		return key === DocumentStorageServiceCompressionAdapter.uncompressedPath;
+	}
+
 	private identifyUncompressedBlobs(
 		snapshot: ISnapshotTree,
 		isUncompressedPath: boolean = false,
 	): void {
 		for (const key of Object.keys(snapshot.trees)) {
 			const obj = snapshot.trees[key];
-			if (key === DocumentStorageServiceCompressionAdapter.uncompressedPath) {
+			if (DocumentStorageServiceCompressionAdapter.isKeyUncompressed(key)) {
 				this.identifyUncompressedBlobs(obj, true);
 			} else {
 				this.identifyUncompressedBlobs(obj, isUncompressedPath);
@@ -211,7 +215,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			if (
 				Boolean(value) &&
 				typeof value === "object" &&
-				key !== DocumentStorageServiceCompressionAdapter.uncompressedPath
+				DocumentStorageServiceCompressionAdapter.isKeyUncompressed(key)
 			) {
 				const replaced = this.recursivelyReplace(
 					isEncode,
