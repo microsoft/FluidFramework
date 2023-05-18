@@ -344,6 +344,7 @@ export class GCTelemetryTracker {
 			return;
 		}
 
+		const deletedNodeIds: Set<string> = new Set();
 		for (const [nodeId, nodeStateTracker] of unreferencedNodesState) {
 			if (nodeStateTracker.state !== UnreferencedState.SweepReady) {
 				return;
@@ -360,12 +361,14 @@ export class GCTelemetryTracker {
 				return;
 			}
 			this.loggedUnreferencedEvents.add(uniqueEventId);
+			deletedNodeIds.add(nodeId);
+		}
+
+		if (deletedNodeIds.size > 0) {
 			logger.sendTelemetryEvent({
-				eventName: "GCObjectDeleted",
+				eventName: "GC_SweepReadyObjects_Delete",
 				details: JSON.stringify({
-					id: nodeId,
-					type: nodeType,
-					age: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
+					id: JSON.stringify(deletedNodeIds),
 					timeout: this.configs.sweepTimeoutMs,
 					completedGCRuns,
 					lastSummaryTime,
