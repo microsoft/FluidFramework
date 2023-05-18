@@ -152,6 +152,7 @@ export function DevtoolsView(): React.ReactElement {
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
+	let queryTimer;
 
 	React.useEffect(() => {
 		/**
@@ -181,17 +182,29 @@ export function DevtoolsView(): React.ReactElement {
 		messageRelay.postMessage(getSupportedFeaturesMessage);
 
 		// Add a timeout for the query
-		const queryTimer = setTimeout(() => {
-			if (!supportedFeatures) {
+		if (!supportedFeatures) {
+			queryTimer = setTimeout(() => {
 				setQueryTimedOut(true);
-			}
-		}, queryTimeoutInMilliseconds);
+			}, queryTimeoutInMilliseconds);
+		}
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 			clearTimeout(queryTimer);
 		};
-	}, [messageRelay, setSupportedFeatures, setQueryTimedOut]);
+	}, [messageRelay, setSupportedFeatures]);
+
+	// Manage the query timeout
+	React.useEffect(() => {
+		if (queryTimedOut) {
+			const timeout = setTimeout(() => {
+				setQueryTimedOut(false);
+			}, queryTimeoutInMilliseconds);
+			return (): void => {
+				clearTimeout(timeout);
+			};
+		}
+	}, [queryTimedOut, setQueryTimedOut]);
 
 	function retryQuery(): void {
 		setQueryTimedOut(false);
