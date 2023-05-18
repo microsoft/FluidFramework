@@ -176,5 +176,5 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
-	readonly initialTree: SchemaAware.TypedField<SchemaAware.ApiMode.Simple, TRoot["schema"]>;
+	readonly initialTree: SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple>;
 }
