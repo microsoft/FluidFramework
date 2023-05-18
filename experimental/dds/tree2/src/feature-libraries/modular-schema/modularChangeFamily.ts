@@ -827,10 +827,8 @@ export class ModularChangeFamily
 			if (deletedByBase && !rebasedChange.nodeExistsConstraint.violated) {
 				rebasedChange.nodeExistsConstraint.violated = true;
 				constraintState.violationCount += 1;
-			}
-
-			// Only decrement the violation count if the constraint has been fixed
-			if (revivedByBase && rebasedChange.nodeExistsConstraint.violated) {
+			} else if (revivedByBase && rebasedChange.nodeExistsConstraint.violated) {
+				// Decrement the violation count if the constraint has been fixed
 				rebasedChange.nodeExistsConstraint.violated = false;
 				constraintState.violationCount -= 1;
 			}
