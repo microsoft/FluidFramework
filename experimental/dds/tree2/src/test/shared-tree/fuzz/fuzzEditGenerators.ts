@@ -16,6 +16,7 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { safelyParseJSON } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
+import { ConnectionState } from "@fluidframework/container-loader";
 import { ISharedTree } from "../../../shared-tree";
 import { brand, fail } from "../../../util";
 import { ITestTreeProvider } from "../../utils";
@@ -388,12 +389,8 @@ export function makeConnectionOpGenerator(
 		[
 			makeDisconnectGenerator(),
 			passedOpWeights.disconnect,
-			({ containersInfo, treeIndex }) => {
-				const containersExist = containersInfo !== undefined;
-				if (!containersExist) {
-					return false;
-				}
-				return containersExist;
+			({ containersInfo }) => {
+				return containersInfo !== undefined;
 			},
 		],
 		[
@@ -472,7 +469,10 @@ function checkContainerConnections(containers: readonly ContainerInfo[] | undefi
 	}
 	for (const containerInfo of containers) {
 		const connection = containerInfo.container.connectionState;
-		if (connection === 2 || connection === 0) {
+		if (
+			connection === ConnectionState.Connected ||
+			connection === ConnectionState.Disconnected
+		) {
 			return true;
 		}
 	}
