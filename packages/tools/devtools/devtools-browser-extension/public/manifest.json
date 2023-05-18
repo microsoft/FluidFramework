@@ -2,6 +2,7 @@
 	"manifest_version": 3,
 	"name": "Fluid Framework Devtools",
 	"description": "Devtools extension for viewing live data about your Fluid application.",
+	"author": "Microsoft",
 	"version": "0.0.1",
 	"action": {
 		"default_icon": "images/Icon.png",
