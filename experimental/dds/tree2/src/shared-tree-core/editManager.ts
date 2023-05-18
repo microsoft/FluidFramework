@@ -449,6 +449,7 @@ export class EditManager<
 				newCommit.change,
 				rebasedBranch,
 				this.trunk.getHead(),
+				this.localBranch.repairStore,
 			);
 
 			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
@@ -459,7 +460,7 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk);
+		this.localBranch.rebaseOnto(this.trunk, this.localBranch.repairStore);
 	}
 
 	public findLocalCommit(

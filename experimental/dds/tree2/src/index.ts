@@ -251,6 +251,7 @@ export {
 	GlobalFieldSchema,
 	Any,
 	Sourced,
+	NodeExistsConstraint,
 	cursorForTypedTreeData,
 } from "./feature-libraries";
 
