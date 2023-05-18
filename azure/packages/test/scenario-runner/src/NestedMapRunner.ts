@@ -10,6 +10,7 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { timeoutPromise } from "@fluidframework/test-utils";
+import { v4 as uuid } from "uuid";
 
 import {
 	AzureClientConnectionConfig,
@@ -35,10 +36,12 @@ const eventMap = getScenarioRunnerTelemetryEventMap("NestedMap");
 export interface NestedMapRunnerConfig {
 	connectionConfig: AzureClientConnectionConfig;
 	schema: ContainerFactorySchema;
-	docIds: string[];
 	clientStartDelayMs: number;
 	numMaps: number;
 	initialMapKey: string;
+	dataType?: "uuid" | "number";
+	writeRatePerMin?: number;
+	docIds?: string[];
 	client?: AzureClient;
 	containers?: IFluidContainer[];
 }
@@ -56,9 +59,11 @@ export interface NestedMapRunnerRunConfig
 		> {
 	childId: number;
 	schema: ContainerFactorySchema;
-	docId: string;
 	numMaps: number;
 	initialMapKey: string;
+	dataType?: "uuid" | "number";
+	writeRatePerMin?: number;
+	docId?: string;
 	container?: IFluidContainer;
 	region?: string;
 	client?: AzureClient;
@@ -79,8 +84,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 	private async spawnChildRunners(config: IRunConfig): Promise<void> {
 		this.status = "running";
 		const runnerArgs: string[][] = [];
-		let i = 0;
-		for (const docId of this.c.docIds) {
+		const createRunnerArg = (childId: number, docId?: string): string[] => {
 			const connection = this.c.connectionConfig;
 			const childArgs: string[] = [
 				"./dist/docLoaderRunnerClient.js",
@@ -89,11 +93,13 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 				"--scenarioName",
 				config.scenarioName,
 				"--childId",
-				(i++).toString(),
-				"--docId",
-				docId,
+				childId.toString(),
 				"--numMaps",
 				this.c.numMaps.toString(),
+				"--writeRatePerMin",
+				(this.c.writeRatePerMin ?? -1).toString(),
+				"--dataType",
+				this.c.dataType ?? "number",
 				"--initialMapKey",
 				this.c.initialMapKey,
 				"--schema",
@@ -104,8 +110,19 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 				...(connection.useSecureTokenProvider ? ["--secureTokenProvider"] : []),
 				...(connection.region ? ["--region", connection.region] : []),
 			];
+			if (docId) {
+				childArgs.push("--docId", docId);
+			}
 			childArgs.push("--verbose");
-			runnerArgs.push(childArgs);
+			return childArgs;
+		};
+		if (this.c.docIds) {
+			let i = 0;
+			for (const docId of this.c.docIds) {
+				runnerArgs.push(createRunnerArg(i++, docId));
+			}
+		} else {
+			runnerArgs.push(createRunnerArg(0));
 		}
 
 		const children: Promise<boolean>[] = [];
@@ -125,7 +142,7 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		}
 	}
 
-	public async runSync(config: IRunConfig): Promise<void> {
+	public async runSync(config: IRunConfig): Promise<string[]> {
 		this.status = "running";
 		const connection = this.c.connectionConfig;
 		const connType = connection.type;
@@ -135,47 +152,62 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		const functionUrl = connection.functionUrl;
 		const secureTokenProvider = connection.useSecureTokenProvider;
 		const numMaps = this.c.numMaps;
+		const dataType = this.c.dataType ?? "number";
+		const writeRatePerMin = this.c.writeRatePerMin;
 		const schema = this.c.schema;
 		const client = this.c.client;
 		const containers = this.c.containers;
 		const docIds = this.c.docIds;
 		const initialMapKey = this.c.initialMapKey;
-		if (containers !== undefined && containers.length !== docIds.length) {
+		if (containers !== undefined && containers.length !== docIds?.length) {
 			throw new Error("Number of containers not equal to number of docIds");
 		}
-		const runs: Promise<void>[] = [];
-		for (let i = 0; i < docIds.length; i++) {
-			const docId = docIds[i];
-			const container = containers ? containers[i] : undefined;
-			runs.push(
-				NestedMapRunner.execRun({
-					...config,
-					childId: i,
-					docId,
-					numMaps,
-					initialMapKey,
-					connType,
-					connEndpoint,
-					tenantId,
-					tenantKey,
-					functionUrl,
-					secureTokenProvider,
-					schema,
-					client,
-					container,
-				}),
-			);
+		const runs: Promise<string>[] = [];
+		const createRun = async (
+			childId: number,
+			docId?: string,
+			container?: IFluidContainer,
+		): Promise<string> => {
+			return NestedMapRunner.execRun({
+				...config,
+				childId,
+				docId,
+				numMaps,
+				dataType,
+				writeRatePerMin,
+				initialMapKey,
+				connType,
+				connEndpoint,
+				tenantId,
+				tenantKey,
+				functionUrl,
+				secureTokenProvider,
+				schema,
+				client,
+				container,
+			});
+		};
+		if (docIds) {
+			for (let i = 0; i < docIds.length; i++) {
+				const docId = docIds[i];
+				const container = containers ? containers[i] : undefined;
+				runs.push(createRun(i, docId, container));
+				await delay(this.c.clientStartDelayMs);
+			}
+		} else {
+			runs.push(createRun(0));
 		}
 		try {
-			await Promise.all(runs);
+			const docIds = await Promise.all(runs);
 			this.status = "success";
+			return docIds;
 		} catch (error) {
 			this.status = "error";
 			throw new Error(`Not all clients closed succesfully.\n${error}`);
 		}
 	}
 
-	public static async execRun(runConfig: NestedMapRunnerRunConfig): Promise<void> {
+	public static async execRun(runConfig: NestedMapRunnerRunConfig): Promise<string> {
 		const logger =
 			runConfig.logger ??
 			(await getLogger(
@@ -210,25 +242,51 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 			ac,
 		);
 
+		const writeRatePerMin = runConfig.writeRatePerMin ?? -1;
+		const msBetweenWrites = writeRatePerMin < 0 ? 0 : 60000 / writeRatePerMin;
 		let currentMap: SharedMap = container.initialObjects[runConfig.initialMapKey] as SharedMap;
-		for (let i = 0; i < runConfig.numMaps; ++i) {
+		const tenPercent = Math.floor(runConfig.numMaps / 10);
+		const getData = () => {
+			const dataType = runConfig.dataType;
+			if (dataType === "uuid") {
+				return uuid();
+			}
+			return undefined;
+		};
+		for (let i = 0; i < runConfig.numMaps; i++) {
+			await delay(msBetweenWrites);
 			const nextMap = await container.create(SharedMap);
-			currentMap.set("data", i);
+			currentMap.set("data", getData() ?? i);
 			currentMap.set("next", nextMap.handle);
 			currentMap = nextMap;
+			if (i % tenPercent === 0) {
+				const message = `${Math.floor((i / runConfig.numMaps) * 100)}% of ${
+					runConfig.numMaps
+				} written.`;
+				logger.sendTelemetryEvent({
+					eventName: "NestedMapProgress",
+					category: "generic",
+					message,
+				});
+				console.log(message);
+			}
 		}
 
-		// await PerformanceEvent.timedExecAsync(
-		// 	logger,
-		// 	{ eventName: "Catchup", clientId: runConfig.childId },
-		// 	async (_event) => {
-		// 		await timeoutPromise((resolve) => container.once("saved", () => resolve()), {
-		// 			durationMs: 20000,
-		// 			errorMsg: "datastoreSaveAfterAttach timeout",
-		// 		});
-		// 	},
-		// 	{ start: true, end: true, cancel: "generic" },
-		// );
+		let id: string | undefined = runConfig.docId;
+		if (!id) {
+			try {
+				id = await PerformanceEvent.timedExecAsync(
+					logger,
+					{ eventName: "attach" },
+					async () => {
+						return container.attach();
+					},
+					{ start: true, end: true, cancel: "generic" },
+				);
+			} catch {
+				throw new Error("Unable to attach container.");
+			}
+		}
 
 		await PerformanceEvent.timedExecAsync(
 			logger,
@@ -242,13 +300,15 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 							() => resolve(),
 						),
 					{
-						durationMs: 60000,
+						durationMs: 600000,
 						errorMsg: "summarize timeout",
 					},
 				);
 			},
 			{ start: true, end: true, cancel: "generic" },
 		);
+
+		return id;
 	}
 
 	private static async loadContainer(
@@ -268,35 +328,50 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 		}
 
 		let container: IFluidContainer;
-		try {
-			({ container } = await PerformanceEvent.timedExecAsync(
+		if (runConfig.docId) {
+			try {
+				({ container } = await PerformanceEvent.timedExecAsync(
+					logger,
+					{ eventName: "load" },
+					async () => {
+						return client.getContainer(runConfig.docId!, schema);
+					},
+					{ start: true, end: true, cancel: "generic" },
+				));
+			} catch {
+				throw new Error("Unable to load container.");
+			}
+
+			await PerformanceEvent.timedExecAsync(
 				logger,
-				{ eventName: "load" },
+				{ eventName: "connected" },
 				async () => {
-					return client.getContainer(runConfig.docId, schema);
+					if (container.connectionState !== ConnectionState.Connected) {
+						return timeoutPromise(
+							(resolve) => container.once("connected", () => resolve()),
+							{
+								durationMs: 60000,
+								errorMsg: "container connect() timeout",
+							},
+						);
+					}
 				},
 				{ start: true, end: true, cancel: "generic" },
-			));
-		} catch {
-			throw new Error("Unable to load container.");
+			);
+		} else {
+			try {
+				({ container } = await PerformanceEvent.timedExecAsync(
+					logger,
+					{ eventName: "create" },
+					async () => {
+						return client.createContainer(schema);
+					},
+					{ start: true, end: true, cancel: "generic" },
+				));
+			} catch (error) {
+				throw new Error(`Unable to create container. ${error}`);
+			}
 		}
-
-		await PerformanceEvent.timedExecAsync(
-			logger,
-			{ eventName: "connected" },
-			async () => {
-				if (container.connectionState !== ConnectionState.Connected) {
-					return timeoutPromise(
-						(resolve) => container.once("connected", () => resolve()),
-						{
-							durationMs: 60000,
-							errorMsg: "container connect() timeout",
-						},
-					);
-				}
-			},
-			{ start: true, end: true, cancel: "generic" },
-		);
 
 		return container;
 	}
