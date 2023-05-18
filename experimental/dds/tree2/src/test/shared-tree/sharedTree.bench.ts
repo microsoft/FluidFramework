@@ -8,7 +8,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	FieldKinds,
 	isEditableField,
-	isUnwrappedNode,
+	isEditableTree,
 	jsonableTreeFromCursor,
 	SchemaAware,
 	SchemaBuilder,
@@ -489,7 +489,7 @@ function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum:
 	let sum = 0;
 	let nodesCount = 0;
 	const root = tree.root;
-	assert(isUnwrappedNode(root));
+	assert(isEditableTree(root));
 	const field = root.foo as UnwrappedEditableField;
 	assert(isEditableField(field));
 	assert(field.length !== 0);
@@ -503,7 +503,7 @@ function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum:
 function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: number } {
 	let depth = 0;
 	let currentNode: UnwrappedEditableField = tree.root;
-	while (isUnwrappedNode(currentNode)) {
+	while (isEditableTree(currentNode)) {
 		currentNode = currentNode.foo as UnwrappedEditableField;
 		depth++;
 	}

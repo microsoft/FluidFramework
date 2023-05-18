@@ -9,7 +9,7 @@ import {
 	ContextuallyTypedNodeData,
 	cursorsFromContextualData,
 	getField,
-	isUnwrappedNode,
+	isEditableTree,
 	singleTextCursor,
 } from "../../../feature-libraries";
 import { ISharedTree } from "../../../shared-tree";
@@ -80,7 +80,7 @@ describe("editable-tree context", () => {
 		});
 
 		assert.doesNotThrow(() => {
-			assert(isUnwrappedNode(tree.root));
+			assert(isEditableTree(tree.root));
 			assert.equal(tree.root[ageField], 35);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete tree.root[ageField];

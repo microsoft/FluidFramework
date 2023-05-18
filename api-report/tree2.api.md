@@ -368,7 +368,10 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 // @alpha
 export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
+    get content(): EditableTree | undefined | EditableField;
+    set content(newContent: NewFieldContent);
     readonly context: EditableTreeContext;
+    delete(): void;
     deleteNodes(index: number, count?: number): void;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldStoredSchema;
@@ -412,10 +415,10 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     free(): void;
     prepareForEdit(): void;
     get root(): EditableField;
-    set root(data: ContextuallyTypedFieldData);
+    set root(data: NewFieldContent);
     readonly schema: SchemaDataAndPolicy;
     get unwrappedRoot(): UnwrappedEditableField;
-    set unwrappedRoot(data: ContextuallyTypedFieldData);
+    set unwrappedRoot(data: NewFieldContent);
 }
 
 // @alpha
@@ -930,6 +933,9 @@ export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeDat
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
 
 // @alpha
+export function isEditableTree(field: UnwrappedEditableField): field is EditableTree;
+
+// @alpha
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @alpha
@@ -951,7 +957,7 @@ export interface ISharedTreeView extends AnchorLocator {
     rebase(view: SharedTreeView): void;
     redo(): void;
     get root(): UnwrappedEditableField;
-    set root(data: ContextuallyTypedNodeData | undefined);
+    set root(data: NewFieldContent);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     schematize<TRoot extends GlobalFieldSchema>(config: SchematizeConfiguration<TRoot>): ISharedTreeView;
     readonly storedSchema: StoredSchemaRepository;
@@ -977,9 +983,6 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
 }
-
-// @alpha
-export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
 
 // @alpha
 export function isWritableArrayLike(data: ContextuallyTypedFieldData): data is MarkedArrayLike<ContextuallyTypedNodeData>;
@@ -1565,7 +1568,7 @@ export interface SchemaPolicy {
 // @alpha
 export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = GlobalFieldSchema> {
     readonly allowedSchemaModifications: AllowedUpdateType;
-    readonly initialTree: SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple>;
+    readonly initialTree: SchemaAware.TypedField<TRoot["schema"], SchemaAware.ApiMode.Simple> | readonly ITreeCursor[];
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 

@@ -218,7 +218,7 @@ export function areCursors(data: NewFieldContent): data is ITreeCursor | readonl
 		return true;
 	}
 
-	if (Array.isArray(data) && data.length >= 0 && Array.isArray(data[0])) {
+	if (Array.isArray(data) && data.length >= 0 && isCursor(data[0])) {
 		return true;
 	}
 
@@ -314,6 +314,7 @@ export interface EditableField
 
 	/**
 	 * Inserts new nodes into this field.
+	 * Sequence fields only.
 	 */
 	insertNodes(index: number, newContent: NewFieldContent): void;
 
@@ -330,6 +331,7 @@ export interface EditableField
 
 	/**
 	 * Sequentially deletes the nodes from this field.
+	 * Sequence fields only.
 	 *
 	 * @param index - the index of the first node to be deleted. It must be in a range of existing node indices.
 	 * @param count - the number of nodes to be deleted. If not provided, deletes all nodes
@@ -339,6 +341,7 @@ export interface EditableField
 
 	/**
 	 * Sequentially replaces the nodes of this field.
+	 * Sequence fields only.
 	 *
 	 * @param index - the index of the first node to be replaced. It must be in a range of existing node indices.
 	 * @param count - the number of nodes to be replaced. If not provided, replaces all nodes
@@ -348,4 +351,21 @@ export interface EditableField
 	 * all the insertions will be preserved.
 	 */
 	replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
+
+	/**
+	 * Delete the content of this field.
+	 * Only supports field kinds which can be empty.
+	 */
+	delete(): void;
+
+	/**
+	 * The content of this field.
+	 *
+	 * @remarks
+	 * For optional and value field multiplicities, the single child, or undefined of none.
+	 * For sequence fields, the field itself (and thus not very useful to read, but can be assigned to).
+	 * Does not unwrap the content.
+	 */
+	get content(): EditableTree | undefined | EditableField;
+	set content(newContent: NewFieldContent);
 }

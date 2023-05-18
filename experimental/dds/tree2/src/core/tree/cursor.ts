@@ -20,8 +20,9 @@ export const CursorMarker: unique symbol = Symbol("CursorMarker");
  * Useful when APIs want to take in tree data in multiple formats, including cursors.
  */
 export function isCursor(data: unknown): data is ITreeCursor {
-	// Other than on null, looking up a missing symbol shouldn't type error.
-	return data !== null && (data as any)[CursorMarker] === true;
+	// Other than on null and undefined, looking up a missing symbol shouldn't type error.
+	// typeof check deals with undefined while providing an early out for other non-object types.
+	return data !== null && typeof data === "object" && (data as any)[CursorMarker] === true;
 }
 
 /**

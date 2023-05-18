@@ -6,20 +6,20 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
+	AllowedUpdateType,
 	FieldKey,
 	GlobalFieldKey,
 	JsonableTree,
 	LocalFieldKey,
-	SchemaData,
 	symbolFromKey,
 	TreeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
-import { ISharedTree } from "../../../shared-tree";
+import { createSharedTreeView, ISharedTree } from "../../../shared-tree";
 import { brand, clone } from "../../../util";
 import {
 	singleTextCursor,
-	isUnwrappedNode,
+	isEditableTree,
 	getField,
 	isEditableField,
 	FieldKinds,
@@ -31,6 +31,8 @@ import {
 	getPrimaryField,
 	SchemaBuilder,
 	FieldKindTypes,
+	TypedSchemaCollection,
+	GlobalFieldSchema,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -57,7 +59,7 @@ const globalFieldSymbol = symbolFromKey(globalFieldKey);
 const localFieldKey: LocalFieldKey = brand("foo");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
-function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind): SchemaData {
+function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
 	const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
 	const globalField = builder.globalField(
 		globalFieldKey,
@@ -77,7 +79,7 @@ function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind): SchemaData
 // Tests which are testing collaboration between multiple trees should be adjusted to not do that, or moved elsewhere (merge/collaboration is not the focus of this file).
 // Tests which are using a single tree should just use a MockFluidDataStoreRuntime instead of all the complexity of TestTreeProvider.
 function createSharedTrees(
-	schemaData: SchemaData,
+	schemaData: TypedSchemaCollection<GlobalFieldSchema>,
 	data?: JsonableTree[],
 	numberOfTrees = 1,
 ): readonly [TestTreeProviderLite, readonly ISharedTree[]] {
@@ -85,9 +87,14 @@ function createSharedTrees(
 	for (const tree of provider.trees) {
 		assert(tree.isAttached());
 	}
+	provider.trees[0].schematize({
+		allowedSchemaModifications: AllowedUpdateType.None,
+		initialTree: data?.map(singleTextCursor),
+		schema: schemaData,
+	});
 	provider.trees[0].storedSchema.update(schemaData);
 	if (data !== undefined) {
-		provider.trees[0].context.root.insertNodes(0, data.map(singleTextCursor));
+		provider.trees[0].context.root.content = data.map(singleTextCursor);
 	}
 	provider.processMessages();
 	return [provider, provider.trees];
@@ -163,7 +170,7 @@ describe("editable-tree: editing", () => {
 		// make sure the value is not set at the primary field parent node
 		{
 			const person = trees[0].root as Person;
-			assert(isUnwrappedNode(person.address));
+			assert(isEditableTree(person.address));
 			const phones = person.address[getField](brand("phones"));
 			assert.equal(phones.getNode(0)[valueSymbol], undefined);
 		}
@@ -363,9 +370,13 @@ describe("editable-tree: editing", () => {
 		const schemaData = builder.intoDocumentSchema(
 			SchemaBuilder.field(FieldKinds.value, stringSchema),
 		);
-
-		const [, trees] = createSharedTrees(schemaData, [{ type: stringSchema.name, value: "x" }]);
-		const root = trees[0].context.root.getNode(0);
+		const tree = createSharedTreeView().schematize({
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: "x",
+			schema: schemaData,
+		});
+		const root = tree.context.root.content;
+		assert(isEditableTree(root));
 		// Confirm stetting value to a string does not error
 		root[valueSymbol] = "hi";
 		// Conform setting value to something out of schema does error
@@ -376,7 +387,6 @@ describe("editable-tree: editing", () => {
 		// This is not dynamic delete: valueSymbol is a constant symbol.
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		assert.throws(() => delete root[valueSymbol]);
-		trees[0].context.free();
 	});
 
 	describe(`can move nodes`, () => {
@@ -384,7 +394,7 @@ describe("editable-tree: editing", () => {
 			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
 				{ type: rootSchemaName },
 			]);
-			assert(isUnwrappedNode(trees[0].root));
+			assert(isEditableTree(trees[0].root));
 			// create using `insertNodes`
 			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
@@ -404,7 +414,7 @@ describe("editable-tree: editing", () => {
 			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
 				{ type: rootSchemaName },
 			]);
-			assert(isUnwrappedNode(trees[0].root));
+			assert(isEditableTree(trees[0].root));
 			// create using `insertNodes`
 			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
@@ -424,7 +434,7 @@ describe("editable-tree: editing", () => {
 			const [provider, trees] = createSharedTrees(getTestSchema(FieldKinds.sequence), [
 				{ type: rootSchemaName },
 			]);
-			assert(isUnwrappedNode(trees[0].root));
+			assert(isEditableTree(trees[0].root));
 			// create using `insertNodes`
 			trees[0].root[getField](localFieldKey).insertNodes(0, [
 				singleTextCursor({ type: stringSchema.name, value: "foo" }),
@@ -461,8 +471,8 @@ describe("editable-tree: editing", () => {
 					[{ type: rootSchemaName }],
 					2,
 				);
-				assert(isUnwrappedNode(trees[0].root));
-				assert(isUnwrappedNode(trees[1].root));
+				assert(isEditableTree(trees[0].root));
+				assert(isEditableTree(trees[1].root));
 				// create using `insertNodes`
 				trees[0].root[getField](fieldKey).insertNodes(0, [
 					singleTextCursor({ type: stringSchema.name, value: "foo" }),
@@ -507,13 +517,11 @@ describe("editable-tree: editing", () => {
 				assert.deepEqual(field_0, field_1);
 
 				// create using `insertNodes()`
-				[
-					singleTextCursor({ type: stringSchema.name, value: "third" }),
-					singleTextCursor({ type: stringSchema.name, value: "second" }),
-					singleTextCursor({ type: stringSchema.name, value: "first" }),
-				].forEach((content) => field_0.insertNodes(0, content));
+				["third", "second", "first"].forEach((content) =>
+					field_0.insertNodes(0, [content]),
+				);
 				assert.throws(
-					() => field_0.insertNodes(5, singleTextCursor({ type: stringSchema.name })),
+					() => field_0.insertNodes(5, ["x"]),
 					(e) => validateAssertionError(e, "Index must be less than or equal to length."),
 					"Expected exception was not thrown",
 				);
@@ -526,7 +534,7 @@ describe("editable-tree: editing", () => {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete trees[0].root[fieldKey];
 				assert.throws(
-					() => field_0.replaceNodes(1, singleTextCursor({ type: stringSchema.name })),
+					() => field_0.replaceNodes(1, ["x"]),
 					(e) =>
 						validateAssertionError(
 							e,
@@ -539,7 +547,7 @@ describe("editable-tree: editing", () => {
 					field_0[index] = field_1[index];
 				}
 				assert.throws(
-					() => field_0.replaceNodes(5, singleTextCursor({ type: stringSchema.name })),
+					() => field_0.replaceNodes(5, ["x"]),
 					(e) =>
 						validateAssertionError(
 							e,
@@ -547,11 +555,7 @@ describe("editable-tree: editing", () => {
 						),
 					"Expected exception was not thrown",
 				);
-				field_0.replaceNodes(
-					1,
-					singleTextCursor({ type: stringSchema.name, value: "changed" }),
-					1,
-				);
+				field_0.replaceNodes(1, ["changed"], 1);
 				assert.equal(field_0[1], "changed");
 				provider.processMessages();
 				assert.deepEqual(field_0, field_1);
@@ -588,127 +592,212 @@ describe("editable-tree: editing", () => {
 				trees[1].context.free();
 			});
 
-			it("as optional field", () => {
-				const [provider, trees] = createSharedTrees(
-					getTestSchema(FieldKinds.optional),
-					[{ type: rootSchemaName }],
-					2,
-				);
-				assert(isUnwrappedNode(trees[0].root));
-				assert(isUnwrappedNode(trees[1].root));
+			it("as sequence field2", () => {
+				const view = createSharedTreeView();
+				const schema = getTestSchema(FieldKinds.sequence);
+				view.schematize({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: {},
+					schema,
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[getField](fieldKey);
+				assert.deepEqual([...field], []);
 
-				// create
-				assert.throws(
-					() => {
-						assert(isUnwrappedNode(trees[0].root));
-						trees[0].root[getField](fieldKey).insertNodes(0, [
-							singleTextCursor({ type: stringSchema.name, value: "foo" }),
-							singleTextCursor({ type: stringSchema.name, value: "foo" }),
-						]);
-					},
-					(e) =>
-						validateAssertionError(e, "Use single cursor to create the optional field"),
-					"Expected exception was not thrown",
-				);
-				trees[0].root[getField](fieldKey).insertNodes(
-					0,
-					singleTextCursor({ type: stringSchema.name, value: "foo" }),
-				);
-				provider.processMessages();
-				assert.equal(trees[1].root[fieldKey], "foo");
+				// Using .content
+				field.content = ["foo", "foo"];
+				assert.deepEqual([...field], ["foo", "foo"]);
+				field.content = [];
+				assert.deepEqual([...field], []);
+				field.content = ["foo"];
+				assert.deepEqual([...field], ["foo"]);
 
 				// edit using assignment
-				trees[0].root[fieldKey] = "bar";
-				provider.processMessages();
-				assert.equal(trees[0].root[fieldKey], "bar");
+				root[fieldKey] = ["1"] as any; // Can't be type safe to to index signature variance limitation.
+				assert.deepEqual([...field], ["1"]);
 
-				// edit using valueSymbol
-				trees[0].root[getField](fieldKey).getNode(0)[valueSymbol] = "via symbol";
-				provider.processMessages();
-				assert.equal(trees[1].root[fieldKey], "via symbol");
-
-				// edit using `replaceField()`
-				trees[0].root[getField](fieldKey).replaceNodes(
-					0,
-					singleTextCursor({ type: stringSchema.name, value: "replaced" }),
-				);
-				provider.processMessages();
-				assert.equal(trees[1].root[fieldKey], "replaced");
+				// edit using indexing
+				field[0] = "replaced";
+				assert.deepEqual([...field], ["replaced"]);
 
 				// delete
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete trees[0].root[fieldKey];
-				assert(!(fieldKey in trees[0].root));
-				provider.processMessages();
-				assert(!(fieldKey in trees[1].root));
-				assert.equal(trees[0].root[fieldKey], undefined);
-				trees[0].context.free();
-				trees[1].context.free();
+				delete root[fieldKey];
+				assert(!(fieldKey in root));
+				assert.deepEqual([...field], []);
+
+				// Restore
+				field.content = ["bar"];
+				assert.deepEqual([...field], ["bar"]);
+
+				// delete assignment
+				assert.throws(() => {
+					root[fieldKey] = undefined;
+				});
+
+				// delete content assignment
+				assert.throws(() => {
+					field.content = undefined;
+				});
+
+				// delete method
+				field.delete();
+				assert(!(fieldKey in root));
+				assert.deepEqual([...field], []);
+			});
+
+			it("regression test for sequence setting empty sequence", () => {
+				const view = createSharedTreeView();
+				const schema = getTestSchema(FieldKinds.sequence);
+				view.schematize({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: {},
+					schema,
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[getField](fieldKey);
+				field.content = [];
+				assert.deepEqual([...field], []);
+			});
+
+			it("as optional field", () => {
+				const view = createSharedTreeView();
+				const schema = getTestSchema(FieldKinds.optional);
+				view.schematize({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: {},
+					schema,
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[getField](fieldKey);
+				assert.equal(field.content, undefined);
+				assert.equal(root[fieldKey], undefined);
+
+				// create
+				assert.throws(
+					() => {
+						assert(isEditableTree(root));
+						field.content = ["foo", "foo"];
+					},
+					(e) => validateAssertionError(e, /incompatible/),
+				);
+
+				// Using .content
+				field.content = "foo";
+				assert.equal(root[fieldKey], "foo");
+				{
+					const child = field.content;
+					assert(isEditableTree(child));
+					assert.equal(child[valueSymbol], "foo");
+				}
+
+				// edit using assignment
+				root[fieldKey] = "bar";
+				assert.equal(root[fieldKey], "bar");
+
+				// edit using valueSymbol
+				field.getNode(0)[valueSymbol] = "via symbol";
+				assert.equal(root[fieldKey], "via symbol");
+
+				// edit using indexing
+				field[0] = "replaced";
+				assert.equal(root[fieldKey], "replaced");
+
+				// delete
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				delete root[fieldKey];
+				assert(!(fieldKey in root));
+				assert.equal(root[fieldKey], undefined);
+
+				// Restore
+				root[fieldKey] = "bar";
+				assert.equal(root[fieldKey], "bar");
+
+				// delete assignment
+				root[fieldKey] = undefined;
+				assert(!(fieldKey in root));
+				assert.equal(root[fieldKey], undefined);
+
+				// Restore
+				root[fieldKey] = "bar";
+				assert.equal(root[fieldKey], "bar");
+
+				// delete content assignment
+				field.content = undefined;
+				assert(!(fieldKey in root));
+				assert.equal(root[fieldKey], undefined);
+
+				// Restore
+				root[fieldKey] = "bar";
+				assert.equal(root[fieldKey], "bar");
+
+				// delete method
+				field.delete();
+				assert(!(fieldKey in root));
+				assert.equal(root[fieldKey], undefined);
 			});
 
 			it("as value field", () => {
-				const [provider, trees] = createSharedTrees(
-					getTestSchema(FieldKinds.value),
-					[{ type: rootSchemaName }],
-					2,
-				);
-				assert(isUnwrappedNode(trees[0].root));
-				assert(isUnwrappedNode(trees[1].root));
+				const view = createSharedTreeView();
+				const schema = getTestSchema(FieldKinds.value);
+				view.schematize({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: { [fieldKey]: "initial" },
+					schema,
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[getField](fieldKey);
+				assert.equal(root[fieldKey], "initial");
 
 				// create
-				const fieldContent = singleTextCursor({
-					type: stringSchema.name,
-					value: "foo",
-				});
 				assert.throws(
 					() => {
-						assert(isUnwrappedNode(trees[0].root));
-						trees[0].root[getField](fieldKey).insertNodes(0, fieldContent);
+						assert(isEditableTree(root));
+						field.content = ["foo", "foo"];
 					},
-					(e) =>
-						validateAssertionError(
-							e,
-							"It is invalid to create fields of kind `value` as they should always exist.",
-						),
-					"Expected exception was not thrown",
+					(e) => validateAssertionError(e, /incompatible/),
 				);
-				// TODO: rework/remove this as soon as trees with value fields will be supported.
-				trees[0].root[getField](fieldKey).insertNodes(0, fieldContent);
-				assert.equal(trees[0].root[fieldKey], "foo");
-				provider.processMessages();
-				assert.equal(trees[1].root[fieldKey], "foo");
+
+				// Using .content
+				field.content = "foo";
+				assert.equal(root[fieldKey], "foo");
 
 				// edit using assignment
-				trees[0].root[fieldKey] = "bar";
-				provider.processMessages();
-				assert.equal(trees[1].root[fieldKey], "bar");
+				root[fieldKey] = "bar";
+				assert.equal(root[fieldKey], "bar");
 
 				// edit using valueSymbol
-				trees[0].root[getField](fieldKey).getNode(0)[valueSymbol] = "via symbol";
-				provider.processMessages();
-				assert.equal(trees[1].root[fieldKey], "via symbol");
+				field.getNode(0)[valueSymbol] = "via symbol";
+				assert.equal(root[fieldKey], "via symbol");
 
-				// edit using `replaceNodes()`
-				trees[0].root[getField](fieldKey).replaceNodes(
-					0,
-					singleTextCursor({ type: stringSchema.name, value: "replaced" }),
-				);
-				provider.processMessages();
-				assert.equal(trees[1].root[fieldKey], "replaced");
+				// edit using indexing
+				field[0] = "replaced";
+				assert.equal(root[fieldKey], "replaced");
 
 				// delete
-				assert.throws(
-					() => {
-						assert(isUnwrappedNode(trees[0].root));
-						// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-						delete trees[0].root[fieldKey];
-					},
-					(e) => validateAssertionError(e, "Fields of kind `value` may not be deleted."),
-					"Expected exception was not thrown",
-				);
+				assert.throws(() => {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete root[fieldKey];
+				});
 
-				trees[0].context.free();
-				trees[1].context.free();
+				// delete assignment
+				assert.throws(() => {
+					root[fieldKey] = undefined;
+				});
+
+				// delete content assignment
+				assert.throws(() => {
+					field.content = undefined;
+				});
+
+				// delete method
+				assert.throws(() => {
+					field.delete();
+				});
 			});
 		});
 	}

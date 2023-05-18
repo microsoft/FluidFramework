@@ -30,7 +30,7 @@ describe("SequenceField - Editor", () => {
 	});
 
 	it("insert one node", () => {
-		const actual = SF.sequenceFieldEditor.insert(42, content[0], id);
+		const actual = SF.sequenceFieldEditor.insert(42, [content[0]], id);
 		const expected: SF.Changeset = [{ count: 42 }, { type: "Insert", content: [nodeX], id }];
 		assert.deepEqual(actual, expected);
 	});

@@ -21,7 +21,7 @@ export {
 	typeSymbol,
 	isEditableField,
 	isPrimitive,
-	isUnwrappedNode,
+	isEditableTree,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
