@@ -21,7 +21,28 @@ npm i @fluid-experimental/devtools -D
 
 ## Usage
 
-TODO
+The Devtools' API surface is designed to fit nicely into most application flows.
+
+### Initialization
+
+To initialize a debugger session for your container, call `initializeDevtools`.
+This function accepts a `DevtoolsLogger` for recording and communicating telemetry data, a list of initial Fluid `Containers` to associate with the session, and (optionally) customized data visualization configurations for visualizing `Container` data.
+
+TODO: link to API docs once API shape has settled.
+
+### Clean-up
+
+The Devtools object is managed as a global singleton.
+That singleton is automatically cleaned up prior to the Window's "unload" event.
+So typical application flows likely won't need to worry about cleanup.
+That said, if you wish to have tighter control over when the Devtools are torn down, you can simply call the `dispose` method on the handle returned by [initialization](#initialization).
+
+## Related Tooling
+
+This library is designed to work alongside our Chromium browser extension.
+
+TODO: link to code on github once package names have been finalized.
+TODO: link to the various browsers' webstore pages for our extension once it has been publiched.
 
 ## Working in the package
 
