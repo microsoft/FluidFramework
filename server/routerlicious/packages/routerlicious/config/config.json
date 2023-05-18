@@ -104,6 +104,9 @@
 		"enforceServerGeneratedDocumentId": false,
 		"socketIo": {
 			"perMessageDeflate": true
+		},
+		"jwtTokenCache": {
+			"enable": true
 		}
 	},
 	"client": {

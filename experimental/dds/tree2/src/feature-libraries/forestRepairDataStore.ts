@@ -46,8 +46,17 @@ export class ForestRepairDataStore implements RepairDataStore {
 
 	public capture(change: Delta.Root, revision: RevisionTag): void {
 		const forest = this.forestProvider(revision);
+		/**
+		 * Cursor used to traverse the forest and build fetch the repair data.
+		 * Note that the cursor is implicitly captured by the functions below, which have requirements for the cursor.
+		 * Calling those functions requires that the cursor be in the appropriate state.
+		 */
 		const cursor = forest.allocateCursor();
 
+		/**
+		 * Visits the node `cursor` is positioned at.
+		 * Restores the `cursor` to that same position before exiting.
+		 */
 		const visitFieldMarks = (fields: Delta.FieldMarks, parent: RepairDataNode): void => {
 			for (const [key, field] of fields) {
 				if (parent !== this.root) {
@@ -62,6 +71,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		};
 
+		/**
+		 * Visits the field `cursor` is positioned at.
+		 * Restores the `cursor` to that same position before exiting.
+		 */
 		function visitField(delta: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
 			let index = 0;
 			for (const mark of delta) {
@@ -74,8 +87,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 					switch (type) {
 						case Delta.MarkType.MoveOut:
 						case Delta.MarkType.Delete: {
+							cursor.enterNode(index);
 							const child = parent.getOrCreateChild(key, index, repairDataFactory);
 							visitModify(mark, child);
+							cursor.exitNode();
 							onDelete(parent, key, index, mark.count);
 							index += mark.count;
 							break;
@@ -98,6 +113,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		}
 
+		/**
+		 * Requires that `cursor` be positioned on a node.
+		 * Restores the `cursor` to that same position before exiting.
+		 */
 		function visitModify(modify: Delta.HasModifications, node: RepairDataNode): void {
 			// Note that the check below returns true for properties that are present on the object even if they
 			// are set to `undefined`. This is leveraged here to represent the fact that the value should be set to
@@ -117,6 +136,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		}
 
+		/**
+		 * Requires that `cursor` be positioned in the field where the deletion takes place.
+		 * Does not move `cursor`.
+		 */
 		function onDelete(
 			parent: RepairDataNode,
 			key: FieldKey,
