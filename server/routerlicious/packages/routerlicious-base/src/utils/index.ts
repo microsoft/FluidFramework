@@ -8,3 +8,8 @@ export { createDocumentRouter, IPlugin } from "./documentRouter";
 export { catch404, handleError } from "./middleware";
 export { getIdFromRequest, getTenantIdFromRequest } from "./params";
 export { getSession } from "./sessionHelper";
+export {
+	getTenantThrottlersMap,
+	getClusterThrottlersMap,
+	getTenantGroup1ThrottlersMap,
+} from "./throttlerHelper";

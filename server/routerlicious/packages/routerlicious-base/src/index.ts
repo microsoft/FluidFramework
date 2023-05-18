@@ -32,4 +32,7 @@ export {
 	getTenantIdFromRequest,
 	handleError,
 	IPlugin,
+	getTenantThrottlersMap,
+	getClusterThrottlersMap,
+	getTenantGroup1ThrottlersMap,
 } from "./utils";
