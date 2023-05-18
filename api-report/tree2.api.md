@@ -1294,7 +1294,9 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
 export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
 // @alpha (undocumented)
-export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined, deleted?: boolean) => NodeChangeset | undefined;
+export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
+deleted?: boolean,
+revived?: boolean) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
