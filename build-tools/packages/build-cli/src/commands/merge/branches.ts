@@ -36,11 +36,6 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			char: "b",
 			required: true,
 		}),
-		pullRequestInfo: Flags.string({
-			description: "Pull request data",
-			char: "p",
-			multiple: true,
-		}),
 		...BaseCommand.flags,
 	};
 
@@ -54,7 +49,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		if (prExists) {
 			this.exit(-1);
 			this.error(`Open pull request exists`);
-			// notify the author
+			// TODO: notify the author
 		}
 
 		const lastMergedCommit = await gitRepo.mergeBase(flags.source, flags.target);
@@ -62,25 +57,13 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			`${lastMergedCommit} is the last merged commit id between ${flags.source} and ${flags.target}`,
 		);
 
-		const listCommits = await gitRepo.revList(lastMergedCommit, flags.source);
 		const unmergedCommitList: string[] = [];
-		let str = "";
+		const revListOutput = await gitRepo.revList(lastMergedCommit, flags.source);
+		const commitLines = revListOutput.split("\n");
 
-		for (const id of listCommits) {
-			// check the length to be 40 since git commit id is 40 digits long
-			if (str.length === 40) {
-				unmergedCommitList.push(str);
-				str = "";
-				continue;
-			}
-
-			str += id;
-
-			if (str.length > 40) {
-				this.error(
-					`Unexpected string. Incorrect commit id length. Please check the commit id`,
-				);
-			}
+		for (const line of commitLines) {
+			const id = line.trim();
+			unmergedCommitList.push(id);
 		}
 
 		this.log(
@@ -131,7 +114,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		this.info(`List users with push access to main branch ${user}`);
 		const prNumber = await createPullRequest(
 			flags.auth,
-			`${flags.source}-${flags.target}-${unmergedCommitList[0]}`,
+			branchName,
 			flags.target,
 			prInfo.data[0].assignee.login,
 			this.logger,
