@@ -402,7 +402,7 @@ export class EditManager<
 	 */
 	public afterSummaryLoad(): void {
 		this.trunkUndoRedoManager.repairDataStoreProvider =
-			this.localBranchUndoRedoManager.clone().repairDataStoreProvider;
+			this.localBranchUndoRedoManager.repairDataStoreProvider.clone();
 	}
 
 	public addSequencedChange(
