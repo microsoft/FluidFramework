@@ -208,7 +208,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		for (const key of Object.keys(input)) {
 			const value = input[key];
 
-			if (Boolean(value) && typeof value === "object") {
+			if (
+				Boolean(value) &&
+				typeof value === "object" &&
+				key !== DocumentStorageServiceCompressionAdapter.uncompressedPath
+			) {
 				const replaced = this.recursivelyReplace(
 					isEncode,
 					value as SummaryObject,
@@ -269,7 +273,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		return metadataHolderTree;
 	}
 
-	private static putCompressionMarkup(summary: ISummaryTree) {
+	private static putCompressionMarkup(summary: ISummaryTree): void {
 		const metadataHolderTree =
 			DocumentStorageServiceCompressionAdapter.getMetadataHolderTree(summary);
 		metadataHolderTree[DocumentStorageServiceCompressionAdapter.compressionMarkupBlob] = {
@@ -278,7 +282,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		};
 	}
 
-	private static hasCompressionMarkup(snapshot: ISnapshotTree) {
+	private static hasCompressionMarkup(snapshot: ISnapshotTree): boolean {
 		const metadataHolder = this.findMetadataHolderSnapshot(snapshot);
 		return (
 			metadataHolder?.blobs[
