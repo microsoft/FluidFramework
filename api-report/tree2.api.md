@@ -832,6 +832,7 @@ type _InlineTrick = 0;
 // @alpha
 interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly content: readonly TTree[];
+    readonly isTransient?: true;
     // (undocumented)
     readonly type: typeof MarkType.Insert;
 }
