@@ -153,7 +153,7 @@ export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
 export {
 	IWebSocketTracker,
 	ITokenRevocationManager,
-	ITokenRevocationChecker,
+	IRevokedTokenChecker,
 	ITokenRevocationResponse,
 	IRevokeTokenOptions,
 	TokenRevocationError,

@@ -12,6 +12,7 @@ import {
 	ICache,
 	IDocumentRepository,
 	ITokenRevocationManager,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -43,6 +44,7 @@ export function create(
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -101,6 +103,7 @@ export function create(
 		documentRepository,
 		documentDeleteService,
 		tokenRevocationManager,
+		revokedTokenChecker,
 	);
 
 	app.use(routes.api);

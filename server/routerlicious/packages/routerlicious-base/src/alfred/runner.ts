@@ -20,6 +20,7 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IWebSocketTracker,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -60,6 +61,7 @@ export class AlfredRunner implements IRunner {
 		private readonly redisCache?: ICache,
 		private readonly socketTracker?: IWebSocketTracker,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
+		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -80,6 +82,7 @@ export class AlfredRunner implements IRunner {
 			this.documentRepository,
 			this.documentDeleteService,
 			this.tokenRevocationManager,
+			this.revokedTokenChecker,
 		);
 		alfred.set("port", this.port);
 
@@ -121,7 +124,7 @@ export class AlfredRunner implements IRunner {
 			this.throttleAndUsageStorageManager,
 			this.verifyMaxMessageSize,
 			this.socketTracker,
-			this.tokenRevocationManager,
+			this.revokedTokenChecker,
 		);
 
 		// Listen on provided port, on all network interfaces.
@@ -132,7 +135,8 @@ export class AlfredRunner implements IRunner {
 		// Start token manager
 		if (this.tokenRevocationManager) {
 			this.tokenRevocationManager.start().catch((error) => {
-				this.runningDeferred.reject(error);
+				// Prevent service crash if token revocation manager fails to start
+				Lumberjack.error("Failed to start token revocation manager.", undefined, error);
 			});
 		}
 

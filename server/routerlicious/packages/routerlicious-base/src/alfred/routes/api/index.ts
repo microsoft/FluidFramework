@@ -9,6 +9,7 @@ import {
 	IDocumentRepository,
 	IDocumentStorage,
 	IProducer,
+	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
 	ITokenRevocationManager,
@@ -35,6 +36,7 @@ export function create(
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -45,7 +47,7 @@ export function create(
 		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
-		tokenRevocationManager,
+		revokedTokenChecker,
 	);
 	const documentsRoute = documents.create(
 		storage,
@@ -58,6 +60,7 @@ export function create(
 		documentRepository,
 		documentDeleteService,
 		tokenRevocationManager,
+		revokedTokenChecker,
 	);
 	const apiRoute = api.create(
 		config,
@@ -66,7 +69,7 @@ export function create(
 		storage,
 		tenantThrottlers,
 		singleUseTokenCache,
-		tokenRevocationManager,
+		revokedTokenChecker,
 	);
 
 	router.use(cors());

@@ -43,7 +43,7 @@ export function create(
 	storage: core.IDocumentStorage,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
-	tokenRevocationManager?: core.ITokenRevocationManager,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 
@@ -94,7 +94,7 @@ export function create(
 				isTokenExpiryEnabled,
 				enableJwtTokenCache,
 				jwtTokenCache,
-				tokenRevocationManager,
+				revokedTokenChecker,
 			);
 			handleResponse(
 				validP.then(() => undefined),
@@ -213,7 +213,7 @@ const verifyRequest = async (
 	isTokenExpiryEnabled: boolean,
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
-	tokenRevocationManager?: core.ITokenRevocationManager,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ) =>
 	Promise.all([
 		verifyTokenWrapper(
@@ -223,7 +223,7 @@ const verifyRequest = async (
 			isTokenExpiryEnabled,
 			tokenCacheEnabled,
 			tokenCache,
-			tokenRevocationManager,
+			revokedTokenChecker,
 		),
 		checkDocumentExistence(request, storage),
 	]);
@@ -235,7 +235,7 @@ async function verifyTokenWrapper(
 	isTokenExpiryEnabled: boolean,
 	tokenCacheEnabled: boolean,
 	tokenCache?: core.ICache,
-	tokenRevocationManager?: core.ITokenRevocationManager,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
@@ -254,8 +254,8 @@ async function verifyTokenWrapper(
 		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 	}
 
-	if (tokenRevocationManager && claims.jti) {
-		const tokenRevoked = await tokenRevocationManager.isTokenRevoked(
+	if (revokedTokenChecker && claims.jti) {
+		const tokenRevoked = await revokedTokenChecker.isTokenRevoked(
 			tenantId,
 			documentId,
 			claims.jti,
@@ -274,6 +274,7 @@ async function verifyTokenWrapper(
 			singleUseTokenCache: undefined,
 			enableTokenCache: true,
 			tokenCache,
+			revokedTokenChecker,
 		};
 		return verifyToken(tenantId, documentId, token, tenantManager, options);
 	}

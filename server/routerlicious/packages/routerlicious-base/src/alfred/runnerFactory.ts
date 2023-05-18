@@ -112,6 +112,7 @@ export class AlfredResources implements core.IResources {
 		public redisCache?: core.ICache,
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
+		public revokedTokenChecker?: core.IRevokedTokenChecker,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -504,8 +505,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 		let socketTracker: core.IWebSocketTracker | undefined;
 		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
+		let revokedTokenChecker: core.IRevokedTokenChecker | undefined;
 		if (tokenRevocationEnabled) {
 			socketTracker = new utils.WebSocketTracker();
+			revokedTokenChecker = new utils.DummyRevokedTokenChecker();
 			tokenRevocationManager = new utils.DummyTokenRevocationManager();
 			await tokenRevocationManager.initialize();
 		}
@@ -539,6 +542,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			redisCache,
 			socketTracker,
 			tokenRevocationManager,
+			revokedTokenChecker,
 		);
 	}
 }
@@ -571,6 +575,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.redisCache,
 			resources.socketTracker,
 			resources.tokenRevocationManager,
+			resources.revokedTokenChecker,
 		);
 	}
 }

@@ -146,7 +146,7 @@ export interface IRevokeTokenOptions {
 	correlationId: string;
 }
 
-export interface ITokenRevocationChecker {
+export interface IRevokedTokenChecker {
 	// Check if a given token id is revoked
 	isTokenRevoked(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;
 }
@@ -174,9 +174,9 @@ export interface ITokenRevocationManager {
 	): Promise<ITokenRevocationResponse>;
 
 	/**
-	 * @deprecated move this function to ITokenRevocationChecker
+	 * @deprecated move this function to IRevokedTokenChecker
 	 */
-	isTokenRevoked(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;
+	isTokenRevoked?(tenantId: string, documentId: string, jwtId: string): Promise<boolean>;
 }
 
 export function createCompositeTokenId(

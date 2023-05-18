@@ -230,7 +230,7 @@ export function configureWebSocketServices(
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
 	socketTracker?: core.IWebSocketTracker,
-	tokenRevocationManager?: core.ITokenRevocationManager,
+	revokedTokenChecker?: core.IRevokedTokenChecker,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -342,8 +342,8 @@ export function configureWebSocketServices(
 
 			try {
 				// Check if token is revoked
-				if (tokenRevocationManager && claims.jti) {
-					const isTokenRevoked: boolean = await tokenRevocationManager.isTokenRevoked(
+				if (revokedTokenChecker && claims.jti) {
+					const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
 						claims.tenantId,
 						claims.documentId,
 						claims.jti,

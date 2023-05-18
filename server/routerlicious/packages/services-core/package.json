@@ -76,6 +76,9 @@
 			},
 			"InterfaceDeclaration_ITokenRevocationResponse": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ITokenRevocationManager": {
+				"backCompat": false
 			}
 		}
 	}

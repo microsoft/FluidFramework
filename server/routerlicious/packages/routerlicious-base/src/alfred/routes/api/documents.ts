@@ -12,6 +12,7 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IRevokeTokenOptions,
+	IRevokedTokenChecker,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -50,6 +51,7 @@ export function create(
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
 	tokenRevocationManager?: ITokenRevocationManager,
+	revokedTokenChecker?: IRevokedTokenChecker,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -101,13 +103,14 @@ export function create(
 		singleUseTokenCache: undefined,
 		enableTokenCache: enableJwtTokenCache,
 		tokenCache: singleUseTokenCache,
+		revokedTokenChecker,
 	};
 
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, tokenRevocationManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
 				getParam(request.params, "tenantId") || appTenants[0].id,
@@ -143,12 +146,13 @@ export function create(
 			winston,
 			createDocTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenRevocationManager, {
+		verifyStorageToken(tenantManager, config, {
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
 			enableTokenCache: enableJwtTokenCache,
 			tokenCache: singleUseTokenCache,
+			revokedTokenChecker,
 		}),
 		async (request, response, next) => {
 			// Tenant and document
@@ -239,7 +243,7 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, tokenRevocationManager, defaultTokenValidationOptions),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -263,12 +267,7 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(
-			tenantManager,
-			config,
-			tokenRevocationManager,
-			defaultTokenValidationOptions,
-		),
+		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -291,7 +290,6 @@ export function create(
 		verifyStorageToken(
 			tenantManager,
 			config,
-			tokenRevocationManager,
 			defaultTokenValidationOptions,
 		),
 		async (request, response, next) => {
