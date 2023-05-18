@@ -515,69 +515,72 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Runs garbage collection. It generates the reference graph, runs GC algorithm on it to find references and
-	 * unreferenced nodes and runs Mark and Sweep phases.
+	 * Runs garbage collection. It does the following:
+	 * 1. It generates / analyzes the runtime's reference graph.
+	 * 2. Generates stats for the GC run based on previous / current GC state.
+	 * 3. Runs Mark phase.
+	 * 4. Runs Sweep phase.
 	 */
 	private async runGC(
 		fullGC: boolean,
 		currentReferenceTimestampMs: number,
 		logger: ITelemetryLogger,
 	): Promise<IGCStats> {
+		// 1. Generate / analyze the runtime's reference graph.
+		// Get the reference graph (gcData) and run GC algorithm to get referenced / unreferenced nodes.
 		const gcData = await this.runtime.getGCData(fullGC);
 		const gcResult = runGarbageCollection(gcData.gcNodes, ["/"]);
+		// Get all referenced nodes - References in this run + references between the previous and current runs.
+		const allReferencedNodeIds =
+			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger) ??
+			gcResult.referencedNodeIds;
 
-		// Generate stats before running Mark / Sweep phase because it uses previous GC state which will get updated
-		// in these stages.
+		// 2. Generate stats based on the previous / current GC state.
+		// Must happen before running Mark / Sweep phase because previous GC state will be updated in these stages.
 		const gcStats = this.generateStats(gcResult);
 
-		// Run the Mark phase. It will mark nodes as referenced / unreferenced appropriately and return a list of
-		// node ids that are ready to be swept.
+		// 3. Run the Mark phase.
+		// It will mark nodes as referenced / unreferenced and return a list of node ids that are ready to be swept.
 		const sweepReadyNodeIds = this.runMarkPhase(
-			gcData,
 			gcResult,
+			allReferencedNodeIds,
 			currentReferenceTimestampMs,
-			logger,
 		);
 
-		// Run the Sweep phase. It will delete sweep ready nodes and return updated GC data - gcData which has deleted
-		// nodes removed.
-		const updatedGCData = this.runSweepPhase(
-			gcData,
+		// 4. Run the Sweep phase.
+		// It will delete sweep ready nodes and return a list of deleted node ids.
+		const deletedNodeIds = this.runSweepPhase(
 			gcResult,
 			sweepReadyNodeIds,
 			currentReferenceTimestampMs,
 			logger,
 		);
 
-		this.gcDataFromLastRun = cloneGCData(updatedGCData);
+		this.gcDataFromLastRun = cloneGCData(
+			gcData,
+			(id: string) => deletedNodeIds.includes(id) /* filter out deleted nodes */,
+		);
 		return gcStats;
 	}
 
 	/**
 	 * Runs the GC Mark phase. It does the following:
-	 * 1. Finds references between previous and current runs and mark these nodes referenced by clearing tracking for them.
+	 * 1. Marks all referenced nodes in this run by clearing tracking for them.
 	 * 2. Marks unreferenced nodes in this run by starting tracking for them.
-	 * 3. Marks referenced nodes in this run by clearing tracking for them.
-	 * 4. Calls the runtime to update nodes that were marked referenced.
+	 * 3. Calls the runtime to update nodes that were marked referenced.
 	 *
-	 * @param gcData - The data representing the reference graph on which GC is run.
 	 * @param gcResult - The result of the GC run on the gcData.
+	 * @param allReferencedNodeIds - Nodes referenced in this GC run + referenced between previous and current GC run.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
-	 * @param logger - The logger to be used to log any telemetry.
 	 * @returns - A list of sweep ready nodes, i.e., nodes that ready to be deleted.
 	 */
 	private runMarkPhase(
-		gcData: IGarbageCollectionData,
 		gcResult: IGCResult,
+		allReferencedNodeIds: string[],
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLogger,
 	): string[] {
-		// 1. Find references between the previous and current GC runs. Mark these nodes as referenced by clearing
-		// their unreferenced tracker, if any.
-		const allNodesReferencedBetweenGCs =
-			this.findAllNodesReferencedBetweenGCs(gcData, this.gcDataFromLastRun, logger) ??
-			gcResult.referencedNodeIds;
-		for (const nodeId of allNodesReferencedBetweenGCs) {
+		// 1. Marks all referenced nodes by clearing their unreferenced tracker, if any.
+		for (const nodeId of allReferencedNodeIds) {
 			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
 			if (nodeStateTracker !== undefined) {
 				// Stop tracking so as to clear out any running timers.
@@ -588,7 +591,6 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		// 2. Mark unreferenced nodes in this run by starting unreferenced tracking for them.
-		// 3. Mark referenced nodes in this run by clearing unreferenced tracking for them.
 		const sweepReadyNodeIds: string[] = [];
 		for (const nodeId of gcResult.deletedNodeIds) {
 			const nodeStateTracker = this.unreferencedNodesState.get(nodeId);
@@ -614,7 +616,7 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 		}
 
-		// 4. Call the runtime to update referenced nodes.
+		// 3. Call the runtime to update referenced nodes in this run.
 		this.runtime.updateUsedRoutes(gcResult.referencedNodeIds);
 
 		return sweepReadyNodeIds;
@@ -624,22 +626,19 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Runs the GC Sweep phase. It does the following:
 	 * 1. Calls the runtime to delete nodes that are sweep ready.
 	 * 2. Clears tracking for deleted nodes.
-	 * 3. Updates the passed in gcData by removing deleted nodes from it.
 	 *
-	 * @param gcData - The data representing the reference graph on which GC is run.
 	 * @param gcResult - The result of the GC run on the gcData.
 	 * @param sweepReadyNodes - List of nodes that are sweep ready.
 	 * @param currentReferenceTimestampMs - The timestamp to be used for unreferenced nodes' timestamp.
 	 * @param logger - The logger to be used to log any telemetry.
-	 * @returns - GC data that has deleted nodes removed.
+	 * @returns - A list of nodes that have been deleted.
 	 */
 	private runSweepPhase(
-		gcData: IGarbageCollectionData,
 		gcResult: IGCResult,
 		sweepReadyNodes: string[],
 		currentReferenceTimestampMs: number,
 		logger: ITelemetryLogger,
-	): IGarbageCollectionData {
+	): string[] {
 		// Log events for objects that are ready to be deleted by sweep. This will give us data on sweep when
 		// its not enabled.
 		this.telemetryTracker.logSweepEvents(
@@ -662,7 +661,7 @@ export class GarbageCollector implements IGarbageCollector {
 		if (this.configs.testMode) {
 			// If we are running in GC test mode, unreferenced nodes (gcResult.deletedNodeIds) are deleted.
 			this.runtime.updateUnusedRoutes(gcResult.deletedNodeIds);
-			return gcData;
+			return [];
 		}
 
 		if (this.configs.tombstoneMode) {
@@ -670,11 +669,11 @@ export class GarbageCollector implements IGarbageCollector {
 			// If we are running in GC tombstone mode, update tombstoned routes. This enables testing scenarios
 			// involving access to "deleted" data without actually deleting the data from summaries.
 			this.runtime.updateTombstonedRoutes(this.tombstones);
-			return gcData;
+			return [];
 		}
 
 		if (!this.configs.shouldRunSweep) {
-			return gcData;
+			return [];
 		}
 
 		// 1. Call the runtime to delete sweep ready nodes. The runtime returns a list of nodes it deleted.
@@ -695,16 +694,7 @@ export class GarbageCollector implements IGarbageCollector {
 			// TODO: GC:Validation - assert that the deleted node is not a duplicate
 			this.deletedNodes.add(nodeId);
 		}
-
-		// 3. Returns a copy of the passed in gcData that has deleted nodes removed.
-		const deletedNodeIdsSet = new Set<string>(deletedNodeIds);
-		const gcNodes: { [id: string]: string[] } = {};
-		for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-			if (!deletedNodeIdsSet.has(id)) {
-				gcNodes[id] = Array.from(outboundRoutes);
-			}
-		}
-		return { gcNodes };
+		return deletedNodeIds;
 	}
 
 	/**
