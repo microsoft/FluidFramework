@@ -253,6 +253,7 @@ export {
 	Sourced,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	NodeExistenceStateChange,
 } from "./feature-libraries";
 
 export {
