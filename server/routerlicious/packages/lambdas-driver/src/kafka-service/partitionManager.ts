@@ -81,7 +81,6 @@ export class PartitionManager extends EventEmitter {
 						msgPartition: queuedMessage.partition,
 						retries,
 						latency,
-						exception: ex,
 					});
 				},
 			);

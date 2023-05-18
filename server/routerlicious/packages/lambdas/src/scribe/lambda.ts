@@ -124,13 +124,18 @@ export class ScribeLambda implements IPartitionLambda {
 			});
 
 			this.updateCheckpointMessages(message);
-			if (this.kafkaCheckpointOnReprocessingOp) {
-				reprocessOpsMetric.setProperty("kafkaCheckpointOnReprocessingOp", true);
-				this.context.checkpoint(message, this.restartOnCheckpointFailure);
+			try {
+				if (this.kafkaCheckpointOnReprocessingOp) {
+					this.context.checkpoint(message, this.restartOnCheckpointFailure);
+				}
+				reprocessOpsMetric.setProperty(
+					"kafkaCheckpointOnReprocessingOp",
+					this.kafkaCheckpointOnReprocessingOp,
+				);
+				reprocessOpsMetric.success(`Successfully reprocessed repeating ops.`);
+			} catch (error) {
+				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
-			reprocessOpsMetric.success(
-				`Repeating ops: message.offset: ${message.offset} <= this.lastOffset: ${this.lastOffset}`,
-			);
 			return;
 		}
 		// if lastOffset is undefined or we have skipped all the previously processed ops,
