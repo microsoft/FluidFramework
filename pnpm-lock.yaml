@@ -6932,6 +6932,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.16.1
       '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/driver-web-cache-previous': npm:@fluidframework/driver-web-cache@2.0.0-internal.4.1.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -6950,6 +6951,7 @@ importers:
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       idb: 6.1.5

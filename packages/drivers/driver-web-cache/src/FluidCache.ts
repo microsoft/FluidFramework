@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { IDBPDatabase } from "idb";
+import { assert } from "@fluidframework/common-utils";
 import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -46,6 +48,16 @@ export interface FluidCacheConfig {
 	 * If an entry exists in the cache, but is older than this value, the cached value will not be returned.
 	 */
 	maxCacheItemAge: number;
+
+	/**
+	 * To improve perf, if this property is set, then db will not be closed immediately after usage.
+	 */
+	noImmediateClose?: boolean;
+
+	/**
+	 * Each time db is opened, it will remain open for this much time. If not provided, default value will be 2s.
+	 */
+	closeDbAfter?: number;
 }
 
 /**
@@ -57,7 +69,8 @@ export class FluidCache implements IPersistedCache {
 	private readonly partitionKey: string | null;
 
 	private readonly maxCacheItemAge: number;
-
+	private readonly noImmediateClose: boolean;
+	private readonly closeDbAfter: number;
 	private db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 	private dbCloseTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -65,6 +78,8 @@ export class FluidCache implements IPersistedCache {
 		this.logger = ChildLogger.create(config.logger);
 		this.partitionKey = config.partitionKey;
 		this.maxCacheItemAge = config.maxCacheItemAge;
+		this.noImmediateClose = config.noImmediateClose ?? false;
+		this.closeDbAfter = config.closeDbAfter ?? 2000;
 
 		scheduleIdleTask(async () => {
 			// Log how much storage space is currently being used by indexed db.
@@ -121,28 +136,46 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	private async openDb() {
-		if (this.db === undefined) {
-			this.db = await getFluidCacheIndexedDbInstance(this.logger);
-			// Need to close the db on version change if opened.
-			this.db.addEventListener("versionchange", (ev) => {
-				this.db?.close();
-				this.db = undefined;
-			});
-			this.db.addEventListener("close", (ev) => {
-				clearTimeout(this.dbCloseTimer);
-				this.dbCloseTimer = undefined;
-				this.db = undefined;
-			});
-			// Schedule db close after 30s.
-			if (this.dbCloseTimer === undefined) {
+		if (this.noImmediateClose) {
+			if (this.db === undefined) {
+				const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
+				if (this.db === undefined) {
+					this.db = dbInstance;
+				} else {
+					dbInstance.close();
+					return this.db;
+				}
+				// Need to close the db on version change if opened.
+				this.db.onversionchange = (ev) => {
+					this.db?.close();
+					this.db = undefined;
+					clearTimeout(this.dbCloseTimer);
+					this.dbCloseTimer = undefined;
+				};
+				this.db.addEventListener("close", (ev) => {
+					clearTimeout(this.dbCloseTimer);
+					this.dbCloseTimer = undefined;
+					this.db = undefined;
+				});
+				// Schedule db close after this.closeDbAfter.
+				assert(this.dbCloseTimer === undefined, "timer should not be set yet!!");
 				this.dbCloseTimer = setTimeout(() => {
 					this.db?.close();
 					this.db = undefined;
 					this.dbCloseTimer = undefined;
-				}, 30000);
+				}, this.closeDbAfter);
 			}
+			assert(this.db !== undefined, "db should be intialized by now");
+			return this.db;
 		}
-		return this.db;
+		return getFluidCacheIndexedDbInstance(this.logger);
+	}
+
+	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>) {
+		if (this.noImmediateClose) {
+			return;
+		}
+		db?.close();
 	}
 
 	public async removeEntries(file: IFileEntry): Promise<void> {
@@ -164,6 +197,8 @@ export class FluidCache implements IPersistedCache {
 				},
 				error,
 			);
+		} finally {
+			this.closeDb(db);
 		}
 	}
 
@@ -196,6 +231,7 @@ export class FluidCache implements IPersistedCache {
 			const value = await db.get(FluidDriverObjectStoreName, key);
 
 			if (!value) {
+				this.closeDb(db);
 				return undefined;
 			}
 
@@ -206,6 +242,7 @@ export class FluidCache implements IPersistedCache {
 					subCategory: FluidCacheEventSubCategories.FluidCache,
 				});
 
+				this.closeDb(db);
 				return undefined;
 			}
 
@@ -213,9 +250,11 @@ export class FluidCache implements IPersistedCache {
 
 			// If too much time has passed since this cache entry was used, we will also return undefined
 			if (currentTime - value.createdTimeMs > this.maxCacheItemAge) {
+				this.closeDb(db);
 				return undefined;
 			}
 
+			this.closeDb(db);
 			return { ...value, dbOpenPerf };
 		} catch (error: any) {
 			// We can fail to open the db for a variety of reasons,
@@ -224,6 +263,7 @@ export class FluidCache implements IPersistedCache {
 				{ eventName: FluidCacheErrorEvent.FluidCacheGetError },
 				error,
 			);
+			this.closeDb(db);
 			return undefined;
 		}
 	}
@@ -248,6 +288,7 @@ export class FluidCache implements IPersistedCache {
 				},
 				getKeyForCacheEntry(entry),
 			);
+			this.closeDb(db);
 		} catch (error: any) {
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us
@@ -255,6 +296,8 @@ export class FluidCache implements IPersistedCache {
 				{ eventName: FluidCacheErrorEvent.FluidCachePutError },
 				error,
 			);
+		} finally {
+			this.closeDb(db);
 		}
 	}
 }
