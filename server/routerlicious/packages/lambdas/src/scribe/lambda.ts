@@ -137,6 +137,11 @@ export class ScribeLambda implements IPartitionLambda {
 				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
 			return;
+		} else if (this.lastOffset === undefined) {
+			Lumberjack.error(
+				`Scribe logOffset is undefined`,
+				getLumberBaseProperties(this.documentId, this.tenantId),
+			);
 		}
 		// if lastOffset is undefined or we have skipped all the previously processed ops,
 		// we want to set the offset we store in the database equal to the kafka message offset
