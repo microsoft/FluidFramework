@@ -499,18 +499,26 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
 
 		// Set up token revocation if enabled
+		/**
+		 * Always have a revoked token checker,
+		 * just make sure it rejects existing revoked tokens even with the feature flag disabled
+		 */
+		const revokedTokenChecker: core.IRevokedTokenChecker =
+			customizations?.revokedTokenChecker ?? new utils.DummyRevokedTokenChecker();
 		const tokenRevocationEnabled: boolean = utils.getBooleanFromConfig(
 			"tokenRevocation:enable",
 			config,
 		);
 		let socketTracker: core.IWebSocketTracker | undefined;
 		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
-		let revokedTokenChecker: core.IRevokedTokenChecker | undefined;
 		if (tokenRevocationEnabled) {
 			socketTracker = new utils.WebSocketTracker();
-			revokedTokenChecker = new utils.DummyRevokedTokenChecker();
-			tokenRevocationManager = new utils.DummyTokenRevocationManager();
-			await tokenRevocationManager.initialize();
+			tokenRevocationManager =
+				customizations?.tokenRevocationManager ?? new utils.DummyTokenRevocationManager();
+			await tokenRevocationManager.initialize().catch((error) => {
+				// Do NOT crash the service if token revocation feature cannot be initialized properly.
+				Lumberjack.error("Failed to initialize token revocation manager", undefined, error);
+			});
 		}
 
 		return new AlfredResources(
