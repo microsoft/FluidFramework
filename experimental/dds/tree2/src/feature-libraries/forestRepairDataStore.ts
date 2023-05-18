@@ -54,7 +54,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 		const cursor = forest.allocateCursor();
 
 		/**
-		 * Requires that `cursor` be positioned on a node.
+		 * Visits the node `cursor` is positioned at.
 		 * Restores the `cursor` to that same position before exiting.
 		 */
 		const visitFieldMarks = (fields: Delta.FieldMarks, parent: RepairDataNode): void => {
@@ -72,7 +72,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 		};
 
 		/**
-		 * Requires that `cursor` be positioned on a field.
+		 * Visits the field `cursor` is positioned at.
 		 * Restores the `cursor` to that same position before exiting.
 		 */
 		function visitField(delta: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
