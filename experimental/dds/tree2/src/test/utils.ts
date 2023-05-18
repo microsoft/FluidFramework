@@ -538,6 +538,9 @@ export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
 	return jsonable;
 }
 
+/**
+ * Assumes `tree` is in the json domain and returns its content as a json compatible object.
+ */
 export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
