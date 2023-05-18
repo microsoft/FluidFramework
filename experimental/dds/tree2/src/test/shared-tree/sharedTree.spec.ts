@@ -27,7 +27,13 @@ import {
 	TestTreeProvider,
 	TestTreeProviderLite,
 } from "../utils";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory, runSynchronous } from "../../shared-tree";
+import {
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+	createSharedTreeView,
+	runSynchronous,
+} from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -47,6 +53,7 @@ import {
 	AllowedUpdateType,
 } from "../../core";
 import { EditManager } from "../../shared-tree-core";
+import { jsonString } from "../../domains";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -1203,6 +1210,96 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
+		it("optional field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const path = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
+			});
+
+			provider.processMessages();
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(undefined, false);
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint({
+					parent: path,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+
+				tree2.editor.setValue(path, "b");
+			});
+
+			provider.processMessages();
+
+			validateRootField(tree1, ["a"]);
+			validateRootField(tree2, ["a"]);
+		});
+
+		it.skip("revived optional field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const path = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
+			});
+
+			provider.processMessages();
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(undefined, false);
+			});
+
+			tree1.undo();
+
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint({
+					parent: path,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+
+				tree2.editor.setValue(path, "b");
+			});
+
+			const expectedState: JsonableTree = {
+				type: brand("TestValue"),
+				value: "b",
+				fields: {
+					foo: [{ type: jsonString.name, value: "x" }],
+				},
+			};
+
+			provider.processMessages();
+
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
+		});
+
 		it("transaction dropped when constraint violated", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
@@ -2471,11 +2568,17 @@ function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
 function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
+		// Test an actual SharedTree...
 		fn(provider.trees[0]);
+		// ...as well as a reference view
+		fn(createSharedTreeView());
 	});
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
+		// Test an actual SharedTree fork...
 		fn(provider.trees[0].fork());
+		// ...as well as a reference fork
+		fn(createSharedTreeView().fork());
 	});
 }

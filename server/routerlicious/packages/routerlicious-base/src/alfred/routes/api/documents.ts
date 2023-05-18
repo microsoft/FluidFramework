@@ -20,6 +20,7 @@ import {
 	getParam,
 	validateTokenScopeClaims,
 	tenantThrottle,
+	getBooleanFromConfig,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
@@ -80,6 +81,20 @@ export function create(
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 
+	// Jwt token cache
+	const enableJwtTokenCache: boolean = getBooleanFromConfig(
+		"alfred:jwtTokenCache:enable",
+		config,
+	);
+
+	const defaultTokenValidationOptions = {
+		requireDocumentId: true,
+		ensureSingleUseToken: false,
+		singleUseTokenCache: undefined,
+		enableTokenCache: enableJwtTokenCache,
+		tokenCache: singleUseTokenCache,
+	};
+
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
@@ -127,6 +142,8 @@ export function create(
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
+			enableTokenCache: enableJwtTokenCache,
+			tokenCache: singleUseTokenCache,
 		}),
 		async (request, response, next) => {
 			// Tenant and document
@@ -244,7 +261,7 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(tenantManager, config, tokenManager),
+		verifyStorageToken(tenantManager, config, tokenManager, defaultTokenValidationOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");

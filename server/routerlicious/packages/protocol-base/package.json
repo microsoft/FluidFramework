@@ -93,6 +93,34 @@
 			"RemovedVariableDeclaration_isServiceMessageType": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_generateServiceProtocolEntries": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_getQuorumTreeEntries": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_mergeAppAndProtocolTree": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_addBlobToTree": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_buildHierarchy": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_isSystemMessage": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ILocalSequencedClient": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

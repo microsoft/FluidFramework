@@ -251,6 +251,8 @@ export {
 	GlobalFieldSchema,
 	Any,
 	Sourced,
+	NodeExistsConstraint,
+	cursorForTypedTreeData,
 } from "./feature-libraries";
 
 export {
@@ -258,9 +260,9 @@ export {
 	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
-	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
+	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
 } from "./shared-tree";

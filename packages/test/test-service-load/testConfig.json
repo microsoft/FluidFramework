@@ -22,7 +22,8 @@
 				"durationMs": {
 					"min": 5000,
 					"max": 15000
-				}
+				},
+				"stashPercent": 0
 			},
 			"optionOverrides": {
 				"odsp": {
