@@ -63,7 +63,8 @@ data:
             "storageUrl": "{{ .Values.storage.storageUrl }}"
         },
         "checkpoints": {
-            "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }}
+            "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},
+            "kafkaCheckpointOnReprocessingOp": {{ .Values.checkpoints.kafkaCheckpointOnReprocessingOp }},
             },
         "alfred": {
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
