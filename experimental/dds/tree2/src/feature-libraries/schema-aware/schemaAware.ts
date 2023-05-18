@@ -22,7 +22,7 @@ import {
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { contextSymbol, typeSymbol } from "../editable-tree";
 import { Assume } from "../../util";
-import { UntypedSequenceField } from "./partlyTyped";
+import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 
 /**
@@ -147,6 +147,8 @@ export type UnbrandedName<TName> = [
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
  *
+ * In Editable mode, unwraps the fields.
+ *
  * TODO:
  * Extend this to support global fields.
  * @alpha
@@ -157,20 +159,23 @@ export type TypedFields<
 > = [
 	TFields extends { [key: string]: FieldSchema }
 		? {
-				[key in keyof TFields]: TypedField<Mode, TFields[key]>;
+				[key in keyof TFields]: TypedField<
+					TFields[key],
+					Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
+				>;
 		  }
 		: EmptyObject,
 ][InternalTypedSchemaTypes._InlineTrick];
 
 /**
- * `FieldSchemaTypeInfo` to `TypedTree`
+ * `FieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
  * @alpha
  */
-export type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
+export type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
 		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
-		Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode
+		Mode
 	>,
 ][InternalTypedSchemaTypes._InlineTrick];
 
@@ -184,11 +189,15 @@ export type ApplyMultiplicity<
 	Mode extends ApiMode,
 > = {
 	[Multiplicity.Forbidden]: undefined;
-	[Multiplicity.Optional]: undefined | TypedChild;
+	[Multiplicity.Optional]: Mode extends ApiMode.Editable
+		? EditableOptionalField<TypedChild>
+		: undefined | TypedChild;
 	[Multiplicity.Sequence]: Mode extends ApiMode.Editable | ApiMode.EditableUnwrapped
 		? EditableSequenceField<TypedChild>
 		: TypedChild[];
-	[Multiplicity.Value]: TypedChild;
+	[Multiplicity.Value]: Mode extends ApiMode.Editable
+		? EditableValueField<TypedChild>
+		: TypedChild;
 }[TMultiplicity];
 
 // TODO: add strong typed `getNode`.
@@ -198,7 +207,23 @@ export type EditableField<TypedChild> = UntypedField & MarkedArrayLike<TypedChil
 /**
  * @alpha
  */
-export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArrayLike<TypedChild>;
+export type EditableSequenceField<TypedChild> = [
+	UntypedSequenceField & MarkedArrayLike<TypedChild>,
+][InternalTypedSchemaTypes._InlineTrick];
+
+/**
+ * @alpha
+ */
+export type EditableValueField<TypedChild> = [
+	UntypedValueField & MarkedArrayLike<TypedChild>,
+][InternalTypedSchemaTypes._InlineTrick];
+
+/**
+ * @alpha
+ */
+export type EditableOptionalField<TypedChild> = [
+	UntypedOptionalField & MarkedArrayLike<TypedChild>,
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * Takes in `AllowedTypes` and returns a TypedTree union.
@@ -278,6 +303,7 @@ export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = Type
  * Provided schema must be included in the schema for the tree being viewed (getting this wrong will error).
  * @alpha
  */
+// TODO: tests
 export function downCast<TSchema extends TreeSchema>(
 	schema: TSchema,
 	tree: UntypedTreeCore,

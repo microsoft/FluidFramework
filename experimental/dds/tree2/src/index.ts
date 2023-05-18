@@ -251,6 +251,7 @@ export {
 	GlobalFieldSchema,
 	Any,
 	Sourced,
+	cursorForTypedTreeData,
 } from "./feature-libraries";
 
 export {
