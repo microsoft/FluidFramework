@@ -115,7 +115,7 @@ export class ScribeLambda implements IPartitionLambda {
 	public async handler(message: IQueuedMessage) {
 		// Skip any log messages we have already processed. Can occur in the case Kafka needed to restart but
 		// we had already checkpointed at a given offset.
-		if (this.lastOffset && message.offset <= this.lastOffset) {
+		if (this.lastOffset !== undefined && message.offset <= this.lastOffset) {
 			const reprocessOpsMetric = Lumberjack.newLumberMetric(LumberEventName.ReprocessOps);
 			reprocessOpsMetric.setProperties({
 				...getLumberBaseProperties(this.documentId, this.tenantId),
@@ -137,7 +137,7 @@ export class ScribeLambda implements IPartitionLambda {
 				reprocessOpsMetric.error(`Error while reprocessing ops.`, error);
 			}
 			return;
-		} else if (!this.lastOffset) {
+		} else if (this.lastOffset === undefined) {
 			Lumberjack.error(
 				`No value for lastOffset`,
 				getLumberBaseProperties(this.documentId, this.tenantId),
