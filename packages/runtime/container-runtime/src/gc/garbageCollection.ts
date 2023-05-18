@@ -490,30 +490,28 @@ export class GarbageCollector implements IGarbageCollector {
 			logger,
 			{ eventName: "GarbageCollection" },
 			async (event) => {
-				/** Pre-GC step. Includes initializing base state and notifying the runtime that GC is starting. */
-				await this.runPreGCSteps();
+				// Pre-GC step.
+				// Ensure that state has been initialized from the base snapshot data.
+				await this.initializeGCStateFromBaseSnapshotP;
+				// Let the runtime update its pending state before GC runs.
+				await this.runtime.updateStateBeforeGC();
 
-				/** GC step. Includes running GC algorithm on the reference graph, running Mark and Sweep phases. */
+				// GC step. Includes running GC algorithm on the reference graph, running Mark and Sweep phases.
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({ ...gcStats, timestamp: currentReferenceTimestampMs });
 
-				/** Post-GC step. Includes logging events and other cleanup. */
-				await this.runPostGCSteps(logger);
+				// Post-GC step.
+				// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
+				// updates its state so that we don't send false positives based on intermediate state. For example, we may get
+				// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
+				await this.telemetryTracker.logPendingEvents(logger);
+				this.newReferencesSinceLastRun.clear();
+				this.completedRuns++;
+
 				return gcStats;
 			},
 			{ end: true, cancel: "error" },
 		);
-	}
-
-	/**
-	 * Runs any steps before actual GC starts. It initializes state from base snapshot (required first time GC runs)
-	 * and notifies runtime that GC is starting.
-	 */
-	private async runPreGCSteps() {
-		// Ensure that state has been initialized from the base snapshot data.
-		await this.initializeGCStateFromBaseSnapshotP;
-		// Let the runtime update its pending state before GC runs.
-		await this.runtime.updateStateBeforeGC();
 	}
 
 	/**
@@ -553,18 +551,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 		this.gcDataFromLastRun = cloneGCData(updatedGCData);
 		return gcStats;
-	}
-
-	/**
-	 * Runs any steps after GC completes. It logs unreferenced events, increments counters and does other cleanup.
-	 */
-	private async runPostGCSteps(logger: ITelemetryLogger) {
-		// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
-		// updates its state so that we don't send false positives based on intermediate state. For example, we may get
-		// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
-		await this.telemetryTracker.logPendingEvents(logger);
-		this.newReferencesSinceLastRun.clear();
-		this.completedRuns++;
 	}
 
 	/**
@@ -710,7 +696,7 @@ export class GarbageCollector implements IGarbageCollector {
 			this.deletedNodes.add(nodeId);
 		}
 
-		// 3. Update and return the passed in gcData by removing deleted nodes from it.
+		// 3. Returns a copy of the passed in gcData that has deleted nodes removed.
 		const deletedNodeIdsSet = new Set<string>(deletedNodeIds);
 		const gcNodes: { [id: string]: string[] } = {};
 		for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
