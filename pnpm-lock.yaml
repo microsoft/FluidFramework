@@ -316,6 +316,9 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../../packages/utils/telemetry-utils
       assert:
         specifier: ^2.0.0
         version: 2.0.0
@@ -329,6 +332,9 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
     devDependencies:
+      '@fluid-experimental/devtools':
+        specifier: workspace:~
+        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
