@@ -76,7 +76,7 @@ export class EditManager<
 	private readonly sequenceMap = new BTree<SeqNumber, GraphCommit<TChangeset>>();
 
 	/** The {@link UndoRedoManager} associated with the trunk */
-	private trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
+	private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
 
 	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
