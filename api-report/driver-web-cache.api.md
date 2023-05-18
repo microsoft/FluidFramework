@@ -26,8 +26,10 @@ export class FluidCache implements IPersistedCache {
 
 // @public (undocumented)
 export interface FluidCacheConfig {
+    closeDbAfter?: number;
     logger?: ITelemetryBaseLogger;
     maxCacheItemAge: number;
+    noImmediateClose?: boolean;
     partitionKey: string | null;
 }
 
