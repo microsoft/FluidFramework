@@ -139,7 +139,7 @@ jobs:
                 workingDir: ${{ parameters.buildDirectory }}
                 customCommand: 'run ${{ taskTestStep }}'
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-        # Rename the failed tinylicious log
+        # Rename the tinylicious log file, only if tests failed
         - task: Bash@3
           displayName: Rename tinylicious log
           inputs: 
