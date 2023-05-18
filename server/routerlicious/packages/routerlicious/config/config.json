@@ -53,7 +53,7 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"kakfkaCheckpointOnRestart": true
+		"kafkaCheckpointOnReprocessingOp": false
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
