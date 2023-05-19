@@ -196,6 +196,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			return cachedBlob;
 		}
 
+		// Note: AFR does not support readBlobs, but potentially other r11s like servers do
 		const blob = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
