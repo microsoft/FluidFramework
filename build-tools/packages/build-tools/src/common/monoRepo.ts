@@ -142,6 +142,9 @@ export class MonoRepo {
 			if (this._packageJson.workspaces instanceof Array) {
 				this.workspaceGlobs = this._packageJson.workspaces;
 			} else {
+				// TODO: make this not crash when using pnpm without lerna.
+				// Maybe restore logic from https://github.com/microsoft/FluidFramework/commit/2f162b61705aa6395298a7adb32c86f4e5590d78 ?
+				// There seems to be only one use of `this.workspaceGlobs` (npmCheckUpdates): maybe it can be removed?
 				this.workspaceGlobs = (this._packageJson.workspaces as any).packages;
 			}
 		}

@@ -37,6 +37,7 @@ import * as semver from "semver";
 import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups";
 import { DependencyUpdateType } from "./bump";
 import { indentString } from "./text";
+import { existsSync } from "fs";
 
 /**
  * An object that maps package names to version strings or range strings.
@@ -563,20 +564,22 @@ export async function setVersion(
 	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
 	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
 	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
-	const [lernaJson, prettierConfig] = await Promise.all([
-		readJson(lernaPath),
-		resolvePrettierConfig(lernaPath),
-	]);
+	if (existsSync(lernaPath)) {
+		const [lernaJson, prettierConfig] = await Promise.all([
+			readJson(lernaPath),
+			resolvePrettierConfig(lernaPath),
+		]);
 
-	if (prettierConfig !== null) {
-		prettierConfig.filepath = lernaPath;
+		if (prettierConfig !== null) {
+			prettierConfig.filepath = lernaPath;
+		}
+		lernaJson.version = translatedVersion.version;
+		const output = prettier(
+			JSON.stringify(lernaJson),
+			prettierConfig === null ? undefined : prettierConfig,
+		);
+		await writeFile(lernaPath, output);
 	}
-	lernaJson.version = translatedVersion.version;
-	const output = prettier(
-		JSON.stringify(lernaJson),
-		prettierConfig === null ? undefined : prettierConfig,
-	);
-	await writeFile(lernaPath, output);
 
 	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
 		json.version = translatedVersion.version;
