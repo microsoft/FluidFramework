@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { brand, fail } from "../util";
+import { fail } from "../util";
 import {
 	EmptyKey,
 	FieldKey,
