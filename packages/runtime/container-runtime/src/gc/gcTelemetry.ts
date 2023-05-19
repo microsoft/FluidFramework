@@ -204,12 +204,15 @@ export class GCTelemetryTracker {
 			// Events generated:
 			// InactiveObject_Loaded, SweepReadyObject_Loaded
 			if (nodeUsageProps.usageType === "Loaded") {
+				const { id: taggedId, fromId: taggedFromId, ...otherProps } = eventProps;
 				const event = {
 					eventName: `${state}Object_${nodeUsageProps.usageType}`,
 					pkg: packagePathToTelemetryProperty(nodeUsageProps.packagePath),
 					stack: generateStack(),
+					id: taggedId,
+					fromId: taggedFromId,
 					details: JSON.stringify({
-						...eventProps,
+						...otherProps,
 					}),
 				};
 
@@ -288,7 +291,7 @@ export class GCTelemetryTracker {
 		// InactiveObject_Loaded, InactiveObject_Changed, InactiveObject_Revived
 		// SweepReadyObject_Loaded, SweepReadyObject_Changed, SweepReadyObject_Revived
 		for (const eventProps of this.pendingEventsQueue) {
-			const { usageType, state, ...propsToLog } = eventProps;
+			const { usageType, state, id, fromId, ...propsToLog } = eventProps;
 			/**
 			 * Revived event is logged only if the node is active. If the node is not active, the reference to it was
 			 * from another unreferenced node and this scenario is not interesting to log.
@@ -309,6 +312,8 @@ export class GCTelemetryTracker {
 					details: JSON.stringify({
 						...propsToLog,
 					}),
+					id,
+					fromId,
 					pkg: pkg ? tagAsCodeArtifact(pkg.join("/")) : undefined,
 					fromPkg: fromPkg ? tagAsCodeArtifact(fromPkg.join("/")) : undefined,
 				};
@@ -365,12 +370,12 @@ export class GCTelemetryTracker {
 			logger.sendTelemetryEvent({
 				eventName: "GC_SweepReadyObjects_Delete",
 				details: JSON.stringify({
-					id: tagAsCodeArtifact(JSON.stringify(deletedNodeIds)),
 					timeout: this.configs.sweepTimeoutMs,
 					completedGCRuns,
 					lastSummaryTime,
 					...this.createContainerMetadata,
 				}),
+				id: tagAsCodeArtifact(JSON.stringify(deletedNodeIds)),
 			});
 		}
 	}
