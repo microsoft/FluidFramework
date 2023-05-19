@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React from "react";
+import React, { useRef } from "react";
 import { useId } from "@fluentui/react-hooks";
 import {
 	ContainerList,
@@ -152,7 +152,7 @@ export function DevtoolsView(): React.ReactElement {
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
-	let queryTimer;
+	const queryTimer = useRef<NodeJS.Timeout>();
 
 	React.useEffect(() => {
 		/**
@@ -162,7 +162,7 @@ export function DevtoolsView(): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
-				clearTimeout(queryTimer); // Clear the timeout when cleaning up
+				clearTimeout(queryTimer.current); // Clear the timeout when found the supported features
 				return true;
 			},
 		};
@@ -183,14 +183,14 @@ export function DevtoolsView(): React.ReactElement {
 
 		// Add a timeout for the query
 		if (!supportedFeatures) {
-			queryTimer = setTimeout(() => {
+			queryTimer.current = setTimeout(() => {
 				setQueryTimedOut(true);
 			}, queryTimeoutInMilliseconds);
 		}
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
-			clearTimeout(queryTimer);
+			clearTimeout(queryTimer.current);
 		};
 	}, [messageRelay, setSupportedFeatures]);
 
