@@ -36,7 +36,7 @@ import {
 	ISharedTreeView,
 	SharedTreeFactory,
 	createSharedTreeView,
-	runSynchronous
+	runSynchronous,
 } from "../shared-tree";
 import {
 	defaultChangeFamily,
