@@ -190,6 +190,54 @@ describe("SharedTree", () => {
 		validateRootField(tree4, expectedValues);
 	});
 
+	it("can load a summary from a tree and receive edits of the new state", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [summarizingTree] = provider.trees;
+
+		const initialState: JsonableTree = {
+			type: brand("Node"),
+			fields: {
+				foo: [
+					{ type: brand("Node"), value: "a" },
+					{ type: brand("Node"), value: "b" },
+					{ type: brand("Node"), value: "c" },
+				],
+			},
+		};
+		initializeTestTree(summarizingTree, initialState);
+
+		await provider.ensureSynchronized();
+		await provider.summarize();
+
+		const loadingTree = await provider.createTree();
+		const fooField: FieldKey = brand("foo");
+
+		runSynchronous(summarizingTree, () => {
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			summarizingTree.editor
+				.sequenceField({ parent: rootPath, field: fooField })
+				.delete(0, 1);
+		});
+
+		await provider.ensureSynchronized();
+
+		const cursor = loadingTree.forest.allocateCursor();
+		moveToDetachedField(loadingTree.forest, cursor);
+		assert.equal(cursor.firstNode(), true);
+		cursor.enterField(fooField);
+		assert.equal(cursor.firstNode(), true);
+		// An error may occur earlier in the test but may be swallowed up. If so, this line will fail
+		// due to the delete edit above not being able to be applied to loadingTree.
+		assert.equal(cursor.value, "b");
+		assert.equal(cursor.nextNode(), true);
+		assert.equal(cursor.value, "c");
+		assert.equal(cursor.nextNode(), false);
+	});
+
 	it("can summarize local edits in the attach summary", async () => {
 		const onCreate = (tree: ISharedTree) => {
 			const schema: SchemaData = {
