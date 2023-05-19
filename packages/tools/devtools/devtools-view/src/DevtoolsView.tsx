@@ -181,22 +181,16 @@ export function DevtoolsView(): React.ReactElement {
 		// Query for supported feature set
 		messageRelay.postMessage(getSupportedFeaturesMessage);
 
-		// Add a timeout for the query
-		if (!supportedFeatures) {
-			queryTimer.current = setTimeout(() => {
-				setQueryTimedOut(true);
-			}, queryTimeoutInMilliseconds);
-		}
-
 		return (): void => {
 			messageRelay.off("message", messageHandler);
-			clearTimeout(queryTimer.current);
 		};
 	}, [messageRelay, setSupportedFeatures]);
 
 	// Manage the query timeout
 	React.useEffect(() => {
-		if (queryTimedOut) {
+		if (supportedFeatures === undefined) {
+			// If we have queried for the supported feature list but have not received
+			// a response yet, queue a timer.
 			const timeout = setTimeout(() => {
 				setQueryTimedOut(false);
 			}, queryTimeoutInMilliseconds);
@@ -204,7 +198,11 @@ export function DevtoolsView(): React.ReactElement {
 				clearTimeout(timeout);
 			};
 		}
-	}, [queryTimedOut, setQueryTimedOut]);
+
+		return (): void => {
+			clearTimeout(queryTimer.current);
+		};
+	}, [supportedFeatures, setQueryTimedOut]);
 
 	function retryQuery(): void {
 		setQueryTimedOut(false);
