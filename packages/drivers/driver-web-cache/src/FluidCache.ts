@@ -51,9 +51,10 @@ export interface FluidCacheConfig {
 	maxCacheItemAge: number;
 
 	/**
-	 * To improve perf, if this property is set, then db will not be closed immediately after usage.
+	 * To improve perf, if this property is set as false, then db will not be closed immediately after usage.
+	 * Default is true.
 	 */
-	noImmediateClose?: boolean;
+	immediateClose?: boolean;
 
 	/**
 	 * Each time db is opened, it will remain open for this much time. If not provided, default value will be 2s.
@@ -70,7 +71,7 @@ export class FluidCache implements IPersistedCache {
 	private readonly partitionKey: string | null;
 
 	private readonly maxCacheItemAge: number;
-	private readonly noImmediateClose: boolean;
+	private readonly immediateClose: boolean;
 	private readonly closeDbAfter: number;
 	private db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 	private dbCloseTimer: ReturnType<typeof setTimeout> | undefined;
@@ -79,7 +80,7 @@ export class FluidCache implements IPersistedCache {
 		this.logger = ChildLogger.create(config.logger);
 		this.partitionKey = config.partitionKey;
 		this.maxCacheItemAge = config.maxCacheItemAge;
-		this.noImmediateClose = config.noImmediateClose ?? false;
+		this.immediateClose = config.immediateClose ?? true;
 		this.closeDbAfter = config.closeDbAfter ?? 2000;
 
 		scheduleIdleTask(async () => {
@@ -139,46 +140,45 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	private async openDb() {
-		if (this.noImmediateClose) {
-			if (this.db === undefined) {
-				const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
-				if (this.db === undefined) {
-					this.db = dbInstance;
-				} else {
-					dbInstance.close();
-					return this.db;
-				}
-				// Need to close the db on version change if opened.
-				this.db.onversionchange = (ev) => {
-					this.db?.close();
-					this.db = undefined;
-					clearTimeout(this.dbCloseTimer);
-					this.dbCloseTimer = undefined;
-				};
-				this.db.addEventListener("close", (ev) => {
-					clearTimeout(this.dbCloseTimer);
-					this.dbCloseTimer = undefined;
-					this.db = undefined;
-				});
-				// Schedule db close after this.closeDbAfter.
-				assert(this.dbCloseTimer === undefined, "timer should not be set yet!!");
-				this.dbCloseTimer = setTimeout(() => {
-					this.db?.close();
-					this.db = undefined;
-					this.dbCloseTimer = undefined;
-				}, this.closeDbAfter);
-			}
-			assert(this.db !== undefined, "db should be intialized by now");
-			return this.db;
+		if (this.immediateClose) {
+			return getFluidCacheIndexedDbInstance(this.logger);
 		}
-		return getFluidCacheIndexedDbInstance(this.logger);
+		if (this.db === undefined) {
+			const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
+			if (this.db === undefined) {
+				this.db = dbInstance;
+			} else {
+				dbInstance.close();
+				return this.db;
+			}
+			// Need to close the db on version change if opened.
+			this.db.onversionchange = (ev) => {
+				this.db?.close();
+				this.db = undefined;
+				clearTimeout(this.dbCloseTimer);
+				this.dbCloseTimer = undefined;
+			};
+			this.db.addEventListener("close", (ev) => {
+				clearTimeout(this.dbCloseTimer);
+				this.dbCloseTimer = undefined;
+				this.db = undefined;
+			});
+			// Schedule db close after this.closeDbAfter.
+			assert(this.dbCloseTimer === undefined, "timer should not be set yet!!");
+			this.dbCloseTimer = setTimeout(() => {
+				this.db?.close();
+				this.db = undefined;
+				this.dbCloseTimer = undefined;
+			}, this.closeDbAfter);
+		}
+		assert(this.db !== undefined, "db should be intialized by now");
+		return this.db;
 	}
 
 	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>) {
-		if (this.noImmediateClose) {
-			return;
+		if (this.immediateClose) {
+			db?.close();
 		}
-		db?.close();
 	}
 
 	public async removeEntries(file: IFileEntry): Promise<void> {

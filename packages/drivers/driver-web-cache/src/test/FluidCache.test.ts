@@ -58,7 +58,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 	};
 }
 
-[true, false].forEach((noImmediateClose) => {
+[true, false].forEach((immediateClose) => {
 	function getFluidCache(config?: {
 		maxCacheItemAge?: number;
 		// eslint-disable-next-line @rushstack/no-new-null
@@ -67,11 +67,11 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 		return new FluidCache({
 			partitionKey: config?.partitionKey ?? mockPartitionKey,
 			maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
-			noImmediateClose,
+			immediateClose,
 			closeDbAfter: 100,
 		});
 	}
-	describe(`Fluid Cache tests: noImmediateClose: ${noImmediateClose}`, () => {
+	describe(`Fluid Cache tests: immediateClose: ${immediateClose}`, () => {
 		beforeEach(() => {
 			// Reset the indexed db before each test so that it starts off in an empty state
 			// eslint-disable-next-line import/no-internal-modules, @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
