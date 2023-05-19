@@ -10,7 +10,7 @@ import { getResolvedFluidRoot } from "../common/fluidUtils";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { existsSync } from "../common/utils";
-import { BuildResult } from "./buildGraph";
+import { BuildGraph, BuildResult } from "./buildGraph";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { options, parseOptions } from "./options";
 
@@ -106,7 +106,13 @@ async function main() {
 		);
 
 		// build the graph
-		const buildGraph = repo.createBuildGraph(options, options.buildScriptNames);
+		let buildGraph: BuildGraph;
+		try {
+			buildGraph = repo.createBuildGraph(options, options.buildTaskNames);
+		} catch (e: unknown) {
+			error((e as Error).message);
+			process.exit(-11);
+		}
 		timer.time("Build graph creation completed");
 
 		// Check install

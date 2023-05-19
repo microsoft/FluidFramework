@@ -131,7 +131,7 @@ const b7: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1 };
 {
 	type XField = typeof ballSchema["localFieldsObject"]["x"];
 	type XMultiplicity = XField["kind"]["multiplicity"];
-	type XContent = TypedField<ApiMode.Simple, XField>;
+	type XContent = TypedField<XField, ApiMode.Simple>;
 	type XChild = XField["allowedTypes"];
 	type _check = requireAssignableTo<XContent, number>;
 }
@@ -258,7 +258,7 @@ type SimpleBall = {
 		type _check5 = requireAssignableTo<FlexBool, ChildTypes>;
 		type _check6 = requireAssignableTo<FlexStr, ChildTypes>;
 		type _check7 = requireAssignableTo<ChildTypes, FlexBool | FlexStr>;
-		type Field = TypedField<ApiMode.Flexible, ChildSchema>;
+		type Field = TypedField<ChildSchema, ApiMode.Flexible>;
 	}
 
 	{
@@ -324,7 +324,7 @@ type SimpleBall = {
 				ApiMode.Simple,
 				RecFieldSchema["allowedTypes"]
 			>;
-			type SimpleField = TypedField<ApiMode.Simple, RecFieldSchema>;
+			type SimpleField = TypedField<RecFieldSchema, ApiMode.Simple>;
 		}
 
 		// Overall integration tests
@@ -387,8 +387,8 @@ type SimpleBall = {
 				>;
 
 				type BoxChildTypeField = TypedField<
-					ApiMode.Flexible,
-					typeof boxSchema.localFieldsObject.children
+					typeof boxSchema.localFieldsObject.children,
+					ApiMode.Flexible
 				>;
 			}
 			type _check8 = requireAssignableTo<ChildTypeArray[0], FlexBall>;
@@ -399,7 +399,7 @@ type SimpleBall = {
 			type _check6 = requireAssignableTo<FlexBall, ChildTypes>;
 			type _check7 = requireAssignableTo<ChildTypes, FlexBall | FlexBox>;
 		}
-		type Field = TypedField<ApiMode.Flexible, ChildSchema>;
+		type Field = TypedField<ChildSchema, ApiMode.Flexible>;
 	}
 
 	type _check1 = requireTrue<areSafelyAssignable<F, FlexBox>>;

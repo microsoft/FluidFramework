@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -13,17 +12,7 @@ import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
-import { MonitoringContext } from "@fluidframework/telemetry-utils";
-import {
-	disableTombstoneKey,
-	GCFeatureMatrix,
-	GCVersion,
-	IGCMetadata,
-	runSweepKey,
-	throwOnTombstoneLoadKey,
-	throwOnTombstoneUsageKey,
-} from "./gcDefinitions";
+import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
 import {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
@@ -36,32 +25,6 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 		return 0;
 	}
 	return metadata.gcFeature ?? 0;
-}
-
-/**
- * Consolidates info / logic for logging when we encounter unexpected usage of GC'd objects. For example, when a
- * tombstoned or deleted object is loaded.
- */
-export function sendGCUnexpectedUsageEvent(
-	mc: MonitoringContext,
-	event: ITelemetryGenericEvent & {
-		category: "error" | "generic";
-		gcTombstoneEnforcementAllowed: boolean | undefined;
-	},
-	packagePath: readonly string[] | undefined,
-	error?: unknown,
-) {
-	event.pkg = packagePathToTelemetryProperty(packagePath);
-	event.tombstoneFlags = JSON.stringify({
-		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
-		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
-		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadKey),
-	});
-	event.sweepFlags = JSON.stringify({
-		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
-	});
-
-	mc.logger.sendTelemetryEvent(event, error);
 }
 
 /**
@@ -188,12 +151,19 @@ export function concatGarbageCollectionStates(
 /**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
+ * @param filter - Optional function to filter out node ids not to be included in the cloned GC data. Returns
+ * true to filter out nodes.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
+export function cloneGCData(
+	gcData: IGarbageCollectionData,
+	filter?: (id: string) => boolean,
+): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		clonedGCNodes[id] = Array.from(outboundRoutes);
+		if (filter?.(id) !== true) {
+			clonedGCNodes[id] = Array.from(outboundRoutes);
+		}
 	}
 	return {
 		gcNodes: clonedGCNodes,

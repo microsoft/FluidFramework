@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree-graphql",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"description": "Prototype using GraphQL to access a distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -18,7 +18,6 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:codegen": "npm run build:plugins && graphql-codegen --config codegen.yml && prettier --write src/graphql-generated/*",
 		"build:compile": "concurrently npm:tsc npm:build:esnext",
-		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
@@ -68,6 +67,13 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:plugins": [
+				"^tsc"
+			]
+		}
 	},
 	"typeValidation": {
 		"disabled": true,
