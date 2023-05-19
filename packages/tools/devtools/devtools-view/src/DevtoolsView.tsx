@@ -191,7 +191,7 @@ export function DevtoolsView(): React.ReactElement {
 			// If we have queried for the supported feature list but have not received
 			// a response yet, queue a timer.
 			const timeout = setTimeout(() => {
-				setQueryTimedOut(false);
+				setQueryTimedOut(true);
 			}, queryTimeoutInMilliseconds);
 			return (): void => {
 				clearTimeout(timeout);
@@ -215,7 +215,7 @@ export function DevtoolsView(): React.ReactElement {
 					<>
 						<div>Devtools not found. Timeout exceeded.</div>
 						<TooltipHost
-							content="Refresh Containers list"
+							content="Retry searching for Devtools"
 							id="retry-query-button-tooltip"
 						>
 							<Button onClick={retryQuery}>Search again</Button>
