@@ -121,6 +121,8 @@ export interface IConnectionDetailsInternal extends IConnectionDetails {
     // (undocumented)
     mode: ConnectionMode;
     // (undocumented)
+    reason: string;
+    // (undocumented)
     version: string;
 }
 

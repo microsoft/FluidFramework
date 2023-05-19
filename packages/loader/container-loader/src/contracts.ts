@@ -95,7 +95,7 @@ export interface IConnectionManager {
 	/**
 	 * Initiates connection to relay service (noop if already connected).
 	 */
-	connect(connectionMode?: ConnectionMode): void;
+	connect(reason: string, connectionMode?: ConnectionMode): void;
 
 	/**
 	 * Disposed connection manager

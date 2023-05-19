@@ -539,7 +539,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.fetchMissingDeltas(args.reason);
 		}
 
-		this.connectionManager.connect(args.mode);
+		this.connectionManager.connect(args.reason, args.mode);
 	}
 
 	private async getDeltas(

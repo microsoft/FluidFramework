@@ -48,6 +48,7 @@ export interface IConnectionDetailsInternal extends IConnectionDetails {
 	mode: ConnectionMode;
 	version: string;
 	initialClients: ISignalClient[];
+	reason: string;
 }
 
 /**
