@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannel,
@@ -24,7 +24,6 @@ import {
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { DataCorruptionError } from "@fluidframework/container-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ChannelStorageService } from "./channelStorageService";
 import { ChannelDeltaConnection } from "./channelDeltaConnection";
 import { ISharedObjectRegistry } from "./dataStoreRuntime";
