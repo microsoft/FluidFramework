@@ -54,4 +54,4 @@ stages:
           initialMapKey: key1
           containers: ${containers}
           numMaps: 10000
-          writeRatePerMin: 30000
+          writeRatePerMin: 20000

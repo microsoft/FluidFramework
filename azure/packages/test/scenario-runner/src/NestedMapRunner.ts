@@ -198,9 +198,9 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 			runs.push(createRun(0));
 		}
 		try {
-			const docIds = await Promise.all(runs);
+			const resultDocIds = await Promise.all(runs);
 			this.status = "success";
-			return docIds;
+			return resultDocIds;
 		} catch (error) {
 			this.status = "error";
 			throw new Error(`Not all clients closed succesfully.\n${error}`);
@@ -329,12 +329,13 @@ export class NestedMapRunner extends TypedEventEmitter<IRunnerEvents> implements
 
 		let container: IFluidContainer;
 		if (runConfig.docId) {
+			const docId: string = runConfig.docId;
 			try {
 				({ container } = await PerformanceEvent.timedExecAsync(
 					logger,
 					{ eventName: "load" },
 					async () => {
-						return client.getContainer(runConfig.docId!, schema);
+						return client.getContainer(docId, schema);
 					},
 					{ start: true, end: true, cancel: "generic" },
 				));

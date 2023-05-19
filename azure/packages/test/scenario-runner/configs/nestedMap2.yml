@@ -29,7 +29,7 @@ stages:
           client: ${client}
           initialMapKey: key1
           numMaps: 10000
-          dataType: uuid
+          dataType: number
       out: ${docIds}
     - stage-3:
       id: 3

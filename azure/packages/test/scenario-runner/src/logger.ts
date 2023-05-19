@@ -97,7 +97,7 @@ class ScenarioRunnerLogger extends TelemetryLogger implements ITelemetryBuffered
 
 		// Here we are remapping internal FF events to scenario runner events.
 		// TODO: Further cleanup needed.
-		let originalEventName = event.eventName;
+		const originalEventName = event.eventName;
 		let telemetryEventName: ScenarioRunnerTelemetryEventNames | undefined;
 		for (const k of this.transformedEvents.keys()) {
 			if (event.eventName.includes(k)) {
