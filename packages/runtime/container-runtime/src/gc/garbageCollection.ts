@@ -122,8 +122,8 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/** Returns the count of data stores whose GC state updated since the last summary. */
-	public get stateUpdatedDSCountSinceLastSummary(): number {
-		return this.summaryStateTracker.stateUpdatedDSCountSinceLastSummary;
+	public get updatedDSCountSinceLastSummary(): number {
+		return this.summaryStateTracker.updatedDSCountSinceLastSummary;
 	}
 
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
@@ -510,9 +510,8 @@ export class GarbageCollector implements IGarbageCollector {
 				// updates its state so that we don't send false positives based on intermediate state. For example, we may get
 				// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
 				await this.telemetryTracker.logPendingEvents(logger);
-				// Update the count of data stores whose state changed in this GC run. This is used by the runtime to validate
-				// that data stores are summarizer incrementally.
-				this.summaryStateTracker.updateStateUpdatedDSCount(gcStats.updatedDataStoreCount);
+				// Update the state of summary state tracker from this run's stats.
+				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
 

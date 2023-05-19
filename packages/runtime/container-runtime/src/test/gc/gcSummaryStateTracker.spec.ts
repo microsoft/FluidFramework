@@ -12,6 +12,7 @@ import {
 	GCSummaryStateTracker,
 	GCVersion,
 	IGarbageCollectionState,
+	IGCStats,
 } from "../../gc";
 import { RefreshSummaryResult } from "../../summary";
 import { parseNothing } from "./garbageCollection.spec";
@@ -216,6 +217,19 @@ describe("GCSummaryStateTracker tests", () => {
 	});
 
 	it("updates state updated data store count correctly", async () => {
+		const updatedDataStoreCount = 10;
+		const gcStats: IGCStats = {
+			nodeCount: 0,
+			unrefNodeCount: 0,
+			updatedNodeCount: 0,
+			dataStoreCount: 0,
+			unrefDataStoreCount: 0,
+			updatedDataStoreCount,
+			attachmentBlobCount: 0,
+			unrefAttachmentBlobCount: 0,
+			updatedAttachmentBlobCount: 0,
+		};
+
 		const summaryStateTracker = new GCSummaryStateTracker(
 			{
 				shouldRunGC: true,
@@ -226,16 +240,18 @@ describe("GCSummaryStateTracker tests", () => {
 			false /* wasGCRunInBaseSnapshot */,
 		);
 
-		// Update the count of data stores whose state updated. This happens when GC runs.
-		summaryStateTracker.updateStateUpdatedDSCount(10);
-		// Validate that the count is 10.
+		let expectedUpdatedDataStoreCount = updatedDataStoreCount;
+		// Update the state from GC stats and validate it's the same as updatedDataStoreCount.
+		summaryStateTracker.updateStateFromGCRunStats(gcStats);
 		assert.strictEqual(
-			summaryStateTracker.stateUpdatedDSCountSinceLastSummary,
-			10,
+			summaryStateTracker.updatedDSCountSinceLastSummary,
+			expectedUpdatedDataStoreCount,
 			"Updated DS count is not correct",
 		);
 
-		// Call summarize. This happens after GC runs.
+		// Call summarize but do not refresh latest summary. This mimics scenarios where summary generation fails
+		// sometime after summarize. This means updatedDSCountSinceLastSummary should be updated incrementally
+		// without resetting it.
 		summaryStateTracker.summarize(
 			false /* fullTree */,
 			true /* trackState */,
@@ -244,15 +260,17 @@ describe("GCSummaryStateTracker tests", () => {
 			[],
 		);
 
-		// Update the count again and validate that the count is aggregate of previous and this count.
-		summaryStateTracker.updateStateUpdatedDSCount(10);
+		// Update the stat from GC state again mimicking a GC run after a failed summary.
+		expectedUpdatedDataStoreCount += updatedDataStoreCount;
+		summaryStateTracker.updateStateFromGCRunStats(gcStats);
 		assert.strictEqual(
-			summaryStateTracker.stateUpdatedDSCountSinceLastSummary,
-			20,
-			"Updated DS count should be aggregated",
+			summaryStateTracker.updatedDSCountSinceLastSummary,
+			expectedUpdatedDataStoreCount,
+			"Updated DS count should have been incrementally updated",
 		);
 
-		// Call summarize again. This happens after GC runs.
+		// Call summarize and refresh latest summary. This mimics a successful summary after a failed one. After
+		// this, updatedDSCountSinceLastSummary should be reset to 0.
 		summaryStateTracker.summarize(
 			false /* fullTree */,
 			true /* trackState */,
@@ -260,8 +278,6 @@ describe("GCSummaryStateTracker tests", () => {
 			new Set(),
 			[],
 		);
-
-		// Refresh latest summary and validate that the count is reset.
 		const refreshSummaryResult: RefreshSummaryResult = {
 			latestSummaryUpdated: true,
 			wasSummaryTracked: true,
@@ -273,7 +289,7 @@ describe("GCSummaryStateTracker tests", () => {
 			parseNothing,
 		);
 		assert.strictEqual(
-			summaryStateTracker.stateUpdatedDSCountSinceLastSummary,
+			summaryStateTracker.updatedDSCountSinceLastSummary,
 			0,
 			"Updated DS count should be reset after refresh latest summary",
 		);
