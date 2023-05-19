@@ -8,6 +8,7 @@ import {
 	IEventProvider,
 	IEvent,
 	IErrorEvent,
+	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import {
 	ConnectionMode,
@@ -144,7 +145,7 @@ export interface IDeltaManagerEvents extends IEvent {
 	 *
 	 * - `reason`: Describes the reason for which the delta manager was disconnected.
 	 */
-	(event: "disconnect", listener: (reason: string) => void);
+	(event: "disconnect", listener: (reason: string, props?: ITelemetryProperties) => void);
 
 	/**
 	 * Emitted when read/write permissions change.

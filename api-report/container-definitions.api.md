@@ -280,7 +280,7 @@ export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
-    (event: "disconnect", listener: (reason: string) => void): any;
+    (event: "disconnect", listener: (reason: string, props?: ITelemetryProperties) => void): any;
     (event: "readonly", listener: (readonly: boolean) => void): any;
 }
 

@@ -758,11 +758,11 @@ export class Container
 		this.connectionStateHandler = createConnectionStateHandler(
 			{
 				logger: this.mc.logger,
-				connectionStateChanged: (value, oldState, reason) => {
+				connectionStateChanged: (value, oldState, reason, props) => {
 					if (value === ConnectionState.Connected) {
 						this._clientId = this.connectionStateHandler.pendingClientId;
 					}
-					this.logConnectionStateChangeTelemetry(value, oldState, reason);
+					this.logConnectionStateChangeTelemetry(value, oldState, reason, props);
 					if (this._lifecycleState === "loaded") {
 						this.propagateConnectionState(
 							false /* initial transition */,
@@ -1843,10 +1843,10 @@ export class Container
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
 
-		deltaManager.on("disconnect", (reason: string) => {
+		deltaManager.on("disconnect", (reason: string, props?: ITelemetryProperties) => {
 			this.collabWindowTracker?.stopSequenceNumberUpdate();
 			if (!this.closed) {
-				this.connectionStateHandler.receivedDisconnectEvent(reason);
+				this.connectionStateHandler.receivedDisconnectEvent(reason, props);
 			}
 		});
 
@@ -1900,6 +1900,7 @@ export class Container
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string,
+		props?: ITelemetryProperties,
 	) {
 		// Log actual event
 		const time = performance.now();
@@ -1930,6 +1931,7 @@ export class Container
 
 		this.mc.logger.sendPerformanceEvent({
 			eventName: `ConnectionStateChange_${ConnectionState[value]}`,
+			...props,
 			from: ConnectionState[oldState],
 			duration,
 			durationFromDisconnected,

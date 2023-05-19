@@ -32,6 +32,7 @@ export interface IConnectionStateHandlerInputs {
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
+		props?: ITelemetryProperties,
 	) => void;
 	/** Whether to expect the client to join in write mode on next connection */
 	shouldClientJoinWrite: () => boolean;
@@ -56,7 +57,7 @@ export interface IConnectionStateHandler {
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
-	receivedDisconnectEvent(reason: string): void;
+	receivedDisconnectEvent(reason: string, props?: ITelemetryProperties): void;
 }
 
 export function createConnectionStateHandler(
@@ -138,8 +139,8 @@ class ConnectionStateHandlerPassThrough
 	public initProtocol(protocol: IProtocolHandler) {
 		return this.pimpl.initProtocol(protocol);
 	}
-	public receivedDisconnectEvent(reason: string) {
-		return this.pimpl.receivedDisconnectEvent(reason);
+	public receivedDisconnectEvent(reason: string, props?: ITelemetryProperties) {
+		return this.pimpl.receivedDisconnectEvent(reason, props);
 	}
 
 	public receivedConnectEvent(details: IConnectionDetailsInternal) {
@@ -157,8 +158,9 @@ class ConnectionStateHandlerPassThrough
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
+		props?: ITelemetryProperties,
 	) {
-		return this.inputs.connectionStateChanged(value, oldState, reason);
+		return this.inputs.connectionStateChanged(value, oldState, reason, props);
 	}
 	public shouldClientJoinWrite() {
 		return this.inputs.shouldClientJoinWrite();
@@ -200,6 +202,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
+		props?: ITelemetryProperties,
 	) {
 		switch (value) {
 			case ConnectionState.Connected:
@@ -462,9 +465,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	public receivedDisconnectEvent(reason: string) {
+	public receivedDisconnectEvent(reason: string, props?: ITelemetryProperties) {
 		this.connection = undefined;
-		this.setConnectionState(ConnectionState.Disconnected, reason);
+		this.setConnectionState(ConnectionState.Disconnected, reason, props);
 	}
 
 	private shouldWaitForJoinSignal() {
@@ -527,11 +530,16 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		// else - We are waiting for Leave op still, do nothing for now, we will transition to Connected later
 	}
 
-	private setConnectionState(value: ConnectionState.Disconnected, reason: string): void;
+	private setConnectionState(
+		value: ConnectionState.Disconnected,
+		reason: string,
+		props?: ITelemetryProperties,
+	): void;
 	private setConnectionState(value: ConnectionState.Connected): void;
 	private setConnectionState(
 		value: ConnectionState.Disconnected | ConnectionState.Connected,
 		reason?: string,
+		props?: ITelemetryProperties,
 	): void {
 		if (this.connectionState === value) {
 			// Already in the desired state - exit early
@@ -592,7 +600,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 
 		// Report transition before we propagate event across layers
-		this.handler.connectionStateChanged(this._connectionState, oldState, reason);
+		this.handler.connectionStateChanged(this._connectionState, oldState, reason, props);
 	}
 
 	// Helper method to switch between quorum and audience.
