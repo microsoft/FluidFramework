@@ -50,6 +50,10 @@ export class GCSummaryStateTracker {
 	// Tracks whether there was GC was run in latest summary being tracked.
 	private wasGCRunInLatestSummary: boolean;
 
+	// Tracks the count of data stores whose state updated since the last summary, i.e., they went from referenced
+	// to unreferenced or vice-versa.
+	public stateUpdatedDSCountSinceLastSummary: number = 0;
+
 	constructor(
 		// Tells whether GC should run or not.
 		private readonly configs: Pick<
@@ -286,6 +290,7 @@ export class GCSummaryStateTracker {
 			this.latestSummaryGCVersion = this.currentGCVersion;
 			this.latestSummaryData = this.pendingSummaryData;
 			this.pendingSummaryData = undefined;
+			this.stateUpdatedDSCountSinceLastSummary = 0;
 			return undefined;
 		}
 
@@ -325,5 +330,12 @@ export class GCSummaryStateTracker {
 			serializedDeletedNodes: JSON.stringify(snapshotData.deletedNodes),
 		};
 		return snapshotData;
+	}
+
+	/**
+	 * Called to update the stats of a GC run. Used to update the count of data stores whose state updated.
+	 */
+	public updateStateUpdatedDSCount(stateUpdatedDataStoreCount: number) {
+		this.stateUpdatedDSCountSinceLastSummary += stateUpdatedDataStoreCount;
 	}
 }

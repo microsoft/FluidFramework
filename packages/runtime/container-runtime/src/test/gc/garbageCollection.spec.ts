@@ -61,6 +61,12 @@ export const configProvider = (settings: Record<string, ConfigTypes>): IConfigPr
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
+export const parseNothing: ReadAndParseBlob = async <T>() => {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	const x: T = {} as T;
+	return x;
+};
+
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
 	readonly summaryStateTracker: Omit<
@@ -100,12 +106,6 @@ describe("Garbage Collection Tests", () => {
 			blobs: {},
 			trees: {},
 		};
-	};
-
-	const parseNothing: ReadAndParseBlob = async <T>() => {
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		const x: T = {} as T;
-		return x;
 	};
 
 	function createGarbageCollector(

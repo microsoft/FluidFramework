@@ -2791,7 +2791,8 @@ export class ContainerRuntime
 			const summaryStats: IGeneratedSummaryStats = {
 				dataStoreCount: this.dataStores.size,
 				summarizedDataStoreCount: this.dataStores.size - handleCount,
-				gcStateUpdatedDataStoreCount: summarizeResult.gcStats?.updatedDataStoreCount,
+				gcStateUpdatedDataStoreCount:
+					this.garbageCollector.stateUpdatedDSCountSinceLastSummary,
 				gcBlobNodeCount: gcSummaryTreeStats?.blobNodeCount,
 				gcTotalBlobsSize: gcSummaryTreeStats?.totalBlobSize,
 				summaryNumber,

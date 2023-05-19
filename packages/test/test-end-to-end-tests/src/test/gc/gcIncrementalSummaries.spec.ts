@@ -221,12 +221,17 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		await validateIncrementalSummary(summarizer3, dataStoreSummaryTypesMap);
 	});
 
-	itExpects.only(
+	/**
+	 * When a data store's GC state changes (referenced -\> unreferenced or vice-versa), it is summarized. This
+	 * test validates that when there are GC state updated data stores in a summary and that summary fails,
+	 * incrementalSummaryViolation is not logged in the next successful summary.
+	 */
+	itExpects(
 		"does not log incrementalSummaryViolation when summary fails with gc state updated data stores",
 		[
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
-				error: "Summary failed simulation",
+				error: "Upload summary failed in test",
 			},
 		],
 		async () => {
@@ -240,14 +245,15 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 				mockLogger,
 			);
 
-			// Create data stores B and C, and mark them as referenced.
+			// Create data stores B and mark it as referenced.
 			const dataStoreB = await requestFluidObject<ITestDataObject>(
 				await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
 				"",
 			);
 			dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
-			for (let i = 1; i < 10; i++) {
+			// Create 10 data stores and mark them referenced by adding their handle to dataStoreB.
+			for (let i = 1; i <= 10; i++) {
 				const newDataStore = await requestFluidObject<ITestDataObject>(
 					await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
 					"",
@@ -255,21 +261,27 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 				dataStoreB._root.set(`dataStoreB-${i}`, newDataStore.handle);
 			}
 			await provider.ensureSynchronized();
+			// Summarize so that GC state is updated with the above data stores.
 			await assert.doesNotReject(summarizeNow(summarizer1), "Summarize should have passed");
 
+			// Delete reference to dataStoreB. This will make dataStoreB and the 10 data store references it contains
+			// unreferenced. These will be summarized and the GC state updated count will include them.
+			dataStoreA._root.delete("dataStoreB");
+			await provider.ensureSynchronized();
+
+			// The next summary should fail - Override the "uploadSummaryWithContext" function so that that step fails.
 			const containerRuntime = (summarizer1 as any).runtime as ContainerRuntime;
 			const uploadSummaryWithContextFunc = containerRuntime.storage.uploadSummaryWithContext;
 			const uploadSummaryWithContextOverride = async () => {
-				throw new Error("Summary failed simulation");
+				throw new Error("Upload summary failed in test");
 			};
 			containerRuntime.storage.uploadSummaryWithContext = uploadSummaryWithContextOverride;
 
-			dataStoreA._root.delete("dataStoreB");
-			await provider.ensureSynchronized();
+			// Summarize and validate that it fails.
 			const errorFn = (error: Error): boolean => {
 				assert.strictEqual(
 					error.message,
-					"Summary failed simulation",
+					"Upload summary failed in test",
 					"unexpected summary failures",
 				);
 				return true;
@@ -279,10 +291,15 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 				errorFn,
 				"Summarize should have failed",
 			);
+			// There should not be any IncrementalSummaryViolation errors.
 			mockLogger.assertMatchNone([{ eventName: "IncrementalSummaryViolation" }]);
+
+			// Revert the "uploadSummaryWithContext" function so that summary will now succeed.
 			containerRuntime.storage.uploadSummaryWithContext = uploadSummaryWithContextFunc;
 
+			// Summarize and validate that it succeeds.
 			await assert.doesNotReject(summarizeNow(summarizer1), "Summarize should have passed");
+			// There should not be any IncrementalSummaryViolation errors.
 			mockLogger.assertMatchNone([{ eventName: "IncrementalSummaryViolation" }]);
 		},
 	);
