@@ -142,7 +142,7 @@ export interface BindTree extends PathStep {
  *
  * @alpha
  */
-export const indexSymbol = Symbol("_index");
+export const indexSymbol = Symbol("editable-tree-binder:index");
 
 /**
  * A syntax node for the bind language
