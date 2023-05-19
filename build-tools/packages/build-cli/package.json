@@ -82,6 +82,7 @@
 		"@rushstack/node-core-library": "^3.51.1",
 		"async": "^3.2.4",
 		"chalk": "^2.4.2",
+		"danger": "^10.9.0",
 		"date-fns": "^2.29.1",
 		"execa": "^5.1.1",
 		"fs-extra": "^9.0.1",

@@ -37,7 +37,7 @@ import {
 	allowedTypesToTypeSet,
 } from "./modular-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
-import { isPrimitive } from "./editable-tree";
+import { areCursors, isPrimitive } from "./editable-tree";
 import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
 
 /**
@@ -304,6 +304,11 @@ function shallowCompatibilityTest(
 	type: TreeSchemaIdentifier,
 	data: ContextuallyTypedNodeData,
 ): boolean {
+	assert(!areCursors(data), "cursors cannot be used as contextually typed data.");
+	assert(
+		data !== undefined,
+		"undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData.",
+	);
 	const schema = lookupTreeSchema(schemaData, type);
 	if (isPrimitiveValue(data)) {
 		return isPrimitive(schema) && allowsValue(schema.value, data);
@@ -400,7 +405,7 @@ export function cursorsFromContextualData(
 export function cursorsForTypedFieldData<T extends FieldSchema>(
 	schemaData: SchemaDataAndPolicy,
 	schema: T,
-	data: TypedField<ApiMode.Simple, T>,
+	data: TypedField<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(schemaData, schema.types, data as ContextuallyTypedNodeData);
 }

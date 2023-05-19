@@ -23,6 +23,7 @@ export const inventory = builder.object("Contoso:Inventory-1.0.0", {
 });
 
 export const rootField = SchemaBuilder.field(FieldKinds.value, inventory);
+export type RootField = SchemaAware.TypedField<typeof rootField>;
 
 export const schema = builder.intoDocumentSchema(rootField);
 

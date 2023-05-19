@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { Mark, MoveId, MoveIn, MoveOut, ReturnFrom, ReturnTo } from "./format";
-import { cloneMark, isSkipMark } from "./utils";
+import { cloneMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -175,9 +175,6 @@ export function makeMergeable<T>(
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
 
 export function isMoveMark<T>(mark: Mark<T>): mark is MoveMark<T> {
-	if (isSkipMark(mark)) {
-		return false;
-	}
 	switch (mark.type) {
 		case "MoveIn":
 		case "MoveOut":
@@ -235,14 +232,18 @@ function applyMoveEffectsToDest<T>(
 			count: childEffect.count,
 		};
 
-		if (mark.type === "ReturnTo" && mark.detachIndex !== undefined) {
+		if (newMark.type === "ReturnTo" && newMark.detachEvent !== undefined) {
 			assert(
 				effect.count !== undefined,
-				0x568 /* Should define count when splitting a mark */,
+				0x699 /* Should have a count when splitting a mark */,
 			);
-			(newMark as ReturnTo).detachIndex = mark.detachIndex + effect.count;
+			newMark.detachEvent = {
+				...newMark.detachEvent,
+				index: newMark.detachEvent.index + effect.count,
+			};
 		}
 
+		// TODO: Split detachEvent if necessary
 		result.push(...applyMoveEffectsToDest(newMark, revision, effects, consumeEffect));
 	}
 
@@ -309,12 +310,15 @@ function applyMoveEffectsToSource<T>(
 			id: effect.child,
 			count: childEffect.count,
 		};
-		if (mark.type === "ReturnFrom" && mark.detachIndex !== undefined) {
+		if (newMark.detachEvent !== undefined) {
 			assert(
 				effect.count !== undefined,
-				0x56c /* Should define count when splitting a mark */,
+				0x69a /* Should specify a count when splitting a mark */,
 			);
-			(newMark as ReturnFrom).detachIndex = mark.detachIndex + effect.count;
+			newMark.detachEvent = {
+				...newMark.detachEvent,
+				index: newMark.detachEvent.index + effect.count,
+			};
 		}
 		result.push(
 			...applyMoveEffectsToSource(newMark, revision, effects, consumeEffect, composeChildren),

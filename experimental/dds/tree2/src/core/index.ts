@@ -89,6 +89,8 @@ export {
 	AnchorEvents,
 	AnchorSetRootEvents,
 	ProtoNodes,
+	CursorMarker,
+	isCursor,
 } from "./tree";
 
 export {
