@@ -36,7 +36,6 @@ import {
 	ISharedTreeView,
 	SharedTreeFactory,
 	createSharedTreeView,
-	runSynchronous,
 } from "../shared-tree";
 import {
 	defaultChangeFamily,
@@ -74,8 +73,6 @@ import {
 	FieldKey,
 	IRepairDataStoreProvider,
 	UndoRedoManager,
-	TreeValue,
-	ValueSchema,
 	ChangeFamilyEditor,
 	ChangeFamily,
 	InMemoryStoredSchemaRepository,
@@ -708,30 +705,6 @@ export function makeEncodingTestSuite<TDecoded>(
 			}
 		});
 	}
-}
-
-const testValueSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	value: ValueSchema.Serializable,
-});
-
-/**
- * Helper function to insert node at a given index.
- *
- * TODO: delete once the JSON editing API is ready for use.
- *
- * @param tree - The tree on which to perform the insert.
- * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted node.
- */
-export function insert(tree: ISharedTreeView, index: number, ...values: TreeValue[]): void {
-	runSynchronous(tree, () => {
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-		const nodes = values.map((value) =>
-			singleTextCursor({ type: testValueSchema.name, value }),
-		);
-		field.insert(index, nodes);
-	});
 }
 
 /**

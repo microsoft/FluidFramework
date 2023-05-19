@@ -405,7 +405,7 @@ describe("SharedTree benchmarks", () => {
 						const provider = new TestTreeProviderLite();
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
-							insert(tree, i, i);
+							insert(tree, i, "test");
 						}
 
 						// Measure
