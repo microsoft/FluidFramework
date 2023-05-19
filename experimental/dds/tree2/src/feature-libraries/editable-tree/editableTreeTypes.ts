@@ -368,4 +368,14 @@ export interface EditableField
 	 */
 	get content(): EditableTree | undefined | EditableField;
 	set content(newContent: NewFieldContent);
+
+	/**
+	 * Sets the content of this field.
+	 *
+	 * @remarks
+	 * Same as assigning to `content`.
+	 * This exists in addition to the setter for `content` since in many contexts limitations in TypeScripts typing
+	 * prevent providing strongly typed getters and setters with the types required.
+	 */
+	setContent(newContent: NewFieldContent): void;
 }

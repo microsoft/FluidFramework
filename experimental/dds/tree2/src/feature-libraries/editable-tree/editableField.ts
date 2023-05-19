@@ -290,6 +290,10 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		}
 	}
 
+	public setContent(newContent: NewFieldContent): void {
+		this.content = newContent;
+	}
+
 	public delete(): void {
 		switch (this.kind.multiplicity) {
 			case Multiplicity.Optional: {

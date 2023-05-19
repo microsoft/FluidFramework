@@ -380,6 +380,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: EditableField): void;
     readonly parent?: EditableTree;
     replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
+    setContent(newContent: NewFieldContent): void;
 }
 
 // @alpha (undocumented)
@@ -1296,7 +1297,8 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
 export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
 // @alpha (undocumented)
-export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined, deleted?: boolean) => NodeChangeset | undefined;
+export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
+deleted?: boolean) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
@@ -1886,19 +1888,25 @@ export interface UntypedField extends MarkedArrayLike<UnwrappedUntypedTree> {
 
 // @alpha
 interface UntypedOptionalField extends UntypedField {
+    readonly content: UntypedTreeCore;
+    delete(): void;
     readonly fieldSchema: FieldStoredSchema & {
         readonly kind: Optional;
     };
+    setContent(newContent: ITreeCursor | ContextuallyTypedNodeData | undefined): void;
 }
 
 // @alpha
 interface UntypedSequenceField extends UntypedField {
+    delete(): void;
     deleteNodes(index: number, count?: number): void;
     readonly fieldSchema: FieldStoredSchema & {
         readonly kind: Sequence;
     };
-    insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
-    replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+    insertNodes(index: number, newContent: NewFieldContent): void;
+    moveNodes(sourceIndex: number, count: number, destIndex: number, destinationField?: UntypedField): void;
+    replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
+    setContent(newContent: NewFieldContent): void;
 }
 
 // @alpha
@@ -1936,9 +1944,11 @@ export type UntypedTreeOrPrimitive = UntypedTree | PrimitiveValue;
 
 // @alpha
 interface UntypedValueField extends UntypedField {
+    readonly content: UntypedTreeCore;
     readonly fieldSchema: FieldStoredSchema & {
         readonly kind: ValueFieldKind;
     };
+    setContent(newContent: ITreeCursor | ContextuallyTypedNodeData): void;
 }
 
 // @alpha
