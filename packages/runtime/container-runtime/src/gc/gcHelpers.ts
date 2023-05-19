@@ -12,6 +12,7 @@ import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
 import {
 	IGarbageCollectionNodeData,
@@ -302,4 +303,14 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  */
 export function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
+}
+
+/**
+ * Wrap the given value in a CodeArtifact tag.
+ */
+export function wrapWithCodeArtifact(value: string) {
+	return {
+		value,
+		tag: TelemetryDataTag.CodeArtifact,
+	};
 }

@@ -6,11 +6,7 @@
 import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
-import {
-	generateStack,
-	MonitoringContext,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
+import { generateStack, MonitoringContext } from "@fluidframework/telemetry-utils";
 import { ICreateContainerMetadata } from "../summary";
 import {
 	disableSweepLogKey,
@@ -23,6 +19,7 @@ import {
 	runSweepKey,
 } from "./gcDefinitions";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
+import { wrapWithCodeArtifact } from "./gcHelpers";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -32,18 +29,24 @@ interface ICommonProps {
 	completedGCRuns: number;
 	isTombstoned: boolean;
 	lastSummaryTime?: number;
-	fromId?: string;
 	viaHandle?: boolean;
 }
 
 /** The event that is logged when unreferenced node is used after a certain time. */
 interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps {
 	state: UnreferencedState;
-	id: string;
+	id: {
+		value: string;
+		tag: string;
+	};
 	type: GCNodeType;
 	unrefTime: number;
 	age: number;
 	timeout?: number;
+	fromId?: {
+		value: string;
+		tag: string;
+	};
 }
 
 /** Properties passed to nodeUsed function when a node is used. */
@@ -51,6 +54,7 @@ interface INodeUsageProps extends ICommonProps {
 	nodeId: string;
 	currentReferenceTimestampMs: number | undefined;
 	packagePath: readonly string[] | undefined;
+	fromNodeId?: string;
 }
 
 /**
@@ -153,7 +157,7 @@ export class GCTelemetryTracker {
 		const { usageType, currentReferenceTimestampMs, packagePath, ...propsToLog } =
 			nodeUsageProps;
 		const eventProps: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
-			id: nodeUsageProps.nodeId,
+			id: wrapWithCodeArtifact(nodeUsageProps.nodeId),
 			type: nodeType,
 			unrefTime: nodeStateTracker.unreferencedTimestampMs,
 			age:
@@ -163,6 +167,9 @@ export class GCTelemetryTracker {
 				state === UnreferencedState.Inactive
 					? this.configs.inactiveTimeoutMs
 					: this.configs.sweepTimeoutMs,
+			fromId: nodeUsageProps.fromNodeId
+				? wrapWithCodeArtifact(nodeUsageProps.fromNodeId)
+				: undefined,
 			...propsToLog,
 			...this.createContainerMetadata,
 		};
@@ -175,7 +182,7 @@ export class GCTelemetryTracker {
 				{
 					eventName: `GC_Tombstone_${nodeType}_Revived`,
 					category: "generic",
-					url: nodeUsageProps.nodeId,
+					url: wrapWithCodeArtifact(nodeUsageProps.nodeId),
 					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,
@@ -263,14 +270,8 @@ export class GCTelemetryTracker {
 			if (missingExplicitRoutes.length > 0) {
 				logger.sendErrorEvent({
 					eventName: "gcUnknownOutboundReferences",
-					id: {
-						value: nodeId,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					routes: {
-						value: JSON.stringify(missingExplicitRoutes),
-						tag: TelemetryDataTag.CodeArtifact,
-					},
+					id: wrapWithCodeArtifact(nodeId),
+					routes: wrapWithCodeArtifact(JSON.stringify(missingExplicitRoutes)),
 				});
 			}
 		}
@@ -294,26 +295,22 @@ export class GCTelemetryTracker {
 			 * Loaded and Changed events are logged only if the node is not active. If the node is active, it was
 			 * revived and a Revived event will be logged for it.
 			 */
-			const nodeStateTracker = this.getNodeStateTracker(eventProps.id);
+			const nodeStateTracker = this.getNodeStateTracker(eventProps.id.value);
 			const active =
 				nodeStateTracker === undefined ||
 				nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
-				const pkg = await this.getNodePackagePath(eventProps.id);
+				const pkg = await this.getNodePackagePath(eventProps.id.value);
 				const fromPkg = eventProps.fromId
-					? await this.getNodePackagePath(eventProps.fromId)
+					? await this.getNodePackagePath(eventProps.fromId.value)
 					: undefined;
 				const event = {
 					eventName: `${state}Object_${usageType}`,
 					details: JSON.stringify({
 						...propsToLog,
 					}),
-					pkg: pkg
-						? { value: pkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
-						: undefined,
-					fromPkg: fromPkg
-						? { value: fromPkg.join("/"), tag: TelemetryDataTag.CodeArtifact }
-						: undefined,
+					pkg: pkg ? wrapWithCodeArtifact(pkg.join("/")) : undefined,
+					fromPkg: fromPkg ? wrapWithCodeArtifact(fromPkg.join("/")) : undefined,
 				};
 
 				if (state === UnreferencedState.Inactive) {
@@ -368,7 +365,7 @@ export class GCTelemetryTracker {
 			logger.sendTelemetryEvent({
 				eventName: "GC_SweepReadyObjects_Delete",
 				details: JSON.stringify({
-					id: JSON.stringify(deletedNodeIds),
+					id: wrapWithCodeArtifact(JSON.stringify(deletedNodeIds)),
 					timeout: this.configs.sweepTimeoutMs,
 					completedGCRuns,
 					lastSummaryTime,

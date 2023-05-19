@@ -156,13 +156,13 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						{
 							eventName: changedEvent,
 							timeout: inactiveTimeoutMs,
-							id: url,
+							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 						},
 						{
 							eventName: loadedEvent,
 							timeout: inactiveTimeoutMs,
-							id: url,
+							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
 						},
 					],
@@ -183,9 +183,12 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						{
 							eventName: revivedEvent,
 							timeout: inactiveTimeoutMs,
-							id: url,
+							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
-							fromId: defaultDataStore._root.handle.absolutePath,
+							fromId: {
+								value: defaultDataStore._root.handle.absolutePath,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
 						},
 					],
 					"revived event not generated as expected",
@@ -244,7 +247,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						{
 							eventName: loadedEvent,
 							timeout: inactiveTimeoutMs,
-							id: summarizerBlobHandle.absolutePath,
+							id: {
+								value: summarizerBlobHandle.absolutePath,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
 						},
 					],
 					"updated event not generated as expected for attachment blobs",
@@ -259,7 +265,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						{
 							eventName: revivedEvent,
 							timeout: inactiveTimeoutMs,
-							id: summarizerBlobHandle.absolutePath,
+							id: {
+								value: summarizerBlobHandle.absolutePath,
+								tag: TelemetryDataTag.CodeArtifact,
+							},
 						},
 					],
 					"revived event not generated as expected for attachment blobs",
@@ -331,7 +340,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 							eventName:
 								"fluid:telemetry:ContainerRuntime:GarbageCollector:InactiveObject_Loaded",
 							timeout: inactiveTimeoutMs,
-							id: url,
+							id: { value: url, tag: TelemetryDataTag.CodeArtifact },
 						},
 					],
 					"loaded event not generated as expected",

@@ -920,7 +920,7 @@ export class GarbageCollector implements IGarbageCollector {
 			completedGCRuns: this.completedRuns,
 			isTombstoned: this.tombstones.includes(toNodePath),
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
-			fromId: fromNodePath,
+			fromNodeId: fromNodePath,
 		});
 	}
 
