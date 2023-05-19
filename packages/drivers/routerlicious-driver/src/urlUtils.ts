@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import URLParse from "url-parse";
 import { ISession } from "@fluidframework/server-services-client";
 
@@ -21,9 +21,9 @@ export const replaceDocumentIdInPath = (urlPath: string, documentId: string): st
 	urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
 
 export const getDiscoveredFluidResolvedUrl = (
-	resolvedUrl: IFluidResolvedUrl,
+	resolvedUrl: IResolvedUrl,
 	session: ISession,
-): IFluidResolvedUrl => {
+): IResolvedUrl => {
 	const discoveredOrdererUrl = new URLParse(session.ordererUrl);
 	const deltaStorageUrl = new URLParse(resolvedUrl.endpoints.deltaStorageUrl);
 	deltaStorageUrl.set("host", discoveredOrdererUrl.host);
@@ -33,7 +33,7 @@ export const getDiscoveredFluidResolvedUrl = (
 	storageUrl.set("host", discoveredStorageUrl.host);
 
 	const parsedUrl = parseFluidUrl(resolvedUrl.url);
-	const discoveredResolvedUrl: IFluidResolvedUrl = {
+	const discoveredResolvedUrl: IResolvedUrl = {
 		endpoints: {
 			deltaStorageUrl: deltaStorageUrl.toString(),
 			ordererUrl: session.ordererUrl,

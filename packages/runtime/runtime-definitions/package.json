@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -56,6 +56,23 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IGarbageCollectionNodeData": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IGarbageCollectionSnapshotData": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IGarbageCollectionState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

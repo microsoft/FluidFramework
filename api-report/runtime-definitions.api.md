@@ -325,37 +325,6 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @public @deprecated
-export interface IGarbageCollectionNodeData {
-    outboundRoutes: string[];
-    unreferencedTimestampMs?: number;
-}
-
-// @public @deprecated
-export interface IGarbageCollectionSnapshotData {
-    // (undocumented)
-    deletedNodes: string[] | undefined;
-    // (undocumented)
-    gcState: IGarbageCollectionState;
-    // (undocumented)
-    tombstones: string[] | undefined;
-}
-
-// @public @deprecated
-export interface IGarbageCollectionState {
-    // (undocumented)
-    gcNodes: {
-        [id: string]: IGarbageCollectionNodeData;
-    };
-}
-
-// @public @deprecated (undocumented)
-export interface IGarbageCollectionSummaryDetailsLegacy {
-    gcData?: IGarbageCollectionData;
-    unrefTimestamp?: number;
-    usedRoutes?: string[];
-}
-
 // @public
 export interface IIdCompressor {
     // Warning: (ae-incompatible-release-tags) The symbol "decompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
