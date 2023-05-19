@@ -267,34 +267,7 @@ describe("Runtime", () => {
 		describe("Op reentry enforcement", () => {
 			let containerRuntime: ContainerRuntime;
 
-			it("By default, don't enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext() as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
-
-				assert.ok(
-					containerRuntime.ensureNoDataModelChanges(() => {
-						containerRuntime.submitDataStoreOp("id", "test");
-						return true;
-					}),
-				);
-
-				assert.ok(
-					containerRuntime.ensureNoDataModelChanges(() =>
-						containerRuntime.ensureNoDataModelChanges(() =>
-							containerRuntime.ensureNoDataModelChanges(() => {
-								containerRuntime.submitDataStoreOp("id", "test");
-								return true;
-							}),
-						),
-					),
-				);
-			});
-
-			it("If option enabled, enforce the op reentry check", async () => {
+			it("Enforce the op reentry check", async () => {
 				containerRuntime = await ContainerRuntime.load(
 					getMockContext() as IContainerContext,
 					[],
@@ -316,31 +289,6 @@ describe("Runtime", () => {
 							containerRuntime.ensureNoDataModelChanges(() =>
 								containerRuntime.submitDataStoreOp("id", "test"),
 							),
-						),
-					),
-				);
-			});
-
-			it("If option enabled but disabled via feature gate, don't enforce the op reentry check", async () => {
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext({
-						"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
-					}) as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{
-						enableOpReentryCheck: true,
-					}, // runtimeOptions
-				);
-
-				containerRuntime.ensureNoDataModelChanges(() =>
-					containerRuntime.submitDataStoreOp("id", "test"),
-				);
-
-				containerRuntime.ensureNoDataModelChanges(() =>
-					containerRuntime.ensureNoDataModelChanges(() =>
-						containerRuntime.ensureNoDataModelChanges(() =>
-							containerRuntime.submitDataStoreOp("id", "test"),
 						),
 					),
 				);

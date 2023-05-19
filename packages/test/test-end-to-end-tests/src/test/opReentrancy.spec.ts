@@ -15,7 +15,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
@@ -63,56 +63,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		await provider.ensureSynchronized();
 	};
 
-	itExpects(
-		"Should close the container when submitting an op while processing a batch",
-		[
-			{
-				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
-			},
-		],
-		async () => {
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					enableOpReentryCheck: true,
-				},
-			});
-
-			sharedMap1.on("valueChanged", (changed) => {
-				if (changed.key !== "key2") {
-					sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-				}
-			});
-
-			assert.throws(() => {
-				sharedMap1.set("key1", "1");
-			});
-
-			sharedMap2.set("key2", "2");
-			await provider.ensureSynchronized();
-
-			// The offending container is closed
-			assert.ok(container1.closed);
-
-			// The other container is fine
-			assert.equal(sharedMap2.get("key1"), undefined);
-			assert.equal(sharedMap2.get("key2"), "2");
-		},
-	);
-
-	it("Should throw when submitting an op while handling an event - offline", async () => {
-		await setupContainers({
-			...testContainerConfig,
-			runtimeOptions: {
-				enableOpReentryCheck: true,
-			},
-		});
-
+	it("Ops sent while processing ops will be observed in reverse order although the data model is in sync", async () => {
+		await setupContainers(testContainerConfig);
 		await container1.deltaManager.inbound.pause();
 		await container1.deltaManager.outbound.pause();
 
@@ -122,102 +74,29 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			}
 		});
 
-		assert.throws(() => {
-			sharedMap1.set("key1", "1");
+		const outOfOrderObservations: string[] = [];
+		sharedMap1.on("valueChanged", (changed) => {
+			outOfOrderObservations.push(changed.key);
 		});
+
+		sharedMap1.set("key1", "1");
 
 		container1.deltaManager.inbound.resume();
 		container1.deltaManager.outbound.resume();
 
+		await provider.ensureSynchronized();
+
 		// The offending container is not closed
 		assert.ok(!container1.closed);
+		assert.equal(sharedMap1.get("key1"), "1");
+		assert.equal(sharedMap1.get("key2"), "1 updated");
+
+		// The other container is also fine and in sync
+		assert.ok(!container2.closed);
+		assert.equal(sharedMap2.get("key1"), "1");
+		assert.equal(sharedMap2.get("key2"), "1 updated");
+
+		// The second event handler didn't receive the events in the actual order of changes
+		assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
 	});
-
-	const allowReentry = [
-		{
-			options: testContainerConfig,
-			featureGates: {},
-			name: "Default config and feature gates",
-		},
-		{
-			options: {
-				...testContainerConfig,
-				runtimeOptions: {
-					enableOpReentryCheck: true,
-				},
-			},
-			featureGates: { "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
-			name: "Enabled by options, disabled by feature gate",
-		},
-	];
-
-	describe("Allow reentry", () =>
-		allowReentry.forEach((testConfig) => {
-			it(`Should not close the container when submitting an op while processing a batch [${testConfig.name}]`, async () => {
-				await setupContainers(testConfig.options, testConfig.featureGates);
-
-				sharedMap1.on("valueChanged", (changed) => {
-					if (changed.key !== "key2") {
-						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-					}
-				});
-
-				const outOfOrderObservations: string[] = [];
-				sharedMap1.on("valueChanged", (changed) => {
-					outOfOrderObservations.push(changed.key);
-				});
-
-				sharedMap1.set("key1", "1");
-				sharedMap2.set("key2", "2");
-				await provider.ensureSynchronized();
-
-				// The offending container is not closed
-				assert.ok(!container1.closed);
-				assert.equal(sharedMap1.get("key2"), "1 updated");
-
-				// The other container is also fine
-				assert.equal(sharedMap2.get("key1"), "1");
-				assert.equal(sharedMap2.get("key2"), "1 updated");
-
-				// The second event handler didn't receive the events in the actual order of changes
-				assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
-			});
-
-			it(`Should not throw when submitting an op while processing a batch - offline [${testConfig.name}]`, async () => {
-				await setupContainers(
-					{
-						...testContainerConfig,
-						runtimeOptions: {
-							enableOpReentryCheck: true,
-						},
-					},
-					{ "Fluid.ContainerRuntime.DisableOpReentryCheck": true },
-				);
-
-				await container1.deltaManager.inbound.pause();
-				await container1.deltaManager.outbound.pause();
-
-				sharedMap1.on("valueChanged", (changed) => {
-					if (changed.key !== "key2") {
-						sharedMap1.set("key2", `${sharedMap1.get("key1")} updated`);
-					}
-				});
-
-				const outOfOrderObservations: string[] = [];
-				sharedMap1.on("valueChanged", (changed) => {
-					outOfOrderObservations.push(changed.key);
-				});
-
-				sharedMap1.set("key1", "1");
-
-				container1.deltaManager.inbound.resume();
-				container1.deltaManager.outbound.resume();
-
-				// The offending container is not closed
-				assert.ok(!container1.closed);
-
-				// The second event handler didn't receive the events in the actual order of changes
-				assert.deepEqual(outOfOrderObservations, ["key2", "key1"]);
-			});
-		}));
 });
