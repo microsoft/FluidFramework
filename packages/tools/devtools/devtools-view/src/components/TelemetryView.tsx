@@ -111,14 +111,33 @@ export function TelemetryView(): React.ReactElement {
 				maxEventsToDisplay - telemetryEvents.length,
 			);
 			setTelemetryEvents([...newEvents, ...telemetryEvents]);
-			setSelectedIndex(selectedIndex + newEvents.length);
+			setSelectedIndex((prevIndex) => prevIndex + newEvents.length);
 			setBufferedEvents(remainingBuffer);
 		}
 	}, [telemetryEvents, bufferedEvents, maxEventsToDisplay, selectedIndex]);
 
 	const handleLoadMore = (): void => {
-		setMaxEventsToDisplay((prevMaxEvents) => prevMaxEvents + bufferedEvents.length);
+		const newEvents =
+			bufferedEvents.length > maxEventsToDisplay
+				? bufferedEvents.slice(0, maxEventsToDisplay)
+				: [...bufferedEvents];
+
+		// Add new events to telemetryEvents
+		let refreshedList = [...newEvents, ...(telemetryEvents ?? [])];
+		// If the length of telemetryEvents exceeds maxEventsToDisplay, truncate oldest events
+		if (refreshedList.length > maxEventsToDisplay) {
+			refreshedList = refreshedList.slice(0, maxEventsToDisplay);
+		}
+		setTelemetryEvents(refreshedList);
+		setSelectedIndex((prevIndex) => prevIndex + newEvents.length);
+		const remainingBuffer = bufferedEvents.slice(newEvents.length);
+		setBufferedEvents(remainingBuffer);
 	};
+
+	/**
+	 * Add scroll bar to table
+	 * remove checkbox
+	 */
 
 	return (
 		<Stack>
@@ -128,13 +147,13 @@ export function TelemetryView(): React.ReactElement {
 					onChangeSelection={(key): void => setMaxEventsToDisplay(key)}
 				/>
 			</StackItem>
-			<StackItem>
+			<StackItem style={{ height: "95vh" }}>
 				<div style={{ width: "100%", flexDirection: "row" }}>
 					{bufferedEvents.length > 0 ? (
 						<div style={{ marginLeft: "6px" }}>
 							<CounterBadge size="large" color="brand">
 								{" "}
-								{bufferedEvents.length}+
+								{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
 							</CounterBadge>
 							&nbsp; Newer telemetry events received.
 						</div>
@@ -142,7 +161,9 @@ export function TelemetryView(): React.ReactElement {
 						<> You &apos;re up to date! </>
 					)}
 				</div>
-				<Button onClick={handleLoadMore}>Load More</Button>
+				<Button style={{ margin: "10px" }} onClick={handleLoadMore}>
+					Refresh
+				</Button>
 				{telemetryEvents !== undefined ? (
 					<FilteredTelemetryView
 						telemetryEvents={telemetryEvents}
@@ -467,6 +488,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					position: "relative",
 					borderTop: `4px solid ${tokens.colorNeutralForeground2}`,
 				}}
+				pane1Style={{ overflowY: "scroll" }}
 				pane2Style={{ margin: "10px" }}
 				resizerStyle={{
 					borderRight: `2px solid ${tokens.colorNeutralForeground2}`,
@@ -481,6 +503,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 					size="extra-small"
 					resizableColumns
 					selectionMode="single"
+					subtleSelection
 					onSelectionChange={(e, data): void => {
 						// Set the index to the appropriate row index in the table.
 						setIndex(Number([...data.selectedItems][0]));
