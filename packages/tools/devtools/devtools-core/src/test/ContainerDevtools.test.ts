@@ -16,7 +16,7 @@ describe("ContainerDevtools unit tests", () => {
 		const container = createMockContainer();
 		const containerId = "test-container-id";
 		const containerProps: ContainerDevtoolsProps = {
-			containerId,
+			id: containerId,
 			container,
 		};
 		const devtools = new ContainerDevtools(containerProps);
@@ -39,7 +39,7 @@ describe("ContainerDevtools unit tests", () => {
 		const container = createMockContainer();
 		const containerId = "test-container-id";
 		const containerProps: ContainerDevtoolsProps = {
-			containerId,
+			id: containerId,
 			container,
 		};
 		const devtools = new ContainerDevtools(containerProps);

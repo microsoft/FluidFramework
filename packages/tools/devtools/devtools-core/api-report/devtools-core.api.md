@@ -95,10 +95,12 @@ export namespace ContainerDevtoolsFeatures {
 export interface ContainerDevtoolsProps {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
-    containerId: string;
-    containerNickname?: string;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
+    id: string;
 }
+
+// @internal
+export type ContainerId = string;
 
 // @internal
 export namespace ContainerList {
@@ -108,14 +110,8 @@ export namespace ContainerList {
         type: typeof MessageType;
     }
     export interface MessageData {
-        containers: ContainerMetadata[];
+        containers: ContainerId[];
     }
-}
-
-// @internal
-export interface ContainerMetadata {
-    id: string;
-    nickname?: string;
 }
 
 // @internal
@@ -152,7 +148,7 @@ export namespace ContainerStateHistory {
 }
 
 // @internal
-export interface ContainerStateMetadata extends ContainerMetadata {
+export interface ContainerStateMetadata extends HasContainerId {
     // (undocumented)
     attachState: AttachState;
     // (undocumented)
@@ -340,7 +336,7 @@ export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourced
 
 // @internal
 export interface HasContainerId {
-    containerId: string;
+    containerId: ContainerId;
 }
 
 // @internal

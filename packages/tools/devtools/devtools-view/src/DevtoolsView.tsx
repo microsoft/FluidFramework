@@ -5,8 +5,8 @@
 import React from "react";
 import { useId } from "@fluentui/react-hooks";
 import {
+	ContainerId,
 	ContainerList,
-	ContainerMetadata,
 	DevtoolsFeature,
 	DevtoolsFeatureFlags,
 	DevtoolsFeatures,
@@ -207,7 +207,7 @@ interface _DevtoolsViewProps {
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	const { supportedFeatures } = props;
 
-	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
+	const [containers, setContainers] = React.useState<ContainerId[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
 	const messageRelay = useMessageRelay();
@@ -270,7 +270,7 @@ interface ViewProps {
 	/**
 	 * The list of Containers, if any are registered with the webpage's Devtools instance.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerId[];
 }
 
 /**
@@ -286,7 +286,9 @@ function View(props: ViewProps): React.ReactElement {
 			break;
 		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations
-			const container = containers?.find((x) => x.id === menuSelection.containerId);
+			const container: ContainerId | undefined = containers?.find(
+				(containerId) => containerId === menuSelection.containerId,
+			);
 			view =
 				container === undefined ? (
 					<div>Could not find a Devtools instance for that container.</div>
@@ -336,7 +338,7 @@ interface MenuProps {
 	/**
 	 * The set of Containers to offer as selection options.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerId[];
 }
 
 /**
@@ -395,7 +397,7 @@ interface ContainersMenuSectionProps {
 	/**
 	 * The set of Containers to offer as selection options.
 	 */
-	containers?: ContainerMetadata[];
+	containers?: ContainerId[];
 
 	/**
 	 * The currently selected Container ID, if one is currently selected.
@@ -427,13 +429,13 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	} else {
 		containerSectionInnerView = (
 			<>
-				{containers.map((container) => (
+				{containers.map((containerId) => (
 					<MenuItem
-						key={container.id}
-						isActive={currentContainerSelection === container.id}
-						text={container.nickname ?? container.id}
+						key={containerId}
+						isActive={currentContainerSelection === containerId}
+						text={containerId}
 						onClick={(event): void => {
-							selectContainer(`${container.id}`);
+							selectContainer(`${containerId}`);
 						}}
 					/>
 				))}

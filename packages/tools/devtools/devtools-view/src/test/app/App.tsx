@@ -131,12 +131,14 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 /**
  * Registers container described by the input `containerInfo` with the provided devtools instance.
  */
-function registerContainerWithDevtools(devtools: IDevtools, containerInfo: ContainerInfo): void {
-	const { container, containerId, containerNickname } = containerInfo;
+function registerContainerWithDevtools(
+	devtools: IDevtools,
+	container: IFluidContainer,
+	id: string,
+): void {
 	devtools.registerContainerDevtools({
 		container,
-		containerId,
-		containerNickname,
+		id,
 		dataVisualizers: undefined, // Use defaults
 	});
 }
@@ -162,17 +164,10 @@ function useContainerInfo(
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
 		async function getSharedFluidData(): Promise<ContainerInfo> {
-			const containerNickname = "Shared Container";
-
 			const containerId = getContainerIdFromLocation(window.location);
 			return containerId.length === 0
-				? createFluidContainer(containerSchema, logger, populateRootMap, containerNickname)
-				: loadExistingFluidContainer(
-						containerId,
-						containerSchema,
-						logger,
-						containerNickname,
-				  );
+				? createFluidContainer(containerSchema, logger, populateRootMap)
+				: loadExistingFluidContainer(containerId, containerSchema, logger);
 		}
 
 		getSharedFluidData().then((containerInfo) => {
@@ -181,24 +176,19 @@ function useContainerInfo(
 			}
 
 			setSharedContainerInfo(containerInfo);
-			registerContainerWithDevtools(devtools, containerInfo);
+			registerContainerWithDevtools(devtools, containerInfo.container, "Shared Container");
 		}, console.error);
 
 		async function getPrivateContainerData(): Promise<ContainerInfo> {
 			// Always create a new container for the private view.
 			// This isn't shared with other collaborators.
 
-			return createFluidContainer(
-				containerSchema,
-				logger,
-				populateRootMap,
-				"Private Container",
-			);
+			return createFluidContainer(containerSchema, logger, populateRootMap);
 		}
 
 		getPrivateContainerData().then((containerInfo) => {
 			setPrivateContainerInfo(containerInfo);
-			registerContainerWithDevtools(devtools, containerInfo);
+			registerContainerWithDevtools(devtools, containerInfo.container, "Private Container");
 		}, console.error);
 
 		return (): void => {
@@ -313,7 +303,7 @@ interface AppViewProps {
  */
 function AppView(props: AppViewProps): React.ReactElement {
 	const { containerInfo } = props;
-	const { container, containerId, containerNickname } = containerInfo;
+	const { container, containerId } = containerInfo;
 
 	const rootMap = container.initialObjects.rootMap as SharedMap;
 	if (rootMap === undefined) {
@@ -340,17 +330,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 	return (
 		<Stack horizontal className={rootStackStyles}>
 			<StackItem className={appViewPaneStackStyles}>
-				<h4>
-					{containerNickname === undefined ? (
-						<></>
-					) : (
-						<>
-							{containerNickname}
-							<br />
-						</>
-					)}
-					{containerId}
-				</h4>
+				<h4>{containerId}</h4>
 				<Stack>
 					<StackItem>
 						<EmojiMatrixView emojiMatrixHandle={emojiMatrixHandle} />

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerMetadata } from "../../ContainerMetadata";
+import { ContainerId } from "../../CommonInterfaces";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
@@ -26,9 +26,9 @@ export namespace ContainerList {
 	 */
 	export interface MessageData {
 		/**
-		 * Metadata list of Containers with active Client Debugger sessions registered.
+		 * List of IDs for the Containers registered with the Devtools.
 		 */
-		containers: ContainerMetadata[];
+		containers: ContainerId[];
 	}
 
 	/**

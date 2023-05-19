@@ -12,9 +12,8 @@ import { VisualizeSharedObject } from '@fluid-experimental/devtools-core';
 // @public
 export interface ContainerDevtoolsProps {
     container: IFluidContainer;
-    containerId: string;
-    containerNickname?: string;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
+    id: string;
 }
 
 export { DevtoolsLogger }

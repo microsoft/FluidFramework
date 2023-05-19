@@ -224,7 +224,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		messageRelay.postMessage(
 			DisconnectContainer.createMessage({
 				containerId,
-				/* TODO: Specify debugger reason here once it is supported */
+				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
 	}
@@ -233,7 +233,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		messageRelay.postMessage(
 			CloseContainer.createMessage({
 				containerId,
-				/* TODO: Specify debugger reason here once it is supported */
+				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
 	}
@@ -251,9 +251,11 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
 	return (
 		<Stack>
+			<StackItem align="center">
+				<h2>{containerState.containerId}</h2>
+			</StackItem>
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>
-					{DataRow("Container", containerState.id, columnSizing_unstable)}
 					{ContainerStatusRow(statusComponents)}
 					{DataRow("Client ID", containerState.clientId, columnSizing_unstable)}
 					{DataRow("User ID", containerState.userId, columnSizing_unstable)}

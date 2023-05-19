@@ -19,10 +19,10 @@ import {
 	postMessagesToWindow,
 } from "./messaging";
 import { IFluidDevtools } from "./IFluidDevtools";
-import { ContainerMetadata } from "./ContainerMetadata";
 import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
 import { DevtoolsLogger } from "./DevtoolsLogger";
 import { VisualizeSharedObject } from "./data-visualization";
+import { ContainerId } from "./CommonInterfaces";
 
 /**
  * Message logging options used by the root devtools.
@@ -205,11 +205,8 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Posts a {@link ContainerList.Message} to the window (globalThis).
 	 */
 	private readonly postContainerList = (): void => {
-		const containers: ContainerMetadata[] = this.getAllContainerDevtools().map(
-			(containerDevtools) => ({
-				id: containerDevtools.containerId,
-				nickname: containerDevtools.containerNickname,
-			}),
+		const containers: ContainerId[] = this.getAllContainerDevtools().map(
+			(containerDevtools) => containerDevtools.containerId,
 		);
 
 		postMessagesToWindow(
@@ -232,10 +229,7 @@ export class FluidDevtools implements IFluidDevtools {
 		this.containers = new Map<string, ContainerDevtools>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
-				this.containers.set(
-					containerConfig.containerId,
-					new ContainerDevtools(containerConfig),
-				);
+				this.containers.set(containerConfig.id, new ContainerDevtools(containerConfig));
 			}
 		}
 
@@ -298,7 +292,7 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		const { containerId, dataVisualizers: containerVisualizers } = props;
+		const { id: containerId, dataVisualizers: containerVisualizers } = props;
 
 		if (this.containers.has(containerId)) {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerId));

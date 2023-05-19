@@ -7,7 +7,7 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
 
-import { FluidObjectId } from "./CommonInterfaces";
+import { ContainerId, FluidObjectId } from "./CommonInterfaces";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
@@ -56,9 +56,9 @@ export interface ContainerDevtoolsProps {
 	container: IContainer;
 
 	/**
-	 * The ID of the {@link ContainerDevtoolsProps.container | Container}.
+	 * A unique ID used to differentiate Containers registered with the {@link IFluidDevtools}.
 	 */
-	containerId: string;
+	id: string;
 
 	/**
 	 * (optional) Distributed Data Structures (DDSs) associated with the
@@ -74,19 +74,6 @@ export interface ContainerDevtoolsProps {
 	 * @privateRemarks TODO: rename this to make it more clear that this data does not *belong* to the Container.
 	 */
 	containerData?: Record<string, IFluidLoadable>;
-
-	/**
-	 * (optional) Nickname for the {@link ContainerDevtoolsProps.container | Container} / debugger instance.
-	 *
-	 * @remarks
-	 *
-	 * Associated tooling may take advantage of this to differentiate between instances using
-	 * semantically meaningful information.
-	 *
-	 * If not provided, the {@link ContainerDevtoolsProps.containerId} will be used for the purpose of distinguishing
-	 * instances.
-	 */
-	containerNickname?: string;
 
 	/**
 	 * (optional) Configurations for generating visual representations of
@@ -159,29 +146,28 @@ export class ContainerDevtools implements IContainerDevtools {
 	/**
 	 * {@inheritDoc IContainerDevtools.containerId}
 	 */
-	public readonly containerId: string;
+	public readonly containerId: ContainerId;
 
 	/**
-	 * {@inheritDoc IContainerDevtools.container}
+	 * The registered Container.
 	 */
 	public readonly container: IContainer;
 
 	/**
-	 * {@inheritDoc IContainerDevtools.audience}
+	 * The {@link ContainerDevtools.container}'s audience.
 	 */
 	public get audience(): IAudience {
 		return this.container.audience;
 	}
 
 	/**
-	 * {@inheritDoc IContainerDevtools.containerData}
+	 * Data contents of the Container.
+	 *
+	 * @remarks
+	 *
+	 * This map is assumed to be immutable. The debugger will not make any modifications to its contents.
 	 */
 	public readonly containerData?: Record<string, IFluidLoadable>;
-
-	/**
-	 * {@inheritDoc IContainerDevtools.containerNickname}
-	 */
-	public readonly containerNickname?: string;
 
 	// #region Accumulated log state
 
@@ -474,10 +460,9 @@ export class ContainerDevtools implements IContainerDevtools {
 	private _disposed: boolean;
 
 	public constructor(props: ContainerDevtoolsProps) {
-		this.containerId = props.containerId;
+		this.containerId = props.id;
 		this.containerData = props.containerData;
 		this.container = props.container;
-		this.containerNickname = props.containerNickname;
 
 		// TODO: would it be useful to log the states (and timestamps) at time of debugger initialize?
 		this._connectionStateLog = [];
@@ -573,8 +558,7 @@ export class ContainerDevtools implements IContainerDevtools {
 	private getContainerState(): ContainerStateMetadata {
 		const clientId = this.container.clientId;
 		return {
-			id: this.containerId,
-			nickname: this.containerNickname,
+			containerId: this.containerId,
 			attachState: this.container.attachState,
 			connectionState: this.container.connectionState,
 			closed: this.container.closed,
