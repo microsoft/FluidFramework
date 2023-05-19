@@ -62,6 +62,15 @@ export const summaryTemplate = {
 			content:
 				'{"createContainerRuntimeVersion":"2.0.0-internal.4.2.0","createContainerTimestamp":1683180222333,"summaryNumber":2,"summaryFormatVersion":1,"gcFeature":2,"sessionExpiryTimeoutMs":2592000000,"sweepEnabled":false,"sweepTimeoutMs":3110400000,"message":{"clientId":null,"clientSequenceNumber":-1,"minimumSequenceNumber":5,"referenceSequenceNumber":-1,"sequenceNumber":7,"timestamp":1683180249726,"type":"join"},"telemetryDocumentId":"72d29676-b076-43e8-80aa-b8fc7aba1506"}',
 		},
+		".protocol": {
+			type: 1,
+			tree: {
+				misotest: {
+					type: 2,
+					content: "ABC",
+				},
+			},
+		},
 		".electedSummarizer": {
 			type: 2,
 			content:
@@ -145,6 +154,7 @@ export const snapshotTree = {
 				quorumMembers: "cf6929236bacbea80764beb3aba8645210f4af57",
 				quorumProposals: "0637a088a01e8ddab3bf3fa98dbe804cbde1a0dc",
 				quorumValues: "c730f7a6ff8c606cc2b7d083e5a9705bff0d7029",
+				misotest: "misotest-id",
 			},
 			commits: {},
 			trees: {},

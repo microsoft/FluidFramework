@@ -16,7 +16,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { compress, decompress } from "lz4js";
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy";
-import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
+import {
+	ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
+	SummaryCompressionProcessor,
+} from "../";
 
 /**
  * This class extends the DocumentStorageServiceProxy so that it can apply various kinds of compressions
@@ -27,6 +31,9 @@ import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
  * in the createBlob method as there is no such key which would identify the blob.
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
+	public get adapterType() {
+		return SummaryCompressionProcessor.SummaryKey;
+	}
 	private readonly _compressedBlobIds: Map<string, number> = new Map();
 	public static readonly compressed_prefix: string = "compressed_";
 	private static readonly defaultIsUseB64OnCompressed = true;
@@ -364,7 +371,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			config,
 			isUseB64OnCompressed,
 		) as ISummaryTree;
-		console.log(`Miso Summary Upload: ${JSON.stringify(prep).length}`);
+		//		console.log(`Miso Summary Upload: ${JSON.stringify(prep).length}`);
 		return prep;
 	}
 

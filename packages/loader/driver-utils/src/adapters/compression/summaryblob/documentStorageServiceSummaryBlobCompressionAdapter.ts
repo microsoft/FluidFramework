@@ -16,7 +16,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { compress, decompress } from "lz4js";
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy";
-import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
+import {
+	ICompressionStorageConfig,
+	SummaryCompressionAlgorithm,
+	SummaryCompressionProcessor,
+} from "../";
 
 /**
  * This class is a proxy for the IDocumentStorageService that compresses and decompresses blobs in the summary.
@@ -30,9 +34,12 @@ import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
  * that the compression is not enabled and no first prefix byte is present in the blobs.
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
+	public get adapterType() {
+		return SummaryCompressionProcessor.SummaryBlob;
+	}
 	private _isCompressionEnabled: boolean = false;
 	private readonly _uncompressedBlobIds: Set<string> = new Set<string>();
-	private static readonly compressionMarkupBlob = ".summary-blob-compression.enabled";
+	public static readonly compressionMarkupBlob = ".summary-blob-compression.enabled";
 	private static readonly defaultIsUseB64OnCompressed = true;
 	private static readonly uncompressedPath = ".protocol";
 
@@ -424,7 +431,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			config,
 			isUseB64OnCompressed,
 		) as ISummaryTree;
-		console.log(`Miso Summary Upload: ${JSON.stringify(prep).length}`);
+		//	console.log(`Miso summary-blob Summary Upload: ${JSON.stringify(prep).length}`);
 		return prep;
 	}
 
@@ -439,7 +446,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		if (!this._isCompressionEnabled || this.isBlobUncompressed(id)) {
 			return originalBlob;
 		} else {
-			return DocumentStorageServiceCompressionAdapter.decodeBlob(originalBlob);
+			const decompressedBlob =
+				DocumentStorageServiceCompressionAdapter.decodeBlob(originalBlob);
+			//			console.log(`Miso summary-blob Blob read END : ${id} ${decompressedBlob.byteLength}`);
+			return decompressedBlob;
 		}
 	}
 
