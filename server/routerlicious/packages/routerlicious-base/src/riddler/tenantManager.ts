@@ -5,6 +5,8 @@
 
 import * as crypto from "crypto";
 import {
+    EncryptionKeyName,
+    IEncryptedTenantKeys,
 	ITenantConfig,
 	ITenantCustomData,
 	ITenantKeys,
@@ -240,7 +242,7 @@ export class TenantManager {
 		const collection = db.collection<ITenantDocument>(this.collectionName);
 
 		const tenantKey1 = this.generateTenantKey();
-		const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1);
+		const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1, EncryptionKeyName.key2);
 		if (encryptedTenantKey1 == null) {
 			winston.error("Tenant key1 encryption failed.");
 			Lumberjack.error("Tenant key1 encryption failed.", {
@@ -249,9 +251,8 @@ export class TenantManager {
 			throw new NetworkError(500, "Tenant key1 encryption failed.");
 		}
 
-
 		const tenantKey2 = this.generateTenantKey();
-		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2);
+		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2, EncryptionKeyName.key2);
 		if (encryptedTenantKey2 == null) {
 			winston.error("Tenant key2 encryption failed.");
 			Lumberjack.error("Tenant key2 encryption failed.", {
@@ -259,6 +260,9 @@ export class TenantManager {
 			});
 			throw new NetworkError(500, "Tenant key2 encryption failed.");
 		}
+
+        // New tenant keys will be encrypted with kek 2.
+        customData.encryptionKeyName = EncryptionKeyName.key2;
 
 		const id = await collection.insertOne({
 			_id: tenantId,
@@ -347,6 +351,7 @@ export class TenantManager {
 
 				if (cachedKey) {
 					retrievedFromCache = true;
+                    // TO DO: add kek 2
 					return this.decryptCachedKeys(cachedKey);
 				}
 			}
@@ -363,6 +368,7 @@ export class TenantManager {
 			}
 
 			const encryptedTenantKey1 = tenantDocument.key;
+            // TO DO: add kek 2
 			const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1);
 
 			if (tenantKey1 == null) {
@@ -372,6 +378,7 @@ export class TenantManager {
 			}
 
 			const encryptedTenantKey2 = tenantDocument.secondaryKey;
+            // TO DO: add kek 2
 			const tenantKey2 = encryptedTenantKey2
 				? this.secretManager.decryptSecret(encryptedTenantKey2)
 				: "";
@@ -394,6 +401,7 @@ export class TenantManager {
 					key1: encryptedTenantKey1,
 					key2: encryptedTenantKey2,
 				};
+                // TO DO: add kek 2
 				const setKeyInCacheSucceeded = await this.setKeyInCache(tenantId, cacheKeys);
 				fetchTenantKeyMetric.setProperty(
 					"settingKeyInCacheSucceeded",
@@ -432,6 +440,7 @@ export class TenantManager {
 		const tenantDocument = await this.getTenantDocument(tenantId, false);
 
 		const newTenantKey = this.generateTenantKey();
+        // TO DO: add kek 2
 		const encryptedNewTenantKey = this.secretManager.encryptSecret(newTenantKey);
 		if (encryptedNewTenantKey == null) {
 			winston.error("Tenant key encryption failed.");
@@ -481,6 +490,7 @@ export class TenantManager {
 		const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
 		// if key2 is to be refreshed
 		if (keyName === KeyName.key2) {
+            // TO DO: add kek 2
 			const decryptedTenantKey1 = this.secretManager.decryptSecret(key1);
 			if (decryptedTenantKey1 == null) {
 				winston.error("Tenant key1 decryption failed.");
@@ -490,10 +500,12 @@ export class TenantManager {
 
 			// Only create and set keys in cache if it is enabled
 			if (this.isCacheEnabled) {
+                // TO DO: add kek 2
 				const cacheKeys = {
 					key1,
 					key2: this.secretManager.encryptSecret(newTenantKey),
 				};
+                // TO DO: add kek name
 				await this.setKeyInCache(tenantId, cacheKeys);
 			}
 
@@ -513,10 +525,12 @@ export class TenantManager {
 
 			// Only create and set keys in cache if it is enabled
 			if (this.isCacheEnabled) {
+                // TO DO: add kek 2
 				const cacheKey1 = {
 					key1: this.secretManager.encryptSecret(newTenantKey),
 					key2: "",
 				};
+                // TO DO: add kek name
 				await this.setKeyInCache(tenantId, cacheKey1);
 				Lumberjack.info(`Added new key to cache.`, lumberProperties);
 			}
@@ -528,6 +542,7 @@ export class TenantManager {
 		}
 
 		// if key2 exists, refresh key1 and return
+        // TO DO: add kek 2
 		const decryptedTenantKey2 = this.secretManager.decryptSecret(key2);
 		if (decryptedTenantKey2 == null) {
 			winston.error("Tenant key2 decryption failed.");
