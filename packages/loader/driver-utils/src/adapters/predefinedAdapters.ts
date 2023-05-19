@@ -6,10 +6,9 @@
 import { assert } from "@fluidframework/common-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
-	SummaryCompressionAlgorithm,
 	DocumentServiceFactoryCompressionAdapter,
 	ICompressionStorageConfig,
-	SummaryCompressionProcessor,
+	DefaultCompressionStorageConfig,
 } from "./compression";
 
 /**
@@ -52,11 +51,7 @@ function applyStorageCompressionInternal(
 		config: ICompressionStorageConfig,
 	) => IDocumentServiceFactory,
 	documentServiceFactory: IDocumentServiceFactory,
-	config: ICompressionStorageConfig = {
-		algorithm: SummaryCompressionAlgorithm.LZ4,
-		minSizeToCompress: 500,
-		processor: SummaryCompressionProcessor.SummaryBlob,
-	},
+	config: ICompressionStorageConfig = DefaultCompressionStorageConfig,
 ): IDocumentServiceFactory {
 	if (config.algorithm === undefined) {
 		return documentServiceFactory;

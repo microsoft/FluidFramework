@@ -17,3 +17,9 @@ export interface ICompressionStorageConfig {
 	minSizeToCompress: number;
 	processor: SummaryCompressionProcessor;
 }
+
+export const DefaultCompressionStorageConfig = {
+	algorithm: SummaryCompressionAlgorithm.LZ4,
+	minSizeToCompress: 500,
+	processor: SummaryCompressionProcessor.SummaryBlob,
+};

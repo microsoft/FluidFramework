@@ -2,7 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/dot-notation */
 import { strict as assert } from "assert";
 import {
@@ -30,6 +31,7 @@ import {
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	applyStorageCompression,
+	DefaultCompressionStorageConfig,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
 	SummaryCompressionProcessor,
@@ -73,6 +75,7 @@ function generateSummaryWithContent(contentSize: number) {
 }
 
 class InternalTestStorage implements IDocumentStorageService {
+	constructor(private readonly config: ICompressionStorageConfig) {}
 	private _uploadedSummary: ISummaryTree | undefined;
 
 	repositoryUrl: string = "";
@@ -82,7 +85,6 @@ class InternalTestStorage implements IDocumentStorageService {
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
 	): Promise<ISnapshotTree | null> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return JSON.parse(JSON.stringify(snapshotTree));
 	}
 	async getVersions(
@@ -97,8 +99,9 @@ class InternalTestStorage implements IDocumentStorageService {
 		throw new Error("Method not implemented.");
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-non-null-assertion
-		return getCompressedHeaderContent(this._uploadedSummary!);
+		return this.config.processor === SummaryCompressionProcessor.SummaryBlob
+			? getHeaderContent(this._uploadedSummary!)
+			: getCompressedHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
 		summary: ISummaryTree,
@@ -108,7 +111,6 @@ class InternalTestStorage implements IDocumentStorageService {
 		return "test";
 	}
 	async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this._uploadedSummary!;
 	}
 	disposed?: boolean | undefined;
@@ -128,9 +130,10 @@ function isOriginalStorage(storage: IDocumentStorageService): boolean {
 }
 
 class InternalTestDocumentService implements IDocumentService {
+	constructor(private readonly config: ICompressionStorageConfig) {}
 	resolvedUrl: IResolvedUrl = { type: "web", data: "" };
 	policies?: IDocumentServicePolicies | undefined;
-	storage: IDocumentStorageService = new InternalTestStorage();
+	storage: IDocumentStorageService = new InternalTestStorage(this.config);
 	async connectToStorage(): Promise<IDocumentStorageService> {
 		return this.storage;
 	}
@@ -146,7 +149,12 @@ class InternalTestDocumentService implements IDocumentService {
 }
 
 class InternalTestDocumentServiceFactory implements IDocumentServiceFactory {
-	documentService: IDocumentService = new InternalTestDocumentService();
+	private readonly documentService: IDocumentService;
+	constructor(private readonly config: ICompressionStorageConfig | boolean = true) {
+		const myConfig =
+			typeof this.config === "boolean" ? DefaultCompressionStorageConfig : this.config;
+		this.documentService = new InternalTestDocumentService(myConfig);
+	}
 
 	async createDocumentService(
 		resolvedUrl: IResolvedUrl,
@@ -170,7 +178,7 @@ async function buildCompressionStorage(
 ): Promise<IDocumentStorageService> {
 	{
 		const factory: IDocumentServiceFactory = applyStorageCompression(
-			new InternalTestDocumentServiceFactory(),
+			new InternalTestDocumentServiceFactory(config),
 			config,
 		);
 		const documentService = await factory.createContainer(undefined, { type: "web", data: "" });
@@ -187,7 +195,6 @@ describe("Summary Compression Test", () => {
 			content.length === 1000000 + 11,
 			`The content size is ${content.length} and should be 1000011`,
 		);
-		await buildCompressionStorage(true);
 	});
 	it("Verify Config True", async () => {
 		const storage = await buildCompressionStorage(true);
@@ -240,21 +247,7 @@ describe("Summary Compression Test", () => {
 			minSizeToCompress: 500,
 			processor: SummaryCompressionProcessor.SummaryKey,
 		};
-		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
-		const summary = generateSummaryWithContent(1000);
-		const originHeaderHolder: ISummaryTree = getHeaderHolder(summary);
-		const originBlob = (originHeaderHolder.tree.header as ISummaryBlob).content;
-		await storage.uploadSummaryWithContext(summary, {
-			referenceSequenceNumber: 0,
-			proposalHandle: "test",
-			ackHandle: "test",
-		});
-		await storage.getSnapshotTree({ id: "test", treeId: "test" }, "test");
-		const blob: ArrayBufferLike = await storage.readBlob(
-			"ee84b67e86708c9dd7fc79ff8f3380b78f000b79",
-		);
-		const blobStr = new TextDecoder().decode(blob);
-		assert(blobStr === originBlob, "The origin and the downloaded blob are not the same");
+		await checkEncDec(config);
 	});
 	it("Verify Upload / Download Summary (summary-key markup)", async () => {
 		const config: ICompressionStorageConfig = {
@@ -287,7 +280,36 @@ describe("Summary Compression Test", () => {
 		\ndownloaded : ${downloadedBlobContent}`,
 		);
 	});
+	it("Verify Blob Enc/Dec Symetry (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+			processor: SummaryCompressionProcessor.SummaryBlob,
+		};
+		await checkEncDec(config);
+	});
 });
+async function checkEncDec(config: ICompressionStorageConfig) {
+	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
+	const summary = generateSummaryWithContent(1000);
+	const originHeaderHolder: ISummaryTree = getHeaderHolder(summary);
+	const originBlob = (originHeaderHolder.tree.header as ISummaryBlob).content;
+	await storage.uploadSummaryWithContext(summary, {
+		referenceSequenceNumber: 0,
+		proposalHandle: "test",
+		ackHandle: "test",
+	});
+	await storage.getSnapshotTree({ id: "test", treeId: "test" }, "test");
+	const blob: ArrayBufferLike = await storage.readBlob(
+		"ee84b67e86708c9dd7fc79ff8f3380b78f000b79",
+	);
+	const blobStr = new TextDecoder().decode(blob);
+	assert(
+		blobStr === originBlob,
+		`The origin and the downloaded blob are not the same \n\n\n${blobStr}\n\n${originBlob}`,
+	);
+}
+
 function checkCompressionConfig(
 	storage: IDocumentStorageService,
 	expectedMinSizeToCompress: number,
@@ -306,12 +328,10 @@ function checkCompressionConfig(
 }
 
 function getHeaderContent(summary: ISummaryTree) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return getHeader(summary)["content"];
 }
 
 function getCompressedHeaderContent(summary: ISummaryTree) {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return getCompressedHeader(summary)["content"];
 }
 

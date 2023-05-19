@@ -53,7 +53,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param blob - The maybe compressed blob.
 	 */
 	private static readAlgorithmFromBlob(blob: ArrayBufferLike): number {
-		return new DataView(blob).getUint8(0);
+		return IsoBuffer.from(blob)[0];
 	}
 
 	/**
@@ -381,7 +381,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns - True if the compression markup blob is found, otherwise false.
 	 */
 	private static hasCompressionMarkup(snapshot: ISnapshotTree): boolean {
-		assert(typeof snapshot === "object", "summary must be a non-null object");
+		assert(typeof snapshot === "object", "snapshot must be a non-null object");
 		for (const key of Object.keys(snapshot.blobs)) {
 			if (key === ".metadata") {
 				const value =
@@ -393,9 +393,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		}
 		for (const key of Object.keys(snapshot.trees)) {
 			const value = snapshot[key] as ISnapshotTree;
-			const found = this.hasCompressionMarkup(value);
-			if (found) {
-				return found;
+			if (value !== undefined) {
+				const found = this.hasCompressionMarkup(value);
+				if (found) {
+					return found;
+				}
 			}
 		}
 		return false;
