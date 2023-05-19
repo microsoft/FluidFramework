@@ -266,7 +266,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			return;
 		}
 		if (!clientManager.isSubscribed(externalTaskListId)) {
-			// Register with external data service for webhook notifications.
+			// Deregister with external data service for webhook notifications.
 			fetch(`${externalDataServiceUrl}/deregister-for-webhook`, {
 				method: "POST",
 				headers: {
@@ -280,7 +280,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			}).catch((error) => {
 				console.error(
 					formatLogMessage(
-						`Registering for data update notifications webhook with the external data service failed due to an error.`,
+						`Deregistering data update notifications webhook with the external data service failed due to an error.`,
 					),
 					error,
 				);

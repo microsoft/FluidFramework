@@ -58,7 +58,6 @@ export class DocumentStorage implements IDocumentStorage {
 		tenantId: string,
 		documentId: string,
 	): Promise<IDocumentDetails> {
-		console.log("")
 		const getOrCreateP = this.getOrCreateObject(tenantId, documentId);
 
 		return getOrCreateP;

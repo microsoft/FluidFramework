@@ -73,7 +73,7 @@ Once the changes are reconciled, the collaboration session can continue as expec
 
 <img width="80%" alt="External Server calls Customer Service's /external-data-webhook endpoint with notification that externalTaskListId data has changed" src="https://user-images.githubusercontent.com/6777404/226746508-04ff2ba0-99a1-4115-8a33-d3ae63cefaf5.png">
 
-<img width="80%" alt="Customer Service looks up the externalTaskListId in its registry and finds a containerUrl subscribed for changes to it, so it calls FLuid Service's /broadcast-signal endpoint passing on the containerUrl" src="https://user-images.githubusercontent.com/6777404/226766084-28a44c45-38d2-4e6c-a665-50d8cd759ca1.png">
+<img width="80%" alt="Customer Service looks up the externalTaskListId in its registry and finds a containerUrl subscribed for changes to it, so it calls Fluid Service's /broadcast-signal endpoint passing on the containerUrl" src="https://user-images.githubusercontent.com/6777404/226766084-28a44c45-38d2-4e6c-a665-50d8cd759ca1.png">
 
 <img width="80%" alt="Fluid Service receives the /broadcast-signal event and containerUrl information and broadcasts a signal to the correct container which notifies the clients of changes upstream" src="https://user-images.githubusercontent.com/6777404/226748490-9117040c-ed0f-43e3-9b29-01c639c57031.png">
 

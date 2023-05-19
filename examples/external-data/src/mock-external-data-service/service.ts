@@ -147,7 +147,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	});
 
 	/**
-	 * Register's the sender's URL to receive notifications when the external task-list data changes.
+	 * Deregisters the URL associated with external task-list id.
 	 *
 	 * Expected input data format:
 	 *
