@@ -44,6 +44,7 @@ export {
 	ValueChange,
 	ValueConstraint,
 	NodeExistsConstraint,
+	NodeExistenceStateChange,
 } from "./fieldChangeHandler";
 export {
 	convertGenericChange,
