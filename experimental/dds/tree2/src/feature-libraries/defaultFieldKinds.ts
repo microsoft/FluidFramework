@@ -599,6 +599,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 						childChange: rebaseChild(
 							change.childChange,
 							over.deletedBy === undefined ? undefined : over.childChange,
+							true,
 						),
 						deletedBy: overTagged.revision,
 					};

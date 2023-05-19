@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
 import { GraphCommit, RevisionTag, findCommonAncestor, tagChange } from "../rebase";
-import { ReadonlyRepairDataStore } from "../repair";
+import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
 import { IRepairDataStoreProvider } from "./repairDataStoreProvider";
 
 /**
@@ -35,7 +35,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	}
 
 	private constructor(
-		public readonly repairDataStoreProvider: IRepairDataStoreProvider,
+		public repairDataStoreProvider: IRepairDataStoreProvider,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private headUndoableCommit?: ReversibleCommit<TChange>,
 		private headRedoableCommit?: ReversibleCommit<TChange>,
@@ -54,7 +54,10 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Adds the provided commit to the undo or redo commit tree, depending on the type of commit it is.
 	 * Should be called for all commits on the relevant branch, including undo and redo commits.
 	 */
-	public trackCommit(commit: GraphCommit<TChange>, type: UndoRedoManagerCommitType): void {
+	public trackCommit(
+		commit: GraphCommit<TChange>,
+		type: UndoRedoManagerCommitType,
+	): RepairDataStore {
 		this.commitTypes.set(commit.revision, type);
 		const repairData = this.repairDataStoreProvider.createRepairData();
 		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
@@ -89,6 +92,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			default:
 				unreachableCase(type);
 		}
+
+		return repairData;
 	}
 
 	/**

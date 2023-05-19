@@ -116,6 +116,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	private disposed = false;
+	public readonly repairStore: Map<RevisionTag, RepairDataStore> = new Map();
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
@@ -238,7 +239,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 			// If this transaction is not nested, add it to the undo commit tree
 			if (!this.isTransacting()) {
-				this.undoRedoManager?.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
+				if (this.undoRedoManager !== undefined) {
+					const repairData = this.undoRedoManager.trackCommit(
+						this.head,
+						UndoRedoManagerCommitType.Undoable,
+					);
+					this.repairStore.set(this.head.revision, repairData);
+				}
 			}
 
 			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
@@ -388,6 +395,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange>,
+		repairData?: Map<RevisionTag, RepairDataStore>,
 	):
 		| [
 				change: TChange | undefined,
@@ -397,7 +405,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| undefined {
 		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(this.head, branch.getHead());
+		const rebaseResult = this.rebaseBranch(this.head, branch.getHead(), repairData);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -475,12 +483,22 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
-	private rebaseBranch(branchHead: GraphCommit<TChange>, onto: GraphCommit<TChange>) {
+	private rebaseBranch(
+		branchHead: GraphCommit<TChange>,
+		onto: GraphCommit<TChange>,
+		repairData?: Map<RevisionTag, RepairDataStore>,
+	) {
 		if (branchHead === onto) {
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, branchHead, onto);
+		const rebaseResult = rebaseBranch(
+			this.changeFamily.rebaser,
+			branchHead,
+			onto,
+			onto,
+			repairData,
+		);
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {
 			return undefined;

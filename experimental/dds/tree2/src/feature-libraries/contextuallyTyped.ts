@@ -400,7 +400,7 @@ export function cursorsFromContextualData(
 export function cursorsForTypedFieldData<T extends FieldSchema>(
 	schemaData: SchemaDataAndPolicy,
 	schema: T,
-	data: TypedField<ApiMode.Simple, T>,
+	data: TypedField<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(schemaData, schema.types, data as ContextuallyTypedNodeData);
 }
