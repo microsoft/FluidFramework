@@ -272,9 +272,6 @@ describe("Runtime", () => {
 					getMockContext() as IContainerContext,
 					[],
 					undefined, // requestHandler
-					{
-						enableOpReentryCheck: true,
-					}, // runtimeOptions
 				);
 
 				assert.throws(() =>
@@ -291,31 +288,6 @@ describe("Runtime", () => {
 							),
 						),
 					),
-				);
-			});
-
-			it("Report at most 5 reentrant ops", async () => {
-				const mockLogger = new MockLogger();
-				containerRuntime = await ContainerRuntime.load(
-					getMockContext({}, mockLogger) as IContainerContext,
-					[],
-					undefined, // requestHandler
-					{}, // runtimeOptions
-				);
-
-				mockLogger.clear();
-				containerRuntime.ensureNoDataModelChanges(() => {
-					for (let i = 0; i < 10; i++) {
-						containerRuntime.submitDataStoreOp("id", "test");
-					}
-				});
-
-				// We expect only 5 events
-				mockLogger.assertMatchStrict(
-					Array.from(Array(5).keys()).map(() => ({
-						eventName: "ContainerRuntime:OpReentry",
-						error: "Op was submitted from within a `ensureNoDataModelChanges` callback",
-					})),
 				);
 			});
 		});
@@ -1039,7 +1011,6 @@ describe("Runtime", () => {
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: false,
-				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
