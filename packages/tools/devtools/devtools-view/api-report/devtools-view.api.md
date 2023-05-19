@@ -20,7 +20,7 @@ export interface DevtoolsPanelProps {
 
 export { IMessageRelay }
 
-// @public
+// @internal
 export class WindowMessageRelay extends TypedEventEmitter<IMessageRelayEvents> implements IMessageRelay {
     constructor(
     messageSource: string);
