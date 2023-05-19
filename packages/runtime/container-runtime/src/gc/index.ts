@@ -43,7 +43,7 @@ export {
 	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
-	wrapWithCodeArtifact,
+	tagAsCodeArtifact,
 } from "./gcHelpers";
 export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 export {

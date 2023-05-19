@@ -47,7 +47,7 @@ import {
 	GCVersion,
 	disableSweepLogKey,
 	stableGCVersion,
-	wrapWithCodeArtifact,
+	tagAsCodeArtifact,
 } from "../../gc";
 import {
 	dataStoreAttributesBlobName,
@@ -84,7 +84,7 @@ describe("Garbage Collection Tests", () => {
 
 	const testPkgPath = ["testPkg"];
 	// The package data is tagged in the telemetry event.
-	const eventPkg = wrapWithCodeArtifact(testPkgPath.join("/"));
+	const eventPkg = tagAsCodeArtifact(testPkgPath.join("/"));
 
 	let injectedSettings: Record<string, ConfigTypes> = {};
 	let mockLogger: MockLogger;
@@ -317,7 +317,7 @@ describe("Garbage Collection Tests", () => {
 					expectedEvents.push({
 						eventName: deleteEventName,
 						timeout,
-						id: wrapWithCodeArtifact(JSON.stringify([nodes[2], nodes[3]])),
+						id: tagAsCodeArtifact(JSON.stringify([nodes[2], nodes[3]])),
 					});
 				} else {
 					assert(
@@ -329,33 +329,37 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 				);
-				mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
+				mockLogger.assertMatch(
+					expectedEvents,
+					"all events not generated as expected",
+					true /* inlineDetailsProp */,
+				);
 
 				// Add reference from node 1 to node 3 and validate that we get a revived event.
 				garbageCollector.addedOutboundReference(nodes[1], nodes[3]);
@@ -365,12 +369,13 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[3]),
+							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
-							fromId: wrapWithCodeArtifact(nodes[1]),
+							fromId: tagAsCodeArtifact(nodes[1]),
 						},
 					],
 					"revived event not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 			});
 
@@ -411,12 +416,13 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[2]),
+							id: tagAsCodeArtifact(nodes[2]),
 							pkg: eventPkg,
-							fromId: wrapWithCodeArtifact(nodes[1]),
+							fromId: tagAsCodeArtifact(nodes[1]),
 						},
 					],
 					"revived event not logged as expected",
+					true /* inlineDetailsProp */,
 				);
 			});
 
@@ -441,7 +447,7 @@ describe("Garbage Collection Tests", () => {
 					expectedEvents.push({
 						eventName: deleteEventName,
 						timeout,
-						id: wrapWithCodeArtifact(JSON.stringify([nodes[3]])),
+						id: tagAsCodeArtifact(JSON.stringify([nodes[3]])),
 					});
 				} else {
 					assert(
@@ -453,17 +459,21 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 						pkg: eventPkg,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 						pkg: eventPkg,
 					},
 				);
-				mockLogger.assertMatch(expectedEvents, "all events not generated as expected");
+				mockLogger.assertMatch(
+					expectedEvents,
+					"all events not generated as expected",
+					true /* inlineDetailsProp */,
+				);
 
 				// Update all nodes again. There shouldn't be any more events since for each node the event is only once.
 				await mockNodeChangesAndRunGC(garbageCollector);
@@ -515,10 +525,11 @@ describe("Garbage Collection Tests", () => {
 							{
 								eventName: deleteEventName,
 								timeout,
-								id: wrapWithCodeArtifact(JSON.stringify([nodes[3]])),
+								id: tagAsCodeArtifact(JSON.stringify([nodes[3]])),
 							},
 						],
 						"sweep ready event not generated as expected",
+						true /* inlineDetailsProp */,
 					);
 				} else {
 					mockLogger.assertMatchNone(
@@ -536,17 +547,18 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[3]),
+							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[3]),
+							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
 						},
 					],
 					"all events not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 
 				// Add reference from node 2 to node 3 and validate that revived event is logged.
@@ -557,12 +569,13 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[3]),
+							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
-							fromId: wrapWithCodeArtifact(nodes[2]),
+							fromId: tagAsCodeArtifact(nodes[2]),
 						},
 					],
 					"revived event not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 			});
 
@@ -616,17 +629,18 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[3]),
+							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[3]),
+							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
 						},
 					],
 					"all events not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 
 				// No revived events should be logged as no timeouts should have occurred
@@ -637,12 +651,13 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[3]),
+							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
-							fromId: wrapWithCodeArtifact(nodes[2]),
+							fromId: tagAsCodeArtifact(nodes[2]),
 						},
 					],
 					"revived event not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 			});
 
@@ -705,12 +720,13 @@ describe("Garbage Collection Tests", () => {
 							{
 								eventName: deleteEventName,
 								timeout,
-								id: wrapWithCodeArtifact(
+								id: tagAsCodeArtifact(
 									JSON.stringify([nodes[1], nodes[2], nodes[3]]),
 								),
 							},
 						],
 						"sweep ready event not generated as expected",
+						true /* inlineDetailsProp */,
 					);
 				} else {
 					mockLogger.assertMatchNone(
@@ -729,23 +745,24 @@ describe("Garbage Collection Tests", () => {
 						{
 							eventName: loadedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[3]),
+							id: tagAsCodeArtifact(nodes[3]),
 							pkg: eventPkg,
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[1]),
+							id: tagAsCodeArtifact(nodes[1]),
 							pkg: eventPkg,
 						},
 						{
 							eventName: changedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[2]),
+							id: tagAsCodeArtifact(nodes[2]),
 							pkg: eventPkg,
 						},
 					],
 					"all events not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 			});
 		};
@@ -1029,25 +1046,26 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 				],
 				"inactive events not generated as expected",
+				true /* inlineDetailsProp */,
 			);
 
 			// Advance the clock to trigger sweep timeout and validate that we get sweep ready events.
@@ -1058,25 +1076,26 @@ describe("Garbage Collection Tests", () => {
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 				],
 				"sweep ready events not generated as expected",
+				true /* inlineDetailsProp */,
 			);
 		});
 	});
@@ -1576,18 +1595,21 @@ describe("Garbage Collection Tests", () => {
 
 				// Validate that we got the "gcUnknownOutboundReferences" error.
 				const unknownReferencesEvent = "GarbageCollector:gcUnknownOutboundReferences";
-				const eventsFound = mockLogger.matchEvents([
-					{
-						eventName: unknownReferencesEvent,
-						id: wrapWithCodeArtifact("/A"),
-						routes: wrapWithCodeArtifact(JSON.stringify(["/B", "/C"])),
-					},
-					{
-						eventName: unknownReferencesEvent,
-						id: wrapWithCodeArtifact("/D"),
-						routes: wrapWithCodeArtifact(JSON.stringify(["/C"])),
-					},
-				]);
+				const eventsFound = mockLogger.matchEvents(
+					[
+						{
+							eventName: unknownReferencesEvent,
+							id: tagAsCodeArtifact("/A"),
+							routes: tagAsCodeArtifact(JSON.stringify(["/B", "/C"])),
+						},
+						{
+							eventName: unknownReferencesEvent,
+							id: tagAsCodeArtifact("/D"),
+							routes: tagAsCodeArtifact(JSON.stringify(["/C"])),
+						},
+					],
+					true /* inlineDetailsProp */,
+				);
 				assert(eventsFound, `Expected unknownReferenceEvent event!`);
 			});
 		});

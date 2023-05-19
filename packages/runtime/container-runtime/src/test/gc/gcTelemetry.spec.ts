@@ -24,7 +24,7 @@ import {
 	disableSweepLogKey,
 	UnreferencedStateTracker,
 	cloneGCData,
-	wrapWithCodeArtifact,
+	tagAsCodeArtifact,
 } from "../../gc";
 import { pkgVersion } from "../../packageVersion";
 import { BlobManager } from "../../blobManager";
@@ -106,9 +106,9 @@ describe("GC Telemetry Tracker", () => {
 
 	// Mock node loaded and changed activity for the given nodes.
 	function mockNodeChanges(nodeIds: string[]) {
-		nodeIds.forEach((nodeId) => {
+		nodeIds.forEach((id) => {
 			telemetryTracker.nodeUsed({
-				nodeId,
+				id,
 				usageType: "Loaded",
 				currentReferenceTimestampMs: Date.now(),
 				packagePath: testPkgPath,
@@ -116,7 +116,7 @@ describe("GC Telemetry Tracker", () => {
 				isTombstoned: false,
 			});
 			telemetryTracker.nodeUsed({
-				nodeId,
+				id,
 				usageType: "Changed",
 				currentReferenceTimestampMs: Date.now(),
 				packagePath: testPkgPath,
@@ -129,13 +129,13 @@ describe("GC Telemetry Tracker", () => {
 	// Mock node revived activity for the given nodes.
 	function reviveNode(fromId: string, toId: string, isTombstoned = false) {
 		telemetryTracker.nodeUsed({
-			nodeId: toId,
+			id: toId,
 			usageType: "Revived",
 			currentReferenceTimestampMs: Date.now(),
 			packagePath: testPkgPath,
 			completedGCRuns: 0,
 			isTombstoned,
-			fromNodeId: fromId,
+			fromId,
 		});
 		unreferencedNodesState.delete(toId);
 	}
@@ -201,9 +201,9 @@ describe("GC Telemetry Tracker", () => {
 			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
 			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
 			const cachedEvents = Array.from(mockLogger.events);
-			mockLogger.assertMatch(expectedEvents, message);
+			mockLogger.assertMatch(expectedEvents, message, true /* inlineDetailsProp */);
 			mockLogger.events = cachedEvents;
-			mockLogger.assertMatchNone(unexpectedEvents, message);
+			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
 		}
 
 		it("generates inactive and sweep ready events when nodes are used after time out", async () => {
@@ -220,22 +220,22 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 				],
 				"inactive events not as expected",
@@ -250,22 +250,22 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
-						id: wrapWithCodeArtifact(nodes[3]),
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 				],
 				"sweep ready events not as expected",
@@ -284,7 +284,7 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: "GarbageCollector:GC_Tombstone_DataStore_Revived",
-						url: wrapWithCodeArtifact(nodes[2]),
+						url: tagAsCodeArtifact(nodes[2]),
 					},
 				],
 				"inactive events not as expected",
@@ -359,7 +359,7 @@ describe("GC Telemetry Tracker", () => {
 					expectedEvents.push({
 						eventName: deleteEventName,
 						timeout,
-						id: wrapWithCodeArtifact(JSON.stringify([nodes[1], nodes[2]])),
+						id: tagAsCodeArtifact(JSON.stringify([nodes[1], nodes[2]])),
 					});
 				} else {
 					assert(
@@ -371,28 +371,28 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[1]),
+						id: tagAsCodeArtifact(nodes[1]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[1]),
+						id: tagAsCodeArtifact(nodes[1]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
@@ -407,9 +407,9 @@ describe("GC Telemetry Tracker", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: wrapWithCodeArtifact(nodes[2]),
+							id: tagAsCodeArtifact(nodes[2]),
 							pkg: eventPkg,
-							fromId: wrapWithCodeArtifact(nodes[0]),
+							fromId: tagAsCodeArtifact(nodes[0]),
 						},
 					],
 					"revived event not as expected",
@@ -436,7 +436,7 @@ describe("GC Telemetry Tracker", () => {
 					expectedEvents.push({
 						eventName: deleteEventName,
 						timeout,
-						id: wrapWithCodeArtifact(JSON.stringify([nodes[2]])),
+						id: tagAsCodeArtifact(JSON.stringify([nodes[2]])),
 					});
 				} else {
 					assert(
@@ -448,13 +448,13 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 						pkg: eventPkg,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: wrapWithCodeArtifact(nodes[2]),
+						id: tagAsCodeArtifact(nodes[2]),
 						pkg: eventPkg,
 					},
 				);
@@ -502,9 +502,9 @@ describe("GC Telemetry Tracker", () => {
 							{
 								eventName: revivedEventName,
 								timeout,
-								id: wrapWithCodeArtifact(nodes[2]),
+								id: tagAsCodeArtifact(nodes[2]),
 								pkg: eventPkg,
-								fromId: wrapWithCodeArtifact(nodes[1]),
+								fromId: tagAsCodeArtifact(nodes[1]),
 							},
 						],
 						"revived event not as expected",
@@ -616,8 +616,8 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						id: wrapWithCodeArtifact(id),
-						routes: wrapWithCodeArtifact(JSON.stringify(routes)),
+						id: tagAsCodeArtifact(id),
+						routes: tagAsCodeArtifact(JSON.stringify(routes)),
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected",
@@ -643,13 +643,13 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						id: wrapWithCodeArtifact(id1),
-						routes: wrapWithCodeArtifact(JSON.stringify(routes1)),
+						id: tagAsCodeArtifact(id1),
+						routes: tagAsCodeArtifact(JSON.stringify(routes1)),
 					},
 					{
 						eventName: unknownReferenceEventName,
-						id: wrapWithCodeArtifact(id2),
-						routes: wrapWithCodeArtifact(JSON.stringify(routes2)),
+						id: tagAsCodeArtifact(id2),
+						routes: tagAsCodeArtifact(JSON.stringify(routes2)),
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected",
@@ -673,8 +673,8 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						id: wrapWithCodeArtifact(id),
-						routes: wrapWithCodeArtifact(JSON.stringify(routes)),
+						id: tagAsCodeArtifact(id),
+						routes: tagAsCodeArtifact(JSON.stringify(routes)),
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected for blob nodes",

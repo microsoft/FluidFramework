@@ -306,9 +306,9 @@ export function trimLeadingAndTrailingSlashes(str: string) {
 }
 
 /**
- * Wrap the given value in a CodeArtifact tag.
+ * Tags the passed value as a CodeArtifact and returns the tagged value.
  */
-export function wrapWithCodeArtifact(value: string) {
+export function tagAsCodeArtifact(value: string) {
 	return {
 		value,
 		tag: TelemetryDataTag.CodeArtifact,

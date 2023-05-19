@@ -167,6 +167,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						},
 					],
 					"changed and loaded events not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 
 				// Make a change again and validate that we don't get another changedEvent as we only log it
@@ -192,6 +193,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						},
 					],
 					"revived event not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 			},
 		);
@@ -254,6 +256,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						},
 					],
 					"updated event not generated as expected for attachment blobs",
+					true /* inlineDetailsProp */,
 				);
 
 				// Add the handle back, summarize and validate that we get the revivedEvent.
@@ -272,6 +275,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						},
 					],
 					"revived event not generated as expected for attachment blobs",
+					true /* inlineDetailsProp */,
 				);
 			},
 		);
@@ -344,6 +348,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						},
 					],
 					"loaded event not generated as expected",
+					true /* inlineDetailsProp */,
 				);
 			},
 		);

@@ -884,7 +884,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		this.telemetryTracker.nodeUsed({
-			nodeId: nodePath,
+			id: nodePath,
 			usageType: reason,
 			currentReferenceTimestampMs:
 				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
@@ -913,14 +913,14 @@ export class GarbageCollector implements IGarbageCollector {
 		this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
 		this.telemetryTracker.nodeUsed({
-			nodeId: toNodePath,
+			id: toNodePath,
 			usageType: "Revived",
 			currentReferenceTimestampMs: this.runtime.getCurrentReferenceTimestampMs(),
 			packagePath: undefined,
 			completedGCRuns: this.completedRuns,
 			isTombstoned: this.tombstones.includes(toNodePath),
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
-			fromNodeId: fromNodePath,
+			fromId: fromNodePath,
 		});
 	}
 
