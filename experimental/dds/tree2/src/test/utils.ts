@@ -641,11 +641,11 @@ export class MockRepairDataStore implements RepairDataStore {
 		index: number,
 		count: number,
 	): ITreeCursorSynchronous[] {
-		throw new Error("Method not implemented.");
+		return makeArray(count, () => singleTextCursor({ type: brand("MockRevivedNode") }));
 	}
 
 	public getValue(revision: RevisionTag, path: UpPath): Value {
-		throw new Error("Method not implemented.");
+		return brand("MockRevivedValue");
 	}
 }
 

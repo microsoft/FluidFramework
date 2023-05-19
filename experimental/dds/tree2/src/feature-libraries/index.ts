@@ -127,6 +127,7 @@ export {
 	SchemaLibrary,
 	SchemaLibraryData,
 	Sourced,
+	NodeExistsConstraint,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

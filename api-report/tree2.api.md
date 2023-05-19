@@ -769,6 +769,8 @@ export interface IDecoder<TDecoded, TEncoded> {
 // @alpha
 export interface IDefaultEditBuilder {
     // (undocumented)
+    addNodeExistsConstraint(path: UpPath): void;
+    // (undocumented)
     addValueConstraint(path: UpPath, value: Value): void;
     // (undocumented)
     move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destIndex: number): void;
@@ -1209,6 +1211,8 @@ export interface ModularChangeset extends HasFieldChanges {
 export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
     constructor(family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>, changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet);
     // (undocumented)
+    addNodeExistsConstraint(path: UpPath): void;
+    // (undocumented)
     addValueConstraint(path: UpPath, currentValue: Value): void;
     // (undocumented)
     apply(change: ModularChangeset): void;
@@ -1292,10 +1296,12 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
 export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
 // @alpha (undocumented)
-export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined) => NodeChangeset | undefined;
+export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined, deleted?: boolean) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
+    // (undocumented)
+    nodeExistsConstraint?: NodeExistsConstraint;
     // (undocumented)
     valueChange?: ValueChange;
     // (undocumented)
@@ -1310,6 +1316,12 @@ export interface NodeData {
 
 // @alpha @deprecated
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
+
+// @alpha (undocumented)
+export interface NodeExistsConstraint {
+    // (undocumented)
+    violated: boolean;
+}
 
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];

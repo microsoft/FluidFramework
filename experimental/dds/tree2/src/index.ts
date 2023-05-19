@@ -250,6 +250,7 @@ export {
 	Any,
 	Sourced,
 	NewFieldContent,
+	NodeExistsConstraint,
 	cursorForTypedTreeData,
 } from "./feature-libraries";
 
