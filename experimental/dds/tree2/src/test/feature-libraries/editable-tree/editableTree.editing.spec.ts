@@ -465,140 +465,86 @@ describe("editable-tree: editing", () => {
 
 	for (const [fieldDescription, fieldKey] of testCases) {
 		describe(`can create, edit, move and delete ${fieldDescription}`, () => {
-			it("as sequence field", () => {
-				const [provider, trees] = createSharedTrees(
-					getTestSchema(FieldKinds.sequence),
-					[{ type: rootSchemaName }],
-					2,
-				);
-				assert(isEditableTree(trees[0].root));
-				assert(isEditableTree(trees[1].root));
+			it("insertNodes in a sequence field", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: {},
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[fieldKey];
+				assert(isEditableField(field));
+
 				// create using `insertNodes`
-				trees[0].root[getField](fieldKey).insertNodes(0, [
-					singleTextCursor({ type: stringSchema.name, value: "foo" }),
-					singleTextCursor({ type: stringSchema.name, value: "bar" }),
-				]);
-				const field_0 = trees[0].root[fieldKey];
-				assert(isEditableField(field_0));
-				assert.equal(field_0.length, 2);
-				assert.equal(field_0[0], "foo");
-				assert.equal(field_0[1], "bar");
-				assert.equal(field_0[2], undefined);
-				provider.processMessages();
-				const field_1 = trees[1].root[fieldKey];
-				assert.deepEqual(field_0, field_1);
+				field.insertNodes(0, ["foo", "bar"]);
+				assert.deepEqual([...field], ["foo", "bar"]);
 
-				// edit using assignment
-				field_0[0] = "buz";
-				assert.equal(field_0[0], "buz");
-				provider.processMessages();
-				assert.deepEqual(field_0, field_1);
-
-				// edit using valueSymbol
-				field_0.getNode(0)[valueSymbol] = "via symbol";
-				assert.equal(field_0[0], "via symbol");
-				provider.processMessages();
-				assert.deepEqual(field_0, field_1);
-
-				// delete
-				assert.throws(
-					() => {
-						delete field_0[0];
-					},
-					(e) => validateAssertionError(e, "Not supported. Use `deleteNodes()` instead"),
-					"Expected exception was not thrown",
-				);
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete trees[0].root[fieldKey];
-				assert(!(fieldKey in trees[0].root));
-				assert.equal(field_0[0], undefined);
-				assert.equal(field_0.length, 0);
-				provider.processMessages();
-				assert.deepEqual(field_0, field_1);
-
+				field.delete();
 				// create using `insertNodes()`
-				["third", "second", "first"].forEach((content) =>
-					field_0.insertNodes(0, [content]),
-				);
+				["third", "second", "first"].forEach((content) => field.insertNodes(0, [content]));
+				assert.deepEqual([...field], ["first", "second", "third"]);
 				assert.throws(
-					() => field_0.insertNodes(5, ["x"]),
+					() => field.insertNodes(5, ["x"]),
 					(e) => validateAssertionError(e, "Index must be less than or equal to length."),
 					"Expected exception was not thrown",
 				);
-				assert.equal(field_0[0], "first");
-				assert.equal(field_0[1], "second");
-				provider.processMessages();
-				assert.deepEqual(field_0, field_1);
-
-				// edit using `replaceNodes()`
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete trees[0].root[fieldKey];
-				assert.throws(
-					() => field_0.replaceNodes(1, ["x"]),
-					(e) =>
-						validateAssertionError(
-							e,
-							"Index must be less than length or, if the field is empty, be 0.",
-						),
-					"Expected exception was not thrown",
-				);
-				assert(isEditableField(field_1));
-				for (let index = 0; index < field_1.length; index++) {
-					field_0[index] = field_1[index];
-				}
-				assert.throws(
-					() => field_0.replaceNodes(5, ["x"]),
-					(e) =>
-						validateAssertionError(
-							e,
-							"Index must be less than length or, if the field is empty, be 0.",
-						),
-					"Expected exception was not thrown",
-				);
-				field_0.replaceNodes(1, ["changed"], 1);
-				assert.equal(field_0[1], "changed");
-				provider.processMessages();
-				assert.deepEqual(field_0, field_1);
-
-				const firstNodeBeforeMove = field_0[0];
-				// move using `moveNodes()`
-				field_0.moveNodes(0, 1, 1);
-				const secondNodeAfterMove = field_0[1];
-				assert.equal(firstNodeBeforeMove, secondNodeAfterMove);
-
-				// delete using `deleteNodes()`
-				field_0.deleteNodes(1, 1);
-				assert.throws(
-					() => field_0.deleteNodes(2),
-					(e) => validateAssertionError(e, "Index must be less than length."),
-					"Expected exception was not thrown",
-				);
-				assert.equal(field_0.length, 2);
-				assert.throws(
-					() => field_0.deleteNodes(0, -1),
-					(e) => validateAssertionError(e, "Count must be non-negative."),
-					"Expected exception was not thrown",
-				);
-				provider.processMessages();
-				assert.deepEqual(field_0, field_1);
-				field_0.deleteNodes(0, 5);
-				assert.equal(field_0.length, 0);
-				assert(!(fieldKey in trees[0].root));
-				assert.doesNotThrow(() => field_0.deleteNodes(0, 0));
-				provider.processMessages();
-				assert.deepEqual(field_0, field_1);
-
-				trees[0].context.free();
-				trees[1].context.free();
 			});
 
-			it("as sequence field2", () => {
-				const view = createSharedTreeView();
-				const schema = getTestSchema(FieldKinds.sequence);
-				view.schematize({
+			it("replaceNodes in a sequence field", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: {},
-					schema,
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[fieldKey];
+				assert(isEditableField(field));
+
+				assert.throws(
+					() => field.replaceNodes(1, ["x"]),
+					(e) =>
+						validateAssertionError(
+							e,
+							"Index must be less than length or, if the field is empty, be 0.",
+						),
+					"Expected exception was not thrown",
+				);
+
+				field.content = ["a", "b", "c"];
+				field.replaceNodes(1, ["changed"], 1);
+				assert.deepEqual([...field], ["a", "changed", "c"]);
+				field.replaceNodes(0, [], 1);
+				assert.deepEqual([...field], ["changed", "c"]);
+				field.replaceNodes(1, ["x", "y"], 0);
+				assert.deepEqual([...field], ["changed", "x", "y", "c"]);
+			});
+
+			it("moveNodes in a sequence field", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: { [fieldKey]: ["a", "b", "c"] },
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[fieldKey];
+				assert(isEditableField(field));
+
+				const firstNodeBeforeMove = field[0];
+				// move using `moveNodes()`
+				field.moveNodes(0, 1, 1);
+				const secondNodeAfterMove = field[1];
+				assert.equal(firstNodeBeforeMove, secondNodeAfterMove);
+				assert.deepEqual([...field], ["b", "a", "c"]);
+			});
+
+			it("assignment and deletion on sequence field", () => {
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: {},
 				});
 				const root = view.root;
 				assert(isEditableTree(root));
@@ -648,12 +594,10 @@ describe("editable-tree: editing", () => {
 			});
 
 			it("regression test for sequence setting empty sequence", () => {
-				const view = createSharedTreeView();
-				const schema = getTestSchema(FieldKinds.sequence);
-				view.schematize({
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.sequence),
 					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: {},
-					schema,
 				});
 				const root = view.root;
 				assert(isEditableTree(root));
@@ -663,12 +607,10 @@ describe("editable-tree: editing", () => {
 			});
 
 			it("as optional field", () => {
-				const view = createSharedTreeView();
-				const schema = getTestSchema(FieldKinds.optional);
-				view.schematize({
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.optional),
 					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: {},
-					schema,
 				});
 				const root = view.root;
 				assert(isEditableTree(root));
@@ -741,12 +683,10 @@ describe("editable-tree: editing", () => {
 			});
 
 			it("as value field", () => {
-				const view = createSharedTreeView();
-				const schema = getTestSchema(FieldKinds.value);
-				view.schematize({
+				const view = createSharedTreeView().schematize({
+					schema: getTestSchema(FieldKinds.value),
 					allowedSchemaModifications: AllowedUpdateType.None,
 					initialTree: { [fieldKey]: "initial" },
-					schema,
 				});
 				const root = view.root;
 				assert(isEditableTree(root));
