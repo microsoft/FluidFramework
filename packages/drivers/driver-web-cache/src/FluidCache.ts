@@ -4,7 +4,7 @@
  */
 import { IDBPDatabase } from "idb";
 import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { scheduleIdleTask } from "./scheduleIdleTask";
 import {
@@ -53,7 +53,7 @@ export interface FluidCacheConfig {
  * A cache that can be used by the Fluid ODSP driver to cache data for faster performance
  */
 export class FluidCache implements IPersistedCache {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	private readonly partitionKey: string | null;
 

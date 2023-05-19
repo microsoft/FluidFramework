@@ -5,7 +5,7 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { assert, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
@@ -75,7 +75,7 @@ export async function fetchSnapshot(
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		url: string,
 		fetchOptions: { [index: string]: any },
@@ -110,7 +110,7 @@ export async function fetchSnapshotWithRedeem(
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
@@ -197,7 +197,7 @@ export async function fetchSnapshotWithRedeem(
 async function redeemSharingLink(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ) {
 	return PerformanceEvent.timedExecAsync(
@@ -234,7 +234,7 @@ async function fetchLatestSnapshotCore(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		storageToken: string,
@@ -561,7 +561,7 @@ function countTreesInSnapshotTree(snapshotTree: ISnapshotTree): number {
 export async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	snapshotOptions: ISnapshotOptions | undefined,
 	snapshotFormatFetchType?: SnapshotFormatSupportType,
 	controller?: AbortController,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
 import { assert, bufferToString } from "@fluidframework/common-utils";
@@ -40,12 +40,12 @@ export class SnapshotV1 {
 	private readonly segments: JsonSegmentSpecs[];
 	private readonly segmentLengths: number[];
 	private readonly attributionCollections: IAttributionCollection<AttributionKey>[];
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly chunkSize: number;
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly getLongClientId: (id: number) => string,
 		public filename?: string,
 		public onCompletion?: () => void,
@@ -314,7 +314,7 @@ export class SnapshotV1 {
 	public static async loadChunk(
 		storage: IChannelStorageService,
 		path: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): Promise<MergeTreeChunkV1> {
@@ -326,7 +326,7 @@ export class SnapshotV1 {
 	public static processChunk(
 		path: string,
 		chunk: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {

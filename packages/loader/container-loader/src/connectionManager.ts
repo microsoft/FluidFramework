@@ -6,7 +6,7 @@
 import { default as AbortController } from "abort-controller";
 import {
 	IDisposable,
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
@@ -344,7 +344,7 @@ export class ConnectionManager implements IConnectionManager {
 		public readonly containerDirty: () => boolean,
 		private client: IClient,
 		reconnectAllowed: boolean,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
 	) {
 		this.clientDetails = this.client.details;

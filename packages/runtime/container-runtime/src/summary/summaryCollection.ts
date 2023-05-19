@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { Deferred, assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
@@ -256,7 +256,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
 	public constructor(
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		super();
 		this.deltaManager.on("op", (op) => this.handleOp(op));

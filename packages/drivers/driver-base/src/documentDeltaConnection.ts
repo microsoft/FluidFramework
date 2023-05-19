@@ -22,7 +22,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import {
 	ChildLogger,
 	extractLogSafeErrorProperties,
@@ -110,7 +110,7 @@ export class DocumentDeltaConnection
 	/**
 	 * @deprecated Implementors should manage their own logger or monitoring context
 	 */
-	protected get logger(): ITelemetryLogger {
+	protected get logger(): ITelemetryLoggerExt {
 		return this.mc.logger;
 	}
 
@@ -130,7 +130,7 @@ export class DocumentDeltaConnection
 	protected constructor(
 		protected readonly socket: Socket,
 		public documentId: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly enableLongPollingDowngrades: boolean = false,
 		protected readonly connectionId?: string,
 	) {

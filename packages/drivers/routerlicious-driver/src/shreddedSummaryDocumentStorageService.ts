@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryLogger } from "@fluidframework/common-definitions";
+import type { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import {
 	IDocumentStorageService,
@@ -57,7 +57,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 	constructor(
 		protected readonly id: string,
 		protected readonly manager: GitManager,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		public readonly policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,

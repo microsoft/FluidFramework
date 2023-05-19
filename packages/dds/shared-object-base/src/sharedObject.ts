@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -59,7 +59,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	/**
 	 * Telemetry logger for the shared object
 	 */
-	protected readonly logger: ITelemetryLogger;
+	protected readonly logger: ITelemetryLoggerExt;
 	private readonly mc: MonitoringContext;
 
 	/**

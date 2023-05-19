@@ -13,7 +13,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
@@ -209,7 +209,7 @@ export interface IGarbageCollector {
 	/** Run garbage collection and update the reference / used state of the system. */
 	collectGarbage(
 		options: {
-			logger?: ITelemetryLogger;
+			logger?: ITelemetryLoggerExt;
 			runSweep?: boolean;
 			fullGC?: boolean;
 		},
@@ -251,7 +251,7 @@ export interface IGarbageCollector {
 export interface IGarbageCollectorCreateParams {
 	readonly runtime: IGarbageCollectionRuntime;
 	readonly gcOptions: IGCRuntimeOptions;
-	readonly baseLogger: ITelemetryLogger;
+	readonly baseLogger: ITelemetryLoggerExt;
 	readonly existing: boolean;
 	readonly metadata: IContainerRuntimeMetadata | undefined;
 	readonly createContainerMetadata: ICreateContainerMetadata;

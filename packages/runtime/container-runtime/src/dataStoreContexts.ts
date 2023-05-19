@@ -6,7 +6,7 @@
 import {
 	IDisposable,
 	ITelemetryBaseLogger,
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/common-definitions";
 import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -46,7 +46,7 @@ export class DataStoreContexts implements Iterable<[string, FluidDataStoreContex
 		}
 	});
 
-	private readonly _logger: ITelemetryLogger;
+	private readonly _logger: ITelemetryLoggerExt;
 
 	constructor(baseLogger: ITelemetryBaseLogger) {
 		this._logger = ChildLogger.create(baseLogger);

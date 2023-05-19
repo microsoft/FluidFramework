@@ -5,7 +5,7 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
@@ -27,7 +27,7 @@ export class OdspDeltaStorageService {
 		private readonly deltaFeedUrl: string,
 		private readonly getStorageToken: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	/**
@@ -131,7 +131,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 	public constructor(
 		private snapshotOps: ISequencedDocumentMessage[] | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly batchSize: number,
 		private readonly concurrency: number,
 		private readonly getFromStorage: (

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
@@ -53,12 +53,12 @@ export class SnapshotLegacy {
 	private header: SnapshotHeader | undefined;
 	private seq: number | undefined;
 	private segments: ISegment[] | undefined;
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly chunkSize: number;
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		public filename?: string,
 		public onCompletion?: () => void,
 	) {

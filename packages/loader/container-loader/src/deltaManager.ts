@@ -6,7 +6,7 @@
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import {
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,
@@ -339,7 +339,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {

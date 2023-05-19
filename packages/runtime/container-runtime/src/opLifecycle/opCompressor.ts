@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
@@ -20,7 +20,7 @@ import { IBatch, BatchMessage } from "./definitions";
 export class OpCompressor {
 	private readonly logger;
 
-	constructor(logger: ITelemetryLogger) {
+	constructor(logger: ITelemetryLoggerExt) {
 		this.logger = ChildLogger.create(logger, "OpCompressor");
 	}
 

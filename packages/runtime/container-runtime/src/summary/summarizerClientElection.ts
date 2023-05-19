@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -55,7 +55,7 @@ export class SummarizerClientElection
 	}
 
 	constructor(
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
 		public readonly clientElection: IOrderedClientElection,
 		private readonly maxOpsSinceLastSummary: number,

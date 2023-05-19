@@ -4,7 +4,7 @@
  */
 
 import {
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 	ITelemetryProperties,
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
@@ -26,7 +26,7 @@ const JoinSignalTimeoutMs = 5000;
 
 /** Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler */
 export interface IConnectionStateHandlerInputs {
-	logger: ITelemetryLogger;
+	logger: ITelemetryLoggerExt;
 	/** Log to telemetry any change in state, included to Connecting */
 	connectionStateChanged: (
 		value: ConnectionState,

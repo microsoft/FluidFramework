@@ -6,7 +6,7 @@
 import {
 	ITelemetryProperties,
 	ITelemetryBaseLogger,
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/common-definitions";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -322,7 +322,7 @@ export function evalBlobsAndTrees(snapshot: IOdspSnapshot) {
 }
 
 export function toInstrumentedOdspTokenFetcher(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
@@ -454,7 +454,7 @@ export function validateMessages(
 	reason: string,
 	messages: ISequencedDocumentMessage[],
 	from: number,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ) {
 	if (messages.length !== 0) {
 		const start = messages[0].sequenceNumber;

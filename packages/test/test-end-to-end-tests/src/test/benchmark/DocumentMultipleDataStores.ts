@@ -19,7 +19,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 // Tests usually make use of the default data object provided by the test object provider.
@@ -84,7 +84,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		return this._mainContainer;
 	}
 
-	public get logger(): ITelemetryLogger | undefined {
+	public get logger(): ITelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
 

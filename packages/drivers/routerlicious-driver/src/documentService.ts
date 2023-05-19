@@ -10,7 +10,7 @@ import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework
 import { IClient } from "@fluidframework/protocol-definitions";
 import io from "socket.io-client";
 import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
@@ -56,7 +56,7 @@ export class DocumentService implements api.IDocumentService {
 		private deltaStorageUrl: string,
 		private deltaStreamUrl: string,
 		private storageUrl: string,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		protected tokenProvider: ITokenProvider,
 		protected tenantId: string,
 		protected documentId: string,

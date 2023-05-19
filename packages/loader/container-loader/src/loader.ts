@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import {
 	FluidObject,
 	IFluidRouter,
@@ -242,7 +242,7 @@ export interface ILoaderServices {
 	/**
 	 * The logger downstream consumers should construct their loggers from
 	 */
-	readonly subLogger: ITelemetryLogger;
+	readonly subLogger: ITelemetryLoggerExt;
 
 	/**
 	 * Blobs storage for detached containers.

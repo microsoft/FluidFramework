@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import {
 	assert,
 	Deferred,
@@ -177,7 +177,7 @@ export class SummaryGenerator {
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.summarizeTimer = new Timer(maxSummarizeTimeoutTime, () =>
 			this.summarizeTimerHandler(maxSummarizeTimeoutTime, 1),

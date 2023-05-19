@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
@@ -31,7 +31,7 @@ export class OpSplitter {
 			| undefined,
 		public readonly chunkSizeInBytes: number,
 		private readonly maxBatchSizeInBytes: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	) {
 		this.chunkMap = new Map<string, string[]>(chunks);
 		this.logger = ChildLogger.create(logger, "OpSplitter");

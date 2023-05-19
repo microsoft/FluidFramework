@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IChannel,
@@ -77,7 +77,7 @@ export function createChannelServiceEndpoints(
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	storageService: IDocumentStorageService,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
 	extraBlobs?: Map<string, ArrayBufferLike>,
 ): ChannelServiceEndpoints {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IAudience,
@@ -100,7 +100,7 @@ export class ContainerContext implements IContainerContext {
 		return context;
 	}
 
-	public readonly taggedLogger: ITelemetryLogger;
+	public readonly taggedLogger: ITelemetryLoggerExt;
 	public readonly supportedFeatures: ReadonlyMap<string, unknown>;
 
 	public get clientId(): string | undefined {

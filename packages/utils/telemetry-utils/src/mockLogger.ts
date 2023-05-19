@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { TelemetryLogger } from "./logger";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events
  * searching for a set of expected events to match against the logged events.
  */
-export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
+export class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	events: ITelemetryBaseEvent[] = [];
 
 	constructor() {

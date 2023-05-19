@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryLogger } from "@fluidframework/common-definitions";
+import type { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import {
 	assert,
 	performance,
@@ -56,7 +56,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	constructor(
 		protected readonly id: string,
 		protected readonly manager: GitManager,
-		protected readonly logger: ITelemetryLogger,
+		protected readonly logger: ITelemetryLoggerExt,
 		public readonly policies: IDocumentStorageServicePolicies,
 		private readonly driverPolicies?: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),

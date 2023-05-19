@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
@@ -50,7 +50,7 @@ export class ParallelRequests<T> {
 		from: number,
 		private to: number | undefined,
 		private readonly payloadSize: number,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		private readonly requestCallback: (
 			request: number,
 			from: number,
@@ -409,7 +409,7 @@ async function getSingleOpBatch(
 	get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
 	props: ITelemetryProperties,
 	strongTo: boolean,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): Promise<{ partial: boolean; cancel: boolean; payload: ISequencedDocumentMessage[] }> {
@@ -540,7 +540,7 @@ export function requestOps(
 	fromTotal: number,
 	toTotal: number | undefined,
 	payloadSize: number,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	signal?: AbortSignal,
 	scenarioName?: string,
 ): IStream<ISequencedDocumentMessage[]> {

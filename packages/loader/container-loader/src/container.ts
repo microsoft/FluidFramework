@@ -8,7 +8,7 @@ import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
 import {
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 	ITelemetryProperties,
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
@@ -253,7 +253,7 @@ const getCodeProposal =
  * @param action - functor to call and measure
  */
 export async function ReportIfTooLong(
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	eventName: string,
 	action: () => Promise<ITelemetryProperties>,
 ) {

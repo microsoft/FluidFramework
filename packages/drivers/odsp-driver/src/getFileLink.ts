@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { canRetryOnError, NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -39,7 +39,7 @@ const fileLinkCache = new Map<string, Promise<string>>();
 export async function getFileLink(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): Promise<string> {
 	const cacheKey = `${odspUrlParts.siteUrl}_${odspUrlParts.driveId}_${odspUrlParts.itemId}`;
 	const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
@@ -80,7 +80,7 @@ export async function getFileLink(
 async function getFileLinkCore(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): Promise<string> {
 	const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, true);
 
@@ -178,7 +178,7 @@ const isFileItemLite = (maybeFileItemLite: any): maybeFileItemLite is FileItemLi
 async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(

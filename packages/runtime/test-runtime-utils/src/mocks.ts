@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -427,7 +427,7 @@ export class MockFluidDataStoreRuntime
 	public readonly connected = true;
 	public deltaManager = new MockDeltaManager();
 	public readonly loader: ILoader = undefined as any;
-	public readonly logger: ITelemetryLogger = DebugLogger.create(
+	public readonly logger: ITelemetryLoggerExt = DebugLogger.create(
 		"fluid:MockFluidDataStoreRuntime",
 	);
 	public quorum = new MockQuorumClients();

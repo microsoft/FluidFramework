@@ -5,7 +5,7 @@
 import { EventEmitter } from "events";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
@@ -41,7 +41,7 @@ export class ScheduleManager {
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly emitter: EventEmitter,
 		readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		this.deltaScheduler = new DeltaScheduler(
 			this.deltaManager,
@@ -106,7 +106,7 @@ class ScheduleManagerCore {
 	constructor(
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		private readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {
 		// Listen for delta manager sends and add batch metadata to messages
 		this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {

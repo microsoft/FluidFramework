@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {
@@ -102,7 +102,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 	private token: ITokenResponse | undefined;
 
 	constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly rateLimiter: RateLimiter,
 		private readonly fetchRefreshedToken: TokenFetcher,
 		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -233,7 +233,7 @@ export class RouterliciousRestWrapper extends RestWrapper {
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -256,7 +256,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 		tenantId: string,
 		documentId: string,
 		tokenProvider: ITokenProvider,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -311,7 +311,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -334,7 +334,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 		tenantId: string,
 		documentId: string | undefined,
 		tokenProvider: ITokenProvider,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,

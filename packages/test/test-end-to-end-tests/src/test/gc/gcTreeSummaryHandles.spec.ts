@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -115,7 +115,7 @@ class ControlledCancellationToken implements ISummaryCancellationToken {
 async function submitFailingSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	failingStage: FailingSubmitSummaryStage,
 	fullTree: boolean = false,
 ) {
@@ -147,7 +147,7 @@ async function submitFailingSummary(
 async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	fullTree: boolean = false,
 	cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 ) {

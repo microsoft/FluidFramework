@@ -37,7 +37,7 @@ export class RemoteChannelContext implements IChannelContext {
 	private channel: IChannel | undefined;
 	private readonly services: ChannelServiceEndpoints;
 	private readonly summarizerNode: ISummarizerNodeWithGC;
-	private readonly subLogger: ITelemetryLogger;
+	private readonly subLogger: ITelemetryLoggerExt;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 

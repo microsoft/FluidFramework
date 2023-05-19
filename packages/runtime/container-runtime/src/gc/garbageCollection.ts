@@ -436,7 +436,7 @@ export class GarbageCollector implements IGarbageCollector {
 	public async collectGarbage(
 		options: {
 			/** Logger to use for logging GC events */
-			logger?: ITelemetryLogger;
+			logger?: ITelemetryLoggerExt;
 			/** True to run GC sweep phase after the mark phase */
 			runSweep?: boolean;
 			/** True to generate full GC data */
@@ -512,7 +512,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private async runPostGCSteps(
 		gcData: IGarbageCollectionData,
 		gcResult: IGCResult,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		currentReferenceTimestampMs: number,
 	): Promise<IGCStats> {
 		// Generate statistics from the current run. This is done before updating the current state because it
@@ -741,7 +741,7 @@ export class GarbageCollector implements IGarbageCollector {
 		gcData: IGarbageCollectionData,
 		gcResult: IGCResult,
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	) {
 		// Get references from the current GC run + references between previous and current run and then update each
 		// node's state
@@ -858,7 +858,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData | undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): string[] | undefined {
 		// If we haven't run GC before there is nothing to do.
 		// No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear

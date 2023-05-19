@@ -7,7 +7,7 @@ import {
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -74,7 +74,7 @@ export interface ISummaryManagerConfig {
  * stopping existing summarizer client.
  */
 export class SummaryManager implements IDisposable {
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 	private readonly opsToBypassInitialDelay: number;
 	private readonly initialDelayMs: number;
 	private latestClientId: string | undefined;
@@ -97,7 +97,7 @@ export class SummaryManager implements IDisposable {
 			SummaryCollection,
 			"opsSinceLastAck" | "addOpListener" | "removeOpListener"
 		>,
-		parentLogger: ITelemetryLogger,
+		parentLogger: ITelemetryLoggerExt,
 		/** Creates summarizer by asking interactive container to spawn summarizing container and
 		 * get back its Summarizer instance. */
 		private readonly requestSummarizerFn: () => Promise<ISummarizer>,

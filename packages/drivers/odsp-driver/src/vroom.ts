@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	InstrumentedStorageTokenFetcher,
@@ -41,7 +41,7 @@ export async function fetchJoinSession(
 	urlParts: IOdspUrlParts,
 	path: string,
 	method: string,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	getStorageToken: InstrumentedStorageTokenFetcher,
 	epochTracker: EpochTracker,
 	requestSocketToken: boolean,

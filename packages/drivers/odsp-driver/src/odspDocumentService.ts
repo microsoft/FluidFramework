@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import {
 	ChildLogger,
@@ -69,7 +69,7 @@ export class OdspDocumentService implements IDocumentService {
 		getStorageToken: InstrumentedStorageTokenFetcher,
 		// eslint-disable-next-line @rushstack/no-new-null
 		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
 		epochTracker: EpochTracker,
@@ -117,7 +117,7 @@ export class OdspDocumentService implements IDocumentService {
 		private readonly getWebsocketToken:
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		private readonly cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,

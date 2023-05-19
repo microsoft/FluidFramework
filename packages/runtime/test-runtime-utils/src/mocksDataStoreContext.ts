@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -63,7 +63,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	constructor(
 		public readonly id: string = uuid(),
 		public readonly existing: boolean = false,
-		public readonly logger: ITelemetryLogger = DebugLogger.create(
+		public readonly logger: ITelemetryLoggerExt = DebugLogger.create(
 			"fluid:MockFluidDataStoreContext",
 		),
 	) {}

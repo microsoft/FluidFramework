@@ -10,7 +10,7 @@ import {
 	DataObjectFactory,
 	PureDataObject,
 } from "@fluidframework/aqueduct";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -133,7 +133,7 @@ async function loadSummarizer(
 async function submitAndAckSummary(
 	provider: ITestObjectProvider,
 	summarizerClient: { containerRuntime: ContainerRuntime; summaryCollection: SummaryCollection },
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	fullTree: boolean = false,
 	cancellationToken = neverCancelledSummaryToken,
 ) {

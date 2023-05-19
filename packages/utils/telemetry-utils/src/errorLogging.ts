@@ -6,7 +6,7 @@
 import {
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
@@ -220,7 +220,7 @@ export function wrapError<T extends LoggingError>(
 export function wrapErrorAndLog<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ) {
 	const newError = wrapError(innerError, newErrorFn);
 

@@ -7,7 +7,7 @@ import {
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	ITelemetryLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/common-definitions";
 import {
 	IFluidHandleContext,
@@ -64,7 +64,7 @@ export interface IFluidDataStoreRuntime
 
 	readonly connected: boolean;
 
-	readonly logger: ITelemetryLogger;
+	readonly logger: ITelemetryLoggerExt;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.

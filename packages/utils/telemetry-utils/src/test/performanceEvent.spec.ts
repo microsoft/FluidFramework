@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger, PerformanceEvent } from "../logger";
 
-class MockLogger extends TelemetryLogger implements ITelemetryLogger {
+class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	public errorsLogged: number = 0;
 
 	constructor() {
