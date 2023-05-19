@@ -356,6 +356,7 @@ export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     readonly enableGroupedBatching?: boolean;
+    // @deprecated
     readonly enableOpReentryCheck?: boolean;
     readonly enableRuntimeIdCompressor?: boolean;
     readonly flushMode?: FlushMode;
