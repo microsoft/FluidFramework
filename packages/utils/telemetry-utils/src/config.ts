@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Lazy } from "@fluidframework/common-utils";
-import { ITelemetryLoggerExt } from "./telemetryTypes";
 import { TelemetryDataTag } from "./logger";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
@@ -241,19 +240,19 @@ export class CachedConfigProvider implements IConfigProvider {
 /**
  * A type containing both a telemetry logger and a configuration provider
  */
-export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
+export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger> {
 	config: IConfigProvider;
 	logger: L;
 }
 
-export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
+export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
 	obj: L,
 ): obj is L & MonitoringContext<L> {
 	const maybeConfig = obj as Partial<MonitoringContext<L>> | undefined;
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
-export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
+export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
 	logger: L,
 ): MonitoringContext<L> {
 	if (loggerIsMonitoringContext<L>(logger)) {
@@ -262,7 +261,7 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 	return mixinMonitoringContext<L>(logger, sessionStorageConfigProvider.value);
 }
 
-export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
+export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(
 	logger: L,
 	...configs: (IConfigProviderBase | undefined)[]
 ) {
