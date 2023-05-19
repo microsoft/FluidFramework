@@ -1011,6 +1011,7 @@ describe("Runtime", () => {
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: false,
+				enableOpReentryCheck: true,
 				enableGroupedBatching: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
@@ -1037,7 +1038,6 @@ describe("Runtime", () => {
 				const featureGates = {
 					"Fluid.ContainerRuntime.CompressionDisabled": true,
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
-					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
 					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 				};
 				await ContainerRuntime.loadRuntime({
@@ -1054,7 +1054,6 @@ describe("Runtime", () => {
 						options: JSON.stringify(mergedRuntimeOptions),
 						featureGates: JSON.stringify({
 							disableCompression: true,
-							disableOpReentryCheck: false,
 							disableChunking: true,
 							idCompressorEnabled: true,
 						}),
