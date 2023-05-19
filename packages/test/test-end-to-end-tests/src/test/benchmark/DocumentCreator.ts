@@ -4,11 +4,8 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { DocumentType, BenchmarkType, isMemoryTest } from "@fluid-internal/test-version-utils";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
 	benchmark,

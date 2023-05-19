@@ -9,7 +9,6 @@ import {
 	ITelemetryErrorEvent,
 	ITelemetryPerformanceEvent,
 	ITelemetryGenericEvent,
-	asdfqwermfields2,
 } from "@fluidframework/common-definitions";
 import { ThresholdCounter } from "../thresholdCounter";
 

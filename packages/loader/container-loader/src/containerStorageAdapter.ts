@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { IDisposable } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";

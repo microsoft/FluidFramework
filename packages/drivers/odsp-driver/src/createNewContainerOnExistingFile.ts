@@ -4,8 +4,6 @@
  */
 
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/driver-utils";
 import {

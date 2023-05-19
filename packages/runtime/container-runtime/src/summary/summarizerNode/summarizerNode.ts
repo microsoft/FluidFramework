@@ -20,9 +20,14 @@ import {
 	ISnapshotTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryErrorEvent, asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	LoggingError,
+	PerformanceEvent,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	convertToSummaryTree,
@@ -30,12 +35,6 @@ import {
 	mergeStats,
 	ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
-import {
-	ChildLogger,
-	LoggingError,
-	PerformanceEvent,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
 import {
 	EscapedPath,
 	ICreateChildDetails,

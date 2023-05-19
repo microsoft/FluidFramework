@@ -6,9 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -26,7 +24,6 @@ import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definition
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { gcTreeKey, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,

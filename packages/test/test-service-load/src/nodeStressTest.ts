@@ -12,8 +12,6 @@ import {
 	DriverEndpoint,
 	ITestDriver,
 } from "@fluidframework/test-driver-definitions";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";

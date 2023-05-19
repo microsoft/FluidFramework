@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IAudience,
@@ -41,7 +39,6 @@ import {
 	MessageType,
 	ISummaryContent,
 } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { Container } from "./container";
 

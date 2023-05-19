@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields, ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { TelemetryLogger } from "./logger";
 

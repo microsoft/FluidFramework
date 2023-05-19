@@ -20,10 +20,13 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { asdfqwermfields, ITelemetryProperties } from '@fluidframework/common-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
+import { ITelemetryProperties } from '@fluidframework/common-definitions';
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	ITelemetryLoggerPropertyBags,
+	PerformanceEvent,
+} from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditHandle, EditLog, OrderedEditSet } from './EditLog';

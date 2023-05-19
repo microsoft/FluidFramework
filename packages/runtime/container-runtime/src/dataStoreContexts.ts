@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	ITelemetryBaseLogger,
-	asdfqwermfields2,
-} from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";

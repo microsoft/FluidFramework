@@ -4,8 +4,6 @@
  */
 
 import { EventEmitter } from "events";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 
 export const connectedEventName = "connected";

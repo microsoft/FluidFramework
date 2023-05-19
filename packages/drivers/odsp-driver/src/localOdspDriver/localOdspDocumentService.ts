@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,

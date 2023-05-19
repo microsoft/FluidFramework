@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { performance } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 /**
  * DeltaScheduler is responsible for the scheduling of inbound delta queue in cases where there
  * is more than one op a particular run of the queue. It does not schedule if there is just one

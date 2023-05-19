@@ -16,11 +16,8 @@ import {
 } from "@fluidframework/driver-utils";
 import { stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,

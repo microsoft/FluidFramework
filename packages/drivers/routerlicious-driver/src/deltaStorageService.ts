@@ -12,10 +12,11 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { readAndParse, requestOps, emptyMessageStream } from "@fluidframework/driver-utils";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	TelemetryNullLogger,
+} from "@fluidframework/telemetry-utils";
 import { DocumentStorageService } from "./documentStorageService";
 import { RestWrapper } from "./restWrapperBase";
 

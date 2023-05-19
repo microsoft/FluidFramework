@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
@@ -15,7 +13,6 @@ import {
 	IDataStore,
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions";
-import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "./containerRuntime";
 import { DataStores } from "./dataStores";
 

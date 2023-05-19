@@ -18,10 +18,9 @@ import {
 	wrapErrorAndLog,
 	isExternalError,
 	NORMALIZED_ERROR_TYPE,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { asdfqwermfields, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**

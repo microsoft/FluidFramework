@@ -4,9 +4,18 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger, asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	DebugLogger,
+	IConfigProviderBase,
+	loggerToMonitoringContext,
+	mixinMonitoringContext,
+	MonitoringContext,
+	PerformanceEvent,
+	sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidRouter,
@@ -24,16 +33,6 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import {
-	ChildLogger,
-	DebugLogger,
-	IConfigProviderBase,
-	loggerToMonitoringContext,
-	mixinMonitoringContext,
-	MonitoringContext,
-	PerformanceEvent,
-	sessionStorageConfigProvider,
-} from "@fluidframework/telemetry-utils";
 import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,

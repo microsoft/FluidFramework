@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryErrorEvent, asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryErrorEvent } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { isOnline, OnlineStatus, canRetryOnError } from "./network";
 

@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, IsoBuffer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
 import { CompressionAlgorithms } from "../containerRuntime";
 import { estimateSocketSize } from "./batchManager";

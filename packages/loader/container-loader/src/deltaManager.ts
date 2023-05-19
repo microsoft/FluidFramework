@@ -6,7 +6,6 @@
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import {
-	asdfqwermfields2,
 	IEventProvider,
 	ITelemetryProperties,
 	ITelemetryErrorEvent,

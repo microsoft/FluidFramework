@@ -4,10 +4,7 @@
  */
 
 import * as fs from "fs";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { CSVFileLogger } from "./csvFileLogger";
 import { IFileLogger, ITelemetryOptions, OutputFormat } from "./fileLogger";
 import { JSONFileLogger } from "./jsonFileLogger";

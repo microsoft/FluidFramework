@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from '@fluidframework/common-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
-import { TelemetryNullLogger } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt, TelemetryNullLogger } from '@fluidframework/telemetry-utils';
 
 /**
  * Because the IdCompressor emits so much telemetry, this function is used to sample

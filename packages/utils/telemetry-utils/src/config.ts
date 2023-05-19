@@ -2,8 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ITelemetryBaseLogger, asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { Lazy } from "@fluidframework/common-utils";
 import { TelemetryDataTag } from "./logger";

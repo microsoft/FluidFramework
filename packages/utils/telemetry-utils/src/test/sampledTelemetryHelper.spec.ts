@@ -8,7 +8,6 @@ import {
 	ITelemetryBaseEvent,
 	ITelemetryErrorEvent,
 	ITelemetryGenericEvent,
-	asdfqwermfields2,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";

@@ -4,9 +4,16 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { asdfqwermfields, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	EventEmitterWithErrorHandling,
+	loggerToMonitoringContext,
+	MonitoringContext,
+	SampledTelemetryHelper,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -25,14 +32,6 @@ import {
 	totalBlobSizePropertyName,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	ChildLogger,
-	EventEmitterWithErrorHandling,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	SampledTelemetryHelper,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";

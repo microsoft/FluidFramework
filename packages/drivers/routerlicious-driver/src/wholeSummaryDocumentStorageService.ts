@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	assert,
 	performance,
@@ -26,7 +24,6 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IWholeFlatSummary } from "@fluidframework/server-services-client";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ICache, InMemoryCache } from "./cache";
 import { IRouterliciousDriverPolicies } from "./policies";
 import {

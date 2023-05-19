@@ -2,11 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	ITelemetryBaseLogger,
-	ITelemetryGenericEvent,
-	asdfqwermfields2,
-} from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import {
 	FluidObject,
 	IFluidHandle,

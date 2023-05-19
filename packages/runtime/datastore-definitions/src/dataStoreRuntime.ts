@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	IEvent,
-	IEventProvider,
-	asdfqwermfields2,
-} from "@fluidframework/common-definitions";
+import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import {
 	IFluidHandleContext,
 	IFluidRouter,

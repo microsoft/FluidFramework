@@ -5,9 +5,13 @@
 
 import { v4 as uuid } from "uuid";
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	isFluidError,
+	normalizeError,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import {
 	ThrottlingError,
 	RateLimiter,
@@ -25,12 +29,6 @@ import {
 	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import {
-	PerformanceEvent,
-	isFluidError,
-	normalizeError,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils";
 import {
 	fetchAndParseAsJSONHelper,
 	fetchArray,

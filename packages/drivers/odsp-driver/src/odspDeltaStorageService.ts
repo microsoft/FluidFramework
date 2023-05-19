@@ -5,9 +5,8 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { asdfqwermfields, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";
@@ -16,7 +15,6 @@ import {
 	IDocumentDeltaStorageService,
 } from "@fluidframework/driver-definitions";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts";
 import { EpochTracker } from "./epochTracker";
 import { getWithRetryForTokenRefresh, validateMessages } from "./odspUtils";

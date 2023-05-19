@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	TelemetryLogger,
+} from "@fluidframework/telemetry-utils";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {
 	getAuthorizationTokenFromCredentials,
 	RestLessClient,
 } from "@fluidframework/server-services-client";
-import { PerformanceEvent, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import fetch from "cross-fetch";
 import type { AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import safeStringify from "json-stringify-safe";

@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IEvent,
-	IEventProvider,
-	asdfqwermfields2,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {

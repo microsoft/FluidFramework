@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,

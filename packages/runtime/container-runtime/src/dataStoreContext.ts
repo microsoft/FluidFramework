@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	asdfqwermfields2,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+import { IDisposable, ITelemetryProperties } from "@fluidframework/common-definitions";
 import { FluidObject, IRequest, IResponse, IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IAudience,

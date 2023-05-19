@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 import { assert, Deferred, performance } from "@fluidframework/common-utils";
-import { asdfqwermfields, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { PerformanceEvent } from "@fluidframework/telemetry-utils";
+import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } from "./network";

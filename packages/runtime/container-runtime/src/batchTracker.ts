@@ -4,12 +4,9 @@
  */
 
 import { EventEmitter } from "events";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert, performance } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 
 export class BatchTracker {
 	private readonly logger: ITelemetryLoggerExt;

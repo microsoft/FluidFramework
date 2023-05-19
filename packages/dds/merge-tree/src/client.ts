@@ -13,7 +13,7 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import type { IEventThisPlaceHolder, asdfqwermfields2 } from "@fluidframework/common-definitions";
+import type { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";

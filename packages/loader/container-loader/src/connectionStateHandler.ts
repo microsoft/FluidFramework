@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	asdfqwermfields2,
-	ITelemetryProperties,
-	TelemetryEventCategory,
-} from "@fluidframework/common-definitions";
+import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";

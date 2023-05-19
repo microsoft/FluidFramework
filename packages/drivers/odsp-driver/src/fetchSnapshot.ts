@@ -5,13 +5,15 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	isFluidError,
+	PerformanceEvent,
+	wrapError,
+} from "@fluidframework/telemetry-utils";
 import { assert, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { isFluidError, PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
 import {
 	IOdspResolvedUrl,
 	ISnapshotOptions,

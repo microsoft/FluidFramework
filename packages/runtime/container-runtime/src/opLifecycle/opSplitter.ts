@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
@@ -13,7 +11,6 @@ import {
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { ContainerMessageType, ContainerRuntimeMessage } from "../containerRuntime";
 import { estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch, IChunkedOp, IMessageProcessingResult } from "./definitions";

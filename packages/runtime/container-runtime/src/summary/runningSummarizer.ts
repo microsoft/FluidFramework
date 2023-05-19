@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	isFluidError,
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
+import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
+import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
+import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { opSize } from "../opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";

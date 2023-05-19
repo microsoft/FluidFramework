@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	LoggingError,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -21,7 +23,6 @@ import {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
-import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import {
 	cloneGCData,

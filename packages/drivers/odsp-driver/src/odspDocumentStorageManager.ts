@@ -4,11 +4,12 @@
  */
 
 import { default as AbortController } from "abort-controller";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	loggerToMonitoringContext,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
 import { assert, delay, performance } from "@fluidframework/common-utils";
-import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import * as api from "@fluidframework/protocol-definitions";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base";
 import { ISummaryContext, DriverErrorType, FetchSource } from "@fluidframework/driver-definitions";

@@ -9,8 +9,6 @@
  */
 
 import { assert, Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";

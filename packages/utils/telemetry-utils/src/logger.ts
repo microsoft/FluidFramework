@@ -8,7 +8,6 @@ import {
 	ITelemetryBaseLogger,
 	ITelemetryErrorEvent,
 	ITelemetryGenericEvent,
-	asdfqwermfields2,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,

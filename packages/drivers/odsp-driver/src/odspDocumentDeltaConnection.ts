@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields, IEvent } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { IEvent } from "@fluidframework/common-definitions";
+import {
+	ITelemetryLoggerExt,
+	IFluidErrorBase,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { OdspError } from "@fluidframework/odsp-driver-definitions";
-import { IFluidErrorBase, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import {
 	IClient,
 	IConnect,

@@ -3,9 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	ChildLogger,
+	generateStack,
+	LoggingError,
+	loggerToMonitoringContext,
+	MonitoringContext,
+	raiseConnectedEvent,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -27,15 +34,6 @@ import {
 	TypedEventEmitter,
 	unreachableCase,
 } from "@fluidframework/common-utils";
-import {
-	ChildLogger,
-	generateStack,
-	LoggingError,
-	loggerToMonitoringContext,
-	MonitoringContext,
-	raiseConnectedEvent,
-	TelemetryDataTag,
-} from "@fluidframework/telemetry-utils";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,

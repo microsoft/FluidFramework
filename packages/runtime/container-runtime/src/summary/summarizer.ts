@@ -5,19 +5,17 @@
 
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
-import { DriverHeader } from "@fluidframework/driver-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
+	ITelemetryLoggerExt,
 	ChildLogger,
 	IFluidErrorBase,
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
+import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
+import { UsageError } from "@fluidframework/container-utils";
+import { DriverHeader } from "@fluidframework/driver-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";

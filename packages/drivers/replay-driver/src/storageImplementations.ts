@@ -20,8 +20,6 @@ import {
 	IVersion,
 	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService";
 import { ReadDocumentStorageServiceBase } from "./replayController";

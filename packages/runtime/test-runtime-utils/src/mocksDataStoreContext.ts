@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, DebugLogger } from "@fluidframework/telemetry-utils";
 import { IFluidHandle, IFluidHandleContext, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -14,7 +12,6 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
-import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,

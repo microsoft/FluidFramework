@@ -5,9 +5,7 @@
 
 import { EventEmitter } from "events";
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,
@@ -22,7 +20,6 @@ import {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
 
-import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IQuorumClients,
 	ISequencedClient,

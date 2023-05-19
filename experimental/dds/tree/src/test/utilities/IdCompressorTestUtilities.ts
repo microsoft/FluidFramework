@@ -17,8 +17,6 @@ import {
 	take,
 	BaseFuzzTestState,
 } from '@fluid-internal/stochastic-test-utils';
-import { asdfqwermfields } from '@fluidframework/common-definitions';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { assertNotUndefined, ClosedMap, fail, getOrCreate } from '../../Common';
 import { IdCompressor, isLocalId } from '../../id-compressor/IdCompressor';

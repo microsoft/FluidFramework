@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { asdfqwermfields } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	LoggingError,
+	ChildLogger,
+} from "@fluidframework/telemetry-utils";
 import {
 	assert,
 	Deferred,
@@ -14,7 +17,6 @@ import {
 	Timer,
 } from "@fluidframework/common-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, LoggingError, ChildLogger } from "@fluidframework/telemetry-utils";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
