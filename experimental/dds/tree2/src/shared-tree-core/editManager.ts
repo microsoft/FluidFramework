@@ -362,9 +362,6 @@ export class EditManager<
 		this.trunk.setHead(
 			data.trunk.reduce((base, c) => {
 				const commit = mintCommit(base, c);
-				this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
-					this.changeFamily.intoDelta(commit.change),
-				);
 				this.sequenceMap.set(c.sequenceNumber, commit);
 				this.trunkMetadata.set(c.revision, {
 					sequenceNumber: c.sequenceNumber,
@@ -397,6 +394,15 @@ export class EditManager<
 		return getPathFromBase(this.localBranch.getHead(), this.trunk.getHead()).map(
 			(c) => c.change,
 		);
+	}
+
+	/**
+	 * Needs to be called after a summary is loaded.
+	 * @remarks This is a temporary workaround until UndoRedoManager is better managed.
+	 */
+	public afterSummaryLoad(): void {
+		this.trunkUndoRedoManager.repairDataStoreProvider =
+			this.localBranchUndoRedoManager.repairDataStoreProvider.clone();
 	}
 
 	public addSequencedChange(
