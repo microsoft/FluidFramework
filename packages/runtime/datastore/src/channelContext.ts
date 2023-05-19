@@ -188,7 +188,7 @@ export async function loadChannel(
 	attributes: IChannelAttributes,
 	factory: IChannelFactory,
 	services: ChannelServiceEndpoints,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
 	// Compare snapshot version to collaborative object version

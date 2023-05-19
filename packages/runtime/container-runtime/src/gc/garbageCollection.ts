@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
@@ -17,6 +16,7 @@ import {
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	MonitoringContext,
 	PerformanceEvent,
