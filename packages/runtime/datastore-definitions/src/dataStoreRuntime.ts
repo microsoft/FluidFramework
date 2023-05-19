@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import {
+	IDisposable,
+	IEvent,
+	IEventProvider,
+	ITelemetryLogger,
+} from "@fluidframework/common-definitions";
 import {
 	IFluidHandleContext,
 	IFluidRouter,
@@ -59,7 +64,7 @@ export interface IFluidDataStoreRuntime
 
 	readonly connected: boolean;
 
-	readonly logger: ITelemetryLoggerExt;
+	readonly logger: ITelemetryLogger;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.

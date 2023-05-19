@@ -16,7 +16,11 @@ import {
 	isFluidError,
 	isValidLegacyError,
 } from "./fluidErrorBase";
-import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
+import {
+	ITaggedTelemetryPropertyTypeExt,
+	ITelemetryLoggerExt,
+	TelemetryEventPropertyTypeExt,
+} from "./telemetryTypes";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {

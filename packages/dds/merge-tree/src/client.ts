@@ -15,7 +15,7 @@ import {
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import type { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, LoggingError } from "@fluidframework/telemetry-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { IIntegerRange } from "./base";
 import { RedBlackTree } from "./collections";

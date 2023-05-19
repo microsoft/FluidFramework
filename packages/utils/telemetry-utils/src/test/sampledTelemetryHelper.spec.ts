@@ -12,6 +12,7 @@ import {
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { SampledTelemetryHelper } from "../sampledTelemetryHelper";
+import { ITelemetryLoggerExt } from "../telemetryTypes";
 
 /**
  * Test logger with only the necessary functionality used by the SampledTelemetryHelper

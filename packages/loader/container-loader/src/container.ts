@@ -72,6 +72,7 @@ import {
 	MonitoringContext,
 	loggerToMonitoringContext,
 	wrapError,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";

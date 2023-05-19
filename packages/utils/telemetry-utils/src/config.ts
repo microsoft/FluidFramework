@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { Lazy } from "@fluidframework/common-utils";
 import { TelemetryDataTag } from "./logger";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 

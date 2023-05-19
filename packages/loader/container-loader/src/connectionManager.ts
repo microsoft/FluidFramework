@@ -44,7 +44,11 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryLogger, normalizeError } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	TelemetryLogger,
+	normalizeError,
+} from "@fluidframework/telemetry-utils";
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";

@@ -11,6 +11,7 @@ import {
 	ITelemetryGenericEvent,
 } from "@fluidframework/common-definitions";
 import { ThresholdCounter } from "../thresholdCounter";
+import { ITelemetryLoggerExt } from "../telemetryTypes";
 
 class FakeTelemetryLogger implements ITelemetryLoggerExt {
 	public events: ITelemetryGenericEvent[] = [];

@@ -4,9 +4,9 @@
  */
 
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger, PerformanceEvent } from "../logger";
+import { ITelemetryLoggerExt } from "../telemetryTypes";
 
 class MockLogger extends TelemetryLogger implements ITelemetryLoggerExt {
 	public errorsLogged: number = 0;

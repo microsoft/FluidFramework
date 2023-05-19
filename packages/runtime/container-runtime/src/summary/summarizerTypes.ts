@@ -4,7 +4,7 @@
  */
 
 import { IEvent, IEventProvider, ITelemetryProperties } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,

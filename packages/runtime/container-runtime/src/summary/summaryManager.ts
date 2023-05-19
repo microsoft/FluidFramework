@@ -5,7 +5,11 @@
 
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	ChildLogger,
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import { IThrottler } from "../throttler";
 import { ISummarizerClientElection } from "./summarizerClientElection";

@@ -4,8 +4,8 @@
  */
 
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { TelemetryLogger } from "./logger";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 /**
  * The MockLogger records events sent to it, and then can walk back over those events

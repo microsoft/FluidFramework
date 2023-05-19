@@ -20,7 +20,12 @@ import {
 	IConnectionDetailsInternal,
 } from "@fluidframework/container-definitions";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
-import { normalizeError, logIfFalse, safeRaiseEvent } from "@fluidframework/telemetry-utils";
+import {
+	normalizeError,
+	logIfFalse,
+	safeRaiseEvent,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
 import {
 	IDocumentDeltaStorageService,
 	IDocumentService,

@@ -4,7 +4,7 @@
  */
 
 import { assert } from '@fluidframework/common-utils';
-import { ChildLogger, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
+import { ChildLogger, EventEmitterWithErrorHandling, ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent, ITelemetryProperties } from '@fluidframework/common-definitions';
 import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common';
 import { EditId } from './Identifiers';

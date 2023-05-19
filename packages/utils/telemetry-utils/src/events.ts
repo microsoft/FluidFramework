@@ -4,7 +4,7 @@
  */
 
 import { EventEmitter } from "events";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 export const connectedEventName = "connected";
 export const disconnectedEventName = "disconnected";

@@ -10,6 +10,7 @@ import {
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { performance } from "@fluidframework/common-utils";
+import { ITelemetryLoggerExt } from "./telemetryTypes";
 
 interface Measurements {
 	// The names of the properties in this interface are the ones that will get stamped in the

@@ -41,6 +41,7 @@ import {
 	MonitoringContext,
 	loggerToMonitoringContext,
 	wrapError,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
 import {
 	DriverHeader,

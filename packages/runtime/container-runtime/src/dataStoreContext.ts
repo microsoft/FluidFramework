@@ -56,6 +56,7 @@ import {
 import {
 	ChildLogger,
 	generateStack,
+	ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	LoggingError,
 	MonitoringContext,

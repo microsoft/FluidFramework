@@ -7,7 +7,11 @@ import { ITelemetryProperties, TelemetryEventCategory } from "@fluidframework/co
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
-import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	ITelemetryLoggerExt,
+	PerformanceEvent,
+	loggerToMonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
 import { ILocalSequencedClient, IProtocolHandler } from "./protocol";

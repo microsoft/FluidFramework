@@ -15,6 +15,7 @@ import {
 import { assert, performance } from "@fluidframework/common-utils";
 import {
 	ChildLogger,
+	ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	wrapError,

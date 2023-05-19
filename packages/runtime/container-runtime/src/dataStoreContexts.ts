@@ -5,7 +5,7 @@
 
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext";
 
 export class DataStoreContexts implements Iterable<[string, FluidDataStoreContext]>, IDisposable {
