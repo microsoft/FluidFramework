@@ -613,6 +613,7 @@ describe("editable-tree: read-only", () => {
 			"primaryType",
 			"parent",
 			"context",
+			"content",
 		]);
 		const act = [...proxy.address.phones].map(
 			(phone: UnwrappedEditableTree): Value | object => {
