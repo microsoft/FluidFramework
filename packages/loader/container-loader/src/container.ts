@@ -8,7 +8,7 @@ import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
 import {
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 	ITelemetryProperties,
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";

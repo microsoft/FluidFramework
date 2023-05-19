@@ -4,7 +4,7 @@
  */
 
 import {
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 	ITelemetryProperties,
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";

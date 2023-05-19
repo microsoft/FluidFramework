@@ -6,7 +6,7 @@
 import { default as AbortController } from "abort-controller";
 import {
 	IDisposable,
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";

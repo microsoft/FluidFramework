@@ -6,7 +6,7 @@
 import {
 	ILoggingError,
 	ITaggedTelemetryPropertyType,
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 	ITelemetryProperties,
 	TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";

@@ -6,7 +6,7 @@
 import {
 	IDisposable,
 	ITelemetryBaseLogger,
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 } from "@fluidframework/common-definitions";
 import { assert, Deferred, Lazy } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";

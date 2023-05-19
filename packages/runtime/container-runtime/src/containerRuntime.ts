@@ -5,7 +5,7 @@
 import {
 	ITelemetryBaseLogger,
 	ITelemetryGenericEvent,
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 } from "@fluidframework/common-definitions";
 import {
 	FluidObject,

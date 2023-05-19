@@ -6,7 +6,7 @@
 import {
 	IDisposable,
 	ITelemetryGenericEvent,
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 	ITelemetryPerformanceEvent,
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";

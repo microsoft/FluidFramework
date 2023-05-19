@@ -6,7 +6,7 @@
 import {
 	ITelemetryProperties,
 	ITelemetryBaseLogger,
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 } from "@fluidframework/common-definitions";
 import { IResolvedUrl, DriverErrorType } from "@fluidframework/driver-definitions";
 import {

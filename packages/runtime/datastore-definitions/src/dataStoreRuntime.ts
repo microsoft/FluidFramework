@@ -7,7 +7,7 @@ import {
 	IDisposable,
 	IEvent,
 	IEventProvider,
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 } from "@fluidframework/common-definitions";
 import {
 	IFluidHandleContext,

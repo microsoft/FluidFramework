@@ -6,7 +6,7 @@
 import {
 	IEvent,
 	IEventProvider,
-	ITelemetryLoggerExt,
+	asdfqwermfields2,
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
