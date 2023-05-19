@@ -138,12 +138,19 @@ export interface BindTree extends PathStep {
 }
 
 /**
+ * Index symbol for syntax tree
+ *
+ * @alpha
+ */
+export const indexSymbol = Symbol("_index");
+
+/**
  * A syntax node for the bind language
  *
  * @alpha
  */
 export interface BindSyntaxTree {
-	readonly _index?: number;
+	readonly [indexSymbol]?: number;
 	readonly [key: string]: boolean | BindSyntaxTree | number | undefined;
 }
 
@@ -766,20 +773,18 @@ export function compileSyntaxTree(syntaxTree: BindSyntaxTree): BindTree {
 function compileSyntaxTreeNode(node: BindSyntaxTree, parentField: FieldKey): BindTree {
 	const pathStep: PathStep = {
 		field: parentField,
-		index: node._index,
+		index: node[indexSymbol],
 	};
 	const children = new Map<FieldKey, BindTree>();
 	for (const [key, value] of Object.entries(node)) {
-		if (key !== "_index") {
-			const fieldKey: FieldKey = brand(key);
-			if (typeof value === "object") {
-				const childTree = compileSyntaxTreeNode(value, fieldKey);
-				if (childTree !== undefined) {
-					children.set(fieldKey, childTree);
-				}
-			} else if (value === true) {
-				children.set(fieldKey, { field: fieldKey, children: new Map() });
+		const fieldKey: FieldKey = brand(key);
+		if (typeof value === "object") {
+			const childTree = compileSyntaxTreeNode(value, fieldKey);
+			if (childTree !== undefined) {
+				children.set(fieldKey, childTree);
 			}
+		} else if (value === true) {
+			children.set(fieldKey, { field: fieldKey, children: new Map() });
 		}
 	}
 	return {

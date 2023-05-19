@@ -34,6 +34,7 @@ import {
 	compareBinderEventsDeleteFirst,
 	createBinderOptions,
 	BindSyntaxTree,
+	indexSymbol,
 	compileSyntaxTree,
 	BindTree,
 } from "../../../feature-libraries";
@@ -53,14 +54,14 @@ describe("editable-tree: data binder", () => {
 			const { tree, root, address } = retrieveNodes();
 			const insertTree = compileSyntaxTree({
 				address: {
-					_index: 0,
-					zip: { _index: 1 },
+					[indexSymbol]: 0,
+					zip: { [indexSymbol]: 1 },
 				},
 			});
 			const deleteTree = compileSyntaxTree({
 				address: {
 					index: 0,
-					zip: { _index: 0 },
+					zip: { [indexSymbol]: 0 },
 				},
 			});
 			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
@@ -114,7 +115,7 @@ describe("editable-tree: data binder", () => {
 			const { tree, root, address } = retrieveNodes();
 			const insertTree = compileSyntaxTree({
 				address: {
-					_index: 0,
+					[indexSymbol]: 0,
 					zip: { index: 1 },
 				},
 			});

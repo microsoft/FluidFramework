@@ -43,6 +43,7 @@ export {
 	FlushableDataBinder,
 	MatchPolicy,
 	BindSyntaxTree,
+	indexSymbol,
 	BindTree,
 	DownPath,
 	BindPath,
