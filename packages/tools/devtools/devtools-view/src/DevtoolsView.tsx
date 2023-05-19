@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import React, { useRef } from "react";
+import React from "react";
 import { useId } from "@fluentui/react-hooks";
 import {
 	ContainerList,
@@ -152,7 +152,7 @@ export function DevtoolsView(): React.ReactElement {
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
-	const queryTimer = useRef<NodeJS.Timeout>();
+	const queryTimer = React.useRef<NodeJS.Timeout>();
 
 	React.useEffect(() => {
 		/**
@@ -162,7 +162,6 @@ export function DevtoolsView(): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
-				clearTimeout(queryTimer.current); // Clear the timeout when found the supported features
 				return true;
 			},
 		};
@@ -215,7 +214,12 @@ export function DevtoolsView(): React.ReactElement {
 				queryTimedOut ? (
 					<>
 						<div>Devtools not found. Timeout exceeded.</div>
-						<button onClick={retryQuery}>Search again</button>
+						<TooltipHost
+							content="Refresh Containers list"
+							id="retry-query-button-tooltip"
+						>
+							<Button onClick={retryQuery}>Search again</Button>
+						</TooltipHost>
 					</>
 				) : (
 					<Waiting />
