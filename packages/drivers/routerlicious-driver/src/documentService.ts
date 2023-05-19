@@ -10,7 +10,9 @@ import { RateLimiter, NetworkErrorBasic, canRetryOnError } from "@fluidframework
 import { IClient } from "@fluidframework/protocol-definitions";
 import io from "socket.io-client";
 import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService";
 import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";

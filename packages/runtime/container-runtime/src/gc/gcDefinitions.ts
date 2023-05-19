@@ -13,7 +13,9 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,

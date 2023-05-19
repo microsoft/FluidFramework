@@ -5,7 +5,9 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { ReadBuffer } from "./ReadBufferUtils";
 import {

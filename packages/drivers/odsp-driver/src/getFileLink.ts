@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { canRetryOnError, NonRetryableError } from "@fluidframework/driver-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";

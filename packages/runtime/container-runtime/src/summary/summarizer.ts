@@ -5,7 +5,9 @@
 
 import { EventEmitter } from "events";
 import { Deferred } from "@fluidframework/common-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { DriverHeader } from "@fluidframework/driver-definitions";

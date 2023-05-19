@@ -5,7 +5,9 @@
 
 import { EventEmitter } from "events";
 import { assert, stringToBuffer } from "@fluidframework/common-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidHandle,

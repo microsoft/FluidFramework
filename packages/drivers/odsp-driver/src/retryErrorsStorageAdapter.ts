@@ -17,7 +17,9 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { IDisposable, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { runWithRetry } from "./retryUtils";
 
 export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisposable {

@@ -4,7 +4,9 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryBaseLogger, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	FluidObject,
 	IFluidRouter,

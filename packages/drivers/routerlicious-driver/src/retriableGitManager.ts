@@ -10,7 +10,9 @@ import {
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { runWithRetry } from "@fluidframework/driver-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IGitManager } from "./storageContracts";
 import { IR11sResponse } from "./restWrapper";
 

@@ -6,7 +6,9 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
 import { assert } from '@fluidframework/common-utils';
-import { ITelemetryLoggerExt } from '@fluidframework/common-definitions';
+import { asdfqwermfields } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import BTree from 'sorted-btree';
 import {
 	hasLength,

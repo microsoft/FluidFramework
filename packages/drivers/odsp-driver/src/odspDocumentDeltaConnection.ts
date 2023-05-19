@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, IEvent } from "@fluidframework/common-definitions";
+import { asdfqwermfields, IEvent } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, performance, Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";

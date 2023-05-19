@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { IDisposable, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, delay, Deferred, PromiseTimer } from "@fluidframework/common-utils";
 import { UsageError } from "@fluidframework/container-utils";
 import { DriverErrorType } from "@fluidframework/driver-definitions";

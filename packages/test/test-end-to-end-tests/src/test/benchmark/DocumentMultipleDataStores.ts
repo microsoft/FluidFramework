@@ -19,7 +19,9 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 // Tests usually make use of the default data object provided by the test object provider.

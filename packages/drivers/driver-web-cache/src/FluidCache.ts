@@ -4,7 +4,9 @@
  */
 import { IDBPDatabase } from "idb";
 import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
-import { ITelemetryBaseLogger, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { scheduleIdleTask } from "./scheduleIdleTask";
 import {

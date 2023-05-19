@@ -5,7 +5,9 @@
 
 import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLoggerExt, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { asdfqwermfields, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions";

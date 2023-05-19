@@ -17,7 +17,9 @@ import {
 	take,
 	BaseFuzzTestState,
 } from "@fluid-internal/stochastic-test-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	FinalCompressedId,
 	SessionId,

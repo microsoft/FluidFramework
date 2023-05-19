@@ -20,7 +20,9 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from '@fluidframework/shared-object-base';
-import { ITelemetryLoggerExt, ITelemetryProperties } from '@fluidframework/common-definitions';
+import { asdfqwermfields, ITelemetryProperties } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
+import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils';
 import { ChildLogger, ITelemetryLoggerPropertyBags, PerformanceEvent } from '@fluidframework/telemetry-utils';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { fail, copyPropertyIfDefined, RestOrArray, unwrapRestOrArray } from './Common';

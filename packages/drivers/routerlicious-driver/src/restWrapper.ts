@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { asdfqwermfields, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";
 import { RateLimiter } from "@fluidframework/driver-utils";
 import {

@@ -9,7 +9,9 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	IClient,

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { getGitType } from "@fluidframework/protocol-base";

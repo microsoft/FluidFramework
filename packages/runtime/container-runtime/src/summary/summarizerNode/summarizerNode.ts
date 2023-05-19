@@ -20,7 +20,9 @@ import {
 	ISnapshotTree,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { ITelemetryErrorEvent, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { ITelemetryErrorEvent, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	convertToSummaryTree,

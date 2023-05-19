@@ -7,7 +7,9 @@ import { decompress } from "lz4js";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { CompressionAlgorithms } from "../containerRuntime";
 import { IMessageProcessingResult } from "./definitions";
 

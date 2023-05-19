@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 /* eslint-disable @rushstack/no-new-null */
-import { IEvent, IEventProvider, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/container-utils";

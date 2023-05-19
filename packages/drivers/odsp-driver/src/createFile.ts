@@ -6,7 +6,9 @@
 import { assert } from "@fluidframework/common-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
 	InstrumentedStorageTokenFetcher,

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { IEvent, IEventProvider, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IClientDetails, MessageType } from "@fluidframework/protocol-definitions";
 import {

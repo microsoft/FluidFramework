@@ -22,7 +22,9 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { IDisposable, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	ChildLogger,
 	extractLogSafeErrorProperties,

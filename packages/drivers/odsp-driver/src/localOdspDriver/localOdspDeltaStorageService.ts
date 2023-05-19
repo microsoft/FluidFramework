@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IDocumentDeltaStorageService, IStream } from "@fluidframework/driver-definitions";
 import { Queue, emptyMessageStream } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";

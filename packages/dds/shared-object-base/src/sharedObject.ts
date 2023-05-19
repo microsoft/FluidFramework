@@ -4,7 +4,9 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { ITelemetryLoggerExt, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { asdfqwermfields, ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, EventEmitterEventType } from "@fluidframework/common-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

@@ -9,7 +9,9 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ITelemetryBaseLogger, ITelemetryLoggerExt } from "@fluidframework/common-definitions";
+import { ITelemetryBaseLogger, asdfqwermfields } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IOdspResolvedUrl,
 	IdentityType,
