@@ -152,7 +152,6 @@ export function DevtoolsView(): React.ReactElement {
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
-	const queryTimer = React.useRef<NodeJS.Timeout>();
 
 	React.useEffect(() => {
 		/**
@@ -190,17 +189,13 @@ export function DevtoolsView(): React.ReactElement {
 		if (supportedFeatures === undefined) {
 			// If we have queried for the supported feature list but have not received
 			// a response yet, queue a timer.
-			const timeout = setTimeout(() => {
+			const queryTimer = setTimeout(() => {
 				setQueryTimedOut(true);
 			}, queryTimeoutInMilliseconds);
 			return (): void => {
-				clearTimeout(timeout);
+				clearTimeout(queryTimer);
 			};
 		}
-
-		return (): void => {
-			clearTimeout(queryTimer.current);
-		};
 	}, [supportedFeatures, setQueryTimedOut]);
 
 	function retryQuery(): void {
