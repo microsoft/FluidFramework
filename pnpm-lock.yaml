@@ -12730,6 +12730,9 @@ importers:
       axios:
         specifier: ^0.26.0
         version: 0.26.1
+      lz4js:
+        specifier: ^0.2.0
+        version: 0.2.0
       url:
         specifier: ^0.11.0
         version: 0.11.0
