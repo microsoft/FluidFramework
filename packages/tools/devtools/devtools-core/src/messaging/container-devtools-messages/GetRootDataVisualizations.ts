@@ -28,7 +28,7 @@ export namespace GetRootDataVisualizations {
 
 	/**
 	 * Inbound message requesting visualizations for the root DDS data tracked by the
-	 * debugger associated with the specified {@link ContainerKey}.
+	 * devtools instance associated with the specified {@link ContainerKey}.
 	 *
 	 * Will result in the {@link RootDataVisualizations.Message} message being posted.
 	 *

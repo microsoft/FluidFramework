@@ -26,7 +26,7 @@ export namespace ContainerList {
 	 */
 	export interface MessageData {
 		/**
-		 * List of IDs for the Containers registered with the Devtools.
+		 * List of keys for the Containers registered with the Devtools.
 		 */
 		containers: ContainerKey[];
 	}
