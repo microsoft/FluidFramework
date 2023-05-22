@@ -18,7 +18,7 @@ import {
 import { rootFieldKeySymbol, ITreeCursor, moveToDetachedField, JsonableTree } from "../../core";
 import { nodeSchema, nodeSchemaData } from "./identifierIndex.spec";
 
-describe.only("Identifiers", () => {
+describe("Identifiers", () => {
 	// TODO: Increase these numbers when the identifier index is more efficient
 	for (const nodeCount of [50, 100]) {
 		describe(`In a tree with ${nodeCount} nodes`, () => {
