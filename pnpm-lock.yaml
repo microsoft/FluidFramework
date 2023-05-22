@@ -10024,6 +10024,9 @@ importers:
       '@fluidframework/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -10039,6 +10042,9 @@ importers:
       eslint:
         specifier: ~8.6.0
         version: 8.6.0
+      execa:
+        specifier: ^5.1.1
+        version: 5.1.1
       mocha-json-output-reporter:
         specifier: ^2.0.1
         version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
