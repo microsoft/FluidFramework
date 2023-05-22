@@ -106,21 +106,24 @@ export function generateGCConfigs(
 		createParams.gcOptions[gcSweepGenerationOptionName] /* currentGeneration */,
 	);
 
+	// If version upgrade is not enabled, fall back to the stable GC version.
+	const gcVersionInEffect =
+		mc.config.getBoolean(gcVersionUpgradeToV3Key) === true ? currentGCVersion : stableGCVersion;
+	// If the GC version in effect is older than the GC version in base snapshot, the GC version is outdated. If so,
+	// we should not run GC as there is a newer version out there which is more reliable than this.
+	const outdatedGCVersion =
+		gcVersionInBaseSnapshot && gcVersionInEffect < gcVersionInBaseSnapshot;
+
 	/**
 	 * Whether GC should run or not. The following conditions have to be met to run sweep:
-	 *
 	 * 1. GC should be enabled for this container.
-	 *
 	 * 2. GC should not be disabled via disableGC GC option.
-	 *
+	 * 3. The current GC version should be greater of equal to the GC version in the base snapshot.
 	 * These conditions can be overridden via runGCKey feature flag.
 	 */
 	const shouldRunGC =
 		mc.config.getBoolean(runGCKey) ??
-		// GC must be enabled for the document.
-		(gcEnabled &&
-			// GC must not be disabled via GC options.
-			!createParams.gcOptions.disableGC);
+		(gcEnabled && !createParams.gcOptions.disableGC && !outdatedGCVersion);
 
 	/**
 	 * Whether sweep should run or not. The following conditions have to be met to run sweep:
@@ -155,10 +158,6 @@ export function generateGCConfigs(
 	// via feature flags.
 	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
-
-	// If version upgrade is not enabled, fall back to the stable GC version.
-	const gcVersionInEffect =
-		mc.config.getBoolean(gcVersionUpgradeToV3Key) === true ? currentGCVersion : stableGCVersion;
 
 	return {
 		gcEnabled,

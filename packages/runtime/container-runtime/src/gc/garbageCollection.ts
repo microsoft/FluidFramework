@@ -202,10 +202,7 @@ export class GarbageCollector implements IGarbageCollector {
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
 					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
 					// brought back. The deletedNodes info is needed to identify when these nodes are used.
-					if (
-						this.configs.gcVersionInBaseSnapshot !==
-						this.summaryStateTracker.currentGCVersion
-					) {
+					if (this.configs.gcVersionInEffect !== this.configs.gcVersionInBaseSnapshot) {
 						return {
 							gcState: undefined,
 							tombstones: undefined,
