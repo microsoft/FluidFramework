@@ -4,24 +4,12 @@
  */
 import { IRequest } from "@fluidframework/core-interfaces";
 
-export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
+export type IResolvedUrl = IFluidResolvedUrl;
 
 /**
- * @deprecated This interface is unused and will be removed in the next major release.
+ * @deprecated Use IResolvedUrl instead.
  */
-export interface IResolvedUrlBase {
-	type: string;
-}
-
-/**
- * @deprecated This interface is unused and will be removed in the next major release.
- */
-export interface IWebResolvedUrl extends IResolvedUrlBase {
-	type: "web";
-	data: string;
-}
-
-export interface IFluidResolvedUrl extends IResolvedUrlBase {
+export interface IFluidResolvedUrl {
 	type: "fluid";
 	/**
 	 * The id of the container this resolved url is for.
