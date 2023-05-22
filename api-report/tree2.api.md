@@ -773,8 +773,7 @@ export interface IDefaultEditBuilder {
     addNodeExistsConstraint(path: UpPath): void;
     // (undocumented)
     addValueConstraint(path: UpPath, value: Value): void;
-    // (undocumented)
-    move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destIndex: number): void;
+    move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destinationIndex: number): void;
     // (undocumented)
     optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
     // (undocumented)
