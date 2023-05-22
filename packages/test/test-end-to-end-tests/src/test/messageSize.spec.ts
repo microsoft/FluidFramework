@@ -296,16 +296,17 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		},
 	);
 
+	const chunkingBatchesTimeoutMs = 200000;
+
 	[false, true].forEach((enableGroupedBatching) => {
 		const compressionSizeThreshold = 1024 * 1024;
-		const chunkingBatchesConfig: ITestContainerConfig = {
+		const containerConfig: ITestContainerConfig = {
 			...testContainerConfig,
 			runtimeOptions: {
 				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 				enableGroupedBatching,
 			},
 		};
-		const chunkingBatchesTimeoutMs = 200000;
 
 		describe(`Large payloads (exceeding the 1MB limit) - ${
 			enableGroupedBatching ? "grouped" : "regular"
@@ -315,13 +316,13 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 					{ messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
 					{ messagesInBatch: 3, messageSize: 5 * 1024 * 1024 }, // Three large messages
 					{ messagesInBatch: 1500, messageSize: 4 * 1024 }, // Many small messages
-				].forEach((config) => {
+				].forEach((testConfig) => {
 					it(
 						"Large payloads pass when compression enabled, " +
 							"compressed content is over max op size and chunking enabled. " +
-							`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
+							`${testConfig.messagesInBatch.toLocaleString()} messages of ${testConfig.messageSize.toLocaleString()} bytes == ` +
 							`${(
-								(config.messagesInBatch * config.messageSize) /
+								(testConfig.messagesInBatch * testConfig.messageSize) /
 								(1024 * 1024)
 							).toFixed(2)} MB`,
 						async function () {
@@ -334,20 +335,20 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 								this.skip();
 							}
 
-							await setupContainers(chunkingBatchesConfig);
+							await setupContainers(containerConfig);
 
 							const generated: string[] = [];
-							for (let i = 0; i < config.messagesInBatch; i++) {
+							for (let i = 0; i < testConfig.messagesInBatch; i++) {
 								// Ensure that the contents don't get compressed properly, by
 								// generating a random string for each map value instead of repeating it
-								const content = generateRandomStringOfSize(config.messageSize);
+								const content = generateRandomStringOfSize(testConfig.messageSize);
 								generated.push(content);
 								localMap.set(`key${i}`, content);
 							}
 
 							await provider.ensureSynchronized();
 
-							for (let i = 0; i < config.messagesInBatch; i++) {
+							for (let i = 0; i < testConfig.messagesInBatch; i++) {
 								assert.strictEqual(
 									localMap.get(`key${i}`),
 									generated[i],
@@ -377,7 +378,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				],
 				async function () {
 					const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-					await setupContainers(chunkingBatchesConfig, {
+					await setupContainers(containerConfig, {
 						"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					});
 
@@ -387,158 +388,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 					await provider.ensureSynchronized();
 				},
 			);
-
-			describe("Resiliency", () => {
-				const messageSize = 5 * 1024 * 1024;
-				const messagesInBatch = 3;
-
-				const sendAndAssertSynchronization = async (connection: Promise<void>) => {
-					const largeString = generateRandomStringOfSize(messageSize);
-					setMapKeys(localMap, messagesInBatch, largeString);
-					await connection;
-					await provider.ensureSynchronized();
-
-					assertMapValues(remoteMap, messagesInBatch, largeString);
-					assertMapValues(localMap, messagesInBatch, largeString);
-				};
-
-				describe("Remote container", () => {
-					// Forces a reconnection after processing a specified number
-					// of ops which satisfy a given condition
-					const reconnectAfterOpProcessing = async (
-						container: IContainer,
-						shouldProcess: (op: ISequencedDocumentMessage) => boolean,
-						count: number,
-					) => {
-						let opsProcessed = 0;
-						return new Promise<void>((resolve) => {
-							const handler = (op) => {
-								if (shouldProcess(op) && ++opsProcessed === count) {
-									container.disconnect();
-									container.once("connected", () => {
-										resolve();
-										container.off("op", handler);
-									});
-									container.connect();
-								}
-							};
-
-							container.on("op", handler);
-						});
-					};
-
-					it("Reconnects while processing chunks", async function () {
-						// This is not supported by the local server. See ADO:2690
-						// This test is flaky on tinylicious. See ADO:2964
-						if (
-							provider.driver.type === "local" ||
-							provider.driver.type === "tinylicious"
-						) {
-							this.skip();
-						}
-
-						await setupContainers(chunkingBatchesConfig);
-						// Force the container to reconnect after processing 2 chunked ops
-						const secondConnection = reconnectAfterOpProcessing(
-							remoteContainer,
-							(op) => op.contents?.type === ContainerMessageType.ChunkedOp,
-							2,
-						);
-
-						await sendAndAssertSynchronization(secondConnection);
-					}).timeout(chunkingBatchesTimeoutMs);
-
-					it("Reconnects while processing compressed batch", async function () {
-						// This is not supported by the local server. See ADO:2690
-						// This test is flaky on tinylicious. See ADO:2964
-						if (
-							provider.driver.type === "local" ||
-							provider.driver.type === "tinylicious"
-						) {
-							this.skip();
-						}
-
-						await setupContainers(chunkingBatchesConfig);
-						// Force the container to reconnect after processing 2 empty ops
-						// which would unroll the original ops from compression
-						const secondConnection = reconnectAfterOpProcessing(
-							remoteContainer,
-							(op) => op.type === MessageType.Operation && op.contents === undefined,
-							2,
-						);
-
-						await sendAndAssertSynchronization(secondConnection);
-					}).timeout(chunkingBatchesTimeoutMs);
-				});
-
-				describe("Local container", () => {
-					const reconnectAfterBatchSending = async (
-						container: IContainer,
-						shouldProcess: (batch: IDocumentMessage[]) => boolean,
-						count: number,
-					) => {
-						let batchesSent = 0;
-						return new Promise<void>((resolve) => {
-							const handler = (batch) => {
-								if (shouldProcess(batch) && ++batchesSent === count) {
-									container.disconnect();
-									container.once("connected", () => {
-										resolve();
-										container.deltaManager.outbound.off("op", handler);
-									});
-									container.connect();
-								}
-							};
-
-							container.deltaManager.outbound.on("op", handler);
-						});
-					};
-
-					it("Reconnects while sending chunks", async function () {
-						// This is not supported by the local server. See ADO:2690
-						if (provider.driver.type === "local") {
-							this.skip();
-						}
-
-						await setupContainers(chunkingBatchesConfig);
-						// Force the container to reconnect after sending 2 chunked ops,
-						// each in their own batch
-						const secondConnection = reconnectAfterBatchSending(
-							localContainer,
-							(batch) =>
-								batch.length === 1 &&
-								JSON.parse(batch[0].contents)?.type ===
-									ContainerMessageType.ChunkedOp,
-							2,
-						);
-
-						await sendAndAssertSynchronization(secondConnection);
-					}).timeout(chunkingBatchesTimeoutMs);
-
-					it("Reconnects while sending compressed batch", async function () {
-						// This is not supported by the local server. See ADO:2690
-						// This test is flaky on tinylicious. See ADO:2964
-						if (
-							provider.driver.type === "local" ||
-							provider.driver.type === "tinylicious"
-						) {
-							this.skip();
-						}
-
-						await setupContainers(chunkingBatchesConfig);
-						// Force the container to reconnect after sending the compressed batch
-						const secondConnection = reconnectAfterBatchSending(
-							localContainer,
-							(batch) =>
-								batch.length > 1 &&
-								batch.slice(1).every((x) => x.contents === undefined),
-							1,
-						);
-
-						await sendAndAssertSynchronization(secondConnection);
-					}).timeout(chunkingBatchesTimeoutMs);
-				});
-			});
 		});
 
 		describe(`Payload size on the wire - ${
@@ -561,7 +410,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				);
 			};
 
-			const setup = async (containerConfig: ITestContainerConfig) => {
+			const setup = async () => {
 				await setupContainers(containerConfig);
 				totalPayloadSizeInBytes = 0;
 				totalOps = 0;
@@ -630,7 +479,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 								this.skip();
 							}
 
-							await setup(chunkingBatchesConfig);
+							await setup();
 
 							for (let i = 0; i < config.messagesInBatch; i++) {
 								localMap.set(
@@ -650,6 +499,153 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 						},
 					).timeout(chunkingBatchesTimeoutMs);
 				}));
+		});
+	});
+
+	describe("Resiliency", () => {
+		const messageSize = 5 * 1024 * 1024;
+		const messagesInBatch = 3;
+		const config: ITestContainerConfig = {
+			...testContainerConfig,
+			runtimeOptions: {
+				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+			},
+		};
+
+		const sendAndAssertSynchronization = async (connection: Promise<void>) => {
+			const largeString = generateRandomStringOfSize(messageSize);
+			setMapKeys(localMap, messagesInBatch, largeString);
+			await connection;
+			await provider.ensureSynchronized();
+
+			assertMapValues(remoteMap, messagesInBatch, largeString);
+			assertMapValues(localMap, messagesInBatch, largeString);
+		};
+
+		describe("Remote container", () => {
+			// Forces a reconnection after processing a specified number
+			// of ops which satisfy a given condition
+			const reconnectAfterOpProcessing = async (
+				container: IContainer,
+				shouldProcess: (op: ISequencedDocumentMessage) => boolean,
+				count: number,
+			) => {
+				let opsProcessed = 0;
+				return new Promise<void>((resolve) => {
+					const handler = (op) => {
+						if (shouldProcess(op) && ++opsProcessed === count) {
+							container.disconnect();
+							container.once("connected", () => {
+								resolve();
+								container.off("op", handler);
+							});
+							container.connect();
+						}
+					};
+
+					container.on("op", handler);
+				});
+			};
+
+			it("Reconnects while processing chunks", async function () {
+				// This is not supported by the local server. See ADO:2690
+				// This test is flaky on tinylicious. See ADO:2964
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				await setupContainers(config);
+				// Force the container to reconnect after processing 2 chunked ops
+				const secondConnection = reconnectAfterOpProcessing(
+					remoteContainer,
+					(op) => op.contents?.type === ContainerMessageType.ChunkedOp,
+					2,
+				);
+
+				await sendAndAssertSynchronization(secondConnection);
+			}).timeout(chunkingBatchesTimeoutMs);
+
+			it("Reconnects while processing compressed batch", async function () {
+				// This is not supported by the local server. See ADO:2690
+				// This test is flaky on tinylicious. See ADO:2964
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				await setupContainers(config);
+				// Force the container to reconnect after processing 2 empty ops
+				// which would unroll the original ops from compression
+				const secondConnection = reconnectAfterOpProcessing(
+					remoteContainer,
+					(op) => op.type === MessageType.Operation && op.contents === undefined,
+					2,
+				);
+
+				await sendAndAssertSynchronization(secondConnection);
+			}).timeout(chunkingBatchesTimeoutMs);
+		});
+
+		describe("Local container", () => {
+			const reconnectAfterBatchSending = async (
+				container: IContainer,
+				shouldProcess: (batch: IDocumentMessage[]) => boolean,
+				count: number,
+			) => {
+				let batchesSent = 0;
+				return new Promise<void>((resolve) => {
+					const handler = (batch) => {
+						if (shouldProcess(batch) && ++batchesSent === count) {
+							container.disconnect();
+							container.once("connected", () => {
+								resolve();
+								container.deltaManager.outbound.off("op", handler);
+							});
+							container.connect();
+						}
+					};
+
+					container.deltaManager.outbound.on("op", handler);
+				});
+			};
+
+			it("Reconnects while sending chunks", async function () {
+				// This is not supported by the local server. See ADO:2690
+				if (provider.driver.type === "local") {
+					this.skip();
+				}
+
+				await setupContainers(config);
+				// Force the container to reconnect after sending 2 chunked ops,
+				// each in their own batch
+				const secondConnection = reconnectAfterBatchSending(
+					localContainer,
+					(batch) =>
+						batch.length === 1 &&
+						JSON.parse(batch[0].contents)?.type === ContainerMessageType.ChunkedOp,
+					2,
+				);
+
+				await sendAndAssertSynchronization(secondConnection);
+			}).timeout(chunkingBatchesTimeoutMs);
+
+			it("Reconnects while sending compressed batch", async function () {
+				// This is not supported by the local server. See ADO:2690
+				// This test is flaky on tinylicious. See ADO:2964
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				await setupContainers(config);
+				// Force the container to reconnect after sending the compressed batch
+				const secondConnection = reconnectAfterBatchSending(
+					localContainer,
+					(batch) =>
+						batch.length > 1 && batch.slice(1).every((x) => x.contents === undefined),
+					1,
+				);
+
+				await sendAndAssertSynchronization(secondConnection);
+			}).timeout(chunkingBatchesTimeoutMs);
 		});
 	});
 });
