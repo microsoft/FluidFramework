@@ -74,7 +74,7 @@ interface TelemetryMenuSelection {
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
- * is selected, and has a 'containerId' property to indicate which Container.
+ * is selected, and has a 'containerKey' property to indicate which Container.
  */
 type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
 

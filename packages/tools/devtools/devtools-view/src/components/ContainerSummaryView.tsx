@@ -200,7 +200,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		// eslint-disable-next-line unicorn/no-useless-undefined
 		setContainerState(undefined);
 
-		// Request state info for the newly specified containerId
+		// Request state info for the newly specified containerKey
 		messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
 
 		return (): void => {

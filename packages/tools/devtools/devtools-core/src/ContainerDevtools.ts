@@ -93,7 +93,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  * This class listens to incoming messages from the window (globalThis), and posts messages to it upon relevant
  * state changes and when requested.
  *
- * **Messages it listens for (if the {@link HasContainerId.containerId} matches):**
+ * **Messages it listens for (if the {@link HasContainerKey.containerKey} matches):**
  *
  * - {@link GetContainerDevtoolsFeatures.Message}: When received, {@link ContainerDevtoolsFeatures.Message} will be
  * posted in response.

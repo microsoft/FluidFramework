@@ -351,7 +351,7 @@ export interface IDevtoolsMessage<TData = unknown> {
 
 // @public
 export interface IFluidDevtools extends IDisposable {
-    closeContainerDevtools(containerId: string): void;
+    closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 

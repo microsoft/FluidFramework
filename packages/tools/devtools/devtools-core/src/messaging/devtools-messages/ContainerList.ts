@@ -34,7 +34,7 @@ export namespace ContainerList {
 	/**
 	 * Outbound message containing the list of Container-level devtools instances tracked by the root Devtools.
 	 *
-	 * Includes the new list of active Container IDs associated with active Container Devtools instances.
+	 * Includes the new list of active {@link ContainerKey}s associated with active Container Devtools instances.
 	 *
 	 * @internal
 	 */

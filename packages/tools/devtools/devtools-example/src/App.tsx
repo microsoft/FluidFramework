@@ -63,7 +63,7 @@ const containerSchema: ContainerSchema = {
 };
 
 /**
- * Helper function to read the container ID from the URL location.
+ * Helper function to read the Container ID from the URL location.
  */
 function getContainerIdFromLocation(location: Location): string {
 	return location.hash.slice(1);

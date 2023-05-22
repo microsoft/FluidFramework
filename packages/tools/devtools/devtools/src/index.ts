@@ -116,7 +116,10 @@ export interface IDevtools extends IDisposable {
 	/**
 	 * Initializes a {@link IDevtools} from the provided properties and stores it for future reference.
 	 *
-	 * @throws Will throw if devtools have already been registered for the specified Container ID.
+	 * @throws
+	 *
+	 * Will throw if devtools have already been registered for the specified
+	 * {@link @fluid-experimental/devtools-core#HasContainerKey.containerKey}.
 	 */
 	registerContainerDevtools(props: ContainerDevtoolsProps): void;
 
