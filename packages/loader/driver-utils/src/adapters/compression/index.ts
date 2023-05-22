@@ -8,5 +8,6 @@ export {
 	ICompressionStorageConfig,
 	SummaryCompressionProcessor,
 	DefaultCompressionStorageConfig,
+	defaultIsUseB64OnCompressed,
 } from "./compressionTypes";
 export { DocumentServiceFactoryCompressionAdapter } from "./documentServiceFactoryCompressionAdapter";

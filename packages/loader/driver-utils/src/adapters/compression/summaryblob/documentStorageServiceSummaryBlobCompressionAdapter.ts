@@ -20,6 +20,7 @@ import {
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
 	SummaryCompressionProcessor,
+	defaultIsUseB64OnCompressed,
 } from "../";
 
 /**
@@ -40,13 +41,12 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private _isCompressionEnabled: boolean = false;
 	private readonly _uncompressedBlobIds: Set<string> = new Set<string>();
 	public static readonly compressionMarkupBlob = ".summary-blob-compression.enabled";
-	private static readonly defaultIsUseB64OnCompressed = true;
 	private static readonly uncompressedPath = ".protocol";
 
 	constructor(
 		service: IDocumentStorageService,
 		private readonly _config: ICompressionStorageConfig,
-		private readonly _isUseB64OnCompressed = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
+		private readonly _isUseB64OnCompressed = defaultIsUseB64OnCompressed,
 	) {
 		super(service);
 	}
@@ -160,7 +160,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static readonly blobEncoder = (
 		input: SummaryObject,
 		config: ICompressionStorageConfig,
-		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
+		isUseB64OnCompressed: boolean = defaultIsUseB64OnCompressed,
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
@@ -420,7 +420,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	public static compressSummary(
 		summary: ISummaryTree,
 		config: ICompressionStorageConfig,
-		isUseB64OnCompressed: boolean = DocumentStorageServiceCompressionAdapter.defaultIsUseB64OnCompressed,
+		isUseB64OnCompressed: boolean = defaultIsUseB64OnCompressed,
 	): ISummaryTree {
 		this.putCompressionMarkup(summary);
 		const prep = DocumentStorageServiceCompressionAdapter.recursivelyReplace(

@@ -54,6 +54,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
+		console.log(`Summary uploaded:  ${JSON.stringify(summary).length} bytes`);
 		return this.internalStorageService.uploadSummaryWithContext(summary, context);
 	}
 

@@ -10,6 +10,7 @@ export enum SummaryCompressionAlgorithm {
 export enum SummaryCompressionProcessor {
 	SummaryBlob = 1,
 	SummaryKey = 2,
+	BlobOnly = 3,
 }
 
 export interface ICompressionStorageConfig {
@@ -21,5 +22,7 @@ export interface ICompressionStorageConfig {
 export const DefaultCompressionStorageConfig = {
 	algorithm: SummaryCompressionAlgorithm.LZ4,
 	minSizeToCompress: 500,
-	processor: SummaryCompressionProcessor.SummaryBlob,
+	processor: SummaryCompressionProcessor.SummaryKey,
 };
+
+export const defaultIsUseB64OnCompressed = true;

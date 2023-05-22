@@ -29,6 +29,7 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { IsoBuffer } from "@fluidframework/common-utils";
 import {
 	applyStorageCompression,
 	DefaultCompressionStorageConfig,
@@ -105,9 +106,9 @@ class InternalTestStorage implements IDocumentStorageService {
 		if (id === misotestid) {
 			return new TextEncoder().encode(abcContent);
 		} else {
-			return this.config.processor === SummaryCompressionProcessor.SummaryBlob
-				? getHeaderContent(this._uploadedSummary!)
-				: getCompressedHeaderContent(this._uploadedSummary!);
+			return this.config.processor === SummaryCompressionProcessor.SummaryKey
+				? getCompressedHeaderContent(this._uploadedSummary!)
+				: getHeaderContent(this._uploadedSummary!);
 		}
 	}
 	async uploadSummaryWithContext(
@@ -344,6 +345,34 @@ describe("Summary Compression Test", () => {
 		const downloadedSummary = await checkUploadDownloadSummary(config);
 		const content = downloadedSummary.tree[".protocol"]["tree"]["misotest"]["content"];
 		assert(content === abcContent, "The .profile underlying blob content is not correct");
+	});
+	it("Verify Blob Enc/Dec Symetry (blob-only markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+			processor: SummaryCompressionProcessor.BlobOnly,
+		};
+		await checkEncDec(config);
+	});
+	it("Verify Blob Enc/Dec Symetry (blob-only markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+			processor: SummaryCompressionProcessor.BlobOnly,
+		};
+		const summary = generateSummaryWithContent(1000);
+		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
+		await storage.uploadSummaryWithContext(summary, {
+			referenceSequenceNumber: 0,
+			proposalHandle: "test",
+			ackHandle: "test",
+		});
+		const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
+		const compressed = IsoBuffer.from(
+			new TextDecoder().decode(getHeaderContent(uploadedSummary!)),
+			"base64",
+		);
+		assert(new Uint8Array(compressed)[0] === 0xf4, "The blob-only prefix is not present!");
 	});
 });
 async function checkUploadDownloadSummary(
