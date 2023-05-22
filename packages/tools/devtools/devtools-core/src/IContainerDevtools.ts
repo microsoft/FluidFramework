@@ -5,7 +5,7 @@
 import { IDisposable } from "@fluidframework/common-definitions";
 
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
-import { HasContainerId } from "./CommonInterfaces";
+import { HasContainerKey } from "./CommonInterfaces";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)
@@ -19,7 +19,7 @@ import { HasContainerId } from "./CommonInterfaces";
  *
  * @internal
  */
-export interface IContainerDevtools extends HasContainerId, IDisposable {
+export interface IContainerDevtools extends HasContainerKey, IDisposable {
 	/**
 	 * Gets the history of all ConnectionState changes since the debugger session was initialized.
 	 *

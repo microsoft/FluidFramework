@@ -130,7 +130,7 @@ function registerContainerWithDevtools(
 ): void {
 	devtools.registerContainerDevtools({
 		container,
-		containerName,
+		containerKey: containerName,
 		dataVisualizers: undefined, // Use defaults
 	});
 }

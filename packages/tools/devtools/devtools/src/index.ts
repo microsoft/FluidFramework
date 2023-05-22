@@ -24,6 +24,7 @@ import {
 	initializeDevtools as initializeDevtoolsBase,
 	DevtoolsLogger,
 	VisualizeSharedObject,
+	HasContainerKey,
 } from "@fluid-experimental/devtools-core";
 import { IDisposable } from "@fluidframework/common-definitions";
 import { FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
@@ -74,18 +75,11 @@ export interface DevtoolsProps {
  *
  * @public
  */
-export interface ContainerDevtoolsProps {
+export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
 	 * The Container to register with the Devtools.
 	 */
 	container: IFluidContainer;
-
-	/**
-	 * A **unique** name or ID used to differentiate Containers registered with the Devtools.
-	 *
-	 * @example "Canvas Container"
-	 */
-	containerName: string;
 
 	/**
 	 * (optional) Configurations for generating visual representations of
@@ -205,7 +199,7 @@ export function initializeDevtools(props: DevtoolsProps): IDevtools {
 function mapContainerProps(
 	containerProps: ContainerDevtoolsProps,
 ): ContainerDevtoolsPropsBase | undefined {
-	const { container, containerName, dataVisualizers } = containerProps;
+	const { container, containerKey, dataVisualizers } = containerProps;
 	const fluidContainer = container as FluidContainer;
 
 	if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
@@ -216,7 +210,7 @@ function mapContainerProps(
 	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE();
 	return {
 		container: innerContainer,
-		containerName,
+		containerKey,
 		containerData: container.initialObjects,
 		dataVisualizers,
 	};

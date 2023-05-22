@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId } from "../../CommonInterfaces";
+import { HasContainerKey } from "../../CommonInterfaces";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
@@ -24,7 +24,7 @@ export namespace GetRootDataVisualizations {
 	 *
 	 * @internal
 	 */
-	export type MessageData = HasContainerId;
+	export type MessageData = HasContainerKey;
 
 	/**
 	 * Inbound message requesting visualizations for the root DDS data tracked by the

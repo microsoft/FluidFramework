@@ -4,28 +4,26 @@
  */
 
 /**
- * A unique ID for a Container registered with the Devtools.
+ * A key used to identify and differentiate Containers registered with the {@link IFluidDevtools}.
  *
- * @remarks
+ * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
  *
- * Note: this is an arbitrary identifier.
- * It is not necessarily the underlying Container object's ID, nor the ID of the associated document.
- * This value is strictly used to differentiate Containers registered with the Devtools.
+ * @example "Canvas Container"
  *
- * @internal
+ * @public
  */
-export type ContainerId = string;
+export type ContainerKey = string;
 
 /**
  * Common interface for data associated with a particular Container registered with the Devtools.
  *
- * @internal
+ * @public
  */
-export interface HasContainerId {
+export interface HasContainerKey {
 	/**
-	 * The ID of the registered Container associated with data or a request.
+	 * {@inheritDoc ContainerKey}
 	 */
-	containerId: ContainerId;
+	containerKey: ContainerKey;
 }
 
 /**

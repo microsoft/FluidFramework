@@ -7,7 +7,7 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
 
-import { ContainerId, FluidObjectId } from "./CommonInterfaces";
+import { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
@@ -49,16 +49,11 @@ import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Featu
  *
  * @public
  */
-export interface ContainerDevtoolsProps {
+export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
 	 * The Container to register with the Devtools.
 	 */
 	container: IContainer;
-
-	/**
-	 * A **unique** name or ID used to differentiate Containers registered with the {@link IFluidDevtools}.
-	 */
-	containerName: string;
 
 	/**
 	 * (optional) Distributed Data Structures (DDSs) associated with the
@@ -138,16 +133,11 @@ export interface ContainerDevtoolsProps {
  *
  * @sealed
  */
-export class ContainerDevtools implements IContainerDevtools {
+export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	/**
-	 * A unique identifier for the Container, used by the Devtools.
-	 *
-	 * @remarks
-	 *
-	 * Note: this has no relation to the Container's instance identifier (often called the "container ID"),
-	 * nor to the ID of the backing document (often called the "document ID").
+	 * {@inheritDoc HasContainerKey.containerKey}
 	 */
-	public readonly containerId: ContainerId;
+	public readonly containerKey: ContainerKey;
 
 	/**
 	 * The registered Container.
@@ -284,7 +274,7 @@ export class ContainerDevtools implements IContainerDevtools {
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		[GetContainerDevtoolsFeatures.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetContainerDevtoolsFeatures.Message;
-			if (message.data.containerId === this.containerId) {
+			if (message.data.containerKey === this.containerKey) {
 				this.postSupportedFeatures();
 				return true;
 			}
@@ -292,7 +282,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		},
 		[GetContainerState.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetContainerState.Message;
-			if (message.data.containerId === this.containerId) {
+			if (message.data.containerKey === this.containerKey) {
 				this.postContainerStateChange();
 				return true;
 			}
@@ -300,7 +290,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		},
 		[ConnectContainer.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as ConnectContainer.Message;
-			if (message.data.containerId === this.containerId) {
+			if (message.data.containerKey === this.containerKey) {
 				this.container.connect();
 				return true;
 			}
@@ -308,7 +298,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		},
 		[DisconnectContainer.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
-			if (message.data.containerId === this.containerId) {
+			if (message.data.containerKey === this.containerKey) {
 				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
 				return true;
 			}
@@ -316,7 +306,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		},
 		[CloseContainer.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as CloseContainer.Message;
-			if (message.data.containerId === this.containerId) {
+			if (message.data.containerKey === this.containerKey) {
 				this.container.close(/* TODO: Specify debugger reason here once it is supported */);
 				return true;
 			}
@@ -324,7 +314,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		},
 		[GetAudienceSummary.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetAudienceSummary.Message;
-			if (message.data.containerId === this.containerId) {
+			if (message.data.containerKey === this.containerKey) {
 				this.postAudienceStateChange();
 				return true;
 			}
@@ -332,7 +322,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		},
 		[GetRootDataVisualizations.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetRootDataVisualizations.Message;
-			if (message.data.containerId === this.containerId) {
+			if (message.data.containerKey === this.containerKey) {
 				this.getRootDataVisualizations().then((visualizations) => {
 					this.postRootDataVisualizations(visualizations);
 				}, console.error);
@@ -342,7 +332,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		},
 		[GetDataVisualization.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetDataVisualization.Message;
-			if (message.data.containerId === this.containerId) {
+			if (message.data.containerKey === this.containerKey) {
 				this.getDataVisualization(message.data.fluidObjectId).then((visualization) => {
 					this.postDataVisualization(message.data.fluidObjectId, visualization);
 				}, console.error);
@@ -370,7 +360,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		postMessagesToWindow(
 			this.messageLoggingOptions,
 			ContainerDevtoolsFeatures.createMessage({
-				containerId: this.containerId,
+				containerKey: this.containerKey,
 				features: supportedFeatures,
 			}),
 		);
@@ -383,11 +373,11 @@ export class ContainerDevtools implements IContainerDevtools {
 		postMessagesToWindow<IDevtoolsMessage>(
 			this.messageLoggingOptions,
 			ContainerStateChange.createMessage({
-				containerId: this.containerId,
+				containerKey: this.containerKey,
 				containerState: this.getContainerState(),
 			}),
 			ContainerStateHistory.createMessage({
-				containerId: this.containerId,
+				containerKey: this.containerKey,
 				history: [...this._connectionStateLog],
 			}),
 		);
@@ -408,7 +398,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		postMessagesToWindow(
 			this.messageLoggingOptions,
 			AudienceSummary.createMessage({
-				containerId: this.containerId,
+				containerKey: this.containerKey,
 				clientId: this.container.clientId,
 				audienceState: audienceClientMetadata,
 				audienceHistory: this.getAudienceHistory(),
@@ -422,7 +412,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		postMessagesToWindow(
 			this.messageLoggingOptions,
 			RootDataVisualizations.createMessage({
-				containerId: this.containerId,
+				containerKey: this.containerKey,
 				visualizations,
 			}),
 		);
@@ -435,7 +425,7 @@ export class ContainerDevtools implements IContainerDevtools {
 		postMessagesToWindow(
 			this.messageLoggingOptions,
 			DataVisualization.createMessage({
-				containerId: this.containerId,
+				containerKey: this.containerKey,
 				fluidObjectId,
 				visualization,
 			}),
@@ -448,7 +438,7 @@ export class ContainerDevtools implements IContainerDevtools {
 	 * Message logging options used by the debugger.
 	 */
 	private get messageLoggingOptions(): MessageLoggingOptions {
-		return { context: `Container Devtools (${this.containerId})` };
+		return { context: `Container Devtools (${this.containerKey})` };
 	}
 
 	/**
@@ -461,7 +451,7 @@ export class ContainerDevtools implements IContainerDevtools {
 	private _disposed: boolean;
 
 	public constructor(props: ContainerDevtoolsProps) {
-		this.containerId = props.containerName;
+		this.containerKey = props.containerKey;
 		this.containerData = props.containerData;
 		this.container = props.container;
 
@@ -559,7 +549,7 @@ export class ContainerDevtools implements IContainerDevtools {
 	private getContainerState(): ContainerStateMetadata {
 		const clientId = this.container.clientId;
 		return {
-			containerId: this.containerId,
+			containerKey: this.containerKey,
 			attachState: this.container.attachState,
 			connectionState: this.container.connectionState,
 			closed: this.container.closed,

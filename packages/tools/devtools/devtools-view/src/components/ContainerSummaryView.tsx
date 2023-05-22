@@ -33,7 +33,7 @@ import {
 	DisconnectContainer,
 	GetContainerState,
 	handleIncomingMessage,
-	HasContainerId,
+	HasContainerKey,
 	IMessageRelay,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
@@ -56,7 +56,7 @@ initializeFluentUiIcons();
 /**
  * {@link ContainerSummaryView} input props.
  */
-export type ContainerSummaryViewProps = HasContainerId;
+export type ContainerSummaryViewProps = HasContainerKey;
 
 const columnsDef: TableColumnDefinition<Item>[] = [
 	createTableColumn<Item>({
@@ -148,7 +148,7 @@ function ContainerStatusRow(statusComponents: string[]): React.ReactElement {
  * Debugger view displaying basic Container stats.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
-	const { containerId } = props;
+	const { containerKey } = props;
 	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
 
@@ -175,7 +175,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		const inboundMessageHandlers: InboundHandlers = {
 			[ContainerStateChange.MessageType]: (untypedMessage) => {
 				const message = untypedMessage as ContainerStateChange.Message;
-				if (message.data.containerId === containerId) {
+				if (message.data.containerKey === containerKey) {
 					setContainerState(message.data.containerState);
 					return true;
 				}
@@ -201,12 +201,12 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		setContainerState(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
+		messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, setContainerState, messageRelay]);
+	}, [containerKey, setContainerState, messageRelay]);
 
 	if (containerState === undefined) {
 		return <Waiting label="Waiting for Container Summary data." />;
@@ -215,7 +215,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	function tryConnect(): void {
 		messageRelay.postMessage(
 			ConnectContainer.createMessage({
-				containerId,
+				containerKey,
 			}),
 		);
 	}
@@ -223,7 +223,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	function forceDisconnect(): void {
 		messageRelay.postMessage(
 			DisconnectContainer.createMessage({
-				containerId,
+				containerKey,
 				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
@@ -232,7 +232,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	function closeContainer(): void {
 		messageRelay.postMessage(
 			CloseContainer.createMessage({
-				containerId,
+				containerKey,
 				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
@@ -252,7 +252,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	return (
 		<Stack>
 			<StackItem align="center">
-				<h2>{containerState.containerId}</h2>
+				<h2>{containerState.containerKey}</h2>
 			</StackItem>
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>

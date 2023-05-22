@@ -5,14 +5,14 @@
 ```ts
 
 import { DevtoolsLogger } from '@fluid-experimental/devtools-core';
+import { HasContainerKey } from '@fluid-experimental/devtools-core';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { VisualizeSharedObject } from '@fluid-experimental/devtools-core';
 
 // @public
-export interface ContainerDevtoolsProps {
+export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IFluidContainer;
-    containerName: string;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 

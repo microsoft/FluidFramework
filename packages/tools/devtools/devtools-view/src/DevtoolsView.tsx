@@ -5,7 +5,7 @@
 import React from "react";
 import { useId } from "@fluentui/react-hooks";
 import {
-	ContainerId,
+	ContainerKey,
 	ContainerList,
 	DevtoolsFeature,
 	DevtoolsFeatureFlags,
@@ -13,6 +13,7 @@ import {
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingMessage,
+	HasContainerKey,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
@@ -51,16 +52,11 @@ const getContainerListMessage = GetContainerList.createMessage();
  * Indicates that the currently selected menu option is a particular Container.
  * @see {@link MenuSection} for other possible options.
  */
-interface ContainerMenuSelection {
+interface ContainerMenuSelection extends HasContainerKey {
 	/**
 	 * String to differentiate between different types of options in menu.
 	 */
 	type: "containerMenuSelection";
-
-	/**
-	 * The containerId for the selected menu option that this object represents.
-	 */
-	containerId: string;
 }
 
 /**
@@ -207,7 +203,7 @@ interface _DevtoolsViewProps {
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	const { supportedFeatures } = props;
 
-	const [containers, setContainers] = React.useState<ContainerId[] | undefined>();
+	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
 	const messageRelay = useMessageRelay();
@@ -270,7 +266,7 @@ interface ViewProps {
 	/**
 	 * The list of Containers, if any are registered with the webpage's Devtools instance.
 	 */
-	containers?: ContainerId[];
+	containers?: ContainerKey[];
 }
 
 /**
@@ -286,14 +282,14 @@ function View(props: ViewProps): React.ReactElement {
 			break;
 		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations
-			const container: ContainerId | undefined = containers?.find(
-				(containerId) => containerId === menuSelection.containerId,
+			const container: ContainerKey | undefined = containers?.find(
+				(containerKey) => containerKey === menuSelection.containerKey,
 			);
 			view =
 				container === undefined ? (
 					<div>Could not find a Devtools instance for that container.</div>
 				) : (
-					<ContainerDevtoolsView containerId={menuSelection.containerId} />
+					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
 			break;
 		default:
@@ -338,7 +334,7 @@ interface MenuProps {
 	/**
 	 * The set of Containers to offer as selection options.
 	 */
-	containers?: ContainerId[];
+	containers?: ContainerKey[];
 }
 
 /**
@@ -347,8 +343,8 @@ interface MenuProps {
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
 
-	function onContainerClicked(id: string): void {
-		setSelection({ type: "containerMenuSelection", containerId: id });
+	function onContainerClicked(containerKey: ContainerKey): void {
+		setSelection({ type: "containerMenuSelection", containerKey });
 	}
 
 	function onTelemetryClicked(): void {
@@ -363,7 +359,7 @@ function Menu(props: MenuProps): React.ReactElement {
 			containers={containers}
 			currentContainerSelection={
 				currentSelection?.type === "containerMenuSelection"
-					? currentSelection.containerId
+					? currentSelection.containerKey
 					: undefined
 			}
 			selectContainer={onContainerClicked}
@@ -397,19 +393,19 @@ interface ContainersMenuSectionProps {
 	/**
 	 * The set of Containers to offer as selection options.
 	 */
-	containers?: ContainerId[];
+	containers?: ContainerKey[];
 
 	/**
-	 * The currently selected Container ID, if one is currently selected.
+	 * The currently selected Container key, if one is currently selected.
 	 */
-	currentContainerSelection: string | undefined;
+	currentContainerSelection: ContainerKey | undefined;
 
 	/**
-	 * Updates the Container selection to the specified ID.
+	 * Updates the Container selection to the specified key.
 	 *
 	 * @remarks Passing `undefined` clears the selection.
 	 */
-	selectContainer(containerId: string | undefined): void;
+	selectContainer(containerKey: ContainerKey | undefined): void;
 }
 
 /**
@@ -429,13 +425,13 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	} else {
 		containerSectionInnerView = (
 			<>
-				{containers.map((containerId) => (
+				{containers.map((containerKey) => (
 					<MenuItem
-						key={containerId}
-						isActive={currentContainerSelection === containerId}
-						text={containerId}
+						key={containerKey}
+						isActive={currentContainerSelection === containerKey}
+						text={containerKey}
 						onClick={(event): void => {
-							selectContainer(`${containerId}`);
+							selectContainer(`${containerKey}`);
 						}}
 					/>
 				))}

@@ -162,7 +162,7 @@ async function start(): Promise<void> {
 		initialContainers: [
 			{
 				container,
-				containerName: "Dice Roller Container",
+				containerKey: "Dice Roller Container",
 			},
 		],
 	});

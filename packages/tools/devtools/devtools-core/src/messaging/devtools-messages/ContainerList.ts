@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerId } from "../../CommonInterfaces";
+import { ContainerKey } from "../../CommonInterfaces";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
@@ -28,7 +28,7 @@ export namespace ContainerList {
 		/**
 		 * List of IDs for the Containers registered with the Devtools.
 		 */
-		containers: ContainerId[];
+		containers: ContainerKey[];
 	}
 
 	/**

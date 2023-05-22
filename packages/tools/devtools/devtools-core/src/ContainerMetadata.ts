@@ -5,14 +5,14 @@
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { HasContainerId } from "./CommonInterfaces";
+import { HasContainerKey } from "./CommonInterfaces";
 
 /**
  * Metadata describing a {@link @fluidframework/container-definitions#IContainer}'s core state.
  *
  * @internal
  */
-export interface ContainerStateMetadata extends HasContainerId {
+export interface ContainerStateMetadata extends HasContainerKey {
 	/**
 	 * Whether or not the Container has been closed (disposed).
 	 */
