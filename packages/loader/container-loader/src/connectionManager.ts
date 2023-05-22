@@ -666,9 +666,10 @@ export class ConnectionManager implements IConnectionManager {
 	/**
 	 * Disconnect the current connection.
 	 * @param reason - Text description of disconnect reason to emit with disconnect event
+	 * @param error - Error causing the disconnect if any.
 	 * @returns A boolean that indicates if there was an existing connection (or pending connection) to disconnect
 	 */
-	private disconnectFromDeltaStream(reason: string): boolean {
+	private disconnectFromDeltaStream(reason: string, error?: IAnyDriverError): boolean {
 		this.pendingReconnect = false;
 
 		if (this.connection === undefined) {
@@ -701,7 +702,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.clear();
 		connection.dispose();
 
-		this.props.disconnectHandler(reason);
+		this.props.disconnectHandler(reason, error);
 
 		this._connectionVerboseProps = {};
 
@@ -897,7 +898,7 @@ export class ConnectionManager implements IConnectionManager {
 		// If we're already disconnected/disconnecting it's not appropriate to call this again.
 		assert(this.connection !== undefined, 0x0eb /* "Missing connection for reconnect" */);
 
-		this.disconnectFromDeltaStream(disconnectMessage);
+		this.disconnectFromDeltaStream(disconnectMessage, error);
 
 		// We will always trigger reconnect, even if canRetry is false.
 		// Any truly fatal error state will result in container close upon attempted reconnect,
