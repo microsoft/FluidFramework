@@ -296,16 +296,17 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		},
 	);
 
-	const compressionSizeThreshold = 1024 * 1024;
-	const chunkingBatchesConfig: ITestContainerConfig = {
-		...testContainerConfig,
-		runtimeOptions: {
-			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-		},
-	};
-	const chunkingBatchesTimeoutMs = 200000;
-
 	[false, true].forEach((enableGroupedBatching) => {
+		const compressionSizeThreshold = 1024 * 1024;
+		const chunkingBatchesConfig: ITestContainerConfig = {
+			...testContainerConfig,
+			runtimeOptions: {
+				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+				enableGroupedBatching,
+			},
+		};
+		const chunkingBatchesTimeoutMs = 200000;
+
 		describe(`Large payloads (exceeding the 1MB limit) - ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batches`, () => {
@@ -629,15 +630,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 								this.skip();
 							}
 
-							await setup({
-								...testContainerConfig,
-								runtimeOptions: {
-									summaryOptions: {
-										summaryConfigOverrides: { state: "disabled" },
-									},
-									enableGroupedBatching,
-								},
-							});
+							await setup(chunkingBatchesConfig);
 
 							for (let i = 0; i < config.messagesInBatch; i++) {
 								localMap.set(
