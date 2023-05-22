@@ -11,11 +11,7 @@ import { Changeset, Mark, MoveId, NodeChangeType, Reattach, ReturnFrom, ReturnTo
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(
-		index: number,
-		cursor: ITreeCursor | ITreeCursor[],
-		id: ChangesetLocalId,
-	): Changeset<never>;
+	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
 	delete(index: number, count: number): Changeset<never>;
 	revive(
 		index: number,
@@ -55,14 +51,12 @@ export const sequenceFieldEditor = {
 	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", changes: change }),
 	insert: (
 		index: number,
-		cursors: ITreeCursor | ITreeCursor[],
+		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
 	): Changeset<never> =>
 		markAtIndex(index, {
 			type: "Insert",
-			content: Array.isArray(cursors)
-				? cursors.map(jsonableTreeFromCursor)
-				: [jsonableTreeFromCursor(cursors)],
+			content: cursors.map(jsonableTreeFromCursor),
 			id,
 		}),
 	delete: (index: number, count: number): Changeset<never> =>
