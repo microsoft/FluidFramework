@@ -68,7 +68,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
     protected getUninitializedErrorString(item: string): string;
     initializeInternal(existing: boolean): Promise<void>;
-    request(request: IRequest): Promise<IResponse>;
     protected get root(): ISharedDirectory;
 }
 
@@ -130,6 +129,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     finishInitialization(existing: boolean): Promise<void>;
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
+    // @deprecated
     getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;

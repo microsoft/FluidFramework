@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/app-insights-logger",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"private": true,
 	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
@@ -15,10 +15,9 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "npm run tsc",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
-		"build:genver": "gen-version",
 		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"clean": "rimraf _api-extractor-temp coverage dist nyc *.tsbuildinfo *.build.log",
 		"eslint": "eslint src",

@@ -17,7 +17,7 @@ services:
     redis:
         image: redis:alpine
     mongodb:
-        image: mongo:3.4.3
+        image: mongo:4
     riddler:
         image: prague.azurecr.io/prague:2302
         command: node dist/riddler/www.js

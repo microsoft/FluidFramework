@@ -39,7 +39,6 @@ export class OpGroupingManager {
 			}
 		}
 
-		// Need deserializedContent for back-compat
 		const deserializedContent = {
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.content.map<IGroupedMessage>((message) => ({
@@ -56,6 +55,7 @@ export class OpGroupingManager {
 					localOpMetadata: undefined,
 					metadata: undefined,
 					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
+					// Need deserializedContent for back-compat
 					deserializedContent: deserializedContent as ContainerRuntimeMessage,
 					contents: JSON.stringify(deserializedContent),
 				},

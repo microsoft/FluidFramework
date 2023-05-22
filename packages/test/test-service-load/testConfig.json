@@ -22,7 +22,8 @@
 				"durationMs": {
 					"min": 5000,
 					"max": 15000
-				}
+				},
+				"stashPercent": 0
 			},
 			"optionOverrides": {
 				"odsp": {
@@ -148,8 +149,8 @@
 			"totalSendCount": 150,
 			"readWriteCycleMs": 10000,
 			"faultInjectionMs": {
-				"min": 0,
-				"max": 10000
+				"min": 5000,
+				"max": 30000
 			},
 			"offline": {
 				"delayMs": {
@@ -162,8 +163,30 @@
 				}
 			},
 			"totalBlobCount": 300,
-			"blobSize": 10240,
-			"detachedBlobCount": 0
+			"blobSize": 10240
+		},
+		"offline": {
+			"opRatePerMin": 60,
+			"progressIntervalMs": 5000,
+			"numClients": 4,
+			"totalSendCount": 300,
+			"readWriteCycleMs": 10000,
+			"faultInjection": {
+				"min": 0,
+				"max": 45000
+			},
+			"offline": {
+				"delayMs": {
+					"min": 0,
+					"max": 30000
+				},
+				"durationMs": {
+					"min": 5000,
+					"max": 15000
+				}
+			},
+			"totalBlobCount": 300,
+			"blobSize": 256
 		},
 		"binarySnapshotFormat": {
 			"opRatePerMin": 60,

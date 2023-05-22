@@ -538,6 +538,49 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.equal(reader.nextNode(), false);
 			});
 
+			it("move-out under transient node", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
+
+				const moveId: Delta.MoveId = brand(1);
+				const moveOut: Delta.MoveOut = {
+					type: Delta.MarkType.MoveOut,
+					count: 1,
+					moveId,
+				};
+
+				const moveIn: Delta.MoveIn = {
+					type: Delta.MarkType.MoveIn,
+					count: 1,
+					moveId,
+				};
+				const mark: Delta.Insert = {
+					type: Delta.MarkType.Insert,
+					content: [
+						singleTextCursor({
+							type: jsonObject.name,
+							fields: {
+								x: [
+									{
+										type: jsonNumber.name,
+										value: 0,
+									},
+								],
+							},
+						}),
+					],
+					isTransient: true,
+					fields: new Map([[xField, [moveOut]]]),
+				};
+				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark, moveIn]]]);
+				forest.applyDelta(delta);
+
+				const reader = forest.allocateCursor();
+				moveToDetachedField(forest, reader);
+				assert(reader.firstNode());
+				assert.equal(reader.value, 0);
+				assert.equal(reader.nextNode(), false);
+			});
+
 			it("move out and move in", () => {
 				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
 				initializeForest(forest, nestedContent.map(singleTextCursor));

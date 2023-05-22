@@ -63,6 +63,8 @@ export class DeliLambdaFactory
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
+		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		super();
 	}
@@ -213,6 +215,8 @@ export class DeliLambdaFactory
 			sessionMetric,
 			sessionStartMetric,
 			this.checkpointService,
+			this.restartOnCheckpointFailure,
+			this.kafkaCheckpointOnReprocessingOp,
 		);
 
 		deliLambda.on("close", (closeType) => {

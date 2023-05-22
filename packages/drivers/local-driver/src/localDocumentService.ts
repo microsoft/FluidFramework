@@ -16,11 +16,10 @@ import { ITokenProvider } from "@fluidframework/routerlicious-driver";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-	LocalDeltaStorageService,
-	LocalDocumentDeltaConnection,
-	LocalDocumentStorageService,
-} from ".";
+import { LocalDocumentStorageService } from "./localDocumentStorageService";
+import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
+import { LocalDeltaStorageService } from "./localDeltaStorageService";
+
 /**
  * Basic implementation of a document service for local use.
  */
