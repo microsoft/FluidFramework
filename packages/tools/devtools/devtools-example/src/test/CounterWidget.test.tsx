@@ -11,7 +11,7 @@ import React from "react";
 import { SharedCounter } from "@fluidframework/counter";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { CounterWidget } from "./widgets";
+import { CounterWidget } from "../widgets";
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
