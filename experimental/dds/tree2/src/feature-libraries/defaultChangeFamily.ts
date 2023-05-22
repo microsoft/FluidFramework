@@ -6,7 +6,6 @@
 import { ICodecFamily } from "../codec";
 import {
 	ChangeFamily,
-	ProgressiveEditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
 	AnchorSet,
@@ -18,7 +17,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 } from "../core";
-import { brand } from "../util";
+import { brand, isReadonlyArray } from "../util";
 import {
 	FieldKind,
 	ModularChangeFamily,
@@ -112,15 +111,14 @@ export interface IDefaultEditBuilder {
 
 	// TODO: document
 	addValueConstraint(path: UpPath, value: Value): void;
+	addNodeExistsConstraint(path: UpPath): void;
 }
 
 /**
- * Implementation of {@link ProgressiveEditBuilder} based on the default set of supported field kinds.
+ * Implementation of {@link IDefaultEditBuilder} based on the default set of supported field kinds.
  * @sealed
  */
-export class DefaultEditBuilder
-	implements ProgressiveEditBuilder<DefaultChangeset>, IDefaultEditBuilder
-{
+export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuilder {
 	private readonly modularBuilder: ModularEditBuilder;
 
 	public constructor(
@@ -148,6 +146,10 @@ export class DefaultEditBuilder
 
 	public addValueConstraint(path: UpPath, value: Value): void {
 		this.modularBuilder.addValueConstraint(path, value);
+	}
+
+	public addNodeExistsConstraint(path: UpPath): void {
+		this.modularBuilder.addNodeExistsConstraint(path);
 	}
 
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
@@ -204,11 +206,15 @@ export class DefaultEditBuilder
 
 	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
 		return {
-			insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
+			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
+				const content = isReadonlyArray(newContent) ? newContent : [newContent];
+				if (content.length === 0) {
+					return;
+				}
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(
 						index,
-						newContent,
+						content,
 						this.modularBuilder.generateId(
 							Array.isArray(newContent) ? newContent.length : 1,
 						),
@@ -268,13 +274,6 @@ export class DefaultEditBuilder
 			},
 		};
 	}
-
-	/**
-	 * {@inheritDoc (ProgressiveEditBuilder:interface).getChanges}
-	 */
-	public getChanges(): DefaultChangeset[] {
-		return this.modularBuilder.getChanges();
-	}
 }
 
 /**
@@ -309,7 +308,7 @@ export interface SequenceFieldEditBuilder {
 	 * @param index - the index at which to insert the `newContent`.
 	 * @param newContent - the new content to be inserted in the field
 	 */
-	insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+	insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
 
 	/**
 	 * Issues a change which deletes `count` elements starting at the given `index`.

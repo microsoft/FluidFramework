@@ -78,6 +78,8 @@ export class ScribeLambdaFactory
 		private readonly getDeltasViaAlfred: boolean,
 		private readonly transientTenants: string[],
 		private readonly checkpointService: ICheckpointService,
+		private readonly restartOnCheckpointFailure: boolean,
+		private readonly kafkaCheckpointOnReprocessingOp: boolean,
 	) {
 		super();
 	}
@@ -273,6 +275,8 @@ export class ScribeLambdaFactory
 			opsSinceLastSummary,
 			scribeSessionMetric,
 			new Set(this.transientTenants),
+			this.restartOnCheckpointFailure,
+			this.kafkaCheckpointOnReprocessingOp,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

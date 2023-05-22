@@ -40,6 +40,9 @@ export function fail(message: string): never {
 
 /**
  * Checks whether or not the given object is a `readonly` array.
+ *
+ * Note that this does NOT indicate if a given array should be treated as readonly.
+ * This instead indicates if an object is an Array, and is typed to tolerate the readonly case.
  */
 export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
 	// `Array.isArray()` does not properly narrow `readonly` array types by itself,
@@ -244,3 +247,17 @@ export function assertValidIndex(
 		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
 }
+
+/**
+ * Assume that `TInput` is a `TAssumeToBe`.
+ *
+ * @remarks
+ * This is useful in generic code when it is impractical (or messy)
+ * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
+ * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
+ * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
+ * it will behave like `TInput` was used directly.
+ *
+ * @alpha
+ */
+export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
