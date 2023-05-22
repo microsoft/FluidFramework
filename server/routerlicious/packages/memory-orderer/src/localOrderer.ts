@@ -290,6 +290,8 @@ export class LocalOrderer implements IOrderer {
 					undefined,
 					undefined,
 					checkpointService,
+					true,
+					true,
 				);
 			},
 		);
@@ -390,6 +392,8 @@ export class LocalOrderer implements IOrderer {
 			scribeMessages.map((message) => message.operation),
 			undefined,
 			new Set<string>(),
+			true,
+			true,
 		);
 	}
 

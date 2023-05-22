@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import * as resources from "@fluidframework/gitresources";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHeirarchy } from "@fluidframework/protocol-base";
 import * as api from "@fluidframework/protocol-definitions";
 import { debug } from "./debug";
 import {
@@ -32,7 +32,7 @@ export class GitManager implements IGitManager {
 			this.blobCache.set(blob.sha, blob);
 		}
 
-		return buildHierarchy(header.tree);
+		return buildGitTreeHeirarchy(header.tree);
 	}
 
 	public async getFullTree(sha: string): Promise<any> {

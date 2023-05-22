@@ -3,49 +3,49 @@
  * Licensed under the MIT License.
  */
 
-import child_process from "child_process";
+import { spawnSync } from "child_process";
 import fs from "fs";
 import os from "os";
 import path from "path";
 
-export interface LernaOutput {
+export interface PackageInfo {
 	name: string;
 	version: string;
 	private: string;
-	location: string;
+	path: string;
 }
 
 /**
- * Gets and parses a LernaOutput from child process
- * @param input - child prcess buffer
+ * Gets and parses a PackageInfo for packages in the workspace.
  */
-export function getLernaOutput(): LernaOutput[] {
+export function getPackageInfo(): PackageInfo[] {
 	try {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const lernaOutput: LernaOutput[] = JSON.parse(
-			child_process.execSync("npx lerna list --all --json").toString(),
+		const info: PackageInfo[] = JSON.parse(
+			spawnSync("pnpm", ["recursive", "list", "--json", "--depth=-1"], {
+				encoding: "utf-8",
+			}).stdout,
 		);
-		if (!Array.isArray(lernaOutput)) {
+		if (!Array.isArray(info)) {
 			// eslint-disable-next-line unicorn/prefer-type-error
 			throw new Error("stdin input was not package array");
 		}
-		return lernaOutput;
+		return info;
 	} catch (error) {
 		console.error(error);
 		process.exit(-1);
 	}
 }
 
-function main(): void {
-	// Get the lerna output
-	const lernaOutput: LernaOutput[] = getLernaOutput();
+export function writePortMapFile(): void {
+	const info: PackageInfo[] = getPackageInfo();
 
 	// Assign a unique port to each package
 	const portMap: { [pkgName: string]: number } = {};
 	let port = 8081;
-	for (const pkg of lernaOutput) {
+	for (const pkg of info) {
 		if (pkg.name === undefined) {
-			console.error("missing name in lerna package entry");
+			console.error("missing name in package info");
 			process.exit(-1);
 		}
 		portMap[pkg.name] = port++;
@@ -55,5 +55,3 @@ function main(): void {
 	const portMapPath = path.join(os.tmpdir(), "testportmap.json");
 	fs.writeFileSync(portMapPath, JSON.stringify(portMap));
 }
-
-main();
