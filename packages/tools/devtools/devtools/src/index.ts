@@ -81,9 +81,9 @@ export interface ContainerDevtoolsProps {
 	container: IFluidContainer;
 
 	/**
-	 * A unique ID used to differentiate Containers registered with the Devtools.
+	 * A **unique** name or ID used to differentiate Containers registered with the Devtools.
 	 */
-	id: string;
+	containerName: string;
 
 	/**
 	 * (optional) Configurations for generating visual representations of
@@ -172,8 +172,6 @@ class Devtools implements IDevtools {
 
 /**
  * TODO
- *
- * @public
  */
 export function initializeDevtools(props: DevtoolsProps): IDevtools {
 	const { initialContainers, logger } = props;
@@ -202,7 +200,7 @@ export function initializeDevtools(props: DevtoolsProps): IDevtools {
 function mapContainerProps(
 	containerProps: ContainerDevtoolsProps,
 ): ContainerDevtoolsPropsBase | undefined {
-	const { container, id, dataVisualizers } = containerProps;
+	const { container, containerName: id, dataVisualizers } = containerProps;
 	const fluidContainer = container as FluidContainer;
 
 	if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
