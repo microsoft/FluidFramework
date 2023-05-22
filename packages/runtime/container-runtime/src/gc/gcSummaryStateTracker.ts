@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { mergeStats, ReadAndParseBlob, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeMetadata, metadataBlobName, RefreshSummaryResult } from "../summary";
-import { GCVersion } from "./gcDefinitions";
+import { GCVersion, IGCStats } from "./gcDefinitions";
 import { getGCDataFromSnapshot, generateSortedGCState, getGCVersion } from "./gcHelpers";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { IGarbageCollectorConfigs } from ".";
@@ -49,6 +49,10 @@ export class GCSummaryStateTracker {
 
 	// Tracks whether there was GC was run in latest summary being tracked.
 	private wasGCRunInLatestSummary: boolean;
+
+	// Tracks the count of data stores whose state updated since the last summary, i.e., they went from referenced
+	// to unreferenced or vice-versa.
+	public updatedDSCountSinceLastSummary: number = 0;
 
 	constructor(
 		// Tells whether GC should run or not.
@@ -286,6 +290,7 @@ export class GCSummaryStateTracker {
 			this.latestSummaryGCVersion = this.currentGCVersion;
 			this.latestSummaryData = this.pendingSummaryData;
 			this.pendingSummaryData = undefined;
+			this.updatedDSCountSinceLastSummary = 0;
 			return undefined;
 		}
 
@@ -325,5 +330,12 @@ export class GCSummaryStateTracker {
 			serializedDeletedNodes: JSON.stringify(snapshotData.deletedNodes),
 		};
 		return snapshotData;
+	}
+
+	/**
+	 * Called to update the state from a GC run's stats. Used to update the count of data stores whose state updated.
+	 */
+	public updateStateFromGCRunStats(stats: IGCStats) {
+		this.updatedDSCountSinceLastSummary += stats.updatedDataStoreCount;
 	}
 }

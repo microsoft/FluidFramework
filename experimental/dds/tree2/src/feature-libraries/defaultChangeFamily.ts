@@ -17,7 +17,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 } from "../core";
-import { brand } from "../util";
+import { brand, isReadonlyArray } from "../util";
 import {
 	FieldKind,
 	ModularChangeFamily,
@@ -206,11 +206,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
 		return {
-			insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
+			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
+				const content = isReadonlyArray(newContent) ? newContent : [newContent];
+				if (content.length === 0) {
+					return;
+				}
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(
 						index,
-						newContent,
+						content,
 						this.modularBuilder.generateId(
 							Array.isArray(newContent) ? newContent.length : 1,
 						),
@@ -304,7 +308,7 @@ export interface SequenceFieldEditBuilder {
 	 * @param index - the index at which to insert the `newContent`.
 	 * @param newContent - the new content to be inserted in the field
 	 */
-	insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+	insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
 
 	/**
 	 * Issues a change which deletes `count` elements starting at the given `index`.

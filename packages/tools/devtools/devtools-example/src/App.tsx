@@ -23,17 +23,9 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 
-import {
-	ContainerInfo,
-	createFluidContainer,
-	loadExistingFluidContainer,
-} from "../ClientUtilities";
-import { CounterWidget, EmojiGrid } from "../widgets";
-import { initializeFluentUiIcons } from "../../InitializeIcons";
-import { createMockSharedObject } from "../MockSharedObject";
-
-// Ensure FluentUI icons are initialized.
-initializeFluentUiIcons();
+import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
+import { CounterWidget, EmojiGrid } from "./widgets";
+import { createMockSharedObject } from "./MockSharedObject";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.

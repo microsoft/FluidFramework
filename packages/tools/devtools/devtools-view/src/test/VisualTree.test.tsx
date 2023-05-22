@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "assert";
 import React from "react";
 
 // eslint-disable-next-line import/no-unassigned-import
@@ -72,7 +71,7 @@ describe("VisualTreeView component tests", () => {
 					};
 				}
 				default:
-					fail("Received unexpected message.");
+					throw new Error("Received unexpected message.");
 			}
 		});
 

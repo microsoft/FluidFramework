@@ -26,6 +26,15 @@ const defaultDataStoreId = "default";
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
 	public static readonly defaultDataStoreId = defaultDataStoreId;
 
+	/**
+	 * Constructor
+	 * @param defaultFactory -
+	 * @param registryEntries -
+	 * @param dependencyContainer - deprecated, will be removed in a future release
+	 * @param requestHandlers -
+	 * @param runtimeOptions -
+	 * @param initializeEntryPoint -
+	 */
 	constructor(
 		protected readonly defaultFactory: IFluidDataStoreFactory,
 		registryEntries: NamedFluidDataStoreRegistryEntries,

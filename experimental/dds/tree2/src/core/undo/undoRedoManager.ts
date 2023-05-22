@@ -197,29 +197,34 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased after merging.
 	 * @param newCommits - all commits which were appended to the source branch.
+	 * @param forestChanged - true iff the known forest has changed at any point due to the commits being rebased.
 	 * @param mergedUndoRedoManager - the {@link UndoRedoManager} of the branch that was merged.
 	 */
 	public updateAfterMerge(
 		newCommits: GraphCommit<TChange>[],
+		forestChanged: boolean,
 		mergedUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
-		this.updateBasedOnNewCommits(newCommits, this, mergedUndoRedoManager);
+		this.updateBasedOnNewCommits(newCommits, forestChanged, this, mergedUndoRedoManager);
 	}
 
 	/**
 	 * Updates the state of this {@link UndoRedoManager} to correctly reference commits that have been rebased.
 	 * @param newCommits - all commits from the original branch that have rebased versions present on the new branch.
+	 * @param forestChanged - true iff the known forest has changed at any point due to the commits being rebased.
 	 * @param baseUndoRedoManager - the {@link UndoRedoManager} of the branch that was rebased onto
 	 */
 	public updateAfterRebase(
 		newCommits: GraphCommit<TChange>[],
+		forestChanged: boolean,
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
-		this.updateBasedOnNewCommits(newCommits, baseUndoRedoManager, this);
+		this.updateBasedOnNewCommits(newCommits, forestChanged, baseUndoRedoManager, this);
 	}
 
 	private updateBasedOnNewCommits(
 		newCommits: GraphCommit<TChange>[],
+		forestChanged: boolean,
 		baseUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 		originalUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	): void {
@@ -240,6 +245,35 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			return;
 		}
 
+		// If the rebase did not produce any type of change to the tree, the new commits
+		// can be replaced directly without updating repair data
+		if (forestChanged === false) {
+			const undoables = new Map<RevisionTag, GraphCommit<TChange>>();
+			const redoables = new Map<RevisionTag, GraphCommit<TChange>>();
+
+			// Distinguish which reversible stack each new commit is in
+			for (const commit of newCommits) {
+				const type = originalUndoRedoManager.commitTypes.get(commit.revision);
+				if (type !== undefined) {
+					if (
+						type === UndoRedoManagerCommitType.Undoable ||
+						type === UndoRedoManagerCommitType.Redo
+					) {
+						undoables.set(commit.revision, commit);
+					} else if (
+						type === UndoRedoManagerCommitType.Redoable ||
+						type === UndoRedoManagerCommitType.Undo
+					) {
+						redoables.set(commit.revision, commit);
+					}
+				}
+			}
+
+			this.replaceReversibleCommits(undoables, this.headUndoableCommit);
+			this.replaceReversibleCommits(redoables, this.headRedoableCommit);
+			return;
+		}
+
 		// Create a complete clone of the base undo redo manager for tracking the rebased path
 		const undoRedoManager = baseUndoRedoManager.clone();
 
@@ -256,6 +290,27 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		this.headUndoableCommit = undoRedoManager.headUndoable;
 		this.headRedoableCommit = undoRedoManager.headRedoable;
 	}
+
+	/**
+	 * Replaces the commits in the provided reversible commit tree with the new commits with matching revisions.
+	 */
+	private replaceReversibleCommits(
+		newCommits: Map<RevisionTag, GraphCommit<TChange>>,
+		headReversibleCommit?: ReversibleCommit<TChange>,
+	) {
+		let currentReversible = headReversibleCommit;
+		while (currentReversible !== undefined && newCommits.size !== 0) {
+			const { revision } = currentReversible.commit;
+			const commit = newCommits.get(revision);
+
+			if (commit !== undefined) {
+				currentReversible.commit = commit;
+				newCommits.delete(revision);
+			}
+
+			currentReversible = currentReversible.parent;
+		}
+	}
 }
 
 /**
@@ -263,7 +318,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
  */
 export interface ReversibleCommit<TChange> {
 	/* The commit to undo */
-	readonly commit: GraphCommit<TChange>;
+	commit: GraphCommit<TChange>;
 	/* The repair data associated with the commit */
 	readonly repairData: ReadonlyRepairDataStore;
 	/* The next undoable commit. */
