@@ -195,7 +195,8 @@ export function initializeDevtools(props: DevtoolsProps): IDevtools {
 }
 
 /**
- * TODO
+ * Maps the input props to lower-level {@link @fluid-experimental/devtools-core#ContainerDevtoolsPropsBase},
+ * to be forwarded on to the base library.
  */
 function mapContainerProps(
 	containerProps: ContainerDevtoolsProps,
