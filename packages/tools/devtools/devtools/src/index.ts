@@ -82,6 +82,8 @@ export interface ContainerDevtoolsProps {
 
 	/**
 	 * A **unique** name or ID used to differentiate Containers registered with the Devtools.
+	 *
+	 * @example "Canvas Container"
 	 */
 	containerName: string;
 
@@ -172,6 +174,8 @@ class Devtools implements IDevtools {
 
 /**
  * {@inheritDoc @fluid-experimental/devtools-core#initializeDevtoolsBase}
+ *
+ * @public
  */
 export function initializeDevtools(props: DevtoolsProps): IDevtools {
 	const { initialContainers, logger } = props;
@@ -212,7 +216,7 @@ function mapContainerProps(
 	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE();
 	return {
 		container: innerContainer,
-		id: containerName,
+		containerName,
 		containerData: container.initialObjects,
 		dataVisualizers,
 	};

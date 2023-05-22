@@ -126,11 +126,11 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 function registerContainerWithDevtools(
 	devtools: IDevtools,
 	container: IFluidContainer,
-	id: string,
+	containerName: string,
 ): void {
 	devtools.registerContainerDevtools({
 		container,
-		id,
+		containerName,
 		dataVisualizers: undefined, // Use defaults
 	});
 }

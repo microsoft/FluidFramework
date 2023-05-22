@@ -56,9 +56,9 @@ export interface ContainerDevtoolsProps {
 	container: IContainer;
 
 	/**
-	 * A unique ID used to differentiate Containers registered with the {@link IFluidDevtools}.
+	 * A **unique** name or ID used to differentiate Containers registered with the {@link IFluidDevtools}.
 	 */
-	id: string;
+	containerName: string;
 
 	/**
 	 * (optional) Distributed Data Structures (DDSs) associated with the
@@ -121,8 +121,6 @@ export interface ContainerDevtoolsProps {
  *
  * - {@link GetDataVisualization.Message}: When received, {@link DataVisualization.Message} will be posted in response.
  *
- * TODO: Document others as they are added.
- *
  * **Messages it posts:**
  *
  * - {@link ContainerDevtoolsFeatures.Message}: Posted only when requested via {@link GetContainerDevtoolsFeatures.Message}.
@@ -138,13 +136,16 @@ export interface ContainerDevtoolsProps {
  * - {@link DataVisualization.Message}: Posted when requested via {@link GetDataVisualization.Message}, or when
  * a change has occurred on the associated DDS, reachable from the visualization graph.
  *
- * TODO: Document others as they are added.
- *
  * @sealed
  */
 export class ContainerDevtools implements IContainerDevtools {
 	/**
-	 * {@inheritDoc IContainerDevtools.containerId}
+	 * A unique identifier for the Container, used by the Devtools.
+	 *
+	 * @remarks
+	 *
+	 * Note: this has no relation to the Container's instance identifier (often called the "container ID"),
+	 * nor to the ID of the backing document (often called the "document ID").
 	 */
 	public readonly containerId: ContainerId;
 
@@ -460,7 +461,7 @@ export class ContainerDevtools implements IContainerDevtools {
 	private _disposed: boolean;
 
 	public constructor(props: ContainerDevtoolsProps) {
-		this.containerId = props.id;
+		this.containerId = props.containerName;
 		this.containerData = props.containerData;
 		this.container = props.container;
 

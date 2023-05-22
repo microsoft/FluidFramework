@@ -229,7 +229,10 @@ export class FluidDevtools implements IFluidDevtools {
 		this.containers = new Map<string, ContainerDevtools>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
-				this.containers.set(containerConfig.id, new ContainerDevtools(containerConfig));
+				this.containers.set(
+					containerConfig.containerName,
+					new ContainerDevtools(containerConfig),
+				);
 			}
 		}
 
@@ -292,7 +295,7 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		const { id: containerId, dataVisualizers: containerVisualizers } = props;
+		const { containerName: containerId, dataVisualizers: containerVisualizers } = props;
 
 		if (this.containers.has(containerId)) {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerId));

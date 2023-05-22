@@ -12,8 +12,8 @@ import { VisualizeSharedObject } from '@fluid-experimental/devtools-core';
 // @public
 export interface ContainerDevtoolsProps {
     container: IFluidContainer;
+    containerName: string;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
-    id: string;
 }
 
 export { DevtoolsLogger }
@@ -31,7 +31,7 @@ export interface IDevtools extends IDisposable {
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
-// @public
+// @public (undocumented)
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
 
 ```

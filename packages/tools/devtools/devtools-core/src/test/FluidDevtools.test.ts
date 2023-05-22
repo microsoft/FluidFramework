@@ -31,7 +31,7 @@ describe("FluidDevtools unit tests", () => {
 		const container = createMockContainer();
 		const containerId = "test-container-id";
 		const containerProps: ContainerDevtoolsProps = {
-			id: containerId,
+			containerName: containerId,
 			container,
 		};
 		devtools.registerContainerDevtools(containerProps);
@@ -62,7 +62,7 @@ describe("FluidDevtools unit tests", () => {
 		const container = createMockContainer();
 		const containerId = "test-container-id";
 		const containerProps: ContainerDevtoolsProps = {
-			id: containerId,
+			containerName: containerId,
 			container,
 		};
 
@@ -82,14 +82,14 @@ describe("FluidDevtools unit tests", () => {
 
 		const container1 = createMockContainer();
 		const container1Props: ContainerDevtoolsProps = {
-			id: containerId,
+			containerName: containerId,
 			container: container1,
 		};
 		devtools.registerContainerDevtools(container1Props);
 
 		const container2 = createMockContainer();
 		const container2Props: ContainerDevtoolsProps = {
-			id: containerId,
+			containerName: containerId,
 			container: container2,
 		};
 

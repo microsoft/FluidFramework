@@ -95,8 +95,8 @@ export namespace ContainerDevtoolsFeatures {
 export interface ContainerDevtoolsProps {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
+    containerName: string;
     dataVisualizers?: Record<string, VisualizeSharedObject>;
-    id: string;
 }
 
 // @internal
