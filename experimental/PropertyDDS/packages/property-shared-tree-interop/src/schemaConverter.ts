@@ -93,16 +93,16 @@ function getChildrenForType(
 
 function buildTreeSchema(
 	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, TreeSchema>,
+	treeSchemaMap: Map<string, TreeSchema | (() => TreeSchema)>,
 	typesChildren: ReadonlyMap<string, ReadonlySet<string>>,
 	type: string,
-): TreeSchema {
-	let treeSchema = treeSchemaMap.get(type);
-	if (treeSchema) {
-		return treeSchema;
-	}
+): TreeSchema | (() => TreeSchema) {
 	const splitTypeId = TypeIdHelper.extractContext(type);
 	if (splitTypeId.context === "single") {
+		let treeSchema = treeSchemaMap.get(splitTypeId.typeid);
+		if (treeSchema) {
+			return treeSchema;
+		}
 		if (TypeIdHelper.isPrimitiveType(splitTypeId.typeid)) {
 			treeSchema = treeSchemaMap.get(splitTypeId.typeid);
 			if (treeSchema) {
@@ -135,7 +135,6 @@ function buildTreeSchema(
 				treeSchemaMap.set(splitTypeId.typeid, treeSchema);
 				return treeSchema;
 			} else {
-				let recursiveRequired = false;
 				const localFields = {};
 				const inheritanceChain = PropertyFactory.getAllParentsForTemplate(
 					splitTypeId.typeid,
@@ -173,16 +172,6 @@ function buildTreeSchema(
 										? FieldKinds.optional
 										: FieldKinds.value,
 								};
-								if (allowedTypes.has(splitTypeId.typeid)) {
-									recursiveRequired = true;
-								}
-								// localFields[property.id] = buildFieldSchema(
-								// 	builder,
-								// 	treeSchemaMap,
-								// 	typesChildren,
-								// 	property.optional ? FieldKinds.optional : FieldKinds.value,
-								// 	currentTypeid,
-								// );
 							}
 						}
 					} else if (
@@ -193,74 +182,32 @@ function buildTreeSchema(
 						);
 					}
 				}
-
-				// eslint-disable-next-line unicorn/prefer-ternary
-				if (recursiveRequired) {
-					treeSchema = builder.objectRecursive(splitTypeId.typeid, {
+				try {
+					const obj: { treeSchema?: TreeSchema | (() => TreeSchema) } = {};
+					treeSchemaMap.set(splitTypeId.typeid, () => obj.treeSchema as TreeSchema);
+					obj.treeSchema = builder.objectRecursive(splitTypeId.typeid, {
 						local: Object.keys(localFields).reduce<{ [key: string]: FieldSchema }>(
 							(o, k) => {
-								let { allowedTypes } = localFields[k];
-								if (allowedTypes.has(splitTypeId.typeid)) {
-									allowedTypes = [...allowedTypes].map((child) => {
-										if (child === splitTypeId.typeid) {
-											return () => treeSchema as TreeSchema;
-										}
+								const allowedTypes = [...localFields[k].allowedTypes].map(
+									(child) => {
 										const exists = treeSchemaMap.get(child);
 										if (exists) return exists;
+										// if (child === splitTypeId.typeid) {
+										// 	const ts = () => obj.treeSchema as TreeSchema;
+										// 	treeSchemaMap.set(child, ts);
+										// 	return ts;
+										// }
 										return buildTreeSchema(
 											builder,
 											treeSchemaMap,
 											typesChildren,
 											child,
 										);
-									});
-									o[k] = SchemaBuilder.fieldRecursive(
-										localFields[k].fieldKind as FieldKindTypes,
-										...allowedTypes,
-									);
-								} else {
-									o[k] = SchemaBuilder.field(
-										localFields[k].fieldKind,
-										...[...allowedTypes].map((child) => {
-											const exists = treeSchemaMap.get(child);
-											if (exists) return exists;
-											return buildTreeSchema(
-												builder,
-												treeSchemaMap,
-												typesChildren,
-												child,
-											);
-										}),
-									);
-								}
-								return o;
-							},
-							{},
-						),
-						extraLocalFields: PropertyFactory.inheritsFrom(
-							splitTypeId.typeid,
-							nodePropertyType,
-						)
-							? SchemaBuilder.fieldOptional(Any)
-							: undefined,
-					});
-				} else {
-					treeSchema = builder.object(splitTypeId.typeid, {
-						local: Object.keys(localFields).reduce<{ [key: string]: FieldSchema }>(
-							(o, k) => {
+									},
+								);
 								o[k] = SchemaBuilder.field(
-									localFields[k].fieldKind,
-									...[...localFields[k].allowedTypes].map((child) => {
-										return (
-											treeSchemaMap.get(child) ??
-											buildTreeSchema(
-												builder,
-												treeSchemaMap,
-												typesChildren,
-												child,
-											)
-										);
-									}),
+									localFields[k].fieldKind as FieldKindTypes,
+									...allowedTypes,
 								);
 								return o;
 							},
@@ -273,12 +220,19 @@ function buildTreeSchema(
 							? SchemaBuilder.fieldOptional(Any)
 							: undefined,
 					});
+					// treeSchemaMap.set(splitTypeId.typeid, treeSchema);
+					return () => obj.treeSchema as TreeSchema;
+				} catch (e) {
+					debugger;
+					throw e;
 				}
-				treeSchemaMap.set(splitTypeId.typeid, treeSchema);
-				return treeSchema;
 			}
 		}
 	} else {
+		let treeSchema = treeSchemaMap.get(type);
+		if (treeSchema) {
+			return treeSchema;
+		}
 		const fieldKind =
 			splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
 		const allowedTypes = new Set<object>();
@@ -327,7 +281,7 @@ export function convertPropertyToSharedTreeStorageSchema<
 >(rootFieldKind: Kind, ...rootTypes: T) {
 	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder");
 	const inheritingChildrenByType = getAllInheritingChildrenTypes();
-	const treeSchemaMap: Map<string, TreeSchema> = new Map();
+	const treeSchemaMap: Map<string, TreeSchema | (() => TreeSchema)> = new Map();
 
 	// Extract all referenced typeids for the schema
 	const unprocessedTypeIds: string[] = [];
@@ -424,7 +378,7 @@ export function convertPropertyToSharedTreeStorageSchema<
 
 function buildFieldSchema<T extends [Any] | readonly string[]>(
 	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, TreeSchema>,
+	treeSchemaMap: Map<string, TreeSchema | (() => TreeSchema)>,
 	typesChildren: ReadonlyMap<string, ReadonlySet<string>>,
 	fieldKind: FieldKindTypes,
 	...fieldTypes: T
@@ -432,7 +386,7 @@ function buildFieldSchema<T extends [Any] | readonly string[]>(
 	if (!fieldTypes || (fieldTypes.length === 1 && fieldTypes[0] === Any)) {
 		return SchemaBuilder.field(fieldKind, Any);
 	}
-	const allowedTypes: Set<TreeSchema> = new Set();
+	const allowedTypes: Set<TreeSchema | (() => TreeSchema)> = new Set();
 	for (const type of fieldTypes) {
 		allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, typesChildren, type));
 		getChildrenForType(typesChildren, type).forEach((child) =>
