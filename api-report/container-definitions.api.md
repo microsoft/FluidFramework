@@ -7,6 +7,7 @@
 import { ConnectionMode } from '@fluidframework/protocol-definitions';
 import { EventEmitter } from 'events';
 import { FluidObject } from '@fluidframework/core-interfaces';
+import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
@@ -280,7 +281,7 @@ export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "processTime", listener: (latency: number) => void): any;
     (event: "connect", listener: (details: IConnectionDetails, opsBehind?: number) => void): any;
-    (event: "disconnect", listener: (reason: string, props?: ITelemetryProperties) => void): any;
+    (event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void): any;
     (event: "readonly", listener: (readonly: boolean) => void): any;
 }
 

@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
@@ -32,7 +33,7 @@ export interface IConnectionStateHandlerInputs {
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
-		props?: ITelemetryProperties,
+		error?: IAnyDriverError,
 	) => void;
 	/** Whether to expect the client to join in write mode on next connection */
 	shouldClientJoinWrite: () => boolean;
@@ -57,7 +58,7 @@ export interface IConnectionStateHandler {
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
-	receivedDisconnectEvent(reason: string, props?: ITelemetryProperties): void;
+	receivedDisconnectEvent(reason: string, error?: IAnyDriverError): void;
 }
 
 export function createConnectionStateHandler(
@@ -139,8 +140,8 @@ class ConnectionStateHandlerPassThrough
 	public initProtocol(protocol: IProtocolHandler) {
 		return this.pimpl.initProtocol(protocol);
 	}
-	public receivedDisconnectEvent(reason: string, props?: ITelemetryProperties) {
-		return this.pimpl.receivedDisconnectEvent(reason, props);
+	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
+		return this.pimpl.receivedDisconnectEvent(reason, error);
 	}
 
 	public receivedConnectEvent(details: IConnectionDetailsInternal) {
@@ -158,9 +159,9 @@ class ConnectionStateHandlerPassThrough
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
-		props?: ITelemetryProperties,
+		error?: IAnyDriverError,
 	) {
-		return this.inputs.connectionStateChanged(value, oldState, reason, props);
+		return this.inputs.connectionStateChanged(value, oldState, reason, error);
 	}
 	public shouldClientJoinWrite() {
 		return this.inputs.shouldClientJoinWrite();
@@ -202,7 +203,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		value: ConnectionState,
 		oldState: ConnectionState,
 		reason?: string | undefined,
-		props?: ITelemetryProperties,
+		error?: IAnyDriverError,
 	) {
 		switch (value) {
 			case ConnectionState.Connected:
@@ -238,7 +239,7 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 			default:
 		}
 		this._connectionState = value;
-		this.inputs.connectionStateChanged(value, oldState, reason);
+		this.inputs.connectionStateChanged(value, oldState, reason, error);
 	}
 
 	private readonly transitionToConnectedState = () => {
@@ -465,9 +466,9 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 	}
 
-	public receivedDisconnectEvent(reason: string, props?: ITelemetryProperties) {
+	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
 		this.connection = undefined;
-		this.setConnectionState(ConnectionState.Disconnected, reason, props);
+		this.setConnectionState(ConnectionState.Disconnected, reason, error);
 	}
 
 	private shouldWaitForJoinSignal() {
@@ -533,13 +534,13 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private setConnectionState(
 		value: ConnectionState.Disconnected,
 		reason: string,
-		props?: ITelemetryProperties,
+		error?: IAnyDriverError,
 	): void;
 	private setConnectionState(value: ConnectionState.Connected): void;
 	private setConnectionState(
 		value: ConnectionState.Disconnected | ConnectionState.Connected,
 		reason?: string,
-		props?: ITelemetryProperties,
+		error?: IAnyDriverError,
 	): void {
 		if (this.connectionState === value) {
 			// Already in the desired state - exit early
@@ -600,7 +601,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		}
 
 		// Report transition before we propagate event across layers
-		this.handler.connectionStateChanged(this._connectionState, oldState, reason, props);
+		this.handler.connectionStateChanged(this._connectionState, oldState, reason, error);
 	}
 
 	// Helper method to switch between quorum and audience.

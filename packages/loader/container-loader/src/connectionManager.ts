@@ -48,7 +48,7 @@ import {
 	ScopeType,
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryLogger, isILoggingError, normalizeError } from "@fluidframework/telemetry-utils";
+import { TelemetryLogger, normalizeError } from "@fluidframework/telemetry-utils";
 import { ReconnectMode, IConnectionManager, IConnectionManagerFactoryArgs } from "./contracts";
 import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
@@ -700,10 +700,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.clear();
 		connection.dispose();
 
-		this.props.disconnectHandler(
-			reason,
-			error !== undefined && isILoggingError(error) ? error.getTelemetryProperties() : {},
-		);
+		this.props.disconnectHandler(reason, error);
 
 		this._connectionVerboseProps = {};
 
