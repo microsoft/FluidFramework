@@ -1130,10 +1130,10 @@ interface LocalFields {
 }
 
 // @alpha
-export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldSchema;
+export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldStoredSchema;
 
 // @alpha
-export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeSchema;
+export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeStoredSchema;
 
 // @alpha
 export interface MakeNominal {

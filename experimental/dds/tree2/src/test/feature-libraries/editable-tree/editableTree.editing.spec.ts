@@ -33,6 +33,7 @@ import {
 	getPrimaryField,
 	SchemaBuilder,
 	FieldKindTypes,
+	typeSymbol,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -148,6 +149,26 @@ describe("editable-tree: editing", () => {
 		// Map<String>
 		maybePerson.friends = { Anna: "Anna" };
 		maybePerson.friends.John = "John";
+
+		maybePerson.address = {
+			zip: 345,
+			phones: [],
+		};
+		// check that phones is an empty array
+		{
+			const person = trees[0].root as Person;
+			assert(isUnwrappedNode(person.address));
+			const primaryNode = person.address[getField](brand("phones")).getNode(0);
+			const primary = getPrimaryField(primaryNode[typeSymbol]);
+			assert(primary !== undefined);
+			const primaryField = primaryNode[getField](primary.key);
+			assert.deepEqual(primaryField.fieldSchema, primary.schema);
+			assert.equal(primaryField.length, 0);
+		}
+		// delete field with an empty array child
+		assert.doesNotThrow(() => {
+			delete maybePerson.address;
+		});
 
 		maybePerson.address = {
 			zip: 345,

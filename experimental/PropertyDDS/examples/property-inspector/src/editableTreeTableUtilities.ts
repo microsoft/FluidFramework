@@ -25,7 +25,7 @@ import {
 	typeNameSymbol,
 	valueSymbol,
 	FieldKinds,
-	FieldSchema,
+	FieldStoredSchema,
 } from "@fluid-experimental/tree2";
 import { addComplexTypeToSchema } from "@fluid-experimental/property-shared-tree-interop";
 
@@ -62,7 +62,7 @@ export function isSequenceField(field: EditableField): boolean {
 	return field.fieldSchema.kind.identifier === sequence.identifier;
 }
 
-export function isValueFieldSchema(fieldSchema: FieldSchema): boolean {
+export function isValueFieldSchema(fieldSchema: FieldStoredSchema): boolean {
 	return fieldSchema.kind.identifier === value.identifier;
 }
 

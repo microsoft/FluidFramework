@@ -6,15 +6,12 @@
 import {
 	brand,
 	TreeSchemaIdentifier,
-	FieldSchema,
 	Brand,
 	EditableField,
 	EditableTree,
 	LocalFieldKey,
 	valueSymbol,
 	typeNameSymbol,
-	fieldSchema,
-	FieldKindSpecifier,
 } from "@fluid-experimental/tree2";
 
 export const personPropertyDDSSchemas = {
@@ -68,6 +65,7 @@ export const personPropertyDDSSchemas = {
 			{ id: "salary", typeid: "Float64", optional: true },
 			{ id: "address", typeid: "Test:Address-1.0.0", optional: true },
 			{ id: "friends", typeid: "String", context: "map", optional: true },
+			{ id: "misc", typeid: "NodeProperty", optional: true },
 		],
 	},
 };
@@ -80,13 +78,6 @@ export const addressSchemaName: TreeSchemaIdentifier = brand("Test:Address-1.0.0
 export const mapStringSchemaName: TreeSchemaIdentifier = brand("map<string>");
 export const personSchemaName: TreeSchemaIdentifier = brand("Test:Person-1.0.0");
 export const complexPhoneSchemaName: TreeSchemaIdentifier = brand("Test:Phone-1.0.0");
-
-export function getRootFieldSchema(
-	fieldKind: FieldKindSpecifier,
-	...fieldTypes: readonly TreeSchemaIdentifier[]
-): FieldSchema {
-	return fieldSchema(fieldKind, new Set(fieldTypes));
-}
 
 export type Float64 = Brand<number, "editable-tree-inspector-demo.Float64"> & EditableTree;
 export type Int32 = Brand<number, "editable-tree-inspector-demo.Int32"> & EditableTree;

@@ -224,6 +224,8 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 						parentContext = contextAndType[0];
 						parentTypeId = contextAndType[1].replace(/>/g, "");
 					}
+				} else if (rowData.parent.parent === undefined) {
+					// TODO: test & improve
 				} else {
 					assert(
 						rowData.parent.fieldSchema.types?.size === 1,
@@ -256,7 +258,11 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 			const subTypeOptions: IDecoratedSelectOptionType[] = [];
 			subType.options.forEach((typ) => {
 				const parentTypes = PropertyFactory.getAllParentsForTemplate(typ.value);
-				if (typ.value === parentTypeId || parentTypes.includes(parentTypeId)) {
+				if (
+					parentTypeId === undefined ||
+					typ.value === parentTypeId ||
+					parentTypes.includes(parentTypeId)
+				) {
 					subTypeOptions.push(typ);
 				}
 			});

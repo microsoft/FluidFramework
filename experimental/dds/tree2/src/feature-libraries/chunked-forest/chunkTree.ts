@@ -130,6 +130,7 @@ export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): 
  */
 export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk[] {
 	const length = cursor.getFieldLength();
+	if (length === 0) return [];
 	const started = cursor.firstNode();
 	assert(started, 0x57c /* field to chunk should have at least one node */);
 	return chunkRange(cursor, policy, length, false);
