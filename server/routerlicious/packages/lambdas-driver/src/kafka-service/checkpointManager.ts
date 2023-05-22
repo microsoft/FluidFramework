@@ -23,10 +23,10 @@ export class CheckpointManager {
 	 */
 	public async checkpoint(queuedMessage: IQueuedMessage) {
 		// Checkpoint calls should always be of increasing or equal value
-		// Exit early if already checkpointed a higher offset
+		// Exit early if already requested checkpoint for a higher offset
 		if (this.lastCheckpoint && queuedMessage.offset < this.lastCheckpoint.offset) {
 			Lumberjack.info(
-				"Skipping checkpoint since kafka already checkpointed a higher offset",
+				"Skipping checkpoint since a request for checkpointing a higher offset has already been made",
 				{
 					lastCheckpointOffset: this.lastCheckpoint.offset,
 					queuedMessageOffset: queuedMessage.offset,
