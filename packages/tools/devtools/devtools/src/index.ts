@@ -171,7 +171,7 @@ class Devtools implements IDevtools {
 }
 
 /**
- * TODO
+ * {@inheritDoc @fluid-experimental/devtools-core#initializeDevtoolsBase}
  */
 export function initializeDevtools(props: DevtoolsProps): IDevtools {
 	const { initialContainers, logger } = props;
@@ -200,7 +200,7 @@ export function initializeDevtools(props: DevtoolsProps): IDevtools {
 function mapContainerProps(
 	containerProps: ContainerDevtoolsProps,
 ): ContainerDevtoolsPropsBase | undefined {
-	const { container, containerName: id, dataVisualizers } = containerProps;
+	const { container, containerName, dataVisualizers } = containerProps;
 	const fluidContainer = container as FluidContainer;
 
 	if (fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE === undefined) {
@@ -211,7 +211,7 @@ function mapContainerProps(
 	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE();
 	return {
 		container: innerContainer,
-		id,
+		id: containerName,
 		containerData: container.initialObjects,
 		dataVisualizers,
 	};
