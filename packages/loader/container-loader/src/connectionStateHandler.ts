@@ -507,7 +507,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 		this._pendingClientId = details.clientId;
 
 		// IMPORTANT: Report telemetry after we set _pendingClientId, but before transitioning to Connected state
-		this.handler.connectionStateChanged(ConnectionState.CatchingUp, oldState);
+		this.handler.connectionStateChanged(ConnectionState.CatchingUp, oldState, details.reason);
 
 		// Check if we need to wait for join op/signal, and if we need to wait for leave op from previous connection.
 		// Pending clientId could have joined already (i.e. join op/signal already processed):
