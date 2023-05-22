@@ -33,9 +33,6 @@ cargo --version
 rustup --version
 rustc --version
 
-Write-Host "Installing wasm-opt..."
-npm i wasm-opt@1.4.0 -g
-
 Write-Host "Installing wasm-snip..."
 cargo install wasm-snip --version 0.4.0
 
