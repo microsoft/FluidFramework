@@ -26,7 +26,7 @@ export type AllowedTypes = [Any] | readonly LazyItem<TreeSchema>[];
 // @alpha
 type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
 T extends InternalTypedSchemaTypes.FlexList<TreeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Mode, Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeSchema[]>>> : UntypedApi<Mode>
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
 export enum AllowedUpdateType {
@@ -35,10 +35,10 @@ export enum AllowedUpdateType {
 }
 
 // @alpha
-type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_dummy];
+type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_InlineTrick];
 
 // @alpha
-type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
+type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
 
 // @alpha
 export type Anchor = Brand<number, "rebaser.Anchor">;
@@ -366,9 +366,6 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @alpha
-type _dummy = 0;
-
-// @alpha
 export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree> {
     readonly [proxyTargetSymbol]: object;
     readonly context: EditableTreeContext;
@@ -639,14 +636,14 @@ export interface FieldUpPath {
 // @alpha
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
-}][_dummy];
+}][_InlineTrick];
 
 // @alpha
 type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
 InternalTypedSchemaTypes.FlattenKeys<{
     [typeNameSymbol]?: UnbrandedName<TName>;
 } & InternalTypedSchemaTypes.AllowOptional<ValuePropertyFromSchema<TValueSchema>>>
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
 type FlexList<Item = unknown> = readonly LazyItem<Item>[];
@@ -830,6 +827,9 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded extends JsonCompatible
 }
 
 // @alpha
+type _InlineTrick = 0;
+
+// @alpha
 interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly content: readonly TTree[];
     // (undocumented)
@@ -847,7 +847,8 @@ declare namespace InternalTypedSchemaTypes {
         OptionalFields,
         Unbrand,
         UnbrandList,
-        _dummy,
+        _InlineTrick,
+        _RecursiveTrick,
         FlattenKeys,
         AllowOptionalNotFlattened,
         ArrayToUnion,
@@ -1340,7 +1341,7 @@ type OptionalFields<T> = [
     {
     [P in keyof T as undefined extends T[P] ? T[P] extends undefined ? never : P : never]?: T[P];
 }
-][_dummy];
+][_InlineTrick];
 
 // @alpha
 export const parentField: unique symbol;
@@ -1399,6 +1400,9 @@ type RecursiveTreeSchema = unknown;
 type RecursiveTreeSchemaSpecification = unknown;
 
 // @alpha
+type _RecursiveTrick = never;
+
+// @alpha
 export interface RepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown> extends ReadonlyRepairDataStore<TTree, TRevisionTag> {
     capture(change: Delta.Root, revision: TRevisionTag): void;
 }
@@ -1411,7 +1415,7 @@ type RequiredFields<T> = [
     {
     [P in keyof T as undefined extends T[P] ? never : P]: T[P];
 }
-][_dummy];
+][_InlineTrick];
 
 // @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
@@ -1779,12 +1783,12 @@ T extends readonly [infer Head, ...infer Tail] ? [
 TypedNode<Assume<Head, TreeSchema>, Mode>,
 ...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>
 ] : []
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
 type TypedField<Mode extends ApiMode, TField extends FieldSchema> = [
 ApplyMultiplicity<TField["kind"]["multiplicity"], AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>, Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode>
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
 type TypedFields<Mode extends ApiMode, TFields extends undefined | {
@@ -1795,7 +1799,7 @@ TFields extends {
 } ? {
     [key in keyof TFields]: TypedField<Mode, TFields[key]>;
 } : EmptyObject
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
 type TypedNode<TSchema extends TreeSchema, Mode extends ApiMode = ApiMode.Editable> = InternalTypedSchemaTypes.FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["localFieldsObject"]>, TSchema["value"], TSchema["name"]>>;
@@ -1826,7 +1830,7 @@ type Unbrand<T, B> = T extends infer S & B ? S : T;
 // @alpha
 type UnbrandedName<TName> = [
 TName extends infer S & TreeSchemaIdentifier ? S : string
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 // @alpha
 type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail] ? [Unbrand<Head, B>, ...UnbrandList<Tail, B>] : [];

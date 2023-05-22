@@ -25,7 +25,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 		} else {
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
-			assert(type !== NoopMarkType, "Cell changing mark must no be a NoopMark");
+			assert(type !== NoopMarkType, 0x6b0 /* Cell changing mark must no be a NoopMark */);
 			switch (type) {
 				case "Insert": {
 					const cursors = mark.content.map(singleTextCursor);
@@ -115,7 +115,7 @@ function deltaFromNodeChange<TNodeChange>(
 	if (change === undefined) {
 		return length;
 	}
-	assert(length === 1, "Modifying mark must be length one");
+	assert(length === 1, 0x6a3 /* Modifying mark must be length one */);
 	const modify = deltaFromChild(change);
 	return isEmptyModify(modify) ? 1 : modify;
 }
