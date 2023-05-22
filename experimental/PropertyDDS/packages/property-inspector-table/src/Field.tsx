@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { isUnwrappedNode, valueSymbol } from "@fluid-experimental/tree2";
+import { isEditableTree, valueSymbol } from "@fluid-experimental/tree2";
 import { PropertyProxy, ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
 import { SetProperty, ContainerProperty } from "@fluid-experimental/property-properties";
 import * as React from "react";
@@ -22,7 +22,7 @@ function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCe
 	}
 
 	if (isEditableTreeRow(rowData)) {
-		assert(isUnwrappedNode(rowData.data), "Expected row data as `EditableField` only at root");
+		assert(isEditableTree(rowData.data), "Expected row data as `EditableField` only at root");
 		try {
 			rowData.data[valueSymbol] = val;
 		} catch (e) {

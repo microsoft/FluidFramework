@@ -162,7 +162,7 @@ describe("editable-tree: editing", () => {
 		// check that phones is an empty array
 		{
 			const person = trees[0].root as Person;
-			assert(isUnwrappedNode(person.address));
+			assert(isEditableTree(person.address));
 			const primaryNode = person.address[getField](brand("phones")).getNode(0);
 			const primary = getPrimaryField(primaryNode[typeSymbol]);
 			assert(primary !== undefined);

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	getPrimaryField,
 	isEditableField,
-	isUnwrappedNode,
+	isEditableTree,
 	typeNameSymbol,
 	typeSymbol,
 } from "@fluid-experimental/tree2";
@@ -170,7 +170,7 @@ const setContext: IDecoratedSelectOptionType = {
 
 const getSiblingIDs = (rowData: IInspectorRow | IEditableTreeRow): string[] => {
 	if (isEditableTreeRow(rowData)) {
-		return isUnwrappedNode(rowData.parent)
+		return isEditableTree(rowData.parent)
 			? [...rowData.parent]
 					.filter((field) => field.fieldKey in rowData.parent)
 					.map((field) => String(field.fieldKey))
@@ -201,7 +201,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 	let isNewNode = false;
 	if (isEditableTreeRow(rowData)) {
 		if (!isCreating) {
-			if (isUnwrappedNode(rowData.parent)) {
+			if (isEditableTree(rowData.parent)) {
 				parentTypeId = rowData.parent[typeNameSymbol];
 				const contextAndType = parentTypeId.split("<");
 				if (contextAndType.length > 1) {
@@ -215,7 +215,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 				// since arrays are currently non-polymorphic, but support inherited types.
 				const parentNode = rowData.parent.parent;
 				if (
-					isUnwrappedNode(parentNode) &&
+					isEditableTree(parentNode) &&
 					getPrimaryField(parentNode[typeSymbol]) !== undefined
 				) {
 					parentTypeId = parentNode[typeNameSymbol];

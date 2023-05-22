@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	isUnwrappedNode,
+	isEditableTree,
 	isEditableField,
 	parentField,
 	FieldKinds,
@@ -82,7 +82,7 @@ const deletionHandler = (rowData: IInspectorRow) => {
 };
 
 const editableTreeDeletionHandler = async (rowData: IEditableTreeRow) => {
-	const field = isUnwrappedNode(rowData.data) ? rowData.data[parentField].parent : rowData.data;
+	const field = isEditableTree(rowData.data) ? rowData.data[parentField].parent : rowData.data;
 	assert(isEditableField(field), "requires field");
 	if (field.fieldSchema.kind.identifier === FieldKinds.value.identifier) {
 		return Promise.reject(
@@ -91,14 +91,13 @@ const editableTreeDeletionHandler = async (rowData: IEditableTreeRow) => {
 			),
 		);
 	}
-	if (isUnwrappedNode(rowData.data)) {
-		// TODO: this works only now since SharedTree internals allow to delete nodes for any field kind.
-		// On the other hand, `delete rowData.parent[fieldKey]` requires to know the parent field of the node.
-		// This is one of the cases, which might be conventiently supported by the feature proposed in
-		// https://github.com/microsoft/FluidFramework/pull/12810#issuecomment-1303949419
+	if (
+		isEditableTree(rowData.data) &&
+		field.fieldSchema.kind.identifier === FieldKinds.sequence.identifier
+	) {
 		field.deleteNodes(rowData.data[parentField].index, 1);
 	} else {
-		field.deleteNodes(0);
+		field.delete();
 	}
 	return Promise.resolve(true);
 };

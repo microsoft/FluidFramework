@@ -14,17 +14,16 @@ import {
 	EditableField,
 	isPrimitive,
 	typeSymbol,
-	isUnwrappedNode,
+	isEditableTree,
+	isEditableField,
 	brand,
 	FieldKey,
-	ContextuallyTypedNodeDataObject,
-	isWritableArrayLike,
 	ISharedTree,
 	TreeSchemaIdentifier,
 	parentField,
 	getPrimaryField,
 	forEachField,
-	cursorFromContextualData,
+	getField,
 } from "@fluid-experimental/tree2";
 import {
 	IDataCreationOptions,
@@ -152,24 +151,19 @@ const tableProps: Partial<IInspectorTableProps> = {
 		const { parent, sharedTree } = rowData;
 		const typeName = brand<TreeSchemaIdentifier>(typeid);
 		try {
-			if (isUnwrappedNode(parent)) {
+			if (isEditableTree(parent)) {
 				const fieldKey = brand<FieldKey>(name);
-				(parent as ContextuallyTypedNodeDataObject)[fieldKey] = getNewNodeData(
+				const field = parent[getField](fieldKey);
+				const newNodeData = getNewNodeData(
 					sharedTree,
 					context === "single"
 						? typeName
 						: brand<TreeSchemaIdentifier>(`${context}<${typeid}>`),
 				);
+				field.content = isSequenceField(field) ? [newNodeData] : newNodeData;
 			} else {
-				assert(isWritableArrayLike(parent), "expected writable ArrayLike");
-				parent.insertNodes(
-					Number(name),
-					cursorFromContextualData(
-						sharedTree.storedSchema,
-						parent.fieldSchema.types,
-						getNewNodeData(sharedTree, typeName),
-					),
-				);
+				assert(isEditableField(parent), "expected field");
+				parent.insertNodes(Number(name), [getNewNodeData(sharedTree, typeName)]);
 			}
 		} catch (e) {
 			console.error(e);
@@ -278,7 +272,7 @@ function nodeToTableRow(
 	if (!isPrimitive(nodeType)) {
 		newRow.children = data[forEachField](fieldToTableRow, [], { sharedTree, pathPrefix: id });
 		// Do not allow to create fields under a node having a primary field.
-		if (getPrimaryField(nodeType) === undefined) {
+		if (getPrimaryField(nodeType) === undefined || newRow.children?.length === 0) {
 			addNewDataLine(newRow.children, sharedTree, data, id);
 		}
 	}
