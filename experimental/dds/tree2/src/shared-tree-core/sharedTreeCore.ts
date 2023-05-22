@@ -238,6 +238,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
+		this.editManager.afterSummaryLoad();
 	}
 
 	/**
@@ -252,7 +253,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// Edits should not be submitted until all transactions finish
 		assert(
 			!this.getLocalBranch().isTransacting(),
-			"Unexpected edit submitted during transaction",
+			0x68b /* Unexpected edit submitted during transaction */,
 		);
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included

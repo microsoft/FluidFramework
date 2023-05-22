@@ -356,15 +356,12 @@ export class EditManager<
 	public loadSummaryData(data: SummaryData<TChangeset>): void {
 		assert(
 			this.isEmpty(),
-			"Attempted to load from summary after edit manager was already mutated",
+			0x68a /* Attempted to load from summary after edit manager was already mutated */,
 		);
 		this.sequenceMap.clear();
 		this.trunk.setHead(
 			data.trunk.reduce((base, c) => {
 				const commit = mintCommit(base, c);
-				this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
-					this.changeFamily.intoDelta(commit.change),
-				);
 				this.sequenceMap.set(c.sequenceNumber, commit);
 				this.trunkMetadata.set(c.revision, {
 					sequenceNumber: c.sequenceNumber,
@@ -397,6 +394,15 @@ export class EditManager<
 		return getPathFromBase(this.localBranch.getHead(), this.trunk.getHead()).map(
 			(c) => c.change,
 		);
+	}
+
+	/**
+	 * Needs to be called after a summary is loaded.
+	 * @remarks This is a temporary workaround until UndoRedoManager is better managed.
+	 */
+	public afterSummaryLoad(): void {
+		this.trunkUndoRedoManager.repairDataStoreProvider =
+			this.localBranchUndoRedoManager.repairDataStoreProvider.clone();
 	}
 
 	public addSequencedChange(
@@ -449,6 +455,7 @@ export class EditManager<
 				newCommit.change,
 				rebasedBranch,
 				this.trunk.getHead(),
+				this.localBranch.repairStore,
 			);
 
 			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
@@ -459,7 +466,7 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk);
+		this.localBranch.rebaseOnto(this.trunk, this.localBranch.repairStore);
 	}
 
 	public findLocalCommit(

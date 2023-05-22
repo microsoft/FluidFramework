@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, FieldStoredSchema, ITreeCursor } from "../../core";
-import { FieldEditor, FieldKind, Multiplicity } from "../modular-schema";
-import { UntypedField, UntypedTree, UntypedTreeContext } from "../untypedTree";
+import { FieldStoredSchema, ITreeCursor } from "../../core";
+import { ContextuallyTypedNodeData } from "../contextuallyTyped";
+import { Optional, Sequence, ValueFieldKind } from "../defaultFieldKinds";
+import { NewFieldContent } from "../editable-tree";
+import { UntypedField, UntypedTreeCore } from "../untypedTree";
 
 /**
  * A sequence field in an {@link UntypedTree}.
@@ -20,35 +22,24 @@ export interface UntypedSequenceField extends UntypedField {
 	 * The `FieldStoredSchema` of this field.
 	 */
 	readonly fieldSchema: FieldStoredSchema & {
-		readonly kind: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
+		readonly kind: Sequence;
 	};
-
-	/**
-	 * The `FieldKey` of this field.
-	 */
-	readonly fieldKey: FieldKey;
-
-	/**
-	 * The node which has this field on it under `fieldKey`.
-	 * `undefined` iff this field is a detached field.
-	 */
-	readonly parent?: UntypedTree;
-
-	/**
-	 * A common context of a "forest" of EditableTrees.
-	 */
-	readonly context: UntypedTreeContext;
-
-	/**
-	 * Gets a node of this field by its index without unwrapping.
-	 * Note that the node must exists at the given index.
-	 */
-	getNode(index: number): UntypedTree;
 
 	/**
 	 * Inserts new nodes into this field.
 	 */
-	insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+	insertNodes(index: number, newContent: NewFieldContent): void;
+
+	/**
+	 * Moves nodes from this field to destination iff both source and destination are sequence fields.
+	 * If the destinationField is not provided, the current field is used as the destination.
+	 */
+	moveNodes(
+		sourceIndex: number,
+		count: number,
+		destIndex: number,
+		destinationField?: UntypedField,
+	): void;
 
 	/**
 	 * Sequentially deletes the nodes from this field.
@@ -69,5 +60,72 @@ export interface UntypedSequenceField extends UntypedField {
 	 * Note that, if multiple clients concurrently call replace on a sequence field,
 	 * all the insertions will be preserved.
 	 */
-	replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
+	replaceNodes(index: number, newContent: NewFieldContent, count?: number): void;
+
+	/**
+	 * Delete the content of this field.
+	 */
+	delete(): void;
+
+	/**
+	 * Sets the content of this field.
+	 */
+	setContent(newContent: NewFieldContent): void;
+}
+
+/**
+ * A value field in an {@link UntypedTree}.
+ * @alpha
+ */
+export interface UntypedValueField extends UntypedField {
+	/**
+	 * The `FieldStoredSchema` of this field.
+	 */
+	readonly fieldSchema: FieldStoredSchema & {
+		readonly kind: ValueFieldKind;
+	};
+
+	/**
+	 * The child within this field.
+	 *
+	 * @remarks
+	 * Does not unwrap the content.
+	 */
+	readonly content: UntypedTreeCore;
+
+	/**
+	 * Sets the content of this field.
+	 */
+	setContent(newContent: ITreeCursor | ContextuallyTypedNodeData): void;
+}
+
+/**
+ * A value field in an {@link UntypedTree}.
+ * @alpha
+ */
+export interface UntypedOptionalField extends UntypedField {
+	/**
+	 * The `FieldStoredSchema` of this field.
+	 */
+	readonly fieldSchema: FieldStoredSchema & {
+		readonly kind: Optional;
+	};
+
+	/**
+	 * Delete the content of this field.
+	 */
+	delete(): void;
+
+	/**
+	 * The child within this field.
+	 *
+	 * @remarks
+	 * Does not unwrap the content.
+	 */
+	readonly content: UntypedTreeCore;
+
+	/**
+	 * Sets the content of this field.
+	 */
+	setContent(newContent: ITreeCursor | ContextuallyTypedNodeData | undefined): void;
 }

@@ -134,7 +134,7 @@ function normalizeField<T extends FieldSchema | undefined>(t: T): NormalizeField
 		return FieldSchema.empty as unknown as NormalizeField<T>;
 	}
 
-	assert(t instanceof FieldSchema, "invalid FieldSchema");
+	assert(t instanceof FieldSchema, 0x6ae /* invalid FieldSchema */);
 	return t as NormalizeField<T>;
 }
 

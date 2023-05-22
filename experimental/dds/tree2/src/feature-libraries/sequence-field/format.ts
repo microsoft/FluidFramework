@@ -12,7 +12,24 @@ import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
 export type ProtoNode = JsonableTree;
 
 export type NodeCount = number;
-export type Skip = number;
+
+/**
+ * Left undefined for terseness.
+ */
+export const NoopMarkType = undefined;
+
+export interface NoopMark extends CellTargetingMark {
+	/**
+	 * Declared for consistency with other marks.
+	 * Left undefined for terseness.
+	 */
+	type?: typeof NoopMarkType;
+
+	/**
+	 * The number of nodes being skipped.
+	 */
+	count: NodeCount;
+}
 
 /**
  * A monotonically increasing positive integer assigned to an individual mark within the changeset.
@@ -252,9 +269,9 @@ export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark 
 
 /**
  * A mark which extends `CellTargetingMark`.
- * Conceptually `Skip` marks also target existing cells, but are not included because they do not have the `CellTargetingMark` fields.
  */
 export type ExistingCellMark<TNodeChange> =
+	| NoopMark
 	| Delete<TNodeChange>
 	| MoveOut<TNodeChange>
 	| ReturnFrom<TNodeChange>
@@ -267,7 +284,7 @@ export type EmptyInputCellMark<TNodeChange> =
 	| (DetachedCellMark & ExistingCellMark<TNodeChange>);
 
 export type Mark<TNodeChange = NodeChangeType> =
-	| Skip
+	| NoopMark
 	| Modify<TNodeChange>
 	| Attach<TNodeChange>
 	| Detach<TNodeChange>;
@@ -275,8 +292,6 @@ export type Mark<TNodeChange = NodeChangeType> =
 export type MarkList<TNodeChange = NodeChangeType, TMark = Mark<TNodeChange>> = TMark[];
 
 export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
-
-export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
 
 /**
  * A mark that spans one or more cells.

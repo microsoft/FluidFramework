@@ -19,8 +19,6 @@ import {
 	isDetachMark,
 	isModify,
 	isNewAttach,
-	isSkipMark,
-	isObjMark,
 	cloneMark,
 	areInputCellsEmpty,
 	getMarkLength,
@@ -33,6 +31,7 @@ import {
 	getNodeChange,
 	withNodeChange,
 	getMarkMoveId,
+	isNoopMark,
 } from "./utils";
 import {
 	Attach,
@@ -41,10 +40,11 @@ import {
 	MarkList,
 	CellSpanningMark,
 	ExistingCellMark,
-	Skip,
+	NoopMark,
 	MoveId,
 	Modify,
 	EmptyInputCellMark,
+	NoopMarkType,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -81,7 +81,7 @@ export function rebase<TNodeChange>(
 	manager: CrossFieldManager,
 	revisionMetadata: RevisionMetadataSource,
 ): Changeset<TNodeChange> {
-	assert(base.revision !== undefined, "Cannot rebase over changeset with no revision");
+	assert(base.revision !== undefined, 0x69b /* Cannot rebase over changeset with no revision */);
 	const baseInfo =
 		base.revision === undefined ? undefined : revisionMetadata.getInfo(base.revision);
 	const baseIntention = baseInfo?.rollbackOf ?? base.revision;
@@ -131,7 +131,7 @@ function rebaseMarkList<TNodeChange>(
 	let baseInputIndex = 0;
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
-		if (isObjMark(baseMark) && baseMark.type !== "Modify" && baseMark.revision !== undefined) {
+		if (baseMark !== undefined && "revision" in baseMark) {
 			// TODO support rebasing over composite changeset
 			assert(
 				baseMark.revision === baseRevision,
@@ -256,7 +256,7 @@ class RebaseQueue<T> {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const length = getInputLength(newMark!);
 			return {
-				baseMark: length > 0 ? length : undefined,
+				baseMark: length > 0 ? { count: length } : undefined,
 				newMark: this.newMarks.tryDequeue(),
 			};
 		} else if (newMark === undefined) {
@@ -266,7 +266,7 @@ class RebaseQueue<T> {
 			}
 			return {
 				baseMark: this.baseMarks.tryDequeue(),
-				newMark: length > 0 ? length : undefined,
+				newMark: length > 0 ? { count: length } : undefined,
 			};
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const cmp = compareCellPositions(
@@ -311,7 +311,7 @@ class RebaseQueue<T> {
 		const newMark = this.newMarks.peek();
 		assert(
 			baseMark !== undefined && newMark !== undefined,
-			"Cannot dequeue both unless both mark queues are non-empty",
+			0x69c /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
 		const length = Math.min(getMarkLength(newMark), getMarkLength(baseMark));
 		return {
@@ -346,7 +346,7 @@ function rebaseMark<TNodeChange>(
 		if (moveId !== undefined) {
 			if (markFollowsMoves(rebasedMark)) {
 				sendMarkToDest(rebasedMark, moveEffects, baseRevision, moveId);
-				return 0;
+				return { count: 0 };
 			}
 
 			const nodeChange = getNodeChange(rebasedMark);
@@ -359,7 +359,7 @@ function rebaseMark<TNodeChange>(
 
 		assert(
 			!isNewAttach(rebasedMark),
-			"A new attach should not be rebased over its cell being emptied",
+			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
 
 		if (isMoveMark(rebasedMark)) {
@@ -383,7 +383,7 @@ function rebaseMark<TNodeChange>(
 	} else if (markFillsCells(baseMark)) {
 		assert(
 			isExistingCellMark(rebasedMark),
-			"Only an ExistingCellMark can target an empty cell",
+			0x69e /* Only an ExistingCellMark can target an empty cell */,
 		);
 		if (isMoveMark(rebasedMark)) {
 			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
@@ -408,10 +408,6 @@ function rebaseMark<TNodeChange>(
 }
 
 function markFollowsMoves(mark: Mark<unknown>): boolean {
-	if (isSkipMark(mark)) {
-		return false;
-	}
-
 	const type = mark.type;
 	switch (type) {
 		case "Delete":
@@ -419,6 +415,7 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 		case "MoveOut":
 		case "Revive":
 			return true;
+		case NoopMarkType:
 		case "ReturnFrom":
 		case "Insert":
 		case "MoveIn":
@@ -456,15 +453,15 @@ function rebaseNodeChange<TNodeChange>(
 }
 
 function makeDetachedMark<T>(
-	mark: Skip | ExistingCellMark<T>,
+	mark: NoopMark | ExistingCellMark<T>,
 	detachIntention: RevisionTag,
 	offset: number,
 ): Mark<T> {
-	if (isSkipMark(mark)) {
-		return 0;
+	if (isNoopMark(mark)) {
+		return { count: 0 };
 	}
 
-	assert(mark.detachEvent === undefined, "Expected mark to be attached");
+	assert(mark.detachEvent === undefined, 0x69f /* Expected mark to be attached */);
 	return { ...mark, detachEvent: { revision: detachIntention, index: offset } };
 }
 
@@ -516,7 +513,10 @@ function amendRebaseI<TNodeChange>(
 
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark } = queue.pop();
-		if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
+		if (
+			baseMark !== undefined &&
+			(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
+		) {
 			const effect = getMoveEffect(
 				moveEffects,
 				CrossFieldTarget.Destination,
@@ -535,24 +535,25 @@ function amendRebaseI<TNodeChange>(
 
 			// TODO: Handle all pairings of base and new mark types.
 			if (baseMark !== undefined && isModify(baseMark)) {
-				if (isSkipMark(newMark)) {
-					const childChange = rebaseChild(undefined, baseMark.changes);
-					if (childChange !== undefined) {
-						rebasedMark = { type: "Modify", changes: childChange };
-					}
-				} else {
-					switch (newMark.type) {
-						case "Modify": {
-							const childChange = rebaseChild(newMark.changes, baseMark.changes);
-							if (childChange === undefined) {
-								rebasedMark = 1;
-							} else {
-								newMark.changes = childChange;
-							}
+				switch (newMark.type) {
+					case NoopMarkType: {
+						const childChange = rebaseChild(undefined, baseMark.changes);
+						if (childChange !== undefined) {
+							rebasedMark = { type: "Modify", changes: childChange };
 						}
-						default:
-							break;
+						break;
 					}
+					case "Modify": {
+						const childChange = rebaseChild(newMark.changes, baseMark.changes);
+						if (childChange === undefined) {
+							rebasedMark = { count: 1 };
+						} else {
+							newMark.changes = childChange;
+						}
+						break;
+					}
+					default:
+						break;
 				}
 			}
 			factory.push(rebasedMark);
@@ -633,7 +634,7 @@ function compareCellPositions(
 	gapOffsetInBase: number,
 ): number {
 	const baseId = getCellId(baseMark, baseIntention);
-	assert(baseId !== undefined, "baseMark should have cell ID");
+	assert(baseId !== undefined, 0x6a0 /* baseMark should have cell ID */);
 	const newId = getCellId(newMark, undefined);
 	if (baseId.revision === newId?.revision) {
 		return baseId.index - newId.index;
@@ -674,7 +675,7 @@ function compareCellPositions(
 
 	assert(
 		isNewAttach(baseMark),
-		"Lineage should determine order of marks unless one is a new attach",
+		0x6a1 /* Lineage should determine order of marks unless one is a new attach */,
 	);
 
 	// `newMark` points to cells which were emptied before `baseMark` was created.
