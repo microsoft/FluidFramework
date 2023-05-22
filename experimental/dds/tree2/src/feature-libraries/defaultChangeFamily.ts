@@ -100,13 +100,19 @@ export interface IDefaultEditBuilder {
 	 */
 	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
 
-	// TODO: document
+	/**
+	 * Moves a subsequence from one sequence field to another sequence.
+	 *
+	 * Note that in the case where the source and destination are the same, the `destinationIndex` is the final index the first node moved would end up at.
+	 * Thus if moving nodes from a lower to a higher index withing the same field, the `destinationIndex` must be computed as if the subsequence being moved has already been removed.
+	 * See {@link SequenceFieldEditBuilder.move} for details.
+	 */
 	move(
 		sourceField: FieldUpPath,
 		sourceIndex: number,
 		count: number,
 		destinationField: FieldUpPath,
-		destIndex: number,
+		destinationIndex: number,
 	): void;
 
 	// TODO: document
