@@ -62,5 +62,5 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 	 *
 	 * @remarks Will be undefined when the Container is not connected.
 	 */
-	audienceId?: string;
+	userId?: string;
 }

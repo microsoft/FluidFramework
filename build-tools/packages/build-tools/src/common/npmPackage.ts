@@ -30,7 +30,6 @@ import {
 } from "./utils";
 
 const { info, verbose, errorLog: error } = defaultLogger;
-export type ScriptDependencies = { [key: string]: string[] };
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
@@ -134,10 +133,6 @@ export class Package {
 
 	public get version(): string {
 		return this.packageJson.version;
-	}
-
-	public get fluidBuildConfig(): IFluidBuildConfig | undefined {
-		return this.packageJson.fluidBuild;
 	}
 
 	public get isPublished(): boolean {

@@ -103,16 +103,12 @@ parameters:
   type: string
   default: "^"
 
-# If true, then this pipeline will check and format package.json files according to prettier settings.
-- name: usesPrettier
-  type: boolean
-  default: true
-
-# A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
-# a pipeline stage separate from the build stage.
+# A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
+# in a pipeline stage separate from the build stage.
 - name: checks
   type: object
   default: []
+
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -271,7 +267,6 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
-              usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -470,7 +465,7 @@ stages:
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ variables.toolAbsolutePath }}
-                # Note: $(buildFeed) and $(officeFeed) come from the ado-feeds variable group
+                # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
                 script: |
                   echo Initialize package
                   npm init --yes
@@ -482,8 +477,8 @@ stages:
                   echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
-                  echo "@ff-internal:registry=$(buildFeed)" >> ./.npmrc
-                  echo "@microsoft:registry=$(officeFeed)" >> ./.npmrc
+                  echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+                  echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
                   echo "always-auth=true" >> ./.npmrc
                   cat .npmrc
 
@@ -522,7 +517,6 @@ stages:
 
             - task: Bash@3
               displayName: Write bundle sizes measurements to Aria/Kusto
-              condition: succeededOrFailed()
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ variables.toolAbsolutePath }}

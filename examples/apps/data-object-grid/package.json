@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/data-object-grid",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"private": true,
 	"description": "Data object grid creates child data objects from a registry and lays them out in a grid.",
 	"homepage": "https://fluidframework.com",
@@ -57,7 +57,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
-		"office-ui-fabric-react": "^7.189.0",
+		"office-ui-fabric-react": "7.199.6",
 		"prop-types": "^15.7.2",
 		"react": "^17.0.1",
 		"react-collapsible": "^2.7.0",
@@ -112,6 +112,28 @@
 				],
 				"library": "main"
 			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"eslint": [
+				"^tsc",
+				"@fluid-example/clicker#build:esnext",
+				"@fluid-example/codemirror#build:esnext",
+				"@fluid-example/collaborative-textarea#build:esnext",
+				"@fluid-example/multiview-coordinate-model#build:esnext",
+				"@fluid-example/multiview-slider-coordinate-view#build:esnext",
+				"@fluid-example/prosemirror#build:esnext"
+			],
+			"build:esnext": [
+				"^tsc",
+				"@fluid-example/clicker#build:esnext",
+				"@fluid-example/codemirror#build:esnext",
+				"@fluid-example/collaborative-textarea#build:esnext",
+				"@fluid-example/multiview-coordinate-model#build:esnext",
+				"@fluid-example/multiview-slider-coordinate-view#build:esnext",
+				"@fluid-example/prosemirror#build:esnext"
+			]
 		}
 	},
 	"jest-junit": {
