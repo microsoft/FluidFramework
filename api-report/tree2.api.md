@@ -988,9 +988,6 @@ export interface ISubscribable<E extends Events<E>> {
 }
 
 // @alpha
-export function isWritableArrayLike(data: ContextuallyTypedFieldData): data is MarkedArrayLike<ContextuallyTypedNodeData>;
-
-// @alpha
 export interface ITreeCursor {
     readonly [CursorMarker]: true;
     readonly chunkLength: number;
