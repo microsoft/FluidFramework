@@ -21,17 +21,16 @@ export {
 	typeSymbol,
 	isEditableField,
 	isPrimitive,
-	isUnwrappedNode,
+	isEditableTree,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	getField,
-	createField,
-	replaceField,
 	parentField,
 	EditableTreeEvents,
 	on,
 	contextSymbol,
+	NewFieldContent,
 } from "./editable-tree";
 
 export {
@@ -51,6 +50,9 @@ export {
 	cursorFromContextualData,
 	cursorsFromContextualData,
 	ContextuallyTypedFieldData,
+	cursorForTypedData,
+	cursorForTypedTreeData,
+	cursorsForTypedFieldData,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -109,12 +111,23 @@ export {
 	RevisionInfo,
 	HasFieldChanges,
 	ValueConstraint,
-	TypedSchema,
+	InternalTypedSchemaTypes,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
-	ViewSchemaCollection,
-	FieldViewSchema,
-	TreeViewSchema,
+	SchemaCollection,
+	IFieldSchema,
+	ITreeSchema,
+	SchemaBuilder,
+	TreeSchema,
+	AllowedTypes,
+	FieldSchema,
+	TypedSchemaCollection,
+	Any,
+	GlobalFieldSchema,
+	SchemaLibrary,
+	SchemaLibraryData,
+	Sourced,
+	NodeExistsConstraint,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
@@ -135,24 +148,18 @@ export {
 	identifierFieldSchema,
 	IdentifierIndex,
 	identifierSchema,
+	identifierFieldSchemaLibrary,
 } from "./identifierIndex";
 
-// Split into separate import and export for compatibility with API-Extractor.
-import * as SchemaAware from "./schema-aware";
-import * as FieldKindsOriginal from "./defaultFieldKinds";
-export { SchemaAware };
-
-// Export subset of FieldKinds in an API-Extractor compatible way:
-import { FieldEditor, FieldKind, Multiplicity } from "./modular-schema";
-
-/**
- * @alpha
- */
-export const FieldKinds: {
-	readonly value: FieldKind<FieldEditor<any>, Multiplicity.Value>;
-	readonly optional: FieldKind<FieldEditor<any>, Multiplicity.Optional>;
-	readonly sequence: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
-} = FieldKindsOriginal;
+export {
+	FieldKinds,
+	BrandedFieldKind,
+	ValueFieldKind,
+	Optional,
+	Sequence,
+	Forbidden,
+	FieldKindTypes,
+} from "./defaultFieldKinds";
 
 export {
 	UntypedField,
@@ -163,3 +170,7 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 } from "./untypedTree";
+
+// Split into separate import and export for compatibility with API-Extractor.
+import * as SchemaAware from "./schema-aware";
+export { SchemaAware };

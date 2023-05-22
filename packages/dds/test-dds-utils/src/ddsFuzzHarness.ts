@@ -183,7 +183,7 @@ export interface DDSFuzzModel<
 	) => void;
 }
 
-interface DDSFuzzSuiteOptions {
+export interface DDSFuzzSuiteOptions {
 	/**
 	 * Number of tests to generate for correctness modes (which are run in the PR gate).
 	 */
@@ -274,7 +274,7 @@ interface DDSFuzzSuiteOptions {
 	saveFailures: false | { directory: string };
 }
 
-const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
+export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	numberOfClients: 3,
 	only: [],
@@ -284,7 +284,12 @@ const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	validationStrategy: { type: "random", probability: 0.05 },
 };
 
-function mixinNewClient<
+/**
+ * Mixes in functionality to add new clients to a DDS fuzz model.
+ * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
+ */
+export function mixinNewClient<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -334,7 +339,12 @@ function mixinNewClient<
 	};
 }
 
-function mixinReconnect<
+/**
+ * Mixes in functionality to disconnect and reconnect clients in a DDS fuzz model.
+ * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
+ */
+export function mixinReconnect<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -379,7 +389,12 @@ function mixinReconnect<
 	};
 }
 
-function mixinSynchronization<
+/**
+ * Mixes in functionality to generate ops which synchronize all clients and assert the resulting state is consistent.
+ * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
+ */
+export function mixinSynchronization<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -449,7 +464,16 @@ function mixinSynchronization<
 
 const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).clientId !== undefined;
 
-function mixinClientSelection<
+/**
+ * Mixes in the ability to select a client to perform an operation on.
+ * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}
+ * and {@link DDSFuzzTestState.channel}.
+ *
+ * @remarks - This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
+ * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
+ */
+export function mixinClientSelection<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 	TState extends DDSFuzzTestState<TChannelFactory>,
@@ -572,6 +596,56 @@ function makeFriendlyClientId(random: IRandom, index: number): string {
 	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
 }
 
+/**
+ * Runs the provided DDS fuzz model. All functionality is already assumed to be mixed in.
+ * @privateRemarks - This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
+ */
+export async function runTestForSeed<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+>(
+	model: DDSFuzzModel<TChannelFactory, TOperation>,
+	options: Omit<DDSFuzzSuiteOptions, "only">,
+	seed: number,
+	saveInfo?: SaveInfo,
+): Promise<DDSFuzzTestState<TChannelFactory>> {
+	const random = makeRandom(seed);
+	const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
+
+	const clients = await Promise.all(
+		Array.from({ length: options.numberOfClients }, async (_, index) =>
+			loadClient(
+				containerRuntimeFactory,
+				summarizerClient,
+				model.factory,
+				makeFriendlyClientId(random, index),
+			),
+		),
+	);
+
+	const initialState: DDSFuzzTestState<TChannelFactory> = {
+		clients,
+		summarizerClient,
+		containerRuntimeFactory,
+		random,
+		// These properties should always be injected into the state by the mixed in reducer/generator
+		// for any user code. We initialize them to proxies which throw errors on any property access
+		// to catch bugs in that setup.
+		channel: makeUnreachableCodepathProxy("channel"),
+		client: makeUnreachableCodepathProxy("client"),
+	};
+
+	const finalState = await performFuzzActions(
+		model.generatorFactory(),
+		model.reducer,
+		initialState,
+		saveInfo,
+	);
+	return finalState;
+}
+
 function runTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 	model: DDSFuzzModel<TChannelFactory, TOperation>,
 	options: InternalOptions,
@@ -580,34 +654,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 ): void {
 	const itFn = options.only.has(seed) ? it.only : it;
 	itFn(`seed ${seed}`, async () => {
-		const random = makeRandom(seed);
-		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
-		const summarizerClient = createClient(containerRuntimeFactory, model.factory, "summarizer");
-
-		const clients = await Promise.all(
-			Array.from({ length: options.numberOfClients }, async (_, index) =>
-				loadClient(
-					containerRuntimeFactory,
-					summarizerClient,
-					model.factory,
-					makeFriendlyClientId(random, index),
-				),
-			),
-		);
-
-		const initialState: DDSFuzzTestState<TChannelFactory> = {
-			clients,
-			summarizerClient,
-			containerRuntimeFactory,
-			random,
-			// These properties should always be injected into the state by the mixed in reducer/generator
-			// for any user code. We initialize them to proxies which throw errors on any property access
-			// to catch bugs in that setup.
-			channel: makeUnreachableCodepathProxy("channel"),
-			client: makeUnreachableCodepathProxy("client"),
-		};
-
-		await performFuzzActions(model.generatorFactory(), model.reducer, initialState, saveInfo);
+		await runTestForSeed(model, options, seed, saveInfo);
 	});
 }
 
@@ -615,6 +662,36 @@ type InternalOptions = Omit<DDSFuzzSuiteOptions, "only"> & { only: Set<number> }
 
 function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
 	return options.only instanceof Set;
+}
+
+export async function replayTest<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+>(
+	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+	seed: number,
+	operations: TOperation[],
+	saveInfo?: SaveInfo,
+	providedOptions?: Partial<DDSFuzzSuiteOptions>,
+): Promise<void> {
+	const options = {
+		...defaultDDSFuzzSuiteOptions,
+		...providedOptions,
+		only: new Set(providedOptions?.only ?? []),
+	};
+
+	const _model = mixinSynchronization(
+		mixinNewClient(mixinClientSelection(mixinReconnect(ddsModel, options), options), options),
+		options,
+	);
+
+	const model = {
+		..._model,
+		// We lose some typesafety here because the options interface isn't generic
+		generatorFactory: (): Generator<TOperation, unknown> => generatorFromArray(operations),
+	};
+
+	await runTestForSeed(model, options, seed, saveInfo);
 }
 
 /**

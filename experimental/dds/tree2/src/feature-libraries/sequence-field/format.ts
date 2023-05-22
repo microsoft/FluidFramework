@@ -19,8 +19,11 @@ export const ProtoNode = Type.Any();
 
 export type NodeCount = number;
 export const NodeCount = Type.Number();
-export type Skip = number;
-export const Skip = Type.Number();
+
+/**
+ * Left undefined for terseness.
+ */
+export const NoopMarkType = undefined;
 
 /**
  * A monotonically increasing positive integer assigned to an individual mark within the changeset.
@@ -40,17 +43,6 @@ export interface HasMoveId {
 }
 export const HasMoveId = Type.Object({ id: MoveId });
 
-export interface Conflicted {
-	/**
-	 * The revision of the concurrent change that the mark conflicts with.
-	 */
-	conflictsWith: RevisionTag;
-}
-export const Conflicted = Type.Object({ conflictsWith: RevisionTagSchema });
-
-export type CanConflict = Partial<Conflicted>;
-export const CanConflict = Type.Partial(Conflicted);
-
 export type NodeChangeType = NodeChangeset;
 
 // Boolean encodings can use this alternative to save space for frequently false values.
@@ -67,11 +59,6 @@ export enum Effects {
 	Delete = "Delete",
 	None = "None",
 }
-
-export interface PriorOp {
-	change: RevisionTag;
-}
-export const PriorOp = Type.Object({ change: RevisionTagSchema });
 
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.
@@ -129,39 +116,14 @@ export const HasPlaceFields = Type.Object({
 
 export interface HasReattachFields extends HasPlaceFields {
 	/**
-	 * The tag of the change that detached the data being reattached.
-	 *
-	 * Undefined when the reattach is the product of a tag-less change being inverted.
-	 * It is invalid to try convert such a reattach mark to a delta.
+	 * The revision this mark is inverting a detach from.
+	 * If defined this mark is a revert-only inverse,
+	 * meaning that it will only reattach nodes if those nodes were last detached by `inverseOf`.
+	 * If `inverseOf` is undefined, this mark will reattach nodes regardless of when they were last detached.
 	 */
-	detachedBy?: RevisionTag;
-
-	/**
-	 * The original field index of the detached node(s).
-	 * "Original" here means before the change that detached them was applied.
-	 */
-	detachIndex: number;
-
-	/**
-	 * When true, the intent for the target nodes is as follows:
-	 * - In a "Revive" mark: the nodes should exist no matter how they were deleted.
-	 * - In a "Return" mark: the nodes, if they exist, should be located here no matter how they were moved.
-	 *
-	 * When undefined, the mark is solely intended to revert a prior change, and will therefore only take effect
-	 * if that change has taken effect.
-	 */
-	isIntention?: true;
-
-	/**
-	 * The changeset that last detached the nodes that this mark intends to revive.
-	 * For this property to be set, the target nodes must have been reattached by another changeset,
-	 * then detached by a changeset other than `Reattach.detachedBy`.
-	 *
-	 * This property should only be set or read when `Reattach.isIntention` is undefined.
-	 * This property should be `undefined` when it would otherwise be equivalent to `Reattach.detachedBy`.
-	 */
-	lastDetachedBy?: RevisionTag;
+	inverseOf?: RevisionTag;
 }
+// TODO
 export const HasReattachFields = Type.Intersect([
 	HasPlaceFields,
 	Type.Object({
@@ -170,6 +132,71 @@ export const HasReattachFields = Type.Intersect([
 		isIntention: OptionalTrue,
 		lastDetachedBy: Type.Optional(RevisionTagSchema),
 	}),
+]);
+
+/**
+ * Identifies an empty cell.
+ */
+export interface DetachEvent {
+	/**
+	 * The intention of edit which last emptied the cell.
+	 */
+	revision: RevisionTag;
+
+	/**
+	 * The absolute position of the node in this cell in the input context of the revision which emptied it.
+	 */
+	index: number;
+}
+export const DetachEvent = Type.Object({
+	revision: RevisionTagSchema,
+	index: Type.Number(),
+});
+
+/**
+ * Mark which targets a range of existing cells instead of creating new cells.
+ */
+export interface CellTargetingMark {
+	/**
+	 * Describes the detach which last emptied target cells.
+	 * Undefined if the target cells are not empty in this mark's input context.
+	 */
+	detachEvent?: DetachEvent;
+
+	/**
+	 * Lineage of detaches adjacent to the cells since `detachEvent`.
+	 * Should be empty if the cells are full in this mark's input context.
+	 */
+	lineage?: LineageEvent[];
+}
+export const CellTargetingMark = Type.Object({
+	detachEvent: Type.Optional(DetachEvent),
+	lineage: Type.Optional(Type.Array(LineageEvent)),
+});
+
+export interface NoopMark extends CellTargetingMark {
+	/**
+	 * Declared for consistency with other marks.
+	 * Left undefined for terseness.
+	 */
+	type?: typeof NoopMarkType;
+
+	/**
+	 * The number of nodes being skipped.
+	 */
+	count: NodeCount;
+}
+export const NoopMark = Type.Intersect([
+	CellTargetingMark,
+	Type.Object({ type: Type.Optional(Type.Undefined()), count: NodeCount }),
+]);
+
+export interface DetachedCellMark extends CellTargetingMark {
+	detachEvent: DetachEvent;
+}
+export const DetachedCellMark = Type.Intersect([
+	CellTargetingMark,
+	Type.Object({ detachEvent: DetachEvent }),
 ]);
 
 export interface HasTiebreakPolicy extends HasPlaceFields {
@@ -224,7 +251,7 @@ export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 		}),
 	]);
 
-export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, CanConflict {
+export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag {
 	type: "MoveIn";
 	/**
 	 * The actual number of nodes being moved-in. This count excludes nodes that were concurrently deleted.
@@ -241,7 +268,6 @@ export const MoveIn = Type.Intersect([
 	HasMoveId,
 	HasPlaceFields,
 	HasRevisionTag,
-	CanConflict,
 	Type.Object({
 		type: Type.Literal("MoveIn"),
 		count: NodeCount,
@@ -252,7 +278,7 @@ export const MoveIn = Type.Intersect([
 export interface Delete<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasChanges<TNodeChange>,
-		CanConflict {
+		CellTargetingMark {
 	type: "Delete";
 	count: NodeCount;
 }
@@ -261,7 +287,7 @@ export const DeleteSchema = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasRevisionTag,
 		HasChanges(tNodeChange),
-		CanConflict,
+		CellTargetingMark,
 		Type.Object({
 			type: Type.Literal("Delete"),
 			count: NodeCount,
@@ -272,21 +298,16 @@ export interface MoveOut<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
 		HasChanges<TNodeChange>,
-		CanConflict {
+		CellTargetingMark {
 	type: "MoveOut";
 	count: NodeCount;
-	/**
-	 * When true, the corresponding MoveIn has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isDstConflicted?: true;
 }
 export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Intersect([
 		HasRevisionTag,
 		HasMoveId,
 		HasChanges(tNodeChange),
-		CanConflict,
+		CellTargetingMark,
 		Type.Object({
 			type: Type.Literal("MoveOut"),
 			count: NodeCount,
@@ -294,19 +315,11 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 		}),
 	]);
 
-/**
- * A Detach with a conflicted destination.
- * Such a Detach has no effect when applied and is therefore akin to a Skip mark.
- */
-export type SkipLikeDetach<TNodeChange> = (MoveOut<TNodeChange> | ReturnFrom<TNodeChange>) & {
-	isDstConflicted: true;
-};
-
 export interface Revive<TNodeChange = NodeChangeType>
 	extends HasReattachFields,
 		HasRevisionTag,
 		HasChanges<TNodeChange>,
-		CanConflict {
+		CellTargetingMark {
 	type: "Revive";
 	content: ITreeCursorSynchronous[];
 	count: NodeCount;
@@ -316,7 +329,7 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 		HasReattachFields,
 		HasRevisionTag,
 		HasChanges(tNodeChange),
-		CanConflict,
+		CellTargetingMark,
 		Type.Object({
 			type: Type.Literal("Revive"),
 			content: Type.Array(ProtoNode),
@@ -324,9 +337,10 @@ export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
 		}),
 	]);
 
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, CanConflict {
+export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId, CellTargetingMark {
 	type: "ReturnTo";
 	count: NodeCount;
+
 	/**
 	 * When true, the corresponding ReturnFrom has a conflict.
 	 * This is independent of whether this mark has a conflict.
@@ -337,7 +351,7 @@ export const ReturnTo = Type.Intersect([
 	HasReattachFields,
 	HasRevisionTag,
 	HasMoveId,
-	CanConflict,
+	CellTargetingMark,
 	Type.Object({
 		type: Type.Literal("ReturnTo"),
 		count: NodeCount,
@@ -349,23 +363,9 @@ export interface ReturnFrom<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
 		HasChanges<TNodeChange>,
-		CanConflict {
+		CellTargetingMark {
 	type: "ReturnFrom";
 	count: NodeCount;
-	/**
-	 * Needed for detecting the following:
-	 * - The mark is being composed with its inverse
-	 * - The mark should be no longer be conflicted
-	 *
-	 * Always kept consistent with `ReturnTo.detachedBy`.
-	 */
-	detachedBy?: RevisionTag;
-
-	/**
-	 * Only populated when the mark is conflicted.
-	 * Indicates the index of the detach in the input context of the change with revision `conflictsWith`.
-	 */
-	detachIndex?: number;
 
 	/**
 	 * When true, the corresponding ReturnTo has a conflict.
@@ -378,12 +378,10 @@ export const ReturnFrom = <Schema extends TSchema>(tNodeChange: Schema) =>
 		HasRevisionTag,
 		HasMoveId,
 		HasChanges(tNodeChange),
-		CanConflict,
+		CellTargetingMark,
 		Type.Object({
 			type: Type.Literal("ReturnFrom"),
 			count: NodeCount,
-			detachedBy: Type.Optional(RevisionTagSchema),
-			detachIndex: Type.Optional(Type.Number()),
 			isDstConflicted: OptionalTrue,
 		}),
 	]);
@@ -399,21 +397,6 @@ export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | Retur
 export const Reattach = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([Revive(tNodeChange), ReturnTo]);
 
-/**
- * A Reattach whose target nodes are already reattached and have not been detached by some other change.
- * Such a Reattach has no effect when applied and is therefore akin to a Skip mark.
- */
-export type SkipLikeReattach<TNodeChange> = Reattach<TNodeChange> &
-	Conflicted & {
-		lastDeletedBy?: never;
-	};
-export const SkipLikeReattach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Intersect([
-		Reattach(tNodeChange),
-		Conflicted,
-		Type.Object({ lastDeletedBy: Type.Never() }),
-	]);
-
 export type Attach<TNodeChange = NodeChangeType> = NewAttach<TNodeChange> | Reattach<TNodeChange>;
 export const Attach = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([NewAttach(tNodeChange), Reattach(tNodeChange)]);
@@ -425,7 +408,7 @@ export type Detach<TNodeChange = NodeChangeType> =
 export const Detach = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Union([DeleteSchema(tNodeChange), MoveOut(tNodeChange), ReturnFrom(tNodeChange)]);
 
-export interface Modify<TNodeChange = NodeChangeType> {
+export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark {
 	type: "Modify";
 	changes: TNodeChange;
 }
@@ -436,40 +419,49 @@ export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
 	});
 
 /**
- * A mark that spans one or more nodes in the input context of its changeset.
+ * A mark which extends `CellTargetingMark`.
  */
-export type InputSpanningMark<TNodeChange> =
-	| Skip
-	| Detach<TNodeChange>
+export type ExistingCellMark<TNodeChange> =
+	| NoopMark
+	| Delete<TNodeChange>
+	| MoveOut<TNodeChange>
+	| ReturnFrom<TNodeChange>
 	| Modify<TNodeChange>
-	| SkipLikeReattach<TNodeChange>;
-export const InputSpanningMark = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Skip, Detach(tNodeChange), Modify(tNodeChange), SkipLikeReattach(tNodeChange)]);
+	| Revive<TNodeChange>
+	| ReturnTo;
+export const ExistingCellMark = <Schema extends TSchema>(tNodeChange: Schema) =>
+	Type.Union([
+		NoopMark,
+		DeleteSchema(tNodeChange),
+		MoveOut(tNodeChange),
+		ReturnFrom(tNodeChange),
+		Modify(tNodeChange),
+		Revive(tNodeChange),
+		ReturnTo,
+	]);
 
-/**
- * A mark that spans one or more nodes in the output context of its changeset.
- */
-export type OutputSpanningMark<TNodeChange> =
-	| Skip
+export type EmptyInputCellMark<TNodeChange> =
 	| NewAttach<TNodeChange>
-	| Modify<TNodeChange>
-	| Reattach<TNodeChange>;
-export const OutputSpanningMark = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Skip, NewAttach(tNodeChange), Modify(tNodeChange), Reattach(tNodeChange)]);
+	| (DetachedCellMark & ExistingCellMark<TNodeChange>);
+export const EmptyInputCellMark = <Schema extends TSchema>(tNodeChange: Schema) =>
+	Type.Union([
+		NewAttach(tNodeChange),
+		Type.Intersect([DetachedCellMark, ExistingCellMark(tNodeChange)]),
+	]);
 
 export type Mark<TNodeChange = NodeChangeType> =
-	| InputSpanningMark<TNodeChange>
-	| OutputSpanningMark<TNodeChange>;
+	| NoopMark
+	| Modify<TNodeChange>
+	| Attach<TNodeChange>
+	| Detach<TNodeChange>;
 export const Mark = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([InputSpanningMark(tNodeChange), OutputSpanningMark(tNodeChange)]);
+	Type.Union([NoopMark, Modify(tNodeChange), Attach(tNodeChange), Detach(tNodeChange)]);
 
 export type MarkList<TNodeChange = NodeChangeType> = Mark<TNodeChange>[];
 
 export type Changeset<TNodeChange = NodeChangeType> = MarkList<TNodeChange>;
 export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Array(Mark(tNodeChange));
-
-export type ObjectMark<TNodeChange = NodeChangeType> = Exclude<Mark<TNodeChange>, Skip>;
 
 /**
  * A mark that spans one or more cells.

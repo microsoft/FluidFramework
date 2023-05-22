@@ -128,10 +128,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				},
 			);
 
-			const _id = await this.initializeFromSnapshot(
-				normalizedSnapshotContents,
-				latestSnapshotId,
-			);
+			const _id = await this.initializeFromSnapshot(normalizedSnapshotContents);
 			this.firstVersionsCall = false;
 			return [
 				{
@@ -173,14 +170,24 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			requestVersion = versions[0];
 		}
 
-		const normalizedWholeSnapshot = await this.snapshotTreeCache.get(
+		let normalizedWholeSnapshot = await this.snapshotTreeCache.get(
 			this.getCacheKey(requestVersion.id),
 		);
 		if (normalizedWholeSnapshot !== undefined) {
 			return normalizedWholeSnapshot.snapshotTree;
 		}
-		return (await this.fetchSnapshotTree(requestVersion.id, undefined, "getSnapshotTree"))
-			.snapshotTree;
+
+		normalizedWholeSnapshot = await this.fetchSnapshotTree(
+			requestVersion.id,
+			undefined,
+			"getSnapshotTree",
+		);
+
+		// Currently retrieving blobs from network is not supported by AFR for WholeSummaryDocumentStorageService
+		// Blobs are expected to be put in the cache
+		await this.updateBlobsCache(normalizedWholeSnapshot.blobs);
+
+		return normalizedWholeSnapshot.snapshotTree;
 	}
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -189,6 +196,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			return cachedBlob;
 		}
 
+		// Note: AFR does not support readBlobs, but potentially other r11s like servers do
 		const blob = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
@@ -317,35 +325,29 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			},
 		);
 
+		// Also add the result into the cache.
+		await this.snapshotTreeCache
+			.put(this.getCacheKey(versionId), normalizedWholeSummary)
+			.catch(() => undefined);
 		return normalizedWholeSummary;
 	}
 
 	private async initializeFromSnapshot(
 		normalizedWholeSummary: INormalizedWholeSummary,
-		versionId: string | null,
 	): Promise<string> {
 		const snapshotId = normalizedWholeSummary.id;
 		assert(snapshotId !== undefined, 0x275 /* "Root tree should contain the id" */);
 		const cachePs: Promise<any>[] = [
 			this.snapshotTreeCache.put(this.getCacheKey(snapshotId), normalizedWholeSummary),
-			this.initBlobCache(normalizedWholeSummary.blobs),
+			this.updateBlobsCache(normalizedWholeSummary.blobs),
 		];
-		if (snapshotId !== versionId && versionId !== null) {
-			// versionId could be "latest". When summarizer checks cache for "latest", we want it to be available.
-			// TODO: For in-memory cache, <latest,snapshotTree> will be a shared pointer with <snapshotId,snapshotTree>,
-			// However, for something like Redis, this will cache the same value twice. Alternatively, could we simply
-			// cache with versionId?
-			cachePs.push(
-				this.snapshotTreeCache.put(this.getCacheKey(versionId), normalizedWholeSummary),
-			);
-		}
 
 		await Promise.all(cachePs);
 
 		return snapshotId;
 	}
 
-	private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
+	private async updateBlobsCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
 		const blobCachePutPs: Promise<void>[] = [];
 		blobs.forEach((value, id) => {
 			const cacheKey = this.getCacheKey(id);
