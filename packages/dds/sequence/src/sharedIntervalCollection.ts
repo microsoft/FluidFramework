@@ -24,7 +24,7 @@ import {
 	IntervalCollectionValueType,
 	ISerializableInterval,
 } from "./intervalCollection";
-import { DefaultMap } from "./defaultMap";
+import { DefaultMap, IMapOperation } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
 import { IMapMessageLocalMetadata } from "./defaultMapInterfaces";
 
@@ -163,7 +163,7 @@ export class SharedIntervalCollection
 	) {
 		if (message.type === MessageType.Operation) {
 			this.intervalCollections.tryProcessMessage(
-				message.contents,
+				message.contents as IMapOperation,
 				local,
 				message,
 				localOpMetadata,

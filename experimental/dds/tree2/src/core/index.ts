@@ -89,6 +89,8 @@ export {
 	AnchorEvents,
 	AnchorSetRootEvents,
 	ProtoNodes,
+	CursorMarker,
+	isCursor,
 } from "./tree";
 
 export {
@@ -108,15 +110,19 @@ export {
 
 export {
 	LocalFieldKey,
+	LocalFieldKeySchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	TreeSchemaIdentifier,
+	TreeSchemaIdentifierSchema,
 	NamedTreeSchema,
 	Named,
-	FieldSchema,
+	FieldStoredSchema,
 	ValueSchema,
-	TreeSchema,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
@@ -134,12 +140,7 @@ export {
 	SchemaEvents,
 } from "./schema-stored";
 
-export {
-	ChangeFamily,
-	ChangeFamilyEditor,
-	ProgressiveEditBuilder,
-	ProgressiveEditBuilderBase,
-} from "./change-family";
+export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
 	assertIsRevisionTag,
@@ -149,6 +150,7 @@ export {
 	GraphCommit,
 	isRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 	TaggedChange,
 	makeAnonChange,
 	tagChange,
@@ -175,9 +177,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
 
-export {
-	IRepairDataStoreProvider,
-	UndoRedoManager,
-	UndoRedoManagerCommitType,
-	markCommits,
-} from "./undo";
+export { IRepairDataStoreProvider, UndoRedoManager, UndoRedoManagerCommitType } from "./undo";

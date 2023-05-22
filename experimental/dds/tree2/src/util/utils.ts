@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
+import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
 
 /**
@@ -38,6 +40,9 @@ export function fail(message: string): never {
 
 /**
  * Checks whether or not the given object is a `readonly` array.
+ *
+ * Note that this does NOT indicate if a given array should be treated as readonly.
+ * This instead indicates if an object is an Array, and is typed to tolerate the readonly case.
  */
 export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
 	// `Array.isArray()` does not properly narrow `readonly` array types by itself,
@@ -210,6 +215,16 @@ export type JsonCompatibleReadOnly =
 	| { readonly [P in string]?: JsonCompatibleReadOnly };
 
 /**
+ * @remarks - TODO: Audit usage of this type in schemas, evaluating whether it is necessary and performance
+ * of alternatives.
+ *
+ * True "arbitrary serializable data" is probably fine, but some persisted types declarations might be better
+ * expressed using composition of schemas for runtime validation, even if we don't think making the types
+ * generic is worth the maintenance cost.
+ */
+export const JsonCompatibleReadOnlySchema = Type.Any();
+
+/**
  * Returns if a particular json compatible value is an object.
  * Does not include `null` or arrays.
  */
@@ -218,3 +233,31 @@ export function isJsonObject(
 ): value is { readonly [P in string]?: JsonCompatibleReadOnly } {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+
+export function assertValidIndex(
+	index: number,
+	array: { readonly length: number },
+	allowOnePastEnd: boolean = false,
+) {
+	assert(Number.isInteger(index), 0x376 /* index must be an integer */);
+	assert(index >= 0, 0x377 /* index must be non-negative */);
+	if (allowOnePastEnd) {
+		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
+	} else {
+		assert(index < array.length, 0x379 /* index must be less than length */);
+	}
+}
+
+/**
+ * Assume that `TInput` is a `TAssumeToBe`.
+ *
+ * @remarks
+ * This is useful in generic code when it is impractical (or messy)
+ * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
+ * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow compilation of the generic code.
+ * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
+ * it will behave like `TInput` was used directly.
+ *
+ * @alpha
+ */
+export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;

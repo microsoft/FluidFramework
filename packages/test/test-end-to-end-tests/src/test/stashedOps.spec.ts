@@ -28,7 +28,11 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { ConnectionState, IPendingContainerState } from "@fluidframework/container-loader";
+import {
+	ConnectionState,
+	IContainerExperimental,
+	IPendingContainerState,
+} from "@fluidframework/container-loader";
 import { bufferToString, Deferred, stringToBuffer } from "@fluidframework/common-utils";
 import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
@@ -1349,6 +1353,87 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const container2 = await loader.resolve({ url }, pendingOps);
 		await waitForContainerConnection(container2);
 		await provider.ensureSynchronized();
+	});
+
+	it("get pending state without close resends ops", async () => {
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+
+		// pause outgoing ops so we can detect dropped stashed changes
+		await container.deltaManager.outbound.pause();
+
+		let pendingState;
+		// always delete stash blob on "connected" event
+		container.on("connected", (clientId: string) => {
+			pendingState = container.getPendingLocalState();
+			// the pending data in the stash blob may not have changed, but the clientId should match our new
+			// clientId, which will now be used to attempt to resubmit pending changes
+			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
+		});
+
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+		for (let i = 5; i--; ) {
+			map.set(`${i}`, `${i}`);
+			container.disconnect();
+			container.connect();
+			await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+		}
+		container.close();
+		// no pending changes went through
+		for (let i = 5; i--; ) {
+			assert.strictEqual(map1.get(`${i}`), undefined);
+		}
+
+		// because the event listener was always refreshing pendingState on "connected", the stash blob
+		// should be safe to use
+		const container2 = await loader.resolve({ url }, pendingState);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+		await provider.ensureSynchronized();
+		for (let i = 5; i--; ) {
+			// local value is what we expect
+			assert.strictEqual(map2.get(`${i}`), `${i}`);
+			// remote value is what we expect
+			assert.strictEqual(map1.get(`${i}`), `${i}`);
+		}
+	});
+
+	it("get pending state without close doesn't duplicate ops", async () => {
+		const container = (await provider.loadTestContainer(
+			testContainerConfig,
+		)) as IContainerExperimental;
+
+		let pendingState;
+		// always delete stash blob on "connected" event
+		container.on("connected", (clientId: string) => {
+			pendingState = container.getPendingLocalState();
+			// the pending data in the stash blob may not have changed, but the clientId should match our new
+			// clientId, which will now be used to attempt to resubmit pending changes
+			assert.strictEqual(clientId, JSON.parse(pendingState).clientId);
+		});
+
+		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const counter = await dataStore.getSharedObject<SharedCounter>(counterId);
+		for (let i = 5; i--; ) {
+			counter.increment(1);
+			container.disconnect();
+			container.connect();
+			await new Promise<void>((resolve) => container.on("connected", () => resolve()));
+		}
+		container.close();
+
+		// because the event listener was always refreshing pendingState on "connected", the stash blob
+		// should be safe to use
+		const container2 = await loader.resolve({ url }, pendingState);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
+		await provider.ensureSynchronized();
+		// local value is what we expect
+		assert.strictEqual(counter2.value, 5);
+		// remote value is what we expect
+		assert.strictEqual(counter1.value, 5);
 	});
 });
 

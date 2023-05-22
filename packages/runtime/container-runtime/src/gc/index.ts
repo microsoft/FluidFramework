@@ -39,11 +39,11 @@ export {
 	cloneGCData,
 	concatGarbageCollectionStates,
 	getGCDataFromSnapshot,
-	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
+	tagAsCodeArtifact,
 } from "./gcHelpers";
 export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 export {
@@ -62,4 +62,5 @@ export {
 	closuresMapLocalStorageKey,
 	SweepReadyUsageDetectionHandler,
 } from "./gcSweepReadyUsageDetection";
+export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";

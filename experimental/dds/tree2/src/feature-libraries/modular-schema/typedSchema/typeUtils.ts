@@ -3,25 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Named } from "../../../core";
-
 /**
  * Utilities for manipulating types.
  */
-
-/**
- * Assume that `TInput` is a `TAssumeToBe`.
- *
- * @remarks
- * This is useful in generic code when it is impractical (or messy)
- * to to convince the compiler that a generic type `TInput` will extend `TAssumeToBe`.
- * In these cases `TInput` can be replaced with `Assume<TInput, TAssumeToBe>` to allow complication of the generic code.
- * When the generic code is parameterized with a concrete type, if that type actually does extend `TAssumeToBe`,
- * it will behave like `TInput` was used directly.
- *
- * @alpha
- */
-export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 /**
  * Convert a object type into the type of a ReadonlyMap from field name to value.
@@ -34,22 +18,30 @@ export type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = R
 	get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
 };
 
+// TODO: test + document
+export function objectToMap<
+	ObjectMap extends Record<MapKey, MapValue>,
+	MapKey extends string,
+	MapValue,
+>(objectMap: ObjectMap): ObjectToMap<ObjectMap, MapKey, MapValue> {
+	const map = new Map<MapKey, MapValue>();
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		map.set(key as MapKey, element);
+	}
+	return map as unknown as ObjectToMap<ObjectMap, MapKey, MapValue>;
+}
+
 /**
  * Convert a Array type into the type of ReadonlySet.
  *
  * Same as `keyof ListToKeys<T, unknown>` but work for values that are not valid keys.
+ * @alpha
  */
 export type ArrayToUnion<T extends readonly unknown[]> = T extends readonly (infer TValue)[]
 	? TValue
 	: never;
-
-/**
- * Takes in a list and returns an object with its members as keys.
- * @alpha
- */
-export type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
-	[key in T[number]]: TValue;
-};
 
 /**
  * Replaces undefined and unknown with a default value.
@@ -62,21 +54,6 @@ export type WithDefault<T, Default> = T extends undefined
 	: unknown extends T
 	? Default
 	: T;
-
-/**
- * Normalize a name or `Named` into the name.
- * @alpha
- */
-export type AsName<T extends unknown | Named<unknown>> = T extends Named<infer Name> ? Name : T;
-
-/**
- * Converts list of names or named objects into list of names.
- * @alpha
- */
-export type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<
-	T extends [infer Head, ...infer Tail] ? [AsName<Head>, ...AsNames<Tail, TName>] : [],
-	TName[]
->;
 
 /**
  * Removes a type brand. See {@link brand}.
@@ -97,7 +74,7 @@ export type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infe
  * This tends to convert unions and intersections into objects.
  * @alpha
  */
-export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_dummy];
+export type FlattenKeys<T> = [{ [Property in keyof T]: T[Property] }][_InlineTrick];
 
 /**
  * Remove all fields which permit undefined from `T`.
@@ -107,7 +84,7 @@ export type RequiredFields<T> = [
 	{
 		[P in keyof T as undefined extends T[P] ? never : P]: T[P];
 	},
-][_dummy];
+][_InlineTrick];
 
 /**
  * Extract fields which permit undefined but can also hold other types.
@@ -121,7 +98,7 @@ export type OptionalFields<T> = [
 				: P
 			: never]?: T[P];
 	},
-][_dummy];
+][_InlineTrick];
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
@@ -135,17 +112,18 @@ export type OptionalFields<T> = [
  * See also `AllowOptional`.
  * @alpha
  */
-export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_dummy];
+// export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
+export type AllowOptionalNotFlattened<T> = [RequiredFields<T> & OptionalFields<T>][_InlineTrick];
 
 /**
  * Converts properties of an object which permit undefined into optional properties.
  * Removes fields which only allow undefined.
  * @alpha
  */
-export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_dummy];
+export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_InlineTrick];
 
 /**
- * Field to use for trick to "inline" generic types.
+ * Use for trick to "inline" generic types.
  *
  * @remarks
  * The TypeScript compiler can be convinced to inline a generic type
@@ -155,7 +133,7 @@ export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T
  * For example:
  * ```typescript
  * type MyGeneric<T1, T2> = {x: T1 extends [] ? T1 : T2 };
- * type MyGenericExpanded<T1, T2> = [{x: T1 extends [] ? T1 : T2 }][_dummy]
+ * type MyGenericExpanded<T1, T2> = [{x: T1 extends [] ? T1 : T2 }][_InlineTrick]
  *
  * // Type is MyGeneric<5, string>
  * const foo: MyGeneric<5, string> = {x: "x"}
@@ -167,4 +145,73 @@ export type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T
  * and to locate types which use this pattern in case they need updating for compiler changes.
  * @alpha
  */
-export type _dummy = 0;
+export type _InlineTrick = 0;
+
+/**
+ * Use for trick to prevent self reference error `ts(2456)`.
+ *
+ * Prefix a type expression with `K extends _RecursiveTrick ? _RecursiveTrick : ` for some K to break the cycle.
+ *
+ * @remarks
+ * The TypeScript compiler handles some cases of recursive types, but not others.
+ * Sometimes adding an otherwise needless conditional can make a type compile.
+ * Use this type in such cases.
+ *
+ *For example:
+ * ```typescript
+ * // The TypeScript compiler can't handle this case
+ * type Broken<T> = FlattenKeys<
+ *	{
+ * 		[K in keyof T]: 0;
+ * 	} & {
+ * 		[K in keyof T]: Broken<T[K]>;
+ * 	}
+ * >;
+ *
+ * // Adding `K extends _RecursiveTrick ? _RecursiveTrick :` makes it compile, and has no effect on the type produced.
+ * type Works<T> = FlattenKeys<
+ * 	{
+ * 		[K in keyof T]: 0;
+ * 	} & {
+ * 		// Trick added here. Since `k` never extends `never`, the second conditional option is always taken,
+ * 		// making this equivalent to the broken version, except this one compiles.
+ * 		[K in keyof T]: K extends _RecursiveTrick ? _RecursiveTrick : Works<T[K]>;
+ * 	}
+ * >;
+ * ```
+ *
+ * This trick appears to start working in TypeScript 4.1 and is confirmed to still work in 5.0.4.
+ *
+ * This constant is defined to provide a way to find this documentation from types which use this pattern,
+ * and to locate types which use this pattern in case they need updating for compiler changes.
+ * @alpha
+ */
+export type _RecursiveTrick = never;
+
+// This block is kept here to ensure the above example behaves as documented, and can be copied into the example to update it as needed.
+{
+	/* eslint-disable @typescript-eslint/no-unused-vars */
+
+	// @ts-expect-error The TypeScript compiler can't handle this case
+	type Broken<T> = FlattenKeys<
+		{
+			[K in keyof T]: 0;
+		} & {
+			// @ts-expect-error Same error as above.
+			[K in keyof T]: Broken<T[K]>;
+		}
+	>;
+
+	// Adding `K extends _RecursiveTrick ? _RecursiveTrick:` OR `T extends _RecursiveTrick ? _RecursiveTrick :` makes it compile and has no effect on the type produced.
+	type Works<T> = FlattenKeys<
+		{
+			[K in keyof T]: 0;
+		} & {
+			// Trick added here. Since `K` never extends `never`, the second conditional option is always taken,
+			// making this equivalent to the broken version, except this one compiles.
+			[K in keyof T]: T extends _RecursiveTrick ? _RecursiveTrick : Works<T[K]>;
+		}
+	>;
+
+	/* eslint-enable @typescript-eslint/no-unused-vars */
+}

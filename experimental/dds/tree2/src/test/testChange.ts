@@ -276,7 +276,10 @@ export function testChangeFamilyFactory(
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		codecs: makeCodecFamily<TestChange>([[0, TestChange.codec]]),
-		buildEditor: () => assert.fail("Unexpected call to buildEditor"),
+		buildEditor: () => ({
+			enterTransaction: () => assert.fail("Unexpected edit"),
+			exitTransaction: () => assert.fail("Unexpected edit"),
+		}),
 		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
 	};
 	return family;

@@ -56,6 +56,38 @@ export class PartitionManager extends EventEmitter {
 
 				this.emit("error", error, errorData);
 			});
+
+			this.consumer.on(
+				"checkpoint_success",
+				(partitionId, queuedMessage, retries, latency) => {
+					if (this.sampleMessages(100)) {
+						Lumberjack.info(`Kafka checkpoint successful`, {
+							msgOffset: queuedMessage.offset,
+							topic: queuedMessage.topic,
+							msgPartition: queuedMessage.partition,
+							retries,
+							latency,
+						});
+					}
+				},
+			);
+
+			this.consumer.on(
+				"checkpoint_error",
+				(partitionId, queuedMessage, retries, latency, ex) => {
+					Lumberjack.error(
+						`Kafka checkpoint failed`,
+						{
+							msgOffset: queuedMessage.offset,
+							topic: queuedMessage.topic,
+							msgPartition: queuedMessage.partition,
+							retries,
+							latency,
+						},
+						ex,
+					);
+				},
+			);
 		}
 	}
 
@@ -190,5 +222,13 @@ export class PartitionManager extends EventEmitter {
 
 			this.partitions.set(partition.partition, newPartition);
 		}
+	}
+
+	private sampleMessages(numberOfMessagesPerTrace: number): boolean {
+		return this.getRandomInt(numberOfMessagesPerTrace) === 0;
+	}
+
+	private getRandomInt(range: number) {
+		return Math.floor(Math.random() * range);
 	}
 }
