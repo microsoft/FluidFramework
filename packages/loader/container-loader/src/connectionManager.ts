@@ -939,7 +939,7 @@ export class ConnectionManager implements IConnectionManager {
 		await waitForOnline();
 
 		this.triggerConnect(
-			error !== undefined ? "Reconnect on Error" : disconnectMessage,
+			error !== undefined ? "Reconnect on Error" : `Reconnecting due to: ${disconnectMessage}`,
 			requestedMode,
 		);
 	}
