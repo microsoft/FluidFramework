@@ -13,7 +13,15 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { Clock12Regular, DoorArrowLeftRegular, Person12Regular } from "@fluentui/react-icons";
+import { TooltipHost } from "@fluentui/react";
+import { useId } from "@fluentui/react-hooks";
+import {
+	DoorArrowLeftRegular,
+	Clock12Regular,
+	Person12Regular,
+	Info12Regular,
+} from "@fluentui/react-icons";
+import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
 
 /**
@@ -33,6 +41,8 @@ export interface AudienceHistoryTableProps {
 export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.ReactElement {
 	const { audienceHistoryItems } = props;
 
+	const clientIdTooltipId = useId("client-id-tooltip");
+
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
 		{ columnKey: "event", label: "Event" },
@@ -46,10 +56,28 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "event" && <DoorArrowLeftRegular />}
-							{column.columnKey === "clientId" && <Person12Regular />}
-							{column.columnKey === "time" && <Clock12Regular />}
-							{column.label}
+							{column.columnKey === "event" && (
+								<>
+									<DoorArrowLeftRegular />
+									{column.label}
+								</>
+							)}
+
+							{column.columnKey === "clientId" && (
+								<TooltipHost content={clientIdTooltipText} id={clientIdTooltipId}>
+									<div style={{ display: "flex", alignItems: "center" }}>
+										<Person12Regular />
+										<span style={{ marginLeft: "5px" }}>{column.label}</span>
+										<Info12Regular style={{ marginLeft: "5px" }} />
+									</div>
+								</TooltipHost>
+							)}
+							{column.columnKey === "time" && (
+								<>
+									<Clock12Regular />
+									{column.label}
+								</>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>

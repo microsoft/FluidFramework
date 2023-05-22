@@ -1071,7 +1071,7 @@ function isDirectoryLocalOpMetadata(metadata: any): metadata is DirectoryLocalOp
 /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
 function assertNonNullClientId(clientId: string | null): asserts clientId is string {
-	assert(clientId !== null, "client id should never be null");
+	assert(clientId !== null, 0x6af /* client id should never be null */);
 }
 
 /**

@@ -54,7 +54,7 @@ export type TypedFields<TFields extends undefined | { [key: string]: FieldSchema
 				[key in keyof TFields]: TypedField<TFields[key]>;
 		  }
 		: Record<string, never>,
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * `FieldSchemaTypeInfo` to `TypedTree`
@@ -65,7 +65,7 @@ export type TypedField<TField extends FieldSchema> = [
 		TField["kind"]["multiplicity"],
 		AllowedTypesToTypedTrees<TField["allowedTypes"]>
 	>,
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -102,7 +102,7 @@ export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 				>
 		  >
 		: unknown,
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
@@ -115,7 +115,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeSchema[]>>,
 		  ]
 		: [],
-][InternalTypedSchemaTypes._dummy];
+][InternalTypedSchemaTypes._InlineTrick];
 
 /**
  * Generate a schema aware API for a list of types.

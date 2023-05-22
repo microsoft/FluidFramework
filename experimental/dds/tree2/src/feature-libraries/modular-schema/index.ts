@@ -43,6 +43,7 @@ export {
 	ToDelta,
 	ValueChange,
 	ValueConstraint,
+	NodeExistsConstraint,
 } from "./fieldChangeHandler";
 export {
 	convertGenericChange,

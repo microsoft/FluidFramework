@@ -21,6 +21,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
+	NodeExistsConstraint,
 	RevisionInfo,
 	ValueChange,
 	ValueConstraint,
@@ -35,6 +36,7 @@ interface EncodedNodeChangeset {
 	valueChange?: ValueChange;
 	fieldChanges?: EncodedFieldChangeMap;
 	valueConstraint?: ValueConstraint;
+	nodeExistsConstraint?: NodeExistsConstraint;
 }
 
 interface EncodedModularChangeset {
@@ -135,6 +137,10 @@ function makeV0Codec(
 			encodedChange.valueConstraint = change.valueConstraint;
 		}
 
+		if (change.nodeExistsConstraint !== undefined) {
+			encodedChange.nodeExistsConstraint = change.nodeExistsConstraint;
+		}
+
 		return encodedChange;
 	}
 
@@ -171,6 +177,10 @@ function makeV0Codec(
 
 		if (encodedChange.valueConstraint !== undefined) {
 			decodedChange.valueConstraint = encodedChange.valueConstraint;
+		}
+
+		if (encodedChange.nodeExistsConstraint !== undefined) {
+			decodedChange.nodeExistsConstraint = encodedChange.nodeExistsConstraint;
 		}
 
 		return decodedChange;

@@ -257,7 +257,7 @@ describe("SequenceField - Rebase", () => {
 		const actual = rebase(deleteA, deleteB, tag1);
 		// Deletes --E-G
 		const expected: SF.Changeset<never> = [
-			2,
+			{ count: 2 },
 			{ type: "Delete", count: 1, detachEvent: { revision: tag1, index: 3 } },
 			{ type: "Delete", count: 1 },
 			{ type: "Delete", count: 1, detachEvent: { revision: tag1, index: 5 } },
@@ -306,7 +306,7 @@ describe("SequenceField - Rebase", () => {
 			{ type: "MoveIn", count: 1, id: brand(2), isSrcConflicted: true },
 			{ type: "MoveIn", count: 1, id: brand(3) },
 			{ type: "MoveIn", count: 1, id: brand(4), isSrcConflicted: true },
-			2,
+			{ count: 2 },
 			{ type: "MoveOut", count: 1, id: brand(0), detachEvent: { revision: tag1, index: 3 } },
 			{ type: "MoveOut", count: 1, id: brand(1) },
 			{ type: "MoveOut", count: 1, id: brand(2), detachEvent: { revision: tag1, index: 5 } },

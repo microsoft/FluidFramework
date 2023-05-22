@@ -217,8 +217,12 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					index += 1;
 					break;
 				case Delta.MarkType.Insert:
-					// Handled in the first pass
-					index += mark.content.length;
+					visitModify(index, mark, visitor, config);
+					if (mark.isTransient === true) {
+						visitor.onDelete(index, mark.content.length);
+					} else {
+						index += mark.content.length;
+					}
 					break;
 				case Delta.MarkType.MoveIn: {
 					visitor.onMoveIn(index, mark.count, mark.moveId);

@@ -44,6 +44,7 @@ export function create(
 		appTenants,
 		tenantThrottlers,
 		clusterThrottlers,
+		singleUseTokenCache,
 		tokenManager,
 	);
 	const documentsRoute = documents.create(
@@ -64,6 +65,7 @@ export function create(
 		tenantManager,
 		storage,
 		tenantThrottlers,
+		singleUseTokenCache,
 		tokenManager,
 	);
 

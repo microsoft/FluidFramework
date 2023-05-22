@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-view",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"private": true,
 	"description": "Contains an extensible debug visualizer / editor for the Fluid client",
 	"homepage": "https://fluidframework.com",
@@ -118,6 +118,21 @@
 				],
 				"library": "main"
 			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"build:copy-resources"
+				],
+				"script": false
+			},
+			"tsc": [
+				"^tsc",
+				"@fluid-example/collaborative-textarea#build:esnext"
+			]
 		}
 	},
 	"jest-junit": {

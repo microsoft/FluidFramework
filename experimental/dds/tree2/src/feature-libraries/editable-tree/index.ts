@@ -12,17 +12,17 @@ export {
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
 	getField,
-	createField,
-	replaceField,
 	parentField,
 	EditableTreeEvents,
 	on,
 	contextSymbol,
 	forEachField,
+	NewFieldContent,
+	areCursors,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";
-export { isUnwrappedNode } from "./editableTree";
+export { isEditableTree } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 

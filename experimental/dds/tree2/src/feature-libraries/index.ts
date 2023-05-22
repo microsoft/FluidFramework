@@ -21,18 +21,17 @@ export {
 	typeSymbol,
 	isEditableField,
 	isPrimitive,
-	isUnwrappedNode,
+	isEditableTree,
 	proxyTargetSymbol,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	getField,
-	createField,
-	replaceField,
 	parentField,
 	EditableTreeEvents,
 	on,
 	contextSymbol,
 	forEachField,
+	NewFieldContent,
 } from "./editable-tree";
 
 export {
@@ -129,6 +128,7 @@ export {
 	SchemaLibrary,
 	SchemaLibraryData,
 	Sourced,
+	NodeExistsConstraint,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

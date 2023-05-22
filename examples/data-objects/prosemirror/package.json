@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/prosemirror",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"private": true,
 	"description": "ProseMirror",
 	"homepage": "https://fluidframework.com",
@@ -79,7 +79,6 @@
 		"@types/prosemirror-model": "^1.17.0",
 		"@types/prosemirror-schema-list": "^1.2.0",
 		"@types/prosemirror-state": "^1.4.0",
-		"@types/prosemirror-view": "^1.24.0",
 		"@types/react": "^17.0.44",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
