@@ -1,7 +1,7 @@
 # @fluidframework/protocol-base
 
-Shared protocol code for client and service to share. Manages the lifetime of Quorum and proposals that needs to be
-consistent across client and service. It also provides utilities for facilitating summary creation.
+## Purpose
+The purpose of @fluidframework/protocol-base is to manage the lifetime of Quorum and proposals that needs to be consistent across client and service and blob implementation. It was intially part of the server release group but now has been moved to the client release group. 
 
 ## Quorum and Proposal
 
