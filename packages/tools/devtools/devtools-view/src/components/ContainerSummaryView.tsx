@@ -273,7 +273,13 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		<Stack>
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>
-					{DataRow("Container", undefined, containerState.id, columnSizing_unstable)}
+					{DataRow(
+						"Container",
+						// The "Container" entry will soon be replaced anyways.
+						undefined,
+						containerState.id,
+						columnSizing_unstable,
+					)}
 					{DataRow(
 						"Status",
 						containerStatusTooltipText,
