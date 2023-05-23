@@ -28,7 +28,11 @@ import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
+import {
+	RouterliciousOrdererRestWrapper,
+	RouterliciousStorageRestWrapper,
+	toInstrumentedR11sOrdererTokenFetcher,
+} from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
@@ -117,11 +121,15 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
 		const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
+			tenantId,
+			undefined /* documentId */,
+			this.tokenProvider,
+			logger2,
+		);
 		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
 		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-			tenantId,
-			undefined,
-			this.tokenProvider,
+			ordererTokenFetcher,
 			logger2,
 			rateLimiter,
 			this.driverPolicies.enableRestLess,
@@ -245,14 +253,29 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			all: { driverVersion },
 		});
 
-		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
-		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			documentId,
 			this.tokenProvider,
 			logger2,
+		);
+		const storageTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
+			tenantId,
+			documentId,
+			this.tokenProvider,
+			logger2,
+		);
+		const ordererTokenP = ordererTokenFetcher();
+		const storageTokenP = storageTokenFetcher();
+
+		const rateLimiter = new RateLimiter(this.driverPolicies.maxConcurrentOrdererRequests);
+		const ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
+			ordererTokenFetcher,
+			logger2,
 			rateLimiter,
 			this.driverPolicies.enableRestLess,
+			undefined /* baseUrl */,
+			ordererTokenP,
 		);
 
 		const discoverFluidResolvedUrl = async (): Promise<IFluidResolvedUrl> => {
@@ -297,12 +320,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 
 		const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
 			tenantId,
-			documentId,
-			this.tokenProvider,
+			storageTokenFetcher,
 			logger2,
 			new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests),
 			this.driverPolicies.enableRestLess,
 			storageUrl,
+			storageTokenP,
 		);
 
 		const documentStorageServicePolicies: IDocumentStorageServicePolicies = {

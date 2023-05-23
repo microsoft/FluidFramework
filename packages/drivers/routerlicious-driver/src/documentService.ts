@@ -16,7 +16,11 @@ import { DocumentStorageService } from "./documentStorageService";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection";
 import { NullBlobStorageService } from "./nullBlobStorageService";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
+import {
+	RouterliciousOrdererRestWrapper,
+	RouterliciousStorageRestWrapper,
+	TokenFetcher,
+} from "./restWrapper";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ICache } from "./cache";
 import { ISnapshotTreeVersion } from "./definitions";
@@ -68,6 +72,8 @@ export class DocumentService implements api.IDocumentService {
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
 		private storageRestWrapper: RouterliciousStorageRestWrapper,
+		private readonly storageTokenFetcher: TokenFetcher,
+		private readonly ordererTokenFetcher: TokenFetcher,
 	) {}
 
 	private documentStorageService: DocumentStorageService | undefined;
@@ -104,8 +110,7 @@ export class DocumentService implements api.IDocumentService {
 					);
 					this.storageRestWrapper = await RouterliciousStorageRestWrapper.load(
 						this.tenantId,
-						this.documentId,
-						this.tokenProvider,
+						this.storageTokenFetcher,
 						this.logger,
 						rateLimiter,
 						this.driverPolicies.enableRestLess,
@@ -156,9 +161,7 @@ export class DocumentService implements api.IDocumentService {
 					this.driverPolicies.maxConcurrentOrdererRequests,
 				);
 				this.ordererRestWrapper = await RouterliciousOrdererRestWrapper.load(
-					this.tenantId,
-					this.documentId,
-					this.tokenProvider,
+					this.ordererTokenFetcher,
 					this.logger,
 					rateLimiter,
 					this.driverPolicies.enableRestLess,
