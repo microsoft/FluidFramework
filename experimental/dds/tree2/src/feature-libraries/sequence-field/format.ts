@@ -7,9 +7,10 @@ import { TSchema, Type } from "@sinclair/typebox";
 import { ITreeCursorSynchronous, JsonableTree, RevisionTag, RevisionTagSchema } from "../../core";
 import { ChangesetLocalId, ChangesetLocalIdSchema, NodeChangeset } from "../modular-schema";
 
-// TODO:AB#4259 Types in this file are largely re-used for in-memory representation.
-// See for example `Revive` whose type uses ITreeCursorSynchronous, but the schema
-// for the serialized type uses ProtoNode (which is the result of serializing that cursor).
+// TODO:AB#4259 Decouple types used for sequence-field's in-memory representation from their encoded variants.
+// Currently, types in this file are largely used for both.
+// See for example `Revive` whose type uses ITreeCursorSynchronous,
+// but the schema for the serialized type uses ProtoNode (which is the result of serializing that cursor).
 
 /**
  * The contents of a node to be created
