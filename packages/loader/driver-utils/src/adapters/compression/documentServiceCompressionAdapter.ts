@@ -7,8 +7,6 @@ import { IDocumentService, IDocumentStorageService } from "@fluidframework/drive
 import { DocumentServiceProxy } from "../../documentServiceProxy";
 import { ICompressionStorageConfig, SummaryCompressionProcessor } from "..";
 import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob";
-import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryKeyCompressionAdapter } from "./summarykey";
-import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceBlobOnlyCompressionAdapter } from "./blobonly";
 
 export class DocumentServiceCompressionAdapter extends DocumentServiceProxy {
 	constructor(service: IDocumentService, private readonly _config: ICompressionStorageConfig) {
@@ -22,14 +20,8 @@ export class DocumentServiceCompressionAdapter extends DocumentServiceProxy {
 		config: ICompressionStorageConfig,
 	) => IDocumentStorageService {
 		switch (config.processor) {
-			case SummaryCompressionProcessor.SummaryKey: {
-				return DocumentStorageServiceSummaryKeyCompressionAdapter;
-			}
 			case SummaryCompressionProcessor.SummaryBlob: {
 				return DocumentStorageServiceSummaryBlobCompressionAdapter;
-			}
-			case SummaryCompressionProcessor.BlobOnly: {
-				return DocumentStorageServiceBlobOnlyCompressionAdapter;
 			}
 			default: {
 				throw new Error(`Invalid processor type ${config.processor}`);

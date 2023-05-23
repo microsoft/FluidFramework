@@ -29,7 +29,6 @@ import {
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
 import {
 	applyStorageCompression,
 	DefaultCompressionStorageConfig,
@@ -103,13 +102,9 @@ class InternalTestStorage implements IDocumentStorageService {
 		throw new Error("Method not implemented.");
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
-		if (id === misotestid) {
-			return new TextEncoder().encode(abcContent);
-		} else {
-			return this.config.processor === SummaryCompressionProcessor.SummaryKey
-				? getCompressedHeaderContent(this._uploadedSummary!)
-				: getHeaderContent(this._uploadedSummary!);
-		}
+		return id === misotestid
+			? new TextEncoder().encode(abcContent)
+			: getHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
 		summary: ISummaryTree,
@@ -220,19 +215,6 @@ describe("Summary Compression Test", () => {
 		assert(config === undefined, "The storage has compression");
 		assert(isOriginalStorage(storage), "The storage is not the original storage");
 	});
-	it("Verify Config Object (summary-key markup)", async () => {
-		const config: ICompressionStorageConfig = {
-			algorithm: SummaryCompressionAlgorithm.None,
-			minSizeToCompress: 763,
-			processor: SummaryCompressionProcessor.SummaryKey,
-		};
-		const storage = await buildCompressionStorage(config);
-		checkCompressionConfig(storage, 763, SummaryCompressionAlgorithm.None);
-		assert(
-			(storage as any).adapterType === SummaryCompressionProcessor.SummaryKey,
-			"Not summary-key storage",
-		);
-	});
 	it("Verify Config Object (summary-blob markup)", async () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.None,
@@ -247,26 +229,6 @@ describe("Summary Compression Test", () => {
 		);
 	});
 
-	it("Verify Compressed Markup at Summary (summary-key markup)", async () => {
-		const config: ICompressionStorageConfig = {
-			algorithm: SummaryCompressionAlgorithm.LZ4,
-			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.SummaryKey,
-		};
-		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
-		const summary = generateSummaryWithContent(1000);
-		await storage.uploadSummaryWithContext(summary, {
-			referenceSequenceNumber: 0,
-			proposalHandle: "test",
-			ackHandle: "test",
-		});
-		const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
-		assert(uploadedSummary !== undefined, "The summary is not uploaded");
-		const headerHolder: ISummaryTree = getHeaderHolder(uploadedSummary);
-		assert(headerHolder.tree.header === undefined, "The header is not compressed");
-		const keyName = "compressed_2_header";
-		assert(headerHolder.tree[keyName] !== undefined, `The header is not compressed ${keyName}`);
-	});
 	it("Verify Compressed Markup at Summary (summary-blob markup)", async () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
@@ -286,22 +248,7 @@ describe("Summary Compression Test", () => {
 			"The summary-blob markup is not added",
 		);
 	});
-	it("Verify Blob Enc/Dec Symetry (summary-key markup)", async () => {
-		const config: ICompressionStorageConfig = {
-			algorithm: SummaryCompressionAlgorithm.LZ4,
-			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.SummaryKey,
-		};
-		await checkEncDec(config);
-	});
-	it("Verify Upload / Download Summary (summary-key markup)", async () => {
-		const config: ICompressionStorageConfig = {
-			algorithm: SummaryCompressionAlgorithm.LZ4,
-			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.SummaryKey,
-		};
-		await checkUploadDownloadSummary(config);
-	});
+
 	it("Verify Blob Enc/Dec Symetry (summary-blob markup)", async () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
@@ -345,34 +292,6 @@ describe("Summary Compression Test", () => {
 		const downloadedSummary = await checkUploadDownloadSummary(config);
 		const content = downloadedSummary.tree[".protocol"]["tree"]["misotest"]["content"];
 		assert(content === abcContent, "The .profile underlying blob content is not correct");
-	});
-	it("Verify Blob Enc/Dec Symetry (blob-only markup)", async () => {
-		const config: ICompressionStorageConfig = {
-			algorithm: SummaryCompressionAlgorithm.LZ4,
-			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.BlobOnly,
-		};
-		await checkEncDec(config);
-	});
-	it("Verify Blob Enc/Dec Symetry (blob-only markup)", async () => {
-		const config: ICompressionStorageConfig = {
-			algorithm: SummaryCompressionAlgorithm.LZ4,
-			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.BlobOnly,
-		};
-		const summary = generateSummaryWithContent(1000);
-		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
-		await storage.uploadSummaryWithContext(summary, {
-			referenceSequenceNumber: 0,
-			proposalHandle: "test",
-			ackHandle: "test",
-		});
-		const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
-		const compressed = IsoBuffer.from(
-			new TextDecoder().decode(getHeaderContent(uploadedSummary!)),
-			"base64",
-		);
-		assert(new Uint8Array(compressed)[0] === 0xf4, "The blob-only prefix is not present!");
 	});
 });
 async function checkUploadDownloadSummary(
