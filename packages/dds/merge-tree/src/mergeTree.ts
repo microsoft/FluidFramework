@@ -891,7 +891,11 @@ export class MergeTree {
 
 	/**
 	 * Slides or removes references from the provided list of segments.
-	 * The order of the references is preserved.
+	 *
+	 * The order of the references is preserved for references of the same sliding
+	 * preference. Relative order between references that slide backward and those
+	 * that slide forward is not preserved, even in the case when they slide to
+	 * the same segment.
 	 * @remarks -
 	 * 1. Preserving the order of the references is a useful property for reference-based undo/redo
 	 * (see revertibles.ts).
@@ -902,9 +906,9 @@ export class MergeTree {
 	 * @param segments - An array of (not necessarily contiguous) segments with increasing ordinals.
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
+		// References are slid in groups to preserve their order.
 		let currentSlideGroup: LocalReferenceCollection[] = [];
 
-		// References are slid in groups to preserve their order.
 		let currentRightSlideDestination: ISegment | undefined;
 		let currentRightSlideIsForward: boolean | undefined;
 		const rightPred = (ref: LocalReferencePosition) =>
