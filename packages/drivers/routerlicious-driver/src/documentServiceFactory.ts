@@ -28,7 +28,7 @@ import { ISession } from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
-import { RouterliciousOrdererRestWrapper } from "./restWrapper";
+import { RouterliciousOrdererRestWrapper, RouterliciousStorageRestWrapper } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
@@ -295,6 +295,16 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			);
 		}
 
+		const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+			tenantId,
+			documentId,
+			this.tokenProvider,
+			logger2,
+			new RateLimiter(this.driverPolicies.maxConcurrentStorageRequests),
+			this.driverPolicies.enableRestLess,
+			storageUrl,
+		);
+
 		const documentStorageServicePolicies: IDocumentStorageServicePolicies = {
 			caching: this.driverPolicies.enablePrefetch
 				? LoaderCachingPolicy.Prefetch
@@ -320,6 +330,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.wholeSnapshotTreeCache,
 			this.shreddedSummaryTreeCache,
 			discoverFluidResolvedUrl,
+			storageRestWrapper,
 		);
 	}
 }

@@ -67,6 +67,7 @@ export class DocumentService implements api.IDocumentService {
 		private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary>,
 		private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion>,
 		private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
+		private storageRestWrapper: RouterliciousStorageRestWrapper,
 	) {}
 
 	private documentStorageService: DocumentStorageService | undefined;
@@ -97,21 +98,23 @@ export class DocumentService implements api.IDocumentService {
 				!this.noCacheStorageManager ||
 				shouldUpdateDiscoveredSessionInfo
 			) {
-				const rateLimiter = new RateLimiter(
-					this.driverPolicies.maxConcurrentStorageRequests,
-				);
-				const storageRestWrapper = await RouterliciousStorageRestWrapper.load(
-					this.tenantId,
-					this.documentId,
-					this.tokenProvider,
-					this.logger,
-					rateLimiter,
-					this.driverPolicies.enableRestLess,
-					this.storageUrl,
-				);
-				const historian = new Historian(true, false, storageRestWrapper);
+				if (shouldUpdateDiscoveredSessionInfo) {
+					const rateLimiter = new RateLimiter(
+						this.driverPolicies.maxConcurrentStorageRequests,
+					);
+					this.storageRestWrapper = await RouterliciousStorageRestWrapper.load(
+						this.tenantId,
+						this.documentId,
+						this.tokenProvider,
+						this.logger,
+						rateLimiter,
+						this.driverPolicies.enableRestLess,
+						this.storageUrl,
+					);
+				}
+				const historian = new Historian(true, false, this.storageRestWrapper);
 				this.storageManager = new GitManager(historian);
-				const noCacheHistorian = new Historian(true, true, storageRestWrapper);
+				const noCacheHistorian = new Historian(true, true, this.storageRestWrapper);
 				this.noCacheStorageManager = new GitManager(noCacheHistorian);
 			}
 

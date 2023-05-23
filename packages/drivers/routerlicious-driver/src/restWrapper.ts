@@ -100,6 +100,7 @@ export function getPropsToLogFromResponse(headers: {
 export class RouterliciousRestWrapper extends RestWrapper {
 	private readonly restLess = new RestLessClient();
 	private token: ITokenResponse | undefined;
+	private tokenP: Promise<ITokenResponse> | undefined;
 
 	constructor(
 		logger: ITelemetryLogger,
@@ -111,6 +112,8 @@ export class RouterliciousRestWrapper extends RestWrapper {
 		defaultQueryString: QueryStringType = {},
 	) {
 		super(baseurl, defaultQueryString);
+		// Initiate the token fetch.
+		this.tokenP = this.fetchRefreshedToken();
 	}
 
 	protected async request<T>(
@@ -221,8 +224,9 @@ export class RouterliciousRestWrapper extends RestWrapper {
 		if (this.token !== undefined) {
 			return this.token;
 		}
-		const token = await this.fetchRefreshedToken();
+		const token = await (this.tokenP ?? this.fetchRefreshedToken());
 		this.setToken(token);
+		this.tokenP = undefined;
 		return token;
 	}
 
