@@ -32,6 +32,7 @@ import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	toInstrumentedR11sOrdererTokenFetcher,
+	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper";
 import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
@@ -259,7 +260,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.tokenProvider,
 			logger2,
 		);
-		const storageTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
+		const storageTokenFetcher = toInstrumentedR11sStorageTokenFetcher(
 			tenantId,
 			documentId,
 			this.tokenProvider,
