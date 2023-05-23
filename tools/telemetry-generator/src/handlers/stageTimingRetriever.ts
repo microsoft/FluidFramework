@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/** Interface to make it easier to parse json returned from the timeline REST API */
 interface ParsedJob {
 	stageName: string;
 	startTime: number;
@@ -26,7 +28,7 @@ module.exports = function handler(fileData, logger) {
 		console.log("BUILD_ID not defined.");
 	}
 
-	// Note: type == "Task" would include tasks from the stages in the result set. It might be interesting in the future.
+	// Note: type == "Task" would include tasks from the stages in the result set. It might be interesting in the future - for now we will only collect stages.
 	const parsedJobs: ParsedJob[] = fileData.records
 		.filter((job) => job.type === "Stage")
 		.map((job) => {
