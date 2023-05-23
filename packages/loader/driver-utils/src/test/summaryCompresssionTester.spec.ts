@@ -31,7 +31,6 @@ import {
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	applyStorageCompression,
-	DefaultCompressionStorageConfig,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
 	SummaryCompressionProcessor,
@@ -78,7 +77,7 @@ const misotestid: string = "misotest-id";
 
 const abcContent = "ABC";
 class InternalTestStorage implements IDocumentStorageService {
-	constructor(private readonly config: ICompressionStorageConfig) {}
+	constructor() {}
 	private _uploadedSummary: ISummaryTree | undefined;
 
 	repositoryUrl: string = "";
@@ -133,10 +132,10 @@ function isOriginalStorage(storage: IDocumentStorageService): boolean {
 }
 
 class InternalTestDocumentService implements IDocumentService {
-	constructor(private readonly config: ICompressionStorageConfig) {}
+	constructor() {}
 	resolvedUrl: IResolvedUrl = { type: "web", data: "" };
 	policies?: IDocumentServicePolicies | undefined;
-	storage: IDocumentStorageService = new InternalTestStorage(this.config);
+	storage: IDocumentStorageService = new InternalTestStorage();
 	async connectToStorage(): Promise<IDocumentStorageService> {
 		return this.storage;
 	}
@@ -153,10 +152,8 @@ class InternalTestDocumentService implements IDocumentService {
 
 class InternalTestDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly documentService: IDocumentService;
-	constructor(private readonly config: ICompressionStorageConfig | boolean = true) {
-		const myConfig =
-			typeof this.config === "boolean" ? DefaultCompressionStorageConfig : this.config;
-		this.documentService = new InternalTestDocumentService(myConfig);
+	constructor() {
+		this.documentService = new InternalTestDocumentService();
 	}
 
 	async createDocumentService(
@@ -181,7 +178,7 @@ async function buildCompressionStorage(
 ): Promise<IDocumentStorageService> {
 	{
 		const factory: IDocumentServiceFactory = applyStorageCompression(
-			new InternalTestDocumentServiceFactory(config),
+			new InternalTestDocumentServiceFactory(),
 			config,
 		);
 		const documentService = await factory.createContainer(undefined, { type: "web", data: "" });
@@ -366,16 +363,8 @@ function getHeaderContent(summary: ISummaryTree) {
 	return getHeader(summary)["content"];
 }
 
-function getCompressedHeaderContent(summary: ISummaryTree) {
-	return getCompressedHeader(summary)["content"];
-}
-
 function getHeader(summary: ISummaryTree) {
 	return getHeaderHolder(summary).tree.header;
-}
-
-function getCompressedHeader(summary: ISummaryTree) {
-	return getHeaderHolder(summary).tree.compressed_2_header;
 }
 
 function getHeaderHolder(summary: ISummaryTree) {

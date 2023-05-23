@@ -336,11 +336,7 @@ export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamRe
 // @public (undocumented)
 export enum SummaryCompressionProcessor {
     // (undocumented)
-    BlobOnly = 3,
-    // (undocumented)
-    SummaryBlob = 1,
-    // (undocumented)
-    SummaryKey = 2
+    SummaryBlob = 1
 }
 
 // @public
