@@ -61,8 +61,8 @@ import {
 export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
- * The key for the special node identifier field, which allows nodes to be given identifiers that can be used
- * to find the nodes via the node identifier index.
+ * The key for the special node identifier field,
+ * which allows nodes to be given identifiers that can be used to find the nodes via the node identifier index.
  * @alpha
  */
 export const nodeIdentifierKey: GlobalFieldKey = brand("__n_id__");

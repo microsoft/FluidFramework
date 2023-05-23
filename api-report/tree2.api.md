@@ -1330,11 +1330,7 @@ export const nodeIdentifierKey: GlobalFieldKey;
 // @alpha
 export function nodeIdentifierSchema(key: string): {
     schema: SchemaLibrary;
-    field: GlobalFieldSchema<BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<0>>, [
-    TreeSchema<string, {
-        value: ValueSchema.String;
-    }>
-    ]>;
+    field: GlobalFieldSchema<NodeIdentifierFieldKind>;
     type: TreeSchemaIdentifier;
 };
 
