@@ -25,6 +25,7 @@ import {
 } from "../schemaConverter";
 import personSchema from "./personSchema";
 
+// TODO: test recursive schemas
 describe("schema converter", () => {
 	beforeAll(() => {
 		PropertyFactory.register(Object.values(personSchema));
@@ -106,7 +107,7 @@ describe("schema converter", () => {
 			extraGlobalFields: false,
 			value: ValueSchema.Nothing,
 		});
-		const expMap = new Map<string, FieldStoredSchema>([
+		const expectedAddressFields = new Map<string, FieldStoredSchema>([
 			["lat", fieldSchema(FieldKinds.value, [brand("Float64")])],
 			["lon", fieldSchema(FieldKinds.value, [brand("Float64")])],
 			["coords", fieldSchema(FieldKinds.value, [brand("array<Float64>")])],
@@ -117,7 +118,7 @@ describe("schema converter", () => {
 			["phones", fieldSchema(FieldKinds.optional, [brand("array<Test:Phone-1.0.0>")])],
 		]);
 		for (const [fieldKey, field] of addressSchema.localFields) {
-			const expected = expMap.get(fieldKey) ?? fail("expected field");
+			const expected = expectedAddressFields.get(fieldKey) ?? fail("expected field");
 			expect(field).toMatchObject(expected);
 		}
 	});

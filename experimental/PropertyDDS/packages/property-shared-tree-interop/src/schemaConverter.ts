@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
 	fail,
 	emptyField,
@@ -97,12 +98,12 @@ function buildTreeSchema(
 	typesChildren: ReadonlyMap<string, ReadonlySet<string>>,
 	type: string,
 ): TreeSchema | (() => TreeSchema) {
+	let treeSchema = treeSchemaMap.get(type);
+	if (treeSchema) {
+		return treeSchema;
+	}
 	const splitTypeId = TypeIdHelper.extractContext(type);
 	if (splitTypeId.context === "single") {
-		let treeSchema = treeSchemaMap.get(splitTypeId.typeid);
-		if (treeSchema) {
-			return treeSchema;
-		}
 		if (TypeIdHelper.isPrimitiveType(splitTypeId.typeid)) {
 			treeSchema = treeSchemaMap.get(splitTypeId.typeid);
 			if (treeSchema) {
@@ -135,7 +136,9 @@ function buildTreeSchema(
 				treeSchemaMap.set(splitTypeId.typeid, treeSchema);
 				return treeSchema;
 			} else {
-				const localFields = {};
+				const cache: { treeSchema?: TreeSchema | (() => TreeSchema) } = {};
+				treeSchemaMap.set(splitTypeId.typeid, () => cache.treeSchema as TreeSchema);
+				const local = {};
 				const inheritanceChain = PropertyFactory.getAllParentsForTemplate(
 					splitTypeId.typeid,
 				);
@@ -159,19 +162,18 @@ function buildTreeSchema(
 							} else {
 								const currentTypeid =
 									property.context && property.context !== "single"
-										? `${property.context}<${property.typeid || ""}>`
+										? // TODO: empty typeid will be converted into BaseProperty and then asserted
+										  // within the further processing of a non-single context case.
+										  // Maybe BaseProperty collections should be allowed or empty typeid asserted here?
+										  `${property.context}<${property.typeid || ""}>`
 										: property.typeid;
-								const allowedTypes = getChildrenForType(
+								local[property.id] = buildFieldSchema(
+									builder,
+									treeSchemaMap,
 									typesChildren,
+									property.optional ? FieldKinds.optional : FieldKinds.value,
 									currentTypeid,
 								);
-								allowedTypes.add(currentTypeid);
-								localFields[property.id] = {
-									allowedTypes,
-									fieldKind: property.optional
-										? FieldKinds.optional
-										: FieldKinds.value,
-								};
 							}
 						}
 					} else if (
@@ -182,70 +184,24 @@ function buildTreeSchema(
 						);
 					}
 				}
-				try {
-					const obj: { treeSchema?: TreeSchema | (() => TreeSchema) } = {};
-					treeSchemaMap.set(splitTypeId.typeid, () => obj.treeSchema as TreeSchema);
-					obj.treeSchema = builder.objectRecursive(splitTypeId.typeid, {
-						local: Object.keys(localFields).reduce<{ [key: string]: FieldSchema }>(
-							(o, k) => {
-								const allowedTypes = [...localFields[k].allowedTypes].map(
-									(child) => {
-										const exists = treeSchemaMap.get(child);
-										if (exists) return exists;
-										// if (child === splitTypeId.typeid) {
-										// 	const ts = () => obj.treeSchema as TreeSchema;
-										// 	treeSchemaMap.set(child, ts);
-										// 	return ts;
-										// }
-										return buildTreeSchema(
-											builder,
-											treeSchemaMap,
-											typesChildren,
-											child,
-										);
-									},
-								);
-								o[k] = SchemaBuilder.field(
-									localFields[k].fieldKind as FieldKindTypes,
-									...allowedTypes,
-								);
-								return o;
-							},
-							{},
-						),
-						extraLocalFields: PropertyFactory.inheritsFrom(
-							splitTypeId.typeid,
-							nodePropertyType,
-						)
-							? SchemaBuilder.fieldOptional(Any)
-							: undefined,
-					});
-					// treeSchemaMap.set(splitTypeId.typeid, treeSchema);
-					return () => obj.treeSchema as TreeSchema;
-				} catch (e) {
-					debugger;
-					throw e;
-				}
+				cache.treeSchema = builder.object(splitTypeId.typeid, {
+					local,
+					extraLocalFields: PropertyFactory.inheritsFrom(
+						splitTypeId.typeid,
+						nodePropertyType,
+					)
+						? SchemaBuilder.fieldOptional(Any)
+						: undefined,
+				});
+				return cache.treeSchema;
 			}
 		}
 	} else {
-		let treeSchema = treeSchemaMap.get(type);
-		if (treeSchema) {
-			return treeSchema;
-		}
+		assert(splitTypeId.typeid !== "" && splitTypeId.typeid !== basePropertyType, "Not allowed");
 		const fieldKind =
 			splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
-		const allowedTypes = new Set<object>();
-		if (splitTypeId.typeid !== "" && splitTypeId.typeid !== basePropertyType) {
-			allowedTypes.add(
-				buildTreeSchema(builder, treeSchemaMap, typesChildren, splitTypeId.typeid),
-			);
-			getChildrenForType(typesChildren, splitTypeId.typeid).forEach((childType) =>
-				allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, typesChildren, childType)),
-			);
-		} else {
-			fail("Not allowed");
-		}
+		const cache: { treeSchema?: TreeSchema | (() => TreeSchema) } = {};
+		treeSchemaMap.set(type, () => cache.treeSchema as TreeSchema);
 		const fieldType = buildFieldSchema(
 			builder,
 			treeSchemaMap,
@@ -256,23 +212,41 @@ function buildTreeSchema(
 		switch (splitTypeId.context) {
 			case "map":
 			case "set": {
-				treeSchema = builder.object(type, { extraLocalFields: fieldType });
-				treeSchemaMap.set(type, treeSchema);
-				return treeSchema;
+				cache.treeSchema = builder.object(type, { extraLocalFields: fieldType });
+				return cache.treeSchema;
 			}
 			case "array": {
-				treeSchema = builder.object(type, {
+				cache.treeSchema = builder.object(type, {
 					local: {
 						[EmptyKey]: fieldType,
 					},
 				});
-				treeSchemaMap.set(type, treeSchema);
-				return treeSchema;
+				return cache.treeSchema;
 			}
 			default:
-				fail(`Unknown context in typeid: ${splitTypeId.context}`);
+				fail(`Unknown context "${splitTypeId.context}" in typeid "${type}" `);
 		}
 	}
+}
+
+function buildFieldSchema<T extends [Any] | readonly string[]>(
+	builder: SchemaBuilder,
+	treeSchemaMap: Map<string, TreeSchema | (() => TreeSchema)>,
+	typesChildren: ReadonlyMap<string, ReadonlySet<string>>,
+	fieldKind: FieldKindTypes,
+	...fieldTypes: T
+): FieldSchema {
+	if (!fieldTypes || (fieldTypes.length === 1 && fieldTypes[0] === Any)) {
+		return SchemaBuilder.field(fieldKind, Any);
+	}
+	const allowedTypes: Set<TreeSchema | (() => TreeSchema)> = new Set();
+	for (const type of fieldTypes) {
+		allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, typesChildren, type));
+		getChildrenForType(typesChildren, type).forEach((child) =>
+			allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, typesChildren, child)),
+		);
+	}
+	return SchemaBuilder.field(fieldKind, ...allowedTypes);
 }
 
 export function convertPropertyToSharedTreeStorageSchema<
@@ -372,28 +346,7 @@ export function convertPropertyToSharedTreeStorageSchema<
 		rootFieldKind,
 		...rootTypes,
 	);
-	const schemaLibrary = builder.intoLibrary();
-	return new SchemaBuilder("schemaConverter", schemaLibrary).intoDocumentSchema(rootSchema);
-}
-
-function buildFieldSchema<T extends [Any] | readonly string[]>(
-	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, TreeSchema | (() => TreeSchema)>,
-	typesChildren: ReadonlyMap<string, ReadonlySet<string>>,
-	fieldKind: FieldKindTypes,
-	...fieldTypes: T
-): FieldSchema {
-	if (!fieldTypes || (fieldTypes.length === 1 && fieldTypes[0] === Any)) {
-		return SchemaBuilder.field(fieldKind, Any);
-	}
-	const allowedTypes: Set<TreeSchema | (() => TreeSchema)> = new Set();
-	for (const type of fieldTypes) {
-		allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, typesChildren, type));
-		getChildrenForType(typesChildren, type).forEach((child) =>
-			allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, typesChildren, child)),
-		);
-	}
-	return SchemaBuilder.field(fieldKind, ...allowedTypes);
+	return builder.intoDocumentSchema(rootSchema);
 }
 
 const allowedCollectionContexts = new Set(["array", "map", "set"]);
@@ -408,6 +361,8 @@ const allowedCollectionContexts = new Set(["array", "map", "set"]);
  * Be aware, that using this function might be very unperformant
  * as it reads all types registered in PropertyDDS schema
  * and creates a shallow copy of the `SchemaDataAndPolicy`.
+ * 
+ * TODO: use new schema API (builder etc.)
  */
 export function addComplexTypeToSchema(
 	fullSchemaData: SchemaDataAndPolicy,
