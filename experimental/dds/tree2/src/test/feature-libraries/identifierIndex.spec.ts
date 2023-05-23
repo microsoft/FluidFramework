@@ -16,17 +16,15 @@ import {
 	identifierKey,
 	SharedTreeFactory,
 } from "../../shared-tree";
-import { brand, compareSets } from "../../util";
+import { compareSets } from "../../util";
 import { TestTreeProviderLite, initializeTestTree } from "../utils";
 import {
-	createField,
 	FieldKinds,
 	Identifier,
 	identifierFieldSchema,
 	IdentifierIndex,
 	identifierSchema,
 	SchemaBuilder,
-	singleTextCursor,
 	identifierFieldSchemaLibrary,
 } from "../../feature-libraries";
 
@@ -166,16 +164,7 @@ describe("Node Identifier Index", () => {
 		const node = tree.identifiedNodes.get(idA);
 		assert(node !== undefined);
 		const idB = makeId();
-		node[createField](
-			brand("child"),
-			singleTextCursor({
-				type: nodeSchema.name,
-				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: idB }],
-				},
-			}),
-		);
-
+		node.child = { [identifierKeySymbol]: idB };
 		assertIds(tree, [idA, idB]);
 	});
 
@@ -193,7 +182,7 @@ describe("Node Identifier Index", () => {
 			nodeSchemaData,
 		);
 
-		tree.context.root.deleteNodes(0, 1);
+		tree.root = undefined;
 		assertIds(tree, []);
 	});
 
@@ -415,7 +404,7 @@ describe("Node Identifier Index", () => {
 		);
 
 		expectedIds = [];
-		tree.context.root.deleteNodes(0, 1);
+		tree.root = undefined;
 		assert.equal(batches, 2);
 	});
 
@@ -477,7 +466,7 @@ describe("Node Identifier Index", () => {
 				);
 
 				const fork = tree.fork();
-				fork.context.root.deleteNodes(0, 1);
+				fork.root = undefined;
 				assertIds(tree, [id]);
 				assertIds(fork, []);
 				tree.merge(fork);
@@ -499,7 +488,7 @@ describe("Node Identifier Index", () => {
 				);
 
 				const fork = tree.fork();
-				tree.context.root.deleteNodes(0, 1);
+				tree.root = undefined;
 				assertIds(tree, []);
 				assertIds(fork, [id]);
 				tree.merge(fork);

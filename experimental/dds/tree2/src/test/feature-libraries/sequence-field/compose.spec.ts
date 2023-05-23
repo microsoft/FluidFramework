@@ -397,13 +397,13 @@ describe("SequenceField - Compose", () => {
 		// Deletes ABC-----IJKLM
 		const deleteA: SF.Changeset = [
 			{ type: "Delete", count: 3 },
-			5,
+			{ count: 5 },
 			{ type: "Delete", count: 5 },
 		];
 		// Deletes DEFG--OP
 		const deleteB: SF.Changeset = [
 			{ type: "Delete", count: 4 },
-			2,
+			{ count: 2 },
 			{ type: "Delete", count: 2 },
 		];
 		const actual = shallowCompose([tagChange(deleteA, tag1), tagChange(deleteB, tag2)]);
@@ -411,9 +411,9 @@ describe("SequenceField - Compose", () => {
 		const expected: SF.Changeset = [
 			{ type: "Delete", revision: tag1, count: 3 },
 			{ type: "Delete", revision: tag2, count: 4 },
-			1,
+			{ count: 1 },
 			{ type: "Delete", revision: tag1, count: 5 },
-			1,
+			{ count: 1 },
 			{ type: "Delete", revision: tag2, count: 2 },
 		];
 		assert.deepEqual(actual, expected);
@@ -422,9 +422,9 @@ describe("SequenceField - Compose", () => {
 	it("revive ○ delete", () => {
 		const revive = Change.revive(0, 5, tag1, 0);
 		const deletion: SF.Changeset = [
-			1,
+			{ count: 1 },
 			{ type: "Delete", count: 1 },
-			1,
+			{ count: 1 },
 			{ type: "Delete", count: 3 },
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(deletion)]);
@@ -514,7 +514,7 @@ describe("SequenceField - Compose", () => {
 	it("insert ○ insert", () => {
 		const insertA: SF.Changeset = [
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
-			2,
+			{ count: 2 },
 			{
 				type: "Insert",
 				revision: tag2,
@@ -528,14 +528,14 @@ describe("SequenceField - Compose", () => {
 
 		const insertB: SF.Changeset = [
 			{ type: "Insert", revision: tag3, content: [{ type, value: 4 }], id: brand(4) },
-			4,
+			{ count: 4 },
 			{ type: "Insert", revision: tag4, content: [{ type, value: 5 }], id: brand(5) },
 		];
 		const actual = shallowCompose([makeAnonChange(insertA), makeAnonChange(insertB)], revInfos);
 		const expected: SF.Changeset = [
 			{ type: "Insert", revision: tag3, content: [{ type, value: 4 }], id: brand(4) },
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
-			2,
+			{ count: 2 },
 			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
 			{ type: "Insert", revision: tag4, content: [{ type, value: 5 }], id: brand(5) },
 			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }], id: brand(3) },
@@ -633,7 +633,7 @@ describe("SequenceField - Compose", () => {
 		const expected: SF.Changeset = [
 			{ type: "Delete", count: 1, revision: tag2 },
 			{ type: "Delete", count: 1, revision: tag1 },
-			1,
+			{ count: 1 },
 			{ type: "Delete", count: 1, revision: tag1 },
 			{ type: "Delete", count: 1, revision: tag2 },
 		];
@@ -649,7 +649,7 @@ describe("SequenceField - Compose", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
 		const revive = Change.revive(0, 2, tag2, 0);
-		const expected: SF.Changeset = [1, { type: "Delete", count: 3, revision: tag1 }];
+		const expected: SF.Changeset = [{ count: 1 }, { type: "Delete", count: 3, revision: tag1 }];
 		const actual = shallowCompose([
 			tagChange(delete1, tag1),
 			tagChange(delete2, tag2),
@@ -762,7 +762,7 @@ describe("SequenceField - Compose", () => {
 	it("insert ○ revive", () => {
 		const insert: SF.Changeset = [
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
-			2,
+			{ count: 2 },
 			{
 				type: "Insert",
 				revision: tag2,
@@ -781,7 +781,7 @@ describe("SequenceField - Compose", () => {
 				count: 1,
 				detachEvent: { revision: tag1, index: 0 },
 			},
-			4,
+			{ count: 4 },
 			{
 				type: "Revive",
 				revision: tag4,
@@ -800,7 +800,7 @@ describe("SequenceField - Compose", () => {
 				detachEvent: { revision: tag1, index: 0 },
 			},
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
-			2,
+			{ count: 2 },
 			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
 			{
 				type: "Revive",
@@ -820,7 +820,7 @@ describe("SequenceField - Compose", () => {
 		const modify = Change.modify(1, nodeChange);
 		const expected: SF.Changeset<TestChange> = [
 			{ type: "MoveOut", id: brand(0), count: 1, changes: nodeChange },
-			1,
+			{ count: 1 },
 			{ type: "MoveIn", id: brand(0), count: 1 },
 		];
 		const actual = shallowCompose([makeAnonChange(move), makeAnonChange(modify)]);

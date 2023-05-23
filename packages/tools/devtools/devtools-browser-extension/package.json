@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-browser-extension",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"private": true,
 	"description": "A browser extension for visualizing Fluid Framework stats and operations",
 	"homepage": "https://fluidframework.com",
@@ -116,13 +116,13 @@
 			"compile": {
 				"dependsOn": [
 					"...",
-					"webpack",
-					"build:copy-resources"
+					"webpack"
 				],
 				"script": false
 			},
 			"webpack": [
-				"@fluid-tools/client-debugger-view#tsc"
+				"@fluid-experimental/devtools-core#tsc",
+				"@fluid-experimental/devtools-view#tsc"
 			]
 		}
 	},

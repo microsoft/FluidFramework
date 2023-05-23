@@ -176,7 +176,7 @@ export {
 	isNeverField,
 	FullSchemaPolicy,
 	UnwrappedEditableField,
-	isUnwrappedNode,
+	isEditableTree,
 	isEditableField,
 	EditableTreeContext,
 	UnwrappedEditableTree,
@@ -191,13 +191,10 @@ export {
 	valueSymbol,
 	proxyTargetSymbol,
 	getField,
-	createField,
-	replaceField,
 	contextSymbol,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -251,6 +248,9 @@ export {
 	GlobalFieldSchema,
 	Any,
 	Sourced,
+	NewFieldContent,
+	NodeExistsConstraint,
+	cursorForTypedTreeData,
 } from "./feature-libraries";
 
 export {
@@ -258,9 +258,9 @@ export {
 	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
-	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
+	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
 } from "./shared-tree";

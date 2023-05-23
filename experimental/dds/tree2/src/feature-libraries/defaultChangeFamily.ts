@@ -17,7 +17,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 } from "../core";
-import { brand } from "../util";
+import { brand, isReadonlyArray } from "../util";
 import {
 	FieldKind,
 	ModularChangeFamily,
@@ -100,17 +100,24 @@ export interface IDefaultEditBuilder {
 	 */
 	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
 
-	// TODO: document
+	/**
+	 * Moves a subsequence from one sequence field to another sequence field.
+	 *
+	 * Note that the `destinationIndex` is the final index the first node moved should end up at.
+	 * Thus if moving nodes from a lower to a higher index within the same field, the `destinationIndex` must be computed as if the subsequence being moved has already been removed.
+	 * See {@link SequenceFieldEditBuilder.move} for details.
+	 */
 	move(
 		sourceField: FieldUpPath,
 		sourceIndex: number,
 		count: number,
 		destinationField: FieldUpPath,
-		destIndex: number,
+		destinationIndex: number,
 	): void;
 
 	// TODO: document
 	addValueConstraint(path: UpPath, value: Value): void;
+	addNodeExistsConstraint(path: UpPath): void;
 }
 
 /**
@@ -145,6 +152,10 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public addValueConstraint(path: UpPath, value: Value): void {
 		this.modularBuilder.addValueConstraint(path, value);
+	}
+
+	public addNodeExistsConstraint(path: UpPath): void {
+		this.modularBuilder.addNodeExistsConstraint(path);
 	}
 
 	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
@@ -201,11 +212,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
 		return {
-			insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
+			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
+				const content = isReadonlyArray(newContent) ? newContent : [newContent];
+				if (content.length === 0) {
+					return;
+				}
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(
 						index,
-						newContent,
+						content,
 						this.modularBuilder.generateId(
 							Array.isArray(newContent) ? newContent.length : 1,
 						),
@@ -299,7 +314,7 @@ export interface SequenceFieldEditBuilder {
 	 * @param index - the index at which to insert the `newContent`.
 	 * @param newContent - the new content to be inserted in the field
 	 */
-	insert(index: number, newContent: ITreeCursor | ITreeCursor[]): void;
+	insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
 
 	/**
 	 * Issues a change which deletes `count` elements starting at the given `index`.

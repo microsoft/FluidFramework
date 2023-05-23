@@ -140,6 +140,7 @@ describe("Routerlicious", () => {
 					[],
 					testCheckpointService,
 					true,
+					true,
 				);
 
 				testContext = new TestContext();

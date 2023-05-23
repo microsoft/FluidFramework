@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-
+import { useId } from "@fluentui/react-hooks";
 import {
 	ContainerList,
 	ContainerMetadata,
@@ -17,8 +17,9 @@ import {
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
-import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { FluentProvider } from "@fluentui/react-components";
+import { IStackItemStyles, IStackStyles, Stack, TooltipHost } from "@fluentui/react";
+import { FluentProvider, Button } from "@fluentui/react-components";
+import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
@@ -148,7 +149,8 @@ export function DevtoolsView(): React.ReactElement {
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
-
+	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
+	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
@@ -182,10 +184,41 @@ export function DevtoolsView(): React.ReactElement {
 		};
 	}, [messageRelay, setSupportedFeatures]);
 
+	// Manage the query timeout
+	React.useEffect(() => {
+		if (supportedFeatures === undefined) {
+			// If we have queried for the supported feature list but have not received
+			// a response yet, queue a timer.
+			const queryTimer = setTimeout(() => {
+				setQueryTimedOut(true);
+			}, queryTimeoutInMilliseconds);
+			return (): void => {
+				clearTimeout(queryTimer);
+			};
+		}
+	}, [supportedFeatures, setQueryTimedOut]);
+
+	function retryQuery(): void {
+		setQueryTimedOut(false);
+		messageRelay.postMessage(getSupportedFeaturesMessage);
+	}
+
 	return (
 		<FluentProvider theme={getFluentUIThemeToUse()} style={{ height: "100%" }}>
 			{supportedFeatures === undefined ? (
-				<Waiting />
+				queryTimedOut ? (
+					<>
+						<div>Devtools not found. Timeout exceeded.</div>
+						<TooltipHost
+							content="Retry searching for Devtools"
+							id="retry-query-button-tooltip"
+						>
+							<Button onClick={retryQuery}>Search again</Button>
+						</TooltipHost>
+					</>
+				) : (
+					<Waiting />
+				)
 			) : (
 				<_DevtoolsView supportedFeatures={supportedFeatures} />
 			)}
@@ -440,10 +473,42 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		);
 	}
 
-	// TODO: add button to refresh list of containers
 	return (
-		<MenuSection header="Containers" key="container-selection-menu-section">
+		<MenuSection
+			header="Containers"
+			key="container-selection-menu-section"
+			icon={<RefreshButton />}
+		>
 			{containerSectionInnerView}
 		</MenuSection>
+	);
+}
+
+/**
+ * A refresh button to retrive the latest list of containers.
+ */
+function RefreshButton(): React.ReactElement {
+	const messageRelay = useMessageRelay();
+	const refreshButtonTooltipId = useId("refresh-container-list-button-tooltip");
+	const transparentButtonStyle = {
+		backgroundColor: "transparent",
+		border: "none",
+		cursor: "pointer",
+	};
+
+	function handleRefreshClick(): void {
+		// Query for list of Containers
+		messageRelay.postMessage(getContainerListMessage);
+	}
+
+	return (
+		<TooltipHost content="Refresh Containers list" id={refreshButtonTooltipId}>
+			<Button
+				icon={<ArrowSync24Regular />}
+				style={transparentButtonStyle}
+				onClick={handleRefreshClick}
+				aria-label="Refresh Containers list"
+			></Button>
+		</TooltipHost>
 	);
 }
