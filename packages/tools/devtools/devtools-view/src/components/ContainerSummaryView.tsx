@@ -45,6 +45,8 @@ import { initializeFluentUiIcons } from "../InitializeIcons";
 import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
+import { InfoBadge } from "./utility-components";
+import { clientIdTooltipText, userIdTooltipText } from "./TooltipTexts";
 
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
@@ -81,8 +83,22 @@ interface Item {
 	value: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function DataRow(label: string, id: string | undefined, columnProps: any): React.ReactElement {
+/**
+ * Displays a row with basic stats about the Container.
+ *
+ * @param label - Row label text.
+ * @param infoTooltipText - (optional) Tooltip text to display via an info badge.
+ * No badge will be displayed if this text is not provided.
+ * @param value - The value text associated with the label.
+ * @param columnProps - Column props consumed by FluentUI.
+ */
+function DataRow(
+	label: string,
+	infoTooltipText: string | undefined,
+	value: string | undefined,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	columnProps: any,
+): React.ReactElement {
 	return (
 		<TableRow>
 			<TableCell
@@ -91,9 +107,20 @@ function DataRow(label: string, id: string | undefined, columnProps: any): React
 					...columnProps.getTableCellProps("containerProperty")
 				}
 			>
-				<b>{label}</b>
+				<span
+					style={{
+						whiteSpace: "nowrap",
+					}}
+				>
+					<b>{label}</b>
+					{infoTooltipText === undefined ? (
+						<></>
+					) : (
+						<InfoBadge tooltipContent={infoTooltipText} />
+					)}
+				</span>
 			</TableCell>
-			<TableCell>{id}</TableCell>
+			<TableCell>{value}</TableCell>
 		</TableRow>
 	);
 }
@@ -253,10 +280,20 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		<Stack>
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>
-					{DataRow("Container", containerState.id, columnSizing_unstable)}
+					{DataRow("Container", undefined, containerState.id, columnSizing_unstable)}
 					{ContainerStatusRow(statusComponents)}
-					{DataRow("Client ID", containerState.clientId, columnSizing_unstable)}
-					{DataRow("User ID", containerState.userId, columnSizing_unstable)}
+					{DataRow(
+						"Client ID",
+						clientIdTooltipText,
+						containerState.clientId,
+						columnSizing_unstable,
+					)}
+					{DataRow(
+						"User ID",
+						userIdTooltipText,
+						containerState.userId,
+						columnSizing_unstable,
+					)}
 				</Table>
 			</StackItem>
 			<StackItem align="start">
