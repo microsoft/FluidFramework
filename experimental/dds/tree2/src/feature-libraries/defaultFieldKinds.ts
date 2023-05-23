@@ -854,14 +854,19 @@ export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, Seque
 /**
  * Exactly one identifier.
  */
-export const nodeIdentifier = brandedFieldKind(
+export const nodeIdentifier: BrandedFieldKind<
+	"NodeIdentifier",
+	Multiplicity.Value,
+	FieldEditor<0>
+> = brandedFieldKind(
 	"NodeIdentifier",
 	Multiplicity.Value,
 	noChangeHandler,
 	(types, other) =>
 		(other.kind.identifier === sequence.identifier ||
 			other.kind.identifier === value.identifier ||
-			other.kind.identifier === optional.identifier) &&
+			other.kind.identifier === optional.identifier ||
+			other.kind.identifier === nodeIdentifier.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set(),
 );
