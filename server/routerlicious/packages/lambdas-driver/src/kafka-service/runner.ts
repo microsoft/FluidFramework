@@ -67,7 +67,7 @@ export class KafkaRunner implements IRunner {
 
 			if (errorData && !errorData.restart) {
 				const errorMsg =
-					"KakfaRunner encountered an error that is not configured to trigger restart";
+					"KafkaRunner encountered an error that is not configured to trigger restart";
 				logger?.error(errorMsg, metadata);
 				logger?.error(inspect(error), metadata);
 				if (!this.runnerMetric.isCompleted()) {
@@ -76,7 +76,7 @@ export class KafkaRunner implements IRunner {
 					Lumberjack.error(errorMsg, lumberProperties, error);
 				}
 			} else {
-				const errorMsg = "KakfaRunner encountered an error that will trigger a restart";
+				const errorMsg = "KafkaRunner encountered an error that will trigger a restart";
 				logger?.error(errorMsg, metadata);
 				logger?.error(inspect(error), metadata);
 				if (!this.runnerMetric.isCompleted()) {
