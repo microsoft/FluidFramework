@@ -126,7 +126,7 @@ async function orchestratorProcess(
 		createTestId?: boolean;
 		testUsers?: ITestUserConfig;
 		profileName: string;
-		ring: string | undefined,
+		ring: string | undefined;
 	},
 ) {
 	const url = await (args.testId !== undefined && args.createTestId === false

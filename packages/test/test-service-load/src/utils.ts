@@ -55,7 +55,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 		driverEndpointName: string | undefined;
 		profile: string;
 		runId: number | undefined;
-		ring: string | undefined,
+		ring: string | undefined;
 	}) {
 		return ChildLogger.create(await this.loggerP, undefined, {
 			all: dimensions,
