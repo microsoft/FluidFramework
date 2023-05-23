@@ -114,7 +114,6 @@ export function assertRouterliciousEndpoint(
 	if (
 		endpoint === undefined ||
 		endpoint === "frs" ||
-		endpoint === "frsCanary" ||
 		endpoint === "r11s" ||
 		endpoint === "docker"
 	) {

@@ -82,13 +82,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAliasDeclaration_DriverEndpoint": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_RouterliciousEndpoint": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

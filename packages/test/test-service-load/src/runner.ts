@@ -96,6 +96,8 @@ async function main() {
 		driverType: driver,
 		driverEndpointName: endpoint,
 		profile: profileName,
+		ring: endpoint,
+
 	});
 
 	process.on("uncaughtExceptionMonitor", (error, origin) => {
