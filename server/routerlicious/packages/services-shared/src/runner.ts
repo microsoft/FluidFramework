@@ -30,7 +30,7 @@ export async function run<T extends IResources>(
 
 	// Start the runner and then listen for the message to stop it
 	const runningP = runner.start(logger).catch(async (error) => {
-        logger?.error(`Encountered exception while running service: ${serializeError(error)}`);
+		logger?.error(`Encountered exception while running service: ${serializeError(error)}`);
 		Lumberjack.error(`Encountered exception while running service`, undefined, error);
 		await runner.stop().catch((innerError) => {
 			logger?.error(`Could not stop runner due to error: ${innerError}`);
@@ -41,7 +41,7 @@ export async function run<T extends IResources>(
 	});
 
 	process.on("SIGTERM", () => {
-        Lumberjack.info(`Received SIGTERM request to stop the service.`);
+		Lumberjack.info(`Received SIGTERM request to stop the service.`);
 		runner.stop().catch((error) => {
 			logger?.error(`Could not stop runner after SIGTERM due to error: ${error}`);
 			Lumberjack.error(`Could not stop runner after SIGTERM due to error`, undefined, error);
