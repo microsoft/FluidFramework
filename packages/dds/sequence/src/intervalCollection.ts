@@ -1560,14 +1560,11 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		if (!this.attached) {
 			throw new LoggingError("The local interval collection must exist");
 		}
-		this.localCollection?.appendIndex(index);
-		const iterator = this[Symbol.iterator]();
-		let iteratorResult = iterator.next();
-		while (!iteratorResult.done) {
-			const interval = iteratorResult.value;
+		for (const interval of this) {
 			this.localCollection?.add(interval);
-			iteratorResult = iterator.next();
 		}
+
+		this.localCollection?.appendIndex(index);
 	}
 
 	private rebasePositionWithSegmentSlide(
