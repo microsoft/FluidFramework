@@ -32,6 +32,7 @@ footer {
     color: #f3f5f7;
     transition: 0.1s ease-in;
     background: #404049;
+    text-decoration: underline;
 }
 
 .cta svg {
