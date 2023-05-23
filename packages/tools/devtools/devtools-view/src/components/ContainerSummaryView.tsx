@@ -276,7 +276,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					{DataRow(
 						"Container",
 						// The "Container" entry will soon be replaced anyways.
-						undefined,
+						/* infoTooltipText: */ undefined,
 						containerState.id,
 						columnSizing_unstable,
 					)}
