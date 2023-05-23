@@ -110,9 +110,9 @@ export function generateGCConfigs(
 	const gcVersionInEffect =
 		mc.config.getBoolean(gcVersionUpgradeToV3Key) === true ? currentGCVersion : stableGCVersion;
 
-	// The GC version is up-to-date if the GC version in effect is not less than the GC version in base snapshot.
-	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So,
-	// GC should not be run as it may produce incorrect / unreliable GC state.
+	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
+	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC
+	// should not run as it may produce incorrect / unreliable state.
 	const isGCVersionUpToDate =
 		gcVersionInBaseSnapshot === undefined || gcVersionInEffect >= gcVersionInBaseSnapshot;
 

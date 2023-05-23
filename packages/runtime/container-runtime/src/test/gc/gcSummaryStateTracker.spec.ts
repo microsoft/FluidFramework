@@ -35,7 +35,6 @@ describe("GCSummaryStateTracker tests", () => {
 				true /* wasGCRunInBaseSnapshot */,
 			) as any;
 			assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
-			assert.equal(tracker.currentGCVersion, 1, "Precondition 2");
 			assert.equal(
 				tracker.doesSummaryStateNeedReset,
 				true,
@@ -72,7 +71,6 @@ describe("GCSummaryStateTracker tests", () => {
 				true /* wasGCRunInBaseSnapshot */,
 			) as any;
 			assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
-			assert.equal(tracker.currentGCVersion, 1, "Precondition 2");
 			assert.equal(
 				tracker.doesSummaryStateNeedReset,
 				false,
@@ -91,7 +89,6 @@ describe("GCSummaryStateTracker tests", () => {
 				true /* wasGCRunInBaseSnapshot */,
 			) as any;
 			assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
-			assert.equal(tracker.currentGCVersion, 1, "Precondition 2");
 
 			// This covers the case where we rolled back an upgrade. Containers that successfully "upgraded" (reset)
 			// shouldn't need to do it again.
