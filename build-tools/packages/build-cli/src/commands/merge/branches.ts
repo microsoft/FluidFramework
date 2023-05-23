@@ -21,6 +21,16 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			char: "a",
 			required: true,
 		}),
+		owner: Flags.string({
+			description: "Owner name",
+			char: "o",
+			required: true,
+		}),
+		repo: Flags.string({
+			description: "Repsoitory name",
+			char: "r",
+			required: true,
+		}),
 		source: Flags.string({
 			description: "Source branch name",
 			char: "s",
@@ -34,6 +44,11 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		batchSize: Flags.integer({
 			description: "Maximum number of commits to include in the pull request",
 			char: "b",
+			required: true,
+		}),
+		description: Flags.string({
+			description: "PR description",
+			char: "d",
 			required: true,
 		}),
 		...BaseCommand.flags,
@@ -106,17 +121,18 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 		await gitRepo.resetBranch(commitId);
 
 		// fetch name of owner associated to the pull request
-		const prInfo = await pullRequestInfo(flags.auth, unmergedCommitList[0], this.logger);
+		const pr = await pullRequestInfo(flags.auth, commitId, this.logger);
 		this.info(
-			`Fetch pull request info for single commit id ${unmergedCommitList[0]} and assignee ${prInfo.data[0].assignee.login}`,
+			`Fetch pull request info for commit id ${commitId} and assignee ${pr.data[0].assignee.login}`,
 		);
 		const user = await getUserAccess(flags.auth, this.logger);
 		this.info(`List users with push access to main branch ${user}`);
+
 		const prNumber = await createPullRequest(
 			flags.auth,
 			branchName,
 			flags.target,
-			prInfo.data[0].assignee.login,
+			pr.data[0].assignee.login,
 			this.logger,
 		);
 		this.log(
