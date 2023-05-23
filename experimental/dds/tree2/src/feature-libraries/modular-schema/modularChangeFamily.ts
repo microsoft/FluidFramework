@@ -601,7 +601,7 @@ export class ModularChangeFamily
 				(child, baseChild) =>
 					this.rebaseNodeChange(
 						child,
-						baseChild !== undefined ? tagChange(baseChild, baseRevision) : undefined,
+						tagChange(baseChild, baseRevision),
 						genId,
 						crossFieldTable,
 						undefined,
@@ -670,7 +670,7 @@ export class ModularChangeFamily
 				(child, baseChild, deleted) =>
 					this.rebaseNodeChange(
 						child,
-						baseChild !== undefined ? { revision, change: baseChild } : undefined,
+						{ revision, change: baseChild },
 						genId,
 						crossFieldTable,
 						baseChanges,
@@ -725,7 +725,7 @@ export class ModularChangeFamily
 						);
 						return this.rebaseNodeChange(
 							child,
-							undefined,
+							tagChange(undefined, over.revision),
 							genId,
 							crossFieldTable,
 							baseChanges,
@@ -752,7 +752,7 @@ export class ModularChangeFamily
 
 	private rebaseNodeChange(
 		change: NodeChangeset | undefined,
-		over: TaggedChange<NodeChangeset> | undefined,
+		over: TaggedChange<NodeChangeset | undefined>,
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		parentField: FieldChange | undefined,
@@ -761,21 +761,21 @@ export class ModularChangeFamily
 		constraintState: ConstraintState,
 		deletedByBase: boolean = false,
 	): NodeChangeset | undefined {
-		if (change === undefined && over?.change?.fieldChanges === undefined) {
+		if (change === undefined && over.change?.fieldChanges === undefined) {
 			return undefined;
 		}
 
-		if (over?.change?.fieldChanges !== undefined && parentField !== undefined) {
+		if (over.change?.fieldChanges !== undefined && parentField !== undefined) {
 			crossFieldTable.baseMapToParentField.set(over.change.fieldChanges, parentField);
 		}
 
 		const baseMap: TaggedChange<FieldChangeMap> =
-			over?.change?.fieldChanges !== undefined
+			over.change?.fieldChanges !== undefined
 				? {
 						...over,
 						change: over.change.fieldChanges,
 				  }
-				: makeAnonChange(new Map());
+				: tagChange(new Map(), over.revision);
 
 		const fieldChanges = this.rebaseFieldMap(
 			change?.fieldChanges ?? new Map(),
@@ -806,7 +806,7 @@ export class ModularChangeFamily
 
 		// We only care if a violated constraint is fixed or if a non-violated
 		// constraint becomes violated
-		if (rebasedChange.valueConstraint !== undefined && over?.change.valueChange !== undefined) {
+		if (rebasedChange.valueConstraint !== undefined && over.change?.valueChange !== undefined) {
 			const violatedByOver =
 				over.change.valueChange.value !== rebasedChange.valueConstraint.value;
 
