@@ -93,7 +93,7 @@ export interface BlockAction<TClientData> {
     (block: IMergeBlock, pos: number, refSeq: number, clientId: number, start: number | undefined, end: number | undefined, accum: TClientData): boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface BlockUpdateActions {
     // (undocumented)
     child: (block: IMergeBlock, index: number) => void;
@@ -1247,11 +1247,14 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
     length: number;
 }
 
-// @public (undocumented)
-export enum SlidingPreference {
-    Backward = 1,
-    Forward = 0
-}
+// @public
+export const SlidingPreference: {
+    readonly BACKWARD: 0;
+    readonly FORWARD: 1;
+};
+
+// @public
+export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
 
 // @internal (undocumented)
 export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {

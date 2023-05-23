@@ -46,6 +46,9 @@ export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperato
 export function isInterdependencyRange(r: any): r is InterdependencyRange;
 
 // @public
+export function isInternalVersionRange(range: string, allowAnyPrereleaseId?: boolean): boolean;
+
+// @public
 export function isInternalVersionScheme(version: semver.SemVer | string | undefined, allowPrereleases?: boolean, allowAnyPrereleaseId?: boolean): boolean;
 
 // @public
