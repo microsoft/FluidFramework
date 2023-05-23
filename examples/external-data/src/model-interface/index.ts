@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 /**
@@ -52,7 +52,7 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	 * Returns the resolved URL for the attached container. If container is not
 	 * attached then returns undefined.
 	 */
-	readonly getContainerResolvedUrl: () => IFluidResolvedUrl | undefined;
+	readonly getContainerResolvedUrl: () => IResolvedUrl | undefined;
 }
 
 /**
@@ -192,7 +192,7 @@ export interface IBaseDocumentEvents extends IEvent {
  */
 export interface IBaseDocumentInitialState {
 	externalTaskListId: string;
-	containerUrl: IFluidResolvedUrl;
+	containerUrl: IResolvedUrl;
 }
 
 /**
