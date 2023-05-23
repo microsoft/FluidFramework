@@ -123,14 +123,10 @@ export interface HasReattachFields extends HasPlaceFields {
 	 */
 	inverseOf?: RevisionTag;
 }
-// TODO
 export const HasReattachFields = Type.Intersect([
 	HasPlaceFields,
 	Type.Object({
-		detachedBy: Type.Optional(RevisionTagSchema),
-		detachIndex: Type.Number(),
-		isIntention: OptionalTrue,
-		lastDetachedBy: Type.Optional(RevisionTagSchema),
+		inverseOf: Type.Optional(RevisionTagSchema),
 	}),
 ]);
 
@@ -311,7 +307,6 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 		Type.Object({
 			type: Type.Literal("MoveOut"),
 			count: NodeCount,
-			isDstConflicted: OptionalTrue,
 		}),
 	]);
 
@@ -413,10 +408,13 @@ export interface Modify<TNodeChange = NodeChangeType> extends CellTargetingMark 
 	changes: TNodeChange;
 }
 export const Modify = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Object({
-		type: Type.Literal("Modify"),
-		changes: tNodeChange,
-	});
+	Type.Intersect([
+		CellTargetingMark,
+		Type.Object({
+			type: Type.Literal("Modify"),
+			changes: tNodeChange,
+		}),
+	]);
 
 /**
  * A mark which extends `CellTargetingMark`.
