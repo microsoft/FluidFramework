@@ -913,19 +913,15 @@ export class MergeTree {
 			return false;
 		}
 
-		function filterLocalRefs(
+		function* filterLocalRefs(
 			collection: LocalReferenceCollection,
 			predicate: (pos: LocalReferencePosition) => boolean,
-		): LocalReferencePosition[] {
-			const refs: LocalReferencePosition[] = [];
-
+		): Generator<LocalReferencePosition> {
 			for (const pos of collection) {
 				if (predicate(pos)) {
-					refs.push(pos);
+					yield pos;
 				}
 			}
-
-			return refs;
 		}
 
 		let currentSlideGroup: LocalReferenceCollection[] = [];
