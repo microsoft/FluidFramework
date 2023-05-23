@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { PackageName } from "@rushstack/node-core-library";
 import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
@@ -29,7 +30,6 @@ import {
 } from "./utils";
 
 const { info, verbose, errorLog: error } = defaultLogger;
-export type ScriptDependencies = { [key: string]: string[] };
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
@@ -110,20 +110,29 @@ export class Package {
 		verbose(`Package loaded: ${this.nameColored}`);
 	}
 
+	/**
+	 * The name of the package including the scope.
+	 */
 	public get name(): string {
 		return this.packageJson.name;
 	}
 
+	/**
+	 * The name of the package with a color for terminal output.
+	 */
 	public get nameColored(): string {
 		return this.color(this.name);
 	}
 
-	public get version(): string {
-		return this.packageJson.version;
+	/**
+	 * The name of the package excluding the scope.
+	 */
+	public get nameUnscoped(): string {
+		return PackageName.getUnscopedName(this.name);
 	}
 
-	public get fluidBuildConfig(): IFluidBuildConfig | undefined {
-		return this.packageJson.fluidBuild;
+	public get version(): string {
+		return this.packageJson.version;
 	}
 
 	public get isPublished(): boolean {
@@ -133,6 +142,7 @@ export class Package {
 	public get isTestPackage(): boolean {
 		return this.name.split("/")[1]?.startsWith("test-") === true;
 	}
+
 	public get matched() {
 		return this._matched;
 	}

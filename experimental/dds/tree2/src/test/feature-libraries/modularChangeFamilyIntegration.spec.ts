@@ -11,12 +11,15 @@ import {
 	FieldKindIdentifier,
 	isSkipMark,
 	makeAnonChange,
+	mintRevisionTag,
+	tagChange,
 } from "../../core";
 import { DefaultEditBuilder, FieldKind, ModularChangeFamily } from "../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/defaultFieldKinds";
 import { brand, Mutable } from "../../util";
+import { testChangeReceiver } from "../utils";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
@@ -30,7 +33,8 @@ const fieldC: FieldKey = brand("FieldC");
 
 describe("rebase", () => {
 	it("delete over cross-field move", () => {
-		const editor = new DefaultEditBuilder(family, () => {}, new AnchorSet());
+		const [changeReceiver, getChanges] = testChangeReceiver(family);
+		const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
 		editor.move(
 			{ parent: undefined, field: fieldA },
 			1,
@@ -40,15 +44,16 @@ describe("rebase", () => {
 		);
 		editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
 		editor.sequenceField({ parent: undefined, field: fieldB }).delete(2, 1);
-		const [move, remove, expected] = editor.getChanges();
-		const rebased = family.rebase(remove, makeAnonChange(move));
+		const [move, remove, expected] = getChanges();
+		const rebased = family.rebase(remove, tagChange(move, mintRevisionTag()));
 		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
 		const expectedDelta = normalizeDelta(family.intoDelta(expected));
 		assert.deepEqual(rebasedDelta, expectedDelta);
 	});
 
 	it("cross-field move over delete", () => {
-		const editor = new DefaultEditBuilder(family, () => {}, new AnchorSet());
+		const [changeReceiver, getChanges] = testChangeReceiver(family);
+		const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
 		editor.sequenceField({ parent: undefined, field: fieldA }).delete(1, 1);
 		editor.move(
 			{ parent: undefined, field: fieldA },
@@ -64,8 +69,8 @@ describe("rebase", () => {
 			{ parent: undefined, field: fieldB },
 			2,
 		);
-		const [remove, move, expected] = editor.getChanges();
-		const rebased = family.rebase(move, makeAnonChange(remove));
+		const [remove, move, expected] = getChanges();
+		const rebased = family.rebase(move, tagChange(remove, mintRevisionTag()));
 		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
 		const expectedDelta = normalizeDelta(family.intoDelta(expected));
 		assert.deepEqual(rebasedDelta, expectedDelta);
@@ -73,7 +78,8 @@ describe("rebase", () => {
 
 	// See bug 4071
 	it.skip("cross-field move composition", () => {
-		const editor = new DefaultEditBuilder(family, () => {}, new AnchorSet());
+		const [changeReceiver, getChanges] = testChangeReceiver(family);
+		const editor = new DefaultEditBuilder(family, changeReceiver, new AnchorSet());
 		editor.move(
 			{ parent: undefined, field: fieldA },
 			0,
@@ -95,7 +101,7 @@ describe("rebase", () => {
 			{ parent: undefined, field: fieldC },
 			0,
 		);
-		const [move1, move2, expected] = editor.getChanges();
+		const [move1, move2, expected] = getChanges();
 		const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 		const actualDelta = normalizeDelta(family.intoDelta(composed));
 		const expectedDelta = normalizeDelta(family.intoDelta(expected));

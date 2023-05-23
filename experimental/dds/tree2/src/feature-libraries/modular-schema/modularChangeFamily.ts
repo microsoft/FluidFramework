@@ -7,8 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ICodecFamily } from "../../codec";
 import {
 	ChangeFamily,
-	ProgressiveEditBuilder,
-	ProgressiveEditBuilderBase,
+	EditBuilder,
 	ChangeRebaser,
 	FieldKindIdentifier,
 	AnchorSet,
@@ -57,6 +56,8 @@ import {
 	HasFieldChanges,
 	RevisionInfo,
 	RevisionMetadataSource,
+	NodeExistsConstraint,
+	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import {
@@ -65,7 +66,7 @@ import {
 	genericFieldKind,
 	newGenericChangeset,
 } from "./genericFieldKind";
-import { makeModularChangeCodecFamily } from "./modularChangeEncoding";
+import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -255,7 +256,8 @@ export class ModularChangeFamily
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
 		let valueChange: ValueChange | undefined;
-		let valueConstraint: Value | undefined;
+		let valueConstraint: ValueConstraint | undefined;
+		let nodeExistsConstraint: NodeExistsConstraint | undefined;
 		for (const change of changes) {
 			// Use the first defined value constraint before any value changes.
 			// Any value constraints defined after a value change can never be violated so they are ignored in the composition.
@@ -266,6 +268,19 @@ export class ModularChangeFamily
 			) {
 				valueConstraint = { ...change.change.valueConstraint };
 			}
+
+			// Composition is part of two codepaths:
+			//   1. Combining multiple changesets into a transaction
+			//   2. Generating a state update after rebasing a branch that has
+			//        more than one changeset
+			// In the first codepath, none of the constraints will be violated and
+			// we need the constraint to be stored on the given node in the transaction.
+			// In the second path, the constraint may have been violated, but the state is tracked
+			// as part of `constraintViolationCount` and the change won't be rebased further.
+			if (change.change.nodeExistsConstraint !== undefined) {
+				nodeExistsConstraint = { ...change.change.nodeExistsConstraint };
+			}
+
 			if (change.change.valueChange !== undefined) {
 				valueChange = { ...change.change.valueChange };
 				valueChange.revision ??= change.revision;
@@ -292,6 +307,10 @@ export class ModularChangeFamily
 
 		if (valueConstraint !== undefined) {
 			composedNodeChange.valueConstraint = valueConstraint;
+		}
+
+		if (nodeExistsConstraint !== undefined) {
+			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
 		return composedNodeChange;
@@ -648,7 +667,7 @@ export class ModularChangeFamily
 			const rebasedField = fieldKind.changeHandler.rebaser.rebase(
 				fieldChangeset,
 				taggedBaseChange,
-				(child, baseChild) =>
+				(child, baseChild, deleted) =>
 					this.rebaseNodeChange(
 						child,
 						baseChild !== undefined ? { revision, change: baseChild } : undefined,
@@ -658,6 +677,7 @@ export class ModularChangeFamily
 						fieldFilter,
 						revisionMetadata,
 						constraintState,
+						deleted,
 					),
 				genId,
 				manager,
@@ -697,7 +717,7 @@ export class ModularChangeFamily
 				const manager = newCrossFieldManager(crossFieldTable);
 				const rebasedChangeset = fieldKind.changeHandler.rebaser.rebase(
 					fieldChangeset,
-					makeAnonChange(baseChangeset),
+					tagChange(baseChangeset, over.revision),
 					(child, baseChild) => {
 						assert(
 							baseChild === undefined,
@@ -739,6 +759,7 @@ export class ModularChangeFamily
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
+		deletedByBase: boolean = false,
 	): NodeChangeset | undefined {
 		if (change === undefined && over?.change?.fieldChanges === undefined) {
 			return undefined;
@@ -779,6 +800,10 @@ export class ModularChangeFamily
 			rebasedChange.valueConstraint = change.valueConstraint;
 		}
 
+		if (change?.nodeExistsConstraint !== undefined) {
+			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
+		}
+
 		// We only care if a violated constraint is fixed or if a non-violated
 		// constraint becomes violated
 		if (rebasedChange.valueConstraint !== undefined && over?.change.valueChange !== undefined) {
@@ -791,6 +816,16 @@ export class ModularChangeFamily
 					violated: violatedByOver,
 				};
 				constraintState.violationCount += violatedByOver ? 1 : -1;
+			}
+		}
+
+		// If there's a node exists constraint and we deleted the node, increment the violation count
+		if (rebasedChange.nodeExistsConstraint !== undefined && deletedByBase) {
+			// Only increment the violation count if the constraint wasn't already violated
+			// TODO: Decrement if constraint is fixed by rebasing (node is revived)
+			if (!rebasedChange.nodeExistsConstraint.violated) {
+				rebasedChange.nodeExistsConstraint.violated = true;
+				constraintState.violationCount += 1;
 			}
 		}
 
@@ -911,7 +946,8 @@ function isEmptyNodeChangeset(change: NodeChangeset): boolean {
 	return (
 		change.fieldChanges === undefined &&
 		change.valueChange === undefined &&
-		change.valueConstraint === undefined
+		change.valueConstraint === undefined &&
+		change.nodeExistsConstraint === undefined
 	);
 }
 
@@ -1093,10 +1129,7 @@ function makeModularChangeset(
  * @sealed
  * @alpha
  */
-export class ModularEditBuilder
-	extends ProgressiveEditBuilderBase<ModularChangeset>
-	implements ProgressiveEditBuilder<ModularChangeset>
-{
+export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	private transactionDepth: number = 0;
 	private idAllocator: IdAllocator;
 
@@ -1207,6 +1240,21 @@ export class ModularEditBuilder
 	public addValueConstraint(path: UpPath, currentValue: Value): void {
 		const nodeChange: NodeChangeset = {
 			valueConstraint: { value: currentValue, violated: false },
+		};
+		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+			path.parentIndex,
+			nodeChange,
+		);
+		this.submitChange(
+			{ parent: path.parent, field: path.parentField },
+			genericFieldKind.identifier,
+			brand(fieldChange),
+		);
+	}
+
+	public addNodeExistsConstraint(path: UpPath): void {
+		const nodeChange: NodeChangeset = {
+			nodeExistsConstraint: { violated: false },
 		};
 		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
 			path.parentIndex,
