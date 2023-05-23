@@ -117,6 +117,9 @@ importers:
       chalk:
         specifier: ^2.4.2
         version: 2.4.2
+      danger:
+        specifier: ^10.9.0
+        version: 10.9.0(@octokit/core@4.0.5)
       date-fns:
         specifier: ^2.29.1
         version: 2.29.3
@@ -2776,7 +2779,7 @@ packages:
     resolution: {integrity: sha512-sxmnewSwAixkP1TrLdE6yRG53eEhHhDTYUykUwdV9x8f91WcbhunIHk9x1PZLALdBZKRPUO2HRcm4kezZ79HoA==}
     engines: {node: '>= 14'}
     dependencies:
-      '@octokit/request': 6.2.1
+      '@octokit/request': 6.2.3
       '@octokit/types': 7.5.1
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
@@ -2913,7 +2916,6 @@ packages:
       '@octokit/types': 9.0.0
       deprecation: 2.3.1
       once: 1.4.0
-    dev: true
 
   /@octokit/request@5.6.3:
     resolution: {integrity: sha512-bFJl0I1KVc9jYTe9tdGGpAMPy32dLBXXo1dS/YwSCTL/2nd9XeHsY616RE3HPXDVk+a+dBuzyz5YdlXwcDTr2A==}
@@ -2932,7 +2934,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       '@octokit/endpoint': 7.0.5
-      '@octokit/request-error': 3.0.1
+      '@octokit/request-error': 3.0.3
       '@octokit/types': 7.5.1
       is-plain-object: 5.0.0
       node-fetch: 2.6.9
@@ -2953,7 +2955,6 @@ packages:
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
       - encoding
-    dev: true
 
   /@octokit/rest@16.43.2(@octokit/core@4.0.5):
     resolution: {integrity: sha512-ngDBevLbBTFfrHZeiS7SAMAZ6ssuVmXuya+F/7RaVvlysgGa1JKJkKWY+jV6TCJYcW0OALfJ7nTIGXcBXzycfQ==}
@@ -4307,7 +4308,7 @@ packages:
     dev: false
 
   /buffer-equal-constant-time@1.0.1:
-    resolution: {integrity: sha1-+OcRMvf/5uAaXJaXpMbz5I1cyBk=}
+    resolution: {integrity: sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==}
     dev: false
 
   /buffer-from@1.1.2:
@@ -5335,7 +5336,7 @@ packages:
       memfs-or-file-map-to-github-branch: 1.2.1
       micromatch: 4.0.5
       node-cleanup: 2.1.2
-      node-fetch: 2.6.7
+      node-fetch: 2.6.9
       override-require: 1.1.1
       p-limit: 2.3.0
       parse-diff: 0.7.1
@@ -9070,18 +9071,6 @@ packages:
 
   /node-cleanup@2.1.2:
     resolution: {integrity: sha512-qN8v/s2PAJwGUtr1/hYTpNKlD6Y9rc4p8KSmJXyGdYGZsDGKXrGThikLFP9OCHFeLeEpQzPwiAtdIvBLqm//Hw==}
-    dev: false
-
-  /node-fetch@2.6.7:
-    resolution: {integrity: sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==}
-    engines: {node: 4.x || >=6.0.0}
-    peerDependencies:
-      encoding: ^0.1.0
-    peerDependenciesMeta:
-      encoding:
-        optional: true
-    dependencies:
-      whatwg-url: 5.0.0
     dev: false
 
   /node-fetch@2.6.9:

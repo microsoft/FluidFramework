@@ -231,17 +231,17 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 // @public
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     constructor();
-    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
-    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
-    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
-    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string): void;
+    assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
+    assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
+    assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
+    assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     // (undocumented)
     clear(): void;
     // (undocumented)
     events: ITelemetryBaseEvent[];
-    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
-    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
-    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[]): boolean;
+    matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
+    matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
+    matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
 }
