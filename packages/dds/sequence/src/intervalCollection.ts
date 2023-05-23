@@ -1104,6 +1104,10 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		}
 	}
 
+	public appendIndex(index: IntervalIndex<TInterval>) {
+		this.indexes.push(index);
+	}
+
 	public removeExistingInterval(interval: TInterval) {
 		this.removeIntervalFromIndexes(interval);
 		this.removeIntervalListeners(interval);
@@ -1542,6 +1546,28 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 			: serializedIntervals.intervals.map((i) =>
 					decompressInterval(i, serializedIntervals.label),
 			  );
+	}
+
+	/**
+	 * Attaches an index to this collection.
+	 * All intervals which are part of this collection will be added to the index, and the index will automatically
+	 * be updated when this collection updates due to local or remote changes.
+	 *
+	 * @remarks - After attaching an index to an interval collection, applications should typically store this
+	 * index somewhere in their in-memory data model for future reference and querying.
+	 */
+	public attachIndex(index: IntervalIndex<TInterval>): void {
+		if (!this.attached) {
+			throw new LoggingError("The local interval collection must exist");
+		}
+		this.localCollection?.appendIndex(index);
+		const iterator = this[Symbol.iterator]();
+		let iteratorResult = iterator.next();
+		while (!iteratorResult.done) {
+			const interval = iteratorResult.value;
+			this.localCollection?.add(interval);
+			iteratorResult = iterator.next();
+		}
 	}
 
 	private rebasePositionWithSegmentSlide(
