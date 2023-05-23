@@ -354,6 +354,8 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.shreddedSummaryTreeCache,
 			discoverFluidResolvedUrl,
 			storageRestWrapper,
+			storageTokenFetcher,
+			ordererTokenFetcher,
 		);
 	}
 }
