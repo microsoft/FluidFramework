@@ -18,7 +18,6 @@ import {
 	AnchorSet,
 	AnchorNode,
 	AnchorSetRootEvents,
-	symbolFromKey,
 	GlobalFieldKey,
 	StoredSchemaRepository,
 	IForestSubscription,
@@ -38,12 +37,12 @@ import {
 	ForestRepairDataStoreProvider,
 	GlobalFieldSchema,
 	EditableTree,
-	Identifier,
 	SchemaEditor,
-	IdentifierIndex,
+	NodeIdentifierIndex,
+	NodeIdentifier,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, JsonCompatibleReadOnly } from "../util";
+import { JsonCompatibleReadOnly, brand } from "../util";
 import { SchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeView,
@@ -62,17 +61,11 @@ import {
 export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
- * The key for the special identifier field, which allows nodes to be given identifiers that can be used
- * to find the nodes via the identifier index
+ * The key for the special node identifier field, which allows nodes to be given identifiers that can be used
+ * to find the nodes via the node identifier index.
  * @alpha
  */
-export const identifierKey: GlobalFieldKey = brand("identifier");
-
-/**
- * The global field key symbol that corresponds to {@link identifierKey}
- * @alpha
- */
-export const identifierKeySymbol = symbolFromKey(identifierKey);
+export const nodeIdentifierKey: GlobalFieldKey = brand("__n_id__");
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
@@ -87,7 +80,7 @@ export class SharedTree
 	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
 	private readonly view: ISharedTreeView;
 	private readonly schema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly identifierIndex: IdentifierIndex<typeof identifierKey>;
+	private readonly identifierIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>;
 
 	public constructor(
 		id: string,
@@ -111,7 +104,7 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
-		this.identifierIndex = new IdentifierIndex(identifierKey);
+		this.identifierIndex = new NodeIdentifierIndex(nodeIdentifierKey);
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
 			schema,
@@ -135,7 +128,7 @@ export class SharedTree
 		return this.view.forest;
 	}
 
-	public get identifiedNodes(): ReadonlyMap<Identifier, EditableTree> {
+	public get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree> {
 		return this.view.identifiedNodes;
 	}
 

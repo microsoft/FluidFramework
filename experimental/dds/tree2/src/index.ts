@@ -200,7 +200,8 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
-	Identifier,
+	NodeIdentifier,
+	nodeIdentifierSchema,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -241,6 +242,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeIdentifierFieldKind,
 	Forbidden,
 	TypedSchemaCollection,
 	SchemaLibrary,
@@ -255,8 +257,7 @@ export {
 } from "./feature-libraries";
 
 export {
-	identifierKey,
-	identifierKeySymbol,
+	nodeIdentifierKey,
 	ISharedTree,
 	ISharedTreeView,
 	runSynchronous,

@@ -424,7 +424,8 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 		(types, other) =>
 			(other.kind.identifier === sequence.identifier ||
 				other.kind.identifier === value.identifier ||
-				other.kind.identifier === optional.identifier) &&
+				other.kind.identifier === optional.identifier ||
+				other.kind.identifier === nodeIdentifier.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
 		new Set(),
 	);
@@ -851,6 +852,21 @@ export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, Seque
 	);
 
 /**
+ * Exactly one identifier.
+ */
+export const nodeIdentifier = brandedFieldKind(
+	"NodeIdentifier",
+	Multiplicity.Value,
+	noChangeHandler,
+	(types, other) =>
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === value.identifier ||
+			other.kind.identifier === optional.identifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set(),
+);
+
+/**
  * Exactly 0 items.
  *
  * Using Forbidden makes what types are listed for allowed in a field irrelevant
@@ -891,7 +907,7 @@ export const forbidden = brandedFieldKind(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s]),
+	[value, optional, sequence, nodeIdentifier, forbidden, counter].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -917,6 +933,11 @@ export interface Sequence
 /**
  * @alpha
  */
+export interface NodeIdentifierFieldKind
+	extends BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
 export interface Forbidden
 	extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {}
 
@@ -929,8 +950,9 @@ export const FieldKinds: {
 	readonly value: ValueFieldKind;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
+	readonly nodeIdentifier: NodeIdentifierFieldKind;
 	readonly forbidden: Forbidden;
-} = { value, optional, sequence, forbidden };
+} = { value, optional, sequence, nodeIdentifier, forbidden };
 
 /**
  * @alpha

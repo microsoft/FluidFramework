@@ -1,0 +1,56 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { StableId } from "@fluidframework/runtime-definitions";
+import { Brand, brand } from "../util";
+import { TreeSchemaIdentifier, ValueSchema } from "../core";
+import {
+	FieldEditor,
+	GlobalFieldSchema,
+	Multiplicity,
+	SchemaBuilder,
+	SchemaLibrary,
+	TreeSchema,
+} from "./modular-schema";
+import { BrandedFieldKind, nodeIdentifier } from "./defaultFieldKinds";
+
+/**
+ * The primitive type used to identify nodes in the tree.
+ * @alpha
+ */
+export type NodeIdentifier = Brand<StableId, "Node Identifier">;
+
+/**
+ * Get the schema for working with {@link NodeIdentifier}s in a tree. Node identifiers are added to nodes via a
+ * global field.
+ * @param key - the string used as the identifier global field key as well as the identifier node type. Defaults
+ * to a string that is unlikely to collide with user/application keys.
+ * @returns the identifier/type of identifier nodes in the schema, the schema for the global field under which
+ * identifiers reside, and a schema library containing the above.
+ *
+ * @alpha
+ */
+export function nodeIdentifierSchema(key: string): {
+	schema: SchemaLibrary;
+	field: GlobalFieldSchema<
+		BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<0>>,
+		[
+			TreeSchema<
+				string,
+				{
+					value: ValueSchema.String;
+				}
+			>,
+		]
+	>;
+	type: TreeSchemaIdentifier;
+} {
+	const builder = new SchemaBuilder("Node Identifier Schema");
+	const field = builder.globalField(
+		key,
+		SchemaBuilder.field(nodeIdentifier, builder.primitive(key, ValueSchema.String)),
+	);
+	return { schema: builder.intoLibrary(), field, type: brand(key) };
+}

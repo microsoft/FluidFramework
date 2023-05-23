@@ -575,6 +575,7 @@ export const FieldKinds: {
     readonly value: ValueFieldKind;
     readonly optional: Optional;
     readonly sequence: Sequence;
+    readonly nodeIdentifier: NodeIdentifierFieldKind;
     readonly forbidden: Forbidden;
 };
 
@@ -786,15 +787,6 @@ export interface IDefaultEditBuilder {
 }
 
 // @alpha
-export type Identifier = number;
-
-// @alpha
-export const identifierKey: GlobalFieldKey;
-
-// @alpha
-export const identifierKeySymbol: GlobalFieldKeySymbol;
-
-// @alpha
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
     applyDelta(delta: Delta.Root): void;
@@ -955,7 +947,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
-    readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+    readonly identifiedNodes: ReadonlyMap<NodeIdentifier, EditableTree>;
     merge(view: SharedTreeView): void;
     rebase(view: SharedTreeView): void;
     redo(): void;
@@ -1325,6 +1317,27 @@ export interface NodeExistsConstraint {
     violated: boolean;
 }
 
+// @alpha
+export type NodeIdentifier = Brand<StableId, "Node Identifier">;
+
+// @alpha (undocumented)
+export interface NodeIdentifierFieldKind extends BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<any>> {
+}
+
+// @alpha
+export const nodeIdentifierKey: GlobalFieldKey;
+
+// @alpha
+export function nodeIdentifierSchema(key: string): {
+    schema: SchemaLibrary;
+    field: GlobalFieldSchema<BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<0>>, [
+    TreeSchema<string, {
+        value: ValueSchema.String;
+    }>
+    ]>;
+    type: TreeSchemaIdentifier;
+};
+
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
 
@@ -1624,7 +1637,7 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     fork(): SharedTreeView;
     // (undocumented)
-    get identifiedNodes(): ReadonlyMap<Identifier, EditableTree>;
+    get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree>;
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
