@@ -20,6 +20,16 @@ This directory contains a series of libraries that comprise our Fluid Framework 
 Additionally, we have an sample application intended to help us test the end-to-end developer tooling experience, as well as to serve as an example for developers looking to integrate the developer tools into their own application.
 It lives under [devtools-example](devtools-example/README.md).
 
+```mermaid
+graph BT;
+    devtools-core-->devtools
+    devtools-core-->devtools-view
+    devtools-core-->devtools-browser-extension
+    devtools-view-->devtools-browser-extension
+    devtools-->devtools-example
+    devtools-view-->devtools-example
+```
+
 ## Architecture
 
 Since our developer tools suite is designed to enable browser devtools experiences, our architecture is constrained in a few ways.
