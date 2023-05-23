@@ -6,7 +6,6 @@
 export {
 	AttachmentTreeEntry,
 	BlobTreeEntry,
-	buildGitTreeHeirarchy,
 	getGitMode,
 	getGitType,
 	TreeTreeEntry,

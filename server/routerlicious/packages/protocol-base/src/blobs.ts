@@ -2,13 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-import * as git from "@fluidframework/gitresources";
 import {
 	FileMode,
 	IBlob,
 	IAttachment,
-	ISnapshotTreeEx,
 	ITree,
 	TreeEntry,
 	SummaryType,
@@ -55,49 +52,8 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
- * Build a tree hierarchy base on a flat tree
- *
- * @param flatTree - a flat tree
- * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
- * @param removeAppTreePrefix - Remove `.app/` from beginning of paths when present
- * @returns the hierarchical tree
- */
-export function buildGitTreeHeirarchy(
-	flatTree: git.ITree,
-	blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
-	removeAppTreePrefix = false,
-): ISnapshotTreeEx {
-	const lookup: { [path: string]: ISnapshotTreeEx } = {};
-	const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, trees: {} };
-	lookup[""] = root;
-
-	for (const entry of flatTree.tree) {
-		const entryPath = removeAppTreePrefix ? entry.path.replace(/^\.app\//, "") : entry.path;
-		const lastIndex = entryPath.lastIndexOf("/");
-		const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
-		const entryPathBase = entryPath.slice(lastIndex + 1);
-
-		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-		const node = lookup[entryPathDir];
-
-		// Add in either the blob or tree
-		if (entry.type === "tree") {
-			const newTree = { id: entry.sha, blobs: {}, commits: {}, trees: {} };
-			node.trees[decodeURIComponent(entryPathBase)] = newTree;
-			lookup[entryPath] = newTree;
-		} else if (entry.type === "blob") {
-			node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
-			blobsShaToPathCache.set(entry.sha, `/${entryPath}`);
-		} else {
-			throw new Error("Unknown entry type!!");
-		}
-	}
-
-	return root;
-}
-
-/**
  * Basic implementation of a blob ITreeEntry
+ * dds/matrix; dds/*; loader/driver-utils; runtime/container-runtime; runtime/runtime-utils; utils/tool-utils
  */
 export class BlobTreeEntry {
 	public readonly mode = FileMode.File;
@@ -121,6 +77,7 @@ export class BlobTreeEntry {
 
 /**
  * Basic implementation of a tree ITreeEntry
+ * loader/driver-utils; runtime/runtime-utils; utils/tool-utils
  */
 export class TreeTreeEntry {
 	public readonly mode = FileMode.Directory;
@@ -136,6 +93,7 @@ export class TreeTreeEntry {
 
 /**
  * Basic implementation of an attachment ITreeEntry
+ * loader/driver-utils; runtime/runtime-utils; utils/tool-utils
  */
 export class AttachmentTreeEntry {
 	public readonly mode = FileMode.File;
