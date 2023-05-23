@@ -1210,7 +1210,7 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
-		it.only("sequence field node exists constraint", () => {
+		it("sequence field node exists constraint", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 			insert(tree1, 0, "a", "b");

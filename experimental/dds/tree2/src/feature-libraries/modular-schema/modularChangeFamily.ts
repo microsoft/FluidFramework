@@ -823,7 +823,7 @@ export class ModularChangeFamily
 		}
 
 		if (change?.nodeExistsConstraint !== undefined) {
-			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
+			rebasedChange.nodeExistsConstraint = { ...change.nodeExistsConstraint };
 		}
 
 		// We only care if a violated constraint is fixed or if a non-violated
@@ -877,6 +877,10 @@ export class ModularChangeFamily
 	}
 
 	public intoDelta(change: ModularChangeset): Delta.Root {
+		if ((change.constraintViolationCount ?? 0) > 0) {
+			return new Map();
+		}
+
 		return this.intoDeltaImpl(change.fieldChanges);
 	}
 

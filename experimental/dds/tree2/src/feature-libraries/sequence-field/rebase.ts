@@ -451,12 +451,12 @@ function rebaseNodeChange<TNodeChange>(
 	const baseChange = getNodeChange(baseMark);
 	const currChange = getNodeChange<TNodeChange>(currMark);
 
-	if (baseMark.type === "Delete") {
+	if (markEmptiesCells(baseMark) && !isMoveMark(baseMark)) {
 		return withNodeChange(
 			currMark,
 			nodeRebaser(currChange, baseChange, NodeExistenceStateChange.Deleted),
 		);
-	} else if (baseMark.type === "Revive") {
+	} else if (markFillsCells(baseMark)) {
 		return withNodeChange(
 			currMark,
 			nodeRebaser(currChange, baseChange, NodeExistenceStateChange.Revived),
