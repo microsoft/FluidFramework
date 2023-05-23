@@ -114,13 +114,13 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 
 	/**
 	 * Check if this field is the same as a different field.
-	 * This is defined to mean that both are in the same editable tree, and are the same failed on the same node.
+	 * This is defined to mean that both are in the same editable tree, and are the same field on the same node.
 	 * This is more than just a reference comparison because unlike EditableTree nodes, fields are not cached on anchors and can be duplicated.
 	 */
 	private isSameAs(other: FieldProxyTarget): boolean {
 		assert(
 			other.context === this.context,
-			"Content from different editable trees should not bew used together",
+			"Content from different editable trees should not be used together",
 		);
 		return this.fieldKey === other.fieldKey && this.parent === other.parent;
 	}
@@ -366,7 +366,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		assert(destination.kind === FieldKinds.sequence, "Move destination must be a sequence.");
 
 		assertNonNegativeSafeInteger(count);
-		// This permits a move of 0 noted starting at this.length, which does seem like it should be allowed.
+		// This permits a move of 0 nodes starting at this.length, which does seem like it should be allowed.
 		assertValidIndex(sourceIndex + count, this, true);
 
 		let destinationLength = destination.length;
