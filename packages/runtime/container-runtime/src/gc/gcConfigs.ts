@@ -109,10 +109,12 @@ export function generateGCConfigs(
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	const gcVersionInEffect =
 		mc.config.getBoolean(gcVersionUpgradeToV3Key) === true ? currentGCVersion : stableGCVersion;
-	// If the GC version in effect is older than the GC version in base snapshot, the GC version is outdated. If so,
-	// we should not run GC as there is a newer version out there which is more reliable than this.
-	const outdatedGCVersion =
-		gcVersionInBaseSnapshot && gcVersionInEffect < gcVersionInBaseSnapshot;
+
+	// The GC version is up-to-date if the GC version in effect is not less than the GC version in base snapshot.
+	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So,
+	// GC should not be run as it may produce incorrect / unreliable GC state.
+	const isGCVersionUpToDate =
+		gcVersionInBaseSnapshot === undefined || gcVersionInEffect >= gcVersionInBaseSnapshot;
 
 	/**
 	 * Whether GC should run or not. The following conditions have to be met to run sweep:
@@ -123,7 +125,7 @@ export function generateGCConfigs(
 	 */
 	const shouldRunGC =
 		mc.config.getBoolean(runGCKey) ??
-		(gcEnabled && !createParams.gcOptions.disableGC && !outdatedGCVersion);
+		(gcEnabled && !createParams.gcOptions.disableGC && isGCVersionUpToDate);
 
 	/**
 	 * Whether sweep should run or not. The following conditions have to be met to run sweep:
