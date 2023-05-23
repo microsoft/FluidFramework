@@ -23,7 +23,7 @@ import {
 export type GCVersion = number;
 
 /** The stable version of garbage collection in production. */
-export const stableGCVersion: GCVersion = 1;
+export const stableGCVersion: GCVersion = 2;
 /** The current version of garbage collection. */
 export const currentGCVersion: GCVersion = 3;
 

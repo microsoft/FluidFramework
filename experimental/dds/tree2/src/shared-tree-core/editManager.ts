@@ -28,12 +28,15 @@ import {
 	mintCommit,
 	mintRevisionTag,
 	ReadonlyRepairDataStore,
-	Rebaser,
+	rebaseBranch,
+	rebaseChange,
 	RevisionTag,
 	SessionId,
 	SimpleDependee,
 	tagChange,
 	TaggedChange,
+	UndoRedoManager,
+	UndoRedoManagerCommitType,
 } from "../core";
 import { SharedTreeBranch } from ".";
 
@@ -98,8 +101,6 @@ export class EditManager<
 	 */
 	private minimumSequenceNumber: SeqNumber = brand(-1);
 
-	private readonly rebaser: Rebaser<TChangeset>;
-
 	/**
 	 * A map from a sequence number to the commit in the trunk which has that sequence number
 	 */
@@ -112,14 +113,21 @@ export class EditManager<
 	 */
 	private readonly trunkBase: TrunkCommit<TChangeset>;
 
+	/**
+	 * @param localBranchUndoRedoManager - the {@link UndoRedoManager} associated with the local branch.
+	 * localBranchUndoRedoManager.getHead can not be called within this constructor.
+	 * @param trunkUndoRedoManager - the {@link UndoRedoManager} associated with the trunk.
+	 * trunkUndoRedoManager.getHead can not be called within this constructor.
+	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
+		public readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, any>,
+		private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, any>,
 		public readonly anchors?: AnchorSet,
 	) {
 		super("EditManager");
-		this.rebaser = new Rebaser(changeFamily.rebaser);
 		this.trunkBase = {
 			revision: nullRevisionTag,
 			sessionId: "",
@@ -169,9 +177,11 @@ export class EditManager<
 		// Whenever the branch forks, register the new fork
 		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offRebase = branch.on("rebase", () => {
-			untrackBranch(branch, trunkBase.sequenceNumber);
-			trunkBase.sequenceNumber = trackBranch(branch);
+		const offRebase = branch.on("change", ({ type }) => {
+			if (type === "rebase") {
+				untrackBranch(branch, trunkBase.sequenceNumber);
+				trunkBase.sequenceNumber = trackBranch(branch);
+			}
 		});
 		// When the branch is disposed, update our branch set and trim the trunk
 		const offDispose = branch.on("dispose", () => {
@@ -319,6 +329,9 @@ export class EditManager<
 		this.sequenceMap.clear();
 		this.trunk = data.trunk.reduce((base, c) => {
 			const commit = mintTrunkCommit(base, c);
+			this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
+				this.changeFamily.intoDelta(commit.change),
+			);
 			this.sequenceMap.set(c.sequenceNumber, commit);
 			return commit;
 		}, this.trunkBase);
@@ -340,10 +353,10 @@ export class EditManager<
 	}
 
 	public getLastSequencedChange(): TChangeset {
-		return (this.getLastCommit() ?? fail("No sequenced changes")).change;
+		return (this.getTrunkHead() ?? fail("No sequenced changes")).change;
 	}
 
-	public getLastCommit(): Commit<TChangeset> | undefined {
+	public getTrunkHead(): GraphCommit<TChangeset> {
 		return this.trunk;
 	}
 
@@ -374,7 +387,7 @@ export class EditManager<
 				fail(
 					"Received a sequenced change from the local session despite having no local changes",
 				);
-			this.pushToTrunk(sequenceNumber, { ...newCommit, change });
+			this.pushToTrunk(sequenceNumber, { ...newCommit, change }, true);
 			// TODO: Can this be optimized by simply mutating the localPath parent pointers? Is it safe to do that?
 			this.localBranch = localPath.reduce(mintCommit, this.trunk);
 			return emptyDelta;
@@ -386,7 +399,8 @@ export class EditManager<
 
 		// Rebase that branch over the part of the trunk up to the base revision
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
-		const [rebasedBranch] = this.rebaser.rebaseBranch(
+		const [rebasedBranch] = rebaseBranch(
+			this.changeFamily.rebaser,
 			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
 			baseRevisionInTrunk,
 			this.trunk,
@@ -397,7 +411,8 @@ export class EditManager<
 			this.pushToTrunk(sequenceNumber, newCommit);
 			this.peerLocalBranches.set(newCommit.sessionId, this.trunk);
 		} else {
-			const newChangeFullyRebased = this.rebaser.rebaseChange(
+			const newChangeFullyRebased = rebaseChange(
+				this.changeFamily.rebaser,
 				newCommit.change,
 				rebasedBranch,
 				this.trunk,
@@ -411,7 +426,12 @@ export class EditManager<
 			});
 		}
 
-		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
+		const delta = this.rebaseLocalBranchOverTrunk();
+		if (delta === undefined) {
+			return emptyDelta;
+		}
+
+		return this.changeFamily.intoDelta(delta);
 	}
 
 	public addLocalChange(
@@ -491,8 +511,18 @@ export class EditManager<
 		return [commit, commits];
 	}
 
-	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {
+	private pushToTrunk(
+		sequenceNumber: SeqNumber,
+		commit: Commit<TChangeset>,
+		local = false,
+	): void {
 		this.trunk = mintTrunkCommit(this.trunk, commit, sequenceNumber);
+		if (local) {
+			this.trunkUndoRedoManager.trackCommit(this.trunk, UndoRedoManagerCommitType.Undoable);
+		}
+		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
+			this.changeFamily.intoDelta(commit.change),
+		);
 		this.sequenceMap.set(sequenceNumber, this.trunk);
 	}
 
@@ -504,15 +534,21 @@ export class EditManager<
 		});
 	}
 
-	private rebaseLocalBranchOverTrunk(): TChangeset {
-		const [newLocalChanges, netChange] = this.rebaser.rebaseBranch(
+	private rebaseLocalBranchOverTrunk(): TChangeset | undefined {
+		const [newLocalChanges, netChange] = rebaseBranch(
+			this.changeFamily.rebaser,
 			this.localBranch,
 			this.trunk,
 		);
 
+		this.localBranchUndoRedoManager.updateAfterRebase(
+			newLocalChanges,
+			this.trunkUndoRedoManager,
+		);
+
 		this.localBranch = newLocalChanges;
 
-		if (this.anchors !== undefined) {
+		if (this.anchors !== undefined && netChange !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, netChange);
 		}
 

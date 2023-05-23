@@ -286,7 +286,7 @@ describe("SharedTreeCore", () => {
 		factory.processAllMessages(); //          [x, x, 3 (b4), 4, 5]
 		assert.equal(getTrunkLength(tree), 3);
 		const branch5 = tree.createBranch(); //   [x, x, 3 (b4), 4, 5 (b5)]
-		branch4.rebaseOnto(branch5.getHead()); // [x, x, 3, 4, 5 (b4, b5)]
+		branch4.rebaseOnto(branch5.getHead(), branch5.undoRedoManager); // [x, x, 3, 4, 5 (b4, b5)]
 		branch4.dispose(); //                     [x, x, 3, 4, 5 (b5)]
 		assert.equal(getTrunkLength(tree), 3);
 		changeTree(tree);
@@ -374,7 +374,7 @@ describe("SharedTreeCore", () => {
 function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
-	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
 	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));
 }
 

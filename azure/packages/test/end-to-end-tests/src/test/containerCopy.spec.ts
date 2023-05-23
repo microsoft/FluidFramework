@@ -14,7 +14,7 @@ import { createAzureClient } from "./AzureClientFactory";
 import { mapWait } from "./utils";
 
 describe("Container copy scenarios", () => {
-	const connectTimeoutMs = 1000;
+	const connectTimeoutMs = 5000;
 	let client: AzureClient;
 	let schema: ContainerSchema;
 

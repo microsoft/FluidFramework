@@ -713,9 +713,6 @@ export class DocumentDeltaConnection
 	 * Error raising for socket.io issues
 	 */
 	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
-		// Note: we suspect the incoming error object is either:
-		// - a string: log it in the message (if not a string, it may contain PII but will print as [object Object])
-		// - an Error object thrown by socket.io engine. Be careful with not recording PII!
 		let message: string;
 		if (error?.type === "TransportError") {
 			// JSON.stringify drops Error.message

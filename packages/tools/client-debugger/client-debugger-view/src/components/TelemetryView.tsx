@@ -10,7 +10,20 @@ import {
 	Stack,
 	StackItem,
 } from "@fluentui/react";
-import React from "react";
+import {
+	tokens,
+	ToggleButton,
+	DataGridBody,
+	DataGridRow,
+	DataGrid,
+	DataGridHeader,
+	DataGridHeaderCell,
+	DataGridCell,
+	TableColumnDefinition,
+	createTableColumn,
+} from "@fluentui/react-components";
+import { Info24Regular, Info24Filled } from "@fluentui/react-icons";
+import React, { useState } from "react";
 
 import {
 	GetTelemetryHistory,
@@ -27,34 +40,18 @@ import { Waiting } from "./Waiting";
 function mapEventCategoryToBackgroundColor(eventCategory: string): string {
 	switch (eventCategory) {
 		case "generic":
-			return "#b8ebf2";
+			return tokens.colorPaletteGreenForeground1;
 		case "performance":
-			return "#4cf5a3";
+			return tokens.colorPaletteBlueForeground2;
 		case "error":
-			return "#f54c4f";
+			return tokens.colorPaletteRedBackground3;
 		default:
-			return "#d2d3d4";
+			return tokens.colorNeutralBackground1;
 	}
 }
 
 /**
- * Function to transform the results when JSON-serializing telemetry events for display.
- * We already extract some of their properties to a different place in the UI, so it seems best to remove them from the
- * rendered JSON payload for a bit less bloat there.
- * @param key - The name of the property that's being serialized.
- * @param value - The value of the property that's being serialized.
- * @returns An updated value for the given key, or 'undefined' to remove the key from the serialized output.
- */
-function jsonSerializationTransformer(key, value): unknown {
-	// Filter out properties we display somewhere else in the UI
-	if (key === "eventName" || key === "category") {
-		return undefined;
-	}
-	return value;
-}
-
-/**
- * Set the default dislayed size to 100.
+ * Set the default displayed size to 100.
  */
 const DEFAULT_PAGE_SIZE = 100;
 
@@ -63,12 +60,10 @@ const DEFAULT_PAGE_SIZE = 100;
  */
 export function TelemetryView(): React.ReactElement {
 	const messageRelay = useMessageRelay();
-
 	const [telemetryEvents, setTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
 	>();
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
-
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to telemetry.
@@ -104,45 +99,127 @@ export function TelemetryView(): React.ReactElement {
 		};
 	}, [messageRelay, setTelemetryEvents]);
 
+	/**
+	 * Interface for each item in the telemetry table.
+	 */
+	interface Item {
+		category: string;
+		eventName: string;
+		information: string;
+	}
+
+	const items: Item[] =
+		telemetryEvents !== undefined
+			? telemetryEvents?.map((message) => {
+					return {
+						category: message.logContent.category,
+						eventName: message.logContent.eventName,
+						information: JSON.stringify(message.logContent, undefined, 2),
+					};
+			  }, [])
+			: [];
+
+	const columns: TableColumnDefinition<Item>[] = [
+		createTableColumn<Item>({
+			columnId: "category",
+			renderHeaderCell: () => {
+				return <b>Category</b>;
+			},
+			renderCell: (message) => {
+				return (
+					<div
+						style={{
+							color: mapEventCategoryToBackgroundColor(message.category),
+							fontWeight: 700,
+						}}
+					>
+						{message.category}
+					</div>
+				);
+			},
+		}),
+		createTableColumn<Item>({
+			columnId: "eventName",
+			renderHeaderCell: () => {
+				return <b>Event Name</b>;
+			},
+			renderCell: (message) => {
+				return (
+					<div style={{ maxWidth: 160, whiteSpace: "normal", wordWrap: "break-word" }}>
+						{/* Since all events start with "fluid:telemetry:", we trim the start of the name */}
+						{message.eventName.slice("fluid:telemetry:".length)}
+					</div>
+				);
+			},
+		}),
+		createTableColumn<Item>({
+			columnId: "information",
+			renderHeaderCell: () => {
+				return <b>Information</b>;
+			},
+			renderCell: (message) => {
+				// eslint-disable-next-line react-hooks/rules-of-hooks
+				const [expanded, setExpanded] = useState(false);
+				const toggleExpanded = (): void => {
+					setExpanded(!expanded);
+				};
+				return (
+					<div>
+						<ToggleButton
+							checked={expanded}
+							icon={expanded ? <Info24Filled /> : <Info24Regular />}
+							size="small"
+							onClick={toggleExpanded}
+						>
+							{expanded ? "Hide" : "Show"} Info
+						</ToggleButton>
+						{expanded && <pre>{message.information}</pre>}
+					</div>
+				);
+			},
+		}),
+	];
+
 	const log_view =
 		telemetryEvents !== undefined ? (
 			<>
 				<h3>Telemetry events (newest first):</h3>
-				<ul>
-					{telemetryEvents.slice(0, maxEventsToDisplay).map((message, index) => (
-						<div
-							key={index}
-							style={{
-								border: "1px solid black",
-								backgroundColor: mapEventCategoryToBackgroundColor(
-									message.logContent.category,
-								),
-								padding: "5px",
-							}}
-						>
-							<h4 style={{ margin: "0px" }}>
-								EventName: {message.logContent.eventName}
-								<br />
-								Category: {message.logContent.category}
-								<br />
-								ContainerId: {message.logContent.containerId} (
-								{message.logContent.clientType})
-								<br />
-								DocumentId: {message.logContent.docId}
-								<br />
-								Timestamp: {new Date(message.timestamp).toLocaleString()}
-								<br />
-							</h4>
-							<p>
-								{JSON.stringify(
-									message.logContent,
-									jsonSerializationTransformer,
-									"  ",
+				<DataGrid
+					items={items}
+					columns={columns}
+					resizableColumns
+					columnSizingOptions={{
+						category: {
+							minWidth: 65,
+							idealWidth: 80,
+						},
+						eventType: {
+							minWidth: 60,
+							idealWidth: 150,
+						},
+						information: {
+							minWidth: 60,
+							idealWidth: 250,
+						},
+					}}
+				>
+					<DataGridHeader>
+						<DataGridRow style={{ whiteSpace: "normal" }}>
+							{({ renderHeaderCell }): JSX.Element => (
+								<DataGridHeaderCell>{renderHeaderCell()}</DataGridHeaderCell>
+							)}
+						</DataGridRow>
+					</DataGridHeader>
+					<DataGridBody<Item>>
+						{({ item, rowId }): JSX.Element => (
+							<DataGridRow<Item> key={rowId}>
+								{({ renderCell }): JSX.Element => (
+									<DataGridCell>{renderCell(item)}</DataGridCell>
 								)}
-							</p>
-						</div>
-					))}
-				</ul>
+							</DataGridRow>
+						)}
+					</DataGridBody>
+				</DataGrid>
 			</>
 		) : (
 			<Waiting label={"Waiting for Telemetry events"} />

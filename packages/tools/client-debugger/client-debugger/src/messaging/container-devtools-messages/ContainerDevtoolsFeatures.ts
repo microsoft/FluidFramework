@@ -10,34 +10,33 @@ import { IDevtoolsMessage } from "../Messages";
 /**
  * Encapsulates types and logic related to {@link ContainerDevtoolsFeatures.Message}.
  *
- * @public
+ * @internal
  */
 export namespace ContainerDevtoolsFeatures {
 	/**
 	 * {@link ContainerDevtoolsFeatures.Message} {@link IDevtoolsMessage."type"}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export const MessageType = "CONTAINER_DEVTOOLS_FEATURES";
 
 	/**
 	 * Message data format used by {@link ContainerDevtoolsFeatures.Message}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface MessageData extends HasContainerId {
 		/**
-		 * Describes the set of features supported by the {@link ContainerDevtools} instance associated with the
-		 * specified {@link HasContainerId.containerId}.
+		 * {@inheritDoc ContainerDevtoolsFeatureFlags}
 		 */
 		features: ContainerDevtoolsFeatureFlags;
 	}
 
 	/**
-	 * Outbound message containing the set of features supported by the {@link ContainerDevtools} instance associated
+	 * Outbound message containing the set of features supported by the Container-level Devtools instance associated
 	 * with the specified {@link HasContainerId.containerId}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
@@ -49,7 +48,7 @@ export namespace ContainerDevtoolsFeatures {
 	/**
 	 * Creates a {@link ContainerDevtoolsFeatures.Message} from the provided {@link ContainerDevtoolsFeatures.MessageData}.
 	 *
-	 * @public
+	 * @internal
 	 */
 	export function createMessage(data: MessageData): Message {
 		return {
