@@ -162,6 +162,37 @@ function assertLocalReferences(lref: any): asserts lref is LocalReference {
 }
 
 /**
+ * @returns true if `func` returns true for any position within the collection
+ */
+export function anyLocalReferencePosition(
+	collection: LocalReferenceCollection,
+	func: (pos: LocalReferencePosition) => boolean,
+): boolean {
+	for (const pos of collection) {
+		if (func(pos)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * @returns only the local reference positions for which the `predicate` returns
+ * true
+ */
+export function* filterLocalReferencePositions(
+	collection: LocalReferenceCollection,
+	predicate: (pos: LocalReferencePosition) => boolean,
+): Generator<LocalReferencePosition> {
+	for (const pos of collection) {
+		if (predicate(pos)) {
+			yield pos;
+		}
+	}
+}
+
+/**
  * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
  */
 export class LocalReferenceCollection {

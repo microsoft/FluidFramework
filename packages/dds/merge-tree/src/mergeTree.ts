@@ -20,6 +20,8 @@ import {
 	UniversalSequenceNumber,
 } from "./constants";
 import {
+	anyLocalReferencePosition,
+	filterLocalReferencePositions,
 	LocalReferenceCollection,
 	LocalReferencePosition,
 	SlidingPreference,
@@ -900,30 +902,6 @@ export class MergeTree {
 	 * @param segments - An array of (not necessarily contiguous) segments with increasing ordinals.
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegment[]) {
-		function anyLocalRef(
-			collection: LocalReferenceCollection,
-			predicate: (pos: LocalReferencePosition) => boolean,
-		): boolean {
-			for (const pos of collection) {
-				if (predicate(pos)) {
-					return true;
-				}
-			}
-
-			return false;
-		}
-
-		function* filterLocalRefs(
-			collection: LocalReferenceCollection,
-			predicate: (pos: LocalReferencePosition) => boolean,
-		): Generator<LocalReferencePosition> {
-			for (const pos of collection) {
-				if (predicate(pos)) {
-					yield pos;
-				}
-			}
-		}
-
 		let currentSlideGroup: LocalReferenceCollection[] = [];
 
 		// References are slid in groups to preserve their order.
@@ -951,11 +929,15 @@ export class MergeTree {
 					new LocalReferenceCollection(currentSlideDestination));
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(
-						...currentSlideGroup.map((collection) => filterLocalRefs(collection, pred)),
+						...currentSlideGroup.map((collection) =>
+							filterLocalReferencePositions(collection, pred),
+						),
 					);
 				} else {
 					localRefs.addAfterTombstones(
-						...currentSlideGroup.map((collection) => filterLocalRefs(collection, pred)),
+						...currentSlideGroup.map((collection) =>
+							filterLocalReferencePositions(collection, pred),
+						),
 					);
 				}
 			} else {
@@ -995,7 +977,7 @@ export class MergeTree {
 		) => {
 			// avoid sliding logic if this segment doesn't have any references
 			// with the given sliding preference
-			if (!segment.localRefs || !anyLocalRef(segment.localRefs, pred)) {
+			if (!segment.localRefs || !anyLocalReferencePosition(segment.localRefs, pred)) {
 				return;
 			}
 
