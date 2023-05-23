@@ -46,7 +46,7 @@ import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import { InfoBadge } from "./utility-components";
-import { clientIdTooltipText, userIdTooltipText } from "./TooltipTexts";
+import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
 
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
@@ -95,7 +95,7 @@ interface Item {
 function DataRow(
 	label: string,
 	infoTooltipText: string | undefined,
-	value: string | undefined,
+	value: React.ReactElement | string | undefined,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	columnProps: any,
 ): React.ReactElement {
@@ -125,49 +125,42 @@ function DataRow(
 	);
 }
 
-function ContainerStatusRow(statusComponents: string[]): React.ReactElement {
+function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
 	return (
-		<TableRow>
-			<TableCell>
-				<b>Status</b>
-			</TableCell>
-			<TableCell>
-				<TableCellLayout
-					media={((): JSX.Element => {
-						switch (statusComponents[0]) {
-							case "attaching":
-								return (
-									<Badge shape="rounded" color="warning">
-										{statusComponents[0]}
-									</Badge>
-								);
-							case "detached":
-								return (
-									<Badge shape="rounded" color="danger">
-										{statusComponents[0]}
-									</Badge>
-								);
-							default:
-								return (
-									<Badge shape="rounded" color="success">
-										{statusComponents[0]}
-									</Badge>
-								);
-						}
-					})()}
-				>
-					{statusComponents[1] === "Connected" ? (
-						<Badge shape="rounded" color="success">
-							{statusComponents[1]}
-						</Badge>
-					) : (
-						<Badge shape="rounded" color="danger">
-							{statusComponents[1]}
-						</Badge>
-					)}
-				</TableCellLayout>
-			</TableCell>
-		</TableRow>
+		<TableCellLayout
+			media={((): JSX.Element => {
+				switch (statusComponents[0]) {
+					case "attaching":
+						return (
+							<Badge shape="rounded" color="warning">
+								{statusComponents[0]}
+							</Badge>
+						);
+					case "detached":
+						return (
+							<Badge shape="rounded" color="danger">
+								{statusComponents[0]}
+							</Badge>
+						);
+					default:
+						return (
+							<Badge shape="rounded" color="success">
+								{statusComponents[0]}
+							</Badge>
+						);
+				}
+			})()}
+		>
+			{statusComponents[1] === "Connected" ? (
+				<Badge shape="rounded" color="success">
+					{statusComponents[1]}
+				</Badge>
+			) : (
+				<Badge shape="rounded" color="danger">
+					{statusComponents[1]}
+				</Badge>
+			)}
+		</TableCellLayout>
 	);
 }
 
@@ -281,7 +274,12 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>
 					{DataRow("Container", undefined, containerState.id, columnSizing_unstable)}
-					{ContainerStatusRow(statusComponents)}
+					{DataRow(
+						"Status",
+						containerStatusTooltipText,
+						containerStatusValueCell(statusComponents),
+						columnSizing_unstable,
+					)}
 					{DataRow(
 						"Client ID",
 						clientIdTooltipText,
