@@ -25,6 +25,8 @@ import {
  * to communicate with the debugger registry.
  * This ensures that we don't "abuse" the power of local interaction to do things that might not be possible (or need
  * to be done differently) with a message passing mechanism that crosses the boundary of the window.
+ *
+ * @internal
  */
 export class WindowMessageRelay
 	extends TypedEventEmitter<IMessageRelayEvents>

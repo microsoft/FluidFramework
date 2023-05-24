@@ -269,6 +269,25 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
+		it.skip("can rebase intra-field move over insert", () => {
+			const tree1 = makeTreeFromJson(["A", "B"]);
+			const tree2 = tree1.fork();
+
+			insert(tree1, 2, "C");
+
+			tree2.editor
+				.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				})
+				.move(0, 1, 1);
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+			expectJsonTree(tree1, ["B", "A", "C"]);
+			expectJsonTree(tree2, ["B", "A", "C"]);
+		});
+
 		it("move under move-out", () => {
 			const tree1 = makeTreeFromJson([{ foo: ["a", "b"] }, "x"]);
 
@@ -296,6 +315,43 @@ describe("Editing", () => {
 			tree1.transaction.commit();
 
 			expectJsonTree(tree1, ["x", { foo: ["b", "a"] }]);
+		});
+
+		it("rebase changes to field untouched by base", () => {
+			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, "B"] });
+			const tree1 = tree.fork();
+			const tree2 = tree.fork();
+
+			const rootNode: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			const fooList: UpPath = {
+				parent: rootNode,
+				parentField: brand("foo"),
+				parentIndex: 0,
+			};
+			const foo1: UpPath = {
+				parent: fooList,
+				parentField: brand(""),
+				parentIndex: 0,
+			};
+			const nodeB: UpPath = {
+				parent: fooList,
+				parentField: brand(""),
+				parentIndex: 1,
+			};
+
+			tree1.editor.setValue(nodeB, "b");
+			tree2.editor.sequenceField({ parent: foo1, field: brand("bar") }).delete(0, 1);
+
+			tree.merge(tree1);
+			tree.merge(tree2);
+			tree1.rebaseOnto(tree);
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, "b"] }]);
 		});
 	});
 

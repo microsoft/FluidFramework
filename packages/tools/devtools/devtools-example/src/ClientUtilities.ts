@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
@@ -27,19 +28,14 @@ export interface ContainerLoadResult {
  */
 export interface ContainerInfo {
 	/**
-	 * {@link ContainerInfo.container}'s unique ID.
-	 */
-	containerId: string;
-
-	/**
 	 * The initialized Fluid Container.
 	 */
 	container: IFluidContainer;
 
 	/**
-	 * Optional nickname for the Container to be used in the debugger and associated UI.
+	 * The Container's unique ID. Also referred to as the "Document ID".
 	 */
-	containerNickname?: string;
+	containerId: string;
 }
 
 function initializeTinyliciousClient(logger?: ITelemetryBaseLogger): TinyliciousClient {
@@ -56,7 +52,6 @@ function initializeTinyliciousClient(logger?: ITelemetryBaseLogger): Tinylicious
  * @param setContentsPreAttach - (optional) Callback for setting initial content state on the
  * container *before* it is attached.
  * @param logger - (optional) Telemetry logger to provide to client initialization.
- * @param containerNickname - See {@link ContainerInfo.containerNickname}.
  *
  * @throws If container creation or attaching fails for any reason.
  */
@@ -64,7 +59,6 @@ export async function createFluidContainer(
 	containerSchema: ContainerSchema,
 	logger?: ITelemetryBaseLogger,
 	setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
-	containerNickname?: string,
 ): Promise<ContainerInfo> {
 	// Initialize Tinylicious client
 	const client = initializeTinyliciousClient(logger);
@@ -108,7 +102,6 @@ export async function createFluidContainer(
 	return {
 		container,
 		containerId,
-		containerNickname,
 	};
 }
 
@@ -118,7 +111,6 @@ export async function createFluidContainer(
  * @param containerId - The unique ID of the existing Fluid Container being loaded.
  * @param containerSchema - Schema with which to load the Container.
  * @param logger - (optional) Telemetry logger to provide to client initialization.
- * @param containerNickname - See {@link ContainerInfo.containerNickname}.
  *
  * @throws If no container exists with the specified ID, or if loading / connecting fails for any reason.
  */
@@ -126,7 +118,6 @@ export async function loadExistingFluidContainer(
 	containerId: string,
 	containerSchema: ContainerSchema,
 	logger?: ITelemetryBaseLogger,
-	containerNickname?: string,
 ): Promise<ContainerInfo> {
 	// Initialize Tinylicious client
 	const client = initializeTinyliciousClient(logger);
@@ -156,6 +147,5 @@ export async function loadExistingFluidContainer(
 	return {
 		container,
 		containerId,
-		containerNickname,
 	};
 }

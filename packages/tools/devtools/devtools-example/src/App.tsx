@@ -12,6 +12,7 @@ import {
 } from "@fluentui/react";
 import React from "react";
 
+import { ContainerKey, HasContainerKey } from "@fluid-experimental/devtools-core";
 import { DevtoolsLogger, IDevtools, initializeDevtools } from "@fluid-experimental/devtools";
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -23,17 +24,12 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 
-import {
-	ContainerInfo,
-	createFluidContainer,
-	loadExistingFluidContainer,
-} from "../ClientUtilities";
-import { CounterWidget, EmojiGrid } from "../widgets";
-import { initializeFluentUiIcons } from "../../InitializeIcons";
-import { createMockSharedObject } from "../MockSharedObject";
+import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
+import { CounterWidget, EmojiGrid } from "./widgets";
+import { createMockSharedObject } from "./MockSharedObject";
 
-// Ensure FluentUI icons are initialized.
-initializeFluentUiIcons();
+const sharedContainerKey: ContainerKey = "Shared Container";
+const privateContainerKey: ContainerKey = "Private Container";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -71,7 +67,7 @@ const containerSchema: ContainerSchema = {
 };
 
 /**
- * Helper function to read the container ID from the URL location.
+ * Helper function to read the Container ID from the URL location.
  */
 function getContainerIdFromLocation(location: Location): string {
 	return location.hash.slice(1);
@@ -131,12 +127,14 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 /**
  * Registers container described by the input `containerInfo` with the provided devtools instance.
  */
-function registerContainerWithDevtools(devtools: IDevtools, containerInfo: ContainerInfo): void {
-	const { container, containerId, containerNickname } = containerInfo;
+function registerContainerWithDevtools(
+	devtools: IDevtools,
+	container: IFluidContainer,
+	containerKey: ContainerKey,
+): void {
 	devtools.registerContainerDevtools({
 		container,
-		containerId,
-		containerNickname,
+		containerKey,
 		dataVisualizers: undefined, // Use defaults
 	});
 }
@@ -162,17 +160,10 @@ function useContainerInfo(
 	// Get the Fluid Data data on app startup and store in the state
 	React.useEffect(() => {
 		async function getSharedFluidData(): Promise<ContainerInfo> {
-			const containerNickname = "Shared Container";
-
 			const containerId = getContainerIdFromLocation(window.location);
 			return containerId.length === 0
-				? createFluidContainer(containerSchema, logger, populateRootMap, containerNickname)
-				: loadExistingFluidContainer(
-						containerId,
-						containerSchema,
-						logger,
-						containerNickname,
-				  );
+				? createFluidContainer(containerSchema, logger, populateRootMap)
+				: loadExistingFluidContainer(containerId, containerSchema, logger);
 		}
 
 		getSharedFluidData().then((containerInfo) => {
@@ -181,24 +172,19 @@ function useContainerInfo(
 			}
 
 			setSharedContainerInfo(containerInfo);
-			registerContainerWithDevtools(devtools, containerInfo);
+			registerContainerWithDevtools(devtools, containerInfo.container, sharedContainerKey);
 		}, console.error);
 
 		async function getPrivateContainerData(): Promise<ContainerInfo> {
 			// Always create a new container for the private view.
 			// This isn't shared with other collaborators.
 
-			return createFluidContainer(
-				containerSchema,
-				logger,
-				populateRootMap,
-				"Private Container",
-			);
+			return createFluidContainer(containerSchema, logger, populateRootMap);
 		}
 
 		getPrivateContainerData().then((containerInfo) => {
 			setPrivateContainerInfo(containerInfo);
-			registerContainerWithDevtools(devtools, containerInfo);
+			registerContainerWithDevtools(devtools, containerInfo.container, privateContainerKey);
 		}, console.error);
 
 		return (): void => {
@@ -277,7 +263,7 @@ export function App(): React.ReactElement {
 						<div>Loading Shared container...</div>
 					</Stack>
 				) : (
-					<AppView containerInfo={sharedContainer} />
+					<AppView {...sharedContainer} containerKey={sharedContainerKey} />
 				)}
 			</StackItem>
 			<StackItem>
@@ -287,7 +273,7 @@ export function App(): React.ReactElement {
 						<div>Loading Private container...</div>
 					</Stack>
 				) : (
-					<AppView containerInfo={privateContainer} />
+					<AppView {...privateContainer} containerKey={privateContainerKey} />
 				)}
 			</StackItem>
 		</Stack>
@@ -299,12 +285,7 @@ export function App(): React.ReactElement {
 /**
  * {@link AppView} input props.
  */
-interface AppViewProps {
-	/**
-	 * Container and related metadata to be displayed.
-	 */
-	containerInfo: ContainerInfo;
-}
+interface AppViewProps extends ContainerInfo, HasContainerKey {}
 
 /**
  * Inner app view.
@@ -312,8 +293,7 @@ interface AppViewProps {
  * @remarks Valid to display once the container has been created / loaded.
  */
 function AppView(props: AppViewProps): React.ReactElement {
-	const { containerInfo } = props;
-	const { container, containerId, containerNickname } = containerInfo;
+	const { container, containerKey } = props;
 
 	const rootMap = container.initialObjects.rootMap as SharedMap;
 	if (rootMap === undefined) {
@@ -340,17 +320,7 @@ function AppView(props: AppViewProps): React.ReactElement {
 	return (
 		<Stack horizontal className={rootStackStyles}>
 			<StackItem className={appViewPaneStackStyles}>
-				<h4>
-					{containerNickname === undefined ? (
-						<></>
-					) : (
-						<>
-							{containerNickname}
-							<br />
-						</>
-					)}
-					{containerId}
-				</h4>
+				<h4>{containerKey}</h4>
 				<Stack>
 					<StackItem>
 						<EmojiMatrixView emojiMatrixHandle={emojiMatrixHandle} />

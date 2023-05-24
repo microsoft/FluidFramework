@@ -121,6 +121,11 @@ export class GarbageCollector implements IGarbageCollector {
 		return this.summaryStateTracker.doesSummaryStateNeedReset;
 	}
 
+	/** Returns the count of data stores whose GC state updated since the last summary. */
+	public get updatedDSCountSinceLastSummary(): number {
+		return this.summaryStateTracker.updatedDSCountSinceLastSummary;
+	}
+
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
@@ -505,6 +510,8 @@ export class GarbageCollector implements IGarbageCollector {
 				// updates its state so that we don't send false positives based on intermediate state. For example, we may get
 				// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
 				await this.telemetryTracker.logPendingEvents(logger);
+				// Update the state of summary state tracker from this run's stats.
+				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
 
@@ -884,7 +891,7 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		this.telemetryTracker.nodeUsed({
-			nodeId: nodePath,
+			id: nodePath,
 			usageType: reason,
 			currentReferenceTimestampMs:
 				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
@@ -913,7 +920,7 @@ export class GarbageCollector implements IGarbageCollector {
 		this.newReferencesSinceLastRun.set(fromNodePath, outboundRoutes);
 
 		this.telemetryTracker.nodeUsed({
-			nodeId: toNodePath,
+			id: toNodePath,
 			usageType: "Revived",
 			currentReferenceTimestampMs: this.runtime.getCurrentReferenceTimestampMs(),
 			packagePath: undefined,
