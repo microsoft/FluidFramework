@@ -31,7 +31,6 @@ import {
 	Mutable,
 	NestedMap,
 	nestedSetContains,
-	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
@@ -743,7 +742,7 @@ export class ModularChangeFamily
 					change: brand(rebasedChangeset),
 				};
 				rebasedFields.set(field, rebasedFieldChange);
-				addFieldData(manager, rebasedChangeset);
+				addFieldData(manager, rebasedFieldChange);
 			}
 		}
 
@@ -973,8 +972,8 @@ export function getChangeHandler(
 interface CrossFieldTable<TFieldData> {
 	srcTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
 	dstTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
-	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
-	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
+	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData[]>;
+	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData[]>;
 	invalidatedFields: Set<TFieldData>;
 }
 
@@ -1049,13 +1048,15 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 			invalidateDependents: boolean,
 		) => {
 			if (invalidateDependents) {
-				const dependents =
+				const dependentsMap =
 					target === CrossFieldTarget.Source
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
-				const dependent = tryGetFromNestedMap(dependents, revision, id);
-				if (dependent !== undefined) {
-					crossFieldTable.invalidatedFields.add(dependent);
+				const dependents = tryGetFromNestedMap(dependentsMap, revision, id);
+				if (dependents !== undefined) {
+					for (const dependent of dependents) {
+						crossFieldTable.invalidatedFields.add(dependent);
+					}
 				}
 
 				if (nestedSetContains(getQueries(target), revision, id)) {
@@ -1083,27 +1084,24 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 	for (const [revision, ids] of manager.srcQueries) {
 		for (const id of ids.keys()) {
-			assert(
-				tryGetFromNestedMap(manager.table.srcDependents, revision, id) === undefined,
-				0x564 /* TODO: Support multiple dependents per key */,
-			);
-			setInNestedMap(manager.table.srcDependents, revision, id, fieldData);
+			addToNestedListMap(manager.table.srcDependents, revision, id, fieldData);
 		}
 	}
 
 	for (const [revision, ids] of manager.dstQueries) {
 		for (const id of ids.keys()) {
-			assert(
-				tryGetFromNestedMap(manager.table.dstDependents, revision, id) === undefined,
-				0x565 /* TODO: Support multiple dependents per key */,
-			);
-			setInNestedMap(manager.table.dstDependents, revision, id, fieldData);
+			addToNestedListMap(manager.table.dstDependents, revision, id, fieldData);
 		}
 	}
 
 	if (manager.fieldInvalidated) {
 		manager.table.invalidatedFields.add(fieldData);
 	}
+}
+
+function addToNestedListMap<K1, K2, V>(map: NestedMap<K1, K2, V[]>, key1: K1, key2: K2, value: V) {
+	const list = getOrAddInNestedMap(map, key1, key2, []);
+	list.push(value);
 }
 
 function makeModularChangeset(
