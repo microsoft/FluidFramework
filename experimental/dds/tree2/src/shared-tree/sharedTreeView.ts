@@ -34,6 +34,7 @@ import {
 	repairDataStoreFromForest,
 	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
+	NewFieldContent,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult } from "../util";
@@ -77,7 +78,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 */
 	// TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
 	get root(): UnwrappedEditableField;
-	set root(data: ContextuallyTypedNodeData | undefined);
+	set root(data: NewFieldContent);
 
 	/**
 	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.

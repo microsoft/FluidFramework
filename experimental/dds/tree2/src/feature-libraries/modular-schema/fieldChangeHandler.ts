@@ -135,7 +135,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 		...data,
 		amendCompose: () => fail("Not implemented"),
 		amendInvert: () => fail("Not implemented"),
-		amendRebase: () => fail("Not implemented"),
+		amendRebase: (change) => change,
 	};
 }
 

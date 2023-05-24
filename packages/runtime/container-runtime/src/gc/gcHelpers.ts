@@ -12,6 +12,7 @@ import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
+import { TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { GCFeatureMatrix, GCVersion, IGCMetadata } from "./gcDefinitions";
 import {
 	IGarbageCollectionNodeData,
@@ -151,12 +152,19 @@ export function concatGarbageCollectionStates(
 /**
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
+ * @param filter - Optional function to filter out node ids not to be included in the cloned GC data. Returns
+ * true to filter out nodes.
  * @returns a clone of the given GC data.
  */
-export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
+export function cloneGCData(
+	gcData: IGarbageCollectionData,
+	filter?: (id: string) => boolean,
+): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		clonedGCNodes[id] = Array.from(outboundRoutes);
+		if (filter?.(id) !== true) {
+			clonedGCNodes[id] = Array.from(outboundRoutes);
+		}
 	}
 	return {
 		gcNodes: clonedGCNodes,
@@ -295,4 +303,14 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  */
 export function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
+}
+
+/**
+ * Tags the passed value as a CodeArtifact and returns the tagged value.
+ */
+export function tagAsCodeArtifact(value: string) {
+	return {
+		value,
+		tag: TelemetryDataTag.CodeArtifact,
+	};
 }

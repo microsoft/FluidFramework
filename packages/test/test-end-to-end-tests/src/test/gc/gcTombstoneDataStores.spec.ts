@@ -1166,12 +1166,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
-					type: "DataStore",
 					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
-					type: "Blob",
 					clientType: "noninteractive/summarizer",
 				},
 			],

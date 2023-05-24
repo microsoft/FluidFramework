@@ -9,6 +9,7 @@ import {
 	IEvent,
 	IErrorEvent,
 } from "@fluidframework/common-definitions";
+import { IAnyDriverError } from "@fluidframework/driver-definitions";
 import {
 	ConnectionMode,
 	IClientConfiguration,
@@ -48,6 +49,7 @@ export interface IConnectionDetailsInternal extends IConnectionDetails {
 	mode: ConnectionMode;
 	version: string;
 	initialClients: ISignalClient[];
+	reason: string;
 }
 
 /**
@@ -143,8 +145,9 @@ export interface IDeltaManagerEvents extends IEvent {
 	 * @remarks Listener parameters:
 	 *
 	 * - `reason`: Describes the reason for which the delta manager was disconnected.
+	 * - `error` : error if any for the disconnect.
 	 */
-	(event: "disconnect", listener: (reason: string) => void);
+	(event: "disconnect", listener: (reason: string, error?: IAnyDriverError) => void);
 
 	/**
 	 * Emitted when read/write permissions change.

@@ -4,20 +4,30 @@
  */
 
 /**
- * Base interface used in message data for events targeting a particular debugger instance via
- * its Container ID.
+ * A key used to identify and differentiate Containers registered with the {@link IFluidDevtools}.
  *
- * @internal
+ * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
+ *
+ * @example "Canvas Container"
+ *
+ * @public
  */
-export interface HasContainerId {
+export type ContainerKey = string;
+
+/**
+ * Common interface for data associated with a particular Container registered with the Devtools.
+ *
+ * @public
+ */
+export interface HasContainerKey {
 	/**
-	 * The ID of the Container whose metadata is being requested.
+	 * {@inheritDoc ContainerKey}
 	 */
-	containerId: string;
+	containerKey: ContainerKey;
 }
 
 /**
- * A unique ID for a Fluid object.
+ * A unique ID for a Fluid object
  *
  * @public
  */
@@ -31,7 +41,7 @@ export type FluidObjectId = string;
  */
 export interface HasFluidObjectId {
 	/**
-	 * The ID of the Fluid object (DDS) whose data is being requested.
+	 * The ID of the Fluid object (DDS) associated with data or a request.
 	 */
 	fluidObjectId: FluidObjectId;
 }

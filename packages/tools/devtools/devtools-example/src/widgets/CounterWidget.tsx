@@ -2,15 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	IStackItemStyles,
-	IStackStyles,
-	IconButton,
-	Stack,
-	StackItem,
-	TooltipHost,
-} from "@fluentui/react";
+
 import React from "react";
+import { IStackItemStyles, IStackStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
+import { Button } from "@fluentui/react-components";
+import { AddSquare24Regular, SubtractSquare24Regular } from "@fluentui/react-icons";
 
 import { SharedCounter } from "@fluidframework/counter";
 
@@ -90,10 +86,11 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 					content="Decrement counter by 1 (min 0)."
 					id={decrementButtonTooltipId}
 				>
-					<IconButton
+					<Button
+						// size="small"
+						icon={<SubtractSquare24Regular />}
 						onClick={decrementCounter}
 						disabled={counterValue === 0}
-						menuIconProps={{ iconName: "CalculatorSubtract" }}
 						aria-describedby={decrementButtonTooltipId}
 					/>
 				</TooltipHost>
@@ -103,9 +100,10 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 			</StackItem>
 			<StackItem styles={stackItemStyles}>
 				<TooltipHost content="Increment counter by 1." id={incrementButtonTooltipId}>
-					<IconButton
+					<Button
+						// size="small"
+						icon={<AddSquare24Regular />}
 						onClick={incrementCounter}
-						menuIconProps={{ iconName: "CalculatorAddition" }}
 						aria-describedby={incrementButtonTooltipId}
 					/>
 				</TooltipHost>

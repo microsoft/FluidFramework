@@ -26,6 +26,7 @@ import {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	DriverErrorType,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions";
 import {
 	IDocumentMessage,
@@ -357,7 +358,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
-			disconnectHandler: (reason: string) => this.disconnectHandler(reason),
+			disconnectHandler: (reason: string, error?: IAnyDriverError) =>
+				this.disconnectHandler(reason, error),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
 				this.connectHandler(connection),
 			pongHandler: (latency: number) => this.emit("pong", latency),
@@ -539,7 +541,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.fetchMissingDeltas(args.reason);
 		}
 
-		this.connectionManager.connect(args.mode);
+		this.connectionManager.connect(args.reason, args.mode);
 	}
 
 	private async getDeltas(
@@ -700,9 +702,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		}
 	}
 
-	private disconnectHandler(reason: string) {
+	private disconnectHandler(reason: string, error?: IAnyDriverError) {
 		this.messageBuffer.length = 0;
-		this.emit("disconnect", reason);
+		this.emit("disconnect", reason, error);
 	}
 
 	/**
