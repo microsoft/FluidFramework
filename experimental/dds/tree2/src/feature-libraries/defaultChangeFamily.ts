@@ -187,12 +187,8 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		destinationField: FieldUpPath,
 		destIndex: number,
 	): void {
-		const changes = sequence.changeHandler.editor.move(
-			sourceIndex,
-			count,
-			destIndex,
-			this.modularBuilder.generateId(),
-		);
+		const moveId = this.modularBuilder.generateId();
+		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex, moveId);
 		this.modularBuilder.submitChanges(
 			[
 				{
@@ -206,7 +202,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					change: brand(changes[1]),
 				},
 			],
-			brand(0),
+			moveId,
 		);
 	}
 
@@ -217,16 +213,18 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				if (content.length === 0) {
 					return;
 				}
+
+				const length = Array.isArray(newContent) ? newContent.length : 1;
+				const firstId = this.modularBuilder.generateId(length);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(
-						index,
-						content,
-						this.modularBuilder.generateId(
-							Array.isArray(newContent) ? newContent.length : 1,
-						),
-					),
+					sequence.changeHandler.editor.insert(index, content, firstId),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change);
+				this.modularBuilder.submitChange(
+					field,
+					sequence.identifier,
+					change,
+					brand((firstId as number) + length - 1),
+				);
 			},
 			delete: (index: number, count: number): void => {
 				const change: FieldChangeset = brand(
@@ -235,11 +233,12 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				this.modularBuilder.submitChange(field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
+				const moveId = this.modularBuilder.generateId();
 				const moves = sequence.changeHandler.editor.move(
 					sourceIndex,
 					count,
 					destIndex,
-					this.modularBuilder.generateId(),
+					moveId,
 				);
 
 				this.modularBuilder.submitChanges(
@@ -255,7 +254,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 							change: brand(moves[1]),
 						},
 					],
-					brand(0),
+					moveId,
 				);
 			},
 			revive: (
