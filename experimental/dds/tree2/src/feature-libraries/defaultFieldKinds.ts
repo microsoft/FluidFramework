@@ -30,7 +30,6 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
-	isolatedFieldChangeRebaser,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
@@ -214,7 +213,7 @@ export const counter: BrandedFieldKind<
 	new Set(),
 );
 
-const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeRebaser({
+const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
 	compose: (
 		changes: TaggedChange<ValueChangeset>[],
 		composeChildren: NodeChangeComposer,
@@ -250,6 +249,8 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 		return composed;
 	},
 
+	amendCompose: () => fail("Not implemented"),
+
 	invert: (
 		{ revision, change }: TaggedChange<ValueChangeset>,
 		invertChild: NodeChangeInverter,
@@ -266,6 +267,8 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 		return inverse;
 	},
 
+	amendInvert: () => fail("Not implemnted"),
+
 	rebase: (
 		change: ValueChangeset,
 		over: TaggedChange<ValueChangeset>,
@@ -276,7 +279,13 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 		}
 		return { ...change, changes: rebaseChild(change.changes, over.change.changes) };
 	},
-});
+
+	amendRebase: (
+		change: ValueChangeset,
+		over: TaggedChange<ValueChangeset>,
+		rebaseChild: NodeChangeRebaser,
+	) => ({ ...change, changes: rebaseChild(change.changes, over.change.changes) }),
+};
 
 export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
 	/**
@@ -329,7 +338,7 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 		new Set(),
 	);
 
-const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFieldChangeRebaser({
+const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
@@ -387,6 +396,8 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		return composed;
 	},
 
+	amendCompose: () => fail("Not implemented"),
+
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
@@ -427,6 +438,8 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 
 		return inverse;
 	},
+
+	amendInvert: () => fail("Not implemented"),
 
 	rebase: (
 		change: OptionalChangeset,
@@ -506,7 +519,22 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 			return rebasedChange;
 		}
 	},
-});
+
+	amendRebase: (
+		change: OptionalChangeset,
+		overTagged: TaggedChange<OptionalChangeset>,
+		rebaseChild: NodeChangeRebaser,
+	) => {
+		const amendedChildChange = rebaseChild(change.childChange, overTagged.change.childChange);
+		const amended = { ...change };
+		if (amendedChildChange !== undefined) {
+			amended.childChange = amendedChildChange;
+		} else {
+			delete amended.childChange;
+		}
+		return amended;
+	},
+};
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**

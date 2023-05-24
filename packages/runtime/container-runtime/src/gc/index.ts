@@ -57,10 +57,5 @@ export {
 	GCSummaryStateTracker,
 	IGCSummaryTrackingData,
 } from "./gcSummaryStateTracker";
-export {
-	skipClosureForXDaysKey,
-	closuresMapLocalStorageKey,
-	SweepReadyUsageDetectionHandler,
-} from "./gcSweepReadyUsageDetection";
 export { GCTelemetryTracker, sendGCUnexpectedUsageEvent } from "./gcTelemetry";
 export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
