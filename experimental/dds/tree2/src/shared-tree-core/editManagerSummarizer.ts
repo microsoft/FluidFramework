@@ -60,6 +60,7 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly editManager: EditManager<
+			ChangeFamilyEditor,
 			TChangeset,
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,

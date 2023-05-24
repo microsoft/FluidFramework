@@ -11,18 +11,17 @@ import {
 	NodeChangeset,
 	NodeReviver,
 	RevisionMetadataSource,
-	SchemaAware,
-	TypedSchema,
 	jsonableTreeFromCursor,
 	singleTextCursor,
 	valueSymbol,
 	cursorFromContextualData,
+	SchemaBuilder,
 } from "../../feature-libraries";
 // Allow import from file being tested.
 // eslint-disable-next-line import/no-internal-modules
 import * as FieldKinds from "../../feature-libraries/defaultFieldKinds";
 // eslint-disable-next-line import/no-internal-modules
-import * as FieldKindsTypes from "../../feature-libraries/defaultFieldKindsTypes";
+import * as FieldKindsTypes from "../../feature-libraries/defaultFieldChangeTypes";
 import {
 	makeAnonChange,
 	RevisionTag,
@@ -40,12 +39,13 @@ import {
 } from "../utils";
 import { IJsonCodec } from "../../codec";
 
-const nodeSchema = TypedSchema.tree("Node", {
+const builder = new SchemaBuilder("defaultFieldKinds tests");
+const nodeSchema = builder.objectRecursive("Node", {
 	value: ValueSchema.String,
-	local: { foo: TypedSchema.field(FieldKinds.optional, "Node") },
+	local: { foo: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema) },
 });
 
-const schemaData = SchemaAware.typedSchemaData([], nodeSchema);
+const schemaData = builder.intoLibrary();
 
 const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
 	[valueSymbol]: "value1",

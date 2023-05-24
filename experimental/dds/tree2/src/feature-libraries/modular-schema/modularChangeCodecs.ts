@@ -105,6 +105,11 @@ const EncodedRevisionInfo = Type.Object({
 	rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
 });
 
+const EncodedNodeExistsConstraint = Type.Object({
+	violated: Type.Boolean(),
+});
+type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
+
 /**
  * Format for encoding as json.
  */
@@ -114,6 +119,7 @@ const EncodedModularChangeset = Type.Object({
 	maxId: Type.Optional(ChangesetLocalIdSchema),
 	changes: EncodedFieldChangeMap,
 	revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+	nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
 });
 
 type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
@@ -153,7 +159,7 @@ function makeV0Codec(
 		fieldKind: FieldKindIdentifier,
 	): { codec: IMultiFormatCodec<FieldChangeset>; compiledSchema?: TypeCheck<TAnySchema> } => {
 		const entry = fieldChangesetCodecs.get(fieldKind);
-		assert(entry !== undefined, "Tried to encode unsupported fieldKind");
+		assert(entry !== undefined, 0x5ea /* Tried to encode unsupported fieldKind */);
 		return entry;
 	};
 
@@ -187,7 +193,7 @@ function makeV0Codec(
 		change: NodeChangeset,
 	): EncodedNodeChangeset & JsonCompatibleReadOnly {
 		const encodedChange: EncodedNodeChangeset & JsonCompatibleReadOnly = {};
-		const { valueChange, fieldChanges, valueConstraint } = change;
+		const { valueChange, fieldChanges, valueConstraint, nodeExistsConstraint } = change;
 		if (valueChange !== undefined) {
 			encodedChange.valueChange = valueChange;
 		}
@@ -198,6 +204,10 @@ function makeV0Codec(
 
 		if (valueConstraint !== undefined) {
 			encodedChange.valueConstraint = valueConstraint;
+		}
+
+		if (nodeExistsConstraint !== undefined) {
+			encodedChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
 		return encodedChange;
@@ -227,7 +237,7 @@ function makeV0Codec(
 
 	function decodeNodeChangesetFromJson(encodedChange: EncodedNodeChangeset): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
-		const { valueChange, fieldChanges, valueConstraint } = encodedChange;
+		const { valueChange, fieldChanges, valueConstraint, nodeExistsConstraint } = encodedChange;
 		if (valueChange) {
 			decodedChange.valueChange = valueChange;
 		}
@@ -241,6 +251,10 @@ function makeV0Codec(
 				value: valueConstraint.value,
 				violated: valueConstraint.violated,
 			};
+		}
+
+		if (nodeExistsConstraint !== undefined) {
+			decodedChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
 		return decodedChange;

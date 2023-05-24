@@ -11,7 +11,7 @@ import {
 	TaggedChange,
 	ITreeCursorSynchronous,
 	tagChange,
-	FieldSchema,
+	FieldStoredSchema,
 	TreeTypeSet,
 } from "../core";
 import { brand, fail, Mutable } from "../util";
@@ -30,7 +30,6 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
-	isolatedFieldChangeRebaser,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
@@ -39,15 +38,18 @@ import {
 	makeOptionalFieldCodecFamily,
 	makeValueFieldCodecFamily,
 	noChangeCodecFamily,
-} from "./defaultFieldKindsCodecs";
+} from "./defaultFieldChangeCodecs";
 import {
 	ValueChangeset,
 	NodeUpdate,
 	OptionalChangeset,
 	OptionalFieldChange,
-} from "./defaultFieldKindsTypes";
+} from "./defaultFieldChangeTypes";
 
-type BrandedFieldKind<
+/**
+ * @alpha
+ */
+export type BrandedFieldKind<
 	TName extends string,
 	TMultiplicity extends Multiplicity,
 	TEditor extends FieldEditor<any>,
@@ -63,7 +65,7 @@ function brandedFieldKind<
 	identifier: TName,
 	multiplicity: TMultiplicity,
 	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldSchema) => boolean,
+	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldStoredSchema) => boolean,
 	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 ): BrandedFieldKind<TName, TMultiplicity, TEditor> {
 	return new FieldKind<TEditor, TMultiplicity>(
@@ -211,7 +213,7 @@ export const counter: BrandedFieldKind<
 	new Set(),
 );
 
-const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeRebaser({
+const valueRebaser: FieldChangeRebaser<ValueChangeset> = {
 	compose: (
 		changes: TaggedChange<ValueChangeset>[],
 		composeChildren: NodeChangeComposer,
@@ -247,6 +249,8 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 		return composed;
 	},
 
+	amendCompose: () => fail("Not implemented"),
+
 	invert: (
 		{ revision, change }: TaggedChange<ValueChangeset>,
 		invertChild: NodeChangeInverter,
@@ -263,6 +267,8 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 		return inverse;
 	},
 
+	amendInvert: () => fail("Not implemnted"),
+
 	rebase: (
 		change: ValueChangeset,
 		over: TaggedChange<ValueChangeset>,
@@ -273,7 +279,13 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 		}
 		return { ...change, changes: rebaseChild(change.changes, over.change.changes) };
 	},
-});
+
+	amendRebase: (
+		change: ValueChangeset,
+		over: TaggedChange<ValueChangeset>,
+		rebaseChild: NodeChangeRebaser,
+	) => ({ ...change, changes: rebaseChild(change.changes, over.change.changes) }),
+};
 
 export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
 	/**
@@ -326,7 +338,7 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 		new Set(),
 	);
 
-const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFieldChangeRebaser({
+const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
@@ -384,6 +396,8 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		return composed;
 	},
 
+	amendCompose: () => fail("Not implemented"),
+
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
@@ -425,6 +439,8 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		return inverse;
 	},
 
+	amendInvert: () => fail("Not implemented"),
+
 	rebase: (
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
@@ -463,6 +479,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 						childChange: rebaseChild(
 							change.childChange,
 							over.deletedBy === undefined ? undefined : over.childChange,
+							true,
 						),
 						deletedBy: overTagged.revision,
 					};
@@ -502,7 +519,22 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 			return rebasedChange;
 		}
 	},
-});
+
+	amendRebase: (
+		change: OptionalChangeset,
+		overTagged: TaggedChange<OptionalChangeset>,
+		rebaseChild: NodeChangeRebaser,
+	) => {
+		const amendedChildChange = rebaseChild(change.childChange, overTagged.change.childChange);
+		const amended = { ...change };
+		if (amendedChildChange !== undefined) {
+			amended.childChange = amendedChildChange;
+		} else {
+			delete amended.childChange;
+		}
+		return amended;
+	},
+};
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
@@ -577,65 +609,72 @@ function deltaForDelete(
 /**
  * 0 or 1 items.
  */
-export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = new FieldKind(
-	brand("Optional"),
-	Multiplicity.Optional,
-	{
-		rebaser: optionalChangeRebaser,
-		codecsFactory: makeOptionalFieldCodecFamily,
-		editor: optionalFieldEditor,
-		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
-			if (change.fieldChange === undefined) {
-				if (change.deletedBy === undefined && change.childChange !== undefined) {
-					return [deltaFromChild(change.childChange)];
+export const optional: BrandedFieldKind<"Optional", Multiplicity.Optional, OptionalFieldEditor> =
+	brandedFieldKind(
+		"Optional",
+		Multiplicity.Optional,
+		{
+			rebaser: optionalChangeRebaser,
+			codecsFactory: makeOptionalFieldCodecFamily,
+			editor: optionalFieldEditor,
+
+			intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
+				if (change.fieldChange === undefined) {
+					if (change.deletedBy === undefined && change.childChange !== undefined) {
+						return [deltaFromChild(change.childChange)];
+					}
+					return [];
 				}
-				return [];
-			}
 
-			const deleteDelta = deltaForDelete(
-				!change.fieldChange.wasEmpty,
-				change.deletedBy === undefined ? change.childChange : undefined,
-				deltaFromChild,
-			);
+				const deleteDelta = deltaForDelete(
+					!change.fieldChange.wasEmpty,
+					change.deletedBy === undefined ? change.childChange : undefined,
+					deltaFromChild,
+				);
 
-			const update = change.fieldChange?.newContent;
-			let content: ITreeCursorSynchronous | undefined;
-			if (update === undefined) {
-				content = undefined;
-			} else if ("set" in update) {
-				content = singleTextCursor(update.set);
-			} else {
-				content = update.revert;
-			}
+				const update = change.fieldChange?.newContent;
+				let content: ITreeCursorSynchronous | undefined;
+				if (update === undefined) {
+					content = undefined;
+				} else if ("set" in update) {
+					content = singleTextCursor(update.set);
+				} else {
+					content = update.revert;
+				}
 
-			const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
+				const insertDelta = deltaFromInsertAndChange(
+					content,
+					update?.changes,
+					deltaFromChild,
+				);
 
-			return [...deleteDelta, ...insertDelta];
+				return [...deleteDelta, ...insertDelta];
+			},
+
+			isEmpty: (change: OptionalChangeset) =>
+				change.childChange === undefined && change.fieldChange === undefined,
 		},
-
-		isEmpty: (change: OptionalChangeset) =>
-			change.childChange === undefined && change.fieldChange === undefined,
-	},
-	(types, other) =>
-		(other.kind.identifier === sequence.identifier ||
-			other.kind.identifier === optional.identifier) &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	new Set([value.identifier]),
-);
+		(types, other) =>
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === optional.identifier) &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		new Set([value.identifier]),
+	);
 
 /**
  * 0 or more items.
  */
-export const sequence: FieldKind<SequenceFieldEditor, Multiplicity.Sequence> = new FieldKind(
-	brand("Sequence"),
-	Multiplicity.Sequence,
-	sequenceFieldChangeHandler,
-	(types, other) =>
-		other.kind.identifier === sequence.identifier &&
-		allowsTreeSchemaIdentifierSuperset(types, other.types),
-	// TODO: add normalizer/importers for handling ops from other kinds.
-	new Set([]),
-);
+export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, SequenceFieldEditor> =
+	brandedFieldKind(
+		"Sequence",
+		Multiplicity.Sequence,
+		sequenceFieldChangeHandler,
+		(types, other) =>
+			other.kind.identifier === sequence.identifier &&
+			allowsTreeSchemaIdentifierSuperset(types, other.types),
+		// TODO: add normalizer/importers for handling ops from other kinds.
+		new Set([]),
+	);
 
 /**
  * Exactly 0 items.
@@ -680,3 +719,46 @@ export const forbidden = brandedFieldKind(
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s]),
 );
+
+// Create named Aliases for nicer intellisense.
+
+// TODO: Find a way to make docs like {@inheritDoc value} work in vscode.
+// TODO: ensure thy work in generated docs.
+// TODO: add these comments to the rest of the cases below.
+/**
+ * @alpha
+ */
+export interface ValueFieldKind
+	extends BrandedFieldKind<"Value", Multiplicity.Value, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Optional
+	extends BrandedFieldKind<"Optional", Multiplicity.Optional, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Sequence
+	extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
+export interface Forbidden
+	extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {}
+
+/**
+ * Default FieldKinds with their editor types erased.
+ * @alpha
+ */
+export const FieldKinds: {
+	// TODO: inheritDoc for these somehow
+	readonly value: ValueFieldKind;
+	readonly optional: Optional;
+	readonly sequence: Sequence;
+	readonly forbidden: Forbidden;
+} = { value, optional, sequence, forbidden };
+
+/**
+ * @alpha
+ */
+export type FieldKindTypes = typeof FieldKinds[keyof typeof FieldKinds];

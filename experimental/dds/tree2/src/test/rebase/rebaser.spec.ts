@@ -68,7 +68,6 @@ describe("rebaser", () => {
 				for (const revision of main) {
 					cur = {
 						revision: makeRevisionTag(revision),
-						sessionId: "",
 						change: {},
 						parent: cur,
 					};
@@ -80,7 +79,6 @@ describe("rebaser", () => {
 				for (const revision of branch.slice(1)) {
 					cur = {
 						revision: makeRevisionTag(revision),
-						sessionId: "",
 						change: {},
 						parent: cur,
 					};
