@@ -496,12 +496,12 @@ export class Loader implements IHostLoader {
 
 	private async loadContainer(
 		request: IRequest,
-		resolved: IResolvedUrl,
+		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	): Promise<Container> {
 		return Container.load(
 			{
-				resolvedUrl: resolved,
+				resolvedUrl,
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
 				pendingLocalState,

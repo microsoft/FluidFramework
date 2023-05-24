@@ -120,35 +120,37 @@ const savedContainerEvent = "saved";
  * @internal
  */
 export interface IContainerLoadProps {
-	resolvedUrl: IResolvedUrl;
+	/**
+	 * The resolved url of the container being loaded
+	 */
+	readonly resolvedUrl: IResolvedUrl;
 	/**
 	 * Control which snapshot version to load from.  See IParsedUrl for detailed information.
 	 */
-	version: string | undefined;
+	readonly version: string | undefined;
 	/**
 	 * Loads the Container in paused state if true, unpaused otherwise.
 	 */
-	loadMode?: IContainerLoadMode;
+	readonly loadMode?: IContainerLoadMode;
 
 	/**
 	 * The pending state serialized from a pervious container instance
 	 */
-	pendingLocalState?: IPendingContainerState;
+	readonly pendingLocalState?: IPendingContainerState;
 }
 
 /**
  * @internal
  */
 export interface IContainerCreateProps {
-	resolvedUrl?: IResolvedUrl;
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
 	 */
-	canReconnect?: boolean;
+	readonly canReconnect?: boolean;
 	/**
 	 * Client details provided in the override will be merged over the default client.
 	 */
-	clientDetailsOverride?: IClientDetails;
+	readonly clientDetailsOverride?: IClientDetails;
 
 	/**
 	 * The url resolver used by the loader for resolving external urls
@@ -344,11 +346,11 @@ export class Container
 
 	public static async clone(
 		container: Container,
-		loadParams: IContainerLoadProps,
+		loadProps: IContainerLoadProps,
 		createParamOverrides: Partial<IContainerCreateProps>,
 	) {
-		return this.load(loadParams, {
-			...container.createParams,
+		return this.load(loadProps, {
+			...container.createProps,
 			...createParamOverrides,
 		});
 	}
@@ -358,12 +360,12 @@ export class Container
 	 * @internal
 	 */
 	public static async load(
-		loadParams: IContainerLoadProps,
-		createParams: IContainerCreateProps,
+		loadProps: IContainerLoadProps,
+		createProps: IContainerCreateProps,
 	): Promise<Container> {
-		const { version, pendingLocalState, loadMode, resolvedUrl } = loadParams;
+		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
 
-		const container = new Container(createParams, loadParams);
+		const container = new Container(createProps, loadProps);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -413,10 +415,10 @@ export class Container
 	 * Create a new container in a detached state.
 	 */
 	public static async createDetached(
-		createParams: IContainerCreateProps,
+		createProps: IContainerCreateProps,
 		codeDetails: IFluidCodeDetails,
 	): Promise<Container> {
-		const container = new Container(createParams);
+		const container = new Container(createProps);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -434,10 +436,10 @@ export class Container
 	 * snapshot from a previous detached container.
 	 */
 	public static async rehydrateDetachedFromSnapshot(
-		createParams: IContainerCreateProps,
+		createProps: IContainerCreateProps,
 		snapshot: string,
 	): Promise<Container> {
-		const container = new Container(createParams);
+		const container = new Container(createProps);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -673,17 +675,17 @@ export class Container
 	}
 
 	private get serviceFactory() {
-		return this.createParams.documentServiceFactory;
+		return this.createProps.documentServiceFactory;
 	}
 	private get urlResolver() {
-		return this.createParams.urlResolver;
+		return this.createProps.urlResolver;
 	}
 	public readonly options: ILoaderOptions;
 	private get scope() {
-		return this.createParams.scope;
+		return this.createProps.scope;
 	}
 	private get codeLoader() {
-		return this.createParams.codeLoader;
+		return this.createProps.codeLoader;
 	}
 
 	/**
@@ -725,8 +727,8 @@ export class Container
 	 * @internal
 	 */
 	constructor(
-		private readonly createParams: IContainerCreateProps,
-		loadParams?: IContainerLoadProps,
+		private readonly createProps: IContainerCreateProps,
+		loadProps?: IContainerLoadProps,
 	) {
 		super((name, error) => {
 			this.mc.logger.sendErrorEvent(
@@ -738,9 +740,9 @@ export class Container
 			);
 		});
 
-		this.clientDetailsOverride = createParams.clientDetailsOverride;
-		if (createParams.canReconnect !== undefined) {
-			this._canReconnect = createParams.canReconnect;
+		this.clientDetailsOverride = createProps.clientDetailsOverride;
+		if (createProps.canReconnect !== undefined) {
+			this._canReconnect = createProps.canReconnect;
 		}
 
 		// Create logger for data stores to use
@@ -751,7 +753,7 @@ export class Container
 		}`;
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
-		this.subLogger = ChildLogger.create(createParams.subLogger, undefined, {
+		this.subLogger = ChildLogger.create(createProps.subLogger, undefined, {
 			all: {
 				clientType, // Differentiating summarizer container from main container
 				containerId: uuid(),
@@ -759,7 +761,7 @@ export class Container
 				containerAttachState: () => this._attachState,
 				containerLifecycleState: () => this._lifecycleState,
 				containerConnectionState: () => ConnectionState[this.connectionState],
-				serializedContainer: loadParams?.pendingLocalState !== undefined,
+				serializedContainer: loadProps?.pendingLocalState !== undefined,
 			},
 			// we need to be judicious with our logging here to avoid generating too much data
 			// all data logged here should be broadly applicable, and not specific to a
@@ -789,7 +791,7 @@ export class Container
 		// all clients that were loaded from the same loader (including summarizer clients).
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = {
-			...this.createParams.options,
+			...this.createProps.options,
 		};
 
 		this._deltaManager = this.createDeltaManager();
@@ -812,7 +814,7 @@ export class Container
 					}
 				},
 				shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
-				maxClientLeaveWaitTime: this.createParams.options.maxClientLeaveWaitTime,
+				maxClientLeaveWaitTime: this.createProps.options.maxClientLeaveWaitTime,
 				logConnectionIssue: (
 					eventName: string,
 					category: TelemetryEventCategory,
@@ -849,7 +851,7 @@ export class Container
 				},
 			},
 			this.deltaManager,
-			loadParams?.pendingLocalState?.clientId,
+			loadProps?.pendingLocalState?.clientId,
 		);
 
 		this.on(savedContainerEvent, () => {
@@ -868,12 +870,12 @@ export class Container
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
 		const forceEnableSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			this.createParams.options.summarizeProtocolTree;
+			this.createProps.options.summarizeProtocolTree;
 
 		this.storageAdapter = new ContainerStorageAdapter(
-			this.createParams.detachedBlobStorage,
+			this.createProps.detachedBlobStorage,
 			this.mc.logger,
-			loadParams?.pendingLocalState?.snapshotBlobs,
+			loadProps?.pendingLocalState?.snapshotBlobs,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -1078,10 +1080,7 @@ export class Container
 		const protocolSummary = this.captureProtocolSummary();
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
-		if (
-			this.createParams.detachedBlobStorage &&
-			this.createParams.detachedBlobStorage.size > 0
-		) {
+		if (this.createProps.detachedBlobStorage && this.createProps.detachedBlobStorage.size > 0) {
 			combinedSummary.tree[".hasAttachmentBlobs"] = {
 				type: SummaryType.Blob,
 				content: "true",
@@ -1111,8 +1110,8 @@ export class Container
 
 				// If attachment blobs were uploaded in detached state we will go through a different attach flow
 				const hasAttachmentBlobs =
-					this.createParams.detachedBlobStorage !== undefined &&
-					this.createParams.detachedBlobStorage.size > 0;
+					this.createProps.detachedBlobStorage !== undefined &&
+					this.createProps.detachedBlobStorage.size > 0;
 
 				try {
 					assert(
@@ -1170,7 +1169,7 @@ export class Container
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
 						assert(
-							!!this.createParams.detachedBlobStorage,
+							!!this.createProps.detachedBlobStorage,
 							0x24e /* "assertion for type narrowing" */,
 						);
 
@@ -1178,12 +1177,12 @@ export class Container
 						// support blob handles that only know about the local IDs
 						const redirectTable = new Map<string, string>();
 						// if new blobs are added while uploading, upload them too
-						while (redirectTable.size < this.createParams.detachedBlobStorage.size) {
-							const newIds = this.createParams.detachedBlobStorage
+						while (redirectTable.size < this.createProps.detachedBlobStorage.size) {
+							const newIds = this.createProps.detachedBlobStorage
 								.getBlobIds()
 								.filter((id) => !redirectTable.has(id));
 							for (const id of newIds) {
-								const blob = await this.createParams.detachedBlobStorage.readBlob(
+								const blob = await this.createProps.detachedBlobStorage.readBlob(
 									id,
 								);
 								const response = await this.storageAdapter.createBlob(blob);
@@ -1622,8 +1621,8 @@ export class Container
 	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
 		if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
 			assert(
-				!!this.createParams.detachedBlobStorage &&
-					this.createParams.detachedBlobStorage.size > 0,
+				!!this.createProps.detachedBlobStorage &&
+					this.createProps.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 			delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
@@ -1721,7 +1720,7 @@ export class Container
 		quorumSnapshot: IQuorumSnapshot,
 	): void {
 		const protocolHandlerBuilder =
-			this.createParams.protocolHandlerBuilder ??
+			this.createProps.protocolHandlerBuilder ??
 			((...args) => new ProtocolHandler(...args, new Audience()));
 		const protocol = protocolHandlerBuilder(attributes, quorumSnapshot, (key, value) =>
 			this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
