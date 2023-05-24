@@ -61,9 +61,15 @@ export function TelemetryView(): React.ReactElement {
 	const [telemetryEvents, setTelemetryEvents] = React.useState<
 		ITimestampedTelemetryEvent[] | undefined
 	>();
+	/**
+	 * The inboundMessageHandlers update `bufferedEvents` with incoming events.
+	 * If `telemetryEvents` has not reached its capacity (`maxEventsToDisplay`),
+	 * `bufferedEvents` transfers events to `telemetryEvents` in a FIFO (First In First Out) manner.
+	 * If `telemetryEvents` is full, new events accumulate in `bufferedEvents` until more space becomes available.
+	 */
 	const [bufferedEvents, setBufferedEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = React.useState<number>(DEFAULT_PAGE_SIZE);
-	const [selectedIndex, setSelectedIndex] = React.useState<number>(-1);
+	const [selectedIndex, setSelectedIndex] = React.useState<number | undefined>();
 
 	React.useEffect(() => {
 		/**
@@ -111,7 +117,11 @@ export function TelemetryView(): React.ReactElement {
 				maxEventsToDisplay - telemetryEvents.length,
 			);
 			setTelemetryEvents([...newEvents, ...telemetryEvents]);
-			setSelectedIndex((prevIndex) => prevIndex + newEvents.length);
+			setSelectedIndex((prevIndex) => {
+				if (prevIndex !== undefined) {
+					return prevIndex + newEvents.length;
+				}
+			});
 			setBufferedEvents(remainingBuffer);
 		}
 	}, [telemetryEvents, bufferedEvents, maxEventsToDisplay, selectedIndex]);
@@ -129,15 +139,15 @@ export function TelemetryView(): React.ReactElement {
 			refreshedList = refreshedList.slice(0, maxEventsToDisplay);
 		}
 		setTelemetryEvents(refreshedList);
-		setSelectedIndex((prevIndex) => prevIndex + newEvents.length);
+		setSelectedIndex((prevIndex) => {
+			if (prevIndex !== undefined) {
+				return prevIndex + newEvents.length;
+			}
+		});
+		// Update bufferedEvents to remove the events just moved to telemetryEvents
 		const remainingBuffer = bufferedEvents.slice(newEvents.length);
 		setBufferedEvents(remainingBuffer);
 	};
-
-	/**
-	 * Add scroll bar to table
-	 * remove checkbox
-	 */
 
 	return (
 		<Stack>
@@ -152,13 +162,12 @@ export function TelemetryView(): React.ReactElement {
 					{bufferedEvents.length > 0 ? (
 						<div style={{ marginLeft: "6px" }}>
 							<CounterBadge size="large" color="brand">
-								{" "}
 								{bufferedEvents.length < 100 ? bufferedEvents.length : "100+"}
 							</CounterBadge>
 							&nbsp; Newer telemetry events received.
 						</div>
 					) : (
-						<> You &apos;re up to date! </>
+						<> {`You're up to date!`} </>
 					)}
 				</div>
 				<Button style={{ margin: "10px" }} onClick={handleLoadMore}>
@@ -246,8 +255,8 @@ interface FilteredTelemetryViewProps {
 	 *
 	 */
 	telemetryEvents: ITimestampedTelemetryEvent[];
-	setIndex: React.Dispatch<React.SetStateAction<number>>;
-	index: number;
+	setIndex: React.Dispatch<React.SetStateAction<number | undefined>>;
+	index: number | undefined;
 }
 
 function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactElement {
@@ -315,13 +324,11 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 		setMatchingOptions(eventNameOptionsRef.current);
 		const filtered = getFilteredEvents();
 		setFilteredTelemetryEvents(filtered);
-		if (filtered !== undefined) {
+		if (filtered !== undefined && index !== undefined) {
 			setIndex(index + (telemetryEvents.length - filtered?.length));
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [telemetryEvents, selectedCategory, customSearch]);
+	}, [telemetryEvents, selectedCategory, customSearch, index, setIndex]);
 
-	React.useEffect(() => {}, [index]);
 	/**
 	 * Gets list of valid categories for displayed telemetry events.
 	 * @returns list of option
@@ -508,7 +515,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 						// Set the index to the appropriate row index in the table.
 						setIndex(Number([...data.selectedItems][0]));
 					}}
-					selectedItems={index > 0 ? [index] : [0]}
+					selectedItems={[index !== undefined && index > 0 ? index : 0]}
 					columnSizingOptions={{
 						category: {
 							minWidth: 110,
