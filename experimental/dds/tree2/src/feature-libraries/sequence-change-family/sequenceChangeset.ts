@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { Type } from "@sinclair/typebox";
 import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../../codec";
 import { Transposed as T } from "./changeset";

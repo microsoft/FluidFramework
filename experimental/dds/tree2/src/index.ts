@@ -118,6 +118,7 @@ export {
 	NestedMap,
 	fail,
 	TransactionResult,
+	Assume,
 } from "./util";
 
 export {
