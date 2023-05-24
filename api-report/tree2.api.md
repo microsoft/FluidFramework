@@ -774,8 +774,7 @@ export interface IDefaultEditBuilder {
     addNodeExistsConstraint(path: UpPath): void;
     // (undocumented)
     addValueConstraint(path: UpPath, value: Value): void;
-    // (undocumented)
-    move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destIndex: number): void;
+    move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destinationIndex: number): void;
     // (undocumented)
     optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
     // (undocumented)
@@ -978,9 +977,6 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
 }
-
-// @alpha
-export function isWritableArrayLike(data: ContextuallyTypedFieldData): data is MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ITreeCursor {
