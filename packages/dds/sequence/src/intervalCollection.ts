@@ -1108,6 +1108,15 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		this.indexes.push(index);
 	}
 
+	public removeIndex(index: IntervalIndex<TInterval>): boolean {
+		const indexToRemove = this.indexes.indexOf(index);
+		if (indexToRemove !== -1) {
+			this.indexes.splice(indexToRemove, 1);
+			return true; // Index removed successfully
+		}
+		return false; // Index not found in this.indexes
+	}
+
 	public removeExistingInterval(interval: TInterval) {
 		this.removeIntervalFromIndexes(interval);
 		this.removeIntervalListeners(interval);
@@ -1561,10 +1570,26 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 			throw new LoggingError("The local interval collection must exist");
 		}
 		for (const interval of this) {
-			this.localCollection?.add(interval);
+			index.add(interval);
 		}
 
 		this.localCollection?.appendIndex(index);
+	}
+
+	/**
+	 * Detaches an index from this collection.
+	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
+	 * due to local or remote changes will no longer incur updates to the index.
+	 */
+	public detachIndex(index: IntervalIndex<TInterval>): boolean {
+		if (!this.attached) {
+			throw new LoggingError("The local interval collection must exist");
+		}
+		for (const interval of this) {
+			index.remove(interval);
+		}
+
+		return this.localCollection?.removeIndex(index) ?? false;
 	}
 
 	private rebasePositionWithSegmentSlide(
