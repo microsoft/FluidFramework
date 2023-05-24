@@ -94,32 +94,32 @@ const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
  */
 type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
-const EncodedNodeChangeset = Type.Object({
-	valueChange: Type.Optional(EncodedValueChange),
-	fieldChanges: Type.Optional(EncodedFieldChangeMap),
-	valueConstraint: Type.Optional(EncodedValueConstraint),
-});
-
-const EncodedRevisionInfo = Type.Object({
-	revision: Type.Readonly(RevisionTagSchema),
-	rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
-});
-
 const EncodedNodeExistsConstraint = Type.Object({
 	violated: Type.Boolean(),
 });
 type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
+
+const EncodedNodeChangeset = Type.Object({
+	valueChange: Type.Optional(EncodedValueChange),
+	fieldChanges: Type.Optional(EncodedFieldChangeMap),
+	valueConstraint: Type.Optional(EncodedValueConstraint),
+	nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
+});
 
 /**
  * Format for encoding as json.
  */
 type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
 
+const EncodedRevisionInfo = Type.Object({
+	revision: Type.Readonly(RevisionTagSchema),
+	rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
+});
+
 const EncodedModularChangeset = Type.Object({
 	maxId: Type.Optional(ChangesetLocalIdSchema),
 	changes: EncodedFieldChangeMap,
 	revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
-	nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
 });
 
 type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
@@ -163,10 +163,8 @@ function makeV0Codec(
 		return entry;
 	};
 
-	function encodeFieldChangesForJson(
-		change: FieldChangeMap,
-	): EncodedFieldChangeMap & JsonCompatibleReadOnly {
-		const encodedFields: EncodedFieldChangeMap & JsonCompatibleReadOnly = [];
+	function encodeFieldChangesForJson(change: FieldChangeMap): EncodedFieldChangeMap {
+		const encodedFields: EncodedFieldChangeMap = [];
 		for (const [field, fieldChange] of change) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
 			const encodedChange = codec.json.encode(fieldChange.change);
@@ -189,10 +187,8 @@ function makeV0Codec(
 		return encodedFields;
 	}
 
-	function encodeNodeChangesForJson(
-		change: NodeChangeset,
-	): EncodedNodeChangeset & JsonCompatibleReadOnly {
-		const encodedChange: EncodedNodeChangeset & JsonCompatibleReadOnly = {};
+	function encodeNodeChangesForJson(change: NodeChangeset): EncodedNodeChangeset {
+		const encodedChange: EncodedNodeChangeset = {};
 		const { valueChange, fieldChanges, valueConstraint, nodeExistsConstraint } = change;
 		if (valueChange !== undefined) {
 			encodedChange.valueChange = valueChange;
