@@ -18,6 +18,7 @@ import {
 	useTableFeatures,
 	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
+import { InfoLabel } from "@fluentui/react-components/unstable";
 import {
 	PlugConnected20Regular,
 	PlugDisconnected20Regular,
@@ -45,15 +46,10 @@ import { initializeFluentUiIcons } from "../InitializeIcons";
 import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
-import { InfoBadge } from "./utility-components";
 import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
 
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
-
-// TODOs:
-// - Add info tooltips (with question mark icons?) for each piece of Container status info to
-//   help education consumers as to what the different statuses mean.
 
 /**
  * {@link ContainerSummaryView} input props.
@@ -93,8 +89,8 @@ interface Item {
  * @param columnProps - Column props consumed by FluentUI.
  */
 function DataRow(
-	label: string,
-	infoTooltipText: string | undefined,
+	label: React.ReactElement | string,
+	infoTooltipText: React.ReactElement | string | undefined,
 	value: React.ReactElement | string | undefined,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	columnProps: any,
@@ -107,22 +103,9 @@ function DataRow(
 					...columnProps.getTableCellProps("containerProperty")
 				}
 			>
-				<span
-					style={{
-						width: "100%",
-						height: "100%",
-						whiteSpace: "nowrap",
-						display: "flex",
-						alignItems: "top",
-					}}
-				>
+				<InfoLabel info={infoTooltipText} style={{ whiteSpace: "nowrap" }}>
 					<b>{label}</b>
-					{infoTooltipText === undefined ? (
-						<></>
-					) : (
-						<InfoBadge tooltipContent={infoTooltipText} />
-					)}
-				</span>
+				</InfoLabel>
 			</TableCell>
 			<TableCell>{value}</TableCell>
 		</TableRow>
