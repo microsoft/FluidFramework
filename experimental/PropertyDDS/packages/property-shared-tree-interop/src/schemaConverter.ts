@@ -29,7 +29,7 @@ const nodePropertyType = "NodeProperty";
 const referenceGenericTypePrefix = "Reference<";
 const referenceType = "Reference";
 const basePropertyType = "BaseProperty";
-const nodePropertyTypes = new Set(["NodeProperty", "NamedNodeProperty", "RelationshipProperty"]);
+const nodePropertyTypes = new Set([nodePropertyType, "NamedNodeProperty", "RelationshipProperty"]);
 const booleanTypes = new Set(["Bool"]);
 const numberTypes = new Set<string>([
 	"Int8",
@@ -180,7 +180,7 @@ function buildTreeSchema(
 						!PropertyFactory.inheritsFrom(typeIdInInheritanceChain, nodePropertyType)
 					) {
 						fail(
-							`"${typeIdInInheritanceChain}" contains no properties and does not inherit from "NodeProperty".`,
+							`"${typeIdInInheritanceChain}" contains no properties and does not inherit from "${nodePropertyType}".`,
 						);
 					}
 				}
@@ -311,7 +311,7 @@ export function convertPropertyToSharedTreeStorageSchema<
 						// extractContexts(property.properties);
 					}
 					if (property.context && property.context !== "single") {
-						referencedTypeIDs.add(`${property.context}<${property.typeid}>`);
+						referencedTypeIDs.add(`${property.context}<${property.typeid ?? ""}>`);
 					}
 				}
 			}
@@ -361,7 +361,7 @@ const allowedCollectionContexts = new Set(["array", "map", "set"]);
  * Be aware, that using this function might be very unperformant
  * as it reads all types registered in PropertyDDS schema
  * and creates a shallow copy of the `SchemaDataAndPolicy`.
- * 
+ *
  * TODO: use new schema API (builder etc.)
  */
 export function addComplexTypeToSchema(
