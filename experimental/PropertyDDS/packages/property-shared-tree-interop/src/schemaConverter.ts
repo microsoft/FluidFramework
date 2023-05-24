@@ -200,9 +200,10 @@ function buildTreeSchema(
 		if (treeSchema) {
 			return treeSchema;
 		}
+		assert(splitTypeId.typeid !== "", `Missing typeid in collection type "${type}"`);
 		assert(
-			splitTypeId.typeid !== "" && (splitTypeId.typeid !== basePropertyType || anyType),
-			"Not allowed",
+			splitTypeId.typeid !== basePropertyType || anyType,
+			`"${basePropertyType}" shall not be used in schemas (typeid "${type}")`,
 		);
 		const fieldKind =
 			splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
