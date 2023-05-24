@@ -22,7 +22,6 @@ export {
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
 	IdAllocator,
-	isolatedFieldChangeRebaser,
 	FieldChange,
 	FieldChangeHandler,
 	FieldChangeMap,
