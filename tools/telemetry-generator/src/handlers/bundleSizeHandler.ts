@@ -16,7 +16,7 @@ module.exports = function handler(fileData, logger) {
 		if (
 			asset.size >= 0 &&
 			asset.name !== undefined &&
-			asset.name.toLowerCase().endsWith(".js")
+			asset.name.toLowerCase().endsWith(".js") === true
 		) {
 			logger.send({
 				category: "performance",

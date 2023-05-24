@@ -15,7 +15,6 @@ import {
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	IdAllocator,
-	isolatedFieldChangeRebaser,
 	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
@@ -57,7 +56,7 @@ export type EncodedGenericChangeset = EncodedGenericChange[];
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
  */
 export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
-	rebaser: isolatedFieldChangeRebaser({
+	rebaser: {
 		compose: (
 			changes: TaggedChange<GenericChangeset>[],
 			composeChildren: NodeChangeComposer,
@@ -97,6 +96,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			return composed;
 		},
+		amendCompose: () => fail("Not implemented"),
 		invert: (
 			{ change }: TaggedChange<GenericChangeset>,
 			invertChild: NodeChangeInverter,
@@ -108,48 +108,10 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				}),
 			);
 		},
-		rebase: (
-			change: GenericChangeset,
-			{ change: over }: TaggedChange<GenericChangeset>,
-			rebaseChild: NodeChangeRebaser,
-		): GenericChangeset => {
-			const rebased: GenericChangeset = [];
-			let iChange = 0;
-			let iOver = 0;
-			while (iChange < change.length && iOver < over.length) {
-				const a = change[iChange];
-				const b = over[iOver];
-				let nodeChangeA: NodeChangeset | undefined;
-				let nodeChangeB: NodeChangeset | undefined;
-				let index: number;
-				if (a.index === b.index) {
-					index = a.index;
-					nodeChangeA = a.nodeChange;
-					nodeChangeB = b.nodeChange;
-					iChange += 1;
-					iOver += 1;
-				} else if (a.index < b.index) {
-					index = a.index;
-					nodeChangeA = a.nodeChange;
-					iChange += 1;
-				} else {
-					index = b.index;
-					nodeChangeB = b.nodeChange;
-					iOver += 1;
-				}
-
-				const nodeChange = rebaseChild(nodeChangeA, nodeChangeB);
-				if (nodeChange !== undefined) {
-					rebased.push({
-						index,
-						nodeChange,
-					});
-				}
-			}
-			rebased.push(...change.slice(iChange));
-			return rebased;
-		},
-	}),
+		amendInvert: () => fail("Not implemented"),
+		rebase: rebaseGenericChange,
+		amendRebase: rebaseGenericChange,
+	},
 	codecsFactory: (childCodec) =>
 		makeCodecFamily([
 			[
@@ -197,6 +159,48 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	},
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
+
+function rebaseGenericChange(
+	change: GenericChangeset,
+	{ change: over }: TaggedChange<GenericChangeset>,
+	rebaseChild: NodeChangeRebaser,
+): GenericChangeset {
+	const rebased: GenericChangeset = [];
+	let iChange = 0;
+	let iOver = 0;
+	while (iChange < change.length && iOver < over.length) {
+		const a = change[iChange];
+		const b = over[iOver];
+		let nodeChangeA: NodeChangeset | undefined;
+		let nodeChangeB: NodeChangeset | undefined;
+		let index: number;
+		if (a.index === b.index) {
+			index = a.index;
+			nodeChangeA = a.nodeChange;
+			nodeChangeB = b.nodeChange;
+			iChange += 1;
+			iOver += 1;
+		} else if (a.index < b.index) {
+			index = a.index;
+			nodeChangeA = a.nodeChange;
+			iChange += 1;
+		} else {
+			index = b.index;
+			nodeChangeB = b.nodeChange;
+			iOver += 1;
+		}
+
+		const nodeChange = rebaseChild(nodeChangeA, nodeChangeB);
+		if (nodeChange !== undefined) {
+			rebased.push({
+				index,
+				nodeChange,
+			});
+		}
+	}
+	rebased.push(...change.slice(iChange));
+	return rebased;
+}
 
 /**
  * {@link FieldKind} used to represent changes to elements of a field in a field-kind-agnostic format.
