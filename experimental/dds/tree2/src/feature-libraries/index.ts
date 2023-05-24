@@ -43,7 +43,6 @@ export {
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	getFieldKind,
 	getFieldSchema,

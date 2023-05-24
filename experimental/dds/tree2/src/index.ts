@@ -197,7 +197,6 @@ export {
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,

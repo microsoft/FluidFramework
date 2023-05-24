@@ -239,13 +239,17 @@ export function assertValidIndex(
 	array: { readonly length: number },
 	allowOnePastEnd: boolean = false,
 ) {
-	assert(Number.isInteger(index), 0x376 /* index must be an integer */);
-	assert(index >= 0, 0x377 /* index must be non-negative */);
+	assertNonNegativeSafeInteger(index);
 	if (allowOnePastEnd) {
 		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
 	} else {
 		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
+}
+
+export function assertNonNegativeSafeInteger(index: number) {
+	assert(Number.isSafeInteger(index), 0x376 /* index must be an integer */);
+	assert(index >= 0, 0x377 /* index must be non-negative */);
 }
 
 /**
