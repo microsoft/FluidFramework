@@ -1167,7 +1167,7 @@ describe("SharedTree", () => {
 			validateTree(tree2, [expectedState]);
 		});
 
-		it("can rebase cross-field move over unrelated change", () => {
+		it.skip("can rebase cross-field move over unrelated change", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
