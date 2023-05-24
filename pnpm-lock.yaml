@@ -10024,6 +10024,9 @@ importers:
       '@fluidframework/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@types/mocha':
         specifier: ^9.1.1
         version: 9.1.1
@@ -10039,6 +10042,9 @@ importers:
       eslint:
         specifier: ~8.6.0
         version: 8.6.0
+      execa:
+        specifier: ^5.1.1
+        version: 5.1.1
       mocha-json-output-reporter:
         specifier: ^2.0.1
         version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
@@ -12044,6 +12050,10 @@ importers:
         version: 4.5.5
 
   packages/framework/synthesize:
+    dependencies:
+      '@fluidframework/common-utils':
+        specifier: ^1.1.1
+        version: 1.1.1
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.17.0
@@ -15641,6 +15651,187 @@ importers:
         specifier: ~4.5.5
         version: 4.5.5
 
+  packages/tools/devtools/devtools-example:
+    dependencies:
+      '@fluentui/react':
+        specifier: ^8.109.3
+        version: 8.109.3(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)
+      '@fluentui/react-components':
+        specifier: ~9.19.1
+        version: 9.19.1(@types/react-dom@17.0.18)(@types/react@17.0.52)(react-dom@17.0.2)(react@17.0.2)(scheduler@0.20.2)
+      '@fluentui/react-icons':
+        specifier: ^2.0.201
+        version: 2.0.201(react@17.0.2)
+      '@fluid-experimental/devtools':
+        specifier: workspace:~
+        version: link:../devtools
+      '@fluid-experimental/devtools-core':
+        specifier: workspace:~
+        version: link:../devtools-core
+      '@fluid-experimental/devtools-view':
+        specifier: workspace:~
+        version: link:../devtools-view
+      '@fluid-experimental/react-inputs':
+        specifier: workspace:~
+        version: link:../../../../experimental/framework/react-inputs
+      '@fluidframework/cell':
+        specifier: workspace:~
+        version: link:../../../dds/cell
+      '@fluidframework/common-utils':
+        specifier: ^1.1.1
+        version: 1.1.1
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../loader/container-loader
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../common/core-interfaces
+      '@fluidframework/counter':
+        specifier: workspace:~
+        version: link:../../../dds/counter
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../runtime/datastore-definitions
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../common/driver-definitions
+      '@fluidframework/fluid-static':
+        specifier: workspace:~
+        version: link:../../../framework/fluid-static
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../dds/map
+      '@fluidframework/matrix':
+        specifier: workspace:~
+        version: link:../../../dds/matrix
+      '@fluidframework/protocol-definitions':
+        specifier: ^1.1.0
+        version: 1.1.0
+      '@fluidframework/sequence':
+        specifier: workspace:~
+        version: link:../../../dds/sequence
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../../dds/shared-object-base
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../../runtime/test-runtime-utils
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../../framework/tinylicious-client
+      re-resizable:
+        specifier: ^6.9.9
+        version: 6.9.9(react-dom@17.0.2)(react@17.0.2)
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      scheduler:
+        specifier: ^0.20.0
+        version: 0.20.2
+    devDependencies:
+      '@fluidframework/build-common':
+        specifier: ^1.1.0
+        version: 1.1.0
+      '@fluidframework/build-tools':
+        specifier: ^0.17.0
+        version: 0.17.0(webpack-cli@4.10.0)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^2.0.0
+        version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
+      '@microsoft/api-extractor':
+        specifier: ^7.34.4
+        version: 7.34.4
+      '@testing-library/dom':
+        specifier: ^8.2.0
+        version: 8.19.1
+      '@testing-library/jest-dom':
+        specifier: ^5.16.5
+        version: 5.16.5
+      '@testing-library/react':
+        specifier: ^12.0.0
+        version: 12.1.5(react-dom@17.0.2)(react@17.0.2)
+      '@testing-library/user-event':
+        specifier: ^14.4.3
+        version: 14.4.3(@testing-library/dom@8.19.1)
+      '@types/jest':
+        specifier: 22.2.3
+        version: 22.2.3
+      '@types/react':
+        specifier: 17.0.52
+        version: 17.0.52
+      '@types/react-dom':
+        specifier: 17.0.18
+        version: 17.0.18
+      '@types/testing-library__jest-dom':
+        specifier: ^5.14.5
+        version: 5.14.5
+      concurrently:
+        specifier: ^7.6.0
+        version: 7.6.0
+      eslint:
+        specifier: ~8.6.0
+        version: 8.6.0
+      eslint-config-prettier:
+        specifier: ~8.5.0
+        version: 8.5.0(eslint@8.6.0)
+      eslint-plugin-jest:
+        specifier: ~27.1.5
+        version: 27.1.7(eslint@8.6.0)(jest@26.6.3)(typescript@4.5.5)
+      eslint-plugin-react:
+        specifier: ~7.28.0
+        version: 7.28.0(eslint@8.6.0)
+      eslint-plugin-react-hooks:
+        specifier: ~4.6.0
+        version: 4.6.0(eslint@8.6.0)
+      html-webpack-plugin:
+        specifier: ^5.5.0
+        version: 5.5.0(webpack@5.82.0)
+      jest:
+        specifier: ^26.6.3
+        version: 26.6.3
+      jest-junit:
+        specifier: ^10.0.0
+        version: 10.0.0
+      prettier:
+        specifier: ~2.6.2
+        version: 2.6.2
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.0
+      start-server-and-test:
+        specifier: ^1.11.7
+        version: 1.14.0
+      tinylicious:
+        specifier: 0.7.2
+        version: 0.7.2
+      ts-jest:
+        specifier: ^26.4.4
+        version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
+      ts-loader:
+        specifier: ^9.3.0
+        version: 9.4.1(typescript@4.5.5)(webpack@5.82.0)
+      typescript:
+        specifier: ~4.5.5
+        version: 4.5.5
+      webpack:
+        specifier: ^5.82.0
+        version: 5.82.0(webpack-cli@4.10.0)
+      webpack-cli:
+        specifier: ^4.9.2
+        version: 4.10.0(webpack-dev-server@4.6.0)(webpack@5.82.0)
+      webpack-dev-server:
+        specifier: ~4.6.0
+        version: 4.6.0(webpack-cli@4.10.0)(webpack@5.82.0)
+      webpack-merge:
+        specifier: ^5.8.0
+        version: 5.8.0
+
   packages/tools/devtools/devtools-view:
     dependencies:
       '@fluentui/react':
@@ -15686,57 +15877,27 @@ importers:
         specifier: ^0.20.0
         version: 0.20.2
     devDependencies:
-      '@fluid-example/collaborative-textarea':
-        specifier: workspace:~
-        version: link:../../../../examples/apps/collaborative-textarea
-      '@fluid-experimental/devtools':
-        specifier: workspace:~
-        version: link:../devtools
-      '@fluid-experimental/react-inputs':
-        specifier: workspace:~
-        version: link:../../../../experimental/framework/react-inputs
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/build-tools':
         specifier: ^0.17.0
-        version: 0.17.0(webpack-cli@4.10.0)
-      '@fluidframework/cell':
-        specifier: workspace:~
-        version: link:../../../dds/cell
+        version: 0.17.0
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../common/core-interfaces
-      '@fluidframework/counter':
-        specifier: workspace:~
-        version: link:../../../dds/counter
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../runtime/datastore-definitions
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../framework/fluid-static
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../dds/map
-      '@fluidframework/matrix':
-        specifier: workspace:~
-        version: link:../../../dds/matrix
-      '@fluidframework/sequence':
-        specifier: workspace:~
-        version: link:../../../dds/sequence
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/test-runtime-utils
-      '@fluidframework/tinylicious-client':
-        specifier: workspace:~
-        version: link:../../../framework/tinylicious-client
       '@microsoft/api-extractor':
         specifier: ^7.34.4
         version: 7.34.4
@@ -15770,9 +15931,6 @@ importers:
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
       eslint:
         specifier: ~8.6.0
         version: 8.6.0
@@ -15788,9 +15946,6 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ~4.6.0
         version: 4.6.0(eslint@8.6.0)
-      html-webpack-plugin:
-        specifier: ^5.5.0
-        version: 5.5.0(webpack@5.82.0)
       jest:
         specifier: ^26.6.3
         version: 26.6.3
@@ -15800,39 +15955,15 @@ importers:
       prettier:
         specifier: ~2.6.2
         version: 2.6.2
-      re-resizable:
-        specifier: ^6.9.9
-        version: 6.9.9(react-dom@17.0.2)(react@17.0.2)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.0
-      start-server-and-test:
-        specifier: ^1.11.7
-        version: 1.14.0
-      tinylicious:
-        specifier: 0.7.2
-        version: 0.7.2
       ts-jest:
         specifier: ^26.4.4
         version: 26.5.6(jest@26.6.3)(typescript@4.5.5)
-      ts-loader:
-        specifier: ^9.3.0
-        version: 9.4.1(typescript@4.5.5)(webpack@5.82.0)
       typescript:
         specifier: ~4.5.5
         version: 4.5.5
-      webpack:
-        specifier: ^5.82.0
-        version: 5.82.0(webpack-cli@4.10.0)
-      webpack-cli:
-        specifier: ^4.9.2
-        version: 4.10.0(webpack-dev-server@4.6.0)(webpack@5.82.0)
-      webpack-dev-server:
-        specifier: ~4.6.0
-        version: 4.6.0(webpack-cli@4.10.0)(webpack@5.82.0)
-      webpack-merge:
-        specifier: ^5.8.0
-        version: 5.8.0
 
   packages/tools/fetch-tool:
     dependencies:
@@ -35471,7 +35602,7 @@ packages:
       he: 1.2.0
       param-case: 3.0.4
       relateurl: 0.2.7
-      terser: 5.15.1
+      terser: 5.17.3
     dev: true
 
   /html-tags@3.2.0:
@@ -42561,7 +42692,7 @@ packages:
     dependencies:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
-    dev: true
+    dev: false
 
   /react-base-table@1.13.2(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-VhyKXZwEu8U/wH2eY3Ie3GJbvGP9wQzts26k1t/A7b8IS1OM31j8ul6HAvLmudpT33XqFPD7/KK18tfx/5I/eA==}
@@ -45531,17 +45662,6 @@ packages:
       source-map-support: 0.5.21
     dev: true
 
-  /terser@5.15.1:
-    resolution: {integrity: sha512-K1faMUvpm/FBxjBXud0LWVAGxmvoPbZbfTCYbSgaaYQaIXI3/TdI7a7ZGA73Zrou6Q8Zmz3oeUTsp/dj+ag2Xw==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dependencies:
-      '@jridgewell/source-map': 0.3.2
-      acorn: 8.8.2
-      commander: 2.20.3
-      source-map-support: 0.5.21
-    dev: true
-
   /terser@5.17.3:
     resolution: {integrity: sha512-AudpAZKmZHkG9jueayypz4duuCFJMMNGRMwaPvQKWfxKedh8Z2x3OCoDqIIi1xx5+iwx1u6Au8XQcc9Lke65Yg==}
     engines: {node: '>=10'}
@@ -45900,7 +46020,7 @@ packages:
       webpack: ^5.0.0 || 5.83.0
     dependencies:
       chalk: 4.1.2
-      enhanced-resolve: 5.11.0
+      enhanced-resolve: 5.14.0
       micromatch: 4.0.5
       semver: 7.3.8
       typescript: 4.5.5

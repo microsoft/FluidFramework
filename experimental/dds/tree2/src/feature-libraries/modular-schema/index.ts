@@ -22,7 +22,6 @@ export {
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
 	IdAllocator,
-	isolatedFieldChangeRebaser,
 	FieldChange,
 	FieldChangeHandler,
 	FieldChangeMap,
@@ -46,15 +45,8 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceStateChange,
 } from "./fieldChangeHandler";
-export {
-	convertGenericChange,
-	EncodedGenericChange,
-	EncodedGenericChangeset,
-	GenericChange,
-	genericChangeHandler,
-	GenericChangeset,
-	genericFieldKind,
-} from "./genericFieldKind";
+export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
+export { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 export {
 	ModularChangeFamily,
 	ModularEditBuilder,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId, HasFluidObjectId } from "../../CommonInterfaces";
+import { HasContainerKey, HasFluidObjectId } from "../../CommonInterfaces";
 import { FluidObjectNode } from "../../data-visualization";
 import { IDevtoolsMessage } from "../Messages";
 
@@ -25,7 +25,7 @@ export namespace DataVisualization {
 	 *
 	 * @internal
 	 */
-	export interface MessageData extends HasContainerId, HasFluidObjectId {
+	export interface MessageData extends HasContainerKey, HasFluidObjectId {
 		/**
 		 * A visual description tree for a particular DDS.
 		 *
