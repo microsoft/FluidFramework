@@ -83,14 +83,13 @@ interface Item {
  * Displays a row with basic stats about the Container.
  *
  * @param label - Row label text.
- * @param infoTooltipText - (optional) Tooltip text to display via an info badge.
- * No badge will be displayed if this text is not provided.
+ * @param infoTooltipText - Tooltip text to display via an info badge.
  * @param value - The value text associated with the label.
  * @param columnProps - Column props consumed by FluentUI.
  */
 function DataRow(
 	label: React.ReactElement | string,
-	infoTooltipText: React.ReactElement | string | undefined,
+	infoTooltipText: React.ReactElement | string,
 	value: React.ReactElement | string | undefined,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	columnProps: any,
