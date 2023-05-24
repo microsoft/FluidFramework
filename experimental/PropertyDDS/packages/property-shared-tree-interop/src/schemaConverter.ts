@@ -21,6 +21,7 @@ import {
 	FieldKindTypes,
 	Any,
 	TreeSchema,
+	LazyTreeSchema,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory, PropertyTemplate } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
@@ -65,39 +66,48 @@ function isIgnoreNestedProperties(typeid: string): boolean {
 	return typeid === "Enum";
 }
 
-function getAllInheritingChildrenTypes(): Map<string, Set<string>> {
-	const inheritedChildren: Map<string, Set<string>> = new Map();
+type InheritingChildrenByType = ReadonlyMap<string, ReadonlySet<string>>;
+
+function getAllInheritingChildrenTypes(): InheritingChildrenByType {
+	const inheritingChildrenByType: Map<string, Set<string>> = new Map();
 	const allTypes = PropertyFactory.listRegisteredTypes();
 	for (const typeid of allTypes) {
 		const parents = PropertyFactory.getAllParentsForTemplate(typeid);
 		for (const parent of parents) {
-			if (!inheritedChildren.has(parent)) {
-				inheritedChildren.set(parent, new Set());
+			if (!inheritingChildrenByType.has(parent)) {
+				inheritingChildrenByType.set(parent, new Set());
 			}
-			inheritedChildren.get(parent)?.add(typeid);
+			inheritingChildrenByType.get(parent)?.add(typeid);
 		}
 	}
-	return inheritedChildren;
+	return inheritingChildrenByType;
 }
 
-function getChildrenForType(
-	inheritingChildrenByType: ReadonlyMap<string, ReadonlySet<string>>,
-	typeid: string,
-): Set<string> {
-	const childrenTypes = new Set<string>();
-	const inheritingTypes = inheritingChildrenByType.get(typeid) ?? new Set();
-	for (const inheritingType of inheritingTypes) {
-		childrenTypes.add(inheritingType);
+function mapTypesAndChildren<T>(
+	allChildrenByType: InheritingChildrenByType,
+	f: (t: string) => T | undefined,
+	...types: readonly string[]
+): Set<T> {
+	const output = new Set<T>();
+	let result: T | undefined;
+	for (const typeid of types) {
+		result = f(typeid);
+		if (result) output.add(result);
+		const inheritingTypes = allChildrenByType.get(typeid) ?? new Set();
+		for (const inheritingType of inheritingTypes) {
+			result = f(inheritingType);
+			if (result) output.add(result);
+		}
 	}
-	return childrenTypes;
+	return output;
 }
 
 function buildTreeSchema(
 	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, TreeSchema | (() => TreeSchema)>,
-	typesChildren: ReadonlyMap<string, ReadonlySet<string>>,
+	treeSchemaMap: Map<string, LazyTreeSchema>,
+	allChildrenByType: InheritingChildrenByType,
 	type: string,
-): TreeSchema | (() => TreeSchema) {
+): LazyTreeSchema {
 	const splitTypeId = TypeIdHelper.extractContext(type);
 	if (splitTypeId.context === "single") {
 		let treeSchema = treeSchemaMap.get(splitTypeId.typeid);
@@ -132,7 +142,7 @@ function buildTreeSchema(
 				treeSchemaMap.set(splitTypeId.typeid, treeSchema);
 				return treeSchema;
 			} else {
-				const cache: { treeSchema?: TreeSchema | (() => TreeSchema) } = {};
+				const cache: { treeSchema?: LazyTreeSchema } = {};
 				treeSchemaMap.set(splitTypeId.typeid, () => cache.treeSchema as TreeSchema);
 				const local = {};
 				const inheritanceChain = PropertyFactory.getAllParentsForTemplate(
@@ -166,7 +176,7 @@ function buildTreeSchema(
 								local[property.id] = buildFieldSchema(
 									builder,
 									treeSchemaMap,
-									typesChildren,
+									allChildrenByType,
 									property.optional ? FieldKinds.optional : FieldKinds.value,
 									currentTypeid,
 								);
@@ -207,12 +217,12 @@ function buildTreeSchema(
 		);
 		const fieldKind =
 			splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
-		const cache: { treeSchema?: TreeSchema | (() => TreeSchema) } = {};
+		const cache: { treeSchema?: LazyTreeSchema } = {};
 		treeSchemaMap.set(currentTypeid, () => cache.treeSchema as TreeSchema);
 		const fieldType = buildFieldSchema(
 			builder,
 			treeSchemaMap,
-			typesChildren,
+			allChildrenByType,
 			fieldKind,
 			anyType ? Any : splitTypeId.typeid,
 		);
@@ -236,44 +246,37 @@ function buildTreeSchema(
 	}
 }
 
-function buildFieldSchema<T extends [Any] | readonly string[]>(
+function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
 	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, TreeSchema | (() => TreeSchema)>,
-	typesChildren: ReadonlyMap<string, ReadonlySet<string>>,
-	fieldKind: FieldKindTypes,
-	...fieldTypes: T
+	treeSchemaMap: Map<string, LazyTreeSchema>,
+	allChildrenByType: InheritingChildrenByType,
+	fieldKind: Kind,
+	...fieldTypes: readonly string[]
 ): FieldSchema {
-	if (!fieldTypes || (fieldTypes.length === 1 && fieldTypes[0] === Any)) {
+	if (!fieldTypes.length || fieldTypes.find((t) => t === Any)) {
 		return SchemaBuilder.field(fieldKind, Any);
 	}
-	const allowedTypes: Set<TreeSchema | (() => TreeSchema)> = new Set();
-	for (const type of fieldTypes) {
-		allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, typesChildren, type));
-		getChildrenForType(typesChildren, type).forEach((child) =>
-			allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, typesChildren, child)),
-		);
-	}
+	const allowedTypes = mapTypesAndChildren(
+		allChildrenByType,
+		(child) => buildTreeSchema(builder, treeSchemaMap, allChildrenByType, child),
+		...fieldTypes,
+	);
 	return SchemaBuilder.field(fieldKind, ...allowedTypes);
 }
 
 export function convertPropertyToSharedTreeStorageSchema<
-	Kind extends FieldKindTypes,
-	T extends [Any] | readonly string[],
->(rootFieldKind: Kind, ...rootTypes: T) {
+	Kind extends FieldKindTypes = FieldKindTypes,
+>(rootFieldKind: Kind, ...rootTypes: readonly string[]) {
 	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder");
-	const inheritingChildrenByType = getAllInheritingChildrenTypes();
-	const treeSchemaMap: Map<string, TreeSchema | (() => TreeSchema)> = new Map();
+	const allChildrenByType = getAllInheritingChildrenTypes();
+	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 
 	// Extract all referenced typeids for the schema
 	const unprocessedTypeIds: string[] = [];
 	if (!rootTypes.find((t) => t === Any)) {
-		for (const rootBaseType of rootTypes) {
-			if (rootBaseType === Any) continue;
-			unprocessedTypeIds.push(rootBaseType);
-			unprocessedTypeIds.push(...getChildrenForType(inheritingChildrenByType, rootBaseType));
-		}
-	} else {
+		unprocessedTypeIds.push(...mapTypesAndChildren(allChildrenByType, (t) => t, ...rootTypes));
 	}
+
 	const referencedTypeIDs = new Set<string>();
 
 	while (unprocessedTypeIds.length > 0) {
@@ -290,19 +293,14 @@ export function convertPropertyToSharedTreeStorageSchema<
 			fail(`Unknown typeid: ${unprocessedTypeID}`);
 		}
 		const dependencies = PropertyTemplate.extractDependencies(schemaTemplate);
-		for (const dependencyTypeId of dependencies) {
-			[
-				dependencyTypeId,
-				...getChildrenForType(inheritingChildrenByType, dependencyTypeId),
-			].forEach((id) => {
-				if (
-					!referencedTypeIDs.has(id) &&
-					!unprocessedTypeIds.find((unprocessedTypeId) => unprocessedTypeId === id)
-				) {
-					unprocessedTypeIds.push(id);
-				}
-			});
-		}
+		unprocessedTypeIds.push(
+			...mapTypesAndChildren(allChildrenByType, (t) => {
+				if (unprocessedTypeIds.find((unprocessedTypeId) => unprocessedTypeId === t)) return;
+				if (referencedTypeIDs.has(t)) return;
+				return t;
+			}),
+			...dependencies,
+		);
 
 		// Extract context information (i.e. array, map and set types)
 		const extractContexts = (properties: any[]): void => {
@@ -343,13 +341,13 @@ export function convertPropertyToSharedTreeStorageSchema<
 		if (treeSchemaMap.has(referencedTypeId)) {
 			continue;
 		}
-		buildTreeSchema(builder, treeSchemaMap, inheritingChildrenByType, referencedTypeId);
+		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, referencedTypeId);
 	}
 
 	const rootSchema = buildFieldSchema(
 		builder,
 		treeSchemaMap,
-		inheritingChildrenByType,
+		allChildrenByType,
 		rootFieldKind,
 		...rootTypes,
 	);
@@ -384,9 +382,10 @@ export function addComplexTypeToSchema(
 		treeSchema.set(k, v);
 	}
 	const complexTypeName: TreeSchemaIdentifier = brand(`${context}<${typeName}>`);
-	const types = new Set<TreeSchemaIdentifier>([brand(typeName)]);
-	getChildrenForType(getAllInheritingChildrenTypes(), typeName).forEach((t) =>
-		types.add(brand(t)),
+	const types = mapTypesAndChildren<TreeSchemaIdentifier>(
+		getAllInheritingChildrenTypes(),
+		(t) => brand(t),
+		typeName,
 	);
 	const typeSchema =
 		context === "array"

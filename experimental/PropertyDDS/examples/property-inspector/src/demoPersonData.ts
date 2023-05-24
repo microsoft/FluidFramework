@@ -130,6 +130,8 @@ export type Person = EditableTree &
 export function getPerson(): Person {
 	const age: Int32 = brand(35);
 	return {
+		// required if root is of "Any" type, otherwise could be omitted
+		[typeNameSymbol]: personSchemaName,
 		// typed with built-in primitive type
 		name: "Adam",
 		// explicitly contextually typed

@@ -17,6 +17,7 @@ import {
 	EmptyKey,
 	FieldStoredSchema,
 	fail,
+	Any,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
@@ -126,7 +127,7 @@ describe("schema converter", () => {
 	it("can dynamically create collection types", () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			"Test:Person-1.0.0",
+			brand<TreeSchemaIdentifier>("Test:Person-1.0.0"),
 		);
 
 		const geoLocationTypeName: TreeSchemaIdentifier = brand("Test:GeodesicLocation-1.0.0");
@@ -174,5 +175,20 @@ describe("schema converter", () => {
 			(e) => validateAssertionError(e, `Not supported collection context "tuple"`),
 			"Expected exception was not thrown",
 		);
+	});
+
+	it("can use any type as root", () => {
+		const fullSchemaData1 = convertPropertyToSharedTreeStorageSchema(FieldKinds.optional, Any);
+		expect([...fullSchemaData1.root.schema.allowedTypes]).toMatchObject([Any]);
+
+		const fullSchemaData2 = convertPropertyToSharedTreeStorageSchema(FieldKinds.optional);
+		expect([...fullSchemaData2.root.schema.allowedTypes]).toMatchObject([Any]);
+
+		const fullSchemaData3 = convertPropertyToSharedTreeStorageSchema(
+			FieldKinds.optional,
+			"String",
+			Any,
+		);
+		expect([...fullSchemaData3.root.schema.allowedTypes]).toMatchObject([Any]);
 	});
 });

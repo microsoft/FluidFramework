@@ -12,7 +12,7 @@ import { registerSchemas } from "@fluid-example/schemas";
 import { convertPropertyToSharedTreeStorageSchema as convertPSetSchema } from "@fluid-experimental/property-shared-tree-interop";
 
 import { renderApp } from "./editableTreeInspector";
-import { personSchemaName, personPropertyDDSSchemas } from "./demoPersonData";
+import { personPropertyDDSSchemas } from "./demoPersonData";
 
 const { optional, sequence } = FieldKinds;
 
@@ -78,7 +78,7 @@ export async function start(): Promise<void> {
 	document.title = containerId;
 
 	const sharedTree = container.initialObjects.sharedTree as ISharedTree;
-	const fullSchemaData = convertPSetSchema(optional, personSchemaName);
+	const fullSchemaData = convertPSetSchema(optional);
 	sharedTree.storedSchema.update(fullSchemaData);
 
 	renderApp(sharedTree);

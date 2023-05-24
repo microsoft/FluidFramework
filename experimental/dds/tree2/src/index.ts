@@ -254,6 +254,7 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	LazyTreeSchema,
 } from "./feature-libraries";
 
 export {
