@@ -64,6 +64,7 @@ async function main() {
 		)
 		.option("-v, --verbose", "Enables verbose logging")
 		.option("-m, --enableOpsMetrics", "Enable capturing ops metrics")
+		.option("--ring <ring>", "Which ring to use")
 		.parse(process.argv);
 
 	const driver: TestDriverTypes = commander.driver;
@@ -75,6 +76,7 @@ async function main() {
 	const verbose: boolean = commander.verbose ?? false;
 	const seed: number = commander.seed;
 	const enableOpsMetrics: boolean = commander.enableOpsMetrics ?? false;
+	const ring: string | undefined = commander.ring;
 
 	const profile = getProfile(profileName);
 
@@ -96,7 +98,7 @@ async function main() {
 		driverType: driver,
 		driverEndpointName: endpoint,
 		profile: profileName,
-		ring: endpoint,
+		ring,
 	});
 
 	process.on("uncaughtExceptionMonitor", (error, origin) => {
