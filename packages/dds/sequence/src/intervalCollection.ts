@@ -154,25 +154,25 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 function startReferenceSlidingPreference(stickiness?: IntervalStickiness): SlidingPreference {
 	// default to forward if stickiness is not specified
 	if (!stickiness) {
-		return SlidingPreference.Forward;
+		return SlidingPreference.FORWARD;
 	}
 
 	// if any start stickiness, prefer sliding backwards
 	return stickiness & IntervalStickiness.Start
-		? SlidingPreference.Backward
-		: SlidingPreference.Forward;
+		? SlidingPreference.BACKWARD
+		: SlidingPreference.FORWARD;
 }
 
 function endReferenceSlidingPreference(stickiness?: IntervalStickiness): SlidingPreference {
 	// default to forward if stickiness is not specified
 	if (!stickiness) {
-		return SlidingPreference.Forward;
+		return SlidingPreference.FORWARD;
 	}
 
 	// if any end stickiness, prefer sliding forwards
 	return stickiness & IntervalStickiness.End
-		? SlidingPreference.Forward
-		: SlidingPreference.Backward;
+		? SlidingPreference.FORWARD
+		: SlidingPreference.BACKWARD;
 }
 
 export interface ISerializableInterval extends IInterval {
@@ -224,7 +224,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 }
 
 /**
- * Determine how an interval should expand when segments are inserted adjacent
+ * Determines how an interval should expand when segments are inserted adjacent
  * to the range it spans
  */
 export enum IntervalStickiness {

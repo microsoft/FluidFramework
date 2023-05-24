@@ -205,7 +205,7 @@ export interface IntervalLocator {
 // @public
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
 
-// @public (undocumented)
+// @public
 export enum IntervalStickiness {
     End = 2,
     Full = 3,

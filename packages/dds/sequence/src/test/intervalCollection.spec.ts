@@ -348,6 +348,33 @@ describe("SharedString interval collections", () => {
 
 				assertIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
 			});
+
+			// skipped: currently fails on main, seems unrelated to interval
+			// stickiness
+			it.skip("...", () => {
+				sharedString.insertText(0, "ABC");
+				sharedString.insertText(0, "D");
+				sharedString.removeRange(0, 1);
+				const collection = sharedString.getIntervalCollection("test");
+				collection.add(0, 0, IntervalType.SlideOnRemove, undefined, IntervalStickiness.End);
+				sharedString.removeRange(0, 1);
+				collection.add(0, 0, IntervalType.SlideOnRemove, undefined, IntervalStickiness.End);
+				sharedString.removeRange(0, 1);
+				sharedString.removeRange(0, 1);
+				sharedString.insertText(0, "EFGHIJK");
+				sharedString.insertText(0, "LMNO");
+				containerRuntimeFactory.processAllMessages();
+				sharedString.insertText(0, "P");
+				collection.add(
+					7,
+					11,
+					IntervalType.SlideOnRemove,
+					undefined,
+					IntervalStickiness.End,
+				);
+				sharedString.removeRange(11, 12);
+				containerRuntimeFactory.processAllMessages();
+			});
 		});
 
 		describe("remain consistent on double-delete", () => {
