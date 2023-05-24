@@ -59,12 +59,8 @@ import {
 	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
-import {
-	convertGenericChange,
-	GenericChangeset,
-	genericFieldKind,
-	newGenericChangeset,
-} from "./genericFieldKind";
+import { convertGenericChange, genericFieldKind, newGenericChangeset } from "./genericFieldKind";
+import { GenericChangeset } from "./genericFieldKindTypes";
 import { makeModularChangeCodecFamily } from "./modularChangeCodecs";
 
 /**
