@@ -103,6 +103,9 @@ function buildTreeSchema(
 		return treeSchema;
 	}
 	const splitTypeId = TypeIdHelper.extractContext(type);
+	if (splitTypeId.typeid === basePropertyType) {
+		splitTypeId.typeid = nodePropertyType;
+	}
 	if (splitTypeId.context === "single") {
 		if (TypeIdHelper.isPrimitiveType(splitTypeId.typeid)) {
 			treeSchema = treeSchemaMap.get(splitTypeId.typeid);
