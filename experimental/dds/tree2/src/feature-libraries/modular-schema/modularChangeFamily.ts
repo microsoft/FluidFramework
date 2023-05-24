@@ -678,27 +678,6 @@ export class ModularChangeFamily
 		return rebasedFields;
 	}
 
-	/**
-	 * Returns the change in constraintState for a given state change and node existence constraint.
-	 * @param existenceStateChange - If the node was Deleted, Revived, or Unchanged
-	 * @param violated - If the constraint is already violated
-	 * @returns 1 if constraint was violated, -1 if it was fixed, 0 in all other cases
-	 */
-	private existenceConstraintDelta(
-		existenceStateChange: NodeExistenceStateChange,
-		violated: boolean,
-	) {
-		if (existenceStateChange === NodeExistenceStateChange.Deleted && !violated) {
-			// Increase violation count if constraint hasn't already been violated and the node is being deleted
-			return 1;
-		} else if (existenceStateChange === NodeExistenceStateChange.Revived && violated) {
-			// Decrement violation count if constraint was previously violated and is fixed by revival
-			return -1;
-		}
-
-		return 0;
-	}
-
 	private rebaseNodeChange(
 		change: NodeChangeset | undefined,
 		over: TaggedChange<NodeChangeset | undefined>,
@@ -758,15 +737,15 @@ export class ModularChangeFamily
 		// We only care if a violated constraint is fixed or if a non-violated
 		// constraint becomes violated
 		if (rebasedChange.valueConstraint !== undefined && over.change?.valueChange !== undefined) {
-			const violatedByOver =
+			const violatedAfter =
 				over.change.valueChange.value !== rebasedChange.valueConstraint.value;
 
-			if (rebasedChange.valueConstraint.violated !== violatedByOver) {
+			if (rebasedChange.valueConstraint.violated !== violatedAfter) {
 				rebasedChange.valueConstraint = {
 					...rebasedChange.valueConstraint,
-					violated: violatedByOver,
+					violated: violatedAfter,
 				};
-				constraintState.violationCount += violatedByOver ? 1 : -1;
+				constraintState.violationCount += violatedAfter ? 1 : -1;
 			}
 		}
 
@@ -775,19 +754,15 @@ export class ModularChangeFamily
 			rebasedChange.nodeExistsConstraint !== undefined &&
 			existenceStateChange !== NodeExistenceStateChange.Unchanged
 		) {
-			const constraintDelta = this.existenceConstraintDelta(
-				existenceStateChange,
-				rebasedChange.nodeExistsConstraint.violated,
-			);
+			const violatedAfter = existenceStateChange === NodeExistenceStateChange.Deleted;
 
-			// Update the constraint if it was violated or fixed
-			if (constraintDelta === -1) {
-				rebasedChange.nodeExistsConstraint.violated = false;
-			} else if (constraintDelta === 1) {
-				rebasedChange.nodeExistsConstraint.violated = true;
+			if (rebasedChange.nodeExistsConstraint.violated !== violatedAfter) {
+				rebasedChange.nodeExistsConstraint = {
+					...rebasedChange.nodeExistsConstraint,
+					violated: violatedAfter,
+				};
+				constraintState.violationCount += violatedAfter ? 1 : -1;
 			}
-
-			constraintState.violationCount += constraintDelta;
 		}
 
 		if (isEmptyNodeChangeset(rebasedChange)) {
