@@ -158,7 +158,7 @@ function startReferenceSlidingPreference(stickiness?: IntervalStickiness): Slidi
 	}
 
 	// if any start stickiness, prefer sliding backwards
-	return stickiness & IntervalStickiness.Start
+	return stickiness & IntervalStickiness.START
 		? SlidingPreference.BACKWARD
 		: SlidingPreference.FORWARD;
 }
@@ -170,7 +170,7 @@ function endReferenceSlidingPreference(stickiness?: IntervalStickiness): Sliding
 	}
 
 	// if any end stickiness, prefer sliding forwards
-	return stickiness & IntervalStickiness.End
+	return stickiness & IntervalStickiness.END
 		? SlidingPreference.FORWARD
 		: SlidingPreference.BACKWARD;
 }
@@ -227,29 +227,35 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
  * Determines how an interval should expand when segments are inserted adjacent
  * to the range it spans
  */
-export enum IntervalStickiness {
+export const IntervalStickiness = {
 	/**
 	 * Interval does not expand to include adjacent segments
 	 */
-	None = 0b00,
+	NONE: 0b00,
 
 	/**
 	 * Interval expands to include segments inserted adjacent to the start
 	 */
-	Start = 0b01,
+	START: 0b01,
 
 	/**
 	 * Interval expands to include segments inserted adjacent to the end
 	 *
 	 * This is the default stickiness
 	 */
-	End = 0b10,
+	END: 0b10,
 
 	/**
 	 * Interval expands to include all segments inserted adjacent to it
 	 */
-	Full = Start | End,
-}
+	FULL: 0b11,
+} as const;
+
+/**
+ * Determines how an interval should expand when segments are inserted adjacent
+ * to the range it spans
+ */
+export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
@@ -685,7 +691,7 @@ export class SequenceInterval implements ISerializableInterval {
 		end: number,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		stickiness: IntervalStickiness = IntervalStickiness.End,
+		stickiness: IntervalStickiness = IntervalStickiness.END,
 	) {
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
@@ -834,7 +840,7 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
-	stickiness: IntervalStickiness = IntervalStickiness.End,
+	stickiness: IntervalStickiness = IntervalStickiness.END,
 ): SequenceInterval {
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;
