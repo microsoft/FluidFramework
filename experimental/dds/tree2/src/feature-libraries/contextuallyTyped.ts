@@ -457,7 +457,18 @@ export function applyTypesFromContext(
 			0x4d6 /* array data reported comparable with the schema without a primary field */,
 		);
 		const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
-		return { value: undefined, type, fields: new Map([[primary.key, children]]) };
+		// TODO: alternatively, one could allow sequence fields to have no children in `chunkField`. tbd.
+		// As primary fields have special meaning, by setting `root.foo = []` one might assume that
+		// an array index (i.e. the primary field) is not empty anymore,
+		// in contrast to the sequence fields, for which the content setter makes `foo` to be "really" non-existent.
+		// This fix makes primary fields to be non-existent as well,
+		// BUT, if such semantics is not desirable, one might consider to change the `chunkField` function instead,
+		// where the field to be chunked is currently asserted to have at least one child node.
+		return {
+			value: undefined,
+			type,
+			fields: children.length ? new Map([[primary.key, children]]) : new Map(),
+		};
 	} else {
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const key of fieldKeysFromData(data)) {

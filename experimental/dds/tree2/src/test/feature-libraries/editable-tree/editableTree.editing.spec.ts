@@ -31,9 +31,9 @@ import {
 	getPrimaryField,
 	SchemaBuilder,
 	FieldKindTypes,
-	typeSymbol,
 	TypedSchemaCollection,
 	GlobalFieldSchema,
+	TreeSchema,
 } from "../../../feature-libraries";
 import { TestTreeProviderLite } from "../../utils";
 import {
@@ -52,6 +52,7 @@ import {
 	phonesSchema,
 	personJsonableTree,
 	personSchemaLibrary,
+	arraySchema,
 } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
@@ -60,7 +61,10 @@ const globalFieldSymbol = symbolFromKey(globalFieldKey);
 const localFieldKey: LocalFieldKey = brand("foo");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
-function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
+function getTestSchema<Kind extends FieldKindTypes>(
+	fieldKind: Kind,
+	fieldType: TreeSchema = stringSchema,
+) {
 	const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
 	const globalField = builder.globalField(
 		globalFieldKey,
@@ -68,7 +72,7 @@ function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
 	);
 	const rootNodeSchema = builder.object("Test", {
 		local: {
-			[localFieldKey]: SchemaBuilder.field(fieldKind, stringSchema),
+			[localFieldKey]: SchemaBuilder.field(fieldKind, fieldType),
 		},
 		globalFields: [globalFieldKey],
 		value: ValueSchema.Serializable,
@@ -154,26 +158,6 @@ describe("editable-tree: editing", () => {
 		// Map<String>
 		maybePerson.friends = { Anna: "Anna" };
 		maybePerson.friends.John = "John";
-
-		maybePerson.address = {
-			zip: 345,
-			phones: [],
-		};
-		// check that phones is an empty array
-		{
-			const person = trees[0].root as Person;
-			assert(isEditableTree(person.address));
-			const primaryNode = person.address[getField](brand("phones")).getNode(0);
-			const primary = getPrimaryField(primaryNode[typeSymbol]);
-			assert(primary !== undefined);
-			const primaryField = primaryNode[getField](primary.key);
-			assert.deepEqual(primaryField.fieldSchema, primary.schema);
-			assert.equal(primaryField.length, 0);
-		}
-		// delete field with an empty array child
-		assert.doesNotThrow(() => {
-			delete maybePerson.address;
-		});
 
 		maybePerson.address = {
 			zip: 345,
@@ -762,4 +746,17 @@ describe("editable-tree: editing", () => {
 			});
 		});
 	}
+
+	it("assignment and deletion of empty primary fields", () => {
+		const view = createSharedTreeView().schematize({
+			schema: getTestSchema(FieldKinds.optional, arraySchema),
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: {},
+		});
+		const root = view.root;
+		assert(isEditableTree(root));
+		root.foo = [];
+		assert.deepEqual([...root.foo], []);
+		delete root.foo;
+	});
 });
