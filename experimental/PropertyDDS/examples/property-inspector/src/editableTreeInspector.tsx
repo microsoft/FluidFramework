@@ -163,7 +163,11 @@ const tableProps: Partial<IInspectorTableProps> = {
 				field.content = isSequenceField(field) ? [newNodeData] : newNodeData;
 			} else {
 				assert(isEditableField(parent), "expected field");
-				parent.insertNodes(Number(name), [getNewNodeData(sharedTree, typeName)]);
+				if (isSequenceField(parent)) {
+					parent.insertNodes(Number(name), [getNewNodeData(sharedTree, typeName)]);
+				} else {
+					parent.content = getNewNodeData(sharedTree, typeName);
+				}
 			}
 		} catch (e) {
 			console.error(e);
