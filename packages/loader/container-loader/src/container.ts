@@ -29,12 +29,16 @@ import {
 	IFluidCodeDetails,
 	isFluidCodeDetails,
 	IBatchMessage,
+	ICodeDetailsLoader,
+	IHostLoader,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IDocumentService,
+	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IResolvedUrl,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import {
 	readAndParse,
@@ -82,7 +86,7 @@ import { ContainerContext } from "./containerContext";
 import { ReconnectMode, IConnectionManagerFactoryArgs, getPackageName } from "./contracts";
 import { DeltaManager, IConnectionArgs } from "./deltaManager";
 import { DeltaManagerProxy } from "./deltaManagerProxy";
-import { ILoaderOptions, Loader, RelativeLoader } from "./loader";
+import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader";
 import { pkgVersion } from "./packageVersion";
 import {
 	ContainerStorageAdapter,
@@ -115,15 +119,7 @@ const savedContainerEvent = "saved";
 /**
  * @internal
  */
-export interface IContainerLoadOptions {
-	/**
-	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
-	 */
-	canReconnect?: boolean;
-	/**
-	 * Client details provided in the override will be merged over the default client.
-	 */
-	clientDetailsOverride?: IClientDetails;
+export interface IContainerLoadProps {
 	resolvedUrl: IResolvedUrl;
 	/**
 	 * Control which snapshot version to load from.  See IParsedUrl for detailed information.
@@ -133,21 +129,68 @@ export interface IContainerLoadOptions {
 	 * Loads the Container in paused state if true, unpaused otherwise.
 	 */
 	loadMode?: IContainerLoadMode;
+
+	/**
+	 * The pending state serialized from a pervious container instance
+	 */
+	pendingLocalState?: IPendingContainerState;
 }
 
 /**
  * @internal
  */
-export interface IContainerConfig {
+export interface IContainerCreateProps {
+	resolvedUrl?: IResolvedUrl;
+	/**
+	 * Disables the Container from reconnecting if false, allows reconnect otherwise.
+	 */
 	canReconnect?: boolean;
 	/**
 	 * Client details provided in the override will be merged over the default client.
 	 */
 	clientDetailsOverride?: IClientDetails;
+
 	/**
-	 * Serialized state from a previous instance of this container
+	 * The url resolver used by the loader for resolving external urls
+	 * into Fluid urls such that the container specified by the
+	 * external url can be loaded.
 	 */
-	serializedContainerState?: IPendingContainerState;
+	readonly urlResolver: IUrlResolver;
+	/**
+	 * The document service factory take the Fluid url provided
+	 * by the resolved url and constructs all the necessary services
+	 * for communication with the container's server.
+	 */
+	readonly documentServiceFactory: IDocumentServiceFactory;
+	/**
+	 * The code loader handles loading the necessary code
+	 * for running a container once it is loaded.
+	 */
+	readonly codeLoader: ICodeDetailsLoader;
+
+	/**
+	 * A property bag of options used by various layers
+	 * to control features
+	 */
+	readonly options: ILoaderOptions;
+
+	/**
+	 * Scope is provided to all container and is a set of shared
+	 * services for container's to integrate with their host environment.
+	 */
+	readonly scope: FluidObject;
+
+	/**
+	 * The logger downstream consumers should construct their loggers from
+	 */
+	readonly subLogger: ITelemetryLogger;
+
+	/**
+	 * Blobs storage for detached containers.
+	 */
+	readonly detachedBlobStorage?: IDetachedBlobStorage;
+
+	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
 }
 
 /**
@@ -299,39 +342,40 @@ export class Container
 {
 	public static version = "^0.1.0";
 
+	public static async clone(
+		container: Container,
+		loadParams: IContainerLoadProps,
+		createParamOverrides: Partial<IContainerCreateProps>,
+	) {
+		return this.load(loadParams, {
+			...container.createParams,
+			...createParamOverrides,
+		});
+	}
+
 	/**
 	 * Load an existing container.
 	 * @internal
 	 */
 	public static async load(
-		loader: Loader,
-		loadOptions: IContainerLoadOptions,
-		pendingLocalState?: IPendingContainerState,
-		protocolHandlerBuilder?: ProtocolHandlerBuilder,
+		loadParams: IContainerLoadProps,
+		createParams: IContainerCreateProps,
 	): Promise<Container> {
-		const container = new Container(
-			loader,
-			{
-				clientDetailsOverride: loadOptions.clientDetailsOverride,
-				canReconnect: loadOptions.canReconnect,
-				serializedContainerState: pendingLocalState,
-			},
-			protocolHandlerBuilder,
-		);
+		const { version, pendingLocalState, loadMode, resolvedUrl } = loadParams;
+
+		const container = new Container(createParams, loadParams);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
 			{ eventName: "Load" },
 			async (event) =>
 				new Promise<Container>((resolve, reject) => {
-					const version = loadOptions.version;
-
 					const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
 					// if we have pendingLocalState, anything we cached is not useful and we shouldn't wait for connection
 					// to return container, so ignore this value and use undefined for opsBeforeReturn
 					const mode: IContainerLoadMode = pendingLocalState
-						? { ...(loadOptions.loadMode ?? defaultMode), opsBeforeReturn: undefined }
-						: loadOptions.loadMode ?? defaultMode;
+						? { ...(loadMode ?? defaultMode), opsBeforeReturn: undefined }
+						: loadMode ?? defaultMode;
 
 					const onClosed = (err?: ICriticalContainerError) => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -342,13 +386,13 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(version, mode, loadOptions.resolvedUrl, pendingLocalState)
+						.load(version, mode, resolvedUrl, pendingLocalState)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
 						.then(
 							(props) => {
-								event.end({ ...props, ...loadOptions.loadMode });
+								event.end({ ...props, ...loadMode });
 								resolve(container);
 							},
 							(error) => {
@@ -369,11 +413,10 @@ export class Container
 	 * Create a new container in a detached state.
 	 */
 	public static async createDetached(
-		loader: Loader,
+		createParams: IContainerCreateProps,
 		codeDetails: IFluidCodeDetails,
-		protocolHandlerBuilder?: ProtocolHandlerBuilder,
 	): Promise<Container> {
-		const container = new Container(loader, {}, protocolHandlerBuilder);
+		const container = new Container(createParams);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -391,11 +434,10 @@ export class Container
 	 * snapshot from a previous detached container.
 	 */
 	public static async rehydrateDetachedFromSnapshot(
-		loader: Loader,
+		createParams: IContainerCreateProps,
 		snapshot: string,
-		protocolHandlerBuilder?: ProtocolHandlerBuilder,
 	): Promise<Container> {
-		const container = new Container(loader, {}, protocolHandlerBuilder);
+		const container = new Container(createParams);
 
 		return PerformanceEvent.timedExecAsync(
 			container.mc.logger,
@@ -631,17 +673,17 @@ export class Container
 	}
 
 	private get serviceFactory() {
-		return this.loader.services.documentServiceFactory;
+		return this.createParams.documentServiceFactory;
 	}
 	private get urlResolver() {
-		return this.loader.services.urlResolver;
+		return this.createParams.urlResolver;
 	}
 	public readonly options: ILoaderOptions;
 	private get scope() {
-		return this.loader.services.scope;
+		return this.createParams.scope;
 	}
 	private get codeLoader() {
-		return this.loader.services.codeLoader;
+		return this.createParams.codeLoader;
 	}
 
 	/**
@@ -683,9 +725,8 @@ export class Container
 	 * @internal
 	 */
 	constructor(
-		private readonly loader: Loader,
-		config: IContainerConfig,
-		private readonly protocolHandlerBuilder?: ProtocolHandlerBuilder,
+		private readonly createParams: IContainerCreateProps,
+		loadParams?: IContainerLoadProps,
 	) {
 		super((name, error) => {
 			this.mc.logger.sendErrorEvent(
@@ -697,9 +738,9 @@ export class Container
 			);
 		});
 
-		this.clientDetailsOverride = config.clientDetailsOverride;
-		if (config.canReconnect !== undefined) {
-			this._canReconnect = config.canReconnect;
+		this.clientDetailsOverride = createParams.clientDetailsOverride;
+		if (createParams.canReconnect !== undefined) {
+			this._canReconnect = createParams.canReconnect;
 		}
 
 		// Create logger for data stores to use
@@ -710,7 +751,7 @@ export class Container
 		}`;
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
-		this.subLogger = ChildLogger.create(loader.services.subLogger, undefined, {
+		this.subLogger = ChildLogger.create(createParams.subLogger, undefined, {
 			all: {
 				clientType, // Differentiating summarizer container from main container
 				containerId: uuid(),
@@ -718,7 +759,7 @@ export class Container
 				containerAttachState: () => this._attachState,
 				containerLifecycleState: () => this._lifecycleState,
 				containerConnectionState: () => ConnectionState[this.connectionState],
-				serializedContainer: config.serializedContainerState !== undefined,
+				serializedContainer: loadParams?.pendingLocalState !== undefined,
 			},
 			// we need to be judicious with our logging here to avoid generating too much data
 			// all data logged here should be broadly applicable, and not specific to a
@@ -748,7 +789,7 @@ export class Container
 		// all clients that were loaded from the same loader (including summarizer clients).
 		// Tracking alternative ways to handle this in AB#4129.
 		this.options = {
-			...this.loader.services.options,
+			...this.createParams.options,
 		};
 
 		this._deltaManager = this.createDeltaManager();
@@ -771,7 +812,7 @@ export class Container
 					}
 				},
 				shouldClientJoinWrite: () => this._deltaManager.connectionManager.shouldJoinWrite(),
-				maxClientLeaveWaitTime: this.loader.services.options.maxClientLeaveWaitTime,
+				maxClientLeaveWaitTime: this.createParams.options.maxClientLeaveWaitTime,
 				logConnectionIssue: (
 					eventName: string,
 					category: TelemetryEventCategory,
@@ -808,7 +849,7 @@ export class Container
 				},
 			},
 			this.deltaManager,
-			config.serializedContainerState?.clientId,
+			loadParams?.pendingLocalState?.clientId,
 		);
 
 		this.on(savedContainerEvent, () => {
@@ -827,12 +868,12 @@ export class Container
 		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
 		const forceEnableSummarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			this.loader.services.options.summarizeProtocolTree;
+			this.createParams.options.summarizeProtocolTree;
 
 		this.storageAdapter = new ContainerStorageAdapter(
-			this.loader.services.detachedBlobStorage,
+			this.createParams.detachedBlobStorage,
 			this.mc.logger,
-			config.serializedContainerState?.snapshotBlobs,
+			loadParams?.pendingLocalState?.snapshotBlobs,
 			addProtocolSummaryIfMissing,
 			forceEnableSummarizeProtocolTree,
 		);
@@ -1038,8 +1079,8 @@ export class Container
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 		if (
-			this.loader.services.detachedBlobStorage &&
-			this.loader.services.detachedBlobStorage.size > 0
+			this.createParams.detachedBlobStorage &&
+			this.createParams.detachedBlobStorage.size > 0
 		) {
 			combinedSummary.tree[".hasAttachmentBlobs"] = {
 				type: SummaryType.Blob,
@@ -1070,8 +1111,8 @@ export class Container
 
 				// If attachment blobs were uploaded in detached state we will go through a different attach flow
 				const hasAttachmentBlobs =
-					this.loader.services.detachedBlobStorage !== undefined &&
-					this.loader.services.detachedBlobStorage.size > 0;
+					this.createParams.detachedBlobStorage !== undefined &&
+					this.createParams.detachedBlobStorage.size > 0;
 
 				try {
 					assert(
@@ -1129,7 +1170,7 @@ export class Container
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
 						assert(
-							!!this.loader.services.detachedBlobStorage,
+							!!this.createParams.detachedBlobStorage,
 							0x24e /* "assertion for type narrowing" */,
 						);
 
@@ -1137,13 +1178,14 @@ export class Container
 						// support blob handles that only know about the local IDs
 						const redirectTable = new Map<string, string>();
 						// if new blobs are added while uploading, upload them too
-						while (redirectTable.size < this.loader.services.detachedBlobStorage.size) {
-							const newIds = this.loader.services.detachedBlobStorage
+						while (redirectTable.size < this.createParams.detachedBlobStorage.size) {
+							const newIds = this.createParams.detachedBlobStorage
 								.getBlobIds()
 								.filter((id) => !redirectTable.has(id));
 							for (const id of newIds) {
-								const blob =
-									await this.loader.services.detachedBlobStorage.readBlob(id);
+								const blob = await this.createParams.detachedBlobStorage.readBlob(
+									id,
+								);
 								const response = await this.storageAdapter.createBlob(blob);
 								redirectTable.set(id, response.id);
 							}
@@ -1580,8 +1622,8 @@ export class Container
 	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
 		if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
 			assert(
-				!!this.loader.services.detachedBlobStorage &&
-					this.loader.services.detachedBlobStorage.size > 0,
+				!!this.createParams.detachedBlobStorage &&
+					this.createParams.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
 			delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
@@ -1679,7 +1721,7 @@ export class Container
 		quorumSnapshot: IQuorumSnapshot,
 	): void {
 		const protocolHandlerBuilder =
-			this.protocolHandlerBuilder ??
+			this.createParams.protocolHandlerBuilder ??
 			((...args) => new ProtocolHandler(...args, new Audience()));
 		const protocol = protocolHandlerBuilder(attributes, quorumSnapshot, (key, value) =>
 			this.submitMessage(MessageType.Propose, JSON.stringify({ key, value })),
@@ -2152,7 +2194,8 @@ export class Container
 
 		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
 		// are set. Global requests will still go directly to the loader
-		const loader = new RelativeLoader(this, this.loader);
+		const maybeLoader: FluidObject<IHostLoader> = this.scope;
+		const loader = new RelativeLoader(this, maybeLoader.ILoader);
 		this._context = await ContainerContext.createOrLoad(
 			this,
 			this.scope,
