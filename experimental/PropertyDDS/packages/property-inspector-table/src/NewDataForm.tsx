@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
+	Any,
 	getPrimaryField,
 	isEditableField,
 	isEditableTree,
@@ -260,6 +261,7 @@ export const NewDataForm: React.FunctionComponent<INewDataFormProps> = (props) =
 				const parentTypes = PropertyFactory.getAllParentsForTemplate(typ.value);
 				if (
 					parentTypeId === undefined ||
+					parentTypeId === Any ||
 					typ.value === parentTypeId ||
 					parentTypes.includes(parentTypeId)
 				) {

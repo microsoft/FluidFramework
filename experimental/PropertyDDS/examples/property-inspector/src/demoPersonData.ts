@@ -65,7 +65,7 @@ export const personPropertyDDSSchemas = {
 			{ id: "salary", typeid: "Float64", optional: true },
 			{ id: "address", typeid: "Test:Address-1.0.0", optional: true },
 			{ id: "friends", typeid: "String", context: "map", optional: true },
-			{ id: "misc", typeid: "NodeProperty", optional: true },
+			{ id: "misc", optional: true, context: "array" },
 		],
 	},
 };
@@ -156,5 +156,15 @@ export function getPerson(): Person {
 				},
 			],
 		},
+		misc: [
+			{
+				[typeNameSymbol]: stringSchemaName,
+				[valueSymbol]: "sad",
+			},
+			{
+				[typeNameSymbol]: int32SchemaName,
+				[valueSymbol]: 104,
+			},
+		],
 	} as unknown as Person; // TODO: fix up these strong types to reflect unwrapping
 }

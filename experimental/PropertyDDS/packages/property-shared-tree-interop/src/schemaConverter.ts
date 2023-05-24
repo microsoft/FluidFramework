@@ -98,20 +98,13 @@ function buildTreeSchema(
 	typesChildren: ReadonlyMap<string, ReadonlySet<string>>,
 	type: string,
 ): TreeSchema | (() => TreeSchema) {
-	let treeSchema = treeSchemaMap.get(type);
-	if (treeSchema) {
-		return treeSchema;
-	}
 	const splitTypeId = TypeIdHelper.extractContext(type);
-	if (splitTypeId.typeid === basePropertyType) {
-		splitTypeId.typeid = nodePropertyType;
-	}
 	if (splitTypeId.context === "single") {
+		let treeSchema = treeSchemaMap.get(splitTypeId.typeid);
+		if (treeSchema) {
+			return treeSchema;
+		}
 		if (TypeIdHelper.isPrimitiveType(splitTypeId.typeid)) {
-			treeSchema = treeSchemaMap.get(splitTypeId.typeid);
-			if (treeSchema) {
-				return treeSchema;
-			}
 			let value: ValueSchema;
 			if (splitTypeId.isEnum) {
 				value = ValueSchema.Number;
@@ -200,26 +193,36 @@ function buildTreeSchema(
 			}
 		}
 	} else {
-		assert(splitTypeId.typeid !== "" && splitTypeId.typeid !== basePropertyType, "Not allowed");
+		const anyType =
+			TypeIdHelper.extractTypeId(type) === "" && splitTypeId.typeid === basePropertyType;
+		const currentTypeid = `${splitTypeId.context}<${anyType ? Any : splitTypeId.typeid}>`;
+		const treeSchema = treeSchemaMap.get(currentTypeid);
+		if (treeSchema) {
+			return treeSchema;
+		}
+		assert(
+			splitTypeId.typeid !== "" && (splitTypeId.typeid !== basePropertyType || anyType),
+			"Not allowed",
+		);
 		const fieldKind =
 			splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
 		const cache: { treeSchema?: TreeSchema | (() => TreeSchema) } = {};
-		treeSchemaMap.set(type, () => cache.treeSchema as TreeSchema);
+		treeSchemaMap.set(currentTypeid, () => cache.treeSchema as TreeSchema);
 		const fieldType = buildFieldSchema(
 			builder,
 			treeSchemaMap,
 			typesChildren,
 			fieldKind,
-			splitTypeId.typeid,
+			anyType ? Any : splitTypeId.typeid,
 		);
 		switch (splitTypeId.context) {
 			case "map":
 			case "set": {
-				cache.treeSchema = builder.object(type, { extraLocalFields: fieldType });
+				cache.treeSchema = builder.object(currentTypeid, { extraLocalFields: fieldType });
 				return cache.treeSchema;
 			}
 			case "array": {
-				cache.treeSchema = builder.object(type, {
+				cache.treeSchema = builder.object(currentTypeid, {
 					local: {
 						[EmptyKey]: fieldType,
 					},
