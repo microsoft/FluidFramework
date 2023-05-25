@@ -158,6 +158,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     get attached(): boolean;
     // @internal (undocumented)
     attachGraph(client: Client, label: string): void;
+    attachIndex(index: IntervalIndex<TInterval>): void;
     change(id: string, start?: number, end?: number): TInterval | undefined;
     changeProperties(id: string, props: PropertySet): void;
     // (undocumented)
@@ -168,6 +169,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     CreateForwardIteratorWithEndPosition(endPosition: number): IntervalCollectionIterator<TInterval>;
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): IntervalCollectionIterator<TInterval>;
+    detachIndex(index: IntervalIndex<TInterval>): boolean;
     // (undocumented)
     findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
@@ -194,6 +196,12 @@ export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 
 // @public @deprecated (undocumented)
 export type IntervalConflictResolver<TInterval> = (a: TInterval, b: TInterval) => TInterval;
+
+// @public
+export interface IntervalIndex<TInterval extends ISerializableInterval> {
+    add(interval: TInterval): void;
+    remove(interval: TInterval): void;
+}
 
 // @public
 export interface IntervalLocator {
