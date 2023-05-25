@@ -161,6 +161,7 @@ export { IJSONTextSegment, IMergeTreeTextHelper, TextSegment } from "./textSegme
 export {
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
+	isMergeTreeDeltaRevertible,
 	MergeTreeDeltaRevertible,
 	MergeTreeRevertibleDriver,
 	revertMergeTreeDeltaRevertibles,
