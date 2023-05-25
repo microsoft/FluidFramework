@@ -239,7 +239,7 @@ describe("EditManager", () => {
 		]);
 
 		describe("Trunk eviction", () => {
-			function localCommit(
+			function applyLocalCommit(
 				manager: EditManager<
 					ChangeFamilyEditor,
 					TestChange,
@@ -260,7 +260,7 @@ describe("EditManager", () => {
 			}
 
 			function peerCommit(
-				peer = localSessionId,
+				peer: typeof peer1 | typeof peer2,
 				inputContext: readonly number[] = [],
 				intention: number | number[] = [],
 			): Commit<TestChange> {
@@ -274,7 +274,7 @@ describe("EditManager", () => {
 			it("Evicts trunk commits according to a provided minimum sequence number", () => {
 				const { manager } = editManagerFactory({});
 				for (let i = 0; i < 10; ++i) {
-					manager.addSequencedChange(localCommit(manager), brand(i), brand(i - 1));
+					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 				}
 
 				assert.equal(manager.getTrunkChanges().length, 10);
@@ -283,7 +283,7 @@ describe("EditManager", () => {
 				manager.advanceMinimumSequenceNumber(brand(10));
 				assert.equal(manager.getTrunkChanges().length, 0);
 				for (let i = 10; i < 20; ++i) {
-					manager.addSequencedChange(localCommit(manager), brand(i), brand(i - 1));
+					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
 				}
 
 				assert.equal(manager.getTrunkChanges().length, 10);
@@ -295,16 +295,16 @@ describe("EditManager", () => {
 
 			it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
 				const { manager } = editManagerFactory({});
-				manager.addSequencedChange(localCommit(manager), brand(1), brand(0));
+				manager.addSequencedChange(applyLocalCommit(manager), brand(1), brand(0));
 				assert.equal(manager.getTrunkChanges().length, 1);
-				manager.addSequencedChange(localCommit(manager), brand(2), brand(1));
+				manager.addSequencedChange(applyLocalCommit(manager), brand(2), brand(1));
 				assert.equal(manager.getTrunkChanges().length, 2);
 				manager.advanceMinimumSequenceNumber(brand(1));
 				assert.equal(manager.getTrunkChanges().length, 2);
 
 				// If a change's sequence number is also the minimum sequence number,
 				// it should not be evicted
-				manager.addSequencedChange(localCommit(manager), brand(3), brand(3));
+				manager.addSequencedChange(applyLocalCommit(manager), brand(3), brand(3));
 				assert.equal(manager.getTrunkChanges().length, 3);
 				manager.advanceMinimumSequenceNumber(brand(3));
 				assert.equal(manager.getTrunkChanges().length, 1);
@@ -313,23 +313,24 @@ describe("EditManager", () => {
 			it("Rebases peer branches during trunk eviction", () => {
 				// This is a regression test that ensures peer branches are rebased up to at least the new tail of the trunk after trunk commits are evicted.
 				const { manager } = editManagerFactory({});
-				// We receive a commit from a peer.
+				// First, we receive a commit from a peer ("1").
 				manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0));
-				// We submit and ack a local commit.
-				// This prevents the upcoming rebase of the peer branch from hitting an eager fast-path that keeps it on the head of the trunk.
-				manager.addSequencedChange(localCommit(manager, [1], 2), brand(2), brand(1));
-				// We receive a second commit from the peer.
+				// We then submit and ack a local commit ("2").
+				// This prevents an upcoming rebase of the peer branch from hitting an eager fast-path that keeps the branch caught up to the head of the trunk.
+				manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(2), brand(1));
+				// We receive a second commit from the peer ("3").
 				// Based on the ref seq number, we know that the peer is lagging "behind" by two commits,
-				// i.e. it has sent a second op without receiving its first op or our local op just above.
+				// i.e. it has sent a second op without receiving its first op ("1") or the local op ("2") that we applied just above.
 				manager.addSequencedChange(peerCommit(peer1, [1], 3), brand(3), brand(0));
+				// Our trunk should have all the commits we've sequenced so far.
+				checkChangeList(manager, [1, 2, 3]);
 				// Suppose that the peer catches up, and we are informed of the new minimum sequence number via some means (e.g. an op).
 				manager.advanceMinimumSequenceNumber(brand(3));
-				// We expect the trunk to now contain commits "3" and "4" (the first two commits "1" and "2" have been evicted)...
+				// Eviction ocurred, so we now expect the trunk to contain only commit "3" (the first two commits "1" and "2" were evicted).
 				checkChangeList(manager, [3]);
-				// ...and we also expect our copy of the peer's local branch to be updated,
-				// even though we have not received any new commits from that peer since commit "3".
+				// We also expect our copy of the peer's local branch to be updated even though we have not received any new commits from that peer since commit "3".
 				// We can check this by receiving another commit from our peer.
-				// The rebase will fail if the branch was not updated and was left referencing evicted commits.
+				// We'll fail when trying to rebase if the branch was not already updated and is referencing evicted commits.
 				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
 				checkChangeList(manager, [3, 4]);
 			});
