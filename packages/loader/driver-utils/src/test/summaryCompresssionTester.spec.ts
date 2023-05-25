@@ -33,7 +33,6 @@ import {
 	applyStorageCompression,
 	ICompressionStorageConfig,
 	SummaryCompressionAlgorithm,
-	SummaryCompressionProcessor,
 } from "../adapters";
 import { DocumentStorageServiceProxy } from "../documentStorageServiceProxy";
 import { snapshotTree, summaryTemplate } from "./summaryCompressionData";
@@ -70,6 +69,26 @@ function generateSummaryWithContent(contentSize: number) {
 		}
 	}
 	header["content"] = `{"value": ${contentString}}`;
+	return summary;
+}
+
+function generateSummaryWithBinaryContent(startsWith: number, contentSize: number) {
+	const summary = cloneSummary();
+	const header = (
+		(
+			((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
+				".channels"
+			] as ISummaryTree
+		).tree["7a99532d-94ec-43ac-8a53-d9f978ad4ae9"] as ISummaryTree
+	).tree.header;
+	const content = new Uint8Array(contentSize);
+	content[0] = startsWith;
+	for (let i = 1; i < contentSize; i = i + 10) {
+		for (let j = 0; j < 10; j++) {
+			content[i + j] = j;
+		}
+	}
+	header["content"] = content;
 	return summary;
 }
 
@@ -187,6 +206,8 @@ async function buildCompressionStorage(
 	}
 }
 
+const prefixForUncompressed = 0xb0;
+const prefixForLZ4 = 0xb1;
 describe("Summary Compression Test", () => {
 	it("Verify Proper Summary Generation", async () => {
 		const summary = generateSummaryWithContent(1000000);
@@ -216,21 +237,15 @@ describe("Summary Compression Test", () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.None,
 			minSizeToCompress: 763,
-			processor: SummaryCompressionProcessor.SummaryBlob,
 		};
 		const storage = await buildCompressionStorage(config);
 		checkCompressionConfig(storage, 763, SummaryCompressionAlgorithm.None);
-		assert(
-			(storage as any).adapterType === SummaryCompressionProcessor.SummaryBlob,
-			"Not summary-blob storage",
-		);
 	});
 
 	it("Verify Compressed Markup at Summary (summary-blob markup)", async () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
 			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.SummaryBlob,
 		};
 		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 		const summary = generateSummaryWithContent(1000);
@@ -246,11 +261,18 @@ describe("Summary Compression Test", () => {
 		);
 	});
 
-	it("Verify Blob Enc/Dec Symetry (summary-blob markup)", async () => {
+	it("Verify Blob Enc/Dec Symmetry (summary-blob markup)", async () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
 			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.SummaryBlob,
+		};
+		await checkEncDec(config);
+	});
+
+	it("Verify Blob Enc/Dec no-compress Symmetry (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.None,
+			minSizeToCompress: 500,
 		};
 		await checkEncDec(config);
 	});
@@ -259,38 +281,209 @@ describe("Summary Compression Test", () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
 			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.SummaryBlob,
 		};
 		await checkUploadDownloadSummary(config);
 	});
 
-	it("Verify .protocol (summary-blob markup)", async () => {
+	it("Verify Upload / Download Summary no-compress (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.None,
+			minSizeToCompress: 500,
+		};
+		await checkUploadDownloadSummary(config);
+	});
+
+	it("Verify no-compress small (summary-blob markup)", async () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
 			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.SummaryBlob,
 		};
 		const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
-		const summary = generateSummaryWithContent(1000);
+		const summary = generateSummaryWithContent(300);
 		await storage.uploadSummaryWithContext(summary, {
 			referenceSequenceNumber: 0,
 			proposalHandle: "test",
 			ackHandle: "test",
 		});
-		const content = new TextDecoder().decode(await storage.readBlob(misotestid));
-		assert(content === abcContent, "The .profile underlying blob content is not correct");
+		const originalContent = getHeaderContent(summary);
+		const content = new TextDecoder().decode(await storage.readBlob("1234"));
+		assert(
+			content === originalContent,
+			`The content is not equal to original content \n${content} \n ${originalContent}`,
+		);
 	});
-	it("Verify .protocol at Download Summary (summary-blob markup)", async () => {
+
+	it("Verify no-compress prefix (summary-blob markup)", async () => {
 		const config: ICompressionStorageConfig = {
 			algorithm: SummaryCompressionAlgorithm.LZ4,
 			minSizeToCompress: 500,
-			processor: SummaryCompressionProcessor.SummaryBlob,
 		};
-		const downloadedSummary = await checkUploadDownloadSummary(config);
-		const content = downloadedSummary.tree[".protocol"]["tree"]["misotest"]["content"];
-		assert(content === abcContent, "The .profile underlying blob content is not correct");
+		const firstOriginalByte = 0xb3;
+		const contentSize = 30;
+		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
+			firstOriginalByte,
+			contentSize,
+			config,
+		);
+		const firstByte = uploadedContent[0];
+		const secondByte = uploadedContent[1];
+		assert(
+			firstByte === prefixForUncompressed,
+			`The first byte should be ${prefixForUncompressed} but is  ${firstByte}`,
+		);
+		assert(
+			secondByte === firstOriginalByte,
+			`The second byte should be ${firstOriginalByte} but is ${secondByte}`,
+		);
+	});
+
+	it("Verify compress prefix (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+		};
+		const firstOriginalByte = 0xb3;
+		const contentSize = 800;
+		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
+			firstOriginalByte,
+			contentSize,
+			config,
+		);
+		const firstByte = uploadedContent[0];
+		assert(
+			firstByte === prefixForLZ4,
+			`The first byte should be ${prefixForLZ4} but is  ${firstByte}`,
+		);
+	});
+
+	it("Verify no-compress no-prefix (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+		};
+		const contentSize = 30;
+		await testNoPrefix(contentSize, config);
+	});
+
+	it("Verify none-algorithm no-prefix (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.None,
+			minSizeToCompress: 500,
+		};
+		const contentSize = 800;
+		await testNoPrefix(contentSize, config);
+	});
+
+	it("Verify prefix compressed (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+		};
+		const contentSize = 800;
+		await testPrefix(contentSize, config);
+	});
+
+	it("Verify prefix uncompressed small size (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+		};
+		const contentSize = 30;
+		await testPrefix(contentSize, config, 0xb0, 0xc0, prefixForUncompressed);
+	});
+
+	it("Verify prefix uncompressed algorithm none (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.None,
+			minSizeToCompress: 500,
+		};
+		const contentSize = 800;
+		await testPrefix(contentSize, config, 0xb0, 0xc0, prefixForUncompressed);
+	});
+
+	it("Verify enc / dec compressed loop (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.LZ4,
+			minSizeToCompress: 500,
+		};
+		const contentSize = 800;
+		await testEncDecBinaryLoop(contentSize, config);
+	});
+
+	it("Verify enc / dec uncompressed loop - algorithm none (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.None,
+			minSizeToCompress: 500,
+		};
+		const contentSize = 800;
+		await testEncDecBinaryLoop(contentSize, config);
+	});
+
+	it("Verify enc / dec uncompressed loop - small (summary-blob markup)", async () => {
+		const config: ICompressionStorageConfig = {
+			algorithm: SummaryCompressionAlgorithm.None,
+			minSizeToCompress: 500,
+		};
+		const contentSize = 30;
+		await testEncDecBinaryLoop(contentSize, config);
 	});
 });
+async function testNoPrefix(contentSize: number, config: ICompressionStorageConfig) {
+	for (let i = 0; i < 256; i++) {
+		if (i >= 0xb0 && i <= 0xbf) {
+			continue;
+		}
+		const firstOriginalByte = i;
+
+		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
+			firstOriginalByte,
+			contentSize,
+			config,
+		);
+		const firstByte = uploadedContent[0];
+		assert(
+			firstByte === firstOriginalByte,
+			`The first byte should be ${firstOriginalByte} but is  ${firstByte}`,
+		);
+	}
+}
+
+async function testPrefix(
+	contentSize: number,
+	config: ICompressionStorageConfig,
+	from: number = 0,
+	to: number = 256,
+	prefix: number = prefixForLZ4,
+) {
+	for (let i = from; i < to; i++) {
+		const firstOriginalByte = i;
+		const uploadedContent: ArrayBufferLike = await uploadSummaryWithBinaryContent(
+			firstOriginalByte,
+			contentSize,
+			config,
+		);
+		const firstByte = uploadedContent[0];
+		assert(firstByte === prefix, `The first byte should be ${prefix} but is  ${firstByte}`);
+	}
+}
+
+async function uploadSummaryWithBinaryContent(
+	firstOriginalByte: number,
+	contentSize: number,
+	config: ICompressionStorageConfig,
+) {
+	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
+	const summary = generateSummaryWithBinaryContent(firstOriginalByte, contentSize);
+	await storage.uploadSummaryWithContext(summary, {
+		referenceSequenceNumber: 0,
+		proposalHandle: "test",
+		ackHandle: "test",
+	});
+	const uploadedSummary = ((storage as any).service as InternalTestStorage).uploadedSummary;
+	const uploadedContent: ArrayBufferLike = getHeaderContent(uploadedSummary!);
+	return uploadedContent;
+}
+
 async function checkUploadDownloadSummary(
 	config: ICompressionStorageConfig,
 ): Promise<ISummaryTree> {
@@ -322,8 +515,51 @@ async function checkUploadDownloadSummary(
 }
 
 async function checkEncDec(config: ICompressionStorageConfig) {
-	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 	const summary = generateSummaryWithContent(1000);
+	await checkEncDecConfigurable(summary, config);
+}
+
+async function checkEncDecBinary(
+	config: ICompressionStorageConfig,
+	startsWith: number,
+	contentSize: number,
+) {
+	const summary = generateSummaryWithBinaryContent(startsWith, contentSize);
+	await checkEncDecConfigurable(summary, config, startsWith);
+}
+
+async function testEncDecBinaryLoop(
+	contentSize: number,
+	config: ICompressionStorageConfig,
+	from: number = 0,
+	to: number = 256,
+) {
+	for (let i = from; i < to; i++) {
+		const firstOriginalByte = i;
+		await checkEncDecBinary(config, firstOriginalByte, contentSize);
+	}
+}
+
+function compareTwoBlobs(blob1: ArrayBufferLike, blob2: ArrayBufferLike): boolean {
+	const blob1View = new Uint8Array(blob1);
+	const blob2View = new Uint8Array(blob2);
+	if (blob1View.length !== blob2View.length) {
+		return false;
+	}
+	for (let i = 0; i < blob1View.length; i++) {
+		if (blob1View[i] !== blob2View[i]) {
+			return false;
+		}
+	}
+	return true;
+}
+
+async function checkEncDecConfigurable(
+	summary: ISummaryTree,
+	config: ICompressionStorageConfig,
+	startsWith = -1,
+) {
+	const storage = (await buildCompressionStorage(config)) as DocumentStorageServiceProxy;
 	const originHeaderHolder: ISummaryTree = getHeaderHolder(summary);
 	const originBlob = (originHeaderHolder.tree.header as ISummaryBlob).content;
 	await storage.uploadSummaryWithContext(summary, {
@@ -332,14 +568,20 @@ async function checkEncDec(config: ICompressionStorageConfig) {
 		ackHandle: "test",
 	});
 	await storage.getSnapshotTree({ id: "test", treeId: "test" }, "test");
-	const blob: ArrayBufferLike = await storage.readBlob(
-		"ee84b67e86708c9dd7fc79ff8f3380b78f000b79",
-	);
-	const blobStr = new TextDecoder().decode(blob);
-	assert(
-		blobStr === originBlob,
-		`The origin and the downloaded blob are not the same \n\n\n${blobStr}\n\n${originBlob}`,
-	);
+	const blob: ArrayBufferLike = await storage.readBlob("abcd");
+	if (typeof originBlob === "string") {
+		const blobStr = new TextDecoder().decode(blob);
+		assert(
+			blobStr === originBlob,
+			`The origin and the downloaded blob starting with ${startsWith} are not the same \n\n\n${blobStr}\n\n${originBlob}`,
+		);
+	} else {
+		assert(
+			compareTwoBlobs(blob, originBlob),
+			`The origin and the downloaded blob are not the same \n\n\n${blob.byteLength}\n\n${originBlob.byteLength}. 
+			The first bytes are ${blob[0]} and ${originBlob[0]}`,
+		);
+	}
 }
 
 function checkCompressionConfig(

@@ -6,7 +6,6 @@
 export {
 	SummaryCompressionAlgorithm,
 	ICompressionStorageConfig,
-	SummaryCompressionProcessor,
 	DefaultCompressionStorageConfig,
 } from "./compression";
 

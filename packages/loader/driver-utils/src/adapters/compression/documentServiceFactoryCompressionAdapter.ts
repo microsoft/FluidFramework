@@ -12,6 +12,7 @@ import {
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { DocumentServiceFactoryProxy } from "../../documentServiceFactoryProxy";
 import { ICompressionStorageConfig } from "..";
+import { DocumentStorageServiceCompressionAdapter as DocumentStorageServiceSummaryBlobCompressionAdapter } from "./summaryblob";
 import { DocumentServiceCompressionAdapter } from "./documentServiceCompressionAdapter";
 
 export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFactoryProxy {
@@ -29,13 +30,11 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		if (createNewSummary !== undefined) {
-			const storageConstr = DocumentServiceCompressionAdapter.storageServiceConstructor(
-				this._config,
-			);
-			const newAppSumary = (storageConstr as any).compressSummary(
-				createNewSummary.tree[".app"] as ISummaryTree,
-				this._config,
-			);
+			const newAppSumary =
+				DocumentStorageServiceSummaryBlobCompressionAdapter.compressSummary(
+					createNewSummary.tree[".app"] as ISummaryTree,
+					this._config,
+				);
 			createNewSummary.tree[".app"] = newAppSumary;
 		}
 		const service = await this.serviceFactory.createContainer(

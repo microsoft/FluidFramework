@@ -172,8 +172,6 @@ export interface ICompressionStorageConfig {
     algorithm: SummaryCompressionAlgorithm;
     // (undocumented)
     minSizeToCompress: number;
-    // (undocumented)
-    processor: SummaryCompressionProcessor;
 }
 
 // @public
@@ -332,12 +330,6 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 
 // @public (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
-
-// @public (undocumented)
-export enum SummaryCompressionProcessor {
-    // (undocumented)
-    SummaryBlob = 1
-}
 
 // @public
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer, Uint8ArrayToString, assert } from "@fluidframework/common-utils";
+import { IsoBuffer, assert } from "@fluidframework/common-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	ISnapshotTree,
@@ -16,12 +16,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { compress, decompress } from "lz4js";
 import { DocumentStorageServiceProxy } from "../../../documentStorageServiceProxy";
-import {
-	ICompressionStorageConfig,
-	SummaryCompressionAlgorithm,
-	SummaryCompressionProcessor,
-	defaultIsUseB64OnCompressed,
-} from "../";
+import { ICompressionStorageConfig, SummaryCompressionAlgorithm } from "../";
 
 /**
  * This class is a proxy for the IDocumentStorageService that compresses and decompresses blobs in the summary.
@@ -35,18 +30,12 @@ import {
  * that the compression is not enabled and no first prefix byte is present in the blobs.
  */
 export class DocumentStorageServiceCompressionAdapter extends DocumentStorageServiceProxy {
-	public get adapterType() {
-		return SummaryCompressionProcessor.SummaryBlob;
-	}
 	private _isCompressionEnabled: boolean = false;
-	private readonly _uncompressedBlobIds: Set<string> = new Set<string>();
 	public static readonly compressionMarkupBlob = ".summary-blob-compression.enabled";
-	private static readonly uncompressedPath = ".protocol";
 
 	constructor(
 		service: IDocumentStorageService,
 		private readonly _config: ICompressionStorageConfig,
-		private readonly _isUseB64OnCompressed = defaultIsUseB64OnCompressed,
 	) {
 		super(service);
 	}
@@ -56,11 +45,25 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	}
 
 	/**
+	 * This method returns true if there is a compression markup byte in the blob, otherwise false.
+	 * @param blob - The blob to compress.
+	 * @returns - True if there is a compression markup byte in the blob, otherwise false.
+	 */
+	private static hasPrefix(blob: ArrayBufferLike): boolean {
+		const firstByte = IsoBuffer.from(blob)[0];
+		// eslint-disable-next-line no-bitwise
+		return (firstByte & 0xf0) === 0xb0;
+	}
+
+	/**
 	 * This method reads the first byte from the given blob and maps that byte to the compression algorithm.
 	 * @param blob - The maybe compressed blob.
 	 */
 	private static readAlgorithmFromBlob(blob: ArrayBufferLike): number {
-		return IsoBuffer.from(blob)[0];
+		return !this.hasPrefix(blob)
+			? SummaryCompressionAlgorithm.None
+			: // eslint-disable-next-line no-bitwise
+			  IsoBuffer.from(blob)[0] & 0x0f;
 	}
 
 	/**
@@ -70,10 +73,20 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @returns - The blob with the algorithm as the first byte.
 	 */
 	private static writeAlgorithmToBlob(blob: ArrayBufferLike, algorithm: number): ArrayBufferLike {
+		if (algorithm === SummaryCompressionAlgorithm.None) {
+			const firstByte = IsoBuffer.from(blob)[0];
+			// eslint-disable-next-line no-bitwise
+			if ((firstByte & 0xf0) !== 0xb0) {
+				return blob;
+			}
+		}
+		assert(algorithm < 0x10, "Algorithm should be less than 0x10");
 		const blobView = new Uint8Array(blob);
 		const blobLength = blobView.length;
 		const newBlob = new Uint8Array(blobLength + 1);
-		newBlob[0] = algorithm;
+		// eslint-disable-next-line no-bitwise
+		const prefix = 0xb0 | algorithm;
+		newBlob[0] = prefix;
 		newBlob.set(blobView, 1);
 		return IsoBuffer.from(newBlob);
 	}
@@ -83,9 +96,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param blob - The blob to remove the prefix from.
 	 * @returns - The blob without the prefix.
 	 */
-	private static removePrefixFromBlob(blob: ArrayBufferLike): ArrayBufferLike {
+	private static removePrefixFromBlobIfPresent(blob: ArrayBufferLike): ArrayBufferLike {
 		const blobView = new Uint8Array(blob);
-		return IsoBuffer.from(blobView.subarray(1));
+		return this.hasPrefix(blob) ? IsoBuffer.from(blobView.subarray(1)) : blob;
 	}
 
 	/**
@@ -100,67 +113,15 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	}
 
 	/**
-	 * This method tries to determine whether the given key found within the SummaryTree or SnapshotTree
-	 * means that everything under that key is uncompressed and has no algorithm byte prefix written to
-	 * the underlying blobs. If this method returns true, every blob which is found inside the sub-tree
-	 * stored under this key is considered to be uncompressed and it should be simply returned as is.
-	 * @param key - The key to check.
-	 * @returns - True if the key means that everything under it is uncompressed.
-	 */
-	private static isKeyUncompressed(key: string): boolean {
-		return key === DocumentStorageServiceCompressionAdapter.uncompressedPath;
-	}
-
-	/**
-	 * This method traverses the SnapshotTree and identifies all the blobs which are uncompressed and have
-	 * no algorithm byte prefix written to them. The method stores the blob ids of such blobs in the
-	 * _uncompressedBlobIds set.
-	 * @param snapshot - The snapshot to traverse.
-	 * @param isUncompressedPath - True if the current path is uncompressed.
-	 */
-	private identifyUncompressedBlobs(
-		snapshot: ISnapshotTree,
-		isUncompressedPath: boolean = false,
-	): void {
-		for (const key of Object.keys(snapshot.trees)) {
-			const obj = snapshot.trees[key];
-			if (DocumentStorageServiceCompressionAdapter.isKeyUncompressed(key)) {
-				this.identifyUncompressedBlobs(obj, true);
-			} else {
-				this.identifyUncompressedBlobs(obj, isUncompressedPath);
-			}
-		}
-		for (const key of Object.keys(snapshot.blobs)) {
-			const blobId = snapshot.blobs[key];
-			if (blobId !== undefined && isUncompressedPath) {
-				this._uncompressedBlobIds.add(blobId);
-			}
-		}
-	}
-
-	/**
-	 * This method returns true if the blob identified by the given blobId is uncompressed and has no algorithm
-	 * byte prefix written to it.
-	 * @param blobId - The blob id to check.
-	 * @returns - True if the blob is uncompressed.
-	 */
-	private isBlobUncompressed(blobId: string): boolean {
-		const isUncompresssed = this._uncompressedBlobIds.has(blobId);
-		return isUncompresssed;
-	}
-
-	/**
 	 * This method encodes the blob inside the given summary object of the SummaryType.Blob type using the given config
 	 * containing  the compression algorithm.
 	 * @param input - The summary object to encode.
 	 * @param config - The config containing the compression algorithm.
-	 * @param isUseB64OnCompressed - True if the compressed blob should be converted to base64 string.
 	 * @returns - The summary object with the encoded blob.
 	 */
 	private static readonly blobEncoder = (
 		input: SummaryObject,
 		config: ICompressionStorageConfig,
-		isUseB64OnCompressed: boolean = defaultIsUseB64OnCompressed,
 	): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
 			const summaryBlob: ISummaryBlob = input;
@@ -169,7 +130,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			const processed: ArrayBufferLike = DocumentStorageServiceCompressionAdapter.encodeBlob(
 				original,
 				config,
-				isUseB64OnCompressed,
 			);
 			const newSummaryBlob = {
 				type: SummaryType.Blob,
@@ -208,37 +168,28 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * This method encodes the given blob according to the given config.
 	 * @param file - The blob to encode.
 	 * @param config - The config to use for encoding.
-	 * @param isUseB64OnCompressed - True if the compressed blob should be converted to base64.
 	 * @returns - The encoded blob.
 	 */
 	private static encodeBlob(
 		file: ArrayBufferLike,
 		config: ICompressionStorageConfig,
-		isUseB64OnCompressed: boolean,
 	): ArrayBufferLike {
 		let maybeCompressed: ArrayBufferLike;
-		let finalAlgorithm = SummaryCompressionAlgorithm.None;
+		let algorithm = config.algorithm;
 		if (new Uint8Array(file).length < config.minSizeToCompress) {
 			maybeCompressed = file;
-		} else if (config.algorithm === SummaryCompressionAlgorithm.None) {
+			algorithm = SummaryCompressionAlgorithm.None;
+		} else if (algorithm === SummaryCompressionAlgorithm.None) {
 			maybeCompressed = file;
-		} else if (config.algorithm === SummaryCompressionAlgorithm.LZ4) {
-			let compressed = compress(file) as ArrayBufferLike;
-			if (isUseB64OnCompressed) {
-				// TODO: This step is now needed, it looks like the function summaryTreeUploadManager#writeSummarPyBlob
-				// fails on assertion at 2 different generations of the hash which do not lead to
-				// the same result if the ISummaryBlob.content is in the form of ArrayBufferLike
-				const compressedString = Uint8ArrayToString(IsoBuffer.from(compressed), "base64");
-				compressed = new TextEncoder().encode(compressedString);
-			}
-			finalAlgorithm = SummaryCompressionAlgorithm.LZ4;
+		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
+			const compressed = compress(file) as ArrayBufferLike;
 			maybeCompressed = compressed;
 		} else {
 			throw new Error(`Unknown Algorithm ${config.algorithm}`);
 		}
 		maybeCompressed = DocumentStorageServiceCompressionAdapter.writeAlgorithmToBlob(
 			maybeCompressed,
-			finalAlgorithm,
+			algorithm,
 		);
 		return maybeCompressed;
 	}
@@ -250,19 +201,19 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
-		let compressedEncoded = file;
-		const algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
-		const orignalBlob = this.removePrefixFromBlob(file);
+		let originalBlob;
+		let algorithm;
+		if (this.hasPrefix(file)) {
+			algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
+			originalBlob = this.removePrefixFromBlobIfPresent(file);
+		} else {
+			algorithm = SummaryCompressionAlgorithm.None;
+			originalBlob = file;
+		}
 		if (algorithm === SummaryCompressionAlgorithm.None) {
-			decompressed = orignalBlob;
+			decompressed = originalBlob;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			try {
-				decompressed = decompress(compressedEncoded) as ArrayBufferLike;
-			} catch (e) {
-				const compressedString = new TextDecoder().decode(orignalBlob);
-				compressedEncoded = IsoBuffer.from(compressedString, "base64");
-				decompressed = decompress(compressedEncoded) as ArrayBufferLike;
-			}
+			decompressed = decompress(originalBlob) as ArrayBufferLike;
 		} else {
 			throw new Error(`Unknown Algorithm ${algorithm}`);
 		}
@@ -277,27 +228,19 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param encoder - The encoder function to use.
 	 * @param decoder - The decoder function to use.
 	 * @param config - The config to use for encoding.
-	 * @param isUseB64OnCompressed - True if the compressed blob should be converted to base64.
 	 * @param context - The summary context.
 	 * @returns - The summary object with the encoded/decoded blob.
 	 */
 	private static recursivelyReplace(
 		isEncode: boolean,
 		input: SummaryObject,
-		encoder: (
-			input: SummaryObject,
-			config: ICompressionStorageConfig,
-			isUseB64OnCompressed: boolean,
-		) => SummaryObject,
+		encoder: (input: SummaryObject, config: ICompressionStorageConfig) => SummaryObject,
 		decoder: (input: SummaryObject) => SummaryObject,
 		config: ICompressionStorageConfig,
-		isUseB64OnCompressed: boolean,
 		context?: ISummaryContext,
 	): SummaryObject {
 		assert(typeof input === "object", "input must be a non-null object");
-		const maybeReplaced = isEncode
-			? encoder(input, config, isUseB64OnCompressed)
-			: decoder(input);
+		const maybeReplaced = isEncode ? encoder(input, config) : decoder(input);
 
 		if (maybeReplaced !== input) {
 			return maybeReplaced;
@@ -306,18 +249,13 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		for (const key of Object.keys(input)) {
 			const value = input[key];
 
-			if (
-				Boolean(value) &&
-				typeof value === "object" &&
-				!DocumentStorageServiceCompressionAdapter.isKeyUncompressed(key)
-			) {
+			if (Boolean(value) && typeof value === "object") {
 				const replaced = this.recursivelyReplace(
 					isEncode,
 					value as SummaryObject,
 					encoder,
 					decoder,
 					config,
-					isUseB64OnCompressed,
 					context,
 				);
 				if (replaced !== value) {
@@ -414,13 +352,11 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * This method performs compression of the blobs in the summary tree.
 	 * @param summary - The summary tree to compress.
 	 * @param config - The compression config.
-	 * @param isUseB64OnCompressed - If true, the compressed blobs are encoded in base64.
 	 * @returns - The compressed summary tree.
 	 */
 	public static compressSummary(
 		summary: ISummaryTree,
 		config: ICompressionStorageConfig,
-		isUseB64OnCompressed: boolean = defaultIsUseB64OnCompressed,
 	): ISummaryTree {
 		this.putCompressionMarkup(summary);
 		const prep = DocumentStorageServiceCompressionAdapter.recursivelyReplace(
@@ -429,7 +365,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			DocumentStorageServiceCompressionAdapter.blobEncoder,
 			DocumentStorageServiceCompressionAdapter.blobDecoder,
 			config,
-			isUseB64OnCompressed,
 		) as ISummaryTree;
 		//	console.log(`Miso summary-blob Summary Upload: ${JSON.stringify(prep).length}`);
 		return prep;
@@ -442,8 +377,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	public override async readBlob(id: string): Promise<ArrayBufferLike> {
 		const originalBlob = await super.readBlob(id);
-		// eslint-disable-next-line unicorn/prefer-ternary
-		if (!this._isCompressionEnabled || this.isBlobUncompressed(id)) {
+		if (!this._isCompressionEnabled) {
 			return originalBlob;
 		} else {
 			const decompressedBlob =
@@ -471,9 +405,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			snapshotTree !== undefined &&
 			snapshotTree !== null &&
 			DocumentStorageServiceCompressionAdapter.hasCompressionMarkup(snapshotTree);
-		if (snapshotTree !== null) {
-			this.identifyUncompressedBlobs(snapshotTree);
-		}
 		return snapshotTree;
 	}
 
@@ -490,7 +421,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		const prep = DocumentStorageServiceCompressionAdapter.compressSummary(
 			summary,
 			this._config,
-			this._isUseB64OnCompressed,
 		);
 		return super.uploadSummaryWithContext(prep, context);
 	}
@@ -510,7 +440,6 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 					DocumentStorageServiceCompressionAdapter.blobEncoder,
 					DocumentStorageServiceCompressionAdapter.blobDecoder,
 					this._config,
-					this._isUseB64OnCompressed,
 			  ) as ISummaryTree);
 	}
 }
