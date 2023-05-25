@@ -6,8 +6,8 @@ import { Resizable } from "re-resizable";
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { DevtoolsPanel } from "../../DevtoolsPanel";
-import { WindowMessageRelay } from "../../WindowMessageRelay";
+import { DevtoolsPanel, WindowMessageRelay } from "@fluid-experimental/devtools-view";
+
 import { App } from "./App";
 
 console.log("Rendering app...");

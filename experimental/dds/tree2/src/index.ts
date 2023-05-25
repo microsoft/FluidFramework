@@ -195,7 +195,6 @@ export {
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -252,6 +251,7 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	NodeExistenceStateChange,
 } from "./feature-libraries";
 
 export {

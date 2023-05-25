@@ -773,8 +773,7 @@ export interface IDefaultEditBuilder {
     addNodeExistsConstraint(path: UpPath): void;
     // (undocumented)
     addValueConstraint(path: UpPath, value: Value): void;
-    // (undocumented)
-    move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destIndex: number): void;
+    move(sourceField: FieldUpPath, sourceIndex: number, count: number, destinationField: FieldUpPath, destinationIndex: number): void;
     // (undocumented)
     optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
     // (undocumented)
@@ -986,9 +985,6 @@ export function isPrimitiveValue(nodeValue: Value): nodeValue is PrimitiveValue;
 export interface ISubscribable<E extends Events<E>> {
     on<K extends keyof Events<E>>(eventName: K, listener: E[K]): () => void;
 }
-
-// @alpha
-export function isWritableArrayLike(data: ContextuallyTypedFieldData): data is MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ITreeCursor {
@@ -1298,7 +1294,7 @@ export type NodeChangeInverter = (change: NodeChangeset, index: number | undefin
 
 // @alpha (undocumented)
 export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
-deleted?: boolean) => NodeChangeset | undefined;
+stateChange?: NodeExistenceStateChange) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
@@ -1318,6 +1314,16 @@ export interface NodeData {
 
 // @alpha @deprecated
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
+
+// @alpha (undocumented)
+export enum NodeExistenceStateChange {
+    // (undocumented)
+    Deleted = 1,
+    // (undocumented)
+    Revived = 2,
+    // (undocumented)
+    Unchanged = 0
+}
 
 // @alpha (undocumented)
 export interface NodeExistsConstraint {

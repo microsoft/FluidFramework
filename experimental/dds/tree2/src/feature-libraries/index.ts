@@ -42,7 +42,6 @@ export {
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	getFieldKind,
 	getFieldSchema,
@@ -128,6 +127,7 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
+	NodeExistenceStateChange,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
