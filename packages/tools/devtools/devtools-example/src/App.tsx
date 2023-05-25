@@ -330,13 +330,11 @@ function AppView(props: AppViewProps): React.ReactElement {
 	const emojiMatrixHandle = rootMap.get(emojiMatrixKey) as IFluidHandle<
 		SharedMatrix<IFluidHandle<SharedCell<boolean>>>
 	>;
-	console.log("emojiMatrixHandle:", emojiMatrixHandle);
 	if (emojiMatrixHandle === undefined) {
 		throw new Error(`"${emojiMatrixKey}" entry not found in rootMap.`);
 	}
 
 	const taskManagerHandle = rootMap.get(taskManagerKey) as IFluidHandle<TaskManager>;
-	console.log("taskManagerHandle:", taskManagerHandle);
 	if (taskManagerHandle === undefined) {
 		throw new Error(`"${taskManagerKey}" entry not found in rootMap.`);
 	}
