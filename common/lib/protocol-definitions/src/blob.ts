@@ -2,16 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	FileMode,
-	IBlob,
-	IAttachment,
-	ITree,
-	TreeEntry,
-	SummaryType,
-	SummaryObject,
-} from "@fluidframework/protocol-definitions";
-import { unreachableCase } from "@fluidframework/common-utils";
+
+import { FileMode, IBlob, IAttachment, ITree, TreeEntry } from "./storage";
+import { SummaryObject, SummaryType } from "./summary";
+
+
+// duplicated this of common-utils
+function unreachableCase(_: never, message = "Unreachable Case"): never {
+	throw new Error(message);
+}
+
 /**
  * Take a summary object and returns its git mode.
  *
@@ -52,9 +52,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/protocol-definitions#blob.ts`
  * Basic implementation of a blob ITreeEntry
- * dds/matrix; dds/*; loader/driver-utils; runtime/container-runtime; runtime/runtime-utils; utils/tool-utils
  */
 export class BlobTreeEntry {
 	public readonly mode = FileMode.File;
@@ -77,9 +75,7 @@ export class BlobTreeEntry {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/protocol-definitions#blob.ts`
  * Basic implementation of a tree ITreeEntry
- * loader/driver-utils; runtime/runtime-utils; utils/tool-utils
  */
 export class TreeTreeEntry {
 	public readonly mode = FileMode.Directory;
@@ -94,9 +90,7 @@ export class TreeTreeEntry {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/protocol-definitions#blob.ts`
  * Basic implementation of an attachment ITreeEntry
- * loader/driver-utils; runtime/runtime-utils; utils/tool-utils
  */
 export class AttachmentTreeEntry {
 	public readonly mode = FileMode.File;
