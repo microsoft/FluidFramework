@@ -31,12 +31,13 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import { IGitManager, ISession } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import LRUCache from "lru-cache";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
@@ -45,6 +46,11 @@ import { SummaryWriter } from "./summaryWriter";
 import { initializeProtocol, sendToDeli } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
 import { PendingMessageReader } from "./pendingMessageReader";
+
+const invalidDocumentCacheKey = (tenantId: string, documentId: string) =>
+	`${tenantId}_${documentId}_document`;
+const invalidSessionCacheKey = (tenantId: string, documentId: string) =>
+	`${tenantId}_${documentId}_session`;
 
 const DefaultScribe: IScribe = {
 	lastClientSummaryHead: undefined,
@@ -66,6 +72,8 @@ export class ScribeLambdaFactory
 	extends EventEmitter
 	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
 {
+	private readonly invalidDocumentOrSessionCache: LRUCache<string, ISession>;
+
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
@@ -80,15 +88,27 @@ export class ScribeLambdaFactory
 		private readonly checkpointService: ICheckpointService,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly invalidDocumentOrSessionCacheEnabled: boolean = false,
+		private readonly invalidDocumentCacheExpiryInMs: number = 1000 * 60 * 60 * 12,
+		invalidSessionCacheExpiryInMs: number = 1000 * 10,
+		maxCacheSize: number = 10000,
 	) {
 		super();
+		const cacheOptions: LRUCache.Options<string, any> = {
+			// given that the default length function returns 1,
+			// this effectively indicates the number of items in cache.
+			max: maxCacheSize,
+			maxAge: invalidSessionCacheExpiryInMs,
+		};
+
+		this.invalidDocumentOrSessionCache = new LRUCache(cacheOptions);
 	}
 
 	public async create(
 		config: IPartitionLambdaConfig,
 		context: IContext,
 	): Promise<IPartitionLambda> {
-		let document: IDocument;
+		let document: IDocument = {} as IDocument;
 		let gitManager: IGitManager;
 		let lastCheckpoint: IScribe;
 		let summaryReader: SummaryReader;
@@ -111,21 +131,39 @@ export class ScribeLambdaFactory
 		const lumberProperties = getLumberBaseProperties(tenantId, documentId);
 
 		try {
-			document = await this.documentRepository.readOne({ documentId, tenantId });
+			const documentCacheKey = invalidDocumentCacheKey(tenantId, documentId);
+			const sessionCacheKey = invalidSessionCacheKey(tenantId, documentId);
+			const invalidDocumentCacheEntryExists = this.invalidDocumentOrSessionCacheEnabled ? this.invalidDocumentOrSessionCache.has(documentCacheKey) : false;
+			const invalidSessionCacheEntryExists = this.invalidDocumentOrSessionCacheEnabled ? this.invalidDocumentOrSessionCache.has(sessionCacheKey) : false;
 
-			if (!isDocumentValid(document)) {
+			const lumberjackProperties = {
+				...getLumberBaseProperties(documentId, tenantId),
+				invalidDocumentOrSessionCacheEnabled: this.invalidDocumentOrSessionCacheEnabled,
+				invalidDocumentCacheEntryExists,
+				invalidSessionCacheEntryExists,
+			};
+			Lumberjack.info("Cached invalid document or session.", lumberjackProperties);
+
+			if (!invalidDocumentCacheEntryExists && !invalidSessionCacheEntryExists) {
+				document = await this.documentRepository.readOne({ documentId, tenantId });
+			}
+
+			if (invalidDocumentCacheEntryExists || !isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
 				// If the document doesn't exist or is marked for deletion then we trivially accept every message.
+				this.invalidDocumentOrSessionCache.set(documentCacheKey, null, this.invalidDocumentCacheExpiryInMs);
 				const errorMessage = `Received attempt to connect to a missing/deleted document.`;
 				context.log?.error(errorMessage, { messageMetaData });
 				Lumberjack.error(errorMessage, lumberProperties);
 				return new NoOpLambda(context);
 			}
-			if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
+			if (invalidSessionCacheEntryExists || !isDocumentSessionValid(document, this.serviceConfiguration)) {
 				// Session for this document is either nonexistent or exists in a different location.
+				const session: ISession = invalidSessionCacheEntryExists ? this.invalidDocumentOrSessionCache.get(sessionCacheKey) : document.session;
 				const errMsg = `Received attempt to connect to invalid session: ${JSON.stringify(
-					document.session,
+					session,
 				)}`;
+				this.invalidDocumentOrSessionCache.set(sessionCacheKey, session);
 				context.log?.error(errMsg, { messageMetaData });
 				Lumberjack.error(errMsg, lumberProperties);
 				if (this.serviceConfiguration.enforceDiscoveryFlow) {

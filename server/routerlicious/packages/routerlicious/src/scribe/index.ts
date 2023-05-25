@@ -65,6 +65,11 @@ export async function scribeCreate(
 	const deltaManager = new DeltaManager(authEndpoint, internalAlfredUrl);
 	const factory = await getDbFactory(config);
 
+	const invalidDocumentOrSessionCacheEnabled = config.get("scribe:invalidDocumentOrSessionCacheEnabled") ?? false;
+	const invalidDocumentCacheExpiryInMs = config.get("scribe:invalidDocumentCacheExpiryInMs") ?? 1000 * 60 * 60 * 12;
+	const invalidSessionCacheExpiryInMs = config.get("scribe:invalidSessionCacheExpiryInMs") ?? 1000 * 10;
+	const invalidDocumentOrSessionMaxCacheSize = config.get("scribe:invalidDocumentOrSessionMaxCacheSize") ?? 10000;
+
 	const checkpointHeuristics = config.get(
 		"scribe:checkpointHeuristics",
 	) as ICheckpointHeuristicsServerConfiguration;
@@ -159,6 +164,10 @@ export async function scribeCreate(
 		checkpointService,
 		restartOnCheckpointFailure,
 		kafkaCheckpointOnReprocessingOp,
+		invalidDocumentOrSessionCacheEnabled,
+		invalidDocumentCacheExpiryInMs,
+		invalidSessionCacheExpiryInMs,
+		invalidDocumentOrSessionMaxCacheSize,
 	);
 }
 

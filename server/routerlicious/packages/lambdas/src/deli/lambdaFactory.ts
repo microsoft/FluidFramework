@@ -23,16 +23,22 @@ import {
 	LambdaCloseType,
 	MongoManager,
 } from "@fluidframework/server-services-core";
-import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
+import { defaultHash, IGitManager, ISession } from "@fluidframework/server-services-client";
 import {
 	Lumber,
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
+import LRUCache from "lru-cache";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
+
+const invalidDocumentCacheKey = (tenantId: string, documentId: string) =>
+	`${tenantId}_${documentId}_document`;
+const invalidSessionCacheKey = (tenantId: string, documentId: string) =>
+	`${tenantId}_${documentId}_session`;
 
 const getDefaultCheckpoint = (): IDeliState => {
 	return {
@@ -53,6 +59,8 @@ export class DeliLambdaFactory
 	extends EventEmitter
 	implements IPartitionLambdaFactory<IPartitionLambdaConfig>
 {
+	private readonly invalidDocumentOrSessionCache: LRUCache<string, ISession>;
+
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
@@ -65,8 +73,20 @@ export class DeliLambdaFactory
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly restartOnCheckpointFailure: boolean,
 		private readonly kafkaCheckpointOnReprocessingOp: boolean,
+		private readonly invalidDocumentOrSessionCacheEnabled: boolean = false,
+		private readonly invalidDocumentCacheExpiryInMs: number = 1000 * 60 * 60 * 12,
+		invalidSessionCacheExpiryInMs: number = 1000 * 10,
+		maxCacheSize: number = 10000,
 	) {
 		super();
+		const cacheOptions: LRUCache.Options<string, any> = {
+			// given that the default length function returns 1,
+			// this effectively indicates the number of items in cache.
+			max: maxCacheSize,
+			maxAge: invalidSessionCacheExpiryInMs,
+		};
+
+		this.invalidDocumentOrSessionCache = new LRUCache(cacheOptions);
 	}
 
 	public async create(
@@ -93,28 +113,46 @@ export class DeliLambdaFactory
 		};
 
 		let gitManager: IGitManager;
-		let document: IDocument;
+		let document: IDocument = {} as IDocument;
 
 		try {
+			const documentCacheKey = invalidDocumentCacheKey(tenantId, documentId);
+			const sessionCacheKey = invalidSessionCacheKey(tenantId, documentId);
+			const invalidDocumentCacheEntryExists = this.invalidDocumentOrSessionCacheEnabled ? this.invalidDocumentOrSessionCache.has(documentCacheKey) : false;
+			const invalidSessionCacheEntryExists = this.invalidDocumentOrSessionCacheEnabled ? this.invalidDocumentOrSessionCache.has(sessionCacheKey) : false;
+
+			const lumberjackProperties = {
+				...getLumberBaseProperties(documentId, tenantId),
+				invalidDocumentOrSessionCacheEnabled: this.invalidDocumentOrSessionCacheEnabled,
+				invalidDocumentCacheEntryExists,
+				invalidSessionCacheEntryExists,
+			};
+			Lumberjack.info("Cached invalid document or session.", lumberjackProperties);
+
 			// Lookup the last sequence number stored
 			// TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-			document = await this.documentRepository.readOne({ documentId, tenantId });
+			if (!invalidDocumentCacheEntryExists && !invalidSessionCacheEntryExists) {
+				document = await this.documentRepository.readOne({ documentId, tenantId });
+			}
 
 			// Check if the document was deleted prior.
-			if (!isDocumentValid(document)) {
+			if (invalidDocumentCacheEntryExists || !isDocumentValid(document)) {
 				// (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
+				this.invalidDocumentOrSessionCache.set(documentCacheKey, null, this.invalidDocumentCacheExpiryInMs);
 				const errorMessage = `Received attempt to connect to a missing/deleted document.`;
 				context.log?.error(errorMessage, { messageMetaData });
 				Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
 				return new NoOpLambda(context);
 			}
 
-			if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
+			if (invalidSessionCacheEntryExists || !isDocumentSessionValid(document, this.serviceConfiguration)) {
 				// Session for this document is either nonexistent or exists in a different location.
+				const session: ISession = invalidSessionCacheEntryExists ? this.invalidDocumentOrSessionCache.get(sessionCacheKey) : document.session;
 				const errMsg = `Received attempt to connect to invalid session: ${JSON.stringify(
-					document.session,
+					session,
 				)}`;
+				this.invalidDocumentOrSessionCache.set(sessionCacheKey, session);
 				context.log?.error(errMsg, { messageMetaData });
 				Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
 				if (this.serviceConfiguration.enforceDiscoveryFlow) {

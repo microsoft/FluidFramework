@@ -54,6 +54,11 @@ export async function deliCreate(
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
 
+	const invalidDocumentOrSessionCacheEnabled = config.get("deli:invalidDocumentOrSessionCacheEnabled") ?? false;
+	const invalidDocumentCacheExpiryInMs = config.get("deli:invalidDocumentCacheExpiryInMs") ?? 1000 * 60 * 60 * 12;
+	const invalidSessionCacheExpiryInMs = config.get("deli:invalidSessionCacheExpiryInMs") ?? 1000 * 10;
+	const invalidDocumentOrSessionMaxCacheSize = config.get("deli:invalidDocumentOrSessionMaxCacheSize") ?? 10000;
+
 	const checkpointHeuristics = config.get(
 		"deli:checkpointHeuristics",
 	) as core.ICheckpointHeuristicsServerConfiguration;
@@ -167,6 +172,10 @@ export async function deliCreate(
 		serviceConfiguration,
 		restartOnCheckpointFailure,
 		kafkaCheckpointOnReprocessingOp,
+		invalidDocumentOrSessionCacheEnabled,
+		invalidDocumentCacheExpiryInMs,
+		invalidSessionCacheExpiryInMs,
+		invalidDocumentOrSessionMaxCacheSize,
 	);
 }
 
