@@ -163,6 +163,7 @@ export async function initialize(
 	verbose: boolean,
 	profileName: string,
 	testIdn?: string,
+	ring?: string,
 ) {
 	const random = makeRandom(seed);
 	const optionsOverride = getOptionOverride(testConfig, testDriver.type, testDriver.endpointName);
@@ -178,7 +179,7 @@ export async function initialize(
 		driverEndpointName: testDriver.endpointName,
 		profile: profileName,
 		runId: undefined,
-		ring: undefined,
+		ring,
 	});
 
 	// Construct the loader

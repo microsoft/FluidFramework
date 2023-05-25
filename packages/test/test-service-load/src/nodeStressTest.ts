@@ -142,6 +142,7 @@ async function orchestratorProcess(
 				args.verbose === true,
 				args.profileName,
 				args.testId,
+				args.ring,
 		  ));
 
 	const estRunningTimeMin = Math.floor(
