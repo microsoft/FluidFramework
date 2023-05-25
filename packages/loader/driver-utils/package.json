@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-utils",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Collection of utility functions for Fluid drivers",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -102,6 +102,18 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LocationRedirectionError": {
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_ensureFluidResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_isFluidResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

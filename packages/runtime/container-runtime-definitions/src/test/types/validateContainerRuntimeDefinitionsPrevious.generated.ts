@@ -16,26 +16,14 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IContainerRuntime": {"forwardCompat": false}
+* "RemovedVariableDeclaration_IContainerRuntime": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_IContainerRuntime():
-    TypeOnly<typeof old.IContainerRuntime>;
-declare function use_current_VariableDeclaration_IContainerRuntime(
-    use: TypeOnly<typeof current.IContainerRuntime>);
-use_current_VariableDeclaration_IContainerRuntime(
-    get_old_VariableDeclaration_IContainerRuntime());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_IContainerRuntime": {"backCompat": false}
+* "RemovedVariableDeclaration_IContainerRuntime": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_IContainerRuntime():
-    TypeOnly<typeof current.IContainerRuntime>;
-declare function use_old_VariableDeclaration_IContainerRuntime(
-    use: TypeOnly<typeof old.IContainerRuntime>);
-use_old_VariableDeclaration_IContainerRuntime(
-    get_current_VariableDeclaration_IContainerRuntime());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -59,6 +47,7 @@ declare function get_current_InterfaceDeclaration_IContainerRuntime():
 declare function use_old_InterfaceDeclaration_IContainerRuntime(
     use: TypeOnly<old.IContainerRuntime>);
 use_old_InterfaceDeclaration_IContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IContainerRuntime());
 
 /*
@@ -136,23 +125,11 @@ use_old_InterfaceDeclaration_IDataStoreWithBindToContext_Deprecated(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideContainerRuntime": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IProvideContainerRuntime": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IProvideContainerRuntime():
-    TypeOnly<old.IProvideContainerRuntime>;
-declare function use_current_InterfaceDeclaration_IProvideContainerRuntime(
-    use: TypeOnly<current.IProvideContainerRuntime>);
-use_current_InterfaceDeclaration_IProvideContainerRuntime(
-    get_old_InterfaceDeclaration_IProvideContainerRuntime());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IProvideContainerRuntime": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IProvideContainerRuntime():
-    TypeOnly<current.IProvideContainerRuntime>;
-declare function use_old_InterfaceDeclaration_IProvideContainerRuntime(
-    use: TypeOnly<old.IProvideContainerRuntime>);
-use_old_InterfaceDeclaration_IProvideContainerRuntime(
-    get_current_InterfaceDeclaration_IProvideContainerRuntime());
