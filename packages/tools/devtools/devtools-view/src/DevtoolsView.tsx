@@ -458,7 +458,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		containers.sort((a, b) => a.localeCompare(b));
 		containerSectionInnerView = (
 			<>
-				{containers.map((containerKey) => (
+				{containers.map((containerKey) => (	
 					<MenuItem
 						key={containerKey}
 						isActive={currentContainerSelection === containerKey}
