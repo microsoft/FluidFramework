@@ -226,7 +226,7 @@ describe("EditManager", () => {
 			{ seq: 4, type: "Pull", ref: 1, from: peer2 },
 			{ seq: 6, type: "Pull", ref: 3, from: peer1 },
 			{ seq: 8, type: "Pull", ref: 3, from: peer1 },
-			{ seq: 10, type: "Pull", ref: 0, from: peer2 },
+			{ seq: 10, type: "Pull", ref: 1, from: peer2 },
 			{ seq: 12, type: "Pull", ref: 1, from: peer2 },
 		]);
 
@@ -546,7 +546,7 @@ function runUnitTestScenario(
 	steps: readonly UnitTestScenarioStep[],
 	rebaser?: ChangeRebaser<TestChange>,
 ): void {
-	const run = () => {
+	const run = (advanceMinimumSequenceNumber: boolean) => {
 		const { manager, anchors } = editManagerFactory({ rebaser });
 		/**
 		 * An `EditManager` that is kept up to date with all sequenced edits.
@@ -584,9 +584,33 @@ function runUnitTestScenario(
 		 */
 		const trunk: number[] = [];
 		/**
-		 * The sequence number of the most recent sequenced commit that the manager is aware of
+		 * The sequence number of the most recent sequenced commit that each client is aware of
 		 */
-		let localRef: number = 0;
+		const referenceSequenceNumbers: { [session: SessionId]: number } = {
+			[localSessionId]: 0,
+			[peer1]: 0,
+			[peer2]: 0,
+		};
+		/**
+		 * The oldest sequence number known to be seen by all peers
+		 */
+		const minimumSequenceNumber = () => {
+			if (advanceMinimumSequenceNumber) {
+				// Find all peers participating in this scenario by scanning the scenario steps
+				const activeClients = [
+					localSessionId,
+					...steps
+						.filter((s): s is UnitTestPullStep => s.type === "Pull")
+						.map((s) => s.from),
+				];
+				// Return the smallest of their reference sequence numbers
+				return activeClients
+					.map((p) => referenceSequenceNumbers[p])
+					.reduce((p, c) => Math.min(p, c));
+			}
+
+			return 0;
+		};
 		/**
 		 * The sequence number of the last sequenced in the scenario.
 		 */
@@ -618,7 +642,7 @@ function runUnitTestScenario(
 						revision,
 						sessionId: localSessionId,
 						seqNumber: brand(seq),
-						refNumber: brand(localRef),
+						refNumber: brand(referenceSequenceNumbers[localSessionId]),
 						change: changeset,
 					};
 					localCommits.push(commit);
@@ -650,7 +674,8 @@ function runUnitTestScenario(
 					);
 					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
 					assert.deepEqual(delta, emptyDelta);
-					localRef = seq;
+					referenceSequenceNumbers[localSessionId] = commit.seqNumber;
+					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber()));
 					recordSequencedEdit(commit);
 					break;
 				}
@@ -708,7 +733,9 @@ function runUnitTestScenario(
 					}
 					recordSequencedEdit(commit);
 					knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
-					localRef = seq;
+					referenceSequenceNumbers[commit.sessionId] = commit.refNumber;
+					referenceSequenceNumbers[localSessionId] = commit.seqNumber;
+					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber()));
 					break;
 				}
 				default:
@@ -717,7 +744,13 @@ function runUnitTestScenario(
 			// Anchors should be kept up to date with the known intentions
 			assert.deepEqual(anchors.intentions, knownToLocal);
 			// The exposed trunk and local changes should reflect what is known to the local client
-			checkChangeList(manager, knownToLocal);
+			checkChangeList(
+				manager,
+				knownToLocal.filter(
+					// Only expect changes which have not been dropped by trunk eviction
+					(i) => i >= minimumSequenceNumber(),
+				),
+			);
 			checkChangeList(summarizer, trunk);
 
 			// Spin-up a new joiner whenever a summary client would have a different state.
@@ -739,9 +772,12 @@ function runUnitTestScenario(
 		}
 	};
 	if (title !== undefined) {
-		it(title, run);
+		// Run two versions of the scenario, one where the minimum sequence number is advanced and one where it is not
+		it(title, () => run(false));
+		it(`${title} (while advancing the min seq number)`, () => run(true));
 	} else {
-		run();
+		run(false);
+		run(true);
 	}
 }
 
