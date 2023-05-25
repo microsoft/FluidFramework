@@ -83,13 +83,14 @@ interface Item {
  * Displays a row with basic stats about the Container.
  *
  * @param label - Row label text.
- * @param infoTooltipText - Tooltip text to display via an info badge.
+ * @param infoTooltipContent - (optional) Tooltip content to display via an info badge.
+ * If not provided, no info badge will be displayed.
  * @param value - The value text associated with the label.
  * @param columnProps - Column props consumed by FluentUI.
  */
 function DataRow(
 	label: React.ReactElement | string,
-	infoTooltipText: React.ReactElement | string,
+	infoTooltipContent: React.ReactElement | string | undefined,
 	value: React.ReactElement | string | undefined,
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	columnProps: any,
@@ -102,9 +103,13 @@ function DataRow(
 					...columnProps.getTableCellProps("containerProperty")
 				}
 			>
-				<InfoLabel info={infoTooltipText} style={{ whiteSpace: "nowrap" }}>
+				{infoTooltipContent === undefined ? (
 					<b>{label}</b>
-				</InfoLabel>
+				) : (
+					<InfoLabel info={infoTooltipContent} style={{ whiteSpace: "nowrap" }}>
+						<b>{label}</b>
+					</InfoLabel>
+				)}
 			</TableCell>
 			<TableCell>{value}</TableCell>
 		</TableRow>
