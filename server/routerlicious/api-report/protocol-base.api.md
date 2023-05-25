@@ -22,7 +22,7 @@ import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @public @deprecated (undocumented)
 export class AttachmentTreeEntry {
     constructor(path: string, id: string);
     // (undocumented)
@@ -37,7 +37,7 @@ export class AttachmentTreeEntry {
     readonly value: IAttachment;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export class BlobTreeEntry {
     constructor(path: string, contents: string, encoding?: "utf-8" | "base64");
     // (undocumented)
@@ -50,10 +50,10 @@ export class BlobTreeEntry {
     readonly value: IBlob;
 }
 
-// @public
+// @public @deprecated (undocumented)
 export function getGitMode(value: SummaryObject): string;
 
-// @public
+// @public @deprecated (undocumented)
 export function getGitType(value: SummaryObject): "blob" | "tree";
 
 // @public (undocumented)
@@ -187,7 +187,7 @@ export type QuorumProposalsSnapshot = {
     values: [string, ICommittedProposal][];
 };
 
-// @public
+// @public @deprecated (undocumented)
 export class TreeTreeEntry {
     constructor(path: string, value: ITree);
     // (undocumented)
