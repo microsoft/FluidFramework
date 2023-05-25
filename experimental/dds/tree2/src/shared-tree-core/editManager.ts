@@ -257,7 +257,7 @@ export class EditManager<
 		const searchResult = this.sequenceMap.getPairOrNextHigher(trunkTailSearchKey);
 		if (searchResult !== undefined) {
 			const [_, newTrunkTail] = searchResult;
-			// Only work if the commit found by the search is farther than the current tail of the trunk
+			// Don't do any work if the commit found by the search is already the tail of the trunk
 			if (newTrunkTail.parent !== this.trunkBase) {
 				// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
 				// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
