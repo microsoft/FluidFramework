@@ -19,7 +19,7 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { IStackItemStyles, IStackStyles, Stack, TooltipHost } from "@fluentui/react";
-import { FluentProvider, Button } from "@fluentui/react-components";
+import { FluentProvider, Button, Dropdown, Option } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
@@ -127,8 +127,12 @@ const menuStyles: IStackItemStyles = {
 		...contentViewStyles,
 		display: "flex",
 		flexDirection: "column",
+		justifyContent:"space-between",
 		borderRight: `2px solid`,
 		minWidth: 150,
+		"> :last-child": {
+			marginTop: "auto",
+		},
 	},
 };
 
@@ -410,10 +414,19 @@ function Menu(props: MenuProps): React.ReactElement {
 			</MenuSection>,
 		);
 	}
-
 	return (
 		<Stack.Item styles={menuStyles}>
-			{menuSections.length === 0 ? <Waiting /> : menuSections}
+				{menuSections.length === 0 ? <Waiting /> : menuSections}
+				<div style={{minWidth: "250px"}}>
+					<Dropdown
+						placeholder="Theme"
+						style={{minWidth: "150px", fontWeight: "bold"}}
+					>
+						<Option>Light</Option>
+						<Option>Dark</Option>
+						<Option>High Contrast</Option>
+					</Dropdown>
+				</div>
 		</Stack.Item>
 	);
 }
