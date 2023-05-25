@@ -67,13 +67,13 @@ export enum KeyName {
 	key2 = "key2",
 }
 
-export enum EncryptionKeyName {
-    key1 = "key1",
-    key2 = "key2",
+export enum EncryptionKeyVersion {
+	key2022 = "2022",
+    key2023 = "2023",
 }
 
 export interface IEncryptedTenantKeys extends ITenantKeys {
-    EncryptionKeyName?: EncryptionKeyName;
+    encryptionKeyVersion?: EncryptionKeyVersion;
 }
 
 export interface ITenant {

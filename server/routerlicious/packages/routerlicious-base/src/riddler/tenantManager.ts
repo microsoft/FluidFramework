@@ -5,7 +5,7 @@
 
 import * as crypto from "crypto";
 import {
-    EncryptionKeyName,
+    EncryptionKeyVersion,
     IEncryptedTenantKeys,
 	ITenantConfig,
 	ITenantCustomData,
@@ -242,7 +242,7 @@ export class TenantManager {
 		const collection = db.collection<ITenantDocument>(this.collectionName);
 
 		const tenantKey1 = this.generateTenantKey();
-		const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1, EncryptionKeyName.key2);
+		const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1, EncryptionKeyVersion.key2023);
 		if (encryptedTenantKey1 == null) {
 			winston.error("Tenant key1 encryption failed.");
 			Lumberjack.error("Tenant key1 encryption failed.", {
@@ -252,7 +252,7 @@ export class TenantManager {
 		}
 
 		const tenantKey2 = this.generateTenantKey();
-		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2, EncryptionKeyName.key2);
+		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2, EncryptionKeyVersion.key2023);
 		if (encryptedTenantKey2 == null) {
 			winston.error("Tenant key2 encryption failed.");
 			Lumberjack.error("Tenant key2 encryption failed.", {
@@ -261,8 +261,8 @@ export class TenantManager {
 			throw new NetworkError(500, "Tenant key2 encryption failed.");
 		}
 
-        // New tenant keys will be encrypted with kek 2.
-        customData.encryptionKeyName = EncryptionKeyName.key2;
+        // New tenant keys will be encrypted with kek 2023.
+        customData.encryptionKeyVersion = EncryptionKeyVersion.key2023;
 
 		const id = await collection.insertOne({
 			_id: tenantId,
