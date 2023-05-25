@@ -10,14 +10,14 @@ This directory contains a series of libraries that comprise our Fluid Framework 
 -   [devtools](devtools/README.md): Higher level Devtools API built upon `devtools-core`.
     -   This library is the one we expect our external customers to use.
         It works in terms of our higher-level [Container abstraction](https://fluidframework.com/docs/build/containers/), and is implemented as a thin wrapper around `devtools-core`.
--   [devtools-view](devtools-view/README.md): Visual experience for use with
+-   [devtools-view](devtools-view/README.md): Visual experience for the Fluid Devtools.
     -   This package contains a simple [React](https://react.dev/)-based view for interacting with the underlying Devtools libraries.
         For now, it is `private` and exists strictly to power our browser extension, though it would not require substantial effort to make it more portable if there was a desire to release it independently in the future.
 -   [devtools-browser-extension](devtools-browser-extension/README.md): Browser extension for Chromium-based browsers (for now, Edge and Chrome).
     -   This package is relatively light-weight.
         It implements the necessary scripting logic to ensure the extension's view (`devtools-view`) is able to communicate with the corresponding webpage.
 
-Additionally, we have an sample application intended to help us test the end-to-end developer tooling experience, as well as to serve as an example for developers looking to integrate the developer tools into their own application.
+Additionally, we have a sample application intended to help us test the end-to-end developer tooling experience, as well as to serve as an example for developers looking to integrate the developer tools into their own application.
 It lives under [devtools-example](devtools-example/README.md).
 
 ```mermaid
