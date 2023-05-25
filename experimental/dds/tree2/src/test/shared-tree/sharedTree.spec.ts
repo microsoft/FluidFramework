@@ -1322,6 +1322,53 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
+		it.only("handles ancestor delete", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const aPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				const sequence = tree2.editor.sequenceField({
+					parent: aPath,
+					field: brand("foo"),
+				});
+				sequence.insert(0, singleTextCursor({ type: testValueSchema.name, value: "bar" }));
+			});
+
+			provider.processMessages();
+
+			// Delete a
+			remove(tree2, 0, 1);
+
+			runSynchronous(tree1, () => {
+				// Put existence constraint on child field of a
+				tree1.editor.addNodeExistsConstraint({
+					parent: aPath,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				const sequence = tree1.editor.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				});
+				sequence.insert(1, singleTextCursor({ type: testValueSchema.name, value: "b" }));
+			});
+
+			const expectedState: JsonableTree[] = [];
+
+			provider.processMessages();
+
+			validateTree(tree1, expectedState);
+			validateTree(tree2, expectedState);
+		});
+
 		it("sequence field node exists constraint", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
