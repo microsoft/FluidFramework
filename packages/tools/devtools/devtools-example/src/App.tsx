@@ -22,10 +22,11 @@ import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
+import { TaskManager } from "@fluidframework/task-manager";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 
 import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
-import { CounterWidget, EmojiGrid } from "./widgets";
+import { CounterWidget, EmojiGrid, TaskManagerWidget } from "./widgets";
 import { createMockSharedObject } from "./MockSharedObject";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
@@ -47,6 +48,11 @@ const sharedCounterKey = "shared-counter";
 const emojiMatrixKey = "emoji-matrix";
 
 /**
+ * Key in the app's `rootMap` under which the TaskManager object is stored.
+ */
+const taskManagerKey = "task-manager";
+
+/**
  * Key in the app's `rootMap` under which an unknown (to the devtools) kind of data will be recorded for testing purposes.
  */
 const unknownDataKey = "unknown-data";
@@ -63,7 +69,14 @@ const containerSchema: ContainerSchema = {
 	initialObjects: {
 		rootMap: SharedMap,
 	},
-	dynamicObjectTypes: [SharedCell, SharedCounter, SharedMap, SharedMatrix, SharedString],
+	dynamicObjectTypes: [
+		TaskManager,
+		SharedCell,
+		SharedCounter,
+		SharedMap,
+		SharedMatrix,
+		SharedString,
+	],
 };
 
 /**
@@ -95,6 +108,10 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	}
 
 	rootMap.set(emojiMatrixKey, emojiMatrix.handle);
+
+	// Set up TaskManager for TaskManagerWidget
+	const taskManager = await container.create(TaskManager);
+	rootMap.set(taskManagerKey, taskManager.handle);
 
 	// Set up SharedText for text form
 	const sharedText = await container.create(SharedString);
@@ -313,8 +330,15 @@ function AppView(props: AppViewProps): React.ReactElement {
 	const emojiMatrixHandle = rootMap.get(emojiMatrixKey) as IFluidHandle<
 		SharedMatrix<IFluidHandle<SharedCell<boolean>>>
 	>;
+	console.log("emojiMatrixHandle:", emojiMatrixHandle);
 	if (emojiMatrixHandle === undefined) {
 		throw new Error(`"${emojiMatrixKey}" entry not found in rootMap.`);
+	}
+
+	const taskManagerHandle = rootMap.get(taskManagerKey) as IFluidHandle<TaskManager>;
+	console.log("taskManagerHandle:", taskManagerHandle);
+	if (taskManagerHandle === undefined) {
+		throw new Error(`"${taskManagerKey}" entry not found in rootMap.`);
 	}
 
 	return (
@@ -324,6 +348,9 @@ function AppView(props: AppViewProps): React.ReactElement {
 				<Stack>
 					<StackItem>
 						<EmojiMatrixView emojiMatrixHandle={emojiMatrixHandle} />
+					</StackItem>
+					<StackItem>
+						<TaskManagerView taskManagerHandle={taskManagerHandle} />
 					</StackItem>
 					<StackItem>
 						<CounterView sharedCounterHandle={sharedCounterHandle} />
@@ -396,4 +423,27 @@ function EmojiMatrixView(props: EmojiMatrixViewProps): React.ReactElement {
 	}, [emojiMatrixHandle, setEmojiMatrix]);
 
 	return emojiMatrix === undefined ? <Spinner /> : <EmojiGrid emojiMatrix={emojiMatrix} />;
+}
+
+interface TaskManagerViewProps {
+	taskManagerHandle: IFluidHandle<TaskManager>;
+}
+
+function TaskManagerView(props: TaskManagerViewProps): React.ReactElement {
+	const { taskManagerHandle } = props;
+
+	const [taskManager, setTaskManager] = React.useState<TaskManager | undefined>();
+
+	React.useEffect(() => {
+		taskManagerHandle.get().then(setTaskManager, (error) => {
+			console.error("Error encountered loading TaskManager:", error);
+			throw error;
+		});
+	}, [taskManagerHandle, setTaskManager]);
+
+	return taskManager === undefined ? (
+		<Spinner />
+	) : (
+		<TaskManagerWidget taskManager={taskManager} />
+	);
 }

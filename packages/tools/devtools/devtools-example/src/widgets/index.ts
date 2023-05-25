@@ -6,3 +6,4 @@
 export { CounterWidget, CounterWidgetProps } from "./CounterWidget";
 export { EmojiButton, EmojiButtonProps } from "./EmojiButton";
 export { EmojiGrid, EmojiGridProps } from "./EmojiGrid";
+export { TaskManagerWidget, TaskManagerWidgetProps } from "./TaskManagerWidget";

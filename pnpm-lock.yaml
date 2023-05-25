@@ -15716,6 +15716,9 @@ importers:
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../../dds/shared-object-base
+      '@fluidframework/task-manager':
+        specifier: workspace:~
+        version: link:../../../dds/task-manager
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/test-runtime-utils
