@@ -38,4 +38,7 @@ The most notable of these is that the runtime library aspects must communicate w
 For this reason, and because there has not been a demand (thus far) for a more standard programatic API, the library API surfaces are quite small.
 The bulk of the logic is instead dedicated to recording state information and broadcasting it via messages on the Window.
 
-TODO: link to API docs once they have been published.
+### API Documentation
+
+-   [@fluid-experimental/devtools-core](https://fluidframework.com/docs/apis/devtools-core)
+-   [@fluid-experimental/devtools](https://fluidframework.com/docs/apis/devtools)
