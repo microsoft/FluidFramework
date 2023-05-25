@@ -6,7 +6,6 @@
 import { FileMode, IBlob, IAttachment, ITree, TreeEntry } from "./storage";
 import { SummaryObject, SummaryType } from "./summary";
 
-
 // duplicated this of common-utils
 function unreachableCase(_: never, message = "Unreachable Case"): never {
 	throw new Error(message);
