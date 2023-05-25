@@ -238,87 +238,102 @@ describe("EditManager", () => {
 			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
 		]);
 
-		it("Evicts trunk commits according to a provided minimum sequence number", () => {
-			const { manager } = editManagerFactory({});
-			for (let i = 0; i < 10; ++i) {
-				manager.addSequencedChange(
-					{
-						change: TestChange.mint([], []),
-						revision: mintRevisionTag(),
-						sessionId: peer1,
-					},
-					brand(i),
-					brand(i - 1),
+		describe("Trunk eviction", () => {
+			function applyLocalCommit(
+				manager: EditManager<
+					ChangeFamilyEditor,
+					TestChange,
+					ChangeFamily<ChangeFamilyEditor, TestChange>
+				>,
+				inputContext: readonly number[] = [],
+				intention: number | number[] = [],
+			): Commit<TestChange> {
+				const [_, commit] = manager.localBranch.apply(
+					TestChange.mint(inputContext, intention),
+					mintRevisionTag(),
 				);
+				return {
+					change: commit.change,
+					revision: commit.revision,
+					sessionId: localSessionId,
+				};
 			}
 
-			assert.equal(manager.getTrunkChanges().length, 10);
-			manager.advanceMinimumSequenceNumber(brand(5));
-			assert.equal(manager.getTrunkChanges().length, 5);
-			manager.advanceMinimumSequenceNumber(brand(10));
-			assert.equal(manager.getTrunkChanges().length, 0);
-
-			for (let i = 10; i < 20; ++i) {
-				manager.addSequencedChange(
-					{
-						change: TestChange.mint([], []),
-						revision: mintRevisionTag(),
-						sessionId: peer1,
-					},
-					brand(i),
-					brand(i - 1),
-				);
+			function peerCommit(
+				peer: typeof peer1 | typeof peer2,
+				inputContext: readonly number[] = [],
+				intention: number | number[] = [],
+			): Commit<TestChange> {
+				return {
+					change: TestChange.mint(inputContext, intention),
+					revision: mintRevisionTag(),
+					sessionId: peer,
+				};
 			}
 
-			assert.equal(manager.getTrunkChanges().length, 10);
-			manager.advanceMinimumSequenceNumber(brand(15));
-			assert.equal(manager.getTrunkChanges().length, 5);
-			manager.advanceMinimumSequenceNumber(brand(20));
-			assert.equal(manager.getTrunkChanges().length, 0);
-		});
+			it("Evicts trunk commits according to a provided minimum sequence number", () => {
+				const { manager } = editManagerFactory({});
+				for (let i = 0; i < 10; ++i) {
+					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
+				}
 
-		it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
-			const { manager } = editManagerFactory({});
-			manager.addSequencedChange(
-				{
-					change: TestChange.mint([], []),
-					revision: mintRevisionTag(),
-					sessionId: peer1,
-				},
-				brand(1),
-				brand(0),
-			);
+				assert.equal(manager.getTrunkChanges().length, 10);
+				manager.advanceMinimumSequenceNumber(brand(5));
+				assert.equal(manager.getTrunkChanges().length, 5);
+				manager.advanceMinimumSequenceNumber(brand(10));
+				assert.equal(manager.getTrunkChanges().length, 0);
+				for (let i = 10; i < 20; ++i) {
+					manager.addSequencedChange(applyLocalCommit(manager), brand(i), brand(i - 1));
+				}
 
-			assert.equal(manager.getTrunkChanges().length, 1);
-			manager.addSequencedChange(
-				{
-					change: TestChange.mint([], []),
-					revision: mintRevisionTag(),
-					sessionId: peer1,
-				},
-				brand(2),
-				brand(1),
-			);
+				assert.equal(manager.getTrunkChanges().length, 10);
+				manager.advanceMinimumSequenceNumber(brand(15));
+				assert.equal(manager.getTrunkChanges().length, 5);
+				manager.advanceMinimumSequenceNumber(brand(20));
+				assert.equal(manager.getTrunkChanges().length, 0);
+			});
 
-			assert.equal(manager.getTrunkChanges().length, 2);
-			manager.advanceMinimumSequenceNumber(brand(1));
-			assert.equal(manager.getTrunkChanges().length, 2);
+			it("Evicts trunk commits after but not exactly at the minimum sequence number", () => {
+				const { manager } = editManagerFactory({});
+				manager.addSequencedChange(applyLocalCommit(manager), brand(1), brand(0));
+				assert.equal(manager.getTrunkChanges().length, 1);
+				manager.addSequencedChange(applyLocalCommit(manager), brand(2), brand(1));
+				assert.equal(manager.getTrunkChanges().length, 2);
+				manager.advanceMinimumSequenceNumber(brand(1));
+				assert.equal(manager.getTrunkChanges().length, 2);
 
-			// If a change's sequence number is also the minimum sequence number,
-			// it should not be evicted
-			manager.addSequencedChange(
-				{
-					change: TestChange.mint([], []),
-					revision: mintRevisionTag(),
-					sessionId: peer1,
-				},
-				brand(3),
-				brand(3),
-			);
+				// If a change's sequence number is also the minimum sequence number,
+				// it should not be evicted
+				manager.addSequencedChange(applyLocalCommit(manager), brand(3), brand(3));
+				assert.equal(manager.getTrunkChanges().length, 3);
+				manager.advanceMinimumSequenceNumber(brand(3));
+				assert.equal(manager.getTrunkChanges().length, 1);
+			});
 
-			assert.equal(manager.getTrunkChanges().length, 3);
-			manager.advanceMinimumSequenceNumber(brand(3));
-			assert.equal(manager.getTrunkChanges().length, 1);
+			it("Rebases peer branches during trunk eviction", () => {
+				// This is a regression test that ensures peer branches are rebased up to at least the new tail of the trunk after trunk commits are evicted.
+				const { manager } = editManagerFactory({});
+				// First, we receive a commit from a peer ("1").
+				manager.addSequencedChange(peerCommit(peer1, [], 1), brand(1), brand(0));
+				// We then submit and ack a local commit ("2").
+				// This prevents an upcoming rebase of the peer branch from hitting an eager fast-path that keeps the branch caught up to the head of the trunk.
+				manager.addSequencedChange(applyLocalCommit(manager, [1], 2), brand(2), brand(1));
+				// We receive a second commit from the peer ("3").
+				// Based on the ref seq number, we know that the peer is lagging "behind" by two commits,
+				// i.e. it has sent a second op without receiving its first op ("1") or the local op ("2") that we applied just above.
+				manager.addSequencedChange(peerCommit(peer1, [1], 3), brand(3), brand(0));
+				// Our trunk should have all the commits we've sequenced so far.
+				checkChangeList(manager, [1, 2, 3]);
+				// Suppose that the peer catches up, and we are informed of the new minimum sequence number via some means (e.g. an op).
+				manager.advanceMinimumSequenceNumber(brand(3));
+				// Eviction ocurred, so we now expect the trunk to contain only commit "3" (the first two commits "1" and "2" were evicted).
+				checkChangeList(manager, [3]);
+				// We also expect our copy of the peer's local branch to be updated even though we have not received any new commits from that peer since commit "3".
+				// We can check this by receiving another commit from our peer.
+				// We'll fail when trying to rebase if the branch was not already updated and is referencing evicted commits.
+				manager.addSequencedChange(peerCommit(peer1, [1, 2, 3], 4), brand(4), brand(3));
+				checkChangeList(manager, [3, 4]);
+			});
 		});
 
 		it("Rebases anchors over local changes", () => {

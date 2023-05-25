@@ -259,6 +259,18 @@ export class EditManager<
 			const [_, newTrunkTail] = searchResult;
 			// Don't do any work if the commit found by the search is already the tail of the trunk
 			if (newTrunkTail.parent !== this.trunkBase) {
+				// The minimum sequence number informs us that all peer branches are at least caught up to the tail commit,
+				// so rebase them accordingly. This is necessary to prevent peer branches from referencing any evicted commits.
+				for (const [sessionId, branch] of this.peerLocalBranches) {
+					const [rebasedBranch] = rebaseBranch(
+						this.changeFamily.rebaser,
+						branch,
+						newTrunkTail,
+						this.trunk.getHead(),
+					);
+					this.peerLocalBranches.set(sessionId, rebasedBranch);
+				}
+
 				// This is dangerous. Commits ought to be immutable, but if they are then changing the trunk tail requires
 				// regenerating the entire commit graph. It is, in general, safe to chop off the tail like this if we know
 				// that there are no outstanding references to any of the commits being removed. For example, there must be
@@ -283,14 +295,6 @@ export class EditManager<
 					sequenceNumber,
 					false,
 				);
-
-				for (const [sessionId, branch] of this.peerLocalBranches) {
-					// If a session branch falls behind the min sequence number, then we know that its session has been abandoned by Fluid
-					// (because otherwise, it would have already been updated) and we expect not to receive any more updates for it.
-					if (findCommonAncestor(branch, newTrunkTail) === undefined) {
-						this.peerLocalBranches.delete(sessionId);
-					}
-				}
 			}
 		} else {
 			// If no trunk commit is found, it means that all trunk commits are below the search key, so evict them all
