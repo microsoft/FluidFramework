@@ -455,6 +455,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	} else if (containers.length === 0) {
 		containerSectionInnerView = <div>No Containers found.</div>;
 	} else {
+		containers.sort((a, b) => a.localeCompare(b));
 		containerSectionInnerView = (
 			<>
 				{containers.map((containerKey) => (
@@ -483,7 +484,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 }
 
 /**
- * A refresh button to retrive the latest list of containers.
+ * A refresh button to retrieve the latest list of containers.
  */
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
