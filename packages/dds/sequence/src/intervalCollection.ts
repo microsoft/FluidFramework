@@ -1575,6 +1575,8 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 	 * Detaches an index from this collection.
 	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
 	 * due to local or remote changes will no longer incur updates to the index.
+	 *
+	 * @returns - Return false if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return true
 	 */
 	public detachIndex(index: IntervalIndex<TInterval>): boolean {
 		if (!this.attached) {
