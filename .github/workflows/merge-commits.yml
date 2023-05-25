@@ -57,6 +57,7 @@ jobs:
             const queueClient = queueServiceClient.getQueueClient(queueName);
             // Peek at messages in the queue
             const peekedMessages = await queueClient.peekMessages({ numberOfMessages: 5 });
+            if(peekedMessages.peekedMessageItems.length === 0) { return false; }
             let firstMessage;
             for (i = 0; i < peekedMessages.peekedMessageItems.length; i++) {
                 // Display the peeked message
@@ -82,7 +83,7 @@ jobs:
       pull-requests: write
       statuses: write
     needs: [dequeue]
-    if: (needs.dequeue.result) == 'success'
+    if: (needs.dequeue.output.EXISTS) != 'false'
     steps:
       - name: Git checkout
         if: ${{needs.dequeue.outputs.LABEL}} == 'queued'
