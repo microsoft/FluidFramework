@@ -10,7 +10,7 @@ import { UpPath } from "./pathTree";
 import { Value, detachedFieldAsKey, DetachedField, FieldKey, EmptyKey } from "./types";
 import { PathVisitor } from "./visitPath";
 import { visitDelta, DeltaVisitor } from "./visitDelta";
-import type { Delta } from ".";
+import * as Delta from "./delta";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
