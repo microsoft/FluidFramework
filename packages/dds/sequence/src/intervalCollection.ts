@@ -1112,10 +1112,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		return this.indexes.delete(index);
 	}
 
-	public hasIndex(index: IntervalIndex<TInterval>): boolean {
-		return this.indexes.has(index);
-	}
-
 	public removeExistingInterval(interval: TInterval) {
 		this.removeIntervalFromIndexes(interval);
 		this.removeIntervalListeners(interval);
@@ -1586,7 +1582,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		}
 
 		// Avoid removing intervals if the index does not exist
-		if (!this.localCollection?.hasIndex(index)) {
+		if (!this.localCollection?.removeIndex(index)) {
 			return false;
 		}
 
@@ -1594,7 +1590,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 			index.remove(interval);
 		}
 
-		return this.localCollection.removeIndex(index);
+		return true;
 	}
 
 	private rebasePositionWithSegmentSlide(
