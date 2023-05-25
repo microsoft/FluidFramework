@@ -1469,6 +1469,11 @@ describe("SharedString interval collections", () => {
 					end: 3,
 				});
 			});
+
+			it("can not detach the index does not exist", () => {
+				assert.equal(collection.detachIndex(mockIntervalIndex), true);
+				assert.equal(collection.detachIndex(mockIntervalIndex), false);
+			});
 		});
 	});
 });
