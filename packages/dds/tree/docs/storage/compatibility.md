@@ -29,7 +29,8 @@ which ensures all SharedTree summaries contain sufficient format version informa
 Configuration should be specifiable by application authors via `SharedTreeFactory`:
 this ensures applications can control rollout of configuration changes which require code saturation of some prior version.
 
-TODO: decide how many format version / flags there should be (format per-index vs. single version)
+Parameterizing SharedTree's factory also empowers the container author to control their data model,
+which is desirable (the host need not care about DDS option details).
 
 ## Code Organization
 
@@ -44,13 +45,12 @@ a simple index with only one persisted format could put all of the above into a 
 whereas an index with back-compat support for a large number of fairly dissimilar formats would be better organized with each version and its codec
 in a separate file.
 To make changes to persisted formats obvious at review time,
-such files should either end in `PersistedFormat` or be located in a `persisted-format` folder.
-Primitive types which are used in persisted formats but don't intrinsically define formats (such as branded strings) should be placed in a file ending in `PersistedTypes` if they aren't already defined in a `PersistedFormat` file.
-Codec logic should generally be self-contained: it should only import from other files with persisted format guarantees. TODO: How can it reference in-memory types?
-Importing Fluid Framework libraries that have the same guarantees (e.g. `SummaryTreeBuilder`) is also acceptable.
+such files should either end in `Format` or be located in a `format` folder.
+Primitive types which are used in persisted formats but don't intrinsically define formats (such as branded strings) should also be placed in a file ending in `Format`.
+Codec logic should generally be self-contained: all imports should either be of the form `import type`, or should import from another `PersistedFormat` file. Importing Fluid Framework libraries that have the same guarantees (e.g. `SummaryTreeBuilder`) is also acceptable.
 Codecs should expose the minimal necessary set of types.
 Encoding should take care to only include necessary object properties, avoiding constructs like object spread.
-Decoding should validate that the data is not malformed.
+Decoding should validate that the data is not malformed: see [encoding validation](#encoding-validation) for more details.
 
 With the exception of primitives, storage format types should never be exposed in the public API.
 
@@ -63,6 +63,24 @@ For example:
 -   On decoding an acked op, it should use the format described by `configStore.getConfigForMessage(op)`.
 -   On op resubmission, it should re-encode the op if the configuration has changed since the op was originally submitted.
 
+## Encoding Validation
+
+Validating that an encoded format thoroughly matches what the code expects and failing fast otherwise is valuable to reduce the risk of data corruption:
+it's a lot easier to investigate and deploy fixes for documents when incompatible clients haven't also changed the contents of a file.
+
+For this reason, encoded data formats should declare JSON schema for the purpose of runtime validation.
+
+> In the near term, we're using [typebox](https://github.com/sinclairzx81/typebox) to declare these schemas.
+> This choice is a matter of convenience: its API naturally matches the expressiveness of typescript types.
+
+Since format validation does incur runtime and bundle-size cost to obtain additional safety,
+whether or not to perform it should ultimately be left as a policy choice to the user of shared-tree.
+This choice will probably also be made in the shared-tree factory,
+but it doesn't need to be persisted and can be changed at will
+(there's no issue
+with collaboration between clients that have different policies around how much
+of the persisted data should be validated).
+
 ## Test Strategy
 
 This section covers types of tests to include when adding new persisted configuration.
@@ -70,8 +88,8 @@ This section covers types of tests to include when adding new persisted configur
 There are a couple different dimensions to consider with respect to testing:
 
 1. SharedTree works correctly for all configurations it can be initialized in when collaborating with SharedTrees with similar configuration
+1. SharedTree is compatible with clients using different source code versions of SharedTree (and the documents those clients may create)
 1. SharedTree can correctly execute document upgrade processes (changes to persisted configuration)
-1. SharedTree is compatible clients using different source code versions of SharedTree (and the documents those clients may create)
 
 ### Configuration Unit Tests
 
@@ -89,11 +107,12 @@ should have unit tests which verify processing ops of various sorts yield reason
 In addition to targeted unit tests, we should modify a small set of functional acceptance tests
 (e.g. `sharedTree.spec.ts`) to run for larger sets of configurations.
 Using `generatePairwiseOptions` will help mitigate the combinatorial explosion concern.
-In the same vein, fuzz tests should cover a variety of valid configurations (TODO: Settle on model).
 
 These tests in aggregate will verify that SharedTree works when initialized with some particular configuration
 and collaborates with other SharedTree instances initialized with the same configuration.
-They would reasonably detect basic defects in codecs or problems unrelated to backwards compatibility or the upgrade process.
+They would reasonably detect basic defects in codecs or problems unrelated to backwards compatibility or any upgrade process.
+
+In the same vein, fuzz tests should cover a variety of valid configurations.
 
 ### Persisted Configuration Store Tests
 
@@ -104,11 +123,13 @@ These tests generally won't be necessary to modify when adding new formats or pe
 ### Configuration-specific Upgrade Tests
 
 The persisted configuration store tests and its integration tests into SharedTree will verify that the scheme for upgrading
-configuration generally works correctly, but they can't generically exercise logic specific to some particular format change.
+configuration works correctly, but they can't generically exercise logic specific to some particular format change.
 Any format change which is more involved than an encoding change should have some targeted tests which verify interesting aspects of the upgrade process work correctly.
 For example, legacy SharedTree's introduction of IdCompressor involved [testing the upgrade process](../../../../../experimental/dds/tree/src/test/utilities/SharedTreeVersioningTests.ts) and specifically the synchronization point logic (see 'generates unique IDs after upgrading from 0.0.2').
 
 These tests should cover logic invoked as part of `onProtocolChange` and `reSubmitPendingOps`.
+
+Fuzz tests specifically targetting that upgrade logic should also be added.
 
 ### Snapshot Tests
 
@@ -124,7 +145,7 @@ Since the serialized form of the documents correspond to documents produced by a
 1. The current version of the code serializes each document to exactly match how the older version of the code serialized each document.
 1. The current version of the code is capable of loading documents written using older versions of the code.
 
-A few examples (which may be exhaustive) of snapshot tests are:
+A few examples (which may not be exhaustive) of snapshot tests are:
 
 -   [Legacy SharedTree](../../../../../experimental/dds/tree/src/test/Summary.tests.ts)
 -   [Sequence / SharedString](../../../sequence/src/test/snapshotVersion.spec.ts)
@@ -134,6 +155,10 @@ The first two examples generate their "from scratch" documents by directly calli
 The e2e snapshot tests accomplish "from scratch" generation by serializing the op stream alongside the snapshots and replaying it.
 In addition to verifying serialized states line up between old and current version of the code, it can also be helpful to
 verify equivalence at runtime, which typically gives more friendly error messages.
+
+> Aside: this approach is also a bit more flexible: it's possible that different snapshots can load to produce logically equivalent DDSes.
+> Matrix is an example of this: it uses a pair of permutation vectors mapping logical indices (i.e. "row 5, column 3") to in-memory indices for the contents of cells.
+> Thus, permuting both the permutation vectors and the cell data contained within a snapshot would not logically change its data.
 
 Snapshot tests are effective at catching changes which inadvertently modify the document format over time.
 SharedTree should have snapshot testing for each of its supported configurations.
