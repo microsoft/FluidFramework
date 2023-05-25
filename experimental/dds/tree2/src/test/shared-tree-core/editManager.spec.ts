@@ -238,6 +238,18 @@ describe("EditManager", () => {
 			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
 		]);
 
+		runUnitTestScenario(
+			// See the test "Rebases peer branches during trunk eviction" for a more detailed analysis of this case.
+			"Can handle changes from a lagging peer which catches up after a local ack",
+			[
+				{ seq: 1, type: "Pull", from: peer1, ref: 0 },
+				{ seq: 2, type: "Push" },
+				{ seq: 2, type: "Ack" },
+				{ seq: 3, type: "Pull", from: peer1, ref: 0 },
+				{ seq: 4, type: "Pull", from: peer1, ref: 3 },
+			],
+		);
+
 		describe("Trunk eviction", () => {
 			function applyLocalCommit(
 				manager: EditManager<
@@ -584,29 +596,37 @@ function runUnitTestScenario(
 		 */
 		const trunk: number[] = [];
 		/**
-		 * The sequence number of the most recent sequenced commit that each client is aware of
+		 * The sequence number of the most recent sequenced commit that the manager is aware of
 		 */
-		const referenceSequenceNumbers: { [session: SessionId]: number } = {
-			[localSessionId]: 0,
-			[peer1]: 0,
-			[peer2]: 0,
-		};
+		let localRef: number = 0;
 		/**
-		 * The oldest sequence number known to be seen by all peers
+		 * The greatest sequence number that could have been received by all peers at the time when the local
+		 * session is made aware of the given sequence number.
 		 */
-		const minimumSequenceNumber = () => {
+		const minimumSequenceNumber = (sequenceNumber: number) => {
 			if (advanceMinimumSequenceNumber) {
-				// Find all peers participating in this scenario by scanning the scenario steps
-				const activeClients = [
-					localSessionId,
-					...steps
-						.filter((s): s is UnitTestPullStep => s.type === "Pull")
-						.map((s) => s.from),
-				];
-				// Return the smallest of their reference sequence numbers
-				return activeClients
-					.map((p) => referenceSequenceNumbers[p])
-					.reduce((p, c) => Math.min(p, c));
+				// Find all non-local peers participating in this scenario by scanning the scenario steps
+				const activePeers = steps
+					.filter((s): s is UnitTestPullStep => s.type === "Pull")
+					.map((s) => s.from);
+
+				// For each peer, find its next step and extract the ref number.
+				// The min of all these ref numbers for all peers is the highest possible min sequence number across those peers.
+				const minPeerRef = activePeers
+					.map(
+						(peer) =>
+							steps
+								.filter(
+									(s): s is UnitTestPullStep =>
+										s.type === "Pull" && s.from === peer,
+								)
+								.find((s) => s.seq > sequenceNumber)?.ref ??
+							Number.POSITIVE_INFINITY,
+					)
+					.reduce((p, c) => Math.min(p, c), Number.POSITIVE_INFINITY);
+
+				// Compute the true min sequence number by including our local session's last seen sequence number as well.
+				return Math.min(sequenceNumber, minPeerRef);
 			}
 
 			return 0;
@@ -642,7 +662,7 @@ function runUnitTestScenario(
 						revision,
 						sessionId: localSessionId,
 						seqNumber: brand(seq),
-						refNumber: brand(referenceSequenceNumbers[localSessionId]),
+						refNumber: brand(localRef),
 						change: changeset,
 					};
 					localCommits.push(commit);
@@ -674,8 +694,10 @@ function runUnitTestScenario(
 					);
 					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
 					assert.deepEqual(delta, emptyDelta);
-					referenceSequenceNumbers[localSessionId] = commit.seqNumber;
-					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber()));
+					localRef = commit.seqNumber;
+					manager.advanceMinimumSequenceNumber(
+						brand(minimumSequenceNumber(commit.seqNumber)),
+					);
 					recordSequencedEdit(commit);
 					break;
 				}
@@ -733,9 +755,10 @@ function runUnitTestScenario(
 					}
 					recordSequencedEdit(commit);
 					knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
-					referenceSequenceNumbers[commit.sessionId] = commit.refNumber;
-					referenceSequenceNumbers[localSessionId] = commit.seqNumber;
-					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber()));
+					localRef = commit.seqNumber;
+					manager.advanceMinimumSequenceNumber(
+						brand(minimumSequenceNumber(commit.seqNumber)),
+					);
 					break;
 				}
 				default:
@@ -748,7 +771,7 @@ function runUnitTestScenario(
 				manager,
 				knownToLocal.filter(
 					// Only expect changes which have not been dropped by trunk eviction
-					(i) => i >= minimumSequenceNumber(),
+					(i) => i >= minimumSequenceNumber(localRef),
 				),
 			);
 			checkChangeList(summarizer, trunk);
