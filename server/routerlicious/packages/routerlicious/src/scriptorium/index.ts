@@ -40,6 +40,8 @@ export async function create(
 
 	const enableTelemetry = (config.get("scriptorium:enableTelemetry") as boolean) ?? false;
 	const maxDbBatchSize = config.get("scriptorium:maxDbBatchSize") as number;
+	const restartOnCheckpointFailure =
+		(config.get("scriptorium:restartOnCheckpointFailure") as boolean) ?? true;
 
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
@@ -118,5 +120,6 @@ export async function create(
 	return new ScriptoriumLambdaFactory(operationsDbManager, opCollection, {
 		enableTelemetry,
 		maxDbBatchSize,
+		restartOnCheckpointFailure,
 	});
 }

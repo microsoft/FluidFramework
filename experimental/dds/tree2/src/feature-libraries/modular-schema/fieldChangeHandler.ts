@@ -135,7 +135,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 		...data,
 		amendCompose: () => fail("Not implemented"),
 		amendInvert: () => fail("Not implemented"),
-		amendRebase: () => fail("Not implemented"),
+		amendRebase: (change) => change,
 	};
 }
 
@@ -176,9 +176,23 @@ export type NodeChangeInverter = (
 /**
  * @alpha
  */
+export enum NodeExistenceStateChange {
+	Unchanged,
+	Deleted,
+	Revived,
+}
+
+/**
+ * @alpha
+ */
 export type NodeChangeRebaser = (
 	change: NodeChangeset | undefined,
 	baseChange: NodeChangeset | undefined,
+	/**
+	 * Deleted when the baseChange deletes the node, Revived when the baseChange revives the node.
+	 * Unchanged by default when undefined.
+	 */
+	stateChange?: NodeExistenceStateChange,
 ) => NodeChangeset | undefined;
 
 /**
@@ -200,6 +214,14 @@ export type IdAllocator = (count?: number) => ChangesetLocalId;
 export interface NodeChangeset extends HasFieldChanges {
 	valueChange?: ValueChange;
 	valueConstraint?: ValueConstraint;
+	nodeExistsConstraint?: NodeExistsConstraint;
+}
+
+/**
+ * @alpha
+ */
+export interface NodeExistsConstraint {
+	violated: boolean;
 }
 
 /**

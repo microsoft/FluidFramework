@@ -1,0 +1,12 @@
+{
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"composite": true,
+		"jsx": "react",
+		"types": ["jest"],
+		"skipLibCheck": true,
+	},
+	"include": ["src/**/*"],
+}

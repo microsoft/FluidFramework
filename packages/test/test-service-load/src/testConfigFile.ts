@@ -27,6 +27,7 @@ export interface ILoadTestConfig {
 		max: number;
 	};
 	opsSendType?: "allClientsConcurrentReadWrite" | "staggeredReadWrite";
+
 	/**
 	 * Simulate clients going offline
 	 */
@@ -45,6 +46,12 @@ export interface ILoadTestConfig {
 			min: number;
 			max: number;
 		};
+		/**
+		 * Percentage of containers for which to stash pending changes when the offline period ends. Note
+		 * that this will only affect containers that have offline load enabled. A float between 0 and 1,
+		 * 1 meaning always stash. Default is 0.5
+		 */
+		stashPercent?: number;
 	};
 	/**
 	 * Number of "attachment" type blobs to upload over the course of the test run.

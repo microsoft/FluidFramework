@@ -2,73 +2,38 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable no-inner-declarations */
 
-import {
-	FieldKinds,
-	rootFieldKey,
-	ValueSchema,
-	TypedSchema,
-	SchemaAware,
-	typeNameSymbol,
-	valueSymbol,
-} from "../../../";
+import { ValueSchema, SchemaAware, typeNameSymbol, valueSymbol, SchemaBuilder } from "../../../";
 
-// Aliases for conciseness
-const { value, sequence } = FieldKinds;
-const { tree, field } = TypedSchema;
+const builder = new SchemaBuilder("Simple Schema");
 
 // Schema
-export const numberSchema = tree("number", { value: ValueSchema.Number });
+export const numberSchema = builder.primitive("number", ValueSchema.Number);
 
-export const pointSchema = tree("point", {
+export const pointSchema = builder.object("point", {
 	local: {
-		x: field(value, numberSchema),
-		y: field(value, numberSchema),
+		x: SchemaBuilder.fieldValue(numberSchema),
+		y: SchemaBuilder.fieldValue(numberSchema),
 	},
 });
 
-export const rootFieldSchema = field(sequence, pointSchema);
-
-export const appSchemaData = SchemaAware.typedSchemaData(
-	[[rootFieldKey, rootFieldSchema]],
-	numberSchema,
-	pointSchema,
-);
+export const appSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldSequence(pointSchema));
 
 // Schema aware types
-export type Number = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
-	SchemaAware.ApiMode.Editable,
-	typeof numberSchema
->;
+export type Number = SchemaAware.TypedNode<typeof numberSchema>;
 
-export type Point = SchemaAware.NodeDataFor<
-	typeof appSchemaData,
-	SchemaAware.ApiMode.Editable,
-	typeof pointSchema
->;
+export type Point = SchemaAware.TypedNode<typeof pointSchema>;
 
 // Example Use
-{
-	function dotProduct(a: Point, b: Point): number {
-		return a.x * b.x + a.y * b.y;
-	}
+function dotProduct(a: Point, b: Point): number {
+	return a.x * b.x + a.y * b.y;
 }
 
 // More Schema aware APIs
 {
-	type FlexibleNumber = SchemaAware.NodeDataFor<
-		typeof appSchemaData,
-		SchemaAware.ApiMode.Flexible,
-		typeof numberSchema
-	>;
+	type FlexibleNumber = SchemaAware.TypedNode<typeof numberSchema, SchemaAware.ApiMode.Flexible>;
 
-	type FlexiblePoint = SchemaAware.NodeDataFor<
-		typeof appSchemaData,
-		SchemaAware.ApiMode.Flexible,
-		typeof pointSchema
-	>;
+	type FlexiblePoint = SchemaAware.TypedNode<typeof pointSchema, SchemaAware.ApiMode.Flexible>;
 
 	const point: FlexiblePoint = {
 		x: 1,

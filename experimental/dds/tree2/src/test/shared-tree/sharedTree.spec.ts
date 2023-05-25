@@ -17,8 +17,8 @@ import {
 	namedTreeSchema,
 	on,
 	valueSymbol,
-	TypedSchema,
-	SchemaAware,
+	SchemaBuilder,
+	Any,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
@@ -27,7 +27,13 @@ import {
 	TestTreeProvider,
 	TestTreeProviderLite,
 } from "../utils";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory, runSynchronous } from "../../shared-tree";
+import {
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+	createSharedTreeView,
+	runSynchronous,
+} from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -47,6 +53,7 @@ import {
 	AllowedUpdateType,
 } from "../../core";
 import { EditManager } from "../../shared-tree-core";
+import { jsonString } from "../../domains";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -183,6 +190,54 @@ describe("SharedTree", () => {
 		validateRootField(tree4, expectedValues);
 	});
 
+	it("can load a summary from a tree and receive edits of the new state", async () => {
+		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+		const [summarizingTree] = provider.trees;
+
+		const initialState: JsonableTree = {
+			type: brand("Node"),
+			fields: {
+				foo: [
+					{ type: brand("Node"), value: "a" },
+					{ type: brand("Node"), value: "b" },
+					{ type: brand("Node"), value: "c" },
+				],
+			},
+		};
+		initializeTestTree(summarizingTree, initialState);
+
+		await provider.ensureSynchronized();
+		await provider.summarize();
+
+		const loadingTree = await provider.createTree();
+		const fooField: FieldKey = brand("foo");
+
+		runSynchronous(summarizingTree, () => {
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			summarizingTree.editor
+				.sequenceField({ parent: rootPath, field: fooField })
+				.delete(0, 1);
+		});
+
+		await provider.ensureSynchronized();
+
+		const cursor = loadingTree.forest.allocateCursor();
+		moveToDetachedField(loadingTree.forest, cursor);
+		assert.equal(cursor.firstNode(), true);
+		cursor.enterField(fooField);
+		assert.equal(cursor.firstNode(), true);
+		// An error may occur earlier in the test but may be swallowed up. If so, this line will fail
+		// due to the delete edit above not being able to be applied to loadingTree.
+		assert.equal(cursor.value, "b");
+		assert.equal(cursor.nextNode(), true);
+		assert.equal(cursor.value, "c");
+		assert.equal(cursor.nextNode(), false);
+	});
+
 	it("can summarize local edits in the attach summary", async () => {
 		const onCreate = (tree: ISharedTree) => {
 			const schema: SchemaData = {
@@ -236,14 +291,14 @@ describe("SharedTree", () => {
 		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
 		// if we'll ever expose some memory stats in which the trunk length would be included.
 		// If we do then this test should be updated to use that code path.
-		const t1 = tree1 as unknown as { editManager?: EditManager<any, any> };
-		const t2 = tree2 as unknown as { editManager?: EditManager<any, any> };
+		const t1 = tree1 as unknown as { editManager?: EditManager<any, any, any> };
+		const t2 = tree2 as unknown as { editManager?: EditManager<any, any, any> };
 		assert(
 			t1.editManager !== undefined && t2.editManager !== undefined,
 			"EditManager has moved. This test must be updated.",
 		);
-		assert(t1.editManager.getTrunk().length < 10);
-		assert(t2.editManager.getTrunk().length < 10);
+		assert(t1.editManager.getTrunkChanges().length < 10);
+		assert(t2.editManager.getTrunkChanges().length < 10);
 	});
 
 	it("can process changes while detached", async () => {
@@ -882,8 +937,7 @@ describe("SharedTree", () => {
 			validateTree(tree2, expectedAfterRedo);
 		});
 
-		// TODO: skipped because it fails on a rebasing bug but does verify that the second undo undoes the correct commit
-		it.skip("an insert after another undo has been sequenced", () => {
+		it("an insert after another undo has been sequenced", () => {
 			const value = "42";
 			const value2 = "43";
 			const value3 = "44";
@@ -930,8 +984,8 @@ describe("SharedTree", () => {
 			tree1.redo();
 			provider.processMessages();
 
-			validateTree(tree1, stringToJsonableTree([value3, value3, "A", "B", "C", "D"]));
-			validateTree(tree2, stringToJsonableTree([value3, value3, "A", "B", "C", "D"]));
+			validateTree(tree1, stringToJsonableTree([value3, value3, "A", value, "B", "C", "D"]));
+			validateTree(tree2, stringToJsonableTree([value3, value3, "A", value, "B", "C", "D"]));
 		});
 	});
 
@@ -1113,6 +1167,70 @@ describe("SharedTree", () => {
 			validateTree(tree2, [expectedState]);
 		});
 
+		it.skip("can rebase cross-field move over unrelated change", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [
+						{ type: brand("Node"), value: "a" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "c" },
+					],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "e" },
+					],
+				},
+			};
+			initializeTestTree(tree1, initialState);
+			provider.processMessages();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			// Change value of c to f
+			runSynchronous(tree1, () => {
+				tree1.editor.setValue(
+					{ parent: rootPath, parentField: brand("foo"), parentIndex: 2 },
+					"f",
+				);
+			});
+
+			// Move bc between d and e.
+			runSynchronous(tree2, () => {
+				tree2.editor.move(
+					{ parent: rootPath, field: brand("foo") },
+					1,
+					2,
+					{ parent: rootPath, field: brand("bar") },
+					1,
+				);
+			});
+
+			provider.processMessages();
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "f" },
+						{ type: brand("Node"), value: "e" },
+					],
+				},
+			};
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
+		});
+
 		it.skip("can rebase cross-field move over delete", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
@@ -1204,6 +1322,96 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
+		it("optional field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const path = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
+			});
+
+			provider.processMessages();
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(undefined, false);
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint({
+					parent: path,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+
+				tree2.editor.setValue(path, "b");
+			});
+
+			provider.processMessages();
+
+			validateRootField(tree1, ["a"]);
+			validateRootField(tree2, ["a"]);
+		});
+
+		it("revived optional field node exists constraint", () => {
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			provider.processMessages();
+
+			const path = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
+			});
+
+			provider.processMessages();
+
+			runSynchronous(tree1, () => {
+				const optional = tree1.editor.optionalField({ parent: path, field: brand("foo") });
+				optional.set(undefined, false);
+			});
+
+			tree1.undo();
+
+			runSynchronous(tree2, () => {
+				tree2.editor.addNodeExistsConstraint({
+					parent: path,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+
+				tree2.editor.setValue(path, "b");
+			});
+
+			const expectedState: JsonableTree = {
+				type: brand("TestValue"),
+				value: "b",
+				fields: {
+					foo: [{ type: jsonString.name, value: "x" }],
+				},
+			};
+
+			provider.processMessages();
+
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
+		});
+
 		it("transaction dropped when constraint violated", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
@@ -2349,18 +2557,11 @@ function initializeTestTree(
 	}
 }
 
-const testValueSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	value: ValueSchema.Serializable,
-});
-
 function testTreeView(): ISharedTreeView {
 	const factory = new SharedTreeFactory();
-	const treeSchema = TypedSchema.tree("root", { value: ValueSchema.Number });
-	const schema = SchemaAware.typedSchemaData(
-		[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.optional)]],
-		treeSchema,
-	);
+	const builder = new SchemaBuilder("testTreeView");
+	const treeSchema = builder.object("root", { value: ValueSchema.Number });
+	const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 	return tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
@@ -2374,6 +2575,30 @@ function testTreeView(): ISharedTreeView {
  */
 function setTestValue(branch: ISharedTreeView, value: TreeValue): void {
 	insert(branch, 0, value);
+}
+
+const testValueSchema = namedTreeSchema({
+	name: brand("TestValue"),
+	value: ValueSchema.Serializable,
+});
+
+/**
+ * Helper function to insert node at a given index.
+ *
+ * TODO: delete once the JSON editing API is ready for use.
+ *
+ * @param tree - The tree on which to perform the insert.
+ * @param index - The index in the root field at which to insert.
+ * @param value - The value of the inserted node.
+ */
+function insert(tree: ISharedTreeView, index: number, ...values: TreeValue[]): void {
+	runSynchronous(tree, () => {
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		const nodes = values.map((value) =>
+			singleTextCursor({ type: testValueSchema.name, value }),
+		);
+		field.insert(index, nodes);
+	});
 }
 
 /**
@@ -2406,25 +2631,6 @@ function getTestValues({ forest }: ISharedTreeView): TreeValue[] {
 	}
 	readCursor.free();
 	return values;
-}
-
-/**
- * Helper function to insert node at a given index.
- *
- * TODO: delete once the JSON editing API is ready for use.
- *
- * @param tree - The tree on which to perform the insert.
- * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted node.
- */
-function insert(tree: ISharedTreeView, index: number, ...values: TreeValue[]): void {
-	runSynchronous(tree, () => {
-		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-		const nodes = values.map((value) =>
-			singleTextCursor({ type: testValueSchema.name, value }),
-		);
-		field.insert(index, nodes);
-	});
 }
 
 function remove(tree: ISharedTree, index: number, count: number): void {
@@ -2474,11 +2680,17 @@ function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
 function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
+		// Test an actual SharedTree...
 		fn(provider.trees[0]);
+		// ...as well as a reference view
+		fn(createSharedTreeView());
 	});
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
+		// Test an actual SharedTree fork...
 		fn(provider.trees[0].fork());
+		// ...as well as a reference fork
+		fn(createSharedTreeView().fork());
 	});
 }

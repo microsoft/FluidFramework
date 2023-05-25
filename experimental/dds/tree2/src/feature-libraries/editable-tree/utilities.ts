@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeSchema, ValueSchema } from "../../core";
+import { TreeStoredSchema, ValueSchema } from "../../core";
 import { forbidden } from "../defaultFieldKinds";
 
 /**
@@ -16,8 +16,8 @@ import { forbidden } from "../defaultFieldKinds";
  * Checking for this object case is done elsewhere.
  * @alpha
  */
-export function isPrimitive(schema: TreeSchema): boolean {
-	// TODO: use a separate `TreeViewSchema` type, with metadata that determines if the type is primitive.
+export function isPrimitive(schema: TreeStoredSchema): boolean {
+	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.
 	// Since the above is not done yet, use use a heuristic:
 	return (
 		schema.value !== ValueSchema.Nothing &&

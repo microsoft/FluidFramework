@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import fs from "fs";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
@@ -28,6 +29,9 @@ export type DocumentType =
 	/** Large document with Multiple DataStores (each data store has 3 DDS) */
 	| "LargeDocumentMultipleDataStores";
 
+export interface IE2EDocsConfig {
+	documents: DescribeE2EDocInfo[];
+}
 // Default document types to be used during the performance E2E runs.
 const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	{
@@ -81,24 +85,55 @@ export type DescribeE2EDocSuite = (
 	testType?: string,
 ) => Mocha.Suite | void;
 
+function getE2EConfigFile(): IE2EDocsConfig | undefined {
+	let config: IE2EDocsConfig | undefined;
+	try {
+		const localDebugPath = "./e2eDocsConfig.json";
+		if (fs.existsSync(localDebugPath)) {
+			config = JSON.parse(fs.readFileSync(localDebugPath, "utf-8"));
+		} else {
+			const childArgs = [...process.execArgv, ...process.argv.slice(1)];
+			const flagIndex = childArgs.indexOf("--e2eConfigFile");
+			if (flagIndex > 0) {
+				const configPath = childArgs[flagIndex + 1];
+				if (!fs.existsSync(configPath)) {
+					console.log("Could not locate e2eDocsConfig.json used on the command line.");
+				}
+				config = JSON.parse(fs.readFileSync(childArgs[flagIndex + 1], "utf-8"));
+			}
+		}
+	} catch (e) {
+		console.log("Could not locate e2eDocsConfig.json - continuing");
+	}
+	return config;
+}
+
 function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocSuite {
+	const config = getE2EConfigFile();
+
 	const d: DescribeE2EDocSuite = (title, tests, testType) => {
 		describe(
 			`${testType} -`,
-			createE2EDocCompatSuite(title, tests, docTypes ?? E2EDefaultDocumentTypes),
+			createE2EDocCompatSuite(
+				title,
+				tests,
+				docTypes ?? config?.documents ?? E2EDefaultDocumentTypes,
+			),
 		);
 	};
 	return d;
 }
 
 function createE2EDocsDescribeWithType(testType: BenchmarkTypeDescription): DescribeE2EDocSuite {
+	const config = getE2EConfigFile();
+
 	const d: DescribeE2EDocSuite = (title, tests, docTypes) => {
 		describe(
 			`${testType} -`,
 			createE2EDocCompatSuite(
 				title,
 				tests,
-				docTypes === undefined ? E2EDefaultDocumentTypes : docTypes,
+				docTypes === undefined ? config?.documents ?? E2EDefaultDocumentTypes : docTypes,
 			),
 		);
 	};
@@ -190,7 +225,7 @@ function createE2EDocCompatSuite(
 	};
 }
 
-export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe(E2EDefaultDocumentTypes);
+export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe();
 
 export const describeE2EDocsRuntime: DescribeE2EDocSuite =
 	createE2EDocsDescribeWithType("Runtime benchmarks");

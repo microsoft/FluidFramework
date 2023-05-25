@@ -60,92 +60,9 @@ const snapshotFileName = "header";
 const placeholderClientId = "placeholder";
 
 /**
- * The TaskManager distributed data structure tracks queues of clients that want to exclusively run a task.
+ * {@inheritDoc ITaskManager}
  *
- * @remarks
- *
- * ### Creation
- *
- * To create a `TaskManager`, call the static create method:
- *
- * ```typescript
- * const taskManager = TaskManager.create(this.runtime, id);
- * ```
- *
- * ### Usage
- *
- * To volunteer for a task, use the `volunteerForTask()` method.  This returns a Promise that will resolve once the
- * client has acquired exclusive rights to run the task, or reject if the client is removed from the queue without
- * acquiring the rights.
- *
- * ```typescript
- * taskManager.volunteerForTask("NameOfTask")
- *     .then(() => { doTheTask(); })
- *     .catch((err) => { console.error(err); });
- * ```
- *
- * Alternatively, you can indefinitely volunteer for a task with the synchronous `subscribeToTask()` method. This
- * method does not return a value, therefore you need to rely on eventing to know when you have acquired the rights
- * to run the task (see below).
- *
- * ```typescript
- * taskManager.subscribeToTask("NameOfTask");
- * ```
- *
- * To check if the local client is currently subscribed to a task, use the `subscribed()` method.
- * ```typescript
- * if (taskManager.subscribed("NameOfTask")) {
- *     console.log("This client is currently subscribed to the task.");
- * }
- * ```
- *
- * To release the rights to the task, use the `abandon()` method.  The next client in the queue will then get the
- * rights to run the task.
- *
- * ```typescript
- * taskManager.abandon("NameOfTask");
- * ```
- *
- * To inspect your state in the queue, you can use the `queued()` and `assigned()` methods.
- *
- * ```typescript
- * if (taskManager.queued("NameOfTask")) {
- *     console.log("This client is somewhere in the queue, potentially even having the task assignment.");
- * }
- *
- * if (taskManager.assigned("NameOfTask")) {
- *     console.log("This client currently has the rights to run the task");
- * }
- * ```
- *
- * To signal to other connected clients that a task is completed, use the `complete()` method. This will release all
- * clients from the queue and emit the "completed" event.
- *
- * ```typescript
- * taskManager.complete("NameOfTask");
- * ```
- *
- * ### Eventing
- *
- * `TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client, when the task
- * assignment is lost, and when a task was completed by another client.
- *
- * ```typescript
- * taskManager.on("assigned", (taskId: string) => {
- *     console.log(`Client was assigned task: ${taskId}`);
- * });
- *
- * taskManager.on("lost", (taskId: string) => {
- *     console.log(`Client released task: ${taskId}`);
- * });
- *
- * taskManager.on("completed", (taskId: string) => {
- *     console.log(`Another client completed task: ${taskId}`);
- * });
- * ```
- *
- * These can be useful if the logic to volunteer for a task is separated from the logic to perform the task, such as
- * when using the `subscribeToTask()` method.
+ * @sealed
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
 	/**
@@ -861,6 +778,6 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 	}
 
 	public applyStashedOp() {
-		throw new Error("not implemented");
+		// do nothing...
 	}
 }

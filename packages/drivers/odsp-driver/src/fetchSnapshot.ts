@@ -517,7 +517,7 @@ function getFormBodyAndHeaders(
 	return { body: postBody, headers: header };
 }
 
-function evalBlobsAndTrees(snapshot: ISnapshotContents) {
+export function evalBlobsAndTrees(snapshot: ISnapshotContents) {
 	const trees = countTreesInSnapshotTree(snapshot.snapshotTree);
 	const numBlobs = snapshot.blobs.size;
 	let encodedBlobsSize = 0;
