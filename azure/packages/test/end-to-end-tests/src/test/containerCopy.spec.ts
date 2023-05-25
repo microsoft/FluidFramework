@@ -124,7 +124,7 @@ describe("Container copy scenarios", () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
-		await timeoutPromise((resolve) => container.once("connected", resolve), {
+		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 			durationMs: connectTimeoutMs,
 			errorMsg: "container connect() timeout",
 		});
@@ -138,7 +138,7 @@ describe("Container copy scenarios", () => {
 		const { container: containerCopy } = await resources;
 
 		const newContainerId = await containerCopy.attach();
-		await timeoutPromise((resolve) => containerCopy.once("connected", resolve), {
+		await timeoutPromise((resolve) => containerCopy.once("connected", () => resolve()), {
 			durationMs: connectTimeoutMs,
 			errorMsg: "container connect() timeout",
 		});
