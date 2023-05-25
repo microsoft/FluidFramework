@@ -1041,7 +1041,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	public readonly overlappingIntervalsIndex: OverlappingIntervalsIndex<TInterval>;
 	public readonly idIntervalIndex: IdIntervalIndex<TInterval>;
 	public readonly endIntervalIndex: EndpointIndex<TInterval>;
-	private readonly indexes: IntervalIndex<TInterval>[];
+	private readonly indexes: Set<IntervalIndex<TInterval>>;
 
 	constructor(
 		private readonly client: Client,
@@ -1056,11 +1056,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
 		this.idIntervalIndex = new IdIntervalIndex();
 		this.endIntervalIndex = new EndpointIndex(client, helpers);
-		this.indexes = [
+		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
 			this.endIntervalIndex,
-		];
+		]);
 	}
 
 	public createLegacyId(start: number, end: number): string {
@@ -1105,16 +1105,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	public appendIndex(index: IntervalIndex<TInterval>) {
-		this.indexes.push(index);
+		this.indexes.add(index);
 	}
 
 	public removeIndex(index: IntervalIndex<TInterval>): boolean {
-		const indexToRemove = this.indexes.indexOf(index);
-		if (indexToRemove !== -1) {
-			this.indexes.splice(indexToRemove, 1);
-			return true; // Index removed successfully
-		}
-		return false; // Index not found in this.indexes
+		return this.indexes.delete(index);
 	}
 
 	public removeExistingInterval(interval: TInterval) {
@@ -1589,6 +1584,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 			index.remove(interval);
 		}
 
+		// Avoid removing intervals from the index if it was not present
 		return this.localCollection?.removeIndex(index) ?? false;
 	}
 

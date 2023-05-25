@@ -1427,37 +1427,47 @@ describe("SharedString interval collections", () => {
 	});
 
 	describe("querying intervals with index API's", () => {
-		it("can attach/detach an index", () => {
-			sharedString.initializeLocal();
-			const collection = sharedString.getIntervalCollection("test");
-			sharedString.insertText(0, "xyzabc");
-			const id1 = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
-			const id2 = collection.add(1, 3, IntervalType.SlideOnRemove).getIntervalId();
+		describe("support attaching/detaching an index", () => {
+			let collection;
+			let mockIntervalIndex;
+			let id1;
+			let id2;
 
-			const mockIntervalIndex = new MockIntervalIndex();
-			collection.attachIndex(mockIntervalIndex);
+			beforeEach(() => {
+				sharedString.initializeLocal();
+				collection = sharedString.getIntervalCollection("test");
+				sharedString.insertText(0, "xyzabc");
+				id1 = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
+				id2 = collection.add(1, 3, IntervalType.SlideOnRemove).getIntervalId();
 
-			// Verify if all intervals in this collection are added to the attached index
-			assert.strictEqual(collection.getIntervalById(id1), mockIntervalIndex.get(0));
-			assert.strictEqual(collection.getIntervalById(id2), mockIntervalIndex.get(1));
-
-			// Verify if the intervals in collection are synced with those in collection
-			const id3 = collection.add(2, 5, IntervalType.SlideOnRemove).getIntervalId();
-			assert.strictEqual(collection.getIntervalById(id3), mockIntervalIndex.get(2));
-			collection.removeIntervalById(id2);
-			assert.strictEqual(collection.getIntervalById(id1), mockIntervalIndex.get(0));
-			assert.strictEqual(collection.getIntervalById(id3), mockIntervalIndex.get(1));
-
-			// detach the index, and the intervals in collection should not be affected
-			assert.equal(collection.detachIndex(mockIntervalIndex), true);
-			assert.equal(mockIntervalIndex.size(), 0);
-			assertIntervalEquals(sharedString, collection.getIntervalById(id1), {
-				start: 1,
-				end: 1,
+				mockIntervalIndex = new MockIntervalIndex();
+				collection.attachIndex(mockIntervalIndex);
 			});
-			assertIntervalEquals(sharedString, collection.getIntervalById(id3), {
-				start: 2,
-				end: 5,
+
+			it("can add all intervals in collection to the attached index", () => {
+				assert.strictEqual(collection.getIntervalById(id1), mockIntervalIndex.get(0));
+				assert.strictEqual(collection.getIntervalById(id2), mockIntervalIndex.get(1));
+			});
+
+			it("the intervals in attached index should be synced with those in collection after updating", () => {
+				const id3 = collection.add(2, 5, IntervalType.SlideOnRemove).getIntervalId();
+				assert.strictEqual(collection.getIntervalById(id3), mockIntervalIndex.get(2));
+				collection.removeIntervalById(id2);
+				assert.strictEqual(collection.getIntervalById(id1), mockIntervalIndex.get(0));
+				assert.strictEqual(collection.getIntervalById(id3), mockIntervalIndex.get(1));
+			});
+
+			it("detached index should not affect the intervals in collection", () => {
+				assert.equal(collection.detachIndex(mockIntervalIndex), true);
+				assert.equal(mockIntervalIndex.size(), 0);
+				assertIntervalEquals(sharedString, collection.getIntervalById(id1), {
+					start: 1,
+					end: 1,
+				});
+				assertIntervalEquals(sharedString, collection.getIntervalById(id2), {
+					start: 1,
+					end: 3,
+				});
 			});
 		});
 	});
