@@ -19,7 +19,7 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet, op?: ICombiningOp, seq?: number): PropertySet;
 
 // @alpha
-export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
+export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha @sealed
 export interface AttributionPolicy {
@@ -935,19 +935,8 @@ export type MergeTreeMaintenanceType = typeof MergeTreeMaintenanceType[keyof typ
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
     annotateRange(start: number, end: number, props: PropertySet): any;
-    // @deprecated (undocumented)
-    createLocalReferencePosition(segment: ISegment, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
-    // @deprecated (undocumented)
-    getContainingSegment(pos: number): {
-        segment: ISegment | undefined;
-        offset: number | undefined;
-    };
-    // @deprecated (undocumented)
-    getPosition(segment: ISegment): number;
     // (undocumented)
     insertFromSpec(pos: number, spec: IJSONSegment): any;
-    // @deprecated (undocumented)
-    localReferencePositionToPosition(lref: LocalReferencePosition): number;
     // (undocumented)
     removeRange(start: number, end: number): any;
 }
