@@ -16,7 +16,43 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import {
+	IntervalCollection,
+	IntervalType,
+	SequenceInterval,
+	IntervalIndex,
+	ISerializableInterval,
+} from "../intervalCollection";
+
+class MockIntervalIndex<TInterval extends ISerializableInterval>
+	implements IntervalIndex<TInterval>
+{
+	private readonly intervals: TInterval[];
+	constructor() {
+		this.intervals = new Array<TInterval>();
+	}
+
+	public add(interval: TInterval) {
+		this.intervals.push(interval);
+	}
+
+	public remove(interval: TInterval): boolean {
+		const idx = this.intervals.indexOf(interval);
+		if (idx !== -1) {
+			this.intervals.splice(idx, 1);
+			return true;
+		}
+		return false;
+	}
+
+	public get(idx: number): TInterval {
+		return this.intervals[idx];
+	}
+
+	public size(): number {
+		return this.intervals.length;
+	}
+}
 
 const assertIntervals = (
 	sharedString: SharedString,
@@ -1387,6 +1423,42 @@ describe("SharedString interval collections", () => {
 			assert.equal(sharedString2.getText(), "hello frnd");
 			assertIntervals(sharedString2, collection2, [{ start: 5, end: 8 }]);
 			assertIntervals(sharedString, collection1, [{ start: 5, end: 8 }]);
+		});
+	});
+
+	describe("querying intervals with index API's", () => {
+		it("can attach/detach an index", () => {
+			sharedString.initializeLocal();
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "xyzabc");
+			const id1 = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
+			const id2 = collection.add(1, 3, IntervalType.SlideOnRemove).getIntervalId();
+
+			const mockIntervalIndex = new MockIntervalIndex();
+			collection.attachIndex(mockIntervalIndex);
+
+			// Verify if all intervals in this collection are added to the attached index
+			assert.strictEqual(collection.getIntervalById(id1), mockIntervalIndex.get(0));
+			assert.strictEqual(collection.getIntervalById(id2), mockIntervalIndex.get(1));
+
+			// Verify if the intervals in collection are synced with those in collection
+			const id3 = collection.add(2, 5, IntervalType.SlideOnRemove).getIntervalId();
+			assert.strictEqual(collection.getIntervalById(id3), mockIntervalIndex.get(2));
+			collection.removeIntervalById(id2);
+			assert.strictEqual(collection.getIntervalById(id1), mockIntervalIndex.get(0));
+			assert.strictEqual(collection.getIntervalById(id3), mockIntervalIndex.get(1));
+
+			// detach the index, and the intervals in collection should not be affected
+			assert.equal(collection.detachIndex(mockIntervalIndex), true);
+			assert.equal(mockIntervalIndex.size(), 0);
+			assertIntervalEquals(sharedString, collection.getIntervalById(id1), {
+				start: 1,
+				end: 1,
+			});
+			assertIntervalEquals(sharedString, collection.getIntervalById(id3), {
+				start: 2,
+				end: 5,
+			});
 		});
 	});
 });
