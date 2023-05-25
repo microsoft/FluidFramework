@@ -251,6 +251,7 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	NodeExistenceStateChange,
 } from "./feature-libraries";
 
 export {
