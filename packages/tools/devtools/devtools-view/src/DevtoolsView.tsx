@@ -455,10 +455,10 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	} else if (containers.length === 0) {
 		containerSectionInnerView = <div>No Containers found.</div>;
 	} else {
-		containers.sort((a, b) => a.localeCompare(b));
+		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
 			<>
-				{containers.map((containerKey) => (	
+				{containers.map((containerKey: string) => (
 					<MenuItem
 						key={containerKey}
 						isActive={currentContainerSelection === containerKey}
