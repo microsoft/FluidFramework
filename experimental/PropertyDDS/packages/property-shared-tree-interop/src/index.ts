@@ -3,7 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export {
-	convertPropertyToSharedTreeStorageSchema,
-	addComplexTypeToSchema,
-} from "./schemaConverter";
+export { convertPropertyToSharedTreeStorageSchema } from "./schemaConverter";

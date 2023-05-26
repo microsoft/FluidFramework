@@ -17,17 +17,14 @@ import {
 	EmptyKey,
 	PrimitiveValue,
 	TreeSchemaIdentifier,
-	brand,
 	isPrimitive,
 	lookupGlobalFieldSchema,
 	lookupTreeSchema,
-	neverTree,
 	typeNameSymbol,
 	valueSymbol,
 	FieldKinds,
 	FieldStoredSchema,
 } from "@fluid-experimental/tree2";
-import { addComplexTypeToSchema } from "@fluid-experimental/property-shared-tree-interop";
 
 const { sequence, value } = FieldKinds;
 const defaultPrimitiveValues = {
@@ -75,13 +72,6 @@ export function getNewNodeData(
 	const contextAndType = typeName.split("<");
 	if (contextAndType.length > 1) {
 		const context = contextAndType[0];
-		const subType = contextAndType[1].replace(/>/g, "");
-		if (lookupTreeSchema(schema, typeName) === neverTree) {
-			// TODO: address this case to MSFT
-			// Ideally, one could expect `map`, `array` etc. complex types
-			// to be available "out-of-the-box" for every existing type.
-			schema.update(addComplexTypeToSchema(schema, context, brand(subType)));
-		}
 		if (context === "array") {
 			newData[EmptyKey] = [];
 		}
@@ -89,7 +79,7 @@ export function getNewNodeData(
 	}
 	const treeSchema = lookupTreeSchema(schema, typeName);
 	// TODO: tbd if this code below could be moved to the EditableTree implementation
-	// for creation of fields and nodes, also having a "hook" to define own default values.
+	// for creation of fields and nodes using a "hook" to define default values.
 	if (isPrimitive(treeSchema)) {
 		// avoid `undefined` as not supported by schema and UI
 		const defaultValue: PrimitiveValue = defaultPrimitiveValues[typeName];

@@ -13,17 +13,12 @@ import {
 	lookupTreeSchema,
 	ValueSchema,
 	rootFieldKey,
-	TreeSchemaIdentifier,
-	EmptyKey,
 	FieldStoredSchema,
 	fail,
 	Any,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import {
-	addComplexTypeToSchema,
-	convertPropertyToSharedTreeStorageSchema,
-} from "../schemaConverter";
+import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
 import personSchema from "./personSchema";
 
 // TODO: test recursive schemas
@@ -82,8 +77,8 @@ describe("schema converter", () => {
 			expectedRootFieldSchema,
 		);
 
-		// 62 types (primitives + "NodeProperty" including inheritances, their arrays and maps)
-		expect(fullSchemaData.treeSchema.size).toEqual(62);
+		// 78 types (all types, their arrays and maps)
+		expect(fullSchemaData.treeSchema.size).toEqual(78);
 		const nodePropertySchema = lookupTreeSchema(fullSchemaData, brand("NodeProperty"));
 		expect(nodePropertySchema).toMatchObject({
 			name: "NodeProperty",
@@ -122,59 +117,6 @@ describe("schema converter", () => {
 			const expected = expectedAddressFields.get(fieldKey) ?? fail("expected field");
 			expect(field).toMatchObject(expected);
 		}
-	});
-
-	it("can dynamically create collection types", () => {
-		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-			FieldKinds.optional,
-			brand<TreeSchemaIdentifier>("Test:Person-1.0.0"),
-		);
-
-		const geoLocationTypeName: TreeSchemaIdentifier = brand("Test:GeodesicLocation-1.0.0");
-		const schemaWithNewArray = addComplexTypeToSchema(
-			fullSchemaData,
-			"array",
-			geoLocationTypeName,
-		);
-		const arrayTypeName: TreeSchemaIdentifier = brand(`array<${geoLocationTypeName}>`);
-		const geoLocationArraySchema = lookupTreeSchema(schemaWithNewArray, arrayTypeName);
-		expect(geoLocationArraySchema).toMatchObject({
-			name: arrayTypeName,
-			localFields: new Map([
-				[
-					EmptyKey,
-					fieldSchema(FieldKinds.sequence, [
-						geoLocationTypeName,
-						brand("Test:Address-1.0.0"),
-					]),
-				],
-			]),
-			extraLocalFields: new Map(),
-			globalFields: new Set(),
-			extraGlobalFields: false,
-			value: ValueSchema.Nothing,
-		});
-
-		const schemaWithNewMap = addComplexTypeToSchema(fullSchemaData, "map", geoLocationTypeName);
-		const mapTypeName: TreeSchemaIdentifier = brand(`map<${geoLocationTypeName}>`);
-		const geoLocationMapSchema = lookupTreeSchema(schemaWithNewMap, mapTypeName);
-		expect(geoLocationMapSchema).toMatchObject({
-			name: mapTypeName,
-			localFields: new Map(),
-			extraLocalFields: fieldSchema(FieldKinds.optional, [
-				geoLocationTypeName,
-				brand("Test:Address-1.0.0"),
-			]),
-			globalFields: new Set(),
-			extraGlobalFields: false,
-			value: ValueSchema.Nothing,
-		});
-
-		assert.throws(
-			() => addComplexTypeToSchema(fullSchemaData, "tuple", geoLocationTypeName),
-			(e) => validateAssertionError(e, `Not supported collection context "tuple"`),
-			"Expected exception was not thrown",
-		);
 	});
 
 	it("can use any type as root", () => {

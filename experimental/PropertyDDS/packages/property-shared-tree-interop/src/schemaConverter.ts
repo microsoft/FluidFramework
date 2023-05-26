@@ -6,18 +6,11 @@
 import { assert } from "@fluidframework/common-utils";
 import {
 	fail,
-	emptyField,
 	FieldKinds,
 	FieldSchema,
-	TreeSchemaIdentifier,
 	ValueSchema,
-	fieldSchema,
-	namedTreeSchema,
-	brand,
 	EmptyKey,
-	SchemaDataAndPolicy,
 	SchemaBuilder,
-	TreeStoredSchema,
 	FieldKindTypes,
 	Any,
 	TreeSchema,
@@ -110,6 +103,14 @@ function buildTreeSchema(
 ): LazyTreeSchema {
 	const splitTypeId = TypeIdHelper.extractContext(type);
 	if (splitTypeId.context === "single") {
+		const arrayOfTypeId = `array<${splitTypeId.typeid}>`;
+		const mapOfTypeId = `map<${splitTypeId.typeid}>`;
+		if (!treeSchemaMap.has(arrayOfTypeId)) {
+			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, arrayOfTypeId);
+		}
+		if (!treeSchemaMap.has(mapOfTypeId)) {
+			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, mapOfTypeId);
+		}
 		let treeSchema = treeSchemaMap.get(splitTypeId.typeid);
 		if (treeSchema) {
 			return treeSchema;
@@ -227,8 +228,10 @@ function buildTreeSchema(
 			anyType ? Any : splitTypeId.typeid,
 		);
 		switch (splitTypeId.context) {
-			case "map":
 			case "set": {
+				fail(`"set" collections are not supported yet`);
+			}
+			case "map": {
 				cache.treeSchema = builder.object(currentTypeid, { extraLocalFields: fieldType });
 				return cache.treeSchema;
 			}
@@ -328,12 +331,6 @@ export function convertPropertyToSharedTreeStorageSchema<
 		if (!referencedTypeIDs.has(type)) {
 			referencedTypeIDs.add(type);
 		}
-		if (!referencedTypeIDs.has(`array<${type}>`)) {
-			referencedTypeIDs.add(`array<${type}>`);
-		}
-		if (!referencedTypeIDs.has(`map<${type}>`)) {
-			referencedTypeIDs.add(`map<${type}>`);
-		}
 	}
 
 	// Now we create the actual schemas, since we are now able to reference the dependent types
@@ -352,61 +349,6 @@ export function convertPropertyToSharedTreeStorageSchema<
 		...rootTypes,
 	);
 	return builder.intoDocumentSchema(rootSchema);
-}
-
-const allowedCollectionContexts = new Set(["array", "map", "set"]);
-
-/**
- * A helper function to add a complex type to the schema.
- *
- * Complex types are `array`, `map` and `set`.
- * The resulting type added to the schema will have a name
- * in the PropertyDDS format `context<typeName>`.
- *
- * Be aware, that using this function might be very unperformant
- * as it reads all types registered in PropertyDDS schema
- * and creates a shallow copy of the `SchemaDataAndPolicy`.
- *
- * TODO: use new schema API (builder etc.)
- */
-export function addComplexTypeToSchema(
-	fullSchemaData: SchemaDataAndPolicy,
-	context: string,
-	typeName: TreeSchemaIdentifier,
-): SchemaDataAndPolicy {
-	if (!allowedCollectionContexts.has(context)) {
-		fail(`Not supported collection context "${context}"`);
-	}
-	const treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema> = new Map();
-	for (const [k, v] of fullSchemaData.treeSchema) {
-		treeSchema.set(k, v);
-	}
-	const complexTypeName: TreeSchemaIdentifier = brand(`${context}<${typeName}>`);
-	const types = mapTypesAndChildren<TreeSchemaIdentifier>(
-		getAllInheritingChildrenTypes(),
-		(t) => brand(t),
-		typeName,
-	);
-	const typeSchema =
-		context === "array"
-			? namedTreeSchema({
-					name: complexTypeName,
-					localFields: {
-						[EmptyKey]: fieldSchema(FieldKinds.sequence, types),
-					},
-					extraLocalFields: emptyField,
-			  })
-			: namedTreeSchema({
-					name: complexTypeName,
-					extraLocalFields: fieldSchema(FieldKinds.optional, types),
-			  });
-	treeSchema.set(complexTypeName, typeSchema);
-	const globalSchema: SchemaDataAndPolicy = {
-		treeSchema,
-		globalFieldSchema: fullSchemaData.globalFieldSchema,
-		policy: fullSchemaData.policy,
-	};
-	return globalSchema;
 }
 
 // Concepts currently not mapped / represented in the compiled schema:
