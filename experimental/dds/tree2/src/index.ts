@@ -255,6 +255,7 @@ export {
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
 	LazyTreeSchema,
+	NodeExistenceStateChange,
 } from "./feature-libraries";
 
 export {

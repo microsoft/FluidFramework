@@ -628,7 +628,7 @@ stages:
           customSteps:
 
           - task: Bash@3
-            displayName: Retrieve buildId results
+            displayName: Retrieve and Upload pipeline run stats to Kusto
             inputs:
               targetType: 'inline'
               workingDirectory: $(toolAbsolutePath)
@@ -636,7 +636,7 @@ stages:
                 echo "creating output folder"
                 mkdir -p ${{ variables.testWorkspace }}/timingOutput
                 echo "Executing curl command ..."
-                echo  'curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
+                echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
                 curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
                 pwd;
                 ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
