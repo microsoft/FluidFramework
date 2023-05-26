@@ -44,12 +44,15 @@ import { IInterval, IntervalConflictResolver, IntervalTree, IntervalNode } from 
 
 const reservedIntervalIdKey = "intervalId";
 
+/**
+ * Values are used in persisted formats (ops) and revertibles.
+ */
 export const IntervalOpType = {
 	ADD: "add",
 	DELETE: "delete",
 	CHANGE: "change",
-	PROPERTYCHANGE: "propertyChange",
-	POSITIONREMOVE: "positionRemove",
+	PROPERTY_CHANGED: "propertyChanged",
+	POSITION_REMOVE: "positionRemove",
 } as const;
 
 export enum IntervalType {

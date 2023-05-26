@@ -46,12 +46,12 @@ export type IntervalRevertible =
 			end: LocalReferencePosition;
 	  }
 	| {
-			event: typeof IntervalOpType.PROPERTYCHANGE;
+			event: typeof IntervalOpType.PROPERTY_CHANGED;
 			interval: SequenceInterval;
 			propertyDeltas: PropertySet;
 	  }
 	| {
-			event: typeof IntervalOpType.POSITIONREMOVE;
+			event: typeof IntervalOpType.POSITION_REMOVE;
 			intervals: {
 				intervalId: string;
 				label: string;
@@ -145,7 +145,7 @@ export function appendLocalPropertyChangedToRevertibles(
 	revertibles: SharedStringRevertible[],
 ) {
 	revertibles.push({
-		event: IntervalOpType.PROPERTYCHANGE,
+		event: IntervalOpType.PROPERTY_CHANGED,
 		interval,
 		propertyDeltas: deltas,
 	});
@@ -204,8 +204,8 @@ export function appendSharedStringDeltaToRevertibles(
 			appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, removeRevertibles);
 			assert(removeRevertibles.length === 1, "Remove revertible should be a single delta");
 
-			const revertible: TypedRevertible<typeof IntervalOpType.POSITIONREMOVE> = {
-				event: IntervalOpType.POSITIONREMOVE,
+			const revertible: TypedRevertible<typeof IntervalOpType.POSITION_REMOVE> = {
+				event: IntervalOpType.POSITION_REMOVE,
 				intervals: [],
 				mergeTreeRevertible: removeRevertibles[0],
 			};
@@ -303,7 +303,7 @@ function revertLocalChange(
 
 function revertLocalPropertyChanged(
 	string: SharedString,
-	revertible: TypedRevertible<typeof IntervalOpType.PROPERTYCHANGE>,
+	revertible: TypedRevertible<typeof IntervalOpType.PROPERTY_CHANGED>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	const id = getId(revertible.interval);
@@ -350,7 +350,7 @@ class SortedRangeSet extends SortedSet<RangeInfo, string> {
 
 function revertLocalSequenceRemove(
 	sharedString: SharedString,
-	revertible: TypedRevertible<typeof IntervalOpType.POSITIONREMOVE>,
+	revertible: TypedRevertible<typeof IntervalOpType.POSITION_REMOVE>,
 ) {
 	const restoredRanges = new SortedRangeSet();
 	const saveSegments = (event: SequenceDeltaEvent) => {
@@ -406,10 +406,10 @@ export function revertSharedStringRevertibles(
 				case IntervalOpType.CHANGE:
 					revertLocalChange(sharedString, r);
 					break;
-				case IntervalOpType.PROPERTYCHANGE:
+				case IntervalOpType.PROPERTY_CHANGED:
 					revertLocalPropertyChanged(sharedString, r);
 					break;
-				case IntervalOpType.POSITIONREMOVE:
+				case IntervalOpType.POSITION_REMOVE:
 					revertLocalSequenceRemove(sharedString, r);
 					break;
 				default:
