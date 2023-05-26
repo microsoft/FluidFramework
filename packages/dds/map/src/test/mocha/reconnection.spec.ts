@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
 import { MapFactory, SharedMap } from "../../map";
-import { assertEquivalentDirectories } from "./directoryFuzzTests.spec";
+import { assertEquivalentDirectories } from "./directoryEquivalenceUtils";
 
 describe("Reconnection", () => {
 	describe("SharedMap", () => {
@@ -386,6 +386,81 @@ describe("Reconnection", () => {
 					?.getSubDirectory(subDirName)
 					?.get(subDirKey) === subDirValue,
 				"/subdir/subdir(subdirkey) should exist",
+			);
+			assertEquivalentDirectories(directory1, directory2);
+		});
+
+		it("multiple create/delete subdirs on disconnection/reconnection 1", async () => {
+			const subDirName1 = "subDir";
+
+			const subDir = directory1.createSubDirectory(subDirName1);
+			containerRuntimeFactory.processAllMessages();
+
+			containerRuntime1.connected = false;
+			// These ops will not be sent initially as we are in disconnected state.
+			subDir.createSubDirectory(subDirName1);
+			subDir.deleteSubDirectory(subDirName1);
+			subDir.createSubDirectory(subDirName1);
+			subDir.deleteSubDirectory(subDirName1);
+			subDir.createSubDirectory(subDirName1);
+
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+
+			// /subdir/subdir should exist in the end
+			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName1) !== undefined, "/subdir should exist");
+			assert(
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) !== undefined,
+				"/subdir/subdir should exist",
+			);
+			assertEquivalentDirectories(directory1, directory2);
+		});
+
+		it("multiple create/delete subdirs on disconnection/reconnection 2", async () => {
+			const subDirName1 = "subDir";
+
+			containerRuntime1.connected = false;
+			// These ops will not be sent initially as we are in disconnected state.
+			const subDir = directory1.createSubDirectory(subDirName1);
+			subDir.createSubDirectory(subDirName1);
+			subDir.deleteSubDirectory(subDirName1);
+			subDir.createSubDirectory(subDirName1);
+			directory1.deleteSubDirectory(subDirName1);
+			directory1.createSubDirectory(subDirName1);
+
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+
+			// /subdir/subdir should not exist in the end as /subDir was deleted after it was created
+			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName1) !== undefined, "/subdir should exist");
+			assert(
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) === undefined,
+				"/subdir/subdir should not exist",
+			);
+			assertEquivalentDirectories(directory1, directory2);
+		});
+
+		it("multiple create/delete subdirs on disconnection/reconnection 3", async () => {
+			const subDirName1 = "subDir";
+
+			containerRuntime1.connected = false;
+			// These ops will not be sent initially as we are in disconnected state.
+			const subDir = directory1.createSubDirectory(subDirName1);
+			subDir.createSubDirectory(subDirName1);
+			directory1.deleteSubDirectory(subDirName1);
+			directory1.createSubDirectory(subDirName1);
+
+			containerRuntimeFactory.processAllMessages();
+			containerRuntime1.connected = true;
+
+			// /subdir/subdir should not exist in the end as /subDir was deleted after it was created
+			containerRuntimeFactory.processAllMessages();
+			assert(directory1.getSubDirectory(subDirName1) !== undefined, "/subdir should exist");
+			assert(
+				directory1.getSubDirectory(subDirName1)?.getSubDirectory(subDirName1) === undefined,
+				"/subdir/subdir should not exist",
 			);
 			assertEquivalentDirectories(directory1, directory2);
 		});

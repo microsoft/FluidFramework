@@ -1015,12 +1015,10 @@ interface IClearLocalOpMetadata {
 
 interface ICreateSubDirLocalOpMetadata {
 	type: "createSubDir";
-	pendingMessageId: number;
 }
 
 interface IDeleteSubDirLocalOpMetadata {
 	type: "deleteSubDir";
-	pendingMessageId: number;
 	subDirectory: SubDirectory | undefined;
 }
 
@@ -1052,7 +1050,6 @@ function isClearLocalOpMetadata(metadata: any): metadata is IClearLocalOpMetadat
 function isSubDirLocalOpMetadata(metadata: any): metadata is SubDirLocalOpMetadata {
 	return (
 		metadata !== undefined &&
-		typeof metadata.pendingMessageId === "number" &&
 		(metadata.type === "createSubDir" || metadata.type === "deleteSubDir")
 	);
 }
@@ -1100,30 +1097,23 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Keys that have been modified locally but not yet ack'd from the server. This is for operations on keys like
 	 * set/delete operations on keys. The value of this map is list of pendingMessageIds at which that key
 	 * was modified. We don't store the type of ops, and behaviour of key ops are different from behaviour of sub
-	 * directory ops, so we have separate map from pendingSubDirectories.
+	 * directory ops, so we have separate map from subDirectories tracker.
 	 */
 	private readonly pendingKeys: Map<string, number[]> = new Map();
 
 	/**
-	 * Subdirectories that have been created/deleted locally but not yet ack'd from the server. This is for operations
-	 * like create/delete sub directories. The value of this map is list of pendingMessageIds at which that sub
-	 * directory was created/deleted. We don't store the type of ops, and behaviour of key ops are different from
-	 * behaviour of sub directory ops, so we have separate map from pendingSubDirectories.
-	 */
-	private readonly pendingSubDirectories: Map<string, number[]> = new Map();
-
-	/**
 	 * Subdirectories that have been deleted locally but not yet ack'd from the server. This maintains the record
 	 * of delete op that are pending or yet to be acked from server. This is maintained just to track the locally
-	 * deleted sub directory as pendingSubDirectories does not track that specifically.
+	 * deleted sub directory.
 	 */
-	private readonly pendingDeleteSubDirectoriesTracker: Set<string> = new Set();
+	private readonly pendingDeleteSubDirectoriesTracker: Map<string, number> = new Map();
 
 	/**
 	 * Subdirectories that have been created locally but not yet ack'd from the server. This maintains the record
-	 * of create op that are pending or yet to be acked from server.
+	 * of create op that are pending or yet to be acked from server. This is maintained just to track the locally
+	 * created sub directory.
 	 */
-	private readonly pendingCreateSubDirectoriesTracker: Set<string> = new Set();
+	private readonly pendingCreateSubDirectoriesTracker: Map<string, number> = new Map();
 
 	/**
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
@@ -1669,11 +1659,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		// Create the sub directory locally first.
 		this.createSubDirectoryCore(op.subdirName, true, -1, this.runtime.clientId ?? "detached");
-		const newMessageId = this.getSubDirMessageId(op);
+		this.updatePendingSubDirMessageCount(op);
 
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
-			pendingMessageId: newMessageId,
 		};
 		return localOpMetadata;
 	}
@@ -1715,10 +1704,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): IDeleteSubDirLocalOpMetadata {
 		this.throwIfDisposed();
 		const subDir = this.deleteSubDirectoryCore(op.subdirName, true);
-		const newMessageId = this.getSubDirMessageId(op);
+		this.updatePendingSubDirMessageCount(op);
 		const metadata: IDeleteSubDirLocalOpMetadata = {
 			type: "deleteSubDir",
-			pendingMessageId: newMessageId,
 			subDirectory: subDir,
 		};
 		return metadata;
@@ -1817,24 +1805,35 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 	}
 
+	private incrementPendingSubDirCount(map: Map<string, number>, subDirName: string) {
+		const count = map.get(subDirName) ?? 0;
+		map.set(subDirName, count + 1);
+	}
+
+	private decrementPendingSubDirCount(map: Map<string, number>, subDirName: string) {
+		const count = map.get(subDirName) ?? 0;
+		map.set(subDirName, count - 1);
+		if (count <= 1) {
+			map.delete(subDirName);
+		}
+	}
+
 	/**
-	 * Get a new pending message id for the op and cache it to track the pending op
+	 * Update the count for pending create/delete of the sub directory so that it can be validated on receiving op
+	 * or while resubmitting the op.
 	 */
-	private getSubDirMessageId(op: IDirectorySubDirectoryOperation): number {
-		// We don't reuse the metadata pendingMessageId but send a new one on each submit.
-		const newMessageId = ++this.pendingMessageId;
-		const pendingMessageIds = this.pendingSubDirectories.get(op.subdirName);
-		if (pendingMessageIds !== undefined) {
-			pendingMessageIds.push(newMessageId);
-		} else {
-			this.pendingSubDirectories.set(op.subdirName, [newMessageId]);
-		}
+	private updatePendingSubDirMessageCount(op: IDirectorySubDirectoryOperation) {
 		if (op.type === "deleteSubDirectory") {
-			this.pendingDeleteSubDirectoriesTracker.add(op.subdirName);
+			this.incrementPendingSubDirCount(
+				this.pendingDeleteSubDirectoriesTracker,
+				op.subdirName,
+			);
 		} else if (op.type === "createSubDirectory") {
-			this.pendingCreateSubDirectoriesTracker.add(op.subdirName);
+			this.incrementPendingSubDirCount(
+				this.pendingCreateSubDirectoriesTracker,
+				op.subdirName,
+			);
 		}
-		return newMessageId;
 	}
 
 	/**
@@ -1843,11 +1842,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private submitCreateSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
 		this.throwIfDisposed();
-		const newMessageId = this.getSubDirMessageId(op);
+		this.updatePendingSubDirMessageCount(op);
 
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
-			pendingMessageId: newMessageId,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
@@ -1862,11 +1860,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		subDir: SubDirectory | undefined,
 	): void {
 		this.throwIfDisposed();
-		const newMessageId = this.getSubDirMessageId(op);
+		this.updatePendingSubDirMessageCount(op);
 
 		const localOpMetadata: IDeleteSubDirLocalOpMetadata = {
 			type: "deleteSubDir",
-			pendingMessageId: newMessageId,
 			subDirectory: subDir,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
@@ -1901,23 +1898,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 
-		// clear the old pending message id
-		const pendingMessageIds = this.pendingSubDirectories.get(op.subdirName);
-		assert(
-			pendingMessageIds !== undefined &&
-				pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-			0x330 /* Unexpected pending message received */,
-		);
-		pendingMessageIds.shift();
-		if (pendingMessageIds.length === 0) {
-			this.pendingSubDirectories.delete(op.subdirName);
-		}
-
 		if (localOpMetadata.type === "createSubDir") {
-			this.pendingCreateSubDirectoriesTracker.delete(op.subdirName);
+			this.decrementPendingSubDirCount(
+				this.pendingCreateSubDirectoriesTracker,
+				op.subdirName,
+			);
 			this.submitCreateSubDirectoryMessage(op);
 		} else {
-			this.pendingDeleteSubDirectoriesTracker.delete(op.subdirName);
+			this.decrementPendingSubDirCount(
+				this.pendingDeleteSubDirectoriesTracker,
+				op.subdirName,
+			);
 			this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
 		}
 	}
@@ -2042,12 +2033,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		} else if (op.type === "createSubDirectory" && localOpMetadata.type === "createSubDir") {
 			this.deleteSubDirectoryCore(op.subdirName as string, true);
 
-			this.rollbackPendingMessageId(
-				this.pendingSubDirectories,
+			this.decrementPendingSubDirCount(
+				this.pendingCreateSubDirectoriesTracker,
 				op.subdirName as string,
-				localOpMetadata.pendingMessageId,
 			);
-			this.pendingCreateSubDirectoriesTracker.delete(op.subdirName);
 		} else if (op.type === "deleteSubDirectory" && localOpMetadata.type === "deleteSubDir") {
 			if (localOpMetadata.subDirectory !== undefined) {
 				this.undeleteSubDirectoryTree(localOpMetadata.subDirectory);
@@ -2056,12 +2045,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.emit("subDirectoryCreated", op.subdirName, true, this);
 			}
 
-			this.rollbackPendingMessageId(
-				this.pendingSubDirectories,
-				op.subdirName as string,
-				localOpMetadata.pendingMessageId,
+			this.decrementPendingSubDirCount(
+				this.pendingDeleteSubDirectoriesTracker,
+				op.subDirName as string,
 			);
-			this.pendingDeleteSubDirectoriesTracker.delete(op.subDirName);
 		} else {
 			throw new Error("Unsupported op for rollback");
 		}
@@ -2180,28 +2167,36 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		local: boolean,
 		localOpMetadata: unknown,
 	): boolean {
-		const pendingSubDirectoryMessageId = this.pendingSubDirectories.get(op.subdirName);
 		assertNonNullClientId(msg.clientId);
-		if (pendingSubDirectoryMessageId !== undefined) {
+		const pendingDeleteCount = this.pendingDeleteSubDirectoriesTracker.get(op.subdirName);
+		const pendingCreateCount = this.pendingCreateSubDirectoriesTracker.get(op.subdirName);
+		if (
+			(pendingDeleteCount !== undefined && pendingDeleteCount > 0) ||
+			(pendingCreateCount !== undefined && pendingCreateCount > 0)
+		) {
 			if (local) {
 				assert(
 					isSubDirLocalOpMetadata(localOpMetadata),
 					0x012 /* pendingMessageId is missing from the local client's operation */,
 				);
-				const pendingMessageIds = this.pendingSubDirectories.get(op.subdirName);
-				assert(
-					pendingMessageIds !== undefined &&
-						pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-					0x332 /* Unexpected pending message received */,
-				);
-				pendingMessageIds.shift();
-				if (pendingMessageIds.length === 0) {
-					this.pendingSubDirectories.delete(op.subdirName);
-				}
-				if (op.type === "deleteSubDirectory") {
-					this.pendingDeleteSubDirectoriesTracker.delete(op.subdirName);
-				} else if (op.type === "createSubDirectory") {
-					this.pendingCreateSubDirectoriesTracker.delete(op.subdirName);
+				if (localOpMetadata.type === "deleteSubDir") {
+					assert(
+						pendingDeleteCount !== undefined && pendingDeleteCount > 0,
+						"pendingDeleteCount should exist",
+					);
+					this.decrementPendingSubDirCount(
+						this.pendingDeleteSubDirectoriesTracker,
+						op.subdirName,
+					);
+				} else if (localOpMetadata.type === "createSubDir") {
+					assert(
+						pendingCreateCount !== undefined && pendingCreateCount > 0,
+						"pendingCreateCount should exist",
+					);
+					this.decrementPendingSubDirCount(
+						this.pendingCreateSubDirectoriesTracker,
+						op.subdirName,
+					);
 				}
 			}
 			if (op.type === "deleteSubDirectory") {
