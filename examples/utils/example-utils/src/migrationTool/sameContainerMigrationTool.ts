@@ -78,10 +78,18 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	}
 
 	public get migrationState() {
-		// if (this.newContainerId !== undefined) {
-		// 	return "migrated";
-		// } else ...
-		if (this.acceptedVersion !== undefined) {
+		// TODO: Other states
+		if (this._v2SummaryDone) {
+			return "migrated";
+			// } else if (this._finalizationStarted) {
+			// 	return "uploadingV2Summary";
+		} else if (this._quorumApprovalComplete) {
+			return "readyForMigration";
+		} else if (this._v1SummaryDone) {
+			// TODO: other phases of quorum proposing?
+			return "proposingV2Code";
+		} else if (this.acceptedVersion !== undefined) {
+			// TODO: other phases of v1 summary upload/submit?
 			return "generatingV1Summary";
 		} else if (this.proposedVersion !== undefined) {
 			return "stoppingCollaboration";
@@ -92,8 +100,45 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		}
 	}
 
-	public async finalizeMigration(id: string) {
-		// TODO this now probably looks like passing in the v2 summary
+	// TODO: Real param typing
+	public async finalizeMigration(v2Summary: string) {
+		// TODO: Start by awaiting connected?
+		// If someone else finishes this while the local client is still working on it, the local
+		// client should immediately abort this step and move on to the next one.
+		// Retain the summary handle for retry in subsequent phases
+		// TODO: actual implementation
+		// TODO: This is basically executing the summary flow outside of the container.  How much of this should stay inside the container?
+		// Main concern is that we want to race it with the summary already being done by another client, and not retry after it's done.
+		// TODO: We may want all clients to race to avoid the problem of the missing v2 summaryAck?  BUT need to acknowledge that sucessful upload
+		// is only "done" for single-commit summary.
+
+		// Don't allow premature calls.
+		if (!this._quorumApprovalComplete) {
+			throw new Error("Not ready to finalize until quorum approval has completed");
+		}
+		// TODO: Also guard against repeat calls
+		const uploadV2Summary = async (_v2Summary) => {
+			// Do upload of v2Summary
+			// TODO: Retry also
+			this.emit("uploadingV2Summary");
+			console.log(_v2Summary);
+			return "This is the handle I got back after successfully uploading the v2 summary";
+		};
+		const submitV2Summary = async (_v2SummaryHandle) => {
+			// Submit summarize op for v2Summary
+			this.emit("submittingV2Summary");
+			// TODO: Retry also
+			// TODO: Returning a never-resolving promise for now so we at least wait on some real summary.
+			return new Promise((resolve) => {});
+		};
+		if (this._v2SummaryDone) {
+			return;
+		}
+		const v2SummaryHandle = await Promise.race([uploadV2Summary(v2Summary), this._v2SummaryP]);
+		if (this._v2SummaryDone) {
+			return;
+		}
+		await Promise.race([submitV2Summary(v2SummaryHandle), this._v2SummaryP]);
 	}
 
 	public get proposedVersion() {
@@ -141,7 +186,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// TODO: actual implementation
 		// TODO: This is basically executing the summary flow outside of the container.  How much of this should stay inside the container?
 		// Main concern is that we want to race it with the summary already being done by another client, and not retry after it's done.
-		// TODO: We may want all clients to race to avoid the problem of the missing v1 summaryAck?
+		// TODO: We may want all clients to race to avoid the problem of the missing v1 summaryAck?  BUT need to acknowledge that sucessful upload
+		// is only "done" for single-commit summary.
 		const generateV1Summary = async () => {
 			// TODO: retry also
 			this.emit("generatingV1Summary");
@@ -151,13 +197,14 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Do upload of v1Summary
 			// TODO: Retry also
 			this.emit("uploadingV1Summary");
-			console.log(_v1Summary);
 			return "This is the handle I got back after successfully uploading the v1 summary";
 		};
 		const submitV1Summary = async (_v1SummaryHandle) => {
 			// Submit summarize op for v1Summary
 			this.emit("submittingV1Summary");
 			// TODO: Retry also
+			// TODO: Returning a never-resolving promise for now so we at least wait on some real summary.
+			return new Promise((resolve) => {});
 		};
 		const v1Summary = await Promise.race([generateV1Summary(), this._v1SummaryP]);
 		if (this._v1SummaryDone) {
@@ -167,45 +214,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		if (this._v1SummaryDone) {
 			return;
 		}
-		await submitV1Summary(v1SummaryHandle);
-		// (this.context.containerRuntime as any).summarizeOnDemand({ reason: "because" });
-	};
-
-	private readonly ensureV2Summary = async () => {
-		// TODO: Start by awaiting connected?
-		// If someone else finishes this while the local client is still working on it, the local
-		// client should immediately abort this step and move on to the next one.
-		// Retain the generated summary and summary handle for retry in subsequent phases
-		// TODO: actual implementation
-		// TODO: This is basically executing the summary flow outside of the container.  How much of this should stay inside the container?
-		// Main concern is that we want to race it with the summary already being done by another client, and not retry after it's done.
-		// TODO: We may want all clients to race to avoid the problem of the missing v2 summaryAck?
-		const generateV2Summary = async () => {
-			// TODO: retry also
-			this.emit("generatingV2Summary");
-			return "This is the v2 summary I generated";
-		};
-		const uploadV2Summary = async (_v2Summary) => {
-			// Do upload of v2Summary
-			// TODO: Retry also
-			this.emit("uploadingV2Summary");
-			console.log(_v2Summary);
-			return "This is the handle I got back after successfully uploading the v2 summary";
-		};
-		const submitV2Summary = async (_v2SummaryHandle) => {
-			// Submit summarize op for v2Summary
-			this.emit("submittingV2Summary");
-			// TODO: Retry also
-		};
-		const v2Summary = await Promise.race([generateV2Summary(), this._v2SummaryP]);
-		if (this._v2SummaryDone) {
-			return;
-		}
-		const v2SummaryHandle = await Promise.race([uploadV2Summary(v2Summary), this._v2SummaryP]);
-		if (this._v2SummaryDone) {
-			return;
-		}
-		await submitV2Summary(v2SummaryHandle);
+		await Promise.race([submitV1Summary(v1SummaryHandle), this._v1SummaryP]);
 		// (this.context.containerRuntime as any).summarizeOnDemand({ reason: "because" });
 	};
 
@@ -214,8 +223,16 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		const version = this.pactMap.get(newVersionKey);
 		const quorumProposal = { package: version };
 		console.log(`Want to propose: ${JSON.stringify(quorumProposal)}`);
-		console.log(this._anyQuorumProposalSeenP, this._anyQuorumProposalSeen);
-		console.log(this._quorumApprovalCompleteP, this._quorumApprovalComplete);
+		console.log(
+			"anyQuorumProposalSeen",
+			this._anyQuorumProposalSeenP,
+			this._anyQuorumProposalSeen,
+		);
+		console.log(
+			"quorumApprovalComplete",
+			this._quorumApprovalCompleteP,
+			this._quorumApprovalComplete,
+		);
 		// TODO Here probably need to have the container reference on the providers, in order to make the proposal?
 		// Or at least a callback for it.
 		// container.proposeCodeDetails(quorumProposal);
@@ -390,6 +407,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// Here we start the actual migration flow.  We await each of the promises we set up in sequence (this is a linear flow), and
 		// take the expected steps in between to advance to the next step.
 
+		// The flow kicks off when a proposal goes pending (which may come either from the local client calling proposeVersion() or
+		// from some remote client doing the same).
 		await this._pendingP;
 		// After the proposal is detected to be pending (or accepted), we must stop collaboration and summarization
 		// to avoid unexpected ops and summaries sneaking in after the proposal's acceptance.
@@ -407,11 +426,11 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// do this here to ensure the correct summary is produced for services that have server-produced .protocol trees.
 		await this.ensureQuorumCodeDetails();
 
-		// TODO: At this point we need to await the finalizeMigration call.
+		// TODO: At this point the user needs to call finalizeMigration().  That call will ultimately submit the v2 summary and resolve this promise.
 
 		// Once we have the v2 contents in hand, we can work on sending it as the next summary (which will look like a v2
 		// summary, due to the v2 code details being in the quorum).  This is the final step.
-		await this.ensureV2Summary();
+		await this._v2SummaryP;
 
 		this.emit("migrated");
 
