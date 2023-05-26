@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { EncryptionKeyName } from "./tenant";
+import { EncryptionKeyVersion } from "./tenant";
 
 export interface ISecretManager {
 	/**
 	 * Encrypts secret.
 	 */
-	encryptSecret(secret: string, encryptionKeyName?: EncryptionKeyName): string;
+	encryptSecret(secret: string, encryptionKeyVersion?: EncryptionKeyVersion): string;
 
 	/**
 	 * Decrypts secret.
 	 */
-	decryptSecret(encryptedSecret: string, encryptionKeyName?: EncryptionKeyName): string;
+	decryptSecret(encryptedSecret: string, encryptionKeyVersion?: EncryptionKeyVersion): string;
 }
