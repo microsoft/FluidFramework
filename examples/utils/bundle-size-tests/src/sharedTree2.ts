@@ -5,5 +5,5 @@
 import { SharedTreeFactory } from "@fluid-experimental/tree2";
 
 export function apisToBundle() {
-	new SharedTreeFactory({});
+	new SharedTreeFactory();
 }

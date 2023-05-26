@@ -241,7 +241,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		packageVersion: "0.0.0",
 	};
 
-	public constructor(private readonly options: SharedTreeOptions) {}
+	public constructor(private readonly options: SharedTreeOptions = {}) {}
 
 	public async load(
 		runtime: IFluidDataStoreRuntime,
