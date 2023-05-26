@@ -128,6 +128,7 @@ export {
 	Sourced,
 	NodeExistsConstraint,
 	NodeExistenceStateChange,
+	LazyTreeSchema,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

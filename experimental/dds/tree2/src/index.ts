@@ -67,6 +67,8 @@ export {
 	SchemaData,
 	SchemaPolicy,
 	SchemaDataAndPolicy,
+	lookupGlobalFieldSchema,
+	lookupTreeSchema,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	EditBuilder,
@@ -252,6 +254,7 @@ export {
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
 	NodeExistenceStateChange,
+	LazyTreeSchema,
 } from "./feature-libraries";
 
 export {
