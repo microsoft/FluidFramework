@@ -280,39 +280,42 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, []);
 	});
 
-	// TODO: this test makes a tree which is out of schema. This should error.
-	it("skips nodes which have identifiers of the wrong type", () => {
+	it("errors nodes which have identifiers of the wrong type", () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		initializeTestTree(
-			tree,
-			{
-				type: nodeSchema.name,
-				globalFields: {
-					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: {} }],
-				},
-			},
-			nodeSchemaData,
+		assert.throws(
+			() =>
+				initializeTestTree(
+					tree,
+					{
+						type: nodeSchema.name,
+						globalFields: {
+							[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: {} }],
+						},
+					},
+					nodeSchemaData,
+				),
+			(e) => validateAssertionError(e, "Malformed value encountered in identifier field"),
 		);
-		assertIds(tree, []);
 	});
 
-	// TODO: this test makes a tree which is out of schema. THis should error.
-	it("skips nodes which should have identifiers, but do not", () => {
-		// This is policy choice rather than correctness. It could also fail.
+	it("errors on nodes which should have identifiers, but do not", () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		initializeTestTree(
-			tree,
-			{
-				type: nodeSchema.name,
-				globalFields: {
-					[nodeIdentifierField.key]: [{ type: nodeIdentifierType }],
-				},
-			},
-			nodeSchemaData,
+		assert.throws(
+			() =>
+				initializeTestTree(
+					tree,
+					{
+						type: nodeSchema.name,
+						globalFields: {
+							[nodeIdentifierField.key]: [{ type: nodeIdentifierType }],
+						},
+					},
+					nodeSchemaData,
+				),
+			(e) => validateAssertionError(e, "Malformed value encountered in identifier field"),
 		);
-		assertIds(tree, []);
 	});
 
 	it("is disabled if identifier field is not in the global schema", () => {

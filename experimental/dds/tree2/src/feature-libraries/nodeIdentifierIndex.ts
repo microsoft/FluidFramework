@@ -116,9 +116,11 @@ export class NodeIdentifierIndex<TField extends GlobalFieldKey>
 				if (field.fieldSchema.kind.identifier === nodeIdentifier.identifier) {
 					const identifierNode = field.getNode(0);
 					const id = identifierNode[valueSymbol];
-					if (typeof id === "string" && isStableId(id)) {
-						yield [brand(id), node];
-					}
+					assert(
+						typeof id === "string" && isStableId(id),
+						"Malformed value encountered in identifier field",
+					);
+					yield [brand(id), node];
 				}
 			}
 		}

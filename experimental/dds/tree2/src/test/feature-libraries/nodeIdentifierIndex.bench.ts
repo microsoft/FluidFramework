@@ -26,7 +26,7 @@ import { nodeSchema, nodeSchemaData } from "./nodeIdentifierIndex.spec";
 
 const { field: nodeIdentifierField, type: nodeIdentifierType } = nodeIdentifierSchema();
 
-describe("Identifiers", () => {
+describe("Node Identifiers", () => {
 	// TODO: Increase these numbers when the identifier index is more efficient
 	for (const nodeCount of [50, 100]) {
 		describe(`In a tree with ${nodeCount} nodes`, () => {
