@@ -5,8 +5,8 @@
 
 import * as crypto from "crypto";
 import {
-    EncryptionKeyVersion,
-    IEncryptedTenantKeys,
+	EncryptionKeyVersion,
+	IEncryptedTenantKeys,
 	ITenantConfig,
 	ITenantCustomData,
 	ITenantKeys,
@@ -242,7 +242,10 @@ export class TenantManager {
 		const collection = db.collection<ITenantDocument>(this.collectionName);
 
 		const tenantKey1 = this.generateTenantKey();
-		const encryptedTenantKey1 = this.secretManager.encryptSecret(tenantKey1, EncryptionKeyVersion.key2023);
+		const encryptedTenantKey1 = this.secretManager.encryptSecret(
+			tenantKey1,
+			EncryptionKeyVersion.key2023,
+		);
 		if (encryptedTenantKey1 == null) {
 			winston.error("Tenant key1 encryption failed.");
 			Lumberjack.error("Tenant key1 encryption failed.", {
@@ -252,7 +255,10 @@ export class TenantManager {
 		}
 
 		const tenantKey2 = this.generateTenantKey();
-		const encryptedTenantKey2 = this.secretManager.encryptSecret(tenantKey2, EncryptionKeyVersion.key2023);
+		const encryptedTenantKey2 = this.secretManager.encryptSecret(
+			tenantKey2,
+			EncryptionKeyVersion.key2023,
+		);
 		if (encryptedTenantKey2 == null) {
 			winston.error("Tenant key2 encryption failed.");
 			Lumberjack.error("Tenant key2 encryption failed.", {
@@ -261,8 +267,8 @@ export class TenantManager {
 			throw new NetworkError(500, "Tenant key2 encryption failed.");
 		}
 
-        // New tenant keys will be encrypted with kek 2023.
-        customData.encryptionKeyVersion = EncryptionKeyVersion.key2023;
+		// New tenant keys will be encrypted with kek 2023.
+		customData.encryptionKeyVersion = EncryptionKeyVersion.key2023;
 
 		const id = await collection.insertOne({
 			_id: tenantId,
@@ -367,8 +373,11 @@ export class TenantManager {
 			}
 
 			const encryptedTenantKey1 = tenantDocument.key;
-            const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
-			const tenantKey1 = this.secretManager.decryptSecret(encryptedTenantKey1, encryptionKeyVersion);
+			const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
+			const tenantKey1 = this.secretManager.decryptSecret(
+				encryptedTenantKey1,
+				encryptionKeyVersion,
+			);
 
 			if (tenantKey1 == null) {
 				winston.error("Tenant key1 decryption failed.");
@@ -441,7 +450,10 @@ export class TenantManager {
 
 		const newTenantKey = this.generateTenantKey();
 		const encryptionKeyVersion = tenantDocument.customData?.encryptionKeyVersion;
-		const encryptedNewTenantKey = this.secretManager.encryptSecret(newTenantKey, encryptionKeyVersion);
+		const encryptedNewTenantKey = this.secretManager.encryptSecret(
+			newTenantKey,
+			encryptionKeyVersion,
+		);
 		if (encryptedNewTenantKey == null) {
 			winston.error("Tenant key encryption failed.");
 			Lumberjack.error("Tenant key encryption failed.", {
@@ -492,7 +504,10 @@ export class TenantManager {
 		const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
 		// if key2 is to be refreshed
 		if (keyName === KeyName.key2) {
-			const decryptedTenantKey1 = this.secretManager.decryptSecret(key1, encryptionKeyVersion);
+			const decryptedTenantKey1 = this.secretManager.decryptSecret(
+				key1,
+				encryptionKeyVersion,
+			);
 			if (decryptedTenantKey1 == null) {
 				winston.error("Tenant key1 decryption failed.");
 				Lumberjack.error("Tenant key1 decryption failed.", lumberProperties);
