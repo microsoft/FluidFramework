@@ -108,13 +108,13 @@ function ContainerStatusRow(statusComponents: string[]): React.ReactElement {
 				<TableCellLayout
 					media={((): JSX.Element => {
 						switch (statusComponents[0]) {
-							case "attaching":
+							case AttachState.Attaching:
 								return (
 									<Badge shape="rounded" color="warning">
 										{statusComponents[0]}
 									</Badge>
 								);
-							case "detached":
+							case AttachState.Detached:
 								return (
 									<Badge shape="rounded" color="danger">
 										{statusComponents[0]}
