@@ -760,6 +760,12 @@ export interface ICodecFamily<TDecoded> {
     resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
 }
 
+// @alpha (undocumented)
+export interface ICodecOptions {
+    // (undocumented)
+    validator?: JsonValidator;
+}
+
 // @alpha
 export type IdAllocator = (count?: number) => ChangesetLocalId;
 
@@ -1127,6 +1133,12 @@ value: ValueSchema.String;
 }>;
 
 // @alpha (undocumented)
+export interface JsonValidator {
+    // (undocumented)
+    compile(schema: TAnySchema): SchemaValidationFunction;
+}
+
+// @alpha (undocumented)
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey;
 
 // @alpha
@@ -1176,7 +1188,7 @@ interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
 
 // @alpha @sealed
 export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset> {
-    constructor(fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>);
+    constructor(fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>, codecOptions: ICodecOptions);
     // (undocumented)
     buildEditor(changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet): ModularEditBuilder;
     // (undocumented)
@@ -1586,6 +1598,12 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
 }
 
 // @alpha (undocumented)
+export interface SchemaValidationFunction {
+    // (undocumented)
+    check(data: any): boolean;
+}
+
+// @alpha (undocumented)
 export interface Sequence extends BrandedFieldKind<"Sequence", Multiplicity.Sequence, FieldEditor<any>> {
 }
 
@@ -1599,6 +1617,7 @@ export interface SequenceFieldEditBuilder {
 
 // @alpha
 export class SharedTreeFactory implements IChannelFactory {
+    constructor(options: SharedTreeOptions);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
@@ -1607,6 +1626,10 @@ export class SharedTreeFactory implements IChannelFactory {
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     // (undocumented)
     type: string;
+}
+
+// @alpha (undocumented)
+export interface SharedTreeOptions extends ICodecOptions {
 }
 
 // @alpha

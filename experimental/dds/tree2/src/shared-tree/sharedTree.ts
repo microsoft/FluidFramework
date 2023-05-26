@@ -223,6 +223,9 @@ export class SharedTree
 	}
 }
 
+/**
+ * @alpha
+ */
 export interface SharedTreeOptions extends ICodecOptions {}
 
 /**

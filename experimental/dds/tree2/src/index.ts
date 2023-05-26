@@ -260,6 +260,7 @@ export {
 	ISharedTreeView,
 	runSynchronous,
 	SharedTreeFactory,
+	SharedTreeOptions,
 	SharedTreeView,
 	ViewEvents,
 	SchematizeConfiguration,
@@ -268,8 +269,11 @@ export {
 export type {
 	IBinaryCodec,
 	ICodecFamily,
+	ICodecOptions,
 	IDecoder,
 	IEncoder,
 	IJsonCodec,
 	IMultiFormatCodec,
+	JsonValidator,
+	SchemaValidationFunction,
 } from "./codec";

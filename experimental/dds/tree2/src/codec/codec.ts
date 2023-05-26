@@ -27,26 +27,35 @@ export interface IDecoder<TDecoded, TEncoded> {
 	decode(obj: TEncoded): TDecoded;
 }
 
+/**
+ * @alpha
+ */
 export interface SchemaValidationFunction {
 	/**
 	 *
-	 * @param data
+	 * @param data - TODO
 	 */
 	check(data: any): boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface JsonValidator {
 	/**
 	 *
-	 * @param schema
+	 * @param schema - TODO
 	 */
 	compile(schema: TAnySchema): SchemaValidationFunction;
 }
 
+/**
+ * @alpha
+ */
 export interface ICodecOptions {
 	/**
 	 *
-	 * @param schema
+	 * @param schema - TODO
 	 * @returns
 	 */
 	validator?: JsonValidator;

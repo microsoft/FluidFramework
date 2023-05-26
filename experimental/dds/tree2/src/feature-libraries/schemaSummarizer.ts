@@ -16,6 +16,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { ICodecOptions, IJsonCodec } from "../codec";
 import {
 	cachedValue,
 	Dependee,
@@ -35,7 +36,6 @@ import {
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { isJsonObject, JsonCompatibleReadOnly } from "../util";
 import { makeSchemaCodec } from "./schemaIndexFormat";
-import { ICodecOptions, IJsonCodec } from "../codec";
 
 /**
  * The storage key for the blob in the summary containing schema data
