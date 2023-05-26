@@ -462,7 +462,15 @@ function Menu(props: MenuProps): React.ReactElement {
 	return (
 		<Stack.Item styles={menuStyles}>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
-			<div style={{ minWidth: "250px" }}>
+			<div
+				style={{
+					minWidth: "250px",
+					display: "grid",
+					gridTemplateRows: "repeat(1fr)",
+					justifyItems: "start",
+				}}
+			>
+				<label style={{ fontSize: "12px" }}>Select theme</label>
 				<Dropdown
 					placeholder="Theme"
 					style={{ minWidth: "150px", fontWeight: "bold" }}
