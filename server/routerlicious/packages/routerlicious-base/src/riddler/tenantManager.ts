@@ -404,7 +404,7 @@ export class TenantManager {
 			}
 
 			if (!bypassCache && this.isCacheEnabled) {
-				let cacheKeys: IEncryptedTenantKeys = {
+				const cacheKeys: IEncryptedTenantKeys = {
 					key1: encryptedTenantKey1,
 					key2: encryptedTenantKey2,
 				};
@@ -516,7 +516,7 @@ export class TenantManager {
 
 			// Only create and set keys in cache if it is enabled
 			if (this.isCacheEnabled) {
-				let cacheKeys: IEncryptedTenantKeys = {
+				const cacheKeys: IEncryptedTenantKeys = {
 					key1,
 					key2: this.secretManager.encryptSecret(newTenantKey, encryptionKeyVersion),
 				};
@@ -542,7 +542,7 @@ export class TenantManager {
 
 			// Only create and set keys in cache if it is enabled
 			if (this.isCacheEnabled) {
-				let cacheKey1: IEncryptedTenantKeys = {
+				const cacheKey1: IEncryptedTenantKeys = {
 					key1: this.secretManager.encryptSecret(newTenantKey),
 					key2: "",
 				};
