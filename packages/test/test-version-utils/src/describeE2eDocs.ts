@@ -58,7 +58,7 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	},
 ];
 
-export type BenchmarkType = "E2ETime" | "E2EMemory";
+export type BenchmarkType = "ExecutionTime" | "MemoryUsage";
 export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
 
 export interface DescribeE2EDocInfo {
@@ -250,7 +250,7 @@ export function isMemoryTest(): boolean {
 
 export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
 export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): BenchmarkType => {
-	return currentType === describeE2EDocsMemory ? "E2EMemory" : "E2ETime";
+	return currentType === describeE2EDocsMemory ? "MemoryUsage" : "ExecutionTime";
 };
 
 function createE2EDocsDescribeRun(): DescribeE2EDocSuite {
