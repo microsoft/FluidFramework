@@ -946,6 +946,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
+    generateNodeIdentifier(): NodeIdentifier;
     readonly identifiedNodes: ReadonlyMap<NodeIdentifier, EditableTree>;
     merge(view: SharedTreeView): void;
     rebase(view: SharedTreeView): void;
@@ -1638,6 +1639,8 @@ export class SharedTreeView implements ISharedTreeView {
     get forest(): IForestSubscription;
     // (undocumented)
     fork(): SharedTreeView;
+    // (undocumented)
+    generateNodeIdentifier(): NodeIdentifier;
     // (undocumented)
     get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree>;
     // (undocumented)
