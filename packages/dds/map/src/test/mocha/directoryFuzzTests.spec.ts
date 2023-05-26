@@ -337,8 +337,6 @@ describe("SharedDirectory fuzz Create/Delete concenterated", () => {
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
 		clientJoinOptions: {
-			// Note: if tests are slow, we may want to tune this down. This mimics behavior before this suite
-			// was refactored to use the DDS fuzz harness.
 			maxNumberOfClients: 3,
 			clientAddProbability: 0.08,
 		},
