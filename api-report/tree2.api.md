@@ -515,14 +515,14 @@ export interface FieldChange {
 // @alpha
 export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>> {
     // (undocumented)
-    codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+    readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
     // (undocumented)
-    editor: TEditor;
+    readonly editor: TEditor;
     // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
-    rebaser: FieldChangeRebaser<TChangeset>;
+    readonly rebaser: FieldChangeRebaser<TChangeset>;
     // (undocumented)
     _typeCheck?: Invariant<TChangeset>;
 }
