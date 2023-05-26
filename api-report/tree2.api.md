@@ -1335,7 +1335,7 @@ export interface NodeIdentifierFieldKind extends BrandedFieldKind<"NodeIdentifie
 export const nodeIdentifierKey: GlobalFieldKey;
 
 // @alpha
-export function nodeIdentifierSchema(key: string): {
+export function nodeIdentifierSchema(): {
     schema: SchemaLibrary;
     field: GlobalFieldSchema<NodeIdentifierFieldKind>;
     type: TreeSchemaIdentifier;

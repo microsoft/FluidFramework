@@ -7,11 +7,10 @@ import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { ISharedTree, nodeIdentifierKey } from "../../shared-tree";
+import { ISharedTree } from "../../shared-tree";
 import { TestTreeProviderLite } from "../utils";
 import {
 	NodeIdentifier,
-	nodeIdentifierSchema,
 	SequenceFieldEditBuilder,
 	singleTextCursor,
 } from "../../feature-libraries";
@@ -22,10 +21,10 @@ import {
 	JsonableTree,
 	symbolFromKey,
 } from "../../core";
+import { nodeIdentifierSchema } from "../../domains";
 import { nodeSchema, nodeSchemaData } from "./nodeIdentifierIndex.spec";
 
-const { field: nodeIdentifierField, type: nodeIdentifierType } =
-	nodeIdentifierSchema(nodeIdentifierKey);
+const { field: nodeIdentifierField, type: nodeIdentifierType } = nodeIdentifierSchema();
 
 describe("Identifiers", () => {
 	// TODO: Increase these numbers when the identifier index is more efficient

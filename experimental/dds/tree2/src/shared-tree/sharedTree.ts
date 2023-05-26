@@ -18,7 +18,6 @@ import {
 	AnchorSet,
 	AnchorNode,
 	AnchorSetRootEvents,
-	GlobalFieldKey,
 	StoredSchemaRepository,
 	IForestSubscription,
 } from "../core";
@@ -42,7 +41,8 @@ import {
 	NodeIdentifier,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand } from "../util";
+import { JsonCompatibleReadOnly } from "../util";
+import { nodeIdentifierKey } from "../domains";
 import { SchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeView,
@@ -59,15 +59,6 @@ import {
  * @alpha
  */
 export interface ISharedTree extends ISharedObject, ISharedTreeView {}
-
-/**
- * The key for the special node identifier field,
- * which allows nodes to be given identifiers that can be used to find the nodes via the node identifier index.
- * @alpha
- * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for global fields defined by the system.
- * For now, we'll use `__` to reduce the change of collision, since this is what other internal properties use in Fluid.
- */
-export const nodeIdentifierKey: GlobalFieldKey = brand("__n_id__");
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.

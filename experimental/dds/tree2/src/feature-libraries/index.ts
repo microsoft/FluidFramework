@@ -145,7 +145,7 @@ export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./
 
 export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
 
-export { nodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
+export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
 
 export {
 	FieldKinds,

@@ -16,7 +16,7 @@ import { NodeIdentifierFieldKind, nodeIdentifier } from "./defaultFieldKinds";
 export type NodeIdentifier = Brand<StableId, "Node Identifier">;
 
 /**
- * Get the schema for working with {@link NodeIdentifier}s in a tree.
+ * Create a schema library for working with {@link NodeIdentifier}s in a tree.
  * Node identifiers are added to nodes via a global field.
  * @param key - the string used as the identifier global field key as well as the identifier node type.
  * Defaults to a string that is unlikely to collide with user/application keys.
@@ -25,7 +25,7 @@ export type NodeIdentifier = Brand<StableId, "Node Identifier">;
  * and a schema library containing the above.
  * @alpha
  */
-export function nodeIdentifierSchema(key: string): {
+export function buildNodeIdentifierSchema(key: string): {
 	schema: SchemaLibrary;
 	field: GlobalFieldSchema<NodeIdentifierFieldKind>;
 	type: TreeSchemaIdentifier;

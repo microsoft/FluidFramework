@@ -39,8 +39,8 @@ import {
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
+import { nodeIdentifierKey } from "../domains";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
-import { nodeIdentifierKey } from "./sharedTree";
 
 /**
  * Events for {@link ISharedTreeView}.

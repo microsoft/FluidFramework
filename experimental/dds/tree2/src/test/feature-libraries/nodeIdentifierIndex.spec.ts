@@ -11,7 +11,7 @@ import {
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedTreeView, nodeIdentifierKey, SharedTreeFactory } from "../../shared-tree";
+import { ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import { brand, compareSets } from "../../util";
 import { TestTreeProviderLite, initializeTestTree } from "../utils";
 import {
@@ -19,15 +19,15 @@ import {
 	NodeIdentifierIndex,
 	SchemaBuilder,
 	NodeIdentifier,
-	nodeIdentifierSchema,
 } from "../../feature-libraries";
 import { symbolFromKey } from "../../core";
+import { nodeIdentifierSchema } from "../../domains";
 
 const {
 	schema: nodeIdentifierSchemaLibrary,
 	field: nodeIdentifierField,
 	type: nodeIdentifierType,
-} = nodeIdentifierSchema(nodeIdentifierKey);
+} = nodeIdentifierSchema();
 assert.equal(nodeIdentifierField.key, nodeIdentifierField.key);
 
 const builder = new SchemaBuilder("identifier index tests", nodeIdentifierSchemaLibrary);

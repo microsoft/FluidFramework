@@ -141,6 +141,8 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
+	nodeIdentifierKey,
+	nodeIdentifierSchema,
 } from "./domains";
 
 export {
@@ -200,7 +202,6 @@ export {
 	jsonableTreeFromCursor,
 	PrimitiveValue,
 	NodeIdentifier,
-	nodeIdentifierSchema,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -257,7 +258,6 @@ export {
 } from "./feature-libraries";
 
 export {
-	nodeIdentifierKey,
 	ISharedTree,
 	ISharedTreeView,
 	runSynchronous,
