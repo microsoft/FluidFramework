@@ -273,6 +273,9 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 				this.pactMap.get(newVersionKey) !== undefined ||
 				this.pactMap.getPending(newVersionKey) !== undefined
 			) {
+				console.log(
+					"Resolving this._pendingP: Pending proposal already exists at load time",
+				);
 				resolve();
 				return;
 			}
@@ -282,6 +285,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			const watchForPending = (key: string) => {
 				if (key === newVersionKey) {
 					this.pactMap.off("pending", watchForPending);
+					console.log("Resolving this._pendingP: Saw pending proposal during run time");
 					resolve();
 				}
 			};
@@ -290,6 +294,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 
 		this._acceptedP = new Promise<void>((resolve) => {
 			if (this.pactMap.get(newVersionKey) !== undefined) {
+				console.log("Resolving this._acceptedP: Acceptance already exists at load time");
 				resolve();
 				return;
 			}
@@ -297,6 +302,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			const watchForAccepted = (key: string) => {
 				if (key === newVersionKey) {
 					this.pactMap.off("accepted", watchForAccepted);
+					console.log("Resolving this._acceptedP: Saw acceptance during run time");
 					resolve();
 				}
 			};
@@ -323,6 +329,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					// Or maybe set that up in ensureV1Summary().
 					this.context.deltaManager.off("op", watchForV1Ack);
 					this._v1SummaryDone = true;
+					console.log("Resolving this._v1SummaryP");
 					resolve();
 				}
 			};
@@ -341,6 +348,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					// Or maybe set that up in ensureQuorumCodeDetails().
 					this.context.deltaManager.off("op", watchForQuorumProposal);
 					this._anyQuorumProposalSeen = true;
+					console.log("Resolving this._anyQuorumProposalSeenP");
 					resolve();
 				}
 			};
@@ -368,6 +376,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					// Or maybe set that up in ensureQuorumCodeDetails().
 					this.context.deltaManager.off("op", watchForLastQuorumAccept);
 					this._quorumApprovalComplete = true;
+					console.log("Resolving this._quorumApprovalCompleteP");
 					resolve();
 				}
 			};
@@ -397,6 +406,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					if (acksSeen === 2) {
 						this.context.deltaManager.off("op", watchForV2Ack);
 						this._v2SummaryDone = true;
+						console.log("Resolving this._v2SummaryP");
 						resolve();
 					}
 				}
