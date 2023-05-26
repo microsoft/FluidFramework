@@ -110,6 +110,22 @@ const useStyles = makeStyles(
 				width: "100%",
 			},
 		},
+		button: {
+			"alignItems": "center",
+			"minWidth": "0px",
+			"overflow": "hidden",
+			"textOverflow": "ellipsis",
+			"margin-left": "12px",
+			"padding-left": "5px",
+			"padding-right": "5px",
+		},
+		buttonContainer: {
+			alignItems: "center",
+			display: "flex",
+			justifyContent: "flex-start",
+			marginBottom: "5px",
+			marginLeft: "13px",
+		},
 	},
 	{ name: "InspectorApp" },
 );
@@ -355,6 +371,7 @@ export const InspectorApp = (props: any) => {
 
 	// const [json, setJson] = useState(editableTree);
 	const [tabIndex, setTabIndex] = useState(0);
+	const [inTransaction, setInTransaction] = useState(sharedTree.transaction.inProgress());
 
 	// const onJsonEdit = ({ updated_src }) => {
 	//     setJson(updated_src);
@@ -371,16 +388,51 @@ export const InspectorApp = (props: any) => {
                         </div> */}
 						<div className={classes.verticalContainer}>
 							<Toolbar>
-								<Button
-									onClick={() =>
-										(sharedTree.root = isSequenceField(sharedTree.context.root)
-											? [getPerson()]
-											: getPerson())
-									}
-									variant="outlined"
-								>
-									Demo Person
-								</Button>
+								<div className={classes.buttonContainer}>
+									<Button
+										className={classes.button}
+										onClick={() =>
+											(sharedTree.root = isSequenceField(
+												sharedTree.context.root,
+											)
+												? [getPerson()]
+												: getPerson())
+										}
+										variant="contained"
+									>
+										Create Person
+									</Button>
+									<Button
+										className={classes.button}
+										onClick={() => {
+											try {
+												sharedTree.transaction.start();
+											} catch (e) {
+												console.error(e);
+											}
+											setInTransaction(sharedTree.transaction.inProgress());
+										}}
+										variant="contained"
+										disabled={inTransaction}
+									>
+										Start
+									</Button>
+									<Button
+										className={classes.button}
+										onClick={() => {
+											try {
+												sharedTree.transaction.commit();
+											} catch (e) {
+												console.error(e);
+											}
+											setInTransaction(sharedTree.transaction.inProgress());
+										}}
+										variant="contained"
+										disabled={!inTransaction}
+									>
+										Commit
+									</Button>
+								</div>
 							</Toolbar>
 							<Tabs
 								value={tabIndex}
