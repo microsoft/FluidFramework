@@ -136,47 +136,42 @@ function DataRow(props: DataRowProps): React.ReactElement {
 
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
 	return (
-		<TableRow>
-			<TableCell>
-				<b>Status</b>
-			</TableCell>
-			<TableCell>
-				<TableCellLayout
-					media={((): JSX.Element => {
-						switch (statusComponents[0]) {
-							case AttachState.Attaching:
-								return (
-									<Badge shape="rounded" color="warning">
-										{statusComponents[0]}
-									</Badge>
-								);
-							case AttachState.Detached:
-								return (
-									<Badge shape="rounded" color="danger">
-										{statusComponents[0]}
-									</Badge>
-								);
-							default:
-								return (
-									<Badge shape="rounded" color="success">
-										{statusComponents[0]}
-									</Badge>
-								);
-						}
-					})()}
-				>
-					{statusComponents[1] === "Connected" ? (
-						<Badge shape="rounded" color="success">
-							{statusComponents[1]}
-						</Badge>
-					) : (
-						<Badge shape="rounded" color="danger">
-							{statusComponents[1]}
-						</Badge>
-					)}
-				</TableCellLayout>
-			</TableCell>
-		</TableRow>
+		<TableCell>
+			<TableCellLayout
+				media={((): JSX.Element => {
+					switch (statusComponents[0]) {
+						case AttachState.Attaching:
+							return (
+								<Badge shape="rounded" color="warning">
+									{statusComponents[0]}
+								</Badge>
+							);
+						case AttachState.Detached:
+							return (
+								<Badge shape="rounded" color="danger">
+									{statusComponents[0]}
+								</Badge>
+							);
+						default:
+							return (
+								<Badge shape="rounded" color="success">
+									{statusComponents[0]}
+								</Badge>
+							);
+					}
+				})()}
+			>
+				{statusComponents[1] === "Connected" ? (
+					<Badge shape="rounded" color="success">
+						{statusComponents[1]}
+					</Badge>
+				) : (
+					<Badge shape="rounded" color="danger">
+						{statusComponents[1]}
+					</Badge>
+				)}
+			</TableCellLayout>
+		</TableCell>
 	);
 }
 
