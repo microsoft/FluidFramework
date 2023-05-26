@@ -2204,10 +2204,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					if (!directory) {
 						return;
 					}
-					// If this is remote delete op and we have keys in this subDirectory, then we need to delete these
+					// If this is delete op and we have keys in this subDirectory, then we need to delete these
 					// keys except the pending ones as they will be sequenced after this delete.
 					directory.clearExceptPendingKeys(local);
-					// In case of remote delete op, we need to reset the creation seq number and client ids of
+					// In case of delete op, we need to reset the creation seq number and client ids of
 					// creators as the previous directory is getting deleted and we will initialize again when
 					// we will receive op for the create again.
 					directory.sequenceNumber = -1;
