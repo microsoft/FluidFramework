@@ -156,6 +156,7 @@ function buildTreeSchema(
 						continue;
 					}
 
+					// TODO: converge this with the same code for `unprocessedTypeIds` below
 					const propertySchema = PropertyFactory.getTemplate(typeIdInInheritanceChain);
 					if (propertySchema === undefined) {
 						fail(`Unknown typeid: ${typeIdInInheritanceChain}`);
