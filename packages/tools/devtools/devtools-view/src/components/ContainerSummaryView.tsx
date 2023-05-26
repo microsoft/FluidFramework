@@ -363,7 +363,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 		props;
 
 	const changeConnectionStateButton = isContainerConnected ? (
-		<Tooltip content="Disconnect Container" relationship="label">
+		<Tooltip content="Disconnect Container" relationship="description">
 			<Button
 				size="small"
 				icon={<PlugDisconnected20Regular />}
@@ -374,7 +374,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			</Button>
 		</Tooltip>
 	) : (
-		<Tooltip content="Connect Container" relationship="label">
+		<Tooltip content="Connect Container" relationship="description">
 			<Button
 				size="small"
 				icon={<PlugConnected20Regular />}
@@ -387,7 +387,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	);
 
 	const disposeContainerButton = (
-		<Tooltip content="Close Container" relationship="label">
+		<Tooltip content="Close Container" relationship="description">
 			<Button
 				size="small"
 				icon={<Delete20Regular />}

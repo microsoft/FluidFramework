@@ -206,7 +206,7 @@ export function DevtoolsView(): React.ReactElement {
 				queryTimedOut ? (
 					<>
 						<div>Devtools not found. Timeout exceeded.</div>
-						<Tooltip content="Retry searching for Devtools" relationship="label">
+						<Tooltip content="Retry searching for Devtools" relationship="description">
 							<Button onClick={retryQuery}>Search again</Button>
 						</Tooltip>
 					</>
