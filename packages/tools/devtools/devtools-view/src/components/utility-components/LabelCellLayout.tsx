@@ -8,9 +8,9 @@ import { Label, TableCellLayout } from "@fluentui/react-components";
 import { InfoLabel } from "@fluentui/react-components/unstable";
 
 /**
- * {@link ConceptCellLayout} input props.
+ * {@link LabelCellLayout} input props.
  */
-export type ConceptCellLayoutProps = React.PropsWithChildren<{
+export type LabelCellLayoutProps = React.PropsWithChildren<{
 	/**
 	 * Icon to display to the left of the label.
 	 */
@@ -24,12 +24,13 @@ export type ConceptCellLayoutProps = React.PropsWithChildren<{
 }>;
 
 /**
- * Helper component for rendering the contents of a Table Cell intended to represent some Fluid or Devtools concept.
+ * Helper component for rendering the contents of a Table Cell containing a label with an optional icon and
+ * "info" tooltip.
  *
  * Displays child content, with an optional content on the leading side and an optional "info" badge on the trailing
  * side.
  */
-export function ConceptCellLayout(props: ConceptCellLayoutProps): React.ReactElement {
+export function LabelCellLayout(props: LabelCellLayoutProps): React.ReactElement {
 	const { children, icon, infoTooltipContent } = props;
 
 	return (

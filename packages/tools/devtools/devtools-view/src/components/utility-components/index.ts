@@ -4,4 +4,4 @@
  */
 
 export { Accordion, AccordionProps } from "./Accordion";
-export { ConceptCellLayout, ConceptCellLayoutProps } from "./ConceptCellLayout";
+export { LabelCellLayout, LabelCellLayoutProps } from "./LabelCellLayout";

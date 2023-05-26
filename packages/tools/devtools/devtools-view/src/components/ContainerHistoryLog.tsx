@@ -24,7 +24,7 @@ import {
 	LockClosed20Filled,
 } from "@fluentui/react-icons";
 import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
-import { ConceptCellLayout } from "./utility-components";
+import { LabelCellLayout } from "./utility-components";
 
 /**
  * Represents container state history data which is rendered in {@link ContainerHistoryLog}.
@@ -73,14 +73,14 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 					{containerHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
 							{column.columnKey === "state" && (
-								<ConceptCellLayout icon={<AlertBadgeRegular />}>
+								<LabelCellLayout icon={<AlertBadgeRegular />}>
 									{column.label}
-								</ConceptCellLayout>
+								</LabelCellLayout>
 							)}
 							{column.columnKey === "time" && (
-								<ConceptCellLayout icon={<Clock12Regular />}>
+								<LabelCellLayout icon={<Clock12Regular />}>
 									{column.label}
-								</ConceptCellLayout>
+								</LabelCellLayout>
 							)}
 						</TableHeaderCell>
 					))}
@@ -122,9 +122,9 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 							}}
 						>
 							<TableCell>
-								<ConceptCellLayout icon={getStateIcon(item.newState)}>
+								<LabelCellLayout icon={getStateIcon(item.newState)}>
 									{item.newState}
-								</ConceptCellLayout>
+								</LabelCellLayout>
 							</TableCell>
 							<TableCell>{timestampDisplay}</TableCell>
 						</TableRow>
