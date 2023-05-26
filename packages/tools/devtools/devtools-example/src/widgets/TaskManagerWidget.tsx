@@ -44,6 +44,7 @@ export function TaskManagerWidget(props: TaskManagerWidgetProps): React.ReactEle
 			return (): void => {
 				taskManager.off("assigned", updateState);
 				taskManager.off("lost", updateState);
+				taskManager.off("completed", updateState);
 			};
 		}
 	}, [taskManager]);
