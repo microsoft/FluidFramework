@@ -24,8 +24,7 @@ export type ConceptCellLayoutProps = React.PropsWithChildren<{
 }>;
 
 /**
- * Helper component for rendering the contents of a Table Header Cell intended to represent some Fluid or Devtools
- * concept.
+ * Helper component for rendering the contents of a Table Cell intended to represent some Fluid or Devtools concept.
  *
  * Displays child content, with an optional content on the leading side and an optional "info" badge on the trailing
  * side.
