@@ -51,7 +51,8 @@ export async function scribeCreate(
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const internalAlfredUrl = config.get("worker:alfredUrl");
 	const getDeltasViaAlfred = config.get("scribe:getDeltasViaAlfred") as boolean;
-	const verifyLastOpPersistence = (config.get("scribe:verifyLastOpPersistence") as boolean) ?? false;
+	const verifyLastOpPersistence =
+		(config.get("scribe:verifyLastOpPersistence") as boolean) ?? false;
 	const transientTenants = config.get("shared:transientTenants") as string[];
 	const localCheckpointEnabled = config.get("checkpoints:localCheckpointEnabled") as boolean;
 	const restartOnCheckpointFailure =
