@@ -64,6 +64,8 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {}
  * The key for the special node identifier field,
  * which allows nodes to be given identifiers that can be used to find the nodes via the node identifier index.
  * @alpha
+ * @privateRemarks TODO: Come up with a unified and collision-resistant naming schema for global fields defined by the system.
+ * For now, we'll use `__` to reduce the change of collision, since this is what other internal properties use in Fluid.
  */
 export const nodeIdentifierKey: GlobalFieldKey = brand("__n_id__");
 
