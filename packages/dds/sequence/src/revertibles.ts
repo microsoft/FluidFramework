@@ -266,7 +266,7 @@ export function discardSharedStringRevertibles(
 	revertibles.forEach((r) => {
 		if (isMergeTreeDeltaRevertible(r)) {
 			discardMergeTreeDeltaRevertible([r]);
-		} else if (r.event === IntervalEventType.CHANGE || r.event === IntervalEventType.DELETE) {
+		} else if (r.event === IntervalOpType.CHANGE || r.event === IntervalOpType.DELETE) {
 			sharedString.removeLocalReferencePosition(r.start);
 			sharedString.removeLocalReferencePosition(r.end);
 		}
