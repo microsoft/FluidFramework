@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import React from "react";
+
+import { Link } from "@fluentui/react-components";
+
 /**
  * Description of Client Id in Fluid Developer Tools used for the context of fluentui/react's TooltipHost.
  */
@@ -18,5 +22,18 @@ export const userIdTooltipText =
 /**
  * Description of the Container "Status" property in the summary view.
  */
-export const containerStatusTooltipText =
-	"Represents the current state of the Container's connection to the Fluid Service.";
+export const containerStatusTooltipText = (
+	<div>
+		Represents the current state of the Container with regards to its connection to the Fluid
+		Service. For more information, see{" "}
+		<Link
+			href="https://fluidframework.com/docs/build/container-states-events"
+			target="_blank"
+			rel="noreferrer"
+			inline
+		>
+			here
+		</Link>
+		.
+	</div>
+);

@@ -4,4 +4,4 @@
  */
 
 export { Accordion, AccordionProps } from "./Accordion";
-export { InfoBadge, InfoBadgeProps } from "./InfoBadge";
+export { LabelCellLayout, LabelCellLayoutProps } from "./LabelCellLayout";
