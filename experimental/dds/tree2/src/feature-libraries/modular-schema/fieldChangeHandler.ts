@@ -18,9 +18,9 @@ export interface FieldChangeHandler<
 	TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>,
 > {
 	_typeCheck?: Invariant<TChangeset>;
-	rebaser: FieldChangeRebaser<TChangeset>;
-	codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
-	editor: TEditor;
+	readonly rebaser: FieldChangeRebaser<TChangeset>;
+	readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+	readonly editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
 	/**
