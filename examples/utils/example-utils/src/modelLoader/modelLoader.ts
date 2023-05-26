@@ -41,6 +41,11 @@ export const makeModelRequestHandler = <ModelType>(
 		// header as containerRef.
 		if (isModelRequest(request)) {
 			const container: IContainer = request.headers.containerRef;
+
+			// TODO: remove, just for debugging purposes
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			window["interactiveContainer"] ??= container;
+
 			const model = await modelMakerCallback(runtime, container);
 			return { status: 200, mimeType: "fluid/object", value: model };
 		}

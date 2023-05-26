@@ -22,8 +22,11 @@ const newVersionKey = "newVersion";
 export class SameContainerMigrationTool extends DataObject implements ISameContainerMigrationTool {
 	private _pactMap: IPactMap<string> | undefined;
 
-	// Not all clients will have a _proposalP, this is only if the local client issued a proposal.
-	// Clients that only see a remote proposal come in will advance directly from "collaborating" to "stoppingCollaboration".
+	/**
+	 * A promise that is only defined if the local client has made a proposal, and will resolve when any proposal goes pending.
+	 * Not all clients will have a _proposalP, if they do not make the proposal.  Those clients instead will only see a remote proposal come in and advance
+	 * directly from "collaborating" to "stoppingCollaboration".
+	 */
 	private _proposalP: Promise<void> | undefined;
 	/**
 	 * A promise that will resolve when the proposal is either pending or accepted, signalling that we have moved on to a later stage of the migration.
@@ -34,14 +37,14 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	 */
 	private _acceptedP: Promise<void> | undefined;
 	/**
-	 * A promise that will resolve when the final v1 summaryAck is seen.
+	 * A promise that will resolve when we know the final v1 summary was successfully submitted.
 	 * Note that even when loading from that summary, we should expect to see the summaryAck as part of the logTail
 	 */
-	private _v1SummaryAckP: Promise<void> | undefined;
+	private _v1SummaryP: Promise<void> | undefined;
 	/**
-	 * This boolean will make it easier to synchronously determine if we have seen the v1 summaryAck.
+	 * This boolean will make it easier to synchronously determine if the v1 summary is done.
 	 */
-	private _seenV1SummaryAck: boolean = false;
+	private _v1SummaryDone: boolean = false;
 	/**
 	 * A promise that will resolve upon seeing the _first_ proposal, even before it is approved.  This lets us know that we don't need to submit our own proposal.
 	 */
@@ -59,13 +62,13 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	 */
 	private _quorumApprovalComplete: boolean = false;
 	/**
-	 * A promise that will resolve when the v2 summaryAck is seen.
+	 * A promise that will resolve when we know the v2 summary was successfully submitted.
 	 */
-	private _v2SummaryAckP: Promise<void> | undefined;
+	private _v2SummaryP: Promise<void> | undefined;
 	/**
-	 * This boolean will make it easier to synchronously determine if we have seen the v2 summaryAck.
+	 * This boolean will make it easier to synchronously determine if the v2 summary is done.
 	 */
-	private _seenV2SummaryAck: boolean = false;
+	private _v2SummaryDone: boolean = false;
 
 	private get pactMap() {
 		if (this._pactMap === undefined) {
@@ -153,9 +156,16 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			this.emit("submittingV1Summary");
 			// TODO: Retry also
 		};
-		const v1Summary = await generateV1Summary();
-		const v1SummaryHandle = await uploadV1Summary(v1Summary);
+		const v1Summary = await Promise.race([generateV1Summary(), this._v1SummaryP]);
+		if (this._v1SummaryDone) {
+			return;
+		}
+		const v1SummaryHandle = await Promise.race([uploadV1Summary(v1Summary), this._v1SummaryP]);
+		if (this._v1SummaryDone) {
+			return;
+		}
 		await submitV1Summary(v1SummaryHandle);
+		// (this.context.containerRuntime as any).summarizeOnDemand({ reason: "because" });
 	};
 
 	private readonly ensureV2Summary = async () => {
@@ -164,7 +174,13 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	};
 
 	private readonly ensureQuorumCodeDetails = async () => {
-		// TODO implement
+		// TODO implement for real
+		const version = this.pactMap.get(newVersionKey);
+		const quorumProposal = { package: version };
+		console.log(`Want to propose: ${quorumProposal}`);
+		// TODO Here probably need to have the container reference on the providers, in order to make the proposal?
+		// Or at least a callback for it.
+		// container.proposeCodeDetails(quorumProposal);
 		// on("quorumDetailsAccepted", waitForV2ProposalCompletion)
 		// Can watch container.on("codeDetailsProposed", (, proposal) => { proposal.sequenceNumber })
 		// This will let us learn the sequence number of each proposal that comes in.
@@ -232,11 +248,12 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			this.pactMap.on("accepted", watchForAccepted);
 		});
 
-		this._v1SummaryAckP = new Promise<void>((resolve) => {
+		this._v1SummaryP = new Promise<void>((resolve) => {
 			// TODO implement for real
 			// Challenge here: ContainerRuntime only emits "op" for runtime ops, which doesn't include summaryAck.
 			// SummaryCollection's approach is to go listen to the deltaManager directly, which is gross but works.
 			// Alternatively could have ContainerRuntime emit some summaryAck event
+			// TODO Figure out plan for when the summaryAck is missing entirely
 			const watchForV1Ack = (op: ISequencedDocumentMessage) => {
 				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
 				// random ack.  Probably means storing the PactMap accept sequence number and verifying the summary is based on that sequence number.
@@ -250,7 +267,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().
 					this.context.deltaManager.off("op", watchForV1Ack);
-					this._seenV1SummaryAck = true;
+					this._v1SummaryDone = true;
 					resolve();
 				}
 			};
@@ -302,7 +319,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			this.context.deltaManager.on("op", watchForLastQuorumAccept);
 		});
 
-		this._v2SummaryAckP = new Promise<void>((resolve) => {
+		this._v2SummaryP = new Promise<void>((resolve) => {
 			// TODO implement for real
 			// Here we want to watch for the v2 summary which will signify that migration is complete and we can reload to start running v2.
 			// Similar challenges to watching for the v1 ack, but one additional challenge is that we don't know exactly what the referenceSequenceNumber
@@ -311,19 +328,20 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// Or maybe set that up in ensureV2Summary().
 			// TODO: acksSeen is a hack, I'm just doing this as an approximation of v2 summary
 			// detection as in "is this at least the second summaryAck we've seen"
+			// TODO Figure out plan for when the summaryAck is missing entirely
 			let acksSeen = 0;
 			const watchForV2Ack = (op: ISequencedDocumentMessage) => {
 				// TODO: This should also be checking that the summaryAck is actually the one we expect to see, not just some
 				// random ack.  Probably means storing the Quorum code accept sequence number and verifying the summary is based on that sequence number.
 				// Would be good if we can verify the contents somehow too.
 				// TODO: Not appropriate to be watching _seenV1SummaryAck here, I'm just doing this to simulate second ack after acceptance
-				if (this._seenV1SummaryAck && op.type === MessageType.SummaryAck) {
+				if (this._v1SummaryDone && op.type === MessageType.SummaryAck) {
 					acksSeen++;
 					// TODO Is this also where I want to emit an internal state event of the ack coming in to help with abort flows?
 					// Or maybe set that up in ensureV1Summary().
 					if (acksSeen === 2) {
 						this.context.deltaManager.off("op", watchForV2Ack);
-						this._seenV2SummaryAck = true;
+						this._v2SummaryDone = true;
 						resolve();
 					}
 				}
@@ -331,11 +349,14 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			this.context.deltaManager.on("op", watchForV2Ack);
 		});
 
+		// Here we start the actual migration flow.  We await each of the promises we set up in sequence (this is a linear flow), and
+		// take the expected steps in between to advance to the next step.
+
 		await this._pendingP;
 		// After the proposal is detected to be pending (or accepted), we must stop collaboration and summarization
 		// to avoid unexpected ops and summaries sneaking in after the proposal's acceptance.
 		// TODO: Determine if we need to stop collaboration within the promise executor to avoid something slipping
-		// in between the microtasks - bearing in mind that we still might need to send out our accept op.
+		// in between the microtasks - bearing in mind that we still need to send out our accept op.
 		this.stopCollaboration();
 		await this._acceptedP;
 
@@ -359,14 +380,14 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// TODO: close and dispose somewhere in here
 
 		// Make build shut up
-		await this._v1SummaryAckP;
-		console.log("Seen v1 summary", this._seenV1SummaryAck);
+		await this._v1SummaryP;
+		console.log("Seen v1 summary", this._v1SummaryDone);
 		await this._anyQuorumProposalSeenP;
 		console.log("Seen any quorum proposal", this._anyQuorumProposalSeen);
 		await this._quorumApprovalCompleteP;
 		console.log("Quorum proposal complete", this._quorumApprovalComplete);
-		await this._v2SummaryAckP;
-		console.log("Seen v2 summary", this._seenV2SummaryAck);
+		await this._v2SummaryP;
+		console.log("Seen v2 summary", this._v2SummaryDone);
 		console.log("All done!");
 	}
 }
