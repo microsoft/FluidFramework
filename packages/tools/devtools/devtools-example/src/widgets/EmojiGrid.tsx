@@ -34,7 +34,7 @@ export function EmojiGrid(props: EmojiGridProps): React.ReactElement {
 		for (let col = 0; col < colCount; col++) {
 			const cellHandle = emojiMatrix.getCell(row, col) as IFluidHandle<SharedCell<boolean>>;
 			renderedCells.push(
-				<Stack.Item>
+				<Stack.Item key={`emoji-grid-cell-${row}-${col}`}>
 					<CellView cellHandle={cellHandle} />
 				</Stack.Item>,
 			);

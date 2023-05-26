@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId } from "../../CommonInterfaces";
+import { HasContainerKey } from "../../CommonInterfaces";
 import { AudienceChangeLogEntry } from "../../Logs";
 import { AudienceClientMetadata } from "../../AudienceMetadata";
 import { IDevtoolsMessage } from "../Messages";
@@ -26,7 +26,7 @@ export namespace AudienceSummary {
 	 *
 	 * @internal
 	 */
-	export interface MessageData extends HasContainerId {
+	export interface MessageData extends HasContainerKey {
 		/**
 		 * Id of the client connected to the container
 		 */

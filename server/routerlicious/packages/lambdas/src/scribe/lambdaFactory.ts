@@ -108,7 +108,7 @@ export class ScribeLambdaFactory
 			this.serviceConfiguration,
 		);
 
-		const lumberProperties = getLumberBaseProperties(tenantId, documentId);
+		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 
 		try {
 			document = await this.documentRepository.readOne({ documentId, tenantId });
