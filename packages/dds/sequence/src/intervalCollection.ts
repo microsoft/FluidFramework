@@ -46,6 +46,7 @@ const reservedIntervalIdKey = "intervalId";
 
 /**
  * Values are used in persisted formats (ops) and revertibles.
+ * @alpha
  */
 export const IntervalOpType = {
 	ADD: "add",
