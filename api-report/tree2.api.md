@@ -515,14 +515,14 @@ export interface FieldChange {
 // @alpha
 export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>> {
     // (undocumented)
-    codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+    readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
     // (undocumented)
-    editor: TEditor;
+    readonly editor: TEditor;
     // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
-    rebaser: FieldChangeRebaser<TChangeset>;
+    readonly rebaser: FieldChangeRebaser<TChangeset>;
     // (undocumented)
     _typeCheck?: Invariant<TChangeset>;
 }
@@ -1294,7 +1294,7 @@ export type NodeChangeInverter = (change: NodeChangeset, index: number | undefin
 
 // @alpha (undocumented)
 export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
-deleted?: boolean) => NodeChangeset | undefined;
+stateChange?: NodeExistenceStateChange) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
@@ -1314,6 +1314,16 @@ export interface NodeData {
 
 // @alpha @deprecated
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
+
+// @alpha (undocumented)
+export enum NodeExistenceStateChange {
+    // (undocumented)
+    Deleted = 1,
+    // (undocumented)
+    Revived = 2,
+    // (undocumented)
+    Unchanged = 0
+}
 
 // @alpha (undocumented)
 export interface NodeExistsConstraint {
