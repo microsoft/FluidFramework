@@ -241,9 +241,9 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	}
 
 	private async overseeMigration() {
-		// The overall strategy here is to set up all of our state observers synchronously upon instantiation.
-		// This lets us get them all ready BEFORE we start processing ANY ops on top of the summary, including
-		// logTail ops.  If we were to instead defer setting them up until the respective phase starts, we'll
+		// The overall strategy here is to set up all of our state observers synchronously during initialization.
+		// This lets us get them ALL ready BEFORE we start processing ANY ops on top of the summary, including
+		// logTail ops.  If we were to instead defer setting each one up until its respective phase starts, we'll
 		// frequently miss the op we're looking for because it will already have been processed before our
 		// microtask runs.
 
