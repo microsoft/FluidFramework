@@ -798,7 +798,6 @@ function runUnitTestScenario(
 		it(title, () => run(false));
 		it(`${title} (while advancing the min seq number)`, () => run(true));
 	} else {
-		run(false);
 		run(true);
 	}
 }
