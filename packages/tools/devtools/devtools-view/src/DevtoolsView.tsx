@@ -19,7 +19,16 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { IStackItemStyles, IStackStyles, Stack, TooltipHost } from "@fluentui/react";
-import { FluentProvider, Button, Dropdown, Option } from "@fluentui/react-components";
+import {
+	FluentProvider,
+	Button,
+	Dropdown,
+	Option,
+	webDarkTheme,
+	webLightTheme,
+	teamsHighContrastTheme,
+	Theme,
+} from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
@@ -125,11 +134,11 @@ const contentViewStyles: IStackItemStyles = {
 const menuStyles: IStackItemStyles = {
 	root: {
 		...contentViewStyles,
-		display: "flex",
-		flexDirection: "column",
-		justifyContent:"space-between",
-		borderRight: `2px solid`,
-		minWidth: 150,
+		"display": "flex",
+		"flexDirection": "column",
+		"justifyContent": "space-between",
+		"borderRight": `2px solid`,
+		"minWidth": 150,
 		"> :last-child": {
 			marginTop: "auto",
 		},
@@ -150,6 +159,8 @@ export function DevtoolsView(): React.ReactElement {
 		DevtoolsFeatureFlags | undefined
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
+	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
+
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
@@ -204,7 +215,7 @@ export function DevtoolsView(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={getFluentUIThemeToUse()} style={{ height: "100%" }}>
+		<FluentProvider theme={selectedTheme} style={{ height: "100%" }}>
 			{supportedFeatures === undefined ? (
 				queryTimedOut ? (
 					<>
@@ -220,13 +231,18 @@ export function DevtoolsView(): React.ReactElement {
 					<Waiting />
 				)
 			) : (
-				<_DevtoolsView supportedFeatures={supportedFeatures} />
+				<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
 			)}
 		</FluentProvider>
 	);
 }
 
 interface _DevtoolsViewProps {
+	/**
+	 * Sets the theme of the DevTools app (light, dark, high contrast)
+	 */
+	setTheme(newTheme: Theme): void;
+
 	/**
 	 * Set of features supported by the Devtools.
 	 */
@@ -237,11 +253,10 @@ interface _DevtoolsViewProps {
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
-	const { supportedFeatures } = props;
+	const { supportedFeatures, setTheme } = props;
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
-
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
@@ -280,6 +295,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 			<Menu
 				currentSelection={menuSelection}
 				setSelection={setMenuSelection}
+				setTheme={setTheme}
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
@@ -355,6 +371,11 @@ interface MenuProps {
 	currentSelection?: MenuSelection;
 
 	/**
+	 * Sets the theme of the DevTools app (light, dark, high contrast)
+	 */
+	setTheme(newTheme: Theme): void;
+
+	/**
 	 * Sets the menu selection to the specified value.
 	 *
 	 * @remarks Passing `undefined` clears the selection.
@@ -377,7 +398,7 @@ interface MenuProps {
  * Menu component for {@link DevtoolsView}.
  */
 function Menu(props: MenuProps): React.ReactElement {
-	const { currentSelection, setSelection, supportedFeatures, containers } = props;
+	const { currentSelection, setTheme, setSelection, supportedFeatures, containers } = props;
 
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
@@ -385,6 +406,30 @@ function Menu(props: MenuProps): React.ReactElement {
 
 	function onTelemetryClicked(): void {
 		setSelection({ type: "telemetryMenuSelection" });
+	}
+
+	function handleThemeChange(
+		event,
+		option: {
+			optionValue: string | undefined;
+			optionText: string | undefined;
+			selectedOptions: string[];
+		},
+	): void {
+		switch (option.optionText) {
+			case "Light":
+				setTheme(webLightTheme);
+				break;
+			case "Dark":
+				setTheme(webDarkTheme);
+				break;
+			case "High Contrast":
+				setTheme(teamsHighContrastTheme);
+				break;
+			default:
+				setTheme(webDarkTheme);
+				break;
+		}
 	}
 
 	const menuSections: React.ReactElement[] = [];
@@ -416,17 +461,18 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 	return (
 		<Stack.Item styles={menuStyles}>
-				{menuSections.length === 0 ? <Waiting /> : menuSections}
-				<div style={{minWidth: "250px"}}>
-					<Dropdown
-						placeholder="Theme"
-						style={{minWidth: "150px", fontWeight: "bold"}}
-					>
-						<Option>Light</Option>
-						<Option>Dark</Option>
-						<Option>High Contrast</Option>
-					</Dropdown>
-				</div>
+			{menuSections.length === 0 ? <Waiting /> : menuSections}
+			<div style={{ minWidth: "250px" }}>
+				<Dropdown
+					placeholder="Theme"
+					style={{ minWidth: "150px", fontWeight: "bold" }}
+					onOptionSelect={handleThemeChange}
+				>
+					<Option>Light</Option>
+					<Option>Dark</Option>
+					<Option>High Contrast</Option>
+				</Dropdown>
+			</div>
 		</Stack.Item>
 	);
 }
