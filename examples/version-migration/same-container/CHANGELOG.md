@@ -1,4 +1,4 @@
-# @fluid-example/app-integration-schema-upgrade
+# @fluid-example/version-migration-same-container
 
 ## 2.0.0-internal.4.1.0
 
