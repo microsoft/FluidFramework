@@ -767,7 +767,7 @@ describe("Runtime", () => {
 
 			it(
 				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
-					"processing remote op, should generate telemetry event and throw an error that closes the container",
+					"processing remote op and local chunked op, should generate telemetry event and throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -785,6 +785,22 @@ describe("Runtime", () => {
 								},
 							} as any as ISequencedDocumentMessage,
 							false /* local */,
+						);
+						containerRuntime.process(
+							{
+								type: "op",
+								clientId: "clientId",
+								sequenceNumber: 0,
+								contents: {
+									address: "address",
+									contents: {
+										chunkId: i + 1,
+										totalChunks: maxReconnects + 1,
+									},
+									type: "chunkedOp",
+								},
+							} as any as ISequencedDocumentMessage,
+							true /* local */,
 						);
 					}
 
