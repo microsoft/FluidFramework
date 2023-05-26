@@ -603,7 +603,7 @@ function runUnitTestScenario(
 		 * The greatest sequence number that could have been received by all peers at the time when the local
 		 * session is made aware of the given sequence number.
 		 */
-		const minimumSequenceNumber = (sequenceNumber: number) => {
+		const computeMinimumSequenceNumber = (sequenceNumber: number) => {
 			if (advanceMinimumSequenceNumber) {
 				// Find all non-local peers participating in this scenario by scanning the scenario steps
 				const activePeers = steps
@@ -644,6 +644,9 @@ function runUnitTestScenario(
 		 */
 		let iNextAck = 0;
 		for (const step of steps) {
+			const minimumSequenceNumber = computeMinimumSequenceNumber(
+				step.type === "Push" ? localRef : step.seq,
+			);
 			const type = step.type;
 			switch (type) {
 				case "Push": {
@@ -695,9 +698,7 @@ function runUnitTestScenario(
 					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
 					assert.deepEqual(delta, emptyDelta);
 					localRef = commit.seqNumber;
-					manager.advanceMinimumSequenceNumber(
-						brand(minimumSequenceNumber(commit.seqNumber)),
-					);
+					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber));
 					recordSequencedEdit(commit);
 					break;
 				}
@@ -756,9 +757,7 @@ function runUnitTestScenario(
 					recordSequencedEdit(commit);
 					knownToLocal = [...trunk, ...localCommits.map((c) => c.seqNumber)];
 					localRef = commit.seqNumber;
-					manager.advanceMinimumSequenceNumber(
-						brand(minimumSequenceNumber(commit.seqNumber)),
-					);
+					manager.advanceMinimumSequenceNumber(brand(minimumSequenceNumber));
 					break;
 				}
 				default:
@@ -771,7 +770,7 @@ function runUnitTestScenario(
 				manager,
 				knownToLocal.filter(
 					// Only expect changes which have not been dropped by trunk eviction
-					(i) => i >= minimumSequenceNumber(localRef),
+					(i) => i >= minimumSequenceNumber,
 				),
 			);
 			checkChangeList(summarizer, trunk);
