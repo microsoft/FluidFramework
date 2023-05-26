@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { generateStableId } from "@fluidframework/container-runtime";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -37,7 +38,7 @@ import {
 	NewFieldContent,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
-import { TransactionResult } from "../util";
+import { TransactionResult, brand } from "../util";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 import { nodeIdentifierKey } from "./sharedTree";
 
@@ -188,6 +189,11 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+
+	/**
+	 * Generate a unique identifier that can be used to identify a node in the tree.
+	 */
+	generateNodeIdentifier(): NodeIdentifier;
 
 	/**
 	 * A map of nodes that have been recorded by the identifier index.
@@ -354,6 +360,11 @@ export class SharedTreeView implements ISharedTreeView {
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this._forest.anchors.locate(anchor);
+	}
+
+	public generateNodeIdentifier(): NodeIdentifier {
+		// TODO: This is a placeholder implementation; use the runtime to generate node identifiers.
+		return brand(generateStableId());
 	}
 
 	public fork(): SharedTreeView {

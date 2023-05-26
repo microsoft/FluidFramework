@@ -148,6 +148,10 @@ export class SharedTree
 		return this.view.locate(anchor);
 	}
 
+	public generateNodeIdentifier(): NodeIdentifier {
+		return this.view.generateNodeIdentifier();
+	}
+
 	public schematize<TRoot extends GlobalFieldSchema>(
 		config: SchematizeConfiguration<TRoot>,
 	): ISharedTreeView {

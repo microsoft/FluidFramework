@@ -3,20 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert, fail } from "assert";
 import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { IsoBuffer } from "@fluidframework/common-utils";
-import { identifierKeySymbol, identifierKey, ISharedTree } from "../../shared-tree";
+import { ISharedTree, nodeIdentifierKey } from "../../shared-tree";
 import { TestTreeProviderLite } from "../utils";
 import {
-	Identifier,
-	identifierSchema,
+	NodeIdentifier,
+	nodeIdentifierSchema,
 	SequenceFieldEditBuilder,
 	singleTextCursor,
 } from "../../feature-libraries";
-import { rootFieldKeySymbol, ITreeCursor, moveToDetachedField, JsonableTree } from "../../core";
-import { nodeSchema, nodeSchemaData } from "./identifierIndex.spec";
+import {
+	rootFieldKeySymbol,
+	ITreeCursor,
+	moveToDetachedField,
+	JsonableTree,
+	symbolFromKey,
+} from "../../core";
+import { nodeSchema, nodeSchemaData } from "./nodeIdentifierIndex.spec";
+
+const { field: nodeIdentifierField, type: nodeIdentifierType } =
+	nodeIdentifierSchema(nodeIdentifierKey);
 
 describe("Identifiers", () => {
 	// TODO: Increase these numbers when the identifier index is more efficient
@@ -33,13 +42,15 @@ describe("Identifiers", () => {
 				return [tree, field, provider];
 			}
 
-			function createNode(identifier?: Identifier): ITreeCursor {
+			function createNode(nodeIdentifier?: NodeIdentifier): ITreeCursor {
 				const jsonTree: JsonableTree = {
 					type: nodeSchema.name,
 				};
-				if (identifier !== undefined) {
+				if (nodeIdentifier !== undefined) {
 					jsonTree.globalFields = {
-						[identifierKey]: [{ type: identifierSchema.name, value: identifier }],
+						[nodeIdentifierField.key]: [
+							{ type: nodeIdentifierType, value: nodeIdentifier },
+						],
 					};
 				}
 				return singleTextCursor(jsonTree);
@@ -56,9 +67,13 @@ describe("Identifiers", () => {
 							assert.equal(state.iterationsPerBatch, 1);
 							const [tree, field] = makeTree();
 							const cursors: ITreeCursor[] = [];
+							const ids: (NodeIdentifier | undefined)[] = [];
 							for (let i = 0; i < nodeCount; i++) {
-								const identifier = i % period === 0 ? i : undefined;
-								cursors.push(createNode(identifier));
+								const nodeIdentifier =
+									i % period === 0 ? tree.generateNodeIdentifier() : undefined;
+
+								ids.push(nodeIdentifier);
+								cursors.push(createNode(nodeIdentifier));
 							}
 
 							// Measure how long it takes to insert a node with an identifier
@@ -74,15 +89,19 @@ describe("Identifiers", () => {
 							cursor.firstNode();
 							for (let i = 0; i < nodeCount; i++) {
 								if (i % period === 0) {
-									cursor.enterField(identifierKeySymbol);
+									cursor.enterField(symbolFromKey(nodeIdentifierField.key));
 									cursor.enterNode(0);
-									assert.equal(cursor.value, i);
+									assert.equal(cursor.value, ids[i]);
 									cursor.exitNode();
 									cursor.exitField();
-
-									const node = tree.identifiedNodes.get(i);
+									const node = tree.identifiedNodes.get(
+										ids[i] ?? fail("Expected node identifier to be in list"),
+									);
 									assert(node !== undefined);
-									assert.equal(node[identifierKeySymbol], i);
+									assert.equal(
+										node[symbolFromKey(nodeIdentifierField.key)],
+										ids[i],
+									);
 								}
 								cursor.nextNode();
 							}
@@ -104,11 +123,12 @@ describe("Identifiers", () => {
 						do {
 							assert.equal(state.iterationsPerBatch, 1);
 							const [tree, field] = makeTree();
-							const ids: number[] = [];
+							const ids: NodeIdentifier[] = [];
 							for (let i = 0; i < nodeCount; i++) {
 								if (i % period === 0) {
-									field.insert(i, createNode(i));
-									ids.push(i);
+									const nodeIdentifier = tree.generateNodeIdentifier();
+									field.insert(i, createNode(nodeIdentifier));
+									ids.push(nodeIdentifier);
 								} else {
 									field.insert(i, createNode());
 								}
@@ -122,7 +142,7 @@ describe("Identifiers", () => {
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							assert(node !== undefined);
-							assert.equal(node[identifierKeySymbol], id);
+							assert.equal(node[symbolFromKey(nodeIdentifierField.key)], id);
 						} while (state.recordBatch(duration));
 					},
 					minBatchDurationSeconds: 0, // Force batch size of 1
@@ -140,13 +160,16 @@ describe("Identifiers", () => {
 							assert.equal(state.iterationsPerBatch, 1);
 							const [tree, field] = makeTree();
 							for (let i = 0; i < nodeCount; i++) {
-								const identifier = i % period === 0 ? i : undefined;
+								const identifier =
+									i % period === 0 ? tree.generateNodeIdentifier() : undefined;
+
 								field.insert(i, createNode(identifier));
 							}
 
 							// Measure how long it takes to lookup an ID that is not in the document
+							const nodeIdentifier = tree.generateNodeIdentifier();
 							const before = state.timer.now();
-							const node = tree.identifiedNodes.get(-1);
+							const node = tree.identifiedNodes.get(nodeIdentifier);
 							duration = state.timer.toSeconds(before, state.timer.now());
 
 							assert(node === undefined);
@@ -168,7 +191,9 @@ describe("Identifiers", () => {
 					// Create a tree of the same size as the baseline, but with some identifiers
 					const [treeWithIds, fieldWithIds, providerWithIds] = makeTree();
 					for (let i = 0; i < nodeCount; i++) {
-						const identifier = i % period === 0 ? i : undefined;
+						const identifier =
+							i % period === 0 ? treeBaseline.generateNodeIdentifier() : undefined;
+
 						fieldWithIds.insert(i, createNode(identifier));
 					}
 					providerWithIds.processMessages();
