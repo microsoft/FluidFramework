@@ -31,11 +31,11 @@ const {
 assert.equal(nodeIdentifierField.key, nodeIdentifierField.key);
 
 const builder = new SchemaBuilder("identifier index tests", nodeIdentifierSchemaLibrary);
-const nodeSchema = builder.objectRecursive("node", {
+export const nodeSchema = builder.objectRecursive("node", {
 	local: { child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema) },
 	global: [nodeIdentifierField],
 });
-const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
+export const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
 
 describe("Node Identifier Index", () => {
 	// All tests should use this function to make their IDs - this makes it easier to change the

@@ -1041,7 +1041,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	public readonly overlappingIntervalsIndex: OverlappingIntervalsIndex<TInterval>;
 	public readonly idIntervalIndex: IdIntervalIndex<TInterval>;
 	public readonly endIntervalIndex: EndpointIndex<TInterval>;
-	private readonly indexes: IntervalIndex<TInterval>[];
+	private readonly indexes: Set<IntervalIndex<TInterval>>;
 
 	constructor(
 		private readonly client: Client,
@@ -1056,11 +1056,11 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
 		this.idIntervalIndex = new IdIntervalIndex();
 		this.endIntervalIndex = new EndpointIndex(client, helpers);
-		this.indexes = [
+		this.indexes = new Set([
 			this.overlappingIntervalsIndex,
 			this.idIntervalIndex,
 			this.endIntervalIndex,
-		];
+		]);
 	}
 
 	public createLegacyId(start: number, end: number): string {
@@ -1102,6 +1102,14 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		for (const index of this.indexes) {
 			index.remove(interval);
 		}
+	}
+
+	public appendIndex(index: IntervalIndex<TInterval>) {
+		this.indexes.add(index);
+	}
+
+	public removeIndex(index: IntervalIndex<TInterval>): boolean {
+		return this.indexes.delete(index);
 	}
 
 	public removeExistingInterval(interval: TInterval) {
@@ -1542,6 +1550,49 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 			: serializedIntervals.intervals.map((i) =>
 					decompressInterval(i, serializedIntervals.label),
 			  );
+	}
+
+	/**
+	 * Attaches an index to this collection.
+	 * All intervals which are part of this collection will be added to the index, and the index will automatically
+	 * be updated when this collection updates due to local or remote changes.
+	 *
+	 * @remarks - After attaching an index to an interval collection, applications should typically store this
+	 * index somewhere in their in-memory data model for future reference and querying.
+	 */
+	public attachIndex(index: IntervalIndex<TInterval>): void {
+		if (!this.attached) {
+			throw new LoggingError("The local interval collection must exist");
+		}
+		for (const interval of this) {
+			index.add(interval);
+		}
+
+		this.localCollection?.appendIndex(index);
+	}
+
+	/**
+	 * Detaches an index from this collection.
+	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
+	 * due to local or remote changes will no longer incur updates to the index.
+	 *
+	 * @returns - Return false if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return true
+	 */
+	public detachIndex(index: IntervalIndex<TInterval>): boolean {
+		if (!this.attached) {
+			throw new LoggingError("The local interval collection must exist");
+		}
+
+		// Avoid removing intervals if the index does not exist
+		if (!this.localCollection?.removeIndex(index)) {
+			return false;
+		}
+
+		for (const interval of this) {
+			index.remove(interval);
+		}
+
+		return true;
 	}
 
 	private rebasePositionWithSegmentSlide(

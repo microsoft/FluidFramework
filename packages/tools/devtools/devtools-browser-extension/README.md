@@ -31,6 +31,54 @@ For an overview on how Devtools extensions work, see [here](https://developer.ch
 
 For a helpful how-to guide for making a Devtools Extension, see [here](https://learn.microsoft.com/en-us/microsoft-edge/extensions-chromium/developer-guide/devtools-extension).
 
+### Initialization Flow
+
+These details are covered by the above articles, but they are a bit obfuscated, so we'll elaborate here for clarity.
+
+Background notes:
+
+-   The `Background Script` is launched alongside the browser itself and runs for its lifetime.
+    -   When run, it establishes a listener to be notified by the `Devtools Script` when the Devtools view is launched and needs to begin communicating with the tab (associated webpage).
+    -   A single instance of this script is always running, and is responsible for pairing **all Devtools views** with **all associated webpages**.
+-   The `Content Script` is launched alongside the webpage (specifically, it is injected into the webpage when the webpage is launched).
+-   When run, it establishes a listener to be notified by the `Background Script` when it should begin relaying messages between the `Background Script` and the webpage (e.g. when the Devtools view is opened by the user).
+-   A single instance of this script is injected into **each open tab**, and is responsible only for bridging communication between that tab and the singular `Background Script` service worker.
+-   The `Devtools Script` is launched when the user opens our extension view in the browser's devtools panel.
+-   When run, it establishes a connection with the `Background Script`, requesting that a connection be established such that information can flow from the `Content Script` injected into the tab (associated webpage) to the `Devtools Script` using the `Background Script` as a bridge.
+
+What does this look like in terms of user flow?
+
+```mermaid
+sequenceDiagram
+   actor User
+   participant Webpage
+   participant Content Script
+   participant Background Script
+   participant Devtools Script
+
+   activate Background Script
+
+   User->>Webpage: User opens webpage.
+   activate Content Script
+
+   User->>Devtools Script: User opens the extension in the browser's devtools panel.
+   activate Devtools Script
+
+   Devtools Script->>Background Script: Devtools Script sends initialization request to Background Script.
+
+   Background Script->>Content Script: Background Script initializes connection with Content Script.
+   Content Script-->>Background Script: (Implicit acknowledgement, handled by browser APIs)
+   Note over Background Script: Background Script begins listening for messages from Content Script and Devtools Script, and relays them between the two as appropriate.
+   Note over Content Script: Content Script begins listening for messages from webpage and Background Script, and relays them between the two as appropriate.
+
+   Background Script->>Devtools Script: Background Script sends connection acknowledgement to Devtools Script.
+   Note over Devtools Script: Devtools Script begins listening for messages from Background Script, and begins posting messages to it.
+
+   deactivate Background Script
+   deactivate Content Script
+   deactivate Devtools Script
+```
+
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
