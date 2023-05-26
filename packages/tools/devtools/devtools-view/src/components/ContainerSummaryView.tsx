@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
-import { useId } from "@fluentui/react-hooks";
+import { IStackItemStyles, Stack, StackItem } from "@fluentui/react";
 import {
 	Button,
 	Badge,
@@ -15,6 +14,7 @@ import {
 	TableCellLayout,
 	TableColumnDefinition,
 	TableColumnSizingOptions,
+	Tooltip,
 	useTableFeatures,
 	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
@@ -362,12 +362,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, isContainerClosed, tryConnect, forceDisconnect, closeContainer } =
 		props;
 
-	const connectButtonTooltipId = useId("connect-button-tooltip");
-	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
-	const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
-
 	const changeConnectionStateButton = isContainerConnected ? (
-		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
+		<Tooltip content="Disconnect Container" relationship="label">
 			<Button
 				size="small"
 				icon={<PlugDisconnected20Regular />}
@@ -376,9 +372,9 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Disconnect Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	) : (
-		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
+		<Tooltip content="Connect Container" relationship="label">
 			<Button
 				size="small"
 				icon={<PlugConnected20Regular />}
@@ -387,11 +383,11 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Connect Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 
 	const disposeContainerButton = (
-		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
+		<Tooltip content="Close Container" relationship="label">
 			<Button
 				size="small"
 				icon={<Delete20Regular />}
@@ -400,7 +396,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Close Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 
 	const itemStyles: IStackItemStyles = {
