@@ -308,6 +308,35 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			},
 		};
 
+		itExpects(
+			`Batch with 4000 ops - ${enableGroupedBatching ? "grouped" : "regular"} batches`,
+			// With grouped batching enabled, this scenario is unblocked
+			enableGroupedBatching
+				? []
+				: [
+						{
+							eventName: "fluid:telemetry:Container:ContainerClose",
+							error: "Runtime detected too many reconnects with no progress syncing local ops.",
+						},
+				  ],
+			async function () {
+				// This is not supported by the local server. See ADO:2690
+				// This test is flaky on tinylicious. See ADO:2964
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					this.skip();
+				}
+
+				await setupContainers(containerConfig);
+
+				const content = generateRandomStringOfSize(1024);
+				for (let i = 0; i < 4000; i++) {
+					localMap.set(`key${i}`, content);
+				}
+
+				await provider.ensureSynchronized();
+			},
+		).timeout(chunkingBatchesTimeoutMs);
+
 		describe(`Large payloads (exceeding the 1MB limit) - ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batches`, () => {
