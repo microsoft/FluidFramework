@@ -4,6 +4,9 @@
  */
 
 import { strict as assert } from "assert";
+// eslint-disable-next-line import/no-internal-modules
+import { TypeCompiler } from "@sinclair/typebox/compiler";
+import { TAnySchema } from "@sinclair/typebox";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -38,7 +41,7 @@ import {
 	createSharedTreeView,
 } from "../shared-tree";
 import {
-	defaultChangeFamily,
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
@@ -78,7 +81,7 @@ import {
 	InMemoryStoredSchemaRepository,
 } from "../core";
 import { JsonCompatible, brand, makeArray } from "../util";
-import { ICodecFamily } from "../codec";
+import { ICodecFamily, JsonValidator } from "../codec";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
 // Testing utilities
@@ -196,7 +199,7 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: SharedTreeFactory = new SharedTreeFactory(),
+		factory: SharedTreeFactory = new SharedTreeFactory({ validator: typeboxValidator }),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -339,7 +342,10 @@ export class TestTreeProviderLite {
 	 * provider.processMessages();
 	 * ```
 	 */
-	public constructor(trees = 1, private readonly factory = new SharedTreeFactory()) {
+	public constructor(
+		trees = 1,
+		private readonly factory = new SharedTreeFactory({ validator: typeboxValidator }),
+	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: ISharedTree[] = [];
 		for (let i = 0; i < trees; i++) {
@@ -417,6 +423,15 @@ export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void
 	assert.deepStrictEqual(aTree, bTree);
 }
 
+export const typeboxValidator: JsonValidator = {
+	compile: (schema: TAnySchema) => {
+		const compiledFormat = TypeCompiler.Compile(schema);
+		return {
+			check: (data) => compiledFormat.Check(data),
+		};
+	},
+};
+
 /**
  * A test helper that allows custom code to be injected when a tree is created/loaded.
  */
@@ -429,7 +444,7 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 		private readonly onCreate: (tree: ISharedTree) => void,
 		private readonly onLoad?: (tree: ISharedTree) => void,
 	) {
-		super();
+		super({ validator: typeboxValidator });
 	}
 
 	public override async load(
@@ -668,7 +683,10 @@ export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
 }
 
 export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-	return UndoRedoManager.create(new MockRepairDataStoreProvider(), defaultChangeFamily);
+	return UndoRedoManager.create(
+		new MockRepairDataStoreProvider(),
+		new DefaultChangeFamily({ validator: typeboxValidator }),
+	);
 }
 
 /**

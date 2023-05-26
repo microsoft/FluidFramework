@@ -19,13 +19,13 @@ import { DefaultEditBuilder, FieldKind, ModularChangeFamily } from "../../featur
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/defaultFieldKinds";
 import { brand, Mutable } from "../../util";
-import { testChangeReceiver } from "../utils";
+import { testChangeReceiver, typeboxValidator } from "../utils";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
 );
 
-const family = new ModularChangeFamily(fieldKinds);
+const family = new ModularChangeFamily(fieldKinds, { validator: typeboxValidator });
 
 const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");

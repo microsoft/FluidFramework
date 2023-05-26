@@ -17,7 +17,7 @@ import {
 	SharedTreeFactory,
 } from "../../shared-tree";
 import { compareSets } from "../../util";
-import { TestTreeProviderLite, initializeTestTree } from "../utils";
+import { TestTreeProviderLite, initializeTestTree, typeboxValidator } from "../utils";
 import {
 	FieldKinds,
 	Identifier,
@@ -235,7 +235,7 @@ describe("Node Identifier Index", () => {
 		provider.processMessages();
 		const summary = await tree.summarize();
 
-		const factory = new SharedTreeFactory();
+		const factory = new SharedTreeFactory({ validator: typeboxValidator });
 		const tree2 = await factory.load(
 			new MockFluidDataStoreRuntime(),
 			factory.type,

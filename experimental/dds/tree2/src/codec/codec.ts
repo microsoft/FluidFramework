@@ -5,15 +5,6 @@
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
 import { Static, TAnySchema, TSchema } from "@sinclair/typebox";
-// TODO:
-// It is unclear if we would want to use the TypeBox compiler
-// (which generates code at runtime for maximum validation perf).
-// This might be an issue with security policies (ex: no eval) and/or more bundle size that we want.
-// We could disable validation or pull in a different validator (like ajv).
-// Only using its validation when testing is another option.
-// typebox documents using this internal module, so it should be ok to access.
-// eslint-disable-next-line import/no-internal-modules
-import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
 /**
@@ -34,6 +25,31 @@ export interface IDecoder<TDecoded, TEncoded> {
 	 * Decodes `obj` from some encoded format. Typically paired with an {@link IEncoder}.
 	 */
 	decode(obj: TEncoded): TDecoded;
+}
+
+export interface SchemaValidationFunction {
+	/**
+	 *
+	 * @param data
+	 */
+	check(data: any): boolean;
+}
+
+export interface JsonValidator {
+	/**
+	 *
+	 * @param schema
+	 */
+	compile(schema: TAnySchema): SchemaValidationFunction;
+}
+
+export interface ICodecOptions {
+	/**
+	 *
+	 * @param schema
+	 * @returns
+	 */
+	validator?: JsonValidator;
 }
 
 /**
@@ -244,11 +260,18 @@ export const unitCodec: IMultiFormatCodec<0> = {
  * });
  * ```
  */
-export function makeValueCodec<Schema extends TSchema>(schema: Schema): IJsonCodec<Static<Schema>> {
-	return withSchemaValidation(schema, {
-		encode: (x: Static<Schema>) => x as unknown as JsonCompatibleReadOnly,
-		decode: (x: JsonCompatibleReadOnly) => x as unknown as Static<Schema>,
-	});
+export function makeValueCodec<Schema extends TSchema>(
+	schema: Schema,
+	validator?: JsonValidator,
+): IJsonCodec<Static<Schema>> {
+	return withSchemaValidation(
+		schema,
+		{
+			encode: (x: Static<Schema>) => x as unknown as JsonCompatibleReadOnly,
+			decode: (x: JsonCompatibleReadOnly) => x as unknown as Static<Schema>,
+		},
+		validator,
+	);
 }
 
 /**
@@ -258,18 +281,23 @@ export function makeValueCodec<Schema extends TSchema>(schema: Schema): IJsonCod
 export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSchema>(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat>,
+	// TODO: make required
+	validator?: JsonValidator,
 ): IJsonCodec<TInMemoryFormat> {
-	const CompiledFormat = TypeCompiler.Compile(schema);
+	if (!validator) {
+		return codec;
+	}
+	const compiledFormat = validator.compile(schema);
 	return {
 		encode: (obj: TInMemoryFormat) => {
 			const encoded = codec.encode(obj);
-			if (!CompiledFormat.Check(encoded)) {
+			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
 			return encoded;
 		},
 		decode: (encoded: JsonCompatibleReadOnly) => {
-			if (!CompiledFormat.Check(encoded)) {
+			if (!compiledFormat.check(encoded)) {
 				fail("Encoded schema should validate");
 			}
 			return codec.decode(encoded) as unknown as TInMemoryFormat;

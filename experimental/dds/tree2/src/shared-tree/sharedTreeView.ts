@@ -28,7 +28,7 @@ import {
 	DefaultChangeset,
 	IdentifierIndex,
 	buildForest,
-	defaultChangeFamily,
+	DefaultChangeFamily,
 	defaultSchemaPolicy,
 	getEditableTreeContext,
 	repairDataStoreFromForest,
@@ -229,6 +229,9 @@ export interface ISharedTreeView extends AnchorLocator {
  * Used as a static property to access the creation function for a {@link SharedTreeView}.
  */
 export const create = Symbol("Create SharedTreeView");
+
+// TODO: Evaluate this singleton.
+const defaultChangeFamily = new DefaultChangeFamily({});
 
 /**
  * Creates a {@link SharedTreeView}.

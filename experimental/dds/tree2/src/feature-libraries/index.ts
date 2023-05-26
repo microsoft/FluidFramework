@@ -5,7 +5,6 @@
 export {
 	DefaultChangeset,
 	DefaultChangeFamily,
-	defaultChangeFamily,
 	DefaultEditBuilder,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
@@ -59,7 +58,7 @@ export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
 export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
-export { getSchemaString } from "./schemaIndexFormat";
+export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
 	singleStackTreeCursor,
 	CursorAdapter,

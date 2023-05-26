@@ -7,8 +7,9 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SchemaBuilder, Any } from "../../feature-libraries";
 import { SharedTreeFactory } from "../../shared-tree";
 import { rootFieldKey, ValueSchema, AllowedUpdateType } from "../../core";
+import { typeboxValidator } from "../utils";
 
-const factory = new SharedTreeFactory();
+const factory = new SharedTreeFactory({ validator: typeboxValidator });
 const builder = new SchemaBuilder("Schematize Tree Tests");
 
 const root = builder.primitive("root", ValueSchema.Number);

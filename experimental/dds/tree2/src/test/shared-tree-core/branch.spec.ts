@@ -18,11 +18,13 @@ import {
 import {
 	DefaultChangeset,
 	DefaultEditBuilder,
-	defaultChangeFamily,
+	DefaultChangeFamily,
 	singleTextCursor,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { MockRepairDataStoreProvider } from "../utils";
+
+const defaultChangeFamily = new DefaultChangeFamily({});
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 

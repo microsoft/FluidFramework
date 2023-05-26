@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { ICodecOptions } from "../codec";
 import {
 	InMemoryStoredSchemaRepository,
 	Anchor,
@@ -29,7 +30,7 @@ import {
 	EditableTreeContext,
 	ForestSummarizer,
 	SchemaSummarizer as SchemaSummarizer,
-	defaultChangeFamily,
+	DefaultChangeFamily,
 	DefaultEditBuilder,
 	UnwrappedEditableField,
 	DefaultChangeset,
@@ -93,16 +94,17 @@ export class SharedTree
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
+		options: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema);
+		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(runtime, forest);
 		const repairProvider = new ForestRepairDataStoreProvider(forest, schema);
 		super(
 			[schemaSummarizer, forestSummarizer],
-			defaultChangeFamily,
+			new DefaultChangeFamily(options),
 			forest.anchors,
 			repairProvider,
 			id,
@@ -110,7 +112,7 @@ export class SharedTree
 			attributes,
 			telemetryContextPrefix,
 		);
-		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
+		this.schema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
 		this.identifierIndex = new IdentifierIndex(identifierKey);
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
@@ -221,6 +223,8 @@ export class SharedTree
 	}
 }
 
+export interface SharedTreeOptions extends ICodecOptions {}
+
 /**
  * A channel factory that creates {@link ISharedTree}s.
  * @alpha
@@ -234,19 +238,21 @@ export class SharedTreeFactory implements IChannelFactory {
 		packageVersion: "0.0.0",
 	};
 
+	public constructor(private readonly options: SharedTreeOptions) {}
+
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
 	): Promise<ISharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, "SharedTree");
+		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
 		await tree.load(services);
 		return tree;
 	}
 
 	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, "SharedTree");
+		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		return tree;
 	}

@@ -5,12 +5,15 @@
 export {
 	IBinaryCodec,
 	ICodecFamily,
+	ICodecOptions,
 	IDecoder,
 	IEncoder,
 	IJsonCodec,
 	IMultiFormatCodec,
+	JsonValidator,
 	makeCodecFamily,
 	makeValueCodec,
+	SchemaValidationFunction,
 	unitCodec,
 	withDefaultBinaryEncoding,
 } from "./codec";

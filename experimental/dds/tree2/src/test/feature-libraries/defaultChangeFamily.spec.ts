@@ -24,8 +24,7 @@ import {
 } from "../../core";
 import { jsonNumber, jsonObject, jsonString } from "../../domains";
 import {
-	defaultChangeFamily,
-	defaultChangeFamily as family,
+	DefaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
@@ -36,6 +35,9 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
+
+const defaultChangeFamily = new DefaultChangeFamily({});
+const family = defaultChangeFamily;
 
 const rootKey = rootFieldKeySymbol;
 const fooKey = brand<FieldKey>("foo");

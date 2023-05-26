@@ -18,7 +18,7 @@ import {
 } from "../../feature-libraries";
 import { jsonNumber, jsonSchema } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
-import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
+import { insert, TestTreeProviderLite, toJsonableTree, typeboxValidator } from "../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,
@@ -68,7 +68,7 @@ const deepSchema = deepBuilder.intoDocumentSchema(
 	SchemaBuilder.field(FieldKinds.value, linkedListSchema, jsonNumber),
 );
 
-const factory = new SharedTreeFactory();
+const factory = new SharedTreeFactory({ validator: typeboxValidator });
 
 /**
  * JS object like a deep tree.

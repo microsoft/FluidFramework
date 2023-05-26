@@ -40,6 +40,7 @@ import {
 	deepFreeze,
 	makeEncodingTestSuite,
 	testChangeReceiver,
+	typeboxValidator,
 } from "../../utils";
 import { makeCodecFamily, makeValueCodec } from "../../../codec";
 
@@ -101,7 +102,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
-const family = new ModularChangeFamily(fieldKinds);
+const family = new ModularChangeFamily(fieldKinds, { validator: typeboxValidator });
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -790,7 +791,7 @@ describe("ModularChangeFamily", () => {
 			(a, b) => false,
 			new Set(),
 		);
-		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]));
+		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]), {});
 
 		const changeA: ModularChangeset = {
 			fieldChanges: new Map([

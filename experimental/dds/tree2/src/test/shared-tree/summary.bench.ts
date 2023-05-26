@@ -18,7 +18,7 @@ import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { ISharedTree, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import { brand } from "../../util";
-import { TestTreeProviderLite } from "../utils";
+import { TestTreeProviderLite, typeboxValidator } from "../utils";
 import {
 	rootFieldKey,
 	rootFieldKeySymbol,
@@ -99,7 +99,7 @@ describe("Summary benchmarks", () => {
 			benchmarkType: BenchmarkType = BenchmarkType.Perspective,
 		) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory();
+			const factory = new SharedTreeFactory({ validator: typeboxValidator });
 			benchmark({
 				title: `a ${shape} tree with ${numberOfNodes} node${
 					numberOfNodes !== 1 ? "s" : ""
