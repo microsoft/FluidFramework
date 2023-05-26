@@ -139,17 +139,20 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// client should immediately abort this step and move on to the next one.
 		// Retain the generated summary and summary handle for retry in subsequent phases
 		// TODO: actual implementation
+		// TODO: This is basically executing the summary flow outside of the container.  How much of this should stay inside the container?
+		// Main concern is that we want to race it with the summary already being done by another client, and not retry after it's done.
+		// TODO: We may want all clients to race to avoid the problem of the missing v1 summaryAck?
 		const generateV1Summary = async () => {
 			// TODO: retry also
 			this.emit("generatingV1Summary");
-			return "v1Summary";
+			return "This is the v1 summary I generated";
 		};
 		const uploadV1Summary = async (_v1Summary) => {
 			// Do upload of v1Summary
 			// TODO: Retry also
 			this.emit("uploadingV1Summary");
 			console.log(_v1Summary);
-			return "v1SummaryHandle";
+			return "This is the handle I got back after successfully uploading the v1 summary";
 		};
 		const submitV1Summary = async (_v1SummaryHandle) => {
 			// Submit summarize op for v1Summary
@@ -169,15 +172,50 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 	};
 
 	private readonly ensureV2Summary = async () => {
-		// TODO implement
-		// on("v2summaryAck", this.emit("migrated"))
+		// TODO: Start by awaiting connected?
+		// If someone else finishes this while the local client is still working on it, the local
+		// client should immediately abort this step and move on to the next one.
+		// Retain the generated summary and summary handle for retry in subsequent phases
+		// TODO: actual implementation
+		// TODO: This is basically executing the summary flow outside of the container.  How much of this should stay inside the container?
+		// Main concern is that we want to race it with the summary already being done by another client, and not retry after it's done.
+		// TODO: We may want all clients to race to avoid the problem of the missing v2 summaryAck?
+		const generateV2Summary = async () => {
+			// TODO: retry also
+			this.emit("generatingV2Summary");
+			return "This is the v2 summary I generated";
+		};
+		const uploadV2Summary = async (_v2Summary) => {
+			// Do upload of v2Summary
+			// TODO: Retry also
+			this.emit("uploadingV2Summary");
+			console.log(_v2Summary);
+			return "This is the handle I got back after successfully uploading the v2 summary";
+		};
+		const submitV2Summary = async (_v2SummaryHandle) => {
+			// Submit summarize op for v2Summary
+			this.emit("submittingV2Summary");
+			// TODO: Retry also
+		};
+		const v2Summary = await Promise.race([generateV2Summary(), this._v2SummaryP]);
+		if (this._v2SummaryDone) {
+			return;
+		}
+		const v2SummaryHandle = await Promise.race([uploadV2Summary(v2Summary), this._v2SummaryP]);
+		if (this._v2SummaryDone) {
+			return;
+		}
+		await submitV2Summary(v2SummaryHandle);
+		// (this.context.containerRuntime as any).summarizeOnDemand({ reason: "because" });
 	};
 
 	private readonly ensureQuorumCodeDetails = async () => {
 		// TODO implement for real
 		const version = this.pactMap.get(newVersionKey);
 		const quorumProposal = { package: version };
-		console.log(`Want to propose: ${quorumProposal}`);
+		console.log(`Want to propose: ${JSON.stringify(quorumProposal)}`);
+		console.log(this._anyQuorumProposalSeenP, this._anyQuorumProposalSeen);
+		console.log(this._quorumApprovalCompleteP, this._quorumApprovalComplete);
 		// TODO Here probably need to have the container reference on the providers, in order to make the proposal?
 		// Or at least a callback for it.
 		// container.proposeCodeDetails(quorumProposal);
@@ -379,15 +417,6 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 
 		// TODO: close and dispose somewhere in here
 
-		// Make build shut up
-		await this._v1SummaryP;
-		console.log("Seen v1 summary", this._v1SummaryDone);
-		await this._anyQuorumProposalSeenP;
-		console.log("Seen any quorum proposal", this._anyQuorumProposalSeen);
-		await this._quorumApprovalCompleteP;
-		console.log("Quorum proposal complete", this._quorumApprovalComplete);
-		await this._v2SummaryP;
-		console.log("Seen v2 summary", this._v2SummaryDone);
 		console.log("All done!");
 	}
 }
