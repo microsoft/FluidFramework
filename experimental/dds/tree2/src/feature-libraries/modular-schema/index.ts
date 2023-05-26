@@ -43,6 +43,7 @@ export {
 	ValueChange,
 	ValueConstraint,
 	NodeExistsConstraint,
+	NodeExistenceStateChange,
 } from "./fieldChangeHandler";
 export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
 export { GenericChange, GenericChangeset } from "./genericFieldKindTypes";

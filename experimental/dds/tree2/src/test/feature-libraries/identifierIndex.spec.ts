@@ -29,11 +29,11 @@ import {
 } from "../../feature-libraries";
 
 const builder = new SchemaBuilder("identifier index tests", identifierFieldSchemaLibrary);
-const nodeSchema = builder.objectRecursive("node", {
+export const nodeSchema = builder.objectRecursive("node", {
 	local: { child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema) },
 	global: [identifierFieldSchema] as const,
 });
-const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
+export const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
 
 describe("Node Identifier Index", () => {
 	let nextId: Identifier = 42;
