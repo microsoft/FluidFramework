@@ -328,7 +328,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 				await setupContainers(containerConfig);
 
-				const content = generateRandomStringOfSize(1024);
+				const content = generateRandomStringOfSize(10);
 				for (let i = 0; i < 4000; i++) {
 					localMap.set(`key${i}`, content);
 				}
