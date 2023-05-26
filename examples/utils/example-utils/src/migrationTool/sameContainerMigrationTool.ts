@@ -100,6 +100,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		}
 	}
 
+	// Once we have the v2 contents in hand, we can work on sending it as the next summary (which will look like a v2
+	// summary, due to the v2 code details being in the quorum).  This is the final step.
 	// TODO: Real param typing
 	public async finalizeMigration(v2Summary: string) {
 		// TODO: Start by awaiting connected?
@@ -436,10 +438,8 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		// do this here to ensure the correct summary is produced for services that have server-produced .protocol trees.
 		await this.ensureQuorumCodeDetails();
 
-		// TODO: At this point the user needs to call finalizeMigration().  That call will ultimately submit the v2 summary and resolve this promise.
-
-		// Once we have the v2 contents in hand, we can work on sending it as the next summary (which will look like a v2
-		// summary, due to the v2 code details being in the quorum).  This is the final step.
+		// The flow blocks at this point until the user calls finalizeMigration().  That call will ultimately submit the
+		// v2 summary and resolve this promise.
 		await this._v2SummaryP;
 
 		this.emit("migrated");
