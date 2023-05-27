@@ -916,7 +916,12 @@ export function configureWebSocketServices(
 					socketTracker.removeSocket(socket.id);
 				}
 				await Promise.all(removeAndStoreP);
-				disconnectMetric.success(`Successfully disconnect.`);
+				if (connectionsMap.size >= 1) {
+					const connections = Array.from(connectionsMap.values());
+					const clients = await clientManager.getClients(connections[0].tenantId, connections[0].documentId);
+					disconnectMetric.setProperties({ [CommonProperties.clientCount]: clients.length });
+				}
+				disconnectMetric.success(`Successfully disconnected.`);
 			}
 			catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
