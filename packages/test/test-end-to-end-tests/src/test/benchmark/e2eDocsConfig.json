@@ -2,25 +2,41 @@
 	"documents": [
 		{
 			"testTitle": "10Mb Map",
-			"documentType": "LargeDocumentMap",
-			"minSampleCount": 2,
+			"documentType": "DocumentMap",
+			"documentTypeInfo": {
+				"numberOfItems": "2",
+				"itemSizeMb": "5"
+			},
+			"minSampleCount": "2",
 			"supportedEndpoints": ["local", "odsp"]
 		},
 		{
 			"testTitle": "5Mb Map",
-			"documentType": "MediumDocumentMap",
+			"documentType": "DocumentMap",
+			"documentTypeInfo": {
+				"numberOfItems": "1",
+				"itemSizeMb": "5"
+			},
 			"minSampleCount": 2,
 			"supportedEndpoints": ["local", "odsp"]
 		},
 		{
 			"testTitle": "250 DataStores - 750 DDSs",
-			"documentType": "MediumDocumentMultipleDataStores",
-			"minSampleCount": 1
+			"documentType": "DocumentMultipleDataStores",
+			"documentTypeInfo": {
+				"numberDataStores": "250",
+				"numberDataStoresPerIteration": "250"
+			},
+			"minSampleCount": "1"
 		},
 		{
 			"testTitle": "500 DataStores - 1500 DDSs",
-			"documentType": "LargeDocumentMultipleDataStores",
-			"minSampleCount": 1
+			"documentType": "DocumentMultipleDataStores",
+			"documentTypeInfo": {
+				"numberDataStores": "500",
+				"numberDataStoresPerIteration": "250"
+			},
+			"minSampleCount": "1"
 		}
 	]
 }
