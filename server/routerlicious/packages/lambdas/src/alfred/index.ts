@@ -916,10 +916,14 @@ export function configureWebSocketServices(
 					socketTracker.removeSocket(socket.id);
 				}
 				await Promise.all(removeAndStoreP);
-				if (connectionsMap.size >= 1) {
-					const connections = Array.from(connectionsMap.values());
-					const clients = await clientManager.getClients(connections[0].tenantId, connections[0].documentId);
-					disconnectMetric.setProperties({ [CommonProperties.clientCount]: clients.length });
+				if (roomMap.size >= 1) {
+					const rooms = Array.from(roomMap.values());
+					const documentId = rooms[0].documentId;
+					const tenantId = rooms[0].tenantId;
+					const clients = await clientManager.getClients(tenantId, documentId);
+					disconnectMetric.setProperties({ 
+						...getLumberBaseProperties(documentId, tenantId),
+						[CommonProperties.clientCount]: clients.length });
 				}
 				disconnectMetric.success(`Successfully disconnected.`);
 			}
