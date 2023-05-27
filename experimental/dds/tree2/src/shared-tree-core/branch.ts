@@ -54,35 +54,33 @@ export type SharedTreeBranchChange<TChange> =
 	  };
 
 /**
- * Returns true iff the given {@link SharedTreeBranchChange} is the result of a rebase operation.
+ * Returns the operation that caused the the given {@link SharedTreeBranchChange}.
  */
-export function isRebaseChange(
+export function getChangeReplaceType(
 	change: SharedTreeBranchChange<unknown> & { type: "replace" },
-): boolean {
-	return !isTransactionCommitChange(change);
-}
+): "transactionCommit" | "rebase" {
+	// The "replace" variant of the change event is emitted by two operations: committing a transaction and doing a rebase.
+	// Committing a transaction will always remove one or more commits (the commits that were squashed),
+	// and will add exactly one new commit (the squash commit).
+	if (change.removedCommits.length === 0 || change.newCommits.length !== 1) {
+		return "rebase";
+	}
 
-/**
- * Returns true iff the given {@link SharedTreeBranchChange} is the result of a transaction being committed.
- */
-export function isTransactionCommitChange(
-	change: SharedTreeBranchChange<unknown> & { type: "replace" },
-): boolean {
-	// "replace" is emitted by transaction commits and by rebase operations. A commit operation will
-	// always result in exactly one new commit. When a rebase results in exactly one new commit, we know
-	// that there will also be no removed commits:
+	// There is only one case in which a rebase both removes commits and adds exactly one new commit.
+	// This occurs when there is exactly one divergent, but equivalent, commit on each branch:
 	//
-	// A ─ B (branch X)
-	// └─ (branch Y)
+	// A ─ B (branch X)	  -- rebase Y onto X -->   A ─ B (branch X)
+	// └─ B' (branch Y)                                └─ (branch Y)
 	//
-	// Rebasing branch Y onto branch X results in:
-	//
-	// A ─ B (branch X)
-	//     └─ (branch Y)
-	//
-	// newCommits: [B]
-	// removedCommits: []
-	return change.newCommits.length === 1 && change.removedCommits.length !== 0;
+	// B' is removed and replaced by B because both have the same revision.
+	if (
+		change.removedCommits.length === 1 &&
+		change.removedCommits[0].revision === change.newCommits[0].revision
+	) {
+		return "rebase";
+	}
+
+	return "transactionCommit";
 }
 
 /**
@@ -209,10 +207,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Commit the current transaction. There must be a transaction in progress that was begun via
-	 * {@link startTransaction}. All commits in the current transaction will be squashed into a new,
-	 * single head commit.
-	 * @returns the commits that were squashed, and the new squash commit
+	 * Commit the current transaction. There must be a transaction in progress that was begun via {@link startTransaction}.
+	 * If there are commits in the current transaction, they will be squashed into a new single head commit.
+	 * @returns the commits that were squashed and the new squash commit if a squash occurred, otherwise `undefined`.
+	 * @remarks If the transaction had no changes applied during its lifetime, then no squash occurs (i.e. this method is a no-op).
+	 * Even if the transaction contained only one change, it will still be replaced with an (equivalent) squash change.
 	 */
 	public commitTransaction():
 		| [squashedCommits: GraphCommit<TChange>[], newCommit: GraphCommit<TChange>]
@@ -228,33 +227,30 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
+		// Squash the changes and make the squash commit the new head of this branch
+		this.head = mintCommit(startCommit, {
+			revision: mintRevisionTag(),
+			change: this.changeFamily.rebaser.compose(anonymousCommits),
+		});
 
-		{
-			// Squash the changes and make the squash commit the new head of this branch
-			const change = this.changeFamily.rebaser.compose(anonymousCommits);
-			this.head = mintCommit(startCommit, {
-				revision: mintRevisionTag(),
-				change,
-			});
-
-			// If this transaction is not nested, add it to the undo commit tree
-			if (!this.isTransacting()) {
-				if (this.undoRedoManager !== undefined) {
-					const repairData = this.undoRedoManager.trackCommit(
-						this.head,
-						UndoRedoManagerCommitType.Undoable,
-					);
-					this.repairStore.set(this.head.revision, repairData);
-				}
+		// If this transaction is not nested, add it to the undo commit tree
+		if (!this.isTransacting()) {
+			if (this.undoRedoManager !== undefined) {
+				const repairData = this.undoRedoManager.trackCommit(
+					this.head,
+					UndoRedoManagerCommitType.Undoable,
+				);
+				this.repairStore.set(this.head.revision, repairData);
 			}
-
-			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
-			// then update the repair data store for that transaction
-			this.transactions.repairStore?.capture(
-				this.changeFamily.intoDelta(change),
-				this.head.revision,
-			);
 		}
+
+		// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
+		// then update the repair data store for that transaction
+		this.transactions.repairStore?.capture(
+			this.changeFamily.intoDelta(this.head.change),
+			this.head.revision,
+		);
+
 		this.emitAndRebaseAnchors({
 			type: "replace",
 			change: undefined,
