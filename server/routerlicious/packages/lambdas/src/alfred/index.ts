@@ -377,10 +377,10 @@ export function configureWebSocketServices(
 				);
 			}
 
-			const lumberjackProperties = getLumberBaseProperties(
-				claims.documentId,
-				claims.tenantId,
-			);
+			const lumberjackProperties = {
+				...getLumberBaseProperties(claims.documentId, claims.tenantId),
+				[CommonProperties.clientId]: clientId,
+			};
 
 			const connectDocumentGetClientsMetric = Lumberjack.newLumberMetric(
 				LumberEventName.ConnectDocumentGetClients,
