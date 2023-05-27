@@ -311,7 +311,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		itExpects(
 			`Batch with 4000 ops - ${enableGroupedBatching ? "grouped" : "regular"} batches`,
 			// With grouped batching enabled, this scenario is unblocked
-			enableGroupedBatching
+			enableGroupedBatching ||
+				provider.driver.type === "local" ||
+				provider.driver.type === "tinylicious"
 				? []
 				: [
 						{
