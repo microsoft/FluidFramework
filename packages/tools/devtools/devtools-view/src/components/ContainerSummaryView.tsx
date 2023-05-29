@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
-import { useId } from "@fluentui/react-hooks";
+import { IStackItemStyles, Stack, StackItem } from "@fluentui/react";
 import {
 	Button,
 	Badge,
@@ -15,6 +14,7 @@ import {
 	TableCellLayout,
 	TableColumnDefinition,
 	TableColumnSizingOptions,
+	Tooltip,
 	useTableFeatures,
 	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
@@ -136,47 +136,42 @@ function DataRow(props: DataRowProps): React.ReactElement {
 
 function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
 	return (
-		<TableRow>
-			<TableCell>
-				<b>Status</b>
-			</TableCell>
-			<TableCell>
-				<TableCellLayout
-					media={((): JSX.Element => {
-						switch (statusComponents[0]) {
-							case AttachState.Attaching:
-								return (
-									<Badge shape="rounded" color="warning">
-										{statusComponents[0]}
-									</Badge>
-								);
-							case AttachState.Detached:
-								return (
-									<Badge shape="rounded" color="danger">
-										{statusComponents[0]}
-									</Badge>
-								);
-							default:
-								return (
-									<Badge shape="rounded" color="success">
-										{statusComponents[0]}
-									</Badge>
-								);
-						}
-					})()}
-				>
-					{statusComponents[1] === "Connected" ? (
-						<Badge shape="rounded" color="success">
-							{statusComponents[1]}
-						</Badge>
-					) : (
-						<Badge shape="rounded" color="danger">
-							{statusComponents[1]}
-						</Badge>
-					)}
-				</TableCellLayout>
-			</TableCell>
-		</TableRow>
+		<TableCell>
+			<TableCellLayout
+				media={((): JSX.Element => {
+					switch (statusComponents[0]) {
+						case AttachState.Attaching:
+							return (
+								<Badge shape="rounded" color="warning">
+									{statusComponents[0]}
+								</Badge>
+							);
+						case AttachState.Detached:
+							return (
+								<Badge shape="rounded" color="danger">
+									{statusComponents[0]}
+								</Badge>
+							);
+						default:
+							return (
+								<Badge shape="rounded" color="success">
+									{statusComponents[0]}
+								</Badge>
+							);
+					}
+				})()}
+			>
+				{statusComponents[1] === "Connected" ? (
+					<Badge shape="rounded" color="success">
+						{statusComponents[1]}
+					</Badge>
+				) : (
+					<Badge shape="rounded" color="danger">
+						{statusComponents[1]}
+					</Badge>
+				)}
+			</TableCellLayout>
+		</TableCell>
 	);
 }
 
@@ -362,12 +357,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, isContainerClosed, tryConnect, forceDisconnect, closeContainer } =
 		props;
 
-	const connectButtonTooltipId = useId("connect-button-tooltip");
-	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
-	const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
-
 	const changeConnectionStateButton = isContainerConnected ? (
-		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
+		<Tooltip content="Disconnect Container" relationship="description">
 			<Button
 				size="small"
 				icon={<PlugDisconnected20Regular />}
@@ -376,9 +367,9 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Disconnect Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	) : (
-		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
+		<Tooltip content="Connect Container" relationship="description">
 			<Button
 				size="small"
 				icon={<PlugConnected20Regular />}
@@ -387,11 +378,11 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Connect Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 
 	const disposeContainerButton = (
-		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
+		<Tooltip content="Close Container" relationship="description">
 			<Button
 				size="small"
 				icon={<Delete20Regular />}
@@ -400,7 +391,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Close Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 
 	const itemStyles: IStackItemStyles = {
