@@ -72,6 +72,7 @@ jobs:
       LABEL: ${{ fromJSON(steps.dequeue-message.outputs.result).label }}
       AUTHOR: ${{ fromJSON(steps.dequeue-message.outputs.result).author }}
       SHA: ${{ fromJSON(steps.dequeue-message.outputs.result).sha }}
+      EXISTS: ${{ steps.dequeue-message.outputs.result }}
   create-branch:
     runs-on: ubuntu-latest
     permissions:
