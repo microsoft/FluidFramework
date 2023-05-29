@@ -515,14 +515,14 @@ export interface FieldChange {
 // @alpha
 export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TChangeset> = FieldEditor<TChangeset>> {
     // (undocumented)
-    codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
+    readonly codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
     // (undocumented)
-    editor: TEditor;
+    readonly editor: TEditor;
     // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
     isEmpty(change: TChangeset): boolean;
     // (undocumented)
-    rebaser: FieldChangeRebaser<TChangeset>;
+    readonly rebaser: FieldChangeRebaser<TChangeset>;
     // (undocumented)
     _typeCheck?: Invariant<TChangeset>;
 }
@@ -575,6 +575,7 @@ export const FieldKinds: {
     readonly value: ValueFieldKind;
     readonly optional: Optional;
     readonly sequence: Sequence;
+    readonly nodeIdentifier: NodeIdentifierFieldKind;
     readonly forbidden: Forbidden;
 };
 
@@ -785,15 +786,6 @@ export interface IDefaultEditBuilder {
 }
 
 // @alpha
-export type Identifier = number;
-
-// @alpha
-export const identifierKey: GlobalFieldKey;
-
-// @alpha
-export const identifierKeySymbol: GlobalFieldKeySymbol;
-
-// @alpha
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
     applyDelta(delta: Delta.Root): void;
@@ -954,7 +946,8 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): SharedTreeView;
-    readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+    generateNodeIdentifier(): NodeIdentifier;
+    readonly identifiedNodes: ReadonlyMap<NodeIdentifier, EditableTree>;
     merge(view: SharedTreeView): void;
     rebase(view: SharedTreeView): void;
     redo(): void;
@@ -1294,7 +1287,7 @@ export type NodeChangeInverter = (change: NodeChangeset, index: number | undefin
 
 // @alpha (undocumented)
 export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined,
-deleted?: boolean) => NodeChangeset | undefined;
+stateChange?: NodeExistenceStateChange) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {
@@ -1316,10 +1309,37 @@ export interface NodeData {
 type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<TSchema, Mode>;
 
 // @alpha (undocumented)
+export enum NodeExistenceStateChange {
+    // (undocumented)
+    Deleted = 1,
+    // (undocumented)
+    Revived = 2,
+    // (undocumented)
+    Unchanged = 0
+}
+
+// @alpha (undocumented)
 export interface NodeExistsConstraint {
     // (undocumented)
     violated: boolean;
 }
+
+// @alpha
+export type NodeIdentifier = Brand<StableId, "Node Identifier">;
+
+// @alpha (undocumented)
+export interface NodeIdentifierFieldKind extends BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<any>> {
+}
+
+// @alpha
+export const nodeIdentifierKey: GlobalFieldKey;
+
+// @alpha
+export function nodeIdentifierSchema(): {
+    schema: SchemaLibrary;
+    field: GlobalFieldSchema<NodeIdentifierFieldKind>;
+    type: TreeSchemaIdentifier;
+};
 
 // @alpha (undocumented)
 export type NodeReviver = (revision: RevisionTag, index: number, count: number) => Delta.ProtoNode[];
@@ -1620,7 +1640,9 @@ export class SharedTreeView implements ISharedTreeView {
     // (undocumented)
     fork(): SharedTreeView;
     // (undocumented)
-    get identifiedNodes(): ReadonlyMap<Identifier, EditableTree>;
+    generateNodeIdentifier(): NodeIdentifier;
+    // (undocumented)
+    get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree>;
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
     // (undocumented)
