@@ -21,6 +21,7 @@ export {
 	IIntervalCollectionEvent,
 	IIntervalHelpers,
 	Interval,
+	IntervalIndex,
 	IntervalCollection,
 	IntervalCollectionIterator,
 	IntervalLocator,
