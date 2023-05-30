@@ -66,5 +66,6 @@ export {
 	zipIterables,
 	Assume,
 	assertValidIndex,
+	assertNonNegativeSafeInteger,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";

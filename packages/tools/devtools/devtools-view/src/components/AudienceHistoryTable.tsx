@@ -13,8 +13,11 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { Clock12Regular, DoorArrowLeftRegular, Person12Regular } from "@fluentui/react-icons";
+import { DoorArrowLeftRegular, Clock12Regular, Person12Regular } from "@fluentui/react-icons";
+
+import { clientIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceHistoryData } from "./AudienceView";
+import { LabelCellLayout } from "./utility-components";
 
 /**
  * Represents audience history data filtered to the attributes that will be displayed in the history table.
@@ -46,10 +49,25 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "event" && <DoorArrowLeftRegular />}
-							{column.columnKey === "clientId" && <Person12Regular />}
-							{column.columnKey === "time" && <Clock12Regular />}
-							{column.label}
+							{column.columnKey === "event" && (
+								<LabelCellLayout icon={<DoorArrowLeftRegular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
+
+							{column.columnKey === "clientId" && (
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={clientIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "time" && (
+								<LabelCellLayout icon={<Clock12Regular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>

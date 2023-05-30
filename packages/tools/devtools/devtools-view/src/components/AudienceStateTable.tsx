@@ -14,7 +14,9 @@ import {
 	TableHeaderCell,
 } from "@fluentui/react-components";
 import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-icons";
+import { clientIdTooltipText, userIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceStateData } from "./AudienceView";
+import { LabelCellLayout } from "./utility-components";
 
 /**
  * Represents audience state data filtered to the attributes that will be displayed in the state table.
@@ -47,11 +49,32 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "clientId" && <Person12Regular />}
-							{column.columnKey === "userId" && <Person12Regular />}
-							{column.columnKey === "mode" && <EditRegular />}
-							{column.columnKey === "scopes" && <Search12Regular />}
-							{column.label}
+							{column.columnKey === "clientId" && (
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={clientIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "userId" && (
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={userIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "mode" && (
+								<LabelCellLayout icon={<EditRegular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "scopes" && (
+								<LabelCellLayout icon={<Search12Regular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>

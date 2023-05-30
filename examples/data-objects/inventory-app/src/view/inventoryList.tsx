@@ -6,7 +6,7 @@
 import * as React from "react";
 import { AllowedUpdateType, ISharedTree } from "@fluid-experimental/tree2";
 import { useTree } from "@fluid-experimental/tree-react-api";
-import { Inventory, schema } from "../schema";
+import { Inventory, RootField, schema } from "../schema";
 import { Counter } from "./counter";
 
 const schemaPolicy = {
@@ -27,7 +27,9 @@ const schemaPolicy = {
 };
 
 export const MainView: React.FC<{ tree: ISharedTree }> = ({ tree }) => {
-	const inventory: Inventory = useTree(tree, schemaPolicy);
+	const root: RootField = useTree(tree, schemaPolicy);
+	// TODO: value fields like `root` which always contain exactly one value should have a nicer API for accessing that child, like `.child`.
+	const inventory: Inventory = root[0];
 
 	const counters: JSX.Element[] = [];
 

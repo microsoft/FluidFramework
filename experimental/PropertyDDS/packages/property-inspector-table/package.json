@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-inspector-table",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"description": "Property Inspector Table component",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,11 +22,11 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "concurrently npm:tsc npm:build:esnext npm:build:webpack",
-		"build:copy": "copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
+		"build:copy-resources": "copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
-		"build:webpack": "webpack --config webpack.svgs.js && npm run build:copy",
+		"build:webpack": "webpack --config webpack.svgs.js && copyfiles -u 2 \"dist/assets/**/*\" \"lib/assets\"",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -39,7 +39,8 @@
 		"test": "npm run test:jest",
 		"test:coverage": "jest --coverage --ci  --reporters=default --reporters=jest-junit",
 		"test:jest": "jest",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"webpack": "webpack --config webpack.svgs.js"
 	},
 	"dependencies": {
 		"@hig/fonts": "^1.0.2",
@@ -55,7 +56,7 @@
 		"react-dom": "^17.0.1",
 		"react-loading-skeleton": "^3.1.0",
 		"react-select": "^2.4.3",
-		"react-virtualized-auto-sizer": "^1.0.6",
+		"react-virtualized-auto-sizer": "1.0.7",
 		"require-from-string": "^2.0.2"
 	},
 	"devDependencies": {
@@ -120,6 +121,21 @@
 		"@fluid-experimental/property-properties": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"@fluid-experimental/property-proxy": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
 		"react": "^17.0.1"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"webpack",
+					"build:copy-resources"
+				],
+				"script": false
+			},
+			"build:copy-resources": [
+				"webpack"
+			]
+		}
 	},
 	"jest-junit": {
 		"outputDirectory": "nyc",
