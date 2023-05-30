@@ -456,7 +456,7 @@ function rebaseNodeChange<TNodeChange>(
 			currMark,
 			nodeRebaser(currChange, baseChange, NodeExistenceStateChange.Deleted),
 		);
-	} else if (markFillsCells(baseMark)) {
+	} else if (markFillsCells(baseMark) && !isMoveMark(baseMark)) {
 		return withNodeChange(
 			currMark,
 			nodeRebaser(currChange, baseChange, NodeExistenceStateChange.Revived),
