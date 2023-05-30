@@ -79,7 +79,6 @@ export default {
 			{ id: "age", typeid: "Int32", optional: true },
 			{ id: "adult", typeid: "Bool", optional: true },
 			{ id: "salary", typeid: "Float64", optional: true },
-			{ id: "salary", typeid: "Int32", optional: true },
 			{ id: "address", typeid: "Test:Address-1.0.0", optional: true },
 			{ id: "friends", typeid: "String", context: "map", optional: true },
 			{ id: "misc", typeid: "NodeProperty", optional: true },
