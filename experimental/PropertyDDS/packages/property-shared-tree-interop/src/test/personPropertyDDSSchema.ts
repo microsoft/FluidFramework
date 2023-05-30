@@ -67,6 +67,10 @@ export default {
 		// does not inherit from "NodeProperty" and has no properties
 		typeid: "Test:ErroneousType-1.0.0",
 	},
+	typeWithNestedProperties: {
+		typeid: "Test:NestedProperties-1.0.0",
+		properties: [{ id: "withNestedProperties", properties: [{ id: "foo", typeid: "String" }] }],
+	},
 	person: {
 		typeid: "Test:Person-1.0.0",
 		inherits: ["NodeProperty"],

@@ -21,13 +21,13 @@ import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
 import personSchema from "./personPropertyDDSSchema";
 
-// TODO: test recursive schemas
+// TODO: improve & enhance tests (recursive schemas, edge cases, contexts...)
 describe("schema converter", () => {
 	beforeAll(() => {
 		PropertyFactory.register(Object.values(personSchema));
 	});
 
-	it(`inherits from "NodeProperty"`, () => {
+	it(`fails on a non-primitive type w/o properties and not inheriting from NodeProperty`, () => {
 		assert.throws(
 			() =>
 				convertPropertyToSharedTreeStorageSchema(
@@ -37,25 +37,44 @@ describe("schema converter", () => {
 			(e) =>
 				validateAssertionError(
 					e,
-					`"Test:ErroneousType-1.0.0" contains no properties and does not inherit from "NodeProperty".`,
+					`"Test:ErroneousType-1.0.0" is not primitive, contains no properties and does not inherit from "NodeProperty".`,
 				),
 			"Expected exception was not thrown",
 		);
+	});
+
+	it(`does not support types with nested properties`, () => {
+		assert.throws(
+			() =>
+				convertPropertyToSharedTreeStorageSchema(
+					FieldKinds.optional,
+					"Test:NestedProperties-1.0.0",
+				),
+			(e) =>
+				validateAssertionError(
+					e,
+					`Nested properties are not supported yet (property "withNestedProperties" of type "Test:NestedProperties-1.0.0")`,
+				),
+			"Expected exception was not thrown",
+		);
+	});
+
+	it(`inherits from "NodeProperty"`, () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
 			"Test:Optional-1.0.0",
 		);
 		const nodeProperty = fullSchemaData.treeSchema.get(brand("NodeProperty"));
-		assert(nodeProperty);
 		const testOptional = fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0"));
-		assert(testOptional);
-		assert.deepEqual(testOptional.extraLocalFields, nodeProperty.extraLocalFields);
-		const miscField = testOptional.localFields.get(brand("misc"));
-		assert(miscField);
-		assert(miscField.types?.has(brand("Test:Optional-1.0.0")));
-		assert(miscField.types?.has(brand("NamedNodeProperty")));
-		assert(miscField.types?.has(brand("RelationshipProperty")));
-		assert(miscField.types?.has(brand("NodeProperty")));
+		expect(testOptional?.extraLocalFields).toEqual(nodeProperty?.extraLocalFields);
+		const miscField = testOptional?.localFields.get(brand("misc"));
+		expect(miscField?.types?.size).toEqual(6);
+		expect(miscField?.types).toContainEqual("Test:Optional-1.0.0");
+		expect(miscField?.types).toContainEqual("Test:Address-1.0.0");
+		expect(miscField?.types).toContainEqual("Test:Person-1.0.0");
+		expect(miscField?.types).toContainEqual("NamedNodeProperty");
+		expect(miscField?.types).toContainEqual("RelationshipProperty");
+		expect(miscField?.types).toContainEqual("NodeProperty");
 	});
 
 	it(`can use "NodeProperty" as root`, () => {
@@ -116,7 +135,9 @@ describe("schema converter", () => {
 		for (const [fieldKey, field] of addressSchema.localFields) {
 			const expected = expectedAddressFields.get(fieldKey) ?? fail("expected field");
 			expect(field).toMatchObject(expected);
+			expectedAddressFields.delete(fieldKey);
 		}
+		expect(expectedAddressFields.size).toEqual(0);
 	});
 
 	it("can use any type as root", () => {

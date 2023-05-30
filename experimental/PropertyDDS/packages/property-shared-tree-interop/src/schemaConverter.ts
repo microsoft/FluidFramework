@@ -14,8 +14,10 @@ import {
 	Any,
 	TreeSchema,
 	LazyTreeSchema,
+	brand,
+	Brand,
 } from "@fluid-experimental/tree2";
-import { PropertyFactory, PropertyTemplate } from "@fluid-experimental/property-properties";
+import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 
 const nodePropertyType = "NodeProperty";
@@ -53,6 +55,16 @@ const primitiveTypes = new Set<string>([
 	"Enum",
 	"Reference",
 ]);
+
+type PropertyContext = Brand<"single" | "array" | "map" | "set", "PropertyDDSContext">;
+
+const singleContext: PropertyContext = brand("single");
+const arrayContext: PropertyContext = brand("array");
+const mapContext: PropertyContext = brand("map");
+
+function isPropertyContext(context: string): context is PropertyContext {
+	return context in { single: true, array: true, map: true, set: true };
+}
 
 function isIgnoreNestedProperties(typeid: string): boolean {
 	return typeid === "Enum";
@@ -94,149 +106,124 @@ function mapTypesAndChildren<T>(
 	return output;
 }
 
+// TODO: clarify `enum` context
 function buildTreeSchema(
 	builder: SchemaBuilder,
 	treeSchemaMap: Map<string, LazyTreeSchema>,
 	allChildrenByType: InheritingChildrenByType,
 	type: string,
 ): LazyTreeSchema {
-	const splitTypeId = TypeIdHelper.extractContext(type);
-	if (splitTypeId.context === "single") {
-		const arrayOfTypeId = `array<${splitTypeId.typeid}>`;
-		const mapOfTypeId = `map<${splitTypeId.typeid}>`;
-		if (!treeSchemaMap.has(arrayOfTypeId)) {
-			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, arrayOfTypeId);
+	const { typeid, context } = TypeIdHelper.extractContext(type);
+	if (!isPropertyContext(context)) {
+		fail(`Unknown context "${context}" in typeid "${type}" `);
+	}
+	if (context === singleContext) {
+		const typeidAsArray = TypeIdHelper.createSerializationTypeId(typeid, arrayContext, false);
+		const typeidAsMap = TypeIdHelper.createSerializationTypeId(typeid, mapContext, false);
+		if (!treeSchemaMap.has(typeidAsArray)) {
+			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeidAsArray);
 		}
-		if (!treeSchemaMap.has(mapOfTypeId)) {
-			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, mapOfTypeId);
+		if (!treeSchemaMap.has(typeidAsMap)) {
+			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeidAsMap);
 		}
-		let treeSchema = treeSchemaMap.get(splitTypeId.typeid);
+		const treeSchema = treeSchemaMap.get(typeid);
 		if (treeSchema) {
 			return treeSchema;
 		}
-		if (TypeIdHelper.isPrimitiveType(splitTypeId.typeid)) {
-			let value: ValueSchema;
-			if (splitTypeId.isEnum) {
-				value = ValueSchema.Number;
-			} else if (
-				splitTypeId.typeid === "String" ||
-				splitTypeId.typeid.startsWith(referenceGenericTypePrefix) ||
-				splitTypeId.typeid === referenceType
-			) {
-				value = ValueSchema.String;
-			} else if (booleanTypes.has(splitTypeId.typeid)) {
-				value = ValueSchema.Boolean;
-			} else if (numberTypes.has(splitTypeId.typeid)) {
-				value = ValueSchema.Number;
-			} else {
-				fail(`Unknown primitive typeid: ${splitTypeId.typeid}`);
-			}
-			treeSchema = builder.object(splitTypeId.typeid, { value });
-			treeSchemaMap.set(splitTypeId.typeid, treeSchema);
-			return treeSchema;
+		if (TypeIdHelper.isPrimitiveType(typeid)) {
+			return buildPrimitiveSchema(builder, treeSchemaMap, typeid);
 		} else {
-			if (nodePropertyTypes.has(splitTypeId.typeid)) {
-				treeSchema = builder.object(splitTypeId.typeid, {
-					extraLocalFields: SchemaBuilder.fieldOptional(Any),
-				});
-				treeSchemaMap.set(splitTypeId.typeid, treeSchema);
-				return treeSchema;
-			} else {
-				const cache: { treeSchema?: LazyTreeSchema } = {};
-				treeSchemaMap.set(splitTypeId.typeid, () => cache.treeSchema as TreeSchema);
-				const local = {};
-				const inheritanceChain = PropertyFactory.getAllParentsForTemplate(
-					splitTypeId.typeid,
+			const cache: { treeSchema?: TreeSchema } = {};
+			treeSchemaMap.set(typeid, () => cache.treeSchema as TreeSchema);
+			const local = {};
+			const schemaTemplate = PropertyFactory.getTemplate(typeid);
+			if (schemaTemplate === undefined) {
+				fail(`Unknown typeid "${typeid}"`);
+			}
+			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
+			for (const typeIdInInheritanceChain of inheritanceChain) {
+				const inheritedSchema = buildTreeSchema(
+					builder,
+					treeSchemaMap,
+					allChildrenByType,
+					typeIdInInheritanceChain,
 				);
-				inheritanceChain.push(splitTypeId.typeid);
-
-				for (const typeIdInInheritanceChain of inheritanceChain) {
-					if (nodePropertyTypes.has(typeIdInInheritanceChain)) {
-						continue;
-					}
-
-					// TODO: converge this with the same code for `unprocessedTypeIds` below
-					const propertySchema = PropertyFactory.getTemplate(typeIdInInheritanceChain);
-					if (propertySchema === undefined) {
-						fail(`Unknown typeid: ${typeIdInInheritanceChain}`);
-					}
-					if (propertySchema.properties !== undefined) {
-						for (const property of propertySchema.properties) {
-							if (property.properties && !isIgnoreNestedProperties(property.typeid)) {
-								fail(
-									`Nested properties are not supported yet (typeid: ${property.typeid})`,
-								);
-							} else {
-								const currentTypeid =
-									property.context && property.context !== "single"
-										? // TODO: empty typeid will be converted into BaseProperty and then asserted
-										  // within the further processing of a non-single context case.
-										  // Maybe BaseProperty collections should be allowed or empty typeid asserted here?
-										  `${property.context}<${property.typeid || ""}>`
-										: property.typeid;
-								local[property.id] = buildFieldSchema(
-									builder,
-									treeSchemaMap,
-									allChildrenByType,
-									property.optional ? FieldKinds.optional : FieldKinds.value,
-									currentTypeid,
-								);
-							}
-						}
-					} else if (
-						!PropertyFactory.inheritsFrom(typeIdInInheritanceChain, nodePropertyType)
-					) {
+				(typeof inheritedSchema === "function"
+					? inheritedSchema()
+					: inheritedSchema
+				).localFields.forEach((field, key) => (local[key] = field));
+			}
+			const extraLocalFields = PropertyFactory.inheritsFrom(typeid, nodePropertyType)
+				? SchemaBuilder.fieldOptional(Any)
+				: undefined;
+			if (schemaTemplate.properties !== undefined) {
+				for (const property of schemaTemplate.properties) {
+					if (property.properties && !isIgnoreNestedProperties(property.typeid)) {
 						fail(
-							`"${typeIdInInheritanceChain}" contains no properties and does not inherit from "${nodePropertyType}".`,
+							`Nested properties are not supported yet (property "${property.id}" of type "${typeid}")`,
+						);
+					} else {
+						const currentTypeid =
+							property.context && property.context !== singleContext
+								? TypeIdHelper.createSerializationTypeId(
+										property.typeid ?? "",
+										property.context,
+										false,
+								  )
+								: property.typeid;
+						local[property.id] = buildFieldSchema(
+							builder,
+							treeSchemaMap,
+							allChildrenByType,
+							property.optional ? FieldKinds.optional : FieldKinds.value,
+							currentTypeid,
 						);
 					}
 				}
-				cache.treeSchema = builder.object(splitTypeId.typeid, {
-					local,
-					extraLocalFields: PropertyFactory.inheritsFrom(
-						splitTypeId.typeid,
-						nodePropertyType,
-					)
-						? SchemaBuilder.fieldOptional(Any)
-						: undefined,
-				});
-				return cache.treeSchema;
+			} else if (!extraLocalFields) {
+				fail(
+					`"${typeid}" is not primitive, contains no properties and does not inherit from "${nodePropertyType}".`,
+				);
 			}
+			cache.treeSchema = builder.object(typeid, {
+				local,
+				extraLocalFields,
+			});
+			return cache.treeSchema;
 		}
 	} else {
-		const anyType =
-			TypeIdHelper.extractTypeId(type) === "" && splitTypeId.typeid === basePropertyType;
-		const currentTypeid = `${splitTypeId.context}<${anyType ? Any : splitTypeId.typeid}>`;
+		const isAnyType = TypeIdHelper.extractTypeId(type) === "" && typeid === basePropertyType;
+		const currentTypeid = TypeIdHelper.createSerializationTypeId(
+			isAnyType ? Any : typeid,
+			context,
+			false,
+		);
 		const treeSchema = treeSchemaMap.get(currentTypeid);
 		if (treeSchema) {
 			return treeSchema;
 		}
-		if (splitTypeId.typeid === "") {
+		if (typeid === "") {
 			fail(`Missing typeid in collection type "${type}"`);
 		}
-		if (splitTypeId.typeid === basePropertyType && !anyType) {
+		if (typeid === basePropertyType && !isAnyType) {
 			fail(`"${basePropertyType}" shall not be used in schemas (typeid "${type}").`);
 		}
-		const fieldKind =
-			splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
-		const cache: { treeSchema?: LazyTreeSchema } = {};
+		const fieldKind = context === arrayContext ? FieldKinds.sequence : FieldKinds.optional;
+		const cache: { treeSchema?: TreeSchema } = {};
 		treeSchemaMap.set(currentTypeid, () => cache.treeSchema as TreeSchema);
 		const fieldType = buildFieldSchema(
 			builder,
 			treeSchemaMap,
 			allChildrenByType,
 			fieldKind,
-			anyType ? Any : splitTypeId.typeid,
+			isAnyType ? Any : typeid,
 		);
-		switch (splitTypeId.context) {
-			case "set": {
-				fail(`"set" collections are not supported yet`);
-			}
-			case "map": {
+		switch (context) {
+			case mapContext: {
 				cache.treeSchema = builder.object(currentTypeid, { extraLocalFields: fieldType });
 				return cache.treeSchema;
 			}
-			case "array": {
+			case arrayContext: {
 				cache.treeSchema = builder.object(currentTypeid, {
 					local: {
 						[EmptyKey]: fieldType,
@@ -245,9 +232,36 @@ function buildTreeSchema(
 				return cache.treeSchema;
 			}
 			default:
-				fail(`Unknown context "${splitTypeId.context}" in typeid "${type}" `);
+				fail(`Context "${context}" is not supported yet`);
 		}
 	}
+}
+
+function buildPrimitiveSchema(
+	builder: SchemaBuilder,
+	treeSchemaMap: Map<string, LazyTreeSchema>,
+	typeid: string,
+	isEnum?: boolean,
+): TreeSchema {
+	let value: ValueSchema;
+	if (isEnum) {
+		value = ValueSchema.Number;
+	} else if (
+		typeid === "String" ||
+		typeid.startsWith(referenceGenericTypePrefix) ||
+		typeid === referenceType
+	) {
+		value = ValueSchema.String;
+	} else if (booleanTypes.has(typeid)) {
+		value = ValueSchema.Boolean;
+	} else if (numberTypes.has(typeid)) {
+		value = ValueSchema.Number;
+	} else {
+		fail(`Unknown primitive typeid: ${typeid}`);
+	}
+	const treeSchema = builder.object(typeid, { value });
+	treeSchemaMap.set(typeid, treeSchema);
+	return treeSchema;
 }
 
 function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
@@ -268,77 +282,28 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
 	return SchemaBuilder.field(fieldKind, ...allowedTypes);
 }
 
+/**
+ * Creates a TypedSchemaCollection out of PropertyDDS schema templates.
+ * The templates must be registered beforehand using {@link PropertyFactory.register}.
+ * @param rootFieldKind - The kind of the root field.
+ * @param allowedRootTypes - The types of children nodes allowed for the root field.
+ */
 export function convertPropertyToSharedTreeStorageSchema<
 	Kind extends FieldKindTypes = FieldKindTypes,
->(rootFieldKind: Kind, ...rootTypes: readonly string[]) {
+>(rootFieldKind: Kind, ...allowedRootTypes: readonly string[]) {
 	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder");
 	const allChildrenByType = getAllInheritingChildrenTypes();
 	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 
-	// Extract all referenced typeids for the schema
-	const unprocessedTypeIds: string[] = [];
-	if (!rootTypes.find((t) => t === Any)) {
-		unprocessedTypeIds.push(...mapTypesAndChildren(allChildrenByType, (t) => t, ...rootTypes));
+	const referencedTypeIDs = allowedRootTypes.find((t) => t === Any)
+		? new Set<string>()
+		: mapTypesAndChildren(allChildrenByType, (t) => t, ...allowedRootTypes);
+
+	for (const typeid of [...primitiveTypes, ...nodePropertyTypes]) {
+		referencedTypeIDs.add(typeid);
 	}
 
-	const referencedTypeIDs = new Set<string>();
-
-	while (unprocessedTypeIds.length > 0) {
-		const unprocessedTypeID = unprocessedTypeIds.pop();
-
-		if (!unprocessedTypeID) {
-			fail(`Found undefined value in stack of unprocessed type ids.`);
-		}
-
-		referencedTypeIDs.add(unprocessedTypeID);
-
-		const schemaTemplate = PropertyFactory.getTemplate(unprocessedTypeID);
-		if (schemaTemplate === undefined) {
-			fail(`Unknown typeid: ${unprocessedTypeID}`);
-		}
-		const dependencies = PropertyTemplate.extractDependencies(schemaTemplate);
-		unprocessedTypeIds.push(
-			...mapTypesAndChildren(allChildrenByType, (t) => {
-				if (unprocessedTypeIds.find((unprocessedTypeId) => unprocessedTypeId === t)) return;
-				if (referencedTypeIDs.has(t)) return;
-				return t;
-			}),
-			...dependencies,
-		);
-
-		// Extract context information (i.e. array, map and set types)
-		const extractContexts = (properties: any[]): void => {
-			if (properties !== undefined) {
-				for (const property of properties || []) {
-					if (property.properties) {
-						if (isIgnoreNestedProperties(property.typeid)) {
-							continue;
-						}
-						// We have a nested set of properties
-						// TODO: We have to create a corresponding nested type
-						fail(`Nested properties are not supported yet ${property.typeid}`);
-						// extractContexts(property.properties);
-					}
-					if (property.context && property.context !== "single") {
-						referencedTypeIDs.add(`${property.context}<${property.typeid ?? ""}>`);
-					}
-				}
-			}
-		};
-		extractContexts(schemaTemplate.properties);
-	}
-
-	for (const type of [...primitiveTypes, ...nodePropertyTypes]) {
-		if (!referencedTypeIDs.has(type)) {
-			referencedTypeIDs.add(type);
-		}
-	}
-
-	// Now we create the actual schemas, since we are now able to reference the dependent types
 	for (const referencedTypeId of referencedTypeIDs) {
-		if (treeSchemaMap.has(referencedTypeId)) {
-			continue;
-		}
 		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, referencedTypeId);
 	}
 
@@ -347,7 +312,7 @@ export function convertPropertyToSharedTreeStorageSchema<
 		treeSchemaMap,
 		allChildrenByType,
 		rootFieldKind,
-		...rootTypes,
+		...allowedRootTypes,
 	);
 	return builder.intoDocumentSchema(rootSchema);
 }
@@ -359,3 +324,4 @@ export function convertPropertyToSharedTreeStorageSchema<
 // * Constants
 // * Values for enums
 // * Default values
+// * Inline type definitions (aka "nested properties") which requires auto-generated type IDs (e.g. "Test:Person$address-1.0.0")
