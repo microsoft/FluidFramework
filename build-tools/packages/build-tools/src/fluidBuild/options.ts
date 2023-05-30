@@ -19,7 +19,7 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	showExec: boolean;
 	clean: boolean;
 	matchedOnly: boolean;
-	buildScriptNames: string[];
+	buildTaskNames: string[];
 	build?: boolean;
 	vscode: boolean;
 	symlink: boolean;
@@ -47,7 +47,7 @@ export const options: FastBuildOptions = {
 	match: [],
 	dirs: [],
 	matchedOnly: true,
-	buildScriptNames: [],
+	buildTaskNames: [],
 	vscode: false,
 	symlink: false,
 	fullSymlink: undefined,
@@ -87,7 +87,7 @@ Options:
     -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
        --reinstall      Same as --uninstall --install.
        --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-    -s --script <name>  npm script to execute (default:build)
+	-t --task <name>  target to execute (default:build)
        --azure          Operate on the azure monorepo (default: client monorepo). Overridden by "--all"
        --buildTools     Operate on the build-tools monorepo (default: client monorepo). Overridden by "--all"
        --server         Operate on the server monorepo (default: client monorepo). Overridden by "--all"
@@ -235,13 +235,13 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "-s" || arg === "--script") {
+		if (arg === "-t" || arg === "--task") {
 			if (i !== process.argv.length - 1) {
-				options.buildScriptNames.push(process.argv[++i]);
+				options.buildTaskNames.push(process.argv[++i]);
 				setBuild(true);
 				continue;
 			}
-			errorLog("Missing argument for --script");
+			errorLog("Missing argument for --task");
 			error = true;
 			break;
 		}
@@ -330,7 +330,7 @@ export function parseOptions(argv: string[]) {
 		process.exit(-1);
 	}
 
-	if (options.buildScriptNames.length === 0) {
-		options.buildScriptNames = ["build"];
+	if (options.buildTaskNames.length === 0) {
+		options.buildTaskNames = ["build"];
 	}
 }

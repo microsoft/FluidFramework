@@ -33,11 +33,11 @@ export function scheduleIdleTask(task: () => void) {
 function ensureIdleCallback() {
 	if (!idleTaskScheduled) {
 		// Exception added when eslint rule was added, this should be revisited when modifying this code
-		if (window.requestIdleCallback) {
-			window.requestIdleCallback(idleTaskCallback);
+		if (self.requestIdleCallback) {
+			self.requestIdleCallback(idleTaskCallback);
 		} else {
 			const deadline = Date.now() + 50;
-			window.setTimeout(
+			self.setTimeout(
 				() =>
 					idleTaskCallback({
 						timeRemaining: () => Math.max(deadline - Date.now(), 0),

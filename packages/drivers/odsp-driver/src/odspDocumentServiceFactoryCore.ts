@@ -71,13 +71,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
-		const [, queryString] = odspResolvedUrl.url.split("?");
-
-		const searchParams = new URLSearchParams(queryString);
-		const filePath = searchParams.get("path");
-		if (filePath === undefined || filePath === null) {
-			throw new Error("File path should be provided!!");
-		}
 
 		let fileInfo: INewFileInfo | IExistingFileInfo;
 		let createShareLinkParam: ShareLinkTypes | ISharingLinkKind | undefined;
@@ -89,6 +82,12 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 				itemId: odspResolvedUrl.itemId,
 			};
 		} else if (odspResolvedUrl.fileName) {
+			const [, queryString] = odspResolvedUrl.url.split("?");
+			const searchParams = new URLSearchParams(queryString);
+			const filePath = searchParams.get("path");
+			if (filePath === undefined || filePath === null) {
+				throw new Error("File path should be provided!!");
+			}
 			createShareLinkParam = getSharingLinkParams(this.hostPolicy, searchParams);
 			fileInfo = {
 				type: "New",

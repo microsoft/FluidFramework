@@ -13,6 +13,7 @@ export {
 } from "./comparison";
 export {
 	ChangesetLocalId,
+	ChangesetLocalIdSchema,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
@@ -21,7 +22,6 @@ export {
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
 	IdAllocator,
-	isolatedFieldChangeRebaser,
 	FieldChange,
 	FieldChangeHandler,
 	FieldChangeMap,
@@ -42,30 +42,29 @@ export {
 	ToDelta,
 	ValueChange,
 	ValueConstraint,
+	NodeExistsConstraint,
+	NodeExistenceStateChange,
 } from "./fieldChangeHandler";
-export {
-	convertGenericChange,
-	EncodedGenericChange,
-	EncodedGenericChangeset,
-	GenericChange,
-	genericChangeHandler,
-	GenericChangeset,
-	genericFieldKind,
-} from "./genericFieldKind";
+export { convertGenericChange, genericChangeHandler, genericFieldKind } from "./genericFieldKind";
+export { GenericChange, GenericChangeset } from "./genericFieldKindTypes";
 export {
 	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";
-export {
-	FieldViewSchema as FieldTypeView,
-	TreeViewSchema,
-	ViewSchemaCollection,
-	ViewSchema,
-	FieldViewSchema,
-} from "./view";
+export { ITreeSchema, SchemaCollection, ViewSchema, IFieldSchema, Sourced } from "./view";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
-import * as TypedSchema from "./typedSchema";
-export { TypedSchema };
+export {
+	SchemaBuilder,
+	TreeSchema,
+	FieldSchema,
+	GlobalFieldSchema,
+	Any,
+	AllowedTypes,
+	InternalTypedSchemaTypes,
+	allowedTypesToTypeSet,
+	TypedSchemaCollection,
+	SchemaLibrary,
+	SchemaLibraryData,
+} from "./typedSchema";

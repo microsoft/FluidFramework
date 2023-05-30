@@ -5,7 +5,6 @@
 import * as path from "path";
 
 import { defaultLogger } from "../../../common/logging";
-import { ScriptDependencies } from "../../../common/npmPackage";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
@@ -15,16 +14,12 @@ import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./
 const { verbose } = defaultLogger;
 
 export class EchoTask extends LeafTask {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
 	protected async checkLeafIsUpToDate() {
 		return true;
 	}
 }
 
 export class LesscTask extends LeafTask {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
 	protected async checkLeafIsUpToDate() {
 		// TODO: assume lessc <src> <dst>
 		const args = this.command.split(" ");
@@ -56,8 +51,8 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private readonly copySrcArg: string = "";
 	private readonly copyDstArg: string = "";
 
-	constructor(node: BuildPackage, command: string, scriptDeps: ScriptDependencies) {
-		super(node, command, scriptDeps);
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
 
 		// TODO: something better
 		const args = this.command.split(" ");
@@ -82,20 +77,6 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 		}
 
 		this.parsed = true;
-	}
-
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		if (this.parsed) {
-			if (this.copySrcArg.startsWith("src")) {
-				return;
-			}
-
-			if (this.copySrcArg.startsWith("./_api-extractor-temp/doc-models/")) {
-				this.addChildTask(dependentTasks, this.node, "api-extractor run --local");
-				return;
-			}
-		}
-		this.addAllDependentPackageTasks(dependentTasks);
 	}
 
 	private _srcFiles: string[] | undefined;
@@ -142,8 +123,6 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GenVerTask extends LeafTask {
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
 	protected async checkLeafIsUpToDate() {
 		const file = path.join(this.node.pkg.directory, "src/packageVersion.ts");
 		try {
@@ -175,15 +154,10 @@ export class TypeValidationTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		return JSON.stringify(this.package.packageJson);
 	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]): void {}
 }
 
 export class GoodFence extends LeafWithFileStatDoneFileTask {
 	private inputFiles: string[] | undefined;
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	protected addDependentTasks(dependentTasks: LeafTask[]) {}
 	protected async getInputFiles(): Promise<string[]> {
 		if (!this.inputFiles) {
 			const fenceGlob = path.join(this.node.pkg.directory, "**/fence.json");
