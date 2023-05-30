@@ -7131,13 +7131,13 @@ importers:
       '@fluid-experimental/tree2':
         specifier: workspace:~
         version: link:../../../dds/tree2
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/test-runtime-utils
     devDependencies:
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../../../packages/runtime/test-runtime-utils
       '@types/jest':
         specifier: 22.2.3
         version: 22.2.3

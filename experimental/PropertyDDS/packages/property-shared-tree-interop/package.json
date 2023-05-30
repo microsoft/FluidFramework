@@ -37,11 +37,11 @@
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-properties": "workspace:~",
-		"@fluid-experimental/tree2": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~"
+		"@fluid-experimental/tree2": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@types/jest": "22.2.3",
 		"@types/node": "^14.18.38",
 		"concurrently": "^7.6.0",
