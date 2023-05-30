@@ -139,6 +139,9 @@
 			},
 			"ClassDeclaration_SequenceInterval": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_IntervalCollection": {
+				"forwardCompat": false
 			}
 		}
 	}

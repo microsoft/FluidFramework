@@ -8,7 +8,7 @@ import {
 	AudienceSummary,
 	GetAudienceSummary,
 	handleIncomingMessage,
-	HasContainerId,
+	HasContainerKey,
 	IDevtoolsMessage,
 	InboundHandlers,
 } from "@fluid-experimental/devtools-core";
@@ -26,13 +26,13 @@ const loggingContext = "EXTENSION(AudienceView)";
 /**
  * {@link AudienceView} input props.
  */
-export type AudienceViewProps = HasContainerId;
+export type AudienceViewProps = HasContainerKey;
 
 /**
  * Displays information about a container's audience.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-	const { containerId } = props;
+	const { containerKey } = props;
 
 	const messageRelay = useMessageRelay();
 
@@ -66,16 +66,12 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request the current Audience State of the Container
-		messageRelay.postMessage(
-			GetAudienceSummary.createMessage({
-				containerId,
-			}),
-		);
+		messageRelay.postMessage(GetAudienceSummary.createMessage({ containerKey }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, setAudienceData, messageRelay]);
+	}, [containerKey, setAudienceData, messageRelay]);
 
 	if (audienceData === undefined) {
 		return <Waiting label="Waiting for Audience data." />;

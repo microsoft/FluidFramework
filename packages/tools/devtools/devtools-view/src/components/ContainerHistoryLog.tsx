@@ -23,8 +23,8 @@ import {
 	Attach20Regular,
 	LockClosed20Filled,
 } from "@fluentui/react-icons";
-import { Stack, StackItem, IStackItemStyles } from "@fluentui/react";
 import { ConnectionStateChangeLogEntry } from "@fluid-experimental/devtools-core";
+import { LabelCellLayout } from "./utility-components";
 
 /**
  * Represents container state history data which is rendered in {@link ContainerHistoryLog}.
@@ -66,30 +66,22 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 		}
 	};
 
-	const itemStyles: IStackItemStyles = {
-		root: {
-			paddingTop: "6px",
-			paddingBottom: "6px",
-		},
-	};
-
-	const itemStateStyle: IStackItemStyles = {
-		root: {
-			marginTop: "8px",
-			marginBottom: "8px",
-			marginLeft: "5px",
-		},
-	};
-
 	return (
 		<Table size="extra-small" aria-label="Audience history table">
 			<TableHeader>
 				<TableRow>
 					{containerHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "state" && <AlertBadgeRegular />}
-							{column.columnKey === "time" && <Clock12Regular />}
-							{column.label}
+							{column.columnKey === "state" && (
+								<LabelCellLayout icon={<AlertBadgeRegular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
+							{column.columnKey === "time" && (
+								<LabelCellLayout icon={<Clock12Regular />}>
+									{column.label}
+								</LabelCellLayout>
+							)}
 						</TableHeaderCell>
 					))}
 				</TableRow>
@@ -130,12 +122,9 @@ export function ContainerHistoryLog(props: ContainerHistoryLogProps): React.Reac
 							}}
 						>
 							<TableCell>
-								<Stack horizontal>
-									<StackItem styles={itemStyles}>
-										{getStateIcon(item.newState)}
-									</StackItem>
-									<StackItem styles={itemStateStyle}>{item.newState}</StackItem>
-								</Stack>
+								<LabelCellLayout icon={getStateIcon(item.newState)}>
+									{item.newState}
+								</LabelCellLayout>
 							</TableCell>
 							<TableCell>{timestampDisplay}</TableCell>
 						</TableRow>

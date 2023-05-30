@@ -202,10 +202,7 @@ export class GarbageCollector implements IGarbageCollector {
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
 					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
 					// brought back. The deletedNodes info is needed to identify when these nodes are used.
-					if (
-						this.configs.gcVersionInBaseSnapshot !==
-						this.summaryStateTracker.currentGCVersion
-					) {
+					if (this.configs.gcVersionInEffect !== this.configs.gcVersionInBaseSnapshot) {
 						return {
 							gcState: undefined,
 							tombstones: undefined,
@@ -823,10 +820,10 @@ export class GarbageCollector implements IGarbageCollector {
 	public getMetadata(): IGCMetadata {
 		return {
 			/**
-			 * If GC is enabled, the GC data is written using the current GC version and that is the gcFeature that goes
+			 * If GC is enabled, the GC data is written using the GC version in effect and that is the gcFeature that goes
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
-			gcFeature: this.configs.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
+			gcFeature: this.configs.gcEnabled ? this.configs.gcVersionInEffect : 0,
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed

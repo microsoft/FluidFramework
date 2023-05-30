@@ -79,6 +79,7 @@ scribe:
   name: scribe
   replicas: 8
   getDeltasViaAlfred: true
+  verifyLastOpPersistence: false
   checkpointHeuristics:
     enable: false
     idleTime: 10000

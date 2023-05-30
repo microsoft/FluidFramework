@@ -22,10 +22,10 @@
  */
 
 export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
-export { FluidObjectId, HasContainerId, HasFluidObjectId } from "./CommonInterfaces";
+export { ContainerKey, FluidObjectId, HasContainerKey, HasFluidObjectId } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtoolsProps } from "./ContainerDevtools";
-export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
+export { ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
 	FluidObjectNode,

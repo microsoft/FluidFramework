@@ -269,6 +269,25 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["B", "A"]);
 		});
 
+		it.skip("can rebase intra-field move over insert", () => {
+			const tree1 = makeTreeFromJson(["A", "B"]);
+			const tree2 = tree1.fork();
+
+			insert(tree1, 2, "C");
+
+			tree2.editor
+				.sequenceField({
+					parent: undefined,
+					field: rootFieldKeySymbol,
+				})
+				.move(0, 1, 1);
+
+			tree1.merge(tree2);
+			tree2.rebaseOnto(tree1);
+			expectJsonTree(tree1, ["B", "A", "C"]);
+			expectJsonTree(tree2, ["B", "A", "C"]);
+		});
+
 		it("move under move-out", () => {
 			const tree1 = makeTreeFromJson([{ foo: ["a", "b"] }, "x"]);
 

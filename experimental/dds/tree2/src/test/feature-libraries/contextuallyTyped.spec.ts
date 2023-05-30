@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { MapTree, ValueSchema } from "../../core";
+import { EmptyKey, MapTree, ValueSchema } from "../../core";
 
 import {
 	allowsValue,
@@ -72,6 +72,17 @@ describe("ContextuallyTyped", () => {
 			numbers: [],
 		});
 		const expected: MapTree = { fields: new Map(), type: numbersObject.name, value: undefined };
+		assert.deepEqual(mapTree, expected);
+	});
+
+	it("applyTypesFromContext omits empty primary fields", () => {
+		const builder = new SchemaBuilder("applyTypesFromContext");
+		const numberSchema = builder.primitive("number", ValueSchema.Number);
+		const numberSequence = SchemaBuilder.fieldSequence(numberSchema);
+		const primaryObject = builder.object("numbers", { local: { [EmptyKey]: numberSequence } });
+		const schema = builder.intoDocumentSchema(numberSequence);
+		const mapTree = applyTypesFromContext(schema, new Set([primaryObject.name]), []);
+		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
 		assert.deepEqual(mapTree, expected);
 	});
 
