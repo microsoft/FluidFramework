@@ -71,6 +71,10 @@ export default {
 		typeid: "Test:NestedProperties-1.0.0",
 		properties: [{ id: "withNestedProperties", properties: [{ id: "foo", typeid: "String" }] }],
 	},
+	peer: {
+		typeid: "Test:Peer-1.0.0",
+		properties: [{ id: "username", typeid: "String" }],
+	},
 	person: {
 		typeid: "Test:Person-1.0.0",
 		inherits: ["NodeProperty"],

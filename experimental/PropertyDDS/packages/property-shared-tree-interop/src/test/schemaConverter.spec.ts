@@ -30,7 +30,7 @@ describe("schema converter", () => {
 			() =>
 				convertPropertyToSharedTreeStorageSchema(
 					FieldKinds.optional,
-					"Test:ErroneousType-1.0.0",
+					new Set(["Test:ErroneousType-1.0.0"]),
 				),
 			(e) =>
 				validateAssertionError(
@@ -46,7 +46,7 @@ describe("schema converter", () => {
 			() =>
 				convertPropertyToSharedTreeStorageSchema(
 					FieldKinds.optional,
-					"Test:NestedProperties-1.0.0",
+					new Set(["Test:NestedProperties-1.0.0"]),
 				),
 			(e) =>
 				validateAssertionError(
@@ -60,7 +60,7 @@ describe("schema converter", () => {
 	it(`inherits from "NodeProperty"`, () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			"Test:Optional-1.0.0",
+			new Set(["Test:Optional-1.0.0"]),
 		);
 		const nodeProperty = fullSchemaData.treeSchema.get(brand("NodeProperty"));
 		const testOptional = fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0"));
@@ -78,7 +78,7 @@ describe("schema converter", () => {
 	it(`can use "NodeProperty" as root`, () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			"NodeProperty",
+			new Set(["NodeProperty"]),
 		);
 
 		expect(fullSchemaData.globalFieldSchema.size).toEqual(1);
@@ -108,7 +108,7 @@ describe("schema converter", () => {
 	it("can convert property with array context", () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			"Test:Person-1.0.0",
+			new Set(["Test:Person-1.0.0"]),
 		);
 		const addressSchema = lookupTreeSchema(fullSchemaData, brand("Test:Address-1.0.0"));
 		expect(addressSchema).toMatchObject({
@@ -140,13 +140,15 @@ describe("schema converter", () => {
 		const fullSchemaData1 = convertPropertyToSharedTreeStorageSchema(FieldKinds.optional, Any);
 		expect([...fullSchemaData1.root.schema.allowedTypes]).toMatchObject([Any]);
 
-		const fullSchemaData2 = convertPropertyToSharedTreeStorageSchema(FieldKinds.optional);
+		const fullSchemaData2 = convertPropertyToSharedTreeStorageSchema(
+			FieldKinds.optional,
+			new Set([Any]),
+		);
 		expect([...fullSchemaData2.root.schema.allowedTypes]).toMatchObject([Any]);
 
 		const fullSchemaData3 = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			"String",
-			Any,
+			new Set(["String", Any]),
 		);
 		expect([...fullSchemaData3.root.schema.allowedTypes]).toMatchObject([Any]);
 	});

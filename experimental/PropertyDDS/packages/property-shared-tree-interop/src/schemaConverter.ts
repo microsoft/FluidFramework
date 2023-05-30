@@ -290,29 +290,39 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
  */
 export function convertPropertyToSharedTreeStorageSchema<
 	Kind extends FieldKindTypes = FieldKindTypes,
->(rootFieldKind: Kind, ...allowedRootTypes: readonly string[]) {
+>(
+	rootFieldKind: Kind,
+	allowedRootTypes: Any | ReadonlySet<string>,
+	extraTypes?: ReadonlySet<string>,
+) {
 	const builder = new SchemaBuilder("PropertyDDS to SharedTree schema builder");
 	const allChildrenByType = getAllInheritingChildrenTypes();
 	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
 
-	const referencedTypeIDs = allowedRootTypes.find((t) => t === Any)
-		? new Set<string>()
-		: mapTypesAndChildren(allChildrenByType, (t) => t, ...allowedRootTypes);
+	const referencedTypeIDs =
+		allowedRootTypes === Any || allowedRootTypes.has(Any)
+			? new Set<string>()
+			: mapTypesAndChildren(allChildrenByType, (t) => t, ...allowedRootTypes);
 
 	for (const typeid of [...primitiveTypes, ...nodePropertyTypes]) {
 		referencedTypeIDs.add(typeid);
+	}
+
+	if (extraTypes) {
+		extraTypes.forEach((typeid) => referencedTypeIDs.add(typeid));
 	}
 
 	for (const referencedTypeId of referencedTypeIDs) {
 		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, referencedTypeId);
 	}
 
+	const allowedTypes = allowedRootTypes === Any ? [Any] : [...allowedRootTypes];
 	const rootSchema = buildFieldSchema(
 		builder,
 		treeSchemaMap,
 		allChildrenByType,
 		rootFieldKind,
-		...allowedRootTypes,
+		...allowedTypes,
 	);
 	return builder.intoDocumentSchema(rootSchema);
 }

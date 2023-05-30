@@ -95,7 +95,7 @@ describe("LlsSchemaConverter", () => {
 	it("Enum", () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			tableTypeName,
+			new Set([tableTypeName]),
 		);
 		const table = lookupTreeSchema(fullSchemaData, tableTypeName);
 		assert(table !== undefined);
@@ -108,7 +108,7 @@ describe("LlsSchemaConverter", () => {
 	it("Missing Refs", () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			tableTypeName,
+			new Set([tableTypeName]),
 		);
 		const typeNames = new Set(fullSchemaData.treeSchema.keys());
 		for (const typeName of typeNames) {
@@ -138,7 +138,7 @@ describe("LlsSchemaConverter", () => {
 	it("Check Structure", () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			tableTypeName,
+			new Set([tableTypeName]),
 		);
 		const table = lookupTreeSchema(fullSchemaData, tableTypeName);
 		assert(table !== undefined);
@@ -173,7 +173,7 @@ describe("LlsSchemaConverter", () => {
 	it("Inheritance Translation", () => {
 		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
 			FieldKinds.optional,
-			tableTypeName,
+			new Set([tableTypeName]),
 		);
 		const row = lookupTreeSchema(fullSchemaData, brand("array<Test:Row-1.0.0>"));
 		assert(row !== undefined);
