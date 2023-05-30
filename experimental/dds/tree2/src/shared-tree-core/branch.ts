@@ -54,7 +54,7 @@ export type SharedTreeBranchChange<TChange> =
 	  };
 
 /**
- * Returns the operation that caused the the given {@link SharedTreeBranchChange}.
+ * Returns the operation that caused the given {@link SharedTreeBranchChange}.
  */
 export function getChangeReplaceType(
 	change: SharedTreeBranchChange<unknown> & { type: "replace" },
