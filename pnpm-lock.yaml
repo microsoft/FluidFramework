@@ -7131,9 +7131,6 @@ importers:
       '@fluid-experimental/tree2':
         specifier: workspace:~
         version: link:../../../dds/tree2
-      '@fluidframework/common-utils':
-        specifier: ^1.1.1
-        version: 1.1.1
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils

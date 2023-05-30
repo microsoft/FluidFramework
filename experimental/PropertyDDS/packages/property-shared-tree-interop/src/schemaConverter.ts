@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
 	fail,
 	FieldKinds,
@@ -212,11 +211,12 @@ function buildTreeSchema(
 		if (treeSchema) {
 			return treeSchema;
 		}
-		assert(splitTypeId.typeid !== "", `Missing typeid in collection type "${type}"`);
-		assert(
-			splitTypeId.typeid !== basePropertyType || anyType,
-			`"${basePropertyType}" shall not be used in schemas (typeid "${type}")`,
-		);
+		if (splitTypeId.typeid === "") {
+			fail(`Missing typeid in collection type "${type}"`);
+		}
+		if (splitTypeId.typeid === basePropertyType && !anyType) {
+			fail(`"${basePropertyType}" shall not be used in schemas (typeid "${type}").`);
+		}
 		const fieldKind =
 			splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
 		const cache: { treeSchema?: LazyTreeSchema } = {};
