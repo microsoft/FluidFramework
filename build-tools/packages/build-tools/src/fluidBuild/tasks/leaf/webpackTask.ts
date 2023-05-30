@@ -5,7 +5,7 @@
 import * as path from "path";
 
 import { globFn, toPosixPath } from "../../../common/utils";
-import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
+import { LeafWithDoneFileTask } from "./leafTask";
 import { TscTask } from "./tscTask";
 
 interface DoneFileContent {
@@ -55,31 +55,6 @@ export class WebpackTask extends LeafWithDoneFileTask {
 			return JSON.stringify(content);
 		} catch {
 			return undefined;
-		}
-	}
-
-	protected addDependentTasks(dependentTasks: LeafTask[]) {
-		for (const child of this.node.dependentPackages) {
-			// TODO: Need to look at the output from tsconfig
-			if (this.addChildTask(dependentTasks, child, "npm run build:esnext")) {
-				this.logVerboseDependency(child, "build:esnext");
-				if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
-					this.logVerboseDependency(child, "build:copy");
-				}
-			} else if (this.addChildTask(dependentTasks, child, "npm run webpack")) {
-				this.logVerboseDependency(child, "webpack");
-				if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
-					this.logVerboseDependency(child, "build:copy");
-				}
-			} else if (this.addChildTask(dependentTasks, child, "tsc")) {
-				this.logVerboseDependency(child, "tsc");
-				if (this.addChildTask(dependentTasks, child, "npm run build:copy")) {
-					this.logVerboseDependency(child, "build:copy");
-				}
-			} else if (child.task) {
-				child.task.collectLeafTasks(dependentTasks);
-				this.logVerboseDependency(child, "*");
-			}
 		}
 	}
 

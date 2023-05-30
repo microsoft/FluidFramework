@@ -1090,6 +1090,7 @@ describe("Runtime", () => {
 				},
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
+				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
 				enableGroupedBatching: false,
 			};
@@ -1108,7 +1109,7 @@ describe("Runtime", () => {
 						eventName: "ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(mergedRuntimeOptions),
-						featureGates: JSON.stringify({}),
+						featureGates: JSON.stringify({ idCompressorEnabled: false }),
 					},
 				]);
 			});
@@ -1118,6 +1119,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.CompressionDisabled": true,
 					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
+					"Fluid.ContainerRuntime.IdCompressorEnabled": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
@@ -1135,6 +1137,7 @@ describe("Runtime", () => {
 							disableCompression: true,
 							disableOpReentryCheck: false,
 							disableChunking: true,
+							idCompressorEnabled: true,
 						}),
 					},
 				]);

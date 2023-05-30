@@ -45,8 +45,10 @@ parameters:
   - endpointName: 'local'
   - endpointName: 'odsp'
     lockVariableGroupName: 'e2e-odsp-lock'
+    timeoutInMinutes: 360
   - endpointName: 'frs'
     lockVariableGroupName: 'e2e-frs-lock'
+    timeoutInMinutes: 360
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -69,6 +71,7 @@ variables:
     readonly: true
   - group: prague-key-vault
 
+lockBehavior: sequential
 stages:
   # Performance unit tests - runtime
   - stage: perf_unit_tests_runtime
@@ -414,6 +417,7 @@ stages:
         parameters:
           poolBuild: ${{ parameters.poolBuild }}
           testWorkspace: ${{ variables.testWorkspace }}
+          timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 60) }}
           customSteps:
 
           # Download test package
@@ -607,3 +611,38 @@ stages:
                 ls -laR ${{ variables.memoryUsageTestOutputFolder }};
                 echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
                 rm -rf ${{ variables.memoryUsageTestOutputFolder }};
+
+  - stage: runAfterAll
+    condition: always()
+    dependsOn:
+      - perf_unit_tests_runtime
+      - perf_unit_tests_memory
+      - perf_e2e_tests_local
+      - perf_e2e_tests_odsp
+
+    jobs:
+      - template: templates/include-test-perf-benchmarks.yml
+        parameters:
+          poolBuild: ${{ parameters.poolBuild }}
+          testWorkspace: ${{ variables.testWorkspace }}
+          customSteps:
+
+          - task: Bash@3
+            displayName: Retrieve and Upload pipeline run stats to Kusto
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(toolAbsolutePath)
+              script: |
+                echo "creating output folder"
+                mkdir -p ${{ variables.testWorkspace }}/timingOutput
+                echo "Executing curl command ..."
+                echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
+                curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+                pwd;
+                ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
+                cat ${{ variables.testWorkspace }}/timingOutput/output.json;
+                node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+            env:
+              BUILD_ID: $(Build.BuildId)
+              ADO_API_TOKEN: $(System.AccessToken)
+              PIPELINE: 'PerformanceBenchmark'

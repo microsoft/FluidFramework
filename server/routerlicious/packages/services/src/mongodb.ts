@@ -8,9 +8,11 @@ import * as core from "@fluidframework/server-services-core";
 import {
 	AggregationCursor,
 	Collection,
-	FindOneOptions,
+	FindOneAndUpdateOptions,
+	FindOptions,
 	MongoClient,
 	MongoClientOptions,
+	OptionalUnlessRequiredId,
 } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
@@ -67,7 +69,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async find(query: object, sort: any, limit = MaxFetchSize, skip?: number): Promise<T[]> {
 		const req: () => Promise<T[]> = async () => {
-			let queryCursor = this.collection.find(query).sort(sort).limit(limit);
+			let queryCursor = this.collection.find<T>(query).sort(sort).limit(limit);
 
 			if (skip) {
 				queryCursor = queryCursor.skip(skip);
@@ -77,8 +79,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.requestWithRetry(req, "MongoCollection.find", query);
 	}
 
-	public async findOne(query: object, options?: FindOneOptions): Promise<T> {
-		const req: () => Promise<T> = async () => this.collection.findOne(query, options);
+	public async findOne(query: object, options?: FindOptions): Promise<T> {
+		const req: () => Promise<T> = async () => this.collection.findOne<T>(query, options);
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.findOne", // callerName
@@ -87,7 +89,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async findAll(): Promise<T[]> {
-		const req: () => Promise<T[]> = async () => this.collection.find({}).toArray();
+		const req: () => Promise<T[]> = async () => this.collection.find<T>({}).toArray();
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.findAll", // callerName
@@ -190,8 +192,11 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async insertOne(value: T): Promise<any> {
 		const req = async () => {
 			try {
-				const result = await this.collection.insertOne(value);
+				const result = await this.collection.insertOne(
+					value as OptionalUnlessRequiredId<T>,
+				);
 				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				return result.insertedId;
 			} catch (error) {
 				this.sanitizeError(error);
@@ -208,7 +213,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async insertMany(values: T[], ordered: boolean): Promise<void> {
 		const req = async () => {
 			try {
-				await this.collection.insertMany(values, { ordered: false });
+				await this.collection.insertMany(values as OptionalUnlessRequiredId<T>[], {
+					ordered: false,
+				});
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
@@ -256,7 +263,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async findOrCreate(
 		query: any,
-		value: T,
+		value: any,
 		options = {
 			returnOriginal: true,
 			upsert: true,
@@ -266,9 +273,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			try {
 				const result = await this.collection.findOneAndUpdate(
 					query,
-					{
-						$setOnInsert: value,
-					},
+					{ $setOnInsert: value },
 					options,
 				);
 
@@ -289,18 +294,15 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async findAndUpdate(
 		query: any,
-		value: T,
-		options = {
-			returnOriginal: true,
-		},
+		value: any,
+		options: FindOneAndUpdateOptions = { returnDocument: "before" },
 	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
+				// eslint-disable-next-line @typescript-eslint/await-thenable
 				const result = await this.collection.findOneAndUpdate(
 					query,
-					{
-						$set: value,
-					},
+					{ $set: value },
 					options,
 				);
 
@@ -319,7 +321,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		);
 	}
 
-	private async updateCore(filter: any, set: any, addToSet: any, options: any): Promise<void> {
+	private async updateCore(filter: any, set: any, addToSet: any, options: any): Promise<any> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -332,12 +334,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.collection.updateOne(filter, update, options);
 	}
 
-	private async updateManyCore(
-		filter: any,
-		set: any,
-		addToSet: any,
-		options: any,
-	): Promise<void> {
+	private async updateManyCore(filter: any, set: any, addToSet: any, options: any): Promise<any> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -447,9 +444,10 @@ export class MongoDb implements core.IDb {
 	}
 }
 
+export type ConnectionNotAvailableMode = "ruleBehavior" | "stop"; // Ideally we should have 'delayRetry' options, but that requires more refactor on our retry engine so hold for this mode;
+
 interface IMongoDBConfig {
 	operationsDbEndpoint: string;
-	bufferMaxEntries: number | undefined;
 	globalDbEndpoint?: string;
 	globalDbEnabled?: boolean;
 	connectionPoolMinSize?: number;
@@ -457,34 +455,35 @@ interface IMongoDBConfig {
 	facadeLevelRetry?: boolean;
 	facadeLevelTelemetry?: boolean;
 	facadeLevelRetryRuleOverride?: any;
+	connectionNotAvailableMode?: ConnectionNotAvailableMode;
 }
 
 export class MongoDbFactory implements core.IDbFactory {
 	private readonly operationsDbEndpoint: string;
-	private readonly bufferMaxEntries?: number;
 	private readonly globalDbEndpoint?: string;
 	private readonly connectionPoolMinSize?: number;
 	private readonly connectionPoolMaxSize?: number;
 	private readonly retryEnabled: boolean = false;
 	private readonly telemetryEnabled: boolean = false;
+	private readonly connectionNotAvailableMode: ConnectionNotAvailableMode = "ruleBehavior";
 	private readonly retryRuleOverride: Map<string, boolean>;
 	constructor(config: IMongoDBConfig) {
 		const {
 			operationsDbEndpoint,
-			bufferMaxEntries,
 			globalDbEnabled,
 			globalDbEndpoint,
 			connectionPoolMinSize,
 			connectionPoolMaxSize,
+			connectionNotAvailableMode,
 		} = config;
 		if (globalDbEnabled) {
 			this.globalDbEndpoint = globalDbEndpoint;
 		}
 		assert(!!operationsDbEndpoint, `No endpoint provided`);
 		this.operationsDbEndpoint = operationsDbEndpoint;
-		this.bufferMaxEntries = bufferMaxEntries;
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
+		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
 		this.retryEnabled = config.facadeLevelRetry || false;
 		this.telemetryEnabled = config.facadeLevelTelemetry || false;
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
@@ -500,21 +499,16 @@ export class MongoDbFactory implements core.IDbFactory {
 		);
 		// Need to cast to any before MongoClientOptions due to missing properties in d.ts
 		const options: MongoClientOptions = {
-			autoReconnect: true,
-			bufferMaxEntries: this.bufferMaxEntries ?? 50,
 			keepAlive: true,
 			keepAliveInitialDelay: 180000,
-			reconnectInterval: 1000,
-			reconnectTries: 100,
 			socketTimeoutMS: 120000,
-			useNewUrlParser: true,
 		};
 		if (this.connectionPoolMinSize) {
-			options.minSize = this.connectionPoolMinSize;
+			options.minPoolSize = this.connectionPoolMinSize;
 		}
 
 		if (this.connectionPoolMaxSize) {
-			options.poolSize = this.connectionPoolMaxSize;
+			options.maxPoolSize = this.connectionPoolMaxSize;
 		}
 
 		const connection = await MongoClient.connect(
@@ -522,7 +516,10 @@ export class MongoDbFactory implements core.IDbFactory {
 			options,
 		);
 
-		const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(this.retryRuleOverride);
+		const retryAnalyzer = MongoErrorRetryAnalyzer.getInstance(
+			this.retryRuleOverride,
+			this.connectionNotAvailableMode,
+		);
 
 		return new MongoDb(connection, this.retryEnabled, this.telemetryEnabled, retryAnalyzer);
 	}

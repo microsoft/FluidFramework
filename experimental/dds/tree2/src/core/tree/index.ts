@@ -29,6 +29,8 @@ export {
 	PathRootPrefix,
 	inCursorField,
 	inCursorNode,
+	CursorMarker,
+	isCursor,
 } from "./cursor";
 export { ProtoNodes } from "./delta";
 export {
@@ -61,6 +63,13 @@ export {
 	scopeFromKey,
 	setGenericTreeField,
 } from "./treeTextFormat";
+export {
+	EncodedFieldMapObject,
+	EncodedGenericFieldsNode,
+	EncodedGenericTreeNode,
+	EncodedJsonableTree,
+	EncodedNodeData,
+} from "./persistedTreeTextFormat";
 export {
 	EmptyKey,
 	FieldKey,
