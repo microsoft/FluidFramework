@@ -18,3 +18,4 @@ export {
 	Synchronize,
 	replayTest,
 } from "./ddsFuzzHarness";
+export { createSnapshotAsync, isEqualPastSnapshotAsync } from "./snapshot";
