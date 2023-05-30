@@ -115,12 +115,12 @@ describe("Container copy scenarios", () => {
 	});
 
 	/**
-	 * Scenario: test if Azure Client can copy existing container at specific version.
+	 * Scenario: test if Azure Client can copy existing container at a specific version.
 	 *
 	 * Expected behavior: an error should not be thrown nor should a rejected promise
 	 * be returned.
 	 */
-	it.skip("TEST FAILING SO SKIPPED - can sucesfully copy document from a specific version", async () => {
+	it("can successfully copy an existing container at a specific version", async () => {
 		const { container } = await client.createContainer(schema);
 		const containerId = await container.attach();
 
