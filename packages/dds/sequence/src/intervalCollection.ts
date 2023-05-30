@@ -103,9 +103,11 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  *
  * Intervals are of the format:
  *
- * [start, end, sequenceNumber, intervalType, properties]
+ * [start, end, sequenceNumber, intervalType, properties, stickiness?]
  */
-export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
+export type CompressedSerializedInterval =
+	| [number, number, number, IntervalType, PropertySet, IntervalStickiness]
+	| [number, number, number, IntervalType, PropertySet];
 
 /**
  * @internal
@@ -130,6 +132,7 @@ function decompressInterval(
 		sequenceNumber: interval[2],
 		intervalType: interval[3],
 		properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
+		stickiness: interval[5],
 	};
 }
 
@@ -140,7 +143,7 @@ function decompressInterval(
 function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
 	const { start, end, sequenceNumber, intervalType, properties } = interval;
 
-	return [
+	const base: CompressedSerializedInterval = [
 		start,
 		end,
 		sequenceNumber,
@@ -149,28 +152,34 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 		// in the `label` field of the summary
 		{ ...properties, [reservedRangeLabelsKey]: undefined },
 	];
+
+	if (interval.stickiness !== undefined && interval.stickiness !== IntervalStickiness.END) {
+		base.push(interval.stickiness);
+	}
+
+	return base;
 }
 
 function startReferenceSlidingPreference(stickiness?: IntervalStickiness): SlidingPreference {
 	// default to forward if stickiness is not specified
-	if (!stickiness) {
+	if (stickiness === undefined) {
 		return SlidingPreference.FORWARD;
 	}
 
 	// if any start stickiness, prefer sliding backwards
-	return stickiness & IntervalStickiness.START
+	return (stickiness & IntervalStickiness.START) !== 0
 		? SlidingPreference.BACKWARD
 		: SlidingPreference.FORWARD;
 }
 
 function endReferenceSlidingPreference(stickiness?: IntervalStickiness): SlidingPreference {
 	// default to forward if stickiness is not specified
-	if (!stickiness) {
+	if (stickiness === undefined) {
 		return SlidingPreference.FORWARD;
 	}
 
 	// if any end stickiness, prefer sliding forwards
-	return stickiness & IntervalStickiness.END
+	return (stickiness & IntervalStickiness.END) !== 0
 		? SlidingPreference.FORWARD
 		: SlidingPreference.BACKWARD;
 }
@@ -327,10 +336,12 @@ export class Interval implements ISerializableInterval {
 			intervalType: 0,
 			sequenceNumber: 0,
 			start: this.start,
-			stickiness: this.stickiness,
 		};
 		if (this.properties) {
 			serializedInterval.properties = this.properties;
+		}
+		if (this.stickiness !== undefined && this.stickiness !== IntervalStickiness.END) {
+			serializedInterval.stickiness = this.stickiness;
 		}
 		return serializedInterval;
 	}
@@ -563,11 +574,13 @@ export class SequenceInterval implements ISerializableInterval {
 			intervalType: this.intervalType,
 			sequenceNumber: this.client.getCurrentSeq(),
 			start: startPosition,
-			stickiness: this.stickiness,
 		};
 
 		if (this.properties) {
 			serializedInterval.properties = this.properties;
+		}
+		if (this.stickiness !== undefined && this.stickiness !== IntervalStickiness.END) {
+			serializedInterval.stickiness = this.stickiness;
 		}
 
 		return serializedInterval;
@@ -888,7 +901,14 @@ export function createSequenceInterval(
 	startLref.addProperties(rangeProp);
 	endLref.addProperties(rangeProp);
 
-	const ival = new SequenceInterval(client, startLref, endLref, intervalType, rangeProp);
+	const ival = new SequenceInterval(
+		client,
+		startLref,
+		endLref,
+		intervalType,
+		rangeProp,
+		stickiness,
+	);
 	return ival;
 }
 
