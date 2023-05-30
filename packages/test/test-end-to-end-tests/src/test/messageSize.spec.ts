@@ -308,36 +308,36 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			},
 		};
 
-		itExpects(
-			`Batch with 4000 ops - ${enableGroupedBatching ? "grouped" : "regular"} batches`,
-			// With grouped batching enabled, this scenario is unblocked
-			enableGroupedBatching ||
-				provider.driver.type === "local" ||
-				provider.driver.type === "tinylicious"
-				? []
-				: [
-						{
-							eventName: "fluid:telemetry:Container:ContainerClose",
-							error: "Runtime detected too many reconnects with no progress syncing local ops.",
-						},
-				  ],
-			async function () {
-				// This is not supported by the local server. See ADO:2690
-				// This test is flaky on tinylicious. See ADO:2964
-				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
-					this.skip();
-				}
+		describe("Batches with large number of ops", () => {
+			// This is not supported by the local server. See ADO:2690
+			// This test is flaky on tinylicious. See ADO:2964
+			if (provider.driver.type !== "local" && provider.driver.type !== "tinylicious") {
+				itExpects(
+					`Batch with 4000 ops - ${
+						enableGroupedBatching ? "grouped" : "regular"
+					} batches`,
+					enableGroupedBatching
+						? [] // With grouped batching enabled, this scenario is unblocked
+						: [
+								// Without grouped batching, it is expected for the container to never make progress
+								{
+									eventName: "fluid:telemetry:Container:ContainerClose",
+									error: "Runtime detected too many reconnects with no progress syncing local ops.",
+								},
+						  ],
+					async function () {
+						await setupContainers(containerConfig);
 
-				await setupContainers(containerConfig);
+						const content = generateRandomStringOfSize(10);
+						for (let i = 0; i < 4000; i++) {
+							localMap.set(`key${i}`, content);
+						}
 
-				const content = generateRandomStringOfSize(10);
-				for (let i = 0; i < 4000; i++) {
-					localMap.set(`key${i}`, content);
-				}
-
-				await provider.ensureSynchronized();
-			},
-		).timeout(chunkingBatchesTimeoutMs);
+						await provider.ensureSynchronized();
+					},
+				).timeout(chunkingBatchesTimeoutMs);
+			}
+		});
 
 		describe(`Large payloads (exceeding the 1MB limit) - ${
 			enableGroupedBatching ? "grouped" : "regular"
