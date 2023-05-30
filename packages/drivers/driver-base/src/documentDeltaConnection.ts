@@ -22,7 +22,11 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import {
+	IDisposable,
+	ITelemetryLogger,
+	ITelemetryProperties,
+} from "@fluidframework/common-definitions";
 import {
 	ChildLogger,
 	extractLogSafeErrorProperties,
@@ -409,14 +413,17 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-		this.logger.sendTelemetryEvent({
-			eventName: "AfterDisconnectEvent",
-			driverVersion,
-			details: JSON.stringify({
-				...this.getConnectionDetailsProps(),
-				disconnectListenerCount: this.listenerCount("disconnect"),
-			}),
-		});
+		this.logger.sendTelemetryEvent(
+			{
+				eventName: "AfterDisconnectEvent",
+				driverVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+					disconnectListenerCount: this.listenerCount("disconnect"),
+				}),
+			},
+			err,
+		);
 	}
 
 	/**
@@ -592,17 +599,13 @@ export class DocumentDeltaConnection
 			// (connect_document_error / connect_document_success), as well as before DeltaManager
 			// had a chance to register its handlers.
 			this.addTrackedListener("disconnect", (reason, details) => {
-				const err = this.createErrorObject("disconnect", reason);
-				this.logger.sendTelemetryEvent(
-					{
-						eventName: "SocketDisconnect",
-						type: details?.context?.type,
+				failAndCloseSocket(
+					this.createErrorObjectWithProps("disconnect", reason, {
+						errorType: details?.context?.type,
 						// https://www.rfc-editor.org/rfc/rfc6455#section-7.4
 						statusCode: details?.context?.code,
-					},
-					err,
+					}),
 				);
-				failAndCloseSocket(err);
 			});
 
 			this.addTrackedListener("error", (error) => {
@@ -714,25 +717,44 @@ export class DocumentDeltaConnection
 		this.connectionListeners.clear();
 	}
 
+	private getErrorMessage(error?: any): string {
+		if (error?.type !== "TransportError") {
+			return extractLogSafeErrorProperties(error, true).message;
+		}
+		// JSON.stringify drops Error.message
+		const messagePrefix = error?.message !== undefined ? `${error.message}: ` : "";
+
+		// Websocket errors reported by engine.io-client.
+		// They are Error objects with description containing WS error and description = "TransportError"
+		// Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
+		return `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
+	}
+
+	private createErrorObjectWithProps(
+		handler: string,
+		error?: any,
+		props?: ITelemetryProperties,
+		canRetry = true,
+	): IAnyDriverError {
+		return createGenericNetworkError(
+			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
+			{ canRetry },
+			{
+				...props,
+				driverVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			},
+		);
+	}
+
 	/**
 	 * Error raising for socket.io issues
 	 */
 	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
-		let message: string;
-		if (error?.type === "TransportError") {
-			// JSON.stringify drops Error.message
-			const messagePrefix = error?.message !== undefined ? `${error.message}: ` : "";
-
-			// Websocket errors reported by engine.io-client.
-			// They are Error objects with description containing WS error and description = "TransportError"
-			// Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
-			message = `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
-		} else {
-			message = extractLogSafeErrorProperties(error, true).message;
-		}
-
-		const errorObj = createGenericNetworkError(
-			`socket.io (${handler}): ${message}`,
+		return createGenericNetworkError(
+			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
 			{ canRetry },
 			{
 				driverVersion,
@@ -741,7 +763,5 @@ export class DocumentDeltaConnection
 				}),
 			},
 		);
-
-		return errorObj;
 	}
 }
