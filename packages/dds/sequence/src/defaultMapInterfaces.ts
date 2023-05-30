@@ -51,9 +51,13 @@ export interface IMapMessageLocalMetadata {
 }
 
 /**
- * Optional flags that configure
+ * Optional flags that configure options for sequence DDSs
  */
 export interface SequenceOptions {
+	/**
+	 * Enable {@link (IntervalStickiness:type) | interval stickiness}
+	 * other than "end"
+	 */
 	intervalStickinessEnabled: boolean;
 	[key: string]: boolean;
 }

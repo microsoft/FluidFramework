@@ -133,6 +133,12 @@
 			},
 			"InterfaceDeclaration_ISerializedIntervalCollectionV2": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IntervalLocator": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceInterval": {
+				"forwardCompat": false
 			}
 		}
 	}

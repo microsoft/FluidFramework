@@ -321,7 +321,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 export class SequenceInterval implements ISerializableInterval {
     constructor(client: Client,
     start: LocalReferencePosition,
-    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness | undefined);
+    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness);
     // @internal
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // @deprecated (undocumented)
@@ -350,7 +350,7 @@ export class SequenceInterval implements ISerializableInterval {
     serialize(): ISerializedInterval;
     start: LocalReferencePosition;
     // (undocumented)
-    readonly stickiness?: IntervalStickiness | undefined;
+    readonly stickiness: IntervalStickiness;
     // @deprecated
     union(b: SequenceInterval): SequenceInterval;
 }
@@ -366,7 +366,6 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
 export interface SequenceOptions {
     // (undocumented)
     [key: string]: boolean;
-    // (undocumented)
     intervalStickinessEnabled: boolean;
 }
 
