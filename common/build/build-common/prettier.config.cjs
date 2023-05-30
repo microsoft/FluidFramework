@@ -51,9 +51,6 @@ module.exports = {
 			// Line break parsing in GitHub and elsewhere is inconsistent. Sometimes line breaks result in a `<br/>`, and
 			// other times they follow the CommonMark spec and ignore single line breaks. Setting proseWrap=never will
 			// condense all "markdown paragraphs" to a single line.
-			//
-			// Note that we don't currently format markdown files using prettier (we use mdlint instead), so these settings
-			// aren't relevant until that changes.
 			files: ["*.md", "*.mdown", "*.markdown"],
 			options: {
 				proseWrap: "never",

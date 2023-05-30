@@ -92,3 +92,6 @@ server/**/templates/*.yaml
 
 # These files are auto-generated according to the comments in the files
 **/charts/**/Chart.yaml
+
+# Kubernetes
+**/kubernetes/**
