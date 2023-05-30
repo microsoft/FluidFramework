@@ -6,7 +6,7 @@
 module.exports = {
 	...require("@fluidframework/build-common/prettier.config.cjs"),
 
-  // TODO: These overrides can be removed once this release group is updated to build-common 1.2.0.
+	// TODO: These overrides can be removed once this release group is updated to build-common 1.2.0.
 	overrides: [
 		{
 			files: "lerna.json",
