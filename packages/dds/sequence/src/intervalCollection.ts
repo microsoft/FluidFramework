@@ -282,12 +282,7 @@ export class Interval implements ISerializableInterval {
 	 * @deprecated - This API was never intended to be public and will be marked internal in a future release.
 	 */
 	public propertyManager: PropertiesManager;
-	constructor(
-		public start: number,
-		public end: number,
-		props?: PropertySet,
-		private readonly stickiness?: IntervalStickiness,
-	) {
+	constructor(public start: number, public end: number, props?: PropertySet) {
 		this.propertyManager = new PropertiesManager();
 		this.properties = {};
 
@@ -341,9 +336,6 @@ export class Interval implements ISerializableInterval {
 		if (this.properties) {
 			serializedInterval.properties = this.properties;
 		}
-		if (this.stickiness !== undefined && this.stickiness !== IntervalStickiness.END) {
-			serializedInterval.stickiness = this.stickiness;
-		}
 		return serializedInterval;
 	}
 
@@ -351,7 +343,7 @@ export class Interval implements ISerializableInterval {
 	 * {@inheritDoc IInterval.clone}
 	 */
 	public clone() {
-		return new Interval(this.start, this.end, this.properties, this.stickiness);
+		return new Interval(this.start, this.end, this.properties);
 	}
 
 	/**
@@ -450,7 +442,7 @@ export class Interval implements ISerializableInterval {
 			// Return undefined to indicate that no change is necessary.
 			return;
 		}
-		const newInterval = new Interval(startPos, endPos, undefined, this.stickiness);
+		const newInterval = new Interval(startPos, endPos, undefined);
 		if (this.properties) {
 			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
@@ -1433,7 +1425,6 @@ function createInterval(
 	intervalType?: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
-	stickiness?: IntervalStickiness,
 ): Interval {
 	const rangeProp: PropertySet = {};
 
@@ -1441,7 +1432,7 @@ function createInterval(
 		rangeProp[reservedRangeLabelsKey] = [label];
 	}
 
-	return new Interval(start, end, rangeProp, stickiness);
+	return new Interval(start, end, rangeProp);
 }
 
 class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Interval>> {

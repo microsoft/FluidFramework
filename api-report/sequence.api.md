@@ -105,7 +105,7 @@ export interface IMapMessageLocalMetadata {
 
 // @public
 export class Interval implements ISerializableInterval {
-    constructor(start: number, end: number, props?: PropertySet, stickiness?: IntervalStickiness | undefined);
+    constructor(start: number, end: number, props?: PropertySet);
     // @deprecated (undocumented)
     addProperties(newProps: PropertySet, collaborating?: boolean, seq?: number, op?: ICombiningOp): PropertySet | undefined;
     addPropertySet(props: PropertySet): void;
