@@ -29,7 +29,7 @@ import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "
 const defaultDataStoreId = "default";
 const mapId = "mapId";
 const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-const maxMessageSizeInBytes = 1 * 1024 * 1024; // 5MB
+const maxMessageSizeInBytes = 1 * 1024 * 1024; // 1MB
 const generateRandomStringOfSize = (sizeInBytes: number): string =>
 	crypto.randomBytes(sizeInBytes / 2).toString("hex");
 
@@ -114,7 +114,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			"default",
 		);
 		this.dataObject1map = await this.dataObject1.getSharedObject<SharedMap>(mapId);
-		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes * this.sizeOfItemMb);
 
 		setMapKeys(this.dataObject1map, this.keysInMap, largeString);
 		this.fileName = uuid();
@@ -146,7 +146,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			defaultDataStoreId,
 		);
 		const dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-		validateMapKeys(dataObject2map, this.keysInMap, maxMessageSizeInBytes);
+		validateMapKeys(dataObject2map, this.keysInMap, maxMessageSizeInBytes * this.sizeOfItemMb);
 
 		return container2;
 	}
