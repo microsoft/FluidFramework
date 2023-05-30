@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { unreachableCase } from "@fluidframework/common-utils";
 
 import { singleJsonCursor } from "../../domains";
 import { rootFieldKeySymbol, UpPath, moveToDetachedField, FieldUpPath } from "../../core";
@@ -372,9 +373,32 @@ describe("Editing", () => {
 				? [describe, it]
 				: [it, (title: string, fn: () => void) => fn()];
 
-			type ScenarioStep =
-				| { readonly removeIdx: number; readonly peer: number }
-				| { readonly peer: number };
+			enum StepType {
+				Remove,
+				Undo,
+			}
+			interface RemoveStep {
+				readonly type: StepType.Remove;
+				/**
+				 * The index of the removed node.
+				 * Note that this index does not account for the removal of earlier nodes.
+				 */
+				readonly index: number;
+				/**
+				 * The index of the peer that removes the node.
+				 */
+				readonly peer: number;
+			}
+
+			interface UndoStep {
+				readonly type: StepType.Undo;
+				/**
+				 * The index of the peer that performs the undo.
+				 */
+				readonly peer: number;
+			}
+
+			type ScenarioStep = RemoveStep | UndoStep;
 
 			/**
 			 * Generates all permutations for `nbNodes` and `nbPeers` such that:
@@ -388,15 +412,25 @@ describe("Editing", () => {
 			 */
 			function buildScenarios(): Generator<readonly ScenarioStep[]> {
 				interface ScenarioBuilderState {
+					/**
+					 * Whether the `i`th node has been removed.
+					 * The index does not account for the removal of earlier nodes.
+					 */
 					removed: boolean[];
-					peerQueue: number[];
+					/**
+					 * The number of operations that the `i`th peer has yet to undo.
+					 */
+					peerUndoStack: number[];
 				}
 
 				const buildState: ScenarioBuilderState = {
 					removed: makeArray(nbNodes, () => false),
-					peerQueue: makeArray(nbPeers, () => 0),
+					peerUndoStack: makeArray(nbPeers, () => 0),
 				};
 
+				/**
+				 * Generates all permutations with prefix `scenario`
+				 */
 				function* buildScenariosImpl(
 					scenario: ScenarioStep[] = [],
 				): Generator<readonly ScenarioStep[]> {
@@ -405,24 +439,23 @@ describe("Editing", () => {
 						for (let i = 0; i < nbNodes; i++) {
 							if (!buildState.removed[i]) {
 								buildState.removed[i] = true;
-								buildState.peerQueue[p] += 1;
-								for (const built of buildScenariosImpl([
+								buildState.peerUndoStack[p] += 1;
+								yield* buildScenariosImpl([
 									...scenario,
-									{ removeIdx: i, peer: p },
-								])) {
-									yield built;
-								}
-								buildState.peerQueue[p] -= 1;
+									{ type: StepType.Remove, index: i, peer: p },
+								]);
+								buildState.peerUndoStack[p] -= 1;
 								buildState.removed[i] = false;
 								done = false;
 							}
 						}
-						if (buildState.peerQueue[p] > 0) {
-							buildState.peerQueue[p] -= 1;
-							for (const built of buildScenariosImpl([...scenario, { peer: p }])) {
-								yield built;
-							}
-							buildState.peerQueue[p] += 1;
+						if (buildState.peerUndoStack[p] > 0) {
+							buildState.peerUndoStack[p] -= 1;
+							yield* buildScenariosImpl([
+								...scenario,
+								{ type: StepType.Undo, peer: p },
+							]);
+							buildState.peerUndoStack[p] += 1;
 							done = false;
 						}
 					}
@@ -455,14 +488,19 @@ describe("Editing", () => {
 				const [verb, action] = useMove ? ["M", moveAction] : ["D", delAction];
 				const title = scenario
 					.map((s) => {
-						if ("removeIdx" in s) {
-							return `${verb}(i:${s.removeIdx} p:${s.peer})`;
+						switch (s.type) {
+							case StepType.Remove:
+								return `${verb}(i:${s.index} p:${s.peer})`;
+							case StepType.Undo:
+								return `U(${s.peer})`;
+							default:
+								unreachableCase(s);
 						}
-						return `U(${s.peer})`;
 					})
 					.join(" ");
 				innerFixture(title, () => {
-					// Keeps track of which nodes are present in the root field for a given peer.
+					// Indicator which keeps track of which nodes are present in the root field for a given peer.
+					// Represented as an integer (0: removed, 1: present) to facilitate summing.
 					// Used to compute the index of the next node to remove.
 					const present = makeArray(nbPeers, () => makeArray(nbNodes, () => 1));
 					// The number of remaining undos available for each peer.
@@ -475,23 +513,30 @@ describe("Editing", () => {
 						const peer = peers[iPeer];
 						let presence: number;
 						let affectedNode: number;
-						if ("removeIdx" in step) {
-							const idx = present[iPeer]
-								.slice(0, step.removeIdx)
-								.reduce((a, b) => a + b, 0);
-							action(peer, idx);
-							presence = 0;
-							affectedNode = step.removeIdx;
-							undoQueues[iPeer].push(step.removeIdx);
-						} else {
-							peer.undo();
-							presence = 1;
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							affectedNode = undoQueues[iPeer].pop()!;
+						switch (step.type) {
+							case StepType.Remove: {
+								const idx = present[iPeer]
+									.slice(0, step.index)
+									.reduce((a, b) => a + b, 0);
+								action(peer, idx);
+								presence = 0;
+								affectedNode = step.index;
+								undoQueues[iPeer].push(step.index);
+								break;
+							}
+							case StepType.Undo: {
+								peer.undo();
+								presence = 1;
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								affectedNode = undoQueues[iPeer].pop()!;
+								break;
+							}
+							default:
+								unreachableCase(step);
 						}
 						tree.merge(peer);
 						// We only let peers with a higher index learn of this edit.
-						// This break the symmetry between scenarios where the permutation of actions is the same
+						// This breaks the symmetry between scenarios where the permutation of actions is the same
 						// except for which peer does which set of actions.
 						// It also helps simulate different peers learning of the same edit at different times.
 						for (let downhillPeer = iPeer + 1; downhillPeer < nbPeers; downhillPeer++) {
