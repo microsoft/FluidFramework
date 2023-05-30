@@ -610,7 +610,9 @@ export function configureWebSocketServices(
 				...getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId),
 				[CommonProperties.clientDriverVersion]: driverVersion,
 				[CommonProperties.connectionCount]: connectionsMap.size,
-				[CommonProperties.connectionClients]: JSON.stringify(Array.from(connectionsMap.keys())),
+				[CommonProperties.connectionClients]: JSON.stringify(
+					Array.from(connectionsMap.keys()),
+				),
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
 			});
 
@@ -845,7 +847,9 @@ export function configureWebSocketServices(
 			const disconnectMetric = Lumberjack.newLumberMetric(LumberEventName.DisconnectDocument);
 			disconnectMetric.setProperties({
 				[CommonProperties.connectionCount]: connectionsMap.size,
-				[CommonProperties.connectionClients]: JSON.stringify(Array.from(connectionsMap.keys())),
+				[CommonProperties.connectionClients]: JSON.stringify(
+					Array.from(connectionsMap.keys()),
+				),
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
 			});
 
@@ -902,14 +906,18 @@ export function configureWebSocketServices(
 					removeAndStoreP.push(
 						clientManager.removeClient(room.tenantId, room.documentId, clientId),
 					);
-					socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId)).catch((error) => {
-						const errorMsg = `Failed to emit signal to room ${clientId}, ${getRoomId(room)}.`;
-						Lumberjack.error(
-							errorMsg,
-							getLumberBaseProperties(room.documentId, room.tenantId),
-							error,
-						);
-					});
+					socket
+						.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId))
+						.catch((error) => {
+							const errorMsg = `Failed to emit signal to room ${clientId}, ${getRoomId(
+								room,
+							)}.`;
+							Lumberjack.error(
+								errorMsg,
+								getLumberBaseProperties(room.documentId, room.tenantId),
+								error,
+							);
+						});
 				}
 				// Clear socket tracker upon disconnection
 				if (socketTracker) {
@@ -921,13 +929,13 @@ export function configureWebSocketServices(
 					const documentId = rooms[0].documentId;
 					const tenantId = rooms[0].tenantId;
 					const clients = await clientManager.getClients(tenantId, documentId);
-					disconnectMetric.setProperties({ 
+					disconnectMetric.setProperties({
 						...getLumberBaseProperties(documentId, tenantId),
-						[CommonProperties.clientCount]: clients.length });
+						[CommonProperties.clientCount]: clients.length,
+					});
 				}
 				disconnectMetric.success(`Successfully disconnected.`);
-			}
-			catch (error) {
+			} catch (error) {
 				disconnectMetric.error(`Disconnect failed.`, error);
 			}
 		});
