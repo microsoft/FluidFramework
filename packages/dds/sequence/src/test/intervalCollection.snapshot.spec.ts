@@ -71,6 +71,7 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.local = false;
+	dataStoreRuntime.options = { intervalStickinessEnabled: true };
 	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime1.createDeltaConnection(),

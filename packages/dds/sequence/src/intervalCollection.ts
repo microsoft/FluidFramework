@@ -161,24 +161,14 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 	return base;
 }
 
-function startReferenceSlidingPreference(stickiness?: IntervalStickiness): SlidingPreference {
-	// default to forward if stickiness is not specified
-	if (stickiness === undefined) {
-		return SlidingPreference.FORWARD;
-	}
-
+function startReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
 	// if any start stickiness, prefer sliding backwards
 	return (stickiness & IntervalStickiness.START) !== 0
 		? SlidingPreference.BACKWARD
 		: SlidingPreference.FORWARD;
 }
 
-function endReferenceSlidingPreference(stickiness?: IntervalStickiness): SlidingPreference {
-	// default to forward if stickiness is not specified
-	if (stickiness === undefined) {
-		return SlidingPreference.FORWARD;
-	}
-
+function endReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
 	// if any end stickiness, prefer sliding forwards
 	return (stickiness & IntervalStickiness.END) !== 0
 		? SlidingPreference.FORWARD
@@ -510,7 +500,7 @@ export class SequenceInterval implements ISerializableInterval {
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
 		props?: PropertySet,
-		public readonly stickiness?: IntervalStickiness,
+		public readonly stickiness: IntervalStickiness = IntervalStickiness.END,
 	) {
 		this.propertyManager = new PropertiesManager();
 		this.properties = {};
@@ -572,7 +562,7 @@ export class SequenceInterval implements ISerializableInterval {
 		if (this.properties) {
 			serializedInterval.properties = this.properties;
 		}
-		if (this.stickiness !== undefined && this.stickiness !== IntervalStickiness.END) {
+		if (this.stickiness !== IntervalStickiness.END) {
 			serializedInterval.stickiness = this.stickiness;
 		}
 
@@ -1229,7 +1219,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		end: number,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
-		stickiness?: IntervalStickiness,
+		stickiness: IntervalStickiness = IntervalStickiness.END,
 	): TInterval {
 		return this.helpers.create(
 			this.label,
@@ -1249,7 +1239,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
-		stickiness?: IntervalStickiness,
+		stickiness: IntervalStickiness = IntervalStickiness.END,
 	) {
 		const interval: TInterval = this.createInterval(start, end, intervalType, op, stickiness);
 		if (interval) {
@@ -1853,7 +1843,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		end: number,
 		intervalType: IntervalType,
 		props?: PropertySet,
-		stickiness?: IntervalStickiness,
+		stickiness: IntervalStickiness = IntervalStickiness.END,
 	): TInterval {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
@@ -1861,11 +1851,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		if (intervalType & IntervalType.Transient) {
 			throw new LoggingError("Can not add transient intervals");
 		}
-		if (
-			stickiness !== undefined &&
-			stickiness !== IntervalStickiness.END &&
-			!this.options.intervalStickinessEnabled
-		) {
+		if (stickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
 			throw new UsageError(
 				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
 			);

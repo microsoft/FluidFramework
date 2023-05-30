@@ -76,6 +76,7 @@ describe("SharedString interval collections", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
+		dataStoreRuntime1.options = { intervalStickinessEnabled: true };
 		sharedString = new SharedString(
 			dataStoreRuntime1,
 			"shared-string-1",
@@ -105,6 +106,7 @@ describe("SharedString interval collections", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			dataStoreRuntime2.options = { intervalStickinessEnabled: true };
 			const services2 = {
 				deltaConnection: containerRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
