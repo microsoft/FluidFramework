@@ -220,6 +220,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new SequenceIntervalCollectionValueType(),
+			dataStoreRuntime.options,
 		);
 	}
 

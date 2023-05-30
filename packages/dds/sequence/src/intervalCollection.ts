@@ -40,6 +40,7 @@ import {
 	IValueOperation,
 	IValueType,
 	IValueTypeOperationValue,
+	SequenceOptions,
 } from "./defaultMapInterfaces";
 import { IInterval, IntervalConflictResolver, IntervalTree, IntervalNode } from "./intervalTree";
 
@@ -1383,12 +1384,13 @@ class SequenceIntervalCollectionFactory
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
+		options?: Partial<SequenceOptions>,
 	): IntervalCollection<SequenceInterval> {
 		const helpers: IIntervalHelpers<SequenceInterval> = {
 			compareEnds: compareSequenceIntervalEnds,
 			create: createSequenceInterval,
 		};
-		return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
+		return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw, options);
 	}
 
 	public store(
@@ -1446,12 +1448,13 @@ class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Inte
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
+		options?: Partial<SequenceOptions>,
 	): IntervalCollection<Interval> {
 		const helpers: IIntervalHelpers<Interval> = {
 			compareEnds: compareIntervalEnds,
 			create: createInterval,
 		};
-		const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw);
+		const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw, options);
 		collection.attachGraph(undefined as any as Client, "");
 		return collection;
 	}
@@ -1677,6 +1680,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		private readonly requiresClient: boolean,
 		private readonly emitter: IValueOpEmitter,
 		serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
+		private readonly options: Partial<SequenceOptions> = {},
 	) {
 		super();
 
@@ -1865,6 +1869,15 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
 		}
 		if (intervalType & IntervalType.Transient) {
 			throw new LoggingError("Can not add transient intervals");
+		}
+		if (
+			stickiness !== undefined &&
+			stickiness !== IntervalStickiness.END &&
+			!this.options.intervalStickinessEnabled
+		) {
+			throw new UsageError(
+				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
+			);
 		}
 
 		const interval: TInterval = this.localCollection.addInterval(

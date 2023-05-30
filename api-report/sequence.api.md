@@ -50,7 +50,7 @@ import { TextSegment } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
-export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
+export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet, IntervalStickiness] | [number, number, number, IntervalType, PropertySet];
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
@@ -143,7 +143,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     // @internal
-    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2);
+    constructor(helpers: IIntervalHelpers<TInterval>, requiresClient: boolean, emitter: IValueOpEmitter, serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2, options?: Partial<SequenceOptions>);
     // @internal (undocumented)
     ackAdd(serializedInterval: ISerializedInterval, local: boolean, op: ISequencedDocumentMessage, localOpMetadata: IMapMessageLocalMetadata | undefined): TInterval | undefined;
     // @internal (undocumented)
@@ -206,12 +206,15 @@ export interface IntervalLocator {
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
 
 // @public
-export enum IntervalStickiness {
-    End = 2,
-    Full = 3,
-    None = 0,
-    Start = 1
-}
+export const IntervalStickiness: {
+    readonly NONE: 0;
+    readonly START: 1;
+    readonly END: 2;
+    readonly FULL: 3;
+};
+
+// @public
+export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
 
 // @public (undocumented)
 export enum IntervalType {
@@ -357,6 +360,14 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     constructor(opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
+}
+
+// @public
+export interface SequenceOptions {
+    // (undocumented)
+    [key: string]: boolean;
+    // (undocumented)
+    intervalStickinessEnabled: boolean;
 }
 
 // @internal
