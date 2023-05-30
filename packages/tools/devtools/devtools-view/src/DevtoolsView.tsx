@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { useId } from "@fluentui/react-hooks";
+
+import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import { Button, FluentProvider, Tooltip } from "@fluentui/react-components";
+import { ArrowSync24Regular } from "@fluentui/react-icons";
+
 import {
 	ContainerKey,
 	ContainerList,
@@ -18,9 +22,6 @@ import {
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
-import { IStackItemStyles, IStackStyles, Stack, TooltipHost } from "@fluentui/react";
-import { FluentProvider, Button } from "@fluentui/react-components";
-import { ArrowSync24Regular } from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
@@ -205,12 +206,9 @@ export function DevtoolsView(): React.ReactElement {
 				queryTimedOut ? (
 					<>
 						<div>Devtools not found. Timeout exceeded.</div>
-						<TooltipHost
-							content="Retry searching for Devtools"
-							id="retry-query-button-tooltip"
-						>
+						<Tooltip content="Retry searching for Devtools" relationship="description">
 							<Button onClick={retryQuery}>Search again</Button>
-						</TooltipHost>
+						</Tooltip>
 					</>
 				) : (
 					<Waiting />
@@ -455,9 +453,10 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	} else if (containers.length === 0) {
 		containerSectionInnerView = <div>No Containers found.</div>;
 	} else {
+		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
 			<>
-				{containers.map((containerKey) => (
+				{containers.map((containerKey: string) => (
 					<MenuItem
 						key={containerKey}
 						isActive={currentContainerSelection === containerKey}
@@ -483,11 +482,11 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 }
 
 /**
- * A refresh button to retrive the latest list of containers.
+ * A refresh button to retrieve the latest list of containers.
  */
 function RefreshButton(): React.ReactElement {
 	const messageRelay = useMessageRelay();
-	const refreshButtonTooltipId = useId("refresh-container-list-button-tooltip");
+
 	const transparentButtonStyle = {
 		backgroundColor: "transparent",
 		border: "none",
@@ -500,13 +499,13 @@ function RefreshButton(): React.ReactElement {
 	}
 
 	return (
-		<TooltipHost content="Refresh Containers list" id={refreshButtonTooltipId}>
+		<Tooltip content="Refresh Containers list" relationship="label">
 			<Button
 				icon={<ArrowSync24Regular />}
 				style={transparentButtonStyle}
 				onClick={handleRefreshClick}
 				aria-label="Refresh Containers list"
 			></Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 }

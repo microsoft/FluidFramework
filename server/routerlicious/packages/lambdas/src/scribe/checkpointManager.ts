@@ -31,6 +31,7 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
 		private readonly getDeltasViaAlfred: boolean,
+		private readonly verifyLastOpPersistence: boolean,
 		private readonly checkpointService: ICheckpointService,
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
@@ -46,7 +47,7 @@ export class CheckpointManager implements ICheckpointManager {
 		noActiveClients: boolean,
 	) {
 		if (this.getDeltasViaAlfred) {
-			if (pending.length > 0) {
+			if (pending.length > 0 && this.verifyLastOpPersistence) {
 				// Verify that the last pending op has been persisted to op storage
 				// If it is, we can checkpoint
 				const expectedSequenceNumber = pending[pending.length - 1].operation.sequenceNumber;

@@ -25,6 +25,7 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 			testName: `Load Document - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
+			documentTypeInfo: docData.documentTypeInfo,
 			benchmarkType,
 		});
 		await documentWrapper.initializeDocument();
