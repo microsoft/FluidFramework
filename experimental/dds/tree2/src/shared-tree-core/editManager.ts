@@ -24,7 +24,7 @@ import {
 	UndoRedoManager,
 } from "../core";
 import { createEmitter, ISubscribable } from "../events";
-import { isRebaseChange, SharedTreeBranch } from "./branch";
+import { getChangeReplaceType, SharedTreeBranch } from "./branch";
 
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 /**
@@ -201,7 +201,7 @@ export class EditManager<
 		const offFork = branch.on("fork", (f) => this.registerBranch(f));
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offRebase = branch.on("change", (args) => {
-			if (args.type === "replace" && isRebaseChange(args)) {
+			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
 				untrackBranch(branch, trunkBase.sequenceNumber);
 				trunkBase.sequenceNumber = trackBranch(branch);
 			}
@@ -415,24 +415,22 @@ export class EditManager<
 		referenceSequenceNumber: SeqNumber,
 	): void {
 		if (newCommit.sessionId === this.localSessionId) {
-			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
-			// `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
-			// change in the incoming commit.
-			const localPath = getPathFromBase(this.localBranch.getHead(), this.trunk.getHead());
-			// Get the first revision in the local branch, and then remove it
-			const { change } =
-				localPath.shift() ??
-				fail(
-					"Received a sequenced change from the local session despite having no local changes",
-				);
-			this.pushToTrunk(sequenceNumber, { ...newCommit, change }, true);
+			const [firstLocalCommit] = getPathFromBase(
+				this.localBranch.getHead(),
+				this.trunk.getHead(),
+			);
+			assert(
+				firstLocalCommit !== undefined,
+				"Received a sequenced change from the local session despite having no local changes",
+			);
 
-			{
-				// TODO: Replace the line below with this line when UndoRedoManager is better optimized.
-				// this.localBranch.rebaseOnto(this.trunk, this.trunkUndoRedoManager);
-				this.localBranch.setHead(localPath.reduce(mintCommit, this.trunk.getHead()));
-			}
-
+			// The first local branch commit is already rebased over the trunk, so we can push it directly to the trunk.
+			this.pushToTrunk(
+				sequenceNumber,
+				{ ...firstLocalCommit, sessionId: this.localSessionId },
+				true,
+			);
+			this.localBranch.rebaseOnto(this.trunk);
 			return;
 		}
 
