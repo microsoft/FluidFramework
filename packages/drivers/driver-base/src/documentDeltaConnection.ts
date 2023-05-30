@@ -601,9 +601,9 @@ export class DocumentDeltaConnection
 			this.addTrackedListener("disconnect", (reason, details) => {
 				failAndCloseSocket(
 					this.createErrorObjectWithProps("disconnect", reason, {
-						errorType: details?.context?.type,
+						socketErrorType: details?.context?.type,
 						// https://www.rfc-editor.org/rfc/rfc6455#section-7.4
-						statusCode: details?.context?.code,
+						socketCode: details?.context?.code,
 					}),
 				);
 			});
