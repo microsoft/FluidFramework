@@ -5,13 +5,14 @@
 
 import { strict as assert } from "assert";
 import { assertIsStableId } from "@fluidframework/container-runtime";
-import { ChangeRebaser, RevisionTag } from "../../core";
+import { ChangeRebaser, Delta, RevisionTag, rootFieldKeySymbol } from "../../core";
 
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { GraphCommit, rebaseBranch } from "../../core/rebase";
 
 import { fail } from "../../util";
+import { MockRepairDataStoreProvider } from "../utils";
 
 /** Given a number in the range [0, 15], turn it into a deterministic and human-rememberable v4 UUID */
 function makeRevisionTag(tag: number): RevisionTag {
@@ -41,6 +42,9 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 
 	public rebaseAnchors(): void {}
 }
+
+const dummyIntoDelta = (change: typeof dummyChange): Delta.Root =>
+	new Map([[rootFieldKeySymbol, []]]);
 
 describe("rebaser", () => {
 	/**
@@ -132,6 +136,8 @@ describe("rebaser", () => {
 
 				const [result] = rebaseBranch(
 					new DummyChangeRebaser(),
+					dummyIntoDelta,
+					new MockRepairDataStoreProvider(),
 					tester.branch,
 					base,
 					tester.main,

@@ -254,7 +254,7 @@ export function createSharedTreeView(args?: {
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
 	const repairDataStoreProvider =
 		args?.repairProvider ?? new ForestRepairDataStoreProvider(forest, schema);
-	const undoRedoManager = UndoRedoManager.create(repairDataStoreProvider, defaultChangeFamily);
+	const undoRedoManager = UndoRedoManager.create(defaultChangeFamily);
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
@@ -263,6 +263,7 @@ export function createSharedTreeView(args?: {
 				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			},
 			defaultChangeFamily,
+			repairDataStoreProvider,
 			undoRedoManager,
 			forest.anchors,
 		);

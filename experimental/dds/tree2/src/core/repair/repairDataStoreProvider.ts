@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RepairDataStore } from "../repair";
 import { Delta } from "../tree";
+import { RepairDataStore } from ".";
 
 /**
  * Manages state required for creating {@link RepairDataStore}s.
