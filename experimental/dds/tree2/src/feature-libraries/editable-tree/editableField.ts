@@ -32,7 +32,7 @@ import {
 	cursorsFromContextualData,
 } from "../contextuallyTyped";
 import { FieldKinds } from "../defaultFieldKinds";
-import { assertValidIndex, fail, isReadonlyArray } from "../../util";
+import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
 import {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
@@ -110,6 +110,19 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		this.fieldKey = cursor.getFieldKey();
 		this[arrayLikeMarkerSymbol] = true;
 		this.kind = getFieldKind(this.fieldSchema);
+	}
+
+	/**
+	 * Check if this field is the same as a different field.
+	 * This is defined to mean that both are in the same editable tree, and are the same field on the same node.
+	 * This is more than just a reference comparison because unlike EditableTree nodes, fields are not cached on anchors and can be duplicated.
+	 */
+	private isSameAs(other: FieldProxyTarget): boolean {
+		assert(
+			other.context === this.context,
+			"Content from different editable trees should not be used together",
+		);
+		return this.fieldKey === other.fieldKey && this.parent === other.parent;
 	}
 
 	public normalizeNewContent(content: NewFieldContent): readonly ITreeCursor[] {
@@ -285,6 +298,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				fieldEditor.insert(0, content);
 				break;
 			}
+			case FieldKinds.nodeIdentifier: {
+				fail("Cannot set identifier field: Identifiers are immutable.");
+			}
 			default:
 				fail(`Cannot set content of fields of "${this.kind.identifier}" kind.`);
 		}
@@ -338,26 +354,31 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		destinationField?: EditableField,
 	): void {
 		const sourceFieldPath = this.cursor.getFieldPath();
-		const destinationFieldKindIdentifier =
-			destinationField?.fieldSchema.kind.identifier ?? this.kind.identifier;
 
-		assert(this.kind === FieldKinds.sequence, "Move source field must be a sequence field.");
+		const destination =
+			destinationField === undefined
+				? this
+				: (destinationField?.[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>);
+
 		assert(
-			destinationFieldKindIdentifier === FieldKinds.sequence.identifier,
-			"Move destination field must be a sequence field.",
+			isFieldProxyTarget(destination),
+			0x684 /* destination must be a field proxy target */,
 		);
 
-		const destinationFieldProxy =
-			destinationField !== undefined
-				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
-				: this;
-		assert(
-			isFieldProxyTarget(destinationFieldProxy),
-			0x684 /* destination field proxy must be a field proxy target */,
-		);
-		assertValidIndex(destinationIndex, destinationFieldProxy, true);
+		assert(this.kind === FieldKinds.sequence, "Move source must be a sequence.");
+		assert(destination.kind === FieldKinds.sequence, "Move destination must be a sequence.");
 
-		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
+		assertNonNegativeSafeInteger(count);
+		// This permits a move of 0 nodes starting at this.length, which does seem like it should be allowed.
+		assertValidIndex(sourceIndex + count, this, true);
+
+		let destinationLength = destination.length;
+		if (this.isSameAs(destination)) {
+			destinationLength -= count;
+		}
+		assertValidIndex(destinationIndex, { length: destinationLength }, true);
+
+		const destinationFieldPath = destination.cursor.getFieldPath();
 
 		this.context.editor.move(
 			sourceFieldPath,

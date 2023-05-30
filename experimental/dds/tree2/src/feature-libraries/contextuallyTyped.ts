@@ -188,6 +188,15 @@ export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLi
 }
 
 /**
+ * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
+ * @alpha
+ */
+export interface ReadonlyMarkedArrayLike<T> extends ArrayLike<T> {
+	readonly [arrayLikeMarkerSymbol]: true;
+	[Symbol.iterator](): IterableIterator<T>;
+}
+
+/**
  * `ArrayLike` numeric indexed access, but writable.
  *
  * @remarks
@@ -230,23 +239,15 @@ export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
  */
 export function isArrayLike(
 	data: ContextuallyTypedFieldData,
-): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData> {
-	return isWritableArrayLike(data) || Array.isArray(data);
-}
-
-/**
- * Checks the type of a `ContextuallyTypedNodeData`.
- * @alpha
- */
-export function isWritableArrayLike(
-	data: ContextuallyTypedFieldData,
-): data is MarkedArrayLike<ContextuallyTypedNodeData> {
+): data is
+	| readonly ContextuallyTypedNodeData[]
+	| ReadonlyMarkedArrayLike<ContextuallyTypedNodeData> {
 	if (typeof data !== "object") {
 		return false;
 	}
 	return (
 		(data as Partial<MarkedArrayLike<ContextuallyTypedNodeData>>)[arrayLikeMarkerSymbol] ===
-		true
+			true || Array.isArray(data)
 	);
 }
 
@@ -457,7 +458,11 @@ export function applyTypesFromContext(
 			0x4d6 /* array data reported comparable with the schema without a primary field */,
 		);
 		const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
-		return { value: undefined, type, fields: new Map([[primary.key, children]]) };
+		return {
+			value: undefined,
+			type,
+			fields: new Map(children.length > 0 ? [[primary.key, children]] : []),
+		};
 	} else {
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const key of fieldKeysFromData(data)) {

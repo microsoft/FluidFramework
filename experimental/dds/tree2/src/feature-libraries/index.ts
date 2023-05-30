@@ -42,7 +42,6 @@ export {
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,
-	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	getFieldKind,
 	getFieldSchema,
@@ -128,6 +127,7 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
+	NodeExistenceStateChange,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
@@ -143,13 +143,9 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export {
-	Identifier,
-	identifierFieldSchema,
-	IdentifierIndex,
-	identifierSchema,
-	identifierFieldSchemaLibrary,
-} from "./identifierIndex";
+export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
+
+export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
 
 export {
 	FieldKinds,
@@ -157,6 +153,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeIdentifierFieldKind,
 	Forbidden,
 	FieldKindTypes,
 } from "./defaultFieldKinds";

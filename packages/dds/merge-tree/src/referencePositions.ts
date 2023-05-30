@@ -4,6 +4,7 @@
  */
 
 import { Stack } from "./collections";
+import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
 import { ReferenceType, ICombiningOp } from "./ops";
 import { PropertySet, MapLike } from "./properties";
@@ -72,6 +73,12 @@ export interface ReferencePosition {
 	 * @returns - Properties associated with this reference
 	 */
 	properties?: PropertySet;
+
+	/**
+	 * Defaults to forward
+	 */
+	slidingPreference?: SlidingPreference;
+
 	refType: ReferenceType;
 
 	/**
