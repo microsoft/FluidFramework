@@ -74,10 +74,8 @@ packages/runtime/test-runtime-utils/src/assertionShortCodesMap.ts
 # Ignore all HTML files in docs since they're go templates
 docs/**/*.html
 
-# Ignore markdown since those are formatted using markdownlint
-*.md
-*.markdown
-*.mdown
+# Ignore docs markdown files since those are formatted using markdownlint
+docs/**/*.md
 
 # github config yaml files are prone to breaking when reformatted
 .github/**/*.yml
