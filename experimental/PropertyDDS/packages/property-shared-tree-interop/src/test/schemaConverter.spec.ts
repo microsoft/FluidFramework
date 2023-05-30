@@ -9,10 +9,8 @@ import {
 	brand,
 	FieldKinds,
 	fieldSchema,
-	lookupGlobalFieldSchema,
 	lookupTreeSchema,
 	ValueSchema,
-	rootFieldKey,
 	FieldStoredSchema,
 	fail,
 	Any,
@@ -92,13 +90,11 @@ describe("schema converter", () => {
 			brand("Test:Optional-1.0.0"),
 			brand("Test:Person-1.0.0"),
 		]);
-		expect(lookupGlobalFieldSchema(fullSchemaData, rootFieldKey)).toMatchObject(
-			expectedRootFieldSchema,
-		);
+		expect(fullSchemaData.root).toMatchObject(expectedRootFieldSchema);
 
 		// 78 types (all types, their arrays and maps)
 		expect(fullSchemaData.treeSchema.size).toEqual(78);
-		const nodePropertySchema = lookupTreeSchema(fullSchemaData, brand("NodeProperty"));
+		const nodePropertySchema = fullSchemaData.treeSchema.get(brand("NodeProperty"));
 		expect(nodePropertySchema).toMatchObject({
 			name: "NodeProperty",
 			localFields: new Map(),
