@@ -37,3 +37,23 @@ export const containerStatusTooltipText = (
 		.
 	</div>
 );
+
+/**
+ * Description of the Client's "Mode" property in the audience view.
+ */
+export const clientModeModeTooltipText = (
+	<div>
+		{"The client's connection mode."}
+		<ul>
+			<li>{'"read": the connection is view-only.'}</li>
+			<li>{'"write": the connection allows edits.'}</li>
+		</ul>
+	</div>
+);
+
+/**
+ * Description of the User "Scopes" property in the audience view.
+ */
+export const clientScopesTooltipText = (
+	<div>{"Enumerates actions allowed for the client connection."}</div>
+);
