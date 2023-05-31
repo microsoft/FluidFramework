@@ -12,6 +12,7 @@ import { ISharedObject } from '@fluidframework/shared-object-base';
 import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
+import { TAnySchema } from '@sinclair/typebox';
 
 // @alpha
 export interface Adapters {
@@ -821,6 +822,8 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 
 // @alpha (undocumented)
 export interface IJsonCodec<TDecoded, TEncoded extends JsonCompatibleReadOnly = JsonCompatibleReadOnly> extends IEncoder<TDecoded, TEncoded>, IDecoder<TDecoded, TEncoded> {
+    // (undocumented)
+    encodedSchema?: TAnySchema;
 }
 
 // @alpha
