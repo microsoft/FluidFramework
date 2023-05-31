@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TAnySchema } from "@sinclair/typebox";
+import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
 import { JsonCompatibleReadOnly } from "../util";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
@@ -17,7 +17,9 @@ import {
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 
-export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([[0, makeValueCodec()]]);
+export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
+	[0, makeValueCodec(Type.Number())],
+]);
 
 export const makeValueFieldCodecFamily = (childCodec: IJsonCodec<NodeChangeset>) =>
 	makeCodecFamily([[0, makeValueFieldCodec(childCodec)]]);
@@ -56,6 +58,7 @@ function makeValueFieldCodec(
 
 			return decoded;
 		},
+		encodedSchema: EncodedValueChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
 
@@ -102,6 +105,7 @@ function makeOptionalFieldCodec(
 
 			return decoded;
 		},
+		encodedSchema: EncodedOptionalChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
 
@@ -141,5 +145,6 @@ function makeNodeUpdateCodec(
 
 			return decoded;
 		},
+		encodedSchema: EncodedNodeUpdate(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
