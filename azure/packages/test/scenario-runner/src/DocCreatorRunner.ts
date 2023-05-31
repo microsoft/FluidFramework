@@ -146,26 +146,28 @@ export class DocCreatorRunner extends TypedEventEmitter<IRunnerEvents> implement
 		try {
 			const ids = await Promise.all(runs);
 			this.status = "success";
-			return ids.length > 1 ? ids : ids[0];
-		} catch {
+			return ids;
+		} catch (error) {
 			this.status = "error";
-			throw new Error("Client did not close successfully.");
+			throw new Error(`Not all clients closed successfully.\n${error}`);
 		}
 	}
 
 	public static async execRun(runConfig: DocCreatorRunnerRunConfig): Promise<string> {
 		let schema;
-		const logger = await getLogger(
-			{
-				runId: runConfig.runId,
-				scenarioName: runConfig.scenarioName,
-				namespace: "scenario:runner:DocCreator",
-				endpoint: runConfig.connEndpoint,
-				region: runConfig.region,
-			},
-			["scenario:runner"],
-			eventMap,
-		);
+		const logger =
+			runConfig.logger ??
+			(await getLogger(
+				{
+					runId: runConfig.runId,
+					scenarioName: runConfig.scenarioName,
+					namespace: "scenario:runner:DocCreator",
+					endpoint: runConfig.connEndpoint,
+					region: runConfig.region,
+				},
+				["scenario:runner"],
+				eventMap,
+			));
 
 		const ac =
 			runConfig.client ??

@@ -118,7 +118,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		}
 	}
 
-	public async runSync(config: IRunConfig): Promise<void> {
+	public async runSync(config: IRunConfig): Promise<IFluidContainer[]> {
 		this.status = "running";
 		const connection = this.c.connectionConfig;
 		const connType = connection.type;
@@ -130,7 +130,7 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 		const schema = this.c.schema;
 		const client = this.c.client;
 		let i = 0;
-		const runs: Promise<void>[] = [];
+		const runs: Promise<IFluidContainer>[] = [];
 		const numOfLoads = this.c.numOfLoads ?? 1;
 		for (let j = 0; j < numOfLoads; j++) {
 			for (const docId of this.c.docIds) {
@@ -152,27 +152,30 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 			}
 		}
 		try {
-			await Promise.all(runs);
+			const containers = await Promise.all(runs);
 			this.status = "success";
+			return containers;
 		} catch {
 			this.status = "error";
 			throw new Error("Not all clients closed succesfully.");
 		}
 	}
 
-	public static async execRun(runConfig: DocLoaderRunnerRunConfig): Promise<void> {
+	public static async execRun(runConfig: DocLoaderRunnerRunConfig): Promise<IFluidContainer> {
 		let schema;
-		const logger = await getLogger(
-			{
-				runId: runConfig.runId,
-				scenarioName: runConfig.scenarioName,
-				namespace: "scenario:runner:DocLoader",
-				endpoint: runConfig.connEndpoint,
-				region: runConfig.region,
-			},
-			["scenario:runner"],
-			eventMap,
-		);
+		const logger =
+			runConfig.logger ??
+			(await getLogger(
+				{
+					runId: runConfig.runId,
+					scenarioName: runConfig.scenarioName,
+					namespace: "scenario:runner:DocLoader",
+					endpoint: runConfig.connEndpoint,
+					region: runConfig.region,
+				},
+				["scenario:runner"],
+				eventMap,
+			));
 
 		const ac =
 			runConfig.client ??
@@ -224,6 +227,8 @@ export class DocLoaderRunner extends TypedEventEmitter<IRunnerEvents> implements
 			},
 			{ start: true, end: true, cancel: "generic" },
 		);
+
+		return container;
 	}
 
 	public stop(): void {}

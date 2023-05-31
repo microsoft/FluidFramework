@@ -45,6 +45,8 @@ The test configuration file `testConfig_v1.yml` can be configured to modify the 
 
 Scenario runnner for FRS and Azure Local Service. This package can be used to create and execute various scenarios involving azure-client, IFluidContainer and a range of distributed data structures (DDSes), while collecting telemetry and validating state in the process. Scenarios are sourced via yaml config files.
 
+You can add new scenarios by following existing patterns (see `MapTrafficRunner` or `DocLoaderRunner` for examples) and adding additional test configs to the `configs` directory. Then, run your scenario with the command: `npm run start:scenario ./configs/<config-name>.yml`.
+
 # Appendix
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
