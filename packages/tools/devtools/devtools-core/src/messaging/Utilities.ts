@@ -116,14 +116,23 @@ export function handleIncomingMessage(
 		return;
 	}
 
-	handlers[message.type](message).then((wasMessageHandled) => {
-		// Only log if the message was actually handled by the recipient.
-		if (wasMessageHandled && loggingOptions !== undefined) {
-			const loggingPreamble =
-				loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-			console.debug(`${loggingPreamble} message handled:`, message);
-		}
-	}, console.error);
+	const loggingPreamble =
+		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
+
+	handlers[message.type](message).then(
+		(wasMessageHandled) => {
+			// Only log if the message was actually handled by the recipient.
+			if (wasMessageHandled && loggingOptions !== undefined) {
+				console.debug(`${loggingPreamble} Message handled.`, message);
+			}
+		},
+		(error) => {
+			console.error(
+				`${loggingPreamble} Message could not be handled due to an error:`,
+				error,
+			);
+		},
+	);
 }
 
 /**
