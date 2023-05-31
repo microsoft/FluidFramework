@@ -51,15 +51,10 @@ export interface FluidCacheConfig {
 	maxCacheItemAge: number;
 
 	/**
-	 * To improve perf, if this property is set as false, then db will not be closed immediately after usage.
-	 * Default is true.
+	 * Each time db is opened, it will remain open for this much time. To improve perf, if this property is set as
+	 * any number greater than 0, then db will not be closed immediately after usage. This value is in milliseconds.
 	 */
-	immediateClose?: boolean;
-
-	/**
-	 * Each time db is opened, it will remain open for this much time. If not provided, default value will be 2s.
-	 */
-	closeDbAfter?: number;
+	closeDbAfterMs?: number;
 }
 
 /**
@@ -71,17 +66,20 @@ export class FluidCache implements IPersistedCache {
 	private readonly partitionKey: string | null;
 
 	private readonly maxCacheItemAge: number;
-	private readonly immediateClose: boolean;
-	private readonly closeDbAfter: number;
+	private readonly closeDbImmediately: boolean = true;
+	private readonly closeDbAfterMs: number;
 	private db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 	private dbCloseTimer: ReturnType<typeof setTimeout> | undefined;
+	private dbReuseCount: number = 0;
 
 	constructor(config: FluidCacheConfig) {
 		this.logger = ChildLogger.create(config.logger);
 		this.partitionKey = config.partitionKey;
 		this.maxCacheItemAge = config.maxCacheItemAge;
-		this.immediateClose = config.immediateClose ?? true;
-		this.closeDbAfter = config.closeDbAfter ?? 2000;
+		this.closeDbAfterMs = config.closeDbAfterMs ?? 0;
+		if (this.closeDbAfterMs > 0) {
+			this.closeDbImmediately = false;
+		}
 
 		scheduleIdleTask(async () => {
 			// Log how much storage space is currently being used by indexed db.
@@ -140,15 +138,18 @@ export class FluidCache implements IPersistedCache {
 	}
 
 	private async openDb() {
-		if (this.immediateClose) {
+		if (this.closeDbImmediately) {
 			return getFluidCacheIndexedDbInstance(this.logger);
 		}
 		if (this.db === undefined) {
 			const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
 			if (this.db === undefined) {
+				// Reset the counter on first open.
+				this.dbReuseCount = 0;
 				this.db = dbInstance;
 			} else {
 				dbInstance.close();
+				this.dbReuseCount += 1;
 				return this.db;
 			}
 			// Need to close the db on version change if opened.
@@ -163,20 +164,20 @@ export class FluidCache implements IPersistedCache {
 				this.dbCloseTimer = undefined;
 				this.db = undefined;
 			});
-			// Schedule db close after this.closeDbAfter.
+			// Schedule db close after this.closeDbAfterMs.
 			assert(this.dbCloseTimer === undefined, "timer should not be set yet!!");
 			this.dbCloseTimer = setTimeout(() => {
 				this.db?.close();
 				this.db = undefined;
 				this.dbCloseTimer = undefined;
-			}, this.closeDbAfter);
+			}, this.closeDbAfterMs);
 		}
 		assert(this.db !== undefined, "db should be intialized by now");
 		return this.db;
 	}
 
 	private closeDb(db?: IDBPDatabase<FluidCacheDBSchema>) {
-		if (this.immediateClose) {
+		if (this.closeDbImmediately) {
 			db?.close();
 		}
 	}
@@ -217,6 +218,7 @@ export class FluidCache implements IPersistedCache {
 			type: cacheEntry.type,
 			duration: performance.now() - startTime,
 			dbOpenPerf: cachedItem?.dbOpenPerf,
+			dbReuseCount: this.dbReuseCount,
 			pkgVersion,
 		});
 

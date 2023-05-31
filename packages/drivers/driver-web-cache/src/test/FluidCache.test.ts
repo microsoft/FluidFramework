@@ -67,8 +67,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 		return new FluidCache({
 			partitionKey: config?.partitionKey ?? mockPartitionKey,
 			maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
-			immediateClose,
-			closeDbAfter: 100,
+			closeDbAfterMs: immediateClose ? 0 : 100,
 		});
 	}
 	describe(`Fluid Cache tests: immediateClose: ${immediateClose}`, () => {

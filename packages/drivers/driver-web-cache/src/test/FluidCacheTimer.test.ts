@@ -27,8 +27,7 @@ function getFluidCache(config?: {
 		partitionKey: config?.partitionKey ?? mockPartitionKey,
 		maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
 		logger: config?.logger,
-		immediateClose: false,
-		closeDbAfter: 100,
+		closeDbAfterMs: 100,
 	});
 }
 
