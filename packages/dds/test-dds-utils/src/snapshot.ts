@@ -3,18 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { promises as fs } from "fs";
+import { strict as assert } from "assert";
+import { promises as fs, existsSync } from "fs";
 import { Serializable } from "@fluidframework/datastore-definitions";
 
-const NUMBER_SPACES = 4;
+const numberOfSpaces = 4;
 
 export async function createSnapshotAsync(path: string, data: Serializable): Promise<void> {
-	const dataStr = JSON.stringify(data, undefined, NUMBER_SPACES);
+	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
 	await fs.writeFile(path, dataStr);
 }
 
 export async function isEqualPastSnapshotAsync(path: string, data: Serializable): Promise<boolean> {
-	const dataStr = JSON.stringify(data, undefined, NUMBER_SPACES);
+	assert(existsSync(path), `test snapshot file does not exist: ${path}`);
+	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
 	const pastDataStr = await fs.readFile(path, "utf-8");
 
 	return dataStr === pastDataStr;

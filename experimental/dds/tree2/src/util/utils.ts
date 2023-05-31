@@ -6,6 +6,11 @@
 import { assert } from "@fluidframework/common-utils";
 import { Type } from "@sinclair/typebox";
 import structuredClone from "@ungap/structured-clone";
+import {
+	generateStableId as runtimeGenerateStableId,
+	assertIsStableId,
+} from "@fluidframework/container-runtime";
+import { StableId } from "@fluidframework/runtime-definitions";
 
 /**
  * Subset of Map interface.
@@ -265,3 +270,22 @@ export function assertNonNegativeSafeInteger(index: number) {
  * @alpha
  */
 export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+
+/**
+ * Only use this function for testing purposes.
+ */
+let count: number | undefined;
+export function useDeterministicStableId(f: () => void) {
+	count = 1;
+	f();
+	count = undefined;
+}
+
+export function generateStableId(): StableId {
+	if (count !== undefined) {
+		return assertIsStableId(
+			`00000000-0000-4000-8000-000000${(count++).toString(16).padStart(6, "0")}`,
+		);
+	}
+	return runtimeGenerateStableId();
+}

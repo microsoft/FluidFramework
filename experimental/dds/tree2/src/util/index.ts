@@ -67,5 +67,7 @@ export {
 	Assume,
 	assertValidIndex,
 	assertNonNegativeSafeInteger,
+	generateStableId,
+	useDeterministicStableId,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
