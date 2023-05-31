@@ -53,7 +53,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/container-definitions#blob.ts`
+ * @deprecated - moved to `@fluidframework/driver-utils#blob.ts`
  * Basic implementation of a blob ITreeEntry
  */
 export class BlobTreeEntry {
@@ -77,7 +77,7 @@ export class BlobTreeEntry {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/container-definitions#blob.ts`
+ * @deprecated - moved to `@fluidframework/driver-utils#blob.ts`
  * Basic implementation of a tree ITreeEntry
  */
 export class TreeTreeEntry {
@@ -93,7 +93,7 @@ export class TreeTreeEntry {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/container-definitions#blob.ts`
+ * @deprecated - moved to `@fluidframework/driver-utils#blob.ts`
  * Basic implementation of an attachment ITreeEntry
  */
 export class AttachmentTreeEntry {

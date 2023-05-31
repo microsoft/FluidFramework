@@ -8991,15 +8991,15 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/merge-tree':
         specifier: workspace:~
         version: link:../merge-tree
@@ -9442,15 +9442,15 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/protocol-base':
         specifier: ^0.1039.1000
         version: 0.1039.1000
@@ -12721,9 +12721,6 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -12770,9 +12767,6 @@ importers:
       '@fluidframework/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-utils
       '@microsoft/api-extractor':
         specifier: ^7.34.4
         version: 7.34.4(@types/node@14.18.38)
@@ -13498,6 +13492,9 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../datastore-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/protocol-base':
         specifier: ^0.1039.1000
         version: 0.1039.1000
@@ -16623,9 +16620,9 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
-      '@fluidframework/container-definitions':
+      '@fluidframework/driver-utils':
         specifier: workspace:~
-        version: link:../../common/container-definitions
+        version: link:../../loader/driver-utils
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../odsp-doclib-utils
