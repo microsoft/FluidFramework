@@ -267,6 +267,11 @@ export type IntervalRevertible = {
         startOffset?: number;
         endOffset?: number;
     }[];
+    revertibleRefs: {
+        revertible: IntervalRevertible;
+        offset: number;
+        isStart: boolean;
+    }[];
     mergeTreeRevertible: MergeTreeDeltaRevertible;
 };
 

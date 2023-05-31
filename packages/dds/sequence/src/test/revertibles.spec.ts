@@ -867,4 +867,135 @@ describe("Undo/redo for string remove containing intervals", () => {
 			{ start: 3, end: 7 },
 		]);
 	});
+
+	describe("mixed with direct interval edit revertibles", () => {
+		it("reverts interval delete + remove range", () => {
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+			sharedString.on("sequenceDelta", (op) => {
+				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+			});
+			collection.on("deleteInterval", (interval, local, op) => {
+				appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
+			});
+
+			collection.removeIntervalById(id);
+			sharedString.removeRange(0, 8);
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }]);
+		});
+		it("reverts remove range + interval delete", () => {
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+			sharedString.on("sequenceDelta", (op) => {
+				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+			});
+			collection.on("deleteInterval", (interval, local, op) => {
+				appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
+			});
+
+			sharedString.removeRange(0, 8);
+			collection.removeIntervalById(id);
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }]);
+		});
+		it("reverts interval change + remove range", () => {
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+			sharedString.on("sequenceDelta", (op) => {
+				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+			});
+			collection.on("changeInterval", (interval, previousInterval, local, op) => {
+				appendChangeIntervalToRevertibles(
+					sharedString,
+					interval,
+					previousInterval,
+					revertibles,
+				);
+			});
+
+			collection.change(id, 2, 4);
+			sharedString.removeRange(0, 8);
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }]);
+		});
+		it("reverts interval change + remove range with interval start", () => {
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+			sharedString.on("sequenceDelta", (op) => {
+				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+			});
+			collection.on("changeInterval", (interval, previousInterval, local, op) => {
+				appendChangeIntervalToRevertibles(
+					sharedString,
+					interval,
+					previousInterval,
+					revertibles,
+				);
+			});
+
+			collection.change(id, 2, 9);
+			sharedString.removeRange(0, 8);
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }]);
+		});
+		it("reverts interval change + remove range containing only revertible refs", () => {
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+			sharedString.on("sequenceDelta", (op) => {
+				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+			});
+			collection.on("changeInterval", (interval, previousInterval, local, op) => {
+				appendChangeIntervalToRevertibles(
+					sharedString,
+					interval,
+					previousInterval,
+					revertibles,
+				);
+			});
+
+			collection.change(id, 9, 10);
+			sharedString.removeRange(0, 8);
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }]);
+		});
+		it("reverts remove range + interval change", () => {
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+			sharedString.on("sequenceDelta", (op) => {
+				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+			});
+			collection.on("changeInterval", (interval, previousInterval, local, op) => {
+				appendChangeIntervalToRevertibles(
+					sharedString,
+					interval,
+					previousInterval,
+					revertibles,
+				);
+			});
+
+			sharedString.removeRange(0, 8);
+			collection.change(id, 1, 2);
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }]);
+		});
+	});
 });
