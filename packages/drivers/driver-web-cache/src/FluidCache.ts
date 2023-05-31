@@ -70,7 +70,7 @@ export class FluidCache implements IPersistedCache {
 	private readonly closeDbAfterMs: number;
 	private db: IDBPDatabase<FluidCacheDBSchema> | undefined;
 	private dbCloseTimer: ReturnType<typeof setTimeout> | undefined;
-	private dbReuseCount: number = 0;
+	private dbReuseCount: number = -1;
 
 	constructor(config: FluidCacheConfig) {
 		this.logger = ChildLogger.create(config.logger);
@@ -145,7 +145,7 @@ export class FluidCache implements IPersistedCache {
 			const dbInstance = await getFluidCacheIndexedDbInstance(this.logger);
 			if (this.db === undefined) {
 				// Reset the counter on first open.
-				this.dbReuseCount = 0;
+				this.dbReuseCount = -1;
 				this.db = dbInstance;
 			} else {
 				dbInstance.close();
@@ -173,6 +173,7 @@ export class FluidCache implements IPersistedCache {
 			}, this.closeDbAfterMs);
 		}
 		assert(this.db !== undefined, "db should be intialized by now");
+		this.dbReuseCount += 1;
 		return this.db;
 	}
 
