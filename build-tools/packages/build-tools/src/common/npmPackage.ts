@@ -86,7 +86,6 @@ export class Package {
 	private _packageJson: PackageJson;
 	private readonly packageId = Package.packageCount++;
 	private _matched: boolean = false;
-	private _markForBuild: boolean = false;
 
 	private _indent: string;
 	public readonly packageManager: PackageManager;
@@ -149,15 +148,6 @@ export class Package {
 
 	public setMatched() {
 		this._matched = true;
-		this._markForBuild = true;
-	}
-
-	public get markForBuild() {
-		return this._markForBuild;
-	}
-
-	public setMarkForBuild() {
-		this._markForBuild = true;
 	}
 
 	public get dependencies() {

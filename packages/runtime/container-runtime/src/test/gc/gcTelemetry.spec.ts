@@ -11,7 +11,6 @@ import {
 	MockLogger,
 	TelemetryDataTag,
 	ConfigTypes,
-	IConfigProviderBase,
 	mixinMonitoringContext,
 	MonitoringContext,
 	ChildLogger,
@@ -24,13 +23,11 @@ import {
 	disableSweepLogKey,
 	UnreferencedStateTracker,
 	cloneGCData,
+	tagAsCodeArtifact,
 } from "../../gc";
 import { pkgVersion } from "../../packageVersion";
 import { BlobManager } from "../../blobManager";
-
-export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
+import { configProvider } from "./gcUnitTestHelpers";
 
 describe("GC Telemetry Tracker", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
@@ -105,9 +102,9 @@ describe("GC Telemetry Tracker", () => {
 
 	// Mock node loaded and changed activity for the given nodes.
 	function mockNodeChanges(nodeIds: string[]) {
-		nodeIds.forEach((nodeId) => {
+		nodeIds.forEach((id) => {
 			telemetryTracker.nodeUsed({
-				nodeId,
+				id,
 				usageType: "Loaded",
 				currentReferenceTimestampMs: Date.now(),
 				packagePath: testPkgPath,
@@ -115,7 +112,7 @@ describe("GC Telemetry Tracker", () => {
 				isTombstoned: false,
 			});
 			telemetryTracker.nodeUsed({
-				nodeId,
+				id,
 				usageType: "Changed",
 				currentReferenceTimestampMs: Date.now(),
 				packagePath: testPkgPath,
@@ -128,7 +125,7 @@ describe("GC Telemetry Tracker", () => {
 	// Mock node revived activity for the given nodes.
 	function reviveNode(fromId: string, toId: string, isTombstoned = false) {
 		telemetryTracker.nodeUsed({
-			nodeId: toId,
+			id: toId,
 			usageType: "Revived",
 			currentReferenceTimestampMs: Date.now(),
 			packagePath: testPkgPath,
@@ -200,9 +197,9 @@ describe("GC Telemetry Tracker", () => {
 			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
 			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
 			const cachedEvents = Array.from(mockLogger.events);
-			mockLogger.assertMatch(expectedEvents, message);
+			mockLogger.assertMatch(expectedEvents, message, true /* inlineDetailsProp */);
 			mockLogger.events = cachedEvents;
-			mockLogger.assertMatchNone(unexpectedEvents, message);
+			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
 		}
 
 		it("generates inactive and sweep ready events when nodes are used after time out", async () => {
@@ -219,22 +216,22 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
-						id: nodes[2],
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
-						id: nodes[2],
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Loaded",
 						timeout: inactiveTimeoutMs,
-						id: nodes[3],
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 					{
 						eventName: "GarbageCollector:InactiveObject_Changed",
 						timeout: inactiveTimeoutMs,
-						id: nodes[3],
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 				],
 				"inactive events not as expected",
@@ -249,22 +246,22 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
-						id: nodes[2],
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
-						id: nodes[2],
+						id: tagAsCodeArtifact(nodes[2]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Loaded",
 						timeout: sweepTimeoutMs,
-						id: nodes[3],
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 					{
 						eventName: "GarbageCollector:SweepReadyObject_Changed",
 						timeout: sweepTimeoutMs,
-						id: nodes[3],
+						id: tagAsCodeArtifact(nodes[3]),
 					},
 				],
 				"sweep ready events not as expected",
@@ -283,7 +280,7 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: "GarbageCollector:GC_Tombstone_DataStore_Revived",
-						url: nodes[2],
+						url: tagAsCodeArtifact(nodes[2]),
 					},
 				],
 				"inactive events not as expected",
@@ -299,7 +296,7 @@ describe("GC Telemetry Tracker", () => {
 			loadedEventName: string,
 			expectDeleteLogs?: boolean,
 		) => {
-			const deleteEventName = "GarbageCollector:GCObjectDeleted";
+			const deleteEventName = "GarbageCollector:GC_SweepReadyObjects_Delete";
 
 			// Validates that no unexpected event has been fired.
 			function validateNoEvents() {
@@ -355,10 +352,11 @@ describe("GC Telemetry Tracker", () => {
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs && isSummarizerClient) {
-					expectedEvents.push(
-						{ eventName: deleteEventName, timeout, id: nodes[1] },
-						{ eventName: deleteEventName, timeout, id: nodes[2] },
-					);
+					expectedEvents.push({
+						eventName: deleteEventName,
+						timeout,
+						id: tagAsCodeArtifact(JSON.stringify([nodes[1], nodes[2]])),
+					});
 				} else {
 					assert(
 						!mockLogger.events.some((event) => event.eventName === deleteEventName),
@@ -369,28 +367,28 @@ describe("GC Telemetry Tracker", () => {
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: nodes[1],
+						id: tagAsCodeArtifact(nodes[1]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: nodes[1],
+						id: tagAsCodeArtifact(nodes[1]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: loadedEventName,
 						timeout,
-						id: nodes[2],
+						id: tagAsCodeArtifact(nodes[2]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
 					{
 						eventName: changedEventName,
 						timeout,
-						id: nodes[2],
+						id: tagAsCodeArtifact(nodes[2]),
 						pkg: eventPkg,
 						createContainerRuntimeVersion: pkgVersion,
 					},
@@ -405,9 +403,9 @@ describe("GC Telemetry Tracker", () => {
 						{
 							eventName: revivedEventName,
 							timeout,
-							id: nodes[2],
+							id: tagAsCodeArtifact(nodes[2]),
 							pkg: eventPkg,
-							fromId: nodes[0],
+							fromId: tagAsCodeArtifact(nodes[0]),
 						},
 					],
 					"revived event not as expected",
@@ -431,7 +429,11 @@ describe("GC Telemetry Tracker", () => {
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				if (expectDeleteLogs && isSummarizerClient) {
-					expectedEvents.push({ eventName: deleteEventName, timeout, id: nodes[2] });
+					expectedEvents.push({
+						eventName: deleteEventName,
+						timeout,
+						id: tagAsCodeArtifact(JSON.stringify([nodes[2]])),
+					});
 				} else {
 					assert(
 						!mockLogger.events.some((event) => event.eventName === deleteEventName),
@@ -439,8 +441,18 @@ describe("GC Telemetry Tracker", () => {
 					);
 				}
 				expectedEvents.push(
-					{ eventName: loadedEventName, timeout, id: nodes[2], pkg: eventPkg },
-					{ eventName: changedEventName, timeout, id: nodes[2], pkg: eventPkg },
+					{
+						eventName: loadedEventName,
+						timeout,
+						id: tagAsCodeArtifact(nodes[2]),
+						pkg: eventPkg,
+					},
+					{
+						eventName: changedEventName,
+						timeout,
+						id: tagAsCodeArtifact(nodes[2]),
+						pkg: eventPkg,
+					},
 				);
 				assertMatchEvents(expectedEvents, "all events not as expected");
 
@@ -486,9 +498,9 @@ describe("GC Telemetry Tracker", () => {
 							{
 								eventName: revivedEventName,
 								timeout,
-								id: nodes[2],
+								id: tagAsCodeArtifact(nodes[2]),
 								pkg: eventPkg,
-								fromId: nodes[1],
+								fromId: tagAsCodeArtifact(nodes[1]),
 							},
 						],
 						"revived event not as expected",
@@ -585,9 +597,9 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("logs gcUnknownOutboundReferences when there are unknown data store references", async () => {
-			const gcNodeId = nodes[0];
-			const gcRoutes = [nodes[2], nodes[3]];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const id = nodes[0];
+			const routes = [nodes[2], nodes[3]];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -600,8 +612,8 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						gcNodeId,
-						gcRoutes: JSON.stringify(gcRoutes),
+						id: tagAsCodeArtifact(id),
+						routes: tagAsCodeArtifact(JSON.stringify(routes)),
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected",
@@ -609,12 +621,12 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("logs gcUnknownOutboundReferences when there are multiple unknown data store references", async () => {
-			const gcNodeId1 = nodes[0];
-			const gcRoutes1 = [nodes[2], nodes[3]];
-			const gcNodeId2 = nodes[3];
-			const gcRoutes2 = [nodes[1], nodes[2]];
-			currentGCData.gcNodes[gcNodeId1] = gcRoutes1;
-			currentGCData.gcNodes[gcNodeId2] = gcRoutes2;
+			const id1 = nodes[0];
+			const routes1 = [nodes[2], nodes[3]];
+			const id2 = nodes[3];
+			const routes2 = [nodes[1], nodes[2]];
+			currentGCData.gcNodes[id1] = routes1;
+			currentGCData.gcNodes[id2] = routes2;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -627,13 +639,13 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						gcNodeId: gcNodeId1,
-						gcRoutes: JSON.stringify(gcRoutes1),
+						id: tagAsCodeArtifact(id1),
+						routes: tagAsCodeArtifact(JSON.stringify(routes1)),
 					},
 					{
 						eventName: unknownReferenceEventName,
-						gcNodeId: gcNodeId2,
-						gcRoutes: JSON.stringify(gcRoutes2),
+						id: tagAsCodeArtifact(id2),
+						routes: tagAsCodeArtifact(JSON.stringify(routes2)),
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected",
@@ -641,10 +653,10 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("logs gcUnknownOutboundReferences when there are unknown blob references", async () => {
-			const gcNodeId = nodes[0];
+			const id = nodes[0];
 			// Id of type `/_blobs/id1 is treated as a blob node.
-			const gcRoutes = ["/_blobs/id1"];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const routes = ["/_blobs/id1"];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -657,8 +669,8 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: unknownReferenceEventName,
-						gcNodeId,
-						gcRoutes: JSON.stringify(gcRoutes),
+						id: tagAsCodeArtifact(id),
+						routes: tagAsCodeArtifact(JSON.stringify(routes)),
 					},
 				],
 				"gcUnknownOutboundReferences event not logged as expected for blob nodes",
@@ -667,9 +679,9 @@ describe("GC Telemetry Tracker", () => {
 
 		it("does not log gcUnknownOutboundReferences for back-routes (ex: DDS to data store)", async () => {
 			// Id of type `/id1/id2 is treated as a sub-data store (DDS) node.
-			const gcNodeId = `${nodes[1]}/dds`;
-			const gcRoutes = [nodes[1]];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const id = `${nodes[1]}/dds`;
+			const routes = [nodes[1]];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -689,10 +701,10 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("does not log gcUnknownOutboundReferences for sub-dataStore routes (ex: to DDS)", async () => {
-			const gcNodeId = nodes[1];
+			const id = nodes[1];
 			// Id of type `/id1/id2 is treated as a sub-data store (DDS) node.
-			const gcRoutes = [`${nodes[1]}/dds`];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const routes = [`${nodes[1]}/dds`];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,
@@ -712,10 +724,10 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("does not log gcUnknownOutboundReferences for other routes (ex: unknown routes)", async () => {
-			const gcNodeId = nodes[1];
+			const id = nodes[1];
 			// Id of type `/id1/id2/ids31` is treated as a other node type.
-			const gcRoutes = [`${nodes[1]}/ids2/ids3`];
-			currentGCData.gcNodes[gcNodeId] = gcRoutes;
+			const routes = [`${nodes[1]}/ids2/ids3`];
+			currentGCData.gcNodes[id] = routes;
 
 			telemetryTracker.logIfMissingExplicitReferences(
 				currentGCData,

@@ -194,7 +194,7 @@ export class FluidRepoBuild extends FluidRepo {
 
 	public createBuildGraph(options: ISymlinkOptions, buildTargetNames: string[]) {
 		return new BuildGraph(
-			this.packages.packages,
+			this.createPackageMap(),
 			buildTargetNames,
 			getFluidBuildConfig(this.resolvedRoot)?.tasks,
 			(pkg: Package) => {
