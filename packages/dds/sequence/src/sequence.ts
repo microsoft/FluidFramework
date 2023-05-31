@@ -35,6 +35,7 @@ import {
 	ReferenceType,
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
+	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -48,7 +49,7 @@ import {
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 
-import { DefaultMap } from "./defaultMap";
+import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
 import {
 	IntervalCollection,
@@ -219,6 +220,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new SequenceIntervalCollectionValueType(),
+			dataStoreRuntime.options,
 		);
 	}
 
@@ -307,8 +309,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
-		return this.client.createLocalReferencePosition(segment, offset, refType, properties);
+		return this.client.createLocalReferencePosition(
+			segment,
+			offset,
+			refType,
+			properties,
+			slidingPreference,
+		);
 	}
 
 	/**
@@ -634,7 +643,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			);
 
 			const handled = this.intervalCollections.tryProcessMessage(
-				message.contents,
+				message.contents as IMapOperation,
 				local,
 				message,
 				localOpMetadata,

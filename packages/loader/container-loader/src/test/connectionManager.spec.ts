@@ -87,7 +87,7 @@ describe("connectionManager", () => {
 	it("reconnectOnError - exceptions invoke closeHandler", async () => {
 		// Arrange
 		const connectionManager = createConnectionManager();
-		connectionManager.connect();
+		connectionManager.connect("test:reconnectOnError");
 		const connection = await waitForConnection();
 
 		// Monkey patch connection to be undefined to trigger assert in reconnectOnError
@@ -111,7 +111,7 @@ describe("connectionManager", () => {
 	it("reconnectOnError - error, disconnect, and nack handling", async () => {
 		// Arrange
 		const connectionManager = createConnectionManager();
-		connectionManager.connect();
+		connectionManager.connect("test:reconnectOnError");
 		let connection = await waitForConnection();
 
 		// Act I - retryableError
@@ -235,7 +235,7 @@ describe("connectionManager", () => {
 
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, { readonly: undefined });
 
-			connectionManager.connect();
+			connectionManager.connect("test");
 			assert.deepStrictEqual(connectionManager.readOnlyInfo, {
 				readonly: true,
 				forced: false,

@@ -107,6 +107,7 @@ declare function get_current_EnumDeclaration_CommonProperties():
 declare function use_old_EnumDeclaration_CommonProperties(
     use: TypeOnly<old.CommonProperties>);
 use_old_EnumDeclaration_CommonProperties(
+    // @ts-expect-error compatibility expected to be broken
     get_current_EnumDeclaration_CommonProperties());
 
 /*
