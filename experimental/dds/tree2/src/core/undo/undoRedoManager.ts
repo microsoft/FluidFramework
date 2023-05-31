@@ -214,10 +214,12 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			return;
 		}
 
-		const undoables = new Map<RevisionTag, GraphCommit<TChange>>();
-		const redoables = new Map<RevisionTag, GraphCommit<TChange>>();
+		// Rebuild the reversible commit trees off of the undo redo manager of the branch
+		// that was rebased onto.
+		let newHeadUndoable = baseUndoRedoManager.headUndoable;
+		let newHeadRedoable = baseUndoRedoManager.headRedoable;
 
-		// Distinguish which reversible stack each new commit is in
+		// Distinguish which reversible stack each commit is in and add it to the stack.
 		for (const commit of newCommits) {
 			const type = originalUndoRedoManager.commitTypes.get(commit.revision);
 			if (type !== undefined) {
@@ -225,39 +227,24 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 					type === UndoRedoManagerCommitType.Undoable ||
 					type === UndoRedoManagerCommitType.Redo
 				) {
-					undoables.set(commit.revision, commit);
+					newHeadUndoable = {
+						commit,
+						parent: newHeadUndoable,
+					};
 				} else if (
 					type === UndoRedoManagerCommitType.Redoable ||
 					type === UndoRedoManagerCommitType.Undo
 				) {
-					redoables.set(commit.revision, commit);
+					newHeadRedoable = {
+						commit,
+						parent: newHeadRedoable,
+					};
 				}
 			}
 		}
 
-		this.replaceReversibleCommits(undoables, this.headUndoableCommit);
-		this.replaceReversibleCommits(redoables, this.headRedoableCommit);
-	}
-
-	/**
-	 * Replaces the commits in the provided reversible commit tree with the new commits with matching revisions.
-	 */
-	private replaceReversibleCommits(
-		newCommits: Map<RevisionTag, GraphCommit<TChange>>,
-		headReversibleCommit?: ReversibleCommit<TChange>,
-	) {
-		let currentReversible = headReversibleCommit;
-		while (currentReversible !== undefined && newCommits.size !== 0) {
-			const { revision } = currentReversible.commit;
-			const commit = newCommits.get(revision);
-
-			if (commit !== undefined) {
-				currentReversible.commit = commit;
-				newCommits.delete(revision);
-			}
-
-			currentReversible = currentReversible.parent;
-		}
+		this.headUndoableCommit = newHeadUndoable;
+		this.headRedoableCommit = newHeadRedoable;
 	}
 }
 
