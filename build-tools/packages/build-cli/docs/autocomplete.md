@@ -14,7 +14,7 @@ USAGE
   $ flub autocomplete [SHELL] [-r]
 
 ARGUMENTS
-  SHELL  shell type
+  SHELL  (zsh|bash|powershell) Shell type
 
 FLAGS
   -r, --refresh-cache  Refresh cache (ignores displaying instructions)
@@ -29,7 +29,9 @@ EXAMPLES
 
   $ flub autocomplete zsh
 
+  $ flub autocomplete powershell
+
   $ flub autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.1.3/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.3.0/src/commands/autocomplete/index.ts)_
