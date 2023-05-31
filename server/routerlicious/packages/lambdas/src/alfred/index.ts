@@ -241,6 +241,8 @@ export function configureWebSocketServices(
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
 
+        let connectDocumentP: Promise<void> | undefined;
+
 		// Timer to check token expiry for this socket connection
 		let expirationTimer: NodeJS.Timer | undefined;
 
@@ -607,12 +609,15 @@ export function configureWebSocketServices(
 			const driverVersion: string | undefined = userAgentInfo.driverVersion;
 			const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
 			connectMetric.setProperties({
-				...getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId),
+				...getLumberBaseProperties(
+                    connectionMessage.id,
+                    connectionMessage.tenantId,
+                ),
 				[CommonProperties.clientDriverVersion]: driverVersion,
 			});
 
-			connectDocument(connectionMessage).then(
-				(message) => {
+			connectDocumentP = connectDocument(connectionMessage)
+				.then((message) => {
 					socket.emit("connect_document_success", message.connection);
 					const room = roomMap.get(message.connection.clientId);
 					if (room) {
@@ -630,15 +635,14 @@ export function configureWebSocketServices(
 						[CommonProperties.clientType]: message.details.details?.type,
 					});
 					connectMetric.success(`Connect document successful`);
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					socket.emit("connect_document_error", error);
 					if (error?.code !== undefined) {
 						connectMetric.setProperty(CommonProperties.errorCode, error.code);
 					}
 					connectMetric.error(`Connect document failed`, error);
-				},
-			);
+				});
 		});
 
 		// Message sent when a new operation is submitted to the router
@@ -839,6 +843,12 @@ export function configureWebSocketServices(
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
+            if (connectDocumentP) {
+                // Wait for document connection to finish before disconnecting.
+                // If disconnect fires before roomMap or connectionsMap are updated, we can be left with
+                // hanging connections and clients.
+                await connectDocumentP.catch(() => {});
+            }
 			clearExpirationTimer();
 			const removeAndStoreP: Promise<void>[] = [];
 			// Send notification messages for all client IDs in the connection map
