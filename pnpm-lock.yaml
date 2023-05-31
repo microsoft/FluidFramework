@@ -8991,6 +8991,9 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -9439,6 +9442,9 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -12715,6 +12721,9 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -16614,6 +16623,9 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../odsp-doclib-utils

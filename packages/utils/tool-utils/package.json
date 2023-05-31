@@ -65,6 +65,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/protocol-base": "^0.1039.1000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
