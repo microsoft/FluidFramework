@@ -80,9 +80,13 @@ export type IntervalRevertible =
 
 type TypedRevertible<T extends IntervalRevertible["event"]> = IntervalRevertible & { event: T };
 
-function getId(interval: SequenceInterval): string {
+function getUpdatedIdFromInterval(interval: SequenceInterval): string {
 	const maybeId = interval.getIntervalId();
-	return idMap.get(maybeId) ?? maybeId;
+	return getUpdatedId(maybeId);
+}
+
+function getUpdatedId(intervalId: string): string {
+	return idMap.get(intervalId) ?? intervalId;
 }
 
 /**
@@ -319,7 +323,7 @@ function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.ADD>,
 ) {
-	const id = getId(revertible.interval);
+	const id = getUpdatedIdFromInterval(revertible.interval);
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	string.getIntervalCollection(label).removeIntervalById(id);
 }
@@ -338,7 +342,7 @@ function revertLocalDelete(
 
 	idMap.forEach((newId, oldId) => {
 		if (intervalId === newId) {
-			idMap.set(oldId, getId(int));
+			idMap.set(oldId, getUpdatedIdFromInterval(int));
 		}
 	});
 	idMap.set(intervalId, int.getIntervalId());
@@ -352,7 +356,7 @@ function revertLocalChange(
 	revertible: TypedRevertible<typeof IntervalOpType.CHANGE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
-	const id = getId(revertible.interval);
+	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	string.getIntervalCollection(label).change(id, start, end);
@@ -366,7 +370,7 @@ function revertLocalPropertyChanged(
 	revertible: TypedRevertible<typeof IntervalOpType.PROPERTY_CHANGED>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
-	const id = getId(revertible.interval);
+	const id = getUpdatedIdFromInterval(revertible.interval);
 	const newProps = revertible.propertyDeltas;
 	string.getIntervalCollection(label).changeProperties(id, newProps);
 }
@@ -428,7 +432,8 @@ function revertLocalSequenceRemove(
 
 	revertible.intervals.forEach((intervalInfo) => {
 		const intervalCollection = sharedString.getIntervalCollection(intervalInfo.label);
-		const interval = intervalCollection.getIntervalById(intervalInfo.intervalId);
+		const intervalId = getUpdatedId(intervalInfo.intervalId);
+		const interval = intervalCollection.getIntervalById(intervalId);
 		if (interval !== undefined) {
 			const newStart = newEndpointPosition(
 				intervalInfo.startOffset,
@@ -441,7 +446,7 @@ function revertLocalSequenceRemove(
 				sharedString,
 			);
 			if (newStart !== undefined || newEnd !== undefined) {
-				intervalCollection.change(intervalInfo.intervalId, newStart, newEnd);
+				intervalCollection.change(intervalId, newStart, newEnd);
 			}
 		}
 	});
