@@ -29,7 +29,7 @@ import {
 	MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
 
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
@@ -183,6 +183,13 @@ export interface DDSFuzzModel<
 	) => void;
 }
 
+export interface DDSFuzzHarnessEvents {
+	/**
+	 * Raised for each non-summarizer client created during fuzz test execution.
+	 */
+	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
+}
+
 export interface DDSFuzzSuiteOptions {
 	/**
 	 * Number of tests to generate for correctness modes (which are run in the PR gate).
@@ -221,6 +228,29 @@ export interface DDSFuzzSuiteOptions {
 		 */
 		clientAddProbability: number;
 	};
+
+	/**
+	 * Event emitter which allows hooking into interesting points of DDS harness execution.
+	 * Test authors that want to subscribe to any of these events should create a `TypedEventEmitter`,
+	 * do so, and pass it in when creating the suite.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+	 * emitter.on("clientCreate", (client) => {
+	 *     // Casting is necessary as the event typing isn't parameterized with each DDS type.
+	 *     const myDDS = client.channel as MyDDSType;
+	 *     // Do what you want with `myDDS`, e.g. subscribe to change events, add logging, etc.
+	 * });
+	 * const options = {
+	 *     ...defaultDDSFuzzSuiteOptions,
+	 *     emitter,
+	 * };
+	 * createDDSFuzzSuite(model, options);
+	 * ```
+	 */
+	emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
 
 	/**
 	 * Strategy for validating eventual consistency of DDSes.
@@ -276,6 +306,7 @@ export interface DDSFuzzSuiteOptions {
 
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
+	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
 	only: [],
 	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
@@ -325,6 +356,7 @@ export function mixinNewClient<
 				state.summarizerClient,
 				model.factory,
 				op.addedClientId,
+				options,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -562,6 +594,7 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	summarizerClient: Client<TChannelFactory>,
 	factory: TChannelFactory,
 	clientId: string,
+	options: Pick<DDSFuzzSuiteOptions, "emitter">,
 ): Promise<Client<TChannelFactory>> {
 	const { summary } = summarizerClient.channel.getAttachSummary();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
@@ -584,6 +617,7 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 		channel,
 		containerRuntime,
 	};
+	options.emitter.emit("clientCreate", newClient);
 	return newClient;
 }
 
@@ -621,6 +655,7 @@ export async function runTestForSeed<
 				summarizerClient,
 				model.factory,
 				makeFriendlyClientId(random, index),
+				options,
 			),
 		),
 	);
