@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-binder",
-	"version": "2.0.0-internal.4.3.0",
+	"version": "2.0.0-internal.4.4.0",
 	"description": "Data Binder for Fluid PropertyDDS",
 	"keywords": [],
 	"homepage": "https://fluidframework.com",
@@ -112,6 +112,13 @@
 		"typedoc": "^0.12.0",
 		"typescript": "~4.5.5",
 		"webpack": "^5.82.0"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"gen:tscdef": [
+				"^tsc"
+			]
+		}
 	},
 	"jest-junit": {
 		"outputDirectory": "nyc",

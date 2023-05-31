@@ -14,29 +14,25 @@ import {
 import { getFluidBuildConfig } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "./monoRepo";
-import { Package, Packages, ScriptDependencies } from "./npmPackage";
+import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
+import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
 
 /**
  * Fluid build configuration that is expected in the repo-root package.json.
  */
 export interface IFluidBuildConfig {
 	/**
+	 * Build tasks and dependencies definitions
+	 */
+	tasks?: TaskDefinitionsOnDisk;
+
+	/**
 	 * A mapping of package or release group names to metadata about the package or release group. This can only be
-	 * configured in the rrepo-wide Fluid build config (the repo-root package.json).
+	 * configured in the repo-wide Fluid build config (the repo-root package.json).
 	 */
 	repoPackages: {
 		[name: string]: IFluidRepoPackageEntry;
-	};
-
-	/**
-	 * dependencies defined here will be incorporated into fluid-build's build graph. This can be used to manually
-	 * fluid-build about dependencies it doesn't automatically detect.
-	 */
-	buildDependencies?: {
-		merge?: {
-			[key: string]: ScriptDependencies;
-		};
 	};
 
 	/**
@@ -139,6 +135,13 @@ export type PreviousVersionStyle =
 export interface PolicyConfig {
 	additionalLockfilePaths?: string[];
 	pnpmSinglePackageWorkspace?: string[];
+	fluidBuildTasks: {
+		tsc: {
+			ignoreTasks: string[];
+			ignoreDependencies: string[];
+			ignoreDevDependencies: string[];
+		};
+	};
 	dependencies?: {
 		requireTilde?: string[];
 	};
@@ -247,7 +250,7 @@ export class FluidRepo {
 			}
 			if (typeof item === "string") {
 				log?.verbose(
-					`No defaultinterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
+					`No defaultInterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
 				);
 				return {
 					directory: path.join(resolvedRoot, item),

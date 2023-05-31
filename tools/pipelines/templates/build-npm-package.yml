@@ -517,7 +517,6 @@ stages:
 
             - task: Bash@3
               displayName: Write bundle sizes measurements to Aria/Kusto
-              condition: succeededOrFailed()
               inputs:
                 targetType: 'inline'
                 workingDirectory: ${{ variables.toolAbsolutePath }}

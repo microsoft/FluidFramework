@@ -27,7 +27,6 @@ export {
 export { MarkListFactory } from "./markListFactory";
 export { toDelta } from "./toDelta";
 export {
-	getAttachLength,
 	getInputLength,
 	getOutputLength,
 	isAttach,

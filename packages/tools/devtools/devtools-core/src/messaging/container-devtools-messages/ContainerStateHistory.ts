@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId } from "../../CommonInterfaces";
+import { HasContainerKey } from "../../CommonInterfaces";
 import { ConnectionStateChangeLogEntry } from "../../Logs";
 import { IDevtoolsMessage } from "../Messages";
 
@@ -25,7 +25,7 @@ export namespace ContainerStateHistory {
 	 *
 	 * @internal
 	 */
-	export interface MessageData extends HasContainerId {
+	export interface MessageData extends HasContainerKey {
 		/**
 		 * The Container's connection state history.
 		 */
