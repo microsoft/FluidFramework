@@ -14,15 +14,17 @@ import {
 	FieldStoredSchema,
 	fail,
 	Any,
+	TreeSchemaIdentifier,
+	FieldSchema,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
-import personSchema from "./personPropertyDDSSchema";
+import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas";
 
 // TODO: improve & enhance tests (recursive schemas, edge cases, contexts...)
 describe("schema converter", () => {
 	beforeAll(() => {
-		PropertyFactory.register(Object.values(personSchema));
+		PropertyFactory.register(Object.values(mockPropertyDDSSchemas));
 	});
 
 	it(`fails on a non-primitive type w/o properties and not inheriting from NodeProperty`, () => {
@@ -151,5 +153,45 @@ describe("schema converter", () => {
 			new Set(["String", Any]),
 		);
 		expect([...fullSchemaData3.root.schema.allowedTypes]).toMatchObject([Any]);
+	});
+
+	it(`can convert property w/o typeid into field of type Any`, () => {
+		const extraTypeName: TreeSchemaIdentifier = brand("Test:ExtraType-1.0.0");
+		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+			FieldKinds.optional,
+			Any,
+			new Set([extraTypeName]),
+		);
+		const extraTypeSchema =
+			fullSchemaData.treeSchema.get(extraTypeName) ?? fail("expected tree schema");
+		const anyField =
+			(extraTypeSchema?.localFields.get(brand("any")) as FieldSchema) ??
+			fail("expected field schema");
+		expect(anyField?.kind).toMatchObject(FieldKinds.optional);
+		expect(anyField.types).toBeUndefined();
+		expect([...anyField.allowedTypes]).toMatchObject([Any]);
+	});
+
+	it(`can use extra schemas`, () => {
+		// note: "Test:ExtraType-1.0.0" does not belong to any inheritance chain i.e.
+		// it is not included into the full schema automatically
+		const extraTypeName: TreeSchemaIdentifier = brand("Test:ExtraType-1.0.0");
+		// provided no extra types
+		{
+			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				FieldKinds.optional,
+				Any,
+			);
+			expect(fullSchemaData.treeSchema.get(extraTypeName)).toBeUndefined();
+		}
+		// with extra types
+		{
+			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				FieldKinds.optional,
+				Any,
+				new Set([extraTypeName]),
+			);
+			expect(fullSchemaData.treeSchema.get(extraTypeName)).not.toBeUndefined();
+		}
 	});
 });

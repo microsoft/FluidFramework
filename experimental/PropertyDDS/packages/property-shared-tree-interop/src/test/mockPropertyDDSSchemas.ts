@@ -4,6 +4,12 @@
  */
 
 export default {
+	user: {
+		typeid: "Test:ExtraType-1.0.0",
+		properties: [
+			{ id: "any", optional: true },
+		],
+	},
 	geodesicLocation: {
 		typeid: "Test:GeodesicLocation-1.0.0",
 		properties: [

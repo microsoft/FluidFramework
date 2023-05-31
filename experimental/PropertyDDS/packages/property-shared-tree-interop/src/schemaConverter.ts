@@ -136,54 +136,56 @@ function buildTreeSchema(
 			const cache: { treeSchema?: TreeSchema } = {};
 			treeSchemaMap.set(typeid, () => cache.treeSchema as TreeSchema);
 			const local = {};
-			const schemaTemplate = PropertyFactory.getTemplate(typeid);
-			if (schemaTemplate === undefined) {
-				fail(`Unknown typeid "${typeid}"`);
-			}
-			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
-			for (const typeIdInInheritanceChain of inheritanceChain) {
-				const inheritedSchema = buildTreeSchema(
-					builder,
-					treeSchemaMap,
-					allChildrenByType,
-					typeIdInInheritanceChain,
-				);
-				(typeof inheritedSchema === "function"
-					? inheritedSchema()
-					: inheritedSchema
-				).localFields.forEach((field, key) => (local[key] = field));
-			}
 			const extraLocalFields = PropertyFactory.inheritsFrom(typeid, nodePropertyType)
 				? SchemaBuilder.fieldOptional(Any)
 				: undefined;
-			if (schemaTemplate.properties !== undefined) {
-				for (const property of schemaTemplate.properties) {
-					if (property.properties && !isIgnoreNestedProperties(property.typeid)) {
-						fail(
-							`Nested properties are not supported yet (property "${property.id}" of type "${typeid}")`,
-						);
-					} else {
-						const currentTypeid =
-							property.context && property.context !== singleContext
-								? TypeIdHelper.createSerializationTypeId(
-										property.typeid ?? "",
-										property.context,
-										false,
-								  )
-								: property.typeid;
-						local[property.id] = buildFieldSchema(
-							builder,
-							treeSchemaMap,
-							allChildrenByType,
-							property.optional ? FieldKinds.optional : FieldKinds.value,
-							currentTypeid,
-						);
+			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
+			inheritanceChain.push(typeid);
+			for (const typeIdInInheritanceChain of inheritanceChain) {
+				const schemaTemplate = PropertyFactory.getTemplate(typeIdInInheritanceChain);
+				if (schemaTemplate === undefined) {
+					fail(`Unknown typeid "${typeIdInInheritanceChain}"`);
+				}
+				if (typeIdInInheritanceChain !== typeid) {
+					const built = buildTreeSchema(
+						builder,
+						treeSchemaMap,
+						allChildrenByType,
+						typeIdInInheritanceChain,
+					);
+					if (typeof built === "function" && built() === undefined) {
+						debugger
 					}
 				}
-			} else if (!extraLocalFields) {
-				fail(
-					`"${typeid}" is not primitive, contains no properties and does not inherit from "${nodePropertyType}".`,
-				);
+				if (schemaTemplate.properties !== undefined) {
+					for (const property of schemaTemplate.properties) {
+						if (property.properties && !isIgnoreNestedProperties(property.typeid)) {
+							fail(
+								`Nested properties are not supported yet (property "${property.id}" of type "${typeIdInInheritanceChain}")`,
+							);
+						} else {
+							const currentTypeid =
+								property.context && property.context !== singleContext
+									? TypeIdHelper.createSerializationTypeId(
+											property.typeid ?? "",
+											property.context,
+											false,
+									  )
+									: property.typeid ?? Any;
+							local[property.id] = buildFieldSchema(
+								builder,
+								treeSchemaMap,
+								allChildrenByType,
+								property.optional ? FieldKinds.optional : FieldKinds.value,
+								currentTypeid,
+							);
+						}
+					}
+				} else if (!extraLocalFields) {
+					fail(
+						`"${typeid}" is not primitive, contains no properties and does not inherit from "${nodePropertyType}".`,
+					);
+				}
 			}
 			cache.treeSchema = builder.object(typeid, {
 				local,
