@@ -12,8 +12,8 @@ import {
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
+
 /**
- * @deprecated - moved to `@fluidframework/protocol-definitions#blob.ts`
  * Take a summary object and returns its git mode.
  *
  * @param value - summary object
@@ -33,7 +33,6 @@ export function getGitMode(value: SummaryObject): string {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/protocol-definitions#blob.ts`
  * Take a summary object and returns its type.
  *
  * @param value - summary object
@@ -54,7 +53,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/protocol-definitions#blob.ts`
+ * @deprecated - moved to `@fluidframework/container-definitions#blob.ts`
  * Basic implementation of a blob ITreeEntry
  */
 export class BlobTreeEntry {
@@ -78,7 +77,7 @@ export class BlobTreeEntry {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/protocol-definitions#blob.ts`
+ * @deprecated - moved to `@fluidframework/container-definitions#blob.ts`
  * Basic implementation of a tree ITreeEntry
  */
 export class TreeTreeEntry {
@@ -94,7 +93,7 @@ export class TreeTreeEntry {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/protocol-definitions#blob.ts`
+ * @deprecated - moved to `@fluidframework/container-definitions#blob.ts`
  * Basic implementation of an attachment ITreeEntry
  */
 export class AttachmentTreeEntry {
