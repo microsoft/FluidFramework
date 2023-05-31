@@ -24,7 +24,6 @@ import {
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createDocument } from "./localCreateDocument";
 
 const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
@@ -95,7 +94,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 					"Insufficient constructor parameters. An ILocalDeltaConnectionServer and IResolvedUrl required",
 				);
 			}
-			ensureFluidResolvedUrl(this.resolvedUrl);
 			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 			const version = await this.getVersions(this.id, 1);
 			return version[0].id;
