@@ -241,6 +241,7 @@ export function configureWebSocketServices(
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
 
+        let connectDocumentComplete: boolean = false;
         let connectDocumentP: Promise<void> | undefined;
 
 		// Timer to check token expiry for this socket connection
@@ -642,7 +643,10 @@ export function configureWebSocketServices(
 						connectMetric.setProperty(CommonProperties.errorCode, error.code);
 					}
 					connectMetric.error(`Connect document failed`, error);
-				});
+				})
+                .finally(() => {
+                    connectDocumentComplete = true;
+                });
 		});
 
 		// Message sent when a new operation is submitted to the router
@@ -843,7 +847,8 @@ export function configureWebSocketServices(
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
-            if (connectDocumentP) {
+            if (!connectDocumentComplete && connectDocumentP) {
+                Lumberjack.warning(`Socket connection disconnected before ConnectDocument completed.`);
                 // Wait for document connection to finish before disconnecting.
                 // If disconnect fires before roomMap or connectionsMap are updated, we can be left with
                 // hanging connections and clients.
