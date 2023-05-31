@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { ReferenceType } from "@fluidframework/merge-tree";
+import { ReferenceType, SlidingPreference } from "@fluidframework/merge-tree";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
@@ -15,6 +15,7 @@ import { SharedStringFactory } from "../sequenceFactory";
 import {
 	IntervalCollection,
 	intervalLocatorFromEndpoint,
+	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
 } from "../intervalCollection";
@@ -70,6 +71,7 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	dataStoreRuntime.local = false;
+	dataStoreRuntime.options = { intervalStickinessEnabled: true };
 	const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime1.createDeltaConnection(),
@@ -81,6 +83,24 @@ async function getSingleIntervalSummary(): Promise<{ summary: ISummaryTree; seq:
 	sharedString.insertText(0, "ABCDEF");
 	const collection = sharedString.getIntervalCollection("test");
 	collection.add(0, 2, IntervalType.SlideOnRemove);
+	const collectionStartSticky = sharedString.getIntervalCollection("start-sticky");
+	const startStickyInterval = collectionStartSticky.add(
+		0,
+		2,
+		IntervalType.SlideOnRemove,
+		undefined,
+		IntervalStickiness.START,
+	);
+	assert.equal(startStickyInterval.stickiness, IntervalStickiness.START);
+	const collectionEndSticky = sharedString.getIntervalCollection("end-sticky");
+	const endStickyInterval = collectionEndSticky.add(
+		0,
+		2,
+		IntervalType.SlideOnRemove,
+		undefined,
+		IntervalStickiness.END,
+	);
+	assert.equal(endStickyInterval.stickiness, IntervalStickiness.END);
 	containerRuntimeFactory.processAllMessages();
 	const { summary } = await sharedString.summarize();
 	return { summary, seq: containerRuntimeFactory.sequenceNumber };
@@ -111,6 +131,28 @@ describe("IntervalCollection snapshotting", () => {
 		assert(interval.start.refType === (ReferenceType.RangeBegin | ReferenceType.SlideOnRemove));
 		assert(interval.end.refType === (ReferenceType.RangeEnd | ReferenceType.SlideOnRemove));
 		/* eslint-enable no-bitwise */
+	});
+
+	it("start stickiness is persisted", async () => {
+		const sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);
+		const collection = sharedString.getIntervalCollection("start-sticky");
+		const intervals = Array.from(collection);
+		assert.equal(intervals.length, 1);
+		const interval = intervals[0] ?? assert.fail();
+		assert.equal(interval.stickiness, IntervalStickiness.START);
+		assert.equal(interval.start.slidingPreference, SlidingPreference.BACKWARD);
+		assert.equal(interval.end.slidingPreference, SlidingPreference.BACKWARD);
+	});
+
+	it("end stickiness is stored as undefined", async () => {
+		const sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);
+		const collection = sharedString.getIntervalCollection("end-sticky");
+		const intervals = Array.from(collection);
+		assert.equal(intervals.length, 1);
+		const interval = intervals[0] ?? assert.fail();
+		assert.equal(interval.stickiness, IntervalStickiness.END);
+		assert.equal(interval.start.slidingPreference, SlidingPreference.FORWARD);
+		assert.equal(interval.end.slidingPreference, SlidingPreference.FORWARD);
 	});
 
 	it("supports detached intervals", async () => {
