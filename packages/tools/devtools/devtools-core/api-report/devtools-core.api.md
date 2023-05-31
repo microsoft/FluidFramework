@@ -367,7 +367,7 @@ export interface IMessageRelayEvents<TMessage extends ISourcedDevtoolsMessage = 
 
 // @internal
 export interface InboundHandlers {
-    [type: string]: (message: ISourcedDevtoolsMessage) => boolean;
+    [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
 // @public

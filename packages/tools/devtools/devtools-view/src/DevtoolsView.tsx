@@ -155,7 +155,7 @@ export function DevtoolsView(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
+			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
 				return true;
@@ -243,7 +243,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerList.MessageType]: (untypedMessage) => {
+			[ContainerList.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerList.Message;
 				setContainers(message.data.containers);
 				return true;
