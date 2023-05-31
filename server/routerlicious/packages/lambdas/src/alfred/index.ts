@@ -241,6 +241,9 @@ export function configureWebSocketServices(
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
 
+		let connectDocumentComplete: boolean = false;
+		let connectDocumentP: Promise<void> | undefined;
+
 		// Timer to check token expiry for this socket connection
 		let expirationTimer: NodeJS.Timer | undefined;
 
@@ -616,8 +619,8 @@ export function configureWebSocketServices(
 				[CommonProperties.roomClients]: JSON.stringify(Array.from(roomMap.keys())),
 			});
 
-			connectDocument(connectionMessage).then(
-				(message) => {
+			connectDocumentP = connectDocument(connectionMessage)
+				.then((message) => {
 					socket.emit("connect_document_success", message.connection);
 					const room = roomMap.get(message.connection.clientId);
 					if (room) {
@@ -635,15 +638,17 @@ export function configureWebSocketServices(
 						[CommonProperties.clientType]: message.details.details?.type,
 					});
 					connectMetric.success(`Connect document successful`);
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					socket.emit("connect_document_error", error);
 					if (error?.code !== undefined) {
 						connectMetric.setProperty(CommonProperties.errorCode, error.code);
 					}
 					connectMetric.error(`Connect document failed`, error);
-				},
-			);
+				})
+				.finally(() => {
+					connectDocumentComplete = true;
+				});
 		});
 
 		// Message sent when a new operation is submitted to the router
@@ -844,6 +849,15 @@ export function configureWebSocketServices(
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
+			if (!connectDocumentComplete && connectDocumentP) {
+				Lumberjack.warning(
+					`Socket connection disconnected before ConnectDocument completed.`,
+				);
+				// Wait for document connection to finish before disconnecting.
+				// If disconnect fires before roomMap or connectionsMap are updated, we can be left with
+				// hanging connections and clients.
+				await connectDocumentP.catch(() => {});
+			}
 			const disconnectMetric = Lumberjack.newLumberMetric(LumberEventName.DisconnectDocument);
 			disconnectMetric.setProperties({
 				[CommonProperties.connectionCount]: connectionsMap.size,
@@ -867,7 +881,7 @@ export function configureWebSocketServices(
 						`Disconnect of ${clientId}`,
 						getLumberBaseProperties(connection.documentId, connection.tenantId),
 					);
-					// eslint-disable-next-line @typescript-eslint/no-floating-promises
+
 					connection.disconnect().catch((error) => {
 						const errorMsg = `Failed to disconnect client ${clientId} from orderer connection.`;
 						Lumberjack.error(
