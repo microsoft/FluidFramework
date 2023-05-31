@@ -1,6 +1,6 @@
 ---
 "@fluidframework/sequence": minor
-"@fluidframework/merge-tree": patch
+"@fluidframework/merge-tree": minor
 ---
 
 initial implementation of interval stickiness, behind feature flag "intervalStickinessEnabled"

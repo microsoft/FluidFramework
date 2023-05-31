@@ -45,7 +45,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@changesets/cli": "^2.26.0",
+		"@changesets/cli": "^2.26.1",
 		"@changesets/types": "^5.2.1",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
