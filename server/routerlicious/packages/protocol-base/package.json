@@ -61,6 +61,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/gitresources": "workspace:*",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"events": "^3.1.0",
 		"lodash": "^4.17.21"
@@ -118,6 +119,18 @@
 				"backCompat": false
 			},
 			"RemovedInterfaceDeclaration_ILocalSequencedClient": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_AttachmentTreeEntry": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_BlobTreeEntry": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedClassDeclaration_TreeTreeEntry": {
 				"forwardCompat": false,
 				"backCompat": false
 			}

@@ -4,6 +4,7 @@
 
 ```ts
 
+import * as git from '@fluidframework/gitresources';
 import { IAttachment } from '@fluidframework/protocol-definitions';
 import { IBlob } from '@fluidframework/protocol-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
@@ -18,6 +19,7 @@ import { IQuorumProposalsEvents } from '@fluidframework/protocol-definitions';
 import { ISequencedClient } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
+import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -49,6 +51,9 @@ export class BlobTreeEntry {
     // (undocumented)
     readonly value: IBlob;
 }
+
+// @public
+export function buildGitTreeHeirarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
 
 // @public
 export function getGitMode(value: SummaryObject): string;

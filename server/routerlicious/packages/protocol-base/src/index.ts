@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { AttachmentTreeEntry, BlobTreeEntry, getGitMode, getGitType, TreeTreeEntry } from "./blobs";
+export { buildGitTreeHeirarchy, getGitMode, getGitType } from "./blobs";
 export { IProtocolHandler, IScribeProtocolState, ProtocolOpHandler } from "./protocol";
 export {
 	IQuorumSnapshot,

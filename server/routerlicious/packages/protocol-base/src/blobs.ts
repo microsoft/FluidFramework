@@ -2,12 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import * as git from "@fluidframework/gitresources";
 import {
 	FileMode,
-	IBlob,
-	IAttachment,
-	ITree,
-	TreeEntry,
+	ISnapshotTreeEx,
 	SummaryType,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
@@ -53,60 +51,43 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
- * @deprecated - moved to `@fluidframework/driver-utils#blob.ts`
- * Basic implementation of a blob ITreeEntry
+ * Build a tree hierarchy base on a flat tree
+ *
+ * @param flatTree - a flat tree
+ * @param blobsShaToPathCache - Map with blobs sha as keys and values as path of the blob.
+ * @param removeAppTreePrefix - Remove `.app/` from beginning of paths when present
+ * @returns the hierarchical tree
  */
-export class BlobTreeEntry {
-	public readonly mode = FileMode.File;
-	public readonly type = TreeEntry.Blob;
-	public readonly value: IBlob;
+export function buildGitTreeHeirarchy(
+	flatTree: git.ITree,
+	blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
+	removeAppTreePrefix = false,
+): ISnapshotTreeEx {
+	const lookup: { [path: string]: ISnapshotTreeEx } = {};
+	const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, trees: {} };
+	lookup[""] = root;
 
-	/**
-	 * Creates a blob ITreeEntry
-	 * @param path - path of entry
-	 * @param contents - blob contents
-	 * @param encoding - encoding of contents; defaults to utf-8
-	 */
-	constructor(
-		public readonly path: string,
-		contents: string,
-		encoding: "utf-8" | "base64" = "utf-8",
-	) {
-		this.value = { contents, encoding };
+	for (const entry of flatTree.tree) {
+		const entryPath = removeAppTreePrefix ? entry.path.replace(/^\.app\//, "") : entry.path;
+		const lastIndex = entryPath.lastIndexOf("/");
+		const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
+		const entryPathBase = entryPath.slice(lastIndex + 1);
+
+		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+		const node = lookup[entryPathDir];
+
+		// Add in either the blob or tree
+		if (entry.type === "tree") {
+			const newTree = { id: entry.sha, blobs: {}, commits: {}, trees: {} };
+			node.trees[decodeURIComponent(entryPathBase)] = newTree;
+			lookup[entryPath] = newTree;
+		} else if (entry.type === "blob") {
+			node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
+			blobsShaToPathCache.set(entry.sha, `/${entryPath}`);
+		} else {
+			throw new Error("Unknown entry type!!");
+		}
 	}
-}
 
-/**
- * @deprecated - moved to `@fluidframework/driver-utils#blob.ts`
- * Basic implementation of a tree ITreeEntry
- */
-export class TreeTreeEntry {
-	public readonly mode = FileMode.Directory;
-	public readonly type = TreeEntry.Tree;
-
-	/**
-	 * Creates a tree ITreeEntry
-	 * @param path - path of entry
-	 * @param value - subtree
-	 */
-	constructor(public readonly path: string, public readonly value: ITree) {}
-}
-
-/**
- * @deprecated - moved to `@fluidframework/driver-utils#blob.ts`
- * Basic implementation of an attachment ITreeEntry
- */
-export class AttachmentTreeEntry {
-	public readonly mode = FileMode.File;
-	public readonly type = TreeEntry.Attachment;
-	public readonly value: IAttachment;
-
-	/**
-	 * Creates an attachment ITreeEntry
-	 * @param path - path of entry
-	 * @param id - id of external blob attachment
-	 */
-	constructor(public readonly path: string, public readonly id: string) {
-		this.value = { id };
-	}
+	return root;
 }
