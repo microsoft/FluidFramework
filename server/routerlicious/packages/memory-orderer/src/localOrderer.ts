@@ -374,6 +374,7 @@ export class LocalOrderer implements IOrderer {
 			scribeMessagesCollection,
 			null /* deltaService */,
 			false /* getDeltasViaAlfred */,
+			false /* verifyLastOpPersistence */,
 			checkpointService,
 		);
 

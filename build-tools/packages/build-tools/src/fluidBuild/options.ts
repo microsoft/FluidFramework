@@ -30,7 +30,6 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	nohoist: boolean;
 	uninstall: boolean;
 	concurrency: number;
-	samples: boolean;
 	fix: boolean;
 	services: boolean;
 	worker: boolean;
@@ -57,7 +56,6 @@ export const options: FastBuildOptions = {
 	nohoist: false,
 	uninstall: false,
 	concurrency: os.cpus().length, // TODO: argument?
-	samples: true,
 	fix: false,
 	all: false,
 	server: false,
@@ -171,11 +169,6 @@ export function parseOptions(argv: string[]) {
 
 		if (arg === "-f" || arg === "--force") {
 			options.force = true;
-			continue;
-		}
-
-		if (arg === "--nosamples") {
-			options.samples = false;
 			continue;
 		}
 

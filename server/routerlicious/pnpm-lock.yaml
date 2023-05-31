@@ -1531,6 +1531,9 @@ importers:
       querystring:
         specifier: ^0.2.0
         version: 0.2.0
+      serialize-error:
+        specifier: ^8.1.0
+        version: 8.1.0
       socket.io:
         specifier: ^4.5.3
         version: 4.5.4

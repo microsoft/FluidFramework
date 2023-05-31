@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Type } from "@sinclair/typebox";
 import { unreachableCase } from "@fluidframework/common-utils";
 import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
 import { IJsonCodec, makeCodecFamily } from "../../codec";
@@ -122,5 +123,6 @@ function makeV0Codec<TNodeChange>(
 			}
 			return marks;
 		},
+		encodedSchema: Changeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }

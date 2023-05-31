@@ -3,47 +3,86 @@
  * Licensed under the MIT License.
  */
 
+import { Static, TAnySchema, Type } from "@sinclair/typebox";
+// TODO:
+// It is unclear if we would want to use the TypeBox compiler
+// (which generates code at runtime for maximum validation perf).
+// This might be an issue with security policies (ex: no eval) and/or more bundle size that we want.
+// We could disable validation or pull in a different validator (like ajv).
+// Only using its validation when testing is another option.
+// typebox documents using this internal module, so it should be ok to access.
+// eslint-disable-next-line import/no-internal-modules
+import { TypeCheck, TypeCompiler } from "@sinclair/typebox/compiler";
 import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
 	FieldKindIdentifier,
+	FieldKindIdentifierSchema,
 	GlobalFieldKey,
+	GlobalFieldKeySchema,
 	isGlobalFieldKey,
 	keyFromSymbol,
 	LocalFieldKey,
+	LocalFieldKeySchema,
+	RevisionTagSchema,
 	symbolFromKey,
 } from "../../core";
-import { brand, JsonCompatibleReadOnly, Mutable } from "../../util";
+import {
+	brand,
+	fail,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlySchema,
+	Mutable,
+} from "../../util";
 import { ICodecFamily, IJsonCodec, IMultiFormatCodec, makeCodecFamily } from "../../codec";
-import { ChangesetLocalId } from "./crossFieldQueries";
+import { ChangesetLocalIdSchema } from "./crossFieldQueries";
 import {
 	FieldChangeMap,
 	FieldChangeset,
 	ModularChangeset,
 	NodeChangeset,
-	NodeExistsConstraint,
 	RevisionInfo,
-	ValueChange,
-	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 
-/**
- * Format for encoding as json.
- */
-interface EncodedNodeChangeset {
-	valueChange?: ValueChange;
-	fieldChanges?: EncodedFieldChangeMap;
-	valueConstraint?: ValueConstraint;
-	nodeExistsConstraint?: NodeExistsConstraint;
+const EncodedValueChange = Type.Object(
+	{
+		revision: Type.Optional(RevisionTagSchema),
+		value: Type.Optional(JsonCompatibleReadOnlySchema),
+	},
+	{ additionalProperties: false },
+);
+type EncodedValueChange = Static<typeof EncodedValueChange>;
+
+const EncodedValueConstraint = Type.Object(
+	{
+		value: Type.Optional(JsonCompatibleReadOnlySchema),
+		violated: Type.Boolean(),
+	},
+	{ additionalProperties: false },
+);
+type EncodedValueConstraint = Static<typeof EncodedValueConstraint>;
+
+const EncodedFieldChange = Type.Object({
+	fieldKey: Type.Union([LocalFieldKeySchema, GlobalFieldKeySchema]),
+	keyIsGlobal: Type.Boolean(),
+	fieldKind: FieldKindIdentifierSchema,
+	// Implementation note: node and field change encoding is mutually recursive.
+	// This field marks a boundary in that recursion to avoid constructing excessively complex
+	// recursive types. Encoded changes are validated at this boundary at runtime--see logic
+	// later in this file's codec.
+	change: JsonCompatibleReadOnlySchema,
+});
+
+interface EncodedFieldChange extends Static<typeof EncodedFieldChange> {
+	/**
+	 * Encoded in format selected by `fieldKind`
+	 */
+	change: JsonCompatibleReadOnly;
 }
 
-interface EncodedModularChangeset {
-	maxId?: ChangesetLocalId;
-	changes: EncodedFieldChangeMap;
-	revisions?: readonly RevisionInfo[];
-}
+const EncodedFieldChangeMap = Type.Array(EncodedFieldChange);
 
 /**
  * Format for encoding as json.
@@ -53,57 +92,85 @@ interface EncodedModularChangeset {
  * which can sometimes be an issue (for example handling that for "__proto__" can require care).
  * It also allows dealing with global vs local field key disambiguation via a flag on the field.
  */
-type EncodedFieldChangeMap = EncodedFieldChange[];
+type EncodedFieldChangeMap = Static<typeof EncodedFieldChangeMap>;
 
-interface EncodedFieldChange {
-	fieldKey: LocalFieldKey | GlobalFieldKey;
-	keyIsGlobal: boolean;
-	fieldKind: FieldKindIdentifier;
-	/**
-	 * Encoded in format selected by `fieldKind`
-	 */
-	change: JsonCompatibleReadOnly;
-}
+const EncodedNodeExistsConstraint = Type.Object({
+	violated: Type.Boolean(),
+});
+type EncodedNodeExistsConstraint = Static<typeof EncodedNodeExistsConstraint>;
+
+const EncodedNodeChangeset = Type.Object({
+	valueChange: Type.Optional(EncodedValueChange),
+	fieldChanges: Type.Optional(EncodedFieldChangeMap),
+	valueConstraint: Type.Optional(EncodedValueConstraint),
+	nodeExistsConstraint: Type.Optional(EncodedNodeExistsConstraint),
+});
+
+/**
+ * Format for encoding as json.
+ */
+type EncodedNodeChangeset = Static<typeof EncodedNodeChangeset>;
+
+const EncodedRevisionInfo = Type.Object({
+	revision: Type.Readonly(RevisionTagSchema),
+	rollbackOf: Type.ReadonlyOptional(RevisionTagSchema),
+});
+
+const EncodedModularChangeset = Type.Object({
+	maxId: Type.Optional(ChangesetLocalIdSchema),
+	changes: EncodedFieldChangeMap,
+	revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+});
+
+type EncodedModularChangeset = Static<typeof EncodedModularChangeset>;
 
 function makeV0Codec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
 ): IJsonCodec<ModularChangeset> {
-	const nodeChangesetCodec: IJsonCodec<NodeChangeset> = {
+	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
 		encode: encodeNodeChangesForJson,
 		decode: decodeNodeChangesetFromJson,
+		encodedSchema: EncodedNodeChangeset,
+	};
+
+	const getMapEntry = (field: FieldKind) => {
+		const codec = field.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0);
+		return {
+			codec,
+			compiledSchema: codec.json.encodedSchema
+				? TypeCompiler.Compile(codec.json.encodedSchema)
+				: undefined,
+		};
 	};
 
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
-		IMultiFormatCodec<FieldChangeset>
-	> = new Map([
-		[
-			genericFieldKind.identifier,
-			genericFieldKind.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0),
-		],
-	]);
+		{
+			compiledSchema?: TypeCheck<TAnySchema>;
+			codec: IMultiFormatCodec<FieldChangeset>;
+		}
+	> = new Map([[genericFieldKind.identifier, getMapEntry(genericFieldKind)]]);
 
 	fieldKinds.forEach((fieldKind, identifier) => {
-		const codec = fieldKind.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0);
-		fieldChangesetCodecs.set(identifier, codec);
+		fieldChangesetCodecs.set(identifier, getMapEntry(fieldKind));
 	});
 
 	const getFieldChangesetCodec = (
 		fieldKind: FieldKindIdentifier,
-	): IMultiFormatCodec<FieldChangeset> => {
-		const codec = fieldChangesetCodecs.get(fieldKind);
-		assert(codec !== undefined, 0x5ea /* Tried to encode unsupported fieldKind */);
-		return codec;
+	): { codec: IMultiFormatCodec<FieldChangeset>; compiledSchema?: TypeCheck<TAnySchema> } => {
+		const entry = fieldChangesetCodecs.get(fieldKind);
+		assert(entry !== undefined, 0x5ea /* Tried to encode unsupported fieldKind */);
+		return entry;
 	};
 
-	function encodeFieldChangesForJson(
-		change: FieldChangeMap,
-	): EncodedFieldChangeMap & JsonCompatibleReadOnly {
-		const encodedFields: EncodedFieldChangeMap & JsonCompatibleReadOnly = [];
+	function encodeFieldChangesForJson(change: FieldChangeMap): EncodedFieldChangeMap {
+		const encodedFields: EncodedFieldChangeMap = [];
 		for (const [field, fieldChange] of change) {
-			const encodedChange = getFieldChangesetCodec(fieldChange.fieldKind).json.encode(
-				fieldChange.change,
-			);
+			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
+			const encodedChange = codec.json.encode(fieldChange.change);
+			if (compiledSchema !== undefined && !compiledSchema.Check(encodedChange)) {
+				fail("Encoded change didn't pass schema validation.");
+			}
 
 			const global = isGlobalFieldKey(field);
 			const fieldKey: LocalFieldKey | GlobalFieldKey = global ? keyFromSymbol(field) : field;
@@ -120,25 +187,23 @@ function makeV0Codec(
 		return encodedFields;
 	}
 
-	function encodeNodeChangesForJson(
-		change: NodeChangeset,
-	): EncodedNodeChangeset & JsonCompatibleReadOnly {
-		const encodedChange: EncodedNodeChangeset & JsonCompatibleReadOnly = {};
-		if (change.valueChange !== undefined) {
-			encodedChange.valueChange = change.valueChange;
+	function encodeNodeChangesForJson(change: NodeChangeset): EncodedNodeChangeset {
+		const encodedChange: EncodedNodeChangeset = {};
+		const { valueChange, fieldChanges, valueConstraint, nodeExistsConstraint } = change;
+		if (valueChange !== undefined) {
+			encodedChange.valueChange = valueChange;
 		}
 
-		if (change.fieldChanges !== undefined) {
-			const encodedFieldChanges = encodeFieldChangesForJson(change.fieldChanges);
-			encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
+		if (fieldChanges !== undefined) {
+			encodedChange.fieldChanges = encodeFieldChangesForJson(fieldChanges);
 		}
 
-		if (change.valueConstraint !== undefined) {
-			encodedChange.valueConstraint = change.valueConstraint;
+		if (valueConstraint !== undefined) {
+			encodedChange.valueConstraint = valueConstraint;
 		}
 
-		if (change.nodeExistsConstraint !== undefined) {
-			encodedChange.nodeExistsConstraint = change.nodeExistsConstraint;
+		if (nodeExistsConstraint !== undefined) {
+			encodedChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
 		return encodedChange;
@@ -147,9 +212,11 @@ function makeV0Codec(
 	function decodeFieldChangesFromJson(encodedChange: EncodedFieldChangeMap): FieldChangeMap {
 		const decodedFields: FieldChangeMap = new Map();
 		for (const field of encodedChange) {
-			const fieldChangeset = getFieldChangesetCodec(field.fieldKind).json.decode(
-				field.change,
-			);
+			const { codec, compiledSchema } = getFieldChangesetCodec(field.fieldKind);
+			if (compiledSchema !== undefined && !compiledSchema.Check(field.change)) {
+				fail("Encoded change didn't pass schema validation.");
+			}
+			const fieldChangeset = codec.json.decode(field.change);
 
 			const fieldKey: FieldKey = field.keyIsGlobal
 				? symbolFromKey(brand<GlobalFieldKey>(field.fieldKey))
@@ -164,23 +231,26 @@ function makeV0Codec(
 		return decodedFields;
 	}
 
-	function decodeNodeChangesetFromJson(change: JsonCompatibleReadOnly): NodeChangeset {
-		const encodedChange = change as EncodedNodeChangeset;
+	function decodeNodeChangesetFromJson(encodedChange: EncodedNodeChangeset): NodeChangeset {
 		const decodedChange: NodeChangeset = {};
-		if (encodedChange.valueChange !== undefined) {
-			decodedChange.valueChange = encodedChange.valueChange;
+		const { valueChange, fieldChanges, valueConstraint, nodeExistsConstraint } = encodedChange;
+		if (valueChange) {
+			decodedChange.valueChange = valueChange;
 		}
 
-		if (encodedChange.fieldChanges !== undefined) {
-			decodedChange.fieldChanges = decodeFieldChangesFromJson(encodedChange.fieldChanges);
+		if (fieldChanges !== undefined) {
+			decodedChange.fieldChanges = decodeFieldChangesFromJson(fieldChanges);
 		}
 
-		if (encodedChange.valueConstraint !== undefined) {
-			decodedChange.valueConstraint = encodedChange.valueConstraint;
+		if (valueConstraint !== undefined) {
+			decodedChange.valueConstraint = {
+				value: valueConstraint.value,
+				violated: valueConstraint.violated,
+			};
 		}
 
-		if (encodedChange.nodeExistsConstraint !== undefined) {
-			decodedChange.nodeExistsConstraint = encodedChange.nodeExistsConstraint;
+		if (nodeExistsConstraint !== undefined) {
+			decodedChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
 		return decodedChange;
@@ -207,6 +277,7 @@ function makeV0Codec(
 			}
 			return decoded;
 		},
+		encodedSchema: EncodedModularChangeset,
 	};
 }
 

@@ -139,6 +139,7 @@
 			"maxMessages": 500
 		},
 		"getDeltasViaAlfred": true,
+		"verifyLastOpPersistence": false,
 		"restartOnCheckpointFailure": true
 	},
 	"system": {

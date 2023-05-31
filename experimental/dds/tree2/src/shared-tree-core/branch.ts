@@ -54,7 +54,7 @@ export type SharedTreeBranchChange<TChange> =
 	  };
 
 /**
- * Returns the operation that caused the the given {@link SharedTreeBranchChange}.
+ * Returns the operation that caused the given {@link SharedTreeBranchChange}.
  */
 export function getChangeReplaceType(
 	change: SharedTreeBranchChange<unknown> & { type: "replace" },
@@ -237,23 +237,25 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
-		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
-		const delta = this.changeFamily.intoDelta(squashedChange);
-		const revision = mintRevisionTag();
 		let repairData: RepairDataStore | undefined;
 		this.head = mintCommit(startCommit, {
-			revision,
-			change: squashedChange,
+			revision: mintRevisionTag(),
+			change: this.changeFamily.rebaser.compose(anonymousCommits),
 			repairData,
 		});
 
-		// If this transaction is not nested, add it to the undo commit tree and capture its repair data
+		const delta = this.changeFamily.intoDelta(this.head.change);
+		const revision = mintRevisionTag();
+		// If this transaction is not nested, add it to the undo commit tree
 		if (!this.isTransacting()) {
 			repairData = this.repairDataStoreProvider.createRepairData();
 			repairData.capture(delta, revision);
 
 			if (this.undoRedoManager !== undefined) {
-				this.undoRedoManager.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
+				this.undoRedoManager.trackCommit(
+					this.head,
+					UndoRedoManagerCommitType.Undoable,
+				);
 			}
 		}
 
