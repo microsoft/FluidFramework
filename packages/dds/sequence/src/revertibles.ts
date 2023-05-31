@@ -75,6 +75,12 @@ export type IntervalRevertible =
 				startOffset?: number; // interval start index within a removed range
 				endOffset?: number; // interval end index within a removed range
 			}[];
+			// local refs used by IntervalOpType.CHANGE and DELETE revertibles
+			revertibleRefs: {
+				revertible: IntervalRevertible;
+				offset: number;
+				isStart: boolean;
+			}[];
 			mergeTreeRevertible: MergeTreeDeltaRevertible;
 	  };
 
@@ -128,12 +134,15 @@ export function appendDeleteIntervalToRevertibles(
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 		undefined,
 	);
-	revertibles.push({
+	const revertible = {
 		event: IntervalOpType.DELETE,
 		interval,
 		start: startRef,
 		end: endRef,
-	});
+	};
+	revertible.start.addProperties({ revertible });
+	revertible.end.addProperties({ revertible });
+	revertibles.push(revertible);
 
 	return revertibles;
 }
@@ -162,12 +171,15 @@ export function appendChangeIntervalToRevertibles(
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 		undefined,
 	);
-	revertibles.push({
+	const revertible = {
 		event: IntervalOpType.CHANGE,
 		interval: newInterval,
 		start: prevStartRef,
 		end: prevEndRef,
-	});
+	};
+	revertible.start.addProperties({ revertible });
+	revertible.end.addProperties({ revertible });
+	revertibles.push(revertible);
 
 	return revertibles;
 }
@@ -212,6 +224,25 @@ function addIfIntervalEndpoint(
 	return false;
 }
 
+function addIfRevertibleRef(
+	ref: LocalReferencePosition,
+	segmentLengths: number,
+	revertibleRefs: {
+		revertible: IntervalRevertible;
+		offset: number;
+		isStart: boolean;
+	}[],
+) {
+	const revertible = ref.properties?.revertible;
+	if (revertible) {
+		revertibleRefs.push({
+			revertible,
+			offset: segmentLengths + ref.getOffset(),
+			isStart: refTypeIncludesFlag(ref.refType, ReferenceType.RangeBegin),
+		});
+	}
+}
+
 /**
  * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
  * (e.g. reverting remove of a range that contains an interval will move the interval back)
@@ -232,6 +263,11 @@ export function appendSharedStringDeltaToRevertibles(
 	if (delta.deltaOperation === MergeTreeDeltaType.REMOVE) {
 		const startIntervals: { offset: number; interval: SequenceInterval }[] = [];
 		const endIntervals: { offset: number; interval: SequenceInterval }[] = [];
+		const revertibleRefs: {
+			revertible: IntervalRevertible;
+			offset: number;
+			isStart: boolean;
+		}[] = [];
 		let segmentLengths = 0;
 
 		// find interval endpoints in each segment
@@ -240,12 +276,13 @@ export function appendSharedStringDeltaToRevertibles(
 			if (refs !== undefined && deltaRange.position !== -1) {
 				for (const ref of refs) {
 					addIfIntervalEndpoint(ref, segmentLengths, startIntervals, endIntervals);
+					addIfRevertibleRef(ref, segmentLengths, revertibleRefs);
 				}
 			}
 			segmentLengths += deltaRange.segment.cachedLength;
 		}
 
-		if (startIntervals.length > 0 || endIntervals.length > 0) {
+		if (startIntervals.length > 0 || endIntervals.length > 0 || revertibleRefs.length > 0) {
 			const removeRevertibles: MergeTreeDeltaRevertible[] = [];
 			appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, removeRevertibles);
 			assert(removeRevertibles.length === 1, "Remove revertible should be a single delta");
@@ -253,6 +290,7 @@ export function appendSharedStringDeltaToRevertibles(
 			const revertible: TypedRevertible<typeof IntervalOpType.POSITION_REMOVE> = {
 				event: IntervalOpType.POSITION_REMOVE,
 				intervals: [],
+				revertibleRefs,
 				mergeTreeRevertible: removeRevertibles[0],
 			};
 
@@ -375,11 +413,7 @@ function revertLocalPropertyChanged(
 	string.getIntervalCollection(label).changeProperties(id, newProps);
 }
 
-function newEndpointPosition(
-	offset: number | undefined,
-	restoredRanges: SortedRangeSet,
-	sharedString: SharedString,
-) {
+function newPosition(offset: number | undefined, restoredRanges: SortedRangeSet) {
 	if (offset === undefined) {
 		return undefined;
 	}
@@ -390,7 +424,7 @@ function newEndpointPosition(
 			// find the segment inside the range
 			for (const range of rangeInfo.ranges) {
 				if (range.segment.cachedLength > offsetFromSegment) {
-					return sharedString.getPosition(range.segment) + offsetFromSegment;
+					return { segment: range.segment, offset: offsetFromSegment };
 				}
 				offsetFromSegment -= range.segment.cachedLength;
 			}
@@ -399,6 +433,15 @@ function newEndpointPosition(
 	}
 
 	return undefined;
+}
+
+function newEndpointPosition(
+	offset: number | undefined,
+	restoredRanges: SortedRangeSet,
+	sharedString: SharedString,
+) {
+	const pos = newPosition(offset, restoredRanges);
+	return pos === undefined ? undefined : sharedString.getPosition(pos.segment) + pos.offset;
 }
 
 interface RangeInfo {
@@ -447,6 +490,37 @@ function revertLocalSequenceRemove(
 			);
 			if (newStart !== undefined || newEnd !== undefined) {
 				intervalCollection.change(intervalId, newStart, newEnd);
+			}
+		}
+	});
+
+	// fix up the local references used by delete and change revertibles
+	revertible.revertibleRefs.forEach((revertibleRef) => {
+		assert(
+			revertibleRef.revertible.event === IntervalOpType.CHANGE ||
+				revertibleRef.revertible.event === IntervalOpType.DELETE,
+			"revertible is not delete or change",
+		);
+		const pos = newPosition(revertibleRef.offset, restoredRanges);
+		if (pos !== undefined) {
+			if (revertibleRef.isStart) {
+				sharedString.removeLocalReferencePosition(revertibleRef.revertible.start);
+				const newRef = sharedString.createLocalReferencePosition(
+					pos.segment as SharedStringSegment,
+					pos.offset,
+					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+					{ revertible: revertibleRef.revertible },
+				);
+				revertibleRef.revertible.start = newRef;
+			} else {
+				sharedString.removeLocalReferencePosition(revertibleRef.revertible.end);
+				const newRef = sharedString.createLocalReferencePosition(
+					pos.segment as SharedStringSegment,
+					pos.offset,
+					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+					{ revertible: revertibleRef.revertible },
+				);
+				revertibleRef.revertible.end = newRef;
 			}
 		}
 	});
