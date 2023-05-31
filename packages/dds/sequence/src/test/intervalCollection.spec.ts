@@ -199,6 +199,40 @@ describe("SharedString interval collections", () => {
 			]);
 		});
 
+		// Regression test for bug described in <https://dev.azure.com/fluidframework/internal/_workitems/edit/4477>
+		//
+		// this test involves a crash inside RBTree when multiple intervals slide
+		// off the string
+		it.skip("passes regression test for #4477", () => {
+			sharedString.insertText(0, "ABC");
+			sharedString.insertText(0, "D");
+			// DABC
+			sharedString.removeRange(0, 1);
+			// [D]ABC
+			const collection = sharedString.getIntervalCollection("test");
+			collection.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "x" });
+			//    x
+			// [D]ABC
+			sharedString.removeRange(0, 1);
+			//     x
+			// [D][A]BC
+			collection.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "y" });
+			//     x y
+			// [D][A]BC
+			sharedString.removeRange(0, 1);
+			sharedString.removeRange(0, 1);
+			sharedString.insertText(0, "EFGHIJK");
+			sharedString.insertText(0, "LMNO");
+			containerRuntimeFactory.processAllMessages();
+			sharedString.insertText(0, "P");
+			// x, y are detached
+			//                  [   ]
+			// string is PLMNOEFGHIJK
+			collection.add(7, 11, IntervalType.SlideOnRemove, { intervalId: "z" });
+			sharedString.removeRange(11, 12);
+			containerRuntimeFactory.processAllMessages();
+		});
+
 		describe("interval stickiness", () => {
 			it("has start stickiness", () => {
 				const collection = sharedString.getIntervalCollection("test");
@@ -415,33 +449,6 @@ describe("SharedString interval collections", () => {
 				assert.equal(interval1.stickiness, IntervalStickiness.FULL);
 				assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
 				assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
-			});
-
-			// skipped: currently fails on main, seems unrelated to interval
-			// stickiness
-			it.skip("...", () => {
-				sharedString.insertText(0, "ABC");
-				sharedString.insertText(0, "D");
-				sharedString.removeRange(0, 1);
-				const collection = sharedString.getIntervalCollection("test");
-				collection.add(0, 0, IntervalType.SlideOnRemove, undefined, IntervalStickiness.END);
-				sharedString.removeRange(0, 1);
-				collection.add(0, 0, IntervalType.SlideOnRemove, undefined, IntervalStickiness.END);
-				sharedString.removeRange(0, 1);
-				sharedString.removeRange(0, 1);
-				sharedString.insertText(0, "EFGHIJK");
-				sharedString.insertText(0, "LMNO");
-				containerRuntimeFactory.processAllMessages();
-				sharedString.insertText(0, "P");
-				collection.add(
-					7,
-					11,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.END,
-				);
-				sharedString.removeRange(11, 12);
-				containerRuntimeFactory.processAllMessages();
 			});
 		});
 
