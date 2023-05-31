@@ -24,7 +24,7 @@ const nodePropertyType = "NodeProperty";
 const referenceGenericTypePrefix = "Reference<";
 const referenceType = "Reference";
 const basePropertyType = "BaseProperty";
-const nodePropertyTypes = new Set([nodePropertyType, "NamedNodeProperty", "RelationshipProperty"]);
+const nodePropertyTypes = new Set([nodePropertyType, "NamedNodeProperty"]);
 const booleanType = "Bool";
 const stringType = "String";
 const numberTypes = new Set<string>([
@@ -168,10 +168,6 @@ function buildTreeSchema(
 							);
 						}
 					}
-				} else if (!extraLocalFields) {
-					fail(
-						`"${typeid}" is not primitive, contains no properties and does not inherit from "${nodePropertyType}".`,
-					);
 				}
 			}
 			cache.treeSchema = builder.object(typeid, {

@@ -8,9 +8,9 @@ export default {
 		typeid: "Test:IndependentType-1.0.0",
 		properties: [{ id: "any", optional: true }],
 	},
-	erroneousType: {
+	neverType: {
 		// does not inherit from "NodeProperty" and has no properties
-		typeid: "Test:ErroneousType-1.0.0",
+		typeid: "Test:NeverType-1.0.0",
 	},
 	typeWithNestedProperties: {
 		typeid: "Test:NestedProperties-1.0.0",

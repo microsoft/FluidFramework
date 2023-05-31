@@ -57,17 +57,26 @@ describe("schema converter", () => {
 				FieldKinds.optional,
 				Any,
 			);
-			["NodeProperty", "NamedNodeProperty", "NamedProperty", "RelationshipProperty"].forEach(
-				(typeName) => {
-					const propertySchema = fullSchemaData.treeSchema.get(brand(typeName));
-					assert(propertySchema !== undefined);
-					if (typeName === "NamedProperty") {
-						assert(propertySchema.extraLocalFields.types !== undefined);
-						assert.equal(propertySchema.extraLocalFields.types.size, 0);
-						assert.deepEqual(
-							propertySchema.extraLocalFields.kind,
-							FieldKinds.forbidden,
-						);
+			["NodeProperty", "NamedNodeProperty", "NamedProperty"].forEach((typeName) => {
+				const propertySchema = fullSchemaData.treeSchema.get(brand(typeName));
+				assert(propertySchema !== undefined);
+				if (typeName === "NamedProperty") {
+					assert(propertySchema.extraLocalFields.types !== undefined);
+					assert.equal(propertySchema.extraLocalFields.types.size, 0);
+					assert.deepEqual(propertySchema.extraLocalFields.kind, FieldKinds.forbidden);
+					const idFieldSchema =
+						propertySchema.localFields.get(brand("guid")) ?? fail("expected field");
+					assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
+					assert.deepEqual(
+						[...(idFieldSchema.types ?? fail("expected types"))],
+						["String"],
+					);
+				} else {
+					assert(propertySchema.extraLocalFields.types === undefined);
+					assert.deepEqual(propertySchema.extraLocalFields.kind, FieldKinds.optional);
+					if (typeName === "NodeProperty") {
+						assert.deepEqual([...propertySchema.localFields], []);
+					} else {
 						const idFieldSchema =
 							propertySchema.localFields.get(brand("guid")) ?? fail("expected field");
 						assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
@@ -75,41 +84,14 @@ describe("schema converter", () => {
 							[...(idFieldSchema.types ?? fail("expected types"))],
 							["String"],
 						);
-					} else {
-						assert(propertySchema.extraLocalFields.types === undefined);
-						assert.deepEqual(propertySchema.extraLocalFields.kind, FieldKinds.optional);
-						if (typeName === "NodeProperty") {
-							assert.deepEqual([...propertySchema.localFields], []);
-						} else {
-							const idFieldSchema =
-								propertySchema.localFields.get(brand("guid")) ??
-								fail("expected field");
-							assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
-							assert.deepEqual(
-								[...(idFieldSchema.types ?? fail("expected types"))],
-								["String"],
-							);
-							if (typeName === "RelationshipProperty") {
-								const toFieldSchema =
-									propertySchema.localFields.get(brand("to")) ??
-									fail("expected field");
-								assert.deepEqual(toFieldSchema.kind, FieldKinds.value);
-								assert.deepEqual(
-									[...(toFieldSchema.types ?? fail("expected types"))],
-									["Reference"],
-								);
-							}
-						}
 					}
-					assert.deepEqual([...propertySchema.globalFields], []);
-					assert.equal(propertySchema.extraGlobalFields, false);
-					assert.equal(propertySchema.value, ValueSchema.Nothing);
-					assert(fullSchemaData.treeSchema.get(brand(`map<${typeName}>`)) !== undefined);
-					assert(
-						fullSchemaData.treeSchema.get(brand(`array<${typeName}>`)) !== undefined,
-					);
-				},
-			);
+				}
+				assert.deepEqual([...propertySchema.globalFields], []);
+				assert.equal(propertySchema.extraGlobalFields, false);
+				assert.equal(propertySchema.value, ValueSchema.Nothing);
+				assert(fullSchemaData.treeSchema.get(brand(`map<${typeName}>`)) !== undefined);
+				assert(fullSchemaData.treeSchema.get(brand(`array<${typeName}>`)) !== undefined);
+			});
 		});
 
 		it("can use any type as root", () => {
@@ -151,20 +133,21 @@ describe("schema converter", () => {
 			PropertyFactory.register(Object.values(mockPropertyDDSSchemas));
 		});
 
-		it(`fails on a non-primitive type w/o properties and not inheriting from NodeProperty`, () => {
-			assert.throws(
-				() =>
-					convertPropertyToSharedTreeStorageSchema(
-						FieldKinds.optional,
-						new Set(["Test:ErroneousType-1.0.0"]),
-					),
-				(e) =>
-					validateAssertionError(
-						e,
-						`"Test:ErroneousType-1.0.0" is not primitive, contains no properties and does not inherit from "NodeProperty".`,
-					),
-				"Expected exception was not thrown",
+		it(`can create a non-primitive type w/o properties and not inheriting from NodeProperty`, () => {
+			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				FieldKinds.optional,
+				new Set(["Test:NeverType-1.0.0"]),
 			);
+			const neverTreeSchema = fullSchemaData.treeSchema.get(brand("Test:NeverType-1.0.0"));
+			assert(neverTreeSchema !== undefined);
+			assert.deepEqual([...(neverTreeSchema.localFields ?? fail("expected empty map"))], []);
+			assert.deepEqual(neverTreeSchema.extraLocalFields.kind, FieldKinds.forbidden);
+			assert.deepEqual(
+				[...(neverTreeSchema.extraLocalFields.types ?? fail("expected empty set"))],
+				[],
+			);
+			assert.deepEqual([...(neverTreeSchema.globalFields ?? fail("expected empty set"))], []);
+			assert.equal(neverTreeSchema.extraGlobalFields, false);
 		});
 
 		it(`does not support types with nested properties`, () => {
