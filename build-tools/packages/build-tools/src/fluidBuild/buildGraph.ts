@@ -26,7 +26,7 @@ const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
 const traceTaskDepTask = registerDebug("fluid-build:task:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
-const { info, verbose } = defaultLogger;
+const { log, verbose } = defaultLogger;
 
 export enum BuildResult {
 	Success,
@@ -309,7 +309,7 @@ export class BuildGraph {
 		const isUpToDate = await this.isUpToDate();
 		if (timer) timer.time(`Check up to date completed`);
 
-		info(
+		log(
 			`Starting build tasks "${chalk.cyanBright(this.buildTaskNames.join(" && "))}" for ${
 				this.buildPackages.size
 			} packages, ${this.buildContext.taskStats.leafTotalCount} tasks`,
@@ -318,7 +318,7 @@ export class BuildGraph {
 			return BuildResult.UpToDate;
 		}
 		if (this.numSkippedTasks) {
-			info(`Skipping ${this.numSkippedTasks} up to date tasks.`);
+			log(`Skipping ${this.numSkippedTasks} up to date tasks.`);
 		}
 		this.buildContext.fileHashCache.clear();
 		const q = Task.createTaskQueue();
