@@ -12,6 +12,8 @@ import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalType } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { IntervalRevertible, revertSharedStringRevertibles } from "../revertibles";
+import { SharedString } from "../sharedString";
 
 export interface RangeSpec {
 	start: number;
@@ -57,10 +59,16 @@ export interface ChangeProperties extends IntervalCollectionSpec {
 	properties: PropertySet;
 }
 
+export interface RevertSharedStringRevertibles extends IntervalCollectionSpec {
+	type: "revertSharedStringRevertibles";
+	id: string;
+	string: SharedString;
+	// will i need other stuff? who knows
+}
+
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
-
+export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
 export type TextOperation = AddText | RemoveRange;
-
 export type ClientOperation = IntervalOperation | TextOperation;
 
 export type Operation = ClientOperation;
@@ -74,7 +82,7 @@ export interface LoggingInfo {
 	clientIds: string[];
 }
 
-function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
+export function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const id of loggingInfo.clientIds) {
 		const { channel } = state.clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		assert(channel);
@@ -136,6 +144,55 @@ export function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, Clien
 		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
+		},
+	});
+
+	return withLogging(reducer);
+}
+
+const revertibles: IntervalRevertible[] = [];
+type RevertOperation = OperationWithRevert | TextOperation;
+
+export function makeRevertibleReducer(
+	loggingInfo?: LoggingInfo,
+): Reducer<RevertOperation, ClientOpState> {
+	const withLogging =
+		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
+		async (state, operation) => {
+			if (loggingInfo !== undefined) {
+				logCurrentState(state, loggingInfo);
+				console.log("-".repeat(20));
+				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
+			}
+			await baseReducer(state, operation);
+		};
+
+	const reducer = combineReducers<RevertOperation, ClientOpState>({
+		addText: async ({ channel }, { index, content }) => {
+			channel.insertText(index, content);
+		},
+		removeRange: async ({ channel }, { start, end }) => {
+			channel.removeRange(start, end);
+		},
+		addInterval: async ({ channel }, { start, end, collectionName, id }) => {
+			const collection = channel.getIntervalCollection(collectionName);
+			collection.add(start, end, IntervalType.SlideOnRemove, { intervalId: id });
+		},
+		deleteInterval: async ({ channel }, { id, collectionName }) => {
+			const collection = channel.getIntervalCollection(collectionName);
+			collection.removeIntervalById(id);
+		},
+		changeInterval: async ({ channel }, { id, start, end, collectionName }) => {
+			const collection = channel.getIntervalCollection(collectionName);
+			collection.change(id, start, end);
+		},
+		changeProperties: async ({ channel }, { id, properties, collectionName }) => {
+			const collection = channel.getIntervalCollection(collectionName);
+			collection.changeProperties(id, { ...properties });
+		},
+		revertSharedStringRevertibles: async ({ channel }, { string }) => {
+			// not sure if i should use string or channel
+			revertSharedStringRevertibles(string, revertibles);
 		},
 	});
 
