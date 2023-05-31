@@ -237,25 +237,26 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
+		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
+		const delta = this.changeFamily.intoDelta(squashedChange);
+		const revision = mintRevisionTag();
+
 		let repairData: RepairDataStore | undefined;
+		if (!this.isTransacting()) {
+			repairData = this.repairDataStoreProvider.createRepairData();
+			repairData?.capture(delta, revision);
+		}
+
 		this.head = mintCommit(startCommit, {
-			revision: mintRevisionTag(),
-			change: this.changeFamily.rebaser.compose(anonymousCommits),
+			revision,
+			change: squashedChange,
 			repairData,
 		});
 
-		const delta = this.changeFamily.intoDelta(this.head.change);
-		const revision = mintRevisionTag();
-		// If this transaction is not nested, add it to the undo commit tree
+		// If this transaction is not nested, add it to the undo commit tree and capture its repair data
 		if (!this.isTransacting()) {
-			repairData = this.repairDataStoreProvider.createRepairData();
-			repairData.capture(delta, revision);
-
 			if (this.undoRedoManager !== undefined) {
-				this.undoRedoManager.trackCommit(
-					this.head,
-					UndoRedoManagerCommitType.Undoable,
-				);
+				this.undoRedoManager.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
 			}
 		}
 
