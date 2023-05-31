@@ -22,16 +22,13 @@ export {
 	IIntervalHelpers,
 	Interval,
 	IntervalIndex,
-	IntervalCollection,
-	IntervalCollectionIterator,
+	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
 	IntervalType,
 	ISerializableInterval,
 	ISerializedInterval,
 	SequenceInterval,
-	ISerializedIntervalCollectionV2,
-	CompressedSerializedInterval,
 	SerializedIntervalDelta,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
