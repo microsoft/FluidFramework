@@ -8,14 +8,12 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	brand,
 	FieldKinds,
-	fieldSchema,
-	lookupTreeSchema,
 	ValueSchema,
-	FieldStoredSchema,
 	fail,
 	Any,
 	TreeSchemaIdentifier,
 	FieldSchema,
+	getPrimaryField,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
@@ -66,15 +64,20 @@ describe("schema converter", () => {
 		);
 		const nodeProperty = fullSchemaData.treeSchema.get(brand("NodeProperty"));
 		const testOptional = fullSchemaData.treeSchema.get(brand("Test:Optional-1.0.0"));
-		expect(testOptional?.extraLocalFields).toEqual(nodeProperty?.extraLocalFields);
+		assert.deepEqual(testOptional?.extraLocalFields, nodeProperty?.extraLocalFields);
 		const miscField = testOptional?.localFields.get(brand("misc"));
-		expect(miscField?.types?.size).toEqual(6);
-		expect(miscField?.types).toContainEqual("Test:Optional-1.0.0");
-		expect(miscField?.types).toContainEqual("Test:Address-1.0.0");
-		expect(miscField?.types).toContainEqual("Test:Person-1.0.0");
-		expect(miscField?.types).toContainEqual("NamedNodeProperty");
-		expect(miscField?.types).toContainEqual("RelationshipProperty");
-		expect(miscField?.types).toContainEqual("NodeProperty");
+		assert(miscField?.types !== undefined);
+		assert.deepEqual(
+			[...miscField.types],
+			[
+				"NodeProperty",
+				"NamedNodeProperty",
+				"RelationshipProperty",
+				"Test:Address-1.0.0",
+				"Test:Optional-1.0.0",
+				"Test:Person-1.0.0",
+			],
+		);
 	});
 
 	it(`can use "NodeProperty" as root`, () => {
@@ -83,28 +86,28 @@ describe("schema converter", () => {
 			new Set(["NodeProperty"]),
 		);
 
-		expect(fullSchemaData.globalFieldSchema.size).toEqual(1);
-		const expectedRootFieldSchema = fieldSchema(FieldKinds.optional, [
-			brand("NodeProperty"),
-			brand("NamedNodeProperty"),
-			brand("RelationshipProperty"),
-			brand("Test:Address-1.0.0"),
-			brand("Test:Optional-1.0.0"),
-			brand("Test:Person-1.0.0"),
-		]);
-		expect(fullSchemaData.root).toMatchObject(expectedRootFieldSchema);
+		assert.deepEqual(fullSchemaData.root.kind, FieldKinds.optional);
+		assert.deepEqual(
+			[...(fullSchemaData.root.types ?? fail("expected root types"))],
+			[
+				"NodeProperty",
+				"NamedNodeProperty",
+				"RelationshipProperty",
+				"Test:Address-1.0.0",
+				"Test:Optional-1.0.0",
+				"Test:Person-1.0.0",
+			],
+		);
 
 		// 78 types (all types, their arrays and maps)
-		expect(fullSchemaData.treeSchema.size).toEqual(78);
-		const nodePropertySchema = fullSchemaData.treeSchema.get(brand("NodeProperty"));
-		expect(nodePropertySchema).toMatchObject({
-			name: "NodeProperty",
-			localFields: new Map(),
-			extraLocalFields: { kind: FieldKinds.optional },
-			globalFields: new Set(),
-			extraGlobalFields: false,
-			value: ValueSchema.Nothing,
-		});
+		assert.equal(fullSchemaData.treeSchema.size, 78);
+		const nodePropertySchema =
+			fullSchemaData.treeSchema.get(brand("NodeProperty")) ?? fail("expected tree schema");
+		assert.deepEqual(nodePropertySchema.extraLocalFields.kind, FieldKinds.optional);
+		assert.deepEqual([...nodePropertySchema.localFields], []);
+		assert.deepEqual([...nodePropertySchema.globalFields], []);
+		assert.equal(nodePropertySchema.extraGlobalFields, false);
+		assert.equal(nodePropertySchema.value, ValueSchema.Nothing);
 	});
 
 	it("can convert property with array context", () => {
@@ -112,47 +115,69 @@ describe("schema converter", () => {
 			FieldKinds.optional,
 			new Set(["Test:Person-1.0.0"]),
 		);
-		const addressSchema = lookupTreeSchema(fullSchemaData, brand("Test:Address-1.0.0"));
-		expect(addressSchema).toMatchObject({
-			name: "Test:Address-1.0.0",
-			extraLocalFields: { kind: FieldKinds.optional },
-			globalFields: new Set(),
-			extraGlobalFields: false,
-			value: ValueSchema.Nothing,
-		});
-		const expectedAddressFields = new Map<string, FieldStoredSchema>([
-			["lat", fieldSchema(FieldKinds.value, [brand("Float64")])],
-			["lon", fieldSchema(FieldKinds.value, [brand("Float64")])],
-			["coords", fieldSchema(FieldKinds.value, [brand("array<Float64>")])],
-			["zip", fieldSchema(FieldKinds.value, [brand("String")])],
-			["street", fieldSchema(FieldKinds.optional, [brand("String")])],
-			["city", fieldSchema(FieldKinds.optional, [brand("String")])],
-			["country", fieldSchema(FieldKinds.optional, [brand("String")])],
-			["phones", fieldSchema(FieldKinds.optional, [brand("array<Test:Phone-1.0.0>")])],
-		]);
-		for (const [fieldKey, field] of addressSchema.localFields) {
-			const expected = expectedAddressFields.get(fieldKey) ?? fail("expected field");
-			expect(field).toMatchObject(expected);
-			expectedAddressFields.delete(fieldKey);
-		}
-		expect(expectedAddressFields.size).toEqual(0);
+		const addressSchema =
+			fullSchemaData.treeSchema.get(brand("Test:Address-1.0.0")) ??
+			fail("expected tree schema");
+		const arrayField =
+			(addressSchema.localFields.get(brand("phones")) as FieldSchema) ??
+			fail("expected field schema");
+		const arrayTypeName: TreeSchemaIdentifier = brand("array<Test:Phone-1.0.0>");
+		assert.deepEqual([...(arrayField.types ?? fail("expected types"))], [arrayTypeName]);
+		const arraySchema =
+			fullSchemaData.treeSchema.get(arrayTypeName) ?? fail("expected tree schema");
+		assert.deepEqual([...arraySchema.globalFields], []);
+		assert.equal(arraySchema.extraGlobalFields, false);
+		assert.equal(arraySchema.value, ValueSchema.Nothing);
+		assert.equal(arraySchema.localFields.size, 1);
+		const primary = getPrimaryField(arraySchema);
+		assert(primary !== undefined);
+		assert.deepEqual(primary.schema.kind, FieldKinds.sequence);
+		assert.deepEqual(
+			[...(primary.schema.types ?? fail("expected types"))],
+			["Test:Phone-1.0.0"],
+		);
+	});
+
+	it("can convert property with map context", () => {
+		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+			FieldKinds.optional,
+			new Set(["Test:Person-1.0.0"]),
+		);
+		const mapSchema =
+			fullSchemaData.treeSchema.get(brand("map<String>")) ?? fail("expected tree schema");
+		assert.deepEqual(mapSchema.extraLocalFields.kind, FieldKinds.optional);
+		assert.deepEqual(
+			[...(mapSchema.extraLocalFields.types ?? fail("expected types"))],
+			["String"],
+		);
+		assert.deepEqual([...mapSchema.localFields], []);
+		assert.deepEqual([...mapSchema.globalFields], []);
+		assert.equal(mapSchema.extraGlobalFields, false);
+		assert.equal(mapSchema.value, ValueSchema.Nothing);
 	});
 
 	it("can use any type as root", () => {
-		const fullSchemaData1 = convertPropertyToSharedTreeStorageSchema(FieldKinds.optional, Any);
-		expect([...fullSchemaData1.root.schema.allowedTypes]).toMatchObject([Any]);
-
-		const fullSchemaData2 = convertPropertyToSharedTreeStorageSchema(
-			FieldKinds.optional,
-			new Set([Any]),
-		);
-		expect([...fullSchemaData2.root.schema.allowedTypes]).toMatchObject([Any]);
-
-		const fullSchemaData3 = convertPropertyToSharedTreeStorageSchema(
-			FieldKinds.optional,
-			new Set(["String", Any]),
-		);
-		expect([...fullSchemaData3.root.schema.allowedTypes]).toMatchObject([Any]);
+		{
+			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				FieldKinds.optional,
+				Any,
+			);
+			assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
+		}
+		{
+			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				FieldKinds.optional,
+				new Set([Any]),
+			);
+			assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
+		}
+		{
+			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				FieldKinds.optional,
+				new Set(["String", Any]),
+			);
+			assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
+		}
 	});
 
 	it(`can convert property w/o typeid into field of type Any`, () => {
@@ -167,9 +192,9 @@ describe("schema converter", () => {
 		const anyField =
 			(extraTypeSchema?.localFields.get(brand("any")) as FieldSchema) ??
 			fail("expected field schema");
-		expect(anyField?.kind).toMatchObject(FieldKinds.optional);
-		expect(anyField.types).toBeUndefined();
-		expect([...anyField.allowedTypes]).toMatchObject([Any]);
+		assert.deepEqual(anyField?.kind, FieldKinds.optional);
+		assert(anyField.types === undefined);
+		assert.deepEqual([...anyField.allowedTypes], [Any]);
 	});
 
 	it(`can use extra schemas`, () => {
@@ -182,7 +207,7 @@ describe("schema converter", () => {
 				FieldKinds.optional,
 				Any,
 			);
-			expect(fullSchemaData.treeSchema.get(extraTypeName)).toBeUndefined();
+			assert(fullSchemaData.treeSchema.get(extraTypeName) === undefined);
 		}
 		// with extra types
 		{
@@ -191,7 +216,7 @@ describe("schema converter", () => {
 				Any,
 				new Set([extraTypeName]),
 			);
-			expect(fullSchemaData.treeSchema.get(extraTypeName)).not.toBeUndefined();
+			assert(fullSchemaData.treeSchema.get(extraTypeName) !== undefined);
 		}
 	});
 });
