@@ -2,13 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-export {
-	isRebaseChange,
-	isTransactionCommitChange,
-	SharedTreeBranch,
-	SharedTreeBranchChange,
-	SharedTreeBranchEvents,
-} from "./branch";
+export { SharedTreeBranch, SharedTreeBranchChange, SharedTreeBranchEvents } from "./branch";
 
 export {
 	ChangeEvents,
