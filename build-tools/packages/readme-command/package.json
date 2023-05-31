@@ -40,11 +40,11 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
-		"@oclif/core": "^2.4.0",
-		"@oclif/plugin-help": "^5.2.6",
-		"@oclif/plugin-plugins": "^2.3.2",
-		"@oclif/test": "^2.3.8",
-		"oclif": "^3.7.0",
+		"@oclif/core": "^2.8.5",
+		"@oclif/plugin-help": "^5.2.9",
+		"@oclif/plugin-plugins": "^2.4.7",
+		"@oclif/test": "^2.3.21",
+		"oclif": "^3.9.0",
 		"semver": "^7.5.1"
 	},
 	"devDependencies": {
