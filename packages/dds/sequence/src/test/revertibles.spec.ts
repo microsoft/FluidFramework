@@ -928,6 +928,29 @@ describe("Undo/redo for string remove containing intervals", () => {
 			assert.equal(sharedString.getText(), "hello world");
 			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }]);
 		});
+		it("reverts interval change + remove range with interval start", () => {
+			sharedString.insertText(0, "hello world");
+			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+
+			sharedString.on("sequenceDelta", (op) => {
+				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+			});
+			collection.on("changeInterval", (interval, previousInterval, local, op) => {
+				appendChangeIntervalToRevertibles(
+					sharedString,
+					interval,
+					previousInterval,
+					revertibles,
+				);
+			});
+
+			collection.change(id, 2, 9);
+			sharedString.removeRange(0, 8);
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }]);
+		});
 		it("reverts remove range + interval change", () => {
 			sharedString.insertText(0, "hello world");
 			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
