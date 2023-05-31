@@ -6,7 +6,8 @@
 import { NewChangesetWithCommit, ModCompWithPackage } from "@changesets/types";
 
 /**
- * Based on Changesets' default `getDependencyReleaseLine`
+ * This function is called when a package within a release group  has updates that are due to dependency updates within
+ * the release group. We don't want to include these in the changelog, so we return an empty string.
  */
 const getDependencyReleaseLine = async (
 	changesets: NewChangesetWithCommit[],

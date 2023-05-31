@@ -1,5 +1,5 @@
 {
-	"name": "changelog-generator",
+	"name": "@fluid-internal/changelog-generator",
 	"version": "0.14.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
@@ -10,6 +10,15 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"main": "./dist/index.js",
+	"files": [
+		"dist/",
+		"src/",
+		"LICENSE",
+		"*.md",
+		"*.cjs",
+		"*.json"
+	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc && npm run build:test",
@@ -23,6 +32,7 @@
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
+		"postinstall": "npm run build:compile",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
@@ -43,14 +53,15 @@
 		"changesets-format-with-issue-links": "^0.3.0",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
+		"eslint": "~8.6.0",
 		"jest": "^26.6.3",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
 	},
-	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
 	"engines": {
 		"node": ">=16.16.0",
 		"pnpm": "7"
-	}
+	},
+	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2"
 }

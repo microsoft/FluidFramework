@@ -3,19 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { NewChangesetWithCommit, VersionType } from "@changesets/types";
 import changelogFunctions from "changesets-format-with-issue-links";
 
+// eslint-disable-next-line import/no-named-as-default-member
 const { getReleaseLine } = changelogFunctions;
-// const { getReleaseLine: getReleaseLineBase } = changelogFunctions;
-
-// const getReleaseLine = async (
-// 	changeset: NewChangesetWithCommit,
-// 	type: VersionType,
-// 	userOptions: unknown,
-// ): Promise<string> => {
-//   return getReleaseLineBase(changeset, type, null);
-// };
 
 export { getReleaseLine };
-// export { getReleaseLineBase };
