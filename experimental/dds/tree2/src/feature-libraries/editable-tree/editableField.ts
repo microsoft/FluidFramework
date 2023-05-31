@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	Anchor,
 	FieldKey,
@@ -17,11 +17,11 @@ import {
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
-	ITreeCursor,
 	inCursorNode,
 	FieldUpPath,
+	ITreeCursor,
 } from "../../core";
-import { Multiplicity } from "../modular-schema";
+import { FieldKind, Multiplicity } from "../modular-schema";
 import {
 	getFieldKind,
 	getPrimaryField,
@@ -29,9 +29,15 @@ import {
 	ContextuallyTypedNodeData,
 	arrayLikeMarkerSymbol,
 	cursorFromContextualData,
+	cursorsFromContextualData,
 } from "../contextuallyTyped";
-import { sequence } from "../defaultFieldKinds";
-import { assertValidIndex } from "../../util";
+import { FieldKinds } from "../defaultFieldKinds";
+import { assertValidIndex, fail, isReadonlyArray, assertNonNegativeSafeInteger } from "../../util";
+import {
+	OptionalFieldEditBuilder,
+	SequenceFieldEditBuilder,
+	ValueFieldEditBuilder,
+} from "../defaultChangeFamily";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -43,8 +49,10 @@ import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
+	NewFieldContent,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
+	areCursors,
 	proxyTargetSymbol,
 } from "./editableTreeTypes";
 import { makeTree } from "./editableTree";
@@ -89,9 +97,11 @@ function getPrimaryArrayKey(
 export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements EditableField {
 	public readonly fieldKey: FieldKey;
 	public readonly [arrayLikeMarkerSymbol]: true;
+	public readonly kind: FieldKind;
 
 	public constructor(
 		context: ProxyContext,
+		// TODO: use view schema typed in editableTree
 		public readonly fieldSchema: FieldStoredSchema,
 		cursor: ITreeSubscriptionCursor,
 	) {
@@ -99,6 +109,40 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		this.fieldKey = cursor.getFieldKey();
 		this[arrayLikeMarkerSymbol] = true;
+		this.kind = getFieldKind(this.fieldSchema);
+	}
+
+	/**
+	 * Check if this field is the same as a different field.
+	 * This is defined to mean that both are in the same editable tree, and are the same field on the same node.
+	 * This is more than just a reference comparison because unlike EditableTree nodes, fields are not cached on anchors and can be duplicated.
+	 */
+	private isSameAs(other: FieldProxyTarget): boolean {
+		assert(
+			other.context === this.context,
+			"Content from different editable trees should not be used together",
+		);
+		return this.fieldKey === other.fieldKey && this.parent === other.parent;
+	}
+
+	public normalizeNewContent(content: NewFieldContent): readonly ITreeCursor[] {
+		if (areCursors(content)) {
+			if (this.kind.multiplicity === Multiplicity.Sequence) {
+				assert(isReadonlyArray(content), "sequence fields require array content");
+				return content;
+			} else {
+				if (isReadonlyArray(content)) {
+					assert(
+						content.length === 1,
+						"non-sequence fields can not be provided content that is multiple cursors",
+					);
+					return content;
+				}
+				return [content];
+			}
+		}
+
+		return cursorsFromContextualData(this.context.schema, this.fieldSchema, content);
 	}
 
 	public get [proxyTargetSymbol](): FieldProxyTarget {
@@ -168,14 +212,131 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return this.asArray().values();
 	}
 
-	public insertNodes(index: number, newContent: ITreeCursor | ITreeCursor[]): void {
+	/**
+	 * Asserts this field is a sequence, and returns an editor for it.
+	 */
+	private sequenceEditor(): SequenceFieldEditBuilder {
+		assert(
+			this.kind === FieldKinds.sequence,
+			"Field kind must be a sequence to edit as a sequence.",
+		);
+		const fieldPath = this.cursor.getFieldPath();
+		const fieldEditor = this.context.editor.sequenceField(fieldPath);
+		return fieldEditor;
+	}
+
+	/**
+	 * Asserts this field is a sequence, and returns an editor for it.
+	 */
+	private optionalEditor(): OptionalFieldEditBuilder {
+		assert(
+			this.kind === FieldKinds.optional,
+			"Field kind must be a optional to edit as optional.",
+		);
+		const fieldPath = this.cursor.getFieldPath();
+		const fieldEditor = this.context.editor.optionalField(fieldPath);
+		return fieldEditor;
+	}
+
+	/**
+	 * Asserts this field is a sequence, and returns an editor for it.
+	 */
+	private valueFieldEditor(): ValueFieldEditBuilder {
+		assert(this.kind === FieldKinds.value, "Field kind must be a value to edit as a value.");
+		const fieldPath = this.cursor.getFieldPath();
+		const fieldEditor = this.context.editor.valueField(fieldPath);
+		return fieldEditor;
+	}
+
+	public get content(): EditableTree | undefined | EditableField {
+		switch (this.kind.multiplicity) {
+			case Multiplicity.Optional: {
+				if (this.length === 0) {
+					return undefined;
+				}
+				return this.getNode(0);
+			}
+			case Multiplicity.Value: {
+				return this.getNode(0);
+			}
+			case Multiplicity.Forbidden: {
+				return undefined;
+			}
+			case Multiplicity.Sequence: {
+				return this;
+			}
+			default:
+				unreachableCase(this.kind.multiplicity);
+		}
+	}
+
+	public set content(newContent: NewFieldContent) {
+		const content = this.normalizeNewContent(newContent);
+
+		switch (this.kind) {
+			case FieldKinds.optional: {
+				const fieldEditor = this.optionalEditor();
+				assert(
+					content.length <= 1,
+					"optional field content should normalize at most one item",
+				);
+				fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
+				break;
+			}
+			case FieldKinds.value: {
+				const fieldEditor = this.valueFieldEditor();
+				assert(content.length === 1, "value field content should normalize to one item");
+				fieldEditor.set(content[0]);
+				break;
+			}
+			case FieldKinds.sequence: {
+				const fieldEditor = this.sequenceEditor();
+				// TODO: this does not have the atomicity or merge semantics that are likely desired.
+				// It should probably either be last write wins OR conflict if concurrently edited.
+				// Current behavior results in concurrent sets concatenating.
+				fieldEditor.delete(0, this.length);
+				fieldEditor.insert(0, content);
+				break;
+			}
+			case FieldKinds.nodeIdentifier: {
+				fail("Cannot set identifier field: Identifiers are immutable.");
+			}
+			default:
+				fail(`Cannot set content of fields of "${this.kind.identifier}" kind.`);
+		}
+	}
+
+	public setContent(newContent: NewFieldContent): void {
+		this.content = newContent;
+	}
+
+	public delete(): void {
+		switch (this.kind.multiplicity) {
+			case Multiplicity.Optional: {
+				const fieldEditor = this.optionalEditor();
+				fieldEditor.set(undefined, false);
+				break;
+			}
+			case Multiplicity.Sequence: {
+				const fieldEditor = this.sequenceEditor();
+				fieldEditor.delete(0, this.length);
+				break;
+			}
+			default:
+				fail(`Cannot delete fields of "${this.kind.identifier}" kind.`);
+		}
+	}
+
+	public insertNodes(index: number, newContent: NewFieldContent): void {
+		const fieldEditor = this.sequenceEditor();
+		const content = this.normalizeNewContent(newContent);
 		const fieldKind = getFieldKind(this.fieldSchema);
 		// TODO: currently for all field kinds the nodes can be created by editor using `sequenceField.insert()`.
 		// Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
 		// assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
 		if (fieldKind.multiplicity !== Multiplicity.Sequence) {
 			assert(
-				this.length === 0 && (!Array.isArray(newContent) || newContent.length <= 1),
+				this.length === 0 && (!Array.isArray(content) || content.length <= 1),
 				0x455 /* A non-sequence field cannot have more than one node. */,
 			);
 		}
@@ -183,8 +344,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			keyIsValidIndex(index, this.length + 1),
 			0x456 /* Index must be less than or equal to length. */,
 		);
-		const fieldPath = this.cursor.getFieldPath();
-		this.context.insertNodes(fieldPath, index, newContent);
+		fieldEditor.insert(index, content);
 	}
 
 	public moveNodes(
@@ -194,30 +354,33 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		destinationField?: EditableField,
 	): void {
 		const sourceFieldPath = this.cursor.getFieldPath();
-		const destinationFieldKindIdentifier =
-			destinationField !== undefined
-				? destinationField.fieldSchema.kind.identifier
-				: this.fieldSchema.kind.identifier;
+
+		const destination =
+			destinationField === undefined
+				? this
+				: (destinationField?.[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>);
 
 		assert(
-			this.fieldSchema.kind.identifier === sequence.identifier &&
-				destinationFieldKindIdentifier === sequence.identifier,
-			0x683 /* Both source and destination fields must be sequence fields. */,
+			isFieldProxyTarget(destination),
+			0x684 /* destination must be a field proxy target */,
 		);
 
-		const destinationFieldProxy =
-			destinationField !== undefined
-				? (destinationField[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
-				: this;
-		assert(
-			isFieldProxyTarget(destinationFieldProxy),
-			0x684 /* destination field proxy must be a field proxy target */,
-		);
-		assertValidIndex(destinationIndex, destinationFieldProxy, true);
+		assert(this.kind === FieldKinds.sequence, "Move source must be a sequence.");
+		assert(destination.kind === FieldKinds.sequence, "Move destination must be a sequence.");
 
-		const destinationFieldPath = destinationFieldProxy.cursor.getFieldPath();
+		assertNonNegativeSafeInteger(count);
+		// This permits a move of 0 nodes starting at this.length, which does seem like it should be allowed.
+		assertValidIndex(sourceIndex + count, this, true);
 
-		this.context.moveNodes(
+		let destinationLength = destination.length;
+		if (this.isSameAs(destination)) {
+			destinationLength -= count;
+		}
+		assertValidIndex(destinationIndex, { length: destinationLength }, true);
+
+		const destinationFieldPath = destination.cursor.getFieldPath();
+
+		this.context.editor.move(
 			sourceFieldPath,
 			sourceIndex,
 			count,
@@ -231,45 +394,33 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	}
 
 	public deleteNodes(index: number, count?: number): void {
-		// TODO: currently for all field kinds the nodes can be deleted by editor using `sequenceField.delete()`.
-		// Uncomment when the editor will become more schema-aware.
-		// const fieldKind = getFieldKind(this.fieldSchema);
-		// assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
+		const fieldEditor = this.sequenceEditor();
 		assert(
 			this.length === 0 || keyIsValidIndex(index, this.length),
 			0x457 /* Index must be less than length. */,
 		);
 		if (count !== undefined) assert(count >= 0, 0x458 /* Count must be non-negative. */);
 		const maxCount = this.length - index;
-		const _count = count === undefined || count > maxCount ? maxCount : count;
-		const fieldPath = this.cursor.getFieldPath();
-		this.context.deleteNodes(fieldPath, index, _count);
+		const adjustedCount = count === undefined || count > maxCount ? maxCount : count;
+
+		fieldEditor.delete(index, adjustedCount);
 	}
 
-	public replaceNodes(
-		index: number,
-		newContent: ITreeCursor | ITreeCursor[],
-		count?: number,
-	): void {
-		const fieldKind = getFieldKind(this.fieldSchema);
-		// TODO: currently for all field kinds the nodes can be created by editor using `sequenceField.insert()`.
-		// Uncomment the next line and remove non-sequence related code when the editor will become more schema-aware.
-		// assert(fieldKind.multiplicity === Multiplicity.Sequence, "The field must be of a sequence kind.");
-		if (fieldKind.multiplicity !== Multiplicity.Sequence) {
-			assert(
-				this.length <= 1 && (!Array.isArray(newContent) || newContent.length <= 1),
-				0x4d0 /* A non-sequence field cannot have more than one node. */,
-			);
-		}
+	public replaceNodes(index: number, newContent: NewFieldContent, count?: number): void {
+		const fieldEditor = this.sequenceEditor();
+		const content = this.normalizeNewContent(newContent);
 		assert(
 			(this.length === 0 && index === 0) || keyIsValidIndex(index, this.length),
 			0x4d1 /* Index must be less than length or, if the field is empty, be 0. */,
 		);
 		if (count !== undefined) assert(count >= 0, 0x4d2 /* Count must be non-negative. */);
 		const maxCount = this.length - index;
-		const _count = count === undefined || count > maxCount ? maxCount : count;
-		const fieldPath = this.cursor.getFieldPath();
-		this.context.replaceNodes(fieldPath, index, _count, newContent);
+		const adjustedCount = count === undefined || count > maxCount ? maxCount : count;
+
+		fieldEditor.delete(index, adjustedCount);
+		if (content.length > 0) {
+			fieldEditor.insert(index, content);
+		}
 	}
 }
 
@@ -279,6 +430,7 @@ const editableFieldPropertySetWithoutLength = new Set<string>([
 	"primaryType",
 	"parent",
 	"context",
+	"content",
 ]);
 /**
  * The set of `EditableField` properties exposed by `fieldProxyHandler`.
@@ -324,26 +476,41 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		}
 		return undefined;
 	},
-	set: (
-		target: FieldProxyTarget,
-		key: string,
-		value: ContextuallyTypedNodeData,
-		receiver: unknown,
-	): boolean => {
-		const cursor = cursorFromContextualData(
-			target.context.schema,
-			target.fieldSchema.types,
-			value,
-		);
-		// This is just a cheap way to check if there might be a node at the given index.
-		// An implementation of the target methods holds all relevant key assertions.
-		// TODO: maybe refactor this to add a real node existence check if desired,
-		// but it might be costly regarding performance.
-		if (keyIsValidIndex(key, target.length)) {
-			target.replaceNodes(Number(key), cursor, 1);
-		} else {
-			target.insertNodes(Number(key), cursor);
+	set: (target: FieldProxyTarget, key: string, value: unknown, receiver: unknown): boolean => {
+		switch (key) {
+			case "content": {
+				target.content = value as NewFieldContent;
+				break;
+			}
+			default: {
+				assert(
+					keyIsValidIndex(key, target.length + 1),
+					"cannot assign to unexpected member of field.",
+				);
+
+				const cursor = cursorFromContextualData(
+					target.context.schema,
+					target.fieldSchema.types,
+					value as ContextuallyTypedNodeData,
+				);
+				const index = Number(key);
+
+				if (target.kind.multiplicity === Multiplicity.Sequence) {
+					if (index < target.length) {
+						target.replaceNodes(index, [cursor], 1);
+					} else {
+						target.insertNodes(index, [cursor]);
+					}
+				} else {
+					assert(
+						index === 0,
+						"Assignments to non-sequence field content by index must use index 0.",
+					);
+					target.content = cursor;
+				}
+			}
 		}
+
 		return true;
 	},
 	deleteProperty: (target: FieldProxyTarget, key: string): boolean => {

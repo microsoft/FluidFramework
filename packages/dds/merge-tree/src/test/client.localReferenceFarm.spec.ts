@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ReferencePosition } from "../referencePositions";
 import { ReferenceType } from "../ops";
+import { SlidingPreference } from "../localReference";
 import {
 	IMergeTreeOperationRunnerConfig,
 	removeRange,
@@ -70,13 +71,22 @@ describe("MergeTree.Client", () => {
 					refs.push([]);
 					for (let t = 0; t < c.getLength(); t++) {
 						const seg = c.getContainingSegment(t);
-						const lref = c.createLocalReferencePosition(
+						const forwardLref = c.createLocalReferencePosition(
 							seg.segment!,
 							seg.offset,
 							ReferenceType.SlideOnRemove,
 							{ t },
+							SlidingPreference.FORWARD,
 						);
-						refs[i].push(lref);
+						const backwardLref = c.createLocalReferencePosition(
+							seg.segment!,
+							seg.offset,
+							ReferenceType.SlideOnRemove,
+							{ t },
+							SlidingPreference.BACKWARD,
+						);
+						refs[i].push(forwardLref);
+						refs[i].push(backwardLref);
 					}
 				});
 			});
