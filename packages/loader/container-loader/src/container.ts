@@ -1447,7 +1447,11 @@ export class Container
 
 		// Start websocket connection as soon as possible. Note that there is no op handler attached yet, but the
 		// DeltaManager is resilient to this and will wait to start processing ops until after it is attached.
-		if (loadMode.deltaConnection === undefined && !pendingLocalState) {
+		if (
+			loadMode.deltaConnection === undefined &&
+			!pendingLocalState &&
+			loadMode.freezeAtSeqNum === undefined
+		) {
 			this.connectToDeltaStream(connectionArgs);
 		}
 

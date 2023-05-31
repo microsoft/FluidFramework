@@ -453,6 +453,10 @@ export class Loader implements IHostLoader {
 			pendingLocalState === undefined;
 		const fromSequenceNumber = request.headers[LoaderHeader.sequenceNumber] ?? -1;
 
+		const freezeAtSeqNum = request.headers[LoaderHeader.loadMode].freezeAtSeqNum as
+			| number
+			| undefined;
+
 		let container: Container;
 		if (canCache) {
 			const key = this.getKeyForContainerCache(request, parsed);
@@ -468,7 +472,30 @@ export class Loader implements IHostLoader {
 			container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 		}
 
-		if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
+		if (freezeAtSeqNum !== undefined) {
+			// We should check that the most recent snapshot isn't more recent than the frozen sequence number.
+			if (container.deltaManager.lastSequenceNumber > freezeAtSeqNum) {
+				throw new Error("Most recent snapshot is newer than frozen sequence number");
+			}
+			// If we are loading a frozen container, it should be in read-only mode.
+			container.forceReadonly(true);
+
+			// Handle incoming ops up until the frozen sequence number, then pause inbound ops.
+			await new Promise<void>((resolve, reject) => {
+				function opHandler(message: ISequencedDocumentMessage) {
+					assert(freezeAtSeqNum !== undefined, "freezeAtSeqNum should be defined");
+					if (message.sequenceNumber >= freezeAtSeqNum) {
+						// Pause inbound queue processing when we reach the frozen sequence number
+						// TODO: Op processing is async, is it possible we get extra ops?
+						void container.deltaManager.inbound.pause();
+						resolve();
+						container.removeListener("op", opHandler);
+					}
+				}
+
+				container.on("op", opHandler);
+			});
+		} else if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
 			await new Promise<void>((resolve, reject) => {
 				function opHandler(message: ISequencedDocumentMessage) {
 					if (message.sequenceNumber > fromSequenceNumber) {

@@ -29,6 +29,7 @@ import { describeFullCompat } from "@fluid-internal/test-version-utils";
 const loadOptions: IContainerLoadMode[] = generatePairwiseOptions<IContainerLoadMode>({
 	deltaConnection: [undefined, "none", "delayed"],
 	opsBeforeReturn: [undefined, "cached", "all"],
+	freezeAtSeqNum: [undefined, 1],
 });
 
 const testConfigs = generatePairwiseOptions({

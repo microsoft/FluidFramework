@@ -660,6 +660,7 @@ export abstract class SharedObject<
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats> {
+		console.log("Summarizing at seq #:", this.runtime.deltaManager.lastSequenceNumber);
 		const result = this.summarizeCore(
 			this.serializer,
 			telemetryContext,
