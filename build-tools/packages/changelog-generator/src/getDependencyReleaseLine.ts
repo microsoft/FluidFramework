@@ -15,7 +15,8 @@ const getDependencyReleaseLine = async (
 	options: unknown,
 ) => {
 	// Don't include dependency release lines
-	return "";
+	// return "";
+	return "REPLACE ME!";
 };
 
 export { getDependencyReleaseLine };
