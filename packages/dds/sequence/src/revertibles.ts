@@ -135,7 +135,7 @@ export function appendDeleteIntervalToRevertibles(
 }
 
 /**
- * Create revertibles for changing an interval
+ * Create revertibles for moving endpoints of an interval
  * @alpha
  */
 export function appendChangeIntervalToRevertibles(
@@ -209,7 +209,8 @@ function addIfIntervalEndpoint(
 }
 
 /**
- * Create revertibles for SharedStringDeltas
+ * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
+ * (e.g. reverting remove of a range that contains an interval will move the interval back)
  *
  * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
  * be set as true on the underlying merge tree in order to function correctly.
