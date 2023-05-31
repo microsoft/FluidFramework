@@ -25,7 +25,8 @@ const referenceGenericTypePrefix = "Reference<";
 const referenceType = "Reference";
 const basePropertyType = "BaseProperty";
 const nodePropertyTypes = new Set([nodePropertyType, "NamedNodeProperty", "RelationshipProperty"]);
-const booleanTypes = new Set(["Bool"]);
+const booleanType = "Bool";
+const stringType = "String";
 const numberTypes = new Set<string>([
 	"Int8",
 	"Uint8",
@@ -33,28 +34,13 @@ const numberTypes = new Set<string>([
 	"Uint16",
 	"Int32",
 	"Int64",
-	"Uint64",
 	"Uint32",
+	"Uint64",
 	"Float32",
 	"Float64",
 	"Enum",
 ]);
-const primitiveTypes = new Set<string>([
-	"Bool",
-	"String",
-	"Int8",
-	"Uint8",
-	"Int16",
-	"Uint16",
-	"Int32",
-	"Int64",
-	"Uint64",
-	"Uint32",
-	"Float32",
-	"Float64",
-	"Enum",
-	"Reference",
-]);
+const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referenceType]);
 
 type PropertyContext = Brand<"single" | "array" | "map" | "set", "PropertyDDSContext">;
 
@@ -147,15 +133,16 @@ function buildTreeSchema(
 					fail(`Unknown typeid "${typeIdInInheritanceChain}"`);
 				}
 				if (typeIdInInheritanceChain !== typeid) {
-					const built = buildTreeSchema(
+					// this call can be deeply recursive returning not yet created schemas, e.g.
+					// "parent -> child -> parent", so that
+					// a) it's a bad idea to use return of this function here and
+					// b) that's why templates instead of treeSchemas are used below.
+					buildTreeSchema(
 						builder,
 						treeSchemaMap,
 						allChildrenByType,
 						typeIdInInheritanceChain,
 					);
-					if (typeof built === "function" && built() === undefined) {
-						debugger
-					}
 				}
 				if (schemaTemplate.properties !== undefined) {
 					for (const property of schemaTemplate.properties) {
@@ -249,12 +236,12 @@ function buildPrimitiveSchema(
 	if (isEnum) {
 		value = ValueSchema.Number;
 	} else if (
-		typeid === "String" ||
+		typeid === stringType ||
 		typeid.startsWith(referenceGenericTypePrefix) ||
 		typeid === referenceType
 	) {
 		value = ValueSchema.String;
-	} else if (booleanTypes.has(typeid)) {
+	} else if (typeid === booleanType) {
 		value = ValueSchema.Boolean;
 	} else if (numberTypes.has(typeid)) {
 		value = ValueSchema.Number;
