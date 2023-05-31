@@ -314,6 +314,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			referenceSequenceNumber: number;
 			latestSummaryUpdated?: boolean;
 			wasSummaryTracked?: boolean;
+			refreshScenario?: string;
 		} = {
 			proposalHandle,
 			summaryRefSeq,
@@ -349,24 +350,19 @@ export class SummarizerNode implements IRootSummarizerNode {
 							latestSummaryUpdated: true,
 							wasSummaryTracked: true,
 							summaryRefSeq,
+							refreshScenario:
+								"Successfully refreshed summary ack for tracked summary",
 						};
 					}
-
-					const props = {
-						summaryRefSeq,
-						pendingSize: this.pendingSummaries.size ?? undefined,
-					};
-					this.logger.sendTelemetryEvent({
-						eventName: "PendingSummaryNotFound",
-						proposalHandle,
-						referenceSequenceNumber: this.referenceSequenceNumber,
-						details: JSON.stringify(props),
-					});
 				}
 
 				// If the summary for which refresh is called is older than the latest tracked summary, ignore it.
 				if (this.referenceSequenceNumber >= summaryRefSeq) {
 					eventProps.latestSummaryUpdated = false;
+					eventProps.refreshScenario =
+						this.referenceSequenceNumber === summaryRefSeq
+							? "Received ack matching the current referenceSequenceNumber without a tracked summary"
+							: "Received ack older than the current referenceSequenceNumber, potentially a server problem";
 					event.end(eventProps);
 					return { latestSummaryUpdated: false };
 				}
@@ -380,6 +376,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 				// snapshot is older than the latest tracked summary, ignore it.
 				if (this.referenceSequenceNumber >= fetchedSnapshotRefSeq) {
 					eventProps.latestSummaryUpdated = false;
+					eventProps.refreshScenario =
+						"Received an ack for a summary with a referenceSequenceNumber greater than currently tracked, and fetched a snapshot older than currently tracked!";
 					event.end(eventProps);
 					return { latestSummaryUpdated: false };
 				}
@@ -396,6 +394,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 				eventProps.latestSummaryUpdated = true;
 				eventProps.wasSummaryTracked = false;
 				eventProps.summaryRefSeq = fetchedSnapshotRefSeq;
+				eventProps.refreshScenario =
+					fetchedSnapshotRefSeq === summaryRefSeq
+						? "Refreshed summary ack with matching server snapshot"
+						: `Refreshed summary ack with server snapshot referenceSequenceNumber ${
+								fetchedSnapshotRefSeq > summaryRefSeq ? ">" : "<"
+						  } the ack's referenceSequenceNumber`;
 				event.end(eventProps);
 				return {
 					latestSummaryUpdated: true,
