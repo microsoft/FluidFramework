@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import type { NewChangesetWithCommit, VersionType } from "@changesets/types";
 import changelogFunctions from "changesets-format-with-issue-links";
 
