@@ -50,10 +50,10 @@ export class BlobTreeEntry {
     readonly value: IBlob;
 }
 
-// @public @deprecated (undocumented)
+// @public
 export function getGitMode(value: SummaryObject): string;
 
-// @public @deprecated (undocumented)
+// @public
 export function getGitType(value: SummaryObject): "blob" | "tree";
 
 // @public (undocumented)
