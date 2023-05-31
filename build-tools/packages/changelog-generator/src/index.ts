@@ -8,9 +8,9 @@ import type { ChangelogFunctions } from "@changesets/types";
 import { getReleaseLine } from "./getReleaseLine";
 import { getDependencyReleaseLine } from "./getDependencyReleaseLine";
 
-const changelogFunctions = {
+const changelogFunctions: ChangelogFunctions = {
 	getReleaseLine,
 	getDependencyReleaseLine,
-} as ChangelogFunctions;
+};
 
 export default changelogFunctions;
