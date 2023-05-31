@@ -116,8 +116,8 @@ export class ScribeLambdaFactory
 			document = (await runWithRetry(
 				async () => this.documentRepository.readOne({ documentId, tenantId }),
 				"readIDocumentInScribeLambdaFactory",
-				6 /* maxRetries */,
-				30000 /* retryAfterMs */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
 				lumberProperties,
 				undefined /* shouldIgnoreError */,
 				(error) => true /* shouldRetry */,
