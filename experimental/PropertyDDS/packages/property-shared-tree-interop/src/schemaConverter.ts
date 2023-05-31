@@ -27,6 +27,7 @@ const basePropertyType = "BaseProperty";
 const nodePropertyTypes = new Set([nodePropertyType, "NamedNodeProperty"]);
 const booleanType = "Bool";
 const stringType = "String";
+const enumType = "Enum";
 const numberTypes = new Set<string>([
 	"Int8",
 	"Uint8",
@@ -38,7 +39,7 @@ const numberTypes = new Set<string>([
 	"Uint64",
 	"Float32",
 	"Float64",
-	"Enum",
+	enumType,
 ]);
 const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referenceType]);
 
@@ -53,7 +54,7 @@ function isPropertyContext(context: string): context is PropertyContext {
 }
 
 function isIgnoreNestedProperties(typeid: string): boolean {
-	return typeid === "Enum";
+	return typeid === enumType;
 }
 
 type InheritingChildrenByType = ReadonlyMap<string, ReadonlySet<string>>;
@@ -272,6 +273,9 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
  * The templates must be registered beforehand using {@link PropertyFactory.register}.
  * @param rootFieldKind - The kind of the root field.
  * @param allowedRootTypes - The types of children nodes allowed for the root field.
+ * @param extraTypes - The extra types which can't be found when traversing across
+ * the PropertyDDS schema inheritances / dependencies starting from
+ * the root schema or built-in node property schemas.
  */
 export function convertPropertyToSharedTreeStorageSchema<
 	Kind extends FieldKindTypes = FieldKindTypes,
@@ -312,6 +316,8 @@ export function convertPropertyToSharedTreeStorageSchema<
 	return builder.intoDocumentSchema(rootSchema);
 }
 
+// TODO: move this to README
+//
 // Concepts currently not mapped / represented in the compiled schema:
 //
 // * Annotations
@@ -320,3 +326,4 @@ export function convertPropertyToSharedTreeStorageSchema<
 // * Values for enums
 // * Default values
 // * Inline type definitions (aka "nested properties") which requires auto-generated type IDs (e.g. "Test:Person$address-1.0.0")
+// * built-in `RelationshipProperty` schema
