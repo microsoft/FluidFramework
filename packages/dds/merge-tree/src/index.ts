@@ -40,6 +40,7 @@ export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
 	LocalReferencePosition,
+	SlidingPreference,
 } from "./localReference";
 export { AttributionPolicy, IMergeTreeAttributionOptions, IMergeTreeOptions } from "./mergeTree";
 export {
