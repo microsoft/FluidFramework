@@ -226,6 +226,9 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 /**
  * Determines how an interval should expand when segments are inserted adjacent
  * to the range it spans
+ *
+ * Note that interval stickiness is currently an experimental feature and must
+ * be explicitly enabled with the `intervalStickinessEnabled` flag
  */
 export const IntervalStickiness = {
 	/**
@@ -254,6 +257,9 @@ export const IntervalStickiness = {
 /**
  * Determines how an interval should expand when segments are inserted adjacent
  * to the range it spans
+ *
+ * Note that interval stickiness is currently an experimental feature and must
+ * be explicitly enabled with the `intervalStickinessEnabled` flag
  */
 export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
 
