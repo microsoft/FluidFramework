@@ -241,8 +241,8 @@ export function configureWebSocketServices(
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
 
-        let connectDocumentComplete: boolean = false;
-        let connectDocumentP: Promise<void> | undefined;
+		let connectDocumentComplete: boolean = false;
+		let connectDocumentP: Promise<void> | undefined;
 
 		// Timer to check token expiry for this socket connection
 		let expirationTimer: NodeJS.Timer | undefined;
@@ -610,10 +610,7 @@ export function configureWebSocketServices(
 			const driverVersion: string | undefined = userAgentInfo.driverVersion;
 			const connectMetric = Lumberjack.newLumberMetric(LumberEventName.ConnectDocument);
 			connectMetric.setProperties({
-				...getLumberBaseProperties(
-                    connectionMessage.id,
-                    connectionMessage.tenantId,
-                ),
+				...getLumberBaseProperties(connectionMessage.id, connectionMessage.tenantId),
 				[CommonProperties.clientDriverVersion]: driverVersion,
 			});
 
@@ -644,9 +641,9 @@ export function configureWebSocketServices(
 					}
 					connectMetric.error(`Connect document failed`, error);
 				})
-                .finally(() => {
-                    connectDocumentComplete = true;
-                });
+				.finally(() => {
+					connectDocumentComplete = true;
+				});
 		});
 
 		// Message sent when a new operation is submitted to the router
@@ -847,13 +844,15 @@ export function configureWebSocketServices(
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
-            if (!connectDocumentComplete && connectDocumentP) {
-                Lumberjack.warning(`Socket connection disconnected before ConnectDocument completed.`);
-                // Wait for document connection to finish before disconnecting.
-                // If disconnect fires before roomMap or connectionsMap are updated, we can be left with
-                // hanging connections and clients.
-                await connectDocumentP.catch(() => {});
-            }
+			if (!connectDocumentComplete && connectDocumentP) {
+				Lumberjack.warning(
+					`Socket connection disconnected before ConnectDocument completed.`,
+				);
+				// Wait for document connection to finish before disconnecting.
+				// If disconnect fires before roomMap or connectionsMap are updated, we can be left with
+				// hanging connections and clients.
+				await connectDocumentP.catch(() => {});
+			}
 			clearExpirationTimer();
 			const removeAndStoreP: Promise<void>[] = [];
 			// Send notification messages for all client IDs in the connection map
