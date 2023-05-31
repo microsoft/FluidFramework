@@ -15,12 +15,14 @@
  *
  * @packageDocumentation
  */
-export { IMapMessageLocalMetadata, IValueOpEmitter } from "./defaultMapInterfaces";
+export { IMapMessageLocalMetadata, IValueOpEmitter, SequenceOptions } from "./defaultMapInterfaces";
 export {
 	DeserializeCallback,
 	IIntervalCollectionEvent,
 	IIntervalHelpers,
 	Interval,
+	IntervalIndex,
+	IIntervalCollection,
 	IntervalCollection,
 	IntervalCollectionIterator,
 	IntervalLocator,
@@ -32,6 +34,7 @@ export {
 	ISerializedIntervalCollectionV2,
 	CompressedSerializedInterval,
 	SerializedIntervalDelta,
+	IntervalStickiness,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
 export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";

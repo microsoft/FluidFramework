@@ -49,6 +49,7 @@ docker compose restart gitrest
 ### Common Issues
 * Port already allocated
   * This can happen if you have a process already running on a port the docker-compose file expects to have available
+  * On MacOS, Disable AirPlay Receiver to free port 5000 (System Settings -> General -> AirDrop & Handoff -> AirPlay Receiver)
 * Drive Share Failure
   * An intermittent failure most frequent on Windows, best solved by reinstalling
 * Not Enough RAM

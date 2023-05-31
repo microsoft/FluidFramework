@@ -22,11 +22,9 @@ import {
 import {
 	MockLogger,
 	ConfigTypes,
-	IConfigProviderBase,
 	mixinMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
 	concatGarbageCollectionStates,
@@ -56,10 +54,7 @@ import {
 	RefreshSummaryResult,
 } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
-
-export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-	getRawConfig: (name: string): ConfigTypes => settings[name],
-});
+import { configProvider, parseNothing } from "./gcUnitTestHelpers";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
@@ -100,12 +95,6 @@ describe("Garbage Collection Tests", () => {
 			blobs: {},
 			trees: {},
 		};
-	};
-
-	const parseNothing: ReadAndParseBlob = async <T>() => {
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		const x: T = {} as T;
-		return x;
 	};
 
 	function createGarbageCollector(

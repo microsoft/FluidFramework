@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
-import { useId } from "@fluentui/react-hooks";
+import { IStackItemStyles, Stack, StackItem } from "@fluentui/react";
 import {
 	Button,
 	Badge,
@@ -15,9 +14,11 @@ import {
 	TableCellLayout,
 	TableColumnDefinition,
 	TableColumnSizingOptions,
+	Tooltip,
 	useTableFeatures,
 	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
+import { InfoLabel } from "@fluentui/react-components/unstable";
 import {
 	PlugConnected20Regular,
 	PlugDisconnected20Regular,
@@ -33,7 +34,7 @@ import {
 	DisconnectContainer,
 	GetContainerState,
 	handleIncomingMessage,
-	HasContainerId,
+	HasContainerKey,
 	IMessageRelay,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
@@ -45,18 +46,15 @@ import { initializeFluentUiIcons } from "../InitializeIcons";
 import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
+import { clientIdTooltipText, containerStatusTooltipText, userIdTooltipText } from "./TooltipTexts";
 
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
 
-// TODOs:
-// - Add info tooltips (with question mark icons?) for each piece of Container status info to
-//   help education consumers as to what the different statuses mean.
-
 /**
  * {@link ContainerSummaryView} input props.
  */
-export type ContainerSummaryViewProps = HasContainerId;
+export type ContainerSummaryViewProps = HasContainerKey;
 
 const columnsDef: TableColumnDefinition<Item>[] = [
 	createTableColumn<Item>({
@@ -81,66 +79,99 @@ interface Item {
 	value: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function DataRow(label: string, id: string | undefined, columnProps: any): React.ReactElement {
+/**
+ * {@link DataRow} input props.
+ */
+interface DataRowProps {
+	/**
+	 * Row label content (first column).
+	 */
+	label: React.ReactElement | string;
+
+	/**
+	 * Tooltip content to display via an info badge.
+	 * If not provided, no info badge will be displayed.
+	 */
+	infoTooltipContent: React.ReactElement | string | undefined;
+
+	/**
+	 * The value text associated with the label (second column).
+	 */
+	value: React.ReactElement | string | undefined;
+
+	/**
+	 * Column props consumed by FluentUI.
+	 *
+	 * @privateRemarks `@fluentui/react-components` does not export the type we need here: `TableColumnSizingState`.
+	 */
+	columnProps: unknown;
+}
+
+/**
+ * Displays a row with basic stats about the Container.
+ */
+function DataRow(props: DataRowProps): React.ReactElement {
+	const { label, infoTooltipContent, value, columnProps } = props;
+
 	return (
 		<TableRow>
 			<TableCell
 				{
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-					...columnProps.getTableCellProps("containerProperty")
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+					...(columnProps as any).getTableCellProps("containerProperty")
 				}
 			>
-				<b>{label}</b>
+				{infoTooltipContent === undefined ? (
+					<b>{label}</b>
+				) : (
+					<InfoLabel info={infoTooltipContent} style={{ whiteSpace: "nowrap" }}>
+						<b>{label}</b>
+					</InfoLabel>
+				)}
 			</TableCell>
-			<TableCell>{id}</TableCell>
+			<TableCell>{value}</TableCell>
 		</TableRow>
 	);
 }
 
-function ContainerStatusRow(statusComponents: string[]): React.ReactElement {
+function containerStatusValueCell(statusComponents: string[]): React.ReactElement {
 	return (
-		<TableRow>
-			<TableCell>
-				<b>Status</b>
-			</TableCell>
-			<TableCell>
-				<TableCellLayout
-					media={((): JSX.Element => {
-						switch (statusComponents[0]) {
-							case "attaching":
-								return (
-									<Badge shape="rounded" color="warning">
-										{statusComponents[0]}
-									</Badge>
-								);
-							case "detached":
-								return (
-									<Badge shape="rounded" color="danger">
-										{statusComponents[0]}
-									</Badge>
-								);
-							default:
-								return (
-									<Badge shape="rounded" color="success">
-										{statusComponents[0]}
-									</Badge>
-								);
-						}
-					})()}
-				>
-					{statusComponents[1] === "Connected" ? (
-						<Badge shape="rounded" color="success">
-							{statusComponents[1]}
-						</Badge>
-					) : (
-						<Badge shape="rounded" color="danger">
-							{statusComponents[1]}
-						</Badge>
-					)}
-				</TableCellLayout>
-			</TableCell>
-		</TableRow>
+		<TableCell>
+			<TableCellLayout
+				media={((): JSX.Element => {
+					switch (statusComponents[0]) {
+						case AttachState.Attaching:
+							return (
+								<Badge shape="rounded" color="warning">
+									{statusComponents[0]}
+								</Badge>
+							);
+						case AttachState.Detached:
+							return (
+								<Badge shape="rounded" color="danger">
+									{statusComponents[0]}
+								</Badge>
+							);
+						default:
+							return (
+								<Badge shape="rounded" color="success">
+									{statusComponents[0]}
+								</Badge>
+							);
+					}
+				})()}
+			>
+				{statusComponents[1] === "Connected" ? (
+					<Badge shape="rounded" color="success">
+						{statusComponents[1]}
+					</Badge>
+				) : (
+					<Badge shape="rounded" color="danger">
+						{statusComponents[1]}
+					</Badge>
+				)}
+			</TableCellLayout>
+		</TableCell>
 	);
 }
 
@@ -148,7 +179,7 @@ function ContainerStatusRow(statusComponents: string[]): React.ReactElement {
  * Debugger view displaying basic Container stats.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
-	const { containerId } = props;
+	const { containerKey } = props;
 	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
 
@@ -175,7 +206,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		const inboundMessageHandlers: InboundHandlers = {
 			[ContainerStateChange.MessageType]: (untypedMessage) => {
 				const message = untypedMessage as ContainerStateChange.Message;
-				if (message.data.containerId === containerId) {
+				if (message.data.containerKey === containerKey) {
 					setContainerState(message.data.containerState);
 					return true;
 				}
@@ -200,13 +231,13 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		// eslint-disable-next-line unicorn/no-useless-undefined
 		setContainerState(undefined);
 
-		// Request state info for the newly specified containerId
-		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
+		// Request state info for the newly specified containerKey
+		messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, setContainerState, messageRelay]);
+	}, [containerKey, setContainerState, messageRelay]);
 
 	if (containerState === undefined) {
 		return <Waiting label="Waiting for Container Summary data." />;
@@ -215,7 +246,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	function tryConnect(): void {
 		messageRelay.postMessage(
 			ConnectContainer.createMessage({
-				containerId,
+				containerKey,
 			}),
 		);
 	}
@@ -223,8 +254,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	function forceDisconnect(): void {
 		messageRelay.postMessage(
 			DisconnectContainer.createMessage({
-				containerId,
-				/* TODO: Specify debugger reason here once it is supported */
+				containerKey,
+				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
 	}
@@ -232,8 +263,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	function closeContainer(): void {
 		messageRelay.postMessage(
 			CloseContainer.createMessage({
-				containerId,
-				/* TODO: Specify debugger reason here once it is supported */
+				containerKey,
+				/* TODO: Specify devtools reason here once it is supported */
 			}),
 		);
 	}
@@ -251,12 +282,29 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
 	return (
 		<Stack>
+			<StackItem align="center">
+				<h2>{containerState.containerKey}</h2>
+			</StackItem>
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>
-					{DataRow("Container", containerState.id, columnSizing_unstable)}
-					{ContainerStatusRow(statusComponents)}
-					{DataRow("Client ID", containerState.clientId, columnSizing_unstable)}
-					{DataRow("User ID", containerState.userId, columnSizing_unstable)}
+					<DataRow
+						label="Status"
+						infoTooltipContent={containerStatusTooltipText}
+						value={containerStatusValueCell(statusComponents)}
+						columnProps={columnSizing_unstable}
+					/>
+					<DataRow
+						label="Client ID"
+						infoTooltipContent={clientIdTooltipText}
+						value={containerState.clientId}
+						columnProps={columnSizing_unstable}
+					/>
+					<DataRow
+						label="User ID"
+						infoTooltipContent={userIdTooltipText}
+						value={containerState.userId}
+						columnProps={columnSizing_unstable}
+					/>
 				</Table>
 			</StackItem>
 			<StackItem align="start">
@@ -309,12 +357,8 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 	const { isContainerConnected, isContainerClosed, tryConnect, forceDisconnect, closeContainer } =
 		props;
 
-	const connectButtonTooltipId = useId("connect-button-tooltip");
-	const disconnectButtonTooltipId = useId("disconnect-button-tooltip");
-	const disposeContainerButtonTooltipId = useId("dispose-container-button-tooltip");
-
 	const changeConnectionStateButton = isContainerConnected ? (
-		<TooltipHost content="Disconnect Container" id={disconnectButtonTooltipId}>
+		<Tooltip content="Disconnect Container" relationship="description">
 			<Button
 				size="small"
 				icon={<PlugDisconnected20Regular />}
@@ -323,9 +367,9 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Disconnect Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	) : (
-		<TooltipHost content="Connect Container" id={connectButtonTooltipId}>
+		<Tooltip content="Connect Container" relationship="description">
 			<Button
 				size="small"
 				icon={<PlugConnected20Regular />}
@@ -334,11 +378,11 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Connect Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 
 	const disposeContainerButton = (
-		<TooltipHost content="Close Container" id={disposeContainerButtonTooltipId}>
+		<Tooltip content="Close Container" relationship="description">
 			<Button
 				size="small"
 				icon={<Delete20Regular />}
@@ -347,7 +391,7 @@ function ActionsBar(props: ActionsBarProps): React.ReactElement {
 			>
 				Close Container
 			</Button>
-		</TooltipHost>
+		</Tooltip>
 	);
 
 	const itemStyles: IStackItemStyles = {

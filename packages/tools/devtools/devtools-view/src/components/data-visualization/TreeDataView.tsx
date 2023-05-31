@@ -4,7 +4,7 @@
  */
 import React from "react";
 
-import { HasContainerId, VisualNodeKind } from "@fluid-experimental/devtools-core";
+import { HasContainerKey, VisualNodeKind } from "@fluid-experimental/devtools-core";
 
 import { DataVisualizationTreeProps } from "./CommonInterfaces";
 import { FluidHandleView } from "./FluidHandleView";
@@ -18,25 +18,25 @@ import { UnknownDataView } from "./UnknownDataView";
 /**
  * {@link TreeDataView} input props.
  */
-export interface TreeDataViewProps extends HasContainerId, DataVisualizationTreeProps {}
+export interface TreeDataViewProps extends HasContainerKey, DataVisualizationTreeProps {}
 
 /**
  * Displays visual summary trees for DDS_s within the container based on the current node's type.
  */
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
-	const { containerId, label, node } = props;
+	const { containerKey, label, node } = props;
 
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.
 		 */
 		case VisualNodeKind.TreeNode:
-			return <TreeView containerId={containerId} label={label} node={node} />;
+			return <TreeView containerKey={containerKey} label={label} node={node} />;
 		/**
 		 * FluidObjectNode with children.
 		 */
 		case VisualNodeKind.FluidTreeNode:
-			return <FluidTreeView containerId={containerId} label={label} node={node} />;
+			return <FluidTreeView containerKey={containerKey} label={label} node={node} />;
 		/**
 		 * Node with primitive value.
 		 */
@@ -63,7 +63,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		case VisualNodeKind.FluidHandleNode:
 			return (
 				<FluidHandleView
-					containerId={containerId}
+					containerKey={containerKey}
 					fluidObjectId={node.fluidObjectId}
 					label={label}
 				/>
