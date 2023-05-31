@@ -23,12 +23,28 @@ import { IntervalOpType, SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
+/**
+ * Data for undoing edits on SharedStrings and Intervals.
+ *
+ * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
+ * be set as true on the underlying merge tree in order to function correctly.
+ *
+ * @alpha
+ */
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
 const idMap = new Map<string, string>();
 
 type IntervalOpType = typeof IntervalOpType[keyof typeof IntervalOpType];
 
+/**
+ * Data for undoing edits affecting Intervals.
+ *
+ * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
+ * be set as true on the underlying merge tree in order to function correctly.
+ *
+ * @alpha
+ */
 export type IntervalRevertible =
 	| {
 			event: typeof IntervalOpType.CHANGE;
@@ -69,7 +85,11 @@ function getId(interval: SequenceInterval): string {
 	return idMap.get(maybeId) ?? maybeId;
 }
 
-export function appendLocalAddToRevertibles(
+/**
+ * Create revertibles for adding an interval
+ * @alpha
+ */
+export function appendAddIntervalToRevertibles(
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
 ) {
@@ -81,7 +101,11 @@ export function appendLocalAddToRevertibles(
 	return revertibles;
 }
 
-export function appendLocalDeleteToRevertibles(
+/**
+ * Create revertibles for deleting an interval
+ * @alpha
+ */
+export function appendDeleteIntervalToRevertibles(
 	string: SharedString,
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
@@ -110,7 +134,11 @@ export function appendLocalDeleteToRevertibles(
 	return revertibles;
 }
 
-export function appendLocalChangeToRevertibles(
+/**
+ * Create revertibles for moving endpoints of an interval
+ * @alpha
+ */
+export function appendChangeIntervalToRevertibles(
 	string: SharedString,
 	newInterval: SequenceInterval,
 	previousInterval: SequenceInterval,
@@ -140,7 +168,11 @@ export function appendLocalChangeToRevertibles(
 	return revertibles;
 }
 
-export function appendLocalPropertyChangedToRevertibles(
+/**
+ * Create revertibles for changing properties of an interval
+ * @alpha
+ */
+export function appendIntervalPropertyChangedToRevertibles(
 	interval: SequenceInterval,
 	deltas: PropertySet,
 	revertibles: SharedStringRevertible[],
@@ -176,6 +208,15 @@ function addIfIntervalEndpoint(
 	return false;
 }
 
+/**
+ * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
+ * (e.g. reverting remove of a range that contains an interval will move the interval back)
+ *
+ * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
+ * be set as true on the underlying merge tree in order to function correctly.
+ *
+ * @alpha
+ */
 export function appendSharedStringDeltaToRevertibles(
 	string: SharedString,
 	delta: SequenceDeltaEvent,
@@ -406,6 +447,14 @@ function revertLocalSequenceRemove(
 	});
 }
 
+/**
+ * Invoke revertibles to reverse prior edits
+ *
+ * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
+ * be set as true on the underlying merge tree in order to function correctly.
+ *
+ * @alpha
+ */
 export function revertSharedStringRevertibles(
 	sharedString: SharedString,
 	revertibles: SharedStringRevertible[],
