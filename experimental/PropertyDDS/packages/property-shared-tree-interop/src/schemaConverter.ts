@@ -229,23 +229,21 @@ function buildPrimitiveSchema(
 	typeid: string,
 	isEnum?: boolean,
 ): TreeSchema {
-	let value: ValueSchema;
-	if (isEnum) {
-		value = ValueSchema.Number;
-	} else if (
+	let valueSchema: ValueSchema;
+	if (
 		typeid === stringType ||
 		typeid.startsWith(referenceGenericTypePrefix) ||
 		typeid === referenceType
 	) {
-		value = ValueSchema.String;
+		valueSchema = ValueSchema.String;
 	} else if (typeid === booleanType) {
-		value = ValueSchema.Boolean;
-	} else if (numberTypes.has(typeid)) {
-		value = ValueSchema.Number;
+		valueSchema = ValueSchema.Boolean;
+	} else if (numberTypes.has(typeid) || isEnum) {
+		valueSchema = ValueSchema.Number;
 	} else {
 		fail(`Unknown primitive typeid: ${typeid}`);
 	}
-	const treeSchema = builder.object(typeid, { value });
+	const treeSchema = builder.primitive(typeid, valueSchema);
 	treeSchemaMap.set(typeid, treeSchema);
 	return treeSchema;
 }
