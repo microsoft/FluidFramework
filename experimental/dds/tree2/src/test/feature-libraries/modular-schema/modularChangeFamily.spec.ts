@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { TUnsafe, Type } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
@@ -46,7 +47,8 @@ type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
-	codecsFactory: () => makeCodecFamily([[0, makeValueCodec<ValueChangeset>()]]),
+	codecsFactory: () =>
+		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change, deltaFromChild) =>
