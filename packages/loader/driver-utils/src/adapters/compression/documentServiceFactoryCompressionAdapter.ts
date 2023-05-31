@@ -30,10 +30,19 @@ export class DocumentServiceFactoryCompressionAdapter extends DocumentServiceFac
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		if (createNewSummary !== undefined) {
+			// TODO : this is a hack to make sure that the initial summary is not compressed
+			// We must prevent the initial summary from being compressed because
+			// of the hack at packages/drivers/routerlicious-driver/src/createNewUtils.ts
+			// where the binary blob is converted to a string using UTF-8 encoding
+			// which is producing incorrect results for compressed data.
+			const configForInitial = {
+				algorithm: this._config.algorithm,
+				minSizeToCompress: Number.POSITIVE_INFINITY,
+			};
 			const newAppSumary =
 				DocumentStorageServiceSummaryBlobCompressionAdapter.compressSummary(
 					createNewSummary.tree[".app"] as ISummaryTree,
-					this._config,
+					configForInitial,
 				);
 			createNewSummary.tree[".app"] = newAppSumary;
 		}
