@@ -658,14 +658,17 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 					const deferred = new Deferred<IConnected>();
 
 					socket.on("connect_document_success", (connectedMessage: IConnected) => {
+                        console.log("connect_document_success")
 						deferred.resolve(connectedMessage);
 					});
 
 					socket.on("connect_document_error", (error: any) => {
+                        console.log("connect_document_error")
 						deferred.reject(error);
 					});
 
 					socket.on("nack", (reason: string, nackMessages: INack[]) => {
+                        console.log("nack")
 						deferred.reject(nackMessages);
 					});
 
@@ -673,6 +676,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						"connect_document",
 						connectMessage,
 						(error: any, connectedMessage: IConnected) => {
+                            console.log("connect_document", error);
 							if (error) {
 								deferred.reject(error);
 							} else {
@@ -697,6 +701,8 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						);
 						Sinon.clock.tick(clientConnectionTime);
 						socket.send("disconnect");
+                        // Wait for disconnect handler to complete
+						await Sinon.clock.nextAsync();
 
 						const usageData = await testThrottleAndUsageStorageManager.getUsageData(
 							clientConnectivityStorageId,
@@ -715,7 +721,9 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 							socket,
 						);
 						Sinon.clock.tick(clientConnectionTime);
-						socket.send("disconnect");
+                        socket.send("disconnect");
+                        // Wait for disconnect handler to complete
+						await Sinon.clock.nextAsync();
 
 						const usageData = await testThrottleAndUsageStorageManager.getUsageData(
 							clientConnectivityStorageId,
