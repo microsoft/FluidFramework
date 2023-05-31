@@ -455,7 +455,7 @@ describe("EditManager", () => {
 	});
 
 	/**
-	 * This test case effectively tests most of the scenarios covered by the other test cases.
+	 * These test cases effectively test most of the scenarios covered by the other test cases.
 	 * Despite that, it's good to keep the other tests cases for the following reasons:
 	 *
 	 * - They are easier to read and debug.
@@ -463,7 +463,7 @@ describe("EditManager", () => {
 	 * - They help diagnose issues with the more complicated exhaustive test (e.g., if one of the above tests fails,
 	 * but this one doesn't, then there might be something wrong with this test).
 	 */
-	it("Combinatorial test", () => {
+	describe("Combinatorial tests", () => {
 		const meta = {
 			peerRefs: makeArray(NUM_PEERS, () => 0),
 			seq: 0,
@@ -472,18 +472,19 @@ describe("EditManager", () => {
 		for (const scenario of buildScenario([], meta)) {
 			// Uncomment the code below to log the titles of generated scenarios.
 			// This is helpful for creating a unit test out of a generated scenario that fails.
-			// const title = scenario
-			// 	.map((s) => {
-			// 		if (s.type === "Pull") {
-			// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
-			// 		} else if (s.type === "Ack") {
-			// 			return `Ack(${s.seq})`;
-			// 		}
-			// 		return `Push(${s.seq})`;
-			// 	})
-			// 	.join("|");
-			// console.debug(title);
-			runUnitTestScenario(undefined, scenario);
+			const title = scenario
+				.map((s) => {
+					if (s.type === "Pull") {
+						return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+					} else if (s.type === "Ack") {
+						return `Ack(${s.seq})`;
+					}
+					return `Push(${s.seq})`;
+				})
+				.join("|");
+			it(title, () => {
+				runUnitTestScenario(undefined, scenario);
+			});
 		}
 	});
 });
