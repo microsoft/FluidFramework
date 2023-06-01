@@ -16,12 +16,16 @@ export default {
 		typeid: "Test:NestedProperties-1.0.0",
 		properties: [{ id: "withNestedProperties", properties: [{ id: "foo", typeid: "String" }] }],
 	},
+	typeWithBaseProperty: {
+		typeid: "Test:BaseProperty-1.0.0",
+		properties: [{ id: "base", typeid: "BaseProperty" }],
+	},
 	child: {
 		inherits: ["Test:Optional-1.0.0"],
 		typeid: "Test:Child-1.0.0",
 		properties: [{ id: "parent", typeid: "Test:Optional-1.0.0", optional: true }],
 	},
-	optional: {
+	parent: {
 		inherits: ["NodeProperty"],
 		typeid: "Test:Optional-1.0.0",
 		properties: [

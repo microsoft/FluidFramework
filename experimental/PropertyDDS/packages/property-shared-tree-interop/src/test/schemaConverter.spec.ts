@@ -119,6 +119,36 @@ describe("schema converter", () => {
 			}
 		});
 
+		it("can convert empty generic types to collections of Any", () => {
+			{
+				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+					FieldKinds.optional,
+					new Set(["array<>"]),
+				);
+				const primary = getPrimaryField(
+					fullSchemaData.treeSchema.get(brand("array<Any>")) ??
+						fail("expected tree schema"),
+				);
+				assert(primary !== undefined);
+				assert.deepEqual(
+					[...((primary.schema as FieldSchema).allowedTypes ?? fail("expected types"))],
+					[Any],
+				);
+			}
+
+			{
+				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+					FieldKinds.optional,
+					new Set(["map<>"]),
+				);
+				const anyMap =
+					fullSchemaData.treeSchema.get(brand("map<Any>")) ??
+					fail("expected tree schema");
+
+				assert.deepEqual([...(anyMap.extraLocalFields as FieldSchema).allowedTypes], [Any]);
+			}
+		});
+
 		it(`throws at unknown typeid`, () => {
 			assert.throws(
 				() =>
@@ -143,6 +173,27 @@ describe("schema converter", () => {
 						e,
 						`Unknown context "custom" in typeid "custom<Test:Optional-1.0.0>"`,
 					),
+				"Expected exception was not thrown",
+			);
+		});
+
+		it(`throws when using "BaseProperty"`, () => {
+			assert.throws(
+				() =>
+					convertPropertyToSharedTreeStorageSchema(
+						FieldKinds.optional,
+						new Set(["array<BaseProperty>"]),
+					),
+				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
+				"Expected exception was not thrown",
+			);
+			assert.throws(
+				() =>
+					convertPropertyToSharedTreeStorageSchema(
+						FieldKinds.optional,
+						new Set(["BaseProperty"]),
+					),
+				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
 			);
 		});
@@ -180,7 +231,7 @@ describe("schema converter", () => {
 				(e) =>
 					validateAssertionError(
 						e,
-						`Nested properties are not supported yet (property "withNestedProperties" of type "Test:NestedProperties-1.0.0")`,
+						`Nested properties are not supported yet (in property "withNestedProperties" of type "Test:NestedProperties-1.0.0")`,
 					),
 				"Expected exception was not thrown",
 			);
@@ -374,6 +425,19 @@ describe("schema converter", () => {
 			const childOfChildFieldSchema =
 				childSchema.localFields.get(childFieldKey) ?? fail("expected field schema");
 			assert.deepEqual(childOfChildFieldSchema, childFieldSchema);
+		});
+
+		it(`throws when using "BaseProperty" in properties`, () => {
+			assert.throws(
+				() =>
+					convertPropertyToSharedTreeStorageSchema(
+						FieldKinds.optional,
+						Any,
+						new Set(["Test:BaseProperty-1.0.0"]),
+					),
+				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
+				"Expected exception was not thrown",
+			);
 		});
 	});
 });

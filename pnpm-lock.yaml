@@ -7131,6 +7131,9 @@ importers:
       '@fluid-experimental/tree2':
         specifier: workspace:~
         version: link:../../../dds/tree2
+      '@fluidframework/common-utils':
+        specifier: ^1.1.1
+        version: 1.1.1
     devDependencies:
       '@fluidframework/build-common':
         specifier: ^1.1.0

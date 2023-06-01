@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
 	fail,
 	FieldKinds,
@@ -100,6 +101,7 @@ function buildTreeSchema(
 	allChildrenByType: InheritingChildrenByType,
 	type: string,
 ): LazyTreeSchema {
+	assert(type !== basePropertyType, `"BaseProperty" shall not be used in schemas.`);
 	const { typeid, context } = TypeIdHelper.extractContext(type);
 	if (!isPropertyContext(context)) {
 		fail(`Unknown context "${context}" in typeid "${type}"`);
@@ -122,56 +124,10 @@ function buildTreeSchema(
 		} else {
 			const cache: { treeSchema?: TreeSchema } = {};
 			treeSchemaMap.set(typeid, () => cache.treeSchema as TreeSchema);
-			const local = {};
-			const inheritanceChain: string[] = [];
-			try {
-				inheritanceChain.push(...PropertyFactory.getAllParentsForTemplate(typeid));
-			} catch (e) {
-				fail(`Unknown typeid "${typeid}"`);
-			}
-			inheritanceChain.push(typeid);
-			for (const typeIdInInheritanceChain of inheritanceChain) {
-				const schemaTemplate = PropertyFactory.getTemplate(typeIdInInheritanceChain);
-				if (schemaTemplate === undefined) {
-					fail(`Unknown typeid "${typeIdInInheritanceChain}"`);
-				}
-				if (typeIdInInheritanceChain !== typeid) {
-					// This call can be deeply recursive returning not yet created schemas,
-					// e.g., for a "parent -> child -> parent" inheritance chain, so that
-					// a) the result of this call can't be used to get the inherited fields and
-					// b) that's why templates are used below instead.
-					buildTreeSchema(
-						builder,
-						treeSchemaMap,
-						allChildrenByType,
-						typeIdInInheritanceChain,
-					);
-				}
-				if (schemaTemplate.properties !== undefined) {
-					for (const property of schemaTemplate.properties) {
-						if (property.properties && !isIgnoreNestedProperties(property.typeid)) {
-							fail(
-								`Nested properties are not supported yet (property "${property.id}" of type "${typeIdInInheritanceChain}")`,
-							);
-						} else {
-							const currentTypeid =
-								property.context && property.context !== singleContext
-									? TypeIdHelper.createSerializationTypeId(
-											property.typeid ?? "",
-											property.context,
-											false,
-									  )
-									: property.typeid ?? Any;
-							local[property.id] = buildFieldSchema(
-								builder,
-								treeSchemaMap,
-								allChildrenByType,
-								property.optional ? FieldKinds.optional : FieldKinds.value,
-								currentTypeid,
-							);
-						}
-					}
-				}
+			const local = buildLocalFields(builder, treeSchemaMap, allChildrenByType, typeid, {});
+			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
+			for (const inheritanceType of inheritanceChain) {
+				buildLocalFields(builder, treeSchemaMap, allChildrenByType, inheritanceType, local);
 			}
 			const extraLocalFields = PropertyFactory.inheritsFrom(typeid, nodePropertyType)
 				? SchemaBuilder.fieldOptional(Any)
@@ -183,7 +139,13 @@ function buildTreeSchema(
 			return cache.treeSchema;
 		}
 	} else {
+		// `typeid === basePropertyType` is only allowed to happen if type is omitted from a generic typeid (e.g. "array<>").
+		// Such generic typeids are also generated when building a field for a collection property w/o typeid.
 		const isAnyType = TypeIdHelper.extractTypeId(type) === "" && typeid === basePropertyType;
+		assert(
+			typeid !== basePropertyType || isAnyType,
+			`"BaseProperty" shall not be used in schemas.`,
+		);
 		const currentTypeid = TypeIdHelper.createSerializationTypeId(
 			isAnyType ? Any : typeid,
 			context,
@@ -192,12 +154,6 @@ function buildTreeSchema(
 		const treeSchema = treeSchemaMap.get(currentTypeid);
 		if (treeSchema) {
 			return treeSchema;
-		}
-		if (typeid === "") {
-			fail(`Missing typeid in collection type "${type}"`);
-		}
-		if (typeid === basePropertyType && !isAnyType) {
-			fail(`"${basePropertyType}" shall not be used in schemas (typeid "${type}").`);
 		}
 		const fieldKind = context === arrayContext ? FieldKinds.sequence : FieldKinds.optional;
 		const cache: { treeSchema?: TreeSchema } = {};
@@ -228,6 +184,54 @@ function buildTreeSchema(
 	}
 }
 
+function buildLocalFields(
+	builder: SchemaBuilder,
+	treeSchemaMap: Map<string, LazyTreeSchema>,
+	allChildrenByType: InheritingChildrenByType,
+	typeid: string,
+	local: { [key: string]: FieldSchema },
+): { readonly [key: string]: FieldSchema } {
+	const schemaTemplate = PropertyFactory.getTemplate(typeid);
+	if (schemaTemplate === undefined) {
+		fail(`Unknown typeid "${typeid}"`);
+	}
+	// This call can be deeply recursive returning not yet created schemas,
+	// e.g., for a "parent -> child -> parent" inheritance chain, so that
+	// a) the result of this call can't be used here to get the inherited fields and
+	// b) that's why templates are used below instead.
+	buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeid);
+	if (schemaTemplate.properties !== undefined) {
+		for (const property of schemaTemplate.properties) {
+			if (property.properties && !isIgnoreNestedProperties(property.typeid)) {
+				fail(
+					`Nested properties are not supported yet (in property "${property.id}" of type "${typeid}")`,
+				);
+			} else {
+				assert(
+					property.typeid !== basePropertyType,
+					`"BaseProperty" shall not be used in schemas.`,
+				);
+				const currentTypeid =
+					property.context && property.context !== singleContext
+						? TypeIdHelper.createSerializationTypeId(
+								property.typeid ?? "",
+								property.context,
+								false,
+						  )
+						: property.typeid ?? Any;
+				local[property.id] = buildFieldSchema(
+					builder,
+					treeSchemaMap,
+					allChildrenByType,
+					property.optional ? FieldKinds.optional : FieldKinds.value,
+					currentTypeid,
+				);
+			}
+		}
+	}
+	return local;
+}
+
 function buildPrimitiveSchema(
 	builder: SchemaBuilder,
 	treeSchemaMap: Map<string, LazyTreeSchema>,
@@ -246,7 +250,9 @@ function buildPrimitiveSchema(
 	} else if (numberTypes.has(typeid) || isEnum) {
 		valueSchema = ValueSchema.Number;
 	} else {
-		fail(`Unknown primitive typeid: ${typeid}`);
+		// If this case occurs, there is definetely a problem with the ajv template,
+		// as unknown primitives should be issued there otherwise.
+		fail(`Unknown primitive typeid "${typeid}"`);
 	}
 	const treeSchema = builder.primitive(typeid, valueSchema);
 	treeSchemaMap.set(typeid, treeSchema);
@@ -260,7 +266,7 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
 	fieldKind: Kind,
 	...fieldTypes: readonly string[]
 ): FieldSchema {
-	if (!fieldTypes.length || fieldTypes.find((t) => t === Any)) {
+	if (fieldTypes.length === 0 || fieldTypes.find((t) => t === Any)) {
 		return SchemaBuilder.field(fieldKind, Any);
 	}
 	const allowedTypes = mapTypesAndChildren(
