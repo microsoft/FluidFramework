@@ -35,7 +35,7 @@
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "jest --detectOpenHandles",
-		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junite",
+		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junit",
 		"tsc": "tsc",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"

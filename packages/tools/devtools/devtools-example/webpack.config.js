@@ -7,7 +7,7 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { merge } = require("webpack-merge");
 
-const testAppSrcPath = path.join(__dirname, "src", "test", "app");
+const sourcePath = path.join(__dirname, "src");
 
 module.exports = (env) => {
 	const isProduction = env && env.production;
@@ -15,7 +15,7 @@ module.exports = (env) => {
 	return merge(
 		{
 			entry: {
-				main: path.join(testAppSrcPath, "index.tsx"),
+				main: path.join(sourcePath, "index.tsx"),
 			},
 			resolve: {
 				extensions: [".ts", ".tsx", ".js"],
@@ -37,7 +37,7 @@ module.exports = (env) => {
 			},
 			plugins: [
 				new HtmlWebpackPlugin({
-					template: path.join(testAppSrcPath, "index.html"),
+					template: path.join(sourcePath, "index.html"),
 				}),
 			],
 			// This impacts which files are watched by the dev server (and likely by webpack if watch is true).

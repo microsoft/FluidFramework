@@ -170,14 +170,24 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			requestVersion = versions[0];
 		}
 
-		const normalizedWholeSnapshot = await this.snapshotTreeCache.get(
+		let normalizedWholeSnapshot = await this.snapshotTreeCache.get(
 			this.getCacheKey(requestVersion.id),
 		);
 		if (normalizedWholeSnapshot !== undefined) {
 			return normalizedWholeSnapshot.snapshotTree;
 		}
-		return (await this.fetchSnapshotTree(requestVersion.id, undefined, "getSnapshotTree"))
-			.snapshotTree;
+
+		normalizedWholeSnapshot = await this.fetchSnapshotTree(
+			requestVersion.id,
+			undefined,
+			"getSnapshotTree",
+		);
+
+		// Currently retrieving blobs from network is not supported by AFR for WholeSummaryDocumentStorageService
+		// Blobs are expected to be put in the cache
+		await this.updateBlobsCache(normalizedWholeSnapshot.blobs);
+
+		return normalizedWholeSnapshot.snapshotTree;
 	}
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -186,6 +196,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			return cachedBlob;
 		}
 
+		// Note: AFR does not support readBlobs, but potentially other r11s like servers do
 		const blob = await PerformanceEvent.timedExecAsync(
 			this.logger,
 			{
@@ -328,7 +339,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		assert(snapshotId !== undefined, 0x275 /* "Root tree should contain the id" */);
 		const cachePs: Promise<any>[] = [
 			this.snapshotTreeCache.put(this.getCacheKey(snapshotId), normalizedWholeSummary),
-			this.initBlobCache(normalizedWholeSummary.blobs),
+			this.updateBlobsCache(normalizedWholeSummary.blobs),
 		];
 
 		await Promise.all(cachePs);
@@ -336,7 +347,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 		return snapshotId;
 	}
 
-	private async initBlobCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
+	private async updateBlobsCache(blobs: Map<string, ArrayBuffer>): Promise<void> {
 		const blobCachePutPs: Promise<void>[] = [];
 		blobs.forEach((value, id) => {
 			const cacheKey = this.getCacheKey(id);

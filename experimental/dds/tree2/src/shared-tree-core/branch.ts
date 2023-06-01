@@ -420,7 +420,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				branch.undoRedoManager !== undefined,
 				0x688 /* Cannot rebase a revertible branch onto a non-revertible branch */,
 			);
-			this.undoRedoManager.updateAfterRebase(sourceCommits, branch.undoRedoManager);
+			this.undoRedoManager.updateAfterRebase(
+				sourceCommits,
+				change !== undefined,
+				branch.undoRedoManager,
+			);
 		}
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
@@ -454,7 +458,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		// Compute the net change to this branch
-		const [newHead, _, { sourceCommits }] = rebaseResult;
+		const [newHead, netChange, { sourceCommits }] = rebaseResult;
 
 		if (this.undoRedoManager !== undefined) {
 			// TODO: We probably can merge a non-revertible branch into a revertible branch.
@@ -462,7 +466,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				branch.undoRedoManager !== undefined,
 				0x689 /* Cannot merge a non-revertible branch into a revertible branch */,
 			);
-			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
+			this.undoRedoManager.updateAfterMerge(
+				sourceCommits,
+				netChange !== undefined,
+				branch.undoRedoManager,
+			);
 		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
