@@ -43,7 +43,7 @@ describe("Branches", () => {
 	it("that are forks are isolated from their parent's changes", () => {
 		// Create a parent branch and a fork
 		const parent = create();
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		const childHead = child.getHead();
 		// Apply a couple of changes to the parent
 		change(parent);
@@ -56,7 +56,7 @@ describe("Branches", () => {
 		// Create a parent branch and a fork
 		const parent = create();
 		const parentHead = parent.getHead();
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a couple of changes to the fork
 		change(child);
 		change(child);
@@ -67,7 +67,7 @@ describe("Branches", () => {
 	it("rebase changes from a child onto a parent", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a couple of changes to the parent
 		const tag1 = change(parent);
 		const tag2 = change(parent);
@@ -81,7 +81,7 @@ describe("Branches", () => {
 	it("rebase changes from a parent onto a child", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a couple of changes to the child
 		const tag1 = change(child);
 		const tag2 = change(child);
@@ -95,7 +95,7 @@ describe("Branches", () => {
 	it("merge changes from a child into a parent", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a couple of changes to the fork
 		const tag1 = change(child);
 		const tag2 = change(child);
@@ -108,7 +108,7 @@ describe("Branches", () => {
 	it("merge changes from a parent into a child", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a couple of changes to the parent
 		const tag1 = change(parent);
 		const tag2 = change(parent);
@@ -121,7 +121,7 @@ describe("Branches", () => {
 	it("correctly merge after being merged", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a change to the parent
 		const tagParent = change(parent);
 		// Apply a change to the child
@@ -138,7 +138,7 @@ describe("Branches", () => {
 	it("correctly rebase after being merged", () => {
 		// Create a parent branch and a child fork
 		const parent = create();
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a change to the parent
 		const tagParent = change(parent);
 		// Apply a change to the child
@@ -178,7 +178,7 @@ describe("Branches", () => {
 				changeEventCount += 1;
 			}
 		});
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply changes to both branches
 		change(parent);
 		change(child);
@@ -196,7 +196,7 @@ describe("Branches", () => {
 				changeEventCount += 1;
 			}
 		});
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a change to the parent
 		change(parent);
 		assert.equal(changeEventCount, 0);
@@ -213,7 +213,7 @@ describe("Branches", () => {
 				changeEventCount += 1;
 			}
 		});
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply changes to both branches
 		change(parent);
 		change(child);
@@ -231,7 +231,7 @@ describe("Branches", () => {
 				changeEventCount += 1;
 			}
 		});
-		const child = parent.fork(new MockRepairDataStoreProvider());
+		const child = parent.fork();
 		// Apply a change to the parent
 		change(parent);
 		assert.equal(changeEventCount, 1);
@@ -316,8 +316,8 @@ describe("Branches", () => {
 		const branch = create();
 		branch.on("fork", (f) => (fork = f));
 		// The fork event should return the new branch, just as the fork method does
-		assert.equal(branch.fork(new MockRepairDataStoreProvider()), fork);
-		assert.equal(branch.fork(new MockRepairDataStoreProvider()), fork);
+		assert.equal(branch.fork(), fork);
+		assert.equal(branch.fork(), fork);
 	});
 
 	it("emit a dispose event after disposing", () => {
@@ -345,9 +345,9 @@ describe("Branches", () => {
 		}
 
 		// These methods are not valid to call after disposal
-		assertDisposed(() => branch.fork(new MockRepairDataStoreProvider()));
+		assertDisposed(() => branch.fork());
 		assertDisposed(() => branch.rebaseOnto(branch));
-		assertDisposed(() => branch.merge(branch.fork(new MockRepairDataStoreProvider())));
+		assertDisposed(() => branch.merge(branch.fork()));
 		assertDisposed(() => branch.editor.apply(branch.changeFamily.rebaser.compose([])));
 		assertDisposed(() => branch.startTransaction());
 		assertDisposed(() => branch.commitTransaction());

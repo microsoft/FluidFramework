@@ -30,7 +30,6 @@ import {
 import { ChangeFamily, ChangeFamilyEditor, rootFieldKeySymbol } from "../../core";
 import { DefaultChangeset, DefaultEditBuilder, singleTextCursor } from "../../feature-libraries";
 import { brand } from "../../util";
-import { MockRepairDataStoreProvider } from "../utils";
 import { ISubscribable } from "../../events";
 import { TestSharedTreeCore } from "./utils";
 
@@ -267,9 +266,9 @@ describe("SharedTreeCore", () => {
 		changeTree(tree);
 		factory.processAllMessages(); //          [1]
 		assert.equal(getTrunkLength(tree), 1);
-		const branch1 = tree.getLocalBranch().fork(new MockRepairDataStoreProvider());
-		const branch2 = tree.getLocalBranch().fork(new MockRepairDataStoreProvider());
-		const branch3 = branch2.fork(new MockRepairDataStoreProvider());
+		const branch1 = tree.getLocalBranch().fork();
+		const branch2 = tree.getLocalBranch().fork();
+		const branch3 = branch2.fork();
 		changeTree(tree);
 		factory.processAllMessages(); //          [1 (b1, b2, b3), 2]
 		changeTree(tree);
@@ -281,12 +280,12 @@ describe("SharedTreeCore", () => {
 		assert.equal(getTrunkLength(tree), 3);
 		branch3.dispose(); //                     [x, 2, 3]
 		assert.equal(getTrunkLength(tree), 2);
-		const branch4 = tree.getLocalBranch().fork(new MockRepairDataStoreProvider()); //     [x, 2, 3 (b4)]
+		const branch4 = tree.getLocalBranch().fork(); //     [x, 2, 3 (b4)]
 		changeTree(tree);
 		changeTree(tree);
 		factory.processAllMessages(); //          [x, x, 3 (b4), 4, 5]
 		assert.equal(getTrunkLength(tree), 3);
-		const branch5 = tree.getLocalBranch().fork(new MockRepairDataStoreProvider()); //     [x, x, 3 (b4), 4, 5 (b5)]
+		const branch5 = tree.getLocalBranch().fork(); //     [x, x, 3 (b4), 4, 5 (b5)]
 		branch4.rebaseOnto(branch5); //           [x, x, 3, 4, 5 (b4, b5)]
 		branch4.dispose(); //                     [x, x, 3, 4, 5 (b5)]
 		assert.equal(getTrunkLength(tree), 3);

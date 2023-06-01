@@ -378,18 +378,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
-	 * @param repairDataStoreProvider - a RepairDataStoreProvider that reflects the state of the new branch
+	 * @param repairDataStoreProvider - a {@link RepairDataStoreProvider} that reflects the state of the new branch. If one is not
+	 * provided, then it will be cloned from this branch.
 	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
 	 */
 	public fork(
-		repairDataStoreProvider: IRepairDataStoreProvider,
+		repairDataStoreProvider?: IRepairDataStoreProvider,
 		anchors?: AnchorSet,
 	): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			this.head,
 			this.changeFamily,
-			repairDataStoreProvider,
+			repairDataStoreProvider ?? this.repairDataStoreProvider.clone(),
 			this.undoRedoManager?.clone(),
 			anchors,
 		);
