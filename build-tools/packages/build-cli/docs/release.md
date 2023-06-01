@@ -24,13 +24,15 @@ FLAGS
                                @fluid-tools/markdown-magic and markdown-magic are valid.
   -t, --bumpType=<option>      Version bump type.
                                <options: major|minor|patch>
-  -v, --verbose                Verbose logging.
   -x, --skipChecks             Skip all checks.
   --[no-]branchCheck           Check that the current branch is correct.
   --[no-]commit                Commit changes to a new branch.
   --[no-]install               Update lockfiles by running 'npm install' automatically.
   --[no-]policyCheck           Check that the local repo complies with all policy.
   --[no-]updateCheck           Check that the local repo is up to date with the remote.
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Releases a package or release group.
@@ -60,11 +62,9 @@ USAGE
 ARGUMENTS
   TAG  A git tag that represents a release. May begin with 'refs/tags/'.
 
-FLAGS
-  -v, --verbose  Verbose logging.
-
 GLOBAL FLAGS
-  --json  Format output as json.
+  -v, --verbose  Verbose logging.
+  --json         Format output as json.
 
 DESCRIPTION
   Determines release information based on a git tag argument.
@@ -97,10 +97,10 @@ FLAGS
                                semver, so '--limit 10' will return the 10 highest semver releases for the release group.
   -p, --package=<value>        Name of package. You can use scoped or unscoped package names. For example, both
                                @fluid-tools/markdown-magic and markdown-magic are valid.
-  -v, --verbose                Verbose logging.
 
 GLOBAL FLAGS
-  --json  Format output as json.
+  -v, --verbose  Verbose logging.
+  --json         Format output as json.
 
 DESCRIPTION
   Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo
@@ -153,11 +153,9 @@ FLAGS
   -s, --highest
       Always pick the greatest semver version as the latest (ignore dates).
 
-  -v, --verbose
-      Verbose logging.
-
 GLOBAL FLAGS
-  --json  Format output as json.
+  -v, --verbose  Verbose logging.
+  --json         Format output as json.
 
 DESCRIPTION
   Generates a report of Fluid Framework releases.
