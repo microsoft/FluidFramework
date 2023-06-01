@@ -77,7 +77,7 @@ export interface IInterval {
 export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
     // (undocumented)
     [Symbol.iterator](): Iterator<TInterval>;
-    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
+    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness): TInterval;
     // (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)

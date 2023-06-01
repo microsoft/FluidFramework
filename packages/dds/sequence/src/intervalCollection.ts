@@ -1666,11 +1666,18 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * @param end - interval end position (exclusive)
 	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
 	 * @param props - properties of the interval
+	 * @param stickiness - {@link (IntervalStickiness:type)} to apply to the added interval.
 	 * @returns - the created interval
 	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
 	 * with how the current half-open behavior is represented.
 	 */
-	add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
+	add(
+		start: number,
+		end: number,
+		intervalType: IntervalType,
+		props?: PropertySet,
+		stickiness?: IntervalStickiness,
+	): TInterval;
 	/**
 	 * Removes an interval from the collection.
 	 * @param id - Id of the interval to remove
