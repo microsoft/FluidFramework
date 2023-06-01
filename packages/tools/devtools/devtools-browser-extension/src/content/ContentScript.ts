@@ -10,7 +10,8 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { extensionMessageSource, relayMessageToPort, relayMessageToWindow } from "../messaging";
-import { browser } from "../utilities";
+// eslint-disable-next-line import/no-internal-modules
+import { browser } from "../utilities/Globals";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
@@ -59,7 +60,7 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	}
 
 	// Relay messages to the Background Worker as appropriate.
-	globalThis.addEventListener("message", relayMessageFromPageToBackground);
+	window.addEventListener("message", relayMessageFromPageToBackground);
 
 	// Relay messages from the Background Worker to the inspected window.
 	backgroundPort.onMessage.addListener((message: Partial<ISourcedDevtoolsMessage>) => {
@@ -77,6 +78,8 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	// When the extension disconnects, clean up listeners.
 	backgroundPort.onDisconnect.addListener(() => {
 		// Unbind window listener
-		globalThis.removeEventListener("message", relayMessageFromPageToBackground);
+		window.removeEventListener("message", relayMessageFromPageToBackground);
 	});
 });
+
+console.log(formatContentScriptMessageForLogging("Content Script initialized!"));
