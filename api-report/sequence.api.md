@@ -65,7 +65,7 @@ export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInt
 // @alpha
 export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
 
-// @public
+// @public @deprecated
 export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet, IntervalStickiness] | [number, number, number, IntervalType, PropertySet];
 
 // @public (undocumented)
