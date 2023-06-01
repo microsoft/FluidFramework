@@ -415,11 +415,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| undefined {
 		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(
-			this.head,
-			branch.getHead(),
-			this.repairDataStoreProvider,
-		);
+		const rebaseResult = this.rebaseBranch(this, branch.getHead());
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -462,11 +458,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 
 		// Rebase the given branch onto this branch
-		const rebaseResult = this.rebaseBranch(
-			branch.head,
-			this.head,
-			branch.repairDataStoreProvider,
-		);
+		const rebaseResult = this.rebaseBranch(branch, this.head);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -493,12 +485,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
-	private rebaseBranch(
-		branchHead: GraphCommit<TChange>,
-		onto: GraphCommit<TChange>,
-		repairDataStoreProvider: IRepairDataStoreProvider,
-	) {
-		if (branchHead === onto) {
+	private rebaseBranch(branch: SharedTreeBranch<TEditor, TChange>, onto: GraphCommit<TChange>) {
+		const { head, repairDataStoreProvider } = branch;
+		if (head === onto) {
 			return undefined;
 		}
 
@@ -506,7 +495,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.changeFamily.rebaser,
 			(change: TChange) => this.changeFamily.intoDelta(change),
 			repairDataStoreProvider,
-			branchHead,
+			head,
 			onto,
 			onto,
 		);
