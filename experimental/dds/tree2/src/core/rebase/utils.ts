@@ -262,7 +262,8 @@ export function rebaseBranch<TChange>(
 					...targetRebasePath,
 				]);
 				const repairData = repairDataStoreProviderClone.createRepairData();
-				repairData.capture(intoDelta(change), c.revision);
+				const delta = intoDelta(change);
+				repairData.capture(delta, c.revision);
 				newHead = {
 					revision: c.revision,
 					change,
@@ -271,7 +272,7 @@ export function rebaseBranch<TChange>(
 				};
 				sourceCommits.push(newHead);
 				targetRebasePath.push({ ...c, change });
-				repairDataStoreProviderClone.applyDelta(intoDelta(change));
+				repairDataStoreProviderClone.applyDelta(delta);
 			}
 
 			inverses.unshift(
