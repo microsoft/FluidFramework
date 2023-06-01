@@ -49,6 +49,16 @@
 			"args": ["release", "report", "-g", "build-tools", "-v"]
 		},
 		{
+			// Runs the `flub generate changeset` command with a debugger attached.
+			"name": "flub generate changeset",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}/build-tools",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["generate", "changeset", "-v", "-b", "main"]
+		},
+		{
 			"name": "flub bump deps",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",

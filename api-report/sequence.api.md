@@ -96,6 +96,40 @@ export interface IInterval {
 }
 
 // @public
+export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
+    // (undocumented)
+    [Symbol.iterator](): Iterator<TInterval>;
+    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
+    // (undocumented)
+    attachDeserializer(onDeserialize: DeserializeCallback): void;
+    // (undocumented)
+    readonly attached: boolean;
+    attachIndex(index: IntervalIndex<TInterval>): void;
+    change(id: string, start?: number, end?: number): TInterval | undefined;
+    changeProperties(id: string, props: PropertySet): any;
+    // (undocumented)
+    CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
+    // (undocumented)
+    CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
+    // (undocumented)
+    CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
+    // (undocumented)
+    CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
+    detachIndex(index: IntervalIndex<TInterval>): boolean;
+    // (undocumented)
+    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
+    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
+    // (undocumented)
+    getIntervalById(id: string): TInterval | undefined;
+    map(fn: (interval: TInterval) => void): void;
+    // (undocumented)
+    nextInterval(pos: number): TInterval | undefined;
+    // (undocumented)
+    previousInterval(pos: number): TInterval | undefined;
+    removeIntervalById(id: string): TInterval | undefined;
+}
+
+// @public
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
     (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
     (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
@@ -157,8 +191,8 @@ export class Interval implements ISerializableInterval {
     union(b: Interval): Interval;
 }
 
-// @public
-export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
+// @public @deprecated (undocumented)
+export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> implements IIntervalCollection<TInterval> {
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     // @internal
@@ -207,7 +241,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     serializeInternal(): ISerializedIntervalCollectionV2;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class IntervalCollectionIterator<TInterval extends ISerializableInterval> implements Iterator<TInterval> {
     constructor(collection: IntervalCollection<TInterval>, iteratesForward?: boolean, start?: number, end?: number);
     // (undocumented)
@@ -328,7 +362,7 @@ export interface ISerializedInterval {
     stickiness?: IntervalStickiness;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export interface ISerializedIntervalCollectionV2 {
     // (undocumented)
     intervals: CompressedSerializedInterval[];

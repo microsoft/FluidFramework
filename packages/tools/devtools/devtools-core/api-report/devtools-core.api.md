@@ -403,9 +403,6 @@ export interface MessageLoggingOptions {
     context?: string;
 }
 
-// @internal
-export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
-
 // @public
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
 
