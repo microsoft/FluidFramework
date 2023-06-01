@@ -20,7 +20,9 @@ FLAGS
   -p, --pullRequestInfo=<value>...  Pull request data
   -s, --source=<value>              (required) Source branch name
   -t, --target=<value>              (required) Target branch name
-  -v, --verbose                     Verbose logging.
+
+GLOBAL FLAGS
+  -v, --verbose  Verbose logging.
 
 DESCRIPTION
   Sync branches depending on the batch size passed
@@ -36,10 +38,10 @@ USAGE
 
 FLAGS
   -b, --branch=<value>...  A branch name. Use this argument multiple times to provide multiple branch names.
-  -v, --verbose            Verbose logging.
 
 GLOBAL FLAGS
-  --json  Format output as json.
+  -v, --verbose  Verbose logging.
+  --json         Format output as json.
 
 DESCRIPTION
   Get info about the merge status of branches in the repo. Uses "main" and "next" if no branch names are provided.
