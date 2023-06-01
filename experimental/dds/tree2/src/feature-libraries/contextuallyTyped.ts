@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { v4 as uuid } from "uuid";
 import { brand, fail } from "../util";
 import {
 	EmptyKey,
@@ -23,6 +24,7 @@ import {
 	MapTree,
 	symbolIsFieldKey,
 	ITreeCursorSynchronous,
+	GlobalFieldKeySymbol,
 } from "../core";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
@@ -32,6 +34,7 @@ import {
 	AllowedTypes,
 	FieldKind,
 	FieldSchema,
+	GlobalFieldSchema,
 	Multiplicity,
 	TreeSchema,
 	allowedTypesToTypeSet,
@@ -144,28 +147,21 @@ export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
 /**
  * @returns all allowed child types for `typeSet`.
  */
-export function getAllowedTypes(
-	schema: SchemaDataAndPolicy,
-	typeSet: TreeTypeSet,
-): ReadonlySet<TreeSchemaIdentifier> {
+export function getAllowedTypes(context: ContextObject): ReadonlySet<TreeSchemaIdentifier> {
 	// TODO: Performance: avoid the `undefined` case being frequent, possibly with caching in the caller of `getPossibleChildTypes`.
-	return typeSet ?? new Set(schema.treeSchema.keys());
+	return context.typeSet ?? new Set(context.schemaData.treeSchema.keys());
 }
 
 /**
  * @returns all types, for which the data is schema-compatible.
  */
-export function getPossibleTypes(
-	schemaData: SchemaDataAndPolicy,
-	typeSet: TreeTypeSet,
-	data: ContextuallyTypedNodeData,
-) {
+export function getPossibleTypes(context: ContextObject, data: ContextuallyTypedNodeData) {
 	// All types allowed by schema
-	const allowedTypes = getAllowedTypes(schemaData, typeSet);
+	const allowedTypes = getAllowedTypes(context);
 
 	const possibleTypes: TreeSchemaIdentifier[] = [];
 	for (const allowed of allowedTypes) {
-		if (shallowCompatibilityTest(schemaData, allowed, data)) {
+		if (shallowCompatibilityTest(context.schemaData, allowed, data)) {
 			possibleTypes.push(allowed);
 		}
 	}
@@ -332,17 +328,25 @@ function shallowCompatibilityTest(
 }
 
 /**
+ * context object providing the typeSet and SchemaData and optional globalFieldKeySymbol to provide context to the data
+ * @alpha
+ */
+export interface ContextObject {
+	schemaData: SchemaDataAndPolicy;
+	typeSet: TreeTypeSet;
+	globalFieldKeySymbol?: GlobalFieldKeySymbol;
+}
+/**
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
  * @alpha
  */
 export function cursorFromContextualData(
-	schemaData: SchemaDataAndPolicy,
-	typeSet: TreeTypeSet,
+	context: ContextObject,
 	data: ContextuallyTypedNodeData,
 ): ITreeCursorSynchronous {
-	const mapTree = applyTypesFromContext(schemaData, typeSet, data);
+	const mapTree = applyTypesFromContext(context, data);
 	return singleMapTreeCursor(mapTree);
 }
 
@@ -356,8 +360,7 @@ export function cursorForTypedTreeData<T extends TreeSchema>(
 	data: TypedNode<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		schemaData,
-		new Set([schema.name]),
+		{ schemaData, typeSet: new Set([schema.name]) },
 		data as ContextuallyTypedNodeData,
 	);
 }
@@ -372,8 +375,7 @@ export function cursorForTypedData<T extends AllowedTypes>(
 	data: AllowedTypesToTypedTrees<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(
-		schemaData,
-		allowedTypesToTypeSet(schema),
+		{ schemaData, typeSet: allowedTypesToTypeSet(schema) },
 		data as unknown as ContextuallyTypedNodeData,
 	);
 }
@@ -402,7 +404,10 @@ export function cursorsForTypedFieldData<T extends FieldSchema>(
 	schema: T,
 	data: TypedField<ApiMode.Simple, T>,
 ): ITreeCursorSynchronous {
-	return cursorFromContextualData(schemaData, schema.types, data as ContextuallyTypedNodeData);
+	return cursorFromContextualData(
+		{ schemaData, typeSet: schema.types },
+		data as ContextuallyTypedNodeData,
+	);
 }
 
 /**
@@ -416,11 +421,10 @@ export function cursorsForTypedFieldData<T extends FieldSchema>(
  * This should not be reexported from the parent module.
  */
 export function applyTypesFromContext(
-	schemaData: SchemaDataAndPolicy,
-	typeSet: TreeTypeSet,
+	context: ContextObject,
 	data: ContextuallyTypedNodeData,
 ): MapTree {
-	const possibleTypes: TreeSchemaIdentifier[] = getPossibleTypes(schemaData, typeSet, data);
+	const possibleTypes: TreeSchemaIdentifier[] = getPossibleTypes(context, data);
 
 	assert(
 		possibleTypes.length !== 0,
@@ -432,7 +436,8 @@ export function applyTypesFromContext(
 	);
 
 	const type = possibleTypes[0];
-	const schema = lookupTreeSchema(schemaData, type);
+	const schema = lookupTreeSchema(context.schemaData, type);
+
 	if (isPrimitiveValue(data)) {
 		// This check avoids returning an out of schema node
 		// in the case where schema permits the value, but has required fields.
@@ -451,16 +456,39 @@ export function applyTypesFromContext(
 			primary !== undefined,
 			0x4d6 /* array data reported comparable with the schema without a primary field */,
 		);
-		const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
+		const children = applyFieldTypesFromContext(context.schemaData, primary.schema, data);
 		return { value: undefined, type, fields: new Map([[primary.key, children]]) };
 	} else {
+		if (
+			context.globalFieldKeySymbol !== undefined &&
+			data[context.globalFieldKeySymbol] === undefined
+		) {
+			const globalFieldSchema = getFieldSchema(
+				context.globalFieldKeySymbol,
+				context.schemaData,
+				schema,
+			) as GlobalFieldSchema;
+			const globalSchema = globalFieldSchema.schema;
+			const globalTreeSchema = globalSchema.allowedTypes[0] as TreeSchema;
+			switch (globalTreeSchema.value) {
+				case ValueSchema.String:
+					data[context.globalFieldKeySymbol] = uuid();
+				default:
+					break;
+			}
+		}
 		const fields: Map<FieldKey, MapTree[]> = new Map(
 			fieldKeysFromData(data).map((key) => {
 				const childKey: FieldKey = brand(key);
-				const childSchema = getFieldSchema(childKey, schemaData, schema);
+				const childSchema = getFieldSchema(childKey, context.schemaData, schema);
 				return [
 					childKey,
-					applyFieldTypesFromContext(schemaData, childSchema, data[childKey]),
+					applyFieldTypesFromContext(
+						context.schemaData,
+						childSchema,
+						data[childKey],
+						context.globalFieldKeySymbol,
+					),
 				];
 			}),
 		);
@@ -494,6 +522,7 @@ export function applyFieldTypesFromContext(
 	schemaData: SchemaDataAndPolicy,
 	field: FieldStoredSchema,
 	data: ContextuallyTypedFieldData,
+	globalFieldKeySymbol?: GlobalFieldKeySymbol,
 ): MapTree[] {
 	const multiplicity = getFieldKind(field).multiplicity;
 	if (data === undefined) {
@@ -506,7 +535,10 @@ export function applyFieldTypesFromContext(
 	if (multiplicity === Multiplicity.Sequence) {
 		assert(isArrayLike(data), 0x4d9 /* expected array for a sequence field */);
 		const children = Array.from(data, (child) =>
-			applyTypesFromContext(schemaData, field.types, child),
+			applyTypesFromContext(
+				{ schemaData, typeSet: field.types, globalFieldKeySymbol },
+				child,
+			),
 		);
 		return children;
 	}
@@ -514,5 +546,7 @@ export function applyFieldTypesFromContext(
 		multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
 		0x4da /* single value provided for an unsupported field */,
 	);
-	return [applyTypesFromContext(schemaData, field.types, data)];
+	return [
+		applyTypesFromContext({ schemaData, typeSet: field.types, globalFieldKeySymbol }, data),
+	];
 }

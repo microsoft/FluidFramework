@@ -251,6 +251,7 @@ export {
 	GlobalFieldSchema,
 	Any,
 	Sourced,
+	ContextObject,
 } from "./feature-libraries";
 
 export {

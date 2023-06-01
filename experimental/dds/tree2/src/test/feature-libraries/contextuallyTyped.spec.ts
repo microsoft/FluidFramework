@@ -5,11 +5,45 @@
 
 import { strict as assert } from "assert";
 
-import { ValueSchema } from "../../core";
-import { isPrimitiveValue } from "../../feature-libraries";
+import { GlobalFieldKey, ValueSchema, symbolFromKey } from "../../core";
+import {
+	FieldKinds,
+	SchemaBuilder,
+	isPrimitiveValue,
+	jsonableTreeFromCursor,
+} from "../../feature-libraries";
 // Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { allowsValue } from "../../feature-libraries/contextuallyTyped";
+import {
+	ContextuallyTypedNodeDataObject,
+	allowsValue,
+	cursorFromContextualData,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/contextuallyTyped";
+import { brand } from "../../util";
+
+const builder = new SchemaBuilder("Identifier Domain");
+
+/**
+ * The tree schema for the identifier primitive
+ */
+export const identifierSchema = builder.primitive("identifier", ValueSchema.String);
+
+/**
+ * The field schema for fields which contain identifiers (see {@link identifierSchema})
+ */
+const identifierFieldSchema = builder.globalField(
+	"identifier",
+	SchemaBuilder.fieldValue(identifierSchema),
+);
+
+// const builder = new SchemaBuilder("identifier index tests", identifierFieldSchemaLibrary);
+const nodeSchema = builder.objectRecursive("node", {
+	local: { child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema) },
+	global: [identifierFieldSchema] as const,
+});
+
+const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
+const globalFieldKey: GlobalFieldKey = brand("identifier");
 
 describe("ContextuallyTyped", () => {
 	it("isPrimitiveValue", () => {
@@ -58,4 +92,40 @@ describe("ContextuallyTyped", () => {
 	});
 
 	// TODO: more tests
+});
+
+describe.only("cursorFromContextualData adds globalFieldKey", () => {
+	it("for empty contextual data.", () => {
+		const contextualData: ContextuallyTypedNodeDataObject = {};
+
+		const treeFromContextualData = jsonableTreeFromCursor(
+			cursorFromContextualData(
+				{
+					schemaData: nodeSchemaData,
+					typeSet: new Set([nodeSchema.name]),
+					globalFieldKeySymbol: symbolFromKey(globalFieldKey),
+				},
+				contextualData,
+			),
+		);
+
+		assert(treeFromContextualData.globalFields?.identifier !== undefined);
+	});
+	it("for nested contextual data with no global fields provided", () => {
+		const contextualData: ContextuallyTypedNodeDataObject = { child: {} };
+
+		const treeFromContextualData = jsonableTreeFromCursor(
+			cursorFromContextualData(
+				{
+					schemaData: nodeSchemaData,
+					typeSet: new Set([nodeSchema.name]),
+					globalFieldKeySymbol: symbolFromKey(globalFieldKey),
+				},
+				contextualData,
+			),
+		);
+
+		assert(treeFromContextualData.globalFields?.identifier !== undefined);
+		assert(treeFromContextualData.fields?.child[0].globalFields?.identifier !== undefined);
+	});
 });

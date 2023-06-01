@@ -331,8 +331,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		receiver: unknown,
 	): boolean => {
 		const cursor = cursorFromContextualData(
-			target.context.schema,
-			target.fieldSchema.types,
+			{ schemaData: target.context.schema, typeSet: target.fieldSchema.types },
 			value,
 		);
 		// This is just a cheap way to check if there might be a node at the given index.
