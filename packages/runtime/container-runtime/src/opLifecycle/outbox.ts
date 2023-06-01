@@ -227,6 +227,18 @@ export class Outbox {
 				limit: this.blobAttachBatch.options.hardLimit,
 			});
 		}
+
+		// If compression is enabled, we will always successfully receive
+		// blobAttach ops and compress then send them at the next JS turn, regardless
+		// of the overall size of the accumulated ops in the batch.
+		// However, it is more efficient to flush these ops faster, preferably
+		// after they reach a size which would benefit from compression.
+		if (
+			this.blobAttachBatch.contentSizeInBytes >=
+			this.params.config.compressionOptions.minimumBatchSizeInBytes
+		) {
+			this.flushInternal(this.blobAttachBatch.popBatch());
+		}
 	}
 
 	public flush() {
