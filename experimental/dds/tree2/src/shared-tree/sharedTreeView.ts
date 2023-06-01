@@ -32,10 +32,10 @@ import {
 	defaultChangeFamily,
 	defaultSchemaPolicy,
 	getEditableTreeContext,
-	repairDataStoreFromForest,
 	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
 	NewFieldContent,
+	ForestRepairDataStore,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -328,7 +328,7 @@ export class SharedTreeView implements ISharedTreeView {
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => {
-			this.branch.startTransaction(repairDataStoreFromForest(this.forest));
+			this.branch.startTransaction(new ForestRepairDataStore(this.forest));
 			this.branch.editor.enterTransaction();
 		},
 		commit: () => {
