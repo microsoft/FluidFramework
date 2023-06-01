@@ -9,6 +9,7 @@ import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
 import { IContainerDevtools } from "./IContainerDevtools";
 import {
 	ContainerList,
+	DevtoolsDisposed,
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
@@ -260,7 +261,7 @@ export class FluidDevtools implements IFluidDevtools {
 		if (FluidDevtools.I !== undefined) {
 			console.warn(
 				"Devtools have already been initialized. " +
-					"Existing Devtools must be closed (see closeDevtools) before new ones may be initialized. " +
+					"Existing Devtools must be closed (see DevtoolsDisposed) before new ones may be initialized. " +
 					"Returning existing Devtools instance.",
 			);
 		} else {
@@ -370,6 +371,9 @@ export class FluidDevtools implements IFluidDevtools {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
+
+		// Send close devtool message
+		postMessagesToWindow(devtoolsMessageLoggingOptions, DevtoolsDisposed.createMessage());
 
 		// Dispose of container-level devtools
 		for (const [, containerDevtools] of this.containers) {

@@ -55,6 +55,15 @@ export namespace CloseContainer {
 }
 
 // @internal
+export namespace DevtoolsDisposed {
+    const MessageType = "CLOSE_DEVTOOLS";
+    export function createMessage(): Message;
+    export interface Message extends IDevtoolsMessage<undefined> {
+        type: typeof MessageType;
+    }
+}
+
+// @internal
 export namespace ConnectContainer {
     const MessageType = "CONNECT_CONTAINER";
     export function createMessage(data: MessageData): Message;

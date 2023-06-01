@@ -7,6 +7,7 @@ import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/commo
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 
 import {
+	DevtoolsDisposed,
 	GetTelemetryHistory,
 	handleIncomingWindowMessage,
 	IDevtoolsMessage,
@@ -53,7 +54,7 @@ export class DevtoolsLogger extends TelemetryLogger {
 	/**
 	 * Accumulated data for Telemetry logs.
 	 */
-	private readonly _telemetryLog: ITimestampedTelemetryEvent[];
+	private _telemetryLog: ITimestampedTelemetryEvent[];
 
 	/**
 	 * Message logging options used by the logger.
@@ -68,6 +69,11 @@ export class DevtoolsLogger extends TelemetryLogger {
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		[GetTelemetryHistory.MessageType]: async (untypedMessage) => {
 			this.postLogHistory();
+			return true;
+		},
+		[DevtoolsDisposed.MessageType]: async (untypedMessage) => {
+			// When devtool is disposed by user, clear the telemetry log
+			this._telemetryLog = [];
 			return true;
 		},
 	};

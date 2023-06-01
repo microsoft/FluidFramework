@@ -11,6 +11,7 @@ import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
 import {
 	ContainerKey,
 	ContainerList,
+	DevtoolsDisposed,
 	DevtoolsFeature,
 	DevtoolsFeatureFlags,
 	DevtoolsFeatures,
@@ -176,6 +177,12 @@ export function DevtoolsView(): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
+				return true;
+			},
+			[DevtoolsDisposed.MessageType]: async (untypedMessage) => {
+				// Reset feature state to ensure we aren't displaying stale data
+				// eslint-disable-next-line unicorn/no-useless-undefined
+				setSupportedFeatures(undefined);
 				return true;
 			},
 		};
