@@ -431,7 +431,7 @@ describe("Editing", () => {
 				/**
 				 * Generates all permutations with prefix `scenario`
 				 */
-				function* buildScenariosImpl(
+				function* buildScenariosWithPrefix(
 					scenario: ScenarioStep[] = [],
 				): Generator<readonly ScenarioStep[]> {
 					let done = true;
@@ -440,7 +440,7 @@ describe("Editing", () => {
 							if (!buildState.removed[i]) {
 								buildState.removed[i] = true;
 								buildState.peerUndoStack[p] += 1;
-								yield* buildScenariosImpl([
+								yield* buildScenariosWithPrefix([
 									...scenario,
 									{ type: StepType.Remove, index: i, peer: p },
 								]);
@@ -451,7 +451,7 @@ describe("Editing", () => {
 						}
 						if (buildState.peerUndoStack[p] > 0) {
 							buildState.peerUndoStack[p] -= 1;
-							yield* buildScenariosImpl([
+							yield* buildScenariosWithPrefix([
 								...scenario,
 								{ type: StepType.Undo, peer: p },
 							]);
@@ -463,7 +463,7 @@ describe("Editing", () => {
 						yield scenario;
 					}
 				}
-				return buildScenariosImpl();
+				return buildScenariosWithPrefix();
 			}
 
 			const delAction = (peer: SharedTreeView, idx: number) => remove(peer, idx, 1);
