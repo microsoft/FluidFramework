@@ -122,6 +122,17 @@ The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles h
 
 `IProvideContainerRuntime` and its `IContainerRuntime` member were deprecated in a previous release and have been removed. This applies to the `ContainerRuntime` class as well.
 
+# 2.0.0-internal.4.4.0
+
+## 2.0.0-internal.4.4.0 Upcoming changes
+
+-   [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated)
+
+### IntervalCollection public export deprecated
+
+`IntervalCollection` has been deprecated in favor of an interface (`IIntervalCollection`) containing its public API.
+Several types transitively referenced by `IntervalCollection` implementation details have also been deprecated: `CompressedSerializedInterval`, `IntervalCollectionIterator`, and `ISerializedIntervalCollectionV2`.
+
 # 2.0.0-internal.4.3.0
 
 ## 2.0.0-internal.4.3.0 Breaking changes
