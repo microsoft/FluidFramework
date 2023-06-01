@@ -23,13 +23,14 @@ type Port = chrome.runtime.Port;
 const proxyquire = Proxyquire.noCallThru();
 
 const backgroundScriptPath = "../background/BackgroundScript"; // Relative to this file
+const globalsModulePath = "../utilities/Globals"; // Relative to this file
 
 /**
  * Require the background script using the provided `browser` APIs.
  */
 const loadBackgroundScript = (globals: Globals): void => {
 	proxyquire(backgroundScriptPath, {
-		"../utilities/Globals": {
+		[globalsModulePath]: {
 			...globals,
 		} as unknown,
 	});
