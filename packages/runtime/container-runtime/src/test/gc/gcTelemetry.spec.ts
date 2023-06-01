@@ -194,12 +194,16 @@ describe("GC Telemetry Tracker", () => {
 				}
 			}
 
-			// Note that mock logger clears all events after one of the `match` functions is called. Since we call match
-			// functions twice, cache the events and repopulate the mock logger with if after the first match call.
+			// Note that mock logger clears all events after one of the `match` functions is called. Since we might call match
+			// functions twice, cache the events and repopulate the mock logger with them if we do the first match call.
 			const cachedEvents = Array.from(mockLogger.events);
-			mockLogger.assertMatch(expectedEvents, message, true /* inlineDetailsProp */);
-			mockLogger.events = cachedEvents;
-			mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
+			if (expectedEvents.length > 0) {
+				mockLogger.assertMatch(expectedEvents, message, true /* inlineDetailsProp */);
+				mockLogger.events = cachedEvents;
+			}
+			if (unexpectedEvents.length > 0) {
+				mockLogger.assertMatchNone(unexpectedEvents, message, true /* inlineDetailsProp */);
+			}
 		}
 
 		it("generates inactive and sweep ready events when nodes are used after time out", async () => {
