@@ -489,8 +489,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 				);
 
 				const cursor = cursorFromContextualData(
-					target.context.schema,
-					target.fieldSchema.types,
+					{ schemaData: target.context.schema, typeSet: target.fieldSchema.types },
 					value as ContextuallyTypedNodeData,
 				);
 				const index = Number(key);

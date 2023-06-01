@@ -241,6 +241,16 @@ infer Head,
 ] ? [ExtractItemType<Head>, ...ConstantFlexListToNonLazyArray<Tail>] : [];
 
 // @alpha
+export interface ContextObject {
+    // (undocumented)
+    globalFieldKeySymbol?: GlobalFieldKeySymbol;
+    // (undocumented)
+    schemaData: SchemaDataAndPolicy;
+    // (undocumented)
+    typeSet: TreeTypeSet;
+}
+
+// @alpha
 export const contextSymbol: unique symbol;
 
 // @alpha
@@ -302,7 +312,7 @@ export interface CursorAdapter<TNode> {
 export function cursorForTypedTreeData<T extends TreeSchema>(schemaData: SchemaDataAndPolicy, schema: T, data: TypedNode<T, ApiMode.Simple>): ITreeCursorSynchronous;
 
 // @alpha
-export function cursorFromContextualData(schemaData: SchemaDataAndPolicy, typeSet: TreeTypeSet, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
+export function cursorFromContextualData(context: ContextObject, data: ContextuallyTypedNodeData): ITreeCursorSynchronous;
 
 // @alpha (undocumented)
 export const enum CursorLocationType {

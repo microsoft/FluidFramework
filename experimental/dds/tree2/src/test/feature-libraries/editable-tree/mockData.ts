@@ -220,7 +220,10 @@ export const personData: ContextuallyTypedNodeDataObject = {
 
 export function personJsonableTree(): JsonableTree {
 	return jsonableTreeFromCursor(
-		cursorFromContextualData(fullSchemaData, rootPersonSchema.types, personData),
+		cursorFromContextualData(
+			{ schemaData: fullSchemaData, typeSet: rootPersonSchema.types },
+			personData,
+		),
 	);
 }
 
