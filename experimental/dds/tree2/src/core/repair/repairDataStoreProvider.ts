@@ -4,7 +4,7 @@
  */
 
 import { Delta } from "../tree";
-import { RepairDataStore } from ".";
+import { RepairDataStore } from "./repairDataStore";
 
 /**
  * Manages state required for creating {@link RepairDataStore}s.
