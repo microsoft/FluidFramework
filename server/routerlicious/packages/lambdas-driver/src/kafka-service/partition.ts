@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { QueueObject, queue } from "async";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { Provider } from "nconf";
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 
@@ -35,6 +36,7 @@ export class Partition extends EventEmitter {
 		factory: IPartitionLambdaFactory,
 		consumer: IConsumer,
 		private readonly logger?: ILogger,
+		private readonly config?: Provider,
 	) {
 		super();
 
@@ -160,7 +162,6 @@ export class Partition extends EventEmitter {
 		try {
 			await this.checkpointManager.flush();
 		} catch (err) {
-			// dont throw the error so that the service continues to shut down gracefully
 			Lumberjack.error(
 				"Error during checkpointManager.flush call",
 				{
@@ -168,6 +169,9 @@ export class Partition extends EventEmitter {
 				},
 				err,
 			);
+			if (!this.config?.get("checkpoints:ignoreCheckpointFlushException")) {
+				throw err;
+			} // else, dont throw the error so that the service continues to shut down gracefully
 		}
 	}
 }
