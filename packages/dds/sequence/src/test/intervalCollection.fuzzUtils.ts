@@ -13,7 +13,7 @@ import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalStickiness, IntervalType } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalRevertible, revertSharedStringRevertibles } from "../revertibles";
-import { SharedString } from "../sharedString";
+// import { SharedString } from "../sharedString";
 
 export interface RangeSpec {
 	start: number;
@@ -63,8 +63,7 @@ export interface ChangeProperties extends IntervalCollectionSpec {
 export interface RevertSharedStringRevertibles extends IntervalCollectionSpec {
 	type: "revertSharedStringRevertibles";
 	id: string;
-	string: SharedString;
-	// will i need other stuff? who knows
+	// might need other props but not sure
 }
 
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
@@ -73,6 +72,7 @@ export type TextOperation = AddText | RemoveRange;
 export type ClientOperation = IntervalOperation | TextOperation;
 
 export type Operation = ClientOperation;
+export type RevertOperation = OperationWithRevert | TextOperation;
 
 export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 
@@ -152,7 +152,6 @@ export function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, Clien
 }
 
 const revertibles: IntervalRevertible[] = [];
-type RevertOperation = OperationWithRevert | TextOperation;
 
 export function makeRevertibleReducer(
 	loggingInfo?: LoggingInfo,
@@ -191,9 +190,9 @@ export function makeRevertibleReducer(
 			const collection = channel.getIntervalCollection(collectionName);
 			collection.changeProperties(id, { ...properties });
 		},
-		revertSharedStringRevertibles: async ({ channel }, { string }) => {
+		revertSharedStringRevertibles: async ({ channel }, { id, collectionName }) => {
 			// not sure if i should use string or channel
-			revertSharedStringRevertibles(string, revertibles);
+			revertSharedStringRevertibles(channel, revertibles);
 		},
 	});
 

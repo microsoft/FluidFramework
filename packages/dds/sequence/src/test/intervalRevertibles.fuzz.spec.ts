@@ -12,10 +12,24 @@ import {
 	AsyncGenerator as Generator,
 	takeAsync as take,
 } from "@fluid-internal/stochastic-test-utils";
-import { createDDSFuzzSuite, DDSFuzzModel } from "@fluid-internal/test-dds-utils";
+import {
+	createDDSFuzzSuite,
+	DDSFuzzModel,
+	DDSFuzzHarnessEvents,
+} from "@fluid-internal/test-dds-utils";
 import { PropertySet } from "@fluidframework/merge-tree";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IntervalCollection, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { SharedString } from "../sharedString";
+import {
+	appendLocalAddToRevertibles,
+	appendLocalChangeToRevertibles,
+	appendLocalDeleteToRevertibles,
+	appendLocalPropertyChangedToRevertibles,
+	appendSharedStringDeltaToRevertibles,
+	SharedStringRevertible,
+} from "../revertibles";
 import { assertEquivalentSharedStrings } from "./intervalUtils";
 import {
 	Operation,
@@ -28,6 +42,8 @@ import {
 	ChangeProperties,
 	FuzzTestState,
 	makeRevertibleReducer,
+	RevertSharedStringRevertibles,
+	RevertOperation,
 } from "./intervalCollection.fuzzUtils";
 import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
 
@@ -60,10 +76,75 @@ const defaultOptions: Required<OperationGenerationConfig> = {
 	validateInterval: 100,
 };
 
+const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+const revertibles: SharedStringRevertible[] = [];
+
+emitter.on("clientCreate", (client) => {
+	const string = client.channel as SharedString;
+	const labels = string.getIntervalCollectionLabels();
+	Array.from(labels).forEach((label) => {
+		const collection = string.getIntervalCollection(label);
+		collection.on("addInterval", (interval, local, op) => {
+			appendLocalAddToRevertibles(interval, revertibles);
+		});
+		collection.on("deleteInterval", (interval, local, op) => {
+			if (local) {
+				appendLocalDeleteToRevertibles(string, interval, revertibles);
+			}
+		});
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			if (local) {
+				appendLocalChangeToRevertibles(string, interval, previousInterval, revertibles);
+			}
+		});
+		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
+			if (local) {
+				appendLocalPropertyChangedToRevertibles(interval, propertyDeltas, revertibles);
+			}
+		});
+		string.on("sequenceDelta", (op) => {
+			if (op.isLocal) {
+				appendSharedStringDeltaToRevertibles(string, op, revertibles);
+			}
+		});
+	});
+});
+
+const intervalTestOptions = {
+	validationStrategy: { type: "fixedInterval", interval: 10 },
+	reconnectProbability: 0.1,
+	numberOfClients: 3,
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.1,
+	},
+	defaultTestCount: 100,
+	// Uncomment this line to replay a specific seed from its failure file:
+	// replay: 0,
+	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+	parseOperations: (serialized: string) => {
+		const operations: Operation[] = JSON.parse(serialized);
+		// Replace this value with some other interval ID and uncomment to filter replay of the test
+		// suite to only include interval operations with this ID.
+		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+		// if (filterIntervalId) {
+		// 	return operations.filter((entry) =>
+		// 		[undefined, filterIntervalId].includes((entry as any).id),
+		// 	);
+		// }
+		return operations;
+	},
+};
+
+const optionsWithEmitter = {
+	...intervalTestOptions,
+	emitter,
+};
+
 type ClientOpState = FuzzTestState;
 function makeOperationGenerator(
 	optionsParam?: OperationGenerationConfig,
-): Generator<Operation, ClientOpState> {
+): Generator<RevertOperation, ClientOpState> {
 	const options = { ...defaultOptions, ...(optionsParam ?? {}) };
 
 	function isNonEmpty(collection: IntervalCollection<SequenceInterval>): boolean {
@@ -144,6 +225,9 @@ function makeOperationGenerator(
 			...inclusiveRange(state),
 			collectionName: state.random.pick(options.intervalCollectionNamePool),
 			id: state.random.uuid4(),
+			// added to get rid of compiler errors - assume we
+			// don't want to test both features here
+			stickiness: 0,
 		};
 	}
 
@@ -169,6 +253,15 @@ function makeOperationGenerator(
 			type: "changeProperties",
 			...interval(state),
 			properties: propertySet(state),
+		};
+	}
+
+	async function revertSharedStringRevertibles(
+		state: ClientOpState,
+	): Promise<RevertSharedStringRevertibles> {
+		return {
+			type: "revertSharedStringRevertibles",
+			...interval(state),
 		};
 	}
 
@@ -203,7 +296,7 @@ function makeOperationGenerator(
 		(t: T) =>
 			clauses.reduce<boolean>((prev, cond) => prev && cond(t), true);
 
-	return createWeightedGenerator<Operation, ClientOpState>([
+	return createWeightedGenerator<RevertOperation, ClientOpState>([
 		[addText, 2, isShorterThanMaxLength],
 		[removeRange, 1, hasNonzeroLength],
 		// [addInterval, 0, all(hasNotTooManyIntervals, hasNonzeroLength)],
@@ -211,11 +304,13 @@ function makeOperationGenerator(
 		[deleteInterval, 2, hasAnInterval],
 		[changeInterval, 2, all(hasAnInterval, hasNonzeroLength)],
 		[changeProperties, 2, hasAnInterval],
+		// don't know what acceptance condition i should be using
+		[revertSharedStringRevertibles, 2, hasAnInterval],
 	]);
 }
 
-describe("IntervalCollection fuzz testing", () => {
-	const model: DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState> = {
+describe.only("IntervalCollection fuzz testing", () => {
+	const model: DDSFuzzModel<SharedStringFactory, RevertOperation, FuzzTestState> = {
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () => take(100, makeOperationGenerator()),
 		reducer:
@@ -226,31 +321,36 @@ describe("IntervalCollection fuzz testing", () => {
 		factory: new SharedStringFactory(),
 	};
 
-	createDDSFuzzSuite(model, {
-		validationStrategy: { type: "fixedInterval", interval: 10 },
-		reconnectProbability: 0.1,
-		numberOfClients: 3,
-		clientJoinOptions: {
-			maxNumberOfClients: 6,
-			clientAddProbability: 0.1,
+	createDDSFuzzSuite(
+		model,
+		// optionsWithEmitter,
+		{
+			validationStrategy: { type: "fixedInterval", interval: 10 },
+			reconnectProbability: 0.1,
+			numberOfClients: 3,
+			clientJoinOptions: {
+				maxNumberOfClients: 6,
+				clientAddProbability: 0.1,
+			},
+			defaultTestCount: 100,
+			// Uncomment this line to replay a specific seed from its failure file:
+			// replay: 0,
+			saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
+			parseOperations: (serialized: string) => {
+				const operations: Operation[] = JSON.parse(serialized);
+				// Replace this value with some other interval ID and uncomment to filter replay of the test
+				// suite to only include interval operations with this ID.
+				// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+				// if (filterIntervalId) {
+				// 	return operations.filter((entry) =>
+				// 		[undefined, filterIntervalId].includes((entry as any).id),
+				// 	);
+				// }
+				return operations;
+			},
+			emitter,
 		},
-		defaultTestCount: 100,
-		// Uncomment this line to replay a specific seed from its failure file:
-		// replay: 0,
-		saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-		parseOperations: (serialized: string) => {
-			const operations: Operation[] = JSON.parse(serialized);
-			// Replace this value with some other interval ID and uncomment to filter replay of the test
-			// suite to only include interval operations with this ID.
-			// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-			// if (filterIntervalId) {
-			// 	return operations.filter((entry) =>
-			// 		[undefined, filterIntervalId].includes((entry as any).id),
-			// 	);
-			// }
-			return operations;
-		},
-	});
+	);
 });
 
 describe.skip("minimize specific seed", () => {
