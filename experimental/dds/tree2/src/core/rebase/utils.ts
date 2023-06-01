@@ -241,7 +241,8 @@ export function rebaseBranch<TChange>(
 		const repairDataStoreProviderClone = repairDataStoreProvider.clone();
 		const nonTaggedInverses: TChange[] = [];
 		// Revert changes from the source path to get to the new base
-		for (const c of sourcePath.map((commit) => commit).reverse()) {
+		for (let i = sourcePath.length - 1; i >= 0; i--) {
+			const c = sourcePath[i];
 			const inverse = changeRebaser.invert(c, true, c.repairData);
 			nonTaggedInverses.push(inverse);
 			repairDataStoreProviderClone.applyDelta(intoDelta(inverse));
