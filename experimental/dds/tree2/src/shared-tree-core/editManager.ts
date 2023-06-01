@@ -333,10 +333,18 @@ export class EditManager<
 			0x428 /* Clients with local changes cannot be used to generate summaries */,
 		);
 
-		const trunk = getPathFromBase(this.trunk.getHead(), this.trunkBase).map((c) => ({
-			...c,
-			...(this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit")),
-		}));
+		const trunk = getPathFromBase(this.trunk.getHead(), this.trunkBase).map((c) => {
+			const metadata =
+				this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
+			const commit: SequencedCommit<TChangeset> = {
+				change: c.change,
+				revision: c.revision,
+				sequenceNumber: metadata.sequenceNumber,
+				sessionId: metadata.sessionId,
+			};
+			return commit;
+		});
+
 		const branches = new Map<SessionId, SummarySessionBranch<TChangeset>>(
 			mapIterable(this.peerLocalBranches.entries(), ([sessionId, branch]) => {
 				const branchPath: GraphCommit<TChangeset>[] = [];
@@ -348,7 +356,14 @@ export class EditManager<
 					sessionId,
 					{
 						base: ancestor.revision,
-						commits: branchPath.map((c) => ({ ...c, sessionId })),
+						commits: branchPath.map((c) => {
+							const commit: Commit<TChangeset> = {
+								change: c.change,
+								revision: c.revision,
+								sessionId,
+							};
+							return commit;
+						}),
 					},
 				];
 			}),
