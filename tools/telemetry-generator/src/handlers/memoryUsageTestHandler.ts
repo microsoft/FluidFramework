@@ -15,6 +15,7 @@ module.exports = function handler(fileData, logger) {
 			category: "performance",
 			eventName: "Benchmark",
 			benchmarkType: "MemoryUsage",
+			hostName: "Benchmark",
 			suiteName: fileData.suiteName,
 			testName: testData.testName,
 			heapUsedAvg: testData.testData.stats.arithmeticMean,

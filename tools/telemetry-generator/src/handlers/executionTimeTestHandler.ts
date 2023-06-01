@@ -15,6 +15,7 @@ module.exports = function handler(fileData, logger) {
 			category: "performance",
 			eventName: "Benchmark",
 			benchmarkType: "ExecutionTime",
+			hostName: "Benchmark",
 			suiteName: fileData.suiteName,
 			benchmarkName: testData.benchmarkName,
 			arithmeticMean: testData.stats.arithmeticMean,

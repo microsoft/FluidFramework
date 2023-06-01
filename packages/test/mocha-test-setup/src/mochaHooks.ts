@@ -23,7 +23,7 @@ class TestLogger implements ITelemetryBufferedLogger {
 		// end of a test, in case the testName is undefined, we will use the currentTestName.
 		event.testName = this.testName ?? currentTestName;
 		event.testVariant = testVariant;
-		event.hostName = pkgName;
+		event.hostName = event.hostName ?? pkgName;
 		this.parentLogger.send(event);
 	}
 	async flush() {
