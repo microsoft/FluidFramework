@@ -216,7 +216,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			instructions: INSTRUCTIONS,
 			message: "Choose which packages to include in the changeset. Type to filter the list.",
 			name: "selectedPackages",
-			optionsPerPage: 10,
+			optionsPerPage: 5,
 			type: uiMode === "default" ? "autocompleteMultiselect" : "multiselect",
 			onState: (state: any) => {
 				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions

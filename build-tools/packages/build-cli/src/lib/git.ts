@@ -94,7 +94,7 @@ export class Repository {
 	 */
 	public async getMergeBase(branch: string, remote: string, localRef = "HEAD"): Promise<string> {
 		const base = await this.gitClient
-			.fetch("--all") // make sure we have the latest remote refs
+			.fetch(["--all"]) // make sure we have the latest remote refs
 			.raw("merge-base", `refs/remotes/${remote}/${branch}`, localRef);
 		return base;
 	}
@@ -103,7 +103,7 @@ export class Repository {
 		const divergedAt = await this.getMergeBase(ref, remote);
 		// Now we can find which files we added
 		const added = await this.gitClient
-			.fetch() // make sure we have the latest remote refs
+			.fetch(["--all"]) // make sure we have the latest remote refs
 			.diff(["--name-only", "--diff-filter=d", divergedAt]);
 
 		const files = added
