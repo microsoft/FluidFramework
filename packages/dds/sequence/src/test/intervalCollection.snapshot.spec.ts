@@ -13,7 +13,7 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
 import {
-	IntervalCollection,
+	IIntervalCollection,
 	intervalLocatorFromEndpoint,
 	IntervalStickiness,
 	IntervalType,
@@ -22,7 +22,7 @@ import {
 
 const assertIntervals = (
 	sharedString: SharedString,
-	intervalCollection: IntervalCollection<SequenceInterval>,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
@@ -172,8 +172,8 @@ describe("IntervalCollection snapshotting", () => {
 	describe("enables operations on reload", () => {
 		let sharedString: SharedString;
 		let sharedString2: SharedString;
-		let collection: IntervalCollection<SequenceInterval>;
-		let collection2: IntervalCollection<SequenceInterval>;
+		let collection: IIntervalCollection<SequenceInterval>;
+		let collection2: IIntervalCollection<SequenceInterval>;
 		let id: string;
 		beforeEach(async () => {
 			sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);

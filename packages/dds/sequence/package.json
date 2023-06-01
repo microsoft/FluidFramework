@@ -140,6 +140,22 @@
 			},
 			"ClassDeclaration_IntervalCollection": {
 				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_CompressedSerializedInterval": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_IntervalCollection": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_IntervalCollectionIterator": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISerializedIntervalCollectionV2": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

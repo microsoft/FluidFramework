@@ -38,6 +38,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [Driver param removed from appendToMergeTreeDeltaRevertibles](#Driver-param-removed-from-appendToMergeTreeDeltaRevertibles)
 -   [PureDataObject.getFluidObjectFromDirectory removed](#PureDataObject.getFluidObjectFromDirectory-removed)
 -   [IProvideContainerRuntime and IContainerRuntime member removed](#IProvideContainerRuntime-and-IContainerRuntime-member-removed)
+-   [IntervalCollection removed](#IntervalCollection-removed)
 
 ### IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -121,6 +122,10 @@ The first parameter, driver, of the function appendToMergeTreeDeltaRevertibles h
 ### IProvideContainerRuntime and IContainerRuntime member removed
 
 `IProvideContainerRuntime` and its `IContainerRuntime` member were deprecated in a previous release and have been removed. This applies to the `ContainerRuntime` class as well.
+
+### IntervalCollection removed
+
+The exports deprecated in [IntervalCollection public export deprecated](#intervalCollection-public-export-deprecated) have been removed.
 
 # 2.0.0-internal.4.4.0
 
