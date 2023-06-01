@@ -102,7 +102,7 @@ function buildTreeSchema(
 ): LazyTreeSchema {
 	const { typeid, context } = TypeIdHelper.extractContext(type);
 	if (!isPropertyContext(context)) {
-		fail(`Unknown context "${context}" in typeid "${type}" `);
+		fail(`Unknown context "${context}" in typeid "${type}"`);
 	}
 	if (context === singleContext) {
 		const typeidAsArray = TypeIdHelper.createSerializationTypeId(typeid, arrayContext, false);
@@ -123,10 +123,12 @@ function buildTreeSchema(
 			const cache: { treeSchema?: TreeSchema } = {};
 			treeSchemaMap.set(typeid, () => cache.treeSchema as TreeSchema);
 			const local = {};
-			const extraLocalFields = PropertyFactory.inheritsFrom(typeid, nodePropertyType)
-				? SchemaBuilder.fieldOptional(Any)
-				: undefined;
-			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
+			const inheritanceChain: string[] = [];
+			try {
+				inheritanceChain.push(...PropertyFactory.getAllParentsForTemplate(typeid));
+			} catch (e) {
+				fail(`Unknown typeid "${typeid}"`);
+			}
 			inheritanceChain.push(typeid);
 			for (const typeIdInInheritanceChain of inheritanceChain) {
 				const schemaTemplate = PropertyFactory.getTemplate(typeIdInInheritanceChain);
@@ -134,10 +136,10 @@ function buildTreeSchema(
 					fail(`Unknown typeid "${typeIdInInheritanceChain}"`);
 				}
 				if (typeIdInInheritanceChain !== typeid) {
-					// this call can be deeply recursive returning not yet created schemas, e.g.
-					// "parent -> child -> parent", so that
-					// a) it's a bad idea to use return of this function here and
-					// b) that's why templates instead of treeSchemas are used below.
+					// This call can be deeply recursive returning not yet created schemas,
+					// e.g., for a "parent -> child -> parent" inheritance chain, so that
+					// a) the result of this call can't be used to get the inherited fields and
+					// b) that's why templates are used below instead.
 					buildTreeSchema(
 						builder,
 						treeSchemaMap,
@@ -171,6 +173,9 @@ function buildTreeSchema(
 					}
 				}
 			}
+			const extraLocalFields = PropertyFactory.inheritsFrom(typeid, nodePropertyType)
+				? SchemaBuilder.fieldOptional(Any)
+				: undefined;
 			cache.treeSchema = builder.object(typeid, {
 				local,
 				extraLocalFields,

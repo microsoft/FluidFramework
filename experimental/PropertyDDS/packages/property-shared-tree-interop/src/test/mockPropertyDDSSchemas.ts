@@ -19,7 +19,7 @@ export default {
 	child: {
 		inherits: ["Test:Optional-1.0.0"],
 		typeid: "Test:Child-1.0.0",
-		properties: [{ id: "backref", typeid: "Test:Optional-1.0.0", optional: true }],
+		properties: [{ id: "parent", typeid: "Test:Optional-1.0.0", optional: true }],
 	},
 	optional: {
 		inherits: ["NodeProperty"],

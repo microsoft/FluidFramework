@@ -16,6 +16,7 @@ import {
 	getPrimaryField,
 	lookupTreeSchema,
 	isPrimitive,
+	LocalFieldKey,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
@@ -119,11 +120,30 @@ describe("schema converter", () => {
 		});
 
 		it(`throws at unknown typeid`, () => {
-			assert.throws(() =>
-				convertPropertyToSharedTreeStorageSchema(
-					FieldKinds.optional,
-					new Set(["Test:Optional-1.0.0"]),
-				),
+			assert.throws(
+				() =>
+					convertPropertyToSharedTreeStorageSchema(
+						FieldKinds.optional,
+						new Set(["Test:Optional-1.0.0"]),
+					),
+				(e) => validateAssertionError(e, `Unknown typeid "Test:Optional-1.0.0"`),
+				"Expected exception was not thrown",
+			);
+		});
+
+		it(`throws at unknown context`, () => {
+			assert.throws(
+				() =>
+					convertPropertyToSharedTreeStorageSchema(
+						FieldKinds.optional,
+						new Set(["custom<Test:Optional-1.0.0>"]),
+					),
+				(e) =>
+					validateAssertionError(
+						e,
+						`Unknown context "custom" in typeid "custom<Test:Optional-1.0.0>"`,
+					),
+				"Expected exception was not thrown",
 			);
 		});
 	});
@@ -317,6 +337,43 @@ describe("schema converter", () => {
 				);
 				assert(lookupTreeSchema(fullSchemaData, extraTypeName) !== undefined);
 			}
+		});
+
+		it(`can use recursive schemas`, () => {
+			const parentTypeName: TreeSchemaIdentifier = brand("Test:Optional-1.0.0");
+			const childTypeName: TreeSchemaIdentifier = brand("Test:Child-1.0.0");
+			const childFieldKey: LocalFieldKey = brand("child");
+			const parentFieldKey: LocalFieldKey = brand("parent");
+
+			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				FieldKinds.optional,
+				new Set([parentTypeName]),
+			);
+
+			assert.deepEqual(
+				[...(fullSchemaData.root.types ?? fail("expected types"))],
+				[parentTypeName, childTypeName],
+			);
+			const parentSchema =
+				fullSchemaData.treeSchema.get(parentTypeName) ?? fail("expected tree schema");
+			const childFieldSchema =
+				parentSchema.localFields.get(childFieldKey) ?? fail("expected field schema");
+			assert.deepEqual(
+				[...(childFieldSchema.types ?? fail("expected types"))],
+				[childTypeName],
+			);
+
+			const childSchema =
+				fullSchemaData.treeSchema.get(childTypeName) ?? fail("expected tree schema");
+			const parentFieldSchema =
+				childSchema.localFields.get(parentFieldKey) ?? fail("expected field schema");
+			assert.deepEqual(
+				[...(parentFieldSchema.types ?? fail("expected types"))],
+				[parentTypeName, childTypeName],
+			);
+			const childOfChildFieldSchema =
+				childSchema.localFields.get(childFieldKey) ?? fail("expected field schema");
+			assert.deepEqual(childOfChildFieldSchema, childFieldSchema);
 		});
 	});
 });
