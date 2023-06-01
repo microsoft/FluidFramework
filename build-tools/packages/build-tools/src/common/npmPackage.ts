@@ -130,6 +130,13 @@ export class Package {
 		return PackageName.getUnscopedName(this.name);
 	}
 
+	/**
+	 * The parsed package scope, including the \@-sign, or an empty string if there is no scope.
+	 */
+	public get scope(): string {
+		return PackageName.getScope(this.name);
+	}
+
 	public get version(): string {
 		return this.packageJson.version;
 	}
