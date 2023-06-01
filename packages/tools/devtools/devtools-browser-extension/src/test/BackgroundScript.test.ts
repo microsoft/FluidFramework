@@ -36,7 +36,7 @@ const loadBackgroundScript = (globals: Globals): void => {
 	});
 };
 
-describe("Background script unit tests", () => {
+describe("Background Script unit tests", () => {
 	const sandbox = createSandbox();
 
 	let globals: Globals = stubGlobals();
