@@ -6,7 +6,7 @@ import React from "react";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
-import { ArrowSync24Regular } from "@fluentui/react-icons";
+import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
 
 import {
 	ContainerKey,
@@ -21,7 +21,6 @@ import {
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
-import {Settings20Regular} from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
@@ -142,7 +141,7 @@ const menuStyles: IStackItemStyles = {
 		"flexDirection": "column",
 		"borderRight": `2px solid`,
 		"minWidth": "150px",
-		"maxHeight":"350px",
+		"maxHeight": "350px",
 		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
@@ -454,10 +453,8 @@ function Menu(props: MenuProps): React.ReactElement {
 				}}
 				onClick={onSettingsClicked}
 			>
-				<h4 style={{  margin: "0px 5px" }} >
-				Settings 
-				</h4>
-				<Settings20Regular/>
+				<h4 style={{ margin: "0px 5px" }}>Settings</h4>
+				<Settings20Regular />
 			</div>
 		</Stack.Item>
 	);

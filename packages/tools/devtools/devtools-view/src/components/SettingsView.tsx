@@ -13,10 +13,13 @@ import {
 	webLightTheme,
 } from "@fluentui/react-components";
 
+/**
+ * An enum with options for the DevTools themes.
+ */
 export enum ThemeOption {
-  Light = 'Light',
-  Dark = 'Dark',
-  HighContrast = 'High Contrast'
+	Light = "Light",
+	Dark = "Dark",
+	HighContrast = "High Contrast",
 }
 interface SettingsProps {
 	/**
@@ -53,11 +56,13 @@ export function SettingsView(props: SettingsProps): React.ReactElement {
 		}
 	}
 	return (
-		<div style={{ 
-			marginLeft: "10px",
-			display: "grid",
-			justifyItems: "start"
-		}}>
+		<div
+			style={{
+				marginLeft: "10px",
+				display: "grid",
+				justifyItems: "start",
+			}}
+		>
 			<label style={{ fontSize: "12px" }}>Select theme</label>
 			<Dropdown
 				placeholder="Theme"
