@@ -158,7 +158,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Creates a copy of this `UndoRedoManager`.
 	 * @param headUndoableCommit - Optional head undoable commit, if one is not provided the head undoable commit
 	 * of this {@link UndoRedoManager} will be used.
-	 * @param headUredoableCommit - Optional head uredoable commit, if one is not provided the head redoable commit
+	 * @param headRedoableCommit - Optional head redoable commit, if one is not provided the head redoable commit
 	 * of this {@link UndoRedoManager} will be used.
 	 */
 	public clone(
