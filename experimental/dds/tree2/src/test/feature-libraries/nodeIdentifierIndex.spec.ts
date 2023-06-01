@@ -4,55 +4,53 @@
  */
 
 import { strict as assert } from "assert";
+import { generateStableId } from "@fluidframework/container-runtime";
 import {
 	MockFluidDataStoreRuntime,
 	MockEmptyDeltaConnection,
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-import {
-	ISharedTreeView,
-	identifierKeySymbol,
-	identifierKey,
-	SharedTreeFactory,
-} from "../../shared-tree";
-import { compareSets } from "../../util";
+import { ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
+import { brand, compareSets } from "../../util";
 import { TestTreeProviderLite, initializeTestTree, typeboxValidator } from "../utils";
 import {
 	FieldKinds,
-	Identifier,
-	identifierFieldSchema,
-	IdentifierIndex,
-	identifierSchema,
+	NodeIdentifierIndex,
 	SchemaBuilder,
-	identifierFieldSchemaLibrary,
+	NodeIdentifier,
 } from "../../feature-libraries";
+import { symbolFromKey } from "../../core";
+import { nodeIdentifierSchema } from "../../domains";
 
-const builder = new SchemaBuilder("identifier index tests", identifierFieldSchemaLibrary);
-const nodeSchema = builder.objectRecursive("node", {
+const {
+	schema: nodeIdentifierSchemaLibrary,
+	field: nodeIdentifierField,
+	type: nodeIdentifierType,
+} = nodeIdentifierSchema();
+assert.equal(nodeIdentifierField.key, nodeIdentifierField.key);
+
+const builder = new SchemaBuilder("identifier index tests", nodeIdentifierSchemaLibrary);
+export const nodeSchema = builder.objectRecursive("node", {
 	local: { child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema) },
-	global: [identifierFieldSchema] as const,
+	global: [nodeIdentifierField],
 });
-const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
+export const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
 
 describe("Node Identifier Index", () => {
-	let nextId: Identifier = 42;
-	beforeEach(() => {
-		nextId = 42;
-	});
 	// All tests should use this function to make their IDs - this makes it easier to change the
-	// type of `Identifier` when the IdCompressor is hooked up later, or as the design evolves
-	function makeId(): Identifier {
-		return nextId++;
+	// type of `NodeIdentifier` when the IdCompressor is hooked up later, or as the design evolves
+	function makeId(): NodeIdentifier {
+		return brand(generateStableId());
 	}
 
-	function assertIds(tree: ISharedTreeView, ids: Identifier[]): void {
+	function assertIds(tree: ISharedTreeView, ids: NodeIdentifier[]): void {
 		assert.equal(tree.identifiedNodes.size, ids.length);
 		for (const id of ids) {
 			assert(tree.identifiedNodes.has(id));
 			const node = tree.identifiedNodes.get(id);
 			assert(node !== undefined);
-			assert.equal(node[identifierKeySymbol], id);
+			assert.equal(node[symbolFromKey(nodeIdentifierField.key)], id);
 		}
 		assert(compareSets({ a: new Set(tree.identifiedNodes.keys()), b: new Set(ids) }));
 	}
@@ -66,7 +64,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: id }],
 				},
 			},
 			nodeSchemaData,
@@ -91,8 +89,8 @@ describe("Node Identifier Index", () => {
 									{
 										type: nodeSchema.name,
 										globalFields: {
-											[identifierKey]: [
-												{ type: identifierSchema.name, value: id },
+											[nodeIdentifierField.key]: [
+												{ type: nodeIdentifierType, value: id },
 											],
 										},
 									},
@@ -116,22 +114,24 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: ids[0] }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: ids[0] }],
 				},
 				fields: {
 					child: [
 						{
 							type: nodeSchema.name,
 							globalFields: {
-								[identifierKey]: [{ type: identifierSchema.name, value: ids[1] }],
+								[nodeIdentifierField.key]: [
+									{ type: nodeIdentifierType, value: ids[1] },
+								],
 							},
 							fields: {
 								child: [
 									{
 										type: nodeSchema.name,
 										globalFields: {
-											[identifierKey]: [
-												{ type: identifierSchema.name, value: ids[2] },
+											[nodeIdentifierField.key]: [
+												{ type: nodeIdentifierType, value: ids[2] },
 											],
 										},
 									},
@@ -155,7 +155,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: idA }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: idA }],
 				},
 			},
 			nodeSchemaData,
@@ -164,7 +164,7 @@ describe("Node Identifier Index", () => {
 		const node = tree.identifiedNodes.get(idA);
 		assert(node !== undefined);
 		const idB = makeId();
-		node.child = { [identifierKeySymbol]: idB };
+		node.child = { [symbolFromKey(nodeIdentifierField.key)]: idB };
 		assertIds(tree, [idA, idB]);
 	});
 
@@ -176,7 +176,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: makeId() }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: makeId() }],
 				},
 			},
 			nodeSchemaData,
@@ -197,15 +197,15 @@ describe("Node Identifier Index", () => {
 					{
 						type: nodeSchema.name,
 						globalFields: {
-							[identifierKey]: [{ type: identifierSchema.name, value: id }],
+							[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: id }],
 						},
 						fields: {
 							child: [
 								{
 									type: nodeSchema.name,
 									globalFields: {
-										[identifierKey]: [
-											{ type: identifierSchema.name, value: id },
+										[nodeIdentifierField.key]: [
+											{ type: nodeIdentifierType, value: id },
 										],
 									},
 								},
@@ -227,7 +227,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: id }],
 				},
 			},
 			nodeSchemaData,
@@ -252,7 +252,7 @@ describe("Node Identifier Index", () => {
 	// TODO: this test makes a tree which is out of schema. This should error.
 	it("skips nodes which have identifiers, but are not in schema", () => {
 		// This is missing the global identifier field on the node
-		const builder2 = new SchemaBuilder("identifier index test", identifierFieldSchemaLibrary);
+		const builder2 = new SchemaBuilder("identifier index test", nodeIdentifierSchemaLibrary);
 		const nodeSchemaNoIdentifier = builder2.objectRecursive("node", {
 			local: {
 				child: SchemaBuilder.fieldRecursive(
@@ -272,7 +272,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: makeId() }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: makeId() }],
 				},
 			},
 			nodeSchemaDataNoIdentifier,
@@ -280,39 +280,42 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, []);
 	});
 
-	// TODO: this test makes a tree which is out of schema. This should error.
-	it("skips nodes which have identifiers of the wrong type", () => {
+	it("errors nodes which have identifiers of the wrong type", () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		initializeTestTree(
-			tree,
-			{
-				type: nodeSchema.name,
-				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: {} }],
-				},
-			},
-			nodeSchemaData,
+		assert.throws(
+			() =>
+				initializeTestTree(
+					tree,
+					{
+						type: nodeSchema.name,
+						globalFields: {
+							[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: {} }],
+						},
+					},
+					nodeSchemaData,
+				),
+			(e) => validateAssertionError(e, "Malformed value encountered in identifier field"),
 		);
-		assertIds(tree, []);
 	});
 
-	// TODO: this test makes a tree which is out of schema. THis should error.
-	it("skips nodes which should have identifiers, but do not", () => {
-		// This is policy choice rather than correctness. It could also fail.
+	it("errors on nodes which should have identifiers, but do not", () => {
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
-		initializeTestTree(
-			tree,
-			{
-				type: nodeSchema.name,
-				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name }],
-				},
-			},
-			nodeSchemaData,
+		assert.throws(
+			() =>
+				initializeTestTree(
+					tree,
+					{
+						type: nodeSchema.name,
+						globalFields: {
+							[nodeIdentifierField.key]: [{ type: nodeIdentifierType }],
+						},
+					},
+					nodeSchemaData,
+				),
+			(e) => validateAssertionError(e, "Malformed value encountered in identifier field"),
 		);
-		assertIds(tree, []);
 	});
 
 	it("is disabled if identifier field is not in the global schema", () => {
@@ -329,7 +332,7 @@ describe("Node Identifier Index", () => {
 		const nodeSchemaDataNoIdentifier = builder2.intoDocumentSchema(
 			SchemaBuilder.fieldOptional(nodeSchemaNoIdentifier),
 		);
-		assert(!nodeSchemaDataNoIdentifier.globalFieldSchema.has(identifierFieldSchema.key));
+		assert(!nodeSchemaDataNoIdentifier.globalFieldSchema.has(nodeIdentifierField.key));
 
 		const provider = new TestTreeProviderLite();
 		const [tree] = provider.trees;
@@ -338,19 +341,24 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: makeId() }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: makeId() }],
 				},
 			},
 			nodeSchemaDataNoIdentifier,
 		);
 		assertIds(tree, []);
-		const index = tree.identifiedNodes as IdentifierIndex<typeof identifierKey>;
-		assert(!index.identifiersAreInSchema(tree.context.schema));
+		const index = tree.identifiedNodes as NodeIdentifierIndex<typeof nodeIdentifierField.key>;
+		assert(
+			!NodeIdentifierIndex.identifiersAreInSchema(
+				tree.context.schema,
+				index.identifierFieldKey,
+			),
+		);
 	});
 
 	it("respects extra global fields", () => {
 		// This is missing the global identifier field on the node, but has "extra global fields" enabled
-		const builder2 = new SchemaBuilder("identifier index test", identifierFieldSchemaLibrary);
+		const builder2 = new SchemaBuilder("identifier index test", nodeIdentifierSchemaLibrary);
 		const nodeSchemaNoIdentifier = builder2.objectRecursive("node", {
 			local: {
 				child: SchemaBuilder.fieldRecursive(
@@ -372,7 +380,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: id }],
 				},
 			},
 			nodeSchemaDataNoIdentifier,
@@ -385,7 +393,7 @@ describe("Node Identifier Index", () => {
 		const [tree] = provider.trees;
 
 		const id = makeId();
-		let expectedIds: Identifier[] = [id];
+		let expectedIds: NodeIdentifier[] = [id];
 		let batches = 0;
 		tree.events.on("afterBatch", () => {
 			assertIds(tree, expectedIds);
@@ -397,7 +405,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: id }],
 				},
 			},
 			nodeSchemaData,
@@ -411,7 +419,7 @@ describe("Node Identifier Index", () => {
 	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
 	it.skip("reacts to schema changes", () => {
 		// This is missing the global identifier field on the node
-		const builder2 = new SchemaBuilder("identifier index test", identifierFieldSchemaLibrary);
+		const builder2 = new SchemaBuilder("identifier index test", nodeIdentifierSchemaLibrary);
 		const nodeSchemaNoIdentifier = builder2.objectRecursive("node", {
 			local: {
 				child: SchemaBuilder.fieldRecursive(
@@ -432,7 +440,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+					[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: id }],
 				},
 			},
 			nodeSchemaData,
@@ -459,7 +467,7 @@ describe("Node Identifier Index", () => {
 					{
 						type: nodeSchema.name,
 						globalFields: {
-							[identifierKey]: [{ type: identifierSchema.name, value: id }],
+							[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: id }],
 						},
 					},
 					nodeSchemaData,
@@ -481,7 +489,7 @@ describe("Node Identifier Index", () => {
 					{
 						type: nodeSchema.name,
 						globalFields: {
-							[identifierKey]: [{ type: identifierSchema.name, value: id }],
+							[nodeIdentifierField.key]: [{ type: nodeIdentifierType, value: id }],
 						},
 					},
 					nodeSchemaData,

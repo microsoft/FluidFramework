@@ -16,4 +16,5 @@ export {
 	SchemaValidationFunction,
 	unitCodec,
 	withDefaultBinaryEncoding,
+	withSchemaValidation,
 } from "./codec";

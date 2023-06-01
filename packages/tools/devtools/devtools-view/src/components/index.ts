@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-// TODO: re-enable rule and fix violations
+// All of the components in this directory are intended to be used within this package,
+// so we will export * here
 /* eslint-disable no-restricted-syntax */
 
-export * from "./client-data-views";
 export * from "./data-visualization";
 
 export * from "./AudienceView";
@@ -16,6 +16,7 @@ export * from "./ContainerSummaryView";
 export * from "./LandingView";
 export * from "./Menu";
 export * from "./TelemetryView";
+export * from "./SettingsView";
 export * from "./Waiting";
 
 /* eslint-enable no-restricted-syntax */

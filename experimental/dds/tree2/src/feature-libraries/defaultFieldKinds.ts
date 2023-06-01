@@ -30,6 +30,7 @@ import {
 	FieldEditor,
 	referenceFreeFieldChangeRebaser,
 	NodeReviver,
+	NodeExistenceStateChange,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
@@ -333,7 +334,8 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 		(types, other) =>
 			(other.kind.identifier === sequence.identifier ||
 				other.kind.identifier === value.identifier ||
-				other.kind.identifier === optional.identifier) &&
+				other.kind.identifier === optional.identifier ||
+				other.kind.identifier === nodeIdentifier.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
 		new Set(),
 	);
@@ -479,7 +481,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						childChange: rebaseChild(
 							change.childChange,
 							over.deletedBy === undefined ? undefined : over.childChange,
-							true,
+							NodeExistenceStateChange.Deleted,
 						),
 						deletedBy: overTagged.revision,
 					};
@@ -495,6 +497,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						childChange: rebaseChild(
 							change.childChange,
 							over.fieldChange.newContent.changes,
+							NodeExistenceStateChange.Revived,
 						),
 					};
 				}
@@ -677,6 +680,26 @@ export const sequence: BrandedFieldKind<"Sequence", Multiplicity.Sequence, Seque
 	);
 
 /**
+ * Exactly one identifier.
+ */
+export const nodeIdentifier: BrandedFieldKind<
+	"NodeIdentifier",
+	Multiplicity.Value,
+	FieldEditor<0>
+> = brandedFieldKind(
+	"NodeIdentifier",
+	Multiplicity.Value,
+	noChangeHandler,
+	(types, other) =>
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === value.identifier ||
+			other.kind.identifier === optional.identifier ||
+			other.kind.identifier === nodeIdentifier.identifier) &&
+		allowsTreeSchemaIdentifierSuperset(types, other.types),
+	new Set(),
+);
+
+/**
  * Exactly 0 items.
  *
  * Using Forbidden makes what types are listed for allowed in a field irrelevant
@@ -717,7 +740,7 @@ export const forbidden = brandedFieldKind(
  * Default field kinds by identifier
  */
 export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
-	[value, optional, sequence, forbidden, counter].map((s) => [s.identifier, s]),
+	[value, optional, sequence, nodeIdentifier, forbidden, counter].map((s) => [s.identifier, s]),
 );
 
 // Create named Aliases for nicer intellisense.
@@ -743,6 +766,11 @@ export interface Sequence
 /**
  * @alpha
  */
+export interface NodeIdentifierFieldKind
+	extends BrandedFieldKind<"NodeIdentifier", Multiplicity.Value, FieldEditor<any>> {}
+/**
+ * @alpha
+ */
 export interface Forbidden
 	extends BrandedFieldKind<"Forbidden", Multiplicity.Forbidden, FieldEditor<any>> {}
 
@@ -755,8 +783,9 @@ export const FieldKinds: {
 	readonly value: ValueFieldKind;
 	readonly optional: Optional;
 	readonly sequence: Sequence;
+	readonly nodeIdentifier: NodeIdentifierFieldKind;
 	readonly forbidden: Forbidden;
-} = { value, optional, sequence, forbidden };
+} = { value, optional, sequence, nodeIdentifier, forbidden };
 
 /**
  * @alpha

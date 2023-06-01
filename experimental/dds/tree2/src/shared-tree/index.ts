@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
-	identifierKey,
-	identifierKeySymbol,
-	ISharedTree,
-	SharedTreeFactory,
-	SharedTreeOptions,
-} from "./sharedTree";
+export { ISharedTree, SharedTreeFactory, SharedTreeOptions } from "./sharedTree";
 
 export {
 	createSharedTreeView,

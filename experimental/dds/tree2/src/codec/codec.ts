@@ -290,7 +290,6 @@ export function makeValueCodec<Schema extends TSchema>(
 export function withSchemaValidation<TInMemoryFormat, EncodedSchema extends TSchema>(
 	schema: EncodedSchema,
 	codec: IJsonCodec<TInMemoryFormat>,
-	// TODO: make required
 	validator?: JsonValidator,
 ): IJsonCodec<TInMemoryFormat> {
 	if (!validator) {

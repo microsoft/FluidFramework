@@ -17,7 +17,6 @@ import {
 	mapCursorField,
 	moveToDetachedField,
 	ReadonlyRepairDataStore,
-	RevisionTag,
 	rootFieldKeySymbol,
 	TaggedChange,
 	UpPath,
@@ -86,13 +85,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
 	let currentRevision = mintRevisionTag();
-	const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
-		assert(
-			revision === currentRevision,
-			"The repair data store should only ask for the current forest state",
-		);
-		return forest;
-	});
+	const repairStore = new ForestRepairDataStore(forest);
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
 	const builder = new DefaultEditBuilder(

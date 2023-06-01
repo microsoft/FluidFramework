@@ -138,6 +138,7 @@ data:
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
             },
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }},
+            "verifyLastOpPersistence": {{ .Values.scribe.verifyLastOpPersistence }},
             "restartOnCheckpointFailure": {{ .Values.scribe.restartOnCheckpointFailure }}
         },
         "system": {

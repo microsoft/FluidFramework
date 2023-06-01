@@ -1347,8 +1347,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0
       node-rdkafka:
-        specifier: ^2.16.0
-        version: 2.16.0
+        specifier: ^2.16.1
+        version: 2.16.1
       sillyname:
         specifier: ^0.1.0
         version: 0.1.0
@@ -1531,6 +1531,9 @@ importers:
       querystring:
         specifier: ^0.2.0
         version: 0.2.0
+      serialize-error:
+        specifier: ^8.1.0
+        version: 8.1.0
       socket.io:
         specifier: ^4.5.3
         version: 4.5.4
@@ -3656,7 +3659,7 @@ packages:
       '@fluidframework/server-services-core': 0.1040.1000
       events: 3.3.0
       nconf: 0.12.0
-      node-rdkafka: 2.16.0
+      node-rdkafka: 2.16.1
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
@@ -12447,8 +12450,8 @@ packages:
       process-on-spawn: 1.0.0
     dev: true
 
-  /node-rdkafka@2.16.0:
-    resolution: {integrity: sha512-xM1wu6f084AbNkUpteOSMiIHSPXZaXQWKoEuu9vAo45b/o0PQ21+STlXmY/YuJbhrleV6ypitfvvjNrRE3u8yw==}
+  /node-rdkafka@2.16.1:
+    resolution: {integrity: sha512-fiZJGl/w9QnACLhfVTYuS4V4WxSmVSbxhXyxL+B0SgRWEa8kA1NpdiB+gHPG71C3CqjbvYEfTJWhjd/1y0OeSA==}
     engines: {node: '>=6.0.0'}
     requiresBuild: true
     dependencies:

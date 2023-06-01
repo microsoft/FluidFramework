@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { generateStableId } from "@fluidframework/container-runtime";
 import {
 	AnchorLocator,
 	StoredSchemaRepository,
@@ -22,24 +23,24 @@ import {
 	ContextuallyTypedNodeData,
 	EditableTreeContext,
 	IDefaultEditBuilder,
-	Identifier,
+	NodeIdentifier,
 	EditableTree,
 	GlobalFieldSchema,
 	DefaultChangeset,
-	IdentifierIndex,
+	NodeIdentifierIndex,
 	buildForest,
 	DefaultChangeFamily,
 	defaultSchemaPolicy,
 	getEditableTreeContext,
-	repairDataStoreFromForest,
 	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
 	NewFieldContent,
+	ForestRepairDataStore,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
-import { TransactionResult } from "../util";
+import { TransactionResult, brand } from "../util";
+import { nodeIdentifierKey } from "../domains";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
-import { identifierKey } from "./sharedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -190,9 +191,14 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
 	/**
+	 * Generate a unique identifier that can be used to identify a node in the tree.
+	 */
+	generateNodeIdentifier(): NodeIdentifier;
+
+	/**
 	 * A map of nodes that have been recorded by the identifier index.
 	 */
-	readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+	readonly identifiedNodes: ReadonlyMap<NodeIdentifier, EditableTree>;
 
 	/**
 	 * Takes in a tree and returns a view of it that conforms to the view schema.
@@ -245,7 +251,7 @@ export function createSharedTreeView(args?: {
 	schema?: InMemoryStoredSchemaRepository;
 	forest?: IEditableForest;
 	repairProvider?: ForestRepairDataStoreProvider;
-	identifierIndex?: IdentifierIndex<typeof identifierKey>;
+	identifierIndex?: NodeIdentifierIndex<typeof nodeIdentifierKey>;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
@@ -264,7 +270,7 @@ export function createSharedTreeView(args?: {
 			forest.anchors,
 		);
 	const context = getEditableTreeContext(forest, branch.editor);
-	const identifierIndex = args?.identifierIndex ?? new IdentifierIndex(identifierKey);
+	const identifierIndex = args?.identifierIndex ?? new NodeIdentifierIndex(nodeIdentifierKey);
 	return SharedTreeView[create](branch, schema, forest, context, identifierIndex);
 }
 
@@ -280,7 +286,7 @@ export class SharedTreeView implements ISharedTreeView {
 		private readonly _storedSchema: InMemoryStoredSchemaRepository,
 		private readonly _forest: IEditableForest,
 		public readonly context: EditableTreeContext,
-		private readonly _identifiedIndex: IdentifierIndex<typeof identifierKey>,
+		private readonly _identifiedIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>,
 	) {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
@@ -298,7 +304,7 @@ export class SharedTreeView implements ISharedTreeView {
 		storedSchema: InMemoryStoredSchemaRepository,
 		forest: IEditableForest,
 		context: EditableTreeContext,
-		identifiedIndex: IdentifierIndex<typeof identifierKey>,
+		identifiedIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>,
 	): SharedTreeView {
 		return new SharedTreeView(branch, storedSchema, forest, context, identifiedIndex);
 	}
@@ -311,7 +317,7 @@ export class SharedTreeView implements ISharedTreeView {
 		return this._forest;
 	}
 
-	public get identifiedNodes(): ReadonlyMap<Identifier, EditableTree> {
+	public get identifiedNodes(): ReadonlyMap<NodeIdentifier, EditableTree> {
 		return this._identifiedIndex;
 	}
 
@@ -325,7 +331,7 @@ export class SharedTreeView implements ISharedTreeView {
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => {
-			this.branch.startTransaction(repairDataStoreFromForest(this.forest));
+			this.branch.startTransaction(new ForestRepairDataStore(this.forest));
 			this.branch.editor.enterTransaction();
 		},
 		commit: () => {
@@ -357,6 +363,11 @@ export class SharedTreeView implements ISharedTreeView {
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this._forest.anchors.locate(anchor);
+	}
+
+	public generateNodeIdentifier(): NodeIdentifier {
+		// TODO: This is a placeholder implementation; use the runtime to generate node identifiers.
+		return brand(generateStableId());
 	}
 
 	public fork(): SharedTreeView {
