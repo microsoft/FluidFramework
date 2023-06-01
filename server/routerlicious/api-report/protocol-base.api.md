@@ -5,8 +5,6 @@
 ```ts
 
 import * as git from '@fluidframework/gitresources';
-import { IAttachment } from '@fluidframework/protocol-definitions';
-import { IBlob } from '@fluidframework/protocol-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IProcessMessageResult } from '@fluidframework/protocol-definitions';
@@ -20,37 +18,8 @@ import { ISequencedClient } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedProposal } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeEx } from '@fluidframework/protocol-definitions';
-import { ITree } from '@fluidframework/protocol-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
-
-// @public
-export class AttachmentTreeEntry {
-    constructor(path: string, id: string);
-    // (undocumented)
-    readonly id: string;
-    // (undocumented)
-    readonly mode = FileMode.File;
-    // (undocumented)
-    readonly path: string;
-    // (undocumented)
-    readonly type = TreeEntry.Attachment;
-    // (undocumented)
-    readonly value: IAttachment;
-}
-
-// @public
-export class BlobTreeEntry {
-    constructor(path: string, contents: string, encoding?: "utf-8" | "base64");
-    // (undocumented)
-    readonly mode = FileMode.File;
-    // (undocumented)
-    readonly path: string;
-    // (undocumented)
-    readonly type = TreeEntry.Blob;
-    // (undocumented)
-    readonly value: IBlob;
-}
 
 // @public
 export function buildGitTreeHeirarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
@@ -191,19 +160,6 @@ export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
 };
-
-// @public
-export class TreeTreeEntry {
-    constructor(path: string, value: ITree);
-    // (undocumented)
-    readonly mode = FileMode.Directory;
-    // (undocumented)
-    readonly path: string;
-    // (undocumented)
-    readonly type = TreeEntry.Tree;
-    // (undocumented)
-    readonly value: ITree;
-}
 
 // (No @packageDocumentation comment for this package)
 

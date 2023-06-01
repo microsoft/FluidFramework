@@ -5,8 +5,8 @@
 import React from "react";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { Button, FluentProvider, Tooltip } from "@fluentui/react-components";
-import { ArrowSync24Regular } from "@fluentui/react-icons";
+import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
+import { ArrowSync24Regular, Settings20Regular } from "@fluentui/react-icons";
 
 import {
 	ContainerKey,
@@ -21,13 +21,13 @@ import {
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
-
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
 	MenuItem,
 	MenuSection,
 	LandingView,
+	SettingsView,
 	Waiting,
 } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
@@ -72,12 +72,23 @@ interface TelemetryMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Settings view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface SettingsMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "settingsMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
+type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | SettingsMenuSelection;
 
 // #region Styles definitions
 
@@ -126,10 +137,15 @@ const contentViewStyles: IStackItemStyles = {
 const menuStyles: IStackItemStyles = {
 	root: {
 		...contentViewStyles,
-		display: "flex",
-		flexDirection: "column",
-		borderRight: `2px solid`,
-		minWidth: 150,
+		"display": "flex",
+		"flexDirection": "column",
+		"borderRight": `2px solid`,
+		"minWidth": "150px",
+		"maxHeight": "350px",
+		// Ensures the last div/component is anchored to the bottom.
+		"> :last-child": {
+			marginTop: "auto",
+		},
 	},
 };
 
@@ -147,6 +163,8 @@ export function DevtoolsView(): React.ReactElement {
 		DevtoolsFeatureFlags | undefined
 	>();
 	const [queryTimedOut, setQueryTimedOut] = React.useState(false);
+	const [selectedTheme, setSelectedTheme] = React.useState(getFluentUIThemeToUse());
+
 	const queryTimeoutInMilliseconds = 30_000; // 30 seconds
 	const messageRelay = useMessageRelay();
 
@@ -155,7 +173,7 @@ export function DevtoolsView(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
+			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
 				return true;
@@ -201,7 +219,7 @@ export function DevtoolsView(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={getFluentUIThemeToUse()} style={{ height: "100%" }}>
+		<FluentProvider theme={selectedTheme} style={{ height: "100%" }}>
 			{supportedFeatures === undefined ? (
 				queryTimedOut ? (
 					<>
@@ -214,13 +232,18 @@ export function DevtoolsView(): React.ReactElement {
 					<Waiting />
 				)
 			) : (
-				<_DevtoolsView supportedFeatures={supportedFeatures} />
+				<_DevtoolsView setTheme={setSelectedTheme} supportedFeatures={supportedFeatures} />
 			)}
 		</FluentProvider>
 	);
 }
 
 interface _DevtoolsViewProps {
+	/**
+	 * Sets the theme of the DevTools app (light, dark, high contrast)
+	 */
+	setTheme(newTheme: Theme): void;
+
 	/**
 	 * Set of features supported by the Devtools.
 	 */
@@ -231,11 +254,10 @@ interface _DevtoolsViewProps {
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
 function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
-	const { supportedFeatures } = props;
+	const { supportedFeatures, setTheme } = props;
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
-
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
@@ -243,7 +265,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerList.MessageType]: (untypedMessage) => {
+			[ContainerList.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerList.Message;
 				setContainers(message.data.containers);
 				return true;
@@ -277,7 +299,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<View menuSelection={menuSelection} containers={containers} />
+			<View menuSelection={menuSelection} containers={containers} setTheme={setTheme} />
 		</Stack>
 	);
 }
@@ -297,13 +319,18 @@ interface ViewProps {
 	 * The list of Containers, if any are registered with the webpage's Devtools instance.
 	 */
 	containers?: ContainerKey[];
+
+	/**
+	 * Sets the theme of the DevTools app (light, dark, high contrast)
+	 */
+	setTheme(newTheme: Theme): void;
 }
 
 /**
  * View body component used by {@link DevtoolsView}.
  */
 function View(props: ViewProps): React.ReactElement {
-	const { menuSelection, containers } = props;
+	const { menuSelection, containers, setTheme } = props;
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
@@ -321,6 +348,9 @@ function View(props: ViewProps): React.ReactElement {
 				) : (
 					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
+			break;
+		case "settingsMenuSelection":
+			view = <SettingsView setTheme={setTheme} />;
 			break;
 		default:
 			view = <LandingView />;
@@ -381,6 +411,10 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "telemetryMenuSelection" });
 	}
 
+	function onSettingsClicked(): void {
+		setSelection({ type: "settingsMenuSelection" });
+	}
+
 	const menuSections: React.ReactElement[] = [];
 
 	menuSections.push(
@@ -408,10 +442,20 @@ function Menu(props: MenuProps): React.ReactElement {
 			</MenuSection>,
 		);
 	}
-
 	return (
 		<Stack.Item styles={menuStyles}>
 			{menuSections.length === 0 ? <Waiting /> : menuSections}
+			<div
+				style={{
+					minWidth: "250px",
+					display: "flex",
+					cursor: "pointer",
+				}}
+				onClick={onSettingsClicked}
+			>
+				<h4 style={{ margin: "0px 5px" }}>Settings</h4>
+				<Settings20Regular />
+			</div>
 		</Stack.Item>
 	);
 }
