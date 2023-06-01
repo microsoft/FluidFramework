@@ -45,7 +45,7 @@
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.3",
-		"@fluentui/react-components": "^9.19.1",
+		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-hooks": "^8.6.24",
 		"@fluentui/react-icons": "^2.0.201",
 		"@fluid-experimental/devtools-core": "workspace:~",
@@ -118,6 +118,22 @@
 				],
 				"library": "main"
 			}
+		}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"build:copy-resources"
+				],
+				"script": false
+			},
+			"tsc": [
+				"^tsc",
+				"build:genver",
+				"@fluid-example/collaborative-textarea#build:esnext"
+			]
 		}
 	},
 	"jest-junit": {
