@@ -29,7 +29,7 @@ import {
 	unlinkAsync,
 } from "./utils";
 
-const { info, verbose, errorLog: error } = defaultLogger;
+const { log, verbose, errorLog: error } = defaultLogger;
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
@@ -257,7 +257,7 @@ export class Package {
 			throw new Error("Package in a monorepo shouldn't be installed");
 		}
 
-		info(`${this.nameColored}: Installing - ${this.installCommand}`);
+		log(`${this.nameColored}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.directory }, this.directory);
 	}
 }
@@ -279,7 +279,7 @@ async function queueExec<TItem, TResult>(
 				const startTime = Date.now();
 				const result = await exec(item);
 				const elapsedTime = (Date.now() - startTime) / 1000;
-				info(
+				log(
 					`[${++numDone}/${p.length}] ${messageCallback(item)} - ${elapsedTime.toFixed(
 						3,
 					)}s`,
@@ -358,7 +358,7 @@ export class Packages {
 
 			const globPkg = globPath + "/package.json";
 			for (const pkg of globSync(globPkg, { ignore: ignoredGlobs })) {
-				info(`Loading from glob: ${pkg}`);
+				log(`Loading from glob: ${pkg}`);
 				packages.push(new Package(pkg, group, monoRepo));
 			}
 		} else {
@@ -427,7 +427,7 @@ export class Packages {
 
 			if (status) {
 				const elapsedTime = (Date.now() - startTime) / 1000;
-				info(
+				log(
 					`[${++numDone}/${cleanP.length}] ${
 						pkg.nameColored
 					}: ${cleanScript} - ${elapsedTime.toFixed(3)}s`,
