@@ -6,7 +6,11 @@
 export default {
 	independent: {
 		typeid: "Test:IndependentType-1.0.0",
-		properties: [{ id: "any", optional: true }],
+		properties: [
+			{ id: "any", optional: true },
+			{ id: "arrayOfAny", context: "array", optional: true },
+			{ id: "mapOfAny", context: "map", optional: true },
+		],
 	},
 	neverType: {
 		// does not inherit from "NodeProperty" and has no properties
@@ -19,6 +23,10 @@ export default {
 	typeWithBaseProperty: {
 		typeid: "Test:BaseProperty-1.0.0",
 		properties: [{ id: "base", typeid: "BaseProperty" }],
+	},
+	typeWithBasePropertyCollection: {
+		typeid: "Test:BasePropertyCollection-1.0.0",
+		properties: [{ id: "base", context: "array", typeid: "BaseProperty" }],
 	},
 	child: {
 		inherits: ["Test:Optional-1.0.0"],

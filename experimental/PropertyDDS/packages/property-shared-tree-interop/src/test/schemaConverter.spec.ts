@@ -125,6 +125,7 @@ describe("schema converter", () => {
 					FieldKinds.optional,
 					new Set(["array<>"]),
 				);
+				assert(fullSchemaData.treeSchema.get(brand("array<>")) === undefined);
 				const primary = getPrimaryField(
 					fullSchemaData.treeSchema.get(brand("array<Any>")) ??
 						fail("expected tree schema"),
@@ -141,6 +142,7 @@ describe("schema converter", () => {
 					FieldKinds.optional,
 					new Set(["map<>"]),
 				);
+				assert(fullSchemaData.treeSchema.get(brand("map<>")) === undefined);
 				const anyMap =
 					fullSchemaData.treeSchema.get(brand("map<Any>")) ??
 					fail("expected tree schema");
@@ -358,13 +360,27 @@ describe("schema converter", () => {
 				Any,
 				new Set([extraTypeName]),
 			);
-			const extraTypeSchema = lookupTreeSchema(fullSchemaData, extraTypeName);
+			const extraTypeSchema =
+				fullSchemaData.treeSchema.get(extraTypeName) ?? fail("expected tree schema");
 			const anyField =
 				(extraTypeSchema?.localFields.get(brand("any")) as FieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(anyField?.kind, FieldKinds.optional);
 			assert(anyField.types === undefined);
 			assert.deepEqual([...anyField.allowedTypes], [Any]);
+
+			const mapOfAnyField =
+				(extraTypeSchema?.localFields.get(brand("mapOfAny")) as FieldSchema) ??
+				fail("expected field schema");
+			assert.deepEqual([...(mapOfAnyField.types ?? fail("expected types"))], ["map<Any>"]);
+
+			const arrayOfAnyField =
+				(extraTypeSchema?.localFields.get(brand("arrayOfAny")) as FieldSchema) ??
+				fail("expected field schema");
+			assert.deepEqual(
+				[...(arrayOfAnyField.types ?? fail("expected types"))],
+				["array<Any>"],
+			);
 		});
 
 		it(`can use extra schemas`, () => {
@@ -386,7 +402,7 @@ describe("schema converter", () => {
 					Any,
 					new Set([extraTypeName]),
 				);
-				assert(lookupTreeSchema(fullSchemaData, extraTypeName) !== undefined);
+				assert(fullSchemaData.treeSchema.get(extraTypeName) !== undefined);
 			}
 		});
 
@@ -434,6 +450,17 @@ describe("schema converter", () => {
 						FieldKinds.optional,
 						Any,
 						new Set(["Test:BaseProperty-1.0.0"]),
+					),
+				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
+				"Expected exception was not thrown",
+			);
+
+			assert.throws(
+				() =>
+					convertPropertyToSharedTreeStorageSchema(
+						FieldKinds.optional,
+						Any,
+						new Set(["Test:BasePropertyCollection-1.0.0"]),
 					),
 				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
