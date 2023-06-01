@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType, ContainerRuntimeMessage } from "..";
+import { ContainerRuntimeMessage } from "..";
 import { IBatch } from "./definitions";
 
 interface IGroupedMessage {
@@ -19,16 +19,12 @@ export class OpGroupingManager {
 
 	constructor(private readonly groupedBatchingEnabled: boolean) {}
 
-	public groupBatch(batch: IBatch): IBatch {
-		if (batch.content.length < 2 || !this.groupedBatchingEnabled) {
+	public groupBatch(batch: IBatch, disableGroupedBatching: boolean): IBatch {
+		if (batch.content.length < 2 || !this.groupedBatchingEnabled || disableGroupedBatching) {
 			return batch;
 		}
 
 		for (const message of batch.content) {
-			// Blob attaches cannot be grouped (grouped batching would hide metadata)
-			if (message.deserializedContent.type === ContainerMessageType.BlobAttach) {
-				return batch;
-			}
 			if (message.metadata) {
 				const keys = Object.keys(message.metadata);
 				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);

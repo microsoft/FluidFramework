@@ -13,7 +13,7 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ICompressionRuntimeOptions } from "../containerRuntime";
+import { ContainerMessageType, ICompressionRuntimeOptions } from "../containerRuntime";
 import { PendingStateManager } from "../pendingStateManager";
 import {
 	BatchManager,
@@ -62,6 +62,7 @@ export class Outbox {
 	private readonly mc: MonitoringContext;
 	private readonly attachFlowBatch: BatchManager;
 	private readonly mainBatch: BatchManager;
+	private readonly blobAttachBatch: BatchManager;
 	private readonly defaultAttachFlowSoftLimitInBytes = 320 * 1024;
 
 	/**
@@ -84,10 +85,15 @@ export class Outbox {
 
 		this.attachFlowBatch = new BatchManager({ hardLimit, softLimit });
 		this.mainBatch = new BatchManager({ hardLimit });
+		this.blobAttachBatch = new BatchManager({ hardLimit });
 	}
 
 	public get isEmpty(): boolean {
-		return this.attachFlowBatch.length === 0 && this.mainBatch.length === 0;
+		return (
+			this.attachFlowBatch.length === 0 &&
+			this.mainBatch.length === 0 &&
+			this.blobAttachBatch.length === 0
+		);
 	}
 
 	/**
@@ -99,9 +105,11 @@ export class Outbox {
 	private maybeFlushPartialBatch() {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const attachFlowBatchSeqNums = this.attachFlowBatch.sequenceNumbers;
+		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		assert(
 			this.params.config.disablePartialFlush ||
-				sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums),
+				(sequenceNumbersMatch(mainBatchSeqNums, attachFlowBatchSeqNums) &&
+					sequenceNumbersMatch(mainBatchSeqNums, blobAttachSeqNums)),
 			0x58d /* Reference sequence numbers from both batches must be in sync */,
 		);
 
@@ -109,7 +117,8 @@ export class Outbox {
 
 		if (
 			sequenceNumbersMatch(mainBatchSeqNums, currentSequenceNumbers) &&
-			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers)
+			sequenceNumbersMatch(attachFlowBatchSeqNums, currentSequenceNumbers) &&
+			sequenceNumbersMatch(blobAttachSeqNums, currentSequenceNumbers)
 		) {
 			// The reference sequence numbers are stable, there is nothing to do
 			return;
@@ -124,6 +133,8 @@ export class Outbox {
 					mainClientSequenceNumber: mainBatchSeqNums.clientSequenceNumber,
 					attachReferenceSequenceNumber: attachFlowBatchSeqNums.referenceSequenceNumber,
 					attachClientSequenceNumber: attachFlowBatchSeqNums.clientSequenceNumber,
+					blobAttachReferenceSequenceNumber: blobAttachSeqNums.referenceSequenceNumber,
+					blobAttachClientSequenceNumber: blobAttachSeqNums.clientSequenceNumber,
 					currentReferenceSequenceNumber: currentSequenceNumbers.referenceSequenceNumber,
 					currentClientSequenceNumber: currentSequenceNumbers.clientSequenceNumber,
 				},
@@ -138,6 +149,11 @@ export class Outbox {
 
 	public submit(message: BatchMessage) {
 		this.maybeFlushPartialBatch();
+
+		// TODO: change to message.type in "2.0.0-internal.5.0.0"
+		if (message.deserializedContent.type === ContainerMessageType.BlobAttach) {
+			return this.submitBlobAttach(message);
+		}
 
 		if (
 			!this.mainBatch.push(
@@ -195,19 +211,38 @@ export class Outbox {
 		}
 	}
 
+	public submitBlobAttach(message: BatchMessage) {
+		this.maybeFlushPartialBatch();
+
+		if (
+			!this.blobAttachBatch.push(
+				message,
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+			)
+		) {
+			throw new GenericError("BatchTooLarge", /* error */ undefined, {
+				opSize: message.contents?.length ?? 0,
+				batchSize: this.blobAttachBatch.contentSizeInBytes,
+				count: this.blobAttachBatch.length,
+				limit: this.blobAttachBatch.options.hardLimit,
+			});
+		}
+	}
+
 	public flush() {
 		this.flushInternal(this.attachFlowBatch.popBatch());
+		this.flushInternal(this.blobAttachBatch.popBatch(), true /* disableGroupedBatching */);
 		this.flushInternal(this.mainBatch.popBatch());
 	}
 
-	private flushInternal(rawBatch: IBatch) {
-		const processedBatch = this.compressBatch(rawBatch);
+	private flushInternal(rawBatch: IBatch, disableGroupedBatching: boolean = false) {
+		const processedBatch = this.compressBatch(rawBatch, disableGroupedBatching);
 		this.sendBatch(processedBatch);
 
 		this.persistBatch(rawBatch.content);
 	}
 
-	private compressBatch(batch: IBatch): IBatch {
+	private compressBatch(batch: IBatch, disableGroupedBatching: boolean): IBatch {
 		if (
 			batch.content.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
@@ -216,11 +251,11 @@ export class Outbox {
 			this.params.containerContext.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return this.params.groupingManager.groupBatch(batch);
+			return this.params.groupingManager.groupBatch(batch, disableGroupedBatching);
 		}
 
 		const compressedBatch = this.params.compressor.compressBatch(
-			this.params.groupingManager.groupBatch(batch),
+			this.params.groupingManager.groupBatch(batch, disableGroupedBatching),
 		);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
@@ -321,6 +356,7 @@ export class Outbox {
 		return {
 			mainBatch: this.mainBatch.checkpoint(),
 			attachFlowBatch: this.attachFlowBatch.checkpoint(),
+			blobAttachBatch: this.blobAttachBatch.checkpoint(),
 		};
 	}
 }
