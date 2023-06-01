@@ -470,6 +470,7 @@ describe("EditManager", () => {
 			inFlight: 0,
 		};
 		for (const scenario of buildScenario([], meta)) {
+			// The code below to obtains the titles of generated scenarios.
 			const title = scenario
 				.map((s) => {
 					if (s.type === "Pull") {
