@@ -68,6 +68,8 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	private error: boolean = false;
 	private readonly schema = new Map<string, number>();
 	private logs: ITelemetryBaseEvent[] = [];
+	private readonly expectedMaxRestarts = 20;
+	private restarts = 0;
 
 	private constructor(private readonly baseLogger?: ITelemetryBufferedLogger) {
 		super(undefined /* namespace */, { all: { testVersion: pkgVersion } });
@@ -107,6 +109,12 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 			typeof event.message === "string" &&
 			event.message.includes("FaultInjectionNack")
 		) {
+			event.category = "generic";
+		} else if (
+			event.error === "Restarting summarizer instead of refreshing" &&
+			this.restarts < this.expectedMaxRestarts
+		) {
+			this.restarts++;
 			event.category = "generic";
 		}
 		this.baseLogger?.send({ ...event, hostName: pkgName });
