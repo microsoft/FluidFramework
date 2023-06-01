@@ -43,7 +43,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		 * Handlers for inbound message related to Data View.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[DataVisualization.MessageType]: (untypedMessage) => {
+			[DataVisualization.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as DataVisualization.Message;
 				if (
 					message.data.containerKey === containerKey &&
