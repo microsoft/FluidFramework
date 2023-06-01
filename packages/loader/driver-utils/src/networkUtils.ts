@@ -13,7 +13,7 @@ export function logNetworkFailure(
 ) {
 	const newEvent = { ...event };
 
-	const errorOnlineProp = error.online;
+	const errorOnlineProp = error?.online;
 	newEvent.online =
 		typeof errorOnlineProp === "string" ? errorOnlineProp : OnlineStatus[isOnline()];
 
