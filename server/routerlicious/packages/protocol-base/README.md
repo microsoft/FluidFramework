@@ -2,7 +2,10 @@
 
 ## Purpose
 
-The purpose of @fluidframework/protocol-base is to manage the lifetime of Quorum and proposals that needs to be consistent across client and service and git implementation which takes in a summary object and returns it mode/type.
+The purpose of @fluidframework/protocol-base is:
+
+1. Manage the lifetime of Quorum and proposals that needs to be consistent across client and service.
+1. Manage git implementation which takes in a summary object and returns it mode/type.
 
 ## Quorum and Proposal
 
