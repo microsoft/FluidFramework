@@ -44,6 +44,7 @@ import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
+import { SlidingPreference } from '@fluidframework/merge-tree';
 import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
@@ -118,7 +119,7 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
     // (undocumented)
     compareEnds(a: TInterval, b: TInterval): number;
     // (undocumented)
-    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean): TInterval;
+    create(label: string, start: number | undefined, end: number | undefined, client: Client | undefined, intervalType: IntervalType, op?: ISequencedDocumentMessage, fromSnapshot?: boolean, stickiness?: IntervalStickiness): TInterval;
 }
 
 // @public (undocumented)
@@ -186,6 +187,17 @@ export interface IntervalLocator {
 // @public
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
 
+// @public
+export const IntervalStickiness: {
+    readonly NONE: 0;
+    readonly START: 1;
+    readonly END: 2;
+    readonly FULL: 3;
+};
+
+// @public
+export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
+
 // @public (undocumented)
 export enum IntervalType {
     // (undocumented)
@@ -224,6 +236,8 @@ export interface ISerializedInterval {
     properties?: PropertySet;
     sequenceNumber: number;
     start: number;
+    // (undocumented)
+    stickiness?: IntervalStickiness;
 }
 
 // @public (undocumented)
@@ -279,7 +293,7 @@ export abstract class SequenceEvent<TOperation extends MergeTreeDeltaOperationTy
 export class SequenceInterval implements ISerializableInterval {
     constructor(client: Client,
     start: LocalReferencePosition,
-    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet);
+    end: LocalReferencePosition, intervalType: IntervalType, props?: PropertySet, stickiness?: IntervalStickiness);
     // @internal
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
     // @deprecated (undocumented)
@@ -294,7 +308,7 @@ export class SequenceInterval implements ISerializableInterval {
     // (undocumented)
     intervalType: IntervalType;
     // @deprecated
-    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number): SequenceInterval;
+    modify(label: string, start: number, end: number, op?: ISequencedDocumentMessage, localSeq?: number, stickiness?: IntervalStickiness): SequenceInterval;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
@@ -307,6 +321,8 @@ export class SequenceInterval implements ISerializableInterval {
     // @internal (undocumented)
     serialize(): ISerializedInterval;
     start: LocalReferencePosition;
+    // (undocumented)
+    readonly stickiness: IntervalStickiness;
     // @deprecated
     union(b: SequenceInterval): SequenceInterval;
 }
@@ -316,6 +332,13 @@ export class SequenceMaintenanceEvent extends SequenceEvent<MergeTreeMaintenance
     constructor(opArgs: IMergeTreeDeltaOpArgs | undefined, deltaArgs: IMergeTreeMaintenanceCallbackArgs, mergeTreeClient: Client);
     // (undocumented)
     readonly opArgs: IMergeTreeDeltaOpArgs | undefined;
+}
+
+// @public
+export interface SequenceOptions {
+    // (undocumented)
+    [key: string]: boolean;
+    intervalStickinessEnabled: boolean;
 }
 
 // @internal
@@ -369,7 +392,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
     protected client: Client;
-    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined): LocalReferencePosition;
+    createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference): LocalReferencePosition;
     // (undocumented)
     protected didAttach(): void;
     getContainingSegment(pos: number): {

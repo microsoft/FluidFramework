@@ -28,6 +28,7 @@ import {
 	maxReferencePosition,
 	createDetachedLocalReferencePosition,
 	DetachedReferencePosition,
+	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
@@ -39,6 +40,7 @@ import {
 	IValueOperation,
 	IValueType,
 	IValueTypeOperationValue,
+	SequenceOptions,
 } from "./defaultMapInterfaces";
 import { IInterval, IntervalConflictResolver, IntervalTree, IntervalNode } from "./intervalTree";
 
@@ -83,6 +85,7 @@ export interface ISerializedInterval {
 	end: number;
 	/** Interval type to create */
 	intervalType: IntervalType;
+	stickiness?: IntervalStickiness;
 	/** Any properties the interval has */
 	properties?: PropertySet;
 }
@@ -101,9 +104,11 @@ export type SerializedIntervalDelta = Omit<ISerializedInterval, "start" | "end" 
  *
  * Intervals are of the format:
  *
- * [start, end, sequenceNumber, intervalType, properties]
+ * [start, end, sequenceNumber, intervalType, properties, stickiness?]
  */
-export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet];
+export type CompressedSerializedInterval =
+	| [number, number, number, IntervalType, PropertySet, IntervalStickiness]
+	| [number, number, number, IntervalType, PropertySet];
 
 export interface ISerializedIntervalCollectionV2 {
 	label: string;
@@ -125,6 +130,7 @@ function decompressInterval(
 		sequenceNumber: interval[2],
 		intervalType: interval[3],
 		properties: { ...interval[4], [reservedRangeLabelsKey]: [label] },
+		stickiness: interval[5],
 	};
 }
 
@@ -135,7 +141,7 @@ function decompressInterval(
 function compressInterval(interval: ISerializedInterval): CompressedSerializedInterval {
 	const { start, end, sequenceNumber, intervalType, properties } = interval;
 
-	return [
+	const base: CompressedSerializedInterval = [
 		start,
 		end,
 		sequenceNumber,
@@ -144,6 +150,26 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 		// in the `label` field of the summary
 		{ ...properties, [reservedRangeLabelsKey]: undefined },
 	];
+
+	if (interval.stickiness !== undefined && interval.stickiness !== IntervalStickiness.END) {
+		base.push(interval.stickiness);
+	}
+
+	return base;
+}
+
+function startReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
+	// if any start stickiness, prefer sliding backwards
+	return (stickiness & IntervalStickiness.START) !== 0
+		? SlidingPreference.BACKWARD
+		: SlidingPreference.FORWARD;
+}
+
+function endReferenceSlidingPreference(stickiness: IntervalStickiness): SlidingPreference {
+	// if any end stickiness, prefer sliding forwards
+	return (stickiness & IntervalStickiness.END) !== 0
+		? SlidingPreference.FORWARD
+		: SlidingPreference.BACKWARD;
 }
 
 export interface ISerializableInterval extends IInterval {
@@ -190,8 +216,49 @@ export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
 		fromSnapshot?: boolean,
+		stickiness?: IntervalStickiness,
 	): TInterval;
 }
+
+/**
+ * Determines how an interval should expand when segments are inserted adjacent
+ * to the range it spans
+ *
+ * Note that interval stickiness is currently an experimental feature and must
+ * be explicitly enabled with the `intervalStickinessEnabled` flag
+ */
+export const IntervalStickiness = {
+	/**
+	 * Interval does not expand to include adjacent segments
+	 */
+	NONE: 0b00,
+
+	/**
+	 * Interval expands to include segments inserted adjacent to the start
+	 */
+	START: 0b01,
+
+	/**
+	 * Interval expands to include segments inserted adjacent to the end
+	 *
+	 * This is the default stickiness
+	 */
+	END: 0b10,
+
+	/**
+	 * Interval expands to include all segments inserted adjacent to it
+	 */
+	FULL: 0b11,
+} as const;
+
+/**
+ * Determines how an interval should expand when segments are inserted adjacent
+ * to the range it spans
+ *
+ * Note that interval stickiness is currently an experimental feature and must
+ * be explicitly enabled with the `intervalStickinessEnabled` flag
+ */
+export type IntervalStickiness = typeof IntervalStickiness[keyof typeof IntervalStickiness];
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
@@ -436,6 +503,7 @@ export class SequenceInterval implements ISerializableInterval {
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
 		props?: PropertySet,
+		public readonly stickiness: IntervalStickiness = IntervalStickiness.END,
 	) {
 		this.propertyManager = new PropertiesManager();
 		this.properties = {};
@@ -497,6 +565,9 @@ export class SequenceInterval implements ISerializableInterval {
 		if (this.properties) {
 			serializedInterval.properties = this.properties;
 		}
+		if (this.stickiness !== IntervalStickiness.END) {
+			serializedInterval.stickiness = this.stickiness;
+		}
 
 		return serializedInterval;
 	}
@@ -511,6 +582,7 @@ export class SequenceInterval implements ISerializableInterval {
 			this.end,
 			this.intervalType,
 			this.properties,
+			this.stickiness,
 		);
 	}
 
@@ -618,6 +690,7 @@ export class SequenceInterval implements ISerializableInterval {
 		end: number,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
+		stickiness: IntervalStickiness = IntervalStickiness.END,
 	) {
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
@@ -637,6 +710,7 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
+				startReferenceSlidingPreference(stickiness),
 			);
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -652,6 +726,7 @@ export class SequenceInterval implements ISerializableInterval {
 				op,
 				undefined,
 				localSeq,
+				endReferenceSlidingPreference(stickiness),
 			);
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -687,6 +762,7 @@ function createPositionReferenceFromSegoff(
 	op?: ISequencedDocumentMessage,
 	localSeq?: number,
 	fromSnapshot?: boolean,
+	slidingPreference?: SlidingPreference,
 ): LocalReferencePosition {
 	if (segoff.segment) {
 		const ref = client.createLocalReferencePosition(
@@ -694,6 +770,7 @@ function createPositionReferenceFromSegoff(
 			segoff.offset,
 			refType,
 			undefined,
+			slidingPreference,
 		);
 		return ref;
 	}
@@ -722,6 +799,7 @@ function createPositionReference(
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
 	localSeq?: number,
+	slidingPreference?: SlidingPreference,
 ): LocalReferencePosition {
 	let segoff;
 	if (op) {
@@ -741,7 +819,16 @@ function createPositionReference(
 		);
 		segoff = client.getContainingSegment(pos, undefined, localSeq);
 	}
-	return createPositionReferenceFromSegoff(client, segoff, refType, op, localSeq, fromSnapshot);
+
+	return createPositionReferenceFromSegoff(
+		client,
+		segoff,
+		refType,
+		op,
+		localSeq,
+		fromSnapshot,
+		slidingPreference,
+	);
 }
 
 export function createSequenceInterval(
@@ -752,6 +839,7 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
+	stickiness: IntervalStickiness = IntervalStickiness.END,
 ): SequenceInterval {
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;
@@ -775,15 +863,38 @@ export function createSequenceInterval(
 		}
 	}
 
-	const startLref = createPositionReference(client, start, beginRefType, op, fromSnapshot);
-	const endLref = createPositionReference(client, end, endRefType, op, fromSnapshot);
+	const startLref = createPositionReference(
+		client,
+		start,
+		beginRefType,
+		op,
+		fromSnapshot,
+		undefined,
+		startReferenceSlidingPreference(stickiness),
+	);
+	const endLref = createPositionReference(
+		client,
+		end,
+		endRefType,
+		op,
+		fromSnapshot,
+		undefined,
+		endReferenceSlidingPreference(stickiness),
+	);
 	const rangeProp = {
 		[reservedRangeLabelsKey]: [label],
 	};
 	startLref.addProperties(rangeProp);
 	endLref.addProperties(rangeProp);
 
-	const ival = new SequenceInterval(client, startLref, endLref, intervalType, rangeProp);
+	const ival = new SequenceInterval(
+		client,
+		startLref,
+		endLref,
+		intervalType,
+		rangeProp,
+		stickiness,
+	);
 	return ival;
 }
 
@@ -1119,8 +1230,18 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		end: number,
 		intervalType: IntervalType,
 		op?: ISequencedDocumentMessage,
+		stickiness: IntervalStickiness = IntervalStickiness.END,
 	): TInterval {
-		return this.helpers.create(this.label, start, end, this.client, intervalType, op);
+		return this.helpers.create(
+			this.label,
+			start,
+			end,
+			this.client,
+			intervalType,
+			op,
+			undefined,
+			stickiness,
+		);
 	}
 
 	public addInterval(
@@ -1129,8 +1250,9 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 		intervalType: IntervalType,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
+		stickiness: IntervalStickiness = IntervalStickiness.END,
 	) {
-		const interval: TInterval = this.createInterval(start, end, intervalType, op);
+		const interval: TInterval = this.createInterval(start, end, intervalType, op, stickiness);
 		if (interval) {
 			if (!interval.properties) {
 				interval.properties = createMap<any>();
@@ -1206,6 +1328,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 				ref.getOffset(),
 				ReferenceType.Transient,
 				ref.properties,
+				ref.slidingPreference,
 			);
 		};
 		if (interval instanceof SequenceInterval) {
@@ -1254,12 +1377,13 @@ class SequenceIntervalCollectionFactory
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
+		options?: Partial<SequenceOptions>,
 	): IntervalCollection<SequenceInterval> {
 		const helpers: IIntervalHelpers<SequenceInterval> = {
 			compareEnds: compareSequenceIntervalEnds,
 			create: createSequenceInterval,
 		};
-		return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw);
+		return new IntervalCollection<SequenceInterval>(helpers, true, emitter, raw, options);
 	}
 
 	public store(
@@ -1294,7 +1418,15 @@ export class SequenceIntervalCollectionValueType
 
 const compareIntervalEnds = (a: Interval, b: Interval) => a.end - b.end;
 
-function createInterval(label: string, start: number, end: number, client: Client): Interval {
+function createInterval(
+	label: string,
+	start: number,
+	end: number,
+	client: Client,
+	intervalType?: IntervalType,
+	op?: ISequencedDocumentMessage,
+	fromSnapshot?: boolean,
+): Interval {
 	const rangeProp: PropertySet = {};
 
 	if (label && label.length > 0) {
@@ -1308,12 +1440,13 @@ class IntervalCollectionFactory implements IValueFactory<IntervalCollection<Inte
 	public load(
 		emitter: IValueOpEmitter,
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
+		options?: Partial<SequenceOptions>,
 	): IntervalCollection<Interval> {
 		const helpers: IIntervalHelpers<Interval> = {
 			compareEnds: compareIntervalEnds,
 			create: createInterval,
 		};
-		const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw);
+		const collection = new IntervalCollection<Interval>(helpers, false, emitter, raw, options);
 		collection.attachGraph(undefined as any as Client, "");
 		return collection;
 	}
@@ -1407,7 +1540,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
 
 export type DeserializeCallback = (properties: PropertySet) => void;
 
-export class IntervalCollectionIterator<TInterval extends ISerializableInterval>
+class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	implements Iterator<TInterval>
 {
 	private readonly results: TInterval[];
@@ -1500,10 +1633,7 @@ export interface IIntervalCollectionEvent<TInterval extends ISerializableInterva
 
 /**
  * Collection of intervals that supports addition, modification, removal, and efficient spatial querying.
- * This class is not a DDS in its own right, but emits events on mutating operations such that it's possible to
- * integrate into a DDS.
- * This aligns with its usage in `SharedSegmentSequence`, which allows associating intervals to positions in the
- * sequence DDS which are broadcast to all other clients in an eventually consistent fashion.
+ * Changes to this collection will be incur updates on collaborating clients (i.e. they are not local-only).
  */
 export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
@@ -1620,6 +1750,9 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	nextInterval(pos: number): TInterval | undefined;
 }
 
+/**
+ * {@inheritdoc IIntervalCollection}
+ */
 export class IntervalCollection<TInterval extends ISerializableInterval>
 	extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>>
 	implements IIntervalCollection<TInterval>
@@ -1655,6 +1788,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		private readonly requiresClient: boolean,
 		private readonly emitter: IValueOpEmitter,
 		serializedIntervals: ISerializedInterval[] | ISerializedIntervalCollectionV2,
+		private readonly options: Partial<SequenceOptions> = {},
 	) {
 		super();
 
@@ -1666,12 +1800,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * Attaches an index to this collection.
-	 * All intervals which are part of this collection will be added to the index, and the index will automatically
-	 * be updated when this collection updates due to local or remote changes.
-	 *
-	 * @remarks - After attaching an index to an interval collection, applications should typically store this
-	 * index somewhere in their in-memory data model for future reference and querying.
+	 * {@inheritdoc IIntervalCollection.attachIndex}
 	 */
 	public attachIndex(index: IntervalIndex<TInterval>): void {
 		if (!this.attached) {
@@ -1685,11 +1814,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * Detaches an index from this collection.
-	 * All intervals which are part of this collection will be removed from the index, and updates to this collection
-	 * due to local or remote changes will no longer incur updates to the index.
-	 *
-	 * @returns - Return false if the target index cannot be found in the indexes, otherwise remove all intervals in the index and return true
+	 * {@inheritdoc IIntervalCollection.detachIndex}
 	 */
 	public detachIndex(index: IntervalIndex<TInterval>): boolean {
 		if (!this.attached) {
@@ -1798,7 +1923,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (this.savedSerializedIntervals) {
 			for (const serializedInterval of this.savedSerializedIntervals) {
 				this.localCollection.ensureSerializedId(serializedInterval);
-				const { start, end, intervalType, properties } = serializedInterval;
+				const { start, end, intervalType, properties, stickiness } = serializedInterval;
 				const interval = this.helpers.create(
 					label,
 					start,
@@ -1807,6 +1932,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					intervalType,
 					undefined,
 					true,
+					stickiness,
 				);
 				if (properties) {
 					interval.addProperties(properties);
@@ -1853,8 +1979,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * @returns the interval in this collection that has the provided `id`.
-	 * If no interval in the collection has this `id`, returns `undefined`.
+	 * {@inheritdoc IIntervalCollection.getIntervalById}
 	 */
 	public getIntervalById(id: string) {
 		if (!this.localCollection) {
@@ -1864,20 +1989,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * Creates a new interval and add it to the collection.
-	 * @param start - interval start position (inclusive)
-	 * @param end - interval end position (exclusive)
-	 * @param intervalType - type of the interval. All intervals are SlideOnRemove. Intervals may not be Transient.
-	 * @param props - properties of the interval
-	 * @returns - the created interval
-	 * @remarks - See documentation on {@link SequenceInterval} for comments on interval endpoint semantics: there are subtleties
-	 * with how the current half-open behavior is represented.
+	 * {@inheritdoc IIntervalCollection.add}
 	 */
 	public add(
 		start: number,
 		end: number,
 		intervalType: IntervalType,
 		props?: PropertySet,
+		stickiness: IntervalStickiness = IntervalStickiness.END,
 	): TInterval {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
@@ -1885,12 +2004,19 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (intervalType & IntervalType.Transient) {
 			throw new LoggingError("Can not add transient intervals");
 		}
+		if (stickiness !== IntervalStickiness.END && !this.options.intervalStickinessEnabled) {
+			throw new UsageError(
+				"attempted to set interval stickiness without enabling `intervalStickinessEnabled` feature flag",
+			);
+		}
 
 		const interval: TInterval = this.localCollection.addInterval(
 			start,
 			end,
 			intervalType,
 			props,
+			undefined,
+			stickiness,
 		);
 
 		if (interval) {
@@ -1900,6 +2026,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				properties: interval.properties,
 				sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 				start,
+				stickiness,
 			};
 			const localSeq = this.getNextLocalSeq();
 			this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
@@ -1940,9 +2067,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * Removes an interval from the collection.
-	 * @param id - Id of the interval to remove
-	 * @returns the removed interval
+	 * {@inheritdoc IIntervalCollection.removeIntervalById}
 	 */
 	public removeIntervalById(id: string) {
 		if (!this.localCollection) {
@@ -1956,10 +2081,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * Changes the properties on an existing interval.
-	 * @param id - Id of the interval whose properties should be changed
-	 * @param props - Property set to apply to the interval. Shallow merging is used between any existing properties
-	 * and `prop`, i.e. the interval will end up with a property object equivalent to `{ ...oldProps, ...props }`.
+	 * {@inheritdoc IIntervalCollection.changeProperties}
 	 */
 	public changeProperties(id: string, props: PropertySet) {
 		if (!this.attached) {
@@ -1993,11 +2115,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * Changes the endpoints of an existing interval.
-	 * @param id - Id of the interval to change
-	 * @param start - New start value, if defined. `undefined` signifies this endpoint should be left unchanged.
-	 * @param end - New end value, if defined. `undefined` signifies this endpoint should be left unchanged.
-	 * @returns the interval that was changed, if it existed in the collection.
+	 * {@inheritdoc IIntervalCollection.change}
 	 */
 	public change(id: string, start?: number, end?: number): TInterval | undefined {
 		if (!this.localCollection) {
@@ -2185,6 +2303,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 	}
 
+	/**
+	 * {@inheritdoc IIntervalCollection.attachDeserializer}
+	 */
 	public attachDeserializer(onDeserialize: DeserializeCallback): void {
 		// If no deserializer is specified can skip all processing work
 		if (!onDeserialize) {
@@ -2352,6 +2473,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					newStart,
 					interval.start.refType,
 					op,
+					startReferenceSlidingPreference(interval.stickiness),
 				);
 				if (props) {
 					interval.start.addProperties(props);
@@ -2369,6 +2491,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					newEnd,
 					interval.end.refType,
 					op,
+					endReferenceSlidingPreference(interval.stickiness),
 				);
 				if (props) {
 					interval.end.addProperties(props);
@@ -2417,6 +2540,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			serializedInterval.intervalType,
 			serializedInterval.properties,
 			op,
+			serializedInterval.stickiness,
 		);
 
 		if (interval) {
@@ -2474,7 +2598,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * @returns a forward iterator over all intervals in this collection with start point equal to `startPosition`.
+	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithStartPosition}
 	 */
 	public CreateForwardIteratorWithStartPosition(
 		startPosition: number,
@@ -2484,7 +2608,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * @returns a backward iterator over all intervals in this collection with start point equal to `startPosition`.
+	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithStartPosition}
 	 */
 	public CreateBackwardIteratorWithStartPosition(
 		startPosition: number,
@@ -2494,7 +2618,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * @returns a forward iterator over all intervals in this collection with end point equal to `endPosition`.
+	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithEndPosition}
 	 */
 	public CreateForwardIteratorWithEndPosition(
 		endPosition: number,
@@ -2509,7 +2633,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * @returns a backward iterator over all intervals in this collection with end point equal to `endPosition`.
+	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithEndPosition}
 	 */
 	public CreateBackwardIteratorWithEndPosition(
 		endPosition: number,
@@ -2524,12 +2648,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * Gathers iteration results that optionally match a start/end criteria into the provided array.
-	 * @param results - Array to gather the results into. In lieu of a return value, this array will be populated with
-	 * intervals matching the query upon edit.
-	 * @param iteratesForward - whether or not iteration should be in the forward direction
-	 * @param start - If provided, only match intervals whose start point is equal to `start`.
-	 * @param end - If provided, only match intervals whose end point is equal to `end`.
+	 * {@inheritdoc IIntervalCollection.gatherIterationResults}
 	 */
 	public gatherIterationResults(
 		results: TInterval[],
@@ -2550,8 +2669,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * @returns an array of all intervals in this collection that overlap with the interval
-	 * `[startPosition, endPosition]`.
+	 * {@inheritdoc IIntervalCollection.findOverlappingIntervals}
 	 */
 	public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
 		if (!this.localCollection) {
@@ -2565,7 +2683,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * Applies a function to each interval in this collection.
+	 * {@inheritdoc IIntervalCollection.map}
 	 */
 	public map(fn: (interval: TInterval) => void) {
 		if (!this.localCollection) {
@@ -2577,6 +2695,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		}
 	}
 
+	/**
+	 * {@inheritdoc IIntervalCollection.previousInterval}
+	 */
 	public previousInterval(pos: number): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");
@@ -2585,6 +2706,9 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		return this.localCollection.endIntervalIndex.previousInterval(pos);
 	}
 
+	/**
+	 * {@inheritdoc IIntervalCollection.nextInterval}
+	 */
 	public nextInterval(pos: number): TInterval | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("attachSequence must be called");

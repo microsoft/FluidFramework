@@ -35,6 +35,7 @@ import {
 	ReferenceType,
 	MergeTreeRevertibleDriver,
 	SegmentGroup,
+	SlidingPreference,
 } from "@fluidframework/merge-tree";
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
@@ -220,6 +221,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new SequenceIntervalCollectionValueType(),
+			dataStoreRuntime.options,
 		);
 	}
 
@@ -308,8 +310,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
+		slidingPreference?: SlidingPreference,
 	): LocalReferencePosition {
-		return this.client.createLocalReferencePosition(segment, offset, refType, properties);
+		return this.client.createLocalReferencePosition(
+			segment,
+			offset,
+			refType,
+			properties,
+			slidingPreference,
+		);
 	}
 
 	/**

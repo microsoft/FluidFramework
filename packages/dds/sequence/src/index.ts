@@ -15,7 +15,7 @@
  *
  * @packageDocumentation
  */
-export { IMapMessageLocalMetadata, IValueOpEmitter } from "./defaultMapInterfaces";
+export { IMapMessageLocalMetadata, IValueOpEmitter, SequenceOptions } from "./defaultMapInterfaces";
 export {
 	DeserializeCallback,
 	IIntervalCollectionEvent,
@@ -30,6 +30,7 @@ export {
 	ISerializedInterval,
 	SequenceInterval,
 	SerializedIntervalDelta,
+	IntervalStickiness,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
 export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";

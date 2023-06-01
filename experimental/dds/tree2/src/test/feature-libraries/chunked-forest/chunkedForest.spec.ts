@@ -29,10 +29,10 @@ import {
 } from "../../../core";
 import { jsonSchema } from "../../../domains";
 import {
+	ForestRepairDataStore,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	singleTextCursor,
-	repairDataStoreFromForest,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
@@ -64,7 +64,7 @@ describe("ChunkedForest", () => {
 		assert(!chunk.isShared());
 		compareForest(forest, [initialState]);
 
-		const repairStore = repairDataStoreFromForest(forest);
+		const repairStore = new ForestRepairDataStore(forest);
 		const delta: Delta.Root = new Map([
 			[rootFieldKeySymbol, [{ type: Delta.MarkType.Delete, count: 1 }]],
 		]);
