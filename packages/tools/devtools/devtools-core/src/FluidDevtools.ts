@@ -156,11 +156,11 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Handlers for inbound messages specific to FluidDevTools.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetDevtoolsFeatures.MessageType]: () => {
+		[GetDevtoolsFeatures.MessageType]: async () => {
 			this.postSupportedFeatures();
 			return true;
 		},
-		[GetContainerList.MessageType]: () => {
+		[GetContainerList.MessageType]: async () => {
 			this.postContainerList();
 			return true;
 		},

@@ -95,7 +95,7 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerDevtoolsFeatures.MessageType]: (untypedMessage) => {
+			[ContainerDevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerDevtoolsFeatures.Message;
 				if (message.data.containerKey === containerKey) {
 					setSupportedFeatures(message.data.features);
