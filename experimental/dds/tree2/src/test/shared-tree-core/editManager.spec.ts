@@ -470,8 +470,6 @@ describe("EditManager", () => {
 			inFlight: 0,
 		};
 		for (const scenario of buildScenario([], meta)) {
-			// Uncomment the code below to log the titles of generated scenarios.
-			// This is helpful for creating a unit test out of a generated scenario that fails.
 			const title = scenario
 				.map((s) => {
 					if (s.type === "Pull") {
