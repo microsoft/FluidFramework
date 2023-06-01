@@ -5,7 +5,7 @@
 import React from "react";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { Button, FluentProvider, Tooltip } from "@fluentui/react-components";
+import { Button, FluentProvider, Tooltip, Theme } from "@fluentui/react-components";
 import { ArrowSync24Regular } from "@fluentui/react-icons";
 
 import {
@@ -21,13 +21,14 @@ import {
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
-
+import {Settings20Regular} from "@fluentui/react-icons";
 import {
 	ContainerDevtoolsView,
 	TelemetryView,
 	MenuItem,
 	MenuSection,
 	LandingView,
+	SettingsView,
 	Waiting,
 } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
@@ -72,12 +73,23 @@ interface TelemetryMenuSelection {
 }
 
 /**
+ * Indicates that the currently selected menu option is the Settings view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface SettingsMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "settingsMenuSelection";
+}
+
+/**
  * Discriminated union type for all the selectable options in the menu.
  * Each specific type should contain any additional information it requires.
  * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
  * is selected, and has a 'containerKey' property to indicate which Container.
  */
-type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
+type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection | SettingsMenuSelection;
 
 // #region Styles definitions
 
@@ -128,9 +140,10 @@ const menuStyles: IStackItemStyles = {
 		...contentViewStyles,
 		"display": "flex",
 		"flexDirection": "column",
-		"justifyContent": "space-between",
 		"borderRight": `2px solid`,
-		"minWidth": 150,
+		"minWidth": "150px",
+		"maxHeight":"350px",
+		// Ensures the last div/component is anchored to the bottom.
 		"> :last-child": {
 			marginTop: "auto",
 		},
@@ -284,11 +297,10 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 			<Menu
 				currentSelection={menuSelection}
 				setSelection={setMenuSelection}
-				setTheme={setTheme}
 				containers={containers}
 				supportedFeatures={supportedFeatures}
 			/>
-			<View menuSelection={menuSelection} containers={containers} />
+			<View menuSelection={menuSelection} containers={containers} setTheme={setTheme} />
 		</Stack>
 	);
 }
@@ -308,13 +320,18 @@ interface ViewProps {
 	 * The list of Containers, if any are registered with the webpage's Devtools instance.
 	 */
 	containers?: ContainerKey[];
+
+	/**
+	 * Sets the theme of the DevTools app (light, dark, high contrast)
+	 */
+	setTheme(newTheme: Theme): void;
 }
 
 /**
  * View body component used by {@link DevtoolsView}.
  */
 function View(props: ViewProps): React.ReactElement {
-	const { menuSelection, containers } = props;
+	const { menuSelection, containers, setTheme } = props;
 
 	let view: React.ReactElement;
 	switch (menuSelection?.type) {
@@ -332,6 +349,9 @@ function View(props: ViewProps): React.ReactElement {
 				) : (
 					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
+			break;
+		case "settingsMenuSelection":
+			view = <SettingsView setTheme={setTheme} />;
 			break;
 		default:
 			view = <LandingView />;
@@ -360,11 +380,6 @@ interface MenuProps {
 	currentSelection?: MenuSelection;
 
 	/**
-	 * Sets the theme of the DevTools app (light, dark, high contrast)
-	 */
-	setTheme(newTheme: Theme): void;
-
-	/**
 	 * Sets the menu selection to the specified value.
 	 *
 	 * @remarks Passing `undefined` clears the selection.
@@ -387,7 +402,7 @@ interface MenuProps {
  * Menu component for {@link DevtoolsView}.
  */
 function Menu(props: MenuProps): React.ReactElement {
-	const { currentSelection, setTheme, setSelection, supportedFeatures, containers } = props;
+	const { currentSelection, setSelection, supportedFeatures, containers } = props;
 
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
@@ -397,28 +412,8 @@ function Menu(props: MenuProps): React.ReactElement {
 		setSelection({ type: "telemetryMenuSelection" });
 	}
 
-	function handleThemeChange(
-		event,
-		option: {
-			optionValue: string | undefined;
-			optionText: string | undefined;
-			selectedOptions: string[];
-		},
-	): void {
-		switch (option.optionText) {
-			case "Light":
-				setTheme(webLightTheme);
-				break;
-			case "Dark":
-				setTheme(webDarkTheme);
-				break;
-			case "High Contrast":
-				setTheme(teamsHighContrastTheme);
-				break;
-			default:
-				setTheme(webDarkTheme);
-				break;
-		}
+	function onSettingsClicked(): void {
+		setSelection({ type: "settingsMenuSelection" });
 	}
 
 	const menuSections: React.ReactElement[] = [];
@@ -454,21 +449,15 @@ function Menu(props: MenuProps): React.ReactElement {
 			<div
 				style={{
 					minWidth: "250px",
-					display: "grid",
-					gridTemplateRows: "repeat(1fr)",
-					justifyItems: "start",
+					display: "flex",
+					cursor: "pointer",
 				}}
+				onClick={onSettingsClicked}
 			>
-				<label style={{ fontSize: "12px" }}>Select theme</label>
-				<Dropdown
-					placeholder="Theme"
-					style={{ minWidth: "150px", fontWeight: "bold" }}
-					onOptionSelect={handleThemeChange}
-				>
-					<Option>Light</Option>
-					<Option>Dark</Option>
-					<Option>High Contrast</Option>
-				</Dropdown>
+				<h4 style={{  margin: "0px 5px" }} >
+				Settings 
+				</h4>
+				<Settings20Regular/>
 			</div>
 		</Stack.Item>
 	);

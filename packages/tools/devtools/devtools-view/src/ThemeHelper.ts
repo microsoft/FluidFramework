@@ -22,6 +22,7 @@ export function getFluentUIThemeToUse(): Theme {
 	}
 
 	// Add a condition to check for high contrast mode
+	// API reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/forced-colors
 	if (window.matchMedia?.("(forced-colors: active)").matches) {
 		defaultTheme = teamsHighContrastTheme;
 	}
