@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { AudienceMemberView, AudienceMemberViewProps } from "./AudienceMemberView";
+export { nodeIdentifierKey, nodeIdentifierSchema } from "./nodeIdentifierSchema";

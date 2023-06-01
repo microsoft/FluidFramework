@@ -13,16 +13,10 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { useId } from "@fluentui/react-hooks";
-import { TooltipHost } from "@fluentui/react";
-import {
-	EditRegular,
-	Search12Regular,
-	Person12Regular,
-	Info12Regular,
-} from "@fluentui/react-icons";
+import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-icons";
 import { clientIdTooltipText, userIdTooltipText } from "./TooltipTexts";
 import { TransformedAudienceStateData } from "./AudienceView";
+import { LabelCellLayout } from "./utility-components";
 
 /**
  * Represents audience state data filtered to the attributes that will be displayed in the state table.
@@ -41,9 +35,6 @@ export interface AudienceStateTableProps {
 export function AudienceStateTable(props: AudienceStateTableProps): React.ReactElement {
 	const { audienceStateItems } = props;
 
-	const clientIdTooltipId = useId("client-guid-tooltip");
-	const userIdTooltipId = useId("user-guid-tooltip");
-
 	// Columns for rendering audience state
 	const audienceStateColumns = [
 		{ columnKey: "clientId", label: "Client ID" },
@@ -59,34 +50,30 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 					{audienceStateColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
 							{column.columnKey === "clientId" && (
-								<TooltipHost content={clientIdTooltipText} id={clientIdTooltipId}>
-									<div style={{ display: "flex", alignItems: "center" }}>
-										<Person12Regular />
-										<span style={{ marginLeft: "5px" }}>{column.label}</span>
-										<Info12Regular style={{ marginLeft: "5px" }} />
-									</div>
-								</TooltipHost>
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={clientIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
 							)}
 							{column.columnKey === "userId" && (
-								<TooltipHost content={userIdTooltipText} id={userIdTooltipId}>
-									<div style={{ display: "flex", alignItems: "center" }}>
-										<Person12Regular />
-										<span style={{ marginLeft: "5px" }}>{column.label}</span>
-										<Info12Regular style={{ marginLeft: "5px" }} />
-									</div>
-								</TooltipHost>
+								<LabelCellLayout
+									icon={<Person12Regular />}
+									infoTooltipContent={userIdTooltipText}
+								>
+									{column.label}
+								</LabelCellLayout>
 							)}
 							{column.columnKey === "mode" && (
-								<>
-									<EditRegular />
+								<LabelCellLayout icon={<EditRegular />}>
 									{column.label}
-								</>
+								</LabelCellLayout>
 							)}
 							{column.columnKey === "scopes" && (
-								<>
-									<Search12Regular />
+								<LabelCellLayout icon={<Search12Regular />}>
 									{column.label}
-								</>
+								</LabelCellLayout>
 							)}
 						</TableHeaderCell>
 					))}

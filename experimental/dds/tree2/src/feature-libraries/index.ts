@@ -127,28 +127,21 @@ export {
 	SchemaLibraryData,
 	Sourced,
 	NodeExistsConstraint,
+	NodeExistenceStateChange,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
-export {
-	ForestRepairDataStore,
-	ForestRepairDataStoreProvider,
-	repairDataStoreFromForest,
-} from "./forestRepairDataStore";
+export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export {
-	Identifier,
-	identifierFieldSchema,
-	IdentifierIndex,
-	identifierSchema,
-	identifierFieldSchemaLibrary,
-} from "./identifierIndex";
+export { NodeIdentifierIndex } from "./nodeIdentifierIndex";
+
+export { buildNodeIdentifierSchema, NodeIdentifier } from "./nodeIdentifier";
 
 export {
 	FieldKinds,
@@ -156,6 +149,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeIdentifierFieldKind,
 	Forbidden,
 	FieldKindTypes,
 } from "./defaultFieldKinds";

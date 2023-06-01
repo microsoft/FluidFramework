@@ -141,6 +141,8 @@ export {
 	jsonObject,
 	jsonString,
 	jsonSchema,
+	nodeIdentifierKey,
+	nodeIdentifierSchema,
 } from "./domains";
 
 export {
@@ -199,7 +201,7 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
-	Identifier,
+	NodeIdentifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -240,6 +242,7 @@ export {
 	ValueFieldKind,
 	Optional,
 	Sequence,
+	NodeIdentifierFieldKind,
 	Forbidden,
 	TypedSchemaCollection,
 	SchemaLibrary,
@@ -251,11 +254,10 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
+	NodeExistenceStateChange,
 } from "./feature-libraries";
 
 export {
-	identifierKey,
-	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	runSynchronous,

@@ -49,7 +49,7 @@ export interface EncodedFieldMapObject<TChild> {
 	[key: string]: TChild[];
 }
 export const EncodedFieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
-	Type.Record(Type.String(), Type.Array(tChild));
+	Type.Record(Type.String(), Type.Array(tChild, { minItems: 1 }));
 
 export type EncodedNodeData = Static<typeof EncodedNodeData>;
 export const EncodedNodeData = Type.Object({
@@ -79,13 +79,15 @@ export interface EncodedGenericTreeNode<TChild>
 	extends EncodedGenericFieldsNode<TChild>,
 		EncodedNodeData {}
 export const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
-	Type.Intersect([EncodedGenericFieldsNode(tChild), EncodedNodeData]);
+	Type.Intersect([EncodedGenericFieldsNode(tChild), EncodedNodeData], {
+		additionalProperties: false,
+	});
 
 /**
  * A tree represented using plain JavaScript objects.
  * Can be passed to `JSON.stringify()` to produce a human-readable/editable JSON tree.
  *
- * JsonableTrees should not store empty fields.
+ * JsonableTrees must not store empty fields.
  */
 export interface EncodedJsonableTree extends EncodedGenericTreeNode<EncodedJsonableTree> {}
 export const EncodedJsonableTree = Type.Recursive((Self) => EncodedGenericTreeNode(Self));

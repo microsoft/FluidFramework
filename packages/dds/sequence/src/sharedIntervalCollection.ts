@@ -122,6 +122,7 @@ export class SharedIntervalCollection
 			this.handle,
 			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new IntervalCollectionValueType(),
+			runtime.options,
 		);
 	}
 

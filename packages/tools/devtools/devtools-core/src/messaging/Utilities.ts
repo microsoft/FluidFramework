@@ -14,8 +14,6 @@ import { IDevtoolsMessage, ISourcedDevtoolsMessage } from "./Messages";
  * If not passed, this function won't log to console before posting the message.
  *
  * @remarks Thin wrapper to provide some message-wise type-safety.
- *
- * @internal
  */
 export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(
 	loggingOptions?: MessageLoggingOptions,
