@@ -13,7 +13,6 @@
 	"main": "./dist/index.js",
 	"files": [
 		"dist/",
-		"src/",
 		"LICENSE",
 		"*.md",
 		"*.cjs",
