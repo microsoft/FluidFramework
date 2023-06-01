@@ -242,7 +242,10 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	 * Asserts this field is a sequence, and returns an editor for it.
 	 */
 	private valueFieldEditor(): ValueFieldEditBuilder {
-		assert(this.kind === FieldKinds.value, 0x6bb /* Field kind must be a value to edit as a value. */);
+		assert(
+			this.kind === FieldKinds.value,
+			0x6bb /* Field kind must be a value to edit as a value. */,
+		);
 		const fieldPath = this.cursor.getFieldPath();
 		const fieldEditor = this.context.editor.valueField(fieldPath);
 		return fieldEditor;
@@ -285,7 +288,10 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			}
 			case FieldKinds.value: {
 				const fieldEditor = this.valueFieldEditor();
-				assert(content.length === 1, 0x6bd /* value field content should normalize to one item */);
+				assert(
+					content.length === 1,
+					0x6bd /* value field content should normalize to one item */,
+				);
 				fieldEditor.set(content[0]);
 				break;
 			}
@@ -366,7 +372,10 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		);
 
 		assert(this.kind === FieldKinds.sequence, 0x6be /* Move source must be a sequence. */);
-		assert(destination.kind === FieldKinds.sequence, 0x6bf /* Move destination must be a sequence. */);
+		assert(
+			destination.kind === FieldKinds.sequence,
+			0x6bf /* Move destination must be a sequence. */,
+		);
 
 		assertNonNegativeSafeInteger(count);
 		// This permits a move of 0 nodes starting at this.length, which does seem like it should be allowed.

@@ -285,7 +285,10 @@ export function appendSharedStringDeltaToRevertibles(
 		if (startIntervals.length > 0 || endIntervals.length > 0 || revertibleRefs.length > 0) {
 			const removeRevertibles: MergeTreeDeltaRevertible[] = [];
 			appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, removeRevertibles);
-			assert(removeRevertibles.length === 1, 0x6c4 /* Remove revertible should be a single delta */);
+			assert(
+				removeRevertibles.length === 1,
+				0x6c4 /* Remove revertible should be a single delta */,
+			);
 
 			const revertible: TypedRevertible<typeof IntervalOpType.POSITION_REMOVE> = {
 				event: IntervalOpType.POSITION_REMOVE,
