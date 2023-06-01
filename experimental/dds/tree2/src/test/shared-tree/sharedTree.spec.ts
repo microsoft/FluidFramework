@@ -866,12 +866,12 @@ describe("SharedTree", () => {
 			const provider = new TestTreeProviderLite(2);
 			const [tree1, tree2] = provider.trees;
 
-			// Insert node
+			// Initialize the tree
 			const expectedState: JsonableTree[] = stringToJsonableTree(["A", "B", "C", "D"]);
 			initializeTestTree(tree1, expectedState);
 			provider.processMessages();
 
-			// Validate insertion
+			// Validate initialization
 			validateTree(tree2, expectedState);
 
 			// Insert a node on tree 2
