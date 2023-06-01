@@ -35,6 +35,7 @@ import { LocalReferencePosition } from '@fluidframework/merge-tree';
 import { Marker } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationType } from '@fluidframework/merge-tree';
 import { MergeTreeDeltaOperationTypes } from '@fluidframework/merge-tree';
+import { MergeTreeDeltaRevertible } from '@fluidframework/merge-tree';
 import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
 import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree';
 import { PropertiesManager } from '@fluidframework/merge-tree';
@@ -49,11 +50,29 @@ import { SummarySerializer } from '@fluidframework/shared-object-base';
 import { TextSegment } from '@fluidframework/merge-tree';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @public
+// @alpha
+export function appendAddIntervalToRevertibles(interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
+
+// @alpha
+export function appendChangeIntervalToRevertibles(string: SharedString, newInterval: SequenceInterval, previousInterval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
+
+// @alpha
+export function appendDeleteIntervalToRevertibles(string: SharedString, interval: SequenceInterval, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
+
+// @alpha
+export function appendIntervalPropertyChangedToRevertibles(interval: SequenceInterval, deltas: PropertySet, revertibles: SharedStringRevertible[]): SharedStringRevertible[];
+
+// @alpha
+export function appendSharedStringDeltaToRevertibles(string: SharedString, delta: SequenceDeltaEvent, revertibles: SharedStringRevertible[]): void;
+
+// @public @deprecated
 export type CompressedSerializedInterval = [number, number, number, IntervalType, PropertySet, IntervalStickiness] | [number, number, number, IntervalType, PropertySet];
 
 // @public (undocumented)
 export type DeserializeCallback = (properties: PropertySet) => void;
+
+// @alpha
+export function discardSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
 
 // @public
 export function getTextAndMarkers(sharedString: SharedString, label: string, start?: number, end?: number): {
@@ -74,6 +93,40 @@ export interface IInterval {
     overlaps(b: IInterval): boolean;
     // @internal
     union(b: IInterval): IInterval;
+}
+
+// @public
+export interface IIntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
+    // (undocumented)
+    [Symbol.iterator](): Iterator<TInterval>;
+    add(start: number, end: number, intervalType: IntervalType, props?: PropertySet): TInterval;
+    // (undocumented)
+    attachDeserializer(onDeserialize: DeserializeCallback): void;
+    // (undocumented)
+    readonly attached: boolean;
+    attachIndex(index: IntervalIndex<TInterval>): void;
+    change(id: string, start?: number, end?: number): TInterval | undefined;
+    changeProperties(id: string, props: PropertySet): any;
+    // (undocumented)
+    CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
+    // (undocumented)
+    CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
+    // (undocumented)
+    CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
+    // (undocumented)
+    CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
+    detachIndex(index: IntervalIndex<TInterval>): boolean;
+    // (undocumented)
+    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
+    gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
+    // (undocumented)
+    getIntervalById(id: string): TInterval | undefined;
+    map(fn: (interval: TInterval) => void): void;
+    // (undocumented)
+    nextInterval(pos: number): TInterval | undefined;
+    // (undocumented)
+    previousInterval(pos: number): TInterval | undefined;
+    removeIntervalById(id: string): TInterval | undefined;
 }
 
 // @public
@@ -138,8 +191,8 @@ export class Interval implements ISerializableInterval {
     union(b: Interval): Interval;
 }
 
-// @public
-export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> {
+// @public @deprecated (undocumented)
+export class IntervalCollection<TInterval extends ISerializableInterval> extends TypedEventEmitter<IIntervalCollectionEvent<TInterval>> implements IIntervalCollection<TInterval> {
     // (undocumented)
     [Symbol.iterator](): IntervalCollectionIterator<TInterval>;
     // @internal
@@ -188,7 +241,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval> extends
     serializeInternal(): ISerializedIntervalCollectionV2;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class IntervalCollectionIterator<TInterval extends ISerializableInterval> implements Iterator<TInterval> {
     constructor(collection: IntervalCollection<TInterval>, iteratesForward?: boolean, start?: number, end?: number);
     // (undocumented)
@@ -212,6 +265,49 @@ export interface IntervalLocator {
 
 // @public
 export function intervalLocatorFromEndpoint(potentialEndpoint: LocalReferencePosition): IntervalLocator | undefined;
+
+// @alpha
+export const IntervalOpType: {
+    readonly ADD: "add";
+    readonly DELETE: "delete";
+    readonly CHANGE: "change";
+    readonly PROPERTY_CHANGED: "propertyChanged";
+    readonly POSITION_REMOVE: "positionRemove";
+};
+
+// @alpha
+export type IntervalRevertible = {
+    event: typeof IntervalOpType.CHANGE;
+    interval: SequenceInterval;
+    start: LocalReferencePosition;
+    end: LocalReferencePosition;
+} | {
+    event: typeof IntervalOpType.ADD;
+    interval: SequenceInterval;
+} | {
+    event: typeof IntervalOpType.DELETE;
+    interval: SequenceInterval;
+    start: LocalReferencePosition;
+    end: LocalReferencePosition;
+} | {
+    event: typeof IntervalOpType.PROPERTY_CHANGED;
+    interval: SequenceInterval;
+    propertyDeltas: PropertySet;
+} | {
+    event: typeof IntervalOpType.POSITION_REMOVE;
+    intervals: {
+        intervalId: string;
+        label: string;
+        startOffset?: number;
+        endOffset?: number;
+    }[];
+    revertibleRefs: {
+        revertible: IntervalRevertible;
+        offset: number;
+        isStart: boolean;
+    }[];
+    mergeTreeRevertible: MergeTreeDeltaRevertible;
+};
 
 // @public
 export const IntervalStickiness: {
@@ -266,7 +362,7 @@ export interface ISerializedInterval {
     stickiness?: IntervalStickiness;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export interface ISerializedIntervalCollectionV2 {
     // (undocumented)
     intervals: CompressedSerializedInterval[];
@@ -303,6 +399,9 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 export interface IValueOpEmitter {
     emit(opName: string, previousValue: any, params: any, localOpMetadata: IMapMessageLocalMetadata): void;
 }
+
+// @alpha
+export function revertSharedStringRevertibles(sharedString: SharedString, revertibles: SharedStringRevertible[]): void;
 
 // @public
 export class SequenceDeltaEvent extends SequenceEvent<MergeTreeDeltaOperationType> {
@@ -548,6 +647,9 @@ export class SharedStringFactory implements IChannelFactory {
     // (undocumented)
     get type(): string;
 }
+
+// @alpha
+export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
 // @public (undocumented)
 export type SharedStringSegment = TextSegment | Marker;

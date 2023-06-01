@@ -1,8 +1,8 @@
-/* eslint-disable no-bitwise */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable no-bitwise */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
@@ -23,12 +23,28 @@ import { IntervalOpType, SequenceInterval } from "./intervalCollection";
 import { SharedString, SharedStringSegment } from "./sharedString";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent";
 
+/**
+ * Data for undoing edits on SharedStrings and Intervals.
+ *
+ * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
+ * be set as true on the underlying merge tree in order to function correctly.
+ *
+ * @alpha
+ */
 export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertible;
 
 const idMap = new Map<string, string>();
 
 type IntervalOpType = typeof IntervalOpType[keyof typeof IntervalOpType];
 
+/**
+ * Data for undoing edits affecting Intervals.
+ *
+ * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
+ * be set as true on the underlying merge tree in order to function correctly.
+ *
+ * @alpha
+ */
 export type IntervalRevertible =
 	| {
 			event: typeof IntervalOpType.CHANGE;
@@ -59,17 +75,31 @@ export type IntervalRevertible =
 				startOffset?: number; // interval start index within a removed range
 				endOffset?: number; // interval end index within a removed range
 			}[];
+			// local refs used by IntervalOpType.CHANGE and DELETE revertibles
+			revertibleRefs: {
+				revertible: IntervalRevertible;
+				offset: number;
+				isStart: boolean;
+			}[];
 			mergeTreeRevertible: MergeTreeDeltaRevertible;
 	  };
 
 type TypedRevertible<T extends IntervalRevertible["event"]> = IntervalRevertible & { event: T };
 
-function getId(interval: SequenceInterval): string {
+function getUpdatedIdFromInterval(interval: SequenceInterval): string {
 	const maybeId = interval.getIntervalId();
-	return idMap.get(maybeId) ?? maybeId;
+	return getUpdatedId(maybeId);
 }
 
-export function appendLocalAddToRevertibles(
+function getUpdatedId(intervalId: string): string {
+	return idMap.get(intervalId) ?? intervalId;
+}
+
+/**
+ * Create revertibles for adding an interval
+ * @alpha
+ */
+export function appendAddIntervalToRevertibles(
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
 ) {
@@ -81,7 +111,11 @@ export function appendLocalAddToRevertibles(
 	return revertibles;
 }
 
-export function appendLocalDeleteToRevertibles(
+/**
+ * Create revertibles for deleting an interval
+ * @alpha
+ */
+export function appendDeleteIntervalToRevertibles(
 	string: SharedString,
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
@@ -100,17 +134,24 @@ export function appendLocalDeleteToRevertibles(
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 		undefined,
 	);
-	revertibles.push({
+	const revertible = {
 		event: IntervalOpType.DELETE,
 		interval,
 		start: startRef,
 		end: endRef,
-	});
+	};
+	revertible.start.addProperties({ revertible });
+	revertible.end.addProperties({ revertible });
+	revertibles.push(revertible);
 
 	return revertibles;
 }
 
-export function appendLocalChangeToRevertibles(
+/**
+ * Create revertibles for moving endpoints of an interval
+ * @alpha
+ */
+export function appendChangeIntervalToRevertibles(
 	string: SharedString,
 	newInterval: SequenceInterval,
 	previousInterval: SequenceInterval,
@@ -130,17 +171,24 @@ export function appendLocalChangeToRevertibles(
 		ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
 		undefined,
 	);
-	revertibles.push({
+	const revertible = {
 		event: IntervalOpType.CHANGE,
 		interval: newInterval,
 		start: prevStartRef,
 		end: prevEndRef,
-	});
+	};
+	revertible.start.addProperties({ revertible });
+	revertible.end.addProperties({ revertible });
+	revertibles.push(revertible);
 
 	return revertibles;
 }
 
-export function appendLocalPropertyChangedToRevertibles(
+/**
+ * Create revertibles for changing properties of an interval
+ * @alpha
+ */
+export function appendIntervalPropertyChangedToRevertibles(
 	interval: SequenceInterval,
 	deltas: PropertySet,
 	revertibles: SharedStringRevertible[],
@@ -176,6 +224,34 @@ function addIfIntervalEndpoint(
 	return false;
 }
 
+function addIfRevertibleRef(
+	ref: LocalReferencePosition,
+	segmentLengths: number,
+	revertibleRefs: {
+		revertible: IntervalRevertible;
+		offset: number;
+		isStart: boolean;
+	}[],
+) {
+	const revertible = ref.properties?.revertible;
+	if (revertible) {
+		revertibleRefs.push({
+			revertible,
+			offset: segmentLengths + ref.getOffset(),
+			isStart: refTypeIncludesFlag(ref.refType, ReferenceType.RangeBegin),
+		});
+	}
+}
+
+/**
+ * Create revertibles for SharedStringDeltas, handling indirectly modified intervals
+ * (e.g. reverting remove of a range that contains an interval will move the interval back)
+ *
+ * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
+ * be set as true on the underlying merge tree in order to function correctly.
+ *
+ * @alpha
+ */
 export function appendSharedStringDeltaToRevertibles(
 	string: SharedString,
 	delta: SequenceDeltaEvent,
@@ -187,6 +263,11 @@ export function appendSharedStringDeltaToRevertibles(
 	if (delta.deltaOperation === MergeTreeDeltaType.REMOVE) {
 		const startIntervals: { offset: number; interval: SequenceInterval }[] = [];
 		const endIntervals: { offset: number; interval: SequenceInterval }[] = [];
+		const revertibleRefs: {
+			revertible: IntervalRevertible;
+			offset: number;
+			isStart: boolean;
+		}[] = [];
 		let segmentLengths = 0;
 
 		// find interval endpoints in each segment
@@ -195,12 +276,13 @@ export function appendSharedStringDeltaToRevertibles(
 			if (refs !== undefined && deltaRange.position !== -1) {
 				for (const ref of refs) {
 					addIfIntervalEndpoint(ref, segmentLengths, startIntervals, endIntervals);
+					addIfRevertibleRef(ref, segmentLengths, revertibleRefs);
 				}
 			}
 			segmentLengths += deltaRange.segment.cachedLength;
 		}
 
-		if (startIntervals.length > 0 || endIntervals.length > 0) {
+		if (startIntervals.length > 0 || endIntervals.length > 0 || revertibleRefs.length > 0) {
 			const removeRevertibles: MergeTreeDeltaRevertible[] = [];
 			appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, removeRevertibles);
 			assert(removeRevertibles.length === 1, "Remove revertible should be a single delta");
@@ -208,6 +290,7 @@ export function appendSharedStringDeltaToRevertibles(
 			const revertible: TypedRevertible<typeof IntervalOpType.POSITION_REMOVE> = {
 				event: IntervalOpType.POSITION_REMOVE,
 				intervals: [],
+				revertibleRefs,
 				mergeTreeRevertible: removeRevertibles[0],
 			};
 
@@ -278,7 +361,7 @@ function revertLocalAdd(
 	string: SharedString,
 	revertible: TypedRevertible<typeof IntervalOpType.ADD>,
 ) {
-	const id = getId(revertible.interval);
+	const id = getUpdatedIdFromInterval(revertible.interval);
 	const label = revertible.interval.properties.referenceRangeLabels[0];
 	string.getIntervalCollection(label).removeIntervalById(id);
 }
@@ -297,7 +380,7 @@ function revertLocalDelete(
 
 	idMap.forEach((newId, oldId) => {
 		if (intervalId === newId) {
-			idMap.set(oldId, getId(int));
+			idMap.set(oldId, getUpdatedIdFromInterval(int));
 		}
 	});
 	idMap.set(intervalId, int.getIntervalId());
@@ -311,7 +394,7 @@ function revertLocalChange(
 	revertible: TypedRevertible<typeof IntervalOpType.CHANGE>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
-	const id = getId(revertible.interval);
+	const id = getUpdatedIdFromInterval(revertible.interval);
 	const start = string.localReferencePositionToPosition(revertible.start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	string.getIntervalCollection(label).change(id, start, end);
@@ -325,16 +408,12 @@ function revertLocalPropertyChanged(
 	revertible: TypedRevertible<typeof IntervalOpType.PROPERTY_CHANGED>,
 ) {
 	const label = revertible.interval.properties.referenceRangeLabels[0];
-	const id = getId(revertible.interval);
+	const id = getUpdatedIdFromInterval(revertible.interval);
 	const newProps = revertible.propertyDeltas;
 	string.getIntervalCollection(label).changeProperties(id, newProps);
 }
 
-function newEndpointPosition(
-	offset: number | undefined,
-	restoredRanges: SortedRangeSet,
-	sharedString: SharedString,
-) {
+function newPosition(offset: number | undefined, restoredRanges: SortedRangeSet) {
 	if (offset === undefined) {
 		return undefined;
 	}
@@ -345,7 +424,7 @@ function newEndpointPosition(
 			// find the segment inside the range
 			for (const range of rangeInfo.ranges) {
 				if (range.segment.cachedLength > offsetFromSegment) {
-					return sharedString.getPosition(range.segment) + offsetFromSegment;
+					return { segment: range.segment, offset: offsetFromSegment };
 				}
 				offsetFromSegment -= range.segment.cachedLength;
 			}
@@ -354,6 +433,15 @@ function newEndpointPosition(
 	}
 
 	return undefined;
+}
+
+function newEndpointPosition(
+	offset: number | undefined,
+	restoredRanges: SortedRangeSet,
+	sharedString: SharedString,
+) {
+	const pos = newPosition(offset, restoredRanges);
+	return pos === undefined ? undefined : sharedString.getPosition(pos.segment) + pos.offset;
 }
 
 interface RangeInfo {
@@ -387,7 +475,8 @@ function revertLocalSequenceRemove(
 
 	revertible.intervals.forEach((intervalInfo) => {
 		const intervalCollection = sharedString.getIntervalCollection(intervalInfo.label);
-		const interval = intervalCollection.getIntervalById(intervalInfo.intervalId);
+		const intervalId = getUpdatedId(intervalInfo.intervalId);
+		const interval = intervalCollection.getIntervalById(intervalId);
 		if (interval !== undefined) {
 			const newStart = newEndpointPosition(
 				intervalInfo.startOffset,
@@ -400,12 +489,51 @@ function revertLocalSequenceRemove(
 				sharedString,
 			);
 			if (newStart !== undefined || newEnd !== undefined) {
-				intervalCollection.change(intervalInfo.intervalId, newStart, newEnd);
+				intervalCollection.change(intervalId, newStart, newEnd);
+			}
+		}
+	});
+
+	// fix up the local references used by delete and change revertibles
+	revertible.revertibleRefs.forEach((revertibleRef) => {
+		assert(
+			revertibleRef.revertible.event === IntervalOpType.CHANGE ||
+				revertibleRef.revertible.event === IntervalOpType.DELETE,
+			"revertible is not delete or change",
+		);
+		const pos = newPosition(revertibleRef.offset, restoredRanges);
+		if (pos !== undefined) {
+			if (revertibleRef.isStart) {
+				sharedString.removeLocalReferencePosition(revertibleRef.revertible.start);
+				const newRef = sharedString.createLocalReferencePosition(
+					pos.segment as SharedStringSegment,
+					pos.offset,
+					ReferenceType.StayOnRemove | ReferenceType.RangeBegin,
+					{ revertible: revertibleRef.revertible },
+				);
+				revertibleRef.revertible.start = newRef;
+			} else {
+				sharedString.removeLocalReferencePosition(revertibleRef.revertible.end);
+				const newRef = sharedString.createLocalReferencePosition(
+					pos.segment as SharedStringSegment,
+					pos.offset,
+					ReferenceType.StayOnRemove | ReferenceType.RangeEnd,
+					{ revertible: revertibleRef.revertible },
+				);
+				revertibleRef.revertible.end = newRef;
 			}
 		}
 	});
 }
 
+/**
+ * Invoke revertibles to reverse prior edits
+ *
+ * Revertibles are new and require the option mergeTreeUseNewLengthCalculations to
+ * be set as true on the underlying merge tree in order to function correctly.
+ *
+ * @alpha
+ */
 export function revertSharedStringRevertibles(
 	sharedString: SharedString,
 	revertibles: SharedStringRevertible[],

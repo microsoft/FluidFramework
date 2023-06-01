@@ -4,7 +4,7 @@
  */
 import { defaultLogger } from "./logging";
 
-const { info } = defaultLogger;
+const { log } = defaultLogger;
 
 export class Timer {
 	private lastTime: number = Date.now();
@@ -19,12 +19,12 @@ export class Timer {
 		if (msg) {
 			if (this.enabled) {
 				if (diffTime > 100) {
-					info(`${msg} - ${diffTimeInSeconds.toFixed(3)}s`);
+					log(`${msg} - ${diffTimeInSeconds.toFixed(3)}s`);
 				} else {
-					info(`${msg} - ${diffTime}ms`);
+					log(`${msg} - ${diffTime}ms`);
 				}
 			} else if (print) {
-				info(msg);
+				log(msg);
 			}
 		}
 		this.totalTime += diffTime;
