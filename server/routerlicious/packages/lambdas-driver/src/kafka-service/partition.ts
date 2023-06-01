@@ -157,6 +157,17 @@ export class Partition extends EventEmitter {
 		await drainedP;
 
 		// Checkpoint at the latest offset
-		await this.checkpointManager.flush();
+		try {
+			await this.checkpointManager.flush();
+		} catch (err) {
+			// dont throw the error so that the service continues to shut down gracefully
+			Lumberjack.error(
+				"Error during checkpointManager.flush call",
+				{
+					partition: this.id,
+				},
+				err,
+			);
+		}
 	}
 }
