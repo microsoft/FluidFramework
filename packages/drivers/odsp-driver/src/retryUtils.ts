@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { delay, performance } from "@fluidframework/common-utils";
 import { canRetryOnError, getRetryDelayFromError } from "@fluidframework/driver-utils";
 import { OdspErrorType } from "@fluidframework/odsp-driver-definitions";
@@ -15,7 +15,7 @@ import { Odsp409Error } from "./epochTracker";
 export async function runWithRetry<T>(
 	api: () => Promise<T>,
 	callName: string,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 	checkDisposed?: () => void,
 ): Promise<T> {
 	let retryAfter = 1000;

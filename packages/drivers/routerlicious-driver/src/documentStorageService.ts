@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -32,7 +32,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private static loadInternalDocumentStorageService(
 		id: string,
 		manager: GitManager,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
@@ -76,7 +76,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	constructor(
 		public readonly id: string,
 		public manager: GitManager,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,

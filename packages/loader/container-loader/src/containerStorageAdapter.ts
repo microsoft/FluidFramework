@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDisposable } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
@@ -59,7 +60,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	 */
 	public constructor(
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 		/**
 		 * ArrayBufferLikes or utf8 encoded strings, containing blobs from a snapshot
 		 */
@@ -182,7 +183,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
 		private readonly detachedStorage: IDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLogger,
+		private readonly logger: ITelemetryLoggerExt,
 	) {}
 
 	public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
