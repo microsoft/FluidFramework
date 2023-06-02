@@ -19,7 +19,11 @@ export namespace DevtoolsDisposed {
 	export const MessageType = "DEVTOOLS_DISPOSED";
 
 	/**
+<<<<<<< HEAD
 	 * Outbound message broadcasting that the devtools instance in the webpage is terminating.
+=======
+	 * Outbound message indicating that the {@link IFluidDevtools} has been disposed.
+>>>>>>> 23c0232c4b1a4d2b40b2bca4c7f8a0854a090887
 	 *
 	 * @internal
 	 */
