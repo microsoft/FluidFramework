@@ -177,16 +177,10 @@ More details on content-addressable file systems and Git can be found at
 
 ### Other Microservices
 
-#### [Copier](./packages/routerlicious/src/copier)
+#### [Copier](./packages/lambdas/src/copier)
 
 Copier directly reads the raw (unticketed) operations and store it in the database. The data can later be retrieved
 via alfred for testing and verification.
-
-#### [Foreman](./packages/routerlicious/src/foreman)
-
-Foreman is in charge of managing a pool of remote agent instances. It listens to the same stream of Kafka messages as
-Scriptorium but uses this to understand which documents are active. It then schedules and manages work to be run
-across the pool of remote agent instances (spell check, entity extraction, etc...).
 
 ## Distributed data structures
 
