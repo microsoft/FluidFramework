@@ -25,26 +25,26 @@ The converter automatically adds built-in PropertyDDS types to the resulting sch
 including their `array` and `map` collection schemas (`set` collections are not supported yet).
 This includes the following primitive types:
 
-- `Bool`,
-- `String`,
-- `Reference`,
-- `Int8`,
-- `Uint8`,
-- `Int16`,
-- `Uint16`,
-- `Int32`,
-- `Int64`,
-- `Uint32`,
-- `Uint64`,
-- `Float32`,
-- `Float64`,
-- `Enum`,
+-   `Bool`,
+-   `String`,
+-   `Reference`,
+-   `Int8`,
+-   `Uint8`,
+-   `Int16`,
+-   `Uint16`,
+-   `Int32`,
+-   `Int64`,
+-   `Uint32`,
+-   `Uint64`,
+-   `Float32`,
+-   `Float64`,
+-   `Enum`,
 
 as well as `NodeProperty`, `NamedProperty`, `NamedNodeProperty` and `RelationshipProperty` types.
 
 ### Limitations
 
-The main limitation is a lack of a static type generation, which might be required for migrating the applications to the `SharedTree`. Thus, the current implementation allows to 
+_The main limitation is that a lack of a static type generation, which might be required for migrating the applications to the `SharedTree`. Thus, the current implementation allows to..._
 
 In addition, the following concepts are currently not supported by the schema converter and/or the `SharedTree`:
 
