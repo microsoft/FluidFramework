@@ -1925,8 +1925,8 @@ export class Container
 				durationFromDisconnected =
 					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
 				durationFromDisconnected = TelemetryLogger.formatTick(durationFromDisconnected);
-			} else {
-				// This info is of most interest on establishing connection only.
+			} else if (value === ConnectionState.CatchingUp) {
+				// This info is of most interesting while Catching Up.
 				checkpointSequenceNumber = this.deltaManager.lastKnownSeqNumber;
 				if (this.deltaManager.hasCheckpointSequenceNumber) {
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
