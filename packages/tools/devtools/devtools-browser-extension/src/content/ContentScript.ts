@@ -9,7 +9,7 @@ import {
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
-import { extensionMessageSource, relayMessageToPort, relayMessageToWindow } from "../messaging";
+import { extensionMessageSource, relayMessageToPort } from "../messaging";
 // eslint-disable-next-line import/no-internal-modules
 import { browser, window } from "../utilities/Globals";
 import {
@@ -67,11 +67,16 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
 		if (isDevtoolsMessage(message) && message.source === extensionMessageSource) {
-			relayMessageToWindow(
+			console.log("Relaying message to the window!");
+			console.debug(
+				formatContentScriptMessageForLogging(
+					`Relaying message from Background Script to the window:`,
+				),
 				message,
-				"Background Worker worker",
-				contentScriptMessageLoggingOptions,
 			);
+			console.log("Calling window.postMessage...");
+			window.postMessage(message, "*");
+			console.log("window.postMessage called!");
 		}
 	});
 
