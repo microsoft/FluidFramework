@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import { IsoBuffer, stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/driver-utils";
 import {
 	SummaryObject,
 	ISummaryTree,
@@ -14,7 +15,6 @@ import {
 	ISnapshotTree,
 	ITree,
 } from "@fluidframework/protocol-definitions";
-import { BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import {
 	convertSnapshotTreeToSummaryTree,
 	convertSummaryTreeToITree,

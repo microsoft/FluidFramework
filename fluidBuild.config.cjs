@@ -14,6 +14,10 @@ const tscDependsOn = ["^tsc", "build:genver", "typetests:gen"];
  */
 module.exports = {
 	tasks: {
+		"ci:build": {
+			dependsOn: ["compile", "lint", "ci:build:docs"],
+			script: false,
+		},
 		"full": {
 			dependsOn: ["build", "webpack"],
 			script: false,
@@ -41,6 +45,7 @@ module.exports = {
 		"build:esnext": tscDependsOn,
 		"build:test": [...tscDependsOn, "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
+		"ci:build:docs": [...tscDependsOn, "tsc"],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],

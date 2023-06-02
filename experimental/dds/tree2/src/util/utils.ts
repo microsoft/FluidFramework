@@ -265,3 +265,24 @@ export function assertNonNegativeSafeInteger(index: number) {
  * @alpha
  */
 export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+
+/**
+ * Convert an object into a Map.
+ *
+ * This function must only be used with objects specifically intended to encode map like information.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
+ * (including but not limited to unintended access to __proto__ and other non-owned keys).
+ * This function helps these few cases get into using an actual map in as safe of was as is practical.
+ */
+export function objectToMap<MapKey extends string | number | symbol, MapValue>(
+	objectMap: Record<MapKey, MapValue>,
+): Map<MapKey, MapValue> {
+	const map = new Map<MapKey, MapValue>();
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		map.set(key as MapKey, element);
+	}
+	return map;
+}

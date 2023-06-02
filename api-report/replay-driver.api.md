@@ -7,8 +7,6 @@
 import * as api from '@fluidframework/protocol-definitions';
 import * as api_2 from '@fluidframework/driver-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
-import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -134,21 +132,6 @@ export class SnapshotStorage extends ReadDocumentStorageServiceBase {
     readBlob(blobId: string): Promise<ArrayBufferLike>;
     // (undocumented)
     protected readonly storage: IDocumentStorageService;
-}
-
-// @public (undocumented)
-export class StaticStorageDocumentService implements IDocumentService {
-    constructor(storage: IDocumentStorageService);
-    // (undocumented)
-    connectToDeltaStorage(): Promise<IDocumentDeltaStorageService>;
-    // (undocumented)
-    connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
-    // (undocumented)
-    connectToStorage(): Promise<IDocumentStorageService>;
-    // (undocumented)
-    dispose(): void;
-    // (undocumented)
-    get resolvedUrl(): IResolvedUrl;
 }
 
 // @public (undocumented)
