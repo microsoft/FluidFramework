@@ -18,7 +18,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -157,9 +156,6 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
 // @public (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 
-// @public @deprecated (undocumented)
-export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
-
 // @public
 export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, props: DriverErrorTelemetryProps);
@@ -209,9 +205,6 @@ export interface IProgress {
 
 // @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
-
-// @public @deprecated (undocumented)
-export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
 export function isOnline(): OnlineStatus;

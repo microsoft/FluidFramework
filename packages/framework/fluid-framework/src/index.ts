@@ -70,7 +70,6 @@ export {
 	SharedMap,
 } from "@fluidframework/map";
 export {
-	CompressedSerializedInterval,
 	DeserializeCallback,
 	getTextAndMarkers,
 	IInterval,
@@ -79,8 +78,7 @@ export {
 	IJSONRunSegment,
 	IMapMessageLocalMetadata,
 	Interval,
-	IntervalCollection,
-	IntervalCollectionIterator,
+	IIntervalCollection,
 	IntervalConflictResolver,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
@@ -88,7 +86,6 @@ export {
 	ISequenceDeltaRange,
 	ISerializableInterval,
 	ISerializedInterval,
-	ISerializedIntervalCollectionV2,
 	ISharedIntervalCollection,
 	ISharedSegmentSequenceEvents,
 	ISharedString,
