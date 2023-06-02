@@ -79,6 +79,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			ReactDOM.render(
 				React.createElement(DebugView, {
 					model,
+					proposeCodeDetails: model.DEBUG_proposeCodeDetails,
 					getUrlForContainerId,
 				}),
 				debugDiv,

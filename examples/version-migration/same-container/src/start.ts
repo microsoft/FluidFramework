@@ -49,6 +49,7 @@ const render = (model: IVersionedModel) => {
 		ReactDOM.render(
 			React.createElement(DebugView, {
 				model,
+				proposeCodeDetails: model.DEBUG_proposeCodeDetails,
 				getUrlForContainerId,
 			}),
 			debugDiv,

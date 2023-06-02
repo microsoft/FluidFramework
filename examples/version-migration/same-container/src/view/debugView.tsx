@@ -9,15 +9,17 @@ import type {
 	ISameContainerMigratableModel,
 	SameContainerMigrationState,
 } from "@fluid-example/example-utils";
+import { IFluidCodeDetails } from "@fluidframework/container-definitions";
 import type { IInventoryListAppModel } from "../modelInterfaces";
 
 export interface IDebugViewProps {
-	model: IInventoryListAppModel;
-	getUrlForContainerId?: (containerId: string) => string;
+	readonly model: IInventoryListAppModel;
+	readonly proposeCodeDetails: (codeDetails: IFluidCodeDetails) => Promise<void>;
+	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
-	const { model, getUrlForContainerId } = props;
+	const { model, proposeCodeDetails, getUrlForContainerId } = props;
 
 	return (
 		<div>
@@ -25,6 +27,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 			<MigrationStatusView model={model} getUrlForContainerId={getUrlForContainerId} />
 			<ControlsView
 				proposeVersion={model.migrationTool.proposeVersion}
+				proposeCodeDetails={proposeCodeDetails}
 				addItem={model.inventoryList.addItem}
 			/>
 		</div>
@@ -113,11 +116,12 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 
 interface IControlsViewProps {
 	readonly proposeVersion: (version: string) => void;
+	readonly proposeCodeDetails: (codeDetails: IFluidCodeDetails) => Promise<void>;
 	readonly addItem: (name: string, quantity: number) => void;
 }
 
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
-	const { proposeVersion, addItem } = props;
+	const { proposeVersion, proposeCodeDetails, addItem } = props;
 
 	const addSampleItems = () => {
 		addItem("Alpha", 1);
@@ -144,6 +148,24 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 					}}
 				>
 					&quot;two&quot;
+				</button>
+			</div>
+			<div style={{ margin: "10px 0" }}>
+				Propose QuorumProposals code details:
+				<br />
+				<button
+					onClick={() => {
+						proposeCodeDetails({ package: "one" }).catch(console.error);
+					}}
+				>
+					{`{ package: "one" }`}
+				</button>
+				<button
+					onClick={() => {
+						proposeCodeDetails({ package: "two" }).catch(console.error);
+					}}
+				>
+					{`{ package: "two" }`}
 				</button>
 			</div>
 			<div style={{ margin: "10px 0" }}>

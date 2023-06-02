@@ -224,35 +224,20 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 
 	private readonly ensureQuorumCodeDetails = async () => {
 		// TODO implement for real
+		// TODO Here probably need to have the container reference on the providers, in order to make the proposal?
+		// Or at least a callback for it.
 		const version = this.pactMap.get(newVersionKey);
 		const quorumProposal = { package: version };
 		console.log(`Want to propose: ${JSON.stringify(quorumProposal)}`);
 		this.emit("proposingV2Code");
-		console.log(
-			"anyQuorumProposalSeen",
-			this._anyQuorumProposalSeenP,
-			this._anyQuorumProposalSeen,
-		);
-		// TODO: This is a lie, just doing this to advance the demo flow (should actually be set in the promise)
-		this._anyQuorumProposalSeen = true;
+		if (!this._anyQuorumProposalSeen) {
+			// TODO: This is where we would want to call container.proposeCodeDetails(quorumProposal).
+			// However, only do so if we are still in this state after fully catching up
+		}
+		await this._anyQuorumProposalSeenP;
 		this.emit("waitingForV2ProposalCompletion");
-		console.log(
-			"quorumApprovalComplete",
-			this._quorumApprovalCompleteP,
-			this._quorumApprovalComplete,
-		);
-		// TODO: This is a lie, just doing this to advance the demo flow (should actually be set in the promise)
-		this._quorumApprovalComplete = true;
+		await this._quorumApprovalCompleteP;
 		this.emit("readyForMigration");
-		// TODO Here probably need to have the container reference on the providers, in order to make the proposal?
-		// Or at least a callback for it.
-		// container.proposeCodeDetails(quorumProposal);
-		// on("quorumDetailsAccepted", waitForV2ProposalCompletion)
-		// Can watch container.on("codeDetailsProposed", (, proposal) => { proposal.sequenceNumber })
-		// This will let us learn the sequence number of each proposal that comes in.
-		// Unfortunately no event on proposal acceptance (from the container) but we can still watch the MSN
-		// ourselves to know when we're done processing them.
-		// on("v2ProposalCompletion", this.emit("readyForMigration"))
 	};
 
 	protected async initializingFirstTime() {
@@ -362,6 +347,7 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					resolve();
 				}
 			};
+			// TODO: Consider if watching container.on("codeDetailsProposed", ...) might be more appropriate.
 			this.context.deltaManager.on("op", watchForQuorumProposal);
 		});
 
@@ -387,6 +373,11 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 					resolve();
 				}
 			};
+			// TODO: Consider if watching container.on("codeDetailsProposed", ...) might be more appropriate.
+			// Note container.on("codeDetailsProposed", (, proposal) => { proposal.sequenceNumber })
+			// This will let us learn the sequence number of each proposal that comes in.
+			// Unfortunately no event on proposal acceptance (from the container) but we can still watch the MSN
+			// ourselves to know when we're done processing them?
 			this.context.deltaManager.on("op", watchForLastQuorumAccept);
 		});
 
