@@ -70,6 +70,11 @@ export function stubPort(name: string): chrome.runtime.Port {
 export function stubGlobals(): Globals {
 	const stubbedBrowser = {
 		browserAction: { onClicked: stubEvent() },
+		devtools: {
+			panels: {
+				create: (): void => {},
+			},
+		},
 		runtime: {
 			onConnect: stubEvent(),
 			onMessage: stubEvent(),
