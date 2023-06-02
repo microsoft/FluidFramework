@@ -209,8 +209,6 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 ): Promise<FluidObjectTreeNode> => {
 	const sharedTree = sharedObject as ISharedTree;
 
-	console.log("Default Visualizer :", JSON.stringify(sharedTree.root));
-
 	// TODO: Find Shared Tree API for JSON data format.
 	const children: Record<string, VisualChildNode> = {};
 	if (sharedTree.root !== undefined) {
