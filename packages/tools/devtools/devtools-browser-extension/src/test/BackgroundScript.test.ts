@@ -14,7 +14,7 @@ import {
 	devtoolsMessageSource,
 } from "@fluid-experimental/devtools-core";
 
-import { Globals } from "../utilities";
+import { Globals } from "../Globals";
 import { DevToolsInitMessage, extensionMessageSource } from "../messaging";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
@@ -23,7 +23,7 @@ type Port = chrome.runtime.Port;
 const proxyquire = Proxyquire.noCallThru();
 
 const backgroundScriptPath = "../background/BackgroundScript"; // Relative to this file
-const globalsModulePath = "../utilities/Globals"; // Relative to this file
+const globalsModulePath = "../Globals"; // Relative to this file
 
 /**
  * Require the background script using the provided `browser` APIs.

@@ -9,9 +9,8 @@ import {
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
+import { browser, window } from "../Globals";
 import { extensionMessageSource, relayMessageToPort } from "../messaging";
-// eslint-disable-next-line import/no-internal-modules
-import { browser, window } from "../utilities/Globals";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,

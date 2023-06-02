@@ -6,7 +6,7 @@
 import { JSDOM } from "jsdom";
 import { SinonSandbox } from "sinon";
 
-import { Globals } from "../utilities";
+import { Globals } from "../Globals";
 
 /**
  * Wait for a listener to be registered for the specified event.
