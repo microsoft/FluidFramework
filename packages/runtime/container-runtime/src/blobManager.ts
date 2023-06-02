@@ -470,7 +470,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
-		assert(entry !== undefined, "pending blob entry not found for uploaded blob");
+		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
 		assert(
 			entry.status === PendingBlobStatus.OnlinePendingUpload ||
 				entry.status === PendingBlobStatus.OfflinePendingUpload,

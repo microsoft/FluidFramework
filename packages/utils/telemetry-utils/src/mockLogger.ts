@@ -191,7 +191,7 @@ ${JSON.stringify(actualEvents)}`);
 		if (inlineDetailsProp && details !== undefined) {
 			assert(
 				typeof details === "string",
-				"Details should a JSON stringified string if inlineDetailsProp is true",
+				0x6c9 /* Details should a JSON stringified string if inlineDetailsProp is true */,
 			);
 			detailsExpanded = JSON.parse(details);
 		}

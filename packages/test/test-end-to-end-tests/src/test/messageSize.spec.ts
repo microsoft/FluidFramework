@@ -118,10 +118,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 	itExpects(
 		"A large op will close the container when compression is disabled",
-		[
-			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
-		],
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async () => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
 			await setupContainers(disableCompressionConfig);
@@ -159,10 +156,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 	itExpects(
 		"Small batches pass while disconnected, fail when the container connects and compression is disabled",
-		[
-			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
-		],
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async () => {
 			const maxMessageSizeInBytes = 600 * 1024;
 			await setupContainers(disableCompressionConfig);
@@ -240,10 +234,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 	itExpects(
 		"Large ops fail when compression is disabled and the content is over max op size",
-		[
-			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
-		],
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
 			await setupContainers(disableCompressionConfig);
@@ -257,10 +248,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 	itExpects(
 		"Large ops fail when compression is disabled by feature gate and the content is over max op size",
-		[
-			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
-		],
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
 			await setupContainers(testContainerConfig, {
@@ -276,10 +264,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 	itExpects(
 		"Large ops fail when compression enabled and compressed content is over max op size",
-		[
-			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
-			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
-		],
+		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
 			await setupContainers({
@@ -307,6 +292,42 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				enableGroupedBatching,
 			},
 		};
+
+		itExpects(
+			`Batch with 4000 ops - ${enableGroupedBatching ? "grouped" : "regular"} batches`,
+			enableGroupedBatching
+				? [] // With grouped batching enabled, this scenario is unblocked
+				: [
+						{
+							eventName: "fluid:telemetry:Container:ContainerClose",
+							error: "Runtime detected too many reconnects with no progress syncing local ops.",
+						},
+				  ], // Without grouped batching, it is expected for the container to never make progress
+			async function () {
+				await setupContainers(containerConfig);
+				// This is not supported by the local server. See ADO:2690
+				// This test is flaky on tinylicious. See ADO:2964
+				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+					if (!enableGroupedBatching) {
+						// Workaround for the `itExpects` construct
+						localContainer.close(
+							new GenericError(
+								"Runtime detected too many reconnects with no progress syncing local ops.",
+							),
+						);
+					}
+
+					this.skip();
+				}
+
+				const content = generateRandomStringOfSize(10);
+				for (let i = 0; i < 4000; i++) {
+					localMap.set(`key${i}`, content);
+				}
+
+				await provider.ensureSynchronized();
+			},
+		).timeout(chunkingBatchesTimeoutMs);
 
 		describe(`Large payloads (exceeding the 1MB limit) - ${
 			enableGroupedBatching ? "grouped" : "regular"
