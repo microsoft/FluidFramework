@@ -261,7 +261,7 @@ export class FluidDevtools implements IFluidDevtools {
 		if (FluidDevtools.I !== undefined) {
 			console.warn(
 				"Devtools have already been initialized. " +
-					"Existing Devtools must be closed (see DevtoolsDisposed) before new ones may be initialized. " +
+					"Existing Devtools instance must be disposed before new ones may be initialized. " +
 					"Returning existing Devtools instance.",
 			);
 		} else {
