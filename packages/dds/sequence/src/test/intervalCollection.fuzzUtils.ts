@@ -13,7 +13,6 @@ import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalStickiness, IntervalType } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { IntervalRevertible, revertSharedStringRevertibles } from "../revertibles";
-// import { SharedString } from "../sharedString";
 
 export interface RangeSpec {
 	start: number;
@@ -84,7 +83,7 @@ export interface LoggingInfo {
 	clientIds: string[];
 }
 
-export function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
+function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const id of loggingInfo.clientIds) {
 		const { channel } = state.clients.find((s) => s.containerRuntime.clientId === id) ?? {};
 		assert(channel);
