@@ -138,7 +138,7 @@ If you want to build API documentation locally, see
 
 Routerlicious as a whole is a collection of microservices. These microservices are designed to handle a single task and
 have clear input and output characteristics. Many can be run as serverless lambdas and in fact we have our own
-[lambda framework](./src/kafka-service). We chose this path to have greater control over the throughput and latency
+[lambda framework](./README.lambdas.md). We chose this path to have greater control over the throughput and latency
 characteristics of our message processing. But could be also be run with Azure Functions, AWS Lambdas, Fission, etc...
 
 #### [Alfred](./packages/routerlicious/src/alfred)
