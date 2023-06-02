@@ -13,6 +13,7 @@ export {
 	JsonValidator,
 	makeCodecFamily,
 	makeValueCodec,
+	noopValidator,
 	SchemaValidationFunction,
 	typeboxValidator,
 	unitCodec,

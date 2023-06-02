@@ -277,6 +277,7 @@ export type {
 	IJsonCodec,
 	IMultiFormatCodec,
 	JsonValidator,
+	noopValidator,
 	SchemaValidationFunction,
 	typeboxValidator,
 } from "./codec";

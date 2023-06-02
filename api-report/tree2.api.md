@@ -763,8 +763,7 @@ export interface ICodecFamily<TDecoded> {
 
 // @alpha (undocumented)
 export interface ICodecOptions {
-    // (undocumented)
-    validator?: JsonValidator;
+    validator: JsonValidator;
 }
 
 // @alpha
@@ -1361,6 +1360,9 @@ export type NodeReviver = (revision: RevisionTag, index: number, count: number) 
 // @alpha
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
 
+// @alpha
+export const noopValidator: JsonValidator;
+
 // @alpha (undocumented)
 type NormalizedFlexList<Item> = readonly Item[];
 
@@ -1636,7 +1638,7 @@ export interface SequenceFieldEditBuilder {
 
 // @alpha
 export class SharedTreeFactory implements IChannelFactory {
-    constructor(options?: SharedTreeOptions);
+    constructor(options: SharedTreeOptions);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
@@ -1648,7 +1650,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @alpha (undocumented)
-export interface SharedTreeOptions extends ICodecOptions {
+export interface SharedTreeOptions extends Partial<ICodecOptions> {
 }
 
 // @alpha

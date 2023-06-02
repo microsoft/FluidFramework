@@ -35,7 +35,7 @@ import {
 	tagRollbackInverse,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily, makeValueCodec, typeboxValidator } from "../../../codec";
+import { makeCodecFamily, makeValueCodec, noopValidator, typeboxValidator } from "../../../codec";
 import {
 	assertDeltaEqual,
 	deepFreeze,
@@ -790,7 +790,9 @@ describe("ModularChangeFamily", () => {
 			(a, b) => false,
 			new Set(),
 		);
-		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]), {});
+		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]), {
+			validator: noopValidator,
+		});
 
 		const changeA: ModularChangeset = {
 			fieldChanges: new Map([

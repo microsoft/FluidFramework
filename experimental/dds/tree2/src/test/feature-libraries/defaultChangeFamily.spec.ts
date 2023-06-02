@@ -34,8 +34,9 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
+import { noopValidator } from "../../codec";
 
-const defaultChangeFamily = new DefaultChangeFamily({});
+const defaultChangeFamily = new DefaultChangeFamily({ validator: noopValidator });
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKeySymbol;

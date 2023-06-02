@@ -114,6 +114,7 @@ type NamedGlobalFieldSchemaFormat = Static<typeof NamedGlobalFieldSchemaFormat>;
 const Versioned = Type.Object({
 	version: Type.String(),
 });
+type Versioned = Static<typeof Versioned>;
 
 function encodeRepo(repo: SchemaData): Format {
 	const treeSchema: TreeSchemaFormat[] = [];
@@ -220,47 +221,32 @@ function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
  * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
  */
 export function makeSchemaCodec({ validator }: ICodecOptions): IJsonCodec<SchemaData, string> {
-	if (validator !== undefined) {
-		const versionedValidator = validator.compile(Versioned);
-		const formatValidator = validator.compile(Format);
-		return {
-			encode: (data: SchemaData) => {
-				const encoded = encodeRepo(data);
-				assert(
-					versionedValidator.check(encoded),
-					0x5c6 /* Encoded schema should be versioned */,
-				);
-				assert(formatValidator.check(encoded), 0x5c7 /* Encoded schema should validate */);
-				// Currently no Fluid handles are used, so just use JSON.stringify.
-				return JSON.stringify(encoded);
-			},
-			decode: (data: string): SchemaData => {
-				// Currently no Fluid handles are used, so just use JSON.parse.
-				const parsed = JSON.parse(data);
-				if (!versionedValidator.check(parsed)) {
-					fail("invalid serialized schema: did not have a version");
-				}
-				// When more versions exist, we can switch on the version here.
-				if (!formatValidator.check(parsed)) {
-					if (parsed.version !== version) {
-						fail("Unexpected version for serialized schema");
-					}
-					fail("Serialized schema failed validation");
-				}
-				return decode(parsed);
-			},
-		};
-	}
+	const versionedValidator = validator.compile(Versioned);
+	const formatValidator = validator.compile(Format);
 	return {
 		encode: (data: SchemaData) => {
 			const encoded = encodeRepo(data);
+			assert(
+				versionedValidator.check(encoded),
+				0x5c6 /* Encoded schema should be versioned */,
+			);
+			assert(formatValidator.check(encoded), 0x5c7 /* Encoded schema should validate */);
 			// Currently no Fluid handles are used, so just use JSON.stringify.
 			return JSON.stringify(encoded);
 		},
 		decode: (data: string): SchemaData => {
 			// Currently no Fluid handles are used, so just use JSON.parse.
 			const parsed = JSON.parse(data);
-			// TODO: make this more reasonable, we still probably want some validation.
+			if (!versionedValidator.check(parsed)) {
+				fail("invalid serialized schema: did not have a version");
+			}
+			// When more versions exist, we can switch on the version here.
+			if (!formatValidator.check(parsed)) {
+				if (parsed.version !== version) {
+					fail("Unexpected version for serialized schema");
+				}
+				fail("Serialized schema failed validation");
+			}
 			return decode(parsed);
 		},
 	};

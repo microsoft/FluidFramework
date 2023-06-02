@@ -40,6 +40,7 @@ import {
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
 import { nodeIdentifierKey } from "../domains";
+import { noopValidator } from "../codec";
 import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
 /**
@@ -237,7 +238,7 @@ export interface ISharedTreeView extends AnchorLocator {
 export const create = Symbol("Create SharedTreeView");
 
 // TODO: Evaluate this singleton.
-const defaultChangeFamily = new DefaultChangeFamily({});
+const defaultChangeFamily = new DefaultChangeFamily({ validator: noopValidator });
 
 /**
  * Creates a {@link SharedTreeView}.

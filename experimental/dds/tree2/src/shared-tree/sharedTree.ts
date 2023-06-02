@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { ICodecOptions } from "../codec";
+import { ICodecOptions, noopValidator } from "../codec";
 import {
 	InMemoryStoredSchemaRepository,
 	Anchor,
@@ -80,9 +80,10 @@ export class SharedTree
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		options: SharedTreeOptions,
+		optionsParam: SharedTreeOptions,
 		telemetryContextPrefix: string,
 	) {
+		const options = { validator: noopValidator, ...optionsParam };
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, new AnchorSet());
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
@@ -216,7 +217,7 @@ export class SharedTree
 /**
  * @alpha
  */
-export interface SharedTreeOptions extends ICodecOptions {}
+export interface SharedTreeOptions extends Partial<ICodecOptions> {}
 
 /**
  * A channel factory that creates {@link ISharedTree}s.
@@ -231,7 +232,7 @@ export class SharedTreeFactory implements IChannelFactory {
 		packageVersion: "0.0.0",
 	};
 
-	public constructor(private readonly options: SharedTreeOptions = {}) {}
+	public constructor(private readonly options: SharedTreeOptions) {}
 
 	public async load(
 		runtime: IFluidDataStoreRuntime,

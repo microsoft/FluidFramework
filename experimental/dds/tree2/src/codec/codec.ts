@@ -71,15 +71,28 @@ export const typeboxValidator: JsonValidator = {
 };
 
 /**
+ * A {@link JsonValidator} implementation which performs no validation and accepts all data as valid.
+ * @privateRemarks - This is useful to avoid conditional branching in codecs when the SharedTree configurer
+ * passes no validator.
+ * @alpha
+ */
+export const noopValidator: JsonValidator = {
+	compile: () => ({ check: () => true }),
+};
+
+/**
  * @alpha
  */
 export interface ICodecOptions {
 	/**
+	 * JSON Validator which should be used to validated persisted data SharedTree handles.
+	 * See {@link noopValidator} and {@link typeboxValidator} for out-of-the-box implementations.
 	 *
-	 * @param schema - TODO
-	 * @returns
+	 * SharedTree users are encouraged to use a non-trivial validator (i.e. not `noopValidator`) whenever
+	 * reasonable: it gives better fail-fast behavior when unexpected encoded data is found, which reduces
+	 * the risk of further data corruption.
 	 */
-	validator?: JsonValidator;
+	validator: JsonValidator;
 }
 
 /**

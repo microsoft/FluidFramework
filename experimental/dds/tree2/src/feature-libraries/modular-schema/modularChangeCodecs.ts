@@ -136,10 +136,9 @@ function makeV0Codec(
 		const codec = field.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0);
 		return {
 			codec,
-			compiledSchema:
-				codec.json.encodedSchema && validator !== undefined
-					? validator.compile(codec.json.encodedSchema)
-					: undefined,
+			compiledSchema: codec.json.encodedSchema
+				? validator.compile(codec.json.encodedSchema)
+				: undefined,
 		};
 	};
 
