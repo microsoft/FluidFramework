@@ -14,7 +14,6 @@ import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedTreeFactory, ISharedTree } from "@fluid-experimental/tree2";
-// import { SharedTree } from "@fluid-experimental/tree";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 import {
@@ -25,6 +24,16 @@ import {
 	VisualChildNode,
 	VisualTreeNode,
 } from "./VisualTree";
+
+/**
+ * @public
+ */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class SharedTreeObject {
+	public static getFactory(): SharedTreeFactory {
+		return new SharedTreeFactory();
+	}
+}
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
@@ -200,20 +209,20 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 ): Promise<FluidObjectTreeNode> => {
 	const sharedTree = sharedObject as ISharedTree;
 
-	console.log(JSON.stringify(sharedTree.root));
+	console.log("Default Visualizer :", JSON.stringify(sharedTree.root));
 
-	// Use Shared Tree APIs to retrieve JSON. 
-	
-	// const children: Record<string, VisualChildNode> = {};
-	// Object.entries(sharedTree)
-	// for (const [key, value] of JSON.stringify(sharedTree)) {
-	// 	const renderedChild = await visualizeChildData(value);
-	// 	children[key] = renderedChild;
-	// }
+	// TODO: Find Shared Tree API for JSON data format.
+	const children: Record<string, VisualChildNode> = {};
+	if (sharedTree.root !== undefined) {
+		for (const [key, value] of Object.entries(sharedTree.root)) {
+			const renderedChild = await visualizeChildData(value);
+			children[key] = renderedChild;
+		}
+	}
 
 	return {
 		fluidObjectId: sharedTree.id,
-		children: {},
+		children,
 		typeMetadata: "SharedTree",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
@@ -233,16 +242,6 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 };
 
 /**
- * TODO
- */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class MySharedTree {
-	public static getFactory(): SharedTreeFactory {
-		return new SharedTreeFactory();
-	}
-}
-
-/**
  * List of default visualizers included in the library.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
@@ -252,7 +251,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
-	[MySharedTree.getFactory().type]: visualizeSharedTree,
-	// [sharedTreeInstance.type]: visualizeSharedTree,
+	[SharedTreeObject.getFactory().type]: visualizeSharedTree,
 	// TODO: the others
 };
