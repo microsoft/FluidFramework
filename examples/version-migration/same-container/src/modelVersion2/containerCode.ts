@@ -70,6 +70,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		// TODO: remove, just for debugging purposes
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		window["interactiveContainer"] ??= container;
+
 		const inventoryList = await requestFluidObject<IInventoryList>(
 			await runtime.getRootDataStore(inventoryListId),
 			"",
