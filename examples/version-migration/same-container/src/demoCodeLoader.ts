@@ -27,12 +27,6 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 		return this;
 	}
 
-	/**
-	 * Code loader for the demo. Supports a test mode which spawns the summarizer instantly.
-	 * @param testMode - True to enable instant summarizer spawning.
-	 */
-	public constructor(private readonly testMode = false) {}
-
 	public async load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
 		const version = source.package;
 		if (typeof version !== "string") {
@@ -40,12 +34,12 @@ export class DemoCodeLoader implements ICodeDetailsLoader {
 		}
 
 		const v1ModuleWithDetails: IFluidModuleWithDetails = {
-			module: { fluidExport: new InventoryListContainerRuntimeFactory1(this.testMode) },
+			module: { fluidExport: new InventoryListContainerRuntimeFactory1() },
 			details: { package: "one" },
 		};
 
 		const v2ModuleWithDetails: IFluidModuleWithDetails = {
-			module: { fluidExport: new InventoryListContainerRuntimeFactory2(this.testMode) },
+			module: { fluidExport: new InventoryListContainerRuntimeFactory2() },
 			details: { package: "two" },
 		};
 

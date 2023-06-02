@@ -93,7 +93,7 @@ describe("inventoryList", () => {
 
 	describe("With summarizer connected", () => {
 		beforeEach(async () => {
-			await page.goto(`${globals.PATH}?testMode`, { waitUntil: "load" });
+			await page.goto(`${globals.PATH}`, { waitUntil: "load" });
 			await page.waitFor(() => window["fluidStarted"]);
 		});
 

@@ -13,6 +13,8 @@ import type {
 } from "../migrationInterfaces";
 import type { IModelLoader, IDetachedModel } from "../modelLoader";
 
+// TODO: Note that this class is far from the expected state - it effectively does nothing since takeAppropriateActionForCurrentMigratable is commented out.
+// Eventually it will be in charge of extracting the v1 data and calling migrationTool.finalizeMigration() with the transformed summary, but for now it's probably best to ignore it.
 export class SameContainerMigrator
 	extends TypedEventEmitter<ISameContainerMigratorEvents>
 	implements ISameContainerMigrator
@@ -84,10 +86,12 @@ export class SameContainerMigrator
 		// 	);
 		// }
 		// TODO: One responsibility here will be generating the v2 summary
+
+		// TODO: Just logging these to quiet the "unused member" error.
+		console.log(this.ensureMigrating, this.ensureLoading);
 	};
 
-	// TODO: Real stuff, just public to shut up unused member
-	public readonly ensureMigrating = () => {
+	private readonly ensureMigrating = () => {
 		// ensureMigrating() is called when we reach the "migrating" state. This should likely only happen once, but
 		// can happen multiple times if we disconnect during the migration process.
 
@@ -215,8 +219,7 @@ export class SameContainerMigrator
 			.catch(console.error);
 	};
 
-	// TODO: Real stuff, just public to shut up unused member
-	public readonly ensureLoading = () => {
+	private readonly ensureLoading = () => {
 		// We assume ensureLoading() is called a single time after we reach the "migrated" state.
 
 		if (this._migratedLoadP !== undefined) {

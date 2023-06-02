@@ -15,11 +15,12 @@ import type { IInventoryListAppModel } from "../modelInterfaces";
 export interface IDebugViewProps {
 	readonly model: IInventoryListAppModel;
 	readonly proposeCodeDetails: (codeDetails: IFluidCodeDetails) => Promise<void>;
+	readonly summarizeOnDemand: () => void;
 	readonly getUrlForContainerId?: (containerId: string) => string;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
-	const { model, proposeCodeDetails, getUrlForContainerId } = props;
+	const { model, proposeCodeDetails, summarizeOnDemand, getUrlForContainerId } = props;
 
 	return (
 		<div>
@@ -28,6 +29,7 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 			<ControlsView
 				proposeVersion={model.migrationTool.proposeVersion}
 				proposeCodeDetails={proposeCodeDetails}
+				summarizeOnDemand={summarizeOnDemand}
 				addItem={model.inventoryList.addItem}
 			/>
 		</div>
@@ -117,11 +119,12 @@ const MigrationStatusView: React.FC<IMigrationStatusViewProps> = (
 interface IControlsViewProps {
 	readonly proposeVersion: (version: string) => void;
 	readonly proposeCodeDetails: (codeDetails: IFluidCodeDetails) => Promise<void>;
+	readonly summarizeOnDemand: () => void;
 	readonly addItem: (name: string, quantity: number) => void;
 }
 
 const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) => {
-	const { proposeVersion, proposeCodeDetails, addItem } = props;
+	const { proposeVersion, proposeCodeDetails, summarizeOnDemand, addItem } = props;
 
 	const addSampleItems = () => {
 		addItem("Alpha", 1);
@@ -151,6 +154,9 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 				</button>
 			</div>
 			<div style={{ margin: "10px 0" }}>
+				The demo in its current state can't make a real code proposal to the Quorum. Use
+				these debug buttons to simulate that step.
+				<br />
 				Propose QuorumProposals code details:
 				<br />
 				<button
@@ -166,6 +172,17 @@ const ControlsView: React.FC<IControlsViewProps> = (props: IControlsViewProps) =
 					}}
 				>
 					{`{ package: "two" }`}
+				</button>
+			</div>
+			<div style={{ margin: "10px 0" }}>
+				The demo in its current state disables summary heuristics, so it won't automatically
+				summarize. Use this button to force a summary immediately.<br />
+				<button
+					onClick={() => {
+						summarizeOnDemand();
+					}}
+				>
+					summarizeOnDemand
 				</button>
 			</div>
 			<div style={{ margin: "10px 0" }}>

@@ -7,6 +7,7 @@ import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
 import { parseStringDataVersionTwo, readVersion } from "../dataTransform";
 import type {
@@ -35,6 +36,7 @@ export class InventoryListAppModel
 		public readonly inventoryList: IInventoryList,
 		public readonly migrationTool: ISameContainerMigrationTool,
 		private readonly container: IContainer,
+		private readonly runtime: IContainerRuntime,
 	) {
 		super();
 		this.container.on("connected", () => {
@@ -86,5 +88,10 @@ export class InventoryListAppModel
 		codeDetails: IFluidCodeDetails,
 	): Promise<void> => {
 		await this.container.proposeCodeDetails(codeDetails);
+	};
+
+	public readonly DEBUG_summarizeOnDemand = () => {
+		(this.runtime as any) /* ContainerRuntime */
+			.summarizeOnDemand({ reason: "I said so" });
 	};
 }

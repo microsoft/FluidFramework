@@ -24,19 +24,22 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * Constructor for the factory. Supports a test mode which spawns the summarizer instantly.
 	 * @param testMode - True to enable instant summarizer spawning.
 	 */
-	public constructor(testMode: boolean) {
+	public constructor() {
 		super(
 			new Map([
 				InventoryListInstantiationFactory.registryEntry,
 				SameContainerMigrationToolInstantiationFactory.registryEntry,
 			]), // registryEntries
-			testMode
-				? {
-						summaryOptions: {
-							initialSummarizerDelayMs: 0,
-						},
-				  }
-				: undefined,
+			{
+				summaryOptions: {
+					summaryConfigOverrides: {
+						state: "disableHeuristics",
+						maxAckWaitTime: 10000,
+						maxOpsSinceLastSummary: 7000,
+						initialSummarizerDelayMs: 0,
+					},
+				},
+			},
 		);
 	}
 
@@ -75,6 +78,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			await runtime.getRootDataStore(migrationToolId),
 			"",
 		);
-		return new InventoryListAppModel(inventoryList, migrationTool, container);
+		return new InventoryListAppModel(inventoryList, migrationTool, container, runtime);
 	}
 }

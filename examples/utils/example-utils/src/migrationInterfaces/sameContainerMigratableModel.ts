@@ -45,6 +45,8 @@ export interface ISameContainerMigratableModel
 		IEventProvider<ISameContainerMigratableModelEvents> {
 	/**
 	 * The tool that will be used to facilitate the migration.
+	 * TODO: Currently this is the only difference as compared to IMigratableModel (which has a non-same-container tool).
+	 * Can we merge these interfaces later somehow?
 	 */
 	readonly migrationTool: ISameContainerMigrationTool;
 

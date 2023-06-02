@@ -41,11 +41,7 @@ window["migrators"] = [];
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
-	const searchParams = new URLSearchParams(location.search);
-	const testMode = searchParams.get("testMode") !== null;
-	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
-		new DemoCodeLoader(testMode),
-	);
+	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(new DemoCodeLoader());
 	let id: string;
 	let model: ISameContainerMigratableModel;
 
@@ -80,6 +76,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 				React.createElement(DebugView, {
 					model,
 					proposeCodeDetails: model.DEBUG_proposeCodeDetails,
+					summarizeOnDemand: model.DEBUG_summarizeOnDemand,
 					getUrlForContainerId,
 				}),
 				debugDiv,
