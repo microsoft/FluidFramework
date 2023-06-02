@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
-import { IntervalCollection, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection, SequenceInterval } from "../intervalCollection";
 
 export interface Client {
 	sharedString: SharedString;
@@ -84,7 +84,7 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 
 export const assertIntervals = (
 	sharedString: SharedString,
-	intervalCollection: IntervalCollection<SequenceInterval>,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
