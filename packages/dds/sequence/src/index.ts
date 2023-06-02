@@ -23,8 +23,6 @@ export {
 	Interval,
 	IntervalIndex,
 	IIntervalCollection,
-	IntervalCollection,
-	IntervalCollectionIterator,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
 	IntervalOpType,
@@ -32,8 +30,6 @@ export {
 	ISerializableInterval,
 	ISerializedInterval,
 	SequenceInterval,
-	ISerializedIntervalCollectionV2,
-	CompressedSerializedInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
 } from "./intervalCollection";

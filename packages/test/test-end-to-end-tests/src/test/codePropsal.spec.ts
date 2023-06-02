@@ -137,15 +137,7 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 				error: "Existing context does not satisfy incoming proposal",
 			},
 			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
-				error: "Existing context does not satisfy incoming proposal",
-			},
-			{
 				eventName: "fluid:telemetry:Container:ContainerClose",
-				error: "Existing context does not satisfy incoming proposal",
-			},
-			{
-				eventName: "fluid:telemetry:Container:ContainerDispose",
 				error: "Existing context does not satisfy incoming proposal",
 			},
 		],

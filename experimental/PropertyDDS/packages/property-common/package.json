@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-common",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "common functions used in properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,10 +14,9 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
+		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
-		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",

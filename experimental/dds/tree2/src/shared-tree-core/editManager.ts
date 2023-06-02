@@ -436,7 +436,7 @@ export class EditManager<
 			);
 			assert(
 				firstLocalCommit !== undefined,
-				"Received a sequenced change from the local session despite having no local changes",
+				0x6b5 /* Received a sequenced change from the local session despite having no local changes */,
 			);
 
 			// The first local branch commit is already rebased over the trunk, so we can push it directly to the trunk.

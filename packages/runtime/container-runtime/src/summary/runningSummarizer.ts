@@ -252,7 +252,7 @@ export class RunningSummarizer implements IDisposable {
 		// Can remove and only listen to runtime once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
 		// Tracked by AB#3883
 		this.runtime.deltaManager.on("op", this.deltaManagerListener);
-		this.runtime.on?.("op", this.runtimeListener);
+		this.runtime.on("op", this.runtimeListener);
 	}
 
 	private async handleSummaryAck(): Promise<number> {
@@ -347,7 +347,7 @@ export class RunningSummarizer implements IDisposable {
 
 	public dispose(): void {
 		this.runtime.deltaManager.off("op", this.deltaManagerListener);
-		this.runtime.off?.("op", this.runtimeListener);
+		this.runtime.off("op", this.runtimeListener);
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
