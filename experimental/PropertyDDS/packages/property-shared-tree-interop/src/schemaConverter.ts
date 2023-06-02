@@ -25,7 +25,6 @@ const nodePropertyType = "NodeProperty";
 const referenceGenericTypePrefix = "Reference<";
 const referenceType = "Reference";
 const basePropertyType = "BaseProperty";
-const nodePropertyTypes = new Set([nodePropertyType, "NamedNodeProperty"]);
 const booleanType = "Bool";
 const stringType = "String";
 const enumType = "Enum";
@@ -305,9 +304,10 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = 
 			? new Set<string>()
 			: mapTypesAndChildren(allChildrenByType, (t) => t, ...allowedRootTypes);
 
-	for (const typeid of [...primitiveTypes, ...nodePropertyTypes]) {
-		referencedTypeIDs.add(typeid);
-	}
+	primitiveTypes.forEach((primitiveType) => referencedTypeIDs.add(primitiveType));
+	// That's enough to add just "NodeProperty" type, as all other
+	// related built-in types will be added through inheritances.
+	referencedTypeIDs.add(nodePropertyType);
 
 	if (extraTypes) {
 		extraTypes.forEach((typeid) => referencedTypeIDs.add(typeid));
@@ -327,15 +327,3 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = 
 	);
 	return builder.intoDocumentSchema(rootSchema);
 }
-
-// TODO: move this to README
-//
-// Concepts currently not mapped / represented in the compiled schema:
-//
-// * Annotations
-// * Length constraints for arrays / strings
-// * Constants
-// * Values for enums
-// * Default values
-// * Inline type definitions (aka "nested properties") which requires auto-generated type IDs (e.g. "Test:Person$address-1.0.0")
-// * built-in `RelationshipProperty` schema

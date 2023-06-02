@@ -52,26 +52,17 @@ describe("schema converter", () => {
 
 		it(`has built-in node types and collections`, () => {
 			const fullSchemaData = convertSchema(FieldKinds.optional, Any);
-			["NodeProperty", "NamedNodeProperty", "NamedProperty"].forEach((typeName) => {
-				const propertySchema = fullSchemaData.treeSchema.get(brand(typeName));
-				assert(propertySchema !== undefined);
-				if (typeName === "NamedProperty") {
-					assert(propertySchema.extraLocalFields.types !== undefined);
-					assert.equal(propertySchema.extraLocalFields.types.size, 0);
-					assert.deepEqual(propertySchema.extraLocalFields.kind, FieldKinds.forbidden);
-					const idFieldSchema =
-						propertySchema.localFields.get(brand("guid")) ?? fail("expected field");
-					assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
-					assert.deepEqual(
-						[...(idFieldSchema.types ?? fail("expected types"))],
-						["String"],
-					);
-				} else {
-					assert(propertySchema.extraLocalFields.types === undefined);
-					assert.deepEqual(propertySchema.extraLocalFields.kind, FieldKinds.optional);
-					if (typeName === "NodeProperty") {
-						assert.deepEqual([...propertySchema.localFields], []);
-					} else {
+			["NodeProperty", "NamedNodeProperty", "NamedProperty", "RelationshipProperty"].forEach(
+				(typeName) => {
+					const propertySchema = fullSchemaData.treeSchema.get(brand(typeName));
+					assert(propertySchema !== undefined);
+					if (typeName === "NamedProperty") {
+						assert(propertySchema.extraLocalFields.types !== undefined);
+						assert.equal(propertySchema.extraLocalFields.types.size, 0);
+						assert.deepEqual(
+							propertySchema.extraLocalFields.kind,
+							FieldKinds.forbidden,
+						);
 						const idFieldSchema =
 							propertySchema.localFields.get(brand("guid")) ?? fail("expected field");
 						assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
@@ -79,14 +70,41 @@ describe("schema converter", () => {
 							[...(idFieldSchema.types ?? fail("expected types"))],
 							["String"],
 						);
+					} else {
+						assert(propertySchema.extraLocalFields.types === undefined);
+						assert.deepEqual(propertySchema.extraLocalFields.kind, FieldKinds.optional);
+						if (typeName === "NodeProperty") {
+							assert.deepEqual([...propertySchema.localFields], []);
+						} else {
+							const idFieldSchema =
+								propertySchema.localFields.get(brand("guid")) ??
+								fail("expected field");
+							assert.deepEqual(idFieldSchema.kind, FieldKinds.value);
+							assert.deepEqual(
+								[...(idFieldSchema.types ?? fail("expected types"))],
+								["String"],
+							);
+							if (typeName === "RelationshipProperty") {
+								const toFieldSchema =
+									propertySchema.localFields.get(brand("to")) ??
+									fail("expected field");
+								assert.deepEqual(toFieldSchema.kind, FieldKinds.value);
+								assert.deepEqual(
+									[...(toFieldSchema.types ?? fail("expected types"))],
+									["Reference"],
+								);
+							}
+						}
 					}
-				}
-				assert.deepEqual([...propertySchema.globalFields], []);
-				assert.equal(propertySchema.extraGlobalFields, false);
-				assert.equal(propertySchema.value, ValueSchema.Nothing);
-				assert(fullSchemaData.treeSchema.get(brand(`map<${typeName}>`)) !== undefined);
-				assert(fullSchemaData.treeSchema.get(brand(`array<${typeName}>`)) !== undefined);
-			});
+					assert.deepEqual([...propertySchema.globalFields], []);
+					assert.equal(propertySchema.extraGlobalFields, false);
+					assert.equal(propertySchema.value, ValueSchema.Nothing);
+					assert(fullSchemaData.treeSchema.get(brand(`map<${typeName}>`)) !== undefined);
+					assert(
+						fullSchemaData.treeSchema.get(brand(`array<${typeName}>`)) !== undefined,
+					);
+				},
+			);
 		});
 
 		it("can use any type as root", () => {
