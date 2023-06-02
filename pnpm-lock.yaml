@@ -5410,7 +5410,7 @@ importers:
         specifier: ~4.5.5
         version: 4.5.5
       webpack:
-        specifier: ^5.76.2
+        specifier: ^5.82.0
         version: 5.82.0(webpack-cli@4.10.0)
       webpack-cli:
         specifier: ^4.9.2
@@ -48301,7 +48301,7 @@ packages:
       strip-ansi: 7.0.1
       url: 0.11.0
       webpack: 5.82.0(webpack-cli@4.10.0)
-      webpack-cli: 4.10.0(webpack-dev-server@4.6.0)(webpack@5.82.0)
+      webpack-cli: 4.10.0(webpack-bundle-analyzer@4.7.0)(webpack-dev-server@4.6.0)(webpack@5.82.0)
       webpack-dev-middleware: 5.3.3(webpack@5.82.0)
       ws: 8.13.0
     transitivePeerDependencies:
