@@ -6,7 +6,9 @@
 
 import { DriverErrorType } from '@fluidframework/driver-definitions';
 import { FetchSource } from '@fluidframework/driver-definitions';
+import { IAttachment } from '@fluidframework/protocol-definitions';
 import { IAuthorizationError } from '@fluidframework/driver-definitions';
+import { IBlob } from '@fluidframework/protocol-definitions';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { ICreateBlobResponse } from '@fluidframework/protocol-definitions';
 import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
@@ -16,7 +18,6 @@ import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
 import { IFluidErrorBase } from '@fluidframework/telemetry-utils';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { ILocationRedirectionError } from '@fluidframework/driver-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
@@ -38,6 +39,21 @@ import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
 
+// @public
+export class AttachmentTreeEntry {
+    constructor(path: string, id: string);
+    // (undocumented)
+    readonly id: string;
+    // (undocumented)
+    readonly mode = FileMode.File;
+    // (undocumented)
+    readonly path: string;
+    // (undocumented)
+    readonly type = TreeEntry.Attachment;
+    // (undocumented)
+    readonly value: IAttachment;
+}
+
 // @public (undocumented)
 export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
     constructor(message: string, claims: string | undefined, tenantId: string | undefined, props: DriverErrorTelemetryProps);
@@ -49,6 +65,19 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     readonly errorType = DriverErrorType.authorizationError;
     // (undocumented)
     readonly tenantId: string | undefined;
+}
+
+// @public
+export class BlobTreeEntry {
+    constructor(path: string, contents: string, encoding?: "utf-8" | "base64");
+    // (undocumented)
+    readonly mode = FileMode.File;
+    // (undocumented)
+    readonly path: string;
+    // (undocumented)
+    readonly type = TreeEntry.Blob;
+    // (undocumented)
+    readonly value: IBlob;
 }
 
 // @public
@@ -127,9 +156,6 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
 // @public (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 
-// @public @deprecated (undocumented)
-export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
-
 // @public
 export class FluidInvalidSchemaError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
     constructor(message: string, props: DriverErrorTelemetryProps);
@@ -179,9 +205,6 @@ export interface IProgress {
 
 // @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
-
-// @public @deprecated (undocumented)
-export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)
 export function isOnline(): OnlineStatus;
@@ -326,6 +349,19 @@ export class ThrottlingError extends LoggingError implements IThrottlingWarning,
     readonly errorType = DriverErrorType.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;
+}
+
+// @public
+export class TreeTreeEntry {
+    constructor(path: string, value: ITree);
+    // (undocumented)
+    readonly mode = FileMode.Directory;
+    // (undocumented)
+    readonly path: string;
+    // (undocumented)
+    readonly type = TreeEntry.Tree;
+    // (undocumented)
+    readonly value: ITree;
 }
 
 // @public

@@ -28,7 +28,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  * - get nominal typing (so types produced without using this class can never be assignable to it).
  * - allow use as {@link Opaque} branded type (not assignable to `ValueType`, but captures `ValueType`).
  *
- * See {@link MakeNominal} for some more details.
+ * See {@link InternalTypes#MakeNominal} for some more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think its true in some cases.

@@ -92,7 +92,6 @@ export {
 	InboundHandlers,
 	isDevtoolsMessage,
 	MessageLoggingOptions,
-	postMessagesToWindow,
 	RootDataVisualizations,
 	TelemetryEvent,
 	TelemetryHistory,
