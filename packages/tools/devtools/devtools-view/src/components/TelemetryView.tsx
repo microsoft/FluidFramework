@@ -93,8 +93,7 @@ export function TelemetryView(): React.ReactElement {
 			[DevtoolsDisposed.MessageType]: async (untypedMessage) => {
 				// Require latest feature state to ensure we aren't displaying stale data
 				setBufferedEvents([]);
-				// eslint-disable-next-line unicorn/no-useless-undefined
-				setTelemetryEvents(undefined);
+				setTelemetryEvents([]);
 				return true;
 			},
 		};
