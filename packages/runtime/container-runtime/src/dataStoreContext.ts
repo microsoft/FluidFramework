@@ -17,8 +17,7 @@ import {
 } from "@fluidframework/container-definitions";
 import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { readAndParse } from "@fluidframework/driver-utils";
-import { BlobTreeEntry } from "@fluidframework/protocol-base";
+import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
 	IClientDetails,
 	IDocumentMessage,

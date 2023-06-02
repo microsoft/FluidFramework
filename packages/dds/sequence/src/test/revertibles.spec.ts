@@ -19,14 +19,14 @@ import {
 	SharedStringRevertible,
 } from "../revertibles";
 import { SharedString } from "../sharedString";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
 import { assertIntervals } from "./intervalUtils";
 
 describe("Sequence.Revertibles with Local Edits", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
-	let collection: IntervalCollection<SequenceInterval>;
+	let collection: IIntervalCollection<SequenceInterval>;
 	let revertibles: SharedStringRevertible[];
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	const stringFactory = new SharedStringFactory();
@@ -226,8 +226,8 @@ describe("Sequence.Revertibles with Local Edits", () => {
 describe("Sequence.Revertibles with Remote Edits", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
-	let collection: IntervalCollection<SequenceInterval>;
-	let collection2: IntervalCollection<SequenceInterval>;
+	let collection: IIntervalCollection<SequenceInterval>;
+	let collection2: IIntervalCollection<SequenceInterval>;
 	let revertibles: SharedStringRevertible[];
 
 	let sharedString2: SharedString;
@@ -552,7 +552,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
-	let collection: IntervalCollection<SequenceInterval>;
+	let collection: IIntervalCollection<SequenceInterval>;
 	let revertibles: SharedStringRevertible[];
 
 	beforeEach(() => {
@@ -580,7 +580,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 
 	describe("with remote ops", () => {
 		let sharedString2: SharedString;
-		let collection2: IntervalCollection<SequenceInterval>;
+		let collection2: IIntervalCollection<SequenceInterval>;
 
 		beforeEach(() => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
