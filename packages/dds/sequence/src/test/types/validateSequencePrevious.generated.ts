@@ -203,7 +203,6 @@ declare function get_old_InterfaceDeclaration_ISerializableInterval():
 declare function use_current_InterfaceDeclaration_ISerializableInterval(
     use: TypeOnly<current.ISerializableInterval>);
 use_current_InterfaceDeclaration_ISerializableInterval(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ISerializableInterval());
 
 /*
@@ -360,7 +359,6 @@ declare function get_old_ClassDeclaration_Interval():
 declare function use_current_ClassDeclaration_Interval(
     use: TypeOnly<current.Interval>);
 use_current_ClassDeclaration_Interval(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Interval());
 
 /*

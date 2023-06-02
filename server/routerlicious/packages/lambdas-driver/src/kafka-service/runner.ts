@@ -18,6 +18,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import { Provider } from "nconf";
 import { PartitionManager } from "./partitionManager";
 
 export class KafkaRunner implements IRunner {
@@ -29,6 +30,7 @@ export class KafkaRunner implements IRunner {
 	constructor(
 		private readonly factory: IPartitionLambdaFactory,
 		private readonly consumer: IConsumer,
+		private readonly config?: Provider,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -51,7 +53,12 @@ export class KafkaRunner implements IRunner {
 			deferred.reject(error);
 		});
 
-		this.partitionManager = new PartitionManager(this.factory, this.consumer, logger);
+		this.partitionManager = new PartitionManager(
+			this.factory,
+			this.consumer,
+			logger,
+			this.config,
+		);
 		this.partitionManager.on("error", (error, errorData: IContextErrorData) => {
 			const documentId = errorData?.documentId ?? "";
 			const tenantId = errorData?.tenantId ?? "";
@@ -118,6 +125,8 @@ export class KafkaRunner implements IRunner {
 		// Mark ourselves done once the partition manager has stopped
 		this.deferred.resolve();
 		this.deferred = undefined;
-		this.runnerMetric.success("Kafka runner stopped");
+		if (!this.runnerMetric.isCompleted()) {
+			this.runnerMetric.success("Kafka runner stopped");
+		}
 	}
 }
