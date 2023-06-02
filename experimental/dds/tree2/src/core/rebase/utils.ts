@@ -58,7 +58,7 @@ export interface RebasedCommits<TChange> {
  *
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
- * @param repairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is necessary for updating the
+ * @param sourceRepairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is necessary for updating the
  * repair data of the rebased commits.
  * @param sourceHead - the head of the source branch, which will be rebased onto `targetHead`
  * @param targetHead - the commit to rebase the source branch onto
@@ -82,7 +82,7 @@ export interface RebasedCommits<TChange> {
  */
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
+	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): [
@@ -99,7 +99,7 @@ export function rebaseBranch<TChange>(
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
  * @param intoDelta - a utility for converting changes into deltas
- * @param repairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is necessary for updating the
+ * @param sourceRepairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is necessary for updating the
  * repair data of the rebased commits.
  * @param sourceHead - the head of the source branch, which will be rebased onto `newBase`
  * @param targetCommit - the commit on the target branch to rebase the source branch onto.
@@ -131,7 +131,7 @@ export function rebaseBranch<TChange>(
  */
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
+	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -142,7 +142,7 @@ export function rebaseBranch<TChange>(
 ];
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
+	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
@@ -233,19 +233,19 @@ export function rebaseBranch<TChange>(
 	const inverses: TaggedChange<TChange>[] = [];
 	if (sourcePath.length !== 0) {
 		// Clone the original repair data store provider so that it can be modified without affecting the original.
-		const repairDataStoreProviderClone = repairDataStoreProvider.clone();
+		const repairDataStoreProviderClone = sourceRepairDataStoreProvider.clone();
 		const nonTaggedInverses: TChange[] = [];
 		// Revert changes from the source path to get to the new base
 		for (let i = sourcePath.length - 1; i >= 0; i--) {
 			const c = sourcePath[i];
 			const inverse = changeRebaser.invert(c, true, c.repairData);
 			nonTaggedInverses.push(inverse);
-			repairDataStoreProviderClone.applyDelta(inverse);
+			repairDataStoreProviderClone.applyChange(inverse);
 		}
 
 		// Apply the changes in the target rebase path
 		for (const c of targetRebasePath) {
-			repairDataStoreProviderClone.applyDelta(c.change);
+			repairDataStoreProviderClone.applyChange(c.change);
 		}
 
 		// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
@@ -266,7 +266,7 @@ export function rebaseBranch<TChange>(
 				};
 				sourceCommits.push(newHead);
 				targetRebasePath.push({ ...c, change });
-				repairDataStoreProviderClone.applyDelta(change);
+				repairDataStoreProviderClone.applyChange(change);
 			}
 
 			inverses.unshift(

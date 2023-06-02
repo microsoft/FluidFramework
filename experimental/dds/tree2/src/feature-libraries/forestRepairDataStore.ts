@@ -220,7 +220,7 @@ export class ForestRepairDataStoreProvider<TChange> implements IRepairDataStoreP
 		this.frozenForest = this.forest.clone(this.storedSchema.clone(), new AnchorSet());
 	}
 
-	public applyDelta(change: TChange): void {
+	public applyChange(change: TChange): void {
 		if (this.frozenForest === undefined) {
 			this.forest.applyDelta(this.intoDelta(change));
 		}

@@ -18,7 +18,7 @@ export interface IRepairDataStoreProvider<TChange> {
 	 * Applies the provided change to the state of this {@link IRepairDataStoreProvider}.
 	 * Does not have an effect if the state has been frozen.
 	 */
-	applyDelta(change: TChange): void;
+	applyChange(change: TChange): void;
 	/**
 	 * Creates and returns a new {@link RepairDataStore}. Also unfreezes this {@link IRepairDataStoreProvider}
 	 * if it is currently frozen.

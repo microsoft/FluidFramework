@@ -656,7 +656,7 @@ export class MockRepairDataStoreProvider<TChange> implements IRepairDataStorePro
 		// Noop
 	}
 
-	public applyDelta(change: TChange): void {
+	public applyChange(change: TChange): void {
 		// Noop
 	}
 
