@@ -93,7 +93,8 @@ the output file name, and ` - ${testReportPrefix}` will be appended to the suite
 
 ### FLUID_LOGGER_PROPS
 
-In case there is a need to override telemetry metrics, one can make use of an environment variable `FLUID_LOGGER_PROPS`, that  to override them during execution time:
+In case there is a need to override telemetry metrics, one can make use of an environment variable `FLUID_LOGGER_PROPS`,
+that to override them during execution time:
 
 ```
 FLUID_LOGGER_PROPS='{ "hostName": "Benchmark" }'
