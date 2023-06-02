@@ -6,7 +6,11 @@
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
 import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
-import { generateStack, MonitoringContext } from "@fluidframework/telemetry-utils";
+import {
+	generateStack,
+	ITelemetryLoggerExt,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils";
 import { ICreateContainerMetadata } from "../summary";
 import {
 	disableSweepLogKey,
