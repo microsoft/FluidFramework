@@ -10,9 +10,9 @@ import { strict as assert } from "assert";
 import { makeSchemaCodec } from "../../feature-libraries/schemaIndexFormat";
 
 import { SchemaData } from "../../core";
+import { typeboxValidator } from "../../codec";
 import { jsonSchema, jsonRoot } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset, SchemaBuilder } from "../../feature-libraries";
-import { typeboxValidator } from "../utils";
 
 const codec = makeSchemaCodec({ validator: typeboxValidator });
 

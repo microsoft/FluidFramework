@@ -35,14 +35,13 @@ import {
 	tagRollbackInverse,
 } from "../../../core";
 import { brand, fail } from "../../../util";
+import { makeCodecFamily, makeValueCodec, typeboxValidator } from "../../../codec";
 import {
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
 	testChangeReceiver,
-	typeboxValidator,
 } from "../../utils";
-import { makeCodecFamily, makeValueCodec } from "../../../codec";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 

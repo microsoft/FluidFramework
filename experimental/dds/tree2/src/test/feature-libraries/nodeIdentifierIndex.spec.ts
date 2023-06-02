@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import { brand, compareSets } from "../../util";
-import { TestTreeProviderLite, initializeTestTree, typeboxValidator } from "../utils";
+import { TestTreeProviderLite, initializeTestTree } from "../utils";
 import {
 	FieldKinds,
 	NodeIdentifierIndex,
@@ -21,6 +21,7 @@ import {
 	NodeIdentifier,
 } from "../../feature-libraries";
 import { symbolFromKey } from "../../core";
+import { typeboxValidator } from "../../codec";
 import { nodeIdentifierSchema } from "../../domains";
 
 const {

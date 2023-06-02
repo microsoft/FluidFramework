@@ -14,6 +14,7 @@ export {
 	makeCodecFamily,
 	makeValueCodec,
 	SchemaValidationFunction,
+	typeboxValidator,
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,

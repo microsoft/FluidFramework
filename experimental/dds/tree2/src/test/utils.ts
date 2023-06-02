@@ -4,9 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-// eslint-disable-next-line import/no-internal-modules
-import { TypeCompiler } from "@sinclair/typebox/compiler";
-import { TAnySchema } from "@sinclair/typebox";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -81,7 +78,7 @@ import {
 	InMemoryStoredSchemaRepository,
 } from "../core";
 import { JsonCompatible, brand, makeArray } from "../util";
-import { ICodecFamily, JsonValidator } from "../codec";
+import { ICodecFamily, typeboxValidator } from "../codec";
 import { cursorToJsonObject, jsonSchema, jsonString, singleJsonCursor } from "../domains";
 
 // Testing utilities
@@ -422,15 +419,6 @@ export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void
 	const bTree = mapFieldMarks(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
 }
-
-export const typeboxValidator: JsonValidator = {
-	compile: (schema: TAnySchema) => {
-		const compiledFormat = TypeCompiler.Compile(schema);
-		return {
-			check: (data) => compiledFormat.Check(data),
-		};
-	},
-};
 
 /**
  * A test helper that allows custom code to be injected when a tree is created/loaded.

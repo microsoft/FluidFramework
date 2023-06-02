@@ -26,7 +26,6 @@ import {
 	SummarizeType,
 	TestTreeProvider,
 	TestTreeProviderLite,
-	typeboxValidator,
 } from "../utils";
 import {
 	ISharedTree,
@@ -53,6 +52,7 @@ import {
 	ValueSchema,
 	AllowedUpdateType,
 } from "../../core";
+import { typeboxValidator } from "../../codec";
 import { EditManager } from "../../shared-tree-core";
 import { jsonString } from "../../domains";
 

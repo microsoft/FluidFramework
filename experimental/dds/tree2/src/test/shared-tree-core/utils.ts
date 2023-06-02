@@ -6,8 +6,9 @@ import { IChannelAttributes, IFluidDataStoreRuntime } from "@fluidframework/data
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { SharedTreeBranch, SharedTreeCore, Summarizable } from "../../shared-tree-core";
 import { AnchorSet } from "../../core";
+import { typeboxValidator } from "../../codec";
 import { DefaultChangeFamily, DefaultChangeset, DefaultEditBuilder } from "../../feature-libraries";
-import { MockRepairDataStoreProvider, typeboxValidator } from "../utils";
+import { MockRepairDataStoreProvider } from "../utils";
 
 /** A `SharedTreeCore` with protected methods exposed but no additional behavior */
 export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {

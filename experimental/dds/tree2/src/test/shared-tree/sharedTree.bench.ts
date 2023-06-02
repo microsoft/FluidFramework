@@ -18,7 +18,8 @@ import {
 } from "../../feature-libraries";
 import { jsonNumber, jsonSchema } from "../../domains";
 import { brand, requireAssignableTo } from "../../util";
-import { insert, TestTreeProviderLite, toJsonableTree, typeboxValidator } from "../utils";
+import { insert, TestTreeProviderLite, toJsonableTree } from "../utils";
+import { typeboxValidator } from "../../codec";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import {
 	AllowedUpdateType,

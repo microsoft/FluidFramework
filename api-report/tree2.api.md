@@ -1125,9 +1125,8 @@ export const jsonString: TreeSchema<"Json.String", {
 value: ValueSchema.String;
 }>;
 
-// @alpha (undocumented)
+// @alpha
 export interface JsonValidator {
-    // (undocumented)
     compile(schema: TAnySchema): SchemaValidationFunction;
 }
 
@@ -1617,7 +1616,7 @@ export interface SchematizeConfiguration<TRoot extends GlobalFieldSchema = Globa
     readonly schema: TypedSchemaCollection<TRoot>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface SchemaValidationFunction {
     // (undocumented)
     check(data: any): boolean;
@@ -1861,6 +1860,9 @@ TypedNode<Assume<Head, TreeSchema>, Mode>,
 ...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>
 ] : []
 ][InternalTypedSchemaTypes._InlineTrick];
+
+// @alpha
+export const typeboxValidator: JsonValidator;
 
 // @alpha
 type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [

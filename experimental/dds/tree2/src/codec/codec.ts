@@ -4,6 +4,9 @@
  */
 
 import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+// This export is documented as supported in typebox's documentation.
+// eslint-disable-next-line import/no-internal-modules
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 import { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 import { fail, JsonCompatibleReadOnly } from "../util";
 
@@ -28,26 +31,44 @@ export interface IDecoder<TDecoded, TEncoded> {
 }
 
 /**
+ * Validates data complies with some particular schema.
+ * Implementations are typically created by a {@link JsonValidator}.
  * @alpha
  */
 export interface SchemaValidationFunction {
 	/**
-	 *
-	 * @param data - TODO
+	 * @returns - Whether the data matches a schema.
 	 */
 	check(data: any): boolean;
 }
 
 /**
+ * JSON schema validator compliant with draft 6 schema. See https://json-schema.org.
  * @alpha
  */
 export interface JsonValidator {
 	/**
-	 *
-	 * @param schema - TODO
+	 * Compiles the provided JSON schema into a validator for that schema.
+	 * @param schema - A valid draft 6 JSON schema
 	 */
 	compile(schema: TAnySchema): SchemaValidationFunction;
 }
+
+/**
+ * A {@link JsonValidator} implementation which uses TypeBox's JSON schema validator.
+ * @alpha
+ * @privateRemarks - Take care to not reference this validator directly in SharedTree code:
+ * the intent of factoring JSON validation into an interface is to make validation more pay-to-play
+ * (i.e. a JSON validator is only included in an application's bundle if that application references it)
+ */
+export const typeboxValidator: JsonValidator = {
+	compile: (schema: TAnySchema) => {
+		const compiledFormat = TypeCompiler.Compile(schema);
+		return {
+			check: (data) => compiledFormat.Check(data),
+		};
+	},
+};
 
 /**
  * @alpha

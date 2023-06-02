@@ -18,7 +18,7 @@ import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { ISharedTree, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import { brand } from "../../util";
-import { TestTreeProviderLite, typeboxValidator } from "../utils";
+import { TestTreeProviderLite } from "../utils";
 import {
 	rootFieldKey,
 	rootFieldKeySymbol,
@@ -27,6 +27,7 @@ import {
 	GlobalFieldKey,
 	SchemaData,
 } from "../../core";
+import { typeboxValidator } from "../../codec";
 // eslint-disable-next-line import/no-internal-modules
 import { PlacePath } from "../../feature-libraries/sequence-change-family";
 

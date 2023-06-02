@@ -278,4 +278,5 @@ export type {
 	IMultiFormatCodec,
 	JsonValidator,
 	SchemaValidationFunction,
+	typeboxValidator,
 } from "./codec";
