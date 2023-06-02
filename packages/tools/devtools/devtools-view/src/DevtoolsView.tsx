@@ -179,13 +179,6 @@ export function DevtoolsView(): React.ReactElement {
 				setSupportedFeatures(message.data.features);
 				return true;
 			},
-			[DevtoolsDisposed.MessageType]: async (untypedMessage) => {
-				// Reset feature state to ensure we aren't displaying stale data
-				// eslint-disable-next-line unicorn/no-useless-undefined
-				setSupportedFeatures(undefined);
-				messageRelay.postMessage(getSupportedFeaturesMessage);
-				return true;
-			},
 		};
 
 		/**
@@ -276,6 +269,15 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 			[ContainerList.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerList.Message;
 				setContainers(message.data.containers);
+				return true;
+			},
+			[DevtoolsDisposed.MessageType]: async (untypedMessage) => {
+				// eslint-disable-next-line unicorn/no-useless-undefined
+				setMenuSelection(undefined);
+				// eslint-disable-next-line unicorn/no-useless-undefined
+				setContainers(undefined);
+				// Require latest feature state to ensure we aren't displaying stale data
+				messageRelay.postMessage(getSupportedFeaturesMessage);
 				return true;
 			},
 		};
