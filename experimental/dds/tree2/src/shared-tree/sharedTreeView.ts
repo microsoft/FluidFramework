@@ -330,11 +330,7 @@ export class SharedTreeView implements ISharedTreeView {
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => {
-			this.branch.startTransaction(
-				new ForestRepairDataStore(this.forest, (change: DefaultChangeset) =>
-					defaultChangeFamily.intoDelta(change),
-				),
-			);
+			this.branch.startTransaction(new ForestRepairDataStore(this.forest, defaultIntoDelta));
 			this.branch.editor.enterTransaction();
 		},
 		commit: () => {
