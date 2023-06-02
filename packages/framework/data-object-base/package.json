@@ -22,7 +22,7 @@
 	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:compile": "npm run typetests:gen && npm run tsc && npm run build:test && npm run build:esnext",
+		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test && npm run build:esnext",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
@@ -81,7 +81,6 @@
 		"@fluidframework/build-tools": "^0.17.0",
 		"@fluidframework/data-object-base-previous": "npm:@fluidframework/data-object-base@2.0.0-internal.4.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",
