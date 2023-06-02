@@ -7,6 +7,7 @@ import { expect } from "chai";
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
+import { delay } from "@fluidframework/common-utils";
 import { TelemetryEvent, devtoolsMessageSource } from "@fluid-experimental/devtools-core";
 
 import { Globals } from "../utilities";
@@ -137,8 +138,12 @@ describe("Content Script unit tests", () => {
 		};
 		window.postMessage(windowMessage, "*");
 
+		// The window's `postMessage` method has async components, so we have to wait for the associated
+		// continuations to run before we can verify the message was forwarded.
+		await delay(500);
+
 		// Verify that the message was forwarded to the Devtools port
-		expect(backgroundPostMessageSpy.called).to.be.true; // TODO: calledWith
+		expect(backgroundPostMessageSpy.calledWith(windowMessage)).to.be.true;
 	});
 
 	it("Does not forward message with unrecognized source from Tab to Devtools script", async () => {
@@ -155,6 +160,10 @@ describe("Content Script unit tests", () => {
 			source: "unrecognized-source",
 		};
 		window.postMessage(windowMessage, "*");
+
+		// The window's `postMessage` method has async components, so we have to wait for the associated
+		// continuations to run before we can verify the message was forwarded.
+		await delay(500);
 
 		// Verify that the message was forwarded to the Devtools port
 		expect(backgroundPostMessageSpy.called).to.be.false;
