@@ -41,7 +41,7 @@ export const containerStatusTooltipText = (
 /**
  * Description of the Client's "Mode" property in the audience view.
  */
-export const clientModeModeTooltipText = (
+export const clientModeTooltipText = (
 	<div>
 		<div>{"The client's connection mode."}</div>
 		<ul>

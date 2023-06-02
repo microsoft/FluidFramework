@@ -17,7 +17,7 @@ import { EditRegular, Search12Regular, Person12Regular } from "@fluentui/react-i
 import {
 	clientIdTooltipText,
 	userIdTooltipText,
-	clientModeModeTooltipText,
+	clientModeTooltipText,
 	clientScopesTooltipText,
 } from "./TooltipTexts";
 import { TransformedAudienceStateData } from "./AudienceView";
@@ -73,7 +73,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 							{column.columnKey === "mode" && (
 								<LabelCellLayout
 									icon={<EditRegular />}
-									infoTooltipContent={clientModeModeTooltipText}
+									infoTooltipContent={clientModeTooltipText}
 								>
 									{column.label}
 								</LabelCellLayout>
