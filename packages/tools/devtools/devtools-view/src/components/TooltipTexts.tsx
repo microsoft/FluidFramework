@@ -43,11 +43,21 @@ export const containerStatusTooltipText = (
  */
 export const clientModeModeTooltipText = (
 	<div>
-		{"The client's connection mode."}
+		<div>{"The client's connection mode."}</div>
 		<ul>
 			<li>{'"read": the connection is view-only.'}</li>
 			<li>{'"write": the connection allows edits.'}</li>
 		</ul>
+		<div>
+			{
+				"Note that the current connection mode does not necessarily reflect the client's permissions."
+			}
+		</div>
+		<div>
+			{
+				"A client with write permissions can connect to a container in view-only mode if it wishes."
+			}
+		</div>
 	</div>
 );
 
