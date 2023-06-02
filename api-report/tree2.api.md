@@ -1638,7 +1638,7 @@ export interface SequenceFieldEditBuilder {
 
 // @alpha
 export class SharedTreeFactory implements IChannelFactory {
-    constructor(options: SharedTreeOptions);
+    constructor(options?: SharedTreeOptions);
     // (undocumented)
     attributes: IChannelAttributes;
     // (undocumented)
