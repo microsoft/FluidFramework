@@ -551,6 +551,7 @@ export class ConnectionManager implements IConnectionManager {
 
 			try {
 				this.client.mode = requestedMode;
+				this.props.establishConnectionHandler(requestedMode);
 				connection = await docService.connectToDeltaStream({
 					...this.client,
 					mode: requestedMode,
@@ -941,7 +942,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.triggerConnect(
 			error !== undefined
-				? "Reconnect on Error"
+				? "Reconnecting due to Error"
 				: `Reconnecting due to: ${disconnectMessage}`,
 			requestedMode,
 		);

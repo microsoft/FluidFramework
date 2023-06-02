@@ -11,7 +11,7 @@ import {
 import { assert, Timer } from "@fluidframework/common-utils";
 import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { IAnyDriverError } from "@fluidframework/driver-definitions";
-import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
+import { ISequencedClient, IClient, ConnectionMode } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
 import { ConnectionState } from "./connectionState";
 import { CatchUpMonitor, ICatchUpMonitor } from "./catchUpMonitor";
@@ -59,6 +59,7 @@ export interface IConnectionStateHandler {
 	initProtocol(protocol: IProtocolHandler): void;
 	receivedConnectEvent(details: IConnectionDetailsInternal): void;
 	receivedDisconnectEvent(reason: string, error?: IAnyDriverError): void;
+	establishingConnection(mode: ConnectionMode): void;
 }
 
 export function createConnectionStateHandler(
@@ -142,6 +143,10 @@ class ConnectionStateHandlerPassThrough
 	}
 	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
 		return this.pimpl.receivedDisconnectEvent(reason, error);
+	}
+
+	public establishingConnection(mode: ConnectionMode) {
+		return this.pimpl.establishingConnection(mode);
 	}
 
 	public receivedConnectEvent(details: IConnectionDetailsInternal) {
@@ -230,9 +235,16 @@ class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				this.catchUpMonitor?.dispose();
 				this.catchUpMonitor = undefined;
 				break;
+			case ConnectionState.EstablishingConnection:
+				assert(
+					this._connectionState === ConnectionState.Disconnected ||
+						this._connectionState === ConnectionState.EstablishingConnection,
+					"connectivity transition to establishing connection",
+				);
+				break;
 			case ConnectionState.CatchingUp:
 				assert(
-					this._connectionState === ConnectionState.Disconnected,
+					this._connectionState === ConnectionState.EstablishingConnection,
 					0x3e3 /* connectivity transitions */,
 				);
 				break;
@@ -469,6 +481,16 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	public receivedDisconnectEvent(reason: string, error?: IAnyDriverError) {
 		this.connection = undefined;
 		this.setConnectionState(ConnectionState.Disconnected, reason, error);
+	}
+
+	public establishingConnection(mode: ConnectionMode) {
+		const oldState = this._connectionState;
+		this._connectionState = ConnectionState.EstablishingConnection;
+		this.handler.connectionStateChanged(
+			ConnectionState.EstablishingConnection,
+			oldState,
+			`Establishing Connection in ${mode} mode`,
+		);
 	}
 
 	private shouldWaitForJoinSignal() {

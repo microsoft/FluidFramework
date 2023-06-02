@@ -50,6 +50,7 @@ import {
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
+	ConnectionMode,
 	IClient,
 	IClientConfiguration,
 	IClientDetails,
@@ -1842,6 +1843,10 @@ export class Container
 		deltaManager.on("connect", (details: IConnectionDetailsInternal, _opsBehind?: number) => {
 			assert(this.connectionMode === details.mode, 0x4b7 /* mismatch */);
 			this.connectionStateHandler.receivedConnectEvent(details);
+		});
+
+		deltaManager.on("establisingConnection", (mode: ConnectionMode) => {
+			this.connectionStateHandler.establishingConnection(mode);
 		});
 
 		deltaManager.on("disconnect", (reason: string, error?: IAnyDriverError) => {

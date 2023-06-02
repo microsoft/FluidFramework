@@ -53,6 +53,7 @@ describe("connectionManager", () => {
 		pongHandler: () => {},
 		readonlyChangeHandler: () => {},
 		reconnectionDelayHandler: () => {},
+		establishConnectionHandler: () => {},
 		signalHandler: () => {},
 	};
 
