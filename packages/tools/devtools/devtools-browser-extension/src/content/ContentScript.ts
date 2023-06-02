@@ -67,16 +67,13 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 		// Only relay message if it is one of ours, and if the source is the extension
 		// (and not the window).
 		if (isDevtoolsMessage(message) && message.source === extensionMessageSource) {
-			console.log("Relaying message to the window!");
 			console.debug(
 				formatContentScriptMessageForLogging(
 					`Relaying message from Background Script to the window:`,
 				),
 				message,
 			);
-			console.log("Calling window.postMessage...");
 			window.postMessage(message, "*");
-			console.log("window.postMessage called!");
 		}
 	});
 

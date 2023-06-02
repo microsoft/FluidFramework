@@ -58,8 +58,7 @@ describe("Content Script unit tests", () => {
 		expect(typeof onConnectListener).to.equal("function");
 	});
 
-	// TODO: verify window.addMessageListener
-	it("Binds `onMessage` listener to Background Script port on connect.", async () => {
+	it("Binds Background Script and Window message listeners on connect.", async () => {
 		const { browser } = globals;
 
 		const backgroundPort = stubPort("background-port");
@@ -80,7 +79,6 @@ describe("Content Script unit tests", () => {
 		onConnectListener(backgroundPort);
 
 		const onMessageListener = await onMessageListenerPromise;
-
 		expect(typeof onMessageListener).to.equal("function");
 	});
 
@@ -108,21 +106,17 @@ describe("Content Script unit tests", () => {
 		expect(typeof connectFromBackground).to.equal("function");
 
 		// Wait for the Content script to register `onMessage`  listener with the Background port.
-		const onMessageFromBackgroundListenerPromise = awaitListener(
-			sandbox,
-			backgroundPort.onMessage,
-		);
+		const backgroundOnMessageListenerPromise = awaitListener(sandbox, backgroundPort.onMessage);
 
 		// Simulate background script connection init from the devtools
 		connectFromBackground(backgroundPort);
 
-		const sendMessageFromBackground = await onMessageFromBackgroundListenerPromise;
-		expect(typeof sendMessageFromBackground).to.equal("function");
+		const backgroundOnMessageListener = await backgroundOnMessageListenerPromise;
+		expect(typeof backgroundOnMessageListener).to.equal("function");
 
 		// Update our port stubs to correctly send messages to the Content script
 		backgroundPort.postMessage = (message): void => {
-			console.log("I was called! Yay!");
-			sendMessageFromBackground(message, backgroundPort);
+			backgroundOnMessageListener(message, backgroundPort);
 		};
 
 		return { backgroundPort };
@@ -193,7 +187,7 @@ describe("Content Script unit tests", () => {
 		expect(windowPostMessageSpy.calledWith(backgroundMessage)).to.be.true;
 	});
 
-	it("Does not forward message with unrecognized source from Background script to ", async () => {
+	it("Does not forward message with unrecognized source from Background script to Window", async () => {
 		const { window } = globals;
 
 		const { backgroundPort } = await initializeContentScript();
@@ -211,6 +205,4 @@ describe("Content Script unit tests", () => {
 		// Verify that the message was forwarded to the Devtools port
 		expect(windowPostMessageSpy.called).to.be.false;
 	});
-
-	// TODO: test teardown
 });
