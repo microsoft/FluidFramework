@@ -31,7 +31,7 @@ export class BaseTelemetryNullLogger implements ITelemetryBaseLogger {
 export class ChildLogger extends TelemetryLogger {
     // (undocumented)
     protected readonly baseLogger: ITelemetryBaseLogger;
-    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static create(baseLogger?: ITelemetryBaseLogger, namespace?: string, properties?: ITelemetryLoggerPropertyBags, sampling?: Map<string, number>): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }
 
