@@ -86,8 +86,9 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 			// 	return "uploadingV2Summary";
 		} else if (this._quorumApprovalComplete) {
 			return "readyForMigration";
+		} else if (this._anyQuorumProposalSeen) {
+			return "waitingForV2ProposalCompletion";
 		} else if (this._v1SummaryDone) {
-			// TODO: other phases of quorum proposing?
 			return "proposingV2Code";
 		} else if (this.acceptedVersion !== undefined) {
 			// TODO: other phases of v1 summary upload/submit?
@@ -226,16 +227,23 @@ export class SameContainerMigrationTool extends DataObject implements ISameConta
 		const version = this.pactMap.get(newVersionKey);
 		const quorumProposal = { package: version };
 		console.log(`Want to propose: ${JSON.stringify(quorumProposal)}`);
+		this.emit("proposingV2Code");
 		console.log(
 			"anyQuorumProposalSeen",
 			this._anyQuorumProposalSeenP,
 			this._anyQuorumProposalSeen,
 		);
+		// TODO: This is a lie, just doing this to advance the demo flow (should actually be set in the promise)
+		this._anyQuorumProposalSeen = true;
+		this.emit("waitingForV2ProposalCompletion");
 		console.log(
 			"quorumApprovalComplete",
 			this._quorumApprovalCompleteP,
 			this._quorumApprovalComplete,
 		);
+		// TODO: This is a lie, just doing this to advance the demo flow (should actually be set in the promise)
+		this._quorumApprovalComplete = true;
+		this.emit("readyForMigration");
 		// TODO Here probably need to have the container reference on the providers, in order to make the proposal?
 		// Or at least a callback for it.
 		// container.proposeCodeDetails(quorumProposal);
