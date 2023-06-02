@@ -9,12 +9,12 @@ import { Serializable } from "@fluidframework/datastore-definitions";
 
 const numberOfSpaces = 4;
 
-export async function createSnapshotAsync(path: string, data: Serializable): Promise<void> {
+export async function createSnapshot(path: string, data: Serializable): Promise<void> {
 	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
 	await fs.writeFile(path, dataStr);
 }
 
-export async function isEqualPastSnapshotAsync(path: string, data: Serializable): Promise<boolean> {
+export async function isEqualPastSnapshot(path: string, data: Serializable): Promise<boolean> {
 	assert(existsSync(path), `test snapshot file does not exist: ${path}`);
 	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
 	const pastDataStr = await fs.readFile(path, "utf-8");

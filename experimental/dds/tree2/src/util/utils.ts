@@ -272,19 +272,40 @@ export function assertNonNegativeSafeInteger(index: number) {
 export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 /**
- * Only use this function for testing purposes.
+ * The counter used to generate deterministic stable ids for testing purposes.
  */
-let count: number | undefined;
-export function useDeterministicStableId(f: () => void) {
-	count = 1;
-	f();
-	count = undefined;
+let deterministicStableIdCount: number | undefined;
+
+/**
+ * This function is used to generate deterministic stable ids for testing purposes.
+ * @param f - A function that will be called and if a stable id is needed inside it a deterministic one will be used.
+ *
+ * @remarks
+ * Only use this function for testing purposes.
+ *
+ * @example
+ * ```ts
+ * const summary = useDeterministicStableId(() => tree.summarize());
+ * ```
+ */
+export function useDeterministicStableId<T>(f: () => T): T {
+	deterministicStableIdCount = 1;
+	const result = f();
+	deterministicStableIdCount = undefined;
+	return result;
 }
 
 export function generateStableId(): StableId {
-	if (count !== undefined) {
+	if (deterministicStableIdCount !== undefined) {
+		assert(
+			deterministicStableIdCount < 281_474_976_710_656,
+			"The maximum valid value for deterministicStableIdCount is 16^12",
+		);
+		// Tried to generate a unique id prefixing it with the word 'beef'
 		return assertIsStableId(
-			`00000000-0000-4000-8000-000000${(count++).toString(16).padStart(6, "0")}`,
+			`beefbeef-beef-4000-8000-${(deterministicStableIdCount++)
+				.toString(16)
+				.padStart(12, "0")}`,
 		);
 	}
 	return runtimeGenerateStableId();

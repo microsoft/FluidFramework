@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 import path from "path";
-import { createSnapshotAsync, isEqualPastSnapshotAsync } from "@fluid-internal/test-dds-utils";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { TestTreeProviderLite } from "../utils";
 import { brand, useDeterministicStableId } from "../../util";
 import {
@@ -17,8 +16,9 @@ import {
 	GlobalFieldKey,
 	SchemaData,
 } from "../../core";
-import { ISharedTree, runSynchronous } from "../../shared-tree";
+import { ISharedTree, ISharedTreeView } from "../../shared-tree";
 import { singleTextCursor, FieldKinds, namedTreeSchema } from "../../feature-libraries";
+import { createSnapshot, isEqualPastSnapshot } from "./utils";
 
 const dirPathTail = "src/test/snapshots/files";
 const fieldKeyA: FieldKey = brand("FieldA");
@@ -45,18 +45,18 @@ function generateTree(fields: FieldKey[], height: number, nodesPerField: number)
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
 	tree.storedSchema.update(testSchema);
-	generateTreeRecursively(tree, undefined, fields, height, nodesPerField, 1);
+	generateTreeRecursively(tree, undefined, fields, height, nodesPerField, { value: 1 });
 	provider.processMessages();
 	return tree;
 }
 
 function generateTreeRecursively(
-	tree: ISharedTree,
+	tree: ISharedTreeView,
 	parent: UpPath | undefined,
 	fieldKeys: FieldKey[],
 	height: number,
 	nodesPerField: number,
-	currentValue: number,
+	currentValue: { value: number },
 ): void {
 	if (height === 0) {
 		return;
@@ -70,13 +70,13 @@ function generateTreeRecursively(
 		const field = tree.editor.sequenceField(fieldUpPath);
 
 		for (let i = 0; i < nodesPerField; i++) {
-			runSynchronous(tree, () => {
-				const writeCursor = singleTextCursor({
-					type: brand("TestValue"),
-					value: currentValue.toString,
-				});
-				field.insert(i, writeCursor);
+			const writeCursor = singleTextCursor({
+				type: brand("TestValue"),
+				value: currentValue.toString,
 			});
+			field.insert(i, writeCursor);
+
+			currentValue.value++;
 
 			generateTreeRecursively(
 				tree,
@@ -86,22 +86,15 @@ function generateTreeRecursively(
 				nodesPerField,
 				currentValue,
 			);
-
-			// This value could be calculated, but it's more readable to just increment it.
-			// eslint-disable-next-line no-param-reassign
-			currentValue++;
 		}
 	}
 }
 
-function generateSummary(): ISummaryTree {
-	let summary: ISummaryTree | undefined;
-	useDeterministicStableId(() => {
-		const tree = generateTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 2);
-		({ summary } = tree.getAttachSummary(true));
-	});
-	assert(summary !== undefined);
-	return summary;
+async function generateSummary(): Promise<ISummaryTreeWithStats> {
+	const tree = useDeterministicStableId(() =>
+		generateTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3),
+	);
+	return tree.summarize(true);
 }
 
 describe("Summary snapshot", () => {
@@ -113,12 +106,12 @@ describe("Summary snapshot", () => {
 
 	// Only run this test when you want to regenerate the snapshot.
 	it.skip("regenerate", async () => {
-		const summary = generateSummary();
-		await createSnapshotAsync(filePath, summary);
+		const summary = await generateSummary();
+		await createSnapshot(filePath, summary);
 	});
 
 	it("is equal to previous one", async () => {
-		const summary = generateSummary();
-		assert(await isEqualPastSnapshotAsync(filePath, summary));
+		const summary = await generateSummary();
+		assert(await isEqualPastSnapshot(filePath, summary));
 	});
 });
