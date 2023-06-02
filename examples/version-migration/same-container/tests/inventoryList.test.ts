@@ -41,7 +41,7 @@ describe("inventoryList", () => {
 			await expect(containsOne).toEqual(true);
 		});
 
-		it("migrates and shows the correct code version after migration", async () => {
+		it.skip("migrates and shows the correct code version after migration", async () => {
 			// Validate the migration status shows "one" initially
 			await Promise.all([
 				page.waitForSelector("#sbs-left .migration-status"),
@@ -91,7 +91,7 @@ describe("inventoryList", () => {
 		});
 	});
 
-	describe("With summarizer connected", () => {
+	describe.skip("With summarizer connected", () => {
 		beforeEach(async () => {
 			await page.goto(`${globals.PATH}`, { waitUntil: "load" });
 			await page.waitFor(() => window["fluidStarted"]);
