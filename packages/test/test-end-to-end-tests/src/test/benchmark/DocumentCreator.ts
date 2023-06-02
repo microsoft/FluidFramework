@@ -65,7 +65,6 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 			testDocument: props.testName,
 			testDocumentType: props.documentType,
 			details: JSON.stringify(props.documentTypeInfo),
-			hostName: "Benchmark",
 		},
 	});
 	const documentProps: IDocumentProps = { ...props, logger };
