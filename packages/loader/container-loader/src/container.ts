@@ -1910,8 +1910,8 @@ export class Container
 	) {
 		// Log actual event
 		const time = performance.now();
-		this.connectionTransitionTimes[value] = time;
 		const duration = time - this.connectionTransitionTimes[oldState];
+		this.connectionTransitionTimes[value] = time;
 
 		let durationFromDisconnected: number | undefined;
 		let connectionInitiationReason: string | undefined;
