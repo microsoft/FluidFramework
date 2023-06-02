@@ -291,9 +291,7 @@ function buildFieldSchema<Kind extends FieldKindTypes = FieldKindTypes>(
  * the PropertyDDS schema inheritances / dependencies starting from
  * the root schema or built-in node property schemas.
  */
-export function convertPropertyToSharedTreeStorageSchema<
-	Kind extends FieldKindTypes = FieldKindTypes,
->(
+export function convertPropertyToSharedTreeSchema<Kind extends FieldKindTypes = FieldKindTypes>(
 	rootFieldKind: Kind,
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,

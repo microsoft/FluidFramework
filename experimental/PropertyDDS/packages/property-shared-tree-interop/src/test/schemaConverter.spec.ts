@@ -19,16 +19,13 @@ import {
 	LocalFieldKey,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
+import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
 import mockPropertyDDSSchemas from "./mockPropertyDDSSchemas";
 
 describe("schema converter", () => {
 	describe("with built-in schemas only", () => {
 		it(`has built-in primitive types and collections`, () => {
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-				FieldKinds.optional,
-				Any,
-			);
+			const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 			[
 				"Int8",
 				"Uint8",
@@ -54,10 +51,7 @@ describe("schema converter", () => {
 		});
 
 		it(`has built-in node types and collections`, () => {
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-				FieldKinds.optional,
-				Any,
-			);
+			const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 			["NodeProperty", "NamedNodeProperty", "NamedProperty"].forEach((typeName) => {
 				const propertySchema = fullSchemaData.treeSchema.get(brand(typeName));
 				assert(propertySchema !== undefined);
@@ -97,34 +91,22 @@ describe("schema converter", () => {
 
 		it("can use any type as root", () => {
 			{
-				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-					FieldKinds.optional,
-					Any,
-				);
+				const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 				assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
 			}
 			{
-				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-					FieldKinds.optional,
-					new Set([Any]),
-				);
+				const fullSchemaData = convertSchema(FieldKinds.optional, new Set([Any]));
 				assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
 			}
 			{
-				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-					FieldKinds.optional,
-					new Set(["String", Any]),
-				);
+				const fullSchemaData = convertSchema(FieldKinds.optional, new Set(["String", Any]));
 				assert.deepEqual([...fullSchemaData.root.schema.allowedTypes], [Any]);
 			}
 		});
 
 		it("can convert empty generic types to collections of Any", () => {
 			{
-				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-					FieldKinds.optional,
-					new Set(["array<>"]),
-				);
+				const fullSchemaData = convertSchema(FieldKinds.optional, new Set(["array<>"]));
 				assert(fullSchemaData.treeSchema.get(brand("array<>")) === undefined);
 				const primary = getPrimaryField(
 					fullSchemaData.treeSchema.get(brand("array<Any>")) ??
@@ -138,10 +120,7 @@ describe("schema converter", () => {
 			}
 
 			{
-				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-					FieldKinds.optional,
-					new Set(["map<>"]),
-				);
+				const fullSchemaData = convertSchema(FieldKinds.optional, new Set(["map<>"]));
 				assert(fullSchemaData.treeSchema.get(brand("map<>")) === undefined);
 				const anyMap =
 					fullSchemaData.treeSchema.get(brand("map<Any>")) ??
@@ -153,11 +132,7 @@ describe("schema converter", () => {
 
 		it(`throws at unknown typeid`, () => {
 			assert.throws(
-				() =>
-					convertPropertyToSharedTreeStorageSchema(
-						FieldKinds.optional,
-						new Set(["Test:Optional-1.0.0"]),
-					),
+				() => convertSchema(FieldKinds.optional, new Set(["Test:Optional-1.0.0"])),
 				(e) => validateAssertionError(e, `Unknown typeid "Test:Optional-1.0.0"`),
 				"Expected exception was not thrown",
 			);
@@ -165,11 +140,7 @@ describe("schema converter", () => {
 
 		it(`throws at unknown context`, () => {
 			assert.throws(
-				() =>
-					convertPropertyToSharedTreeStorageSchema(
-						FieldKinds.optional,
-						new Set(["custom<Test:Optional-1.0.0>"]),
-					),
+				() => convertSchema(FieldKinds.optional, new Set(["custom<Test:Optional-1.0.0>"])),
 				(e) =>
 					validateAssertionError(
 						e,
@@ -181,20 +152,12 @@ describe("schema converter", () => {
 
 		it(`throws when using "BaseProperty"`, () => {
 			assert.throws(
-				() =>
-					convertPropertyToSharedTreeStorageSchema(
-						FieldKinds.optional,
-						new Set(["array<BaseProperty>"]),
-					),
+				() => convertSchema(FieldKinds.optional, new Set(["array<BaseProperty>"])),
 				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
 			);
 			assert.throws(
-				() =>
-					convertPropertyToSharedTreeStorageSchema(
-						FieldKinds.optional,
-						new Set(["BaseProperty"]),
-					),
+				() => convertSchema(FieldKinds.optional, new Set(["BaseProperty"])),
 				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
 			);
@@ -207,7 +170,7 @@ describe("schema converter", () => {
 		});
 
 		it(`can create a non-primitive type w/o properties and not inheriting from NodeProperty`, () => {
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+			const fullSchemaData = convertSchema(
 				FieldKinds.optional,
 				new Set(["Test:NeverType-1.0.0"]),
 			);
@@ -225,11 +188,7 @@ describe("schema converter", () => {
 
 		it(`does not support types with nested properties`, () => {
 			assert.throws(
-				() =>
-					convertPropertyToSharedTreeStorageSchema(
-						FieldKinds.optional,
-						new Set(["Test:NestedProperties-1.0.0"]),
-					),
+				() => convertSchema(FieldKinds.optional, new Set(["Test:NestedProperties-1.0.0"])),
 				(e) =>
 					validateAssertionError(
 						e,
@@ -240,7 +199,7 @@ describe("schema converter", () => {
 		});
 
 		it(`inherits from "NodeProperty"`, () => {
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+			const fullSchemaData = convertSchema(
 				FieldKinds.optional,
 				new Set(["Test:Optional-1.0.0"]),
 			);
@@ -262,10 +221,7 @@ describe("schema converter", () => {
 		});
 
 		it(`can use "NodeProperty" as root`, () => {
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-				FieldKinds.optional,
-				new Set(["NodeProperty"]),
-			);
+			const fullSchemaData = convertSchema(FieldKinds.optional, new Set(["NodeProperty"]));
 
 			assert.deepEqual(fullSchemaData.root.kind, FieldKinds.optional);
 			assert.deepEqual(
@@ -290,7 +246,7 @@ describe("schema converter", () => {
 		});
 
 		it("can convert property with array context", () => {
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+			const fullSchemaData = convertSchema(
 				FieldKinds.optional,
 				new Set(["Test:Optional-1.0.0"]),
 			);
@@ -317,7 +273,7 @@ describe("schema converter", () => {
 		});
 
 		it("can convert property with map context", () => {
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+			const fullSchemaData = convertSchema(
 				FieldKinds.optional,
 				new Set(["Test:Optional-1.0.0"]),
 			);
@@ -343,11 +299,7 @@ describe("schema converter", () => {
 
 		it(`"set" context is not supported`, () => {
 			assert.throws(
-				() =>
-					convertPropertyToSharedTreeStorageSchema(
-						FieldKinds.optional,
-						new Set(["set<Test:Optional-1.0.0>"]),
-					),
+				() => convertSchema(FieldKinds.optional, new Set(["set<Test:Optional-1.0.0>"])),
 				(e) => validateAssertionError(e, `Context "set" is not supported yet`),
 				"Expected exception was not thrown",
 			);
@@ -355,7 +307,7 @@ describe("schema converter", () => {
 
 		it(`can convert property w/o typeid into field of type Any`, () => {
 			const extraTypeName: TreeSchemaIdentifier = brand("Test:IndependentType-1.0.0");
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+			const fullSchemaData = convertSchema(
 				FieldKinds.optional,
 				Any,
 				new Set([extraTypeName]),
@@ -389,15 +341,12 @@ describe("schema converter", () => {
 			const extraTypeName: TreeSchemaIdentifier = brand("Test:IndependentType-1.0.0");
 			// provided no extra types
 			{
-				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-					FieldKinds.optional,
-					Any,
-				);
+				const fullSchemaData = convertSchema(FieldKinds.optional, Any);
 				assert(fullSchemaData.treeSchema.get(extraTypeName) === undefined);
 			}
 			// with extra types
 			{
-				const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				const fullSchemaData = convertSchema(
 					FieldKinds.optional,
 					Any,
 					new Set([extraTypeName]),
@@ -408,7 +357,7 @@ describe("schema converter", () => {
 
 		it(`can use enums`, () => {
 			const enumTypeName: TreeSchemaIdentifier = brand(`Test:Optional-1.0.0`);
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+			const fullSchemaData = convertSchema(
 				FieldKinds.optional,
 				Any,
 				new Set([`enum<${enumTypeName}>`]),
@@ -439,10 +388,7 @@ describe("schema converter", () => {
 			const childFieldKey: LocalFieldKey = brand("child");
 			const parentFieldKey: LocalFieldKey = brand("parent");
 
-			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-				FieldKinds.optional,
-				new Set([parentTypeName]),
-			);
+			const fullSchemaData = convertSchema(FieldKinds.optional, new Set([parentTypeName]));
 
 			assert.deepEqual(
 				[...(fullSchemaData.root.types ?? fail("expected types"))],
@@ -472,19 +418,14 @@ describe("schema converter", () => {
 
 		it(`throws when using "BaseProperty" in properties`, () => {
 			assert.throws(
-				() =>
-					convertPropertyToSharedTreeStorageSchema(
-						FieldKinds.optional,
-						Any,
-						new Set(["Test:BaseProperty-1.0.0"]),
-					),
+				() => convertSchema(FieldKinds.optional, Any, new Set(["Test:BaseProperty-1.0.0"])),
 				(e) => validateAssertionError(e, `"BaseProperty" shall not be used in schemas.`),
 				"Expected exception was not thrown",
 			);
 
 			assert.throws(
 				() =>
-					convertPropertyToSharedTreeStorageSchema(
+					convertSchema(
 						FieldKinds.optional,
 						Any,
 						new Set(["Test:BasePropertyCollection-1.0.0"]),

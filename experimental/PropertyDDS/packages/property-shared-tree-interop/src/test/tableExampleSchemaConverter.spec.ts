@@ -13,7 +13,7 @@ import {
 	FieldKinds,
 	TreeSchemaIdentifier,
 } from "@fluid-experimental/tree2";
-import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
+import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
 
 const tableTypeName: TreeSchemaIdentifier = brand("Test:Table-1.0.0");
 
@@ -93,10 +93,7 @@ describe("LlsSchemaConverter", () => {
 	beforeAll(registerPropertySchemas);
 
 	it("Enum", () => {
-		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-			FieldKinds.optional,
-			new Set([tableTypeName]),
-		);
+		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const table = lookupTreeSchema(fullSchemaData, tableTypeName);
 		assert(table !== undefined);
 		const encoding = table.localFields.get(brand("encoding"));
@@ -106,10 +103,7 @@ describe("LlsSchemaConverter", () => {
 	});
 
 	it("Missing Refs", () => {
-		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-			FieldKinds.optional,
-			new Set([tableTypeName]),
-		);
+		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const typeNames = new Set(fullSchemaData.treeSchema.keys());
 		for (const typeName of typeNames) {
 			const treeSchema = lookupTreeSchema(fullSchemaData, typeName);
@@ -136,10 +130,7 @@ describe("LlsSchemaConverter", () => {
 	});
 
 	it("Check Structure", () => {
-		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-			FieldKinds.optional,
-			new Set([tableTypeName]),
-		);
+		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const table = lookupTreeSchema(fullSchemaData, tableTypeName);
 		assert(table !== undefined);
 		assert(table.localFields !== undefined);
@@ -171,10 +162,7 @@ describe("LlsSchemaConverter", () => {
 	});
 
 	it("Inheritance Translation", () => {
-		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
-			FieldKinds.optional,
-			new Set([tableTypeName]),
-		);
+		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const row = lookupTreeSchema(fullSchemaData, brand("array<Test:Row-1.0.0>"));
 		assert(row !== undefined);
 		assert(row.localFields !== undefined);
