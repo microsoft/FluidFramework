@@ -123,6 +123,10 @@
 			"RemovedInterfaceDeclaration_IPendingContainerState": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISerializableBlobContents": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
