@@ -7370,9 +7370,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^2.0.0
         version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
-      '@fluidframework/map-previous':
-        specifier: npm:@fluidframework/map@2.0.0-internal.4.1.0
-        version: /@fluidframework/map@2.0.0-internal.4.1.0
       '@fluidframework/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
