@@ -54,7 +54,6 @@
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
-		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",

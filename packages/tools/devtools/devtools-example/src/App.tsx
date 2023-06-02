@@ -68,54 +68,6 @@ const unknownDataKey = "unknown-data";
 const unknownSharedObjectKey = "unknown-shared-object";
 
 /**
- * TODO
- */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-// export class MySharedTree {
-// 	public static getFactory(): IChannelFactory {
-// 		return new SharedTreeFactory();
-// 	}
-// }
-
-// /**
-//  * TODO
-//  */
-// export class SharedTreeObject extends DataObject {
-// 	private _tree: ISharedTree | undefined;
-
-// 	public get tree(): ISharedTree {
-// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-// 		return this._tree!;
-// 	}
-
-// 	protected async initializingFirstTime(): Promise<void> {
-// 		this._tree = this.runtime.createChannel(
-// 			undefined,
-// 			new SharedTreeFactory().type,
-// 		) as ISharedTree;
-
-// 		this.root.set(sharedTreeKey, this.tree.handle);
-// 	}
-
-// 	protected async initializingFromExisting(): Promise<void> {
-// 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-// 		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
-// 	}
-
-// 	protected async hasInitialized(): Promise<void> {}
-// }
-
-// /**
-//  * TODO
-//  */
-// export const SharedTreeObjectFactory = new DataObjectFactory(
-// 	"shared-tree-example",
-// 	SharedTreeObject,
-// 	[new SharedTreeFactory()],
-// 	{},
-// );
-
-/**
  * Schema used by the app.
  */
 const containerSchema: ContainerSchema = {
