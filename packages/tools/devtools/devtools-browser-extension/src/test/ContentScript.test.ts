@@ -8,8 +8,13 @@ import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
 import { delay } from "@fluidframework/common-utils";
-import { TelemetryEvent, devtoolsMessageSource } from "@fluid-experimental/devtools-core";
+import {
+	CloseContainer,
+	TelemetryEvent,
+	devtoolsMessageSource,
+} from "@fluid-experimental/devtools-core";
 
+import { extensionMessageSource } from "../messaging";
 import { Globals } from "../utilities";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
@@ -146,7 +151,7 @@ describe("Content Script unit tests", () => {
 		expect(backgroundPostMessageSpy.calledWith(windowMessage)).to.be.true;
 	});
 
-	it("Does not forward message with unrecognized source from Tab to Devtools script", async () => {
+	it("Does not forward message with unrecognized source from Window to Background script", async () => {
 		const { window } = globals;
 
 		const { backgroundPort } = await initializeContentScript();
@@ -169,39 +174,43 @@ describe("Content Script unit tests", () => {
 		expect(backgroundPostMessageSpy.called).to.be.false;
 	});
 
-	// it("Forwards Devtools message from Devtools script to Tab", async () => {
-	// 	const { backgroundPort } = await initializeContentScript();
+	it("Forwards Devtools message from Background script to Window", async () => {
+		const { window } = globals;
 
-	// 	// Spy on the Devtools port's `postMessage` so we can later verify it was called.
-	// 	const tabPostMessageSpy = sandbox.spy(tabPort, "postMessage");
+		const { backgroundPort } = await initializeContentScript();
 
-	// 	// Post message from the Tab
-	// 	const devtoolsMessage = {
-	// 		...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
-	// 		source: extensionMessageSource,
-	// 	};
-	// 	devtoolsPort.postMessage(devtoolsMessage);
+		// Spy on the Window's `postMessage` so we can later verify it was called.
+		const windowPostMessageSpy = sandbox.spy(window, "postMessage");
 
-	// 	// Verify that the message was forwarded to the Devtools port
-	// 	expect(tabPostMessageSpy.calledWith(devtoolsMessage)).to.be.true;
-	// });
+		// Post message from the Tab
+		const backgroundMessage = {
+			...CloseContainer.createMessage({} as unknown as CloseContainer.MessageData),
+			source: extensionMessageSource,
+		};
+		backgroundPort.postMessage(backgroundMessage);
 
-	// it("Does not forward message with unrecognized source from Devtools script to Tab", async () => {
-	// 	const { backgroundPort } = await initializeContentScript();
+		// Verify that the message was forwarded to the Devtools port
+		expect(windowPostMessageSpy.calledWith(backgroundMessage)).to.be.true;
+	});
 
-	// 	// Spy on the Devtools port's `postMessage` so we can later verify if it was called.
-	// 	const tabPostMessageSpy = sandbox.spy(tabPort, "postMessage");
+	it("Does not forward message with unrecognized source from Background script to ", async () => {
+		const { window } = globals;
 
-	// 	// Post message from the Tab
-	// 	const devtoolsMessage = {
-	// 		data: "some-data",
-	// 		source: "unrecognized-source",
-	// 	};
-	// 	devtoolsPort.postMessage(devtoolsMessage);
+		const { backgroundPort } = await initializeContentScript();
 
-	// 	// Verify that the message was forwarded to the Devtools port
-	// 	expect(tabPostMessageSpy.called).to.be.false;
-	// });
+		// Spy on the Window's `postMessage` so we can later verify it was called.
+		const windowPostMessageSpy = sandbox.spy(window, "postMessage");
+
+		// Post message from the Tab
+		const backgroundMessage = {
+			data: "some-data",
+			source: "unrecognized-source",
+		};
+		backgroundPort.postMessage(backgroundMessage);
+
+		// Verify that the message was forwarded to the Devtools port
+		expect(windowPostMessageSpy.called).to.be.false;
+	});
 
 	// TODO: test teardown
 });
