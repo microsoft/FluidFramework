@@ -69,6 +69,7 @@ export interface RevertSharedStringRevertibles extends IntervalCollectionSpec {
 export type IntervalOperation = AddInterval | ChangeInterval | DeleteInterval | ChangeProperties;
 export type OperationWithRevert = IntervalOperation | RevertSharedStringRevertibles;
 export type TextOperation = AddText | RemoveRange;
+
 export type ClientOperation = IntervalOperation | TextOperation;
 
 export type Operation = ClientOperation;
