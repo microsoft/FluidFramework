@@ -66,8 +66,6 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 	}
 }
 
-// export const defaultChangeFamily = new DefaultChangeFamily();
-
 /**
  * Default editor for transactions.
  * @alpha
