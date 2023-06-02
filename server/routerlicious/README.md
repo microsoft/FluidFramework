@@ -141,25 +141,25 @@ have clear input and output characteristics. Many can be run as serverless lambd
 [lambda framework](./README.lambdas.md). We chose this path to have greater control over the throughput and latency
 characteristics of our message processing. But could be also be run with Azure Functions, AWS Lambdas, Fission, etc...
 
-#### [Alfred](./packages/routerlicious/src/alfred)
+#### [Alfred](./packages/lambdas/src/alfred)
 
 Alfred is the entry point to the system. Clients connect to Alfred to join the operation stream. Joining the stream
 allows them to receive push notifications for new operations, retrieve old operations, as well as create new ones. We
 make use of Redis for push notifications. New operations are placed inside of Apache Kafka for processing.
 
-#### [Deli](./packages/routerlicious/src/deli)
+#### [Deli](./packages/lambdas/src/deli)
 
 Deli retrieves unsequenced messages from Kafka and then attaches a new sequence number to them. Sequence numbers
 are per-document monotonically increasing numbers. Sequenced messages are placed back into Apache Kafka for processing.
 The Deli microservice also runs the [Broadcaster](./packages/lambdas/src/broadcaster) lambda that directly put sequenced
 message into redis so that alfred can listen and broadcast back to the clients.
 
-#### [Scriptorium](./packages/routerlicious/src/scriptorium)
+#### [Scriptorium](./packages/lambdas/src/scriptorium)
 
 Scriptorium retrieves sequenced messages from Kafka. It then writes the message
 to a database for storage. We currently make use of Redis for broadcasting and MongoDB for storage.
 
-#### [Scribe](./packages/routerlicious/src/scribe)
+#### [Scribe](./packages/lambdas/src/scribe)
 
 Scribe is responsible for listening to inbound summary ops and then writing them to the public record in the Historian
 
