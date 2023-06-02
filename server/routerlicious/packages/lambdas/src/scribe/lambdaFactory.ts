@@ -25,6 +25,7 @@ import {
 	ITenantManager,
 	LambdaName,
 	MongoManager,
+	runWithRetry,
 } from "@fluidframework/server-services-core";
 import {
 	IDocumentSystemMessage,
@@ -112,7 +113,15 @@ export class ScribeLambdaFactory
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 
 		try {
-			document = await this.documentRepository.readOne({ documentId, tenantId });
+			document = (await runWithRetry(
+				async () => this.documentRepository.readOne({ documentId, tenantId }),
+				"readIDocumentInScribeLambdaFactory",
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				lumberProperties,
+				undefined /* shouldIgnoreError */,
+				(error) => true /* shouldRetry */,
+			)) as IDocument;
 
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.

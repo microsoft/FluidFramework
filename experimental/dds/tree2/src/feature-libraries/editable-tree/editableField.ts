@@ -120,7 +120,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	private isSameAs(other: FieldProxyTarget): boolean {
 		assert(
 			other.context === this.context,
-			"Content from different editable trees should not be used together",
+			0x6b6 /* Content from different editable trees should not be used together */,
 		);
 		return this.fieldKey === other.fieldKey && this.parent === other.parent;
 	}
@@ -128,13 +128,13 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public normalizeNewContent(content: NewFieldContent): readonly ITreeCursor[] {
 		if (areCursors(content)) {
 			if (this.kind.multiplicity === Multiplicity.Sequence) {
-				assert(isReadonlyArray(content), "sequence fields require array content");
+				assert(isReadonlyArray(content), 0x6b7 /* sequence fields require array content */);
 				return content;
 			} else {
 				if (isReadonlyArray(content)) {
 					assert(
 						content.length === 1,
-						"non-sequence fields can not be provided content that is multiple cursors",
+						0x6b8 /* non-sequence fields can not be provided content that is multiple cursors */,
 					);
 					return content;
 				}
@@ -218,7 +218,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	private sequenceEditor(): SequenceFieldEditBuilder {
 		assert(
 			this.kind === FieldKinds.sequence,
-			"Field kind must be a sequence to edit as a sequence.",
+			0x6b9 /* Field kind must be a sequence to edit as a sequence. */,
 		);
 		const fieldPath = this.cursor.getFieldPath();
 		const fieldEditor = this.context.editor.sequenceField(fieldPath);
@@ -231,7 +231,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	private optionalEditor(): OptionalFieldEditBuilder {
 		assert(
 			this.kind === FieldKinds.optional,
-			"Field kind must be a optional to edit as optional.",
+			0x6ba /* Field kind must be a optional to edit as optional. */,
 		);
 		const fieldPath = this.cursor.getFieldPath();
 		const fieldEditor = this.context.editor.optionalField(fieldPath);
@@ -242,7 +242,10 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	 * Asserts this field is a sequence, and returns an editor for it.
 	 */
 	private valueFieldEditor(): ValueFieldEditBuilder {
-		assert(this.kind === FieldKinds.value, "Field kind must be a value to edit as a value.");
+		assert(
+			this.kind === FieldKinds.value,
+			0x6bb /* Field kind must be a value to edit as a value. */,
+		);
 		const fieldPath = this.cursor.getFieldPath();
 		const fieldEditor = this.context.editor.valueField(fieldPath);
 		return fieldEditor;
@@ -278,14 +281,17 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				const fieldEditor = this.optionalEditor();
 				assert(
 					content.length <= 1,
-					"optional field content should normalize at most one item",
+					0x6bc /* optional field content should normalize at most one item */,
 				);
 				fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
 				break;
 			}
 			case FieldKinds.value: {
 				const fieldEditor = this.valueFieldEditor();
-				assert(content.length === 1, "value field content should normalize to one item");
+				assert(
+					content.length === 1,
+					0x6bd /* value field content should normalize to one item */,
+				);
 				fieldEditor.set(content[0]);
 				break;
 			}
@@ -365,8 +371,11 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 			0x684 /* destination must be a field proxy target */,
 		);
 
-		assert(this.kind === FieldKinds.sequence, "Move source must be a sequence.");
-		assert(destination.kind === FieldKinds.sequence, "Move destination must be a sequence.");
+		assert(this.kind === FieldKinds.sequence, 0x6be /* Move source must be a sequence. */);
+		assert(
+			destination.kind === FieldKinds.sequence,
+			0x6bf /* Move destination must be a sequence. */,
+		);
 
 		assertNonNegativeSafeInteger(count);
 		// This permits a move of 0 nodes starting at this.length, which does seem like it should be allowed.
@@ -485,7 +494,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 			default: {
 				assert(
 					keyIsValidIndex(key, target.length + 1),
-					"cannot assign to unexpected member of field.",
+					0x6c0 /* cannot assign to unexpected member of field. */,
 				);
 
 				const cursor = cursorFromContextualData(
@@ -504,7 +513,7 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 				} else {
 					assert(
 						index === 0,
-						"Assignments to non-sequence field content by index must use index 0.",
+						0x6c1 /* Assignments to non-sequence field content by index must use index 0. */,
 					);
 					target.content = cursor;
 				}

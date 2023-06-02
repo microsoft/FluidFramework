@@ -13,7 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 
 interface IntervalEventInfo {
 	interval: { start: number; end: number };
@@ -27,7 +27,7 @@ describe("SharedString interval collection event spec", () => {
 
 	let sharedString2: SharedString;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
-	let collection: IntervalCollection<SequenceInterval>;
+	let collection: IIntervalCollection<SequenceInterval>;
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime();

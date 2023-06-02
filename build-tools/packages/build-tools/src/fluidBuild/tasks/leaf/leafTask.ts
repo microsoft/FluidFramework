@@ -24,7 +24,7 @@ import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGrap
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 
-const { info, verbose } = defaultLogger;
+const { log, verbose } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
 const traceTaskDep = registerDebug("fluid-build:task:dep");
 interface TaskExecResult extends ExecAsyncResult {
@@ -94,7 +94,7 @@ export abstract class LeafTask extends Task {
 			const totalTask =
 				this.node.buildContext.taskStats.leafTotalCount -
 				this.node.buildContext.taskStats.leafUpToDateCount;
-			info(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
+			log(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
 		}
 		const startTime = Date.now();
 		if (this.recheckLeafIsUpToDate && !this.forced && (await this.checkLeafIsUpToDate())) {
@@ -216,7 +216,7 @@ export abstract class LeafTask extends Task {
 			const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
 				this.node.pkg.nameColored
 			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
-			info(statusString);
+			log(statusString);
 			if (status === BuildResult.Failed) {
 				this.node.buildContext.failedTaskLines.push(statusString);
 			}
