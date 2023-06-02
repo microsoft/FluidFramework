@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { assertIsStableId } from "@fluidframework/container-runtime";
-import { ChangeRebaser, Delta, RevisionTag, rootFieldKeySymbol } from "../../core";
+import { ChangeRebaser, RevisionTag } from "../../core";
 
 // Allow importing from these specific files which are being tested:
 /* eslint-disable-next-line import/no-internal-modules */
@@ -42,9 +42,6 @@ export class DummyChangeRebaser implements ChangeRebaser<typeof dummyChange> {
 
 	public rebaseAnchors(): void {}
 }
-
-const dummyIntoDelta = (change: typeof dummyChange): Delta.Root =>
-	new Map([[rootFieldKeySymbol, []]]);
 
 describe("rebaser", () => {
 	/**
@@ -136,7 +133,6 @@ describe("rebaser", () => {
 
 				const [result] = rebaseBranch(
 					new DummyChangeRebaser(),
-					dummyIntoDelta,
 					new MockRepairDataStoreProvider(),
 					tester.branch,
 					base,

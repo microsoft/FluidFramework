@@ -131,7 +131,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
-		repairDataStoreProvider: IRepairDataStoreProvider,
+		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
 		anchors?: AnchorSet,
 	) {
 		super("EditManager");
@@ -267,7 +267,6 @@ export class EditManager<
 				for (const [sessionId, branch] of this.peerLocalBranches) {
 					const [rebasedBranch] = rebaseBranch(
 						this.changeFamily.rebaser,
-						(change: TChangeset) => this.changeFamily.intoDelta(change),
 						this.localBranch.repairDataStoreProvider,
 						branch,
 						newTrunkTail,
@@ -462,7 +461,6 @@ export class EditManager<
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const [rebasedBranch] = rebaseBranch(
 			this.changeFamily.rebaser,
-			(change: TChangeset) => this.changeFamily.intoDelta(change),
 			this.localBranch.repairDataStoreProvider,
 			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
 			baseRevisionInTrunk,
@@ -518,7 +516,7 @@ export class EditManager<
 
 			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
 		}
-		this.trunk.repairDataStoreProvider.applyDelta(this.changeFamily.intoDelta(commit.change));
+		this.trunk.repairDataStoreProvider.applyDelta(commit.change);
 		this.sequenceMap.set(sequenceNumber, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceNumber, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);

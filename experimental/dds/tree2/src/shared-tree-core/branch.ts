@@ -112,7 +112,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
-	private readonly transactions = new TransactionStack();
+	private readonly transactions = new TransactionStack<TChange>();
 	private disposed = false;
 	/**
 	 * Construct a new branch.
@@ -126,7 +126,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		public repairDataStoreProvider: IRepairDataStoreProvider,
+		public repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 		private readonly undoRedoManager?: UndoRedoManager<TChange, TEditor>,
 		private readonly anchors?: AnchorSet,
 	) {
@@ -167,11 +167,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		this.assertNotDisposed();
 
 		// If this is not part of a transaction, capture the repair data
-		let repairData: RepairDataStore | undefined;
-		const delta = this.changeFamily.intoDelta(change);
+		let repairData: RepairDataStore<TChange> | undefined;
 		if (!this.isTransacting()) {
 			repairData = this.repairDataStoreProvider.createRepairData();
-			repairData.capture(delta, revision);
+			repairData.capture(change, revision);
 		}
 
 		this.head = mintCommit(this.head, {
@@ -180,7 +179,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			repairData,
 		});
 
-		this.transactions.repairStore?.capture(delta, this.head.revision);
+		this.transactions.repairStore?.capture(change, this.head.revision);
 
 		// If this is not part of a transaction, add it to the undo commit tree
 		if (undoRedoType !== undefined && !this.isTransacting()) {
@@ -203,7 +202,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * all commits made since this call will be squashed into a single head commit.
 	 * @param repairStore - the repair store associated with this transaction
 	 */
-	public startTransaction(repairStore?: RepairDataStore): void {
+	public startTransaction(repairStore?: RepairDataStore<TChange>): void {
 		this.assertNotDisposed();
 		if (!this.isTransacting()) {
 			// If this is the start of a transaction stack, freeze the
@@ -238,13 +237,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
 		// Squash the changes and make the squash commit the new head of this branch
 		const squashedChange = this.changeFamily.rebaser.compose(anonymousCommits);
-		const delta = this.changeFamily.intoDelta(squashedChange);
 		const revision = mintRevisionTag();
 
-		let repairData: RepairDataStore | undefined;
+		let repairData: RepairDataStore<TChange> | undefined;
 		if (!this.isTransacting()) {
 			repairData = this.repairDataStoreProvider.createRepairData();
-			repairData?.capture(delta, revision);
+			repairData?.capture(squashedChange, revision);
 		}
 
 		this.head = mintCommit(startCommit, {
@@ -262,7 +260,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
 		// then update the repair data store for that transaction
-		this.transactions.repairStore?.capture(delta, revision);
+		this.transactions.repairStore?.capture(this.head.change, revision);
 
 		this.emitAndRebaseAnchors({
 			type: "replace",
@@ -317,7 +315,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private popTransaction(): [
 		GraphCommit<TChange>,
 		GraphCommit<TChange>[],
-		RepairDataStore | undefined,
+		RepairDataStore<TChange> | undefined,
 	] {
 		const { startRevision, repairStore } = this.transactions.pop();
 		const commits: GraphCommit<TChange>[] = [];
@@ -383,7 +381,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @param anchors - an optional set of anchors that the new branch is responsible for rebasing
 	 */
 	public fork(
-		repairDataStoreProvider?: IRepairDataStoreProvider,
+		repairDataStoreProvider?: IRepairDataStoreProvider<TChange>,
 		anchors?: AnchorSet,
 	): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
@@ -494,7 +492,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		const rebaseResult = rebaseBranch(
 			this.changeFamily.rebaser,
-			(change: TChange) => this.changeFamily.intoDelta(change),
 			repairDataStoreProvider,
 			head,
 			onto,

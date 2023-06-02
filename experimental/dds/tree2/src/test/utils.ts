@@ -621,10 +621,10 @@ export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath 
 	}
 }
 
-export class MockRepairDataStore implements RepairDataStore {
+export class MockRepairDataStore<TChange> implements RepairDataStore<TChange> {
 	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
 
-	public capture(change: Delta.Root, revision: RevisionTag): void {
+	public capture(change: TChange, revision: RevisionTag): void {
 		const existing = this.capturedData.get(revision);
 
 		if (existing === undefined) {
@@ -649,20 +649,22 @@ export class MockRepairDataStore implements RepairDataStore {
 	}
 }
 
-export class MockRepairDataStoreProvider implements IRepairDataStoreProvider {
+export const mockIntoDelta = (delta: Delta.Root) => delta;
+
+export class MockRepairDataStoreProvider<TChange> implements IRepairDataStoreProvider<TChange> {
 	public freeze(): void {
 		// Noop
 	}
 
-	public applyDelta(change: Delta.Root): void {
+	public applyDelta(change: TChange): void {
 		// Noop
 	}
 
-	public createRepairData(): MockRepairDataStore {
+	public createRepairData(): MockRepairDataStore<TChange> {
 		return new MockRepairDataStore();
 	}
 
-	public clone(): IRepairDataStoreProvider {
+	public clone(): IRepairDataStoreProvider<TChange> {
 		return new MockRepairDataStoreProvider();
 	}
 }

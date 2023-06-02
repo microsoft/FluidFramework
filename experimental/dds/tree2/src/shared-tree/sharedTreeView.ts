@@ -36,6 +36,7 @@ import {
 	DefaultEditBuilder,
 	NewFieldContent,
 	ForestRepairDataStore,
+	defaultIntoDelta,
 } from "../feature-libraries";
 import { SharedTreeBranch } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -247,13 +248,13 @@ export function createSharedTreeView(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 	schema?: InMemoryStoredSchemaRepository;
 	forest?: IEditableForest;
-	repairProvider?: ForestRepairDataStoreProvider;
+	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
 	identifierIndex?: NodeIdentifierIndex<typeof nodeIdentifierKey>;
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
 	const repairDataStoreProvider =
-		args?.repairProvider ?? new ForestRepairDataStoreProvider(forest, schema);
+		args?.repairProvider ?? new ForestRepairDataStoreProvider(forest, schema, defaultIntoDelta);
 	const undoRedoManager = UndoRedoManager.create(defaultChangeFamily);
 	const branch =
 		args?.branch ??
@@ -329,7 +330,11 @@ export class SharedTreeView implements ISharedTreeView {
 
 	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => {
-			this.branch.startTransaction(new ForestRepairDataStore(this.forest));
+			this.branch.startTransaction(
+				new ForestRepairDataStore(this.forest, (change: DefaultChangeset) =>
+					defaultChangeFamily.intoDelta(change),
+				),
+			);
 			this.branch.editor.enterTransaction();
 		},
 		commit: () => {
@@ -372,7 +377,11 @@ export class SharedTreeView implements ISharedTreeView {
 		const anchors = new AnchorSet();
 		const storedSchema = this._storedSchema.clone();
 		const forest = this._forest.clone(storedSchema, anchors);
-		const repairDataStoreProvider = new ForestRepairDataStoreProvider(forest, storedSchema);
+		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
+			forest,
+			storedSchema,
+			defaultIntoDelta,
+		);
 		const branch = this.branch.fork(repairDataStoreProvider, anchors);
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeView(

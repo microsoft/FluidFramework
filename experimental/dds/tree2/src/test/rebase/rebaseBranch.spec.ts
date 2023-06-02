@@ -14,8 +14,8 @@ import {
 	rebaseBranch,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../core/rebase";
-import { NonEmptyTestChange, TestChange, testChangeFamilyFactory } from "../testChange";
-import { MockRepairDataStore, MockRepairDataStoreProvider } from "../utils";
+import { NonEmptyTestChange, TestChange, TestChangeRebaser } from "../testChange";
+import { MockRepairDataStoreProvider } from "../utils";
 
 function newCommit(
 	intention: number | number[],
@@ -31,7 +31,6 @@ function newCommit(
 		change: TestChange.mint(inputContext2, intention),
 		revision: intention.toString() as RevisionTag,
 		parent,
-		repairData: new MockRepairDataStore(),
 	};
 }
 
@@ -66,8 +65,6 @@ describe("rebaseBranch", () => {
 	// Commit "2" is in parentheses and is the target commit of the rebase operation.
 
 	it("fails if branches are disjoint", () => {
-		const changeFamily = testChangeFamilyFactory();
-
 		// 1 ─ 2
 		// 3
 		const n1 = newCommit(1);
@@ -75,22 +72,14 @@ describe("rebaseBranch", () => {
 		const n3 = newCommit(3);
 
 		assert.throws(
-			() =>
-				rebaseBranch(
-					changeFamily.rebaser,
-					changeFamily.intoDelta,
-					new MockRepairDataStoreProvider(),
-					n3,
-					n2,
-				),
+			() => rebaseBranch(new TestChangeRebaser(), new MockRepairDataStoreProvider(), n3, n2),
 			(e) => validateAssertionError(e, "branches must be related"),
 		);
 
 		assert.throws(
 			() =>
 				rebaseBranch(
-					changeFamily.rebaser,
-					changeFamily.intoDelta,
+					new TestChangeRebaser(),
 					new MockRepairDataStoreProvider(),
 					n2,
 					n3,
@@ -101,8 +90,6 @@ describe("rebaseBranch", () => {
 	});
 
 	it("does nothing if already rebased onto target", () => {
-		const changeFamily = testChangeFamilyFactory();
-
 		// 1
 		// └─ 2 ─ 3
 		const n1 = newCommit(1);
@@ -112,8 +99,7 @@ describe("rebaseBranch", () => {
 		// (1)
 		//  └─ 2 ─ 3
 		const [n3_1, change, commits] = rebaseBranch(
-			changeFamily.rebaser,
-			changeFamily.intoDelta,
+			new TestChangeRebaser(),
 			new MockRepairDataStoreProvider(),
 			n3,
 			n1,
@@ -126,8 +112,6 @@ describe("rebaseBranch", () => {
 	});
 
 	it("can rebase a branch onto the head of another branch", () => {
-		const changeFamily = testChangeFamilyFactory();
-
 		// 1 ─ 2 ─ 3
 		// └─ 4 ─ 5
 		const n1 = newCommit(1);
@@ -139,8 +123,7 @@ describe("rebaseBranch", () => {
 		// 1 ─ 2 ─(3)
 		//         └─ 4'─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			changeFamily.rebaser,
-			changeFamily.intoDelta,
+			new TestChangeRebaser(),
 			new MockRepairDataStoreProvider(),
 			n5,
 			n3,
@@ -158,8 +141,6 @@ describe("rebaseBranch", () => {
 	});
 
 	it("can rebase a branch onto the middle of another branch", () => {
-		const changeFamily = testChangeFamilyFactory();
-
 		// 1 ─ 2 ─ 3
 		// └─ 4 ─ 5
 		const n1 = newCommit(1);
@@ -171,8 +152,7 @@ describe("rebaseBranch", () => {
 		// 1 ─(2)─ 3
 		//     └─ 4'─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			changeFamily.rebaser,
-			changeFamily.intoDelta,
+			new TestChangeRebaser(),
 			new MockRepairDataStoreProvider(),
 			n5,
 			n2,
@@ -191,8 +171,6 @@ describe("rebaseBranch", () => {
 	});
 
 	it("skips and advances over commits with the same revision tag", () => {
-		const changeFamily = testChangeFamilyFactory();
-
 		// 1 ─ 2 ─ 3 ─ 4
 		// └─ 2'─ 3'─ 5
 		const n1 = newCommit(1);
@@ -206,8 +184,7 @@ describe("rebaseBranch", () => {
 		// 1 ─(2)─ 3 ─ 4
 		//         └─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			changeFamily.rebaser,
-			changeFamily.intoDelta,
+			new TestChangeRebaser(),
 			new MockRepairDataStoreProvider(),
 			n5,
 			n2,
@@ -226,8 +203,6 @@ describe("rebaseBranch", () => {
 	});
 
 	it("correctly rebases over branches that share some commits", () => {
-		const changeFamily = testChangeFamilyFactory();
-
 		// 1 ─ 2 ─ 3 ─ 4
 		// └─ 2'─ 3'─ 5
 		const n1 = newCommit(1);
@@ -241,8 +216,7 @@ describe("rebaseBranch", () => {
 		// 1 ─ 2 ─ 3 ─(4)
 		//             └─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			changeFamily.rebaser,
-			changeFamily.intoDelta,
+			new TestChangeRebaser(),
 			new MockRepairDataStoreProvider(),
 			n5,
 			n4,
@@ -260,8 +234,6 @@ describe("rebaseBranch", () => {
 	});
 
 	it("reports no change for equivalent branches", () => {
-		const changeFamily = testChangeFamilyFactory();
-
 		// 1 ─ 2 ─ 3 ─ 4
 		// └─ 2'─ 3'
 		const n1 = newCommit(1);
@@ -274,8 +246,7 @@ describe("rebaseBranch", () => {
 		// 1 ─ 2 ─(3)─ 4
 		//         └─
 		const [n3_2, change, commits] = rebaseBranch(
-			changeFamily.rebaser,
-			changeFamily.intoDelta,
+			new TestChangeRebaser(),
 			new MockRepairDataStoreProvider(),
 			n3_1,
 			n3,
@@ -289,8 +260,6 @@ describe("rebaseBranch", () => {
 	});
 
 	it("generates and stores repair data for rebased changes", () => {
-		const changeFamily = testChangeFamilyFactory();
-
 		// 1 ─ 2 ─ 3 ─ 4
 		// └─ 2'─ 3'─ 5
 		const n1 = newCommit(1);
@@ -305,8 +274,7 @@ describe("rebaseBranch", () => {
 		// 1 ─ 2 ─ 3 ─(4)
 		//             └─ 5'
 		const [n5_1, change, commits] = rebaseBranch(
-			changeFamily.rebaser,
-			changeFamily.intoDelta,
+			new TestChangeRebaser(),
 			new MockRepairDataStoreProvider(),
 			n5,
 			n4,
