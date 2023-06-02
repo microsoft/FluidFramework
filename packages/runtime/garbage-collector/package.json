@@ -1,19 +1,21 @@
 {
-	"name": "@fluidframework/local-driver",
+	"name": "@fluidframework/garbage-collector",
 	"version": "2.0.0-internal.4.4.0",
-	"description": "Fluid local driver",
+	"description": "Garbage Collector implementation for Fluid, @deprecated - This package is for internal use only and will be deleted in a future release.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/drivers/local-driver"
+		"directory": "packages/runtime/garbage-collector"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"sideEffects": false,
 	"main": "dist/index.js",
 	"module": "lib/index.js",
 	"browser": {
-		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
+		"./dist/indexNode.js": "./dist/indexBrowser.js",
+		"./lib/indexNode.js": "./lib/indexBrowser.js"
 	},
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -25,6 +27,7 @@
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"bump-version": "npm version minor --no-push --no-git-tag-version && npm run build:genver",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
 		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
 		"eslint": "eslint --format stylish src",
@@ -35,10 +38,11 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
-		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:coverage": "nyc npm run test:report",
 		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
+		"test:report": "npm test -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
@@ -66,32 +70,18 @@
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/driver-base": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/protocol-base": "^0.1039.1000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
-		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/server-local-server": "^0.1039.1000",
-		"@fluidframework/server-services-client": "^0.1039.1000",
-		"@fluidframework/server-services-core": "^0.1039.1000",
-		"@fluidframework/server-test-utils": "^0.1039.1000",
-		"@fluidframework/telemetry-utils": "workspace:~",
-		"events": "^3.1.0",
-		"jsrsasign": "^10.5.25",
-		"url": "^0.11.0",
-		"uuid": "^8.3.1"
+		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.17.0",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.17.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.0.0-internal.4.1.0",
+		"@fluidframework/garbage-collector-previous": "npm:@fluidframework/garbage-collector@2.0.0-internal.4.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
-		"@types/jsrsasign": "^8.0.8",
+		"@types/events": "^3.0.0",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",
 		"concurrently": "^7.6.0",
@@ -105,7 +95,6 @@
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"socket.io-client": "^4.6.1",
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
