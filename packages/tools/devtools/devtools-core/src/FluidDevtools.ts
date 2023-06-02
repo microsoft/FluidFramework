@@ -246,6 +246,9 @@ export class FluidDevtools implements IFluidDevtools {
 		// Register the devtools instance to be disposed on Window unload
 		globalThis.addEventListener?.("beforeunload", this.windowBeforeUnloadHandler);
 
+		// Post message for supported features
+		this.postSupportedFeatures();
+
 		this._disposed = false;
 	}
 
