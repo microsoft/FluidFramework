@@ -487,7 +487,6 @@ stages:
               workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
               script: |
 
-                FLUID_LOGGER_PROPS=$FLUID_LOGGER_PROPS;
                 echo "FLUID_LOGGER_PROPS = $FLUID_LOGGER_PROPS"
 
                 # Run execution time tests
