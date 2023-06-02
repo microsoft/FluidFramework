@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 import { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils";
 import { SharedString } from "../sharedString";
+import { IIntervalCollection, SequenceInterval } from "../intervalCollection";
 
 export interface Client {
 	sharedString: SharedString;
@@ -80,3 +81,32 @@ export function assertEquivalentSharedStrings(a: SharedString, b: SharedString) 
 		}
 	}
 }
+
+export const assertIntervals = (
+	sharedString: SharedString,
+	intervalCollection: IIntervalCollection<SequenceInterval>,
+	expected: readonly { start: number; end: number }[],
+	validateOverlapping: boolean = true,
+) => {
+	const actual = Array.from(intervalCollection);
+	if (validateOverlapping && sharedString.getLength() > 0) {
+		const overlapping = intervalCollection.findOverlappingIntervals(
+			0,
+			sharedString.getLength() - 1,
+		);
+		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
+	}
+	assert.strictEqual(
+		actual.length,
+		expected.length,
+		`findOverlappingIntervals() must return the expected number of intervals`,
+	);
+
+	const actualPos = actual.map((interval) => {
+		assert(interval);
+		const start = sharedString.localReferencePositionToPosition(interval.start);
+		const end = sharedString.localReferencePositionToPosition(interval.end);
+		return { start, end };
+	});
+	assert.deepEqual(actualPos, expected, "intervals are not as expected");
+};

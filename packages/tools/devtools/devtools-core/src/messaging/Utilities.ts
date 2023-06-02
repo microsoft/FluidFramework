@@ -14,8 +14,6 @@ import { IDevtoolsMessage, ISourcedDevtoolsMessage } from "./Messages";
  * If not passed, this function won't log to console before posting the message.
  *
  * @remarks Thin wrapper to provide some message-wise type-safety.
- *
- * @internal
  */
 export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(
 	loggingOptions?: MessageLoggingOptions,
@@ -46,9 +44,10 @@ export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(
 export interface InboundHandlers {
 	/**
 	 * Mapping from {@link IDevtoolsMessage."type"}s to a handler callback for that message type.
-	 * @returns Whether or not the message was actually handled.
+	 *
+	 * @returns A promise that resolves to a flag indicating if the message was handled (`true`) or not (`false`).
 	 */
-	[type: string]: (message: ISourcedDevtoolsMessage) => boolean;
+	[type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
 /**
@@ -115,14 +114,23 @@ export function handleIncomingMessage(
 		return;
 	}
 
-	const handled = handlers[message.type](message);
+	const loggingPreamble =
+		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
 
-	// Only log if the message was actually handled by the recipient.
-	if (handled && loggingOptions !== undefined) {
-		const loggingPreamble =
-			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-		console.debug(`${loggingPreamble} message handled:`, message);
-	}
+	handlers[message.type](message).then(
+		(wasMessageHandled) => {
+			// Only log if the message was actually handled by the recipient.
+			if (wasMessageHandled && loggingOptions !== undefined) {
+				console.debug(`${loggingPreamble} Message handled.`, message);
+			}
+		},
+		(error) => {
+			console.error(
+				`${loggingPreamble} Message could not be handled due to an error:`,
+				error,
+			);
+		},
+	);
 }
 
 /**

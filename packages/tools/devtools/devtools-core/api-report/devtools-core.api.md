@@ -368,7 +368,7 @@ export interface IMessageRelayEvents<TMessage extends ISourcedDevtoolsMessage = 
 
 // @internal
 export interface InboundHandlers {
-    [type: string]: (message: ISourcedDevtoolsMessage) => boolean;
+    [type: string]: (message: ISourcedDevtoolsMessage) => Promise<boolean>;
 }
 
 // @public
@@ -403,9 +403,6 @@ export enum MemberChangeKind {
 export interface MessageLoggingOptions {
     context?: string;
 }
-
-// @internal
-export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
