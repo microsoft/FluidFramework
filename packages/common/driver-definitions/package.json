@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-definitions",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Fluid driver definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -58,6 +58,27 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IWebResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IResolvedUrlBase": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_IResolvedUrl": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ILocationRedirectionError": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDocumentService": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_DriverError": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/local-driver",
-	"version": "2.0.0-internal.4.4.0",
+	"version": "2.0.0-internal.5.0.0",
 	"description": "Fluid local driver",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -105,10 +105,14 @@
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
-		"socket.io-client": "^4.4.1",
+		"socket.io-client": "^4.6.1",
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LocalDocumentService": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
