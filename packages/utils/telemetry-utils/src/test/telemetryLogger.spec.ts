@@ -297,9 +297,18 @@ describe("convertToBasePropertyType", () => {
 				b: "two",
 				c: true,
 				d: [false, "okay"],
+				e: undefined,
 			};
 			const converted = convertToBasePropertyType(property);
 			const expected: TelemetryEventPropertyTypeExt = JSON.stringify(property);
+			assert.deepStrictEqual(converted, expected);
+		});
+		it("flat object with only undefined", () => {
+			const property: TelemetryEventPropertyTypeExt = {
+				e: undefined,
+			};
+			const converted = convertToBasePropertyType(property);
+			const expected: TelemetryEventPropertyTypeExt = "{}";
 			assert.deepStrictEqual(converted, expected);
 		});
 	});
