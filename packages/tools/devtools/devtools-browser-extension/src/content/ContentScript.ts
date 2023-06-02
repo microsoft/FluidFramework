@@ -83,5 +83,3 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 		window.removeEventListener("message", relayMessageFromPageToBackground);
 	});
 });
-
-console.log(formatContentScriptMessageForLogging("Content Script initialized!"));
