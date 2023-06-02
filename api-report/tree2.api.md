@@ -1157,6 +1157,7 @@ export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: G
 // @alpha
 export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeStoredSchema;
 
+// @alpha
 interface MakeNominal {
 }
 
