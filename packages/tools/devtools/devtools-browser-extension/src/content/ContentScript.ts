@@ -11,7 +11,7 @@ import {
 
 import { extensionMessageSource, relayMessageToPort, relayMessageToWindow } from "../messaging";
 // eslint-disable-next-line import/no-internal-modules
-import { browser } from "../utilities/Globals";
+import { browser, window } from "../utilities/Globals";
 import {
 	contentScriptMessageLoggingOptions,
 	formatContentScriptMessageForLogging,
@@ -47,7 +47,7 @@ browser.runtime.onConnect.addListener((backgroundPort: Port) => {
 	): void {
 		const message = event.data;
 
-		// Only relay message if it is one of ours, and if the source is the window's debugger
+		// Only relay message if it is one of ours, and if the source is the window's Devtools instance
 		// (and not a message originating from the extension).
 		if (isDevtoolsMessage(message) && message.source === devtoolsMessageSource) {
 			relayMessageToPort(

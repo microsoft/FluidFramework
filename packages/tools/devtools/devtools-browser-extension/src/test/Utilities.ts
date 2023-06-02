@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { JSDOM } from "jsdom";
 import { SinonSandbox } from "sinon";
 
 import { Globals } from "../utilities";
@@ -84,7 +85,13 @@ export function stubGlobals(): Globals {
 		webNavigation: { onCommitted: stubEvent() },
 	} as unknown as typeof chrome;
 
+	const dom = new JSDOM("<!doctype html>", {
+		runScripts: "dangerously",
+		url: "http://localhost/",
+	});
+
 	return {
 		browser: stubbedBrowser,
+		window: dom.window as unknown as Window & typeof globalThis,
 	};
 }
