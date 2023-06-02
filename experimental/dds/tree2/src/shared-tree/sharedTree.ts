@@ -209,6 +209,10 @@ export class SharedTree
 		this.identifierIndex.scanIdentifiers(this.context);
 		this.events.emit("afterBatch");
 	}
+
+	public static getFactory(): IChannelFactory {
+		return new SharedTreeFactory();
+	}
 }
 
 /**

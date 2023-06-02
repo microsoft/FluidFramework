@@ -17,13 +17,23 @@ import { DevtoolsLogger, IDevtools, initializeDevtools } from "@fluid-experiment
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema, IFluidContainer, SharedObjectClass } from "@fluidframework/fluid-static";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
+import {
+	AllowedUpdateType,
+	FieldKinds,
+	ISharedTree,
+	SchemaBuilder,
+	SharedTreeFactory,
+	ValueSchema,
+} from "@fluid-experimental/tree2";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
 
+import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
 import { CounterWidget, EmojiGrid } from "./widgets";
 import { createMockSharedObject } from "./MockSharedObject";
@@ -42,6 +52,11 @@ const sharedTextKey = "shared-text";
 const sharedCounterKey = "shared-counter";
 
 /**
+ * Key in the app's `rootMap` under which the SharedTree object is stored.
+ */
+const sharedTreeKey = "shared-tree";
+
+/**
  * Key in the app's `rootMap` under which the SharedCell object is stored.
  */
 const emojiMatrixKey = "emoji-matrix";
@@ -57,13 +72,68 @@ const unknownDataKey = "unknown-data";
 const unknownSharedObjectKey = "unknown-shared-object";
 
 /**
+ * TODO
+ */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class MySharedTree {
+	public static getFactory(): IChannelFactory {
+		return new SharedTreeFactory();
+	}
+}
+
+/**
+ * TODO
+ */
+export class SharedTreeObject extends DataObject {
+	private _tree: ISharedTree | undefined;
+
+	public get tree(): ISharedTree {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._tree!;
+	}
+
+	protected async initializingFirstTime(): Promise<void> {
+		this._tree = this.runtime.createChannel(
+			undefined,
+			new SharedTreeFactory().type,
+		) as ISharedTree;
+
+		this.root.set(sharedTreeKey, this.tree.handle);
+	}
+
+	protected async initializingFromExisting(): Promise<void> {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
+	}
+
+	protected async hasInitialized(): Promise<void> {}
+}
+
+/**
+ * TODO
+ */
+export const SharedTreeObjectFactory = new DataObjectFactory(
+	"shared-tree-example",
+	SharedTreeObject,
+	[new SharedTreeFactory()],
+	{},
+);
+
+/**
  * Schema used by the app.
  */
 const containerSchema: ContainerSchema = {
 	initialObjects: {
 		rootMap: SharedMap,
 	},
-	dynamicObjectTypes: [SharedCell, SharedCounter, SharedMap, SharedMatrix, SharedString],
+	dynamicObjectTypes: [
+		SharedCell,
+		SharedCounter,
+		SharedMap,
+		SharedMatrix,
+		SharedString,
+		MySharedTree,
+	],
 };
 
 /**
@@ -104,6 +174,37 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	// Set up SharedCounter for counter widget
 	const sharedCounter = await container.create(SharedCounter);
 	rootMap.set(sharedCounterKey, sharedCounter.handle);
+
+	const genan = MySharedTree as unknown as SharedObjectClass<ISharedTree>;
+	// const zelda = undefined as unknown as typeof MySharedTree;
+	// const link: SharedObjectClass<MySharedTree> = zelda;
+
+	// Set up SharedTree for visualization.
+	const sharedTree = await container.create(genan);
+
+	// call sharedTree APIs
+	const builder = new SchemaBuilder("SchemaAware");
+	const stringSchema = builder.primitive("string", ValueSchema.String);
+	const rootNodeSchema = builder.object("Test", {
+		local: {
+			children: SchemaBuilder.fieldSequence(stringSchema),
+		},
+	});
+	const schema = builder.intoDocumentSchema(
+		SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
+	);
+
+	const view = sharedTree.schematize({
+		schema,
+		allowedSchemaModifications: AllowedUpdateType.None,
+		initialTree: { children: [] },
+	});
+
+	console.log(view.root);
+
+	rootMap.set(sharedTreeKey, sharedTree.handle);
+
+	// rootMap.set(sharedTreeKey, sha)
 
 	// Also set a couple of primitives for testing the debug view
 	rootMap.set("numeric-value", 42);

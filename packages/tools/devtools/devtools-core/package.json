@@ -72,7 +72,9 @@
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~"
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluid-experimental/tree": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",

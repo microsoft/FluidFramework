@@ -40,6 +40,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluidframework/aqueduct": "workspace",
 		"@fluentui/react": "^8.109.3",
 		"@fluentui/react-components": "~9.19.1",
 		"@fluentui/react-icons": "^2.0.201",
@@ -53,6 +54,8 @@
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
+		"@fluid-experimental/tree": "workspace:~",
+		"@fluid-experimental/tree2": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
