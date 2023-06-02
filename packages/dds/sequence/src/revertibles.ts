@@ -284,7 +284,7 @@ export function appendSharedStringDeltaToRevertibles(
 
 		if (startIntervals.length > 0 || endIntervals.length > 0 || revertibleRefs.length > 0) {
 			const removeRevertibles: MergeTreeDeltaRevertible[] = [];
-			appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, removeRevertibles);
+			appendToMergeTreeDeltaRevertibles(delta.deltaArgs, removeRevertibles);
 			assert(
 				removeRevertibles.length === 1,
 				0x6c4 /* Remove revertible should be a single delta */,
@@ -337,7 +337,7 @@ export function appendSharedStringDeltaToRevertibles(
 	if (revertibles.length > 0 && isMergeTreeDeltaRevertible(revertibles[revertibles.length - 1])) {
 		mergeTreeRevertibles.push(revertibles.pop() as MergeTreeDeltaRevertible);
 	}
-	appendToMergeTreeDeltaRevertibles(string, delta.deltaArgs, mergeTreeRevertibles);
+	appendToMergeTreeDeltaRevertibles(delta.deltaArgs, mergeTreeRevertibles);
 	revertibles.push(...mergeTreeRevertibles);
 }
 
