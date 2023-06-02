@@ -94,7 +94,6 @@ function mapTypesAndChildren<T>(
 	return output;
 }
 
-// TODO: clarify `enum` context
 function buildTreeSchema(
 	builder: SchemaBuilder,
 	treeSchemaMap: Map<string, LazyTreeSchema>,
@@ -102,26 +101,32 @@ function buildTreeSchema(
 	type: string,
 ): LazyTreeSchema {
 	assert(type !== basePropertyType, `"BaseProperty" shall not be used in schemas.`);
-	const { typeid, context } = TypeIdHelper.extractContext(type);
+	const { typeid, context, isEnum } = TypeIdHelper.extractContext(type);
 	if (!isPropertyContext(context)) {
 		fail(`Unknown context "${context}" in typeid "${type}"`);
 	}
 	if (context === singleContext) {
-		const typeidAsArray = TypeIdHelper.createSerializationTypeId(typeid, arrayContext, false);
-		const typeidAsMap = TypeIdHelper.createSerializationTypeId(typeid, mapContext, false);
+		const typeidAsArray = TypeIdHelper.createSerializationTypeId(typeid, arrayContext, isEnum);
+		const typeidAsMap = TypeIdHelper.createSerializationTypeId(typeid, mapContext, isEnum);
 		if (!treeSchemaMap.has(typeidAsArray)) {
 			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeidAsArray);
 		}
 		if (!treeSchemaMap.has(typeidAsMap)) {
 			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeidAsMap);
 		}
-		const treeSchema = treeSchemaMap.get(typeid);
+		// There must be no difference between `type` and `typeid` within the rest of this block
+		// except that `type` keeps `enum<>` pattern whereas `typeid` is a "pure" type.
+		// Since SharedTree does not support enums yet, they are considered to be just primitives.
+		// In all other cases `type` and `typeid` should be exactly the same.
+		// TODO: adapt the code when enums will become supported.
+		const treeSchema = treeSchemaMap.get(type);
 		if (treeSchema) {
 			return treeSchema;
 		}
-		if (TypeIdHelper.isPrimitiveType(typeid)) {
-			return buildPrimitiveSchema(builder, treeSchemaMap, typeid);
+		if (TypeIdHelper.isPrimitiveType(type)) {
+			return buildPrimitiveSchema(builder, treeSchemaMap, type, isEnum);
 		} else {
+			assert(type === typeid, "Unexpected typeid discrepancy");
 			const cache: { treeSchema?: TreeSchema } = {};
 			treeSchemaMap.set(typeid, () => cache.treeSchema as TreeSchema);
 			const local = buildLocalFields(builder, treeSchemaMap, allChildrenByType, typeid, {});
@@ -149,7 +154,7 @@ function buildTreeSchema(
 		const currentTypeid = TypeIdHelper.createSerializationTypeId(
 			isAnyType ? Any : typeid,
 			context,
-			false,
+			isEnum,
 		);
 		const treeSchema = treeSchemaMap.get(currentTypeid);
 		if (treeSchema) {
@@ -163,7 +168,7 @@ function buildTreeSchema(
 			treeSchemaMap,
 			allChildrenByType,
 			fieldKind,
-			isAnyType ? Any : typeid,
+			isAnyType ? Any : isEnum ? `enum<${typeid}>` : typeid,
 		);
 		switch (context) {
 			case mapContext: {

@@ -406,6 +406,33 @@ describe("schema converter", () => {
 			}
 		});
 
+		it(`can use enums`, () => {
+			const enumTypeName: TreeSchemaIdentifier = brand(`Test:Optional-1.0.0`);
+			const fullSchemaData = convertPropertyToSharedTreeStorageSchema(
+				FieldKinds.optional,
+				Any,
+				new Set([`enum<${enumTypeName}>`]),
+			);
+			const enumSchema = fullSchemaData.treeSchema.get(brand(`enum<${enumTypeName}>`));
+			assert(enumSchema && isPrimitive(enumSchema));
+			assert.equal(enumSchema.value, ValueSchema.Number);
+
+			const arrayOfEnums = fullSchemaData.treeSchema.get(
+				brand(`array<enum<${enumTypeName}>>`),
+			);
+			assert(arrayOfEnums);
+			const primary = getPrimaryField(arrayOfEnums);
+			assert(primary);
+			assert.deepEqual([...(primary.schema as FieldSchema).allowedTypes][0], enumSchema);
+
+			const mapOfEnums = fullSchemaData.treeSchema.get(brand(`map<enum<${enumTypeName}>>`));
+			assert(mapOfEnums);
+			assert.deepEqual(
+				[...(mapOfEnums.extraLocalFields as FieldSchema).allowedTypes][0],
+				enumSchema,
+			);
+		});
+
 		it(`can use recursive schemas`, () => {
 			const parentTypeName: TreeSchemaIdentifier = brand("Test:Optional-1.0.0");
 			const childTypeName: TreeSchemaIdentifier = brand("Test:Child-1.0.0");
