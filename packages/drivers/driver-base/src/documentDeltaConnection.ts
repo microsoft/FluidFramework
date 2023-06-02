@@ -24,7 +24,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	IDisposable,
-	ITelemetryLogger,
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import {

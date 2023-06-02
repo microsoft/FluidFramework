@@ -183,7 +183,7 @@ export interface IContainerCreateProps {
 	/**
 	 * The logger downstream consumers should construct their loggers from
 	 */
-	readonly subLogger: ITelemetryLogger;
+	readonly subLogger: ITelemetryLoggerExt;
 
 	/**
 	 * Blobs storage for detached containers.

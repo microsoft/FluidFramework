@@ -528,7 +528,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private async runGC(
 		fullGC: boolean,
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): Promise<IGCStats> {
 		// 1. Generate / analyze the runtime's reference graph.
 		// Get the reference graph (gcData) and run GC algorithm to get referenced / unreferenced nodes.
@@ -641,7 +641,7 @@ export class GarbageCollector implements IGarbageCollector {
 		gcResult: IGCResult,
 		sweepReadyNodes: string[],
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	): string[] {
 		// Log events for objects that are ready to be deleted by sweep. This will give us data on sweep when
 		// its not enabled.

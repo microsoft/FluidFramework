@@ -11,7 +11,6 @@ import {
 	isMemoryTest,
 	DocumentTypeInfo,
 } from "@fluid-internal/test-version-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
 	benchmark,

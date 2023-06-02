@@ -19,7 +19,6 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,

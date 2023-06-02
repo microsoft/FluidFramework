@@ -263,7 +263,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	public static async load(
 		tenantId: string,
 		tokenFetcher: TokenFetcher,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -323,7 +323,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 
 	public static async load(
 		tokenFetcher: TokenFetcher,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -353,7 +353,7 @@ export function toInstrumentedR11sOrdererTokenFetcher(
 	tenantId: string,
 	documentId: string | undefined,
 	tokenProvider: ITokenProvider,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): TokenFetcher {
 	const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
@@ -380,7 +380,7 @@ export function toInstrumentedR11sStorageTokenFetcher(
 	tenantId: string,
 	documentId: string,
 	tokenProvider: ITokenProvider,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ): TokenFetcher {
 	const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
