@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { Type } from "@sinclair/typebox";
-import { IJsonCodec, withSchemaValidation } from "../../codec";
+import { IJsonCodec, typeboxValidator, withSchemaValidation } from "../../codec";
 
 describe("Codec APIs", () => {
 	describe("withSchemaValidation", () => {
@@ -13,7 +13,7 @@ describe("Codec APIs", () => {
 			encode: (x) => x,
 			decode: (x) => x,
 		};
-		const codec = withSchemaValidation(Type.Number(), idCodec);
+		const codec = withSchemaValidation(Type.Number(), idCodec, typeboxValidator);
 		describe("rejects invalid data", () => {
 			it("on encode", () => {
 				assert.throws(
