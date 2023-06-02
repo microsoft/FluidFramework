@@ -29,10 +29,8 @@ import {
 	SchemaBuilder,
 	ValueSchema,
 } from "@fluid-experimental/tree2";
-import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { ContainerInfo, createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities";
 import { CounterWidget, EmojiGrid } from "./widgets";
-import { createMockSharedObject } from "./MockSharedObject";
 
 const sharedContainerKey: ContainerKey = "Shared Container";
 const privateContainerKey: ContainerKey = "Private Container";
@@ -56,16 +54,6 @@ const sharedTreeKey = "shared-tree";
  * Key in the app's `rootMap` under which the SharedCell object is stored.
  */
 const emojiMatrixKey = "emoji-matrix";
-
-/**
- * Key in the app's `rootMap` under which an unknown (to the devtools) kind of data will be recorded for testing purposes.
- */
-const unknownDataKey = "unknown-data";
-
-/**
- * Key in the app's `rootMap` under which an unknown (to the devtools) kind of Shared Object will be recorded for testing purposes.
- */
-const unknownSharedObjectKey = "unknown-shared-object";
 
 /**
  * Schema used by the app.
@@ -139,14 +127,11 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 		SchemaBuilder.field(FieldKinds.value, rootNodeSchema),
 	);
 
-	const view = sharedTree.schematize({
+	sharedTree.schematize({
 		schema,
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree: { children: ["hello", "world"] },
 	});
-
-	// TODO: Console to avoid linter problem. Make sure to remove
-	console.log("Live Forever:", view.root);
 
 	rootMap.set(sharedTreeKey, sharedTree.handle);
 
@@ -161,12 +146,6 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 			b: "b",
 		},
 	});
-
-	// Add some unrecognizable data to test devtools handling
-	rootMap.set(unknownDataKey, new MockHandle("Unknown data"));
-
-	const unknownSharedObject = createMockSharedObject("unknown-shared-object-id");
-	rootMap.set(unknownSharedObjectKey, unknownSharedObject.handle);
 }
 
 /**
