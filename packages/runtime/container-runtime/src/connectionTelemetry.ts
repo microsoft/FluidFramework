@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, ChildLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	IDocumentMessage,
@@ -69,12 +68,12 @@ class OpPerfTelemetry {
 	private connectionStartTime = 0;
 	private gap = 0;
 
-	private readonly logger: ITelemetryLogger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	public constructor(
 		private clientId: string | undefined,
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 	) {
 		this.logger = ChildLogger.create(logger, "OpPerf");
 
@@ -314,7 +313,7 @@ export interface IPerfSignalReport {
 export function ReportOpPerfTelemetry(
 	clientId: string | undefined,
 	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-	logger: ITelemetryLogger,
+	logger: ITelemetryLoggerExt,
 ) {
 	new OpPerfTelemetry(clientId, deltaManager, logger);
 }
