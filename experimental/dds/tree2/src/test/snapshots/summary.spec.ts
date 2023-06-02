@@ -3,48 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import path from "path";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { TestTreeProviderLite } from "../utils";
+import { TestTreeProviderLite, initializeTestTree } from "../utils";
 import { brand, useDeterministicStableId } from "../../util";
-import {
-	FieldKey,
-	UpPath,
-	rootFieldKey,
-	fieldSchema,
-	GlobalFieldKey,
-	SchemaData,
-} from "../../core";
+import { FieldKey, UpPath } from "../../core";
 import { ISharedTree, ISharedTreeView } from "../../shared-tree";
-import { singleTextCursor, FieldKinds, namedTreeSchema } from "../../feature-libraries";
-import { createSnapshot, isEqualPastSnapshot } from "./utils";
+import { singleTextCursor } from "../../feature-libraries";
+import { createSnapshot, verifyEqualPastSnapshot } from "./utils";
+
+const regenerateSnapshots = false;
 
 const dirPathTail = "src/test/snapshots/files";
 const fieldKeyA: FieldKey = brand("FieldA");
 const fieldKeyB: FieldKey = brand("FieldB");
 const fieldKeyC: FieldKey = brand("FieldC");
 
-const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const globalFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
-	globalFields: [globalFieldKey],
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([
-		[rootFieldKey, rootFieldSchema],
-		[globalFieldKey, globalFieldSchema],
-	]),
-};
-
 function generateTree(fields: FieldKey[], height: number, nodesPerField: number): ISharedTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	tree.storedSchema.update(testSchema);
+	initializeTestTree(tree);
 	generateTreeRecursively(tree, undefined, fields, height, nodesPerField, { value: 1 });
 	provider.processMessages();
 	return tree;
@@ -105,13 +83,15 @@ describe("Summary snapshot", () => {
 	});
 
 	// Only run this test when you want to regenerate the snapshot.
-	it.skip("regenerate", async () => {
-		const summary = await generateSummary();
-		await createSnapshot(filePath, summary);
-	});
-
-	it("is equal to previous one", async () => {
-		const summary = await generateSummary();
-		assert(await isEqualPastSnapshot(filePath, summary));
-	});
+	if (regenerateSnapshots) {
+		it("regenerate", async () => {
+			const summary = await generateSummary();
+			await createSnapshot(filePath, summary);
+		});
+	} else {
+		it("is equal to previous one", async () => {
+			const summary = await generateSummary();
+			await verifyEqualPastSnapshot(filePath, summary);
+		});
+	}
 });

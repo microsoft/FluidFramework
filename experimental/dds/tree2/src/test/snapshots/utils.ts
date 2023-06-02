@@ -14,10 +14,10 @@ export async function createSnapshot(path: string, data: Serializable): Promise<
 	await fs.writeFile(path, dataStr);
 }
 
-export async function isEqualPastSnapshot(path: string, data: Serializable): Promise<boolean> {
+export async function verifyEqualPastSnapshot(path: string, data: Serializable): Promise<void> {
 	assert(existsSync(path), `test snapshot file does not exist: ${path}`);
 	const dataStr = JSON.stringify(data, undefined, numberOfSpaces);
 	const pastDataStr = await fs.readFile(path, "utf-8");
 
-	return dataStr === pastDataStr;
+	assert.equal(dataStr, pastDataStr);
 }

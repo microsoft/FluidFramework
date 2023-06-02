@@ -285,10 +285,14 @@ let deterministicStableIdCount: number | undefined;
  *
  * @example
  * ```ts
- * const summary = useDeterministicStableId(() => tree.summarize());
+ * function f() {
+ *    ....
+ * }
+ * const result = useDeterministicStableId(f());
  * ```
  */
 export function useDeterministicStableId<T>(f: () => T): T {
+	assert(deterministicStableIdCount === undefined, "useDeterministicStableId cannot be nested");
 	deterministicStableIdCount = 1;
 	const result = f();
 	deterministicStableIdCount = undefined;
