@@ -84,7 +84,7 @@
 		"@fluidframework/build-tools": "^0.17.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.0.0-internal.4.0.0",
+		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@2.0.0-internal.4.1.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/mocha": "^9.1.1",

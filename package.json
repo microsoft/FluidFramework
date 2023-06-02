@@ -54,8 +54,10 @@
 		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run ci:eslint",
 		"lint:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream lint:fix",
 		"policy-check": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json",
+		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Excludes assert-short-code. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
 		"policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
 		"policy-check:fix": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --excludeHandler assert-short-codes --fix",
+		"policy-check:fix-help": "echo Fix policy-check violations excludes assert-short-code/",
 		"prettier": "npm run prettier:root && pnpm run -r --no-sort --stream prettier",
 		"prettier:fix": "npm run prettier:root:fix && pnpm run -r --no-sort --stream prettier:fix",
 		"prettier:root": "prettier --check ./*.* --ignore-path .prettierignore",
@@ -137,7 +139,6 @@
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@octokit/core": "^4.0.5",
-		"@types/node": "^14.18.38",
 		"auto-changelog": "^2.4.0",
 		"c8": "^7.7.1",
 		"changesets-format-with-issue-links": "^0.3.0",
@@ -185,7 +186,6 @@
 				"webpack": "^5.82.0"
 			},
 			"ignoreMissing": [
-				"@types/node",
 				"fluid-framework"
 			]
 		}

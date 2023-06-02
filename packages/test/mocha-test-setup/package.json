@@ -16,7 +16,8 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint && npm run build:docs",
-		"build:compile": "npm run typetests:gen && concurrently npm:tsc npm:build:esnext",
+		"build:commonjs": "npm run typetests:gen && npm run tsc",
+		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
 		"build:compile:min": "npm run build:compile",
 		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
