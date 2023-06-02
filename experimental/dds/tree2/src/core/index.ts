@@ -35,6 +35,11 @@ export {
 	NodeData,
 	GenericTreeNode,
 	JsonableTree,
+	EncodedFieldMapObject,
+	EncodedNodeData,
+	EncodedGenericFieldsNode,
+	EncodedGenericTreeNode,
+	EncodedJsonableTree,
 	Delta,
 	rootFieldKey,
 	rootField,
@@ -89,6 +94,8 @@ export {
 	AnchorEvents,
 	AnchorSetRootEvents,
 	ProtoNodes,
+	CursorMarker,
+	isCursor,
 } from "./tree";
 
 export {

@@ -16,7 +16,7 @@ export type MenuSectionProps = React.PropsWithChildren<{
 	header: string;
 
 	/**
-	 * The refresh icon to display in the header of the menu section.
+	 * The icon to display in the header of the menu section.
 	 */
 	icon?: React.ReactElement;
 }>;

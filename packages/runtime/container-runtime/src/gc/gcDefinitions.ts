@@ -204,6 +204,8 @@ export interface IGarbageCollector {
 	readonly shouldRunGC: boolean;
 	/** Tells whether the GC state in summary needs to be reset in the next summary. */
 	readonly summaryStateNeedsReset: boolean;
+	/** The count of data stores whose GC state updated since the last summary. */
+	readonly updatedDSCountSinceLastSummary: number;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */

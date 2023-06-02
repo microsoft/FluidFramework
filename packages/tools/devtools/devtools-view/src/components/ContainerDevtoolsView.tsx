@@ -16,7 +16,7 @@ import {
 	ContainerDevtoolsFeatureFlags,
 	ContainerDevtoolsFeatures,
 	GetContainerDevtoolsFeatures,
-	HasContainerId,
+	HasContainerKey,
 	ISourcedDevtoolsMessage,
 	InboundHandlers,
 	handleIncomingMessage,
@@ -48,7 +48,7 @@ const containerDevtoolsViewClassName = `fluid-client-debugger-view`;
 /**
  * {@link ContainerDevtoolsView} input props.
  */
-export type ContainerDevtoolsViewProps = HasContainerId;
+export type ContainerDevtoolsViewProps = HasContainerKey;
 
 /**
  * Inner view options within the container view.
@@ -81,7 +81,7 @@ enum PanelView {
  * data.
  */
 export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.ReactElement {
-	const { containerId } = props;
+	const { containerKey } = props;
 
 	// Set of features supported by the corresponding Container-level devtools instance.
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
@@ -95,9 +95,9 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerDevtoolsFeatures.MessageType]: (untypedMessage) => {
+			[ContainerDevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerDevtoolsFeatures.Message;
-				if (message.data.containerId === containerId) {
+				if (message.data.containerKey === containerKey) {
 					setSupportedFeatures(message.data.features);
 					return true;
 				}
@@ -117,24 +117,24 @@ export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.
 		messageRelay.on("message", messageHandler);
 
 		// Query for supported feature set
-		messageRelay.postMessage(GetContainerDevtoolsFeatures.createMessage({ containerId }));
+		messageRelay.postMessage(GetContainerDevtoolsFeatures.createMessage({ containerKey }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, messageRelay, setSupportedFeatures]);
+	}, [containerKey, messageRelay, setSupportedFeatures]);
 
 	return supportedFeatures === undefined ? (
 		<Waiting />
 	) : (
-		<_ContainerDevtoolsView containerId={containerId} supportedFeatures={supportedFeatures} />
+		<_ContainerDevtoolsView containerKey={containerKey} supportedFeatures={supportedFeatures} />
 	);
 }
 
 /**
  * {@link _ContainerDevtoolsView} input props.
  */
-interface _ContainerDevtoolsViewProps extends HasContainerId {
+interface _ContainerDevtoolsViewProps extends HasContainerKey {
 	/**
 	 * Set of features supported by the corresponding Container-level devtools instance.
 	 */
@@ -145,7 +145,7 @@ interface _ContainerDevtoolsViewProps extends HasContainerId {
  * Internal {@link ContainerDevtoolsView}, displayed after supported feature set has been acquired from the webpage.
  */
 function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.ReactElement {
-	const { containerId, supportedFeatures } = props;
+	const { containerKey, supportedFeatures } = props;
 	const panelViews = Object.values(PanelView);
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
@@ -157,13 +157,13 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData:
-			innerView = <DataObjectsView containerId={containerId} />;
+			innerView = <DataObjectsView containerKey={containerKey} />;
 			break;
 		case PanelView.Audience:
-			innerView = <AudienceView containerId={containerId} />;
+			innerView = <AudienceView containerKey={containerKey} />;
 			break;
 		case PanelView.ContainerStateHistory:
-			innerView = <ContainerHistoryView containerId={containerId} />;
+			innerView = <ContainerHistoryView containerKey={containerKey} />;
 			break;
 		default:
 			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
@@ -187,7 +187,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 			className={containerDevtoolsViewClassName}
 		>
 			<Stack.Item>
-				<ContainerSummaryView containerId={containerId} />
+				<ContainerSummaryView containerKey={containerKey} />
 			</Stack.Item>
 			<Divider appearance="strong" />
 			<Stack.Item style={{ width: "100%", height: "100%", overflowY: "auto" }}>

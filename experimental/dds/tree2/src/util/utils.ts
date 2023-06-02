@@ -40,6 +40,9 @@ export function fail(message: string): never {
 
 /**
  * Checks whether or not the given object is a `readonly` array.
+ *
+ * Note that this does NOT indicate if a given array should be treated as readonly.
+ * This instead indicates if an object is an Array, and is typed to tolerate the readonly case.
  */
 export function isReadonlyArray<T>(x: readonly T[] | unknown): x is readonly T[] {
 	// `Array.isArray()` does not properly narrow `readonly` array types by itself,
@@ -236,13 +239,17 @@ export function assertValidIndex(
 	array: { readonly length: number },
 	allowOnePastEnd: boolean = false,
 ) {
-	assert(Number.isInteger(index), 0x376 /* index must be an integer */);
-	assert(index >= 0, 0x377 /* index must be non-negative */);
+	assertNonNegativeSafeInteger(index);
 	if (allowOnePastEnd) {
 		assert(index <= array.length, 0x378 /* index must be less than or equal to length */);
 	} else {
 		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
+}
+
+export function assertNonNegativeSafeInteger(index: number) {
+	assert(Number.isSafeInteger(index), 0x376 /* index must be an integer */);
+	assert(index >= 0, 0x377 /* index must be non-negative */);
 }
 
 /**
@@ -258,3 +265,24 @@ export function assertValidIndex(
  * @alpha
  */
 export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+
+/**
+ * Convert an object into a Map.
+ *
+ * This function must only be used with objects specifically intended to encode map like information.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
+ * (including but not limited to unintended access to __proto__ and other non-owned keys).
+ * This function helps these few cases get into using an actual map in as safe of was as is practical.
+ */
+export function objectToMap<MapKey extends string | number | symbol, MapValue>(
+	objectMap: Record<MapKey, MapValue>,
+): Map<MapKey, MapValue> {
+	const map = new Map<MapKey, MapValue>();
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		map.set(key as MapKey, element);
+	}
+	return map;
+}

@@ -54,35 +54,33 @@ export type SharedTreeBranchChange<TChange> =
 	  };
 
 /**
- * Returns true iff the given {@link SharedTreeBranchChange} is the result of a rebase operation.
+ * Returns the operation that caused the given {@link SharedTreeBranchChange}.
  */
-export function isRebaseChange(
+export function getChangeReplaceType(
 	change: SharedTreeBranchChange<unknown> & { type: "replace" },
-): boolean {
-	return !isTransactionCommitChange(change);
-}
+): "transactionCommit" | "rebase" {
+	// The "replace" variant of the change event is emitted by two operations: committing a transaction and doing a rebase.
+	// Committing a transaction will always remove one or more commits (the commits that were squashed),
+	// and will add exactly one new commit (the squash commit).
+	if (change.removedCommits.length === 0 || change.newCommits.length !== 1) {
+		return "rebase";
+	}
 
-/**
- * Returns true iff the given {@link SharedTreeBranchChange} is the result of a transaction being committed.
- */
-export function isTransactionCommitChange(
-	change: SharedTreeBranchChange<unknown> & { type: "replace" },
-): boolean {
-	// "replace" is emitted by transaction commits and by rebase operations. A commit operation will
-	// always result in exactly one new commit. When a rebase results in exactly one new commit, we know
-	// that there will also be no removed commits:
+	// There is only one case in which a rebase both removes commits and adds exactly one new commit.
+	// This occurs when there is exactly one divergent, but equivalent, commit on each branch:
 	//
-	// A ─ B (branch X)
-	// └─ (branch Y)
+	// A ─ B (branch X)	  -- rebase Y onto X -->   A ─ B (branch X)
+	// └─ B' (branch Y)                                └─ (branch Y)
 	//
-	// Rebasing branch Y onto branch X results in:
-	//
-	// A ─ B (branch X)
-	//     └─ (branch Y)
-	//
-	// newCommits: [B]
-	// removedCommits: []
-	return change.newCommits.length === 1 && change.removedCommits.length !== 0;
+	// B' is removed and replaced by B because both have the same revision.
+	if (
+		change.removedCommits.length === 1 &&
+		change.removedCommits[0].revision === change.newCommits[0].revision
+	) {
+		return "rebase";
+	}
+
+	return "transactionCommit";
 }
 
 /**
@@ -116,6 +114,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	private disposed = false;
+	public readonly repairStore: Map<RevisionTag, RepairDataStore> = new Map();
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
@@ -143,7 +142,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public setHead(head: GraphCommit<TChange>): void {
 		this.assertNotDisposed();
-		assert(!this.isTransacting(), "Cannot set head during a transaction");
+		assert(!this.isTransacting(), 0x685 /* Cannot set head during a transaction */);
 		this.head = head;
 	}
 
@@ -208,10 +207,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Commit the current transaction. There must be a transaction in progress that was begun via
-	 * {@link startTransaction}. All commits in the current transaction will be squashed into a new,
-	 * single head commit.
-	 * @returns the commits that were squashed, and the new squash commit
+	 * Commit the current transaction. There must be a transaction in progress that was begun via {@link startTransaction}.
+	 * If there are commits in the current transaction, they will be squashed into a new single head commit.
+	 * @returns the commits that were squashed and the new squash commit if a squash occurred, otherwise `undefined`.
+	 * @remarks If the transaction had no changes applied during its lifetime, then no squash occurs (i.e. this method is a no-op).
+	 * Even if the transaction contained only one change, it will still be replaced with an (equivalent) squash change.
 	 */
 	public commitTransaction():
 		| [squashedCommits: GraphCommit<TChange>[], newCommit: GraphCommit<TChange>]
@@ -227,27 +227,30 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
 		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
+		// Squash the changes and make the squash commit the new head of this branch
+		this.head = mintCommit(startCommit, {
+			revision: mintRevisionTag(),
+			change: this.changeFamily.rebaser.compose(anonymousCommits),
+		});
 
-		{
-			// Squash the changes and make the squash commit the new head of this branch
-			const change = this.changeFamily.rebaser.compose(anonymousCommits);
-			this.head = mintCommit(startCommit, {
-				revision: mintRevisionTag(),
-				change,
-			});
-
-			// If this transaction is not nested, add it to the undo commit tree
-			if (!this.isTransacting()) {
-				this.undoRedoManager?.trackCommit(this.head, UndoRedoManagerCommitType.Undoable);
+		// If this transaction is not nested, add it to the undo commit tree
+		if (!this.isTransacting()) {
+			if (this.undoRedoManager !== undefined) {
+				const repairData = this.undoRedoManager.trackCommit(
+					this.head,
+					UndoRedoManagerCommitType.Undoable,
+				);
+				this.repairStore.set(this.head.revision, repairData);
 			}
-
-			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
-			// then update the repair data store for that transaction
-			this.transactions.repairStore?.capture(
-				this.changeFamily.intoDelta(change),
-				this.head.revision,
-			);
 		}
+
+		// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
+		// then update the repair data store for that transaction
+		this.transactions.repairStore?.capture(
+			this.changeFamily.intoDelta(this.head.change),
+			this.head.revision,
+		);
+
 		this.emitAndRebaseAnchors({
 			type: "replace",
 			change: undefined,
@@ -322,7 +325,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public undo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
 		assert(
 			this.undoRedoManager !== undefined,
-			"Must construct branch with an `UndoRedoManager` in order to undo.",
+			0x686 /* Must construct branch with an `UndoRedoManager` in order to undo. */,
 		);
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
@@ -345,7 +348,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public redo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
 		assert(
 			this.undoRedoManager !== undefined,
-			"Must construct branch with an `UndoRedoManager` in order to redo.",
+			0x687 /* Must construct branch with an `UndoRedoManager` in order to redo. */,
 		);
 		// TODO: allow this once it becomes possible to compose the changesets created by edits made
 		// within transactions and edits that represent completed transactions.
@@ -388,6 +391,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 */
 	public rebaseOnto(
 		branch: SharedTreeBranch<TEditor, TChange>,
+		repairData?: Map<RevisionTag, RepairDataStore>,
 	):
 		| [
 				change: TChange | undefined,
@@ -397,7 +401,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		| undefined {
 		this.assertNotDisposed();
 		// Rebase this branch onto the given branch
-		const rebaseResult = this.rebaseBranch(this.head, branch.getHead());
+		const rebaseResult = this.rebaseBranch(this.head, branch.getHead(), repairData);
 		if (rebaseResult === undefined) {
 			return undefined;
 		}
@@ -410,9 +414,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			// TODO: We probably can rebase a revertible branch onto a non-revertible branch.
 			assert(
 				branch.undoRedoManager !== undefined,
-				"Cannot rebase a revertible branch onto a non-revertible branch",
+				0x688 /* Cannot rebase a revertible branch onto a non-revertible branch */,
 			);
-			this.undoRedoManager.updateAfterRebase(sourceCommits, branch.undoRedoManager);
+			this.undoRedoManager.updateAfterRebase(
+				sourceCommits,
+				change !== undefined,
+				branch.undoRedoManager,
+			);
 		}
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
@@ -446,15 +454,19 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		}
 
 		// Compute the net change to this branch
-		const [newHead, _, { sourceCommits }] = rebaseResult;
+		const [newHead, netChange, { sourceCommits }] = rebaseResult;
 
 		if (this.undoRedoManager !== undefined) {
 			// TODO: We probably can merge a non-revertible branch into a revertible branch.
 			assert(
 				branch.undoRedoManager !== undefined,
-				"Cannot merge a non-revertible branch into a revertible branch",
+				0x689 /* Cannot merge a non-revertible branch into a revertible branch */,
 			);
-			this.undoRedoManager.updateAfterMerge(sourceCommits, branch.undoRedoManager);
+			this.undoRedoManager.updateAfterMerge(
+				sourceCommits,
+				netChange !== undefined,
+				branch.undoRedoManager,
+			);
 		}
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
@@ -467,12 +479,22 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
-	private rebaseBranch(branchHead: GraphCommit<TChange>, onto: GraphCommit<TChange>) {
+	private rebaseBranch(
+		branchHead: GraphCommit<TChange>,
+		onto: GraphCommit<TChange>,
+		repairData?: Map<RevisionTag, RepairDataStore>,
+	) {
 		if (branchHead === onto) {
 			return undefined;
 		}
 
-		const rebaseResult = rebaseBranch(this.changeFamily.rebaser, branchHead, onto);
+		const rebaseResult = rebaseBranch(
+			this.changeFamily.rebaser,
+			branchHead,
+			onto,
+			onto,
+			repairData,
+		);
 		const [rebasedHead] = rebaseResult;
 		if (this.head === rebasedHead) {
 			return undefined;

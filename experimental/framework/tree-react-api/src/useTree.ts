@@ -23,7 +23,7 @@ import React from "react";
 export function useTree<TRoot extends GlobalFieldSchema>(
 	tree: ISharedTreeView,
 	config: SchematizeConfiguration<TRoot>,
-): SchemaAware.TypedField<SchemaAware.ApiMode.Editable, TRoot["schema"]> {
+): SchemaAware.TypedField<TRoot["schema"]> {
 	// TODO: reconsider where this belongs. Consider error handling from schema changes.
 	const typedTree = React.useMemo<ISharedTreeView>(() => tree.schematize(config), [tree]);
 
@@ -39,8 +39,5 @@ export function useTree<TRoot extends GlobalFieldSchema>(
 		});
 	});
 
-	return typedTree.context.unwrappedRoot as unknown as SchemaAware.TypedField<
-		SchemaAware.ApiMode.Editable,
-		TRoot["schema"]
-	>;
+	return typedTree.context.root as unknown as SchemaAware.TypedField<TRoot["schema"]>;
 }

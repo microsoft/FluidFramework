@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { brand, fail } from "../util";
+import { fail } from "../util";
 import {
 	EmptyKey,
 	FieldKey,
@@ -37,7 +37,7 @@ import {
 	allowedTypesToTypeSet,
 } from "./modular-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
-import { isPrimitive } from "./editable-tree";
+import { areCursors, isPrimitive } from "./editable-tree";
 import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
 
 /**
@@ -188,6 +188,15 @@ export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLi
 }
 
 /**
+ * Can be used to mark a type which works like an array, but is not compatible with `Array.isArray`.
+ * @alpha
+ */
+export interface ReadonlyMarkedArrayLike<T> extends ArrayLike<T> {
+	readonly [arrayLikeMarkerSymbol]: true;
+	[Symbol.iterator](): IterableIterator<T>;
+}
+
+/**
  * `ArrayLike` numeric indexed access, but writable.
  *
  * @remarks
@@ -230,23 +239,15 @@ export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
  */
 export function isArrayLike(
 	data: ContextuallyTypedFieldData,
-): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData> {
-	return isWritableArrayLike(data) || Array.isArray(data);
-}
-
-/**
- * Checks the type of a `ContextuallyTypedNodeData`.
- * @alpha
- */
-export function isWritableArrayLike(
-	data: ContextuallyTypedFieldData,
-): data is MarkedArrayLike<ContextuallyTypedNodeData> {
+): data is
+	| readonly ContextuallyTypedNodeData[]
+	| ReadonlyMarkedArrayLike<ContextuallyTypedNodeData> {
 	if (typeof data !== "object") {
 		return false;
 	}
 	return (
 		(data as Partial<MarkedArrayLike<ContextuallyTypedNodeData>>)[arrayLikeMarkerSymbol] ===
-		true
+			true || Array.isArray(data)
 	);
 }
 
@@ -304,6 +305,11 @@ function shallowCompatibilityTest(
 	type: TreeSchemaIdentifier,
 	data: ContextuallyTypedNodeData,
 ): boolean {
+	assert(!areCursors(data), 0x6b1 /* cursors cannot be used as contextually typed data. */);
+	assert(
+		data !== undefined,
+		0x6b2 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
+	);
 	const schema = lookupTreeSchema(schemaData, type);
 	if (isPrimitiveValue(data)) {
 		return isPrimitive(schema) && allowsValue(schema.value, data);
@@ -400,7 +406,7 @@ export function cursorsFromContextualData(
 export function cursorsForTypedFieldData<T extends FieldSchema>(
 	schemaData: SchemaDataAndPolicy,
 	schema: T,
-	data: TypedField<ApiMode.Simple, T>,
+	data: TypedField<T, ApiMode.Simple>,
 ): ITreeCursorSynchronous {
 	return cursorFromContextualData(schemaData, schema.types, data as ContextuallyTypedNodeData);
 }
@@ -452,18 +458,22 @@ export function applyTypesFromContext(
 			0x4d6 /* array data reported comparable with the schema without a primary field */,
 		);
 		const children = applyFieldTypesFromContext(schemaData, primary.schema, data);
-		return { value: undefined, type, fields: new Map([[primary.key, children]]) };
+		return {
+			value: undefined,
+			type,
+			fields: new Map(children.length > 0 ? [[primary.key, children]] : []),
+		};
 	} else {
-		const fields: Map<FieldKey, MapTree[]> = new Map(
-			fieldKeysFromData(data).map((key) => {
-				const childKey: FieldKey = brand(key);
-				const childSchema = getFieldSchema(childKey, schemaData, schema);
-				return [
-					childKey,
-					applyFieldTypesFromContext(schemaData, childSchema, data[childKey]),
-				];
-			}),
-		);
+		const fields: Map<FieldKey, MapTree[]> = new Map();
+		for (const key of fieldKeysFromData(data)) {
+			assert(!fields.has(key), 0x6b3 /* Keys should not be duplicated */);
+			const childSchema = getFieldSchema(key, schemaData, schema);
+			const children = applyFieldTypesFromContext(schemaData, childSchema, data[key]);
+			if (children.length > 0) {
+				fields.set(key, children);
+			}
+		}
+
 		const value = data[valueSymbol];
 		assert(
 			allowsValue(schema.value, value),

@@ -34,6 +34,12 @@ To run against `azure`, run `npm run start:azure`.
 
 Note: this option requires additional steps outlined [below](#backed-locally-and-running-with-live-azure-fluid-relay-service-instance).
 
+### Devtools
+
+This example is configured to opt into our [developer tools suite](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools).
+To view the Devtools view, first install our [Devtools browser extension](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-browser-extension).
+After launching the application, press `F12` to launch the browser's devtools panel and navigate to the `Fluid Framework Devtools` tab.
+
 ## Testing
 
 ```bash

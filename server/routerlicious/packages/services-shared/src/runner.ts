@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { inspect } from "util";
 import nconf from "nconf";
+import { serializeError } from "serialize-error";
 import {
 	ILogger,
 	IResources,
@@ -30,6 +30,8 @@ export async function run<T extends IResources>(
 
 	// Start the runner and then listen for the message to stop it
 	const runningP = runner.start(logger).catch(async (error) => {
+		logger?.error(`Encountered exception while running service: ${serializeError(error)}`);
+		Lumberjack.error(`Encountered exception while running service`, undefined, error);
 		await runner.stop().catch((innerError) => {
 			logger?.error(`Could not stop runner due to error: ${innerError}`);
 			Lumberjack.error(`Could not stop runner due to error`, undefined, innerError);
@@ -39,8 +41,11 @@ export async function run<T extends IResources>(
 	});
 
 	process.on("SIGTERM", () => {
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		runner.stop();
+		Lumberjack.info(`Received SIGTERM request to stop the service.`);
+		runner.stop().catch((error) => {
+			logger?.error(`Could not stop runner after SIGTERM due to error: ${error}`);
+			Lumberjack.error(`Could not stop runner after SIGTERM due to error`, undefined, error);
+		});
 	});
 
 	try {
@@ -88,7 +93,7 @@ export function runService<T extends IResources>(
 		async (error) => {
 			await executeAndWait(() => {
 				logger?.error(`${group} service exiting due to error`);
-				logger?.error(inspect(error));
+				logger?.error(serializeError(error));
 				runnerMetric.error(`${group} service exiting due to error`, error);
 			}, waitInMs);
 			if (error.forceKill) {

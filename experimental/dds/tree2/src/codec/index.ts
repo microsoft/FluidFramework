@@ -13,4 +13,5 @@ export {
 	makeValueCodec,
 	unitCodec,
 	withDefaultBinaryEncoding,
+	withSchemaValidation,
 } from "./codec";

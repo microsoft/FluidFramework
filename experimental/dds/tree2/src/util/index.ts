@@ -66,5 +66,17 @@ export {
 	zipIterables,
 	Assume,
 	assertValidIndex,
+	assertNonNegativeSafeInteger,
+	objectToMap,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
+
+export {
+	AllowOptional,
+	RequiredFields,
+	OptionalFields,
+	_InlineTrick,
+	_RecursiveTrick,
+	FlattenKeys,
+	AllowOptionalNotFlattened,
+} from "./typeUtils";

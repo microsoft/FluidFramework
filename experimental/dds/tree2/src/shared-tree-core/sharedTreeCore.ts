@@ -35,7 +35,7 @@ import {
 } from "../core";
 import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { SharedTreeBranch, isTransactionCommitChange } from "./branch";
+import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
 import { Commit, EditManager, SeqNumber, minimumPossibleSequenceNumber } from "./editManager";
 
@@ -177,7 +177,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 					}
 					break;
 				case "replace":
-					if (isTransactionCommitChange(args)) {
+					if (getChangeReplaceType(args) === "transactionCommit") {
 						if (!this.getLocalBranch().isTransacting()) {
 							this.submitCommit(args.newCommits[0]);
 						}
@@ -238,6 +238,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
+		this.editManager.afterSummaryLoad();
 	}
 
 	/**
@@ -252,7 +253,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		// Edits should not be submitted until all transactions finish
 		assert(
 			!this.getLocalBranch().isTransacting(),
-			"Unexpected edit submitted during transaction",
+			0x68b /* Unexpected edit submitted during transaction */,
 		);
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included

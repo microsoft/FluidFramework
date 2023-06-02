@@ -38,22 +38,28 @@ const undefinedFactory = (): undefined => undefined;
 export class ForestRepairDataStore implements RepairDataStore {
 	private readonly root: RepairDataNode;
 
-	public constructor(
-		private readonly forestProvider: (revision: RevisionTag) => IForestSubscription,
-	) {
+	public constructor(private readonly forest: IForestSubscription) {
 		this.root = new SparseNode<RepairData | undefined>(EmptyKey, 0, undefined, undefined);
 	}
 
 	public capture(change: Delta.Root, revision: RevisionTag): void {
-		const forest = this.forestProvider(revision);
-		const cursor = forest.allocateCursor();
+		/**
+		 * Cursor used to traverse the forest and build fetch the repair data.
+		 * Note that the cursor is implicitly captured by the functions below, which have requirements for the cursor.
+		 * Calling those functions requires that the cursor be in the appropriate state.
+		 */
+		const cursor = this.forest.allocateCursor();
 
+		/**
+		 * Visits the node `cursor` is positioned at.
+		 * Restores the `cursor` to that same position before exiting.
+		 */
 		const visitFieldMarks = (fields: Delta.FieldMarks, parent: RepairDataNode): void => {
 			for (const [key, field] of fields) {
 				if (parent !== this.root) {
 					cursor.enterField(key);
 				} else {
-					moveToDetachedField(forest, cursor, keyAsDetachedField(key));
+					moveToDetachedField(this.forest, cursor, keyAsDetachedField(key));
 				}
 				visitField(field, parent, key);
 				if (parent !== this.root) {
@@ -62,6 +68,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		};
 
+		/**
+		 * Visits the field `cursor` is positioned at.
+		 * Restores the `cursor` to that same position before exiting.
+		 */
 		function visitField(delta: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
 			let index = 0;
 			for (const mark of delta) {
@@ -74,8 +84,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 					switch (type) {
 						case Delta.MarkType.MoveOut:
 						case Delta.MarkType.Delete: {
+							cursor.enterNode(index);
 							const child = parent.getOrCreateChild(key, index, repairDataFactory);
 							visitModify(mark, child);
+							cursor.exitNode();
 							onDelete(parent, key, index, mark.count);
 							index += mark.count;
 							break;
@@ -98,6 +110,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		}
 
+		/**
+		 * Requires that `cursor` be positioned on a node.
+		 * Restores the `cursor` to that same position before exiting.
+		 */
 		function visitModify(modify: Delta.HasModifications, node: RepairDataNode): void {
 			// Note that the check below returns true for properties that are present on the object even if they
 			// are set to `undefined`. This is leveraged here to represent the fact that the value should be set to
@@ -117,6 +133,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		}
 
+		/**
+		 * Requires that `cursor` be positioned in the field where the deletion takes place.
+		 * Does not move `cursor`.
+		 */
 		function onDelete(
 			parent: RepairDataNode,
 			key: FieldKey,
@@ -183,10 +203,6 @@ export class ForestRepairDataStore implements RepairDataStore {
 	}
 }
 
-export function repairDataStoreFromForest(forest: IForestSubscription): ForestRepairDataStore {
-	return new ForestRepairDataStore(() => forest);
-}
-
 export class ForestRepairDataStoreProvider implements IRepairDataStoreProvider {
 	private frozenForest: IForestSubscription | undefined;
 
@@ -208,8 +224,8 @@ export class ForestRepairDataStoreProvider implements IRepairDataStoreProvider {
 	public createRepairData(): ForestRepairDataStore {
 		const repairDataStore =
 			this.frozenForest !== undefined
-				? repairDataStoreFromForest(this.frozenForest)
-				: repairDataStoreFromForest(this.forest);
+				? new ForestRepairDataStore(this.frozenForest)
+				: new ForestRepairDataStore(this.forest);
 		this.frozenForest = undefined;
 		return repairDataStore;
 	}
