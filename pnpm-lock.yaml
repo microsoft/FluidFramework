@@ -12980,9 +12980,6 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../../loader/driver-utils
-      '@fluidframework/garbage-collector':
-        specifier: workspace:~
-        version: link:../garbage-collector
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.2.0
@@ -13320,88 +13317,6 @@ importers:
       eslint:
         specifier: ~8.6.0
         version: 8.6.0
-      prettier:
-        specifier: ~2.6.2
-        version: 2.6.2
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      typescript:
-        specifier: ~4.5.5
-        version: 4.5.5
-
-  packages/runtime/garbage-collector:
-    dependencies:
-      '@fluidframework/common-definitions':
-        specifier: ^0.20.1
-        version: 0.20.1
-      '@fluidframework/common-utils':
-        specifier: ^1.1.1
-        version: 1.1.1
-      '@fluidframework/protocol-definitions':
-        specifier: ^1.1.0
-        version: 1.2.0
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../runtime-definitions
-    devDependencies:
-      '@fluid-tools/build-cli':
-        specifier: ^0.17.0
-        version: 0.17.0(@types/node@14.18.47)
-      '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
-      '@fluidframework/build-tools':
-        specifier: ^0.17.0
-        version: 0.17.0(@types/node@14.18.47)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^2.0.0
-        version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
-      '@fluidframework/garbage-collector-previous':
-        specifier: npm:@fluidframework/garbage-collector@2.0.0-internal.4.1.0
-        version: /@fluidframework/garbage-collector@2.0.0-internal.4.1.0
-      '@fluidframework/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../test/mocha-test-setup
-      '@microsoft/api-extractor':
-        specifier: ^7.34.4
-        version: 7.34.9(@types/node@14.18.47)
-      '@types/events':
-        specifier: ^3.0.0
-        version: 3.0.0
-      '@types/mocha':
-        specifier: ^9.1.1
-        version: 9.1.1
-      '@types/node':
-        specifier: ^14.18.38
-        version: 14.18.47
-      concurrently:
-        specifier: ^7.6.0
-        version: 7.6.0
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      eslint:
-        specifier: ~8.6.0
-        version: 8.6.0
-      mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
-      mocha-json-output-reporter:
-        specifier: ^2.0.1
-        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
-      mocha-multi-reporters:
-        specifier: ^1.5.1
-        version: 1.5.1(mocha@10.2.0)
-      moment:
-        specifier: ^2.21.0
-        version: 2.29.4
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
       prettier:
         specifier: ~2.6.2
         version: 2.6.2
@@ -21536,15 +21451,6 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.3
-    dev: true
-
-  /@fluidframework/garbage-collector@2.0.0-internal.4.1.0:
-    resolution: {integrity: sha512-iL+7lBtXx6vbzpPrF1Hi9o41W3sdPDJCoqWZ7iGlVgGtve4Z41Nv3uajUpEAe7QxrYfKV4vuOIVCBfgs4msoag==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/protocol-definitions': 1.2.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.4.1.2
     dev: true
 
   /@fluidframework/garbage-collector@2.0.0-internal.4.1.2:
