@@ -237,9 +237,6 @@ export interface ISharedTreeView extends AnchorLocator {
  */
 export const create = Symbol("Create SharedTreeView");
 
-// TODO: Evaluate this singleton.
-const defaultChangeFamily = new DefaultChangeFamily({ validator: noopValidator });
-
 /**
  * Creates a {@link SharedTreeView}.
  * @param args - an object containing optional components that will be used to build the view.
@@ -249,6 +246,7 @@ const defaultChangeFamily = new DefaultChangeFamily({ validator: noopValidator }
  */
 export function createSharedTreeView(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+	changeFamily?: DefaultChangeFamily;
 	schema?: InMemoryStoredSchemaRepository;
 	forest?: IEditableForest;
 	repairProvider?: ForestRepairDataStoreProvider;
@@ -256,23 +254,25 @@ export function createSharedTreeView(args?: {
 }): ISharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 	const forest = args?.forest ?? buildForest(schema, new AnchorSet());
+	const changeFamily =
+		args?.changeFamily ?? new DefaultChangeFamily({ validator: noopValidator });
 	const repairDataStoreProvider =
 		args?.repairProvider ?? new ForestRepairDataStoreProvider(forest, schema);
-	const undoRedoManager = UndoRedoManager.create(repairDataStoreProvider, defaultChangeFamily);
+	const undoRedoManager = UndoRedoManager.create(repairDataStoreProvider, changeFamily);
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
 			{
-				change: defaultChangeFamily.rebaser.compose([]),
+				change: changeFamily.rebaser.compose([]),
 				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			},
-			defaultChangeFamily,
+			changeFamily,
 			undoRedoManager,
 			forest.anchors,
 		);
 	const context = getEditableTreeContext(forest, branch.editor);
 	const identifierIndex = args?.identifierIndex ?? new NodeIdentifierIndex(nodeIdentifierKey);
-	return SharedTreeView[create](branch, schema, forest, context, identifierIndex);
+	return SharedTreeView[create](branch, changeFamily, schema, forest, context, identifierIndex);
 }
 
 /**
@@ -284,6 +284,7 @@ export class SharedTreeView implements ISharedTreeView {
 
 	private constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		private readonly changeFamily: DefaultChangeFamily,
 		private readonly _storedSchema: InMemoryStoredSchemaRepository,
 		private readonly _forest: IEditableForest,
 		public readonly context: EditableTreeContext,
@@ -291,7 +292,7 @@ export class SharedTreeView implements ISharedTreeView {
 	) {
 		branch.on("change", ({ change }) => {
 			if (change !== undefined) {
-				const delta = defaultChangeFamily.intoDelta(change);
+				const delta = this.changeFamily.intoDelta(change);
 				this._forest.applyDelta(delta);
 				this._identifiedIndex.scanIdentifiers(this.context);
 				this.events.emit("afterBatch");
@@ -302,12 +303,20 @@ export class SharedTreeView implements ISharedTreeView {
 	// SharedTreeView is a public type, but its instantiation is internal
 	private static [create](
 		branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
+		changeFamily: DefaultChangeFamily,
 		storedSchema: InMemoryStoredSchemaRepository,
 		forest: IEditableForest,
 		context: EditableTreeContext,
 		identifiedIndex: NodeIdentifierIndex<typeof nodeIdentifierKey>,
 	): SharedTreeView {
-		return new SharedTreeView(branch, storedSchema, forest, context, identifiedIndex);
+		return new SharedTreeView(
+			branch,
+			changeFamily,
+			storedSchema,
+			forest,
+			context,
+			identifiedIndex,
+		);
 	}
 
 	public get storedSchema(): StoredSchemaRepository {
@@ -380,6 +389,7 @@ export class SharedTreeView implements ISharedTreeView {
 		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeView(
 			branch,
+			this.changeFamily,
 			storedSchema,
 			forest,
 			context,
