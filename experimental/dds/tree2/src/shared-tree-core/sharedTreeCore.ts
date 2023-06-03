@@ -22,7 +22,6 @@ import {
 	ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
-import { v4 as uuid } from "uuid";
 import { IMultiFormatCodec } from "../codec";
 import {
 	ChangeFamily,
@@ -33,7 +32,7 @@ import {
 	IRepairDataStoreProvider,
 	GraphCommit,
 } from "../core";
-import { brand, isJsonObject, JsonCompatibleReadOnly } from "../util";
+import { brand, isJsonObject, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -154,7 +153,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
-		const localSessionId = uuid();
+		const localSessionId = generateStableId();
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,

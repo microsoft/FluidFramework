@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { generateStableId, isStableId } from "@fluidframework/container-runtime";
+import { isStableId } from "@fluidframework/container-runtime";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { brandedStringType } from "../../util";
+import { brandedStringType, generateStableId } from "../../util";
 import { ReadonlyRepairDataStore } from "../repair";
 
 /**

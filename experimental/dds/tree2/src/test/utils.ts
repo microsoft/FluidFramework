@@ -602,14 +602,17 @@ const testSchema: SchemaData = {
  */
 export function initializeTestTree(
 	tree: ISharedTreeView,
-	state: JsonableTree,
+	state?: JsonableTree,
 	schema: SchemaData = testSchema,
 ): void {
 	tree.storedSchema.update(schema);
-	// Apply an edit to the tree which inserts a node with a value
-	const writeCursor = singleTextCursor(state);
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
-	field.insert(0, writeCursor);
+
+	if (state) {
+		// Apply an edit to the tree which inserts a node with a value
+		const writeCursor = singleTextCursor(state);
+		const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKeySymbol });
+		field.insert(0, writeCursor);
+	}
 }
 
 export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
