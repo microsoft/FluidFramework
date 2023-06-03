@@ -138,7 +138,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		anchors: AnchorSet,
-		repairDataStoreProvider: IRepairDataStoreProvider,
+		repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
