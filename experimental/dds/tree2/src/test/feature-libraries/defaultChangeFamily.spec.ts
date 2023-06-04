@@ -32,6 +32,7 @@ import {
 	buildForest,
 	singleTextCursor,
 	jsonableTreeFromCursor,
+	defaultIntoDelta,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { assertDeltaEqual } from "../utils";
@@ -83,15 +84,15 @@ function initializeEditableForest(data?: JsonableTree): {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
 	let currentRevision = mintRevisionTag();
-	const repairStore = new ForestRepairDataStore(forest);
+	const repairStore = new ForestRepairDataStore(forest, defaultIntoDelta);
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: Delta.Root[] = [];
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
 			changes.push({ revision: currentRevision, change });
+			repairStore.capture(change, currentRevision);
 			const delta = defaultChangeFamily.intoDelta(change);
-			repairStore.capture(delta, currentRevision);
 			deltas.push(delta);
 			forest.applyDelta(delta);
 			currentRevision = mintRevisionTag();

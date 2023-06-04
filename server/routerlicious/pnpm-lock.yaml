@@ -292,6 +292,9 @@ importers:
       lodash:
         specifier: ^4.17.21
         version: 4.17.21
+      nconf:
+        specifier: ^0.12.0
+        version: 0.12.0
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.16.1

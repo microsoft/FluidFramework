@@ -131,7 +131,7 @@ export class EditManager<
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
-		repairDataStoreProvider: IRepairDataStoreProvider,
+		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
 		anchors?: AnchorSet,
 	) {
 		super("EditManager");
@@ -139,15 +139,18 @@ export class EditManager<
 			revision: nullRevisionTag,
 			change: changeFamily.rebaser.compose([]),
 		};
-		this.localBranchUndoRedoManager = UndoRedoManager.create(
-			repairDataStoreProvider,
-			changeFamily,
-		);
+		this.localBranchUndoRedoManager = UndoRedoManager.create(changeFamily);
 		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, this.trunkUndoRedoManager);
+		this.trunk = new SharedTreeBranch(
+			this.trunkBase,
+			changeFamily,
+			repairDataStoreProvider.clone(),
+			this.trunkUndoRedoManager,
+		);
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
+			repairDataStoreProvider,
 			this.localBranchUndoRedoManager,
 			anchors,
 		);
@@ -264,6 +267,7 @@ export class EditManager<
 				for (const [sessionId, branch] of this.peerLocalBranches) {
 					const [rebasedBranch] = rebaseBranch(
 						this.changeFamily.rebaser,
+						this.localBranch.repairDataStoreProvider,
 						branch,
 						newTrunkTail,
 						this.trunk.getHead(),
@@ -417,11 +421,11 @@ export class EditManager<
 
 	/**
 	 * Needs to be called after a summary is loaded.
-	 * @remarks This is a temporary workaround until UndoRedoManager is better managed.
+	 * @remarks This is necessary to keep the trunk's repairDataStoreProvider up to date with the
+	 * local's after a summary load.
 	 */
 	public afterSummaryLoad(): void {
-		this.trunkUndoRedoManager.repairDataStoreProvider =
-			this.localBranchUndoRedoManager.repairDataStoreProvider.clone();
+		this.trunk.repairDataStoreProvider = this.localBranch.repairDataStoreProvider.clone();
 	}
 
 	public addSequencedChange(
@@ -457,6 +461,7 @@ export class EditManager<
 		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
 		const [rebasedBranch] = rebaseBranch(
 			this.changeFamily.rebaser,
+			this.localBranch.repairDataStoreProvider,
 			getOrCreate(this.peerLocalBranches, newCommit.sessionId, () => baseRevisionInTrunk),
 			baseRevisionInTrunk,
 			this.trunk.getHead(),
@@ -472,7 +477,6 @@ export class EditManager<
 				newCommit.change,
 				rebasedBranch,
 				this.trunk.getHead(),
-				this.localBranch.repairStore,
 			);
 
 			this.peerLocalBranches.set(newCommit.sessionId, mintCommit(rebasedBranch, newCommit));
@@ -483,7 +487,7 @@ export class EditManager<
 			});
 		}
 
-		this.localBranch.rebaseOnto(this.trunk, this.localBranch.repairStore);
+		this.localBranch.rebaseOnto(this.trunk);
 	}
 
 	public findLocalCommit(
@@ -512,9 +516,7 @@ export class EditManager<
 
 			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
 		}
-		this.trunkUndoRedoManager.repairDataStoreProvider.applyDelta(
-			this.changeFamily.intoDelta(commit.change),
-		);
+		this.trunk.repairDataStoreProvider.applyChange(commit.change);
 		this.sequenceMap.set(sequenceNumber, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceNumber, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);

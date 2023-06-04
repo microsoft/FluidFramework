@@ -213,7 +213,7 @@ export async function initialize(
 	await container.attach(request);
 	assert(container.resolvedUrl !== undefined, "Container missing resolved URL after attach");
 	const resolvedUrl = container.resolvedUrl;
-	container.close();
+	container.dispose();
 
 	if ((testConfig.detachedBlobCount ?? 0) > 0 && testDriver.type === "odsp") {
 		const url = (testDriver as OdspTestDriver).getUrlFromItemId((resolvedUrl as any).itemId);

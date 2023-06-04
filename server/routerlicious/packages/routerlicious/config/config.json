@@ -53,7 +53,8 @@
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,
-		"kafkaCheckpointOnReprocessingOp": false
+		"kafkaCheckpointOnReprocessingOp": false,
+		"ignoreCheckpointFlushException": false
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
