@@ -161,7 +161,7 @@ export interface ICollection<T> {
 	 * @param value - data to insert to the database if we cannot find query
 	 * @param options - optional. If set, provide customized options to the implementations
 	 */
-	findOrCreate(query: any, value: any, options?: any): Promise<{ value: T; existing: boolean }>;
+	findOrCreate(query: any, value: T, options?: any): Promise<{ value: T; existing: boolean }>;
 
 	/**
 	 * Finds query in the database and replace its value.
@@ -173,7 +173,7 @@ export interface ICollection<T> {
 	 */
 	findAndUpdate(
 		query: any,
-		value: any,
+		value: T,
 		options?: any,
 	): Promise<{
 		value: T;
