@@ -47,7 +47,7 @@ Next, run `npm run test` from a terminal within this directory.
 
 This package has a simple testing app that sets up a Container with some simple data for testing the debug view, as well as some interactive controls for testing live editing / collaboration scenarios.
 
-To run the app, navigate to the root of this package and run `npm run start:test-app`.
+To run the app, navigate to the root of `@fluid-example/devtools-example` package and run `npm run start`.
 
 -   This will launch a local [Tinylicious](https://fluidframework.com/docs/testing/tinylicious/) service and serve the app at <http://localhost:8080/>.
 
