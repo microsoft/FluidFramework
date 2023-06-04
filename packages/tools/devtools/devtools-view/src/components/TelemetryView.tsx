@@ -24,6 +24,7 @@ import {
 import React, { useState, useRef } from "react";
 import SplitPane from "react-split-pane";
 import {
+	DevtoolsDisposed,
 	GetTelemetryHistory,
 	handleIncomingMessage,
 	InboundHandlers,
@@ -76,7 +77,7 @@ export function TelemetryView(): React.ReactElement {
 		 * Handlers for inbound messages related to telemetry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[TelemetryEvent.MessageType]: (untypedMessage) => {
+			[TelemetryEvent.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as TelemetryEvent.Message;
 				setBufferedEvents((currentBuffer) => [
 					message.data.event,
@@ -84,9 +85,15 @@ export function TelemetryView(): React.ReactElement {
 				]);
 				return true;
 			},
-			[TelemetryHistory.MessageType]: (untypedMessage) => {
+			[TelemetryHistory.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as TelemetryHistory.Message;
 				setTelemetryEvents(message.data.contents);
+				return true;
+			},
+			[DevtoolsDisposed.MessageType]: async (untypedMessage) => {
+				// Require latest feature state to ensure we aren't displaying stale data
+				setBufferedEvents([]);
+				setTelemetryEvents([]);
 				return true;
 			},
 		};

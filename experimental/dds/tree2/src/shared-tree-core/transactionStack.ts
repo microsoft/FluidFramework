@@ -9,10 +9,10 @@ import { fail } from "../util";
 /**
  * A helper class that organizes the state needed for managing nesting transactions.
  */
-export class TransactionStack {
+export class TransactionStack<TChange> {
 	private readonly stack: {
 		startRevision: RevisionTag;
-		repairStore?: RepairDataStore;
+		repairStore?: RepairDataStore<TChange>;
 	}[] = [];
 
 	/**
@@ -25,7 +25,7 @@ export class TransactionStack {
 	/**
 	 * @returns the repair data store for the current transaction, or `undefined` if no transaction is ongoing.
 	 */
-	public get repairStore(): RepairDataStore | undefined {
+	public get repairStore(): RepairDataStore<TChange> | undefined {
 		return this.stack[this.stack.length - 1]?.repairStore;
 	}
 
@@ -34,7 +34,7 @@ export class TransactionStack {
 	 * @param startRevision - the revision of the latest commit when this transaction begins
 	 * @param repairStore - an optional repair data store for helping with undo or rollback operations
 	 */
-	public push(startRevision: RevisionTag, repairStore?: RepairDataStore): void {
+	public push(startRevision: RevisionTag, repairStore?: RepairDataStore<TChange>): void {
 		this.stack.push({ startRevision, repairStore });
 	}
 
@@ -44,7 +44,7 @@ export class TransactionStack {
 	 */
 	public pop(): {
 		startRevision: RevisionTag;
-		repairStore?: RepairDataStore;
+		repairStore?: RepairDataStore<TChange>;
 	} {
 		return this.stack.pop() ?? fail("No transaction is currently in progress");
 	}

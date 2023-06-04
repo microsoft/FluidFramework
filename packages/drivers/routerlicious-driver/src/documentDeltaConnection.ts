@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base";
 import { IAnyDriverError, IDocumentDeltaConnection } from "@fluidframework/driver-definitions";
 import { IClient, IConnect } from "@fluidframework/protocol-definitions";
@@ -24,7 +24,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 		io: typeof SocketIOClientStatic,
 		client: IClient,
 		url: string,
-		logger: ITelemetryLogger,
+		logger: ITelemetryLoggerExt,
 		timeoutMs = 20000,
 	): Promise<IDocumentDeltaConnection> {
 		const socket = io(url, {

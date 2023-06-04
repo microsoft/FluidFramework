@@ -40,7 +40,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerStateHistory.MessageType]: (untypedMessage) => {
+			[ContainerStateHistory.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerStateHistory.Message;
 				if (message.data.containerKey === containerKey) {
 					setContainerHistory(message.data.history);

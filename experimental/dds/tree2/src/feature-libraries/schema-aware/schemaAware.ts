@@ -21,7 +21,7 @@ import {
 } from "../modular-schema";
 import { UntypedField, UntypedTree, UntypedTreeCore } from "../untypedTree";
 import { contextSymbol, typeSymbol } from "../editable-tree";
-import { Assume } from "../../util";
+import { AllowOptional, Assume, FlattenKeys, _InlineTrick } from "../../util";
 import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
 import { PrimitiveValueSchema, TypedValue } from "./schemaAwareUtil";
 
@@ -129,12 +129,12 @@ export type CollectOptions<
  * @alpha
  */
 export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
-	InternalTypedSchemaTypes.FlattenKeys<
-		{ [typeNameSymbol]?: UnbrandedName<TName> } & InternalTypedSchemaTypes.AllowOptional<
+	FlattenKeys<
+		{ [typeNameSymbol]?: UnbrandedName<TName> } & AllowOptional<
 			ValuePropertyFromSchema<TValueSchema>
 		>
 	>,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Remove type brand from name.
@@ -142,7 +142,7 @@ export type FlexibleObject<TValueSchema extends ValueSchema, TName> = [
  */
 export type UnbrandedName<TName> = [
 	TName extends infer S & TreeSchemaIdentifier ? S : string,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * `{ [key: string]: FieldSchemaTypeInfo }` to `{ [key: string]: TypedTree }`
@@ -165,7 +165,7 @@ export type TypedFields<
 				>;
 		  }
 		: EmptyObject,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * `FieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
@@ -177,7 +177,7 @@ export type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMod
 		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
 		Mode
 	>,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Adjusts the API for a field based on its Multiplicity.
@@ -209,21 +209,21 @@ export type EditableField<TypedChild> = UntypedField & MarkedArrayLike<TypedChil
  */
 export type EditableSequenceField<TypedChild> = [
 	UntypedSequenceField & MarkedArrayLike<TypedChild>,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * @alpha
  */
 export type EditableValueField<TypedChild> = [
 	UntypedValueField & MarkedArrayLike<TypedChild>,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * @alpha
  */
 export type EditableOptionalField<TypedChild> = [
 	UntypedOptionalField & MarkedArrayLike<TypedChild>,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Takes in `AllowedTypes` and returns a TypedTree union.
@@ -241,7 +241,7 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 				>
 		  >
 		: UntypedApi<Mode>,
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 /**
  * Takes in `TreeSchema[]` and returns a TypedTree union.
@@ -254,7 +254,7 @@ export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly T
 				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>,
 		  ]
 		: [],
-][InternalTypedSchemaTypes._InlineTrick];
+][_InlineTrick];
 
 // TODO: make these more accurate
 /**
@@ -276,7 +276,7 @@ export type UntypedApi<Mode extends ApiMode> = {
 export type TypedNode<
 	TSchema extends TreeSchema,
 	Mode extends ApiMode = ApiMode.Editable,
-> = InternalTypedSchemaTypes.FlattenKeys<
+> = FlattenKeys<
 	CollectOptions<
 		Mode,
 		TypedFields<
