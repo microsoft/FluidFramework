@@ -1,5 +1,13 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.5.0.0
+
+### Major Changes
+
+-   The following types have been removed: `IntervalCollection`, `CompressedSerializedInterval`, [8b242fdc79](https://github.com/microsoft/FluidFramework/commits/8b242fdc796714cf1da9ad3f90d02efb122af0c2)
+    `IntervalCollectionIterator`, and `ISerializedIntervalCollectionV2`. These types were deprecated in version
+    2.0.0-internal.4.4.0.
+
 ## 2.0.0-internal.4.4.0
 
 ### Minor Changes
