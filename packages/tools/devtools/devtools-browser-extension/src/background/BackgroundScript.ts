@@ -9,6 +9,7 @@ import {
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
+import { browser } from "../Globals";
 import {
 	DevToolsInitAcknowledgement,
 	devToolsInitAcknowledgementType,
@@ -18,8 +19,6 @@ import {
 	postMessageToPort,
 	relayMessageToPort,
 } from "../messaging";
-// eslint-disable-next-line import/no-internal-modules
-import { browser } from "../utilities/Globals";
 import {
 	backgroundScriptMessageLoggingOptions,
 	formatBackgroundScriptMessageForLogging,
